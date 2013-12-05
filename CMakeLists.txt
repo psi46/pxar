@@ -1,6 +1,6 @@
 ########################################################
 # CMake file for the pXar framework
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4 FATAL_ERROR)
 ########################################################
 
 # Project name
