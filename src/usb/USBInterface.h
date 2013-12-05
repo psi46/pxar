@@ -54,7 +54,7 @@ public:
   int32_t GetLastError() { return ftdiStatus; }
 #ifdef HAVE_LIBFTDI
   const char* GetErrorMsg();
-  const char* GetErrorMsg(int){GetErrorMsg();};
+  const char* GetErrorMsg(int){ return GetErrorMsg(); };
 #else
   const char* GetErrorMsg(int error);
 #endif
