@@ -1,6 +1,9 @@
 ########################################################
 # CMake file for the pXar framework
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4 FATAL_ERROR)
+IF(COMMAND CMAKE_POLICY)
+  CMAKE_POLICY(SET CMP0003 NEW)
+ENDIF(COMMAND CMAKE_POLICY)
 ########################################################
 
 # Project name
@@ -33,8 +36,11 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 # Additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-# Can't remember right now: do we need libusb-1.0?
+# Check for libusb-1.0 package:
 FIND_PACKAGE(libusb-1.0 REQUIRED)
+
+# Include packages for threading:
+FIND_PACKAGE(Threads)
 
 # Find the FTDI chip drivers, either the open source or proprietary ones,
 # depending on the build option we set:
