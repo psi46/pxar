@@ -1,0 +1,39 @@
+# - Find FTDI installation
+# This module tries to find the libftdi installation on your system.
+# Once done this will define
+#
+#  FTDI_FOUND - system has ftdi
+#  FTDI_INCLUDE_DIR - ~ the ftdi include directory 
+#  FTDI_LIBRARY - Link these to use ftdi
+
+FIND_PATH(FTDI_INCLUDE_DIR 
+NAMES   ftdi.h
+PATHS   /usr/local/include
+        /usr/include
+        /usr/include/libftdi
+        /usr/local/include/libftdi
+)
+
+
+FIND_LIBRARY(FTDI_LIBRARY
+NAMES ftdi
+PATHS /usr/lib
+      /usr/local/lib
+)
+
+IF (FTDI_LIBRARY)
+  IF(FTDI_INCLUDE_DIR)
+    set(FTDI_FOUND TRUE)
+    MESSAGE(STATUS "Found libFTDI: ${FTDI_INCLUDE_DIR}, ${FTDI_LIBRARY}")
+  ELSE(FTDI_INCLUDE_DIR)
+    set(FTDI_FOUND FALSE)
+    MESSAGE(FATAL_ERROR "libFTDI headers NOT FOUND. Make sure to install the development headers!")
+  ENDIF(FTDI_INCLUDE_DIR)
+ELSE (FTDI_LIBRARY)
+    set(FTDI_FOUND FALSE)
+    MESSAGE(FATAL_ERROR "libFTDI NOT FOUND.")
+ENDIF (FTDI_LIBRARY)
+
+set(FTDI_INCLUDE_DIR
+    ${FTDI_INCLUDE_DIR}
+)
