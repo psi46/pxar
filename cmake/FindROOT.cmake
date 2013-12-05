@@ -10,8 +10,6 @@
 # F.Uhlig@gsi.de (fairroot.gsi.de)
 
 
-MESSAGE(STATUS "Looking for Root...")
-
 SET(ROOT_CONFIG_SEARCHPATH
   ${SIMPATH}/tools/root/bin
   $ENV{ROOTSYS}/bin
@@ -44,8 +42,7 @@ IF (ROOT_CONFIG_EXECUTABLE)
 
   EXEC_PROGRAM(${ROOT_CONFIG_EXECUTABLE} ARGS "--version" OUTPUT_VARIABLE ROOTVERSION)
 
-  MESSAGE(STATUS "Looking for Root... - found $ENV{ROOTSYS}/bin/root")
-  MESSAGE(STATUS "Looking for Root... - version ${ROOTVERSION} ")   
+  MESSAGE(STATUS "Found ROOT: $ENV{ROOTSYS}/bin/root (found version ${ROOTVERSION})")
 
   # we need at least version 5.00/00
   IF (NOT ROOT_MIN_VERSION)

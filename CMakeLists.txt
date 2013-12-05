@@ -8,7 +8,7 @@ PROJECT( PXAR )
 
 # Library Version
 SET(PXAR_LIB_VERSION "0.0.1")
-SET(CPXAR_LIB_SOVERSION "1")
+SET(PXAR_LIB_SOVERSION "1")
 
 SET(GCC_COMPILE_FLAGS "-Wall -Wextra -g -Wno-deprecated -ansi -pedantic -Wno-long-long")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}" )
@@ -46,6 +46,12 @@ ENDIF(USE_FTD2XX)
 
 # SWIG provides the wrapper generation for our Python interface:
 FIND_PACKAGE(SWIG REQUIRED)
+INCLUDE(${SWIG_USE_FILE})
+SET(CMAKE_SWIG_FLAGS "")
+
+# Find Python libraries
+FIND_PACKAGE(PythonLibs)
+INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 
 # ROOT provides, well, ROOT:
 FIND_PACKAGE(ROOT REQUIRED)
@@ -70,3 +76,12 @@ INCLUDE_DIRECTORIES( ./include )
 add_subdirectory(src)
 
 
+
+#########################################################
+# Preparation for SWIG wrapper Python module generation #
+#########################################################
+
+#SET_SOURCE_FILES_PROPERTIES(example.i PROPERTIES CPLUSPLUS ON)
+#SET_SOURCE_FILES_PROPERTIES(example.i PROPERTIES SWIG_FLAGS "-includeall")
+#SWIG_ADD_MODULE(example python example.i example.cxx)
+#SWIG_LINK_LIBRARIES(example ${PYTHON_LIBRARIES})
