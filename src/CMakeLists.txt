@@ -1,0 +1,36 @@
+# Add source files for the library
+
+INCLUDE_DIRECTORIES(rpc api usb)
+
+FILE(GLOB SOURCE_FILES 
+  "rpc/*.cpp"
+  "api/*.cc"
+  )
+
+FILE(GLOB HEADER_FILES
+  "rpc/*.h"
+  "usb/*.h"
+  "api/*.h"
+  )
+
+SET(SOURCES ${SOURCE_FILES} ${HEADER_FILES})
+
+IF(USE_FTD2XX)
+  FILE(GLOB SOURCE_FILES_FTDI "usb/USBInterface.libftd2xx.cc")
+ELSE(USE_FTD2XX)
+  FILE(GLOB SOURCE_FILES_FTDI "usb/USBInterface.libftdi.cc")
+ENDIF(USE_FTD2XX)
+SET(SOURCES ${SOURCES} ${SOURCE_FILES_FTDI})
+
+ADD_LIBRARY( ${PROJECT_NAME} SHARED ${SOURCES} )
+
+IF(USE_FTD2XX)
+  TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${FTD2XX_LIBRARY})
+ELSE(USE_FTD2XX)
+  TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${FTDI_LIBRARY})
+ENDIF(USE_FTD2XX)
+# We don't do any python binding yet!
+#SET_SOURCE_FILES_PROPERTIES(api/libpxar.i PROPERTIES CPLUSPLUS ON)
+#SET_SOURCE_FILES_PROPERTIES(apilibpxar.i PROPERTIES SWIG_FLAGS "-includeall")
+#SWIG_ADD_MODULE(pypxar python api/libpxar.i api/libpxar.cc)
+#SWIG_LINK_LIBRARIES(pypxar ${PYTHON_LIBRARIES})

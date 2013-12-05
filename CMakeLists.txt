@@ -4,7 +4,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.4 FATAL_ERROR)
 ########################################################
 
 # Project name
-PROJECT( PXAR )
+PROJECT( pxar )
 
 # Library Version
 SET(PXAR_LIB_VERSION "0.0.1")
@@ -34,7 +34,7 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 # Can't remember right now: do we need libusb-1.0?
-#FIND_PACKAGE(libusb-1.0 REQUIRED)
+FIND_PACKAGE(libusb-1.0 REQUIRED)
 
 # Find the FTDI chip drivers, either the open source or proprietary ones,
 # depending on the build option we set:
@@ -42,6 +42,7 @@ IF(USE_FTD2XX)
   FIND_PACKAGE(FTD2XX REQUIRED)
 ELSE(USE_FTD2XX)
   FIND_PACKAGE(FTDI REQUIRED)
+  ADD_DEFINITIONS(-DHAVE_LIBFTDI)
 ENDIF(USE_FTD2XX)
 
 # SWIG provides the wrapper generation for our Python interface:
@@ -70,10 +71,10 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 ##################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( ./include )
+#INCLUDE_DIRECTORIES( ./include )
 
 # Build main pXar API library
-add_subdirectory(src)
+ADD_SUBDIRECTORY(src)
 
 
 
