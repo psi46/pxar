@@ -373,27 +373,25 @@ bool CUSB::WaitForFilledQueue( int32_t pSize, int32_t pMaxWait )
 }
 
 
-bool CUSB::Read_String(char *s, uint16_t maxlength)
+void CUSB::Read_String(char *s, uint16_t maxlength)
 {
 	char ch = 0;
 	uint16_t i=0;
 	do
 	{
-		if (!Read_CHAR(ch)) return false;
-		if (i<maxlength) { s[i] = ch; i++; }
+	  Read_CHAR(ch);
+	  if (i<maxlength) { s[i] = ch; i++; }
 	} while (ch != 0);
 	if (i >= maxlength) s[maxlength-1] = 0;
-	return true;
 }
 
 
-bool CUSB::Write_String(const char *s)
+void CUSB::Write_String(const char *s)
 {
 	do
 	{
-		if (!Write_CHAR(*s)) return false;
-		s++;
+	  Write_CHAR(*s);
+	  s++;
 	} while (*s != 0);
-	return true;
 }
 

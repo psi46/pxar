@@ -12,9 +12,9 @@
 #define USB_H
 
 #ifdef HAVE_LIBFTDI
-#include "ftdi.h"
+#include <ftdi.h>
 #else
-#include "ftd2xx.h"
+#include <ftd2xx.h>
 #endif
 
 #include "rpc_io.h"
@@ -87,99 +87,99 @@ public:
 
   // read methods
 
-  bool Read_CHAR(char &x) { Read(&x, sizeof(char)); }
+  void Read_CHAR(char &x) { Read(&x, sizeof(char)); }
 
-  bool Read_CHARS(char *x, uint16_t count)
+  void Read_CHARS(char *x, uint16_t count)
   { Read(x, count*sizeof(char)); }
 
-  bool Read_UCHAR(unsigned char &x)	{ Read(&x, sizeof(char)); }
+  void Read_UCHAR(unsigned char &x)	{ Read(&x, sizeof(char)); }
 
-  bool Read_UCHARS(unsigned char *x, uint32_t count)
+  void Read_UCHARS(unsigned char *x, uint32_t count)
   { Read(x, count*sizeof(char)); }
 
-  bool Read_SHORT(int16_t &x)
+  void Read_SHORT(int16_t &x)
   { Read((unsigned char *)(&x), sizeof(int16_t)); }
 
-  bool Read_SHORTS(int16_t *x, uint16_t count)
+  void Read_SHORTS(int16_t *x, uint16_t count)
   { Read(x, count*sizeof(int16_t)); }
 
-  bool Read_USHORT(uint16_t &x)
+  void Read_USHORT(uint16_t &x)
   { Read((unsigned char *)(&x), sizeof(int16_t)); }
 
-  bool Read_USHORTS(uint16_t *x, uint16_t count)
+  void Read_USHORTS(uint16_t *x, uint16_t count)
   { Read(x, count*sizeof(int16_t)); }
 
-  bool Read_INT(int32_t &x)
+  void Read_INT(int32_t &x)
   { Read((unsigned char *)(&x), sizeof(int32_t)); }
 
-  bool Read_INTS(int32_t *x, uint16_t count)
+  void Read_INTS(int32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
-  bool Read_UINT(uint32_t &x)
+  void Read_UINT(uint32_t &x)
   { Read((unsigned char *)(&x), sizeof(int32_t)); }
 
-  bool Read_UINTS(uint32_t *x, uint16_t count)
+  void Read_UINTS(uint32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
-  bool Read_LONG(int32_t &x)
+  void Read_LONG(int32_t &x)
   { Read((unsigned char *)(&x), sizeof(int32_t)); }
 
-  bool Read_LONGS(int32_t *x, uint16_t count)
+  void Read_LONGS(int32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
-  bool Read_ULONG(uint32_t &x)
+  void Read_ULONG(uint32_t &x)
   { Read((unsigned char *)(&x), sizeof(int32_t)); }
 
-  bool Read_ULONGS(uint32_t *x, uint16_t count)
+  void Read_ULONGS(uint32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
-  bool Read_String(char *s, uint16_t maxlength);
+  void Read_String(char *s, uint16_t maxlength);
 
 
   // -- write methods
 
-  bool Write_CHAR(char x) { Write(&x, sizeof(char)); }
+  void Write_CHAR(char x) { Write(&x, sizeof(char)); }
 
-  bool Write_CHARS(const char *x, uint16_t count)
+  void Write_CHARS(const char *x, uint16_t count)
   { Write(x, count*sizeof(char)); }
 
-  bool Write_UCHAR(const unsigned char x) { Write(&x, sizeof(char)); }
+  void Write_UCHAR(const unsigned char x) { Write(&x, sizeof(char)); }
 
-  bool Write_UCHARS(const unsigned char *x, uint32_t count)
+  void Write_UCHARS(const unsigned char *x, uint32_t count)
   { Write(x, count*sizeof(char)); }
 
-  bool Write_SHORT(const int16_t x) { Write(&x, sizeof(int16_t)); }
+  void Write_SHORT(const int16_t x) { Write(&x, sizeof(int16_t)); }
 
-  bool Write_SHORTS(const int16_t *x, uint16_t count)
+  void Write_SHORTS(const int16_t *x, uint16_t count)
   { Write(x, count*sizeof(int16_t)); }
 
-  bool Write_USHORT(const uint16_t x)
+  void Write_USHORT(const uint16_t x)
   { Write(&x, sizeof(int16_t)); }
 
-  bool Write_USHORTS(const uint16_t *x, uint16_t count)
+  void Write_USHORTS(const uint16_t *x, uint16_t count)
   { Write(x, count*sizeof(int16_t)); }
 
-  bool Write_INT(const int32_t x) { Write(&x, sizeof(int32_t)); }
+  void Write_INT(const int32_t x) { Write(&x, sizeof(int32_t)); }
 
-  bool Write_INTS(const int32_t *x, uint16_t count)
+  void Write_INTS(const int32_t *x, uint16_t count)
   { Write(x, count*sizeof(int32_t)); }
 
-  bool Write_UINT(const uint32_t x) { Write(&x, sizeof(int32_t)); }
+  void Write_UINT(const uint32_t x) { Write(&x, sizeof(int32_t)); }
 
-  bool Write_UINTS(const uint32_t *x, uint16_t count)
+  void Write_UINTS(const uint32_t *x, uint16_t count)
   { Write(x, count*sizeof(int32_t)); }
 
-  bool Write_LONG(const int32_t x) { Write(&x, sizeof(int32_t)); }
+  void Write_LONG(const int32_t x) { Write(&x, sizeof(int32_t)); }
 
-  bool Write_LONGS(const int32_t *x, uint16_t count)
+  void Write_LONGS(const int32_t *x, uint16_t count)
   { Write(x, count*sizeof(int32_t)); }
 
-  bool Write_ULONG(const uint32_t x) { Write(&x, sizeof(int32_t)); }
+  void Write_ULONG(const uint32_t x) { Write(&x, sizeof(int32_t)); }
 
-  bool Write_ULONGS(const uint32_t *x, uint16_t count)
+  void Write_ULONGS(const uint32_t *x, uint16_t count)
   { Write(x, count*sizeof(int32_t)); }
 
-  bool Write_String(const char *s);
+  void Write_String(const char *s);
 };
 
 #endif

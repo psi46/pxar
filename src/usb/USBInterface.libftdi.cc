@@ -80,6 +80,7 @@ static void *usbclose (void *arg) {
     struct ftdi_context *handle = (struct ftdi_context *)(arg);
     ftdi_usb_close(handle);
     pthread_mutex_lock(&cleanup_mutex); usbclose_done = true; pthread_mutex_unlock(&cleanup_mutex);
+    return NULL;
 }
 
 static void *usbdeinit (void *arg) {
@@ -88,6 +89,7 @@ static void *usbdeinit (void *arg) {
     struct ftdi_context *handle = (struct ftdi_context *)(arg);
     ftdi_deinit(handle);
     pthread_mutex_lock(&cleanup_mutex); usbdeinit_done = true; pthread_mutex_unlock(&cleanup_mutex);
+    return NULL;
 }
 
 uint32_t FindAllUSB(struct ftdi_device_list ** devlist){
@@ -117,7 +119,7 @@ uint32_t FindAllUSB(struct ftdi_device_list ** devlist){
     // merge device lists
     struct ftdi_device_list **curdev;
     curdev = devlist;
-    for (int i = 0; i<nDevices;i++) curdev=&(*curdev)->next; // go to end of DTB device list
+    for (uint32_t i = 0; i<nDevices;i++) curdev=&(*curdev)->next; // go to end of DTB device list
     (*curdev)->dev = devlist_atb->dev; // put pointer to last devlist entry to first ATB entry
     nDevices+=status; // add number of ATB devices to total number
   }
@@ -160,7 +162,7 @@ CUSB::~CUSB(){
 
 const char* CUSB::GetErrorMsg()
 {
-  ftdi_get_error_string(&ftdic);
+  return ftdi_get_error_string(&ftdic);
 }
 
 
@@ -197,7 +199,7 @@ bool CUSB::EnumNext(char name[])
   if( enumPos >= enumCount) return false;
 
   // go to the position of the enumPos pointer
-  for (int32_t i=0; i<enumPos; i++) devlist->next;
+  for (uint32_t i=0; i<enumPos; i++) devlist = devlist->next;
   
   char manufacturer[128], description[128], serial[128];
 
@@ -230,7 +232,7 @@ bool CUSB::Enum(char name[], uint32_t pos)
   if( pos > enumCount) return false;
 
   // go to the position of the pos argument
-  for (int32_t i=0; i<pos; i++) devlist->next;
+  for (uint32_t i=0; i<pos; i++) devlist = devlist->next;
   
   char manufacturer[128], description[128], serial[128];
   if ((ftdiStatus = ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 128, description, 128, serial, 128)) < 0)
@@ -275,14 +277,14 @@ bool CUSB::Open(char serialNumber[])
 	 ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 
 			      128, description, 128, serial, 128)) < 0){
       std::cout << " USBInterface::Open(): Error polling USB device number " << i << std::endl;
-      devlist->next;
+      devlist = devlist->next;
       continue;
     }    
     if (strcmp(serialNumber,serial)!=0 && strcmp(serialNumber,"*")!=0){
       // not found, next device
       std::cout << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'" << std::endl;
 
-      devlist->next;
+      devlist = devlist->next;
     } else {
       // found the device
       std::cout << " USBInterface::Open(): found device with serial " << serial << std::endl;
@@ -356,7 +358,7 @@ void CUSB::Close(){
   pthread_cancel(readerthread);
   usleep(10000);
   // join reader thread and clean up semaphores
-  int pth_status = pthread_join(readerthread, NULL);
+  pthread_join(readerthread, NULL);
   sem_destroy (&buf_data);
   sem_destroy (&buf_space);
   usleep(10000);
@@ -414,7 +416,7 @@ void CUSB::Flush()
   }
 }
 
-bool CUSB::FillBuffer(uint32_t minBytesToRead)
+bool CUSB::FillBuffer(uint32_t /*minBytesToRead*/)
 {
   cout << " USBInterface: FillBuffer() called but this function is not implemted anymore for libftdi " << endl;
   return true;
@@ -426,8 +428,8 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
    if (!isUSB_open) throw CRpcError(CRpcError::READ_ERROR);
  
    // Copy over data from the circular buffer
-    int32_t i;
-    int32_t timewasted = 0; // time in ms wasted in this routine
+    uint32_t i;
+    uint32_t timewasted = 0; // time in ms wasted in this routine
 
       for (i=0; i<bytesToRead; i++) {
 	bool bufferready = true;
@@ -507,7 +509,7 @@ int32_t CUSB::GetQueue()
   return 0;
 }
 
-bool CUSB::WaitForFilledQueue(int32_t pSize,int32_t pMaxWait)
+bool CUSB::WaitForFilledQueue(int32_t /*pSize*/,int32_t /*pMaxWait*/)
 {
   // this function has no purpose when using libftdi: we implement our own read buffer and poll 
   if( !isUSB_open ) return false;
@@ -515,26 +517,24 @@ bool CUSB::WaitForFilledQueue(int32_t pSize,int32_t pMaxWait)
 }
 
 //----------------------------------------------------------------------
-bool CUSB::Read_String(char *s, uint16_t maxlength)
+void CUSB::Read_String(char *s, uint16_t maxlength)
 {
   char ch = 0;
   uint16_t i=0;
   do {
-    if( !Read_CHAR(ch)) return false;
+    Read_CHAR(ch);
     if( i<maxlength) { s[i] = ch; i++; }
   }
   while (ch != 0);
   if( i >= maxlength) s[maxlength-1] = 0;
-  return true;
 }
 
 
-bool CUSB::Write_String(const char *s)
+void CUSB::Write_String(const char *s)
 {
   do {
-    if( !Write_CHAR(*s) ) return false;
+    Write_CHAR(*s);
     s++;
   }
   while (*s != 0);
-  return true;
 }
