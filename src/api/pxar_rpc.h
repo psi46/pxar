@@ -84,7 +84,7 @@ public:
 	  printf("Please choose DTB (0-%u): ", (nDev-1));
 	  char choice[8];
 	  fgets(choice, 8, stdin);
-	  sscanf (choice, "%d", &nr);
+	  sscanf (choice, "%ud", &nr);
 	  if (nr >= devList.size()) {
 	    nr = 0;
 	    printf("No DTB opened\n");
