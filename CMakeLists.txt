@@ -13,7 +13,7 @@ PROJECT( pxar )
 SET(PXAR_LIB_VERSION "0.0.1")
 SET(PXAR_LIB_SOVERSION "1")
 
-SET(GCC_COMPILE_FLAGS "-Wall -Wextra -g -Wno-deprecated -ansi -pedantic -Wno-long-long")
+SET(GCC_COMPILE_FLAGS "-Wall -Wextra -g -Wno-deprecated -pedantic -Wno-long-long")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}" )
 
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" CACHE STRING "Debug options." FORCE )
@@ -38,6 +38,7 @@ LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 # Check for libusb-1.0 package:
 FIND_PACKAGE(libusb-1.0 REQUIRED)
+INCLUDE_DIRECTORIES(${LIBUSB_1_INCLUDE_DIRS})
 
 # Include packages for threading:
 FIND_PACKAGE(Threads)
@@ -46,9 +47,11 @@ FIND_PACKAGE(Threads)
 # depending on the build option we set:
 IF(USE_FTD2XX)
   FIND_PACKAGE(FTD2XX REQUIRED)
+  INCLUDE_DIRECTORIES(${FTD2XX_INCLUDE_DIR})
 ELSE(USE_FTD2XX)
   FIND_PACKAGE(FTDI REQUIRED)
   ADD_DEFINITIONS(-DHAVE_LIBFTDI)
+  INCLUDE_DIRECTORIES(${FTDI_INCLUDE_DIR})
 ENDIF(USE_FTD2XX)
 
 # SWIG provides the wrapper generation for our Python interface:
