@@ -102,7 +102,7 @@ public:
 
 	void Send(CRpcIo &rpc_io);
 	void Receive(CRpcIo &rpc_io);
-	void Check(uint16_t cmd, uint8_t size)
+	void Check(uint16_t cmd, uint8_t /*size*/)
 	{
 		if (m_cmd != cmd) throw CRpcError(CRpcError::UNKNOWN_CMD);
 		if (m_size != m_size) throw CRpcError(CRpcError::CMD_PAR_SIZE);

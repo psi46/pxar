@@ -25,10 +25,10 @@ public:
 class CRpcIoNull : public CRpcIo
 {
 public:
-	void Write(const void *buffer, uint32_t size) { throw CRpcError(CRpcError::WRITE_ERROR); }
+        void Write(const void * /*buffer*/, uint32_t /*size*/) { throw CRpcError(CRpcError::WRITE_ERROR); }
 	void Flush() {}
 	void Clear() {}
-	void Read(void *buffer, uint32_t size) { throw CRpcError(CRpcError::READ_ERROR); }
+	void Read(void * /*buffer*/, uint32_t /*size*/) { throw CRpcError(CRpcError::READ_ERROR); }
 	void Close() {}
 
 };
