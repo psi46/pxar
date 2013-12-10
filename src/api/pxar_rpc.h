@@ -20,6 +20,9 @@ public:
 
 	int test(int a) { return a + 5; }
 
+	int32_t GetHostRpcCallCount() { return rpc_cmdListSize; }
+	bool GetHostRpcCallName(int32_t id, stringR &callName) { callName = rpc_cmdName[id]; return true; }
+
 	// === RPC ==============================================================
 
 	// Don't change the following two entries

@@ -1,11 +1,18 @@
 #include <unistd.h>
 #include "pxar.h"
+#include <iostream>
 
 int main(int argc, char * argv[])
 {
 
   // Create new API instance:
-  pxar = new pXarAPI();
+  try {
+    pxar = new pXarAPI();
+  }
+  catch (...) {
+    std::cout << "pXar cauhgt an exception from the board. Exiting." << std::endl;
+    return -1;
+  }
 
   //if (usbId == "*") cTestboard->FindDTB(usbId);
   /*  
