@@ -126,7 +126,7 @@ void GenerateServerCode(functList &fl, FILE *f)
 void GenerateServerCodeTrailer(functList &fl, FILE *f)
 {
 	// generate command dispatcher for DTB code
-	fprintf(f, "const uint16_t rpc_cmdListSize = %lu;\n\n", (unsigned int)(fl.size()));
+	fprintf(f, "const uint16_t rpc_cmdListSize = %u;\n\n", (unsigned int)(fl.size()));
 	fprintf(f,
 		"const CRpcCall rpc_cmdlist[] =\n{\n"
 	);
@@ -260,7 +260,7 @@ bool GenerateClientCode(functList &fl, FILE *f)
 void Help(const char *msg = 0)
 {
 	if (msg) printf("%s!\n", msg);
-	printf("rpcgen <source> -h<host rpc> -d<dtb rpc>");
+	printf("rpcgen <source> -h<host rpc> -d<dtb rpc>\n");
 }
 
 
