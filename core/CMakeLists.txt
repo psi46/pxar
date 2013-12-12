@@ -1,6 +1,6 @@
 # Add source files for the library
 
-INCLUDE_DIRECTORIES(rpc api usb)
+INCLUDE_DIRECTORIES(rpc usb hal)
 
 FILE(GLOB LIB_SOURCE_FILES 
   "rpc/*.cpp"
@@ -32,7 +32,3 @@ ENDIF(USE_FTD2XX)
 #SET_SOURCE_FILES_PROPERTIES(apilibpxar.i PROPERTIES SWIG_FLAGS "-includeall")
 #SWIG_ADD_MODULE(pypxar python api/libpxar.i api/libpxar.cc)
 #SWIG_LINK_LIBRARIES(pypxar ${PYTHON_LIBRARIES})
-
-# Build testbed exe:
-ADD_EXECUTABLE(testpxar "pxar/pxar.cpp" "pxar/pxar.h" )
-TARGET_LINK_LIBRARIES(testpxar ${PROJECT_NAME})
