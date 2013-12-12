@@ -3,3 +3,7 @@ build/
 bin/
 lib/
 
+# ignore backup files of any sort of editor:
+~*
+.*
+\#*
