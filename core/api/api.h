@@ -1,5 +1,5 @@
 /**
- * pXar API class header
+ * pxar API class header
  * to be included by any executable linking to libpxar
  */
 
@@ -59,19 +59,29 @@ namespace pxar {
     bool enable;
   };
 
-  /* Forward declaration, implementation follows below...
+  /** Forward declaration, implementation follows below...
    */
   class dut;
 
+  /** Forward declaration, not including the header file!
+   */
+  class hal;
+
+
+
+  /** pxar API class definition
+   *  this is the central API through which all calls from tests and user space
+   *  functions have to be routed in order to interact with the hardware.
+   */
   class api {
 
   public:
 
-    /** Constructor for the libpxar API
-     *
-     * 
+    /** Default constructor for the libpxar API
      */
     api();
+    /** Default destructor for libpxar API
+     */
     //~api();
 
     /** Initializer method for the testboard
@@ -85,6 +95,7 @@ namespace pxar {
     bool initDUT();
 
 
+
     /** DTB fcuntions **/
 
     /** Function to flash a new firmware onto the DTB via
@@ -92,8 +103,30 @@ namespace pxar {
      */
     bool flashTB(std::string filename);
 
-    /* GetTB...() */
-    //FIXME
+    /** Function to read out analog DUT supply current on the testboard
+     */
+    int32_t getTBia();
+
+    /** Function to read out analog DUT supply voltage on the testboard
+     */
+    int32_t getTBva();
+
+    /** Function to read out digital DUT supply current on the testboard
+     */
+    int32_t getTBid();
+
+    /** Function to read out digital DUT supply voltage on the testboard
+     */
+    int32_t getTBvd();
+
+    /** Function to read values from the integrated digital scope on the DTB
+     */
+    //getScopeData();
+
+    /** Function to select the channel of the integrated digital scope on the DTB
+     */
+    //setScopeChannel();
+
 
 
     /** TEST functions **/
@@ -180,27 +213,47 @@ namespace pxar {
 
     int32_t getReadbackValue(std::string parameterName);
 
+
+
     /** DAQ functions **/
 
+    /** Function to set up a new data acquisition
+     */
     bool daqStart();
     
+    /** Function to read out the earliest event in buffer from the currently
+     *  data acquisition. If no event is buffered, the function will wait for
+     *  the next event to arrive and then return it.
+     */
     std::vector<pixel> daqGetEvent();
 
+    /** Function to stop the running data acquisition
+     */
     bool daqStop();
+
+    /** Function to return the full event buffer from the testboard RAM after the
+     *  data acquisition has been stopped.
+     */
+    // <?> daqGetBuffer();
     
 
-    /** DUT implementation **/
-    
-    
+
+    /** DUT object for book keeping of settings
+     */
+    dut * _dut;
     
   private:
 
-  };
+    /** Private HAL object for the API to access hardware routines
+     */
+    hal * _hal;
+
+  }; // class api
 
 
   class dut {
     
-    /* Allow the API class to access private members of the DUT - noone else should be able to access them! 
+    /** Allow the API class to access private members of the DUT - noone else should be able to access them! 
      */
     friend class api;
     
@@ -209,11 +262,17 @@ namespace pxar {
     //get...
 
   private:
+
+    /** Function to enable the given pixel on all ROCs:
+     */
+    void setPixelEnable(uint8_t column, uint8_t row, bool enable);
+    void setAllPixelEnable(bool enable);
+
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;
 
-  };
+  }; //class DUT
 
-}
+} //namespace pxar
 
 #endif /* PXAR_API_H */
