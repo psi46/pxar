@@ -259,14 +259,43 @@ namespace pxar {
     
   public:
 
-    //get...
+    /** GET functions to read information **/
 
-  private:
+    /** Function returning the number of enabled pixels on each ROC:
+     */
+    int32_t getEnabledPixels(size_t rocId);
+
+    /** Function returning the status of a given pixel:
+     */
+    bool getPixelEnabled(uint8_t column, uint8_t row, size_t rocId);
+
+    /** Function to read the current value from a DAC on ROC rocId
+     */
+    uint8_t getDACvalue(std::string dacName, size_t rocId);
+
+
+
+    /** SET functions to allow enabling and disabling from the outside **/
+
+    /** Function to enable the given ROC:
+     */
+    void setROCEnable(size_t rocId, bool enable);
+
+    /** Function to enable the given ROC:
+     */
+    void setTBMEnable(size_t tbmId, bool enable);
 
     /** Function to enable the given pixel on all ROCs:
      */
     void setPixelEnable(uint8_t column, uint8_t row, bool enable);
+
+    /** Function to enable all pixels on all ROCs:
+     */
     void setAllPixelEnable(bool enable);
+
+    
+
+  private:
 
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;
