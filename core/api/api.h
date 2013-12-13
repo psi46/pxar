@@ -3,8 +3,12 @@
  * to be included by any executable linking to libpxar
  */
 
-#IFNDEF PXAR_API_H
-#DEFINE PXAR_API_H
+#ifndef PXAR_API_H
+#define PXAR_API_H
+
+#include <string>
+#include <vector>
+#include <stdint.h>
 
 namespace pxar {
 
@@ -13,7 +17,7 @@ namespace pxar {
     uint8_t column;
     uint8_t row;
     int32_t value;
-  }
+  };
 
   class api {
 
@@ -61,7 +65,7 @@ namespace pxar {
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the averaged pulse height over nTriggers triggers
      */
-    std::vector<pixel> getPulseheightVsDAC(string dacName uint8_t dacMin, uint8_t dacMax, 
+    std::vector<pixel> getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 					   uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the pixel threshold
@@ -69,7 +73,7 @@ namespace pxar {
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
-    std::vector<pixel> getEfficiencyVsDAC(string dacName uint8_t dacMin, uint8_t dacMax, 
+    std::vector<pixel> getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 					  uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the pulse height
@@ -77,7 +81,7 @@ namespace pxar {
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the threshold value of that pixel
      */
-    std::vector<pixel> getThresholdVsDAC(string dacName uint8_t dacMin, uint8_t dacMax, 
+    std::vector<pixel> getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 					 uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the pulse height
@@ -85,14 +89,14 @@ namespace pxar {
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the averaged pulse height over nTriggers triggers
      */
-    std::vector<pixel> getPulseheightVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					      string dac2name, uint8_t dac2min, uint8_t dac2max, 
+    std::vector<pixel> getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
+					      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					      uint32_t flags, uint32_t nTriggers=16);
-    std::vector<pixel> getEfficiencyVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					     string dac2name, uint8_t dac2min, uint8_t dac2max, 
+    std::vector<pixel> getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
+					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					     uint32_t flags, uint32_t nTriggers=16);
-    std::vector<pixel> getThresholdVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					    string dac2name, uint8_t dac2min, uint8_t dac2max, 
+    std::vector<pixel> getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
+					    std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					    uint32_t flags, uint32_t nTriggers=16);
 
     std::vector<pixel> getPulseheightMap(uint32_t flags, uint32_t nTriggers=16);
@@ -103,11 +107,11 @@ namespace pxar {
 
     /** DAQ functions **/
 
-    daqStart();
+    bool daqStart();
     
-    daqGetEvent();
+    std::vector<pixel> daqGetEvent();
 
-    daqStop();
+    bool daqStop();
     
 
     /** DUT implementation **/
@@ -118,4 +122,4 @@ namespace pxar {
 
 }
 
-#ENDIF /* PXAR_API_H */
+#endif /* PXAR_API_H */
