@@ -1,9 +1,9 @@
 #ifndef PXAR
 #define PXAR
 
-#include "libpxar.h"
+#include "api.h"
 
-pXarAPI * pxar;
+pxar::api * api_inst;
 
 #endif
 
