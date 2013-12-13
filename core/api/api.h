@@ -50,38 +50,56 @@ namespace pxar {
     /** TEST functions **/
 
     /** Set a DAC value on the DUT
+     *
      *  This function will both update the bookkeeping value in the DUT
      *  struct and program the actual device 
      */
     bool setDAC(std::string dacName, uint8_t dacValue);
 
     /** Method to scan a DAC and measure the pulse height
+     *
      *  Returns a std vector of pixels, with the value of the pixel struct being
-     *  the averaged pulse height over ntrig triggers
+     *  the averaged pulse height over nTriggers triggers
      */
-    std::vector<pixel> getPulseheightVsDAC(string dac, int dacmin, int dacmax, int flag, int ntrig=16);
+    std::vector<pixel> getPulseheightVsDAC(string dacName uint8_t dacMin, uint8_t dacMax, 
+					   uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the pixel threshold
+     *
      *  Returns a std vector of pixels, with the value of the pixel struct being
-     *  number of 
+     *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
-    std::vector<pixel> getEfficiencyVsDAC(string dac, int dacmin, int dacmax, int flag, int ntrig=16);
+    std::vector<pixel> getEfficiencyVsDAC(string dacName uint8_t dacMin, uint8_t dacMax, 
+					  uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the pulse height
+     *
      *  Returns a std vector of pixels, with the value of the pixel struct being
-     *  
+     *  the threshold value of that pixel
      */
-    std::vector<pixel> getThresholdVsDAC(string dac, int dacmin, int dacmax, int flag, int ntrig=16);
+    std::vector<pixel> getThresholdVsDAC(string dacName uint8_t dacMin, uint8_t dacMax, 
+					 uint32_t flags, uint32_t nTriggers=16);
 
-    std::vector<pixel> getPulseheightVsDACDAC(string dac1, int dac1min, int dac1max, string dac2, int dac2min, int dac2max, int flag, int ntrig=10);
-    std::vector<pixel> getEfficiencyVsDACDAC(string dac1, int dac1min, int dac1max, string dac2, int dac2min, int dac2max, int flag, int ntrig=10);
-    std::vector<pixel> getThresholdVsDACDAC(string dac1, int dac1min, int dac1max, string dac2, int dac2min, int dac2max, int flag, int ntrig=10);
+    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the pulse height
+     *
+     *  Returns a std vector of pixels, with the value of the pixel struct being
+     *  the averaged pulse height over nTriggers triggers
+     */
+    std::vector<pixel> getPulseheightVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, 
+					      string dac2name, uint8_t dac2min, uint8_t dac2max, 
+					      uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getEfficiencyVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, 
+					     string dac2name, uint8_t dac2min, uint8_t dac2max, 
+					     uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getThresholdVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, 
+					    string dac2name, uint8_t dac2min, uint8_t dac2max, 
+					    uint32_t flags, uint32_t nTriggers=16);
 
-    std::vector<pixel> getPulseheightMap(int flag, int ntrig=10);
-    std::vector<pixel> getEfficiencyMap(int flag, int ntrig=10);
-    std::vector<pixel> getThresholdMap(int flag, int ntrig=10);
+    std::vector<pixel> getPulseheightMap(uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getEfficiencyMap(uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getThresholdMap(uint32_t flags, uint32_t nTriggers=16);
 
-    getReadbackValue();
+    int32_t getReadbackValue(std::string parameterName);
 
     /** DAQ functions **/
 
