@@ -5,12 +5,14 @@ INCLUDE_DIRECTORIES(rpc usb hal)
 FILE(GLOB LIB_SOURCE_FILES 
   "rpc/*.cpp"
   "api/*.cc"
+  "hal/*.cc"
   )
 
 FILE(GLOB LIB_HEADER_FILES
   "rpc/*.h"
   "usb/*.h"
   "api/*.h"
+  "hal/*.h"
   )
 
 IF(USE_FTD2XX)
