@@ -12,12 +12,56 @@
 
 namespace pxar {
 
+  /** Struct for storing pixel readout data
+   */
   struct pixel {
     uint8_t roc_id;
     uint8_t column;
     uint8_t row;
     int32_t value;
   };
+
+  /** Struct to store the configuration for single pixels (i.e. their mask state, trim bit settings
+   *  and the arming state (enable)
+   */
+  struct pixelConfig {
+    uint8_t column;
+    uint8_t row;
+    uint8_t trim;
+    bool mask;
+    bool enable;
+  };
+
+  /** Struct to store values for DACs (identified by their register id)
+   */
+  struct DAC {
+    uint8_t id;
+    uint8_t value;
+  };
+
+  /** Struct for ROC states
+   *  Contains a DAC vector for their settings, a type flag and an enable switch
+   *  and a vector for pixelConfig
+   */
+  struct rocConfig {
+    std::vector< pixelConfig > pixels;
+    std::vector< DAC > dacs;
+    uint8_t type;
+    bool enable;
+  };
+
+  /** Struct for TBM states
+   *  Contains a DAC vector for their settings, a type flag and an enable switch
+   */
+  struct tbmConfig {
+    std::vector< DAC > dacs;
+    uint8_t type;
+    bool enable;
+  };
+
+  /* Forward declaration, implementation follows below...
+   */
+  class dut;
 
   class api {
 
@@ -146,9 +190,27 @@ namespace pxar {
     
 
     /** DUT implementation **/
-
+    
+    
     
   private:
+
+  };
+
+
+  class dut {
+    
+    /* Allow the API class to access private members of the DUT - noone else should be able to access them! 
+     */
+    friend class api;
+    
+  public:
+
+    //get...
+
+  private:
+    std::vector< rocConfig > roc;
+    std::vector< tbmConfig > tbm;
 
   };
 
