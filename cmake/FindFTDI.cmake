@@ -27,11 +27,11 @@ IF (FTDI_LIBRARY)
     MESSAGE(STATUS "Found libFTDI: ${FTDI_INCLUDE_DIR}, ${FTDI_LIBRARY}")
   ELSE(FTDI_INCLUDE_DIR)
     set(FTDI_FOUND FALSE)
-    MESSAGE(FATAL_ERROR "libFTDI headers NOT FOUND. Make sure to install the development headers!")
+    MESSAGE(STATUS "libFTDI headers NOT FOUND. Make sure to install the development headers!")
   ENDIF(FTDI_INCLUDE_DIR)
 ELSE (FTDI_LIBRARY)
     set(FTDI_FOUND FALSE)
-    MESSAGE(FATAL_ERROR "libFTDI NOT FOUND.")
+    MESSAGE(STATUS "libFTDI NOT FOUND.")
 ENDIF (FTDI_LIBRARY)
 
 set(FTDI_INCLUDE_DIR
