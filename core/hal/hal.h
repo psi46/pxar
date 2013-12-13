@@ -3,18 +3,21 @@
 
 #include "rpc_impl.h"
 
-class HAL
-{
+namespace pxar {
 
- public:
-  HAL(std::string name = "*");
+  class hal
+  {
 
-  void Configure();
+  public:
+    hal(std::string name = "*");
 
- private:
-  void PrintInfo();
-  void CheckCompatibility();
+    void Configure();
 
-};
+  private:
+    void PrintInfo();
+    void CheckCompatibility();
 
+  };
+
+}
 #endif
