@@ -1,7 +1,7 @@
 // rpc_error.cpp
 
 #include "rpc_error.h"
-#include "libpxar.h"
+#include "rpc_impl.h"
 
 
 const char *CRpcError::GetMsg()
