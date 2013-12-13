@@ -1,3 +1,10 @@
+/**
+ * pXar API class header
+ * to be included by any executable linking to libpxar
+ */
+
+#IFNDEF PXAR_API_H
+#DEFINE PXAR_API_H
 
 namespace pxar {
 
@@ -93,3 +100,4 @@ namespace pxar {
 
 }
 
+#ENDIF /* PXAR_API_H */
