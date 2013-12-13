@@ -54,11 +54,6 @@ ELSE(USE_FTD2XX)
   INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
 ENDIF(USE_FTD2XX)
 
-# SWIG provides the wrapper generation for our Python interface:
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-SET(CMAKE_SWIG_FLAGS "")
-
 # Find Python libraries
 FIND_PACKAGE(PythonLibs)
 INCLUDE_DIRECTORIES(SYSTEM ${PYTHON_INCLUDE_PATH})
@@ -94,14 +89,3 @@ ADD_SUBDIRECTORY(main)
 
 # Build the pXar GUI
 ADD_SUBDIRECTORY(gui)
-
-
-
-#########################################################
-# Preparation for SWIG wrapper Python module generation #
-#########################################################
-
-#SET_SOURCE_FILES_PROPERTIES(example.i PROPERTIES CPLUSPLUS ON)
-#SET_SOURCE_FILES_PROPERTIES(example.i PROPERTIES SWIG_FLAGS "-includeall")
-#SWIG_ADD_MODULE(example python example.i example.cxx)
-#SWIG_LINK_LIBRARIES(example ${PYTHON_LIBRARIES})
