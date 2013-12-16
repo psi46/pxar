@@ -23,18 +23,20 @@ int main(int argc, char *argv[]){
   cout << "Welcome to pix!" << endl;
 
   // -- command line arguments
-  string dir("."); 
+  string dir("."), rootfile("pxar.root"); 
   bool debug(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
       cout << "-D [--dir] path       directory with config files" << endl;
-      cout << "-d                    debug -- no testboard connected" << endl;
       return 0;
     }
     if (!strcmp(argv[i],"-d"))                                {debug      = 1; } 
+    if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-D") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
   }
+
+  TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
 
   ConfigParameters *configParameters = ConfigParameters::Singleton();
   configParameters->setDirectory(dir);
@@ -63,8 +65,6 @@ int main(int argc, char *argv[]){
 
   configParameters->setGuiMode(true);
 
-  TFile *f = TFile::Open("pxar.root", "RECREATE"); 
-
   PixGui gui(gClient->GetRoot(), 1200, 900, &a);
   theApp.Run();
 
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]){
   tb->Poff();
   tb->Cleanup();
 
-  f->Write(); 
-  f->Close(); 
+  rfile->Write(); 
+  rfile->Close(); 
   
   delete configParameters;
   //  delete controlNetwork;
