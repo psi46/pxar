@@ -22,7 +22,7 @@
 #include <TRandom.h>
 #include <TH1.h>
 #include <TRootEmbeddedCanvas.h>
-
+#include <TVirtualStreamerInfo.h>  // w/o this dict compilation problems
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
@@ -85,7 +85,7 @@ private:
   TGHorizontalFrame 	*fH1;
   TGHorizontalFrame	*fH2;
   std::vector<TH1*>      fHistList; 
-  std::vector<void *>    fTestList; // else dictionary compilation problems
+  std::vector<PixTest *> fTestList; 
   bool			 fDebug;
   bool			 fPower, fHV;
 

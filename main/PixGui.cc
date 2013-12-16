@@ -222,9 +222,10 @@ void PixGui::handleButtons(Int_t id) {
   }
   case B_EXIT: {
     cout << "PixGui terminated" << endl;
-    //     std::list<void*>::iterator il; 
-    //     for (il = fTestList.begin(); il != fTestList.end(); ++il) {
-    //    fTestList; 
+    std::vector<PixTest*>::iterator il; 
+    for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+      delete (*il); 
+    } 
     delete fTb;
     gApplication->Terminate(0);
   }
