@@ -12,6 +12,11 @@ api::api() {
   _hal = new hal("*");
 }
 
+api::~api() {
+  //delete _dut;
+  delete _hal;
+}
+
 bool api::initTB() {
   return false;
 }

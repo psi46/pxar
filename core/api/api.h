@@ -82,7 +82,7 @@ namespace pxar {
     api();
     /** Default destructor for libpxar API
      */
-    //~api();
+    ~api();
 
     /** Initializer method for the testboard
      *  Opens new testboard instance
