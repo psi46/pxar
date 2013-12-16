@@ -22,6 +22,12 @@ bool api::initTB() {
 }
   
 bool api::initDUT() {
+
+  //FIXME read these information from the DUT object:
+  //for(nrocs)
+  _hal->initROC();
+
+  //if(TBM _hal->initTBM();
   return false;
 }
 
@@ -31,13 +37,21 @@ bool api::flashTB(std::string filename) {
   return false;
 }
 
-int32_t api::getTBia() {}
+int32_t api::getTBia() {
+  return _hal->getTBia();
+}
 
-int32_t api::getTBva() {}
+int32_t api::getTBva() {
+  return _hal->getTBva();
+}
 
-int32_t api::getTBid() {}
+int32_t api::getTBid() {
+  return _hal->getTBid();
+}
 
-int32_t api::getTBvd() {}
+int32_t api::getTBvd() {
+  return _hal->getTBvd();
+}
 
   
 /** TEST functions **/
