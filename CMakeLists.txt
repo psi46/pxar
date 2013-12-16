@@ -107,7 +107,7 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 ##################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( ./core/api)
+INCLUDE_DIRECTORIES( core/api)
 
 # Build main pXar API library
 ADD_SUBDIRECTORY(core)
