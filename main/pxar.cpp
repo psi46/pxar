@@ -2,21 +2,30 @@
 #include "pxar.h"
 #include <iostream>
 
-int main(int argc, char * argv[])
+int main()
 {
 
   // Create new API instance:
   try {
-    api_inst = new pxar::api();
+    _api = new pxar::api();
   }
   catch (...) {
-    std::cout << "pXar cauhgt an exception from the board. Exiting." << std::endl;
+    std::cout << "pxar cauhgt an exception from the board. Exiting." << std::endl;
     return -1;
   }
 
-  std::cout << "Done." << std::endl;
-  sleep(2);
+  // Try some test or so:
 
-  delete api_inst;
+  // Initialize the DUT (power it up and stuff):
+  _api->initDUT();
+
+  // Read current:
+  std::cout << "Analog current: " << _api->getTBia() << "mA" << std::endl;
+
+  sleep(10);
+
+  // And end that whole thing correcly:
+  std::cout << "Done." << std::endl;
+  delete _api;
   return 0;
 }
