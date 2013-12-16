@@ -15,13 +15,14 @@
 
 class PixTest: public TQObject {
 public:
+  PixTest(PixSetup &a, std::string name);
   PixTest(TBInterface *tb, std::string name, PixTestParameters *);
   PixTest();
-  void init(TBInterface *tb, std::string name, PixTestParameters *);
-  void clearHist(); 
-
   virtual ~PixTest();
+  void init(TBInterface *tb, std::string name, PixTestParameters *);
+  void init(PixSetup &, std::string name);
 
+  void clearHist(); 
   virtual void doTest(); 
   virtual void doAnalysis();
   

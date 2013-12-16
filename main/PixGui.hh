@@ -28,25 +28,14 @@
 #include "ConfigParameters.hh"
 #include "TBInterface.hh"
 #include "PixTest.hh"
-#include "TestRange.hh"
 #include "PixTestParameters.hh"
+#include "PixSetup.hh"
 
 //fixme #include "monitorSource.hh"
 
-struct pixSetup {
-  bool debug;
-  TBInterface *aTB; 
-  //  ControlNetwork *aCN;
-  ConfigParameters *aCP;   
-  TestRange *aTR; 
-  PixTestParameters *aPTP; 
-};
-
-
-
 class PixGui: public TGMainFrame {
 public:
-  PixGui(const TGWindow *p, UInt_t w, UInt_t h, pixSetup *setup);
+  PixGui(const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup);
   ~PixGui();
 
   void handleButtons(Int_t id = -1);
@@ -93,7 +82,6 @@ private:
   SysCommand             *fSysCommand;
   
   TBInterface            *fTb;
-  TestRange              *fTestRange; 
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
 

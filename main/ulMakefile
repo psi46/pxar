@@ -30,13 +30,13 @@ LIBS          = $(ROOTLIBS)
 GLIBS         = $(filter-out -lz, $(ROOTGLIBS))
 
 
-PXAR = PixTestParameters.o \
+PXAR = PixSetup.o PixTestParameters.o \
        PixLog.o ConfigParameters.o  \
        PixGui.o PixTab.o \
-       PixTest.o \
+       PixTest.o PixTestFactory.o \
        PixTestAlive.o \
        PixTestGainCalibration.o \
-       TBInterface.o TBVirtualInterface.o TestRange.o\
+       SysCommand.o TBInterface.o TBVirtualInterface.o TestRange.o\
        PixModule.o PixRoc.o PixTbm.o
 
 # -- dictionaries

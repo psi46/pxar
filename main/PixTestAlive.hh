@@ -5,6 +5,7 @@
 
 class PixTestAlive: public PixTest {
 public:
+  PixTestAlive(PixSetup &, std::string);
   PixTestAlive(TBInterface *, std::string, PixTestParameters *);
   PixTestAlive();
   virtual ~PixTestAlive();

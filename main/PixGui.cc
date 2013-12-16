@@ -9,24 +9,20 @@ using namespace std;
 ClassImp(PixGui)
 
 // ----------------------------------------------------------------------
-PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, pixSetup *setup) : 
+PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) : 
   TGMainFrame(p, w, h, kVerticalFrame) {
 
   ULong_t red;
   gClient->GetColorByName("red", red);
 
-  fTb = setup->aTB;
-  fTestRange = setup->aTR; 
-  fConfigParameters = setup->aCP;
-  fTestParameters = setup->aPTP; 
-  fDebug = setup->debug;
+  fTb = setup->getTBInterface();
+  fConfigParameters = setup->getConfigParameters();
+  fTestParameters = setup->getPixTestParameters(); 
 
-  if (!fDebug) {
-    fTb->HVoff(); 
-    fTb->Poff(); 
-    fPower = false;
-    fHV = false;
-  }
+  fTb->HVoff(); 
+  fTb->Poff(); 
+  fPower = false;
+  fHV = false;
 
   // create the frames
   fhFrame = new TGVerticalFrame(this, w, h);
@@ -188,7 +184,7 @@ PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, pixSetup *setup) :
 }
 // ----------------------------------------------------------------------
 PixGui::~PixGui() {
-  //log::current()->print("PixGui::destructor");
+  cout << "PixGui::destructor" << endl;
 }
 
 
@@ -221,12 +217,15 @@ void PixGui::handleButtons(Int_t id) {
     break;
   }
   case B_EXIT: {
-    cout << "PixGui terminated" << endl;
+    cout << "PixGui::exit called" << endl;
     std::vector<PixTest*>::iterator il; 
     for (il = fTestList.begin(); il != fTestList.end(); ++il) {
       delete (*il); 
     } 
-    delete fTb;
+
+    //    delete this; 
+    //delete fTb;
+    //CloseWindow();
     gApplication->Terminate(0);
   }
   case B_POWER: {

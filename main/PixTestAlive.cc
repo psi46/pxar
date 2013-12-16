@@ -8,6 +8,13 @@ using namespace std;
 ClassImp(PixTestAlive)
 
 // ----------------------------------------------------------------------
+PixTestAlive::PixTestAlive(PixSetup &a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
+  PixTest::init(a, name);
+  init(); 
+  cout << "PixTestAlive ctor(PixSetup &a, string, TGTab *)" << endl;
+}
+
+// ----------------------------------------------------------------------
 PixTestAlive::PixTestAlive(TBInterface *tb, std::string name, PixTestParameters *tp) : PixTest(tb, name, tp), fParNtrig(-1), fParVcal(-1) {
   PixTest::init(tb, name, tp);
   init(); 
@@ -74,6 +81,7 @@ PixTestAlive::~PixTestAlive() {
 void PixTestAlive::doTest() {
   cout << "PixTestAlive::doTest() ntrig = " << fParNtrig << endl;
   clearHist();
+  // -- FIXME: Should/could separate better test from display?
   for (int ichip = 0; ichip < 16; ++ichip) {
     vector<int> results = fTB->GetEfficiencyMap(fParNtrig, 0);
     TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));

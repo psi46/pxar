@@ -6,6 +6,13 @@ using namespace std;
 ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
+PixTest::PixTest(PixSetup &a, string name) {
+  init(a.getTBInterface(), name, a.getPixTestParameters()); 
+  cout << "PixTest ctor(TBInterface *, string)" << endl;
+}
+
+
+// ----------------------------------------------------------------------
 PixTest::PixTest(TBInterface *tb, string name, PixTestParameters *tp) {
   init(tb, name, tp); 
   cout << "PixTest ctor(TBInterface *, string)" << endl;
@@ -20,7 +27,21 @@ PixTest::PixTest() {
 
 
 // ----------------------------------------------------------------------
-void PixTest::init(TBInterface *tb, string name, PixTestParameters *tp) {
+void PixTest::init(PixSetup &a, string name) {
+  cout << "PixTest::init()" << endl;
+  fTB = a.getTBInterface(); 
+  fName = name;
+  fParameters = a.getPixTestParameters()->getTestParameters(name); 
+  NCOL = 52; 
+  NROW = 80;
+
+  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+    setParameter(imap->first, imap->second); 
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixTest::init(TBInterface *tb, std::string name, PixTestParameters *tp) {
   cout << "PixTest::init()" << endl;
   fTB = tb; 
   fName = name;

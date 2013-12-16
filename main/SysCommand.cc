@@ -17,12 +17,13 @@
   *
   *************************************************************/
 
-#include "SysCommand.h"
+#include "SysCommand.hh"
 #include<string.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <cctype>
 using namespace std;
 
 
@@ -671,7 +672,8 @@ int SysCommand::Getline(char * line, int n) {
     if (nOpen > 0) {
       inputFile = fileStack[nOpen - 1];
     } else {
-      inputFile == NULL;
+      //      inputFile == NULL;
+      inputFile = NULL;
       return 1;
     }
   }
@@ -823,6 +825,7 @@ int SysCommand:: GetTargetRoc(int * pModule, int * pRoc) {
 */
 
 bool SysCommand::Keyword(const char * keyword) {
+
   if ((carg[0] != NULL) && (strcmp(carg[0], keyword) == 0)
       && (narg == 1))
     {
