@@ -14,6 +14,11 @@ namespace pxar {
     void Configure();
 
   private:
+
+    /** Private instance of the testboard RPC interface
+     */
+    CTestboard * tb;
+
     void PrintInfo();
     void CheckCompatibility();
 

@@ -3,10 +3,13 @@
  */
 
 #include "api.h"
+#include "hal.h"
 
 using namespace pxar;
 
 api::api() {
+  //FIXME: once we have config file parsing, we need the DTB name here:
+  _hal = new hal("*");
 }
 
 bool api::initTB() {
