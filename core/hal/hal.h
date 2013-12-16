@@ -24,12 +24,40 @@ namespace pxar {
      */
     void Configure();
 
+    /** DEVICE INITIALIZATION **/
+
+    /** Initialize attached TBMs with their settings and configuration
+     */
+    void initTBM();
+
+    /** Initialize attached ROCs with their settings and configuration
+     */
+    void initROC();
+
+
+    /** TESTBOARD GET COMMANDS **/
+    /** Read the testboard analog current
+     */
+    int32_t getTBia();
+
+    /** Read the testboard analog voltage
+     */
+    int32_t getTBva();
+
+    /** Read the testboard digital current
+     */
+    int32_t getTBid();
+
+    /** Read the testboard digital voltage
+     */
+    int32_t getTBvd();
+
   private:
 
     /** Private instance of the testboard RPC interface, routes all
      *  hardware access:
      */
-    CTestboard * tb;
+    CTestboard * _testboard;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
@@ -48,7 +76,11 @@ namespace pxar {
      */
     bool FindDTB(std::string &usbId);
 
-
+    /** Set a DAC on a specific ROC
+     *  DAC is referenced by its id, the range is checken in teh function
+     *  If the dacValue is out of range the function's return is false.
+     */
+    bool rocSetDAC(uint8_t dacId, uint8_t dacValue);
   };
 
 }
