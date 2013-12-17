@@ -37,19 +37,19 @@ bool api::flashTB(std::string filename) {
   return false;
 }
 
-int32_t api::getTBia() {
+double api::getTBia() {
   return _hal->getTBia();
 }
 
-int32_t api::getTBva() {
+double api::getTBva() {
   return _hal->getTBva();
 }
 
-int32_t api::getTBid() {
+double api::getTBid() {
   return _hal->getTBid();
 }
 
-int32_t api::getTBvd() {
+double api::getTBvd() {
   return _hal->getTBvd();
 }
 

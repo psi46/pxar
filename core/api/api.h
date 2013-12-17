@@ -105,19 +105,19 @@ namespace pxar {
 
     /** Function to read out analog DUT supply current on the testboard
      */
-    int32_t getTBia();
+    double getTBia();
 
     /** Function to read out analog DUT supply voltage on the testboard
      */
-    int32_t getTBva();
+    double getTBva();
 
     /** Function to read out digital DUT supply current on the testboard
      */
-    int32_t getTBid();
+    double getTBid();
 
     /** Function to read out digital DUT supply voltage on the testboard
      */
-    int32_t getTBvd();
+    double getTBvd();
 
     /** Function to read values from the integrated digital scope on the DTB
      */
