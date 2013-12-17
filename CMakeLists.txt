@@ -50,6 +50,9 @@ FIND_PACKAGE(Threads)
 FIND_PACKAGE(FTD2XX)
 FIND_PACKAGE(FTDI)
 
+# init the variable that will later hold the FTDI library name we link against
+SET(FTDI_LINK_LIBRARY "")
+
 IF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
   # We have none of the two options available, this doesn't work!
   MESSAGE(FATAL_ERROR "No FTDI library found. Provide either libftdi or libftd2xx!")
@@ -58,6 +61,7 @@ ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
   IF(USE_FTD2XX AND FTD2XX_FOUND)
     # We want FTD2XX, we have FTD2XX.
     MESSAGE(STATUS "Using libFTD2XX.")
+    SET(FTDI_LINK_LIBRARY ${FTD2XX_LIBRARY})
     INCLUDE_DIRECTORIES(SYSTEM ${FTD2XX_INCLUDE_DIR})
   ENDIF(USE_FTD2XX AND FTD2XX_FOUND)
 
@@ -66,6 +70,7 @@ ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
     SET(USE_FTD2XX FALSE)
     MESSAGE(STATUS "Using libFTDI as fallback. LibFTD2XX could not be found.")
     ADD_DEFINITIONS(-DHAVE_LIBFTDI)
+    SET(FTDI_LINK_LIBRARY ${FTDI_LIBRARY})
     INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
   ENDIF(USE_FTD2XX AND NOT FTD2XX_FOUND)
 
@@ -73,6 +78,7 @@ ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
     # We want FTDI, and we have it.
     MESSAGE(STATUS "Using libFTDI.")
     ADD_DEFINITIONS(-DHAVE_LIBFTDI)
+    SET(FTDI_LINK_LIBRARY ${FTDI_LIBRARY})
     INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
   ENDIF(NOT USE_FTD2XX AND FTDI_FOUND)
 
@@ -81,25 +87,49 @@ ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
     SET(USE_FTD2XX TRUE)
     MESSAGE(STATUS "Using libFTD2XX as fallback. LibFTDI could not be found.")
     INCLUDE_DIRECTORIES(SYSTEM ${FTD2XX_INCLUDE_DIR})
+    SET(FTDI_LINK_LIBRARY ${FTD2XX_LIBRARY})
   ENDIF(NOT USE_FTD2XX AND NOT FTDI_FOUND)
 ENDIF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
 
 
 # Find Python libraries
-FIND_PACKAGE(PythonLibs)
-INCLUDE_DIRECTORIES(SYSTEM ${PYTHON_INCLUDE_PATH})
+#FIND_PACKAGE(PythonLibs)
+#INCLUDE_DIRECTORIES(SYSTEM ${PYTHON_INCLUDE_PATH})
 
-# ROOT provides, well, ROOT:
-FIND_PACKAGE(ROOT REQUIRED)
-INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
-
+# set the path to which we will install later: default project home, can be changed using
+# cmake -DINSTALL_PREFIX=/some/dir ..
+SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
+SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
 MESSAGE( STATUS "Build Type: " ${CMAKE_BUILD_TYPE} )
-MESSAGE( STATUS "Installing to: " ${PROJECT_SOURCE_DIR} )
+MESSAGE( STATUS "Installing to: " ${CMAKE_INSTALL_PREFIX} )
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
+# SET THE RPATH SO THAT OUR EXECUTABLES FIND THE LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
+# see http://www.cmake.org/Wiki/CMake_RPATH_handling
+# enable @rpath in the install name for any shared library being built
+# note: it is planned that a future version of CMake will enable this by default
+set(CMAKE_MACOSX_RPATH 1)
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+# *ALTERNATIVELY*: USE RELATIVE PATHS
+# see http://www.semipol.de/archives/356
+# for all binaries created in a CMake project:
+#SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+# for certain targets
+#SET_TARGET_PROPERTIES(target 1 target2 ...
+#    PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# the RPATH to be used when installing, but only if it's not a system directory
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+IF("${isSystemDir}" STREQUAL "-1")
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
 ##################################################
@@ -112,11 +142,16 @@ INCLUDE_DIRECTORIES( core/api)
 # Build main pXar API library
 ADD_SUBDIRECTORY(core)
 
-# Build the tests and test library
-ADD_SUBDIRECTORY(tests)
+option(BUILD_pxarexe  "Compile pXar tests and executables (requires ROOT)?" OFF)
+IF(BUILD_pxarexe)
 
-# Build the pXar executable
-ADD_SUBDIRECTORY(main)
+  # Build the tests and test library
+  ADD_SUBDIRECTORY(tests)
 
-# Build the pXar GUI
-ADD_SUBDIRECTORY(gui)
+  # Build the pXar executable
+  ADD_SUBDIRECTORY(main)
+
+  # Build the pXar GUI
+  ADD_SUBDIRECTORY(gui)
+
+ENDIF(BUILD_pxarexe)
