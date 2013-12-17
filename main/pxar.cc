@@ -128,11 +128,18 @@ void runTest(PixTest *b) {
 void execute(PixSetup &a, SysCommand *sysCommand) {
   PixTestFactory *factory = PixTestFactory::instance(); 
   do {
-    if (sysCommand->Keyword("pixelalive"))  runTest(factory->createTest("pixelalive", a)); 
-    if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
-    if (sysCommand->Keyword("gui")) runGui(a, 0, 0);
-    //     else if (a.TargetIsTB()) {tbInterface -> Execute(command);}
-    //     else  {controlNetwork->Execute(command);}
+    cout << "sysCommand.toString(): " << sysCommand->toString() << endl;
+    if (sysCommand->TargetIsTB()) 
+      a.getTBInterface()->Execute(sysCommand);
+    else if (sysCommand->TargetIsROC()) 
+      a.getTBInterface()->Execute(sysCommand);
+    else if (sysCommand->TargetIsTest()) 
+      runTest(factory->createTest(sysCommand->toString(), a)); 
+    else if (sysCommand->Keyword("gui")) 
+      runGui(a, 0, 0);
+    else 
+      cout << "dunno what to do" << endl;
+    //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
   } while (sysCommand->Next());
   //  tbInterface->Flush();
 }

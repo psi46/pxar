@@ -410,8 +410,14 @@ int SysCommand::Parse(char * line) {
     }
 
 
-  // optional target identifier tb,tbm, roc or sys
-  if ((narg0 > consumed) && (strcmp(carg0[consumed], "tbm") == 0))
+
+  // optional target identifier test,tb,tbm, roc or sys
+  if ((narg0 > consumed) && (strcmp(carg0[consumed], "test") == 0))
+    {
+      target.type = kTest;
+      consumed++;
+    }
+  else if ((narg0 > consumed) && (strcmp(carg0[consumed], "tbm") == 0))
     {
       target.type = kTBM;
       target.nRoc = 0;
@@ -625,6 +631,9 @@ char * SysCommand::toString() {
 
   switch (type)
     {
+    case kTest:
+      sprintf(buf, "");
+      break;
     case kTB:
       sprintf(buf, "TB:");
       break;
@@ -716,6 +725,11 @@ int SysCommand::Read(const char * fileName) {
 //------------------------------------------------------------
 bool SysCommand::Exit() {
   return exitFlag;
+}
+
+//------------------------------------------------------------
+bool SysCommand::TargetIsTest() {
+  return (type == kTest);
 }
 
 //------------------------------------------------------------

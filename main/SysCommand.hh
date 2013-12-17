@@ -12,7 +12,7 @@ class SysCommand {
 
 public:
 
-    enum {kTB, kTBM, kROC, kSYS};
+    enum {kTest, kTB, kTBM, kROC, kSYS};
     static const int nModuleMax = 32;
     static const int nRocMax = 16;
     static const int nCNMax = 3;
@@ -41,6 +41,7 @@ public:
     void RocsDone();
     bool IncludesRoc(int rocID);
 
+    bool TargetIsTest();
     bool TargetIsTB();
     bool TargetIsTBM();
     bool TargetIsROC();
