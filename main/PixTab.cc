@@ -220,19 +220,43 @@ void PixTab::clearCanvas() {
 
 // ----------------------------------------------------------------------
 void PixTab::nextHistogram() {
-  cout << "go to next histogram" << endl;
+  TH1 *h = fTest->nextHist(); 
+  if (h) {
+    h->Draw("colz");
+    update(); 
+  } else {
+    cout << "no previous histogram found " << endl;
+  }
+
 }
 
 
 // ----------------------------------------------------------------------
 void PixTab::previousHistogram() {
-  cout << "previous histogram" << endl;
+  TH1 *h = fTest->previousHist(); 
+  if (h) {
+    h->Draw("colz");
+    update(); 
+  } else {
+    cout << "no previous histogram found " << endl;
+  }
 }
 
 
 // ----------------------------------------------------------------------
 void PixTab::update() {
   TCanvas *c = fEc1->GetCanvas();
+
+//   TObject *obj(0); 
+//   TIter next(c->GetListOfPrimitives());
+//   while ((obj = next())) {
+//     if (obj->InheritsFrom("TH2D")) h = (TH2D*)obj; 
+//     if (obj->InheritsFrom("TH1D")) h = (TH1D*)obj; 
+//   }  
+//   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h); 
+
+  
+
   c->Modified(); 
   c->Update(); 
 }

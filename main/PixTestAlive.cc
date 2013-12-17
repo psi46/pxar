@@ -54,6 +54,7 @@ void PixTestAlive::init() {
   fDirectory->cd(); 
 
   TH2D *h2(0);
+  fHistList.clear();
   for (int i = 0; i < 16; ++i){
     h2 = new TH2D(Form("PixelAlive_C%d", i), Form("PixelAlive_C%d", i), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
@@ -82,6 +83,7 @@ void PixTestAlive::doTest() {
   cout << "PixTestAlive::doTest() ntrig = " << fParNtrig << endl;
   clearHist();
   // -- FIXME: Should/could separate better test from display?
+  // -- FIXME: loop over range from DUT
   for (int ichip = 0; ichip < 16; ++ichip) {
     vector<int> results = fTB->GetEfficiencyMap(fParNtrig, 0);
     TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
@@ -94,6 +96,7 @@ void PixTestAlive::doTest() {
     }
     //    cout << "done with doTest" << endl;
     h->Draw("colz");
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
     PixTest::update(); 
   }
 }

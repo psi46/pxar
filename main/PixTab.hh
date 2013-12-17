@@ -2,6 +2,7 @@
 #define PIXTAB_H
 
 #include <string>
+#include <list>
 
 #include <TQObject.h> 
 #include <TGFrame.h>
@@ -47,6 +48,7 @@ protected:
   vector<std::string>      fParIds;
 
   TRootEmbeddedCanvas  	*fEc1;
+  //  std::list<TH1*>::iterator fDisplayedHist; 
   
   static const int TESTNUMBER = 0;
   enum CommandIdentifiers {
