@@ -37,5 +37,5 @@ PixTest* PixTestFactory::createTest(string name, PixSetup &a) {
   
   if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("gaincalibration")) return new PixTestAlive(a, "GainCalibration"); 
-
+  return 0; 
 }
