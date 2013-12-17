@@ -40,6 +40,8 @@ public:
 
   void handleButtons(Int_t id = -1);
   void createTab(char*);
+  void createParTab();
+
   void doSetfConsole();
   void closeWindow();
   PixTest *createTest(TBInterface *, std::string); 
@@ -60,6 +62,7 @@ private:
   };
 
   TGTab               	*fTabs;
+  TGCompositeFrame     	*fParTab;
   //fixme  monitorSource		*fMonitoring;
   TGTextView		*fLogger;
   TGTextEntry		*fConsole;

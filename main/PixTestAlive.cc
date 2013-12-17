@@ -97,6 +97,10 @@ void PixTestAlive::doTest() {
     //    cout << "done with doTest" << endl;
     h->Draw("colz");
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    cout << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
+	 << " begin? " << (fDisplayedHist == fHistList.begin())
+	 << " end? " << (fDisplayedHist == fHistList.end())
+	 << endl;
     PixTest::update(); 
   }
 }
