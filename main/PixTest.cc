@@ -142,24 +142,27 @@ void PixTest::doAnalysis() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::nextHist() {
-  fDisplayedHist++; 
-  if (fDisplayedHist != fHistList.end()) {
-    return (*fDisplayedHist); 
-  } else {
+  std::list<TH1*>::iterator itmp = fDisplayedHist;  
+  ++itmp;
+  if (itmp == fHistList.end()) {
     // -- wrap around and point to first histogram in list
     fDisplayedHist = fHistList.begin(); 
+    return (*fDisplayedHist); 
+  } else {
+    ++fDisplayedHist; 
     return (*fDisplayedHist); 
   }
 }
 
 // ----------------------------------------------------------------------
 TH1* PixTest::previousHist() {
-  fDisplayedHist--; 
   if (fDisplayedHist == fHistList.begin()) {
     // -- wrap around and point to last histogram in list
     fDisplayedHist = fHistList.end(); 
-    return (*fHistList.begin()); 
+    --fDisplayedHist;
+    return (*fDisplayedHist); 
   } else {
+    --fDisplayedHist; 
     return (*fDisplayedHist); 
   }
 

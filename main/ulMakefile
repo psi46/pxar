@@ -32,7 +32,7 @@ GLIBS         = $(filter-out -lz, $(ROOTGLIBS))
 
 PXAR = PixSetup.o PixTestParameters.o \
        PixLog.o ConfigParameters.o  \
-       PixGui.o PixTab.o \
+       PixGui.o PixTab.o PixParTab.o \
        PixTest.o PixTestFactory.o \
        PixTestAlive.o \
        PixTestGainCalibration.o \
@@ -53,13 +53,13 @@ $(addprefix obj/,%.o): %.cc
 
 
 # ----------------------------------------------------------------------
-all: dir pxar libpxar
+all: dir pXar libpxar
 
 libpxar: $(addprefix obj/,$(PXAR)) $(addprefix obj/,$(PXARDICT))
 	$(CXX) $(SOFLAGS) -o lib/libpxar.so $(addprefix obj/,$(PXAR) $(PXARDICT)) $(GLIBS)
 
-pxar: libpxar obj/pxar.o  ../lib/libpxar.so
-	$(LD) $(LDFLAGS) -o bin/pxar $(GLIBS) obj/pxar.o lib/libpxar.so ../lib/libpxar.dylib
+pXar: libpxar obj/pXar.o  ../lib/libpxar.so
+	$(LD) $(LDFLAGS) -o bin/pXar $(GLIBS) obj/pXar.o lib/libpxar.so ../lib/libpxar.dylib
 
 clean:
 	rm -f $(addprefix obj/,$(PXAR))
