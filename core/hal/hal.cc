@@ -321,27 +321,10 @@ int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
   _testboard->Daq_Stop();
   _testboard->Daq_Read(data, 4000);
   _testboard->Daq_Close();
-  // --- analyze data
-
-  int cnt = 0;
-  double yi = 0.0;
-
-  int16_t ok = -1, pos = 0, n = 0, ph = 0, colR = 0, rowR = 0;
 
   for(std::vector<uint16_t>::iterator it = data.begin(); it != data.end(); ++it) {
     std::cout << std::hex << (*it) << std::dec << std::endl;
   }
 
-
-  for (int16_t i=0; i < nTriggers; i++)
-    {
-      // ok = DecodePixel(data, pos, n, ph, colR, rowR);
-      if (n > 0 and ok) {yi += ph; cnt++;}
-    }
-
-  if (cnt > 0)
-    return (int32_t) yi/cnt;
-  else
-    return -9999;
-
+  return -9999;
 }

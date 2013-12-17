@@ -48,6 +48,9 @@ int main()
     // Do some debug readout: Pulseheight of px 3,3 with 5 triggers:
     _api->debug_ph(3,3,15,5);
 
+    // Check if we can access the DUT data structure and enable/disable stuff:
+    //_api->_dut->getDAC(0,"Vana");
+
     sleep(2);
 
     // And end that whole thing correcly:

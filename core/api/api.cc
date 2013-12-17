@@ -129,7 +129,7 @@ bool dut::getPixelEnabled(uint8_t column, uint8_t row, size_t rocId) {
   return false;
 }
 
-uint8_t dut::getDAC(std::string dacName, size_t rocId) {}
+uint8_t dut::getDAC(size_t rocId, std::string dacName) {}
 
 std::vector<std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {}
 

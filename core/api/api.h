@@ -264,7 +264,7 @@ namespace pxar {
 
     /** Function to read the current value from a DAC on ROC rocId
      */
-    uint8_t getDAC(std::string dacName, size_t rocId);
+    uint8_t getDAC(size_t rocId, std::string dacName);
 
     /** Function to read the current value from a DAC on ROC rocId
      */
