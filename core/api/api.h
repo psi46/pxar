@@ -32,20 +32,13 @@ namespace pxar {
     bool enable;
   };
 
-  /** Struct to store values for DACs (identified by their register id)
-   */
-  struct DAC {
-    uint8_t id;
-    uint8_t value;
-  };
-
   /** Struct for ROC states
    *  Contains a DAC vector for their settings, a type flag and an enable switch
    *  and a vector for pixelConfig
    */
   struct rocConfig {
     std::vector< pixelConfig > pixels;
-    std::vector< DAC > dacs;
+    std::vector< std::pair<uint8_t,uint8_t> > dacs;
     uint8_t type;
     bool enable;
   };
@@ -54,7 +47,7 @@ namespace pxar {
    *  Contains a DAC vector for their settings, a type flag and an enable switch
    */
   struct tbmConfig {
-    std::vector< DAC > dacs;
+    std::vector< std::pair<uint8_t,uint8_t> > dacs;
     uint8_t type;
     bool enable;
   };
@@ -271,8 +264,11 @@ namespace pxar {
 
     /** Function to read the current value from a DAC on ROC rocId
      */
-    uint8_t getDACvalue(std::string dacName, size_t rocId);
+    uint8_t getDAC(std::string dacName, size_t rocId);
 
+    /** Function to read the current value from a DAC on ROC rocId
+     */
+    std::vector<std::pair<uint8_t,uint8_t> > getDACs(size_t rocId);
 
 
     /** SET functions to allow enabling and disabling from the outside **/
