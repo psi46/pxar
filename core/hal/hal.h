@@ -56,6 +56,11 @@ namespace pxar {
      */
     double getTBvd();
 
+
+    /** TEST COMMANDS **/
+    //FIXME DEBUG
+    int32_t PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
+
   private:
 
     /** Private instance of the testboard RPC interface, routes all

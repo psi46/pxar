@@ -102,6 +102,10 @@ std::vector<pixel> api::getThresholdMap(uint32_t flags, uint32_t nTriggers) {}
   
 int32_t api::getReadbackValue(std::string parameterName) {}
 
+int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers) {
+  return _hal->PH(col,row,trim,nTriggers);
+}
+
 
 /** DAQ functions **/
 bool api::daqStart() {

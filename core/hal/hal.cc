@@ -287,3 +287,61 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
   _testboard->roc_SetDAC(dacId,dacValue);
   return true;
 }
+
+
+
+
+
+//FIXME DEBUG
+int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
+{
+  _testboard->Daq_Open(50000);
+  _testboard->Daq_Select_Deser160(4);
+  _testboard->uDelay(100);
+  _testboard->Daq_Start();
+  _testboard->uDelay(100);
+
+  _testboard->roc_Col_Enable(col, true);
+  _testboard->roc_Pix_Trim(col, row, trim);
+  _testboard->roc_Pix_Cal (col, row, false);
+
+  vector<uint16_t> data;
+
+  _testboard->uDelay(100);
+  for (int16_t k=0; k<nTriggers; k++)
+    {
+      _testboard->Pg_Single();
+      _testboard->uDelay(20);
+    }
+
+  _testboard->roc_Pix_Mask(col, row);
+  _testboard->roc_Col_Enable(col, false);
+  _testboard->roc_ClrCal();
+
+  _testboard->Daq_Stop();
+  _testboard->Daq_Read(data, 4000);
+  _testboard->Daq_Close();
+  // --- analyze data
+
+  int cnt = 0;
+  double yi = 0.0;
+
+  int16_t ok = -1, pos = 0, n = 0, ph = 0, colR = 0, rowR = 0;
+
+  for(std::vector<uint16_t>::iterator it = data.begin(); it != data.end(); ++it) {
+    std::cout << std::hex << (*it) << std::dec << std::endl;
+  }
+
+
+  for (int16_t i=0; i < nTriggers; i++)
+    {
+      // ok = DecodePixel(data, pos, n, ph, colR, rowR);
+      if (n > 0 and ok) {yi += ph; cnt++;}
+    }
+
+  if (cnt > 0)
+    return (int32_t) yi/cnt;
+  else
+    return -9999;
+
+}

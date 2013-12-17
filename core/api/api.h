@@ -206,7 +206,7 @@ namespace pxar {
 
     int32_t getReadbackValue(std::string parameterName);
 
-
+    int32_t debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
 
     /** DAQ functions **/
 
