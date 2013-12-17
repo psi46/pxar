@@ -174,11 +174,6 @@ public:
 	RPC_EXPORT uint16_t _GetID();
 	RPC_EXPORT uint16_t _GetIA();
 
-	void SetVA(double V) { _SetVA(uint16_t(V*1000)); }  // set VA voltage
-	void SetVD(double V) { _SetVD(uint16_t(V*1000)); }  // set VD voltage
-	void SetIA(double A) { _SetIA(uint16_t(A*10000)); }  // set VA current limit
-	void SetID(double A) { _SetID(uint16_t(A*10000)); }  // set VD current limit
-
 	RPC_EXPORT void HVon();
 	RPC_EXPORT void HVoff();
 	RPC_EXPORT void ResetOn();

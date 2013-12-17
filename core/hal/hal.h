@@ -20,11 +20,12 @@ namespace pxar {
      */
     ~hal();
 
-    /** Configure FIXME
-     */
-    void Configure();
 
     /** DEVICE INITIALIZATION **/
+
+    /** Initialize the testboard with the signal delay settings:
+     */
+    void initTestboard();
 
     /** Initialize attached TBMs with their settings and configuration
      */
@@ -76,6 +77,11 @@ namespace pxar {
      */
     bool FindDTB(std::string &usbId);
 
+    /** Delay helper function
+     *  Uses usleep() to wait the given time in milliseconds
+     */
+    void mDelay(uint32_t ms);
+
     /** Set a DAC on a specific ROC rocId
      *  DAC is referenced by its id, the range is checken in teh function
      *  If the dacValue is out of range the function's return is false.
@@ -86,6 +92,25 @@ namespace pxar {
      *  DACs are provided as vector of std::pair with DAC Id and DAC value.
      */
     bool rocSetDACs(uint8_t rocId, std::vector< std::pair<uint8_t, uint8_t> > dacPairs);
+
+
+    /** TESTBOARD SET COMMANDS **/
+    /** Set the testboard analog current limit
+     */
+    void setTBia(double IA);
+
+    /** Set the testboard analog voltage
+     */
+    void setTBva(double VA);
+
+    /** Set the testboard digital current limit
+     */
+    void setTBid(double ID);
+
+    /** Set the testboard digital voltage
+     */
+    void setTBvd(double VD);
+
   };
 
 }

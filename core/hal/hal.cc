@@ -44,6 +44,7 @@ hal::hal(std::string name) {
   
   // Finally, initialize the testboard:
   _testboard->Init();
+  initTestboard();
 }
 
 hal::~hal() {
@@ -61,11 +62,30 @@ hal::~hal() {
   delete _testboard;
 }
 
-void hal::Configure() {
-  // FIXME nothing done yet.
+void hal::initTestboard() {
+
+  //FIXME get from board configuration:
+
+  _testboard->Sig_SetDelay(SIG_CLK, 2);
+  _testboard->Sig_SetDelay(SIG_CTR, 20);
+  _testboard->Sig_SetDelay(SIG_SDA, 19);
+  _testboard->Sig_SetDelay(SIG_TIN, 7);
+  _testboard->Flush();
+  std::cout << "Testboard delays set." << std::endl;
+
+  // Set voltages:
+  setTBva(1.8);
+  setTBvd(2.5);
+  
+  // Set current limits:
+  setTBia(1.199);
+  setTBid(1.000);
+  _testboard->Flush();
+  std::cout << "Voltages/current limits set." << std::endl;
 }
 
 void hal::initTBM() {
+  //FIXME
   /*  SetTBMChannel(configParameters->tbmChannel);
       Tbmenable(configParameters->tbmEnable);*/
 }
@@ -100,6 +120,11 @@ void hal::PrintInfo() {
   std::cout << "--- DTB info-------------------------------------" << std::endl
 	    << info
 	    <<"-------------------------------------------------" << std::endl;
+}
+
+void hal::mDelay(uint32_t ms) {
+  // Wait for the given time in milliseconds:
+  usleep(ms*1000);
 }
 
 void hal::CheckCompatibility(){
@@ -223,6 +248,28 @@ double hal::getTBvd() {
   // Return the VD digital voltage in V:
   return (_testboard->_GetVD()/1000.0);
 }
+
+
+void hal::setTBia(double IA) {
+  // Set the VA analog current limit in A:
+  _testboard->_SetIA(uint16_t(IA*10000));
+}
+
+void hal::setTBva(double VA){
+  // Set the VA analog voltage in V:
+  _testboard->_SetVA(uint16_t(VA*1000));
+}
+
+void hal::setTBid(double ID) {
+ // Set the VD digital current limit in A:
+  _testboard->_SetID(uint16_t(ID*10000));
+}
+
+void hal::setTBvd(double VD) {
+  // Set the VD digital voltage in V:
+  _testboard->_SetVD(uint16_t(VD*1000));
+}
+
 
 bool hal::rocSetDACs(uint8_t rocId, std::vector< std::pair< uint8_t, uint8_t> > dacPairs) {
 
