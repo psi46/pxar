@@ -215,7 +215,9 @@ void PixTab::setParameter() {
 
 // ----------------------------------------------------------------------
 void PixTab::clearCanvas() {
-  cout << "clear canvas" << endl;
+  TCanvas *c = fEc1->GetCanvas();
+  c->Clear(); 
+  update();
 }
 
 // ----------------------------------------------------------------------
@@ -246,17 +248,6 @@ void PixTab::previousHistogram() {
 // ----------------------------------------------------------------------
 void PixTab::update() {
   TCanvas *c = fEc1->GetCanvas();
-
-//   TObject *obj(0); 
-//   TIter next(c->GetListOfPrimitives());
-//   while ((obj = next())) {
-//     if (obj->InheritsFrom("TH2D")) h = (TH2D*)obj; 
-//     if (obj->InheritsFrom("TH1D")) h = (TH1D*)obj; 
-//   }  
-//   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h); 
-
-  
-
   c->Modified(); 
   c->Update(); 
 }
