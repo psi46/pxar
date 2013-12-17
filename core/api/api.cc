@@ -21,11 +21,24 @@ bool api::initTB() {
   return false;
 }
   
-bool api::initDUT() {
+bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
 
-  //FIXME read these information from the DUT object:
+  // Get the DUT up and running:
+  _dut = new dut();
+
+  // FIXME read these information from the DUT object:
+  // this is highly incomplete and is only a demonstration for single ROCs
   //for(nrocs)
-  _hal->initROC();
+
+  rocConfig newroc;
+  newroc.dacs = dacVector;
+  newroc.type = 0x0; //ROC_PSI46DIGV2;
+  newroc.enable = true;
+  _dut->roc.push_back(newroc);
+
+  for(size_t n = 0; n < _dut->roc.size(); n++) {
+    if(_dut->roc[n].enable) _hal->initROC(n,_dut->roc[n].dacs);
+  }
 
   //if(TBM _hal->initTBM();
   return false;

@@ -90,28 +90,20 @@ void hal::initTBM() {
       Tbmenable(configParameters->tbmEnable);*/
 }
 
-void hal::initROC() {
-  //FIXME get configuration! E.g. I2C address
+void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
 
-  // Turn output power of the tesboard on:
+  // Turn on the output power of the testboardeady done:
   _testboard->Pon();
-
-  //  if(configParameters->hvOn)
-  _testboard->HVon();
+  mDelay(300);
 
   // Set the I2C address of the ROC we are configuring right now:
-  _testboard->SetRocAddress(0);
-  //or:
-  //_testboard->roc_I2cAddr(0);
+  _testboard->roc_I2cAddr(rocId);
+  mDelay(300);
 
-  /*
-  // Send hard reset to connected modules / TBMs
-  _testboard->ResetOn(); 
-  _testboard->Flush();
-  gDelay->Mdelay(100);
-  _testboard->ResetOff();
-  _testboard->Flush();
-  */
+  // Programm all DAC registers according to the configuration data:
+  rocSetDACs(rocId,dacVector);
+  mDelay(300);
+
 }
 
 void hal::PrintInfo() {

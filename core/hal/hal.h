@@ -32,8 +32,11 @@ namespace pxar {
     void initTBM();
 
     /** Initialize attached ROCs with their settings and configuration
+     *  This is the startup-routine for single ROCs. It first powers up the
+     *  testboard output if necessary, sets the ROC's I2C address and then
+     *  programs all DAC registers for the given ROC.
      */
-    void initROC();
+    void initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector);
 
 
     /** TESTBOARD GET COMMANDS **/

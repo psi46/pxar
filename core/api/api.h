@@ -85,7 +85,7 @@ namespace pxar {
     /** Initializer method for the DUT
      *  Fills the DUT (the attached device(s))
      */
-    bool initDUT();
+    bool initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector);
 
 
 
