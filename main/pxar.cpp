@@ -20,7 +20,8 @@ int main()
   _api->initDUT();
 
   // Read current:
-  std::cout << "Analog current: " << _api->getTBia() << "mA" << std::endl;
+  std::cout << "Analog current: " << _api->getTBia()*1000 << "mA" << std::endl;
+  std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
 
   sleep(10);
 
