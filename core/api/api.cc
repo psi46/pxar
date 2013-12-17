@@ -4,12 +4,19 @@
 
 #include "api.h"
 #include "hal.h"
+#include <iostream>
 
 using namespace pxar;
 
 api::api() {
   //FIXME: once we have config file parsing, we need the DTB name here:
   _hal = new hal("*");
+
+  // Get the DUT up and running:
+  _dut = new dut();
+
+  _testboardInitialized = false;
+  _dutInitialized = false;
 }
 
 api::~api() {
@@ -17,14 +24,17 @@ api::~api() {
   delete _hal;
 }
 
-bool api::initTB() {
-  return false;
+bool api::initTestboard() {
+  //FIXME Anything we need to do here? Probably depends on how we get the config...
+  _hal->initTestboard();
+  _testboardInitialized = true;
+  return true;
 }
   
 bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
 
-  // Get the DUT up and running:
-  _dut = new dut();
+  // Check if the testboard is ready:
+  if(!_testboardStatus()) return false;
 
   // FIXME read these information from the DUT object:
   // this is highly incomplete and is only a demonstration for single ROCs
@@ -41,8 +51,23 @@ bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
   }
 
   //if(TBM _hal->initTBM();
+  _dutInitialized = true;
+  return true;
+}
+
+
+bool api::_testboardStatus() {
+  if(_testboardInitialized) return true;
+  std::cout << "Testboard not initialized yet!" << std::endl;
   return false;
 }
+
+bool api::_dutStatus() {
+  if(_dutInitialized) return true;
+  std::cout << "Device Under Test not initialized yet!" << std::endl;
+  return false;
+}
+
 
 /** DTB fcuntions **/
 
@@ -103,6 +128,9 @@ std::vector<pixel> api::getThresholdMap(uint32_t flags, uint32_t nTriggers) {}
 int32_t api::getReadbackValue(std::string parameterName) {}
 
 int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers) {
+
+  // Make sure our DUT is properly configured:
+  if(!_dutStatus()) return -1;
   return _hal->PH(col,row,trim,nTriggers);
 }
 
@@ -132,6 +160,17 @@ bool dut::getPixelEnabled(uint8_t column, uint8_t row, size_t rocId) {
 uint8_t dut::getDAC(size_t rocId, std::string dacName) {}
 
 std::vector<std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {}
+
+void dut::printDACs(size_t rocId) {
+  
+  if(rocId < roc.size()) {
+      std::cout << "Printing current DAC settings for ROC " << rocId << ":" << std::endl;
+      for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = roc[rocId].dacs.begin(); 
+	  it != roc[rocId].dacs.end(); ++it) {
+	std::cout << "DAC" << (int)it->first << " = " << (int)it->second << std::endl;
+      }
+    }
+}
 
 void dut::setROCEnable(size_t rocId, bool enable) {}
 

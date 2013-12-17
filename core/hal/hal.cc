@@ -44,7 +44,6 @@ hal::hal(std::string name) {
   
   // Finally, initialize the testboard:
   _testboard->Init();
-  initTestboard();
 }
 
 hal::~hal() {
@@ -66,6 +65,7 @@ void hal::initTestboard() {
 
   //FIXME get from board configuration:
 
+  // Write testboard delay settings to the repsective registers:
   _testboard->Sig_SetDelay(SIG_CLK, 2);
   _testboard->Sig_SetDelay(SIG_CTR, 20);
   _testboard->Sig_SetDelay(SIG_SDA, 19);

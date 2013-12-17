@@ -38,6 +38,9 @@ int main()
     dacs.push_back(std::make_pair(254,100)); //WBC
     std::cout << (int)dacs.size() << " DACs loaded.\n";
 
+    // Initialize the testboard:
+    _api->initTestboard();
+
     // Initialize the DUT (power it up and stuff):
     _api->initDUT(dacs);
 
@@ -50,6 +53,9 @@ int main()
 
     // Check if we can access the DUT data structure and enable/disable stuff:
     //_api->_dut->getDAC(0,"Vana");
+    
+    // Print DACs from ROC 0:
+    _api->_dut->printDACs(0);
 
     sleep(2);
 

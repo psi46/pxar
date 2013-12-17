@@ -71,6 +71,7 @@ namespace pxar {
   public:
 
     /** Default constructor for the libpxar API
+     *  Fetches a new HAL instance and opens the testboard connection
      */
     api();
     /** Default destructor for libpxar API
@@ -78,9 +79,9 @@ namespace pxar {
     ~api();
 
     /** Initializer method for the testboard
-     *  Opens new testboard instance
+     *  Initializes the tesboard with delay and voltage/current limit settings
      */
-    bool initTB();
+    bool initTestboard();
   
     /** Initializer method for the DUT
      *  Fills the DUT (the attached device(s))
@@ -241,6 +242,14 @@ namespace pxar {
      */
     hal * _hal;
 
+    /** Status flag for initialization status 
+     */
+    bool _testboardStatus();
+    bool _testboardInitialized;
+
+    bool _dutStatus();
+    bool _dutInitialized;
+
   }; // class api
 
 
@@ -266,10 +275,14 @@ namespace pxar {
      */
     uint8_t getDAC(size_t rocId, std::string dacName);
 
-    /** Function to read the current value from a DAC on ROC rocId
+    /** Function to read current values from all DAC on ROC rocId
      */
     std::vector<std::pair<uint8_t,uint8_t> > getDACs(size_t rocId);
 
+    /** Helper function to print current values from all DAC on ROC rocId
+     *  to stdout
+     */
+    void printDACs(size_t rocId);
 
     /** SET functions to allow enabling and disabling from the outside **/
 
