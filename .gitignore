@@ -2,6 +2,7 @@
 build/
 bin/
 lib/
+obj/
 
 # root files do not belong into the repository
 *.root
