@@ -172,9 +172,21 @@ void dut::printDACs(size_t rocId) {
     }
 }
 
-void dut::setROCEnable(size_t rocId, bool enable) {}
+void dut::setROCEnable(size_t rocId, bool enable) {
 
-void dut::setTBMEnable(size_t tbmId, bool enable) {}
+  // Check if ROC exists:
+  if(rocId < roc.size())
+    // Set its status to the desired value:
+    roc[rocId].enable = enable;
+}
+
+void dut::setTBMEnable(size_t tbmId, bool enable) {
+
+  // Check if TBM exists:
+  if(tbmId < tbm.size())
+    // Set its status to the desired value:
+    tbm[tbmId].enable = enable;
+}
 
 void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {}
 
