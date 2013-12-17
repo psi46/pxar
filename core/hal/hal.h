@@ -38,19 +38,19 @@ namespace pxar {
     /** TESTBOARD GET COMMANDS **/
     /** Read the testboard analog current
      */
-    int32_t getTBia();
+    double getTBia();
 
     /** Read the testboard analog voltage
      */
-    int32_t getTBva();
+    double getTBva();
 
     /** Read the testboard digital current
      */
-    int32_t getTBid();
+    double getTBid();
 
     /** Read the testboard digital voltage
      */
-    int32_t getTBvd();
+    double getTBvd();
 
   private:
 
@@ -76,11 +76,16 @@ namespace pxar {
      */
     bool FindDTB(std::string &usbId);
 
-    /** Set a DAC on a specific ROC
+    /** Set a DAC on a specific ROC rocId
      *  DAC is referenced by its id, the range is checken in teh function
      *  If the dacValue is out of range the function's return is false.
      */
-    bool rocSetDAC(uint8_t dacId, uint8_t dacValue);
+    bool rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue);
+
+    /** Set all DACs on a specific ROC rocId
+     *  DACs are provided as vector of std::pair with DAC Id and DAC value.
+     */
+    bool rocSetDACs(uint8_t rocId, std::vector< std::pair<uint8_t, uint8_t> > dacPairs);
   };
 
 }

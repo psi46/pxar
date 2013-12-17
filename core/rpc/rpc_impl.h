@@ -179,11 +179,6 @@ public:
 	void SetIA(double A) { _SetIA(uint16_t(A*10000)); }  // set VA current limit
 	void SetID(double A) { _SetID(uint16_t(A*10000)); }  // set VD current limit
 
-	double GetVA() { return _GetVA()/1000.0; }   // get VA voltage in V
-	double GetVD() { return _GetVD()/1000.0; }	 // get VD voltage in V
-	double GetIA() { return _GetIA()/10000.0; }  // get VA current in A
-	double GetID() { return _GetID()/10000.0; }  // get VD current in A
-
 	RPC_EXPORT void HVon();
 	RPC_EXPORT void HVoff();
 	RPC_EXPORT void ResetOn();

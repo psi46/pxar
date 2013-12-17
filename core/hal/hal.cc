@@ -204,25 +204,40 @@ bool hal::FindDTB(std::string &usbId) {
   return true;
 }
 
-int32_t hal::getTBia() {
-  return _testboard->GetIA();
+double hal::getTBia() {
+  // Return the VA analog current in A:
+  return (_testboard->_GetIA()/10000.0);
 }
 
-int32_t hal::getTBva(){
-  return _testboard->GetVA();
+double hal::getTBva(){
+  // Return the VA analog voltage in V:
+  return (_testboard->_GetVA()/1000.0);
 }
 
-int32_t hal::getTBid() {
-  return _testboard->GetID();
+double hal::getTBid() {
+  // Return the VD digital current in A:
+  return (_testboard->_GetID()/10000.0);
 }
 
-int32_t hal::getTBvd() {
-  return _testboard->GetVD();
+double hal::getTBvd() {
+  // Return the VD digital voltage in V:
+  return (_testboard->_GetVD()/1000.0);
 }
 
-bool hal::rocSetDAC(uint8_t dacId, uint8_t dacValue) {
-  
-  
+bool hal::rocSetDACs(uint8_t rocId, std::vector< std::pair< uint8_t, uint8_t> > dacPairs) {
+
+  // Iterate over all DAC id/value pairs and set the DAC
+  for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
+    rocSetDAC(rocId, it->first, it->second);
+  }
+}
+
+bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
+
+  // Make sure we are writing to the correct ROC by setting the I2C address:
+  _testboard->SetRocAddress(rocId);
+
+  //FIXME range check missing...
   _testboard->roc_SetDAC(dacId,dacValue);
   return true;
 }
