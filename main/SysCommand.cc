@@ -17,12 +17,13 @@
   *
   *************************************************************/
 
-#include "SysCommand.h"
+#include "SysCommand.hh"
 #include<string.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <cctype>
 using namespace std;
 
 
@@ -409,8 +410,14 @@ int SysCommand::Parse(char * line) {
     }
 
 
-  // optional target identifier tb,tbm, roc or sys
-  if ((narg0 > consumed) && (strcmp(carg0[consumed], "tbm") == 0))
+
+  // optional target identifier test,tb,tbm, roc or sys
+  if ((narg0 > consumed) && (strcmp(carg0[consumed], "test") == 0))
+    {
+      target.type = kTest;
+      consumed++;
+    }
+  else if ((narg0 > consumed) && (strcmp(carg0[consumed], "tbm") == 0))
     {
       target.type = kTBM;
       target.nRoc = 0;
@@ -624,6 +631,9 @@ char * SysCommand::toString() {
 
   switch (type)
     {
+    case kTest:
+      sprintf(buf, "");
+      break;
     case kTB:
       sprintf(buf, "TB:");
       break;
@@ -671,7 +681,8 @@ int SysCommand::Getline(char * line, int n) {
     if (nOpen > 0) {
       inputFile = fileStack[nOpen - 1];
     } else {
-      inputFile == NULL;
+      //      inputFile == NULL;
+      inputFile = NULL;
       return 1;
     }
   }
@@ -714,6 +725,11 @@ int SysCommand::Read(const char * fileName) {
 //------------------------------------------------------------
 bool SysCommand::Exit() {
   return exitFlag;
+}
+
+//------------------------------------------------------------
+bool SysCommand::TargetIsTest() {
+  return (type == kTest);
 }
 
 //------------------------------------------------------------
@@ -823,6 +839,7 @@ int SysCommand:: GetTargetRoc(int * pModule, int * pRoc) {
 */
 
 bool SysCommand::Keyword(const char * keyword) {
+
   if ((carg[0] != NULL) && (strcmp(carg[0], keyword) == 0)
       && (narg == 1))
     {

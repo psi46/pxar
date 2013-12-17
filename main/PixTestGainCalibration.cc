@@ -6,6 +6,11 @@ using namespace std;
 ClassImp(PixTestGainCalibration)
 
 //----------------------------------------------------------
+PixTestGainCalibration::PixTestGainCalibration(PixSetup &a, std::string name): PixTest(a, name) {
+  cout << "PixTestGainCalibration ctor(PixSetup &, string)" << endl;
+}
+
+//----------------------------------------------------------
 PixTestGainCalibration::PixTestGainCalibration(TBInterface *tb, std::string name, PixTestParameters *tp): PixTest(tb, name, tp) {
   cout << "PixTestGainCalibration ctor(TBInterface *, string)" << endl;
 }

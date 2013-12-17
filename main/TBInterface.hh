@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+#include "SysCommand.hh"
+
 class ConfigParameters; 
 
 class TBInterface {
@@ -19,6 +21,7 @@ public:
   void Pon();
 
   virtual bool IsPresent() = 0;
+  virtual bool Execute(SysCommand *) = 0;
   virtual void Cleanup() = 0;
   virtual std::vector<int> GetEfficiencyMap(int, int);
 };

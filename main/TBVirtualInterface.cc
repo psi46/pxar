@@ -34,6 +34,13 @@ void TBVirtualInterface::Cleanup() {
   cout << "TBVirtualInterface::Cleanup()" << endl;
 }
 
+
+// ----------------------------------------------------------------------
+bool TBVirtualInterface::Execute(SysCommand *sysCommand) {
+  cout << "TBVirtualInterface::Execute(): " << sysCommand->toString() << endl;
+  return true; 
+}
+
 // ----------------------------------------------------------------------
 vector<int> TBVirtualInterface::GetEfficiencyMap(int ntrig, int flag) {
   vector<int> bla; 

@@ -4,26 +4,37 @@
 #include <string>
 #include <map>
 
-#include <TQObject.h> 
-#include <TDirectory.h> 
+#include <TObject.h> 
 
 #include "TBInterface.hh"
 #include "PixTestParameters.hh"
-#include "PixSetup.hh"
+#include "ConfigParameters.hh"
 #include "PixModule.hh"
+#include "SysCommand.hh"
 
 class PixSetup: public TObject {
 public:
-  PixSetup(TBInterface *, PixTestParameters *, PixModule *);
+  PixSetup(TBInterface *, PixTestParameters *, ConfigParameters *, SysCommand *);
   PixSetup();
+  ~PixSetup();
   void init(); 
 
-private: 
-  TBInterface       *fTB; 
-  PixTestParameters *fTP; 
-  PixModule         *fModule; 
-};
+  TBInterface*       getTBInterface() {return fTBInterface;}
+  PixTestParameters* getPixTestParameters() {return fPixTestParameters;}
+  ConfigParameters * getConfigParameters()  {return fConfigParameters;}
+  PixModule*         getModule()  {return fModule;}
+  SysCommand*        getSysCommand()  {return fSysCommand;}
 
+private: 
+  bool              fDebug; 
+  SysCommand        *fSysCommand;
+  TBInterface       *fTBInterface; 
+  PixTestParameters *fPixTestParameters; 
+  ConfigParameters  *fConfigParameters;   
+  PixModule         *fModule; 
+
+  ClassDef(PixSetup, 1); 
+};
 
 #endif
 

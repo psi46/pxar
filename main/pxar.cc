@@ -13,9 +13,22 @@
 #include "ConfigParameters.hh"
 #include "PixTestParameters.hh"
 
+#include "PixTest.hh"
+#include "PixTestFactory.hh"
 #include "PixGui.hh"
+#include "PixSetup.hh"
+#include "getLine.icc"
+
+#include "../core/api/api.h"
+
 
 using namespace std;
+
+void runFile(PixSetup &a, string cmdFile);
+void execute(PixSetup &a, SysCommand *command);
+void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
+void runTest(PixTest *b);
+
 
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
@@ -23,17 +36,23 @@ int main(int argc, char *argv[]){
   cout << "Welcome to pix!" << endl;
 
   // -- command line arguments
-  string dir("."), rootfile("pxar.root"); 
-  bool debug(false);
+  string dir("."), cmdFile("cal.sys"), rootfile("pxar.root"); 
+  bool debug(false), doRunGui(false), doRunScript(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
+      cout << "-c filename           read in commands from filename" << endl;
       cout << "-D [--dir] path       directory with config files" << endl;
+      cout << "-d                    more debug printout (to be implemented)" << endl;
+      cout << "-g                    start with GUI" << endl;
+      cout << "-r rootfilename       set rootfile name" << endl;
       return 0;
     }
-    if (!strcmp(argv[i],"-d"))                                {debug      = 1; } 
-    if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
     if (!strcmp(argv[i],"-D") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-d"))                                {debug      = true; } 
+    if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
+    if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
   }
 
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
@@ -54,33 +73,88 @@ int main(int argc, char *argv[]){
 //   cout << "[pix] Setting up the testboard interface ..." << endl;
 //   TestControlNetwork *controlNetwork = new TestControlNetwork(tb, configParameters);
 
+  SysCommand sysCommand;
+  
+  PixSetup a(tb, ptp, configParameters, &sysCommand);  
 
-  TApplication theApp("App", &argc, argv);
-  pixSetup a; 
-  a.debug = debug;
-  a.aTB = tb;
-  //  a.aCN = 0;
-  a.aCP = configParameters; 
-  a.aPTP = ptp; 
+  if (doRunGui) {
+    configParameters->setGuiMode(true);
+    runGui(a, argc, argv); 
+  } else if (doRunScript) {
+    runFile(a, cmdFile);    
+  } else {
+    char * p;
+    do {
+      p = Getline("psi46expert> ");
+      if (sysCommand.Parse(p)) execute(a, &sysCommand);
+    } while ((strcmp(p,"exit\n") != 0) && (strcmp(p,"q\n") != 0));
 
-  configParameters->setGuiMode(true);
+  }
 
-  PixGui gui(gClient->GetRoot(), 1200, 900, &a);
-  theApp.Run();
-
+  cout << "closing down 1" << endl;
+  
   // -- clean exit
-  tb->HVoff();
-  tb->Poff();
-  tb->Cleanup();
+  //   tb->HVoff();
+  //   tb->Poff();
+  //   tb->Cleanup();
 
   rfile->Write(); 
   rfile->Close(); 
   
-  delete configParameters;
+  //  delete configParameters;
   //  delete controlNetwork;
-  delete tb;
-  cout << "pix: this is the end, my friend" << endl;
+  //  delete tb;
+  cout << "pixar: this is the end, my friend" << endl;
 
   return 0;
 }
+
+// ----------------------------------------------------------------------
+void runFile(PixSetup &a, string cmdFile) {
+  cout << "Executing file " << cmdFile << endl;
+  a.getSysCommand()->Read(cmdFile.c_str());
+  execute(a, a.getSysCommand());
+}
+
+
+// ----------------------------------------------------------------------
+void runTest(PixTest *b) {
+  if (b) b->doTest();
+  else cout << "test not known" << endl;
+}
+
+
+// ----------------------------------------------------------------------
+void execute(PixSetup &a, SysCommand *sysCommand) {
+  PixTestFactory *factory = PixTestFactory::instance(); 
+  do {
+    cout << "sysCommand.toString(): " << sysCommand->toString() << endl;
+    if (sysCommand->TargetIsTB()) 
+      a.getTBInterface()->Execute(sysCommand);
+    else if (sysCommand->TargetIsROC()) 
+      a.getTBInterface()->Execute(sysCommand);
+    else if (sysCommand->TargetIsTest()) 
+      runTest(factory->createTest(sysCommand->toString(), a)); 
+    else if (sysCommand->Keyword("gui")) 
+      runGui(a, 0, 0);
+    else 
+      cout << "dunno what to do" << endl;
+    //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
+  } while (sysCommand->Next());
+  //  tbInterface->Flush();
+}
+
+// ----------------------------------------------------------------------
+void runGui(PixSetup &a, int argc, char *argv[]) {
+  TApplication theApp("App", &argc, argv);
+  theApp.SetReturnFromRun(true);
+  PixGui gui(gClient->GetRoot(), 1200, 900, &a);
+  theApp.Run();
+  cout << "closing down 0 " << endl;
+
+//   TApplication * application = new TApplication("App", 0, 0, 0, -1);
+//   MainFrame MainFrame(gClient->GetRoot(), 400, 400, tbInterface, controlNetwork, configParameters);
+//   application->Run();
+}
+
 #endif

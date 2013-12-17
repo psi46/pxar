@@ -5,6 +5,7 @@
 
 class PixTestGainCalibration: public PixTest {
 public:
+  PixTestGainCalibration(PixSetup &a, std::string name);
   PixTestGainCalibration(TBInterface *, std::string name, PixTestParameters *);
   PixTestGainCalibration();
   virtual ~PixTestGainCalibration();
