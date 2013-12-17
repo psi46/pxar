@@ -1,0 +1,37 @@
+testboardName *
+
+-- parameter files
+
+tbParameters tbParameters.dat
+dacParameters dacParameters
+tbmParameters tbmParameters.dat
+trimParameters trimParameters
+testParameters testParameters.dat
+rootFileName Pretest.root
+
+-- configuration
+
+nModules 1
+nRocs 16
+hubId 31
+tbmEnable 1
+tbmEmulator 0
+hvOn 0
+tbmChannel 0
+rocType psi46digv2
+
+halfModule 0
+
+-- voltages and current limits
+
+ia 1199
+id 1000
+va 1699
+vd 2500
+
+-- adc parameters
+
+dataTriggerLevel -176
+emptyReadoutLength 54
+emptyReadoutLengthADC 64
+emptyReadoutLengthADCDual 40

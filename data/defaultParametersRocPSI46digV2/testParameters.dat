@@ -1,0 +1,146 @@
+-- DacDependency
+
+Dac1 26
+Dac2 12
+DacNTrig 5
+DacRange1 256
+DacRange2 256
+
+-- Trimming --
+
+TrimVcal 40
+TrimNTrig 5
+TrimDoubleWbc 1
+TrimVtrim -1
+TrimVthrcomp -1
+TrimAdjustCalDel 0
+
+-- PH --
+
+PHNTrig 10
+PHMode 25
+PHdac1Start 60
+PHdac1Stop 80
+PHdac1Step 10
+PHdac2Start 70
+PHdac2Stop 90
+PHdac2Step 10
+PHNumberOfSteps 15
+PHtestVcal 60
+PHDacType 1
+# DAC to scan in PhScan test. 0: all DACs
+PHScanDac 0
+# Vcal range for PhScan test. 0: low range, 1: high range, 2: both
+PHScanVcalRange 0
+
+-- PHCalibration --
+
+PHCalibrationNTrig 10
+# 0: 10 points 1: 100 points
+PHCalibrationMode 0
+# 1: Adjusts VthrComp for Vcal 50, 100, and (200)
+PHCalibrationAdjustVthrComp 1
+# 1: Adjusts CalDel for every Vcal setting
+PHCalibrationAdjustCalDel 1
+
+-- PixelMap --
+
+PixelMapReadouts 10
+PixelMapEfficiency 100
+
+-- SCurve --
+
+SCurveVcal 100
+SCurveVthr -1
+SCurveMode 1
+# 1: VthrComp fix 2: Vcal fix
+SCurveNTrig 50
+SCurveBeamNTrig 5
+
+-- Threshold --
+
+ThresholdVcal 200
+ThresholdVthr -1
+ThresholdMode 1
+# 0: CalThresholdMap 1: VcalThresholdMap 2: VcalsThresholdMap 3: NoiseMap 4: CalXTalkMap
+ThresholdNTrig 50
+
+-- BumpBonding --
+
+BumpBondingNTrig 50
+
+-- TrimTest --
+
+TrimBitsVtrim14 250
+TrimBitsVtrim13 200
+TrimBitsVtrim11 180
+TrimBitsVtrim7  140
+TrimBitsNTrig 5
+
+-- IVCurve --
+
+IVStep 5
+IVStart 0
+IVStop 600
+IVDelay 3
+
+-- TempTest ---
+
+TempNTrig 1
+
+
+-- TBMUbCheck --
+
+TBMUbLevel 1000
+PHSafety 100
+
+-- VsfOptimization --
+
+vsfStart 130
+vsfStop 250
+vsfSteps 24
+vhldDelStart 70
+vhldDelStop 80
+vhldDelSteps 10
+goalPar1 1.4
+goalCurrent 0.005
+
+-- TimeWalk ---
+
+TWMeanShift 22
+
+-- Xray
+
+XrayNTrig 20000
+XrayVthrCompMin 40
+XrayVthrCompMax 110
+XrayMaxEff 0.01
+XrayClockStretchFactor 100
+XrayClockStretchDelay 0
+
+-- High rate pixel map
+
+# Seconds (floating point number, resolution: ms)
+HRPixelMapAquisitionTime 10.0
+# Number of consecutive measurements
+HRPixelMapRepetitions 1
+# Trigger rate (40000 / (256 * N)) kHz
+HRPixelMapTriggerRate 5
+# Clock stretch factor (Disabled if < 2)
+HRPixelMapClockStretch 0
+# Clock stretch follows Calibrate after N clock cycles (can be negative)
+HRPixelMapStretchDelay 7
+
+-- High rate efficiency
+
+# Calibrates per pixel
+HREfficiencyTriggers 100
+
+-- High rate SCurve
+
+# Start of rough threshold scan
+HRSCurveThrStart 40
+# End of rough threshold scan
+HRSCurveThrEnd 130
+# Calibrates per pixel per threshold setting
+HRSCurveTriggers 50

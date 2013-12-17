@@ -1,0 +1,12 @@
+-- PixelAlive 
+Ntrig 10
+Vcal 200
+
+-- GainCalibration
+TrimVcal 60
+TrimNTrig 10
+TrimDoubleWbc 1
+TrimVtrim -1
+TrimVthrcomp -1
+TrimAdjustCalDel 0
+
