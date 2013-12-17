@@ -142,36 +142,27 @@ void PixTest::doAnalysis() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::nextHist() {
-  cout << "PixTest::nextHist()" << endl;
-//   if (fDisplayedHist) {
-//     TH1 *h(0); 
-//     for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-//       if (fDisplayedHist == (*il)) {
-// 	// missing "back()"
-// 	h = (*il); 
-// 	fDisplayedHist = h; 
-// 	return h; 
-//       }
-//     }
-//   }
-  return 0; 
+  fDisplayedHist++; 
+  if (fDisplayedHist != fHistList.end()) {
+    return (*fDisplayedHist); 
+  } else {
+    // -- wrap around and point to first histogram in list
+    fDisplayedHist = fHistList.begin(); 
+    return (*fDisplayedHist); 
+  }
 }
 
 // ----------------------------------------------------------------------
 TH1* PixTest::previousHist() {
-  cout << "PixTest::previousHist()" << endl;
-//   if (fDisplayedHist) {
-//     TH1 *h(0); 
-//     for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-//       if (fDisplayedHist == (*il)) {
-// 	// missing "back()"
-// 	h = *il; 
-// 	fDisplayedHist = h; 
-// 	return h; 
-//       }
-//     }
-//   }
-  return 0; 
+  fDisplayedHist--; 
+  if (fDisplayedHist == fHistList.begin()) {
+    // -- wrap around and point to last histogram in list
+    fDisplayedHist = fHistList.end(); 
+    return (*fHistList.begin()); 
+  } else {
+    return (*fDisplayedHist); 
+  }
+
 }
 
 // ----------------------------------------------------------------------

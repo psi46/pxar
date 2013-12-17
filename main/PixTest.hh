@@ -55,7 +55,8 @@ protected:
 
   TDirectory            *fDirectory; 
   std::list<TH1*>       fHistList;
-  TH1*                  fDisplayedHist; 
+  std::list<TH1*>::iterator fDisplayedHist;  
+
   int NCOL, NROW; 
 
 };

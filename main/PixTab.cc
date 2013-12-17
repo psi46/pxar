@@ -215,18 +215,33 @@ void PixTab::setParameter() {
 
 // ----------------------------------------------------------------------
 void PixTab::clearCanvas() {
-  cout << "clear canvas" << endl;
+  TCanvas *c = fEc1->GetCanvas();
+  c->Clear(); 
+  update();
 }
 
 // ----------------------------------------------------------------------
 void PixTab::nextHistogram() {
-  cout << "go to next histogram" << endl;
+  TH1 *h = fTest->nextHist(); 
+  if (h) {
+    h->Draw("colz");
+    update(); 
+  } else {
+    cout << "no previous histogram found " << endl;
+  }
+
 }
 
 
 // ----------------------------------------------------------------------
 void PixTab::previousHistogram() {
-  cout << "previous histogram" << endl;
+  TH1 *h = fTest->previousHist(); 
+  if (h) {
+    h->Draw("colz");
+    update(); 
+  } else {
+    cout << "no previous histogram found " << endl;
+  }
 }
 
 
