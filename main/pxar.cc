@@ -75,7 +75,18 @@ int main(int argc, char *argv[]){
 
   SysCommand sysCommand;
   
-  PixSetup a(tb, ptp, configParameters, &sysCommand);  
+  pxar::api *api = 0;
+  if (0) {
+    pxar::api *api = new pxar::api();
+    try {
+      api = new pxar::api();
+    } catch (...) {
+      cout << "pxar caught an exception from the board. Exiting." << endl;
+      return -1;
+    }
+  }
+
+  PixSetup a(tb, api, ptp, configParameters, &sysCommand);  
 
   if (doRunGui) {
     configParameters->setGuiMode(true);

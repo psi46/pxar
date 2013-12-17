@@ -58,8 +58,8 @@ all: dir pxar libpxar
 libpxar: $(addprefix obj/,$(PXAR)) $(addprefix obj/,$(PXARDICT))
 	$(CXX) $(SOFLAGS) -o lib/libpxar.so $(addprefix obj/,$(PXAR) $(PXARDICT)) $(GLIBS)
 
-pxar: libpxar obj/pxar.o
-	$(LD) $(LDFLAGS) -o bin/pxar $(GLIBS) obj/pxar.o lib/libpxar.so
+pxar: libpxar obj/pxar.o  ../lib/libpxar.so
+	$(LD) $(LDFLAGS) -o bin/pxar $(GLIBS) obj/pxar.o lib/libpxar.so ../lib/libpxar.dylib
 
 clean:
 	rm -f $(addprefix obj/,$(PXAR))

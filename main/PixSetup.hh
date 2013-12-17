@@ -6,7 +6,9 @@
 
 #include <TObject.h> 
 
+#include "../core/api/api.h"
 #include "TBInterface.hh"
+
 #include "PixTestParameters.hh"
 #include "ConfigParameters.hh"
 #include "PixModule.hh"
@@ -14,7 +16,7 @@
 
 class PixSetup: public TObject {
 public:
-  PixSetup(TBInterface *, PixTestParameters *, ConfigParameters *, SysCommand *);
+  PixSetup(TBInterface *, pxar::api *, PixTestParameters *, ConfigParameters *, SysCommand *);
   PixSetup();
   ~PixSetup();
   void init(); 
@@ -28,6 +30,7 @@ public:
 private: 
   bool              fDebug; 
   SysCommand        *fSysCommand;
+  pxar::api         *fAPI; 
   TBInterface       *fTBInterface; 
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
