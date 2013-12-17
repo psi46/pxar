@@ -267,16 +267,23 @@ bool hal::rocSetDACs(uint8_t rocId, std::vector< std::pair< uint8_t, uint8_t> > 
 
   // Iterate over all DAC id/value pairs and set the DAC
   for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
-    rocSetDAC(rocId, it->first, it->second);
+    // One of the DAC settings had an issue, abort:
+    if(!rocSetDAC(rocId, it->first, it->second)) return false;
   }
+
+  // Send all queued commands to the testboard:
+  _testboard->Flush();
+  // Everything went all right:
+  return true;
 }
 
 bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
 
   // Make sure we are writing to the correct ROC by setting the I2C address:
-  _testboard->SetRocAddress(rocId);
+  _testboard->roc_I2cAddr(rocId);
 
   //FIXME range check missing...
+  std::cout << "Set DAC" << (int)dacId << " to " << (int)dacValue << std::endl;
   _testboard->roc_SetDAC(dacId,dacValue);
   return true;
 }
