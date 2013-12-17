@@ -15,7 +15,7 @@ PATHS   /usr/local/include
 )
 
 
-FIND_LIBRARY(FTD2XX_LIBRARY
+FIND_LIBRARY(FTDI_LIBRARY
 NAMES ftd2xx
 PATHS /usr/lib
       /usr/local/lib
@@ -24,7 +24,7 @@ PATHS /usr/lib
 IF (FTD2XX_LIBRARY)
   IF(FTD2XX_INCLUDE_DIR)
     set(FTD2XX_FOUND TRUE)
-    MESSAGE(STATUS "Found libFTD2XX: ${FTD2XX_INCLUDE_DIR}, ${FTD2XX_LIBRARY}")
+    MESSAGE(STATUS "Found libFTD2XX: ${FTD2XX_INCLUDE_DIR}, ${FTDI_LIBRARY}")
   ELSE(FTD2XX_INCLUDE_DIR)
     set(FTD2XX_FOUND FALSE)
     MESSAGE(STATUS "libFTD2XX headers NOT FOUND. Make sure to install the development headers!")
