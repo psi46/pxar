@@ -235,20 +235,17 @@ namespace pxar {
     /** DUT object for book keeping of settings
      */
     dut * _dut;
+
+    /** Status function for the API, returns ture if everything is setup correctly
+     *  for operation
+     */
+    bool status();
     
   private:
 
     /** Private HAL object for the API to access hardware routines
      */
     hal * _hal;
-
-    /** Status flag for initialization status 
-     */
-    bool _testboardStatus();
-    bool _testboardInitialized;
-
-    bool _dutStatus();
-    bool _dutInitialized;
 
   }; // class api
 
@@ -302,9 +299,18 @@ namespace pxar {
      */
     void setAllPixelEnable(bool enable);
 
-    
+   
+    /** Function to check the status of the DUT
+     */
+    bool status();
+
 
   private:
+
+    /** Initialization status of the DUT instance, marks the "ready for
+     *  operations" status
+     */
+    bool _initialized;
 
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;

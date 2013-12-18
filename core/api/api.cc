@@ -14,9 +14,7 @@ api::api() {
 
   // Get the DUT up and running:
   _dut = new dut();
-
-  _testboardInitialized = false;
-  _dutInitialized = false;
+  _dut->_initialized = false;
 }
 
 api::~api() {
@@ -27,14 +25,13 @@ api::~api() {
 bool api::initTestboard() {
   //FIXME Anything we need to do here? Probably depends on how we get the config...
   _hal->initTestboard();
-  _testboardInitialized = true;
   return true;
 }
   
 bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
 
-  // Check if the testboard is ready:
-  if(!_testboardStatus()) return false;
+  // Check if the HAL is ready:
+  if(!_hal->status()) return false;
 
   // FIXME read these information from the DUT object:
   // this is highly incomplete and is only a demonstration for single ROCs
@@ -51,22 +48,16 @@ bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
   }
 
   //if(TBM _hal->initTBM();
-  _dutInitialized = true;
+  _dut->_initialized = true;
   return true;
 }
 
 
-bool api::_testboardStatus() {
-  if(_testboardInitialized) return true;
-  std::cout << "Testboard not initialized yet!" << std::endl;
+bool api::status() {
+  if(_hal->status() && _dut->status()) return true;
   return false;
 }
 
-bool api::_dutStatus() {
-  if(_dutInitialized) return true;
-  std::cout << "Device Under Test not initialized yet!" << std::endl;
-  return false;
-}
 
 
 /** DTB fcuntions **/
@@ -130,7 +121,7 @@ int32_t api::getReadbackValue(std::string parameterName) {}
 int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers) {
 
   // Make sure our DUT is properly configured:
-  if(!_dutStatus()) return -1;
+  if(!status()) return -1;
   return _hal->PH(col,row,trim,nTriggers);
 }
 
@@ -191,3 +182,11 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
 void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {}
 
 void dut::setAllPixelEnable(bool enable) {}
+
+bool dut::status() {
+
+  if(!_initialized)
+    std::cout << "DUT structure not initialized yet!" << std::endl;
+
+  return _initialized;
+}

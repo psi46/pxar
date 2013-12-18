@@ -20,6 +20,10 @@ namespace pxar {
      */
     ~hal();
 
+    /** Function to check the status of the HAL
+     */
+    bool status();
+
 
     /** DEVICE INITIALIZATION **/
 
@@ -67,6 +71,11 @@ namespace pxar {
      *  hardware access:
      */
     CTestboard * _testboard;
+
+    /** Initialization status of the HAL instance, marks the "ready for
+     *  operations" status
+     */
+    bool _initialized;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard

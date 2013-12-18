@@ -6,6 +6,9 @@ using namespace pxar;
 
 hal::hal(std::string name) {
 
+  // Reset the state of the HAL instance:
+  _initialized = false;
+
   // Get a new CTestboard class instance:
   _testboard = new CTestboard();
 
@@ -61,6 +64,14 @@ hal::~hal() {
   delete _testboard;
 }
 
+bool hal::status() {
+
+  if(!_initialized)
+    std::cout << "Testboard not initialized yet!" << std::endl;
+
+  return _initialized;
+}
+
 void hal::initTestboard() {
 
   //FIXME get from board configuration:
@@ -82,6 +93,9 @@ void hal::initTestboard() {
   setTBid(1.000);
   _testboard->Flush();
   std::cout << "Voltages/current limits set." << std::endl;
+
+  // We are ready for operations now, mark the HAL as initialized:
+  _initialized = true;
 }
 
 void hal::initTBM() {

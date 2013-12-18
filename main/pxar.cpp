@@ -57,8 +57,6 @@ int main()
     // Print DACs from ROC 0:
     _api->_dut->printDACs(0);
 
-    sleep(2);
-
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
     delete _api;
