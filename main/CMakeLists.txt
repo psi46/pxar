@@ -17,6 +17,7 @@ PixRoc.cc
 PixSetup.cc
 PixTab.cc
 PixTbm.cc
+PixParTab.cc
 PixTest.cc
 PixTestAlive.cc
 PixTestFactory.cc
@@ -26,7 +27,7 @@ SysCommand.cc
 TBInterface.cc
 TBVirtualInterface.cc
 TestRange.cc
-pxar.cc
+pXar.cc
   )
 
 # fill list of header files 
@@ -38,6 +39,7 @@ PixGui.hh
 PixModule.hh
 PixRoc.hh
 PixSetup.hh
+PixParTab.hh
 PixTab.hh
 PixTbm.hh
 PixTest.hh
