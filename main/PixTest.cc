@@ -1,5 +1,7 @@
 #include <iostream>
 #include "PixTest.hh"
+#include <stdlib.h>     /* atof, atoi */
+
 
 using namespace std;
 

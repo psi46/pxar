@@ -1,5 +1,7 @@
 #include <iostream>
 #include "PixTestAlive.hh"
+#include <stdlib.h>     /* atof, atoi */
+#include <algorithm>    // std::find
 
 #include <TH2.h>
 
