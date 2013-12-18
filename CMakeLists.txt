@@ -142,8 +142,8 @@ INCLUDE_DIRECTORIES( core/api)
 # Build main pXar API library
 ADD_SUBDIRECTORY(core)
 
-option(BUILD_pxarexe  "Compile pXar tests and executables (requires ROOT)?" OFF)
-IF(BUILD_pxarexe)
+option(BUILD_pxarui  "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
+IF(BUILD_pxarui)
 
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
@@ -154,4 +154,4 @@ IF(BUILD_pxarexe)
   # Build the pXar GUI
   ADD_SUBDIRECTORY(gui)
 
-ENDIF(BUILD_pxarexe)
+ENDIF(BUILD_pxarui)
