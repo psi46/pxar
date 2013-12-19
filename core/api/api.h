@@ -59,6 +59,13 @@ namespace pxar {
   /** Forward declaration, not including the header file!
    */
   class hal;
+  /** Define typedefs to allow easy passing of member function
+   *   addresses from the HAL class, used e.g. in loop expansion routines.
+   *   Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
+   */
+  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnPixel)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnRoc)(uint8_t rocid, std::vector<int32_t> parameter);
+  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnModule)(std::vector<int32_t> parameter);
 
 
 
@@ -193,20 +200,22 @@ namespace pxar {
 
     /** Method to get a chip map of the efficiency
      *
-     *  Returns a std vector of pixels, with the value of the pixel struct bein
+     *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
     std::vector<pixel> getEfficiencyMap(uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to get a chip map of the pixel threshold
      *
-     *  Returns a std vector of pixels, with the value of the pixel struct bein
+     *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the threshold value of that pixel
      */
     std::vector<pixel> getThresholdMap(uint32_t flags, uint32_t nTriggers=16);
 
     int32_t getReadbackValue(std::string parameterName);
 
+    /** DEBUG METHOD -- FIXME/DELME
+     */
     int32_t debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
 
     /** DAQ functions **/
@@ -247,6 +256,11 @@ namespace pxar {
      */
     hal * _hal;
 
+    /** Routine to loop over all active ROCs/pixels and call the
+     *  appropriate pixel, ROC or module HAL methods for execution
+     */
+    std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param);
+
   }; // class api
 
 
@@ -262,11 +276,19 @@ namespace pxar {
 
     /** Function returning the number of enabled pixels on each ROC:
      */
-    int32_t getEnabledPixels(size_t rocId);
+    int32_t getNEnabledPixels();
+
+    /** Function returning the enabled pixels configs for a specific ROC:
+     */
+    std::vector< pixelConfig > getEnabledPixels(size_t rocid);
 
     /** Function returning the status of a given pixel:
      */
-    bool getPixelEnabled(uint8_t column, uint8_t row, size_t rocId);
+    bool getPixelEnabled(uint8_t column, uint8_t row);
+
+    /** Function returning the configuration of a given pixel:
+     */
+    pixelConfig getPixelConfig(size_t rocid, uint8_t column, uint8_t row);
 
     /** Function to read the current value from a DAC on ROC rocId
      */
