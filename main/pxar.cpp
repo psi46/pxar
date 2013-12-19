@@ -61,7 +61,7 @@ int main()
     std::cout << " have " << _api->_dut->getNEnabledPixels() << " pixels set to enabled" << std::endl;
     std::cout << " have " << (int) _api->_dut->getPixelConfig(0,8,8).trim << " as trim value on pixel 8,8" << std::endl;
 
-
+    _api->getDebugVsDAC("test", 20, 128, 50, 16);
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
     delete _api;

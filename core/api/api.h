@@ -266,6 +266,15 @@ namespace pxar {
      */
     std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param, bool forceSerial = false);
 
+    /** repacks Dac scan data into pairs of Dac values with fired pixel vectors
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax);
+
+    /** compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into (data(roc0,roc1)) where the data blocks can be subdivided into e.g. DAC ranges
+     */
+    std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
+
+
   }; // class api
 
 
@@ -282,6 +291,10 @@ namespace pxar {
     /** Function returning the number of enabled pixels on each ROC:
      */
     int32_t getNEnabledPixels();
+
+    /** Function returning the number of enabled ROCs:
+     */
+    int32_t getNEnabledRocs();
 
     /** Function returning the enabled pixels configs for a specific ROC:
      */
