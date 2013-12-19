@@ -304,6 +304,19 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
 
 
 
+std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter){
+  std::cout << " called DummyPixelTestSkeleton routine " << std::endl;
+}
+
+std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter){
+  std::cout << " called DummyRocTestSkeleton routine " << std::endl;
+}
+
+std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int32_t> parameter){
+  std::cout << " called DummyModuleTestSkeleton routine " << std::endl;
+}
+
+
 
 
 //FIXME DEBUG
