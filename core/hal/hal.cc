@@ -309,8 +309,10 @@ std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, ui
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<pixel> dacscan;
-  // we 'scan' 15 dac values
-  for (int i=0;i<15;i++){
+  // we 'scan' dac values
+  int32_t dacmin = parameter.at(0);
+  int32_t dacmax = parameter.at(1);
+  for (int i=dacmin;i<dacmax;i++){
     pixel newpixel = {};
     newpixel.column = column;
     newpixel.row = row;
@@ -327,8 +329,10 @@ std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std:
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<pixel> dacscan;
-  // dac 'scan' with 15 values
-  for (int i=0;i<15;i++){
+  // we 'scan' dac values
+  int32_t dacmin = parameter.at(0);
+  int32_t dacmax = parameter.at(1);
+  for (int i=dacmin;i<dacmax;i++){
     // over the full roc
     for (int column=0;column<52;column++){
       for (int row=0;row<80;row++){
@@ -351,8 +355,10 @@ std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int3
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<pixel> dacscan;
   for (int rocid=0;rocid<16;rocid++){
-    // dac 'scan' with 15 values
-    for (int i=0;i<15;i++){
+    // we 'scan' dac values
+    int32_t dacmin = parameter.at(0);
+    int32_t dacmax = parameter.at(1);
+    for (int i=dacmin;i<dacmax;i++){
       // over the full roc
       for (int column=0;column<52;column++){
 	for (int row=0;row<80;row++){
