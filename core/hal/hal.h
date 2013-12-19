@@ -2,6 +2,7 @@
 #define PXAR_HAL_H
 
 #include "rpc_impl.h"
+#include "api.h"
 
 namespace pxar {
 
@@ -62,6 +63,10 @@ namespace pxar {
 
 
     /** TEST COMMANDS **/
+    std::vector< std::vector<pixel> >* DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector< std::vector<pixel> >* DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter);
+    std::vector< std::vector<pixel> >* DummyModuleTestSkeleton(std::vector<int32_t> parameter);
+
     //FIXME DEBUG
     int32_t PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
 
