@@ -108,6 +108,9 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
+										uint32_t flags, uint32_t nTriggers) {}
+
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint32_t flags, uint32_t nTriggers) {
   // setup the correct _hal calls for this test (FIXME:DUMMYONLY)
   HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;

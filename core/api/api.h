@@ -145,7 +145,12 @@ namespace pxar {
      *  the averaged pulse height over nTriggers triggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					   uint32_t flags, uint32_t nTriggers=16);
+									       uint32_t flags, uint32_t nTriggers=16);
+
+    /** DEBUG ROUTINE DELME FIXME WHATEVER
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
+									 uint32_t flags, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the efficiency
      *
