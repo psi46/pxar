@@ -259,7 +259,7 @@ namespace pxar {
     /** Routine to loop over all active ROCs/pixels and call the
      *  appropriate pixel, ROC or module HAL methods for execution
      */
-    std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param);
+    std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param, bool forceSerial = false);
 
   }; // class api
 
@@ -282,9 +282,21 @@ namespace pxar {
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
 
+    /** Function returning the enabled roc configs
+     */
+    std::vector< rocConfig > getEnabledRocs();
+
     /** Function returning the status of a given pixel:
      */
     bool getPixelEnabled(uint8_t column, uint8_t row);
+
+    /** Function to check if all pixels on all ROCs are enabled:
+     */
+    bool getAllPixelEnable();
+
+    /** Function to check if all ROCs of a module are enabled:
+     */
+    bool getModuleEnable();
 
     /** Function returning the configuration of a given pixel:
      */

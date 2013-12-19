@@ -7,6 +7,12 @@
 #include <iostream>
 #include <algorithm>
 
+/** Define a macro for calls to member functions through pointers to memeber functions (used in the loop expansion routines).
+ *  Follows advice of http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
+ */
+#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
+
+
 using namespace pxar;
 
 api::api() {
@@ -102,7 +108,26 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-										uint32_t flags, uint32_t nTriggers) {}
+										uint32_t flags, uint32_t nTriggers) {
+  // setup the correct _hal calls for this test (FIXME:DUMMYONLY)
+  HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;
+  HalMemFnRoc rocfn = &hal::DummyRocTestSkeleton;
+  HalMemFnModule modulefn = &hal::DummyModuleTestSkeleton;
+  // load the test parameters into vector
+  std::vector<int32_t> param;
+  // FIXME: NOT IMPLEMENTED:
+  //param.push_back(static_cast<int32_t>dacNameToID(dacName));  
+  param.push_back(static_cast<int32_t>(dacMin));
+  param.push_back(static_cast<int32_t>(dacMax));
+  param.push_back(static_cast<int32_t>(flags));
+  param.push_back(static_cast<int32_t>(nTriggers));
+  // check if the flags indicate that the user explicitly asks for serial execution of test:
+  // FIXME: FLAGS NOT YET CHECKED!
+  bool forceSerial = flags > 1;
+  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  // FIXME: DO SOMETHING WITH DATA
+
+} // getPulseheightVsDAC
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint32_t flags, uint32_t nTriggers) {}
@@ -110,9 +135,12 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									      uint32_t flags, uint32_t nTriggers) {}
 
+
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 													std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-													uint32_t flags, uint32_t nTriggers){}
+													uint32_t flags, uint32_t nTriggers){
+
+} // getPulseheightVsDACDAC
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												       std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
@@ -138,6 +166,7 @@ int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 }
 
 
+
 /** DAQ functions **/
 bool api::daqStart() {
   return false;
@@ -150,6 +179,43 @@ bool api::daqStop() {
 }
 
 
+std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param,  bool forceSerial){
+  
+  // pointer to vector to hold our data
+  std::vector< std::vector<pixel> >* data = NULL;
+
+  // check if we might use parallel routine on whole module: 16 ROCs
+  // must be enabled and parallel execution not disabled by user
+  if (_dut->getModuleEnable() && !forceSerial && modulefn != NULL){
+    data = CALL_MEMBER_FN(*_hal,modulefn)(param);
+  } else {
+    // -> single ROC / ROC-by-ROC operation
+    // check if all pixels are enabled
+    // if so, use routine that accesses whole ROC
+    if (_dut->getAllPixelEnable() && rocfn != NULL){
+      // loop over all enabled ROCs
+      std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+      for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+	// FIXME: DATA NEEDS TO BE MERGED!
+	data = CALL_MEMBER_FN(*_hal,rocfn)((uint8_t) (rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
+      }
+    } else {
+      // -> we operate on single pixels
+      // loop over all enabled ROCs
+      std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+      for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels((uint8_t)(rocit - enabledRocs.begin()));
+	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit){
+	  // FIXME: DATA NEEDS TO BE MERGED!
+	  data = CALL_MEMBER_FN(*_hal,pixelfn)((uint8_t) (rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
+	}
+      }
+    }
+  }
+} // expandLoop()
+
+
+/* ===================================================================================================== */
 
 /** Helper class to search vectors of pixelConfig, rocConfig and dacConfig for 'enable' bit
  */
@@ -186,7 +252,7 @@ public:
 };
 
 
-
+/* ===================================================================================================== */
 
 /** DUT class functions **/
 
@@ -220,6 +286,21 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
 }
 
 
+std::vector< rocConfig > dut::getEnabledRocs() {
+  std::vector< rocConfig > result;
+  if (!_initialized) return result;
+  // search for pixels that have enable set
+  std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
+						     roc.end(),
+						     configEnableSet(true));
+  while(it != roc.end()){
+    result.push_back(*it);
+    it++;
+  }
+  return result;
+}
+
+
 bool dut::getPixelEnabled(uint8_t column, uint8_t row) {
   std::vector<pixelConfig>::iterator it = std::find_if(roc.at(0).pixels.begin(),
 						       roc.at(0).pixels.end(),
@@ -228,6 +309,33 @@ bool dut::getPixelEnabled(uint8_t column, uint8_t row) {
     return it->enable;
   return false;
 }
+
+bool dut::getAllPixelEnable(){
+ if (!_initialized) return false;
+ // search for pixels that DO NOT have enable set
+ std::vector<pixelConfig>::iterator it = std::find_if(roc.at(0).pixels.begin(),
+						      roc.at(0).pixels.end(),
+						      configEnableSet(false));
+ if(it != roc.at(0).pixels.end())
+   return false; // found a disabled pixel
+ else
+   return true; // all pixels are enabled
+}
+
+
+bool dut::getModuleEnable(){
+ if (!_initialized) return false;
+ // check that we have all 16 ROCs
+ if (roc.size()<16) return false;
+ // search for pixels that DO NOT have enable set
+ std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
+						      roc.end(),
+						      configEnableSet(false));
+ if(it != roc.end()) return false;
+ // 16 ROCs are enabled:
+ return true;
+}
+
 
 pixelConfig dut::getPixelConfig(size_t rocid, uint8_t column, uint8_t row) {
   pixelConfig result = {}; // init with 0s
