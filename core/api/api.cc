@@ -187,6 +187,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   // check if we might use parallel routine on whole module: 16 ROCs
   // must be enabled and parallel execution not disabled by user
   if (_dut->getModuleEnable() && !forceSerial && modulefn != NULL){
+    // execute call to HAL layer routine
     data = CALL_MEMBER_FN(*_hal,modulefn)(param);
   } else {
     // -> single ROC / ROC-by-ROC operation
@@ -196,22 +197,49 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
       // loop over all enabled ROCs
       std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-	// FIXME: DATA NEEDS TO BE MERGED!
-	data = CALL_MEMBER_FN(*_hal,rocfn)((uint8_t) (rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
-      }
+	// execute call to HAL layer routine and save returned data in buffer
+	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)((uint8_t) (rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
+	// append rocdata to main data storage vector
+	if (!data) data = rocdata;
+	else {
+	  data->reserve( data->size() + rocdata->size());
+	  data->insert(data->end(), rocdata->begin(), rocdata->end());
+	}
+      } // roc loop
     } else {
       // -> we operate on single pixels
       // loop over all enabled ROCs
       std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+	std::vector< std::vector<pixel> >* rocdata;
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels((uint8_t)(rocit - enabledRocs.begin()));
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit){
-	  // FIXME: DATA NEEDS TO BE MERGED!
-	  data = CALL_MEMBER_FN(*_hal,pixelfn)((uint8_t) (rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
+	  // execute call to HAL layer routine and store data in buffer
+	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)((uint8_t) (rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
+	  // merge pixel data into roc data storage vector
+	  if (!rocdata){
+	    rocdata = buffer; // for first time call
+	  } else {
+	    // loop over all entries in outer vector (i.e. over vectors of pixel)
+	    for (std::vector<std::vector<pixel> >::iterator vecit = buffer->begin(); vecit != buffer->end(); ++vecit){
+	      std::vector<pixel>::iterator pixelit = vecit->begin();
+	      // loop over all entries in buffer and add fired pixels to existing pixel vector
+	      while (pixelit != vecit->end()){
+		rocdata->at(vecit-buffer->begin()).push_back(*pixelit);
+	      }
+	    }
+	  }
+	} // pixel loop
+	// append rocdata to main data storage vector
+	if (!data) data = rocdata;
+	else {
+	  data->reserve( data->size() + rocdata->size());
+	  data->insert(data->end(), rocdata->begin(), rocdata->end());
 	}
-      }
-    }
-  }
+      } // roc loop
+    }// single pixel
+  } // single roc
+  return data;
 } // expandLoop()
 
 
