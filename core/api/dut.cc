@@ -65,6 +65,21 @@ int32_t dut::getNEnabledPixels() {
   return count;
 }
 
+int32_t dut::getNEnabledRocs() {
+  if (!_initialized) return 0;
+  // search for pixels that have enable set
+  std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
+						     roc.end(),
+						     configEnableSet(true));
+  int32_t count = 0;
+  // loop over result, count pixel
+  while(it != roc.end()){
+    count++;
+    it++;
+  }
+  return count;
+}
+
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   std::vector< pixelConfig > result;
   if (!_initialized) return result;
