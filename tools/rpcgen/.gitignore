@@ -1,8 +1,0 @@
-# ignore rpcgen binary
-rpcgen
-
-# ignore objects
-*.o
-
-# Ignore the generated .h files of the RPC interface
-*.h
