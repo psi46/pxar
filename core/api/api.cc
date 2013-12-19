@@ -112,6 +112,12 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint32_t flags, uint32_t nTriggers) {
+  // check range
+  if (dacMin>dacMax){
+    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+    std::cout << " ERROR: DacMin > DacMax! " << std::endl;
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+  }
   // setup the correct _hal calls for this test (FIXME:DUMMYONLY)
   HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;
   HalMemFnRoc rocfn = &hal::DummyRocTestSkeleton;
@@ -128,8 +134,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags > 1;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
-  // FIXME: DO SOMETHING WITH DATA
-
+  // repack data into the expected return format
+  return repackDacScanData(data,dacMin,dacMax);
 } // getPulseheightVsDAC
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
@@ -209,7 +215,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 	  data->insert(data->end(), rocdata->begin(), rocdata->end());
 	}
       } // roc loop
-    } else {
+    } else if (pixelfn!= NULL){
       // -> we operate on single pixels
       // loop over all enabled ROCs
       std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -240,10 +246,58 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 	  data->insert(data->end(), rocdata->begin(), rocdata->end());
 	}
       } // roc loop
-    }// single pixel
-  } // single roc
-  return data;
+    }// single pixel fnc
+    else {
+      // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+      std::cout << " CRITICAL: LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?! " << std::endl;
+      return NULL;
+    }
+  } // single roc fnc
+  // now repack the data to join the individual ROC segments and return
+  return compactRocLoopData(data, _dut->getNEnabledRocs());
 } // expandLoop()
+
+
+
+
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result;
+  uint8_t currentDAC = dacMin;
+  for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
+    result.push_back(std::make_pair(currentDAC, *vecit));
+    currentDAC++;
+  }
+  if (currentDAC!=dacMax){
+    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+    std::cout << " CRITICAL: data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values! " << std::endl;
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > > ();
+  }
+}
+
+
+std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs){
+  if (data->size() % nRocs != 0) {
+    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+    std::cout << " CRITICAL: data structure size not as expected! " << data->size() << " data blocks do not fit to " << nRocs << " active ROCs! " << std::endl;
+    return NULL;
+  }
+
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  // loop over all rocs
+  for (uint8_t rocid = 0; rocid<nRocs;rocid++){
+    std::vector<pixel> pixjoined;
+    // loop over each data segment belonging to this roc
+    int segmentsize = data->size()/nRocs;
+    for (int segment = 0; segment<segmentsize;segment++){
+      // copy pixel over
+      pixjoined.reserve(pixjoined.size() + data->at(segment+segmentsize*rocid).size());
+      pixjoined.insert(pixjoined.end(), data->at(segment+segmentsize*rocid).begin(),data->at(segment+segmentsize*rocid).end());
+    }
+    result->push_back(pixjoined);
+  }
+  return result;
+}
+
 
 
 /* ===================================================================================================== */
@@ -301,6 +355,23 @@ int32_t dut::getNEnabledPixels() {
   }
   return count;
 }
+
+
+int32_t dut::getNEnabledRocs() {
+  if (!_initialized) return 0;
+  // search for pixels that have enable set
+  std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
+						     roc.end(),
+						     configEnableSet(true));
+  int32_t count = 0;
+  // loop over result, count pixel
+  while(it != roc.end()){
+    count++;
+    it++;
+  }
+  return count;
+}
+
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   std::vector< pixelConfig > result;
