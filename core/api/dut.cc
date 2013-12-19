@@ -51,7 +51,7 @@ public:
 /** DUT class functions **/
 
 int32_t dut::getNEnabledPixels() {
-  if (!_initialized) return 0;
+  if (!status()) return 0;
   // search for pixels that have enable set
   std::vector<pixelConfig>::iterator it = std::find_if(roc.at(0).pixels.begin(),
 						       roc.at(0).pixels.end(),
@@ -66,7 +66,7 @@ int32_t dut::getNEnabledPixels() {
 }
 
 int32_t dut::getNEnabledRocs() {
-  if (!_initialized) return 0;
+  if (!status()) return 0;
   // search for pixels that have enable set
   std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
 						     roc.end(),
@@ -82,7 +82,7 @@ int32_t dut::getNEnabledRocs() {
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   std::vector< pixelConfig > result;
-  if (!_initialized) return result;
+  if (!status()) return result;
   // search for pixels that have enable set
   std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
 						       roc.at(rocid).pixels.end(),
@@ -97,7 +97,7 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
 
 std::vector< rocConfig > dut::getEnabledRocs() {
   std::vector< rocConfig > result;
-  if (!_initialized) return result;
+  if (!status()) return result;
   // search for pixels that have enable set
   std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
 						     roc.end(),
@@ -120,7 +120,7 @@ bool dut::getPixelEnabled(uint8_t column, uint8_t row) {
 }
 
 bool dut::getAllPixelEnable(){
- if (!_initialized) return false;
+ if (!status()) return false;
  // search for pixels that DO NOT have enable set
  std::vector<pixelConfig>::iterator it = std::find_if(roc.at(0).pixels.begin(),
 						      roc.at(0).pixels.end(),
@@ -133,7 +133,7 @@ bool dut::getAllPixelEnable(){
 
 
 bool dut::getModuleEnable(){
- if (!_initialized) return false;
+ if (!status()) return false;
  // check that we have all 16 ROCs
  if (roc.size()<16) return false;
  // search for pixels that DO NOT have enable set
@@ -148,7 +148,7 @@ bool dut::getModuleEnable(){
 
 pixelConfig dut::getPixelConfig(size_t rocid, uint8_t column, uint8_t row) {
   pixelConfig result = {}; // init with 0s
-  if (!_initialized) return result;
+  if (!status()) return result;
   // find pixel with specified column and row
   std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
 						       roc.at(rocid).pixels.end(),
@@ -166,13 +166,14 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {}
 std::vector<std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {}
 
 void dut::printDACs(size_t rocId) {
+  
   if(rocId < roc.size()) {
-      std::cout << "Printing current DAC settings for ROC " << rocId << ":" << std::endl;
-      for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = roc.at(rocId).dacs.begin(); 
-	  it != roc.at(rocId).dacs.end(); ++it) {
-	std::cout << "DAC" << (int)it->first << " = " << (int)it->second << std::endl;
-      }
+    std::cout << "Printing current DAC settings for ROC " << rocId << ":" << std::endl;
+    for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = roc.at(rocId).dacs.begin(); 
+	it != roc.at(rocId).dacs.end(); ++it) {
+      std::cout << "DAC" << (int)it->first << " = " << (int)it->second << std::endl;
     }
+  }
 }
 
 void dut::setROCEnable(size_t rocId, bool enable) {
@@ -192,7 +193,7 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
 }
 
 void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {
-  if (!_initialized) return;
+
   // loop over all rocs (not strictly needed but used for consistency)
   for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
     // find pixel with specified column and row
@@ -206,6 +207,7 @@ void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {
 }
 
 void dut::setAllPixelEnable(bool enable) {
+
   // loop over all rocs (not strictly needed but used for consistency)
   for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
     // loop over all pixel, set enable according to parameter
