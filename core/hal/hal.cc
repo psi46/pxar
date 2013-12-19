@@ -306,14 +306,68 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
 
 std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter){
   std::cout << " called DummyPixelTestSkeleton routine " << std::endl;
+  // pack some random data
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<pixel> dacscan;
+  // we 'scan' 15 dac values
+  for (int i=0;i<15;i++){
+    pixel newpixel = {};
+    newpixel.column = column;
+    newpixel.row = row;
+    newpixel.roc_id = rocid;
+    newpixel.value = rocid*column+row*i;
+    dacscan.push_back(newpixel);
+  }
+  result->push_back(dacscan);
+  return result;
 }
 
 std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter){
   std::cout << " called DummyRocTestSkeleton routine " << std::endl;
+  // pack some random data
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<pixel> dacscan;
+  // dac 'scan' with 15 values
+  for (int i=0;i<15;i++){
+    // over the full roc
+    for (int column=0;column<52;column++){
+      for (int row=0;row<80;row++){
+	pixel newpixel = {};
+	newpixel.column = column;
+	newpixel.row = row;
+	newpixel.roc_id = rocid;
+	newpixel.value = rocid*column+row*i;
+	dacscan.push_back(newpixel);
+      }
+    }
+    result->push_back(dacscan);
+  }
+  return result;
 }
 
 std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int32_t> parameter){
   std::cout << " called DummyModuleTestSkeleton routine " << std::endl;
+  // pack some random data
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<pixel> dacscan;
+  for (int rocid=0;rocid<16;rocid++){
+    // dac 'scan' with 15 values
+    for (int i=0;i<15;i++){
+      // over the full roc
+      for (int column=0;column<52;column++){
+	for (int row=0;row<80;row++){
+	  pixel newpixel = {};
+	  newpixel.column = column;
+	  newpixel.row = row;
+	  newpixel.roc_id = rocid;
+	  newpixel.value = rocid*column+row*i;
+	  dacscan.push_back(newpixel);
+	}
+      }
+      result->push_back(dacscan);
+    }
+  }
+  return result;
 }
 
 
