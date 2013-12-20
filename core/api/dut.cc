@@ -23,7 +23,6 @@ public:
   template<class ConfigType>
   bool operator()(const ConfigType &config) const
   {
-    LOG(logDEBUG) << "Comparison against " << _isEnable<< " : " << config.enable;
     return config.enable == _isEnable;
   }
 };
