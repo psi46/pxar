@@ -3,7 +3,7 @@
  */
 
 #include "api.h"
-#include <iostream>
+#include "log.h"
 #include <vector>
 #include <algorithm>
 
@@ -168,10 +168,10 @@ std::vector<std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {}
 void dut::printDACs(size_t rocId) {
   
   if(rocId < roc.size()) {
-    std::cout << "Printing current DAC settings for ROC " << rocId << ":" << std::endl;
+    LOG(logINFO) << "Printing current DAC settings for ROC " << rocId << ":";
     for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
-      std::cout << "DAC" << (int)it->first << " = " << (int)it->second << std::endl;
+      LOG(logINFO) << "DAC" << (int)it->first << " = " << (int)it->second;
     }
   }
 }
@@ -220,7 +220,7 @@ void dut::setAllPixelEnable(bool enable) {
 bool dut::status() {
 
   if(!_initialized)
-    std::cout << "DUT structure not initialized yet!" << std::endl;
+    LOG(logERROR) << "DUT structure not initialized yet!";
 
   return _initialized;
 }

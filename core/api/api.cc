@@ -19,7 +19,7 @@ api::api(std::string usbId, std::string logLevel) {
 
   // Set up the libpxar API/HAL logging mechanism:
   Log::ReportingLevel() = Log::FromString(logLevel);
-  LOG(logINFO) << "Log level: " << logLevel << std::endl;
+  LOG(logINFO) << "Log level: " << logLevel;
 
   // Get a new HAL instance with the DTB USB ID passed to the API constructor:
   _hal = new hal(usbId);
@@ -120,7 +120,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
   // check range
   if (dacMin>dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logERROR) << "DacMin > DacMax! " << std::endl;
+    LOG(logERROR) << "DacMin > DacMax! ";
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
   // setup the correct _hal calls for this test (FIXME:DUMMYONLY)
@@ -255,7 +255,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
     }// single pixel fnc
     else {
       // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-      LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?! " << std::endl;
+      LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?!";
       return NULL;
     }
   } // single roc fnc
@@ -274,7 +274,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
   }
   if (currentDAC!=dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values! " << std::endl;
+    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values!";
     return std::vector< std::pair<uint8_t, std::vector<pixel> > > ();
   }
 }
@@ -283,7 +283,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
 std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs){
   if (data->size() % nRocs != 0) {
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << nRocs << " active ROCs! " << std::endl;
+    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << nRocs << " active ROCs!";
     return NULL;
   }
 
