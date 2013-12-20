@@ -266,17 +266,19 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result;
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   uint8_t currentDAC = dacMin;
   for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
-    result.push_back(std::make_pair(currentDAC, *vecit));
+    result->push_back(std::make_pair(currentDAC, *vecit));
     currentDAC++;
   }
   if (currentDAC!=dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
     LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values!";
+    delete result;
     return std::vector< std::pair<uint8_t, std::vector<pixel> > > ();
   }
+  return *result;
 }
 
 
@@ -287,12 +289,17 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
     return NULL;
   }
 
+  // the size of the data blocks of each ROC
+  int segmentsize = data->size()/nRocs;
+
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  // loop over all rocs
-  for (uint8_t rocid = 0; rocid<nRocs;rocid++){
+  // copy data segment of first ROC into the main data vector
+  result->insert(result->end(), data->begin(), data->begin()+segmentsize);
+
+  // loop over all remaining rocs to merge their data segments into one
+  for (uint8_t rocid = 1; rocid<nRocs;rocid++){
     std::vector<pixel> pixjoined;
     // loop over each data segment belonging to this roc
-    int segmentsize = data->size()/nRocs;
     for (int segment = 0; segment<segmentsize;segment++){
       // copy pixel over
       pixjoined.reserve(pixjoined.size() + data->at(segment+segmentsize*rocid).size());
