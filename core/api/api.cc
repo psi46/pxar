@@ -113,10 +113,10 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-										uint32_t flags, uint32_t nTriggers) {}
+										uint16_t flags, uint32_t nTriggers) {}
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-										uint32_t flags, uint32_t nTriggers) {
+										uint16_t flags, uint32_t nTriggers) {
   // check range
   if (dacMin>dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
@@ -145,31 +145,31 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
 } // getPulseheightVsDAC
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint32_t flags, uint32_t nTriggers) {}
+									       uint16_t flags, uint32_t nTriggers) {}
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									      uint32_t flags, uint32_t nTriggers) {}
+									      uint16_t flags, uint32_t nTriggers) {}
 
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 													std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-													uint32_t flags, uint32_t nTriggers){
+													uint16_t flags, uint32_t nTriggers){
 
 } // getPulseheightVsDACDAC
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												       std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-												       uint32_t flags, uint32_t nTriggers) {}
+												       uint16_t flags, uint32_t nTriggers) {}
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-												      uint32_t flags, uint32_t nTriggers) {}
+												      uint16_t flags, uint32_t nTriggers) {}
 
-std::vector<pixel> api::getPulseheightMap(uint32_t flags, uint32_t nTriggers) {}
+std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {}
 
-std::vector<pixel> api::getEfficiencyMap(uint32_t flags, uint32_t nTriggers) {}
+std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {}
 
-std::vector<pixel> api::getThresholdMap(uint32_t flags, uint32_t nTriggers) {}
+std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {}
   
 int32_t api::getReadbackValue(std::string parameterName) {}
 
