@@ -2,12 +2,10 @@
 #define PIX_H
 
 #include <iostream>
+#include <unistd.h>
 
 #include <TApplication.h> 
 #include <TFile.h> 
-
-#include "TBInterface.hh"
-#include "TBVirtualInterface.hh"
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
@@ -19,7 +17,7 @@
 #include "PixSetup.hh"
 #include "getLine.icc"
 
-#include "../core/api/api.h"
+#include "api.h"
 
 
 using namespace std;
@@ -33,7 +31,8 @@ void runTest(PixTest *b);
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
   
-  cout << "Welcome to pix!" << endl;
+  //  LOG(logINFO) << "Welcome to pxar!";
+  cout << "welcome to pxar" << endl;
 
   // -- command line arguments
   string dir("."), cmdFile("cal.sys"), rootfile("pxar.root"); 
@@ -55,8 +54,20 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
   }
 
+  pxar::api *api = 0;
+  if (1) {
+    try {
+      api = new pxar::api();
+      api->initTestboard();
+    } catch (...) {
+      cout << "pxar caught an exception from the board. Exiting." << endl;
+      return -1;
+    }
+  }
+  
+  
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
-
+  
   ConfigParameters *configParameters = ConfigParameters::Singleton();
   configParameters->setDirectory(dir);
   string cfgFile = configParameters->getDirectory() + string("/configParameters.dat");
@@ -65,8 +76,6 @@ int main(int argc, char *argv[]){
     return 1;
   
   cout << "pxar>  Setting up the testboard interface ..." << endl;
-  TBInterface *tb = new TBVirtualInterface(configParameters);
-  if (!tb->IsPresent()) return -1;
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getTestParametersFileName()); 
 
@@ -75,18 +84,7 @@ int main(int argc, char *argv[]){
 
   SysCommand sysCommand;
   
-  pxar::api *api = 0;
-  if (0) {
-    pxar::api *api = new pxar::api();
-    try {
-      api = new pxar::api();
-    } catch (...) {
-      cout << "pxar caught an exception from the board. Exiting." << endl;
-      return -1;
-    }
-  }
-
-  PixSetup a(tb, api, ptp, configParameters, &sysCommand);  
+  PixSetup a(api, ptp, configParameters, &sysCommand);  
 
   if (doRunGui) {
     configParameters->setGuiMode(true);
@@ -105,16 +103,12 @@ int main(int argc, char *argv[]){
   cout << "closing down 1" << endl;
   
   // -- clean exit
-  //   tb->HVoff();
-  //   tb->Poff();
-  //   tb->Cleanup();
 
   rfile->Write(); 
   rfile->Close(); 
   
   //  delete configParameters;
   //  delete controlNetwork;
-  //  delete tb;
   cout << "pixar: this is the end, my friend" << endl;
 
   return 0;
@@ -141,9 +135,11 @@ void execute(PixSetup &a, SysCommand *sysCommand) {
   do {
     cout << "sysCommand.toString(): " << sysCommand->toString() << endl;
     if (sysCommand->TargetIsTB()) 
-      a.getTBInterface()->Execute(sysCommand);
+      cout << "FIXME  a.getTBInterface()->Execute(sysCommand);" << endl;
+      //FIXME  a.getTBInterface()->Execute(sysCommand);
     else if (sysCommand->TargetIsROC()) 
-      a.getTBInterface()->Execute(sysCommand);
+      cout << "FIXME  a.getTBInterface()->Execute(sysCommand);" << endl;
+      //FIXME      a.getTBInterface()->Execute(sysCommand);
     else if (sysCommand->TargetIsTest()) 
       runTest(factory->createTest(sysCommand->toString(), a)); 
     else if (sysCommand->Keyword("gui")) 
@@ -159,13 +155,9 @@ void execute(PixSetup &a, SysCommand *sysCommand) {
 void runGui(PixSetup &a, int argc, char *argv[]) {
   TApplication theApp("App", &argc, argv);
   theApp.SetReturnFromRun(true);
-  PixGui gui(gClient->GetRoot(), 1200, 900, &a);
+  PixGui gui(gClient->GetRoot(), 800, 500, &a);
   theApp.Run();
   cout << "closing down 0 " << endl;
-
-//   TApplication * application = new TApplication("App", 0, 0, 0, -1);
-//   MainFrame MainFrame(gClient->GetRoot(), 400, 400, tbInterface, controlNetwork, configParameters);
-//   application->Run();
 }
 
 #endif
