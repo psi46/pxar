@@ -58,20 +58,29 @@ int main()
     _api->_dut->printDACs(0);
 
     // disable pixel(s)
-    _api->_dut->setPixelEnable(34,12,false);
-    _api->_dut->setPixelEnable(33,12,false);
-    _api->_dut->setPixelEnable(34,11,false);
-    _api->_dut->setPixelEnable(14,12,false);
-    //_api->_dut->setAllPixelEnable(false);
+    _api->_dut->setAllPixelEnable(false);
+    _api->_dut->setPixelEnable(34,12,true);
+    _api->_dut->setPixelEnable(33,12,true);
+    _api->_dut->setPixelEnable(34,11,true);
+    _api->_dut->setPixelEnable(14,12,true);
 
     // debug some DUT implementation details
     std::cout << " have " << _api->_dut->getNEnabledPixels() << " pixels set to enabled" << std::endl;
     std::cout << " have " << (int) _api->_dut->getPixelConfig(0,8,8).trim << " as trim value on pixel 8,8" << std::endl;
 
     // call a 'demo' (i.e. fake) DAC scan routine
-    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > data = _api->getDebugVsDAC("test", 20, 128, 50, 16);
-    std::cout << " my data has the size of " << data.size() << std::endl;
+    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > data = _api->getDebugVsDAC("test", 20, 28, 50, 16);
 
+    // check out the data we received:
+    std::cout << " number of stored (DAC,pixels) pairs in data: " << data.size() << std::endl;
+    // loop over dac values:
+    for (std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = data.begin();dacit != data.end(); ++dacit){
+      std::cout << "   dac value: " << (int) dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
+      // loop over fired pixels and show value
+      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
+	std::cout << "       pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value <<  std::endl;
+      }
+    }
 
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
