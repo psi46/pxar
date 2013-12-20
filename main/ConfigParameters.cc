@@ -262,13 +262,6 @@ bool ConfigParameters::writeConfigParameterFile() {
 
   fprintf(file, "rocZeroAnalogCurrent %i\n\n", static_cast<int>(rocZeroAnalogCurrent * 1000));
 
-  fprintf(file, "-- adc parameters\n\n");
-
-  fprintf(file, "dataTriggerLevel %i\n", fDataTriggerLevel);
-  fprintf(file, "emptyReadoutLength %i\n", fEmptyReadoutLength);
-  fprintf(file, "emptyReadoutLengthADC %i\n", fEmptyReadoutLengthADC);
-  fprintf(file, "emptyReadoutLengthADCDual %i\n", fEmptyReadoutLengthADCDual);
-
   fclose(file);
   return true;
 }
