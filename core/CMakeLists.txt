@@ -1,11 +1,12 @@
 # Add source files for the library
 
-INCLUDE_DIRECTORIES(rpc usb hal)
+INCLUDE_DIRECTORIES(rpc usb hal utils)
 
 FILE(GLOB LIB_SOURCE_FILES 
   "rpc/*.cpp"
   "api/*.cc"
   "hal/*.cc"
+  "utils/*.cc"
   )
 
 FILE(GLOB LIB_HEADER_FILES
@@ -13,6 +14,7 @@ FILE(GLOB LIB_HEADER_FILES
   "usb/*.h"
   "api/*.h"
   "hal/*.h"
+  "utils/*.h"
   )
 
 IF(USE_FTD2XX)

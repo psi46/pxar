@@ -4,6 +4,7 @@
 
 #include "api.h"
 #include "hal.h"
+#include "log.h"
 #include <iostream>
 #include <algorithm>
 
@@ -18,8 +19,8 @@ using namespace pxar;
 api::api(std::string usbId, std::string logLevel) {
 
   // Set up the libpxar API/HAL logging mechanism:
-  // FIXME
-  std::cout << "Log level: " << logLevel << std::endl;
+  Log::ReportingLevel() = Log::FromString(logLevel);
+  LOG(logDEBUG) << "Log level: " << logLevel << std::endl;
 
   // Get a new HAL instance with the DTB USB ID passed to the API constructor:
   _hal = new hal(usbId);
