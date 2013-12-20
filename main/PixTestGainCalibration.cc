@@ -11,8 +11,8 @@ PixTestGainCalibration::PixTestGainCalibration(PixSetup &a, std::string name): P
 }
 
 //----------------------------------------------------------
-PixTestGainCalibration::PixTestGainCalibration(TBInterface *tb, std::string name, PixTestParameters *tp): PixTest(tb, name, tp) {
-  cout << "PixTestGainCalibration ctor(TBInterface *, string)" << endl;
+PixTestGainCalibration::PixTestGainCalibration(pxar::api *a, std::string name, PixTestParameters *tp): PixTest(a, name, tp) {
+  cout << "PixTestGainCalibration ctor(pxar::api *, string)" << endl;
 }
 
 //----------------------------------------------------------

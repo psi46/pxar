@@ -11,49 +11,31 @@ ClassImp(PixGui)
 
 // ----------------------------------------------------------------------
 PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) : 
-  TGMainFrame(p, w, h, kVerticalFrame) {
+TGMainFrame(p, w, h, kVerticalFrame), fWidth(w), fHeight(h) {
 
   ULong_t red;
   gClient->GetColorByName("red", red);
 
-  fTb = setup->getTBInterface();
+  fApi = setup->getApi();
   fConfigParameters = setup->getConfigParameters();
   fTestParameters = setup->getPixTestParameters(); 
 
-  fTb->HVoff(); 
-  fTb->Poff(); 
+  fApi->HVoff(); 
+  fApi->Poff(); 
   fPower = false;
   fHV = false;
 
-  // create the frames
+  // -- create the main frames: fH1 for top stuff and fH2 for tabs
   fhFrame = new TGVerticalFrame(this, w, h);
-  fH1 = new TGHorizontalFrame(fhFrame, 600, 200, kFixedHeight);
-  fH2 = new TGHorizontalFrame(fhFrame, 600, 1200);
+  fH1 = new TGHorizontalFrame(fhFrame, w, static_cast<int>(h*0.2), kFixedHeight);
+  fH2 = new TGHorizontalFrame(fhFrame, w, static_cast<int>(h*0.75), kFixedHeight);
 
-  TGCompositeFrame *topFrame = new TGCompositeFrame(fH1, w, 0.3*h);
-  topFrame->SetName("topFrame");
-
-  TGHorizontalFrame *topFrame1 = new TGHorizontalFrame(topFrame,w,0.1*h);
-  topFrame1->SetName("topFrame1");
-
-  TGHorizontalFrame *logFrame = new TGHorizontalFrame(topFrame, w, 0.1*h);
-  logFrame->SetName("logFrame");
-
-  TGVerticalFrame *leftFrame = new TGVerticalFrame(logFrame, 250, 0.1*h);
-  leftFrame->SetName("leftFrame");
-
-  TGHorizontalFrame *upFrame = new TGHorizontalFrame(leftFrame, 250, 0.05*h);
-  TGHorizontalFrame *downFrame = new TGHorizontalFrame(leftFrame, 250, 0.05*h);
-  
-  // Loggerview
-  fLogger = new TGTextView(logFrame, 500, 100, "Welcome to pxar");
-  // Consoleview
-  fConsole = new TGTextEntry(logFrame, fConsoleBuffer = new TGTextBuffer(100), 450, 100);
-  fConsole->SetText("exec module.ini");
-  fConsole->Connect("ReturnPressed()", "PixGui", this, "doSetfConsole()");
+  TGVerticalFrame *h1v1 = new TGVerticalFrame(fH1, 0.33*w, 0.1*h);
+  TGVerticalFrame *h1v2 = new TGVerticalFrame(fH1, 0.33*w, 0.1*h);
+  TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1, 0.33*w, 0.1*h);
 
   // -- create and add widgets
-  fcmbTests = new TGComboBox(upFrame, kDoubleBorder);
+  fcmbTests = new TGComboBox(h1v1, kDoubleBorder);
   fcmbTests->SetWidth(200);
   fcmbTests->SetHeight(20);
   fcmbTests->Connect("Selected(char*)","PixGui",this,"createTab(char*)");
@@ -65,15 +47,16 @@ PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) :
   }
   fcmbTests->Select(0);
 
-  TGTextButton *exitButton = new TGTextButton(upFrame, "exit", B_EXIT);
-  exitButton->ChangeOptions(exitButton->GetOptions() | kFixedWidth);
+  TGTextButton *exitButton = new TGTextButton(h1v3, "exit", B_EXIT);
+  exitButton->ChangeOptions(exitButton->GetOptions() );
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
+  exitButton->ChangeBackground(red);
 
 
   // Frames
-  TGGroupFrame *indicateFrame = new TGGroupFrame(topFrame1, "Hardware control");
-
+  TGGroupFrame *indicateFrame = new TGGroupFrame(h1v2, "Hardware control");
+  
   TGHorizontalFrame *powerFrame = new TGHorizontalFrame(indicateFrame, 150, 75);
   powerFrame->SetName("powerFrame");
 
@@ -85,7 +68,7 @@ PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) :
   powerFrame->AddFrame(flblPower, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
   fbtnPower = new TGTextButton(powerFrame, "Off", B_POWER);
-  fbtnPower->ChangeOptions(fbtnPower->GetOptions() | kFixedWidth);
+  //  fbtnPower->ChangeOptions(fbtnPower->GetOptions() | kFixedWidth);
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
   fbtnPower->ChangeBackground(red);
@@ -97,7 +80,7 @@ PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) :
   hvFrame->AddFrame(flblHV, new TGLayoutHints(kLHintsLeft,5,5,3,4));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
-  fbtnHV->ChangeOptions(fbtnHV->GetOptions() | kFixedWidth);
+  //  fbtnHV->ChangeOptions(fbtnHV->GetOptions() | kFixedWidth);
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   fbtnHV->ChangeBackground(red);
@@ -107,45 +90,34 @@ PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) :
 
   // FIXME add self-updating IA and ID readings
 
-
-//   // -- Placeholders --
-//   // Frames
-//   TGHorizontalFrame *placeFrame = new TGHorizontalFrame(topFrame1);
-  
-//   // Buttons
-//   TGTextButton *btnPlaceHolder = new TGTextButton(placeFrame, "PlaceHolder");
-//   btnPlaceHolder->ChangeOptions(btnPlaceHolder->GetOptions() | kFixedWidth);
-//   btnPlaceHolder->ChangeOptions(btnPlaceHolder->GetOptions() | kFixedHeight);
-//   btnPlaceHolder->Resize(200,78);
-
-//   placeFrame->AddFrame(btnPlaceHolder, new TGLayoutHints(kLHintsLeft,5,5,8,4));
-
-
   // -- rootfile for output --
-  TGTextEntry *output = new TGTextEntry(downFrame, fRootFileNameBuffer = new TGTextBuffer(100), B_FILENAME);
-  TGLabel *wOutputDirLabel = new TGLabel(downFrame, "root file:");
+  TGTextEntry *output = new TGTextEntry(h1v1, fRootFileNameBuffer = new TGTextBuffer(100), B_FILENAME);
+  TGLabel *wOutputDirLabel = new TGLabel(h1v1, "root file:");
   wOutputDirLabel->MoveResize(130, 60, 55, output->GetDefaultHeight());
 
   output->SetText("bla");
   output->MoveResize(200, 60, 200, output->GetDefaultHeight());
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
   
+  h1v1->AddFrame(wOutputDirLabel, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  h1v1->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
   // -- frame managing
-  upFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  upFrame->AddFrame(fcmbTests, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  h1v1->AddFrame(fcmbTests, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  h1v2->AddFrame(indicateFrame, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
-  downFrame->AddFrame(wOutputDirLabel, new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  downFrame->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+//   downFrame->AddFrame(wOutputDirLabel, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+//   downFrame->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
-  leftFrame->AddFrame(upFrame, new TGLayoutHints(kLHintsTop,5,5,3,4));
-  leftFrame->AddFrame(downFrame, new TGLayoutHints(kLHintsTop,5,5,3,4));
+//   leftFrame->AddFrame(upFrame, new TGLayoutHints(kLHintsTop,5,5,3,4));
+//   leftFrame->AddFrame(downFrame, new TGLayoutHints(kLHintsTop,5,5,3,4));
 
-  logFrame->AddFrame(leftFrame, new TGLayoutHints(kLHintsTop,2,2,2,2));
-  logFrame->AddFrame(fLogger, new TGLayoutHints(kLHintsTop,2,2,2,2));
-  logFrame->AddFrame(fConsole, new TGLayoutHints(kLHintsTop | kLHintsExpandX,2,2,2,2));
+//   logFrame->AddFrame(leftFrame, new TGLayoutHints(kLHintsTop,2,2,2,2));
+//   logFrame->AddFrame(fLogger, new TGLayoutHints(kLHintsTop,2,2,2,2));
+//   logFrame->AddFrame(fConsole, new TGLayoutHints(kLHintsTop | kLHintsExpandX,2,2,2,2));
 
-  topFrame1->AddFrame(indicateFrame, new TGLayoutHints(kLHintsTop,1,1,2,0));
+//   topFrame1->AddFrame(indicateFrame, new TGLayoutHints(kLHintsTop,1,1,2,0));
 
   // -- tab widget
   fTabs = new TGTab(fH2, 0.7*w, 0.7*h);
@@ -153,49 +125,43 @@ PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) :
   
   fTabs->Resize(fTabs->GetDefaultSize());
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
-  fTabs->MoveResize(16,300,0.7*w,0.7*h);
+  fTabs->MoveResize(16,300,0.7*w,2.7*h);
 
 
   PixParTab *t = new PixParTab(this, "hardware parameters"); 
-  cout << t << endl;
+  MapSubwindows();
+  fTabs->MoveResize(800, 800);
+  MapWindow(); 
+
+  if (0) {
+    TGCompositeFrame *ctab = t->getCompositeFrame(); 
+    ctab->Resize(800, 800);
+    TGCompositeFrame *htab = t->getHorizontalFrame(); 
+    htab->Resize(800, 800);
+  }
 
   // -- organize the frames
-  topFrame->Resize(topFrame->GetDefaultSize());
-  topFrame1->Resize(topFrame1->GetDefaultSize());
-  logFrame->Resize(logFrame->GetDefaultSize());
-  topFrame->AddFrame(logFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX | kLHintsExpandY,2,2,2,2));
-  topFrame->AddFrame(topFrame1, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX,2,2,2,2));
-  fH1->AddFrame(topFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX,2,2,2,2));
+//   topFrame->Resize(topFrame->GetDefaultSize());
+//   topFrame1->Resize(topFrame1->GetDefaultSize());
+//   logFrame->Resize(logFrame->GetDefaultSize());
 
-  cout << "hello 0 " << endl;
+//   topFrame->MoveResize(8,24,696,80);
+//   topFrame1->MoveResize(8,80,696,136);
+//   logFrame->MoveResize(8,24,696,80);
 
-  topFrame->MoveResize(8,24,696,80);
-  topFrame1->MoveResize(8,80,696,136);
-  logFrame->MoveResize(8,24,696,80);
+  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsTop | kLHintsExpandX,2,2,2,2));
+  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsTop | kLHintsExpandX,2,2,2,2));
+  fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsTop | kLHintsExpandX,2,2,2,2));
 
-  cout << "hello 1 " << endl;
-  
-  // -- splitter frames
   fhFrame->AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
-  TGHSplitter *splitter = new TGHSplitter(fhFrame,2,2);
-  splitter->SetFrame(fH1, kTRUE);
-  fhFrame->AddFrame(splitter, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
   fhFrame->AddFrame(fH2, new TGLayoutHints(kLHintsBottom | kLHintsExpandY | kLHintsExpandX));
 
-  cout << "hello 2 " << endl;
-
   AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
-
-  cout << "hello 3 " << endl;
  
   Resize(GetDefaultSize());
-  cout << "hello 4 " << endl;
   SetWindowName("pXar");
-  cout << "hello 5 " << endl;
   MapSubwindows();
-  cout << "hello 6 " << endl;
   MapWindow();
-  cout << "hello 7 " << endl;
 
 
   //fTimer->TurnOn();
@@ -211,9 +177,9 @@ PixGui::~PixGui() {
 // ----------------------------------------------------------------------
 void PixGui::closeWindow() {
   // Close Window
-  if (fTb) {
-    fTb->HVoff();
-    fTb->Poff();
+  if (fApi) {
+    fApi->HVoff();
+    fApi->Poff();
   }
   if (fTimer) fTimer->TurnOff();
   DestroyWindow();
@@ -245,6 +211,7 @@ void PixGui::handleButtons(Int_t id) {
     //    delete this; 
     //delete fTb;
     //CloseWindow();
+    if (fApi) delete fApi; 
     gApplication->Terminate(0);
   }
   case B_POWER: {
@@ -252,13 +219,13 @@ void PixGui::handleButtons(Int_t id) {
       fPower = false;
       fbtnPower->ChangeBackground(red);
       fbtnPower->SetText("Off");
-      fTb->Poff(); 
+      fApi->Poff(); 
       cout << "Power set Off" << endl;
     } else {
       fPower = true;
       fbtnPower->ChangeBackground(green);
       fbtnPower->SetText("On");
-      fTb->Pon(); 
+      fApi->Pon(); 
       cout << "Power set On" << endl;
     }
     break;
@@ -268,13 +235,13 @@ void PixGui::handleButtons(Int_t id) {
       fHV = false;
       fbtnHV->ChangeBackground(red);
       fbtnHV->SetText("Off");
-      fTb->HVoff(); 
+      fApi->HVoff(); 
       cout << "HV set Off" << endl;
     } else {
       fHV = true;
       fbtnHV->ChangeBackground(green);
       fbtnHV->SetText("On");
-      fTb->HVon(); 
+      fApi->HVon(); 
       cout << "HV set On" << endl;
     }
     break;  
@@ -304,7 +271,7 @@ void PixGui::createParTab() {
 void PixGui::createTab(char*csel) {
   string tname = csel; 
 
-  PixTest *pt = createTest(fTb, string(csel));
+  PixTest *pt = createTest(fApi, string(csel));
   if (0 == pt) {
     cout << "ERROR: " << csel << " not known, nothing created" << endl;
     return;
@@ -314,9 +281,11 @@ void PixGui::createTab(char*csel) {
   PixTab *t = new PixTab(this, pt, string(csel)); 
   pt->Connect("update()", "PixTab", t, "update()"); 
   MapSubwindows();
-  fTabs->MoveResize(2, 0, 1500, 800);
+  fTabs->MoveResize(2, 0, 800, 800);
   Resize(GetDefaultSize());
   MapWindow();
+  cout << "csel = " << csel << endl;
+  fTabs->SetTab(csel); 
   
 }
 
@@ -348,8 +317,8 @@ void PixGui::doSetfConsole() {
 
 
 // ----------------------------------------------------------------------
-PixTest* PixGui::createTest(TBInterface *tb, string testname) {
-  if (!testname.compare("PixelAlive")) return new PixTestAlive(tb, testname, fTestParameters); 
-  if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(tb, testname, fTestParameters); 
+PixTest* PixGui::createTest(pxar::api *a, string testname) {
+  if (!testname.compare("PixelAlive")) return new PixTestAlive(a, testname, fTestParameters); 
+  if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(a, testname, fTestParameters); 
   return 0; 
 }

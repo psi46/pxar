@@ -9,15 +9,15 @@ ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
 PixTest::PixTest(PixSetup &a, string name) {
-  init(a.getTBInterface(), name, a.getPixTestParameters()); 
-  cout << "PixTest ctor(TBInterface *, string)" << endl;
+  init(a.getApi(), name, a.getPixTestParameters()); 
+  cout << "PixTest ctor(pxar::xapi *, string)" << endl;
 }
 
 
 // ----------------------------------------------------------------------
-PixTest::PixTest(TBInterface *tb, string name, PixTestParameters *tp) {
-  init(tb, name, tp); 
-  cout << "PixTest ctor(TBInterface *, string)" << endl;
+PixTest::PixTest(pxar::api *a, string name, PixTestParameters *tp) {
+  init(a, name, tp); 
+  cout << "PixTest ctor(pxar::api *, string)" << endl;
 }
 
 
@@ -31,7 +31,7 @@ PixTest::PixTest() {
 // ----------------------------------------------------------------------
 void PixTest::init(PixSetup &a, string name) {
   cout << "PixTest::init()" << endl;
-  fTB = a.getTBInterface(); 
+  fApi = a.getApi(); 
   fName = name;
   fParameters = a.getPixTestParameters()->getTestParameters(name); 
   NCOL = 52; 
@@ -43,9 +43,9 @@ void PixTest::init(PixSetup &a, string name) {
 }
 
 // ----------------------------------------------------------------------
-void PixTest::init(TBInterface *tb, std::string name, PixTestParameters *tp) {
+void PixTest::init(pxar::api *a, std::string name, PixTestParameters *tp) {
   cout << "PixTest::init()" << endl;
-  fTB = tb; 
+  fApi = a; 
   fName = name;
   fParameters = tp->getTestParameters(name); 
   NCOL = 52; 

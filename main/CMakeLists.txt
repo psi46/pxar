@@ -24,9 +24,6 @@ PixTestFactory.cc
 PixTestGainCalibration.cc
 PixTestParameters.cc
 SysCommand.cc
-TBInterface.cc
-TBVirtualInterface.cc
-TestRange.cc
 #pXar.cc
   )
 
@@ -48,9 +45,6 @@ PixTestFactory.hh
 PixTestGainCalibration.hh
 PixTestParameters.hh
 SysCommand.hh
-TBInterface.hh
-TBVirtualInterface.hh
-TestRange.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/main ${PROJECT_SOURCE_DIR}/core/api ${ROOT_INCLUDE_DIR} )

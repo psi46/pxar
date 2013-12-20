@@ -9,17 +9,18 @@
 #include <TH1.h> 
 #include <TDirectory.h> 
 
-#include "TBInterface.hh"
+#include "api.h"
+
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
 
 class PixTest: public TQObject {
 public:
   PixTest(PixSetup &a, std::string name);
-  PixTest(TBInterface *tb, std::string name, PixTestParameters *);
+  PixTest(pxar::api *a, std::string name, PixTestParameters *);
   PixTest();
   virtual ~PixTest();
-  void init(TBInterface *tb, std::string name, PixTestParameters *);
+  void init(pxar::api *a, std::string name, PixTestParameters *);
   void init(PixSetup &, std::string name);
 
   void clearHist(); 
@@ -44,10 +45,10 @@ public:
   
 
 protected: 
-  TBInterface          *fTB;
+  pxar::api            *fApi;
   PixSetup             *fPixSetup; 
   PixTestParameters    *fTestParameters; 
-
+  
   std::string           fName; 
 
   std::map<std::string, std::string> fParameters;

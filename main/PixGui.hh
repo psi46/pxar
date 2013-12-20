@@ -24,9 +24,10 @@
 #include <TRootEmbeddedCanvas.h>
 #include <TVirtualStreamerInfo.h>  // w/o this dict compilation problems
 
+#include "api.h"
+
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
-#include "TBInterface.hh"
 #include "PixTest.hh"
 #include "PixTestParameters.hh"
 #include "PixSetup.hh"
@@ -44,10 +45,13 @@ public:
 
   void doSetfConsole();
   void closeWindow();
-  PixTest *createTest(TBInterface *, std::string); 
+  PixTest *createTest(pxar::api *, std::string); 
 
   TGCompositeFrame	*fhFrame;
   TGTab               	*getTabs() {return fTabs;}
+
+  int getWidth() {return fWidth;}
+  int getHeight() {return fHeight;}
   
 private: 
   TTimer	*fTimer;
@@ -84,9 +88,11 @@ private:
 
   SysCommand             *fSysCommand;
   
-  TBInterface            *fTb;
+  pxar::api              *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
+
+  int                    fWidth, fHeight; 
 
   ClassDef(PixGui, 1); //
 

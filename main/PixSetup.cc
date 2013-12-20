@@ -7,21 +7,19 @@ using namespace pxar;
 ClassImp(PixSetup)
 
 // ----------------------------------------------------------------------
-PixSetup::PixSetup(TBInterface *tb, api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc) {
-  fTBInterface       = tb; 
-  fAPI               = a; 
+PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc) {
+  fApi               = a; 
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fSysCommand        = sc; 
   fModule = 0; 
   init(); 
-  cout << "PixSetup ctor(TBInterface *tb, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)" << endl;
+  cout << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)" << endl;
 }
 
 // ----------------------------------------------------------------------
 PixSetup::PixSetup() {
-  fTBInterface       = 0; 
-  fAPI               = 0; 
+  fApi               = 0; 
   fPixTestParameters = 0; 
   fConfigParameters  = 0; 
   fSysCommand        = 0; 

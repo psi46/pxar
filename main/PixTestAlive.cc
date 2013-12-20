@@ -1,11 +1,12 @@
-#include <iostream>
-#include "PixTestAlive.hh"
 #include <stdlib.h>     /* atof, atoi */
 #include <algorithm>    // std::find
+#include <iostream>
+#include "PixTestAlive.hh"
 
 #include <TH2.h>
 
 using namespace std;
+using namespace pxar;
 
 ClassImp(PixTestAlive)
 
@@ -17,10 +18,10 @@ PixTestAlive::PixTestAlive(PixSetup &a, std::string name) : PixTest(a, name), fP
 }
 
 // ----------------------------------------------------------------------
-PixTestAlive::PixTestAlive(TBInterface *tb, std::string name, PixTestParameters *tp) : PixTest(tb, name, tp), fParNtrig(-1), fParVcal(-1) {
-  PixTest::init(tb, name, tp);
+PixTestAlive::PixTestAlive(pxar::api *a, std::string name, PixTestParameters *tp) : PixTest(a, name, tp), fParNtrig(-1), fParVcal(-1) {
+  PixTest::init(a, name, tp);
   init(); 
-  cout << "PixTestAlive ctor(TBInterface *, string, TGTab *, TGTextView *)" << endl;
+  cout << "PixTestAlive ctor(pxar::api *, string, TGTab *, TGTextView *)" << endl;
 }
 
 //----------------------------------------------------------
@@ -87,11 +88,12 @@ void PixTestAlive::doTest() {
   // -- FIXME: Should/could separate better test from display?
   // -- FIXME: loop over range from DUT
   for (int ichip = 0; ichip < 16; ++ichip) {
-    vector<int> results = fTB->GetEfficiencyMap(fParNtrig, 0);
+    vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
+    cout << " results.size(): " << results.size() << endl;
     TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
     if (h) {
       for (int i = 0; i < results.size(); ++i) {
-	h->SetBinContent(i/NROW+1, i%NROW+1, results[i]); 
+	h->SetBinContent(i/NROW+1, i%NROW+1, static_cast<float>(results[i].value)/fParNtrig); 
       }
     } else {
       cout << "XX did not find " << Form("PixelAlive_C%d", ichip) << endl;
