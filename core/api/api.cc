@@ -226,7 +226,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
       // loop over all enabled ROCs
       std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-	std::vector< std::vector<pixel> >* rocdata;
+	std::vector< std::vector<pixel> >* rocdata = NULL;
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels((uint8_t)(rocit - enabledRocs.begin()));
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit){
 	  // execute call to HAL layer routine and store data in buffer
