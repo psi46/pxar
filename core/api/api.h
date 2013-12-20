@@ -132,6 +132,23 @@ namespace pxar {
      */
     double getTBvd();
 
+    /** turn off HV
+     */
+    void HVoff();
+
+    /** turn on HV
+     */
+    void HVon();
+
+    /** turn on power
+     */
+    void Pon();
+
+    /** turn off power
+     */
+    void Poff();
+
+
     /** Function to read values from the integrated digital scope on the DTB
      */
     //getScopeData();

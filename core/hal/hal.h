@@ -43,6 +43,22 @@ namespace pxar {
      */
     void initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector);
 
+    /** turn off HV
+     */
+    void HVoff();
+
+    /** turn on HV
+     */
+    void HVon();
+
+    /** turn on power
+     */
+    void Pon();
+
+    /** turn off power
+     */
+    void Poff();
+
 
     /** TESTBOARD GET COMMANDS **/
     /** Read the testboard analog current

@@ -105,6 +105,23 @@ double api::getTBvd() {
   return _hal->getTBvd();
 }
 
+
+void api::HVoff() {
+  _hal->HVoff();
+}
+
+void api::HVon() {
+  _hal->HVon();
+}
+
+void api::Poff() {
+  _hal->Poff();
+}
+
+void api::Pon() {
+  _hal->Pon();
+}
+
   
 /** TEST functions **/
 

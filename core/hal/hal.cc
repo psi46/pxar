@@ -416,3 +416,20 @@ int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 
   return -9999;
 }
+
+
+void hal::HVoff() {
+  _testboard->HVoff();
+}
+
+void hal::HVon() {
+  _testboard->HVon();
+}
+ 
+void hal::Pon() {
+  _testboard->Pon();
+}
+
+void hal::Poff() {
+  _testboard->Poff();
+}
