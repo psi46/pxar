@@ -59,12 +59,12 @@ namespace pxar {
 
   inline std::ostringstream& Log::Get(TLogLevel level, std::string function, uint32_t line) {
     os << "[" << NowTime() << "] ";
+    os << std::setw(8) << ToString(level) << ": ";
     
     // For debug levels we want also function name and line number printed:
-    if (level != logINFO && level != logWARNING && level != logQUIET) os << "[" << function << ":" << line << "] ";
+    if (level != logINFO && level != logWARNING && level != logQUIET)
+      os << "<" << function << ":L" << line << "> ";
 
-    os << std::setw(7) << ToString(level) << ": ";
-    os << std::string(level > logDEBUG ? level - logDEBUG : 0, '\t');
     return os;
   }
 
@@ -75,7 +75,7 @@ namespace pxar {
   }
 
   inline TLogLevel& Log::ReportingLevel() {
-    static TLogLevel reportingLevel = logERROR;
+    static TLogLevel reportingLevel = logINFO;
     return reportingLevel;
   }
 
