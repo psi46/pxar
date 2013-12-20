@@ -87,7 +87,6 @@ int main(int argc, char *argv[]){
   PixSetup a(api, ptp, configParameters, &sysCommand);  
 
   if (doRunGui) {
-    configParameters->setGuiMode(true);
     runGui(a, argc, argv); 
   } else if (doRunScript) {
     runFile(a, cmdFile);    
@@ -134,16 +133,16 @@ void execute(PixSetup &a, SysCommand *sysCommand) {
   PixTestFactory *factory = PixTestFactory::instance(); 
   do {
     cout << "sysCommand.toString(): " << sysCommand->toString() << endl;
-    if (sysCommand->TargetIsTB()) 
+    if (sysCommand->TargetIsTest()) 
+      runTest(factory->createTest(sysCommand->toString(), a)); 
+    else if (sysCommand->Keyword("gui")) 
+      runGui(a, 0, 0);
+    else if (sysCommand->TargetIsTB()) 
       cout << "FIXME  a.getTBInterface()->Execute(sysCommand);" << endl;
       //FIXME  a.getTBInterface()->Execute(sysCommand);
     else if (sysCommand->TargetIsROC()) 
       cout << "FIXME  a.getTBInterface()->Execute(sysCommand);" << endl;
       //FIXME      a.getTBInterface()->Execute(sysCommand);
-    else if (sysCommand->TargetIsTest()) 
-      runTest(factory->createTest(sysCommand->toString(), a)); 
-    else if (sysCommand->Keyword("gui")) 
-      runGui(a, 0, 0);
     else 
       cout << "dunno what to do" << endl;
     //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
