@@ -14,7 +14,7 @@ namespace pxar {
 
   enum TLogLevel {
     logQUIET,
-    logSUMMARY,
+    logCRITICAL,
     logERROR,
     logWARNING,
     logINFO,
@@ -61,7 +61,7 @@ namespace pxar {
     os << "[" << NowTime() << "] ";
     
     // For debug levels we want also function name and line number printed:
-    if (level > logINFO) os << "[" << function << ":" << line << "] ";
+    if (level != logINFO && level != logWARNING && level != logQUIET) os << "[" << function << ":" << line << "] ";
 
     os << std::setw(7) << ToString(level) << ": ";
     os << std::string(level > logDEBUG ? level - logDEBUG : 0, '\t');
@@ -75,12 +75,12 @@ namespace pxar {
   }
 
   inline TLogLevel& Log::ReportingLevel() {
-    static TLogLevel reportingLevel = logSUMMARY;
+    static TLogLevel reportingLevel = logERROR;
     return reportingLevel;
   }
 
   inline std::string Log::ToString(TLogLevel level) {
-    static const char* const buffer[] = {"QUIET","SUMMARY","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGUSB"};
+    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGUSB"};
     return buffer[level];
   }
 
@@ -101,11 +101,11 @@ namespace pxar {
       return logWARNING;
     if (level == "ERROR")
       return logERROR;
-    if (level == "SUMMARY")
-      return logSUMMARY;
+    if (level == "CRITICAL")
+      return logCRITICAL;
     if (level == "QUIET")
       return logQUIET;
-    Log().Get(logWARNING,"LogInit") << "Unknown logging level '" << level << "'. Using WARNING level as default.";
+    Log().Get(logWARNING) << "Unknown logging level '" << level << "'. Using WARNING level as default.";
     return logWARNING;
   }
 
