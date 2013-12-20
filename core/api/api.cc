@@ -30,7 +30,7 @@ api::api(std::string usbId, std::string logLevel) {
 }
 
 api::~api() {
-  //delete _dut;
+  delete _dut;
   delete _hal;
 }
 
@@ -140,7 +140,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
   bool forceSerial = flags > 1;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
-  return repackDacScanData(data,dacMin,dacMax);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
+  delete data;
+  return *result;
 
 } // getPulseheightVsDAC
 
@@ -219,6 +221,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 	else {
 	  data->reserve( data->size() + rocdata->size());
 	  data->insert(data->end(), rocdata->begin(), rocdata->end());
+	  delete rocdata;
 	}
       } // roc loop
     } else if (pixelfn!= NULL){
@@ -244,6 +247,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 		pixelit++;
 	      }
 	    }
+	    delete buffer;
 	  }
 	} // pixel loop
 	// append rocdata to main data storage vector
@@ -251,6 +255,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 	else {
 	  data->reserve( data->size() + rocdata->size());
 	  data->insert(data->end(), rocdata->begin(), rocdata->end());
+	  delete rocdata;
 	}
       } // roc loop
     }// single pixel fnc
@@ -261,12 +266,14 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
     }
   } // single roc fnc
   // now repack the data to join the individual ROC segments and return
-  return compactRocLoopData(data, _dut->getNEnabledRocs());
+  std::vector< std::vector<pixel> >* compactdata = compactRocLoopData(data, _dut->getNEnabledRocs());
+  delete data; // clean up
+  return compactdata;
 } // expandLoop()
 
 
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
+std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   uint8_t currentDAC = dacMin;
   for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
@@ -277,9 +284,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
     LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values!";
     delete result;
-    return std::vector< std::pair<uint8_t, std::vector<pixel> > > ();
+    return NULL;
   }
-  return *result;
+  return result;
 }
 
 
