@@ -7,7 +7,7 @@ int main()
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*","ERROR");
+    _api = new pxar::api("*","DEBUG");
   
     // Try some test or so:
 
@@ -57,11 +57,22 @@ int main()
     // Print DACs from ROC 0:
     _api->_dut->printDACs(0);
 
+    // disable pixel(s)
+    _api->_dut->setPixelEnable(34,12,false);
+    _api->_dut->setPixelEnable(33,12,false);
+    _api->_dut->setPixelEnable(34,11,false);
+    _api->_dut->setPixelEnable(14,12,false);
+    //_api->_dut->setAllPixelEnable(false);
+
     // debug some DUT implementation details
     std::cout << " have " << _api->_dut->getNEnabledPixels() << " pixels set to enabled" << std::endl;
     std::cout << " have " << (int) _api->_dut->getPixelConfig(0,8,8).trim << " as trim value on pixel 8,8" << std::endl;
 
-    _api->getDebugVsDAC("test", 20, 128, 50, 16);
+    // call a 'demo' (i.e. fake) DAC scan routine
+    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > data = _api->getDebugVsDAC("test", 20, 128, 50, 16);
+    std::cout << " my data has the size of " << data.size() << std::endl;
+
+
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
     delete _api;
