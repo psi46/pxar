@@ -23,6 +23,7 @@ public:
   template<class ConfigType>
   bool operator()(const ConfigType &config) const
   {
+    LOG(logDEBUG) << "Comparison against " << _isEnable<< " : " << config.enable;
     return config.enable == _isEnable;
   }
 };
@@ -52,44 +53,31 @@ public:
 
 int32_t dut::getNEnabledPixels() {
   if (!status()) return 0;
-  // search for pixels that have enable set
-  std::vector<pixelConfig>::iterator it = std::find_if(roc.at(0).pixels.begin(),
-						       roc.at(0).pixels.end(),
-						       configEnableSet(true));
+  // loop over result, count enabled pixel
   int32_t count = 0;
-  // loop over result, count pixel
-  while(it != roc.at(0).pixels.end()){
-    count++;
-    it++;
+  for (std::vector<pixelConfig>::iterator it = roc.at(0).pixels.begin(); it != roc.at(0).pixels.end(); ++it){
+    if (it->enable) count++;
   }
   return count;
 }
 
 int32_t dut::getNEnabledRocs() {
   if (!status()) return 0;
-  // search for pixels that have enable set
-  std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
-						     roc.end(),
-						     configEnableSet(true));
+  // loop over result, count enabled ROCs
   int32_t count = 0;
-  // loop over result, count pixel
-  while(it != roc.end()){
-    count++;
-    it++;
+  for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
+    if (it->enable) count++;
   }
   return count;
 }
+
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   std::vector< pixelConfig > result;
   if (!status()) return result;
   // search for pixels that have enable set
-  std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
-						       roc.at(rocid).pixels.end(),
-						       configEnableSet(true));
-  while(it != roc.at(rocid).pixels.end()){
-    result.push_back(*it);
-    it++;
+  for (std::vector<pixelConfig>::iterator it = roc.at(0).pixels.begin(); it != roc.at(0).pixels.end(); ++it){
+    if (it->enable) result.push_back(*it);
   }
   return result;
 }
@@ -98,13 +86,9 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
 std::vector< rocConfig > dut::getEnabledRocs() {
   std::vector< rocConfig > result;
   if (!status()) return result;
-  // search for pixels that have enable set
-  std::vector<rocConfig>::iterator it = std::find_if(roc.begin(),
-						     roc.end(),
-						     configEnableSet(true));
-  while(it != roc.end()){
-    result.push_back(*it);
-    it++;
+  // search for rocs that have enable set
+  for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
+    if (it->enable) result.push_back(*it);
   }
   return result;
 }
@@ -201,8 +185,11 @@ void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {
 							 rocit->pixels.end(),
 							 findPixelXY(column,row));
     // set enable
-    if(it != rocit->pixels.end())
+    if(it != rocit->pixels.end()){
       it->enable = enable;
+    } else {
+      LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int) (rocit - roc.begin())<< "!" ;
+    }
   }
 }
 
