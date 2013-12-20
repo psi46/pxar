@@ -1,6 +1,6 @@
 #include "hal.h"
+#include "log.h"
 #include "rpc_impl.h"
-#include <iostream>
 
 using namespace pxar;
 
@@ -17,7 +17,7 @@ hal::hal(std::string name) {
 
   // Open the testboard connection:
   if(_testboard->Open(name)) {
-    std::cout << "Connection to board " << name << " opened." << std::endl;
+    LOG(logQUIET) << "Connection to board " << name << " opened.";
     try {
       // Print the useful SW/FW versioning info:
       PrintInfo();
@@ -32,17 +32,17 @@ hal::hal(std::string name) {
     catch(CRpcError &e) {
       // Something went wrong:
       e.What();
-      std::cout << "ERROR: DTB software version could not be identified, please update!" << std::endl;
+      LOG(logCRITICAL) << "DTB software version could not be identified, please update!";
       _testboard->Close();
-      std::cout << "Connection to board " << name << " has been cancelled." << std::endl;
+      LOG(logCRITICAL) << "Connection to board " << name << " has been cancelled.";
     }
   }
   else {
     // USB port cannot be accessed correctly, most likely access right issue:
-    std::cout << "USB error: " << _testboard->ConnectionError() << std::endl;
-    std::cout << "DTB: could not open port to device." << std::endl;
-    std::cout << "Make sure you have permission to access USB devices." << std::endl;
-    std::cout << "(see documentation for UDEV configuration examples)" << std::endl;
+    LOG(logCRITICAL) << "USB error: " << _testboard->ConnectionError();
+    LOG(logCRITICAL) << "DTB: could not open port to device.";
+    LOG(logCRITICAL) << "Make sure you have permission to access USB devices.";
+    LOG(logCRITICAL) << "(see documentation for UDEV configuration examples)";
   }
   
   // Finally, initialize the testboard:
@@ -59,7 +59,7 @@ hal::~hal() {
   _testboard->Poff();
 
   // Close the RPC/USB Connection:
-  std::cout << "Connection to board " << _testboard->GetBoardId() << " closed." << std::endl;
+  LOG(logQUIET) << "Connection to board " << _testboard->GetBoardId() << " closed.";
   _testboard->Close();
   delete _testboard;
 }
@@ -67,7 +67,7 @@ hal::~hal() {
 bool hal::status() {
 
   if(!_initialized)
-    std::cout << "Testboard not initialized yet!" << std::endl;
+    LOG(logERROR) << "Testboard not initialized yet!";
 
   return _initialized;
 }
@@ -82,7 +82,7 @@ void hal::initTestboard() {
   _testboard->Sig_SetDelay(SIG_SDA, 19);
   _testboard->Sig_SetDelay(SIG_TIN, 7);
   _testboard->Flush();
-  std::cout << "Testboard delays set." << std::endl;
+  LOG(logDEBUG) << "Testboard delays set.";
 
   // Set voltages:
   setTBva(1.8);
@@ -92,7 +92,7 @@ void hal::initTestboard() {
   setTBia(1.199);
   setTBid(1.000);
   _testboard->Flush();
-  std::cout << "Voltages/current limits set." << std::endl;
+  LOG(logDEBUG) << "Voltages/current limits set.";
 
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;
@@ -123,9 +123,10 @@ void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVec
 void hal::PrintInfo() {
   std::string info;
   _testboard->GetInfo(info);
-  std::cout << "--- DTB info-------------------------------------" << std::endl
-	    << info
-	    <<"-------------------------------------------------" << std::endl;
+  LOG(logINFO) << "DTB startup information" << std::endl 
+	       << "--- DTB info------------------------------------------" << std::endl
+	       << info
+	       << "------------------------------------------------------";
 }
 
 void hal::mDelay(uint32_t ms) {
@@ -141,9 +142,9 @@ void hal::CheckCompatibility(){
 
   // If they don't match check RPC calls one by one and print offenders:
   if(dtb_callcount != host_callcount) {
-    std::cout << "RPC Call count of DTB and host do not match:" << std::endl;
-    std::cout << "   " << dtb_callcount << " DTB RPC calls vs. " << std::endl
-	      << "   " << host_callcount << " host RPC calls defined!" << std::endl;
+    LOG(logERROR) << "RPC Call count of DTB and host do not match:";
+    LOG(logERROR) << "   " << dtb_callcount << " DTB RPC calls vs. ";
+    LOG(logERROR) << "   " << host_callcount << " host RPC calls defined!";
 
     for(int id = 0; id < max(dtb_callcount,host_callcount); id++) {
 
@@ -152,21 +153,21 @@ void hal::CheckCompatibility(){
 
       if(id < dtb_callcount) {
 	if(!_testboard->GetRpcCallName(id,dtb_callname)) 
-	  std::cout << "Error in fetching DTB RPC call name." << std::endl;
+	  LOG(logERROR) << "Error in fetching DTB RPC call name.";
       }
       if(id < host_callcount) {
 	if(!_testboard->GetHostRpcCallName(id,host_callname)) 
-	  std::cout << "Error in fetching host RPC call name." << std::endl;
+	  LOG(logERROR) << "Error in fetching host RPC call name.";
       }
 
       if(dtb_callname.compare(host_callname) != 0) 
-	std::cout << "ID " << id 
+	LOG(logERROR) << "ID " << id 
 		  << ": (DTB) \"" << dtb_callname 
-		  << "\" != (Host) \"" << host_callname << "\"" << std::endl;
+		  << "\" != (Host) \"" << host_callname << "\"";
     }
 
     // For now, just print a message and don't to anything else:
-    std::cout << "Please update your DTB with the correct flash file!" << std::endl;
+    LOG(logERROR) << "Please update your DTB with the correct flash file!";
   }
 }
 
@@ -188,13 +189,13 @@ bool hal::FindDTB(std::string &usbId) {
   }
   catch (int e) {
     switch (e) {
-    case 1: std::cout << "Cannot access the USB driver\n" << std::endl; return false;
+    case 1: LOG(logCRITICAL) << "Cannot access the USB driver\n"; return false;
     default: return false;
     }
   }
 
   if (devList.size() == 0) {
-    std::cout << "No DTB connected.\n" << std::endl;
+    LOG(logCRITICAL) << "No DTB connected.\n";
     return false;
   }
 
@@ -204,29 +205,29 @@ bool hal::FindDTB(std::string &usbId) {
   }
 
   // If more than 1 connected device list them
-  std::cout << "\nConnected DTBs:\n" << std::endl;
+  LOG(logINFO) << "\nConnected DTBs:\n";
   for (nr=0; nr<devList.size(); nr++) {
-    std::cout << nr << ":" << devList[nr] << std::endl;
+    LOG(logINFO) << nr << ":" << devList[nr];
     if (_testboard->Open(devList[nr], false)) {
       try {
 	unsigned int bid = _testboard->GetBoardId();
-	std::cout << "  BID=" << bid << std::endl;
+	LOG(logINFO) << "  BID=" << bid;
       }
       catch (...) {
-	std::cout << "  Not identifiable\n" << std::endl;
+	LOG(logERROR) << "  Not identifiable\n";
       }
       _testboard->Close();
     }
-    else std::cout << " - in use\n" << std::endl;
+    else LOG(logWARNING) << " - in use\n";
   }
 
-  std::cout << "Please choose DTB (0-" << (nDev-1) << "): " << std::endl;
+  LOG(logINFO) << "Please choose DTB (0-" << (nDev-1) << "): ";
   char choice[8];
   fgets(choice, 8, stdin);
   sscanf (choice, "%ud", &nr);
   if (nr >= devList.size()) {
     nr = 0;
-    std::cout << "No DTB opened\n" << std::endl;
+    LOG(logCRITICAL) << "No DTB opened\n";
     return false;
   }
 
@@ -297,7 +298,7 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
   _testboard->roc_I2cAddr(rocId);
 
   //FIXME range check missing...
-  std::cout << "Set DAC" << (int)dacId << " to " << (int)dacValue << std::endl;
+  LOG(logDEBUGHAL) << "Set DAC" << (int)dacId << " to " << (int)dacValue;
   _testboard->roc_SetDAC(dacId,dacValue);
   return true;
 }
@@ -305,7 +306,7 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
 
 
 std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter){
-  std::cout << " called DummyPixelTestSkeleton routine " << std::endl;
+  LOG(logDEBUGHAL) << " called DummyPixelTestSkeleton routine";
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<pixel> dacscan;
@@ -325,7 +326,7 @@ std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, ui
 }
 
 std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter){
-  std::cout << " called DummyRocTestSkeleton routine " << std::endl;
+  LOG(logDEBUGHAL) << " called DummyRocTestSkeleton routine";
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<pixel> dacscan;
@@ -350,7 +351,7 @@ std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std:
 }
 
 std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int32_t> parameter){
-  std::cout << " called DummyModuleTestSkeleton routine " << std::endl;
+  LOG(logDEBUGHAL) << " called DummyModuleTestSkeleton routine";
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<pixel> dacscan;
@@ -410,7 +411,7 @@ int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
   _testboard->Daq_Close();
 
   for(std::vector<uint16_t>::iterator it = data.begin(); it != data.end(); ++it) {
-    std::cout << std::hex << (*it) << std::dec << std::endl;
+    LOG(logDEBUGHAL) << std::hex << (*it) << std::dec;
   }
 
   return -9999;
