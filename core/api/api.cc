@@ -241,6 +241,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 	      // loop over all entries in buffer and add fired pixels to existing pixel vector
 	      while (pixelit != vecit->end()){
 		rocdata->at(vecit-buffer->begin()).push_back(*pixelit);
+		pixelit++;
 	      }
 	    }
 	  }
