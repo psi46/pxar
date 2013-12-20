@@ -20,7 +20,7 @@ api::api(std::string usbId, std::string logLevel) {
 
   // Set up the libpxar API/HAL logging mechanism:
   Log::ReportingLevel() = Log::FromString(logLevel);
-  LOG(logDEBUG) << "Log level: " << logLevel << std::endl;
+  LOG(logINFO) << "Log level: " << logLevel << std::endl;
 
   // Get a new HAL instance with the DTB USB ID passed to the API constructor:
   _hal = new hal(usbId);
