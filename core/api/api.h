@@ -145,12 +145,12 @@ namespace pxar {
      *  the averaged pulse height over nTriggers triggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint32_t flags, uint32_t nTriggers=16);
+									       uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** DEBUG ROUTINE DELME FIXME WHATEVER
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									 uint32_t flags, uint32_t nTriggers=16);
+									 uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the efficiency
      *
@@ -158,7 +158,7 @@ namespace pxar {
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					  uint32_t flags, uint32_t nTriggers=16);
+					  uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the pixel threshold
      *
@@ -166,7 +166,7 @@ namespace pxar {
      *  the threshold value of that pixel
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					 uint32_t flags, uint32_t nTriggers=16);
+					 uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the pulse height
      *
@@ -175,7 +175,7 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					      uint32_t flags, uint32_t nTriggers=16);
+					      uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the efficiency
      *
@@ -185,7 +185,7 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					     uint32_t flags, uint32_t nTriggers=16);
+					     uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the threshold
      *
@@ -194,28 +194,28 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					    std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					    uint32_t flags, uint32_t nTriggers=16);
+					    uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to get a chip map of the pulse height
      *
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the averaged pulse height over nTriggers triggers
      */
-    std::vector<pixel> getPulseheightMap(uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getPulseheightMap(uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to get a chip map of the efficiency
      *
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
-    std::vector<pixel> getEfficiencyMap(uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getEfficiencyMap(uint32_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to get a chip map of the pixel threshold
      *
      *  Returns a std vector of pixels, with the value of the pixel struct being
      *  the threshold value of that pixel
      */
-    std::vector<pixel> getThresholdMap(uint32_t flags, uint32_t nTriggers=16);
+    std::vector<pixel> getThresholdMap(uint32_t flags = 0, uint32_t nTriggers=16);
 
     int32_t getReadbackValue(std::string parameterName);
 
