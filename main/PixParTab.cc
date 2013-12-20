@@ -17,25 +17,27 @@ ClassImp(PixParTab)
 PixParTab::PixParTab(PixGui *p, string tabname) {
   init(p, tabname); 
   
-  UInt_t w = 400; 
-  UInt_t h = 400; 
+  UInt_t w = 800; 
+  UInt_t h = 800; 
 
-  // -- Tab Frame
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
   fTabFrame->SetLayoutManager(new TGVerticalLayout(fTabFrame));
 
-  // create the TopFrame
-  fhFrame = new TGHorizontalFrame(fTabFrame, w, 0.5*h);
+  fhFrame = new TGHorizontalFrame(fTabFrame, w, h);
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
 
+//   fhFrame->Resize(fTabFrame->GetDefaultSize());
+//   fTabFrame->Resize(fTabFrame->GetDefaultSize());
   fTabFrame->Layout();
   fTabFrame->MapSubwindows();
   fTabFrame->MapWindow();
+//   fhFrame->Resize(fTabFrame->GetDefaultSize());
+//   fTabFrame->Resize(fTabFrame->GetDefaultSize());
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
 
-  fGui->getTabs()->SetTab("PixParTab"); 
+  fGui->getTabs()->SetTab(tabname.c_str()); 
 
 }
 

@@ -18,31 +18,27 @@ ClassImp(PixTab)
 PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   init(p, test, tabname); 
   
-  UInt_t w = 400; 
-  UInt_t h = 400; 
+  UInt_t w = p->getWidth(); 
+  UInt_t h = p->getHeight(); 
 
-  // -- Tab Frame
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
   fTabFrame->SetLayoutManager(new TGVerticalLayout(fTabFrame));
-
-  // create the TopFrame
-  fhFrame = new TGHorizontalFrame(fTabFrame, w, 0.5*h);
+ 
+  fhFrame = new TGHorizontalFrame(fTabFrame, w, 0.75*h);
   
-  // Frames for the splitter
-  fV1 = new TGVerticalFrame(fhFrame, 600, 800, kFixedWidth);
-
-  // ---------------------------------------------------------------------------------------------
-  // -- create and add Embedded Canvas
-  TGLayoutHints *L4 = new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15);
-  fEc1 = new TRootEmbeddedCanvas("ec1", fV1, 400, 700);
-  fV1->AddFrame(fEc1, L4);
+  // -- 2 vertical frames
+  fV1 = new TGVerticalFrame(fhFrame, 0.6*w, 0.75*h, kFixedWidth);
   fhFrame->AddFrame(fV1, new TGLayoutHints(kLHintsLeft | kLHintsExpandY));
-
-  fV2 = new TGVerticalFrame(fhFrame, 800, 800);
+  fV2 = new TGVerticalFrame(fhFrame, 0.4*w, 0.75*h);
   fhFrame->AddFrame(fV2, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
 
+  // -- fV1: create and add Embedded Canvas
+  TGLayoutHints *L4 = new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15);
+  fEc1 = new TRootEmbeddedCanvas("ec1", fV1, 0.6*w, 0.75*h);
+  fV1->AddFrame(fEc1, L4);
 
-  // -- create parameter TGText boxes for test
+
+  // -- fV2: create parameter TGText boxes for test
   cout << "map tab individually for test: " << fTest->getName() << endl;
   map<string, string> amap = fTest->getParameters();
   TGTextEntry *te(0); 
@@ -124,8 +120,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fTabFrame->MapWindow();
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
-
-  fGui->getTabs()->SetTab("PixTab"); 
+  //  fGui->getTabs()->SetTab(tabname.c_str()); 
 
 }
 

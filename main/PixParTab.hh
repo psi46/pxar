@@ -28,6 +28,8 @@ public:
 
   virtual void handleButtons(Int_t id = -1); 
   std::string getName() {return fTabName;}
+  TGCompositeFrame* getCompositeFrame() {return fTabFrame;}
+  TGCompositeFrame* getHorizontalFrame() {return fhFrame;}
 
 protected: 
   // -- frames and widgets
