@@ -204,15 +204,23 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   // check if we might use parallel routine on whole module: 16 ROCs
   // must be enabled and parallel execution not disabled by user
   if (_dut->getModuleEnable() && !forceSerial && modulefn != NULL){
+
+    LOG(logDEBUGAPI) << "\"The Loop\" contains one call to \'modulefn\'";
     // execute call to HAL layer routine
     data = CALL_MEMBER_FN(*_hal,modulefn)(param);
-  } else {
+  } 
+  else {
+
     // -> single ROC / ROC-by-ROC operation
     // check if all pixels are enabled
     // if so, use routine that accesses whole ROC
     if (_dut->getAllPixelEnable() && rocfn != NULL){
+
       // loop over all enabled ROCs
       std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+
+      LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " calls to \'rocfn\'";
+
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)((uint8_t) (rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
@@ -224,14 +232,24 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 	  delete rocdata;
 	}
       } // roc loop
-    } else if (pixelfn!= NULL){
+    } 
+    else if (pixelfn != NULL){
+
       // -> we operate on single pixels
       // loop over all enabled ROCs
       std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+
+      LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " enabled ROCs.";
+
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
 	std::vector< std::vector<pixel> >* rocdata = NULL;
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels((uint8_t)(rocit - enabledRocs.begin()));
-	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit){
+
+
+	LOG(logDEBUGAPI) << "\"The Loop\" for the current ROC contains " \
+			 << enabledPixels.size() << " calls to \'pixelfn\'";
+
+	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
 	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)((uint8_t) (rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
 	  // merge pixel data into roc data storage vector
