@@ -304,6 +304,9 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
 }
 
 
+/* ---------------- TEST FUNCTIONS ---------------------- */
+
+std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {}
 
 std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter){
   LOG(logDEBUGHAL) << " called DummyPixelTestSkeleton routine";
