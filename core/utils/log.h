@@ -29,7 +29,7 @@ namespace pxar {
   public:
     Log();
     virtual ~Log();
-    std::ostringstream& Get(TLogLevel level = logINFO);
+    std::ostringstream& Get(TLogLevel level = logINFO, std::string function = "", uint32_t line = 0);
   public:
     static TLogLevel& ReportingLevel();
     static std::string ToString(TLogLevel level);
@@ -57,9 +57,9 @@ namespace pxar {
     return result;
   }
 
-  inline std::ostringstream& Log::Get(TLogLevel level) {
+  inline std::ostringstream& Log::Get(TLogLevel level, std::string function, uint32_t line) {
     os << "[" << NowTime();
-    os << "] " << std::setw(7) << ToString(level) << ": ";
+    os << " " << function << ":" << line << "] " << std::setw(7) << ToString(level) << ": ";
     os << std::string(level > logDEBUG ? level - logDEBUG : 0, '\t');
     return os;
   }
@@ -101,13 +101,13 @@ namespace pxar {
       return logSUMMARY;
     if (level == "QUIET")
       return logQUIET;
-    Log().Get(logWARNING) << "Unknown logging level '" << level << "'. Using WARNING level as default.";
+    Log().Get(logWARNING,"LogInit") << "Unknown logging level '" << level << "'. Using WARNING level as default.";
     return logWARNING;
   }
 
 #define LOG(level)				\
   if (level > Log::ReportingLevel()) ;		\
-  else Log().Get(level)
+  else Log().Get(level,__func__,__LINE__)
 
 } //namespace pxar
 
