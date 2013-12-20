@@ -7,7 +7,7 @@ int main()
 
   // Create new API instance:
   try {
-    _api = new pxar::api();
+    _api = new pxar::api("*","ERROR");
   
     // Try some test or so:
 

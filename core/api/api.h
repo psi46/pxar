@@ -92,7 +92,7 @@ namespace pxar {
     /** Default constructor for the libpxar API
      *  Fetches a new HAL instance and opens the testboard connection
      */
-    api();
+    api(std::string usbId = "*", std::string logLevel = "WARNING");
     /** Default destructor for libpxar API
      */
     ~api();

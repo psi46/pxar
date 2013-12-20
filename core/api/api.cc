@@ -15,9 +15,14 @@
 
 using namespace pxar;
 
-api::api() {
-  //FIXME: once we have config file parsing, we need the DTB name here:
-  _hal = new hal("*");
+api::api(std::string usbId, std::string logLevel) {
+
+  // Set up the libpxar API/HAL logging mechanism:
+  // FIXME
+  std::cout << "Log level: " << logLevel << std::endl;
+
+  // Get a new HAL instance with the DTB USB ID passed to the API constructor:
+  _hal = new hal(usbId);
 
   // Get the DUT up and running:
   _dut = new dut();
