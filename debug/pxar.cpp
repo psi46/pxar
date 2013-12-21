@@ -12,6 +12,14 @@ int main()
   
     // Try some test or so:
 
+    // Create some dummy testboard config, not doing anything right now:
+    std::vector<std::pair<std::string,uint8_t> > sig_delays;
+    std::vector<std::pair<std::string,double> > power_settings;
+    std::vector<std::pair<std::string,uint8_t> > pg_setup;
+    // Initialize the testboard:
+    _api->initTestboard(sig_delays, power_settings, pg_setup);
+
+
     // Create some fake DUT/DAC parameters since we can't read configs yet:
     std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
 
@@ -63,9 +71,6 @@ int main()
 
     // Prepare some empty TBM vector:
     std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
-
-    // Initialize the testboard:
-    _api->initTestboard();
 
     // Initialize the DUT (power it up and stuff):
     _api->initDUT("",tbmDACs,"psi46digV3",rocDACs,rocPixels);
