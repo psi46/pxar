@@ -43,37 +43,74 @@ bool api::initTestboard() {
   return true;
 }
   
-bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
+bool api::initDUT(std::string tbmtype, 
+		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		  std::string roctype,
+		  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		  std::vector<std::vector<pixelConfig> > rocPixels) {
 
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // FIXME read these information from the DUT object:
-  // this is highly incomplete and is only a demonstration for single ROCs
-  //for(nrocs)
+  // First initialized the API's DUT instance with the information supplied.
+  // FIXME TODO: currently values are not checked for sanity! (Num pixels etc.)
 
-  rocConfig newroc;
-  newroc.dacs = dacVector;
-  for (uint8_t column=1;column<=52;column++){
-    for (uint8_t row=1;row<=80;row++){
-      pixelConfig newpix;
-      newpix.row = row;
-      newpix.column = column;
-      newpix.enable = true;
-      newpix.mask = false;
-      newpix.trim = column+row; // arbitray but varying values for debugging
-      newroc.pixels.push_back(newpix);
+  // FIXME check size of rocDACs and rocPixels agains each other
+
+  // Initialize TBMs:
+  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){
+    // Prepare a new TBM configuration
+    tbmConfig newtbm;
+    // Set the TBM type (get value from dictionary)
+    newtbm.type = 0x0; //FIXME stringToType(tbmtype);
+    
+    // Loop over all the DAC settings supplied and fill them into the TBM dacs
+    for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
+
+      // Fill the DAC pairs with the register from the dictionary:
+      uint8_t dacRegister = 0x0; //FIXME stringToRegister(dacIt->first);
+      newtbm.dacs.push_back(std::make_pair(dacRegister,dacIt->second));
     }
-  }
-  newroc.type = 0x0; //ROC_PSI46DIGV2;
-  newroc.enable = true;
-  _dut->roc.push_back(newroc);
 
+    // Done. Enable bit is already set by tbmConfig constructor.
+    _dut->tbm.push_back(newtbm);
+  }
+
+  // Initialize ROCs:
+  size_t nROCs = 0;
+
+  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator rocIt = rocDACs.begin(); rocIt != rocDACs.end(); ++rocIt){
+
+    // Prepare a new ROC configuration
+    rocConfig newroc;
+    // Set the ROC type (get value from dictionary)
+    newroc.type = 0x0; //FIXME stringToType(roctype);
+    
+    // Loop over all the DAC settings supplied and fill them into the ROC dacs
+    for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
+      // Fill the DAC pairs with the register from the dictionary:
+      uint8_t dacRegister = 0x0; //FIXME stringToRegister(dacIt->first);
+      newroc.dacs.push_back(std::make_pair(dacRegister,dacIt->second));
+    }
+
+    // Loop over all pixelConfigs supplied:
+    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt){
+      // Push the pixelConfigs into the rocConfig:
+      newroc.pixels.push_back(*pixIt);
+    }
+
+    // Done. Enable bit is already set by rocConfig constructor.
+    _dut->roc.push_back(newroc);
+    nROCs++;
+  }
+
+  // FIXME start programming the devices here!
+  /*
   for(size_t n = 0; n < _dut->roc.size(); n++) {
     if(_dut->roc[n].enable) _hal->initROC(n,_dut->roc[n].dacs);
   }
+  */
 
-  //if(TBM _hal->initTBM();
   _dut->_initialized = true;
   return true;
 }

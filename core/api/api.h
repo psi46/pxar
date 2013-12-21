@@ -129,12 +129,20 @@ namespace pxar {
      */
     bool initTestboard();
   
-    /** Initializer method for the DUT
-     *  Fills the DUT (the attached device(s))
+    /** Initializer method for the DUT (attached devices)
+     *  This function requires the types and DAC settings for all TBMs and ROCs
+     *  contained in the setup. All values will be checked for validity (DAC
+     *  ranges, position and number of pixels, etc.)
+
+     *  All parameters are supplied via vectors, the size of the vector represents
+     *  the number of devices.
      */
-    bool initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector);
-
-
+    bool initDUT(std::string tbmtype, 
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		 std::string roctype,
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		 std::vector<std::vector<pixelConfig> > rocPixels);
+  
 
     /** DTB fcuntions **/
 
