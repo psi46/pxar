@@ -72,10 +72,14 @@ int32_t dut::getNEnabledRocs() {
 
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
+
   std::vector< pixelConfig > result;
-  if (!status()) return result;
-  // search for pixels that have enable set
-  for (std::vector<pixelConfig>::iterator it = roc.at(0).pixels.begin(); it != roc.at(0).pixels.end(); ++it){
+
+  // Check if DUT is allright and the roc we are looking at exists:
+  if (!status() || !(rocid < roc.size())) return result;
+
+  // Search for pixels that have enable set
+  for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
     if (it->enable) result.push_back(*it);
   }
   return result;
@@ -130,7 +134,8 @@ bool dut::getModuleEnable(){
 
 
 pixelConfig dut::getPixelConfig(size_t rocid, uint8_t column, uint8_t row) {
-  pixelConfig result = {}; // init with 0s
+
+  pixelConfig result; // initialized with 0 by constructor
   if (!status()) return result;
   // find pixel with specified column and row
   std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
@@ -205,8 +210,9 @@ void dut::setAllPixelEnable(bool enable) {
 
 bool dut::status() {
 
-  if(!_initialized)
+  if(!_initialized) {
     LOG(logERROR) << "DUT structure not initialized yet!";
+  }
 
   return _initialized;
 }

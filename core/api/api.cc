@@ -49,11 +49,11 @@ bool api::initDUT(std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
   // this is highly incomplete and is only a demonstration for single ROCs
   //for(nrocs)
 
-  rocConfig newroc = {};
+  rocConfig newroc;
   newroc.dacs = dacVector;
   for (uint8_t column=1;column<=52;column++){
     for (uint8_t row=1;row<=80;row++){
-      pixelConfig newpix = {};
+      pixelConfig newpix;
       newpix.row = row;
       newpix.column = column;
       newpix.enable = true;

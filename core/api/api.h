@@ -12,19 +12,42 @@
 
 namespace pxar {
 
-  /** Struct for storing pixel readout data
+  /** Class for storing pixel readout data
    */
-  struct pixel {
+  class pixel {
+  public:
+  pixel() : roc_id(0), column(0), row(0), value(0) {};
+    /** Function to fill the pixel with linear encoded data from RPC transfer
+     */
+    inline void fill(int32_t address, int32_t data) {
+      // Fill the data
+      value = data;
+      
+      // Split the address and distribute it over ROC, column and row:
+      // pixel column: max(51 -> 110011), requires 6bits
+      // pixel row: max(79 -> 1001111), requires 7bits
+      // roc id: max(15 -> 1111), requires 4bits
+
+      // 32 bits:
+      // -------- ----IIII --CCCCCC -RRRRRRR
+      roc_id = (address>>16)&15;
+      column = (address>>8)&63;
+      row = (address)&127;
+    };
     uint8_t roc_id;
     uint8_t column;
     uint8_t row;
     int32_t value;
   };
 
-  /** Struct to store the configuration for single pixels (i.e. their mask state, trim bit settings
+  /** Class to store the configuration for single pixels (i.e. their mask state, trim bit settings
    *  and the arming state (enable)
    */
-  struct pixelConfig {
+  class pixelConfig {
+  public:
+  pixelConfig() : 
+    column(0), row(0), 
+      trim(15), mask(false), enable(true) {};
     uint8_t column;
     uint8_t row;
     uint8_t trim;
@@ -37,28 +60,32 @@ namespace pxar {
    */
   class dacConfig {
   public:
-    dacConfig() {};
+  dacConfig() : _id(0), _min(0), _max(0) {};
     dacConfig(uint8_t id, uint8_t min, uint8_t max) : _id(id), _min(min), _max(max) {};
     uint8_t _id;
     uint8_t _min;
     uint8_t _max;
   };
 
-  /** Struct for ROC states
+  /** Class for ROC states
    *  Contains a DAC vector for their settings, a type flag and an enable switch
    *  and a vector for pixelConfig
    */
-  struct rocConfig {
+  class rocConfig {
+  public:
+  rocConfig() : pixels(), dacs(), type(0), enable(true) {};
     std::vector< pixelConfig > pixels;
     std::vector< std::pair<uint8_t,uint8_t> > dacs;
     uint8_t type;
     bool enable;
   };
 
-  /** Struct for TBM states
+  /** Class for TBM states
    *  Contains a DAC vector for their settings, a type flag and an enable switch
    */
-  struct tbmConfig {
+  class tbmConfig {
+  public:
+  tbmConfig() : dacs(), type(0), enable(true) {};
     std::vector< std::pair<uint8_t,uint8_t> > dacs;
     uint8_t type;
     bool enable;

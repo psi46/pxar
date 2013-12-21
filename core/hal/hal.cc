@@ -317,7 +317,7 @@ std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, ui
   int32_t dacmax = parameter.at(1);
   for (int i=dacmin;i<dacmax;i++){
     std::vector<pixel> dacscan;
-    pixel newpixel = {};
+    pixel newpixel;
     newpixel.column = column;
     newpixel.row = row;
     newpixel.roc_id = rocid;
@@ -340,7 +340,7 @@ std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std:
     // over the full roc
     for (int column=0;column<52;column++){
       for (int row=0;row<80;row++){
-	pixel newpixel = {};
+	pixel newpixel;
 	newpixel.column = column;
 	newpixel.row = row;
 	newpixel.roc_id = rocid;
@@ -366,7 +366,7 @@ std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int3
       // over the full roc
       for (int column=0;column<52;column++){
 	for (int row=0;row<80;row++){
-	  pixel newpixel = {};
+	  pixel newpixel;
 	  newpixel.column = column;
 	  newpixel.row = row;
 	  newpixel.roc_id = rocid;
