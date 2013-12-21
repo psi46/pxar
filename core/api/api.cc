@@ -6,6 +6,7 @@
 #include "hal.h"
 #include "log.h"
 #include <algorithm>
+#include <stdio.h>
 
 /** Define a macro for calls to member functions through pointers to memeber functions (used in the loop expansion routines).
  *  Follows advice of http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
@@ -83,10 +84,30 @@ bool api::status() {
 
 
 
-/** DTB fcuntions **/
+/** DTB functions **/
 
 bool api::flashTB(std::string filename) {
-  return false;
+
+  if(_hal->status() || _dut->status()) {
+    LOG(logERROR) << "The testboard should only be flashed without initialization"
+		  << " and with all attached DUTs powered down.";
+    LOG(logERROR) << "Please power cycle the testboard and flash directly after startup!";
+    return false;
+  }
+
+  // Try to open the flash file
+  FILE *flashFile;
+  if((flashFile = fopen(filename.c_str(),"r")) == NULL) {
+    LOG(logERROR) << "Could not open specified DTB flash file \"" << filename<< "\"!";
+    return false;
+  }
+
+  // Call the HAL routine to do the flashing:
+  bool status = false;
+  status = _hal->flashTestboard(flashFile);
+  fclose(flashFile);
+  
+  return status;
 }
 
 double api::getTBia() {

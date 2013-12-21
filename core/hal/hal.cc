@@ -98,6 +98,10 @@ void hal::initTestboard() {
   _initialized = true;
 }
 
+bool hal::flashTestboard(FILE * /*flashFile*/) {
+  /* drop DTB upgrade function from psi46expert here */
+}
+
 void hal::initTBM() {
   //FIXME
   /*  SetTBMChannel(configParameters->tbmChannel);
