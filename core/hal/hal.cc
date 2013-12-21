@@ -1,6 +1,7 @@
 #include "hal.h"
 #include "log.h"
 #include "rpc_impl.h"
+#include <fstream>
 
 using namespace pxar;
 
@@ -99,8 +100,73 @@ void hal::initTestboard() {
   _initialized = true;
 }
 
-bool hal::flashTestboard(FILE * /*flashFile*/) {
-  /* drop DTB upgrade function from psi46expert here */
+bool hal::flashTestboard(ifstream * flashFile) {
+
+  if (_testboard->UpgradeGetVersion() == 0x0100) {
+    LOG(logINFO) << "Staring DTB firmware upgrade...";
+
+    // Reading lines of file:
+    string line;
+    size_t file_lines;
+    for (file_lines = 0; getline((*flashFile), line); ++file_lines)
+      ;
+    flashFile->clear(flashFile->goodbit);
+    flashFile->seekg(ios::beg);
+
+    // Check if upgrade is possible
+    if (_testboard->UpgradeStart(0x0100) != 0) {
+      string msg;
+      _testboard->UpgradeErrorMsg(msg);
+      LOG(logCRITICAL) << "UPGRADE: " << msg.data();
+      return false;
+    }
+
+    // Download the flash data
+    string rec;
+    uint16_t recordCount = 0;
+    while (true) {
+      // FIXME not sure LOG works wit flush:
+      LOG(logINFO) << "\rDownload running... " 
+		   << ((int)(100 * recordCount / file_lines)) << " % " << flush;
+      getline((*flashFile), rec);
+      if (flashFile->good()) {
+	if (rec.size() == 0) continue;
+	recordCount++;
+	if (_testboard->UpgradeData(rec) != 0) {
+	  string msg;
+	  _testboard->UpgradeErrorMsg(msg);
+	  LOG(logCRITICAL) << "UPGRADE: " << msg.data();
+	  return false;
+	}
+      }
+      else if (flashFile->eof()) break;
+      else {
+	LOG(logCRITICAL) << "UPGRADE: Error reading file.";
+	return false;
+      }
+    }
+      
+    if (_testboard->UpgradeError() != 0) {
+      string msg;
+      _testboard->UpgradeErrorMsg(msg);
+      LOG(logCRITICAL) << "UPGRADE: " << msg.data();
+      return false;
+    }
+
+    // Write EPCS FLASH
+    LOG(logINFO) << "DTB download complete.";
+    mDelay(200);
+    LOG(logINFO) << "FLASH write start (LED 1..4 on)";
+    LOG(logINFO) << "DO NOT INTERUPT DTB POWER !";
+    LOG(logINFO) << "Wait till LEDs goes off.";
+    LOG(logINFO) << "Power-cycle the DTB.";
+    _testboard->UpgradeExec(recordCount);
+    _testboard->Flush();
+    return true;
+  }
+
+  LOG(logCRITICAL) << "ERROR UPGRADE: Could not upgrade this DTB version!";
+  return false;
 }
 
 void hal::initTBM() {

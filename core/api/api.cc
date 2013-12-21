@@ -7,7 +7,7 @@
 #include "log.h"
 #include "dictionaries.h"
 #include <algorithm>
-#include <stdio.h>
+#include <fstream>
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
@@ -135,8 +135,10 @@ bool api::flashTB(std::string filename) {
   }
 
   // Try to open the flash file
-  FILE *flashFile;
-  if((flashFile = fopen(filename.c_str(),"r")) == NULL) {
+  ifstream *flashFile;
+
+  flashFile->open(filename.c_str());
+  if(!flashFile->is_open()) {
     LOG(logERROR) << "Could not open specified DTB flash file \"" << filename<< "\"!";
     return false;
   }
@@ -144,7 +146,7 @@ bool api::flashTB(std::string filename) {
   // Call the HAL routine to do the flashing:
   bool status = false;
   status = _hal->flashTestboard(flashFile);
-  fclose(flashFile);
+  flashFile->close();
   
   return status;
 }
