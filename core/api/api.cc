@@ -106,7 +106,7 @@ bool api::initDUT(std::string tbmtype,
     nROCs++;
   }
 
-  // FIXME start programming the devices here!
+  // FIXME start programming the devices here! WATCH OUT, DICTIONARIES REQUIRED BEFORE!
   /*
   for(size_t n = 0; n < _dut->roc.size(); n++) {
     if(_dut->roc[n].enable) _hal->initROC(n,_dut->roc[n].dacs);
