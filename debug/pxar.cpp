@@ -72,8 +72,14 @@ int main()
     // Prepare some empty TBM vector:
     std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
 
+    // Read DUT info, should result in error message, not initialized:
+    _api->_dut->info();
+
     // Initialize the DUT (power it up and stuff):
     _api->initDUT("",tbmDACs,"psi46digV3",rocDACs,rocPixels);
+
+    // Read DUT info, should print above filled information:
+    _api->_dut->info();
 
     // Read current:
     std::cout << "Analog current: " << _api->getTBia()*1000 << "mA" << std::endl;
