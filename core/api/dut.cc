@@ -9,7 +9,7 @@
 
 using namespace pxar;
 
-/* ===================================================================================================== */
+/* =========================================================================== */
 
 /** Helper class to search vectors of pixelConfig, rocConfig and dacConfig for 'enable' bit
  */
@@ -46,7 +46,7 @@ public:
 };
 
 
-/* ===================================================================================================== */
+/* =========================================================================== */
 
 /** DUT class functions **/
 
@@ -54,8 +54,21 @@ int32_t dut::getNEnabledPixels() {
   if (!status()) return 0;
   // loop over result, count enabled pixel
   int32_t count = 0;
+  // We currently hide the possibility to enable pixels on some ROCs only,
+  // so looking at ROC 0 as default is safe:
   for (std::vector<pixelConfig>::iterator it = roc.at(0).pixels.begin(); it != roc.at(0).pixels.end(); ++it){
     if (it->enable) count++;
+  }
+  return count;
+}
+
+int32_t dut::getNMaskedPixels(size_t rocid) {
+  if (!status() || !(rocid < roc.size())) return 0;
+  // loop over result, count masked pixel
+  int32_t count = 0;
+
+  for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
+    if (it->mask) count++;
   }
   return count;
 }
@@ -69,6 +82,17 @@ int32_t dut::getNEnabledRocs() {
   }
   return count;
 }
+
+int32_t dut::getNEnabledTbms() {
+  if (!status()) return 0;
+  // loop over result, count enabled TBMs
+  int32_t count = 0;
+  for (std::vector<tbmConfig>::iterator it = tbm.begin(); it != tbm.end(); ++it){
+    if (it->enable) count++;
+  }
+  return count;
+}
+
 
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
@@ -154,8 +178,8 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {}
 std::vector<std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {}
 
 void dut::printDACs(size_t rocId) {
-  
-  if(rocId < roc.size()) {
+
+  if(status() && rocId < roc.size()) {
     LOG(logINFO) << "Printing current DAC settings for ROC " << rocId << ":";
     for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
@@ -180,19 +204,37 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
     tbm[tbmId].enable = enable;
 }
 
+void dut:: setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask) {
+
+  if(status() && rocid < roc.size()) {
+    // Find pixel with specified column and row
+    std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
+							 roc.at(rocid).pixels.end(),
+							 findPixelXY(column,row));
+    // Set mask:
+    if(it != roc.at(rocid).pixels.end()){
+      it->mask = mask;
+    } else {
+      LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int)(rocid)<< "!" ;
+    }
+  }
+}
+
 void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {
 
-  // loop over all rocs (not strictly needed but used for consistency)
-  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
-    // find pixel with specified column and row
-    std::vector<pixelConfig>::iterator it = std::find_if(rocit->pixels.begin(),
-							 rocit->pixels.end(),
-							 findPixelXY(column,row));
-    // set enable
-    if(it != rocit->pixels.end()){
-      it->enable = enable;
-    } else {
-      LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int) (rocit - roc.begin())<< "!" ;
+  if(status()) {
+    // loop over all rocs (not strictly needed but used for consistency)
+    for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+      // find pixel with specified column and row
+      std::vector<pixelConfig>::iterator it = std::find_if(rocit->pixels.begin(),
+							   rocit->pixels.end(),
+							   findPixelXY(column,row));
+      // set enable
+      if(it != rocit->pixels.end()){
+	it->enable = enable;
+      } else {
+	LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int) (rocit - roc.begin())<< "!" ;
+      }
     }
   }
 }

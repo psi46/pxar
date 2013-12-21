@@ -356,6 +356,14 @@ namespace pxar {
      */
     int32_t getNEnabledPixels();
 
+    /** Function returning the number of masked pixels on a specific ROC:
+     */
+    int32_t getNMaskedPixels(size_t rocid);
+
+    /** Function returning the number of enabled TBMs:
+     */
+    int32_t getNEnabledTbms();
+
     /** Function returning the number of enabled ROCs:
      */
     int32_t getNEnabledRocs();
@@ -410,6 +418,10 @@ namespace pxar {
     /** Function to enable the given pixel on all ROCs:
      */
     void setPixelEnable(uint8_t column, uint8_t row, bool enable);
+
+    /** Function to mask the given pixel on a specific ROC:
+     */
+    void setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask);
 
     /** Function to enable all pixels on all ROCs:
      */
