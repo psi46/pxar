@@ -1,7 +1,4 @@
-# Build pXar test exe:
-ADD_EXECUTABLE(testpxar "pxar.cpp" "pxar.h" )
-TARGET_LINK_LIBRARIES(testpxar ${PROJECT_NAME} ${FTDI_LINK_LIBRARY} )
-
+# Build pXar executables:
 INCLUDE_DIRECTORIES( . )
 
 # ROOT provides, well, ROOT:
@@ -61,7 +58,7 @@ target_link_libraries(pxarui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRA
 add_executable(pxarGui pXar.cc ${pxarGui_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/pxarGuiDict.cxx)
 target_link_libraries(pxarGui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
-INSTALL(TARGETS pxarui pxarGui testpxar
+INSTALL(TARGETS pxarui pxarGui
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

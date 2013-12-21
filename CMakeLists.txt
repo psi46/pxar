@@ -155,3 +155,11 @@ IF(BUILD_pxarui)
   ADD_SUBDIRECTORY(gui)
 
 ENDIF(BUILD_pxarui)
+
+option(BUILD_pxardebug  "Compile pXar debug executable?" OFF)
+IF(BUILD_pxardebug)
+
+  # Build the pXar debug executable
+  ADD_SUBDIRECTORY(debug)
+
+ENDIF(BUILD_pxardebug)
