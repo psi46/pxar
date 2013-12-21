@@ -37,7 +37,9 @@ api::~api() {
   delete _hal;
 }
 
-bool api::initTestboard() {
+bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
+                       std::vector<std::pair<std::string,double> > power_settings,
+                       std::vector<std::pair<std::string,uint8_t> > pg_setup) {
   //FIXME Anything we need to do here? Probably depends on how we get the config...
   _hal->initTestboard();
   return true;

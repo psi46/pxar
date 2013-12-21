@@ -125,9 +125,14 @@ namespace pxar {
     ~api();
 
     /** Initializer method for the testboard
-     *  Initializes the tesboard with delay and voltage/current limit settings
+     *  Initializes the tesboard with signal delay settings, and voltage/current
+     *  limit settings (power_settings) and the initial pattern generator setup
+     *  (pg_setup), all provided via vectors of pairs with descriptive name.
+     *  Name lookup via central dictionaries.
      */
-    bool initTestboard();
+    bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
+                       std::vector<std::pair<std::string,double> > power_settings,
+                       std::vector<std::pair<std::string,uint8_t> > pg_setup);
   
     /** Initializer method for the DUT (attached devices)
      *  This function requires the types and DAC settings for all TBMs and ROCs
