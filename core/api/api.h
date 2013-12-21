@@ -352,6 +352,10 @@ namespace pxar {
 
     /** GET functions to read information **/
 
+    /** Info function printing a listing of the current DUT objects and their states
+     */
+    void info();
+
     /** Function returning the number of enabled pixels on each ROC:
      */
     int32_t getNEnabledPixels();

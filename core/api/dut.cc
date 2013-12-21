@@ -50,6 +50,37 @@ public:
 
 /** DUT class functions **/
 
+void dut::info() {
+  if (status()) {
+    LOG(logINFO) << "The DUT currently contains the following objects:";
+
+    LOG(logINFO) << std::setw(2) << tbm.size() << " TBMs (" << getNEnabledTbms() 
+		 << " ON)";
+
+    size_t nTBMs = 0;
+    for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
+      LOG(logINFO) << "\tTBM " << nTBMs << ": " 
+		   << (*tbmIt).dacs.size() << " DACs set";
+      nTBMs++;
+    }
+
+    // We currently hide the possibility to enable pixels on some ROCs only,
+    // so looking at ROC 0 as default is safe:
+    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs (" << getNEnabledRocs() 
+		 << " ON) with " << roc.at(0).pixels.size() << " pixelConfigs (" 
+		 << getNEnabledPixels() << " ON).";
+
+    size_t nROCs = 0;
+    for(std::vector<rocConfig>::iterator rocIt = roc.begin(); rocIt != roc.end(); rocIt++) {
+      LOG(logINFO) << "\tROC " << nROCs << ": " 
+		   << (*rocIt).dacs.size() << " DACs set, " 
+		   << getNMaskedPixels(nROCs) << " pixels masked";
+      
+      nROCs++;
+    }
+  }
+}
+
 int32_t dut::getNEnabledPixels() {
   if (!status()) return 0;
   // loop over result, count enabled pixel
