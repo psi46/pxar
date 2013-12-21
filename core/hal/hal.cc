@@ -66,8 +66,9 @@ hal::~hal() {
 
 bool hal::status() {
 
-  if(!_initialized)
+  if(!_initialized) {
     LOG(logERROR) << "Testboard not initialized yet!";
+  }
 
   return _initialized;
 }
@@ -156,18 +157,21 @@ void hal::CheckCompatibility(){
       std::string host_callname;
 
       if(id < dtb_callcount) {
-	if(!_testboard->GetRpcCallName(id,dtb_callname)) 
+	if(!_testboard->GetRpcCallName(id,dtb_callname)) {
 	  LOG(logERROR) << "Error in fetching DTB RPC call name.";
+	}
       }
       if(id < host_callcount) {
-	if(!_testboard->GetHostRpcCallName(id,host_callname)) 
+	if(!_testboard->GetHostRpcCallName(id,host_callname)) {
 	  LOG(logERROR) << "Error in fetching host RPC call name.";
+	}
       }
 
-      if(dtb_callname.compare(host_callname) != 0) 
+      if(dtb_callname.compare(host_callname) != 0) {
 	LOG(logERROR) << "ID " << id 
 		  << ": (DTB) \"" << dtb_callname 
 		  << "\" != (Host) \"" << host_callname << "\"";
+      }
     }
 
     // For now, just print a message and don't to anything else:
