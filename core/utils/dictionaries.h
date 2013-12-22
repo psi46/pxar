@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <stdint.h>
+#include "constants.h"
 
 namespace pxar {
 

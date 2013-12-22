@@ -55,18 +55,6 @@ namespace pxar {
     bool enable;
   };
 
-  /** class to store a DAC config
-   *  contains register id and valid range of the DAC
-   */
-  class dacConfig {
-  public:
-  dacConfig() : _id(0), _min(0), _max(0) {};
-    dacConfig(uint8_t id, uint8_t min, uint8_t max) : _id(id), _min(min), _max(max) {};
-    uint8_t _id;
-    uint8_t _min;
-    uint8_t _max;
-  };
-
   /** Class for ROC states
    *  Contains a DAC vector for their settings, a type flag and an enable switch
    *  and a vector for pixelConfig
