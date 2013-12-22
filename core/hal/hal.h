@@ -35,7 +35,7 @@ namespace pxar {
     /** Flashes the given firmware file to the testboard FPGA
      *  Powers down the DUT first.
      */
-    bool flashTestboard(ifstream * flashFile);
+    bool flashTestboard(std::ifstream& flashFile);
 
     /** Initialize attached TBMs with their settings and configuration
      */

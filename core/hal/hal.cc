@@ -100,7 +100,7 @@ void hal::initTestboard() {
   _initialized = true;
 }
 
-bool hal::flashTestboard(ifstream * flashFile) {
+bool hal::flashTestboard(std::ifstream& flashFile) {
 
   if (_testboard->UpgradeGetVersion() == 0x0100) {
     LOG(logINFO) << "Staring DTB firmware upgrade...";
@@ -108,10 +108,10 @@ bool hal::flashTestboard(ifstream * flashFile) {
     // Reading lines of file:
     string line;
     size_t file_lines;
-    for (file_lines = 0; getline((*flashFile), line); ++file_lines)
+    for (file_lines = 0; getline(flashFile, line); ++file_lines)
       ;
-    flashFile->clear(flashFile->goodbit);
-    flashFile->seekg(ios::beg);
+    flashFile.clear(flashFile.goodbit);
+    flashFile.seekg(ios::beg);
 
     // Check if upgrade is possible
     if (_testboard->UpgradeStart(0x0100) != 0) {
@@ -128,8 +128,8 @@ bool hal::flashTestboard(ifstream * flashFile) {
       // FIXME not sure LOG works wit flush:
       LOG(logINFO) << "\rDownload running... " 
 		   << ((int)(100 * recordCount / file_lines)) << " % " << flush;
-      getline((*flashFile), rec);
-      if (flashFile->good()) {
+      getline(flashFile, rec);
+      if (flashFile.good()) {
 	if (rec.size() == 0) continue;
 	recordCount++;
 	if (_testboard->UpgradeData(rec) != 0) {
@@ -139,7 +139,7 @@ bool hal::flashTestboard(ifstream * flashFile) {
 	  return false;
 	}
       }
-      else if (flashFile->eof()) break;
+      else if (flashFile.eof()) break;
       else {
 	LOG(logCRITICAL) << "UPGRADE: Error reading file.";
 	return false;

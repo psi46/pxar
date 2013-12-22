@@ -137,18 +137,19 @@ bool api::flashTB(std::string filename) {
   }
 
   // Try to open the flash file
-  ifstream *flashFile;
+  std::ifstream flashFile;
 
-  flashFile->open(filename.c_str());
-  if(!flashFile->is_open()) {
+  LOG(logINFO) << "Trying to open " << filename;
+  flashFile.open(filename.c_str(), std::ifstream::in);
+  if(!flashFile.is_open()) {
     LOG(logERROR) << "Could not open specified DTB flash file \"" << filename<< "\"!";
     return false;
   }
-
+  
   // Call the HAL routine to do the flashing:
   bool status = false;
   status = _hal->flashTestboard(flashFile);
-  flashFile->close();
+  flashFile.close();
   
   return status;
 }

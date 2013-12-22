@@ -19,7 +19,8 @@ int main()
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
 
-
+    //_api->flashTB("/tmp/dtb_v0111.flash");
+    
     // Create some fake DUT/DAC parameters since we can't read configs yet:
     std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
 
@@ -121,7 +122,7 @@ int main()
 	std::cout << "       pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value <<  std::endl;
       }
     }
-
+    
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
     delete _api;
