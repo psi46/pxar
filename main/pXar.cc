@@ -57,15 +57,75 @@ int main(int argc, char *argv[]){
   pxar::api *api = 0;
   if (1) {
     try {
-      api = new pxar::api();
-      api->initTestboard();
+      api = new pxar::api("*","DEBUG");
+      std::vector<std::pair<std::string,uint8_t> > sig_delays;
+      std::vector<std::pair<std::string,double> > power_settings;
+      std::vector<std::pair<std::string,uint8_t> > pg_setup;
+      api->initTestboard(sig_delays, power_settings, pg_setup);
     } catch (...) {
       cout << "pxar caught an exception from the board. Exiting." << endl;
       return -1;
     }
   }
+
   
+  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
+  std::vector<std::pair<std::string,uint8_t> > dacs;
+  dacs.push_back(std::make_pair("Vdig",6));
+  dacs.push_back(std::make_pair("Vana",84));
+  dacs.push_back(std::make_pair("Vsf",30));
+  dacs.push_back(std::make_pair("Vcomp",12));
+  dacs.push_back(std::make_pair("VwllPr",60));
+  dacs.push_back(std::make_pair("VwllSh",60));
+  dacs.push_back(std::make_pair("VhldDel",230));
+  dacs.push_back(std::make_pair("Vtrim",29));
+  dacs.push_back(std::make_pair("VthrComp",86));
+  dacs.push_back(std::make_pair("VIBias_Bus",1));
+  dacs.push_back(std::make_pair("Vbias_sf",6));
+  dacs.push_back(std::make_pair("VoffsetOp",40));
+  dacs.push_back(std::make_pair("VOffsetR0",129));
+  dacs.push_back(std::make_pair("VIon",120));
+  dacs.push_back(std::make_pair("Vcomp_ADC",100));
+  dacs.push_back(std::make_pair("VIref_ADC",91));
+  dacs.push_back(std::make_pair("VIbias_roc",150));
+  dacs.push_back(std::make_pair("VIColOr",50));
+  dacs.push_back(std::make_pair("Vcal",200));
+  dacs.push_back(std::make_pair("CalDel",122));
+  dacs.push_back(std::make_pair("CtrlReg",0));
+  dacs.push_back(std::make_pair("WBC",100));
+  rocDACs.push_back(dacs);
+
+    // Get some pixelConfigs up and running:
+    std::vector<std::vector<pxar::pixelConfig> > rocPixels;
+    std::vector<pxar::pixelConfig> pixels;
+
+    for(int col = 0; col < 52; col++) {
+      for(int row = 0; row < 80; row++) {
+	pxar::pixelConfig newpix;
+	newpix.column = col;
+	newpix.row = row;
+	//Trim: fill random value, should report fail as soon as we have range checks:
+	newpix.trim = row;
+	newpix.mask = false;
+	newpix.enable = true;
+
+	pixels.push_back(newpix);
+      }
+    }
+    rocPixels.push_back(pixels);
+
   
+  // Initialize the DUT (power it up and stuff):
+  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
+  api->initDUT("", tbmDACs, "psi46digV3", rocDACs, rocPixels);
+
+
+  api->_dut->setAllPixelEnable(false);
+  api->_dut->setPixelEnable(34,12,true);
+  api->_dut->setPixelEnable(33,12,true);
+  api->_dut->setPixelEnable(34,11,true);
+  api->_dut->setPixelEnable(14,12,true);
+
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   
   ConfigParameters *configParameters = ConfigParameters::Singleton();
