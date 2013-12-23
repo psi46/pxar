@@ -28,9 +28,9 @@ public:
   std::string getDebugFileName()          {return fDebugFileName;}
   std::string getDirectory()              {return fDirectory;}
 
-  std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
-  std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
-  std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
+  std::vector<std::pair<std::string, unsigned char> > readDacFile(std::string fname);
+  std::vector<std::vector<std::pair<std::string, unsigned char> > > getRocDacs();
+  std::vector<std::vector<std::pair<std::string, unsigned char> > > getTbmDacs();
   //  std::vector<std::vector<std::pair<std::string,uint8_t> > > getTbParameters();
 
   void setTBParameterFileName(const std::string &filename);

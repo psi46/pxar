@@ -170,8 +170,8 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
 
 // ----------------------------------------------------------------------
-vector<pair<string,uint8_t> > ConfigParameters::readDacFile(string fname) {
-  vector<pair<string,uint8_t> > rocDacs; 
+vector<pair<string,unsigned char> > ConfigParameters::readDacFile(string fname) {
+  vector<pair<string,unsigned char> > rocDacs; 
 
   // -- read in file
   vector<string> lines; 
@@ -185,7 +185,7 @@ vector<pair<string,uint8_t> > ConfigParameters::readDacFile(string fname) {
 
   // -- parse lines
   unsigned int ival(0); 
-  uint8_t uval(0); 
+  unsigned char uval(0); 
   
   string::size_type s1, s2; 
   string str1, str2, str3;
@@ -218,15 +218,15 @@ vector<pair<string,uint8_t> > ConfigParameters::readDacFile(string fname) {
 }
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<std::pair<std::string,uint8_t> > > ConfigParameters::getRocDacs() {
+std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameters::getRocDacs() {
 
-  vector<vector<pair<string,uint8_t> > > allDacs; 
+  vector<vector<pair<string,unsigned char> > > allDacs; 
   string filename; 
 
   for (int i = 0; i < fnRocs; ++i) {
     filename = Form("%s_C%d.dat", fDACParametersFileName.c_str(), i); 
     cout << "reading " << filename << endl;
-    std::vector<std::pair<std::string,uint8_t> > rocDacs = readDacFile(filename); 
+    std::vector<std::pair<std::string,unsigned char> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
 
@@ -235,16 +235,16 @@ std::vector<std::vector<std::pair<std::string,uint8_t> > > ConfigParameters::get
 
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<std::pair<std::string,uint8_t> > > ConfigParameters::getTbmDacs() {
+std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameters::getTbmDacs() {
 
-  vector<vector<pair<string,uint8_t> > > allDacs; 
+  vector<vector<pair<string,unsigned char> > > allDacs; 
   string filename; 
 
   // FIXME changing naming scheme for TBMs to incorporate the possible case of >1 TBMs
   for (int i = 0; i < fnTbms; ++i) {
     filename = Form("%s", fTbmParametersFileName.c_str()); 
     cout << "reading " << filename << endl;
-    std::vector<std::pair<std::string,uint8_t> > rocDacs = readDacFile(filename); 
+    std::vector<std::pair<std::string,unsigned char> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
 
