@@ -7,11 +7,25 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <TString.h>
+
 #include "ConfigParameters.hh"
 
 using namespace std;
 
 ConfigParameters * ConfigParameters::fInstance = 0;
+
+bool BothAreSpaces(char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); }
+
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if(from.empty())
+        return;
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}
 
 // ----------------------------------------------------------------------
 ConfigParameters::ConfigParameters() {
@@ -31,6 +45,7 @@ void ConfigParameters::initialize() {
   cout << fTBName << endl;
 
   fnRocs = 16;
+  fnTbms = 1; 
   fnModules = 1;
   fHubId = 31;
   
@@ -151,6 +166,89 @@ bool ConfigParameters::readConfigParameterFile(string file) {
   _input.close();
 
   return true;
+}
+
+
+// ----------------------------------------------------------------------
+vector<pair<string,uint8_t> > ConfigParameters::readDacFile(string fname) {
+  vector<pair<string,uint8_t> > rocDacs; 
+
+  // -- read in file
+  vector<string> lines; 
+  char  buffer[5000];
+  cout << "reading " << fname << endl;
+  ifstream is(fname.c_str());
+  while (is.getline(buffer, 200, '\n')) {
+    lines.push_back(string(buffer));
+  }
+  is.close();
+
+  // -- parse lines
+  unsigned int ival(0); 
+  uint8_t uval(0); 
+  
+  string::size_type s1, s2; 
+  string str1, str2, str3;
+  for (unsigned int i = 0; i < lines.size(); ++i) {
+    //    cout << lines[i] << endl;   
+    // -- remove tabs, adjacent spaces, leading and trailing spaces
+    replaceAll(lines[i], "\t", " "); 
+    std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
+    lines[i].erase(new_end, lines[i].end()); 
+    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
+    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
+    s1 = lines[i].find(" "); 
+    s2 = lines[i].rfind(" "); 
+    if (s1 != s2) {
+      str1 = lines[i].substr(0, s1); 
+      str2 = lines[i].substr(s1+1, s2-s1); 
+      str3 = lines[i].substr(s2+1); 
+    } else {
+      cout << "could not read line -->" << lines[i] << "<--" << endl;
+    }
+    
+    ival = atoi(str3.c_str()); 
+    uval = ival; //FIXME DOES NOT WORK
+    //    cout << "  -->  " << str2 << " ival = " << ival << " uval = " << uval << endl;
+    rocDacs.push_back(make_pair(str2, uval)); 
+
+  }
+
+  return rocDacs; 
+}
+
+// ----------------------------------------------------------------------
+std::vector<std::vector<std::pair<std::string,uint8_t> > > ConfigParameters::getRocDacs() {
+
+  vector<vector<pair<string,uint8_t> > > allDacs; 
+  string filename; 
+
+  for (int i = 0; i < fnRocs; ++i) {
+    filename = Form("%s_C%d.dat", fDACParametersFileName.c_str(), i); 
+    cout << "reading " << filename << endl;
+    std::vector<std::pair<std::string,uint8_t> > rocDacs = readDacFile(filename); 
+    allDacs.push_back(rocDacs); 
+  }
+
+  return allDacs; 
+}
+
+
+// ----------------------------------------------------------------------
+std::vector<std::vector<std::pair<std::string,uint8_t> > > ConfigParameters::getTbmDacs() {
+
+  vector<vector<pair<string,uint8_t> > > allDacs; 
+  string filename; 
+
+  // FIXME changing naming scheme for TBMs to incorporate the possible case of >1 TBMs
+  for (int i = 0; i < fnTbms; ++i) {
+    filename = Form("%s", fTbmParametersFileName.c_str()); 
+    cout << "reading " << filename << endl;
+    std::vector<std::pair<std::string,uint8_t> > rocDacs = readDacFile(filename); 
+    allDacs.push_back(rocDacs); 
+  }
+
+  return allDacs; 
 }
 
 

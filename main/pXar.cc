@@ -54,6 +54,27 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
   }
 
+  ConfigParameters *configParameters = ConfigParameters::Singleton();
+  configParameters->setDirectory(dir);
+  string cfgFile = configParameters->getDirectory() + string("/configParameters.dat");
+  cout << cfgFile << endl;
+  if (!configParameters->readConfigParameterFile(cfgFile))
+    return 1;
+  
+  vector<vector<pair<string,uint8_t> > > rocDACs = configParameters->getRocDacs(); 
+  cout << "rocDACs.size() = " << rocDACs.size() << endl;
+  for (int i = 0; i < rocDACs.size(); ++i) {
+    vector<pair<string,uint8_t> > a = rocDACs[i]; 
+    cout << "a.size() = " << a.size() << endl;
+    for (int j = 0; j < a.size(); ++j) {
+      cout << a[j].first << ": " << a[j].second << endl;
+    }
+  }
+      
+  vector<vector<pair<string,uint8_t> > > tbmDACs = configParameters->getTbmDacs(); 
+    
+  return 0 ;
+
   pxar::api *api = 0;
   if (1) {
     try {
@@ -68,32 +89,33 @@ int main(int argc, char *argv[]){
     }
   }
 
+
   
-  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
-  std::vector<std::pair<std::string,uint8_t> > dacs;
-  dacs.push_back(std::make_pair("Vdig",6));
-  dacs.push_back(std::make_pair("Vana",84));
-  dacs.push_back(std::make_pair("Vsf",30));
-  dacs.push_back(std::make_pair("Vcomp",12));
-  dacs.push_back(std::make_pair("VwllPr",60));
-  dacs.push_back(std::make_pair("VwllSh",60));
-  dacs.push_back(std::make_pair("VhldDel",230));
-  dacs.push_back(std::make_pair("Vtrim",29));
-  dacs.push_back(std::make_pair("VthrComp",86));
-  dacs.push_back(std::make_pair("VIBias_Bus",1));
-  dacs.push_back(std::make_pair("Vbias_sf",6));
-  dacs.push_back(std::make_pair("VoffsetOp",40));
-  dacs.push_back(std::make_pair("VOffsetR0",129));
-  dacs.push_back(std::make_pair("VIon",120));
-  dacs.push_back(std::make_pair("Vcomp_ADC",100));
-  dacs.push_back(std::make_pair("VIref_ADC",91));
-  dacs.push_back(std::make_pair("VIbias_roc",150));
-  dacs.push_back(std::make_pair("VIColOr",50));
-  dacs.push_back(std::make_pair("Vcal",200));
-  dacs.push_back(std::make_pair("CalDel",122));
-  dacs.push_back(std::make_pair("CtrlReg",0));
-  dacs.push_back(std::make_pair("WBC",100));
-  rocDACs.push_back(dacs);
+//   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
+//   std::vector<std::pair<std::string,uint8_t> > dacs;
+//   dacs.push_back(std::make_pair("Vdig",6));
+//   dacs.push_back(std::make_pair("Vana",84));
+//   dacs.push_back(std::make_pair("Vsf",30));
+//   dacs.push_back(std::make_pair("Vcomp",12));
+//   dacs.push_back(std::make_pair("VwllPr",60));
+//   dacs.push_back(std::make_pair("VwllSh",60));
+//   dacs.push_back(std::make_pair("VhldDel",230));
+//   dacs.push_back(std::make_pair("Vtrim",29));
+//   dacs.push_back(std::make_pair("VthrComp",86));
+//   dacs.push_back(std::make_pair("VIBias_Bus",1));
+//   dacs.push_back(std::make_pair("Vbias_sf",6));
+//   dacs.push_back(std::make_pair("VoffsetOp",40));
+//   dacs.push_back(std::make_pair("VOffsetR0",129));
+//   dacs.push_back(std::make_pair("VIon",120));
+//   dacs.push_back(std::make_pair("Vcomp_ADC",100));
+//   dacs.push_back(std::make_pair("VIref_ADC",91));
+//   dacs.push_back(std::make_pair("VIbias_roc",150));
+//   dacs.push_back(std::make_pair("VIColOr",50));
+//   dacs.push_back(std::make_pair("Vcal",200));
+//   dacs.push_back(std::make_pair("CalDel",122));
+//   dacs.push_back(std::make_pair("CtrlReg",0));
+//   dacs.push_back(std::make_pair("WBC",100));
+//   rocDACs.push_back(dacs);
 
     // Get some pixelConfigs up and running:
     std::vector<std::vector<pxar::pixelConfig> > rocPixels;
@@ -114,10 +136,14 @@ int main(int argc, char *argv[]){
     }
     rocPixels.push_back(pixels);
 
+
+  TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
+  
   
   // Initialize the DUT (power it up and stuff):
-  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
-  api->initDUT("", tbmDACs, "psi46digV3", rocDACs, rocPixels);
+  cout << "calling initDUT" << endl;
+  api->initDUT("", tbmDACs, "psi46digV2", rocDACs, rocPixels);
+  cout << "called initDUT" << endl;
 
 
   api->_dut->setAllPixelEnable(false);
@@ -126,16 +152,11 @@ int main(int argc, char *argv[]){
   api->_dut->setPixelEnable(34,11,true);
   api->_dut->setPixelEnable(14,12,true);
 
-  TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
-  
-  ConfigParameters *configParameters = ConfigParameters::Singleton();
-  configParameters->setDirectory(dir);
-  string cfgFile = configParameters->getDirectory() + string("/configParameters.dat");
-  cout << cfgFile << endl;
-  if (!configParameters->readConfigParameterFile(cfgFile))
-    return 1;
-  
+ 
   cout << "pxar>  Setting up the testboard interface ..." << endl;
+
+  string dacFile = configParameters->getDirectory() + string("/dacParameters_C0.dat");
+  std::vector<std::pair<std::string,uint8_t> > asd = configParameters->readDacFile(dacFile); 
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getTestParametersFileName()); 
 
