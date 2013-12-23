@@ -86,25 +86,23 @@ void PixTestAlive::doTest() {
   cout << "PixTestAlive::doTest() ntrig = " << fParNtrig << endl;
   clearHist();
   // -- FIXME: Should/could separate better test from display?
-  // -- FIXME: loop over range from DUT
-  for (int ichip = 0; ichip < 16; ++ichip) {
-    vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
-    cout << " results.size(): " << results.size() << endl;
-    TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
-    if (h) {
-      for (int i = 0; i < results.size(); ++i) {
-	h->SetBinContent(i/NROW+1, i%NROW+1, static_cast<float>(results[i].value)/fParNtrig); 
-      }
-    } else {
-      cout << "XX did not find " << Form("PixelAlive_C%d", ichip) << endl;
+  int ichip(0); 
+  vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
+  cout << " results.size(): " << results.size() << endl;
+  TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
+  if (h) {
+    for (int i = 0; i < results.size(); ++i) {
+      h->SetBinContent(i/NROW+1, i%NROW+1, static_cast<float>(results[i].value)/fParNtrig); 
     }
-    //    cout << "done with doTest" << endl;
-    h->Draw("colz");
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    cout << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
-	 << " begin? " << (fDisplayedHist == fHistList.begin())
-	 << " end? " << (fDisplayedHist == fHistList.end())
-	 << endl;
-    PixTest::update(); 
+  } else {
+    cout << "XX did not find " << Form("PixelAlive_C%d", ichip) << endl;
   }
+  //    cout << "done with doTest" << endl;
+  h->Draw("colz");
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  cout << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
+       << " begin? " << (fDisplayedHist == fHistList.begin())
+       << " end? " << (fDisplayedHist == fHistList.end())
+       << endl;
+  PixTest::update(); 
 }
