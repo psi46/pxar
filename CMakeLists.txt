@@ -163,3 +163,17 @@ IF(BUILD_pxardebug)
   ADD_SUBDIRECTORY(debug)
 
 ENDIF(BUILD_pxardebug)
+
+
+##################################################
+# Doxygen target to generate API documentation   #
+##################################################
+FIND_PACKAGE(Doxygen)
+IF(DOXYGEN_FOUND)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
+  ADD_CUSTOM_TARGET(doc
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+ENDIF(DOXYGEN_FOUND)
