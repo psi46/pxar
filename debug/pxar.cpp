@@ -103,7 +103,7 @@ int main()
     _api->_dut->setPixelEnable(14,12,true);
 
     // Mask some pixels, just because we can:
-    _api->_dut->setPixelMask(0,33,11,true);
+    //_api->maskPixel(0,33,11,true);
 
     // debug some DUT implementation details
     std::cout << " have " << _api->_dut->getNEnabledPixels() << " pixels set to enabled" << std::endl;

@@ -416,10 +416,6 @@ namespace pxar {
      */
     void setPixelEnable(uint8_t column, uint8_t row, bool enable);
 
-    /** Function to mask the given pixel on a specific ROC:
-     */
-    void setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask);
-
     /** Function to enable all pixels on all ROCs:
      */
     void setAllPixelEnable(bool enable);
@@ -439,6 +435,11 @@ namespace pxar {
 
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;
+
+    /** Function to mask the given pixel on a specific ROC
+     *  This function needs to be private since also device programming is needed.
+     */
+    void setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask);
 
   }; //class DUT
 
