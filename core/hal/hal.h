@@ -142,6 +142,13 @@ namespace pxar {
      */
     bool rocSetDACs(uint8_t rocId, std::vector< std::pair<uint8_t, uint8_t> > dacPairs);
 
+    /** Mask all pixels on a specific ROC rocId
+     */
+    void rocMask(uint8_t rocid, std::vector<int32_t> parameter);
+
+    /** Mask the specified pixel on ROC rocId
+     */
+    void pixelMask(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     /** TESTBOARD SET COMMANDS **/
     /** Set the testboard analog current limit

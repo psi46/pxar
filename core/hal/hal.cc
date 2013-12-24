@@ -377,6 +377,21 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
   return true;
 }
 
+void hal::rocMask(uint8_t rocid, std::vector<int32_t> parameter) {
+  
+  LOG(logDEBUGHAL) << "Masking full ROC ID " << rocid;
+  _testboard->roc_I2cAddr(rocid);
+  _testboard->roc_Chip_Mask();
+}
+
+void hal::pixelMask(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  LOG(logDEBUGHAL) << "Masking pixel " << column << "," << row 
+		   << "on ROC ID " << rocid;
+  _testboard->roc_I2cAddr(rocid);
+  _testboard->roc_Pix_Mask(column, row);
+
+}
 
 /* ---------------- TEST FUNCTIONS ---------------------- */
 
