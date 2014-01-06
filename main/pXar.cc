@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
     vector<pair<string,uint8_t> > a = rocDACs[i]; 
     cout << "ROC " << i << " a.size() = " << a.size() << endl;
     for (unsigned int j = 0; j < a.size(); ++j) {
-      cout << a[j].first << ": " << int(a[j].second) << endl;
+      cout << a[j].first << ": " << a[j].second << " int -> " << int(a[j].second) << endl;
     }
   }
       

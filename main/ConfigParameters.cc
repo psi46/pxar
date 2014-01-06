@@ -207,7 +207,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     s2 = lines[i].rfind(" "); 
     if (s1 != s2) {
       str1 = lines[i].substr(0, s1); 
-      str2 = lines[i].substr(s1+1, s2-s1); 
+      str2 = lines[i].substr(s1+1, s2-s1-1); 
       str3 = lines[i].substr(s2+1); 
     } else {
       cout << "could not read line -->" << lines[i] << "<--" << endl;
@@ -322,14 +322,14 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
 
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameters::getRocDacs() {
+std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::getRocDacs() {
 
-  vector<vector<pair<string,unsigned char> > > allDacs; 
+  vector<vector<pair<string, uint8_t> > > allDacs; 
   string filename; 
 
   for (int i = 0; i < fnRocs; ++i) {
     filename = Form("%s_C%d.dat", fDACParametersFileName.c_str(), i); 
-    std::vector<std::pair<std::string,unsigned char> > rocDacs = readDacFile(filename); 
+    std::vector<std::pair<std::string, uint8_t> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
 
@@ -338,15 +338,15 @@ std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameter
 
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameters::getTbmDacs() {
+std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::getTbmDacs() {
 
-  vector<vector<pair<string,unsigned char> > > allDacs; 
+  vector<vector<pair<string, uint8_t> > > allDacs; 
   string filename; 
 
   // FIXME changing naming scheme for TBMs to incorporate the possible case of >1 TBMs
   for (int i = 0; i < fnTbms; ++i) {
     filename = Form("%s", fTbmParametersFileName.c_str()); 
-    std::vector<std::pair<std::string,unsigned char> > rocDacs = readDacFile(filename); 
+    std::vector<std::pair<std::string, uint8_t> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
 
