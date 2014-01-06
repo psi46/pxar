@@ -156,7 +156,7 @@ IF(BUILD_pxarui)
 
 ENDIF(BUILD_pxarui)
 
-option(BUILD_pxardebug  "Compile pXar debug executable?" OFF)
+option(BUILD_pxardebug  "Compile pXar debug executable?" ON)
 IF(BUILD_pxardebug)
 
   # Build the pXar debug executable
