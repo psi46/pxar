@@ -27,7 +27,7 @@ namespace pxar {
 // --- ROC DACs ---------------------------------------------------------------
 #define ROC_DAC_Vdig       0x01
 #define ROC_DAC_Vana       0x02
-#define ROC_DAC_Vsf        0x03
+#define ROC_DAC_Vsh        0x03
 #define ROC_DAC_Vcomp      0x04
 #define ROC_DAC_Vleak_comp 0x05
 #define ROC_DAC_VrgPr      0x06
@@ -44,16 +44,16 @@ namespace pxar {
 #define ROC_DAC_VoffsetRO  0x11
 #define ROC_DAC_VIon       0x12
 #define ROC_DAC_VIbias_PH  0x13
-#define ROC_DAC_Ibias_DAC  0x14
+#define ROC_DAC_VIbias_DAC 0x14
 #define ROC_DAC_VIbias_roc 0x15
 #define ROC_DAC_VIColOr    0x16
 #define ROC_DAC_Vnpix      0x17
 #define ROC_DAC_VsumCol    0x18
 #define ROC_DAC_Vcal       0x19
 #define ROC_DAC_CalDel     0x1A
-#define ROC_DAC_RangeTemp  0x1B
-#define ROC_DAC_WBC        0xFE
 #define ROC_DAC_CtrlReg    0xFD
+#define ROC_DAC_WBC        0xFE
+#define ROC_DAC_Readback   0xFF
 
 
 // --- Testboard Signal Delay -------------------------------------------------
