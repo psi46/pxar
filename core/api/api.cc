@@ -71,6 +71,8 @@ bool api::initDUT(std::string tbmtype,
 
       // Fill the DAC pairs with the register from the dictionary:
       uint8_t dacRegister = stringToRegister(dacIt->first);
+      if(dacRegister == 0x0) continue;
+
       uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
       newtbm.dacs.push_back(std::make_pair(dacRegister,dacValue));
     }
@@ -93,6 +95,8 @@ bool api::initDUT(std::string tbmtype,
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
       // Fill the DAC pairs with the register from the dictionary:
       uint8_t dacRegister = stringToRegister(dacIt->first);
+      if(dacRegister == 0x0) continue;
+
       uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
       newroc.dacs.push_back(std::make_pair(dacRegister,dacValue));
     }
@@ -119,7 +123,7 @@ bool api::initDUT(std::string tbmtype,
   return true;
 }
 
-
+// API status function, checks HAL and DUT statuses
 bool api::status() {
   if(_hal->status() && _dut->status()) return true;
   return false;
@@ -127,15 +131,43 @@ bool api::status() {
 
 // Return the register id of the DAC specified by "name", return 0x0 if invalid:
 uint8_t api::stringToRegister(std::string name) {
-  // FIXME
-  LOG(logERROR) << "Invalid (DAC) register name " << name << "!";
-  return 0x0;
+
+  // Convert the name to lower case for comparison:
+  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+  LOG(logDEBUGAPI) << "Name to fetch register for: " << name;
+
+  // Get singleton DAC dictionary object:
+  RegisterDictionary * _dict = RegisterDictionary::getInstance();
+
+  // And get the register value from the dictionary object:
+  uint8_t _register = _dict->getRegister(name);
+  LOG(logDEBUGAPI) << "Register return: " << (int)_register;
+
+  if(_register == 0x0) {LOG(logERROR) << "Invalid register name " << name << "!";}
+  return _register;
 }
 
 // Check if the given value lies within the valid range of the DAC. If value lies above/below valid range
 // return the upper/lower bondary. If value lies wqithin the range, return the value
-uint8_t api::registerRangeCheck(uint8_t register, uint8_t value) {
-  // FIXME
+uint8_t api::registerRangeCheck(uint8_t regId, uint8_t value) {
+
+  // Get singleton DAC dictionary object:
+  RegisterDictionary * _dict = RegisterDictionary::getInstance();
+  uint16_t regLimit = 1;
+
+  for(int i = 0; i < _dict->getSize(regId); i++) {regLimit *= 2;}
+  LOG(logDEBUGAPI) << "Upper limit of register " << (int)regId << " is " << regLimit;
+  
+  if(value <= 0) {
+    LOG(logWARNING) << "Register range underflow, set register " << (int)regId << " to 0.";
+    value = 0;
+  }
+  else if(value >= regLimit) {
+    uint8_t limit = (uint8_t)(regLimit - 1);
+    LOG(logWARNING) << "Register range overflow, set register " << (int)regId << " to " << (int)limit << ".";
+    value = limit;
+  }
+
   return value;
 }
 
