@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
   pxar::api *api = 0;
   if (1) {
     try {
-      api = new pxar::api("*","DEBUG");
+      api = new pxar::api("*","DEBUGAPI");
       std::vector<std::pair<std::string,uint8_t> > sig_delays;
       std::vector<std::pair<std::string,double> > power_settings;
       std::vector<std::pair<std::string,uint8_t> > pg_setup;
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]){
   
   // Initialize the DUT (power it up and stuff):
   cout << "calling initDUT" << endl;
-  api->initDUT("", tbmDACs, "psi46digV2", rocDACs, rocPixels);
+  api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
   cout << "called initDUT" << endl;
 
 
