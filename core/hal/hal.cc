@@ -177,7 +177,8 @@ void hal::initTBM() {
 
 void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
 
-  // Turn on the output power of the testboardeady done:
+  // Turn on the output power of the testboard if not already done:
+  LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
   _testboard->Pon();
   mDelay(300);
 
@@ -186,6 +187,7 @@ void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVec
   mDelay(300);
 
   // Programm all DAC registers according to the configuration data:
+  LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << (int)rocId << ".";
   rocSetDACs(rocId,dacVector);
   mDelay(300);
 
