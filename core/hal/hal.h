@@ -26,7 +26,7 @@ namespace pxar {
     bool status();
 
 
-    /** DEVICE INITIALIZATION **/
+    // DEVICE INITIALIZATION
 
     /** Initialize the testboard with the signal delay settings:
      */
@@ -64,8 +64,18 @@ namespace pxar {
      */
     void Poff();
 
+    /** Set a DAC on a specific ROC rocId
+     *  DAC is referenced by its id, the range is checken in teh function
+     */
+    bool rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue);
 
-    /** TESTBOARD GET COMMANDS **/
+    /** Set all DACs on a specific ROC rocId
+     *  DACs are provided as vector of std::pair with DAC Id and DAC value.
+     */
+    bool rocSetDACs(uint8_t rocId, std::vector< std::pair<uint8_t, uint8_t> > dacPairs);
+
+
+    // TESTBOARD GET COMMANDS
     /** Read the testboard analog current
      */
     double getTBia();
@@ -83,7 +93,7 @@ namespace pxar {
     double getTBvd();
 
 
-    /** TEST COMMANDS **/
+    // TEST COMMANDS
     std::vector< std::vector<pixel> >* DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
     std::vector< std::vector<pixel> >* DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter);
     std::vector< std::vector<pixel> >* DummyModuleTestSkeleton(std::vector<int32_t> parameter);
@@ -131,17 +141,6 @@ namespace pxar {
      */
     void mDelay(uint32_t ms);
 
-    /** Set a DAC on a specific ROC rocId
-     *  DAC is referenced by its id, the range is checken in teh function
-     *  If the dacValue is out of range the function's return is false.
-     */
-    bool rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue);
-
-    /** Set all DACs on a specific ROC rocId
-     *  DACs are provided as vector of std::pair with DAC Id and DAC value.
-     */
-    bool rocSetDACs(uint8_t rocId, std::vector< std::pair<uint8_t, uint8_t> > dacPairs);
-
     /** Mask all pixels on a specific ROC rocId
      */
     void rocMask(uint8_t rocid, std::vector<int32_t> parameter);
@@ -150,7 +149,7 @@ namespace pxar {
      */
     void pixelMask(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
-    /** TESTBOARD SET COMMANDS **/
+    // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit
      */
     void setTBia(double IA);
