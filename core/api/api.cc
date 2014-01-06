@@ -153,19 +153,15 @@ uint8_t api::registerRangeCheck(uint8_t regId, uint8_t value) {
 
   // Get singleton DAC dictionary object:
   RegisterDictionary * _dict = RegisterDictionary::getInstance();
-  uint16_t regLimit = 1;
 
-  for(int i = 0; i < _dict->getSize(regId); i++) {regLimit *= 2;}
-  LOG(logDEBUGAPI) << "Upper limit of register " << (int)regId << " is " << regLimit;
+  // Read register value limit:
+  uint8_t regLimit = _dict->getSize(regId);
+  LOG(logDEBUGAPI) << "Max. value of register " << (int)regId << " is " << (int)regLimit;
   
-  if(value < 0) {
-    LOG(logWARNING) << "Register range underflow, set register " << (int)regId << " to 0.";
-    value = 0;
-  }
-  else if(value >= regLimit) {
-    uint8_t limit = (uint8_t)(regLimit - 1);
-    LOG(logWARNING) << "Register range overflow, set register " << (int)regId << " to " << (int)limit << ".";
-    value = limit;
+  if(value > regLimit) {
+    LOG(logWARNING) << "Register range overflow, set register " << (int)regId 
+		    << " to " << (int)regLimit << " (was: " << (int)value << ")";
+    value = (uint8_t)regLimit;
   }
 
   return value;

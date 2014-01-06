@@ -69,53 +69,53 @@ namespace pxar {
       // DAC name, register and size reference:
       // http://cms.web.psi.ch/phase1/psi46dig/index.html
 
-      _dacs["vdig"]       = dacConfig(ROC_DAC_Vdig,4);
+      _dacs["vdig"]       = dacConfig(ROC_DAC_Vdig,15);
 
-      _dacs["vana"]       = dacConfig(ROC_DAC_Vana,8);
+      _dacs["vana"]       = dacConfig(ROC_DAC_Vana,255);
 
-      _dacs["vsf"]        = dacConfig(ROC_DAC_Vsh,8);
-      _dacs["vsh"]        = dacConfig(ROC_DAC_Vsh,8);
+      _dacs["vsf"]        = dacConfig(ROC_DAC_Vsh,255);
+      _dacs["vsh"]        = dacConfig(ROC_DAC_Vsh,255);
 
-      _dacs["vcomp"]      = dacConfig(ROC_DAC_Vcomp,4);
-      _dacs["vwllpr"]     = dacConfig(ROC_DAC_VwllPr,8);
-      _dacs["vwllsh"]     = dacConfig(ROC_DAC_VwllSh,8);
-      _dacs["vhlddel"]    = dacConfig(ROC_DAC_VhldDel,8);
-      _dacs["vtrim"]      = dacConfig(ROC_DAC_Vtrim,8);
-      _dacs["vthrcomp"]   = dacConfig(ROC_DAC_VthrComp,8);
-      _dacs["vibias_bus"] = dacConfig(ROC_DAC_VIBias_Bus,8);
-      _dacs["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,4);
-      _dacs["voffsetop"]  = dacConfig(ROC_DAC_VoffsetOp,8);
-      _dacs["voffsetro"]  = dacConfig(ROC_DAC_VoffsetRO,8);
-      _dacs["vion"]       = dacConfig(ROC_DAC_VIon,8);
+      _dacs["vcomp"]      = dacConfig(ROC_DAC_Vcomp,15);
+      _dacs["vwllpr"]     = dacConfig(ROC_DAC_VwllPr,255);
+      _dacs["vwllsh"]     = dacConfig(ROC_DAC_VwllSh,255);
+      _dacs["vhlddel"]    = dacConfig(ROC_DAC_VhldDel,255);
+      _dacs["vtrim"]      = dacConfig(ROC_DAC_Vtrim,255);
+      _dacs["vthrcomp"]   = dacConfig(ROC_DAC_VthrComp,255);
+      _dacs["vibias_bus"] = dacConfig(ROC_DAC_VIBias_Bus,255);
+      _dacs["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,15);
+      _dacs["voffsetop"]  = dacConfig(ROC_DAC_VoffsetOp,255);
+      _dacs["voffsetro"]  = dacConfig(ROC_DAC_VoffsetRO,255);
+      _dacs["vion"]       = dacConfig(ROC_DAC_VIon,255);
 
-      _dacs["vcomp_adc"]  = dacConfig(ROC_DAC_VIbias_PH,8);
-      _dacs["vibias_ph"]  = dacConfig(ROC_DAC_VIbias_PH,8);
+      _dacs["vcomp_adc"]  = dacConfig(ROC_DAC_VIbias_PH,255);
+      _dacs["vibias_ph"]  = dacConfig(ROC_DAC_VIbias_PH,255);
 
-      _dacs["viref_adc"]  = dacConfig(ROC_DAC_VIbias_DAC,8);
-      _dacs["vibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,8);
+      _dacs["viref_adc"]  = dacConfig(ROC_DAC_VIbias_DAC,255);
+      _dacs["vibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255);
 
-      _dacs["vicolor"]    = dacConfig(ROC_DAC_VIColOr,8);
-      _dacs["vcal"]       = dacConfig(ROC_DAC_Vcal,8);
-      _dacs["caldel"]     = dacConfig(ROC_DAC_CalDel,8);
+      _dacs["vicolor"]    = dacConfig(ROC_DAC_VIColOr,255);
+      _dacs["vcal"]       = dacConfig(ROC_DAC_Vcal,255);
+      _dacs["caldel"]     = dacConfig(ROC_DAC_CalDel,255);
 
-      _dacs["ctrlreg"]    = dacConfig(ROC_DAC_CtrlReg,8);
-      _dacs["wbc"]        = dacConfig(ROC_DAC_WBC,8);
-      _dacs["readback"]   = dacConfig(ROC_DAC_Readback,4);
+      _dacs["ctrlreg"]    = dacConfig(ROC_DAC_CtrlReg,255);
+      _dacs["wbc"]        = dacConfig(ROC_DAC_WBC,255);
+      _dacs["readback"]   = dacConfig(ROC_DAC_Readback,15);
 
 
       // DACs removed from psi46digV2:
-      _dacs["vleak_comp"] = dacConfig(ROC_DAC_Vleak_comp,8);
-      _dacs["vleak"] = dacConfig(ROC_DAC_Vleak_comp,8);
+      _dacs["vleak_comp"] = dacConfig(ROC_DAC_Vleak_comp,255);
+      _dacs["vleak"] = dacConfig(ROC_DAC_Vleak_comp,255);
 
-      _dacs["vrgpr"]      = dacConfig(ROC_DAC_VrgPr,8);
-      _dacs["vrgsh"]      = dacConfig(ROC_DAC_VrgSh,8);
+      _dacs["vrgpr"]      = dacConfig(ROC_DAC_VrgPr,255);
+      _dacs["vrgsh"]      = dacConfig(ROC_DAC_VrgSh,255);
 
-      _dacs["vibiasop"]   = dacConfig(ROC_DAC_VIbiasOp,8);
-      _dacs["vbias_op"]   = dacConfig(ROC_DAC_VIbiasOp,8);
+      _dacs["vibiasop"]   = dacConfig(ROC_DAC_VIbiasOp,255);
+      _dacs["vbias_op"]   = dacConfig(ROC_DAC_VIbiasOp,255);
 
-      _dacs["vibias_roc"]   = dacConfig(ROC_DAC_VIbias_roc,8);
-      _dacs["vnpix"]   = dacConfig(ROC_DAC_Vnpix,8);
-      _dacs["vsumcol"]   = dacConfig(ROC_DAC_VsumCol,8);
+      _dacs["vibias_roc"]   = dacConfig(ROC_DAC_VIbias_roc,255);
+      _dacs["vnpix"]   = dacConfig(ROC_DAC_Vnpix,255);
+      _dacs["vsumcol"]   = dacConfig(ROC_DAC_VsumCol,255);
 
     };
 
