@@ -158,7 +158,7 @@ uint8_t api::registerRangeCheck(uint8_t regId, uint8_t value) {
   for(int i = 0; i < _dict->getSize(regId); i++) {regLimit *= 2;}
   LOG(logDEBUGAPI) << "Upper limit of register " << (int)regId << " is " << regLimit;
   
-  if(value <= 0) {
+  if(value < 0) {
     LOG(logWARNING) << "Register range underflow, set register " << (int)regId << " to 0.";
     value = 0;
   }
