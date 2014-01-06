@@ -70,8 +70,9 @@ bool api::initDUT(std::string tbmtype,
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
 
       // Fill the DAC pairs with the register from the dictionary:
-      uint8_t dacRegister = 0x0; //FIXME stringToRegister(dacIt->first);
-      newtbm.dacs.push_back(std::make_pair(dacRegister,dacIt->second));
+      uint8_t dacRegister = stringToRegister(dacIt->first);
+      uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
+      newtbm.dacs.push_back(std::make_pair(dacRegister,dacValue));
     }
 
     // Done. Enable bit is already set by tbmConfig constructor.
@@ -91,8 +92,9 @@ bool api::initDUT(std::string tbmtype,
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
       // Fill the DAC pairs with the register from the dictionary:
-      uint8_t dacRegister = 0x0; //FIXME stringToRegister(dacIt->first);
-      newroc.dacs.push_back(std::make_pair(dacRegister,dacIt->second));
+      uint8_t dacRegister = stringToRegister(dacIt->first);
+      uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
+      newroc.dacs.push_back(std::make_pair(dacRegister,dacValue));
     }
 
     // Loop over all pixelConfigs supplied:
@@ -121,6 +123,20 @@ bool api::initDUT(std::string tbmtype,
 bool api::status() {
   if(_hal->status() && _dut->status()) return true;
   return false;
+}
+
+// Return the register id of the DAC specified by "name", return 0x0 if invalid:
+uint8_t api::stringToRegister(std::string name) {
+  // FIXME
+  LOG(logERROR) << "Invalid (DAC) register name " << name << "!";
+  return 0x0;
+}
+
+// Check if the given value lies within the valid range of the DAC. If value lies above/below valid range
+// return the upper/lower bondary. If value lies wqithin the range, return the value
+uint8_t api::registerRangeCheck(uint8_t register, uint8_t value) {
+  // FIXME
+  return value;
 }
 
 

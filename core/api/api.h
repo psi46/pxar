@@ -307,7 +307,7 @@ namespace pxar {
      */
     dut * _dut;
 
-    /** Status function for the API, returns ture if everything is setup correctly
+    /** Status function for the API, returns true if everything is setup correctly
      *  for operation
      */
     bool status();
@@ -330,6 +330,15 @@ namespace pxar {
     /** compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into (data(roc0,roc1)) where the data blocks can be subdivided into e.g. DAC ranges
      */
     std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
+
+    /** Helper function for conversion from string to register value
+     */
+    uint8_t stringToRegister(std::string name);
+    
+    /** Range check for DAC and testboard register values. This function return the value itself if valid
+     *  or upper/lower range boundary in case of over/underflow:
+     */
+    uint8_t registerRangeCheck(uint8_t register, uint8_t value);
 
 
   }; // class api
