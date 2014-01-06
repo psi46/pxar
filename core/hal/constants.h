@@ -9,6 +9,13 @@
 
 namespace pxar {
 
+// --- TBM Types ---------------------------------------------------------------
+// FIXME just an example...
+#define TBM_07             0x01
+#define TBM_07A            0x02
+#define TBM_08             0x03
+
+
 // --- ROC Size ---------------------------------------------------------------
 #define ROC_NUMROWS 80
 #define ROC_NUMCOLS 52
@@ -17,11 +24,11 @@ namespace pxar {
 // --- ROC Types ---------------------------------------------------------------
 #define ROC_PSI46V2        0x01
 #define ROC_PSI46XDB       0x02
-#define ROC_PSI46DIG       0x04
-#define ROC_PSI46DIG_TRIG  0x08
-#define ROC_PSI46DIGV2_B   0x10
-#define ROC_PSI46DIGV2     0x20
-#define ROC_PSI46DIGV3     0x40
+#define ROC_PSI46DIG       0x03
+#define ROC_PSI46DIG_TRIG  0x04
+#define ROC_PSI46DIGV2_B   0x05
+#define ROC_PSI46DIGV2     0x06
+#define ROC_PSI46DIGV3     0x07
 
 
 // --- ROC DACs ---------------------------------------------------------------
