@@ -239,7 +239,18 @@ void api::Pon() {
 /** TEST functions **/
 
 bool api::setDAC(std::string dacName, uint8_t dacValue) {
-  return false;
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister = stringToRegister(dacName);
+  if(dacRegister == 0x0) return false;
+
+  dacValue = registerRangeCheck(dacRegister, dacValue);
+
+  // FIXME maybe go over expandLoop here?
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,dacValue);
+  }
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
