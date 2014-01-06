@@ -225,6 +225,8 @@ void api::HVon() {
 
 void api::Poff() {
   _hal->Poff();
+  // Reset the programmed state of the DUT (lost by turning off power)
+  _dut->_programmed = false;
 }
 
 void api::Pon() {
