@@ -116,8 +116,21 @@ bool api::initDUT(std::string tbmtype,
 
   // All data is stored in the DUT struct, now programming it.
   _dut->_initialized = true;
+  return programDUT();
+}
 
-  // FIXME start programming the devices here! WATCH OUT, DICTIONARIES REQUIRED BEFORE!
+bool api::programDUT() {
+
+  if(!_dut->_initialized) {
+    LOG(logERROR) << "DUT not initialized, unable to program it.";
+    return false;
+  }
+
+  // Start programming the devices here!
+
+  // FIXME TBMs not programmed at all right now!
+  // FIXME Device types not transmitted yet!
+
   // FIXME maybe go over expandLoop here?
   LOG(logDEBUGAPI) << "Programming ROCS...";
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -125,7 +138,7 @@ bool api::initDUT(std::string tbmtype,
     _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
   }
 
-  // The DUT os programmed, everything all right:
+  // The DUT is programmed, everything all right:
   _dut->_programmed = true;
 
   return true;
