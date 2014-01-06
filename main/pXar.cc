@@ -152,7 +152,7 @@ int main(int argc, char *argv[]){
   
   // Initialize the DUT (power it up and stuff):
   cout << "calling initDUT" << endl;
-  api->initDUT("", tbmDACs, "psi46digV2", rocDACs, rocPixels);
+  api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
   cout << "called initDUT" << endl;
 
 

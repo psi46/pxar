@@ -126,7 +126,7 @@ namespace pxar {
      *  This function requires the types and DAC settings for all TBMs and ROCs
      *  contained in the setup. All values will be checked for validity (DAC
      *  ranges, position and number of pixels, etc.)
-
+     *
      *  All parameters are supplied via vectors, the size of the vector represents
      *  the number of devices.
      */
@@ -135,9 +135,20 @@ namespace pxar {
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		 std::vector<std::vector<pixelConfig> > rocPixels);
+
+    /** Programming method for the DUT (attached devices)
+     *  This function requires the DUT structure to be filled (initialized).
+     *
+     *  All parameters are taken from the DUT struct, the enabled devices are programmed.
+     *  This function needs to be called after power cycling the testboard output (using Poff,
+     *  Pon).
+     *
+     *  A DUT flag is set which prevents test functions to be executed if not programmed.
+     */
+    bool programDUT(); 
   
 
-    /** DTB fcuntions **/
+    /** DTB functions **/
 
     /** Function to flash a new firmware onto the DTB via
      *  the regular USB connection.
@@ -339,6 +350,10 @@ namespace pxar {
      *  or upper/lower range boundary in case of over/underflow:
      */
     uint8_t registerRangeCheck(uint8_t register, uint8_t value);
+
+    /** Helper function for conversion from device type string to code
+     */
+    uint8_t stringToDeviceCode(std::string name);
 
 
   }; // class api

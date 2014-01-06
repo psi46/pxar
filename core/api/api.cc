@@ -64,7 +64,8 @@ bool api::initDUT(std::string tbmtype,
     // Prepare a new TBM configuration
     tbmConfig newtbm;
     // Set the TBM type (get value from dictionary)
-    newtbm.type = 0x0; //FIXME stringToType(tbmtype);
+    newtbm.type = stringToDeviceCode(tbmtype);
+    if(newtbm.type == 0x0) return false;
     
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
@@ -89,7 +90,8 @@ bool api::initDUT(std::string tbmtype,
     // Prepare a new ROC configuration
     rocConfig newroc;
     // Set the ROC type (get value from dictionary)
-    newroc.type = 0x0; //FIXME stringToType(roctype);
+    newroc.type = stringToDeviceCode(roctype);
+    if(newroc.type == 0x0) return false;
     
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
@@ -114,8 +116,21 @@ bool api::initDUT(std::string tbmtype,
 
   // All data is stored in the DUT struct, now programming it.
   _dut->_initialized = true;
+  return programDUT();
+}
 
-  // FIXME start programming the devices here! WATCH OUT, DICTIONARIES REQUIRED BEFORE!
+bool api::programDUT() {
+
+  if(!_dut->_initialized) {
+    LOG(logERROR) << "DUT not initialized, unable to program it.";
+    return false;
+  }
+
+  // Start programming the devices here!
+
+  // FIXME TBMs not programmed at all right now!
+  // FIXME Device types not transmitted yet!
+
   // FIXME maybe go over expandLoop here?
   LOG(logDEBUGAPI) << "Programming ROCS...";
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -123,7 +138,7 @@ bool api::initDUT(std::string tbmtype,
     _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
   }
 
-  // The DUT os programmed, everything all right:
+  // The DUT is programmed, everything all right:
   _dut->_programmed = true;
 
   return true;
@@ -140,7 +155,7 @@ uint8_t api::stringToRegister(std::string name) {
 
   // Convert the name to lower case for comparison:
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-  LOG(logDEBUGAPI) << "Name to fetch register for: " << name;
+  LOG(logDEBUGAPI) << "Looking up register for: \"" << name << "\"";
 
   // Get singleton DAC dictionary object:
   RegisterDictionary * _dict = RegisterDictionary::getInstance();
@@ -149,7 +164,7 @@ uint8_t api::stringToRegister(std::string name) {
   uint8_t _register = _dict->getRegister(name);
   LOG(logDEBUGAPI) << "Register return: " << (int)_register;
 
-  if(_register == 0x0) {LOG(logERROR) << "Invalid register name " << name << "!";}
+  if(_register == 0x0) {LOG(logERROR) << "Invalid register name \"" << name << "\"!";}
   return _register;
 }
 
@@ -173,6 +188,23 @@ uint8_t api::registerRangeCheck(uint8_t regId, uint8_t value) {
   return value;
 }
 
+// Return the device code for the given name, return 0x0 if invalid:
+uint8_t api::stringToDeviceCode(std::string name) {
+
+  // Convert the name to lower case for comparison:
+  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+  LOG(logDEBUGAPI) << "Looking up device type for \"" << name << "\"";
+
+  // Get singleton device dictionary object:
+  DeviceDictionary * _devices = DeviceDictionary::getInstance();
+
+  // And get the device code from the dictionary object:
+  uint8_t _code = _devices->getDevCode(name);
+  LOG(logDEBUGAPI) << "Device type return: " << (int)_code;
+
+  if(_code == 0x0) {LOG(logCRITICAL) << "Unknown device \"" << (int)_code << "\"!";}
+  return _code;
+}
 
 
 /** DTB functions **/

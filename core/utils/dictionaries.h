@@ -33,7 +33,6 @@ namespace pxar {
    *  All DAC names are lower case, DAC register selection is case-insensitive.
    *  Singleton class, only one object of this floating around.
    */
-
   class RegisterDictionary {
   public:
     static RegisterDictionary * getInstance() {
@@ -123,9 +122,54 @@ namespace pxar {
     // Dont forget to declare these two. You want to make sure they
     // are unaccessable otherwise you may accidently get copies of
     // your singleton appearing.
-    RegisterDictionary(RegisterDictionary const&);              // Don't Implement
+    RegisterDictionary(RegisterDictionary const&); // Don't Implement
     void operator=(RegisterDictionary const&); // Don't implement
   };
+
+
+  /** Map for device name lookup
+   *  All device names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class DeviceDictionary {
+  public:
+    static DeviceDictionary * getInstance() {
+      static DeviceDictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint8_t getDevCode(std::string name) {
+      try { return _devices[name]; }
+      catch(...) { return 0x0; }
+    }
+
+  private:
+    DeviceDictionary() {
+      // Device name and types
+
+      // ROC flavors:
+      _devices["psi46v2"]       = ROC_PSI46V2;
+      _devices["psi46xdb"]      = ROC_PSI46XDB;
+      _devices["psi46dig"]      = ROC_PSI46DIG;
+      _devices["psi46dig_trig"] = ROC_PSI46DIG_TRIG;
+      _devices["psi46digv2_b"]  = ROC_PSI46DIGV2_B;
+      _devices["psi46digv2"]    = ROC_PSI46DIGV2;
+      _devices["psi46digv3"]    = ROC_PSI46DIGV3;
+
+      // TBM flavors:
+      // FIXME this is just an example.
+      _devices["tbm07"]         = TBM_07;
+      _devices["tbm07a"]        = TBM_07A;
+      _devices["tbm08"]         = TBM_08;
+    };
+
+    std::map<std::string, uint8_t> _devices;
+    DeviceDictionary(DeviceDictionary const&); // Don't Implement
+    void operator=(DeviceDictionary const&); // Don't implement
+  };
+
 
 } //namespace pxar
 
