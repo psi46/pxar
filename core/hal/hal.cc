@@ -371,7 +371,6 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
   // Make sure we are writing to the correct ROC by setting the I2C address:
   _testboard->roc_I2cAddr(rocId);
 
-  //FIXME range check missing...
   LOG(logDEBUGHAL) << "Set DAC" << (int)dacId << " to " << (int)dacValue;
   _testboard->roc_SetDAC(dacId,dacValue);
   return true;
