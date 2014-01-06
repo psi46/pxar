@@ -34,6 +34,7 @@ int main(int argc, char *argv[]){
   //  LOG(logINFO) << "Welcome to pxar!";
   cout << "welcome to pxar" << endl;
 
+
   // -- command line arguments
   string dir("."), cmdFile("cal.sys"), rootfile("pxar.root"); 
   bool debug(false), doRunGui(false), doRunScript(false);
@@ -62,19 +63,28 @@ int main(int argc, char *argv[]){
     return 1;
   
   vector<vector<pair<string,uint8_t> > > rocDACs = configParameters->getRocDacs(); 
+
   cout << "rocDACs.size() = " << rocDACs.size() << endl;
-  for (int i = 0; i < rocDACs.size(); ++i) {
+  for (unsigned int i = 0; i < rocDACs.size(); ++i) {
     vector<pair<string,uint8_t> > a = rocDACs[i]; 
-    cout << "a.size() = " << a.size() << endl;
-    for (int j = 0; j < a.size(); ++j) {
-      cout << a[j].first << ": " << a[j].second << endl;
+    cout << "ROC " << i << " a.size() = " << a.size() << endl;
+    for (unsigned int j = 0; j < a.size(); ++j) {
+      cout << a[j].first << ": " << int(a[j].second) << endl;
     }
   }
       
   vector<vector<pair<string,uint8_t> > > tbmDACs = configParameters->getTbmDacs(); 
-    
-  return 0 ;
 
+  cout << "tbmDACs.size() = " << tbmDACs.size() << endl;
+  for (unsigned int i = 0; i < tbmDACs.size(); ++i) {
+    vector<pair<string, uint8_t> > a = tbmDACs[i]; 
+    cout << "a.size() = " << a.size() << endl;
+    for (unsigned int j = 0; j < a.size(); ++j) {
+      cout << a[j].first << ": " << int(a[j].second) << endl;
+    }
+  }
+
+  
   pxar::api *api = 0;
   if (1) {
     try {
@@ -117,24 +127,24 @@ int main(int argc, char *argv[]){
 //   dacs.push_back(std::make_pair("WBC",100));
 //   rocDACs.push_back(dacs);
 
-    // Get some pixelConfigs up and running:
-    std::vector<std::vector<pxar::pixelConfig> > rocPixels;
-    std::vector<pxar::pixelConfig> pixels;
-
-    for(int col = 0; col < 52; col++) {
-      for(int row = 0; row < 80; row++) {
-	pxar::pixelConfig newpix;
-	newpix.column = col;
-	newpix.row = row;
-	//Trim: fill random value, should report fail as soon as we have range checks:
-	newpix.trim = row;
-	newpix.mask = false;
-	newpix.enable = true;
-
-	pixels.push_back(newpix);
-      }
-    }
-    rocPixels.push_back(pixels);
+  // Get some pixelConfigs up and running:
+  std::vector<std::vector<pxar::pixelConfig> > rocPixels;
+  //   std::vector<pxar::pixelConfig> pixels;
+  
+  //   for(int col = 0; col < 52; col++) {
+  //     for(int row = 0; row < 80; row++) {
+  //       pxar::pixelConfig newpix;
+  //       newpix.column = col;
+  //       newpix.row = row;
+  //       //Trim: fill random value, should report fail as soon as we have range checks:
+  //       newpix.trim = row;
+  //       newpix.mask = false;
+  //       newpix.enable = true;
+  
+  //       pixels.push_back(newpix);
+  //     }
+  //   }
+  rocPixels = configParameters->getRocPixelConfig();
 
 
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
@@ -155,8 +165,8 @@ int main(int argc, char *argv[]){
  
   cout << "pxar>  Setting up the testboard interface ..." << endl;
 
-  string dacFile = configParameters->getDirectory() + string("/dacParameters_C0.dat");
-  std::vector<std::pair<std::string,uint8_t> > asd = configParameters->readDacFile(dacFile); 
+//   string dacFile = configParameters->getDirectory() + string("/dacParameters_C0.dat");
+//   std::vector<std::pair<std::string,uint8_t> > asd = configParameters->readDacFile(dacFile); 
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getTestParametersFileName()); 
 

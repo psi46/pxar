@@ -3,8 +3,11 @@
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
+#include <stdint.h>
 #include <string>
 #include <vector>
+
+#include "api.h"
 
 class ConfigParameters {
 public:
@@ -28,9 +31,12 @@ public:
   std::string getDebugFileName()          {return fDebugFileName;}
   std::string getDirectory()              {return fDirectory;}
 
-  std::vector<std::pair<std::string, unsigned char> > readDacFile(std::string fname);
-  std::vector<std::vector<std::pair<std::string, unsigned char> > > getRocDacs();
-  std::vector<std::vector<std::pair<std::string, unsigned char> > > getTbmDacs();
+  std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
+  std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
+  std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
+  void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
+  std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
+
   //  std::vector<std::vector<std::pair<std::string,uint8_t> > > getTbParameters();
 
   void setTBParameterFileName(const std::string &filename);
@@ -48,7 +54,7 @@ public:
 
 private:
 
-  int fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;
+  int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;
   int fCustomModule;
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   double ia, id, va, vd;
@@ -69,6 +75,7 @@ private:
   std::string fDebugFileName;
 
   static ConfigParameters* fInstance;
+
 };
 
 #endif

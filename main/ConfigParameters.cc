@@ -15,8 +15,10 @@ using namespace std;
 
 ConfigParameters * ConfigParameters::fInstance = 0;
 
+// ----------------------------------------------------------------------
 bool BothAreSpaces(char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); }
 
+// ----------------------------------------------------------------------
 void replaceAll(std::string& str, const std::string& from, const std::string& to) {
     if(from.empty())
         return;
@@ -44,6 +46,8 @@ ConfigParameters::ConfigParameters(string filename) {
 void ConfigParameters::initialize() {
   cout << fTBName << endl;
 
+  fnCol = 52; 
+  fnRow = 80; 
   fnRocs = 16;
   fnTbms = 1; 
   fnModules = 1;
@@ -170,13 +174,13 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
 
 // ----------------------------------------------------------------------
-vector<pair<string,unsigned char> > ConfigParameters::readDacFile(string fname) {
-  vector<pair<string,unsigned char> > rocDacs; 
+vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
+  vector<pair<string, uint8_t> > rocDacs; 
 
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "reading " << fname << endl;
+  cout << "readDacFile reading " << fname << endl;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -185,7 +189,8 @@ vector<pair<string,unsigned char> > ConfigParameters::readDacFile(string fname) 
 
   // -- parse lines
   unsigned int ival(0); 
-  unsigned char uval(0); 
+  uint8_t uval(0); 
+  //  unsigned char uval(0); 
   
   string::size_type s1, s2; 
   string str1, str2, str3;
@@ -207,15 +212,113 @@ vector<pair<string,unsigned char> > ConfigParameters::readDacFile(string fname) 
       cout << "could not read line -->" << lines[i] << "<--" << endl;
     }
     
+    // -- why, oh why?!
     ival = atoi(str3.c_str()); 
-    uval = ival; //FIXME DOES NOT WORK
-    //    cout << "  -->  " << str2 << " ival = " << ival << " uval = " << uval << endl;
+    uval = ival;
+    // const unsigned char* us =  reinterpret_cast<const unsigned char*>(str3.c_str());
+    // const uint8_t *us2 =  reinterpret_cast<const uint8_t*>(str3.data());
+    // uval = ival;  does not work at all          
+    // uval = *us;   strips off trailing digits   
+    // uval = *us2;  strips off trailing digits   
+    //    uval = translate(ival); 
+    //    cout << "    str3 = " << str3 << " ival = " << ival << " uval = " << uval << " int(uval) = " << int(uval) << endl;
     rocDacs.push_back(make_pair(str2, uval)); 
 
   }
 
   return rocDacs; 
 }
+
+// ----------------------------------------------------------------------
+std::vector<std::vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
+
+  vector<vector<pxar::pixelConfig> > allRocPixelConfigs; 
+
+  string filename; 
+  for (int i = 0; i < fnRocs; ++i) {
+    vector<pxar::pixelConfig> v;
+    for (int ic = 0; ic < fnCol; ++ic) {
+      for (int ir = 0; ir < fnRow; ++ir) {
+	pxar::pixelConfig a; 
+	a.column = ic; 
+	a.row = ir; 
+	a.trim = 0; 
+	a.mask = false;
+	a.enable = false;
+	v.push_back(a); 
+      }
+    }
+    
+    filename = Form("%s_C%d.dat", fTrimParametersFileName.c_str(), i); 
+    readTrimFile(filename, v); 
+    allRocPixelConfigs.push_back(v); 
+  }
+
+  return allRocPixelConfigs;
+
+}
+
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) {
+
+  // -- read in file
+  vector<string> lines; 
+  char  buffer[5000];
+  cout << "readTrimFile reading " << fname << endl;
+  ifstream is(fname.c_str());
+  while (is.getline(buffer, 200, '\n')) {
+    lines.push_back(string(buffer));
+  }
+  is.close();
+  
+  // -- parse lines
+  unsigned int ival(0), irow(0), icol(0); 
+  uint8_t uval(0), urow(0), ucol(0); 
+  
+  string::size_type s1, s2; 
+  string str1, str2, str3;
+  for (unsigned int i = 0; i < lines.size(); ++i) {
+    //    cout << lines[i] << endl;   
+    // -- remove tabs, adjacent spaces, leading and trailing spaces
+    replaceAll(lines[i], "\t", " "); 
+    replaceAll(lines[i], "Pix", " "); 
+    std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
+    lines[i].erase(new_end, lines[i].end()); 
+    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
+    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
+    s1 = lines[i].find(" "); 
+    s2 = lines[i].rfind(" "); 
+    if (s1 != s2) {
+      str1 = lines[i].substr(0, s1); 
+      str2 = lines[i].substr(s1+1, s2-s1); 
+      str3 = lines[i].substr(s2+1); 
+    } else {
+      cout << "could not read line -->" << lines[i] << "<--" << endl;
+    }
+    
+    // -- why, oh why?!
+    ival = atoi(str1.c_str()); 
+    icol = atoi(str2.c_str()); 
+    irow = atoi(str3.c_str()); 
+    uval = ival;
+    ucol = icol;
+    urow = irow;
+    unsigned int index = icol*80+irow; 
+    if (index <= v.size()) {
+      v[index].trim = uval; 
+    } else {
+      cout << " not matching entry in trim vector found for row/col = " << irow << "/" << icol << endl;
+    }
+    //     cout << "col/row = " << icol << "/" << irow << " trim = " << ival 
+    // 	 << " pixelConfig: " << int(v[index].column) << "/" << int(v[index].row)
+    // 	 << endl;
+  }
+
+
+}
+
+
 
 // ----------------------------------------------------------------------
 std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameters::getRocDacs() {
@@ -225,7 +328,6 @@ std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameter
 
   for (int i = 0; i < fnRocs; ++i) {
     filename = Form("%s_C%d.dat", fDACParametersFileName.c_str(), i); 
-    cout << "reading " << filename << endl;
     std::vector<std::pair<std::string,unsigned char> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
@@ -243,7 +345,6 @@ std::vector<std::vector<std::pair<std::string,unsigned char> > > ConfigParameter
   // FIXME changing naming scheme for TBMs to incorporate the possible case of >1 TBMs
   for (int i = 0; i < fnTbms; ++i) {
     filename = Form("%s", fTbmParametersFileName.c_str()); 
-    cout << "reading " << filename << endl;
     std::vector<std::pair<std::string,unsigned char> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
