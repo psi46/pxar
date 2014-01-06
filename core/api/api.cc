@@ -112,14 +112,20 @@ bool api::initDUT(std::string tbmtype,
     nROCs++;
   }
 
-  // FIXME start programming the devices here! WATCH OUT, DICTIONARIES REQUIRED BEFORE!
-  /*
-  for(size_t n = 0; n < _dut->roc.size(); n++) {
-    if(_dut->roc[n].enable) _hal->initROC(n,_dut->roc[n].dacs);
-  }
-  */
-
+  // All data is stored in the DUT struct, now programming it.
   _dut->_initialized = true;
+
+  // FIXME start programming the devices here! WATCH OUT, DICTIONARIES REQUIRED BEFORE!
+  // FIXME maybe go over expandLoop here?
+  LOG(logDEBUGAPI) << "Programming ROCS...";
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+    _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
+  }
+
+  // The DUT os programmed, everything all right:
+  _dut->_programmed = true;
+
   return true;
 }
 
