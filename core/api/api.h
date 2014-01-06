@@ -442,6 +442,11 @@ namespace pxar {
      */
     bool _initialized;
 
+    /** Initialization status of the DUT devices, true when successfully 
+     *  programmed and ready for operations
+     */
+    bool _programmed;
+
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;
 

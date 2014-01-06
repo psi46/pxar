@@ -283,9 +283,9 @@ void dut::setAllPixelEnable(bool enable) {
 
 bool dut::status() {
 
-  if(!_initialized) {
-    LOG(logERROR) << "DUT structure not initialized yet!";
+  if(!_initialized || !_programmed) {
+    LOG(logERROR) << "DUT structure not initialized/programmed yet!";
   }
 
-  return _initialized;
+  return (_initialized && _programmed);
 }
