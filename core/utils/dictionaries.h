@@ -65,6 +65,18 @@ namespace pxar {
 
   private:
     RegisterDictionary() {
+
+      //------- DTB registers -----------------------------
+      // FIXME what are the upper values for signal delays?
+      _dacs["clk"]        = dacConfig(SIG_CLK,255);
+      _dacs["ctr"]        = dacConfig(SIG_CTR,255);
+      _dacs["sda"]        = dacConfig(SIG_SDA,255);
+      _dacs["tin"]        = dacConfig(SIG_TIN,255);
+
+      //------- TBM registers -----------------------------
+
+
+      //------- ROC registers -----------------------------
       // DAC name, register and size reference:
       // http://cms.web.psi.ch/phase1/psi46dig/index.html
 
