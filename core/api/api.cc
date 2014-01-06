@@ -40,7 +40,10 @@ api::~api() {
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
                        std::vector<std::pair<std::string,uint8_t> > pg_setup) {
-  //FIXME Anything we need to do here? Probably depends on how we get the config...
+
+  // FIXME Missing configuration:
+  //  * power settings
+  //  * pattern generator setup
 
   // Take care of the signal delay settings:
   std::vector<std::pair<uint8_t,uint8_t> > delays;
@@ -48,7 +51,7 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     // Fill the DAC pairs with the register from the dictionary:
     uint8_t sigRegister = stringToRegister(sigIt->first);
     uint8_t sigValue = registerRangeCheck(sigRegister, sigIt->second);
-    
+
     delays.push_back(std::make_pair(sigRegister,sigValue));
   }
     

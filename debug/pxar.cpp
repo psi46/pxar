@@ -8,12 +8,17 @@ int main()
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*","DEBUG");
+    _api = new pxar::api("*","DEBUGHAL");
   
     // Try some test or so:
 
     // Create some dummy testboard config, not doing anything right now:
     std::vector<std::pair<std::string,uint8_t> > sig_delays;
+    sig_delays.push_back(std::make_pair("clk",2));
+    sig_delays.push_back(std::make_pair("ctr",20));
+    sig_delays.push_back(std::make_pair("sda",19));
+    sig_delays.push_back(std::make_pair("tin",7));
+
     std::vector<std::pair<std::string,double> > power_settings;
     std::vector<std::pair<std::string,uint8_t> > pg_setup;
     // Initialize the testboard:
@@ -25,7 +30,7 @@ int main()
     std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
 
     std::vector<std::pair<std::string,uint8_t> > dacs;
-    dacs.push_back(std::make_pair("Vdig",6));
+    dacs.push_back(std::make_pair("Vdig",60));
     dacs.push_back(std::make_pair("Vana",84));
     dacs.push_back(std::make_pair("Vsf",30));
     dacs.push_back(std::make_pair("Vcomp",12));
@@ -37,7 +42,7 @@ int main()
     dacs.push_back(std::make_pair("VIBias_Bus",1));
     dacs.push_back(std::make_pair("Vbias_sf",6));
     dacs.push_back(std::make_pair("VoffsetOp",40));
-    dacs.push_back(std::make_pair("VOffsetR0",129));
+    dacs.push_back(std::make_pair("VOffsetRO",129));
     dacs.push_back(std::make_pair("VIon",120));
     dacs.push_back(std::make_pair("Vcomp_ADC",100));
     dacs.push_back(std::make_pair("VIref_ADC",91));
