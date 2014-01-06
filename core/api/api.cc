@@ -64,7 +64,8 @@ bool api::initDUT(std::string tbmtype,
     // Prepare a new TBM configuration
     tbmConfig newtbm;
     // Set the TBM type (get value from dictionary)
-    newtbm.type = 0x0; //FIXME stringToType(tbmtype);
+    newtbm.type = stringToDeviceCode(tbmtype);
+    if(newtbm.type == 0x0) return false;
     
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
@@ -89,7 +90,8 @@ bool api::initDUT(std::string tbmtype,
     // Prepare a new ROC configuration
     rocConfig newroc;
     // Set the ROC type (get value from dictionary)
-    newroc.type = 0x0; //FIXME stringToType(roctype);
+    newroc.type = stringToDeviceCode(roctype);
+    if(newroc.type == 0x0) return false;
     
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
@@ -173,6 +175,23 @@ uint8_t api::registerRangeCheck(uint8_t regId, uint8_t value) {
   return value;
 }
 
+// Return the device code for the given name, return 0x0 if invalid:
+uint8_t api::stringToDeviceCode(std::string name) {
+
+  // Convert the name to lower case for comparison:
+  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+  LOG(logDEBUGAPI) << "Looking up device type for: " << name;
+
+  // Get singleton device dictionary object:
+  DeviceDictionary * _devices = DeviceDictionary::getInstance();
+
+  // And get the device code from the dictionary object:
+  uint8_t _code = _devices->getDevCode(name);
+  LOG(logDEBUGAPI) << "Device type return: " << (int)_code;
+
+  if(_code == 0x0) {LOG(logCRITICAL) << "Unknown device \"" << _code << "\"!";}
+  return _code;
+}
 
 
 /** DTB functions **/

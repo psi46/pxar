@@ -340,6 +340,10 @@ namespace pxar {
      */
     uint8_t registerRangeCheck(uint8_t register, uint8_t value);
 
+    /** Helper function for conversion from device type string to code
+     */
+    uint8_t stringToDeviceCode(std::string name);
+
 
   }; // class api
 
