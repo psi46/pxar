@@ -143,7 +143,7 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
 
 std::vector< rocConfig > dut::getEnabledRocs() {
   std::vector< rocConfig > result;
-  if (!status()) return result;
+  if (!_initialized) return result;
   // search for rocs that have enable set
   for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
     if (it->enable) result.push_back(*it);
