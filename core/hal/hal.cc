@@ -74,15 +74,15 @@ bool hal::status() {
   return _initialized;
 }
 
-void hal::initTestboard() {
+void hal::initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays) {
 
   //FIXME get from board configuration:
 
   // Write testboard delay settings to the repsective registers:
-  _testboard->Sig_SetDelay(SIG_CLK, 2);
-  _testboard->Sig_SetDelay(SIG_CTR, 20);
-  _testboard->Sig_SetDelay(SIG_SDA, 19);
-  _testboard->Sig_SetDelay(SIG_TIN, 7);
+  for(std::vector<std::pair<uint8_t,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
+    LOG(logDEBUGHAL) << "Set DTB delay " << (int)sigIt->first << " to value " << (int)sigIt->second;
+    _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
+  }
   _testboard->Flush();
   LOG(logDEBUG) << "Testboard delays set.";
 

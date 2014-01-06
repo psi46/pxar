@@ -30,7 +30,7 @@ namespace pxar {
 
     /** Initialize the testboard with the signal delay settings:
      */
-    void initTestboard();
+    void initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays);
 
     /** Flashes the given firmware file to the testboard FPGA
      *  Powers down the DUT first.
