@@ -18,6 +18,7 @@ int main()
     sig_delays.push_back(std::make_pair("ctr",20));
     sig_delays.push_back(std::make_pair("sda",19));
     sig_delays.push_back(std::make_pair("tin",7));
+    sig_delays.push_back(std::make_pair("deser160phase",4));
 
     std::vector<std::pair<std::string,double> > power_settings;
     std::vector<std::pair<std::string,uint8_t> > pg_setup;

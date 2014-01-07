@@ -77,16 +77,26 @@ bool hal::status() {
 
 void hal::initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays) {
 
-  //FIXME get from board configuration:
-
-  // Write testboard delay settings to the repsective registers:
+  // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::vector<std::pair<uint8_t,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
-    LOG(logDEBUGHAL) << "Set DTB delay " << (int)sigIt->first << " to value " << (int)sigIt->second;
-    _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
+
+    if(sigIt->first < SIG_DESER160PHASE) {
+      LOG(logDEBUGHAL) << "Set DTB delay " << (int)sigIt->first << " to value " << (int)sigIt->second;
+      _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER160PHASE) {
+      LOG(logDEBUGHAL) << "Set DTB deser160 phase to value " << (int)sigIt->second;
+      _testboard->Daq_Select_Deser160(sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE) {
+      //LOG(logDEBUGHAL) << "Set DTB deser400 phase to value " << (int)sigIt->second;
+      //_testboard->Daq_Select_Deser160(sigIt->second);
+    }
   }
   _testboard->Flush();
   LOG(logDEBUG) << "Testboard delays set.";
 
+  //FIXME get from board configuration:
   // Set voltages:
   setTBva(1.8);
   setTBvd(2.5);

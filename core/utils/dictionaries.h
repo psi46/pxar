@@ -68,10 +68,12 @@ namespace pxar {
 
       //------- DTB registers -----------------------------
       // FIXME what are the upper values for signal delays?
-      _dacs["clk"]        = dacConfig(SIG_CLK,255);
-      _dacs["ctr"]        = dacConfig(SIG_CTR,255);
-      _dacs["sda"]        = dacConfig(SIG_SDA,255);
-      _dacs["tin"]        = dacConfig(SIG_TIN,255);
+      _dacs["clk"]           = dacConfig(SIG_CLK,255);
+      _dacs["ctr"]           = dacConfig(SIG_CTR,255);
+      _dacs["sda"]           = dacConfig(SIG_SDA,255);
+      _dacs["tin"]           = dacConfig(SIG_TIN,255);
+      _dacs["deser160phase"] = dacConfig(SIG_DESER160PHASE,255);
+      _dacs["deser400phase"] = dacConfig(SIG_DESER400PHASE,255);
 
       //------- TBM registers -----------------------------
 
