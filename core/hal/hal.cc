@@ -418,7 +418,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   int32_t flags = parameter.at(0);
   int32_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << (int)flags << ", running " << nTriggers << " triggers.";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<int16_t> nReadouts;
   std::vector<int32_t> PHsum;
@@ -433,17 +433,34 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   LOG(logDEBUGRPC) << "RPC: CalibrateMap(" << nTriggers << ", nReadouts, PHsum)";
   LOG(logDEBUGHAL) << "Function returns: " << status;
   LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
-  
-  int column = 0, row = 0;
+
+  // Decide over what we get back in the value field:
+  if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
+    result->push_back(deserialize(rocid,nReadouts));
+    LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";
+  }
+  else {
+    result->push_back(deserialize(rocid,PHsum));
+    LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
+  }
+
+  return result;
+}
+
+template <typename T>
+std::vector<pixel> hal::deserialize(uint8_t rocId, std::vector<T> tvec) {
+
   // Loop over the full roc, since we have full-matrix readout:
-  for(std::vector<int16_t>::iterator it = nReadouts.begin(); it < nReadouts.end(); ++it){
+  std::vector<pixel> data;
+  int column = 0, row = 0;
+
+  for(typename std::vector<T>::iterator it = tvec.begin(); it < tvec.end(); ++it) {
     pixel newpixel;
     newpixel.column = column;
     newpixel.row = row;
-    newpixel.roc_id = rocid;
+    newpixel.roc_id = rocId;
 
-    // FIXME we need a flag to select PHsum or nReadouts
-    newpixel.value = (*it);
+    newpixel.value = static_cast<int32_t>(*it);
     data.push_back(newpixel);
 
     // Translate linear vectors into 2D pixel addresses:
@@ -454,10 +471,8 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
     }
   }
 
-  result->push_back(data);
-  return result;
+  return data;
 }
-
 
 std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 

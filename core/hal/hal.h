@@ -166,6 +166,11 @@ namespace pxar {
      */
     void setTBvd(double VD);
 
+    /** Helper template function to compact and pack linear vectors into
+     *  pixel struct vectors
+     */
+    template <typename T> std::vector<pixel> deserialize(uint8_t rocId, std::vector<T> tvec);
+
   };
 
 }
