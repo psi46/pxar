@@ -45,7 +45,7 @@ public:
 
   void doSetfConsole();
   void closeWindow();
-  PixTest *createTest(pxar::api *, std::string); 
+  PixTest* createTest(std::string); 
 
   TGCompositeFrame	*fhFrame;
   TGTab               	*getTabs() {return fTabs;}
@@ -88,6 +88,7 @@ private:
 
   SysCommand             *fSysCommand;
   
+  PixSetup               *fPixSetup; 
   pxar::api              *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;

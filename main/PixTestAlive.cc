@@ -11,18 +11,12 @@ using namespace pxar;
 ClassImp(PixTestAlive)
 
 // ----------------------------------------------------------------------
-PixTestAlive::PixTestAlive(PixSetup &a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
+PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
   PixTest::init(a, name);
   init(); 
   cout << "PixTestAlive ctor(PixSetup &a, string, TGTab *)" << endl;
 }
 
-// ----------------------------------------------------------------------
-PixTestAlive::PixTestAlive(pxar::api *a, std::string name, PixTestParameters *tp) : PixTest(a, name, tp), fParNtrig(-1), fParVcal(-1) {
-  PixTest::init(a, name, tp);
-  init(); 
-  cout << "PixTestAlive ctor(pxar::api *, string, TGTab *, TGTextView *)" << endl;
-}
 
 //----------------------------------------------------------
 PixTestAlive::PixTestAlive() : PixTest() {
@@ -58,7 +52,10 @@ void PixTestAlive::init() {
 
   TH2D *h2(0);
   fHistList.clear();
-  for (int i = 0; i < 16; ++i){
+  cout << "fPixSetup = " << fPixSetup << endl;
+  cout << "fPixSetup->getConfigParameters() = " << fPixSetup->getConfigParameters() << endl;
+  cout << "fPixSetup->getConfigParameters()->getNrocs() = " << fPixSetup->getConfigParameters()->getNrocs() << endl;
+  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h2 = new TH2D(Form("PixelAlive_C%d", i), Form("PixelAlive_C%d", i), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     setTitles(h2, "col", "row"); 

@@ -16,9 +16,10 @@ TGMainFrame(p, w, h, kVerticalFrame), fWidth(w), fHeight(h) {
   ULong_t red;
   gClient->GetColorByName("red", red);
 
-  fApi = setup->getApi();
-  fConfigParameters = setup->getConfigParameters();
-  fTestParameters = setup->getPixTestParameters(); 
+  fPixSetup = setup;
+  fApi = fPixSetup->getApi();
+  fConfigParameters = fPixSetup->getConfigParameters();
+  fTestParameters = fPixSetup->getPixTestParameters(); 
 
   fApi->HVoff(); 
   fApi->Poff(); 
@@ -271,7 +272,7 @@ void PixGui::createParTab() {
 void PixGui::createTab(char*csel) {
   string tname = csel; 
 
-  PixTest *pt = createTest(fApi, string(csel));
+  PixTest *pt = createTest(string(csel));
   if (0 == pt) {
     cout << "ERROR: " << csel << " not known, nothing created" << endl;
     return;
@@ -317,8 +318,8 @@ void PixGui::doSetfConsole() {
 
 
 // ----------------------------------------------------------------------
-PixTest* PixGui::createTest(pxar::api *a, string testname) {
-  if (!testname.compare("PixelAlive")) return new PixTestAlive(a, testname, fTestParameters); 
-  if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(a, testname, fTestParameters); 
+PixTest* PixGui::createTest(string testname) {
+  if (!testname.compare("PixelAlive")) return new PixTestAlive(fPixSetup, testname); 
+  if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(fPixSetup, testname); 
   return 0; 
 }

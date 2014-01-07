@@ -10,7 +10,7 @@ class PixTestFactory {
 public:
 
   static PixTestFactory*  instance(); 
-  PixTest*                createTest(string, PixSetup &); 
+  PixTest*                createTest(string, PixSetup *); 
 
 protected: 
   PixTestFactory(); 

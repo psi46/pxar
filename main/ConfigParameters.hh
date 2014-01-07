@@ -53,6 +53,8 @@ public:
 
   void setGuiMode(bool a) {fGuiMode = a;}
 
+  int getNrocs() {return fnRocs;}
+
 private:
 
   int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;

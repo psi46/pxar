@@ -8,46 +8,27 @@ using namespace std;
 ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
-PixTest::PixTest(PixSetup &a, string name) {
-  init(a.getApi(), name, a.getPixTestParameters()); 
-  cout << "PixTest ctor(pxar::xapi *, string)" << endl;
+PixTest::PixTest(PixSetup *a, string name) {
+  cout << "PixTest ctor(PixSetup, string)" << endl;
+  init(a, name); 
 }
-
-
-// ----------------------------------------------------------------------
-PixTest::PixTest(pxar::api *a, string name, PixTestParameters *tp) {
-  init(a, name, tp); 
-  cout << "PixTest ctor(pxar::api *, string)" << endl;
-}
-
 
 // ----------------------------------------------------------------------
 PixTest::PixTest() {
-  cout << "PixTestBase ctor()" << endl;
-
+  cout << "PixTest ctor()" << endl;
+  
 }
 
 
 // ----------------------------------------------------------------------
-void PixTest::init(PixSetup &a, string name) {
+void PixTest::init(PixSetup *a, string name) {
   cout << "PixTest::init()" << endl;
-  fApi = a.getApi(); 
-  fName = name;
-  fParameters = a.getPixTestParameters()->getTestParameters(name); 
-  NCOL = 52; 
-  NROW = 80;
+  fPixSetup       = a;
+  fApi            = a->getApi(); 
+  fTestParameters = a->getPixTestParameters(); 
 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    setParameter(imap->first, imap->second); 
-  }
-}
-
-// ----------------------------------------------------------------------
-void PixTest::init(pxar::api *a, std::string name, PixTestParameters *tp) {
-  cout << "PixTest::init()" << endl;
-  fApi = a; 
   fName = name;
-  fParameters = tp->getTestParameters(name); 
+  fParameters = a->getPixTestParameters()->getTestParameters(name); 
   NCOL = 52; 
   NROW = 80;
 
@@ -65,7 +46,7 @@ void PixTest::init(pxar::api *a, std::string name, PixTestParameters *tp) {
 
 // ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
-  cout << " PixTest::setParameter wrong function" << endl;
+  //  cout << " PixTest::setParameter wrong function" << endl;
   return false;
 }
 
