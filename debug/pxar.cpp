@@ -67,7 +67,8 @@ int main()
 	newpix.column = col;
 	newpix.row = row;
 	//Trim: fill random value, should report fail as soon as we have range checks:
-	newpix.trim = row;
+	//newpix.trim = row;
+	newpix.trim = 15;
 	newpix.mask = false;
 	newpix.enable = true;
 
