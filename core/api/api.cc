@@ -413,14 +413,20 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   HalMemFnRoc rocfn = &hal::RocCalibrateMap;
   HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
 
+  // We want the efficiency back from the Map function, so let's set the internal flag:
+  int32_t internal_flags;
+  internal_flags |= flags;
+  internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
+  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << flags;
+
   // Load the test parameters into vector
   std::vector<int32_t> param;
-  param.push_back(static_cast<int32_t>(flags));
+  param.push_back(static_cast<int32_t>(internal_flags));
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
-  bool forceSerial = flags > 1;
+  bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // FIXME do proper repacking instead of just returning the first vector entry!
