@@ -71,7 +71,9 @@ bool api::initDUT(std::string tbmtype,
   // First initialized the API's DUT instance with the information supplied.
   // FIXME TODO: currently values are not checked for sanity! (Num pixels etc.)
 
-  // FIXME check size of rocDACs and rocPixels agains each other
+  // FIXME check size of rocDACs and rocPixels against each other
+
+  // FIXME masking not done yet.
 
   // Initialize TBMs:
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){

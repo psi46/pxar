@@ -159,6 +159,7 @@ int main()
 
       if((int)mapit->value == nTrig) std::cout << "X";
       else if((int)mapit->value == 0) std::cout << "-";
+      else if((int)mapit->value > nTrig) std::cout << "#";
       else std::cout << (int)mapit->value;
 
       row++;
