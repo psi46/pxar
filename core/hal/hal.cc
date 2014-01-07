@@ -1,6 +1,7 @@
 #include "hal.h"
 #include "log.h"
 #include "rpc_impl.h"
+#include "constants.h"
 #include <fstream>
 
 using namespace pxar;
@@ -244,6 +245,7 @@ void hal::CheckCompatibility(){
 
     // For now, just print a message and don't to anything else:
     LOG(logERROR) << "Please update your DTB with the correct flash file!";
+    // FIXME throw some exception here!
   }
 }
 
@@ -394,18 +396,67 @@ void hal::pixelMask(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int3
 
 }
 
-/* ---------------- TEST FUNCTIONS ---------------------- */
 
-std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {}
+// ---------------- TEST FUNCTIONS ----------------------
 
-std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter){
-  LOG(logDEBUGHAL) << " called DummyPixelTestSkeleton routine";
+std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {
+
+  int32_t flags = parameter.at(0);
+  int32_t nTriggers = parameter.at(1);
+
+  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << flags << ", running " << nTriggers << " triggers.";
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<int16_t> nReadouts;
+  std::vector<int32_t> PHsum;
+  std::vector<pixel> data;
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+  LOG(logDEBUGRPC) << "RPC: roc_I2cAddr(" << rocid << ")";
+
+  // Call the RPC command:
+  int status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum);
+  LOG(logDEBUGRPC) << "RPC: CalibrateMap(" << nTriggers << ", nReadouts, PHsum)";
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
+  
+  int column = 0, row = 0;
+  // Loop over the full roc, since we have full-matrix readout:
+  for(std::vector<int16_t>::iterator it = nReadouts.begin(); it < nReadouts.end(); ++it){
+    pixel newpixel;
+    newpixel.column = column;
+    newpixel.row = row;
+    newpixel.roc_id = rocid;
+
+    // FIXME we need a flag to select PHsum or nReadouts
+    newpixel.value = (*it);
+    data.push_back(newpixel);
+
+    // Translate linear vectors into 2D pixel addresses:
+    row++;
+    if(row >= ROC_NUMROWS) {
+      row = 0;
+      column++;
+    }
+  }
+
+  result->push_back(data);
+  return result;
+}
+
+
+std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  LOG(logDEBUGHAL) << "Called DummyPixelTestSkeleton routine";
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   // we 'scan' dac values
-  int32_t dacmin = parameter.at(0);
-  int32_t dacmax = parameter.at(1);
-  for (int i=dacmin;i<dacmax;i++){
+  int32_t dacreg = parameter.at(0);
+  int32_t dacmin = parameter.at(1);
+  int32_t dacmax = parameter.at(2);
+
+  LOG(logDEBUGHAL) << "\"scanning\" DAC " << dacreg << " from " << dacmin << " to " << dacmax;
+  for (int i=dacmin;i<dacmax;i++) {
     std::vector<pixel> dacscan;
     pixel newpixel;
     newpixel.column = column;
@@ -418,13 +469,17 @@ std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, ui
   return result;
 }
 
-std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter){
-  LOG(logDEBUGHAL) << " called DummyRocTestSkeleton routine";
+std::vector< std::vector<pixel> >* hal::DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter) {
+
+  LOG(logDEBUGHAL) << "Called DummyRocTestSkeleton routine";
   // pack some random data
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   // we 'scan' dac values
-  int32_t dacmin = parameter.at(0);
-  int32_t dacmax = parameter.at(1);
+  int32_t dacreg = parameter.at(0);
+  int32_t dacmin = parameter.at(1);
+  int32_t dacmax = parameter.at(2);
+
+  LOG(logDEBUGHAL) << "\"scanning\" DAC " << dacreg << " from " << dacmin << " to " << dacmax;
   for (int i=dacmin;i<dacmax;i++){
     std::vector<pixel> dacscan;
     // over the full roc
@@ -449,9 +504,12 @@ std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int3
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   for (int rocid=0;rocid<16;rocid++){
     // we 'scan' dac values
-    int32_t dacmin = parameter.at(0);
-    int32_t dacmax = parameter.at(1);
-    for (int i=dacmin;i<dacmax;i++){
+    int32_t dacreg = parameter.at(0);
+    int32_t dacmin = parameter.at(1);
+    int32_t dacmax = parameter.at(2);
+
+    LOG(logDEBUGHAL) << "\"scanning\" DAC " << dacreg << " from " << dacmin << " to " << dacmax;
+    for (int i=dacmin;i<dacmax;i++) {
       std::vector<pixel> dacscan;
       // over the full roc
       for (int column=0;column<52;column++){
@@ -476,6 +534,9 @@ std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int3
 //FIXME DEBUG
 int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 {
+  LOG(logDEBUGHAL) << "Starting debug PH function for some readout, " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Looking for pixel " << col << ", " << row << ", trim " << trim;
+
   _testboard->Daq_Open(50000);
   _testboard->Daq_Select_Deser160(4);
   _testboard->uDelay(100);
@@ -503,6 +564,7 @@ int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
   _testboard->Daq_Read(data, 4000);
   _testboard->Daq_Close();
 
+  LOG(logDEBUGHAL) << "Data length is " << data.size() << ":";
   for(std::vector<uint16_t>::iterator it = data.begin(); it != data.end(); ++it) {
     LOG(logDEBUGHAL) << std::hex << (*it) << std::dec;
   }
