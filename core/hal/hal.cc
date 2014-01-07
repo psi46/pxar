@@ -524,6 +524,61 @@ std::vector<pixel> hal::deserialize(uint8_t rocId, std::vector<T> tvec) {
   return data;
 }
 
+
+std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  int32_t dacreg = parameter.at(0);
+  int32_t dacmin = parameter.at(1);
+  int32_t dacmax = parameter.at(2);
+  int32_t flags = parameter.at(3);
+  int32_t nTriggers = parameter.at(4);
+
+  LOG(logDEBUGHAL) << "Called PixelCalibrateDacScan with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Scanning DAC " << dacreg << " from " << dacmin << " to " << dacmax;
+
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<int16_t> nReadouts;
+  std::vector<int32_t> PHsum;
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+  LOG(logDEBUGRPC) << "RPC: roc_I2cAddr(" << rocid << ")";
+
+  // FIXME no DACMIN usage possible right now.
+
+  // Call the RPC command:
+  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmax, nReadouts, PHsum);
+  LOG(logDEBUGRPC) << "RPC: CalibrateDacScan(" << nTriggers << ", " << column << ", " << row 
+		   << ", " << dacreg << ", " << dacmax << ", nReadouts, PHsum)";
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
+
+  //FIXME no DACMIN setting possible, starting at 0 all the time:
+  //  for (int i=dacmin;i<dacmax;i++) {
+  for(int i=0; i < dacmax; i++) {
+    std::vector<pixel> data;
+    pixel newpixel;
+    newpixel.column = column;
+    newpixel.row = row;
+    newpixel.roc_id = rocid;
+
+    // Decide over what we get back in the value field:
+    if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
+      // FIXME not nice, not safe:
+      newpixel.value =  static_cast<int32_t>(nReadouts[i]);
+    }
+    else {
+      // FIXME not nice, not safe:
+      newpixel.value =  static_cast<int32_t>(PHsum[i]);
+    }
+    data.push_back(newpixel);
+    result->push_back(data);
+  }
+
+  return result;
+}
+
+
 std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   LOG(logDEBUGHAL) << "Called DummyPixelTestSkeleton routine";
