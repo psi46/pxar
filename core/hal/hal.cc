@@ -422,7 +422,6 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<int16_t> nReadouts;
   std::vector<int32_t> PHsum;
-  std::vector<pixel> data;
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
@@ -443,6 +442,47 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
     result->push_back(deserialize(rocid,PHsum));
     LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
   }
+
+  return result;
+}
+
+std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  int32_t flags = parameter.at(0);
+  int32_t nTriggers = parameter.at(1);
+
+  LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  int16_t nReadouts;
+  int32_t PHsum;
+  std::vector<pixel> data;
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+  LOG(logDEBUGRPC) << "RPC: roc_I2cAddr(" << rocid << ")";
+
+  // Call the RPC command:
+  int status = _testboard->CalibratePixel(nTriggers, column, row, nReadouts, PHsum);
+  LOG(logDEBUGRPC) << "RPC: CalibratePixel(" << nTriggers << ", " << column << ", " << row << ", nReadouts, PHsum)";
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+
+  pixel newpixel;
+  newpixel.column = column;
+  newpixel.row = row;
+  newpixel.roc_id = rocid;
+
+  // Decide over what we get back in the value field:
+  if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
+    newpixel.value =  static_cast<int32_t>(nReadouts);
+    LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";
+  }
+  else {
+    newpixel.value =  static_cast<int32_t>(PHsum);
+    LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
+  }
+
+  data.push_back(newpixel);
+  result->push_back(data);
 
   return result;
 }

@@ -102,10 +102,16 @@ namespace pxar {
     int32_t PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
 
     /** Function to return ROC maps of calibration pulses
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
     std::vector< std::vector<pixel> >* RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter);
+
+    /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel.
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
+     *  Private flags allow selection of output value (pulse height or efficiency)
+     */
+    std::vector< std::vector<pixel> >* PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
   private:
 
