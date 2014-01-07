@@ -158,6 +158,10 @@ int main(int argc, char *argv[]){
   
   //  delete configParameters;
   //  delete controlNetwork;
+  if (!noAPI) {
+    delete api;
+  }
+
   cout << "pixar: this is the end, my friend" << endl;
 
   return 0;
