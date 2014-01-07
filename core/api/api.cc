@@ -383,7 +383,28 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 												      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 												      uint16_t flags, uint32_t nTriggers) {}
 
-std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {}
+std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
+
+  // Setup the correct _hal calls for this test (ROC wide only)
+  HalMemFnPixel pixelfn = NULL;
+  HalMemFnRoc rocfn = &hal::RocCalibrateMap;
+  HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
+
+  // We want the pulse height back from the Map function, no flag needed.
+
+  // Load the test parameters into vector
+  std::vector<int32_t> param;
+  param.push_back(static_cast<int32_t>(flags));
+  param.push_back(static_cast<int32_t>(nTriggers));
+
+  // check if the flags indicate that the user explicitly asks for serial execution of test:
+  // FIXME: FLAGS NOT YET CHECKED!
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+
+  // FIXME do proper repacking instead of just returning the first vector entry!
+  return data->at(0);
+}
 
 std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
 
