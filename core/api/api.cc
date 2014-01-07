@@ -386,7 +386,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
 
   // Setup the correct _hal calls for this test (ROC wide only)
-  HalMemFnPixel pixelfn = NULL;
+  HalMemFnPixel pixelfn = &hal::PixelCalibrateMap;
   HalMemFnRoc rocfn = &hal::RocCalibrateMap;
   HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
 
@@ -409,12 +409,12 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
 std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
 
   // Setup the correct _hal calls for this test (ROC wide only)
-  HalMemFnPixel pixelfn = NULL;
+  HalMemFnPixel pixelfn = &hal::PixelCalibrateMap;
   HalMemFnRoc rocfn = &hal::RocCalibrateMap;
   HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
 
   // We want the efficiency back from the Map function, so let's set the internal flag:
-  int32_t internal_flags;
+  int32_t internal_flags = 0;
   internal_flags |= flags;
   internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
   LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << flags;
