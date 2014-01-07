@@ -142,7 +142,7 @@ int main()
     
     // ##########################################################
     // Call the first real test (pixel efficiency map):
-    /*
+    
     // Enable all pixels first:
     _api->_dut->setAllPixelEnable(true);
 
@@ -158,6 +158,7 @@ int main()
       //std::cout << "Px " << (int)mapit->column << ", " << (int)mapit->row << " has efficiency " << (int)mapit->value << "/" << nTrig << " = " << (mapit->value/nTrig) << std::endl;
 
       if((int)mapit->value == nTrig) std::cout << "X";
+      else if((int)mapit->value == 0) std::cout << "-";
       else std::cout << (int)mapit->value;
 
       row++;
@@ -166,7 +167,7 @@ int main()
 	std::cout << std::endl;
       }
     }
-    */
+    
     // ##########################################################
     
     // And end that whole thing correcly:
