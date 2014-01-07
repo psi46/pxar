@@ -160,7 +160,7 @@ bool api::programDUT() {
   LOG(logDEBUGAPI) << "Programming ROCS...";
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
+    _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs, (*rocit).pixels);
   }
 
   // The DUT is programmed, everything all right:

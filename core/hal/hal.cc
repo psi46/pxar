@@ -176,7 +176,7 @@ void hal::initTBM() {
       Tbmenable(configParameters->tbmEnable);*/
 }
 
-void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector) {
+void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector, std::vector< pixelConfig > pixels) {
 
   // Turn on the output power of the testboard if not already done:
   LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
@@ -190,6 +190,20 @@ void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVec
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << (int)rocId << ".";
   rocSetDACs(rocId,dacVector);
+  mDelay(300);
+
+  // Prepare configuration of the pixels, linearize vector:
+  std::vector<int8_t> trim;
+  // Set default trim value to 15:
+  for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(15); }
+  for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
+    size_t position = (*pxIt).column*ROC_NUMROWS + (*pxIt).row;
+    trim[position] = (*pxIt).trim;
+  }
+
+  // Trim the whole ROC:
+  LOG(logDEBUGHAL) << "Trimming ROC " << (int)rocId << ".";
+  _testboard->TrimChip(trim);
   mDelay(300);
 
 }

@@ -46,7 +46,7 @@ namespace pxar {
      *  testboard output if necessary, sets the ROC's I2C address and then
      *  programs all DAC registers for the given ROC.
      */
-    void initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector);
+    void initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector, std::vector<pixelConfig> pixels);
 
     /** turn off HV
      */
