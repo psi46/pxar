@@ -316,20 +316,30 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint16_t flags, uint32_t nTriggers) {
-  // check range
-  if (dacMin>dacMax){
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister = stringToRegister(dacName);
+  if(dacRegister == 0x0) {
+    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+  }
+
+  // Check DAC range
+  if(dacMin > dacMax) {
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
     LOG(logERROR) << "DacMin > DacMax! ";
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
-  // setup the correct _hal calls for this test (FIXME:DUMMYONLY)
+  dacMax = registerRangeCheck(dacRegister, dacMax);
+
+  // Setup the correct _hal calls for this test (FIXME:DUMMYONLY)
   HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;
   HalMemFnRoc rocfn = &hal::DummyRocTestSkeleton;
   HalMemFnModule modulefn = &hal::DummyModuleTestSkeleton;
-  // load the test parameters into vector
+  // Load the test parameters into vector
   std::vector<int32_t> param;
-  // FIXME: NOT IMPLEMENTED:
-  //param.push_back(static_cast<int32_t>dacNameToID(dacName));  
+
+  param.push_back(static_cast<int32_t>(dacRegister));  
   param.push_back(static_cast<int32_t>(dacMin));
   param.push_back(static_cast<int32_t>(dacMax));
   param.push_back(static_cast<int32_t>(flags));
