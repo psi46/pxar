@@ -9,6 +9,16 @@
 
 namespace pxar {
 
+// --- PXAR Flags---------------------------------------------------------------
+// These flags are all < 16bit and can be set by the user:
+#define FLAG_FORCE_SERIAL 0x0001
+#define FLAG_USE_CALS     0x0002
+
+// --- PXAR Internal Flags------------------------------------------------------
+// All internal flags are > 16bit, cannot be set from outside:
+#define FLAG_INTERNAL_GET_EFFICIENCY 0x10000
+
+
 // --- TBM Types ---------------------------------------------------------------
 // FIXME just an example...
 #define TBM_07             0x01
