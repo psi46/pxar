@@ -139,6 +139,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("dacParameters")) { setDACParameterFileName(_value); }
       else if (0 == _name.compare("rootFileName")) { setRootFileName(_value); }
       else if (0 == _name.compare("trimParameters")) { setTrimParameterFileName(_value); }
+      else if (0 == _name.compare("maskFile")) { setMaskFileName(_value); }
 
       else if (0 == _name.compare("nModules")) { fnModules                  = _ivalue; }
       else if (0 == _name.compare("nRocs")) { fnRocs                     = _ivalue; }
@@ -201,6 +202,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     replaceAll(lines[i], "\t", " "); 
     std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
+    if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
     s1 = lines[i].find(" "); 
@@ -255,6 +257,15 @@ std::vector<std::vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig
     allRocPixelConfigs.push_back(v); 
   }
 
+  filename = Form("%s", fMaskFileName.c_str()); 
+  vector<vector<pair<int, int> > > a = readMaskFile(filename); 
+  for (unsigned int i = 0; i < a.size(); ++i) {
+    vector<pair<int, int> > v = a[i]; 
+    for (unsigned int j = 0; j < v.size(); ++j) {
+      cout << "Roc " << i << " col/row: " << v[j].first << " " << v[j].second << endl;
+    }
+  }
+
   return allRocPixelConfigs;
 
 }
@@ -286,6 +297,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     replaceAll(lines[i], "Pix", " "); 
     std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
+    if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
     s1 = lines[i].find(" "); 
@@ -317,6 +329,82 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   }
 
 
+}
+
+
+// ----------------------------------------------------------------------
+vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
+
+  vector<vector<pair<int, int> > > v; 
+  vector<pair<int, int> > a; 
+  for (unsigned int i = 0; i < fnRocs; ++i) {
+    v.push_back(a); 
+  }
+  cout << "maskfile vector length: " << v.size() << endl;
+
+  // -- read in file
+  vector<string> lines; 
+  char  buffer[5000];
+  cout << "readMaskFile reading " << fname << endl;
+  ifstream is(fname.c_str());
+  while (is.getline(buffer, 200, '\n')) {
+    lines.push_back(string(buffer));
+  }
+  is.close();
+  
+  // -- parse lines
+  unsigned int ival(0), irow(0), icol(0); 
+  uint8_t uval(0), urow(0), ucol(0); 
+  
+  string::size_type s1, s2; 
+  string str1, str2, str3;
+  for (unsigned int i = 0; i < lines.size(); ++i) {
+    //    cout << lines[i] << endl;   
+    if (lines[i].substr(0, 1) == string("#")) continue;
+    // -- remove tabs, adjacent spaces, leading and trailing spaces
+    replaceAll(lines[i], "\t", " "); 
+    replaceAll(lines[i], "Pix", " "); 
+    std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
+    lines[i].erase(new_end, lines[i].end()); 
+    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
+    if (0 == lines[i].length()) continue;
+    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
+
+    s1 = lines[i].find("roc"); 
+    if (string::npos != s1) {
+      str3 = lines[i].substr(s1+1); 
+      ival = atoi(str3.c_str()); 
+      cout << "masking all pixels for ROC " << ival << endl;
+      if (ival > 0 && ival < fnRocs) {
+	for (unsigned int ic = 0; ic < fnCol; ++ic) {
+	  for (unsigned int ir = 0; ir < fnRow; ++ir) {
+	    v[ival].push_back(make_pair(ic, ir)); 
+	  }
+	}  
+      }
+      continue;
+    }
+    
+    s1 = lines[i].find("row"); 
+    if (string::npos != s1) {
+
+      continue;
+    }
+
+    s1 = lines[i].find("col"); 
+    if (string::npos != s1) {
+
+      continue;
+    }
+
+    s1 = lines[i].find("pix"); 
+    if (string::npos != s1) {
+
+      continue;
+    }
+  }
+
+  return v; 
 }
 
 

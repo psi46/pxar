@@ -6,6 +6,7 @@ tbParameters tbParameters.dat
 dacParameters dacParameters
 tbmParameters tbmParameters.dat
 trimParameters trimParameters
+maskFile defaultMaskFile.dat
 testParameters testParameters.dat
 rootFileName Pretest.root
 
