@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){
 
   // -- command line arguments
   string dir("."), cmdFile("cal.sys"), rootfile("pxar.root"); 
-  bool debug(false), doRunGui(false), doRunScript(false);
+  bool debug(false), doRunGui(false), doRunScript(false), noAPI(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
@@ -45,6 +45,7 @@ int main(int argc, char *argv[]){
       cout << "-D [--dir] path       directory with config files" << endl;
       cout << "-d                    more debug printout (to be implemented)" << endl;
       cout << "-g                    start with GUI" << endl;
+      cout << "-n                    no DUT/API initialization" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
       return 0;
     }
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-D") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-d"))                                {debug      = true; } 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
+    if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
   }
 
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]){
 
   
   pxar::api *api = 0;
-  if (1) {
+  if (!noAPI) {
     try {
       api = new pxar::api("*","DEBUGAPI");
       std::vector<std::pair<std::string,uint8_t> > sig_delays;
@@ -100,70 +102,27 @@ int main(int argc, char *argv[]){
   }
 
 
-  
-//   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
-//   std::vector<std::pair<std::string,uint8_t> > dacs;
-//   dacs.push_back(std::make_pair("Vdig",6));
-//   dacs.push_back(std::make_pair("Vana",84));
-//   dacs.push_back(std::make_pair("Vsf",30));
-//   dacs.push_back(std::make_pair("Vcomp",12));
-//   dacs.push_back(std::make_pair("VwllPr",60));
-//   dacs.push_back(std::make_pair("VwllSh",60));
-//   dacs.push_back(std::make_pair("VhldDel",230));
-//   dacs.push_back(std::make_pair("Vtrim",29));
-//   dacs.push_back(std::make_pair("VthrComp",86));
-//   dacs.push_back(std::make_pair("VIBias_Bus",1));
-//   dacs.push_back(std::make_pair("Vbias_sf",6));
-//   dacs.push_back(std::make_pair("VoffsetOp",40));
-//   dacs.push_back(std::make_pair("VOffsetR0",129));
-//   dacs.push_back(std::make_pair("VIon",120));
-//   dacs.push_back(std::make_pair("Vcomp_ADC",100));
-//   dacs.push_back(std::make_pair("VIref_ADC",91));
-//   dacs.push_back(std::make_pair("VIbias_roc",150));
-//   dacs.push_back(std::make_pair("VIColOr",50));
-//   dacs.push_back(std::make_pair("Vcal",200));
-//   dacs.push_back(std::make_pair("CalDel",122));
-//   dacs.push_back(std::make_pair("CtrlReg",0));
-//   dacs.push_back(std::make_pair("WBC",100));
-//   rocDACs.push_back(dacs);
-
   // Get some pixelConfigs up and running:
-  std::vector<std::vector<pxar::pixelConfig> > rocPixels;
-  //   std::vector<pxar::pixelConfig> pixels;
-  
-  //   for(int col = 0; col < 52; col++) {
-  //     for(int row = 0; row < 80; row++) {
-  //       pxar::pixelConfig newpix;
-  //       newpix.column = col;
-  //       newpix.row = row;
-  //       //Trim: fill random value, should report fail as soon as we have range checks:
-  //       newpix.trim = row;
-  //       newpix.mask = false;
-  //       newpix.enable = true;
-  
-  //       pixels.push_back(newpix);
-  //     }
-  //   }
-  rocPixels = configParameters->getRocPixelConfig();
-
+  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
 
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   
-  
-  // Initialize the DUT (power it up and stuff):
-  cout << "calling initDUT" << endl;
-  api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
-  cout << "called initDUT" << endl;
-
-
-  api->_dut->setAllPixelEnable(false);
-  api->_dut->setPixelEnable(34,12,true);
-  api->_dut->setPixelEnable(33,12,true);
-  api->_dut->setPixelEnable(34,11,true);
-  api->_dut->setPixelEnable(14,12,true);
-
  
-  cout << "pxar>  Setting up the testboard interface ..." << endl;
+  // Initialize the DUT (power it up and stuff):
+  if (!noAPI) {
+    cout << "calling initDUT" << endl;
+    api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
+    cout << "called initDUT" << endl;
+    
+    
+    api->_dut->setAllPixelEnable(false);
+    api->_dut->setPixelEnable(34,12,true);
+    api->_dut->setPixelEnable(33,12,true);
+    api->_dut->setPixelEnable(34,11,true);
+    api->_dut->setPixelEnable(14,12,true);
+  }
+ 
+    cout << "pxar>  Setting up the testboard interface ..." << endl;
 
 //   string dacFile = configParameters->getDirectory() + string("/dacParameters_C0.dat");
 //   std::vector<std::pair<std::string,uint8_t> > asd = configParameters->readDacFile(dacFile); 
