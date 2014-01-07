@@ -73,7 +73,6 @@ namespace pxar {
       _dacs["sda"]           = dacConfig(SIG_SDA,255);
       _dacs["tin"]           = dacConfig(SIG_TIN,255);
       _dacs["deser160phase"] = dacConfig(SIG_DESER160PHASE,255);
-      _dacs["deser400phase"] = dacConfig(SIG_DESER400PHASE,255);
 
       //------- TBM registers -----------------------------
 

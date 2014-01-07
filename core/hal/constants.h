@@ -79,8 +79,7 @@ namespace pxar {
 #define SIG_SDA 2
 #define SIG_TIN 3
 
-#define SIG_DESER160PHASE 0xF0
-#define SIG_DESER400PHASE 0xF1
+#define SIG_DESER160PHASE 0xFF
 
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
