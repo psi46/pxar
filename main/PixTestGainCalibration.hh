@@ -6,8 +6,7 @@
 
 class PixTestGainCalibration: public PixTest {
 public:
-  PixTestGainCalibration(PixSetup &a, std::string name);
-  PixTestGainCalibration(pxar::api *, std::string name, PixTestParameters *);
+  PixTestGainCalibration(PixSetup *a, std::string name);
   PixTestGainCalibration();
   virtual ~PixTestGainCalibration();
   virtual bool setParameter(std::string parName, std::string sval); 

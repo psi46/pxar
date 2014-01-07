@@ -16,12 +16,10 @@
 
 class PixTest: public TQObject {
 public:
-  PixTest(PixSetup &a, std::string name);
-  PixTest(pxar::api *a, std::string name, PixTestParameters *);
+  PixTest(PixSetup *a, std::string name);
   PixTest();
   virtual ~PixTest();
-  void init(pxar::api *a, std::string name, PixTestParameters *);
-  void init(PixSetup &, std::string name);
+  void init(PixSetup *, std::string name);
 
   void clearHist(); 
   virtual void doTest(); 

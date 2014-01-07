@@ -184,7 +184,7 @@ void execute(PixSetup &a, SysCommand *sysCommand) {
   do {
     cout << "sysCommand.toString(): " << sysCommand->toString() << endl;
     if (sysCommand->TargetIsTest()) 
-      runTest(factory->createTest(sysCommand->toString(), a)); 
+      runTest(factory->createTest(sysCommand->toString(), &a)); 
     else if (sysCommand->Keyword("gui")) 
       runGui(a, 0, 0);
     else if (sysCommand->TargetIsTB()) 

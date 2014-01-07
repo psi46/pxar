@@ -6,8 +6,7 @@
 
 class PixTestAlive: public PixTest {
 public:
-  PixTestAlive(PixSetup &, std::string);
-  PixTestAlive(pxar::api *, std::string, PixTestParameters *);
+  PixTestAlive(PixSetup *, std::string);
   PixTestAlive();
   virtual ~PixTestAlive();
   virtual bool setParameter(std::string parName, std::string sval); 
