@@ -298,8 +298,8 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
   // Get the register number and check the range from dictionary:
   uint8_t dacRegister = stringToRegister(dacName);
   if(dacRegister == 0x0) {
+   LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
     return false;
-    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
   }
 
   dacValue = registerRangeCheck(dacRegister, dacValue);
