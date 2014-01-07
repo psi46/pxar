@@ -343,17 +343,18 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
   HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;
   HalMemFnRoc rocfn = &hal::DummyRocTestSkeleton;
   HalMemFnModule modulefn = &hal::DummyModuleTestSkeleton;
+
   // Load the test parameters into vector
   std::vector<int32_t> param;
-
   param.push_back(static_cast<int32_t>(dacRegister));  
   param.push_back(static_cast<int32_t>(dacMin));
   param.push_back(static_cast<int32_t>(dacMax));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
+
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
-  bool forceSerial = flags > 1;
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
@@ -363,7 +364,62 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
 } // getPulseheightVsDAC
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint16_t flags, uint32_t nTriggers) {}
+									       uint16_t flags, uint32_t nTriggers) {
+
+ // Get the register number and check the range from dictionary:
+  uint8_t dacRegister = stringToRegister(dacName);
+  if(dacRegister == 0x0) {
+    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+  }
+
+  // Check DAC range
+  if(dacMin > dacMax) {
+    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+    LOG(logERROR) << "DacMin > DacMax! ";
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+  }
+  dacMax = registerRangeCheck(dacRegister, dacMax);
+
+  // Setup the correct _hal calls for this test
+  HalMemFnPixel pixelfn = &hal::PixelCalibrateDacScan;
+  HalMemFnRoc rocfn = NULL;
+  HalMemFnModule modulefn = NULL;
+
+ // We want the efficiency back from the Map function, so let's set the internal flag:
+  int32_t internal_flags = 0;
+  internal_flags |= flags;
+  internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
+  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
+
+  // Load the test parameters into vector
+  std::vector<int32_t> param;
+  param.push_back(static_cast<int32_t>(dacRegister));  
+  param.push_back(static_cast<int32_t>(dacMin));
+  param.push_back(static_cast<int32_t>(dacMax));
+  param.push_back(static_cast<int32_t>(internal_flags));
+  param.push_back(static_cast<int32_t>(nTriggers));
+
+  // check if the flags indicate that the user explicitly asks for serial execution of test:
+  // FIXME: FLAGS NOT YET CHECKED!
+  bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
+  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  // repack data into the expected return format
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
+
+  // Reset the original value for the scanned DAC:
+  // FIXME maybe go over expandLoop here?
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+    uint8_t oldDacValue = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dacName);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << (int)oldDacValue;
+    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,oldDacValue);
+  }
+
+  delete data;
+  return *result;
+
+}
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									      uint16_t flags, uint32_t nTriggers) {}
@@ -417,7 +473,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   int32_t internal_flags = 0;
   internal_flags |= flags;
   internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
-  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << flags;
+  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
