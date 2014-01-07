@@ -35,6 +35,7 @@ public:
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
+  std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
 
   //  std::vector<std::vector<std::pair<std::string,uint8_t> > > getTbParameters();
