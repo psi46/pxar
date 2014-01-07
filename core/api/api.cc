@@ -124,7 +124,12 @@ bool api::initDUT(std::string tbmtype,
     }
 
     // Loop over all pixelConfigs supplied:
-    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt){
+    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt) {
+      // Check the trim value to be within boundaries:
+      if((*pixIt).trim > 15) {
+	LOG(logWARNING) << "Pixel " << (int)(*pixIt).column << ", " << (int)(*pixIt).row << " trim value " << (int)(*pixIt).trim << " exceeds limit. Set to 15.";
+	(*pixIt).trim = 15;
+      }
       // Push the pixelConfigs into the rocConfig:
       newroc.pixels.push_back(*pixIt);
     }
