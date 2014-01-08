@@ -110,8 +110,8 @@ namespace pxar {
   }
 
 #define LOG(level)				\
-  if (level > Log::ReportingLevel()) ;		\
-  else Log().Get(level,__func__,__LINE__)
+  if (level > pxar::Log::ReportingLevel()) ;	\
+  else pxar::Log().Get(level,__func__,__LINE__)
 
 } //namespace pxar
 
