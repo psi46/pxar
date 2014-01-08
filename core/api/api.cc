@@ -297,6 +297,8 @@ void api::Poff() {
 
 void api::Pon() {
   _hal->Pon();
+  // Re-program the DUT after power has been switched on:
+  programDUT();
 }
 
   
