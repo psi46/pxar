@@ -179,6 +179,25 @@ namespace pxar {
      */
     void setTBvd(double VD);
 
+
+    // Testboard probe channel commands:
+    /** Selects "signal" as output for the DTB probe channel D1 (digital) 
+     */
+    void SignalProbeD1(uint8_t signal);
+
+    /** Selects "signal" as output for the DTB probe channel D2 (digital) 
+     */
+    void SignalProbeD2(uint8_t signal);
+
+    /** Selects "signal" as output for the DTB probe channel A1 (analog) 
+     */
+    void SignalProbeA1(uint8_t signal);
+
+    /** Selects "signal" as output for the DTB probe channel A2 (analog) 
+     */
+    void SignalProbeA2(uint8_t signal);
+
+
     /** Helper template function to compact and pack linear vectors into
      *  pixel struct vectors
      */
