@@ -103,15 +103,6 @@ public:
 
 
 	// --- Signal Delay -----------------------------------------------------
-	#define SIG_CLK 0
-	#define SIG_CTR 1
-	#define SIG_SDA 2
-	#define SIG_TIN 3
-
-	#define SIG_MODE_NORMAL  0
-	#define SIG_MODE_LO      1
-	#define SIG_MODE_HI      2
-
 	RPC_EXPORT void Sig_SetMode(uint8_t signal, uint8_t mode);
 	RPC_EXPORT void Sig_SetPRBS(uint8_t signal, uint8_t speed);
 	RPC_EXPORT void Sig_SetDelay(uint8_t signal, uint16_t delay, int8_t duty = 0);
@@ -122,39 +113,11 @@ public:
 
 
 	// --- digital signal probe ---------------------------------------------
-	#define PROBE_OFF     0
-	#define PROBE_CLK     1
-	#define PROBE_SDA     2
-	#define PROBE_PGTOK   3
-	#define PROBE_PGTRG   4
-	#define PROBE_PGCAL   5
-	#define PROBE_PGRESR  6
-	#define PROBE_PGREST  7
-	#define PROBE_PGSYNC  8
-	#define PROBE_CTR     9
-	#define PROBE_CLKP   10
-	#define PROBE_CLKG   11
-	#define PROBE_CRC    12
-
 	RPC_EXPORT void SignalProbeD1(uint8_t signal);
 	RPC_EXPORT void SignalProbeD2(uint8_t signal);
 
 
 	// --- analog signal probe ----------------------------------------------
-	#define PROBEA_TIN     0
-	#define PROBEA_SDATA1  1
-	#define PROBEA_SDATA2  2
-	#define PROBEA_CTR     3
-	#define PROBEA_CLK     4
-	#define PROBEA_SDA     5
-	#define PROBEA_TOUT    6
-	#define PROBEA_OFF     7
-
-	#define GAIN_1   0
-	#define GAIN_2   1
-	#define GAIN_3   2
-	#define GAIN_4   3
-
 	RPC_EXPORT void SignalProbeA1(uint8_t signal);
 	RPC_EXPORT void SignalProbeA2(uint8_t signal);
 	RPC_EXPORT void SignalProbeADC(uint8_t signal, uint8_t gain = 0);
@@ -186,13 +149,6 @@ public:
 
 
 	// --- pulse pattern generator ------------------------------------------
-	#define PG_TOK   0x0100
-	#define PG_TRG   0x0200
-	#define PG_CAL   0x0400
-	#define PG_RESR  0x0800
-	#define PG_REST  0x1000
-	#define PG_SYNC  0x2000
-
 	RPC_EXPORT void Pg_SetCmd(uint16_t addr, uint16_t cmd);
 	RPC_EXPORT void Pg_Stop();
 	RPC_EXPORT void Pg_Single();
