@@ -183,6 +183,91 @@ namespace pxar {
     void operator=(DeviceDictionary const&); // Don't implement
   };
 
+  
+  /** Map for DTB digital probe signal name lookup
+   *  All signal names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class ProbeDictionary {
+  public:
+    static ProbeDictionary * getInstance() {
+      static ProbeDictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint8_t getSignal(std::string name) {
+      try { return _signals[name]; }
+      catch(...) { return PROBE_OFF; }
+    }
+
+  private:
+    ProbeDictionary() {
+      // Probe name and values
+
+      // Digital signals:
+      _signals["off"]    = PROBE_OFF;
+      _signals["clk"]    = PROBE_CLK;
+      _signals["sda"]    = PROBE_SDA;
+      _signals["pgtok"]  = PROBE_PGTOK;
+      _signals["pgtrg"]  = PROBE_PGTRG;
+      _signals["pgcal"]  = PROBE_PGCAL;
+      _signals["pgresr"] = PROBE_PGRESR;
+      _signals["pgrest"] = PROBE_PGREST;
+      _signals["pgsync"] = PROBE_PGSYNC;
+      _signals["ctr"]    = PROBE_CTR;
+      _signals["clkp"]   = PROBE_CLKP;
+      _signals["clkg"]   = PROBE_CLKG;
+      _signals["crc"]    = PROBE_CRC;
+
+    };
+
+    std::map<std::string, uint8_t> _signals;
+    ProbeDictionary(ProbeDictionary const&); // Don't Implement
+    void operator=(ProbeDictionary const&); // Don't implement
+  };
+
+
+  /** Map for DTB analog probe signal name lookup
+   *  All signal names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class ProbeADictionary {
+  public:
+    static ProbeADictionary * getInstance() {
+      static ProbeADictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint8_t getSignal(std::string name) {
+      try { return _signals[name]; }
+      catch(...) { return PROBEA_OFF; }
+    }
+
+  private:
+    ProbeADictionary() {
+      // Probe name and values
+
+      // Digital signals:
+      _signals["tin"]    = PROBEA_TIN;
+      _signals["sdata1"] = PROBEA_SDATA1;
+      _signals["sdata2"] = PROBEA_SDATA2;
+      _signals["ctr"]    = PROBEA_CTR;
+      _signals["clk"]    = PROBEA_CLK;
+      _signals["sda"]    = PROBEA_SDA;
+      _signals["tout"]   = PROBEA_TOUT;
+      _signals["off"]    = PROBEA_OFF;
+
+    };
+
+    std::map<std::string, uint8_t> _signals;
+    ProbeADictionary(ProbeADictionary const&); // Don't Implement
+    void operator=(ProbeADictionary const&); // Don't implement
+  };
+
 
 } //namespace pxar
 

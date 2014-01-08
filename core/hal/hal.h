@@ -93,6 +93,24 @@ namespace pxar {
     double getTBvd();
 
 
+    // Testboard probe channel commands:
+    /** Selects "signal" as output for the DTB probe channel D1 (digital) 
+     */
+    void SignalProbeD1(uint8_t signal);
+
+    /** Selects "signal" as output for the DTB probe channel D2 (digital) 
+     */
+    void SignalProbeD2(uint8_t signal);
+
+    /** Selects "signal" as output for the DTB probe channel A1 (analog) 
+     */
+    void SignalProbeA1(uint8_t signal);
+
+    /** Selects "signal" as output for the DTB probe channel A2 (analog) 
+     */
+    void SignalProbeA2(uint8_t signal);
+
+
     // TEST COMMANDS
     std::vector< std::vector<pixel> >* DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
     std::vector< std::vector<pixel> >* DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter);
@@ -178,6 +196,7 @@ namespace pxar {
     /** Set the testboard digital voltage
      */
     void setTBvd(double VD);
+
 
     /** Helper template function to compact and pack linear vectors into
      *  pixel struct vectors

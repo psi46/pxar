@@ -87,6 +87,8 @@ void hal::initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays) {
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << (int)sigIt->first << " to value " << (int)sigIt->second;
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
+      // Also set the signal level, all levels default to 15 (highest) for now:
+      _testboard->Sig_SetLevel(sigIt->first, 15);
     }
   }
   _testboard->Flush();
@@ -187,7 +189,7 @@ void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVec
   // Turn on the output power of the testboard if not already done:
   LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
   _testboard->Pon();
-  mDelay(300);
+  mDelay(400);
 
   // Set the I2C address of the ROC we are configuring right now:
   _testboard->roc_I2cAddr(rocId);
@@ -695,6 +697,8 @@ int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 }
 
 
+// Testboard power switches:
+
 void hal::HVon() {
   // Turn on HV and execute (flush):
   _testboard->HVon();
@@ -716,5 +720,29 @@ void hal::Pon() {
 void hal::Poff() {
   // Turn off DUT power and execute (flush):
   _testboard->Poff();
+  _testboard->Flush();
+}
+
+
+
+// Testboard probe channel selectors:
+
+void hal::SignalProbeD1(uint8_t signal) {
+  _testboard->SignalProbeD1(signal);
+  _testboard->Flush();
+}
+
+void hal::SignalProbeD2(uint8_t signal) {
+  _testboard->SignalProbeD2(signal);
+  _testboard->Flush();
+}
+
+void hal::SignalProbeA1(uint8_t signal) {
+  _testboard->SignalProbeA1(signal);
+  _testboard->Flush();
+}
+
+void hal::SignalProbeA2(uint8_t signal) {
+  _testboard->SignalProbeA2(signal);
   _testboard->Flush();
 }
