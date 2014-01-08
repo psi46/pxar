@@ -60,7 +60,7 @@ private:
   bool fReadTbParameters, fReadTbmParameters, fReadDacParameters, fReadRocPixelConfig;
   std::vector<std::pair<std::string,uint8_t> > fTbParameters;
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
-  std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfig; 
+  std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
 
   int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;
   int fCustomModule;

@@ -265,10 +265,25 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
 
 // ----------------------------------------------------------------------
 vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
-
-  vector<vector<pxar::pixelConfig> > allRocPixelConfigs; 
-
   string filename; 
+
+  // -- read one mask file containing entire DUT mask
+  filename = Form("%s", fMaskFileName.c_str()); 
+  vector<bool> rocmasked; 
+  for (unsigned int i = 0; i < fnRocs; ++i) rocmasked.push_back(false); 
+
+  vector<vector<pair<int, int> > > vmask = readMaskFile(filename); 
+  for (unsigned int i = 0; i < vmask.size(); ++i) {
+    vector<pair<int, int> > v = vmask[i]; 
+    if (v.size() > 0) {
+      rocmasked[i] = true; 
+      for (unsigned int j = 0; j < v.size(); ++j) {
+	cout << "MASKED Roc " << i << " col/row: " << v[j].first << " " << v[j].second << endl;
+      }
+    }
+  }
+
+  // -- read all trim files and creat pixelconfig vector
   for (int i = 0; i < fnRocs; ++i) {
     vector<pxar::pixelConfig> v;
     for (int ic = 0; ic < fnCol; ++ic) {
@@ -277,27 +292,28 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
 	a.column = ic; 
 	a.row = ir; 
 	a.trim = 0; 
-	a.mask = false;
+	if (rocmasked[i]) {
+	  vector<pair<int, int> > v = vmask[i]; 
+	  for (unsigned int j = 0; j < v.size(); ++j) {
+	    if (v[j].first == ic && v[j].second == ir) {
+	      cout << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second << endl;
+	      a.mask = true;
+	    }
+	  }
+	} else {
+	  a.mask = false;
+	}
 	a.enable = false;
 	v.push_back(a); 
       }
     }
-    
     filename = Form("%s_C%d.dat", fTrimParametersFileName.c_str(), i); 
     readTrimFile(filename, v); 
-    allRocPixelConfigs.push_back(v); 
+    fRocPixelConfigs.push_back(v); 
   }
 
-  filename = Form("%s", fMaskFileName.c_str()); 
-  vector<vector<pair<int, int> > > a = readMaskFile(filename); 
-  for (unsigned int i = 0; i < a.size(); ++i) {
-    vector<pair<int, int> > v = a[i]; 
-    for (unsigned int j = 0; j < v.size(); ++j) {
-      cout << "Roc " << i << " col/row: " << v[j].first << " " << v[j].second << endl;
-    }
-  }
-
-  return allRocPixelConfigs;
+  fReadRocPixelConfig = true; 
+  return fRocPixelConfigs;
 
 }
 
@@ -384,10 +400,10 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
   is.close();
   
   // -- parse lines
-  unsigned int ival(0), irow(0), icol(0); 
+  unsigned int iroc(0), irow(0), icol(0); 
   uint8_t uval(0), urow(0), ucol(0); 
   
-  string::size_type s1, s2; 
+  string::size_type s1, s2, s3; 
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
     //    cout << lines[i] << endl;   
@@ -404,33 +420,68 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     s1 = lines[i].find("roc"); 
     if (string::npos != s1) {
       str3 = lines[i].substr(s1+1); 
-      ival = atoi(str3.c_str()); 
-      cout << "masking all pixels for ROC " << ival << endl;
-      if (ival > 0 && ival < fnRocs) {
+      iroc = atoi(str3.c_str()); 
+      //      cout << "masking all pixels for ROC " << iroc << endl;
+      if (iroc >= 0 && iroc < fnRocs) {
 	for (unsigned int ic = 0; ic < fnCol; ++ic) {
 	  for (unsigned int ir = 0; ir < fnRow; ++ir) {
-	    v[ival].push_back(make_pair(ic, ir)); 
+	    v[iroc].push_back(make_pair(ic, ir)); 
 	  }
 	}  
+      } else {
+	cout << "illegal ROC coordinates in line " << i << ": " << lines[i] << endl;
       }
       continue;
     }
     
     s1 = lines[i].find("row"); 
     if (string::npos != s1) {
-
+      s1 += 4; 
+      s2 = lines[i].find(" ", s1) + 1; 
+      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
+      irow = atoi(lines[i].substr(s2).c_str()); 
+      //      cout << "-> MASKING ROC " << iroc << " row " << irow << endl;
+      if (iroc >= 0 && iroc < fnRocs && irow > 0 && irow < fnRow) {
+	for (unsigned int ic = 0; ic < fnCol; ++ic) {
+	  v[iroc].push_back(make_pair(ic, irow)); 
+	}  
+      } else {
+	cout << "illegal ROC/row coordinates in line " << i << ": " << lines[i] << endl;
+      }
       continue;
     }
 
     s1 = lines[i].find("col"); 
     if (string::npos != s1) {
-
+      s1 += 4; 
+      s2 = lines[i].find(" ", s1) + 1; 
+      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
+      icol = atoi(lines[i].substr(s2).c_str()); 
+      //      cout << "-> MASKING ROC " << iroc << " col " << icol << endl;
+      if (iroc >= 0 && iroc < fnRocs && icol > 0 && icol < fnCol) {
+	for (unsigned int ir = 0; ir < fnRow; ++ir) {
+	  v[iroc].push_back(make_pair(icol, ir)); 
+	}  
+      } else {
+	cout << "illegal ROC/col coordinates in line " << i << ": " << lines[i] << endl;
+      }
       continue;
     }
 
     s1 = lines[i].find("pix"); 
     if (string::npos != s1) {
-
+      s1 += 4; 
+      s2 = lines[i].find(" ", s1) + 1; 
+      s3 = lines[i].find(" ", s2) + 1; 
+      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
+      icol = atoi(lines[i].substr(s2, s3-s2-1).c_str()); 
+      irow = atoi(lines[i].substr(s3).c_str()); 
+      //      cout << "-> MASKING ROC " << iroc << " col " << icol << " row " << irow << endl;
+      if (iroc >= 0 && iroc < fnRocs && icol > 0 && icol < fnCol && irow > 0 && irow < fnRow) {
+	v[iroc].push_back(make_pair(icol, irow)); 
+      } else {
+	cout << "illegal ROC/row/col coordinates in line " << i << ": " << lines[i] << endl;
+      }
       continue;
     }
   }
@@ -442,34 +493,27 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
-
-  vector<vector<pair<string, uint8_t> > > allDacs; 
   string filename; 
-
   for (int i = 0; i < fnRocs; ++i) {
     filename = Form("%s_C%d.dat", fDACParametersFileName.c_str(), i); 
     vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
-    allDacs.push_back(rocDacs); 
+    fDacParameters.push_back(rocDacs); 
   }
-
-  return allDacs; 
+  fReadDacParameters = true; 
+  return fDacParameters; 
 }
 
 
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
-
-  vector<vector<pair<string, uint8_t> > > allDacs; 
   string filename; 
-
-  // FIXME changing naming scheme for TBMs to incorporate the possible case of >1 TBMs
   for (int i = 0; i < fnTbms; ++i) {
     filename = Form("%s", fTbmParametersFileName.c_str()); 
     vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
-    allDacs.push_back(rocDacs); 
+    fTbmParameters.push_back(rocDacs); 
   }
-
-  return allDacs; 
+  fReadTbmParameters = true; 
+  return fTbmParameters; 
 }
 
 
