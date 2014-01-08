@@ -431,11 +431,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
-  LOG(logDEBUGRPC) << "RPC: roc_I2cAddr(" << rocid << ")";
 
   // Call the RPC command:
   int status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum);
-  LOG(logDEBUGRPC) << "RPC: CalibrateMap(" << nTriggers << ", nReadouts, PHsum)";
   LOG(logDEBUGHAL) << "Function returns: " << status;
   LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
 
@@ -465,11 +463,9 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
-  LOG(logDEBUGRPC) << "RPC: roc_I2cAddr(" << rocid << ")";
 
   // Call the RPC command:
   int status = _testboard->CalibratePixel(nTriggers, column, row, nReadouts, PHsum);
-  LOG(logDEBUGRPC) << "RPC: CalibratePixel(" << nTriggers << ", " << column << ", " << row << ", nReadouts, PHsum)";
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   pixel newpixel;
@@ -538,14 +534,11 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
-  LOG(logDEBUGRPC) << "RPC: roc_I2cAddr(" << rocid << ")";
 
   // FIXME no DACMIN usage possible right now.
 
   // Call the RPC command:
   int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmax, nReadouts, PHsum);
-  LOG(logDEBUGRPC) << "RPC: CalibrateDacScan(" << nTriggers << ", " << column << ", " << row 
-		   << ", " << dacreg << ", " << dacmax << ", nReadouts, PHsum)";
   LOG(logDEBUGHAL) << "Function returns: " << status;
   LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
 
