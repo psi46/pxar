@@ -10,9 +10,10 @@
 
 #include "rpc_io.h"
 #include "rpc_error.h"
+#include "log.h"
 
 #ifndef RPC_PROFILING
-#define RPC_PROFILING
+#define RPC_PROFILING LOG(pxar::logDEBUGRPC) << " called.";
 #endif
 
 #ifdef RPC_MULTITHREADING
