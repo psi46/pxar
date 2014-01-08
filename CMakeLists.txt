@@ -9,9 +9,23 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 
-# Library Version
-SET(PXAR_LIB_VERSION "0.0.1")
-SET(PXAR_LIB_SOVERSION "1")
+# Check if this is a source tarball build
+IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+  SET(SOURCE_PACKAGE 1)
+ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+
+# Set package version
+IF(NOT SOURCE_PACKAGE)
+  # Get the version from last git tag plus numer of additional commits:
+  EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD | "sed 's,^release-,,;s,-,+,;s,-,~,;'" OUTPUT_VARIABLE PXAR_LIB_VERSION) 
+  MESSAGE("-- Determined API version ${PXAR_LIB_VERSION}.")
+ELSE(NOT SOURCE_PACKAGE)
+  # If we don't have git we take the hard-set version.
+  # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
+  SET(PXAR_LIB_VERSION "0.0.2")
+ENDIF(NOT SOURCE_PACKAGE)
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 
 SET(GCC_COMPILE_FLAGS "-Wall -Wextra -g -Wno-deprecated -pedantic -Wno-long-long")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}" )
