@@ -174,6 +174,37 @@ int main()
     }
     
     // ##########################################################
+
+
+    // ##########################################################
+    // Call the second real test (a DAC scan for some pixels):
+    
+    // disable pixel(s)
+    _api->_dut->setAllPixelEnable(false);
+    _api->_dut->setPixelEnable(34,12,true);
+    _api->_dut->setPixelEnable(33,12,true);
+    _api->_dut->setPixelEnable(34,11,true);
+    _api->_dut->setPixelEnable(14,12,true);
+
+    // Call the test:
+    nTrig = 10;
+    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
+      effscandata = _api->getEfficiencyVsDAC("vana", 0, 84, 0, nTrig);
+    
+    // Check out the data we received:
+    std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata.size() << std::endl;
+
+    // Loop over dac values:
+    for(std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = effscandata.begin();
+	dacit != effscandata.end(); ++dacit) {
+      std::cout << "  dac value: " << (int)dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
+      // Loop over fired pixels and show value
+      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
+	std::cout << "      pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
+      }
+    }
+
+    // ##########################################################
     
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
