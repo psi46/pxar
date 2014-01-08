@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <iomanip>
 #include <cstdio>
+#include <stdint.h>
 
 namespace pxar {
 
