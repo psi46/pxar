@@ -194,6 +194,14 @@ namespace pxar {
      */
     void Poff();
 
+     /** Selects "signal" as output for the DTB probe channel "probe"
+      *  (digital or analog)
+      *
+      *  The signal identifier is checked against a dictionary to be valid.
+      *  In case of an invalid signal identifier the output is turned off.
+      */
+    bool SignalProbe(std::string probe, std::string name);
+
 
     /** Function to read values from the integrated digital scope on the DTB
      */

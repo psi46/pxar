@@ -301,6 +301,64 @@ void api::Pon() {
   programDUT();
 }
 
+bool api::SignalProbe(std::string probe, std::string name) {
+  
+  // Convert the probe name to lower case for comparison:
+  std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+  
+  // Convert the name to lower case for comparison:
+  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+  
+  // Digital signal probes:
+  if(probe.compare(0,1,"d") == 0) {
+    
+    LOG(logDEBUGAPI) << "Looking up digital probe signal for: \"" << name << "\"";
+  
+    // Get singleton Probe dictionary object:
+    ProbeDictionary * _dict = ProbeDictionary::getInstance();
+  
+    // And get the register value from the dictionary object:
+    uint8_t signal = _dict->getSignal(name);
+    LOG(logDEBUGAPI) << "Probe signal return: " << (int)signal;
+
+    // Select the correct probe for the output:
+    if(probe.compare("d1") == 0) {
+      _hal->SignalProbeD1(signal);
+      return true;
+    }
+    else if(probe.compare("d2") == 0) {
+      _hal->SignalProbeD2(signal);
+      return true;
+    }
+  }
+  // Analog signal probes:
+  else if(probe.compare(0,1,"a") == 0) {
+
+    LOG(logDEBUGAPI) << "Looking up analog probe signal for: \"" << name << "\"";
+
+    // Get singleton Probe dictionary object:
+    ProbeADictionary * _dict = ProbeADictionary::getInstance();
+  
+    // And get the register value from the dictionary object:
+    uint8_t signal = _dict->getSignal(name);
+    LOG(logDEBUGAPI) << "Probe signal return: " << (int)signal;
+
+    // Select the correct probe for the output:
+    if(probe.compare("a1") == 0) {
+      _hal->SignalProbeA1(signal);
+      return true;
+    }
+    else if(probe.compare("a2") == 0) {
+      _hal->SignalProbeA2(signal);
+      return true;
+    }
+  }
+    
+  LOG(logERROR) << "Invalid probe name \"" << probe << "\" selected!";
+  return false;
+}
+
+
   
 /** TEST functions **/
 
