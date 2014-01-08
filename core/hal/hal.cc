@@ -695,18 +695,26 @@ int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 }
 
 
-void hal::HVoff() {
-  _testboard->HVoff();
+void hal::HVon() {
+  // Turn on HV and execute (flush):
+  _testboard->HVon();
+  _testboard->Flush();
 }
 
-void hal::HVon() {
-  _testboard->HVon();
+void hal::HVoff() {
+  // Turn off HV and execute (flush):
+  _testboard->HVoff();
+  _testboard->Flush();
 }
  
 void hal::Pon() {
+  // Turn on DUT power and execute (flush):
   _testboard->Pon();
+  _testboard->Flush();
 }
 
 void hal::Poff() {
+  // Turn off DUT power and execute (flush):
   _testboard->Poff();
+  _testboard->Flush();
 }
