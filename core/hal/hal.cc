@@ -439,11 +439,11 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
 
   // Decide over what we get back in the value field:
   if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
-    result->push_back(deserialize(rocid,nReadouts));
+    result->push_back(delinearize(rocid,nReadouts));
     LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";
   }
   else {
-    result->push_back(deserialize(rocid,PHsum));
+    result->push_back(delinearize(rocid,PHsum));
     LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
   }
 
@@ -490,7 +490,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
 }
 
 template <typename T>
-std::vector<pixel> hal::deserialize(uint8_t rocId, std::vector<T> tvec) {
+std::vector<pixel> hal::delinearize(uint8_t rocId, std::vector<T> tvec) {
 
   // Loop over the full roc, since we have full-matrix readout:
   std::vector<pixel> data;
@@ -515,7 +515,6 @@ std::vector<pixel> hal::deserialize(uint8_t rocId, std::vector<T> tvec) {
 
   return data;
 }
-
 
 std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
