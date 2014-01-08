@@ -20,11 +20,11 @@ ConfigParameters * ConfigParameters::fInstance = 0;
 bool BothAreSpaces(char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); }
 
 // ----------------------------------------------------------------------
-void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+void replaceAll(string& str, const string& from, const string& to) {
     if(from.empty())
         return;
     size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+    while((start_pos = str.find(from, start_pos)) != string::npos) {
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
     }
@@ -47,6 +47,7 @@ ConfigParameters::ConfigParameters(string filename) {
 void ConfigParameters::initialize() {
   cout << fTBName << endl;
 
+  fReadTbParameters = fReadTbmParameters = fReadDacParameters = fReadRocPixelConfig = false; 
   fnCol = 52; 
   fnRow = 80; 
   fnRocs = 16;
@@ -97,7 +98,7 @@ ConfigParameters*  ConfigParameters::Singleton() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::readConfigParameterFile(string file) {
-  std::ifstream _input(file.c_str());
+  ifstream _input(file.c_str());
   if (!_input.is_open())
     {
       cout << "[ConfigParameters] Can not open file '"
@@ -110,7 +111,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
        << file << "'." << endl;
 
   // Read file by lines
-  for (std::string _line; _input.good();)
+  for (string _line; _input.good();)
     {
       getline(_input, _line);
 
@@ -119,9 +120,9 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 	  || '#' == _line[0]
 	  || '-' == _line[0]) continue;
 
-      std::istringstream _istring(_line);
-      std::string _name;
-      std::string _value;
+      istringstream _istring(_line);
+      string _name;
+      string _value;
 
       _istring >> _name >> _value;
 
@@ -200,7 +201,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     //    cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
-    std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
@@ -233,7 +234,37 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
 }
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
+vector<pair<string, uint8_t> >  ConfigParameters::getTbParameters() {
+  string filename = Form("%s", fTBParametersFileName.c_str()); 
+  fTbParameters = readDacFile(filename); 
+  fReadTbParameters = true; 
+  return fTbParameters;
+}
+
+// ----------------------------------------------------------------------
+vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
+  vector<pair<string, uint8_t> > a;
+
+  vector<string> sigdelays; 
+  sigdelays.push_back("clk");
+  sigdelays.push_back("ctr");
+  sigdelays.push_back("sda");
+  sigdelays.push_back("tin");
+  sigdelays.push_back("deser160phase");
+
+  if (!fReadTbParameters) getTbParameters();
+  for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
+    for (unsigned int j = 0; j < sigdelays.size(); ++j) {
+      if (0 == fTbParameters[i].first.compare(sigdelays[j])) a.push_back(make_pair(sigdelays[j], fTbParameters[i].second));
+    }
+  }
+
+  return a;
+}
+
+
+// ----------------------------------------------------------------------
+vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
 
   vector<vector<pxar::pixelConfig> > allRocPixelConfigs; 
 
@@ -295,7 +326,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
     replaceAll(lines[i], "Pix", " "); 
-    std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
@@ -364,7 +395,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
     replaceAll(lines[i], "Pix", " "); 
-    std::string::iterator new_end = std::unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), BothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (0 == lines[i].length()) continue;
@@ -410,14 +441,14 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::getRocDacs() {
+vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
 
   vector<vector<pair<string, uint8_t> > > allDacs; 
   string filename; 
 
   for (int i = 0; i < fnRocs; ++i) {
     filename = Form("%s_C%d.dat", fDACParametersFileName.c_str(), i); 
-    std::vector<std::pair<std::string, uint8_t> > rocDacs = readDacFile(filename); 
+    vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
 
@@ -426,7 +457,7 @@ std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::ge
 
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::getTbmDacs() {
+vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
 
   vector<vector<pair<string, uint8_t> > > allDacs; 
   string filename; 
@@ -434,7 +465,7 @@ std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::ge
   // FIXME changing naming scheme for TBMs to incorporate the possible case of >1 TBMs
   for (int i = 0; i < fnTbms; ++i) {
     filename = Form("%s", fTbmParametersFileName.c_str()); 
-    std::vector<std::pair<std::string, uint8_t> > rocDacs = readDacFile(filename); 
+    vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
     allDacs.push_back(rocDacs); 
   }
 
@@ -443,61 +474,61 @@ std::vector<std::vector<std::pair<std::string, uint8_t> > > ConfigParameters::ge
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setTBParameterFileName(const std::string &file) {
+void ConfigParameters::setTBParameterFileName(const string &file) {
   fTBParametersFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setTbmParameterFileName(const std::string &file) {
+void ConfigParameters::setTbmParameterFileName(const string &file) {
   fTbmParametersFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setDACParameterFileName(const std::string &file) {
+void ConfigParameters::setDACParameterFileName(const string &file) {
   fDACParametersFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setTrimParameterFileName(const std::string &file) {
+void ConfigParameters::setTrimParameterFileName(const string &file) {
   fTrimParametersFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setTestParameterFileName(const std::string &file) {
+void ConfigParameters::setTestParameterFileName(const string &file) {
   fTestParametersFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setRootFileName(const std::string &file) {
+void ConfigParameters::setRootFileName(const string &file) {
   fRootFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setLogFileName(const std::string &file) {
+void ConfigParameters::setLogFileName(const string &file) {
   fLogFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setDebugFileName(const std::string &file) {
+void ConfigParameters::setDebugFileName(const string &file) {
   fDebugFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setMaskFileName(const std::string &file) {
+void ConfigParameters::setMaskFileName(const string &file) {
   fMaskFileName.assign(fDirectory).append("/").append(file);
 }
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setDirectory(std::string &d) {
+void ConfigParameters::setDirectory(string &d) {
   fDirectory = d;
 }
 

@@ -86,15 +86,48 @@ int main(int argc, char *argv[]){
     }
   }
 
+  // Get some pixelConfigs up and running:
+  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
+
+  TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
+  
   
   pxar::api *api = 0;
   if (!noAPI) {
     try {
       api = new pxar::api("*","DEBUGAPI");
+
+
       std::vector<std::pair<std::string,uint8_t> > sig_delays;
+      // sig_delays.push_back(std::make_pair("clk",2));
+      // sig_delays.push_back(std::make_pair("ctr",20));
+      // sig_delays.push_back(std::make_pair("sda",19));
+      // sig_delays.push_back(std::make_pair("tin",7));
+      // sig_delays.push_back(std::make_pair("deser160phase",4));
+   
+      sig_delays = configParameters->getTbSigDelays(); 
+
+
+      for (unsigned int i = 0; i < sig_delays.size(); ++i) {
+	cout << " sigdelays: " << sig_delays[i].first << ": " << int(sig_delays[i].second) << endl;
+      }
+   
       std::vector<std::pair<std::string,double> > power_settings;
       std::vector<std::pair<std::string,uint8_t> > pg_setup;
+
       api->initTestboard(sig_delays, power_settings, pg_setup);
+
+      cout << "calling initDUT" << endl;
+      api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
+      cout << "called initDUT" << endl;
+      
+      
+      api->_dut->setAllPixelEnable(false);
+      api->_dut->setPixelEnable(34,12,true);
+      api->_dut->setPixelEnable(33,12,true);
+      api->_dut->setPixelEnable(34,11,true);
+      api->_dut->setPixelEnable(14,12,true);
+      
     } catch (...) {
       cout << "pxar caught an exception from the board. Exiting." << endl;
       return -1;
@@ -102,24 +135,8 @@ int main(int argc, char *argv[]){
   }
 
 
-  // Get some pixelConfigs up and running:
-  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
-
-  TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
-  
- 
   // Initialize the DUT (power it up and stuff):
   if (!noAPI) {
-    cout << "calling initDUT" << endl;
-    api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
-    cout << "called initDUT" << endl;
-    
-    
-    api->_dut->setAllPixelEnable(false);
-    api->_dut->setPixelEnable(34,12,true);
-    api->_dut->setPixelEnable(33,12,true);
-    api->_dut->setPixelEnable(34,11,true);
-    api->_dut->setPixelEnable(14,12,true);
   }
  
     cout << "pxar>  Setting up the testboard interface ..." << endl;
