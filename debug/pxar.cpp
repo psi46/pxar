@@ -94,12 +94,14 @@ int main()
     std::cout << "Analog current: " << _api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
 
-    sleep(1);
+    // Do some debug readout: Pulseheight of px 3,3 with 10 triggers:
+    _api->debug_ph(3,3,15,10);
 
-    // Do some debug readout: Pulseheight of px 3,3 with 5 triggers:
-    _api->debug_ph(3,3,15,5);
-
-    sleep(1);
+    // Test power-cycling and re-programming:
+    _api->Poff();
+    //    sleep(1);
+    _api->Pon();
+    _api->debug_ph(3,3,15,10);
 
     /*
     // Check if we can access the DUT data structure and enable/disable stuff:
