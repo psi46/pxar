@@ -20,6 +20,8 @@ using namespace pxar;
 
 api::api(std::string usbId, std::string logLevel) {
 
+  LOG(logQUIET) << "Instanciating API for " << PACKAGE_STRING;
+
   // Set up the libpxar API/HAL logging mechanism:
   Log::ReportingLevel() = Log::FromString(logLevel);
   LOG(logINFO) << "Log level: " << logLevel;

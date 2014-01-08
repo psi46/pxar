@@ -10,6 +10,8 @@
 #include <vector>
 #include <stdint.h>
 
+#include "config.h"
+
 namespace pxar {
 
   /** Class for storing pixel readout data
@@ -108,9 +110,14 @@ namespace pxar {
      *  Fetches a new HAL instance and opens the testboard connection
      */
     api(std::string usbId = "*", std::string logLevel = "WARNING");
+
     /** Default destructor for libpxar API
      */
     ~api();
+
+    /** Returns the version string for the pxar API
+     */
+    std::string getVersion() {return PACKAGE_STRING;};
 
     /** Initializer method for the testboard
      *  Initializes the tesboard with signal delay settings, and voltage/current
