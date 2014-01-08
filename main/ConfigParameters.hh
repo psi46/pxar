@@ -31,14 +31,14 @@ public:
   std::string getDebugFileName()          {return fDebugFileName;}
   std::string getDirectory()              {return fDirectory;}
 
+  std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
+  std::vector<std::pair<std::string,uint8_t> >  getTbSigDelays();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
-
-  //  std::vector<std::vector<std::pair<std::string,uint8_t> > > getTbParameters();
 
   void setTBParameterFileName(const std::string &filename);
   void setDACParameterFileName(const std::string &filename);
@@ -56,6 +56,11 @@ public:
   int getNrocs() {return fnRocs;}
 
 private:
+
+  bool fReadTbParameters, fReadTbmParameters, fReadDacParameters, fReadRocPixelConfig;
+  std::vector<std::pair<std::string,uint8_t> > fTbParameters;
+  std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
+  std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfig; 
 
   int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;
   int fCustomModule;
