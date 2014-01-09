@@ -8,7 +8,7 @@ int main()
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*","DEBUGHAL");
+    _api = new pxar::api("*","DEBUGRPC");
   
     // Try some test or so:
 
@@ -32,6 +32,8 @@ int main()
     std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
 
     std::vector<std::pair<std::string,uint8_t> > dacs;
+    dacs.push_back(std::make_pair("Vdig",5));
+    // Let's try to trich the API and set Vdig again:
     dacs.push_back(std::make_pair("Vdig",6));
     dacs.push_back(std::make_pair("Vana",84));
     dacs.push_back(std::make_pair("Vsf",30));
@@ -103,6 +105,11 @@ int main()
     // Read current:
     std::cout << "Analog current: " << _api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
+
+    // Set some DAC after the "real" DUT initialization (all active ROCs):
+    _api->setDAC("Vcal",101,0);
+    // And check if the DUT has the updated value:
+    std::cout << "New Vcal value: " << (int)_api->_dut->getDAC(0,"vCaL") << std::endl;
 
     // Do some debug readout: Pulseheight of px 3,3 with 10 triggers:
     _api->debug_ph(3,3,15,10);
