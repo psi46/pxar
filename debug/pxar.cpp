@@ -81,11 +81,21 @@ int main()
     // Prepare some empty TBM vector:
     std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
 
+    std::vector<std::pair<std::string,uint8_t> > regs;
+    regs.push_back(std::make_pair("clear",0xF0));       // Init TBM, Reset ROC
+    regs.push_back(std::make_pair("counters",0x00));    // Disable PKAM Counter
+    regs.push_back(std::make_pair("mode",0xC0));        // Set Mode = Calibration
+    regs.push_back(std::make_pair("pkam_set",0x02));    // Set PKAM Counter
+    regs.push_back(std::make_pair("delays",0x00));      // Set Delays
+    regs.push_back(std::make_pair("temperature",0x00)); // Turn off Temperature Measurement
+
+    tbmDACs.push_back(regs);
+
     // Read DUT info, should result in error message, not initialized:
     _api->_dut->info();
 
     // Initialize the DUT (power it up and stuff):
-    _api->initDUT("",tbmDACs,"psi46digV3",rocDACs,rocPixels);
+    _api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels);
 
     // Read DUT info, should print above filled information:
     _api->_dut->info();
@@ -96,7 +106,7 @@ int main()
 
     // Do some debug readout: Pulseheight of px 3,3 with 10 triggers:
     _api->debug_ph(3,3,15,10);
-
+    
     // Test power-cycling and re-programming:
     _api->Poff();
     //    sleep(1);
