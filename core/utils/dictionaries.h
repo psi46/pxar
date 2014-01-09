@@ -114,6 +114,7 @@ namespace pxar {
 
       _dacs["viref_adc"]  = dacConfig(ROC_DAC_VIbias_DAC,255);
       _dacs["vibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255);
+      _dacs["ibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255);
 
       _dacs["vicolor"]    = dacConfig(ROC_DAC_VIColOr,255);
       _dacs["vcal"]       = dacConfig(ROC_DAC_Vcal,255);
