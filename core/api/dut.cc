@@ -152,6 +152,15 @@ std::vector< rocConfig > dut::getEnabledRocs() {
   return result;
 }
 
+std::vector< tbmConfig > dut::getEnabledTbms() {
+  std::vector< tbmConfig > result;
+  if (!_initialized) return result;
+  // search for rocs that have enable set
+  for (std::vector<tbmConfig>::iterator it = tbm.begin(); it != tbm.end(); ++it){
+    if (it->enable) result.push_back(*it);
+  }
+  return result;
+}
 
 bool dut::getPixelEnabled(uint8_t column, uint8_t row) {
   std::vector<pixelConfig>::iterator it = std::find_if(roc.at(0).pixels.begin(),

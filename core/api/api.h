@@ -411,9 +411,13 @@ namespace pxar {
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
 
-    /** Function returning the enabled roc configs
+    /** Function returning the enabled ROC configs
      */
     std::vector< rocConfig > getEnabledRocs();
+
+    /** Function returning the enabled TBM configs
+     */
+    std::vector< tbmConfig > getEnabledTbms();
 
     /** Function returning the status of a given pixel:
      */
