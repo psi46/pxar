@@ -10,7 +10,6 @@
 
 #include "PixTestParameters.hh"
 #include "ConfigParameters.hh"
-#include "PixModule.hh"
 #include "SysCommand.hh"
 
 class PixSetup: public TObject {
@@ -22,7 +21,6 @@ public:
 
   PixTestParameters* getPixTestParameters() {return fPixTestParameters;}
   ConfigParameters * getConfigParameters()  {return fConfigParameters;}
-  PixModule*         getModule()  {return fModule;}
   SysCommand*        getSysCommand()  {return fSysCommand;}
   pxar::api*         getApi() {return fApi;}
 private: 
@@ -31,7 +29,6 @@ private:
   pxar::api         *fApi; 
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
-  PixModule         *fModule; 
 
   ClassDef(PixSetup, 1); 
 };

@@ -30,6 +30,8 @@ public:
   std::string getMaskFileName()           {return fMaskFileName;}
   std::string getDebugFileName()          {return fDebugFileName;}
   std::string getDirectory()              {return fDirectory;}
+  std::string getRocType()                {return fRocType;}
+  std::string getTbmType()                {return fTbmType;}
 
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,uint8_t> >  getTbSigDelays();
@@ -54,6 +56,7 @@ public:
   void setGuiMode(bool a) {fGuiMode = a;}
 
   int getNrocs() {return fnRocs;}
+  int getNtbms() {return fnTbms;}
 
 private:
 
@@ -67,7 +70,7 @@ private:
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   double ia, id, va, vd;
   float rocZeroAnalogCurrent;
-  std::string fRocType;
+  std::string fRocType, fTbmType;
   std::string fDirectory;
   std::string fTBName;
   bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;

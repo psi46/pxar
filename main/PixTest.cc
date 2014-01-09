@@ -1,28 +1,30 @@
 #include <iostream>
-#include "PixTest.hh"
 #include <stdlib.h>     /* atof, atoi */
 
+#include "PixTest.hh"
+#include "log.h"
 
 using namespace std;
+using namespace pxar;
 
 ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
 PixTest::PixTest(PixSetup *a, string name) {
-  cout << "PixTest ctor(PixSetup, string)" << endl;
+  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
   init(a, name); 
 }
 
 // ----------------------------------------------------------------------
 PixTest::PixTest() {
-  cout << "PixTest ctor()" << endl;
+  LOG(logINFO) << "PixTest ctor()";
   
 }
 
 
 // ----------------------------------------------------------------------
 void PixTest::init(PixSetup *a, string name) {
-  cout << "PixTest::init()" << endl;
+  LOG(logINFO)  << "PixTest::init()";
   fPixSetup       = a;
   fApi            = a->getApi(); 
   fTestParameters = a->getPixTestParameters(); 
@@ -85,21 +87,21 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 
 // ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
-  cout << "Parameters for test" << getName() << endl;
+  LOG(logINFO) << "Parameters for test" << getName();
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    cout << imap->first << ": " << imap->second << endl;
+    LOG(logINFO) << imap->first << ": " << imap->second;
   }
 }
 
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  cout << "PixTestBase dtor()" << endl;
+  LOG(logINFO) << "PixTestBase dtor()";
 }
 
 // ----------------------------------------------------------------------
 void PixTest::testDone() {
-  cout << "PixTest::testDone()" << endl;
+  LOG(logINFO) << "PixTest::testDone()";
   Emit("testDone()"); 
 }
 
@@ -112,13 +114,13 @@ void PixTest::update() {
 
 // ----------------------------------------------------------------------
 void PixTest::doTest() {
-  cout << "PixTest::doTest()" << endl;
+  LOG(logINFO) << "PixTest::doTest()";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTest::doAnalysis() {
-  cout << "PixTest::doAnalysis()" << endl;
+  LOG(logINFO) << "PixTest::doAnalysis()";
 
 }
 
@@ -155,7 +157,7 @@ TH1* PixTest::previousHist() {
 void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size, 
 			float xoff, float yoff, float lsize, int font) {
   if (h == 0) {
-    cout << " Histogram not defined" << endl;
+    LOG(logINFO) << " Histogram not defined";
   } else {
     h->SetXTitle(sx);                  h->SetYTitle(sy); 
     h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");

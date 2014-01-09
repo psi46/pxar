@@ -18,9 +18,11 @@
 #include "getLine.icc"
 
 #include "api.h"
+#include "log.h"
 
 
 using namespace std;
+using namespace pxar; 
 
 void runFile(PixSetup &a, string cmdFile);
 void execute(PixSetup &a, SysCommand *command);
@@ -28,15 +30,23 @@ void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
 void runTest(PixTest *b);
 
 
+
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
   
-  //  LOG(logINFO) << "Welcome to pxar!";
-  cout << "welcome to pxar" << endl;
+  LOG(logINFO) << "*** Welcome to pxar ***";
+
+  if (0) {
+    uint16_t x = 0; 
+    int32_t y = 1; 
+    y |= x; 
+    cout << "y = " << y << " int(y) = " << int(y) << endl;
+    return 0; 
+  }
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("pxar.root"); 
+  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"); 
   bool debug(false), doRunGui(false), doRunScript(false), noAPI(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
@@ -60,97 +70,47 @@ int main(int argc, char *argv[]){
   ConfigParameters *configParameters = ConfigParameters::Singleton();
   configParameters->setDirectory(dir);
   string cfgFile = configParameters->getDirectory() + string("/configParameters.dat");
-  cout << cfgFile << endl;
-  if (!configParameters->readConfigParameterFile(cfgFile))
-    return 1;
-  
-  vector<vector<pair<string,uint8_t> > > rocDACs = configParameters->getRocDacs(); 
+  LOG(logINFO) << "pxar: reading config parameters from " << cfgFile;
+  if (!configParameters->readConfigParameterFile(cfgFile)) return 1;
 
-  cout << "rocDACs.size() = " << rocDACs.size() << endl;
-  for (unsigned int i = 0; i < rocDACs.size(); ++i) {
-    vector<pair<string,uint8_t> > a = rocDACs[i]; 
-    cout << "ROC " << i << " a.size() = " << a.size() << endl;
-    for (unsigned int j = 0; j < a.size(); ++j) {
-      cout << a[j].first << ": " << a[j].second << " int -> " << int(a[j].second) << endl;
-    }
-  }
-      
-  vector<vector<pair<string,uint8_t> > > tbmDACs = configParameters->getTbmDacs(); 
-
-  cout << "tbmDACs.size() = " << tbmDACs.size() << endl;
-  for (unsigned int i = 0; i < tbmDACs.size(); ++i) {
-    vector<pair<string, uint8_t> > a = tbmDACs[i]; 
-    cout << "a.size() = " << a.size() << endl;
-    for (unsigned int j = 0; j < a.size(); ++j) {
-      cout << a[j].first << ": " << int(a[j].second) << endl;
-    }
-  }
-
-  // Get some pixelConfigs up and running:
-  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
-
+  if (!rootfile.compare("nada.root")) rootfile = configParameters->getRootFileName();
+  LOG(logINFO)<< "pxar: dumping results into " << rootfile;
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   
-  
+  vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
+  vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
+  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
+
   pxar::api *api = 0;
   if (!noAPI) {
     try {
       api = new pxar::api("*","DEBUGAPI");
-
-
-      std::vector<std::pair<std::string,uint8_t> > sig_delays;
+      std::vector<std::pair<std::string,uint8_t> > sig_delays = configParameters->getTbSigDelays(); 
       // sig_delays.push_back(std::make_pair("clk",2));
       // sig_delays.push_back(std::make_pair("ctr",20));
       // sig_delays.push_back(std::make_pair("sda",19));
       // sig_delays.push_back(std::make_pair("tin",7));
       // sig_delays.push_back(std::make_pair("deser160phase",4));
    
-      sig_delays = configParameters->getTbSigDelays(); 
-
-
-      for (unsigned int i = 0; i < sig_delays.size(); ++i) {
-	cout << " sigdelays: " << sig_delays[i].first << ": " << int(sig_delays[i].second) << endl;
-      }
-   
       std::vector<std::pair<std::string,double> > power_settings;
       std::vector<std::pair<std::string,uint8_t> > pg_setup;
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
-
-      cout << "calling initDUT" << endl;
-      api->initDUT("tbm08", tbmDACs, "psi46digV2", rocDACs, rocPixels);
-      cout << "called initDUT" << endl;
+      api->initDUT(configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels);
+      LOG(logINFO) << "DUT info: ";
+      api->_dut->info(); 
       
-      
-      api->_dut->setAllPixelEnable(false);
-      api->_dut->setPixelEnable(34,12,true);
-      api->_dut->setPixelEnable(33,12,true);
-      api->_dut->setPixelEnable(34,11,true);
-      api->_dut->setPixelEnable(14,12,true);
       
     } catch (...) {
-      cout << "pxar caught an exception from the board. Exiting." << endl;
+      LOG(logINFO)<< "pxar caught an exception from the board. Exiting.";
       return -1;
     }
   }
 
-
-  // Initialize the DUT (power it up and stuff):
-  if (!noAPI) {
-  }
- 
-    cout << "pxar>  Setting up the testboard interface ..." << endl;
-
-//   string dacFile = configParameters->getDirectory() + string("/dacParameters_C0.dat");
-//   std::vector<std::pair<std::string,uint8_t> > asd = configParameters->readDacFile(dacFile); 
-
   PixTestParameters *ptp = new PixTestParameters(configParameters->getTestParametersFileName()); 
-
-//   cout << "[pix] Setting up the testboard interface ..." << endl;
-//   TestControlNetwork *controlNetwork = new TestControlNetwork(tb, configParameters);
-
   SysCommand sysCommand;
-  
   PixSetup a(api, ptp, configParameters, &sysCommand);  
 
   if (doRunGui) {
@@ -166,7 +126,7 @@ int main(int argc, char *argv[]){
 
   }
 
-  cout << "closing down 1" << endl;
+  LOG(logINFO) << "closing down 1";
   
   // -- clean exit
 
@@ -179,14 +139,14 @@ int main(int argc, char *argv[]){
     delete api;
   }
 
-  cout << "pixar: this is the end, my friend" << endl;
+  LOG(logINFO) << "pixar: this is the end, my friend";
 
   return 0;
 }
 
 // ----------------------------------------------------------------------
 void runFile(PixSetup &a, string cmdFile) {
-  cout << "Executing file " << cmdFile << endl;
+  LOG(logINFO) << "Executing file " << cmdFile;
   a.getSysCommand()->Read(cmdFile.c_str());
   execute(a, a.getSysCommand());
 }
@@ -195,7 +155,7 @@ void runFile(PixSetup &a, string cmdFile) {
 // ----------------------------------------------------------------------
 void runTest(PixTest *b) {
   if (b) b->doTest();
-  else cout << "test not known" << endl;
+  else LOG(logINFO) << "test not known";
 }
 
 
@@ -203,19 +163,19 @@ void runTest(PixTest *b) {
 void execute(PixSetup &a, SysCommand *sysCommand) {
   PixTestFactory *factory = PixTestFactory::instance(); 
   do {
-    cout << "sysCommand.toString(): " << sysCommand->toString() << endl;
+    LOG(logINFO) << "sysCommand.toString(): " << sysCommand->toString();
     if (sysCommand->TargetIsTest()) 
       runTest(factory->createTest(sysCommand->toString(), &a)); 
     else if (sysCommand->Keyword("gui")) 
       runGui(a, 0, 0);
     else if (sysCommand->TargetIsTB()) 
-      cout << "FIXME  a.getTBInterface()->Execute(sysCommand);" << endl;
+      LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
       //FIXME  a.getTBInterface()->Execute(sysCommand);
     else if (sysCommand->TargetIsROC()) 
-      cout << "FIXME  a.getTBInterface()->Execute(sysCommand);" << endl;
+      LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
       //FIXME      a.getTBInterface()->Execute(sysCommand);
     else 
-      cout << "dunno what to do" << endl;
+      LOG(logINFO) << "dunno what to do";
     //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
   } while (sysCommand->Next());
   //  tbInterface->Flush();
@@ -227,7 +187,7 @@ void runGui(PixSetup &a, int argc, char *argv[]) {
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 800, 500, &a);
   theApp.Run();
-  cout << "closing down 0 " << endl;
+  LOG(logINFO) << "closing down 0 ";
 }
 
 #endif

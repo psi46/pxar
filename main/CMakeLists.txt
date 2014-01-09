@@ -8,12 +8,8 @@ INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
 SET (pxarGui_SOURCES
 ConfigParameters.cc
 PixGui.cc
-PixLog.cc
-PixModule.cc
-PixRoc.cc
 PixSetup.cc
 PixTab.cc
-PixTbm.cc
 PixParTab.cc
 PixTest.cc
 PixTestAlive.cc
@@ -30,12 +26,9 @@ ConfigParameters.hh
 #GlobalConstants.hh
 PixGui.hh
 #PixLog.hh
-PixModule.hh
-PixRoc.hh
 PixSetup.hh
 PixParTab.hh
 PixTab.hh
-PixTbm.hh
 PixTest.hh
 PixTestAlive.hh
 PixTestFactory.hh

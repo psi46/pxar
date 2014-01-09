@@ -1,4 +1,6 @@
 #include "PixGui.hh"
+#include "log.h"
+
 #include "PixTab.hh"
 #include "PixParTab.hh"
 
@@ -6,6 +8,7 @@
 #include "PixTestGainCalibration.hh"
  
 using namespace std;
+using namespace pxar;
 
 ClassImp(PixGui)
 
@@ -21,10 +24,10 @@ TGMainFrame(p, w, h, kVerticalFrame), fWidth(w), fHeight(h) {
   fConfigParameters = fPixSetup->getConfigParameters();
   fTestParameters = fPixSetup->getPixTestParameters(); 
 
-  fApi->HVoff(); 
-  fApi->Poff(); 
-  fPower = false;
-  fHV = false;
+//   fApi->HVoff(); 
+//   fApi->Poff(); 
+  fPower = true;
+  fHV = true;
 
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
   fhFrame = new TGVerticalFrame(this, w, h);
@@ -170,7 +173,7 @@ TGMainFrame(p, w, h, kVerticalFrame), fWidth(w), fHeight(h) {
 }
 // ----------------------------------------------------------------------
 PixGui::~PixGui() {
-  cout << "PixGui::destructor" << endl;
+  LOG(logINFO) << "PixGui::destructor";
 }
 
 
@@ -199,11 +202,11 @@ void PixGui::handleButtons(Int_t id) {
  
   switch (id) {
   case B_FILENAME: {
-    cout << Form("fRootFileNameBuffer: %s", fRootFileNameBuffer->GetString()) << endl;
+    LOG(logINFO) << Form("fRootFileNameBuffer: %s", fRootFileNameBuffer->GetString());
     break;
   }
   case B_EXIT: {
-    cout << "PixGui::exit called" << endl;
+    LOG(logINFO) << "PixGui::exit called";
     std::vector<PixTest*>::iterator il; 
     for (il = fTestList.begin(); il != fTestList.end(); ++il) {
       delete (*il); 
@@ -221,13 +224,13 @@ void PixGui::handleButtons(Int_t id) {
       fbtnPower->ChangeBackground(red);
       fbtnPower->SetText("Off");
       fApi->Poff(); 
-      cout << "Power set Off" << endl;
+      LOG(logINFO) << "Power set Off";
     } else {
       fPower = true;
       fbtnPower->ChangeBackground(green);
       fbtnPower->SetText("On");
       fApi->Pon(); 
-      cout << "Power set On" << endl;
+      LOG(logINFO) << "Power set On";
     }
     break;
   }
@@ -237,13 +240,13 @@ void PixGui::handleButtons(Int_t id) {
       fbtnHV->ChangeBackground(red);
       fbtnHV->SetText("Off");
       fApi->HVoff(); 
-      cout << "HV set Off" << endl;
+      LOG(logINFO) << "HV set Off";
     } else {
       fHV = true;
       fbtnHV->ChangeBackground(green);
       fbtnHV->SetText("On");
       fApi->HVon(); 
-      cout << "HV set On" << endl;
+      LOG(logINFO) << "HV set On";
     }
     break;  
   }
@@ -274,7 +277,7 @@ void PixGui::createTab(char*csel) {
 
   PixTest *pt = createTest(string(csel));
   if (0 == pt) {
-    cout << "ERROR: " << csel << " not known, nothing created" << endl;
+    LOG(logINFO) << "ERROR: " << csel << " not known, nothing created";
     return;
   }
 
@@ -285,7 +288,7 @@ void PixGui::createTab(char*csel) {
   fTabs->MoveResize(2, 0, 800, 800);
   Resize(GetDefaultSize());
   MapWindow();
-  cout << "csel = " << csel << endl;
+  LOG(logINFO) << "csel = " << csel;
   fTabs->SetTab(csel); 
   
 }
@@ -310,7 +313,7 @@ void PixGui::doSetfConsole() {
       delete s;
     } while (fpSysCommand1->Next());
   */
-    cout << p << endl;
+    LOG(logINFO) << p;
     fConsole->Clear();
   }
   // fConsoleBuffer->AddText(0,"");
