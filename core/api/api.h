@@ -225,6 +225,15 @@ namespace pxar {
      */
     bool setDAC(std::string dacName, uint8_t dacValue, int8_t rocid = -1);
 
+    /** Set a register value on the DUT (TBMs)
+     *  The "tbmid" parameter can be used to select a specific TBM to program. If tbmid is set to
+     *  a value < 0 all enabled TBMs will be programmed with the given register value.
+     *
+     *  This function will both update the bookkeeping value in the DUT
+     *  struct and program the actual device 
+     */
+    bool setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid = -1);
+
     /** Method to scan a DAC and measure the pulse height
      *
      *  Returns a std vector of pairs containing set dac value and a pixel vector, with the value of the pixel struct being
