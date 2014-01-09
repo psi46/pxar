@@ -90,10 +90,11 @@ bool api::initDUT(std::string tbmtype,
 
       // Fill the DAC pairs with the register from the dictionary:
       uint8_t dacRegister = stringToRegister(dacIt->first);
-      if(dacRegister == 0x0) {
+      // FIXME 0x0 is valid TBM register!
+      /*      if(dacRegister == 0x0) {
 	continue;
 	LOG(logERROR) << "Invalid register name \"" << dacIt->first << "\"!";
-      }
+	}*/
 
       uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
       newtbm.dacs.push_back(std::make_pair(dacRegister,dacValue));

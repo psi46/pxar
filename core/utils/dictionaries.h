@@ -75,6 +75,15 @@ namespace pxar {
       _dacs["deser160phase"] = dacConfig(SIG_DESER160PHASE,255);
 
       //------- TBM registers -----------------------------
+      _dacs["counters"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255);
+      _dacs["mode"]             = dacConfig(TBM_REG_SET_MODE,255);
+
+      _dacs["clear"]            = dacConfig(TBM_REG_CLEAR_INJECT,255);
+      _dacs["inject"]           = dacConfig(TBM_REG_CLEAR_INJECT,255);
+
+      _dacs["pkam_set"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255);
+      _dacs["delays"]           = dacConfig(TBM_REG_SET_DELAYS,255);
+      _dacs["temperature"]      = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255);
 
 
       //------- ROC registers -----------------------------
