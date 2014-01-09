@@ -178,10 +178,24 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBM() {
-  //FIXME
-  /*  SetTBMChannel(configParameters->tbmChannel);
-      Tbmenable(configParameters->tbmEnable);*/
+void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
+
+  // Turn on the output power of the testboard if not already done:
+  LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
+  _testboard->Pon();
+  mDelay(400);
+
+  // Turn the TBM on:
+  _testboard->tbm_Enable(true);
+  // FIXME BEat: 31 is default hub address for the new modules:
+  _testboard->mod_Addr(31);
+  _testboard->Flush();
+
+  // Programm all registers according to the configuration data:
+  LOG(logDEBUGHAL) << "Setting register vector for TBM " << (int)tbmId << ".";
+  tbmSetRegs(tbmId,regVector);
+  mDelay(300);
+  
 }
 
 void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector, std::vector< pixelConfig > pixels) {

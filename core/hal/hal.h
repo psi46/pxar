@@ -39,7 +39,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBM();
+    void initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector);
 
     /** Initialize attached ROCs with their settings and configuration
      *  This is the startup-routine for single ROCs. It first powers up the
