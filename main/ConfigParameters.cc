@@ -546,7 +546,7 @@ void ConfigParameters::setTestParameterFileName(const string &file) {
 
 // ----------------------------------------------------------------------
 void ConfigParameters::setRootFileName(const string &file) {
-  fRootFileName.assign(fDirectory).append("/").append(file);
+  fRootFileName.assign(file);
 }
 
 
