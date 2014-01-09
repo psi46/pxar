@@ -184,7 +184,7 @@ void hal::initTBM() {
       Tbmenable(configParameters->tbmEnable);*/
 }
 
-void hal::initROC(uint8_t rocId, std::vector<std::pair<uint8_t,uint8_t> > dacVector, std::vector< pixelConfig > pixels) {
+void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector, std::vector< pixelConfig > pixels) {
 
   // Turn on the output power of the testboard if not already done:
   LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
@@ -378,10 +378,10 @@ void hal::setTBvd(double VD) {
 }
 
 
-bool hal::rocSetDACs(uint8_t rocId, std::vector< std::pair< uint8_t, uint8_t> > dacPairs) {
+bool hal::rocSetDACs(uint8_t rocId, std::map< uint8_t, uint8_t > dacPairs) {
 
   // Iterate over all DAC id/value pairs and set the DAC
-  for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
+  for(std::map< uint8_t,uint8_t >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
     // One of the DAC settings had an issue, abort:
     if(!rocSetDAC(rocId, it->first, it->second)) return false;
   }

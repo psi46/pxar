@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <stdint.h>
 
 #include "config.h"
@@ -65,7 +66,7 @@ namespace pxar {
   public:
   rocConfig() : pixels(), dacs(), type(0), enable(true) {};
     std::vector< pixelConfig > pixels;
-    std::vector< std::pair<uint8_t,uint8_t> > dacs;
+    std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
     bool enable;
   };
@@ -76,7 +77,7 @@ namespace pxar {
   class tbmConfig {
   public:
   tbmConfig() : dacs(), type(0), enable(true) {};
-    std::vector< std::pair<uint8_t,uint8_t> > dacs;
+    std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
     bool enable;
   };

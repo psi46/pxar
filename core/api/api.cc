@@ -97,7 +97,14 @@ bool api::initDUT(std::string tbmtype,
 	}*/
 
       uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
-      newtbm.dacs.push_back(std::make_pair(dacRegister,dacValue));
+      std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+      ret = newtbm.dacs.insert( std::make_pair(dacRegister,dacValue) );
+      if(ret.second == false) {
+	LOG(logWARNING) << "Overwriting existing DAC \"" << dacIt->first 
+			<< "\" value " << (int)ret.first->second
+			<< " with " << (int)dacValue;
+	newtbm.dacs[dacRegister] = dacValue;
+      }
     }
 
     // Done. Enable bit is already set by tbmConfig constructor.
@@ -125,7 +132,14 @@ bool api::initDUT(std::string tbmtype,
       }
 
       uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
-      newroc.dacs.push_back(std::make_pair(dacRegister,dacValue));
+      std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+      ret = newroc.dacs.insert( std::make_pair(dacRegister,dacValue) );
+      if(ret.second == false) {
+	LOG(logWARNING) << "Overwriting existing DAC \"" << dacIt->first 
+			<< "\" value " << (int)ret.first->second
+			<< " with " << (int)dacValue;
+	newroc.dacs[dacRegister] = dacValue;
+      }
     }
 
     // Loop over all pixelConfigs supplied:

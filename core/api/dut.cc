@@ -212,7 +212,7 @@ void dut::printDACs(size_t rocId) {
 
   if(status() && rocId < roc.size()) {
     LOG(logINFO) << "Printing current DAC settings for ROC " << rocId << ":";
-    for(std::vector< std::pair<uint8_t,uint8_t> >::iterator it = roc.at(rocId).dacs.begin(); 
+    for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
       LOG(logINFO) << "DAC" << (int)it->first << " = " << (int)it->second;
     }
