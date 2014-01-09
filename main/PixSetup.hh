@@ -21,7 +21,6 @@ public:
 
   PixTestParameters* getPixTestParameters() {return fPixTestParameters;}
   ConfigParameters * getConfigParameters()  {return fConfigParameters;}
-  PixModule*         getModule()  {return fModule;}
   SysCommand*        getSysCommand()  {return fSysCommand;}
   pxar::api*         getApi() {return fApi;}
 private: 
