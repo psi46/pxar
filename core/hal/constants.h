@@ -26,6 +26,18 @@ namespace pxar {
 #define TBM_08             0x03
 
 
+// --- TBM Register -----------------------------------------------------------
+// These register addresses give the position relative to the base of the cores
+// To actually program the TBM the base has to be added, e.g.
+// Register 0x04 + Base -> 0xE4 or 0xF4
+#define TBM_REG_COUNTER_SWITCHES    0x00
+#define TBM_REG_SET_MODE            0x02
+#define TBM_REG_CLEAR_INJECT        0x04
+#define TBM_REG_SET_PKAM_COUNTER    0x08
+#define TBM_REG_SET_DELAYS          0x0A
+#define TBM_REG_TEMPERATURE_CONTROL 0x0C
+
+
 // --- ROC Size ---------------------------------------------------------------
 #define ROC_NUMROWS 80
 #define ROC_NUMCOLS 52
