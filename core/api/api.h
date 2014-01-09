@@ -365,6 +365,10 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax);
 
+    /** repacks DacDac scan data into pairs of Dac values with fired pixel vectors
+     */
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max);
+
     /** compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into (data(roc0,roc1)) where the data blocks can be subdivided into e.g. DAC ranges
      */
     std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);

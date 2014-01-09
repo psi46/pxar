@@ -841,9 +841,41 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
     delete result;
     return NULL;
   }
+
+  LOG(logDEBUGAPI) << "Correctly repacked DacScan data for delivery.";
   return result;
 }
 
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max) {
+
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = new std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+
+  uint8_t current1dac = dac1min;
+  uint8_t current2dac = dac2min;
+
+  //FIXME if DAC value increment is correctly done:
+  for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
+
+    result->push_back(std::make_pair(current1dac, std::make_pair(current2dac, *vecit)));
+
+    if(current2dac == dac2max) {
+      current2dac = dac2min;
+      current1dac++;
+    }
+    else current2dac++;
+  }
+
+  // FIXME make valid check here
+  /*  if (current1dac != dac1max){
+    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << (dac1max-dac1min)*(dac2max-dac2min) << " DAC values!";
+    delete result;
+    return NULL;
+    }*/
+  
+  LOG(logDEBUGAPI) << "Correctly repacked DacDacScan data for delivery.";
+  return result;
+}
 
 std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs){
   if (data->size() % nRocs != 0) {
