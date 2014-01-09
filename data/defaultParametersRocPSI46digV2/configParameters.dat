@@ -14,6 +14,7 @@ rootFileName pxar.root
 
 nModules 1
 nRocs 1
+nTbms 0
 hubId 0
 tbmEnable 0
 tbmEmulator 0
