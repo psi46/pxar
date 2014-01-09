@@ -203,9 +203,18 @@ int main()
 	std::cout << "      pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
       }
     }
-
+    
     // ##########################################################
     
+
+    // ##########################################################
+    // Let's spy a bit on the DTB scope ports:
+
+    _api->SignalProbe("D1","sda");
+    _api->SignalProbe("A2","sda");
+
+    // ##########################################################
+
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
     delete _api;
