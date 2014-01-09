@@ -10,9 +10,12 @@
 
 #include <TString.h>
 
+#include "log.h"
 #include "ConfigParameters.hh"
 
 using namespace std;
+using namespace pxar;
+
 
 ConfigParameters * ConfigParameters::fInstance = 0;
 
@@ -100,8 +103,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
   ifstream _input(file.c_str());
   if (!_input.is_open())
     {
-      cout << "[ConfigParameters] Can not open file '"
-		     << file << "' to read Config Parameters." << endl;
+      LOG(logINFO) << "Can not open file '"  << file << "' to read Config Parameters.";
 
       return false;
     }
@@ -164,8 +166,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
 
-      else { cout << "[ConfigParameters] Did not understand '"
-			    << _name << "'." << endl; }
+      else { LOG(logINFO) << "Did not understand '" << _name << "'."; }
     }
 
   _input.close();
@@ -181,7 +182,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "  readDacFile  reading " << fname << endl;
+  LOG(logINFO) << "  readDacFile  reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -211,7 +212,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
       str2 = lines[i].substr(s1+1, s2-s1-1); 
       str3 = lines[i].substr(s2+1); 
     } else {
-      cout << "could not read line -->" << lines[i] << "<--" << endl;
+      LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
     }
     
     // -- why, oh why?!
@@ -276,7 +277,7 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
     if (v.size() > 0) {
       rocmasked[i] = true; 
       for (unsigned int j = 0; j < v.size(); ++j) {
-	cout << "MASKED Roc " << i << " col/row: " << v[j].first << " " << v[j].second << endl;
+	LOG(logINFO) << "MASKED Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
       }
     }
   }
@@ -294,7 +295,7 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
 	  vector<pair<int, int> > v = vmask[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
 	    if (v[j].first == ic && v[j].second == ir) {
-	      cout << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second << endl;
+	      LOG(logINFO) << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
 	      a.mask = true;
 	    }
 	  }
@@ -322,7 +323,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "  readTrimFile reading " << fname << endl;
+  LOG(logINFO) << "  readTrimFile reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -352,7 +353,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
       str2 = lines[i].substr(s1+1, s2-s1); 
       str3 = lines[i].substr(s2+1); 
     } else {
-      cout << "could not read line -->" << lines[i] << "<--" << endl;
+      LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
     }
     
     // -- why, oh why?!
@@ -366,7 +367,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     if (index <= v.size()) {
       v[index].trim = uval; 
     } else {
-      cout << " not matching entry in trim vector found for row/col = " << irow << "/" << icol << endl;
+      LOG(logINFO) << " not matching entry in trim vector found for row/col = " << irow << "/" << icol;
     }
     //     cout << "col/row = " << icol << "/" << irow << " trim = " << ival 
     // 	 << " pixelConfig: " << int(v[index].column) << "/" << int(v[index].row)
@@ -389,7 +390,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "  readMaskFile reading " << fname << endl;
+  LOG(logINFO) << "  readMaskFile reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -426,7 +427,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 	  }
 	}  
       } else {
-	cout << "illegal ROC coordinates in line " << i << ": " << lines[i] << endl;
+	LOG(logINFO) << "illegal ROC coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
@@ -443,7 +444,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 	  v[iroc].push_back(make_pair(ic, irow)); 
 	}  
       } else {
-	cout << "illegal ROC/row coordinates in line " << i << ": " << lines[i] << endl;
+	LOG(logINFO) << "illegal ROC/row coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
@@ -460,7 +461,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 	  v[iroc].push_back(make_pair(icol, ir)); 
 	}  
       } else {
-	cout << "illegal ROC/col coordinates in line " << i << ": " << lines[i] << endl;
+	LOG(logINFO) << "illegal ROC/col coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
@@ -477,7 +478,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
       if (iroc >= 0 && iroc < fnRocs && icol > 0 && icol < fnCol && irow > 0 && irow < fnRow) {
 	v[iroc].push_back(make_pair(icol, irow)); 
       } else {
-	cout << "illegal ROC/row/col coordinates in line " << i << ": " << lines[i] << endl;
+	LOG(logINFO) << "illegal ROC/row/col coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
@@ -580,13 +581,11 @@ bool ConfigParameters::writeConfigParameterFile() {
   FILE * file = fopen(filename, "w");
   if (!file)
     {
-      cout << "[ConfigParameters] Can not open file '" << filename
-		     << "' to write configParameters." << endl;
+      LOG(logINFO) << "Can not open file '" << filename << "' to write configParameters.";
       return false;
     }
 
-  cout << "[ConfigParameters] Writing Config-Parameters to '"
-       << filename << "'." << endl;
+  LOG(logINFO) << "Writing Config-Parameters to '" << filename << "'.";
 
   fprintf(file, "testboardName %s\n\n", fTBName.c_str());
 
