@@ -13,7 +13,6 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp, SysComma
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fSysCommand        = sc; 
-  fModule = 0; 
   init(); 
   LOG(logINFO) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)";
 }
@@ -24,7 +23,6 @@ PixSetup::PixSetup() {
   fPixTestParameters = 0; 
   fConfigParameters  = 0; 
   fSysCommand        = 0; 
-  fModule = 0; 
   init(); 
   LOG(logINFO) << "PixSetup ctor()";
 }
