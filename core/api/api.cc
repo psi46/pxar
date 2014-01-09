@@ -387,26 +387,46 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   }
   dacValue = registerRangeCheck(dacRegister, dacValue);
 
+  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+
   if(rocid < 0) {
     // Set the DAC for all active ROCs:
     // FIXME maybe go over expandLoop here?
     std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
-    for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+    for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
+
+      // Update the DUT DAC Value:
+      ret = _dut->roc[(uint8_t)(rocit - enabledRocs.begin())].dacs.insert( std::make_pair(dacRegister,dacValue) );
+      if(ret.second == true) {
+	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << (int)dacValue;
+      }
+      else {
+	_dut->roc[(uint8_t)(rocit - enabledRocs.begin())].dacs[dacRegister] = dacValue;
+	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << (int)dacValue;
+      }
+
       _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,dacValue);
     }
   }
-  else {
+  else if(_dut->roc.size() > rocid) {
     // Set the DAC only in the given ROC (even if that is disabled!)
-    if(_dut->roc.size() > rocid) {
-      _hal->rocSetDAC((uint8_t)rocid,dacRegister,dacValue);
+
+    // Update the DUT DAC Value:
+    ret = _dut->roc[rocid].dacs.insert( std::make_pair(dacRegister,dacValue) );
+    if(ret.second == true) {
+      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << (int)dacValue;
     }
     else {
-      LOG(logERROR) << "ROC " << rocid << " is not existing in the DUT!";
-      return false;
+      _dut->roc[rocid].dacs[dacRegister] = dacValue;
+	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << (int)dacValue;
     }
-    
-  }
 
+    _hal->rocSetDAC((uint8_t)rocid,dacRegister,dacValue);
+  }
+  else {
+    LOG(logERROR) << "ROC " << rocid << " is not existing in the DUT!";
+    return false;
+  }
   return true;
 }
 
