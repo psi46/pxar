@@ -45,8 +45,6 @@ ConfigParameters::ConfigParameters(string filename) {
 
 // ----------------------------------------------------------------------
 void ConfigParameters::initialize() {
-  cout << fTBName << endl;
-
   fReadTbParameters = fReadTbmParameters = fReadDacParameters = fReadRocPixelConfig = false; 
   fnCol = 52; 
   fnRow = 80; 
@@ -86,6 +84,7 @@ void ConfigParameters::initialize() {
 
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46v2";
+  fTbmType = ""; 
 }
 
 
@@ -106,9 +105,6 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       return false;
     }
-
-  cout << "[ConfigParameters] Reading Config-Parameters from '"
-       << file << "'." << endl;
 
   // Read file by lines
   for (string _line; _input.good();)
@@ -144,6 +140,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       else if (0 == _name.compare("nModules")) { fnModules                  = _ivalue; }
       else if (0 == _name.compare("nRocs")) { fnRocs                     = _ivalue; }
+      else if (0 == _name.compare("nTbms")) { fnTbms                     = _ivalue; }
       else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
       else if (0 == _name.compare("customModule")) { fCustomModule              = _ivalue; }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
@@ -165,6 +162,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("rocZeroAnalogCurrent")) { rocZeroAnalogCurrent = .001 * _ivalue; }
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
+      else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
 
       else { cout << "[ConfigParameters] Did not understand '"
 			    << _name << "'." << endl; }
@@ -183,7 +181,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "readDacFile reading " << fname << endl;
+  cout << "  readDacFile  reading " << fname << endl;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -303,7 +301,7 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
 	} else {
 	  a.mask = false;
 	}
-	a.enable = false;
+	a.enable = true;
 	v.push_back(a); 
       }
     }
@@ -324,7 +322,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "readTrimFile reading " << fname << endl;
+  cout << "  readTrimFile reading " << fname << endl;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -387,12 +385,11 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
   for (unsigned int i = 0; i < fnRocs; ++i) {
     v.push_back(a); 
   }
-  cout << "maskfile vector length: " << v.size() << endl;
 
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  cout << "readMaskFile reading " << fname << endl;
+  cout << "  readMaskFile reading " << fname << endl;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -615,6 +612,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "tbmChannel %i\n\n", fTbmChannel);
   fprintf(file, "halfModule %i\n\n", fHalfModule);
   fprintf(file, "rocType %s\n\n", fRocType.c_str());
+  fprintf(file, "tbmType %s\n\n", fTbmType.c_str());
 
   fprintf(file, "-- voltages and current limits\n\n");
 

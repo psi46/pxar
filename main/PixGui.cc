@@ -21,10 +21,10 @@ TGMainFrame(p, w, h, kVerticalFrame), fWidth(w), fHeight(h) {
   fConfigParameters = fPixSetup->getConfigParameters();
   fTestParameters = fPixSetup->getPixTestParameters(); 
 
-  fApi->HVoff(); 
-  fApi->Poff(); 
-  fPower = false;
-  fHV = false;
+//   fApi->HVoff(); 
+//   fApi->Poff(); 
+  fPower = true;
+  fHV = true;
 
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
   fhFrame = new TGVerticalFrame(this, w, h);

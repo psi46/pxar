@@ -62,6 +62,11 @@ void PixTestAlive::init() {
     fHistList.push_back(h2); 
   }
 
+  cout << "PixeTestAlive: XXX fApi = " << fApi << endl;
+  cout << "PixTestAlive: api->status() = " << fApi->status() << endl;
+  cout << "PixTestAlive: DUT info= " << endl; 
+  fApi->_dut->info(); 
+
 }
 
 
@@ -84,6 +89,7 @@ void PixTestAlive::doTest() {
   clearHist();
   // -- FIXME: Should/could separate better test from display?
   int ichip(0); 
+  uint16_t flag(0); 
   vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
   cout << " results.size(): " << results.size() << endl;
   TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
