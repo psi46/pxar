@@ -216,8 +216,8 @@ namespace pxar {
 
     /** TEST functions **/
 
-    /** Set a DAC value on the DUT
-     *  The "rocid" parameter can be used to select a specific ROC to program If rocid is set to
+    /** Set a DAC value on the DUT (ROCs)
+     *  The "rocid" parameter can be used to select a specific ROC to program. If rocid is set to
      *  a value < 0 all enabled ROCs will be programmed with the given DAC value.
      *
      *  This function will both update the bookkeeping value in the DUT

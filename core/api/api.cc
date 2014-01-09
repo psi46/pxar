@@ -382,7 +382,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   // Get the register number and check the range from dictionary:
   uint8_t dacRegister = stringToRegister(dacName);
   if(dacRegister == 0x0) {
-   LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
+    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
     return false;
   }
   dacValue = registerRangeCheck(dacRegister, dacValue);
@@ -408,7 +408,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
       _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,dacValue);
     }
   }
-  else if(_dut->roc.size() > rocid) {
+  else if(_dut->roc.size() > (unsigned)rocid) {
     // Set the DAC only in the given ROC (even if that is disabled!)
 
     // Update the DUT DAC Value:
