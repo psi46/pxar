@@ -172,12 +172,16 @@ bool api::programDUT() {
 
   // Start programming the devices here!
 
-  // FIXME TBMs not programmed at all right now!
   // FIXME Device types not transmitted yet!
 
-  // FIXME maybe go over expandLoop here?
-  LOG(logDEBUGAPI) << "Programming ROCS...";
+  std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
+  if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
+  for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
+    _hal->initTBM((uint8_t)(tbmit - enabledTbms.begin()),(*tbmit).dacs);
+  }
+
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  if(!enabledRocs.empty()) {LOG(logDEBUGAPI) << "Programming ROCs...";}
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs, (*rocit).pixels);
   }
