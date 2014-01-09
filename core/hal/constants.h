@@ -86,6 +86,11 @@ namespace pxar {
 #define SIG_MODE_HI      2
 
 
+// --- Testboard Clock / Timing------------------------------------------------
+#define CLK_SRC_INT 0
+#define CLK_SRC_EXT 1
+
+
 // --- Testboard digital signal probe -----------------------------------------
 #define PROBE_OFF     0
 #define PROBE_CLK     1

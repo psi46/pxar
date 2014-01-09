@@ -729,20 +729,24 @@ void hal::Poff() {
 
 void hal::SignalProbeD1(uint8_t signal) {
   _testboard->SignalProbeD1(signal);
+  _testboard->uDelay(100);
   _testboard->Flush();
 }
 
 void hal::SignalProbeD2(uint8_t signal) {
   _testboard->SignalProbeD2(signal);
+  _testboard->uDelay(100);
   _testboard->Flush();
 }
 
 void hal::SignalProbeA1(uint8_t signal) {
   _testboard->SignalProbeA1(signal);
+  _testboard->uDelay(100);
   _testboard->Flush();
 }
 
 void hal::SignalProbeA2(uint8_t signal) {
   _testboard->SignalProbeA2(signal);
+  _testboard->uDelay(100);
   _testboard->Flush();
 }
