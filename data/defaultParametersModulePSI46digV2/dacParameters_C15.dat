@@ -14,7 +14,7 @@
  14   Vbias_sf  10
  15  VoffsetOp  82
  16   VIbiasOp  50
- 17  VOffsetR0 120
+ 17  VOffsetRO 120
  18       VIon 130
  19  VIbias_PH 220
  20  Ibias_DAC  34
