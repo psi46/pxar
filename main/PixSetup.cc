@@ -1,5 +1,6 @@
 #include <iostream>
 #include "PixSetup.hh"
+#include "log.h"
 
 using namespace std;
 using namespace pxar;
@@ -14,7 +15,7 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp, SysComma
   fSysCommand        = sc; 
   fModule = 0; 
   init(); 
-  cout << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)" << endl;
+  LOG(logINFO) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)";
 }
 
 // ----------------------------------------------------------------------
@@ -25,7 +26,7 @@ PixSetup::PixSetup() {
   fSysCommand        = 0; 
   fModule = 0; 
   init(); 
-  cout << "PixSetup ctor()" << endl;
+  LOG(logINFO) << "PixSetup ctor()";
 }
 
 // ----------------------------------------------------------------------
@@ -35,6 +36,6 @@ PixSetup::~PixSetup() {
 
 // ----------------------------------------------------------------------
 void PixSetup::init() {
-  cout << "PixSetup init" << endl;
+  LOG(logINFO) << "PixSetup init";
 }
 

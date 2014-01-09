@@ -1,5 +1,4 @@
 #include <iostream>
-#include "PixParTab.hh"
 
 #include <TApplication.h>
 #include <TGButton.h>
@@ -9,7 +8,12 @@
 #include <TGTab.h>
 #include <TGLabel.h>
 
+#include "PixParTab.hh"
+#include "log.h"
+
+
 using namespace std;
+using namespace pxar;
 
 ClassImp(PixParTab)
 
@@ -49,7 +53,7 @@ PixParTab::PixParTab() {
 
 // ----------------------------------------------------------------------
 void PixParTab::init(PixGui *p, std::string tabname) {
-  cout << "PixParTab::init()" << endl;
+  LOG(logINFO) << "PixParTab::init()";
   fGui = p;
   fTabName = tabname; 
 }
@@ -57,7 +61,7 @@ void PixParTab::init(PixGui *p, std::string tabname) {
 // ----------------------------------------------------------------------
 // PixParTab destructor
 PixParTab::~PixParTab() {
-  cout << "PixParTab destructor" << endl;
+  LOG(logINFO) << "PixParTab destructor";
 }
 
 
@@ -73,11 +77,11 @@ void PixParTab::handleButtons(Int_t id) {
   
   switch (id) {
   case B_DOSET: {
-    cout << "and now what???" << endl;
+    LOG(logINFO) << "and now what???";
   }
     
   case B_PRINT: {
-    cout << "dump parameters into file" << endl;
+    LOG(logINFO) << "dump parameters into file";
     break;
   }
     

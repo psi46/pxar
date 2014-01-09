@@ -1,5 +1,4 @@
 #include <iostream>
-#include "PixTab.hh"
 
 #include <TApplication.h>
 #include <TGButton.h>
@@ -9,8 +8,11 @@
 #include <TGTab.h>
 #include <TGLabel.h>
 
+#include "PixTab.hh"
+#include "log.h"
 
 using namespace std;
+using namespace pxar; 
 
 ClassImp(PixTab)
 
@@ -39,7 +41,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
 
   // -- fV2: create parameter TGText boxes for test
-  cout << "map tab individually for test: " << fTest->getName() << endl;
+  LOG(logINFO) << "map tab individually for test: " << fTest->getName();
   map<string, string> amap = fTest->getParameters();
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
@@ -52,7 +54,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
     hFrame = new TGHorizontalFrame(fV2, 300, 30, kFixedWidth); 
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsTop));
-    cout << "Creating TGTextEntry for " << imap->first << endl;
+    LOG(logINFO) << "Creating TGTextEntry for " << imap->first;
     tb = new TGTextBuffer(20); 
     tl = new TGLabel(hFrame, imap->first.c_str());
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
@@ -132,7 +134,7 @@ PixTab::PixTab() {
 
 // ----------------------------------------------------------------------
 void PixTab::init(PixGui *p, PixTest *test, std::string tabname) {
-  cout << "PixTab::init()" << endl;
+  LOG(logINFO) << "PixTab::init()";
   fGui = p;
   fTest = test; 
   fTabName = tabname; 
@@ -142,7 +144,7 @@ void PixTab::init(PixGui *p, PixTest *test, std::string tabname) {
 // ----------------------------------------------------------------------
 // PixTab destructor
 PixTab::~PixTab() {
-  cout << "PixTab destructor" << endl;
+  LOG(logINFO) << "PixTab destructor";
 }
 
 
@@ -158,19 +160,19 @@ void PixTab::handleButtons(Int_t id) {
   
   switch (id) {
     case B_DOTEST: {
-      cout << "and now what???" << endl;
+      LOG(logINFO) << "and now what???";
     }
 
     case B_PRINT: {
       fCount++;
-      cout << Form("Canvas printed to %s-%d.pdf", fTabName.c_str(), fCount) << endl;
+      LOG(logINFO) << Form("Canvas printed to %s-%d.pdf", fTabName.c_str(), fCount);
       fEc1->GetCanvas()->SaveAs(Form("%s-%d.pdf", fTabName.c_str(), fCount));
       break;
     }
 
     case B_CLOSETAB: {
       delete fEc1; fEc1 = 0;
-      cout << Form("Tab %s closed", fTabName.c_str()) << endl;
+      LOG(logINFO) << Form("Tab %s closed", fTabName.c_str());
       fGui->getTabs()->RemoveTab(fGui->getTabs()->GetCurrent());
       fGui->getTabs()->Layout();
       delete this; 
@@ -183,23 +185,21 @@ void PixTab::handleButtons(Int_t id) {
 // ----------------------------------------------------------------------
 void PixTab::setParameter() {
   if (!fGui->getTabs()) return;
-  cout << "PixTab::setParameter: " <<  endl;
+  LOG(logINFO)  << "PixTab::setParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    cout << "ASLFDKHAPIUDF " << endl;
+    LOG(logINFO) << "ASLFDKHAPIUDF ";
     return; 
   }
 
   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
   
-  cout << "xxxPressed():  ID = " << id 
-       << " -> " << fParIds[id] 
-       << " to value " << svalue
-       << endl;
-
+  LOG(logINFO) << "xxxPressed():  ID = " << id 
+	       << " -> " << fParIds[id] 
+	       << " to value " << svalue;
 
   fTest->setParameter(fParIds[id], svalue); 
 
@@ -222,7 +222,7 @@ void PixTab::nextHistogram() {
     h->Draw("colz");
     update(); 
   } else {
-    cout << "no previous histogram found " << endl;
+    LOG(logINFO) << "no previous histogram found ";
   }
 
 }
@@ -235,7 +235,7 @@ void PixTab::previousHistogram() {
     h->Draw("colz");
     update(); 
   } else {
-    cout << "no previous histogram found " << endl;
+    LOG(logINFO)  << "no previous histogram found ";
   }
 }
 

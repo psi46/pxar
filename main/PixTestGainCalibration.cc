@@ -1,23 +1,25 @@
 #include <iostream>
 #include "PixTestGainCalibration.hh"
+#include "log.h"
 
 using namespace std;
+using namespace pxar;
 
 ClassImp(PixTestGainCalibration)
 
 //----------------------------------------------------------
 PixTestGainCalibration::PixTestGainCalibration(PixSetup *a, std::string name): PixTest(a, name) {
-  cout << "PixTestGainCalibration ctor(PixSetup &, string)" << endl;
+  LOG(logINFO) << "PixTestGainCalibration ctor(PixSetup &, string)";
 }
 
 //----------------------------------------------------------
 PixTestGainCalibration::PixTestGainCalibration(): PixTest() {
-  cout << "PixTestGainCalibration ctor()" << endl;
+  LOG(logINFO) << "PixTestGainCalibration ctor()";
 }
 
 //----------------------------------------------------------
 PixTestGainCalibration::~PixTestGainCalibration() {
-  cout << "PixTestGainCalibration dtor()" << endl;
+  LOG(logINFO) << "PixTestGainCalibration dtor()";
 }
 
 // ----------------------------------------------------------------------
@@ -38,5 +40,5 @@ bool PixTestGainCalibration::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestGainCalibration::doTest() {
-  cout << "PixTestGainCalibration::doTest()" << endl;
+  LOG(logINFO)<< "PixTestGainCalibration::doTest()";
 }

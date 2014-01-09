@@ -1,11 +1,13 @@
 #include <iostream>
 
 #include "PixTestFactory.hh"
+#include "log.h"
 
 #include "PixTestAlive.hh"
 #include "PixTestGainCalibration.hh"
 
 using namespace std;
+using namespace pxar;
 
 
 PixTestFactory* PixTestFactory::fInstance = 0; 
@@ -13,7 +15,7 @@ PixTestFactory* PixTestFactory::fInstance = 0;
 
 // ----------------------------------------------------------------------
 PixTestFactory* PixTestFactory::instance() {
-  cout << "PixTestFactory* PixTestFactory::instance()" << endl;
+  LOG(logINFO) << "PixTestFactory* PixTestFactory::instance()";
   if (0 == fInstance) {
     fInstance = new PixTestFactory;
   }
@@ -24,12 +26,12 @@ PixTestFactory* PixTestFactory::instance() {
 
 // ----------------------------------------------------------------------
 PixTestFactory::PixTestFactory() {
-  cout << "PixTestFactory::PixTestFactory()" << endl;
+  LOG(logINFO) << "PixTestFactory::PixTestFactory()";
 }
 
 // ----------------------------------------------------------------------
 PixTestFactory::~PixTestFactory() {
-  cout << "PixTestFactory::~PixTestFactory()" << endl;
+  LOG(logINFO) << "PixTestFactory::~PixTestFactory()";
 }
 
 // ----------------------------------------------------------------------
