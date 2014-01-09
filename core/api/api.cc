@@ -396,12 +396,12 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
     for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 
       // Update the DUT DAC Value:
-      ret = _dut->roc[(uint8_t)(rocit - enabledRocs.begin())].dacs.insert( std::make_pair(dacRegister,dacValue) );
+      ret = _dut->roc.at((uint8_t)(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
       if(ret.second == true) {
 	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << (int)dacValue;
       }
       else {
-	_dut->roc[(uint8_t)(rocit - enabledRocs.begin())].dacs[dacRegister] = dacValue;
+	_dut->roc.at((uint8_t)(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
 	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << (int)dacValue;
       }
 
@@ -412,12 +412,12 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
     // Set the DAC only in the given ROC (even if that is disabled!)
 
     // Update the DUT DAC Value:
-    ret = _dut->roc[rocid].dacs.insert( std::make_pair(dacRegister,dacValue) );
+    ret = _dut->roc.at(rocid).dacs.insert( std::make_pair(dacRegister,dacValue) );
     if(ret.second == true) {
       LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << (int)dacValue;
     }
     else {
-      _dut->roc[rocid].dacs[dacRegister] = dacValue;
+      _dut->roc.at(rocid).dacs[dacRegister] = dacValue;
 	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << (int)dacValue;
     }
 
