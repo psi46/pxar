@@ -4,6 +4,7 @@
 
 #include "api.h"
 #include "log.h"
+#include "dictionaries.h"
 #include <vector>
 #include <algorithm>
 
@@ -204,9 +205,36 @@ pixelConfig dut::getPixelConfig(size_t rocid, uint8_t column, uint8_t row) {
 }
 
 
-uint8_t dut::getDAC(size_t rocId, std::string dacName) {}
+uint8_t dut::getDAC(size_t rocId, std::string dacName) {
 
-std::vector<std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {}
+  if(status() && rocId < roc.size()) {  
+    // Convert the name to lower case for comparison:
+    std::transform(dacName.begin(), dacName.end(), dacName.begin(), ::tolower);
+
+    // Get singleton DAC dictionary object:
+    RegisterDictionary * _dict = RegisterDictionary::getInstance();
+
+    // And get the register value from the dictionary object:
+    uint8_t _register = _dict->getRegister(dacName);
+    return roc[rocId].dacs[_register];
+  }
+  // FIXME throw error
+  else return 0x0;
+}
+
+std::vector< std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {
+
+  if(status() && rocId < roc.size()) {
+    std::vector< std::pair<uint8_t,uint8_t> > vec;
+
+    for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
+	it != roc.at(rocId).dacs.end(); ++it) {
+      vec.push_back(*it);
+    }
+    return vec;
+  }
+  else return std::vector< std::pair<uint8_t,uint8_t> >();
+}
 
 void dut::printDACs(size_t rocId) {
 
