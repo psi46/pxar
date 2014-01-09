@@ -1,13 +1,13 @@
-  0        clk   0
-  1        ctr   0
-  2        sda  22
-  3        tin  13
- 12        rda  60
- 17        trc 120
- 18        tcc   6
- 19        tct 105
- 20        ttk  32
- 21       trep  40
- 22         cc   1
- 77        spd   0
-255 deserAdjust  4
+  0        clk    2
+  1        ctr   20
+  2        sda   19
+  3        tin    7
+ 12        rda   60
+ 17        trc  120
+ 18        tcc    6
+ 19        tct  105
+ 20        ttk   32
+ 21       trep   40
+ 22         cc    1
+ 77        spd    0
+255 deser160phase 4
