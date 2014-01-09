@@ -65,14 +65,22 @@ namespace pxar {
     void Poff();
 
     /** Set a DAC on a specific ROC rocId
-     *  DAC is referenced by its id, the range is checken in teh function
      */
     bool rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue);
 
     /** Set all DACs on a specific ROC rocId
-     *  DACs are provided as vector of std::pair with DAC Id and DAC value.
+     *  DACs are provided as map of uint8_t,uint8_t pairs  with DAC Id and DAC value.
      */
     bool rocSetDACs(uint8_t rocId, std::map< uint8_t, uint8_t > dacPairs);
+
+    /** Set a register on a specific TBM tbmId
+     */
+    bool tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue);
+
+    /** Set all registers on a specific TBM tbmId
+     *  registers are provided as map of uint8_t,uint8_t pairs with Reg Id and value.
+     */
+    bool tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs);
 
 
     // TESTBOARD GET COMMANDS

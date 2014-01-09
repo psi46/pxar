@@ -402,6 +402,31 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
   return true;
 }
 
+bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
+
+  // Iterate over all register id/value pairs and set them
+  for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
+    // One of the register settings had an issue, abort:
+    if(!tbmSetReg(tbmId, it->first, it->second)) return false;
+  }
+
+  // Send all queued commands to the testboard:
+  _testboard->Flush();
+  // Everything went all right:
+  return true;
+}
+
+bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
+
+  // Make sure we are writing to the correct TBM by setting its sddress:
+  // FIXME Magic from Beat, need to understand this:
+  _testboard->mod_Addr(31);
+
+  LOG(logDEBUGHAL) << "Set Reg" << (int)regId << " to " << std::hex << (int)regValue << std::dec;
+  _testboard->tbm_Set(regId,regValue);
+  return true;
+}
+
 void hal::rocMask(uint8_t rocid, std::vector<int32_t> /*parameter*/) {
   
   LOG(logDEBUGHAL) << "Masking full ROC ID " << rocid;
