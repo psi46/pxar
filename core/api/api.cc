@@ -363,7 +363,7 @@ bool api::SignalProbe(std::string probe, std::string name) {
   
 /** TEST functions **/
 
-bool api::setDAC(std::string dacName, uint8_t dacValue) {
+bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   
   // Get the register number and check the range from dictionary:
   uint8_t dacRegister = stringToRegister(dacName);
@@ -371,14 +371,29 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
     return false;
   }
-
   dacValue = registerRangeCheck(dacRegister, dacValue);
 
-  // FIXME maybe go over expandLoop here?
-  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
-  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,dacValue);
+  if(rocid < 0) {
+    // Set the DAC for all active ROCs:
+    // FIXME maybe go over expandLoop here?
+    std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+    for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+      _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,dacValue);
+    }
   }
+  else {
+    // Set the DAC only in the given ROC (even if that is disabled!)
+    if(_dut->roc.size() > rocid) {
+      _hal->rocSetDAC((uint8_t)rocid,dacRegister,dacValue);
+    }
+    else {
+      LOG(logERROR) << "ROC " << rocid << " is not existing in the DUT!";
+      return false;
+    }
+    
+  }
+
+  return true;
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 

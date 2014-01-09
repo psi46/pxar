@@ -216,11 +216,13 @@ namespace pxar {
     /** TEST functions **/
 
     /** Set a DAC value on the DUT
+     *  The "rocid" parameter can be used to select a specific ROC to program If rocid is set to
+     *  a value < 0 all enabled ROCs will be programmed with the given DAC value.
      *
      *  This function will both update the bookkeeping value in the DUT
      *  struct and program the actual device 
      */
-    bool setDAC(std::string dacName, uint8_t dacValue);
+    bool setDAC(std::string dacName, uint8_t dacValue, int8_t rocid = -1);
 
     /** Method to scan a DAC and measure the pulse height
      *
