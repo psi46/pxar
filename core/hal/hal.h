@@ -145,6 +145,12 @@ namespace pxar {
      */
     std::vector< std::vector<pixel> >* PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
+    /** Function to scan two given DAC ranges for a pixel
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
+     *  Private flags allow selection of output value (pulse height or efficiency)
+     */
+    std::vector< std::vector<pixel> >* PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+
 
   private:
 

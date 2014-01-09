@@ -607,6 +607,64 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   return result;
 }
 
+std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  int32_t dac1reg = parameter.at(0);
+  int32_t dac1min = parameter.at(1);
+  int32_t dac1max = parameter.at(2);
+  int32_t dac2reg = parameter.at(3);
+  int32_t dac2min = parameter.at(4);
+  int32_t dac2max = parameter.at(5);
+  int32_t flags = parameter.at(6);
+  int32_t nTriggers = parameter.at(7);
+
+  LOG(logDEBUGHAL) << "Called PixelCalibrateDacDacScan with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Scanning field DAC " << dac1reg << " " << dac1min << "-" << dac1max 
+		   << ", DAC " << dac2reg << " " << dac2min << "-" << dac2max;
+
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<int16_t> nReadouts;
+  std::vector<int32_t> PHsum;
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // FIXME no DACMIN usage possible right now.
+
+  // Call the RPC command:
+  int status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1max, dac2reg, dac2max, nReadouts, PHsum);
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
+
+  //FIXME no DACMIN setting possible, starting at 0 all the time:
+  //  for (int i=dac1min;i<dac1max;i++) {
+  for(int i=0; i < dac1max; i++) {
+    //FIXME no DACMIN setting possible, starting at 0 all the time:
+    //for(int j=dac2min; j < dac2max; j++) {
+    for(int j=0; j < dac2max; j++) {
+      std::vector<pixel> data;
+      pixel newpixel;
+      newpixel.column = column;
+      newpixel.row = row;
+      newpixel.roc_id = rocid;
+
+      // Decide over what we get back in the value field:
+      if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
+	// FIXME not nice, not safe:
+	newpixel.value =  static_cast<int32_t>(nReadouts[i]);
+      }
+      else {
+	// FIXME not nice, not safe:
+	newpixel.value =  static_cast<int32_t>(PHsum[i]);
+      }
+      data.push_back(newpixel);
+      result->push_back(data);
+    }
+  }
+
+  return result;
+}
+
 
 std::vector< std::vector<pixel> >* hal::DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
