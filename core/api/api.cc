@@ -652,7 +652,73 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												       std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-												       uint16_t flags, uint32_t nTriggers) {}
+												       uint16_t flags, uint32_t nTriggers) {
+
+  // Get the register numbers and check their ranges from dictionary:
+  uint8_t dac1register = stringToRegister(dac1name);
+  uint8_t dac2register = stringToRegister(dac2name);
+  if(dac1register == 0x0) {
+    LOG(logERROR) << "Invalid register name \"" << dac1name << "\"!";
+    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  }
+  if(dac2register == 0x0) {
+    LOG(logERROR) << "Invalid register name \"" << dac2name << "\"!";
+    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  }
+
+  // Check DAC range
+  if(dac1min > dac1max || dac2min > dac2max) {
+    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
+    LOG(logERROR) << "DacMin > DacMax! ";
+    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  }
+  dac1max = registerRangeCheck(dac1register, dac1max);
+  dac2max = registerRangeCheck(dac2register, dac2max);
+
+  // Setup the correct _hal calls for this test
+  HalMemFnPixel pixelfn = &hal::PixelCalibrateDacDacScan;
+  HalMemFnRoc rocfn = NULL;
+  HalMemFnModule modulefn = NULL;
+
+ // We want the efficiency back from the Map function, so let's set the internal flag:
+  int32_t internal_flags = 0;
+  internal_flags |= flags;
+  internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
+  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
+
+  // Load the test parameters into vector
+  std::vector<int32_t> param;
+  param.push_back(static_cast<int32_t>(dac1register));  
+  param.push_back(static_cast<int32_t>(dac1min));
+  param.push_back(static_cast<int32_t>(dac1max));
+  param.push_back(static_cast<int32_t>(dac2register));  
+  param.push_back(static_cast<int32_t>(dac2min));
+  param.push_back(static_cast<int32_t>(dac2max));
+  param.push_back(static_cast<int32_t>(internal_flags));
+  param.push_back(static_cast<int32_t>(nTriggers));
+
+  // check if the flags indicate that the user explicitly asks for serial execution of test:
+  // FIXME: FLAGS NOT YET CHECKED!
+  bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
+  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  // repack data into the expected return format
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
+
+  // Reset the original value for the scanned DAC:
+  // FIXME maybe go over expandLoop here?
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+    uint8_t oldDac1Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac1name);
+    uint8_t oldDac2Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac2name);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << (int)oldDac1Value;
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << (int)oldDac2Value;
+    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac1register,oldDac1Value);
+    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac2register,oldDac2Value);
+  }
+
+  delete data;
+  return *result;
+}
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
