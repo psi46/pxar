@@ -109,9 +109,9 @@ int main()
 
     std::vector<std::pair<std::string,uint8_t> > regs;
     regs.push_back(std::make_pair("clear",0xF0));       // Init TBM, Reset ROC
-    regs.push_back(std::make_pair("counters",0x00));    // Disable PKAM Counter
+    regs.push_back(std::make_pair("counters",0x01));    // Disable PKAM Counter
     regs.push_back(std::make_pair("mode",0xC0));        // Set Mode = Calibration
-    regs.push_back(std::make_pair("pkam_set",0x02));    // Set PKAM Counter
+    regs.push_back(std::make_pair("pkam_set",0x10));    // Set PKAM Counter
     regs.push_back(std::make_pair("delays",0x00));      // Set Delays
     regs.push_back(std::make_pair("temperature",0x00)); // Turn off Temperature Measurement
 
