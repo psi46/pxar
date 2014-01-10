@@ -71,10 +71,17 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   vFrame->AddFrame(g1Frame);
 
   // -- TBM Parameters
-  g2Frame = new TGGroupFrame(vFrame, "TBM DAC");
+  g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
   if (cmap.size() > 0) {
-    amap = cmap[0];  // FIXME!!!
+    int itbm(0); 
+    for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
+      if (kButtonDown == fSelectTbm[i]->GetState()) {
+	itbm = i; 
+	break;
+      }
+    }
+    amap = cmap[itbm];  
     std::vector<std::string>     parids;
     std::map<std::string, void*> textentries; 
     for (unsigned int i = 0; i < amap.size(); ++i) {
@@ -135,16 +142,23 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   hFrame = new TGHorizontalFrame(vFrame);
   vFrame->AddFrame(hFrame, new TGLayoutHints(kLHintsBottom, 2, 2, 2, 2));
   
-  g1Frame = new TGGroupFrame(hFrame, "DACs1");
+  g1Frame = new TGGroupFrame(hFrame, "DACs of first selected ROC");
   hFrame->AddFrame(g1Frame, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
-  g2Frame = new TGGroupFrame(hFrame, "DACs2");
+  g2Frame = new TGGroupFrame(hFrame, "DACs of first selected ROC");
   hFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, 2, 2, 2, 2));
   
   cmap = fConfigParameters->getRocDacs();
   if (cmap.size() > 0) {
     std::vector<std::string>     parids;
     std::map<std::string, void*> textentries; 
-    amap = cmap[0];   // FIXME!!! // FIXME!!! // FIXME!!! // FIXME!!! // FIXME!!! // FIXME!!!
+    int iroc(0); 
+    for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
+      if (kButtonDown == fSelectRoc[i]->GetState()) {
+	iroc = i; 
+	break;
+      }
+    }
+    amap = cmap[iroc]; 
     unsigned int idac(0); 
     for (idac = 0; idac < 0.5*amap.size(); ++idac) {
       hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
