@@ -185,7 +185,7 @@ void execute(PixSetup &a, SysCommand *sysCommand) {
 void runGui(PixSetup &a, int argc, char *argv[]) {
   TApplication theApp("App", &argc, argv);
   theApp.SetReturnFromRun(true);
-  PixGui gui(gClient->GetRoot(), 800, 500, &a);
+  PixGui gui(gClient->GetRoot(), 1200, 800, &a);
   theApp.Run();
   LOG(logINFO) << "closing down 0 ";
 }

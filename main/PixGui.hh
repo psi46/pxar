@@ -73,7 +73,6 @@ private:
 
   TGTab               	*fTabs;
   TGCompositeFrame     	*fParTab;
-  //fixme  monitorSource		*fMonitoring;
   TGTextView		*fLogger;
   TGTextEntry		*fConsole;
   TGTextBuffer		*fConsoleBuffer;

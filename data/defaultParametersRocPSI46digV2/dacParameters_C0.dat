@@ -13,7 +13,7 @@
  17  VOffsetRO 150
  18       VIon 120
  19  VIbias_PH 100
- 20  Ibias_DAC  62
+ 20  VIref_ADC  62
  21 VIbias_roc 150
  22    VIColOr  50
  25       Vcal 200
