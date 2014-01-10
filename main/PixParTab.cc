@@ -140,10 +140,10 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   g2Frame = new TGGroupFrame(hFrame, "DACs2");
   hFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, 2, 2, 2, 2));
   
+  cmap = fConfigParameters->getRocDacs();
   if (cmap.size() > 0) {
     std::vector<std::string>     parids;
     std::map<std::string, void*> textentries; 
-    cmap = fConfigParameters->getRocDacs();
     amap = cmap[0];   // FIXME!!! // FIXME!!! // FIXME!!! // FIXME!!! // FIXME!!! // FIXME!!!
     unsigned int idac(0); 
     for (idac = 0; idac < 0.5*amap.size(); ++idac) {
