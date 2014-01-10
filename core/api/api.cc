@@ -48,13 +48,20 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   //  * pattern generator setup
 
   // Take care of the signal delay settings:
-  std::vector<std::pair<uint8_t,uint8_t> > delays;
+  std::map<uint8_t,uint8_t> delays;
   for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
     // Fill the DAC pairs with the register from the dictionary:
     uint8_t sigRegister = stringToRegister(sigIt->first);
     uint8_t sigValue = registerRangeCheck(sigRegister, sigIt->second);
 
-    delays.push_back(std::make_pair(sigRegister,sigValue));
+    std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+    ret = delays.insert( std::make_pair(sigRegister,sigValue) );
+    if(ret.second == false) {
+      LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
+		      << "\" value " << (int)ret.first->second
+		      << " with " << (int)sigValue;
+      delays[sigRegister] = sigValue;
+    }
   }
     
   _hal->initTestboard(delays);

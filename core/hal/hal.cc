@@ -75,10 +75,10 @@ bool hal::status() {
   return _initialized;
 }
 
-void hal::initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays) {
+void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays) {
 
   // Write testboard delay settings and deserializer phases to the repsective registers:
-  for(std::vector<std::pair<uint8_t,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
+  for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
     if(sigIt->first == SIG_DESER160PHASE) {
       LOG(logDEBUGHAL) << "Set DTB deser160 phase to value " << (int)sigIt->second;
