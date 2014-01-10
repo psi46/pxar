@@ -247,6 +247,34 @@ int main()
     
     // ##########################################################
     
+ // ##########################################################
+    // Call the third real test (a DACDAC scan for some pixels):
+    
+    // disable pixel(s)
+    _api->_dut->setAllPixelEnable(false);
+    _api->_dut->setPixelEnable(33,12,true);
+    _api->_dut->setPixelEnable(14,12,true);
+
+    // Call the test:
+    nTrig = 10;
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > 
+      effscan2ddata = _api->getEfficiencyVsDACDAC("vdig", 0, 7, "vcomp", 0, 12, 0, nTrig);
+    
+    // Check out the data we received:
+    std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscan2ddata.size() << std::endl;
+    
+    // Loop over dacdac values:
+    for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = effscan2ddata.begin();
+	dacit != effscan2ddata.end(); ++dacit) {
+      std::cout << "  dac1: " << (int)dacit->first << " dac2: " << (int)dacit->second.first
+		<< " has " << dacit->second.second.size() << " fired pixels " << std::endl;
+      // Loop over fired pixels and show value
+      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.second.begin(); pixit != dacit->second.second.end();++pixit){
+	std::cout << "      pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
+      }
+    }
+    
+    // ##########################################################
 
     // ##########################################################
     // Let's spy a bit on the DTB scope ports:
