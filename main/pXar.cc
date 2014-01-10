@@ -92,8 +92,8 @@ int main(int argc, char *argv[]){
       // sig_delays.push_back(std::make_pair("tin",7));
       // sig_delays.push_back(std::make_pair("deser160phase",4));
    
-      std::vector<std::pair<std::string,double> > power_settings;
-      std::vector<std::pair<std::string,uint8_t> > pg_setup;
+      std::vector<std::pair<std::string, double> > power_settings;
+      std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
       api->initDUT(configParameters->getTbmType(), tbmDACs, 
