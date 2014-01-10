@@ -373,21 +373,25 @@ double hal::getTBvd() {
 
 void hal::setTBia(double IA) {
   // Set the VA analog current limit in A:
+  LOG(logDEBUGHAL) << "Set DTB analog current limit to IA = " << IA << "A";
   _testboard->_SetIA(uint16_t(IA*10000));
 }
 
 void hal::setTBva(double VA){
   // Set the VA analog voltage in V:
+  LOG(logDEBUGHAL) << "Set DTB analog output voltage to VA = " << VA << "V";
   _testboard->_SetVA(uint16_t(VA*1000));
 }
 
 void hal::setTBid(double ID) {
  // Set the VD digital current limit in A:
+  LOG(logDEBUGHAL) << "Set DTB digital current limit to ID = " << ID << "A";
   _testboard->_SetID(uint16_t(ID*10000));
 }
 
 void hal::setTBvd(double VD) {
   // Set the VD digital voltage in V:
+  LOG(logDEBUGHAL) << "Set DTB digital output voltage to VD = " << VD << "V";
   _testboard->_SetVD(uint16_t(VD*1000));
 }
 
