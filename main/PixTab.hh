@@ -2,7 +2,6 @@
 #define PIXTAB_H
 
 #include <string>
-#include <list>
 
 #include <TQObject.h> 
 #include <TGFrame.h>
@@ -43,7 +42,6 @@ protected:
   TGVerticalFrame 	*fV1;
   TGVerticalFrame 	*fV2;
 
-  //  map<std::string, void*>  fParTextBuffers, fParTextEntries, fParLabels;
   map<std::string, void*>  fParTextEntries;
   vector<std::string>      fParIds;
 
