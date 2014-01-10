@@ -29,7 +29,10 @@ public:
 
 
   virtual void handleButtons(Int_t id = -1); 
-  virtual void setParameter(); 
+
+  virtual void setTbParameter(); 
+  virtual void setTbmParameter(); 
+  virtual void setRocParameter(); 
 
   std::string getName() {return fTabName;}
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}

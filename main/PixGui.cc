@@ -29,7 +29,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fTestParameters = fPixSetup->getPixTestParameters(); 
   
   fPower = true;
-  fHV = true;
+  fHV = false;
   
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
   fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
@@ -76,7 +76,13 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fbtnPower = new TGTextButton(powerFrame, "Off", B_POWER);
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  fbtnPower->ChangeBackground(red);
+  if (fPower) {
+    fbtnPower->ChangeBackground(green);
+    fbtnPower->SetText("On");
+  }  else {
+    fbtnPower->ChangeBackground(red);
+    fbtnPower->SetText("Off");
+  }
   powerFrame->AddFrame(fbtnPower, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
   hwControl->AddFrame(powerFrame);
   
@@ -88,7 +94,14 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  fbtnHV->ChangeBackground(red);
+  if (fHV) {
+    fbtnHV->ChangeBackground(green);
+    fbtnHV->SetText("On");
+  } else {
+    fbtnHV->ChangeBackground(red);
+    fbtnHV->SetText("Off");
+  }
+
   hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 22, 5, 3, 7));
 
   hwControl->AddFrame(hvFrame);
