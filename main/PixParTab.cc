@@ -43,7 +43,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   vFrame = new TGVerticalFrame(fhFrame);
   fhFrame->AddFrame(vFrame, new TGLayoutHints(kLHintsLeft, 15, 15, 15, 15));
   g1Frame = new TGGroupFrame(vFrame, "Testboard");
-  int cnt(0); 
   vector<pair<string, uint8_t> > amap = fConfigParameters->getTbParameters();
   for (unsigned int i = 0; i < amap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
@@ -54,23 +53,31 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tl->SetWidth(100);
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 
-    te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
+    te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
     hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
     fTbParIds.push_back(amap[i].first); 
     fTbTextEntries.insert(make_pair(amap[i].first, te)); 
 
     te->SetText(Form("%d", int(amap[i].second)));
-    te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
+    te->Connect("ReturnPressed()", "PixParTab", this, "setTbParameter()");
 
-    tset = new TGTextButton(hFrame, "Set", cnt);
-    tset->Connect("Clicked()", "PixTab", this, "setParameter()");
+    tset = new TGTextButton(hFrame, "Set", i);
+    tset->Connect("Clicked()", "PixParTab", this, "setTbParameter()");
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 
-    ++cnt;
   }
   vFrame->AddFrame(g1Frame);
 
   // -- TBM Parameters
+  TGCompositeFrame *bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
+  for (int i = 0; i < fConfigParameters->getNtbms(); ++i) {
+    tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
+    bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
+    fSelectTbm.push_back(tcb); 
+  }
+  if (fSelectTbm.size() > 0) fSelectTbm[0]->SetState(kButtonDown);
+  vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
+
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
   if (cmap.size() > 0) {
@@ -93,19 +100,18 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       tl->SetWidth(100);
       hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       
-      te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
+      te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
       hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
       parids.push_back(amap[i].first); 
       textentries.insert(make_pair(amap[i].first, te)); 
       
       te->SetText(Form("%d", int(amap[i].second)));
-      te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
+      te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
       
-      tset = new TGTextButton(hFrame, "Set", cnt);
-      tset->Connect("Clicked()", "PixTab", this, "setParameter()");
+      tset = new TGTextButton(hFrame, "Set", i);
+      tset->Connect("Clicked()", "PixParTab", this, "setTbmParameter()");
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       
-      ++cnt;
     }
     fTbmTextEntries.push_back(textentries);
     fTbmParIds.push_back(parids);
@@ -130,12 +136,13 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   hFrame->AddFrame(tset = new TGTextButton(hFrame, "Deselect all", B_DESELECTALL));
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
   
-  TGCompositeFrame *bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
+  bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
   for (int i = 0; i < fConfigParameters->getNrocs(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectRoc.push_back(tcb); 
   }
+  if (fSelectRoc.size() > 0) fSelectRoc[0]->SetState(kButtonDown);
   
   vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
 
@@ -169,19 +176,18 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       tl->SetWidth(100);
       hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       
-      te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
+      te  = new TGTextEntry(hFrame, tb, idac); te->SetWidth(100); 
       hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
       parids.push_back(amap[idac].first); 
       textentries.insert(make_pair(amap[idac].first, te)); 
       
       te->SetText(Form("%d", int(amap[idac].second)));
-      te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
+      te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
       
-      tset = new TGTextButton(hFrame, "Set", cnt);
-      tset->Connect("Clicked()", "PixTab", this, "setParameter()");
+      tset = new TGTextButton(hFrame, "Set", idac);
+      tset->Connect("Clicked()", "PixParTab", this, "setRocParameter()");
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       
-      ++cnt;
     }
     
     for (idac = 0.5*amap.size(); idac < amap.size(); ++idac) {
@@ -193,23 +199,22 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       tl->SetWidth(100);
       hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       
-      te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
+      te  = new TGTextEntry(hFrame, tb, idac); te->SetWidth(100); 
       hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
       parids.push_back(amap[idac].first); 
       textentries.insert(make_pair(amap[idac].first, te)); 
       
       te->SetText(Form("%d", int(amap[idac].second)));
-      te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
+      te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
       
-      tset = new TGTextButton(hFrame, "Set", cnt);
-      tset->Connect("Clicked()", "PixTab", this, "setParameter()");
+      tset = new TGTextButton(hFrame, "Set", idac);
+      tset->Connect("Clicked()", "PixParTab", this, "setRocParameter()");
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       
-      ++cnt;
     }
 
-    fTbmTextEntries.push_back(textentries);
-    fTbmParIds.push_back(parids);
+    fRocTextEntries.push_back(textentries);
+    fRocParIds.push_back(parids);
   }
 
 
@@ -272,9 +277,9 @@ void PixParTab::handleButtons(Int_t id) {
 
 
 // ----------------------------------------------------------------------
-void PixParTab::setParameter() {
+void PixParTab::setTbParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixParTab::setParameter: ";
+  LOG(logINFO)  << "PixParTab::setTbParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
@@ -284,8 +289,89 @@ void PixParTab::setParameter() {
     return; 
   }
 
+  string svalue = ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText(); 
 
-  cout << "FIXME FIXME " << endl;
+  cout << "FIXME FIXME: ID = " << id << " -> " << fTbParIds[id] << " set to " << svalue << endl;
+
+//   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  
+//   LOG(logINFO) << "xxxPressed():  ID = " << id 
+// 	       << " -> " << fParIds[id] 
+// 	       << " to value " << svalue;
+
+  //FIXME fTest->setParameter(fParIds[id], svalue); 
+
+  //FIXME if (1) fTest->dumpParameters();
+  
+} 
+// ----------------------------------------------------------------------
+void PixParTab::setTbmParameter() {
+  if (!fGui->getTabs()) return;
+  LOG(logINFO)  << "PixParTab::setTbmParameter: ";
+
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+  int itbm(-1); 
+  for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
+    if (kButtonDown == fSelectTbm[i]->GetState()) {
+      itbm = i; 
+      break;
+    }
+  }
+  cout << "TBM " << itbm << " is selected" << endl;
+  if (itbm > -1) {
+    vector<string> v = fTbmParIds[itbm]; 
+    map<string, void *> t = fTbmTextEntries[itbm];
+    string svalue = ((TGTextEntry*)(t[v[id]]))->GetText(); 
+    cout << "FIXME FIXME: ID = " << id << " -> " << v[id] << " set to " << svalue << endl;
+  }
+
+//   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  
+//   LOG(logINFO) << "xxxPressed():  ID = " << id 
+// 	       << " -> " << fParIds[id] 
+// 	       << " to value " << svalue;
+
+  //FIXME fTest->setParameter(fParIds[id], svalue); 
+
+  //FIXME if (1) fTest->dumpParameters();
+  
+} 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::setRocParameter() {
+  if (!fGui->getTabs()) return;
+  LOG(logINFO)  << "PixParTab::setRocParameter: ";
+
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  int iroc(-1); 
+  for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
+    if (kButtonDown == fSelectRoc[i]->GetState()) {
+      iroc = i; 
+      break;
+    }
+  }
+  cout << "ROC " << iroc << " is selected. id = " << id << endl;
+  if (iroc > -1) {
+    vector<string> v = fRocParIds[iroc]; 
+    map<string, void *> t = fRocTextEntries[iroc];
+    string svalue = ((TGTextEntry*)(t[v[id]]))->GetText(); 
+    cout << "FIXME FIXME: ID = " << id << " -> " << v[id] << " set to " << svalue << endl;
+  }
+
 
 //   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
   
