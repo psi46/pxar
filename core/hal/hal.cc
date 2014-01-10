@@ -136,9 +136,9 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     string rec;
     uint16_t recordCount = 0;
     while (true) {
-      // FIXME not sure LOG works wit flush:
-      LOG(logINFO) << "\rDownload running... " 
-		   << ((int)(100 * recordCount / file_lines)) << " % " << flush;
+      LOG(logINFO) << "\rDownload running... "; 
+      // LOG doesn't works with flush, so we can't display the percentage:
+      //             << ((int)(100 * recordCount / file_lines)) << " % " << flush;
       getline(flashFile, rec);
       if (flashFile.good()) {
 	if (rec.size() == 0) continue;
