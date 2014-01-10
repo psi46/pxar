@@ -22,6 +22,22 @@ int main()
 
     std::vector<std::pair<std::string,double> > power_settings;
     std::vector<std::pair<std::string,uint8_t> > pg_setup;
+
+
+    // Pattern Generator:
+    // pgset 0 b010000  15  pg_rest
+    // pgset 1 b000100  50  pg_cal
+    // pgset 2 b100010   0  pg_trg pg_sync
+
+    // Power settings:
+    power_settings.push_back(std::make_pair("va",1.9));
+    power_settings.push_back(std::make_pair("vd",2.6));
+    power_settings.push_back(std::make_pair("ia",1.190));
+    power_settings.push_back(std::make_pair("id",1.10));
+    // Try to do some nasty stuff:
+    power_settings.push_back(std::make_pair("vxyz",-1.9));
+    power_settings.push_back(std::make_pair("vhaha",200.9));
+
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
 
