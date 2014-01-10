@@ -21,7 +21,31 @@ int main()
     sig_delays.push_back(std::make_pair("deser160phase",4));
 
     std::vector<std::pair<std::string,double> > power_settings;
-    std::vector<std::pair<std::string,uint8_t> > pg_setup;
+    std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+
+
+    // Pattern Generator:
+
+    // Module:
+    //pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
+    //pg_setup.push_back(std::make_pair(0x0400,50)); // PG_CAL
+    //pg_setup.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
+
+    // Single ROC:
+    pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
+    pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
+    pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
+    pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+
+    // Power settings:
+    power_settings.push_back(std::make_pair("va",1.9));
+    power_settings.push_back(std::make_pair("vd",2.6));
+    power_settings.push_back(std::make_pair("ia",1.190));
+    power_settings.push_back(std::make_pair("id",1.10));
+    // Try to do some nasty stuff:
+    power_settings.push_back(std::make_pair("vxyz",-1.9));
+    power_settings.push_back(std::make_pair("vhaha",200.9));
+
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
 

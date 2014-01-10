@@ -41,23 +41,61 @@ api::~api() {
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
-                       std::vector<std::pair<std::string,uint8_t> > pg_setup) {
+			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
   // FIXME Missing configuration:
   //  * power settings
   //  * pattern generator setup
 
+  // Read the power settings:
+  double va = 0, vd = 0, ia = 0, id = 0;
+  for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
+    std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
+    // FIXME Range Checks!
+    if((*it).second < 0) {
+      LOG(logERROR) << "Negative value for power setting " << (*it).first << "! Skipping.";
+      continue;
+    }
+
+    if((*it).first.compare("va") == 0) { va = (*it).second; }
+    else if((*it).first.compare("vd") == 0) { vd = (*it).second; }
+    else if((*it).first.compare("ia") == 0) { ia = (*it).second; }
+    else if((*it).first.compare("id") == 0) { id = (*it).second; }
+    else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
+  }
+
   // Take care of the signal delay settings:
-  std::vector<std::pair<uint8_t,uint8_t> > delays;
+  std::map<uint8_t,uint8_t> delays;
   for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
     // Fill the DAC pairs with the register from the dictionary:
     uint8_t sigRegister = stringToRegister(sigIt->first);
     uint8_t sigValue = registerRangeCheck(sigRegister, sigIt->second);
 
-    delays.push_back(std::make_pair(sigRegister,sigValue));
+    std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+    ret = delays.insert( std::make_pair(sigRegister,sigValue) );
+    if(ret.second == false) {
+      LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
+		      << "\" value " << (int)ret.first->second
+		      << " with " << (int)sigValue;
+      delays[sigRegister] = sigValue;
+    }
   }
-    
-  _hal->initTestboard(delays);
+  
+  // Prepare Patter Generator:
+  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+    if((*it).second == 0 && it != pg_setup.end() -1 ) {
+      LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
+		       << (int)(it - pg_setup.begin())  << ".";
+    }
+    // Check last entry for PG stop signal (delay = 0):
+    if(it == pg_setup.end() - 1 && (*it).second != 0) {
+      LOG(logCRITICAL) << "No delay = 0 found on last entry. Seting last delay to 0 to stop the pattern generator.";
+      (*it).second = 0;
+    }
+  }
+
+  // Call the HAL to do the job:
+  _hal->initTestboard(delays,pg_setup,va,vd,ia,id);
   return true;
 }
   

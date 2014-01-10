@@ -75,10 +75,19 @@ bool hal::status() {
   return _initialized;
 }
 
-void hal::initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays) {
+void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
+
+  // Set voltages and current limits:
+  setTBva(va);
+  setTBvd(vd);
+  setTBia(ia);
+  setTBid(id);
+  _testboard->Flush();
+  LOG(logDEBUG) << "Voltages/current limits set.";
+
 
   // Write testboard delay settings and deserializer phases to the repsective registers:
-  for(std::vector<std::pair<uint8_t,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
+  for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
     if(sigIt->first == SIG_DESER160PHASE) {
       LOG(logDEBUGHAL) << "Set DTB deser160 phase to value " << (int)sigIt->second;
@@ -94,16 +103,16 @@ void hal::initTestboard(std::vector<std::pair<uint8_t,uint8_t> > sig_delays) {
   _testboard->Flush();
   LOG(logDEBUG) << "Testboard delays set.";
 
-  //FIXME get from board configuration:
-  // Set voltages:
-  setTBva(1.8);
-  setTBvd(2.5);
-  
-  // Set current limits:
-  setTBia(1.199);
-  setTBid(1.000);
-  _testboard->Flush();
-  LOG(logDEBUG) << "Voltages/current limits set.";
+
+  // Set up Pattern Generator:
+  // Write the (sorted!) PG patterns into adjacent register addresses:
+  uint8_t addr = 0;
+  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+    uint16_t cmd = (*it).first | (*it).second;
+    LOG(logDEBUGHAL) << "Setting PG cmd " << std::hex << cmd << std::dec;
+    _testboard->Pg_SetCmd(addr, cmd);
+    addr++;
+  }
 
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;
@@ -134,9 +143,9 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     string rec;
     uint16_t recordCount = 0;
     while (true) {
-      // FIXME not sure LOG works wit flush:
-      LOG(logINFO) << "\rDownload running... " 
-		   << ((int)(100 * recordCount / file_lines)) << " % " << flush;
+      LOG(logINFO) << "\rDownload running... "; 
+      // LOG doesn't works with flush, so we can't display the percentage:
+      //             << ((int)(100 * recordCount / file_lines)) << " % " << flush;
       getline(flashFile, rec);
       if (flashFile.good()) {
 	if (rec.size() == 0) continue;
@@ -224,6 +233,10 @@ void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector, std::vec
   }
 
   // Trim the whole ROC:
+  // FIXME THIS IS WRONG! THIS DOESN'T WORK!
+  // The trim value resides in the same register as the mask bit and has to be written together with that.
+  // Otherwise we will overwrite the trim value every time a pixel is masked/unmasked!
+  // FIXME need to find a solution for this!
   LOG(logDEBUGHAL) << "Trimming ROC " << (int)rocId << ".";
   _testboard->TrimChip(trim);
   mDelay(300);
@@ -373,21 +386,25 @@ double hal::getTBvd() {
 
 void hal::setTBia(double IA) {
   // Set the VA analog current limit in A:
+  LOG(logDEBUGHAL) << "Set DTB analog current limit to IA = " << IA << "A";
   _testboard->_SetIA(uint16_t(IA*10000));
 }
 
 void hal::setTBva(double VA){
   // Set the VA analog voltage in V:
+  LOG(logDEBUGHAL) << "Set DTB analog output voltage to VA = " << VA << "V";
   _testboard->_SetVA(uint16_t(VA*1000));
 }
 
 void hal::setTBid(double ID) {
  // Set the VD digital current limit in A:
+  LOG(logDEBUGHAL) << "Set DTB digital current limit to ID = " << ID << "A";
   _testboard->_SetID(uint16_t(ID*10000));
 }
 
 void hal::setTBvd(double VD) {
   // Set the VD digital voltage in V:
+  LOG(logDEBUGHAL) << "Set DTB digital output voltage to VD = " << VD << "V";
   _testboard->_SetVD(uint16_t(VD*1000));
 }
 
@@ -436,8 +453,13 @@ bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
   // FIXME Magic from Beat, need to understand this:
   _testboard->mod_Addr(31);
 
-  LOG(logDEBUGHAL) << "Set Reg" << (int)regId << " to " << std::hex << (int)regValue << std::dec;
-  _testboard->tbm_Set(regId,regValue);
+  LOG(logDEBUGHAL) << "Set Reg" << std::hex << (int)regId << std::dec << " to " << std::hex << (int)regValue << std::dec << " for both TBM cores.";
+  // Set this register for both TBM cores:
+  uint8_t regCore1 = 0xE0 | regId;
+  uint8_t regCore2 = 0xF0 | regId;
+  LOG(logDEBUGHAL) << "Core 1: register " << std::hex << (int)regCore1 << " = " << (int)regValue << std::dec;
+  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << (int)regCore2 << " = " << (int)regValue << std::dec;
+  //_testboard->tbm_Set(regId,regValue);
   return true;
 }
 
