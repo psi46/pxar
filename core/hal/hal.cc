@@ -75,7 +75,16 @@ bool hal::status() {
   return _initialized;
 }
 
-void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays) {
+void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector< std::pair<uint8_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
+
+  // Set voltages and current limits:
+  setTBva(va);
+  setTBvd(vd);
+  setTBia(ia);
+  setTBid(id);
+  _testboard->Flush();
+  LOG(logDEBUG) << "Voltages/current limits set.";
+
 
   // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
@@ -94,16 +103,9 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays) {
   _testboard->Flush();
   LOG(logDEBUG) << "Testboard delays set.";
 
-  //FIXME get from board configuration:
-  // Set voltages:
-  setTBva(1.8);
-  setTBvd(2.5);
-  
-  // Set current limits:
-  setTBia(1.199);
-  setTBid(1.000);
-  _testboard->Flush();
-  LOG(logDEBUG) << "Voltages/current limits set.";
+
+  // Set up Pattern Generator:
+  //_testboard->Pg_SetCmd(addr, cmd);
 
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;

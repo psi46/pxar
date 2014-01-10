@@ -47,6 +47,23 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   //  * power settings
   //  * pattern generator setup
 
+  // Read the power settings:
+  double va = 0, vd = 0, ia = 0, id = 0;
+  for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
+    std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
+    // FIXME Range Checks!
+    if((*it).second < 0) {
+      LOG(logERROR) << "Negative value for power setting " << (*it).first << "! Skipping.";
+      continue;
+    }
+
+    if((*it).first.compare("va") == 0) { va = (*it).second; }
+    else if((*it).first.compare("vd") == 0) { vd = (*it).second; }
+    else if((*it).first.compare("ia") == 0) { ia = (*it).second; }
+    else if((*it).first.compare("id") == 0) { id = (*it).second; }
+    else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
+  }
+
   // Take care of the signal delay settings:
   std::map<uint8_t,uint8_t> delays;
   for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
@@ -63,8 +80,10 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
       delays[sigRegister] = sigValue;
     }
   }
-    
-  _hal->initTestboard(delays);
+  
+  // FIXME Prepare Patter Generator!
+  std::vector<std::pair<uint8_t, uint8_t> > pgsetup;
+  _hal->initTestboard(delays,pgsetup,va,vd,ia,id);
   return true;
 }
   
