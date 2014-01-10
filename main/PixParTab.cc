@@ -296,10 +296,29 @@ void PixParTab::setTbParameter() {
   }
 
   string svalue = ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText(); 
+  uint8_t udac = atoi(svalue.c_str()); 
 
   cout << "FIXME FIXME: ID = " << id << " -> " << fTbParIds[id] << " set to " << svalue << endl;
 
-  
+  // FIXME UPDATE CONFIGPARAMETERS!
+
+  // -- reprogram timing parameters
+  vector<pair<string,uint8_t> >  v0 = fConfigParameters->getTbSigDelays();
+  vector<pair<string,uint8_t> >  v1;
+  for (unsigned int i = 0; i < v0.size(); ++i) {
+    if (!v0[i].first.compare(fTbParIds[id])) {
+      cout << "XXXX old value: " << int(v0[i].second) << endl;
+      v1.push_back(make_pair(fTbParIds[id], udac)); 
+    } else {
+      v1.push_back(v0[i]); 
+    }
+  }
+
+  std::vector<std::pair<std::string, double> > power_settings;
+  std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
+
+  fGui->getApi()->initTestboard(v1, power_settings, pg_setup);
+
 } 
 
 
@@ -331,6 +350,8 @@ void PixParTab::setTbmParameter() {
     LOG(logINFO)<< "xxx: ID = " << id << " -> " << v[id] << " set to svalue = " << svalue << " int = " << int(udac);
     fGui->getApi()->setTbmReg(v[id], udac, itbm);
   }
+
+  // FIXME UPDATE CONFIGPARAMETERS!
   
 } 
 
@@ -365,5 +386,6 @@ void PixParTab::setRocParameter() {
     fGui->getApi()->setDAC(v[id], udac, iroc);
   }
 
+  // FIXME UPDATE CONFIGPARAMETERS!
  
 } 
