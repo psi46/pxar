@@ -226,6 +226,10 @@ void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector, std::vec
   }
 
   // Trim the whole ROC:
+  // FIXME THIS IS WRONG! THIS DOESN'T WORK!
+  // The trim value resides in the same register as the mask bit and has to be written together with that.
+  // Otherwise we will overwrite the trim value every time a pixel is masked/unmasked!
+  // FIXME need to find a solution for this!
   LOG(logDEBUGHAL) << "Trimming ROC " << (int)rocId << ".";
   _testboard->TrimChip(trim);
   mDelay(300);
