@@ -442,8 +442,13 @@ bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
   // FIXME Magic from Beat, need to understand this:
   _testboard->mod_Addr(31);
 
-  LOG(logDEBUGHAL) << "Set Reg" << (int)regId << " to " << std::hex << (int)regValue << std::dec;
-  _testboard->tbm_Set(regId,regValue);
+  LOG(logDEBUGHAL) << "Set Reg" << std::hex << (int)regId << std::dec << " to " << std::hex << (int)regValue << std::dec << " for both TBM cores.";
+  // Set this register for both TBM cores:
+  uint8_t regCore1 = 0xE0 | regId;
+  uint8_t regCore2 = 0xF0 | regId;
+  LOG(logDEBUGHAL) << "Core 1: register " << std::hex << (int)regCore1 << " = " << (int)regValue << std::dec;
+  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << (int)regCore2 << " = " << (int)regValue << std::dec;
+  //_testboard->tbm_Set(regId,regValue);
   return true;
 }
 
