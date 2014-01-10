@@ -41,7 +41,7 @@ api::~api() {
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
-                       std::vector<std::pair<std::string,uint8_t> > pg_setup) {
+			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
   // FIXME Missing configuration:
   //  * power settings
@@ -81,9 +81,21 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     }
   }
   
-  // FIXME Prepare Patter Generator!
-  std::vector<std::pair<uint8_t, uint8_t> > pgsetup;
-  _hal->initTestboard(delays,pgsetup,va,vd,ia,id);
+  // Prepare Patter Generator:
+  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+    if((*it).second == 0 && it != pg_setup.end() -1 ) {
+      LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
+		       << (int)(it - pg_setup.begin())  << ".";
+    }
+    // Check last entry for PG stop signal (delay = 0):
+    if(it == pg_setup.end() - 1 && (*it).second != 0) {
+      LOG(logCRITICAL) << "No delay = 0 found on last entry. Seting last delay to 0 to stop the pattern generator.";
+      (*it).second = 0;
+    }
+  }
+
+  // Call the HAL to do the job:
+  _hal->initTestboard(delays,pg_setup,va,vd,ia,id);
   return true;
 }
   

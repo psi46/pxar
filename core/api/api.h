@@ -128,7 +128,7 @@ namespace pxar {
      */
     bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
-                       std::vector<std::pair<std::string,uint8_t> > pg_setup);
+                       std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
   
     /** Initializer method for the DUT (attached devices)
      *  This function requires the types and DAC settings for all TBMs and ROCs

@@ -75,7 +75,7 @@ bool hal::status() {
   return _initialized;
 }
 
-void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector< std::pair<uint8_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
+void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
 
   // Set voltages and current limits:
   setTBva(va);
@@ -105,7 +105,14 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector< std::
 
 
   // Set up Pattern Generator:
-  //_testboard->Pg_SetCmd(addr, cmd);
+  // Write the (sorted!) PG patterns into adjacent register addresses:
+  uint8_t addr = 0;
+  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+    uint16_t cmd = (*it).first | (*it).second;
+    LOG(logDEBUGHAL) << "Setting PG cmd " << std::hex << cmd << std::dec;
+    _testboard->Pg_SetCmd(addr, cmd);
+    addr++;
+  }
 
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;
