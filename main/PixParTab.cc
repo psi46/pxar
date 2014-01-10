@@ -29,6 +29,12 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
 
+  Pixel_t colDarkSeaGreen;    
+  gClient->GetColorByName("DarkSeaGreen", colDarkSeaGreen);
+  TGTabElement *tabel = fGui->getTabs()->GetTabTab(fTabName.c_str());
+  tabel->ChangeBackground(colDarkSeaGreen);
+
+
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
   TGTextBuffer *tb(0); 
@@ -293,17 +299,10 @@ void PixParTab::setTbParameter() {
 
   cout << "FIXME FIXME: ID = " << id << " -> " << fTbParIds[id] << " set to " << svalue << endl;
 
-//   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
-  
-//   LOG(logINFO) << "xxxPressed():  ID = " << id 
-// 	       << " -> " << fParIds[id] 
-// 	       << " to value " << svalue;
-
-  //FIXME fTest->setParameter(fParIds[id], svalue); 
-
-  //FIXME if (1) fTest->dumpParameters();
   
 } 
+
+
 // ----------------------------------------------------------------------
 void PixParTab::setTbmParameter() {
   if (!fGui->getTabs()) return;
@@ -328,18 +327,10 @@ void PixParTab::setTbmParameter() {
     vector<string> v = fTbmParIds[itbm]; 
     map<string, void *> t = fTbmTextEntries[itbm];
     string svalue = ((TGTextEntry*)(t[v[id]]))->GetText(); 
-    cout << "FIXME FIXME: ID = " << id << " -> " << v[id] << " set to " << svalue << endl;
+    uint8_t udac = atoi(svalue.c_str()); 
+    LOG(logINFO)<< "xxx: ID = " << id << " -> " << v[id] << " set to svalue = " << svalue << " int = " << int(udac);
+    fGui->getApi()->setTbmReg(v[id], udac, itbm);
   }
-
-//   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
-  
-//   LOG(logINFO) << "xxxPressed():  ID = " << id 
-// 	       << " -> " << fParIds[id] 
-// 	       << " to value " << svalue;
-
-  //FIXME fTest->setParameter(fParIds[id], svalue); 
-
-  //FIXME if (1) fTest->dumpParameters();
   
 } 
 
@@ -364,23 +355,15 @@ void PixParTab::setRocParameter() {
       break;
     }
   }
-  cout << "ROC " << iroc << " is selected. id = " << id << endl;
+  LOG(logINFO) << "ROC " << iroc << " is selected. id = " << id;
   if (iroc > -1) {
     vector<string> v = fRocParIds[iroc]; 
     map<string, void *> t = fRocTextEntries[iroc];
     string svalue = ((TGTextEntry*)(t[v[id]]))->GetText(); 
-    cout << "FIXME FIXME: ID = " << id << " -> " << v[id] << " set to " << svalue << endl;
+    uint8_t udac = atoi(svalue.c_str()); 
+    LOG(logINFO)<< "xxx: ID = " << id << " -> " << v[id] << " set to svalue = " << svalue << " int = " << int(udac);
+    fGui->getApi()->setDAC(v[id], udac, iroc);
   }
 
-
-//   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
-  
-//   LOG(logINFO) << "xxxPressed():  ID = " << id 
-// 	       << " -> " << fParIds[id] 
-// 	       << " to value " << svalue;
-
-  //FIXME fTest->setParameter(fParIds[id], svalue); 
-
-  //FIXME if (1) fTest->dumpParameters();
-  
+ 
 } 
