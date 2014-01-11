@@ -43,20 +43,19 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
 			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
-  // FIXME Missing configuration:
-  //  * power settings
-  //  * pattern generator setup
+  // Collect and check the testboard configuration settings
 
   // Read the power settings:
   double va = 0, vd = 0, ia = 0, id = 0;
   for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
     std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
-    // FIXME Range Checks!
+
     if((*it).second < 0) {
       LOG(logERROR) << "Negative value for power setting " << (*it).first << "! Skipping.";
       continue;
     }
 
+    // FIXME Range Checks!
     if((*it).first.compare("va") == 0) { va = (*it).second; }
     else if((*it).first.compare("vd") == 0) { vd = (*it).second; }
     else if((*it).first.compare("ia") == 0) { ia = (*it).second; }
@@ -89,7 +88,7 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     }
     // Check last entry for PG stop signal (delay = 0):
     if(it == pg_setup.end() - 1 && (*it).second != 0) {
-      LOG(logCRITICAL) << "No delay = 0 found on last entry. Seting last delay to 0 to stop the pattern generator.";
+      LOG(logCRITICAL) << "No delay = 0 found on last entry. Setting last delay to 0 to stop the pattern generator.";
       (*it).second = 0;
     }
   }
