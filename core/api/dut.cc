@@ -95,14 +95,14 @@ void dut::info() {
 }
 
 int32_t dut::getNEnabledPixels(uint8_t rocid) {
-  if (!status() || rocid >= roc.size()) return 0;
+  if (!_initialized || rocid >= roc.size()) return 0;
   // We currently hide the possibility to enable pixels on some ROCs only,
   // so looking at ROC 0 as default is safe:
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configEnableSet(true));
 }
 
 int32_t dut::getNMaskedPixels(uint8_t rocid) {
-  if (!status() || rocid >= roc.size()) return 0;
+  if (!_initialized || rocid >= roc.size()) return 0;
   // We currently hide the possibility to enable pixels on some ROCs only,
   // so looking at ROC 0 as default is safe:
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configMaskSet(true));
