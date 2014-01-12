@@ -887,6 +887,10 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   // pointer to vector to hold our data
   std::vector< std::vector<pixel> >* data = NULL;
 
+
+  // Do the masking/unmasking&trimming for all ROCs first
+  MaskAndTrim();
+
   // check if we might use parallel routine on whole module: 16 ROCs
   // must be enabled and parallel execution not disabled by user
   if (_dut->getModuleEnable() && !forceSerial && modulefn != NULL){
@@ -1055,4 +1059,46 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
     result->push_back(pixjoined);
   }
   return result;
+}
+
+
+// Function to program the device with all the needed trimming and masking stuff
+void api::MaskAndTrim() {
+
+  // Run over all existing ROCs:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
+    // Check if we can run on full ROCs:
+    uint16_t masked = _dut->getNMaskedPixels((uint8_t)(rocit-_dut->roc.begin()));
+    LOG(logDEBUGAPI) << "ROC " << (int)(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
+
+    // This ROC is completely unmasked, let's trim it:
+    if(masked == 0) {
+      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " in one go.";
+      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
+      continue;
+    }
+    // Choose the version with less calls:
+    else if(masked <= ROC_NUMROWS*ROC_NUMCOLS) {
+      // We have more unmasked than masked pixels:
+      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " before masking single pixels.";
+      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
+      
+      // And then mask the required pixels:
+      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+	if(pxit->mask == true) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
+      }
+    }
+    else {
+      // Some are unmasked, but not too many. First mask that ROC:
+      LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
+      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
+      
+      // And then unmask the required pixels with their trim values:
+      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+	if(pxit->mask == false) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
+      }
+    }
+  }
+
 }

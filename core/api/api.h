@@ -385,6 +385,12 @@ namespace pxar {
      */
     uint8_t stringToDeviceCode(std::string name);
 
+    /** Routine to loop over all ROCs/pixels and figure out the most efficient way to
+     *  (un)mask and trim them for the upcoming test according to the information stored
+     *  in the DUT struct.
+     */
+    void MaskAndTrim();
+
 
   }; // class api
 
