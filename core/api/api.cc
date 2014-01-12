@@ -714,6 +714,70 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
 
+  // Check DAC ranges
+  if(dac1min > dac1max) {
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dac1min;
+    dac1min = dac1max;
+    dac1max = temp;
+  }
+  if(dac2min > dac2max) {
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dac2min;
+    dac2min = dac2max;
+    dac2max = temp;
+  }
+
+  // Get the register number and check the range from dictionary:
+  uint8_t dac1register, dac2register;
+  if(!verifyRegister(dac1name, dac1register, dac1max, ROC_REG)) {
+    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  }
+  if(!verifyRegister(dac2name, dac2register, dac2max, ROC_REG)) {
+    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  }
+
+  // Setup the correct _hal calls for this test
+  HalMemFnPixel pixelfn = &hal::PixelCalibrateDacDacScan;
+  HalMemFnRoc rocfn = NULL;
+  HalMemFnModule modulefn = NULL;
+
+ // We want the pulse height back from the DacDac function, so no internal flags needed.
+
+  // Load the test parameters into vector
+  std::vector<int32_t> param;
+  param.push_back(static_cast<int32_t>(dac1register));  
+  param.push_back(static_cast<int32_t>(dac1min));
+  param.push_back(static_cast<int32_t>(dac1max));
+  param.push_back(static_cast<int32_t>(dac2register));  
+  param.push_back(static_cast<int32_t>(dac2min));
+  param.push_back(static_cast<int32_t>(dac2max));
+  param.push_back(static_cast<int32_t>(flags));
+  param.push_back(static_cast<int32_t>(nTriggers));
+
+  // check if the flags indicate that the user explicitly asks for serial execution of test:
+  // FIXME: FLAGS NOT YET CHECKED!
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  // repack data into the expected return format
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
+
+  // Reset the original value for the scanned DAC:
+  // FIXME maybe go over expandLoop here?
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+    uint8_t oldDac1Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac1name);
+    uint8_t oldDac2Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac2name);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << (int)oldDac1Value;
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << (int)oldDac2Value;
+    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac1register,oldDac1Value);
+    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac2register,oldDac2Value);
+  }
+
+  delete data;
+  return *result;
 }
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
