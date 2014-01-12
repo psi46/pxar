@@ -83,7 +83,7 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
   setTBia(ia);
   setTBid(id);
   _testboard->Flush();
-  LOG(logDEBUG) << "Voltages/current limits set.";
+  LOG(logDEBUGHAL) << "Voltages/current limits set.";
 
 
   // Write testboard delay settings and deserializer phases to the repsective registers:
@@ -101,7 +101,7 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
     }
   }
   _testboard->Flush();
-  LOG(logDEBUG) << "Testboard delays set.";
+  LOG(logDEBUGHAL) << "Testboard delays set.";
 
 
   // Set up Pattern Generator:
