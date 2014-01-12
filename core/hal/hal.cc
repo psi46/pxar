@@ -223,22 +223,9 @@ void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector, std::vec
   rocSetDACs(rocId,dacVector);
   mDelay(300);
 
-  // Prepare configuration of the pixels, linearize vector:
-  std::vector<int8_t> trim;
-  // Set default trim value to 15:
-  for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(15); }
-  for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-    size_t position = (*pxIt).column*ROC_NUMROWS + (*pxIt).row;
-    trim[position] = (*pxIt).trim;
-  }
-
-  // Trim the whole ROC:
-  // FIXME THIS IS WRONG! THIS DOESN'T WORK!
-  // The trim value resides in the same register as the mask bit and has to be written together with that.
-  // Otherwise we will overwrite the trim value every time a pixel is masked/unmasked!
-  // FIXME need to find a solution for this!
-  LOG(logDEBUGHAL) << "Trimming ROC " << (int)rocId << ".";
-  _testboard->TrimChip(trim);
+  // Mask the whole ROC:
+  LOG(logDEBUGHAL) << "Masking ROC " << (int)rocId << ".";
+  _testboard->roc_Chip_Mask();
   mDelay(300);
 
 }
