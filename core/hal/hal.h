@@ -151,6 +151,13 @@ namespace pxar {
      */
     std::vector< std::vector<pixel> >* PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
+    /** Mask all pixels on a specific ROC rocId
+     */
+    void RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels = std::vector<pixelConfig>());
+
+    /** Mask the specified pixel on ROC rocId
+     */
+    void PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, uint8_t trim = 15);
 
   private:
 
@@ -185,14 +192,6 @@ namespace pxar {
      *  Uses usleep() to wait the given time in milliseconds
      */
     void mDelay(uint32_t ms);
-
-    /** Mask all pixels on a specific ROC rocId
-     */
-    void rocMask(uint8_t rocid, std::vector<int32_t> parameter);
-
-    /** Mask the specified pixel on ROC rocId
-     */
-    void pixelMask(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit

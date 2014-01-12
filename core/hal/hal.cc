@@ -450,20 +450,49 @@ bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
   return true;
 }
 
-void hal::rocMask(uint8_t rocid, std::vector<int32_t> /*parameter*/) {
-  
-  LOG(logDEBUGHAL) << "Masking full ROC ID " << rocid;
+void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) {
+
   _testboard->roc_I2cAddr(rocid);
-  _testboard->roc_Chip_Mask();
+  
+  // Check if we want to mask or unmask&trim:
+  if(mask) {
+    // This is quite easy:
+    LOG(logDEBUGHAL) << "Masking ROC " << (int)rocid;
+    _testboard->roc_Chip_Mask();
+  }
+  else {
+    // We really want to enable that full thing:
+    LOG(logDEBUGHAL) << "Updating mask bits & trim values of ROC " << (int)rocid;
+
+    // Prepare configuration of the pixels, linearize vector:
+    std::vector<int8_t> trim;
+    // Set default trim value to 15:
+    for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(15); }
+    for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
+      size_t position = (*pxIt).column*ROC_NUMROWS + (*pxIt).row;
+      trim[position] = (*pxIt).trim;
+    }
+
+    // Trim the whole ROC:
+    _testboard->TrimChip(trim);
+  }
 }
 
-void hal::pixelMask(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> /*parameter*/) {
+void hal::PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, uint8_t trim) {
 
-  LOG(logDEBUGHAL) << "Masking pixel " << column << "," << row 
-		   << "on ROC ID " << rocid;
   _testboard->roc_I2cAddr(rocid);
-  _testboard->roc_Pix_Mask(column, row);
 
+  // Check if we want to mask or unmask&trim:
+  if(mask) {
+    LOG(logDEBUGHAL) << "Masking pixel " << (int)column << "," << (int)row 
+		     << " on ROC " << (int)rocid;
+  _testboard->roc_Pix_Mask(column, row);
+  }
+  else {
+    LOG(logDEBUGHAL) << "Trimming pixel " << (int)column << "," << (int)row 
+		     << " (" << (int)trim << ")";
+    _testboard->roc_Pix_Trim(column,row,trim);
+  }
 }
 
 
