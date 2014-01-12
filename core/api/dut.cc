@@ -278,6 +278,8 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
 void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
 
   if(status() && rocid < 0) {
+    LOG(logDEBUGAPI) << "Set mask bit of pixel " << (int)column << ", " << (int)row 
+		     << " to " << (int)mask << " on all ROCs."; 
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
       // Find pixel with specified column and row
@@ -288,11 +290,12 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
       if(it != rocit->pixels.end()) {
 	it->mask = mask;
       } else {
-	LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int) (rocit - roc.begin())<< "!" ;
+	LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int)(rocit - roc.begin())<< "!" ;
       }
     }
   }
-  else if(status() && rocid < roc.size()) {
+  else if(status() && rocid < (int)roc.size()) {
+    LOG(logDEBUGAPI) << "Set mask bit of pixel " << (int)column << ", " << (int)row << " to " << (int)mask << " on ROC " << (int)rocid; 
     // Find pixel with specified column and row
     std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
 							 roc.at(rocid).pixels.end(),
@@ -312,6 +315,8 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid) {
   maskPixel(column, row,enable,rocid);
 
   if(status() && rocid < 0) {
+    LOG(logDEBUGAPI) << "Set enable bit of pixel " << (int)column << ", " << (int)row 
+		     << " to " << (int)enable << " on all ROCs.";
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
       // Find pixel with specified column and row
