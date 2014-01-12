@@ -311,8 +311,8 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
 
 void dut::testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid) {
 
-  // Testing also means we need to set the mask state accordingly:
-  maskPixel(column, row,enable,rocid);
+  // Testing also means we need to set the mask state accordingly (inverted)
+  maskPixel(column,row,!enable,rocid);
 
   if(status() && rocid < 0) {
     LOG(logDEBUGAPI) << "Set enable bit of pixel " << (int)column << ", " << (int)row 
