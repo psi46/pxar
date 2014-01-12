@@ -84,9 +84,10 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   // Take care of the signal delay settings:
   std::map<uint8_t,uint8_t> delays;
   for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
-    // Fill the DAC pairs with the register from the dictionary:
-    uint8_t sigRegister = stringToRegister(sigIt->first);
-    uint8_t sigValue = registerRangeCheck(sigRegister, sigIt->second);
+
+    // Fill the signal timing pairs with the register from the dictionary:
+    uint8_t sigRegister, sigValue = sigIt->second;
+    if(!verifyRegister(sigIt->first,sigRegister,sigValue,DTB_REG)) continue;
 
     std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
     ret = delays.insert( std::make_pair(sigRegister,sigValue) );
@@ -144,14 +145,9 @@ bool api::initDUT(std::string tbmtype,
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
 
       // Fill the DAC pairs with the register from the dictionary:
-      uint8_t dacRegister = stringToRegister(dacIt->first);
-      // FIXME 0x0 is valid TBM register!
-      /*      if(dacRegister == 0x0) {
-	continue;
-	LOG(logERROR) << "Invalid register name \"" << dacIt->first << "\"!";
-	}*/
+      uint8_t dacRegister, dacValue = dacIt->second;
+      if(!verifyRegister(dacIt->first, dacRegister, dacValue, TBM_REG)) continue;
 
-      uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
       ret = newtbm.dacs.insert( std::make_pair(dacRegister,dacValue) );
       if(ret.second == false) {
@@ -180,13 +176,9 @@ bool api::initDUT(std::string tbmtype,
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
       // Fill the DAC pairs with the register from the dictionary:
-      uint8_t dacRegister = stringToRegister(dacIt->first);
-      if(dacRegister == 0x0) {
-	continue;
-	LOG(logERROR) << "Invalid register name \"" << dacIt->first << "\"!";
-      }
+      uint8_t dacRegister, dacValue = dacIt->second;
+      if(!verifyRegister(dacIt->first, dacRegister, dacValue, ROC_REG)) continue;
 
-      uint8_t dacValue = registerRangeCheck(dacRegister, dacIt->second);
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
       ret = newroc.dacs.insert( std::make_pair(dacRegister,dacValue) );
       if(ret.second == false) {
@@ -253,41 +245,36 @@ bool api::status() {
   return false;
 }
 
-// Return the register id of the DAC specified by "name", return 0x0 if invalid:
-uint8_t api::stringToRegister(std::string name) {
+// Check if the given value lies within the valid range of the DAC. If value lies above/below valid range
+// return the upper/lower bondary. If value lies wqithin the range, return the value
+bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type) {
 
   // Convert the name to lower case for comparison:
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-  LOG(logDEBUGAPI) << "Looking up register for: \"" << name << "\"";
 
   // Get singleton DAC dictionary object:
   RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
   // And get the register value from the dictionary object:
-  uint8_t _register = _dict->getRegister(name);
-  LOG(logDEBUGAPI) << "Register return: " << (int)_register;
+  id = _dict->getRegister(name,type);
 
-  return _register;
-}
-
-// Check if the given value lies within the valid range of the DAC. If value lies above/below valid range
-// return the upper/lower bondary. If value lies wqithin the range, return the value
-uint8_t api::registerRangeCheck(uint8_t regId, uint8_t value) {
-
-  // Get singleton DAC dictionary object:
-  RegisterDictionary * _dict = RegisterDictionary::getInstance();
+  // Check if it was found:
+  if(id == type) {
+    LOG(logERROR) << "Invalid register name \"" << name << "\".";
+    return false;
+  }
 
   // Read register value limit:
-  uint8_t regLimit = _dict->getSize(regId);
-  LOG(logDEBUGAPI) << "Max. value of register " << (int)regId << " is " << (int)regLimit;
-  
+  uint8_t regLimit = _dict->getSize(id, type);
   if(value > regLimit) {
-    LOG(logWARNING) << "Register range overflow, set register " << (int)regId 
-		    << " to " << (int)regLimit << " (was: " << (int)value << ")";
+    LOG(logWARNING) << "Register range overflow, set register \"" 
+		    << name << "\" (" << (int)id << ") to " 
+		    << (int)regLimit << " (was: " << (int)value << ")";
     value = (uint8_t)regLimit;
   }
 
-  return value;
+  LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << (int)id << "): " << (int)value << " (max " << (int)regLimit << ")"; 
+  return true;
 }
 
 // Return the device code for the given name, return 0x0 if invalid:
@@ -439,15 +426,10 @@ bool api::SignalProbe(std::string probe, std::string name) {
 bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   
   // Get the register number and check the range from dictionary:
-  uint8_t dacRegister = stringToRegister(dacName);
-  if(dacRegister == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
-    return false;
-  }
-  dacValue = registerRangeCheck(dacRegister, dacValue);
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-
   if(rocid < 0) {
     // Set the DAC for all active ROCs:
     // FIXME maybe go over expandLoop here?
@@ -492,12 +474,8 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
 bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
   
   // Get the register number and check the range from dictionary:
-  uint8_t _register = stringToRegister(regName);
-  if(_register == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << regName << "\"!";
-    return false;
-  }
-  regValue = registerRangeCheck(_register, regValue);
+  uint8_t _register;
+  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
 
@@ -545,20 +523,20 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint16_t flags, uint32_t nTriggers) {
 
-  // Get the register number and check the range from dictionary:
-  uint8_t dacRegister = stringToRegister(dacName);
-  if(dacRegister == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
-    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
-  }
-
   // Check DAC range
   if(dacMin > dacMax) {
-    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logERROR) << "DacMin > DacMax! ";
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dacMin;
+    dacMin = dacMax;
+    dacMax = temp;
+  }
+
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
-  dacMax = registerRangeCheck(dacRegister, dacMax);
 
   // Setup the correct _hal calls for this test
   HalMemFnPixel pixelfn = &hal::PixelCalibrateDacScan;
@@ -598,21 +576,21 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint16_t flags, uint32_t nTriggers) {
   
-  // Get the register number and check the range from dictionary:
-  uint8_t dacRegister = stringToRegister(dacName);
-  if(dacRegister == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
-    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
-  }
-
   // Check DAC range
   if(dacMin > dacMax) {
-    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logERROR) << "DacMin > DacMax! ";
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dacMin;
+    dacMin = dacMax;
+    dacMax = temp;
+  }
+
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
-  dacMax = registerRangeCheck(dacRegister, dacMax);
-
+  
   // Setup the correct _hal calls for this test (FIXME:DUMMYONLY)
   HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;
   HalMemFnRoc rocfn = &hal::DummyRocTestSkeleton;
@@ -640,20 +618,20 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint16_t flags, uint32_t nTriggers) {
 
-  // Get the register number and check the range from dictionary:
-  uint8_t dacRegister = stringToRegister(dacName);
-  if(dacRegister == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << dacName << "\"!";
-    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
-  }
-
   // Check DAC range
   if(dacMin > dacMax) {
-    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logERROR) << "DacMin > DacMax! ";
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dacMin;
+    dacMin = dacMax;
+    dacMax = temp;
+  }
+
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
-  dacMax = registerRangeCheck(dacRegister, dacMax);
 
   // Setup the correct _hal calls for this test
   HalMemFnPixel pixelfn = &hal::PixelCalibrateDacScan;
@@ -709,26 +687,30 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 												       std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 												       uint16_t flags, uint32_t nTriggers) {
 
-  // Get the register numbers and check their ranges from dictionary:
-  uint8_t dac1register = stringToRegister(dac1name);
-  uint8_t dac2register = stringToRegister(dac2name);
-  if(dac1register == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << dac1name << "\"!";
-    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  // Check DAC ranges
+  if(dac1min > dac1max) {
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dac1min;
+    dac1min = dac1max;
+    dac1max = temp;
   }
-  if(dac2register == 0x0) {
-    LOG(logERROR) << "Invalid register name \"" << dac2name << "\"!";
-    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  if(dac2min > dac2max) {
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dac2min;
+    dac2min = dac2max;
+    dac2max = temp;
   }
 
-  // Check DAC range
-  if(dac1min > dac1max || dac2min > dac2max) {
-    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logERROR) << "DacMin > DacMax! ";
+  // Get the register number and check the range from dictionary:
+  uint8_t dac1register, dac2register;
+  if(!verifyRegister(dac1name, dac1register, dac1max, ROC_REG)) {
     return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
   }
-  dac1max = registerRangeCheck(dac1register, dac1max);
-  dac2max = registerRangeCheck(dac2register, dac2max);
+  if(!verifyRegister(dac2name, dac2register, dac2max, ROC_REG)) {
+    return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
+  }
 
   // Setup the correct _hal calls for this test
   HalMemFnPixel pixelfn = &hal::PixelCalibrateDacDacScan;

@@ -224,7 +224,7 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {
     RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
     // And get the register value from the dictionary object:
-    uint8_t _register = _dict->getRegister(dacName);
+    uint8_t _register = _dict->getRegister(dacName, ROC_REG);
     return roc[rocId].dacs[_register];
   }
   // FIXME throw error

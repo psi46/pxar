@@ -374,13 +374,12 @@ namespace pxar {
     std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
 
     /** Helper function for conversion from string to register value
-     */
-    uint8_t stringToRegister(std::string name);
-    
-    /** Range check for DAC and testboard register values. This function return the value itself if valid
+     *  Type tells it whether it is a DTB, TBM or ROC register to look for
+     * Range check for DAC and testboard register values. This function 
+     *  return the value itself if valid
      *  or upper/lower range boundary in case of over/underflow:
      */
-    uint8_t registerRangeCheck(uint8_t register, uint8_t value);
+    bool verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type);
 
     /** Helper function for conversion from device type string to code
      */
@@ -499,6 +498,10 @@ namespace pxar {
 
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;
+
+    std::vector<std::pair<std::string,uint8_t> > sig_delays;
+    double va, vd, ia, id;
+    std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
 
     /** Function to mask the given pixel on a specific ROC
      *  This function needs to be private since also device programming is needed.
