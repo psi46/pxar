@@ -512,7 +512,7 @@ namespace pxar {
     std::vector< rocConfig > roc;
     std::vector< tbmConfig > tbm;
 
-    std::vector<std::pair<std::string,uint8_t> > sig_delays;
+    std::map<uint8_t,uint8_t> sig_delays;
     double va, vd, ia, id;
     std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
 

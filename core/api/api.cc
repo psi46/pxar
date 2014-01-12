@@ -98,6 +98,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
       delays[sigRegister] = sigValue;
     }
   }
+  // Store these validated parameters in the DUT
+  _dut->sig_delays = delays;
   
   // Prepare Patter Generator:
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
@@ -111,6 +113,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
       (*it).second = 0;
     }
   }
+  // Store the Pattern Generator commands in the DUT:
+  _dut->pg_setup = pg_setup;
 
   // Call the HAL to do the job:
   _hal->initTestboard(delays,pg_setup,va,vd,ia,id);
