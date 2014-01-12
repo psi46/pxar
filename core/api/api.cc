@@ -129,7 +129,12 @@ bool api::initDUT(std::string tbmtype,
   // First initialized the API's DUT instance with the information supplied.
   // FIXME TODO: currently values are not checked for sanity! (Num pixels etc.)
 
-  // FIXME check size of rocDACs and rocPixels against each other
+  // Check size of rocDACs and rocPixels against each other
+  if(rocDACs.size() != rocPixels.size()) {
+    LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
+    LOG(logCRITICAL) << "This cannot end well...";
+    return false;
+  }
 
   // FIXME masking not done yet.
 
