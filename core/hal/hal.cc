@@ -207,7 +207,7 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   
 }
 
-void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector, std::vector< pixelConfig > pixels) {
+void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector) {
 
   // Turn on the output power of the testboard if not already done:
   LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
