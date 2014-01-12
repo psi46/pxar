@@ -331,18 +331,22 @@ bool api::flashTB(std::string filename) {
 }
 
 double api::getTBia() {
+  if(!_hal->status()) {return 0;}
   return _hal->getTBia();
 }
 
 double api::getTBva() {
+  if(!_hal->status()) {return 0;}
   return _hal->getTBva();
 }
 
 double api::getTBid() {
+  if(!_hal->status()) {return 0;}
   return _hal->getTBid();
 }
 
 double api::getTBvd() {
+  if(!_hal->status()) {return 0;}
   return _hal->getTBvd();
 }
 
@@ -368,7 +372,9 @@ void api::Pon() {
 }
 
 bool api::SignalProbe(std::string probe, std::string name) {
-  
+
+  if(!_hal->status()) {return false;}
+
   // Convert the probe name to lower case for comparison:
   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
   
@@ -430,6 +436,8 @@ bool api::SignalProbe(std::string probe, std::string name) {
 
 bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   
+  if(!status()) {return false;}
+
   // Get the register number and check the range from dictionary:
   uint8_t dacRegister;
   if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
@@ -477,6 +485,8 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
 }
 
 bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
+
+  if(!status()) {return 0;}
   
   // Get the register number and check the range from dictionary:
   uint8_t _register;
@@ -527,6 +537,8 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
   // Check DAC range
   if(dacMin > dacMax) {
@@ -580,6 +592,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 										uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
   
   // Check DAC range
   if(dacMin > dacMax) {
@@ -622,6 +636,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::s
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
   // Check DAC range
   if(dacMin > dacMax) {
@@ -679,18 +695,25 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									      uint16_t flags, uint32_t nTriggers) {}
+									      uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
+}
 
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 													std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 													uint16_t flags, uint32_t nTriggers){
 
-} // getPulseheightVsDACDAC
+  if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
+
+}
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												       std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 												       uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
 
   // Check DAC ranges
   if(dac1min > dac1max) {
@@ -764,9 +787,15 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-												      uint16_t flags, uint32_t nTriggers) {}
+												      uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
+
+}
 
 std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector<pixel>();}
 
   // Setup the correct _hal calls for this test (ROC wide only)
   HalMemFnPixel pixelfn = &hal::PixelCalibrateMap;
@@ -790,6 +819,8 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
 }
 
 std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {return std::vector<pixel>();}
 
   // Setup the correct _hal calls for this test (ROC wide only)
   HalMemFnPixel pixelfn = &hal::PixelCalibrateMap;
@@ -816,9 +847,16 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   return data->at(0);
 }
 
-std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {}
+std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {
+
+  if(!status()) {std::vector<pixel>();}
+
+}
   
-int32_t api::getReadbackValue(std::string parameterName) {}
+int32_t api::getReadbackValue(std::string parameterName) {
+
+  if(!status()) {return -1;}
+}
 
 int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers) {
 
@@ -831,12 +869,15 @@ int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 
 /** DAQ functions **/
 bool api::daqStart() {
+
+  if(!status()) {return false;}
   return false;
 }
     
 std::vector<pixel> api::daqGetEvent() {}
 
 bool api::daqStop() {
+  if(!status()) {return false;}
   return false;
 }
 
