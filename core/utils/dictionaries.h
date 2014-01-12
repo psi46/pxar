@@ -15,6 +15,11 @@
 #include <stdint.h>
 #include "constants.h"
 #include "api.h"
+#include <iostream>
+
+#define DTB_REG 0xFF
+#define TBM_REG 0x0F
+#define ROC_REG 0x00
 
 namespace pxar {
 
@@ -24,13 +29,16 @@ namespace pxar {
   class dacConfig {
   public:
     dacConfig() {};
-  dacConfig(uint8_t id, uint8_t size) : _id(id), _size(size) {};
+  dacConfig(uint8_t id, uint8_t size) : _type(0), _id(id), _size(size) {};
+  dacConfig(uint8_t id, uint8_t size, uint8_t type) : _type(type), _id(id), _size(size) {};
+    uint8_t _type;
     uint8_t _id;
     uint8_t _size;
   };
 
-  /** Map for DAC name lookup
-   *  All DAC names are lower case, DAC register selection is case-insensitive.
+
+  /** Map for generic register name lookup
+   *  All register names are lower case, register selection is case-insensitive.
    *  Singleton class, only one object of this floating around.
    */
   class RegisterDictionary {
@@ -42,106 +50,117 @@ namespace pxar {
     }
 
     // Return the register id for the name in question:
-    inline uint8_t getRegister(std::string name) {
-      try { return _dacs[name]._id; }
-      catch(...) { return 0x0; }
-    }
-
-    // Return the register size for the register in question:
-    inline uint8_t getSize(std::string name) {
-      try { return _dacs[name]._size; }
-      catch(...) { return 0x0; }
-    }
-
-    // Return the register size for the register in question:
-    inline uint8_t getSize(uint8_t id) {
-
-      for(std::map<std::string, dacConfig>::iterator iter = _dacs.begin(); iter != _dacs.end(); ++iter) {
-	if((*iter).second._id == id) return (*iter).second._size;
+    inline uint8_t getRegister(std::string name, uint8_t type) {
+      if(_registers.find(name)->second._type == type) {
+	return _registers.find(name)->second._id;
       }
-      
-      return 0x0;
+      else { return type;}
+    }
+
+    // Return the register size for the register in question:
+    inline uint8_t getSize(std::string name, uint8_t type) {
+	if(_registers.find(name)->second._type == type) {
+	  return _registers.find(name)->second._size;
+	}
+	else { return type;}
+    }
+
+    // Return the register name for the register in question:
+    inline uint8_t getSize(uint8_t id, uint8_t type) {
+      for(std::map<std::string, dacConfig>::iterator iter = _registers.begin(); iter != _registers.end(); ++iter) {
+	if((*iter).second._type == type && (*iter).second._id == id) {
+	  return (*iter).second._size;
+	}
+      }
+      return type;
+    }
+
+    // Return the register name for the register in question:
+    inline std::string getName(uint8_t id, uint8_t type) {
+      for(std::map<std::string, dacConfig>::iterator iter = _registers.begin(); iter != _registers.end(); ++iter) {
+	if((*iter).second._type == type && (*iter).second._id == id) {
+	  return (*iter).first;}
+      }
+      return "";
     }
 
   private:
     RegisterDictionary() {
-
       //------- DTB registers -----------------------------
       // FIXME what are the upper values for signal delays?
-      _dacs["clk"]           = dacConfig(SIG_CLK,255);
-      _dacs["ctr"]           = dacConfig(SIG_CTR,255);
-      _dacs["sda"]           = dacConfig(SIG_SDA,255);
-      _dacs["tin"]           = dacConfig(SIG_TIN,255);
-      _dacs["deser160phase"] = dacConfig(SIG_DESER160PHASE,255);
+      _registers["clk"]           = dacConfig(SIG_CLK,255,DTB_REG);
+      _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
+      _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
+      _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
+      _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,255,DTB_REG);
+
 
       //------- TBM registers -----------------------------
-      _dacs["counters"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255);
-      _dacs["mode"]             = dacConfig(TBM_REG_SET_MODE,255);
+      _registers["counters"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
+      _registers["mode"]             = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
 
-      _dacs["clear"]            = dacConfig(TBM_REG_CLEAR_INJECT,255);
-      _dacs["inject"]           = dacConfig(TBM_REG_CLEAR_INJECT,255);
+      _registers["clear"]            = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["inject"]           = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
 
-      _dacs["pkam_set"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255);
-      _dacs["delays"]           = dacConfig(TBM_REG_SET_DELAYS,255);
-      _dacs["temperature"]      = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255);
+      _registers["pkam_set"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
+      _registers["delays"]           = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
+      _registers["temperature"]      = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
 
 
       //------- ROC registers -----------------------------
       // DAC name, register and size reference:
       // http://cms.web.psi.ch/phase1/psi46dig/index.html
 
-      _dacs["vdig"]       = dacConfig(ROC_DAC_Vdig,15);
+      _registers["vdig"]       = dacConfig(ROC_DAC_Vdig,15,ROC_REG);
 
-      _dacs["vana"]       = dacConfig(ROC_DAC_Vana,255);
+      _registers["vana"]       = dacConfig(ROC_DAC_Vana,255,ROC_REG);
 
-      _dacs["vsf"]        = dacConfig(ROC_DAC_Vsh,255);
-      _dacs["vsh"]        = dacConfig(ROC_DAC_Vsh,255);
+      _registers["vsf"]        = dacConfig(ROC_DAC_Vsh,255,ROC_REG);
+      _registers["vsh"]        = dacConfig(ROC_DAC_Vsh,255,ROC_REG);
 
-      _dacs["vcomp"]      = dacConfig(ROC_DAC_Vcomp,15);
-      _dacs["vwllpr"]     = dacConfig(ROC_DAC_VwllPr,255);
-      _dacs["vwllsh"]     = dacConfig(ROC_DAC_VwllSh,255);
-      _dacs["vhlddel"]    = dacConfig(ROC_DAC_VhldDel,255);
-      _dacs["vtrim"]      = dacConfig(ROC_DAC_Vtrim,255);
-      _dacs["vthrcomp"]   = dacConfig(ROC_DAC_VthrComp,255);
-      _dacs["vibias_bus"] = dacConfig(ROC_DAC_VIBias_Bus,255);
-      _dacs["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,15);
-      _dacs["voffsetop"]  = dacConfig(ROC_DAC_VoffsetOp,255);
-      _dacs["voffsetro"]  = dacConfig(ROC_DAC_VoffsetRO,255);
-      _dacs["vion"]       = dacConfig(ROC_DAC_VIon,255);
+      _registers["vcomp"]      = dacConfig(ROC_DAC_Vcomp,15,ROC_REG);
+      _registers["vwllpr"]     = dacConfig(ROC_DAC_VwllPr,255,ROC_REG);
+      _registers["vwllsh"]     = dacConfig(ROC_DAC_VwllSh,255,ROC_REG);
+      _registers["vhlddel"]    = dacConfig(ROC_DAC_VhldDel,255,ROC_REG);
+      _registers["vtrim"]      = dacConfig(ROC_DAC_Vtrim,255,ROC_REG);
+      _registers["vthrcomp"]   = dacConfig(ROC_DAC_VthrComp,255,ROC_REG);
+      _registers["vibias_bus"] = dacConfig(ROC_DAC_VIBias_Bus,255,ROC_REG);
+      _registers["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,15,ROC_REG);
+      _registers["voffsetop"]  = dacConfig(ROC_DAC_VoffsetOp,255,ROC_REG);
+      _registers["voffsetro"]  = dacConfig(ROC_DAC_VoffsetRO,255,ROC_REG);
+      _registers["vion"]       = dacConfig(ROC_DAC_VIon,255,ROC_REG);
 
-      _dacs["vcomp_adc"]  = dacConfig(ROC_DAC_VIbias_PH,255);
-      _dacs["vibias_ph"]  = dacConfig(ROC_DAC_VIbias_PH,255);
+      _registers["vcomp_adc"]  = dacConfig(ROC_DAC_VIbias_PH,255,ROC_REG);
+      _registers["vibias_ph"]  = dacConfig(ROC_DAC_VIbias_PH,255,ROC_REG);
 
-      _dacs["viref_adc"]  = dacConfig(ROC_DAC_VIbias_DAC,255);
-      _dacs["vibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255);
-      _dacs["ibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255);
+      _registers["viref_adc"]  = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
+      _registers["vibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
+      _registers["ibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
 
-      _dacs["vicolor"]    = dacConfig(ROC_DAC_VIColOr,255);
-      _dacs["vcal"]       = dacConfig(ROC_DAC_Vcal,255);
-      _dacs["caldel"]     = dacConfig(ROC_DAC_CalDel,255);
+      _registers["vicolor"]    = dacConfig(ROC_DAC_VIColOr,255,ROC_REG);
+      _registers["vcal"]       = dacConfig(ROC_DAC_Vcal,255,ROC_REG);
+      _registers["caldel"]     = dacConfig(ROC_DAC_CalDel,255,ROC_REG);
 
-      _dacs["ctrlreg"]    = dacConfig(ROC_DAC_CtrlReg,255);
-      _dacs["wbc"]        = dacConfig(ROC_DAC_WBC,255);
-      _dacs["readback"]   = dacConfig(ROC_DAC_Readback,15);
-
+      _registers["ctrlreg"]    = dacConfig(ROC_DAC_CtrlReg,255,ROC_REG);
+      _registers["wbc"]        = dacConfig(ROC_DAC_WBC,255,ROC_REG);
+      _registers["readback"]   = dacConfig(ROC_DAC_Readback,15,ROC_REG);
 
       // DACs removed from psi46digV2:
-      _dacs["vleak_comp"] = dacConfig(ROC_DAC_Vleak_comp,255);
-      _dacs["vleak"] = dacConfig(ROC_DAC_Vleak_comp,255);
+      _registers["vleak_comp"] = dacConfig(ROC_DAC_Vleak_comp,255,ROC_REG);
+      _registers["vleak"] = dacConfig(ROC_DAC_Vleak_comp,255,ROC_REG);
 
-      _dacs["vrgpr"]      = dacConfig(ROC_DAC_VrgPr,255);
-      _dacs["vrgsh"]      = dacConfig(ROC_DAC_VrgSh,255);
+      _registers["vrgpr"]      = dacConfig(ROC_DAC_VrgPr,255,ROC_REG);
+      _registers["vrgsh"]      = dacConfig(ROC_DAC_VrgSh,255,ROC_REG);
 
-      _dacs["vibiasop"]   = dacConfig(ROC_DAC_VIbiasOp,255);
-      _dacs["vbias_op"]   = dacConfig(ROC_DAC_VIbiasOp,255);
+      _registers["vibiasop"]   = dacConfig(ROC_DAC_VIbiasOp,255,ROC_REG);
+      _registers["vbias_op"]   = dacConfig(ROC_DAC_VIbiasOp,255,ROC_REG);
 
-      _dacs["vibias_roc"]   = dacConfig(ROC_DAC_VIbias_roc,255);
-      _dacs["vnpix"]   = dacConfig(ROC_DAC_Vnpix,255);
-      _dacs["vsumcol"]   = dacConfig(ROC_DAC_VsumCol,255);
-
+      _registers["vibias_roc"]   = dacConfig(ROC_DAC_VIbias_roc,255,ROC_REG);
+      _registers["vnpix"]   = dacConfig(ROC_DAC_Vnpix,255,ROC_REG);
+      _registers["vsumcol"]   = dacConfig(ROC_DAC_VsumCol,255,ROC_REG);
     };
 
-    std::map<std::string, dacConfig> _dacs;
+    std::map<std::string, dacConfig> _registers;
     // Dont forget to declare these two. You want to make sure they
     // are unaccessable otherwise you may accidently get copies of
     // your singleton appearing.
