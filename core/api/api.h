@@ -472,12 +472,19 @@ namespace pxar {
 
     /** Function to enable the given pixel on all ROCs:
      */
-    void setPixelEnable(uint8_t column, uint8_t row, bool enable);
+    void testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid = -1);
+
+    /** Function to mask the given pixel on a specific ROC
+     */
+    void maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid = -1);
 
     /** Function to enable all pixels on all ROCs:
      */
-    void setAllPixelEnable(bool enable);
+    void testAllPixels(bool enable);
 
+    /** Function to enable all pixels on all ROCs:
+     */
+    void maskAllPixels(bool mask);
    
     /** Function to check the status of the DUT
      */
@@ -502,11 +509,6 @@ namespace pxar {
     std::vector<std::pair<std::string,uint8_t> > sig_delays;
     double va, vd, ia, id;
     std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
-
-    /** Function to mask the given pixel on a specific ROC
-     *  This function needs to be private since also device programming is needed.
-     */
-    void setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask);
 
   }; //class DUT
 

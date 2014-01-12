@@ -272,9 +272,24 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
     tbm[tbmId].enable = enable;
 }
 
-void dut:: setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask) {
+void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
 
-  if(status() && rocid < roc.size()) {
+  if(status() && rocid < 0) {
+    // Loop over all ROCs
+    for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+      // Find pixel with specified column and row
+      std::vector<pixelConfig>::iterator it = std::find_if(rocit->pixels.begin(),
+							   rocit->pixels.end(),
+							   findPixelXY(column,row));
+      // Set enable bit
+      if(it != rocit->pixels.end()) {
+	it->mask = mask;
+      } else {
+	LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int) (rocit - roc.begin())<< "!" ;
+      }
+    }
+  }
+  else if(status() && rocid < roc.size()) {
     // Find pixel with specified column and row
     std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
 							 roc.at(rocid).pixels.end(),
@@ -288,26 +303,55 @@ void dut:: setPixelMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask) {
   }
 }
 
-void dut::setPixelEnable(uint8_t column, uint8_t row, bool enable) {
+void dut::testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid) {
 
-  if(status()) {
-    // loop over all rocs (not strictly needed but used for consistency)
+  // Testing also means we need to set the mask state accordingly:
+  maskPixel(column, row,enable,rocid);
+
+  if(status() && rocid < 0) {
+    // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
-      // find pixel with specified column and row
+      // Find pixel with specified column and row
       std::vector<pixelConfig>::iterator it = std::find_if(rocit->pixels.begin(),
 							   rocit->pixels.end(),
 							   findPixelXY(column,row));
-      // set enable
-      if(it != rocit->pixels.end()){
+      // Set enable bit
+      if(it != rocit->pixels.end()) {
 	it->enable = enable;
       } else {
 	LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int) (rocit - roc.begin())<< "!" ;
       }
     }
   }
+  else if(status() && rocid < roc.size()) {
+    // Find pixel with specified column and row
+    std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
+							 roc.at(rocid).pixels.end(),
+							 findPixelXY(column,row));
+    // Set mask:
+    if(it != roc.at(rocid).pixels.end()){
+      it->enable = enable;
+    } else {
+      LOG(logWARNING) << "Pixel at column " << (int) column << " and row " << (int) row << " not found for ROC " << (int)(rocid)<< "!" ;
+    }
+  }
 }
 
-void dut::setAllPixelEnable(bool enable) {
+void dut::maskAllPixels(bool mask) {
+
+  // loop over all rocs (not strictly needed but used for consistency)
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    // loop over all pixel, set enable according to parameter
+    for (std::vector<pixelConfig>::iterator pixelit = rocit->pixels.begin() ; pixelit != rocit->pixels.end(); ++pixelit){
+      pixelit->mask = mask;
+    }
+  }
+}
+
+void dut::testAllPixels(bool enable) {
+
+  // Testing also means we need to set the mask state accordingly:
+  maskAllPixels(enable);
 
   // loop over all rocs (not strictly needed but used for consistency)
   for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
