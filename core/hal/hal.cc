@@ -446,7 +446,7 @@ bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
   uint8_t regCore2 = 0xF0 | regId;
   LOG(logDEBUGHAL) << "Core 1: register " << std::hex << (int)regCore1 << " = " << (int)regValue << std::dec;
   LOG(logDEBUGHAL) << "Core 2: register " << std::hex << (int)regCore2 << " = " << (int)regValue << std::dec;
-  //_testboard->tbm_Set(regId,regValue);
+  _testboard->tbm_Set(regId,regValue);
   return true;
 }
 
