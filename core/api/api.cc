@@ -45,7 +45,7 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 
   // Collect and check the testboard configuration settings
 
-  // Read the power settings:
+  // Read the power settings and make sure we got all:
   double va = 0, vd = 0, ia = 0, id = 0;
   for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
     std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
@@ -56,12 +56,30 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     }
 
     // FIXME Range Checks!
-    if((*it).first.compare("va") == 0) { va = (*it).second; }
-    else if((*it).first.compare("vd") == 0) { vd = (*it).second; }
-    else if((*it).first.compare("ia") == 0) { ia = (*it).second; }
-    else if((*it).first.compare("id") == 0) { id = (*it).second; }
+    if((*it).first.compare("va") == 0) { 
+      va = (*it).second;
+      _dut->va = va;
+    }
+    else if((*it).first.compare("vd") == 0) {
+      vd = (*it).second;
+      _dut->vd = vd;
+    }
+    else if((*it).first.compare("ia") == 0) {
+      ia = (*it).second;
+      _dut->ia = ia;
+    }
+    else if((*it).first.compare("id") == 0) {
+      id = (*it).second;
+      _dut->id = id;
+    }
     else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
   }
+
+  if(va == 0 || vd == 0 || ia == 0 || id == 0) {
+    LOG(logCRITICAL) << "Power settings are not suffient. Please check and re-configure!";
+    return false;
+  }
+
 
   // Take care of the signal delay settings:
   std::map<uint8_t,uint8_t> delays;
