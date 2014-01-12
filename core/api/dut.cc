@@ -28,6 +28,21 @@ public:
   }
 };
 
+/** Helper class to search vectors of pixelConfig for 'mask' bit
+ */
+class configMaskSet
+{
+  const bool _isMasked;
+
+public:
+  configMaskSet(const bool pMask) : _isMasked(pMask) {}
+
+  template<class ConfigType>
+  bool operator()(const ConfigType &config) const
+  {
+    return config.mask == _isMasked;
+  }
+};
 
 /** Helper class to search vectors of pixel or pixelConfig for 'column' and 'row' values
  */
@@ -68,41 +83,29 @@ void dut::info() {
     // We currently hide the possibility to enable pixels on some ROCs only,
     // so looking at ROC 0 as default is safe:
     LOG(logINFO) << std::setw(2) << roc.size() << " ROCs (" << getNEnabledRocs() 
-		 << " ON) with " << roc.at(0).pixels.size() << " pixelConfigs (" 
-		 << getNEnabledPixels() << " ON).";
+		 << " ON) with " << roc.at(0).pixels.size() << " pixelConfigs";
 
-    size_t nROCs = 0;
     for(std::vector<rocConfig>::iterator rocIt = roc.begin(); rocIt != roc.end(); rocIt++) {
-      LOG(logINFO) << "\tROC " << nROCs << ": " 
-		   << (*rocIt).dacs.size() << " DACs set, " 
-		   << getNMaskedPixels(nROCs) << " pixels masked";
-      
-      nROCs++;
+      LOG(logINFO) << "\tROC " << (int)(rocIt-roc.begin()) << ": " 
+		   << (*rocIt).dacs.size() << " DACs set, Pixels: " 
+		   << getNMaskedPixels((int)(rocIt-roc.begin())) << " masked, "
+		   << getNEnabledPixels((int)(rocIt-roc.begin())) << " active.";
     }
   }
 }
 
-int32_t dut::getNEnabledPixels() {
-  if (!status()) return 0;
-  // loop over result, count enabled pixel
-  int32_t count = 0;
+int32_t dut::getNEnabledPixels(uint8_t rocid) {
+  if (!status() || rocid >= roc.size()) return 0;
   // We currently hide the possibility to enable pixels on some ROCs only,
   // so looking at ROC 0 as default is safe:
-  for (std::vector<pixelConfig>::iterator it = roc.at(0).pixels.begin(); it != roc.at(0).pixels.end(); ++it){
-    if (it->enable) count++;
-  }
-  return count;
+  return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configEnableSet(true));
 }
 
-int32_t dut::getNMaskedPixels(size_t rocid) {
-  if (!status() || !(rocid < roc.size())) return 0;
-  // loop over result, count masked pixel
-  int32_t count = 0;
-
-  for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
-    if (it->mask) count++;
-  }
-  return count;
+int32_t dut::getNMaskedPixels(uint8_t rocid) {
+  if (!status() || rocid >= roc.size()) return 0;
+  // We currently hide the possibility to enable pixels on some ROCs only,
+  // so looking at ROC 0 as default is safe:
+  return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configMaskSet(true));
 }
 
 int32_t dut::getNEnabledRocs() {

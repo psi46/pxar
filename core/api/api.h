@@ -403,13 +403,13 @@ namespace pxar {
      */
     void info();
 
-    /** Function returning the number of enabled pixels on each ROC:
+    /** Function returning the number of enabled pixels on a specific ROC:
      */
-    int32_t getNEnabledPixels();
+    int32_t getNEnabledPixels(uint8_t rocid);
 
     /** Function returning the number of masked pixels on a specific ROC:
      */
-    int32_t getNMaskedPixels(size_t rocid);
+    int32_t getNMaskedPixels(uint8_t rocid);
 
     /** Function returning the number of enabled TBMs:
      */
