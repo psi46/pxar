@@ -223,11 +223,6 @@ void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector) {
   rocSetDACs(rocId,dacVector);
   mDelay(300);
 
-  // Mask the whole ROC:
-  LOG(logDEBUGHAL) << "Masking ROC " << (int)rocId << ".";
-  _testboard->roc_Chip_Mask();
-  mDelay(300);
-
 }
 
 void hal::PrintInfo() {

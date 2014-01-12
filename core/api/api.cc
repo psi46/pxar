@@ -238,6 +238,9 @@ bool api::programDUT() {
     _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
   }
 
+  // As last step, write all the mask and trim information to the devices:
+  MaskAndTrim();
+
   // The DUT is programmed, everything all right:
   _dut->_programmed = true;
 
