@@ -486,11 +486,11 @@ namespace pxar {
 
     /** Function to enable all pixels on all ROCs:
      */
-    void testAllPixels(bool enable);
+    void testAllPixels(bool enable, int8_t rocid = -1);
 
     /** Function to enable all pixels on all ROCs:
      */
-    void maskAllPixels(bool mask);
+    void maskAllPixels(bool mask, int8_t rocid = -1);
    
     /** Function to check the status of the DUT
      */
