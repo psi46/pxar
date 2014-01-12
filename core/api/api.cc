@@ -1081,8 +1081,13 @@ void api::MaskAndTrim() {
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
       continue;
     }
-    // Choose the version with less calls:
-    else if(masked <= ROC_NUMROWS*ROC_NUMCOLS) {
+    else if(masked == ROC_NUMROWS*ROC_NUMCOLS) {
+      LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " in one go.";
+      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
+      continue;
+    }
+    // Choose the version with less calls (less than half the pixels to change):
+    else if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
       // We have more unmasked than masked pixels:
       LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " before masking single pixels.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
