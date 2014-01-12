@@ -44,13 +44,13 @@ namespace pxar {
   };
 
   /** Class to store the configuration for single pixels (i.e. their mask state, trim bit settings
-   *  and the arming state (enable)
+   *  and whether they belong to the currently run test ("enable"). By default, pixels are masked.
    */
   class pixelConfig {
   public:
   pixelConfig() : 
     column(0), row(0), 
-      trim(15), mask(false), enable(true) {};
+      trim(15), mask(true), enable(false) {};
     uint8_t column;
     uint8_t row;
     uint8_t trim;
