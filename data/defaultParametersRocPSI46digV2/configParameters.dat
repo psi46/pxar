@@ -26,10 +26,10 @@ halfModule 0
 
 -- voltages and current limits
 
-ia 1199
-id 1000
-va 1699
-vd 2500
+ia 1.190
+id 1.100
+va 1.900
+vd 2.600
 
 -- adc parameters
 
