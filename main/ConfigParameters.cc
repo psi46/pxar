@@ -80,10 +80,10 @@ void ConfigParameters::initialize() {
   fDebugFileName          = "debug.log";
   fRootFileName           = "expert.root";
 
-  ia = 1.2;
-  id = 1.;
-  va = 1.7;
-  vd = 2.5;
+  ia = -1.; 
+  id = -1.;
+  va = -1.;
+  vd = -1.;
 
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46v2";
@@ -128,7 +128,8 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       if (_istring.fail() || !_name.length()) continue;
 
       int _ivalue = atoi(_value.c_str());
-
+      float dvalue = atof(_value.c_str());
+      
       if (0 == _name.compare("testboardName")) { fTBName = _value; }
       else if (0 == _name.compare("directory")) { fDirectory =  _value; }
 
@@ -156,10 +157,10 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("tbmEmulator")) { fTbmEmulator             = _ivalue; }
       else if (0 == _name.compare("tbmChannel")) { fTbmChannel                = _ivalue; }
 
-      else if (0 == _name.compare("ia")) { ia = .001 * _ivalue; }
-      else if (0 == _name.compare("id")) { id = .001 * _ivalue; }
-      else if (0 == _name.compare("va")) { va = .001 * _ivalue; }
-      else if (0 == _name.compare("vd")) { vd = .001 * _ivalue; }
+      else if (0 == _name.compare("ia")) { cout << "ia dvalue: " << dvalue << " _value: " << _value << endl; ia = (dvalue > 1000.?.001:1.) * dvalue; }
+      else if (0 == _name.compare("id")) { id = (dvalue > 1000.?.001:1.) * dvalue; }
+      else if (0 == _name.compare("va")) { va = (dvalue > 1000.?.001:1.) * dvalue; }
+      else if (0 == _name.compare("vd")) { vd = (dvalue > 1000.?.001:1.) * dvalue; }
 
       else if (0 == _name.compare("rocZeroAnalogCurrent")) { rocZeroAnalogCurrent = .001 * _ivalue; }
 
@@ -241,6 +242,20 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbParameters() {
 }
 
 // ----------------------------------------------------------------------
+vector<pair<string, double> >  ConfigParameters::getTbPowerSettings() {
+  vector<pair<string, double> > v; 
+  if (ia < 0.) {
+    LOG(logINFO) << "Read config files first!" << endl;    
+    return v; 
+  }
+  v.push_back(make_pair("ia", ia));   
+  v.push_back(make_pair("id", id)); 
+  v.push_back(make_pair("va", va));   
+  v.push_back(make_pair("vd", vd)); 
+  return v; 
+}
+
+// ----------------------------------------------------------------------
 vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   vector<pair<string, uint8_t> > a;
 
@@ -256,6 +271,24 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
     for (unsigned int j = 0; j < sigdelays.size(); ++j) {
       if (0 == fTbParameters[i].first.compare(sigdelays[j])) a.push_back(make_pair(sigdelays[j], fTbParameters[i].second));
     }
+  }
+
+  return a;
+}
+
+// ----------------------------------------------------------------------
+vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
+  vector<pair<uint16_t, uint8_t> > a;
+
+  if (fnTbms < 1) {
+    a.push_back(make_pair(0x0800,25));    // PG_RESR
+    a.push_back(make_pair(0x0400,101+5)); // PG_CAL
+    a.push_back(make_pair(0x0200,16));    // PG_TRG
+    a.push_back(make_pair(0x0100,0));     // PG_TOK
+  } else {
+    a.push_back(std::make_pair(0x1000,15)); // PG_REST
+    a.push_back(std::make_pair(0x0400,50)); // PG_CAL
+    a.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
   }
 
   return a;
@@ -624,4 +657,30 @@ bool ConfigParameters::writeConfigParameterFile() {
 
   fclose(file);
   return true;
+}
+
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::setTbParameter(std::string var, uint8_t val) {
+  for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
+    if (!fTbParameters[i].first.compare(var)) {
+      fTbParameters[i].second = val;
+      cout << "ConfigParameters::setTbParameter> Updated " << fTbParameters[i].first << " to " << fTbParameters[i].second << endl;
+      return true; 
+    }
+  }
+  return false; 
+}
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
+  for (unsigned int i = 0; i < fTbPowerSettings.size(); ++i) {
+    if (!fTbPowerSettings[i].first.compare(var)) {
+      fTbPowerSettings[i].second = val;
+      cout << "ConfigParameters::setTbParameter> Updated " << fTbPowerSettings[i].first << " to " << fTbPowerSettings[i].second << endl;
+      return true; 
+    }
+  }
+  return false; 
+
 }

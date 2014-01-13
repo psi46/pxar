@@ -34,13 +34,18 @@ public:
   std::string getTbmType()                {return fTbmType;}
 
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
+  std::vector<std::pair<std::string,double> >  getTbPowerSettings();
   std::vector<std::pair<std::string,uint8_t> >  getTbSigDelays();
+  std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
+
+  bool setTbParameter(std::string, uint8_t);
+  bool setTbPowerSettings(std::string, double);
 
   void setTBParameterFileName(const std::string &filename);
   void setDACParameterFileName(const std::string &filename);
@@ -58,17 +63,24 @@ public:
   int getNrocs() {return fnRocs;}
   int getNtbms() {return fnTbms;}
 
+  double getIa() {return ia;}
+  double getId() {return id;}
+  double getVa() {return va;}
+  double getVd() {return vd;}
+
 private:
 
   bool fReadTbParameters, fReadTbmParameters, fReadDacParameters, fReadRocPixelConfig;
-  std::vector<std::pair<std::string,uint8_t> > fTbParameters;
+  std::vector<std::pair<std::string, uint8_t> > fTbParameters;
+  std::vector<std::pair<std::string, double> > fTbPowerSettings;
+  std::vector<std::pair<uint16_t, uint8_t> > fTbPgSettings;
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
   std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
 
   int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;
   int fCustomModule;
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
-  double ia, id, va, vd;
+  float ia, id, va, vd;
   float rocZeroAnalogCurrent;
   std::string fRocType, fTbmType;
   std::string fDirectory;

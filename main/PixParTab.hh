@@ -31,8 +31,11 @@ public:
   virtual void handleButtons(Int_t id = -1); 
 
   virtual void setTbParameter(); 
+  virtual void setPowerSettings(); 
+  virtual void setPgSettings();
   virtual void setTbmParameter(); 
   virtual void setRocParameter(); 
+  virtual void initTestboard(); 
 
   std::string getName() {return fTabName;}
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}
@@ -50,6 +53,12 @@ protected:
   
   std::map<std::string, void*>  fTbTextEntries;
   std::vector<std::string>      fTbParIds;
+
+  std::map<std::string, void*>  fPowerTextEntries;
+  std::vector<std::string>      fPowerParIds;
+
+  std::map<std::string, void*>  fPgTextEntries;
+  std::vector<std::string>      fPgParIds;
 
   std::vector<std::map<std::string, void*> > fTbmTextEntries;
   std::vector<std::vector<std::string> >     fTbmParIds;

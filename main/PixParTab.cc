@@ -70,8 +70,31 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tset = new TGTextButton(hFrame, "Set", i);
     tset->Connect("Clicked()", "PixParTab", this, "setTbParameter()");
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
-
   }
+
+  vector<pair<string, double> > dmap = fConfigParameters->getTbPowerSettings();
+  for (unsigned int i = 0; i < dmap.size(); ++i) {
+    hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
+    g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+    LOG(logINFO) << "Creating TGTextEntry for " << dmap[i].first; 
+    tb = new TGTextBuffer(5); 
+    tl = new TGLabel(hFrame, dmap[i].first.c_str());
+    tl->SetWidth(100);
+    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+
+    te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
+    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
+    fPowerParIds.push_back(dmap[i].first); 
+    fPowerTextEntries.insert(make_pair(dmap[i].first, te)); 
+
+    te->SetText(Form("%5.3f", float(dmap[i].second)));
+    te->Connect("ReturnPressed()", "PixParTab", this, "setPowerSettings()");
+
+    tset = new TGTextButton(hFrame, "Set", i);
+    tset->Connect("Clicked()", "PixParTab", this, "setPowerSettings()");
+    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+  }
+
   vFrame->AddFrame(g1Frame);
 
   // -- TBM Parameters
@@ -299,27 +322,73 @@ void PixParTab::setTbParameter() {
   uint8_t udac = atoi(svalue.c_str()); 
 
   cout << "FIXME FIXME: ID = " << id << " -> " << fTbParIds[id] << " set to " << svalue << endl;
+  fConfigParameters->setTbParameter(fTbParIds[id], udac); 
+
+  initTestboard(); 
+
+} 
+
+// ----------------------------------------------------------------------
+void PixParTab::setPgSettings() {
+  if (!fGui->getTabs()) return;
+  LOG(logINFO)  << "PixParTab::setPgSettings: ";
+
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  string svalue = ((TGTextEntry*)(fPgTextEntries[fPgParIds[id]]))->GetText(); 
+  uint8_t udac = atoi(svalue.c_str()); 
+
+  cout << "FIXME FIXME: ID = " << id << " -> " << fPgParIds[id] << " set to " << svalue << endl;
+
+  initTestboard(); 
+
+} 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::setPowerSettings() {
+  if (!fGui->getTabs()) return;
+  LOG(logINFO)  << "PixParTab::setPowerSettings: ";
+
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  string svalue = ((TGTextEntry*)(fPowerTextEntries[fPowerParIds[id]]))->GetText(); 
+  double udac = atof(svalue.c_str()); 
+  
+  cout << "FIXME FIXME: ID = " << id << " -> " << fPowerParIds[id] << " set to " << svalue << endl;
+  fConfigParameters->setTbPowerSettings(fPowerParIds[id], udac); 
+  
+  initTestboard(); 
 
   // FIXME UPDATE CONFIGPARAMETERS!
 
-  // -- reprogram timing parameters
-  vector<pair<string,uint8_t> >  v0 = fConfigParameters->getTbSigDelays();
-  vector<pair<string,uint8_t> >  v1;
-  for (unsigned int i = 0; i < v0.size(); ++i) {
-    if (!v0[i].first.compare(fTbParIds[id])) {
-      cout << "XXXX old value: " << int(v0[i].second) << endl;
-      v1.push_back(make_pair(fTbParIds[id], udac)); 
-    } else {
-      v1.push_back(v0[i]); 
-    }
-  }
-
-  std::vector<std::pair<std::string, double> > power_settings;
-  std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
-
-  fGui->getApi()->initTestboard(v1, power_settings, pg_setup);
-
 } 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::initTestboard() {
+
+  vector<pair<string, uint8_t> > sig_delays = fConfigParameters->getTbSigDelays();
+  vector<pair<string, double> > power_settings = fConfigParameters->getTbPowerSettings();
+  vector<pair<uint16_t, uint8_t> > pg_setup = fConfigParameters->getTbPgSettings();;
+
+  LOG(logINFO) << "Re-programming TB"; 
+
+  fGui->getApi()->initTestboard(sig_delays, power_settings, pg_setup);
+
+}
 
 
 // ----------------------------------------------------------------------
