@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"); 
+  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("logDEBUGHAL"); 
   bool debug(false), doRunGui(false), doRunScript(false), noAPI(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
@@ -57,6 +57,7 @@ int main(int argc, char *argv[]){
       cout << "-g                    start with GUI" << endl;
       cout << "-n                    no DUT/API initialization" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
+      cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
@@ -65,6 +66,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
   ConfigParameters *configParameters = ConfigParameters::Singleton();
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]){
   pxar::api *api = 0;
   if (!noAPI) {
     try {
-      api = new pxar::api("*","DEBUGAPI");
+      api = new pxar::api("*", verbosity);
       std::vector<std::pair<std::string,uint8_t> > sig_delays = configParameters->getTbSigDelays(); 
       // sig_delays.push_back(std::make_pair("clk",2));
       // sig_delays.push_back(std::make_pair("ctr",20));
