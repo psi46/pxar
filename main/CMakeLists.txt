@@ -11,6 +11,7 @@ PixGui.cc
 PixSetup.cc
 PixTab.cc
 PixParTab.cc
+PixMonitor.cc
 PixTest.cc
 PixTestAlive.cc
 PixTestFactory.cc
@@ -28,6 +29,7 @@ PixGui.hh
 #PixLog.hh
 PixSetup.hh
 PixParTab.hh
+PixMonitor.hh
 PixTab.hh
 PixTest.hh
 PixTestAlive.hh
