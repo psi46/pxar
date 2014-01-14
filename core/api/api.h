@@ -321,8 +321,11 @@ namespace pxar {
     /** DAQ functions **/
 
     /** Function to set up a new data acquisition
+     *  This function takes a new Pattern Generator setup as argument, if left empty the one which is currently
+     *  programmed via initTestboard is used. The given pattern generator only lives for the time of the 
+     *  data acquisition and is replaced by the previous one after stopping the DAQ.
      */
-    bool daqStart();
+    bool daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup = std::vector<std::pair<uint16_t, uint8_t> >());
     
     /** Function to read out the earliest event in buffer from the currently
      *  data acquisition. If no event is buffered, the function will wait for
@@ -331,6 +334,9 @@ namespace pxar {
     std::vector<pixel> daqGetEvent();
 
     /** Function to stop the running data acquisition
+     *  This triggers also a reprogramming of the old (test-) Pattern Generator setup, so no additional
+     *  steps are needed before one can do regular tests again. The patterns are taken from the DUT struct
+     *  in which they are stored from initTestboard.
      */
     bool daqStop();
 
@@ -390,6 +396,10 @@ namespace pxar {
      *  in the DUT struct.
      */
     void MaskAndTrim();
+
+    /** Helper function to check validity of the pattern generator settings coming from the user space
+     */
+    bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
 
   }; // class api

@@ -112,38 +112,62 @@ namespace pxar {
       // http://cms.web.psi.ch/phase1/psi46dig/index.html
 
       _registers["vdig"]       = dacConfig(ROC_DAC_Vdig,15,ROC_REG);
+      _registers["vdd"]        = dacConfig(ROC_DAC_Vdig,15,ROC_REG);
 
       _registers["vana"]       = dacConfig(ROC_DAC_Vana,255,ROC_REG);
+      _registers["iana"]       = dacConfig(ROC_DAC_Vana,255,ROC_REG);
 
       _registers["vsf"]        = dacConfig(ROC_DAC_Vsh,255,ROC_REG);
       _registers["vsh"]        = dacConfig(ROC_DAC_Vsh,255,ROC_REG);
 
       _registers["vcomp"]      = dacConfig(ROC_DAC_Vcomp,15,ROC_REG);
+
       _registers["vwllpr"]     = dacConfig(ROC_DAC_VwllPr,255,ROC_REG);
+      _registers["fbpre"]      = dacConfig(ROC_DAC_VwllPr,255,ROC_REG);
+
       _registers["vwllsh"]     = dacConfig(ROC_DAC_VwllSh,255,ROC_REG);
+      _registers["fbsh"]       = dacConfig(ROC_DAC_VwllSh,255,ROC_REG);
+
       _registers["vhlddel"]    = dacConfig(ROC_DAC_VhldDel,255,ROC_REG);
+      _registers["holddel"]    = dacConfig(ROC_DAC_VhldDel,255,ROC_REG);
+
       _registers["vtrim"]      = dacConfig(ROC_DAC_Vtrim,255,ROC_REG);
+      _registers["trimscale"]  = dacConfig(ROC_DAC_Vtrim,255,ROC_REG);
+
       _registers["vthrcomp"]   = dacConfig(ROC_DAC_VthrComp,255,ROC_REG);
+      _registers["globalthr"]  = dacConfig(ROC_DAC_VthrComp,255,ROC_REG);
+
       _registers["vibias_bus"] = dacConfig(ROC_DAC_VIBias_Bus,255,ROC_REG);
-      _registers["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,15,ROC_REG);
-      _registers["voffsetop"]  = dacConfig(ROC_DAC_VoffsetOp,255,ROC_REG);
+
       _registers["voffsetro"]  = dacConfig(ROC_DAC_VoffsetRO,255,ROC_REG);
-      _registers["vion"]       = dacConfig(ROC_DAC_VIon,255,ROC_REG);
+      _registers["phoffset"]   = dacConfig(ROC_DAC_VoffsetRO,255,ROC_REG);
 
       _registers["vcomp_adc"]  = dacConfig(ROC_DAC_VIbias_PH,255,ROC_REG);
       _registers["vibias_ph"]  = dacConfig(ROC_DAC_VIbias_PH,255,ROC_REG);
+      _registers["adcpower"]   = dacConfig(ROC_DAC_VIbias_PH,255,ROC_REG);
 
       _registers["viref_adc"]  = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
       _registers["vibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
-      _registers["ibias_dac"] = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
+      _registers["ibias_dac"]  = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
+      _registers["phscale"]    = dacConfig(ROC_DAC_VIbias_DAC,255,ROC_REG);
 
       _registers["vicolor"]    = dacConfig(ROC_DAC_VIColOr,255,ROC_REG);
+
       _registers["vcal"]       = dacConfig(ROC_DAC_Vcal,255,ROC_REG);
+
       _registers["caldel"]     = dacConfig(ROC_DAC_CalDel,255,ROC_REG);
 
       _registers["ctrlreg"]    = dacConfig(ROC_DAC_CtrlReg,255,ROC_REG);
+      _registers["ccr"]        = dacConfig(ROC_DAC_CtrlReg,255,ROC_REG);
+
       _registers["wbc"]        = dacConfig(ROC_DAC_WBC,255,ROC_REG);
+
       _registers["readback"]   = dacConfig(ROC_DAC_Readback,15,ROC_REG);
+
+      // DACs removed from psi46digV3 (?):
+      _registers["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,15,ROC_REG);
+      _registers["voffsetop"]  = dacConfig(ROC_DAC_VoffsetOp,255,ROC_REG);
+      _registers["vion"]       = dacConfig(ROC_DAC_VIon,255,ROC_REG);
 
       // DACs removed from psi46digV2:
       _registers["vleak_comp"] = dacConfig(ROC_DAC_Vleak_comp,255,ROC_REG);

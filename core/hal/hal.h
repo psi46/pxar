@@ -82,6 +82,9 @@ namespace pxar {
      */
     bool tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs);
 
+    /** Function to set and update the pattern generator command list on the DTB
+     */
+    void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup);
 
     // TESTBOARD GET COMMANDS
     /** Read the testboard analog current
