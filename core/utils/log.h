@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <cstdio>
 #include <stdint.h>
+#include <string.h>
 
 namespace pxar {
 
@@ -26,11 +27,12 @@ namespace pxar {
     logDEBUGUSB
   };
 
-  class Log {
+  template <typename T>
+    class pxarLog {
   public:
-    Log();
-    virtual ~Log();
-    std::ostringstream& Get(TLogLevel level = logINFO, std::string function = "", uint32_t line = 0);
+    pxarLog();
+    virtual ~pxarLog();
+    std::ostringstream& Get(TLogLevel level = logINFO, std::string file = "", std::string function = "", uint32_t line = 0);
   public:
     static TLogLevel& ReportingLevel();
     static std::string ToString(TLogLevel level);
@@ -38,14 +40,16 @@ namespace pxar {
   protected:
     std::ostringstream os;
   private:
-    Log(const Log&);
-    Log& operator =(const Log&);
+    pxarLog(const pxarLog&);
+    pxarLog& operator =(const pxarLog&);
     std::string NowTime();
   };
 
-  inline Log::Log() : os() {}
+  template <typename T>
+    pxarLog<T>::pxarLog() {}
 
-  inline std::string Log::NowTime() {
+  template <typename T>
+    std::string pxarLog<T>::NowTime() {
     char buffer[11];
     time_t t;
     time(&t);
@@ -58,34 +62,38 @@ namespace pxar {
     return result;
   }
 
-  inline std::ostringstream& Log::Get(TLogLevel level, std::string function, uint32_t line) {
+  template <typename T>
+    std::ostringstream& pxarLog<T>::Get(TLogLevel level, std::string file, std::string function, uint32_t line) {
     os << "[" << NowTime() << "] ";
     os << std::setw(8) << ToString(level) << ": ";
     
     // For debug levels we want also function name and line number printed:
     if (level != logINFO && level != logWARNING && level != logQUIET)
-      os << "<" << function << ":L" << line << "> ";
+      os << "<" << file << "/" << function << ":L" << line << "> ";
 
     return os;
   }
 
-  inline Log::~Log() {
+  template <typename T>
+    pxarLog<T>::~pxarLog() {
     os << std::endl;
-    fprintf(stderr, "%s", os.str().c_str());
-    fflush(stderr);
+    T::Output(os.str());
   }
 
-  inline TLogLevel& Log::ReportingLevel() {
+  template <typename T>
+    TLogLevel& pxarLog<T>::ReportingLevel() {
     static TLogLevel reportingLevel = logINFO;
     return reportingLevel;
   }
 
-  inline std::string Log::ToString(TLogLevel level) {
+  template <typename T>
+    std::string pxarLog<T>::ToString(TLogLevel level) {
     static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGUSB"};
     return buffer[level];
   }
 
-  inline TLogLevel Log::FromString(const std::string& level) {
+  template <typename T>
+    TLogLevel pxarLog<T>::FromString(const std::string& level) {
     if (level == "DEBUGUSB")
       return logDEBUGUSB;
     if (level == "DEBUGRPC")
@@ -106,13 +114,40 @@ namespace pxar {
       return logCRITICAL;
     if (level == "QUIET")
       return logQUIET;
-    Log().Get(logWARNING) << "Unknown logging level '" << level << "'. Using WARNING level as default.";
+    pxarLog<T>().Get(logWARNING) << "Unknown logging level '" << level << "'. Using WARNING level as default.";
     return logWARNING;
   }
 
+
+  class SetLogOutput
+  {
+  public:
+    static FILE*& Stream();
+    static void Output(const std::string& msg);
+  };
+
+  inline FILE*& SetLogOutput::Stream()
+  {
+    static FILE* pStream = stderr;
+    return pStream;
+  }
+
+  inline void SetLogOutput::Output(const std::string& msg)
+  {   
+    FILE* pStream = Stream();
+    if (!pStream)
+      return;
+    fprintf(pStream, "%s", msg.c_str());
+    fflush(pStream);
+  }
+
+typedef pxarLog<SetLogOutput> Log;
+
+#define __FILE_NAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
 #define LOG(level)				\
-  if (level > pxar::Log::ReportingLevel()) ;	\
-  else pxar::Log().Get(level,__func__,__LINE__)
+  if (level > pxar::Log::ReportingLevel() || !pxar::SetLogOutput::Stream()) ; \
+  else pxar::Log().Get(level,__FILE_NAME__,__func__,__LINE__)
 
 } //namespace pxar
 
