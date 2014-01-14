@@ -333,6 +333,10 @@ namespace pxar {
      */
     std::vector<pixel> daqGetEvent();
 
+    /** Function to fire the previously defined pattern commands once
+     */
+    void daqTrigger();
+
     /** Function to stop the running data acquisition
      *  This triggers also a reprogramming of the old (test-) Pattern Generator setup, so no additional
      *  steps are needed before one can do regular tests again. The patterns are taken from the DUT struct
