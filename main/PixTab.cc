@@ -24,10 +24,9 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   UInt_t h = fGui->getTabs()->GetHeight(); 
 
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
-  fTabFrame->SetLayoutManager(new TGVerticalLayout(fTabFrame));
  
-  fhFrame = new TGHorizontalFrame(fTabFrame, w, h);
-  fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 5, 5, 3, 4));
+  //  fhFrame = new TGHorizontalFrame(fTabFrame, w, h);
+  fhFrame = new TGCompositeFrame(fTabFrame, w, h, kHorizontalFrame);
   
   // -- 2 vertical frames
   fV1 = new TGVerticalFrame(fhFrame);
@@ -40,7 +39,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
 
   // -- fV2: create parameter TGText boxes for test
-  LOG(logINFO) << "map tab individually for test: " << fTest->getName();
   map<string, string> amap = fTest->getParameters();
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
@@ -116,9 +114,14 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));
 
-  fhFrame->MapSubwindows();
-  fhFrame->Resize(fhFrame->GetDefaultSize());
-  fhFrame->MapWindow();
+//   fhFrame->MapSubwindows();
+//   fhFrame->Resize(fhFrame->GetDefaultSize());
+//   fhFrame->MapWindow();
+
+  fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
+  fTabFrame->MapSubwindows();
+  fTabFrame->Resize(fTabFrame->GetDefaultSize());
+  fTabFrame->MapWindow();
 
 }
 

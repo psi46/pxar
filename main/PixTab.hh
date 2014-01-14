@@ -38,7 +38,8 @@ protected:
 
   // -- frames and widgets
   TGCompositeFrame     	*fTabFrame;
-  TGHorizontalFrame     *fhFrame;
+  TGCompositeFrame     	*fhFrame;
+  //  TGHorizontalFrame     *fhFrame;
   TGVerticalFrame 	*fV1;
   TGVerticalFrame 	*fV2;
 

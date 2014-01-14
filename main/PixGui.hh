@@ -47,11 +47,10 @@ public:
   ~PixGui();
 
   void handleButtons(Int_t id = -1);
-  void createTab(char*);
+  void createTab(const char*);
   void createParTab();
   void selectedTab(int); 
 
-  void doSetfConsole();
   void closeWindow();
   PixTest* createTest(std::string); 
 

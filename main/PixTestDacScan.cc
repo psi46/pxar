@@ -33,11 +33,10 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
     LOG(logINFO) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
-
+      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       fParameters[parName] = sval;
       LOG(logINFO) << "  ==> parName: " << parName;
       LOG(logINFO) << "  ==> sval:    " << sval;
-      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
       if (!parName.compare("DAC")) fParDAC = sval; 
       break;
