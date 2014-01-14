@@ -222,9 +222,76 @@ int main(int argc, char* argv[]) {
     // Enable all pixels first:
     _api->_dut->testAllPixels(true);
 
-    _api->_dut->maskPixel(5,38,true);
-    _api->_dut->maskPixel(5,39,true);
-    _api->_dut->maskPixel(5,40,true);
+    // Head:
+    for(int i = 25; i < 55; i++) _api->_dut->maskPixel(5,i,true);
+
+    int j = 24;
+    int k = 56;
+    for(int i = 6; i < 11; i++) {
+      _api->_dut->maskPixel(i,j--,true);
+      _api->_dut->maskPixel(i,j--,true);
+      _api->_dut->maskPixel(i,k++,true);
+      _api->_dut->maskPixel(i,k++,true);
+    }
+
+    j = 15;
+    k = 65;
+    for(int i = 11; i < 14; i++) {
+      _api->_dut->maskPixel(i,j--,true);
+      _api->_dut->maskPixel(i,j--,true);
+      j++;
+      _api->_dut->maskPixel(i,k++,true);
+      _api->_dut->maskPixel(i,k++,true);
+      k--;
+    }
+
+    for(int i = 14; i < 17; i++) {
+      _api->_dut->maskPixel(i,12,true);
+      _api->_dut->maskPixel(i,13,true);
+      _api->_dut->maskPixel(i,68,true);
+      _api->_dut->maskPixel(i,69,true);
+    }
+
+    j = 68;
+    k = 13;
+    for(int i = 17; i < 20; i++) {
+      _api->_dut->maskPixel(i,j--,true);
+      _api->_dut->maskPixel(i,j--,true);
+      j++;
+      _api->_dut->maskPixel(i,k++,true);
+      _api->_dut->maskPixel(i,k++,true);
+      k--;
+    }
+
+    j = 65;
+    k = 16;
+    for(int i = 20; i < 25; i++) {
+      _api->_dut->maskPixel(i,j--,true);
+      _api->_dut->maskPixel(i,j--,true);
+      _api->_dut->maskPixel(i,k++,true);
+      _api->_dut->maskPixel(i,k++,true);
+    }
+
+    for(int i = 25; i < 55; i++) _api->_dut->maskPixel(25,i,true);
+
+    // Eyes:
+    _api->_dut->maskPixel(7,37,true);
+    _api->_dut->maskPixel(7,41,true);
+
+    // Mouth:
+    for(int i = 30; i < 50; i++) _api->_dut->maskPixel(19,i,true);
+    _api->_dut->maskPixel(18,28,true);
+    _api->_dut->maskPixel(18,29,true);
+    _api->_dut->maskPixel(18,30,true);
+    _api->_dut->maskPixel(18,50,true);
+    _api->_dut->maskPixel(18,51,true);
+    _api->_dut->maskPixel(18,52,true);
+    _api->_dut->maskPixel(17,27,true);
+    _api->_dut->maskPixel(17,28,true);
+    _api->_dut->maskPixel(17,52,true);
+    _api->_dut->maskPixel(17,53,true);
+
+    //_api->_dut->maskColumn(8,true);
 
     // Call the test:
     int nTrig = 10;
