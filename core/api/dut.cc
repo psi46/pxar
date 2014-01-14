@@ -12,7 +12,7 @@ using namespace pxar;
 
 /* =========================================================================== */
 
-/** Helper class to search vectors of pixelConfig, rocConfig and dacConfig for 'enable' bit
+/** Helper class to search vectors of pixelConfig, rocConfig and tbmConfig for 'enable' bit
  */
 class configEnableSet
 {
