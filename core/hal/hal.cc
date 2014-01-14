@@ -117,7 +117,9 @@ void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_set
   uint8_t addr = 0;
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     uint16_t cmd = (*it).first | (*it).second;
-    LOG(logDEBUGHAL) << "Setting PG cmd " << std::hex << cmd << std::dec;
+    LOG(logDEBUGHAL) << "Setting PG cmd " << std::hex << cmd << std::dec 
+		     << " (addr " << (int)addr << " pat " << std::hex << (int)(*it).first << std::dec
+		     << " del " << (int)(*it).second << ")";
     _testboard->Pg_SetCmd(addr, cmd);
     addr++;
   }
