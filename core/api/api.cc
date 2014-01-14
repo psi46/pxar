@@ -101,18 +101,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   // Store these validated parameters in the DUT
   _dut->sig_delays = delays;
   
-  // Prepare Patter Generator:
-  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
-    if((*it).second == 0 && it != pg_setup.end() -1 ) {
-      LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
-		       << (int)(it - pg_setup.begin())  << ".";
-    }
-    // Check last entry for PG stop signal (delay = 0):
-    if(it == pg_setup.end() - 1 && (*it).second != 0) {
-      LOG(logCRITICAL) << "No delay = 0 found on last entry. Setting last delay to 0 to stop the pattern generator.";
-      (*it).second = 0;
-    }
-  }
+  // Prepare Pattern Generator:
+  if(!verifyPatternGenerator(pg_setup)) return false;
   // Store the Pattern Generator commands in the DUT:
   _dut->pg_setup = pg_setup;
 
@@ -1177,4 +1167,23 @@ void api::MaskAndTrim() {
     }
   }
 
+}
+
+
+bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+  
+  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+    if((*it).second == 0 && it != pg_setup.end() -1 ) {
+      LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
+		       << (int)(it - pg_setup.begin())  << ".";
+      return false;
+    }
+    // Check last entry for PG stop signal (delay = 0):
+    if(it == pg_setup.end() - 1 && (*it).second != 0) {
+      LOG(logWARNING) << "No delay = 0 found on last entry. Setting last delay to 0 to stop the pattern generator.";
+      (*it).second = 0;
+    }
+  }
+
+  return true;
 }

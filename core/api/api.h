@@ -391,6 +391,10 @@ namespace pxar {
      */
     void MaskAndTrim();
 
+    /** Helper function to check validity of the pattern generator settings coming from the user space
+     */
+    bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
+
 
   }; // class api
 
