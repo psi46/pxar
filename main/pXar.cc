@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("logDEBUGHAL"); 
+  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("DEBUGHAL"); 
   bool debug(false), doRunGui(false), doRunScript(false), noAPI(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
