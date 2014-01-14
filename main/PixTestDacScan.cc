@@ -37,6 +37,7 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
       fParameters[parName] = sval;
       LOG(logINFO) << "  ==> parName: " << parName;
       LOG(logINFO) << "  ==> sval:    " << sval;
+      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
       if (!parName.compare("DAC")) fParDAC = sval; 
       break;
