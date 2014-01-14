@@ -131,7 +131,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 
-  PixParTab *t = new PixParTab(this, fConfigParameters, "hardware parameters"); 
+  PixParTab *t = new PixParTab(this, fConfigParameters, "h/w"); 
 
   fcmbTests->AddEntry("Ignore this ...", 0);
   vector<string> tests = fTestParameters->getTests();

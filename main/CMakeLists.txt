@@ -15,6 +15,7 @@ PixMonitor.cc
 PixTest.cc
 PixTestAlive.cc
 PixTestDacScan.cc
+PixTestSetup.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
 PixTestParameters.cc
@@ -32,6 +33,7 @@ PixTab.hh
 PixTest.hh
 PixTestAlive.hh
 PixTestDacScan.hh
+PixTestSetup.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
 PixTestParameters.hh

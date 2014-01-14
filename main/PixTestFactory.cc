@@ -5,6 +5,7 @@
 
 #include "PixTestAlive.hh"
 #include "PixTestDacScan.hh"
+#include "PixTestSetup.hh"
 #include "PixTestGainCalibration.hh"
 
 using namespace std;
@@ -40,6 +41,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   
   if (!name.compare("PixelAlive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("DacScan")) return new PixTestDacScan(a, "DacScan"); 
+  if (!name.compare("Setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare("GainCalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   return 0; 
 }
