@@ -1,44 +1,42 @@
 #include <stdlib.h>     /* atof, atoi */
 #include <algorithm>    // std::find
 #include <iostream>
-
-#include <TH1.h>
-
-#include "PixTestDacScan.hh"
+#include "PixTestSetup.hh"
 #include "log.h"
 
+#include <TH2.h>
 
 using namespace std;
 using namespace pxar;
 
-ClassImp(PixTestDacScan)
+ClassImp(PixTestSetup)
 
 // ----------------------------------------------------------------------
-PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada") {
+PixTestSetup::PixTestSetup(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
   PixTest::init(a, name);
   init(); 
-  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
+  LOG(logINFO) << "PixTestSetup ctor(PixSetup &a, string, TGTab *)";
 }
 
 
 //----------------------------------------------------------
-PixTestDacScan::PixTestDacScan() : PixTest() {
-  LOG(logINFO) << "PixTestDacScan ctor()";
+PixTestSetup::PixTestSetup() : PixTest() {
+  LOG(logINFO) << "PixTestSetup ctor()";
 }
 
 // ----------------------------------------------------------------------
-bool PixTestDacScan::setParameter(string parName, string sval) {
+bool PixTestSetup::setParameter(string parName, string sval) {
   bool found(false);
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
     LOG(logINFO) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
-      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
+
       fParameters[parName] = sval;
       LOG(logINFO) << "  ==> parName: " << parName;
       LOG(logINFO) << "  ==> sval:    " << sval;
       if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
-      if (!parName.compare("DAC")) fParDAC = sval; 
+      if (!parName.compare("Vcal")) fParVcal = atoi(sval.c_str()); 
       break;
     }
   }
@@ -47,30 +45,30 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 
 
 // ----------------------------------------------------------------------
-void PixTestDacScan::init() {
-  LOG(logINFO) << "PixTestDacScan::init()";
-
+void PixTestSetup::init() {
+  LOG(logINFO) << "PixTestSetup::init()";
+  
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
   fDirectory->cd(); 
 
-  TH1D *h1(0);
+  TH2D *h2(0);
   fHistList.clear();
   for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h1 = new TH1D(Form("DacScan_C%d", i), Form("DacScan_C%d", i), 255, 0., 255.); 
-    h1->SetMinimum(0.); 
-    setTitles(h1, "DAC", "#pixels"); 
-    fHistList.push_back(h1); 
+    h2 = new TH2D(Form("PixelAlive_C%d", i), Form("PixelAlive_C%d", i), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.); 
+    setTitles(h2, "col", "row"); 
+    fHistList.push_back(h2); 
   }
 
 }
 
 
 //----------------------------------------------------------
-PixTestDacScan::~PixTestDacScan() {
-  LOG(logINFO) << "PixTestDacScan dtor";
+PixTestSetup::~PixTestSetup() {
+  LOG(logINFO) << "PixTestSetup dtor";
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
@@ -82,31 +80,30 @@ PixTestDacScan::~PixTestDacScan() {
 
 
 // ----------------------------------------------------------------------
-void PixTestDacScan::doTest() {
-  LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
+void PixTestSetup::doTest() {
+  LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
   clearHist();
   // -- FIXME: Should/could separate better test from display?
   uint16_t flag(0); 
   fApi->_dut->testAllPixels(true);
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, 0, 150, 0, fParNtrig);
-
-  LOG(logINFO) << " dacscandata.size(): " << results.size();
+  vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
+  LOG(logINFO) << " results.size(): " << results.size();
   for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    TH1D *h = (TH1D*)fDirectory->Get(Form("DacScan_C%d", ichip));
+    TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
     if (h) {
       for (int i = 0; i < results.size(); ++i) {
-	h->SetBinContent(results[i].first, results[i].second.size()); 
+	//      cout << Form("i = %4d", i) << " col = " << int(results[i].column) << " row = " << int(results[i].row)
+	//	   << " results: " << int(results[i].value) << endl;
+	h->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/fParNtrig); 
       }
     } else {
-      LOG(logINFO) << "XX did not find " << Form("DacScan_C%d", ichip);
+      LOG(logINFO) << "XX did not find " << Form("PixelAlive_C%d", ichip);
     }
-    //    cout << "done with doTest" << endl;
-    h->Draw("");
+    h->Draw("colz");
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
     LOG(logINFO) << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
 		 << " begin? " << (fDisplayedHist == fHistList.begin())
 		 << " end? " << (fDisplayedHist == fHistList.end());
     PixTest::update(); 
   }
-
 }

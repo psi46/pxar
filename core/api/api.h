@@ -325,7 +325,7 @@ namespace pxar {
      *  programmed via initTestboard is used. The given pattern generator only lives for the time of the 
      *  data acquisition and is replaced by the previous one after stopping the DAQ.
      */
-    bool daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup = std::vector<std::pair<uint16_t, uint8_t> >());
+    bool daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
     
     /** Function to read out the earliest event in buffer from the currently
      *  data acquisition. If no event is buffered, the function will wait for

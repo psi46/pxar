@@ -50,14 +50,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fcmbTests = new TGComboBox(testChooser);
   fcmbTests->SetWidth(150);
   fcmbTests->SetHeight(20);
-  fcmbTests->Connect("Selected(char*)", "PixGui", this, "createTab(char*)");
-
-  fcmbTests->AddEntry("Choose a test", 0);
-  vector<string> tests = fTestParameters->getTests();
-  for (int i = 0; i < tests.size(); ++i) {
-    fcmbTests->AddEntry(tests[i].c_str(), i+1);
-  }
-  fcmbTests->Select(0);
+  fcmbTests->Connect("Selected(char*)", "PixGui", this, "selectedTab(int)");
 
   tabControl->AddFrame(testChooser);
   testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, 5, 50, 3, 4));
@@ -138,7 +131,17 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 
-  PixParTab *t = new PixParTab(this, fConfigParameters, "hardware parameters"); 
+  PixParTab *t = new PixParTab(this, fConfigParameters, "h/w"); 
+
+  fcmbTests->AddEntry("Ignore this ...", 0);
+  vector<string> tests = fTestParameters->getTests();
+  for (int i = 0; i < tests.size(); ++i) {
+    fcmbTests->AddEntry(tests[i].c_str(), i+1);
+    cout << "CREATE TAB FOR TEST " << i << endl;
+    createTab(tests[i].c_str()); 
+  }
+  fcmbTests->Select(0);
+
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 2, 20, 2, 2));
   fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX | kLHintsExpandY, 20, 20, 2, 2));
@@ -254,7 +257,7 @@ void PixGui::createParTab() {
 
 
 // --------------------------------------------------------------------------------
-void PixGui::createTab(char*csel) {
+void PixGui::createTab(const char*csel) {
   string tname = csel; 
 
   PixTest *pt = createTest(string(csel));
@@ -266,9 +269,9 @@ void PixGui::createTab(char*csel) {
   fTestList.push_back(pt); 
   PixTab *t = new PixTab(this, pt, string(csel)); 
   pt->Connect("update()", "PixTab", t, "update()"); 
-  fTabs->Resize(fTabs->GetDefaultSize());
+  //  fTabs->Resize(fTabs->GetDefaultSize());
+  //  fTabs->MoveResize(0, 0, 800, 800);
   MapSubwindows();
-  //  fTabs->MoveResize(2, 0, 800, 800);
   Resize(GetDefaultSize());
   MapWindow();
   LOG(logINFO) << "csel = " << csel;
@@ -276,46 +279,16 @@ void PixGui::createTab(char*csel) {
   
 }
 
-// --------------------------------------------------------------------------------
-void PixGui::doSetfConsole() {
-
-  char *p = (char*)fConsoleBuffer->GetString();
-  if (p) {
-      /*
-    do {
-      if (pSysCommand1->TargetIsTB()) {
-        fTB->Execute(*fpSysCommand1);
-        cout << Form(" fTB->Execute: ");
-      } else  {
-        fCN->Execute(*fpSysCommand1);
-        cout << Form(" fCN->Execute: ");
-      }
-
-      char* s = fpSysCommand1->toString();
-      cout << Form(" %s", s) << endl;
-      delete s;
-    } while (fpSysCommand1->Next());
-  */
-    LOG(logINFO) << p;
-    fConsole->Clear();
-  }
-  // fConsoleBuffer->AddText(0,"");
-}
-
 
 // ----------------------------------------------------------------------
 PixTest* PixGui::createTest(string testname) {
   PixTestFactory *factory = PixTestFactory::instance(); 
-//   if (!testname.compare("PixelAlive")) return new PixTestAlive(fPixSetup, testname); 
-//   if (!testname.compare("DacScan")) return new PixTestDacScan(fPixSetup, testname); 
   return factory->createTest(testname, fPixSetup);
-
-//   if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(fPixSetup, testname); 
-//   return 0; 
 }
 
 
 // ----------------------------------------------------------------------
-void PixGui::selectedTab(int i) {
-  cout << "Switched to tab " << i << endl;
+void PixGui::selectedTab(int id) {
+    LOG(logINFO) << "Switched to tab " << id;
+    fTabs->SetTab(id); 
 }

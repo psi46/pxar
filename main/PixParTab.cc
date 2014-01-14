@@ -25,7 +25,12 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
   fTabFrame->SetLayoutManager(new TGVerticalLayout(fTabFrame));
 
-  fhFrame = new TGHorizontalFrame(fTabFrame);
+
+  UInt_t w = fGui->getTabs()->GetWidth(); 
+  UInt_t h = fGui->getTabs()->GetHeight(); 
+
+  //   fhFrame = new TGHorizontalFrame(fTabFrame);
+  fhFrame = new TGCompositeFrame(fTabFrame, w, h, kHorizontalFrame);
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY));
 
@@ -249,6 +254,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   fTabFrame->Layout();
   fTabFrame->MapSubwindows();
+  fTabFrame->Resize(fTabFrame->GetDefaultSize());
   fTabFrame->MapWindow();
 
 }
