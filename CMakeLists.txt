@@ -191,3 +191,16 @@ IF(DOXYGEN_FOUND)
     COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
 ENDIF(DOXYGEN_FOUND)
+
+###############################################
+# LaTeX target to compile the PDF user manual #
+###############################################
+# Information and the manual on the UseLATEX.cmake package can be found here
+# http://www.cmake.org/Wiki/CMakeUserUseLATEX
+# The code resides here:
+# https://github.com/kmorel/UseLATEX
+
+INCLUDE(cmake/UseLATEX.cmake)
+ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
+  NO_DEFAULT
+  )

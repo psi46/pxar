@@ -1,0 +1,7 @@
+# Ignore files produced by LaTeX
+doc
+*.aux
+*.log
+*.out
+*.pdf
+*.toc
