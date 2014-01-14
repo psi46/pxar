@@ -31,8 +31,6 @@ void PixTest::init(PixSetup *a, string name) {
 
   fName = name;
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
-  NCOL = 52; 
-  NROW = 80;
 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
     setParameter(imap->first, imap->second); 

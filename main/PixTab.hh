@@ -52,7 +52,7 @@ protected:
   enum CommandIdentifiers {
     B_DOTEST = TESTNUMBER + 21,
     B_CLOSETAB,
-    B_PRINT,
+    B_PRINT
   };
 
   std::string           fTabName; 
