@@ -86,12 +86,15 @@ void PixTestAlive::doTest() {
   // -- FIXME: Should/could separate better test from display?
   int ichip(0); 
   uint16_t flag(0); 
+  fApi->_dut->testAllPixels(true);
   vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
   LOG(logINFO) << " results.size(): " << results.size();
   TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
   if (h) {
     for (int i = 0; i < results.size(); ++i) {
-      h->SetBinContent(i/NROW+1, i%NROW+1, static_cast<float>(results[i].value)/fParNtrig); 
+      //      cout << Form("i = %4d", i) << " col = " << int(results[i].column) << " row = " << int(results[i].row)
+      //	   << " results: " << int(results[i].value) << endl;
+      h->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/fParNtrig); 
     }
   } else {
     LOG(logINFO) << "XX did not find " << Form("PixelAlive_C%d", ichip);
