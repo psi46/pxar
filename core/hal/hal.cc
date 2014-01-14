@@ -105,6 +105,14 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
 
 
   // Set up Pattern Generator:
+  SetupPatternGenerator(pg_setup);
+
+  // We are ready for operations now, mark the HAL as initialized:
+  _initialized = true;
+}
+
+void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+
   // Write the (sorted!) PG patterns into adjacent register addresses:
   uint8_t addr = 0;
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
@@ -114,8 +122,8 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
     addr++;
   }
 
-  // We are ready for operations now, mark the HAL as initialized:
-  _initialized = true;
+  // Since the last delay is known to be zero we don't have to overwrite the rest of the address range - 
+  // the Pattern generator will stop automatically at that point.
 }
 
 bool hal::flashTestboard(std::ifstream& flashFile) {
