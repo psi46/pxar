@@ -50,13 +50,12 @@ protected:
   std::string           fName; 
 
   std::map<std::string, std::string> fParameters;
-  ClassDef(PixTest, 1); // testing PixTest
 
   TDirectory            *fDirectory; 
   std::list<TH1*>       fHistList;
   std::list<TH1*>::iterator fDisplayedHist;  
 
-  int NCOL, NROW; 
+  ClassDef(PixTest, 1); // testing PixTest
 
 };
 

@@ -14,25 +14,24 @@ PixParTab.cc
 PixMonitor.cc
 PixTest.cc
 PixTestAlive.cc
+PixTestDacScan.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
 PixTestParameters.cc
 SysCommand.cc
-#pXar.cc
-  )
+)
 
 # fill list of header files 
 set(pxarGui_HEADERS
 ConfigParameters.hh
-#GlobalConstants.hh
 PixGui.hh
-#PixLog.hh
 PixSetup.hh
 PixParTab.hh
 PixMonitor.hh
 PixTab.hh
 PixTest.hh
 PixTestAlive.hh
+PixTestDacScan.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
 PixTestParameters.hh

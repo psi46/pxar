@@ -43,7 +43,7 @@ private:
   static const int TESTNUMBER = 100;
   enum CommandIdentifiers {
     B_DRAWANA = TESTNUMBER + 21,
-    B_DRAWDIGI,
+    B_DRAWDIGI
   };
 
   ClassDef(PixMonitor, 1)
