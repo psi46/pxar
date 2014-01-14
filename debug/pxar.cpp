@@ -38,36 +38,64 @@ int main(int argc, char* argv[]) {
   // Prepare some empty TBM vector:
   std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
 
+  std::string roctype = "psi46digv2";
 
   // Create some fake DUT/DAC parameters since we can't read configs yet:
   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
-
   std::vector<std::pair<std::string,uint8_t> > dacs;
-  dacs.push_back(std::make_pair("Vdig",5));
-  // Let's try to trich the API and set Vdig again:
-  dacs.push_back(std::make_pair("Vdig",6));
-  dacs.push_back(std::make_pair("Vana",84));
-  dacs.push_back(std::make_pair("Vsf",30));
-  dacs.push_back(std::make_pair("Vcomp",12));
-  dacs.push_back(std::make_pair("VwllPr",60));
-  dacs.push_back(std::make_pair("VwllSh",60));
-  dacs.push_back(std::make_pair("VhldDel",230));
-  dacs.push_back(std::make_pair("Vtrim",29));
-  dacs.push_back(std::make_pair("VthrComp",86));
-  dacs.push_back(std::make_pair("VIBias_Bus",1));
-  dacs.push_back(std::make_pair("Vbias_sf",6));
-  dacs.push_back(std::make_pair("VoffsetOp",40));
-  dacs.push_back(std::make_pair("VOffsetRO",129));
-  dacs.push_back(std::make_pair("VIon",120));
-  dacs.push_back(std::make_pair("Vcomp_ADC",100));
-  dacs.push_back(std::make_pair("VIref_ADC",91));
-  dacs.push_back(std::make_pair("VIbias_roc",150));
-  dacs.push_back(std::make_pair("VIColOr",50));
-  dacs.push_back(std::make_pair("Vcal",200));
-  dacs.push_back(std::make_pair("CalDel",122));
-  dacs.push_back(std::make_pair("CtrlReg",0));
-  dacs.push_back(std::make_pair("WBC",100));
-  dacs.push_back(std::make_pair("WBCDEFG",100));
+
+  if(roctype.compare("psi46digv2") == 0) {
+    // DAC settings to operate a V2 chip are slightly different, this ine has seen 50MRAD already:
+    dacs.push_back(std::make_pair("Vdig",8));
+    dacs.push_back(std::make_pair("Vana",120));
+    dacs.push_back(std::make_pair("Vsf",40));
+    dacs.push_back(std::make_pair("Vcomp",12));
+    dacs.push_back(std::make_pair("VwllPr",30));
+    dacs.push_back(std::make_pair("VwllSh",30));
+    dacs.push_back(std::make_pair("VhldDel",117));
+    dacs.push_back(std::make_pair("Vtrim",1));
+    dacs.push_back(std::make_pair("VthrComp",40));
+    dacs.push_back(std::make_pair("VIBias_Bus",30));
+    dacs.push_back(std::make_pair("Vbias_sf",6));
+    dacs.push_back(std::make_pair("VoffsetOp",60));
+    dacs.push_back(std::make_pair("VOffsetRO",150));
+    dacs.push_back(std::make_pair("VIon",45));
+    dacs.push_back(std::make_pair("Vcomp_ADC",50));
+    dacs.push_back(std::make_pair("VIref_ADC",70));
+    dacs.push_back(std::make_pair("VIbias_roc",150));
+    dacs.push_back(std::make_pair("VIColOr",99));
+    dacs.push_back(std::make_pair("Vcal",220));
+    dacs.push_back(std::make_pair("CalDel",122));
+    dacs.push_back(std::make_pair("CtrlReg",0));
+    dacs.push_back(std::make_pair("WBC",100));
+  }
+  else {
+    dacs.push_back(std::make_pair("Vdig",5));
+    // Let's try to trich the API and set Vdig again:
+    dacs.push_back(std::make_pair("Vdig",7));
+    dacs.push_back(std::make_pair("Vana",84));
+    dacs.push_back(std::make_pair("Vsf",30));
+    dacs.push_back(std::make_pair("Vcomp",12));
+    dacs.push_back(std::make_pair("VwllPr",60));
+    dacs.push_back(std::make_pair("VwllSh",60));
+    dacs.push_back(std::make_pair("VhldDel",230));
+    dacs.push_back(std::make_pair("Vtrim",29));
+    dacs.push_back(std::make_pair("VthrComp",86));
+    dacs.push_back(std::make_pair("VIBias_Bus",1));
+    dacs.push_back(std::make_pair("Vbias_sf",6));
+    dacs.push_back(std::make_pair("VoffsetOp",40));
+    dacs.push_back(std::make_pair("VOffsetRO",129));
+    dacs.push_back(std::make_pair("VIon",120));
+    dacs.push_back(std::make_pair("Vcomp_ADC",100));
+    dacs.push_back(std::make_pair("VIref_ADC",91));
+    dacs.push_back(std::make_pair("VIbias_roc",150));
+    dacs.push_back(std::make_pair("VIColOr",50));
+    dacs.push_back(std::make_pair("Vcal",220));
+    dacs.push_back(std::make_pair("CalDel",122));
+    dacs.push_back(std::make_pair("CtrlReg",0));
+    dacs.push_back(std::make_pair("WBC",100));
+    dacs.push_back(std::make_pair("WBCDEFG",100));
+  }
 
   // Get some pixelConfigs up and running:
   std::vector<std::vector<pxar::pixelConfig> > rocPixels;
