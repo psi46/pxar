@@ -929,16 +929,32 @@ int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
 
 
 /** DAQ functions **/
-bool api::daqStart() {
+bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   if(!status()) {return false;}
+
+  if(!pg_setup.empty()) {
+    // Prepare new Pattern Generator:
+    if(!verifyPatternGenerator(pg_setup)) return false;
+    _hal->SetupPatternGenerator(pg_setup);
+  }
+  
+  // FIXME still not doing anything here...
   return false;
 }
     
 std::vector<pixel> api::daqGetEvent() {}
 
 bool api::daqStop() {
+
   if(!status()) {return false;}
+
+  // FIXME still not doing anything here...
+
+  // Re-program the old Pattern Generator setup which is stored in the DUT.
+  // Since these patterns are verified already, just write them:
+  _hal->SetupPatternGenerator(_dut->pg_setup);
+  
   return false;
 }
 
