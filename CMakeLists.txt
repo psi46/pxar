@@ -179,15 +179,15 @@ IF(BUILD_pxardebug)
 ENDIF(BUILD_pxardebug)
 
 
-##################################################
-# Doxygen target to generate API documentation   #
-##################################################
+#############################################
+# Doxygen target to generate API reference  #
+#############################################
 FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
-  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-  ADD_CUSTOM_TARGET(doc
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/reference/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/reference/Doxyfile @ONLY)
+  ADD_CUSTOM_TARGET(ref
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/reference/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/reference
     COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
 ENDIF(DOXYGEN_FOUND)
