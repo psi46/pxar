@@ -129,7 +129,7 @@ PixTab::PixTab() {
 }
 
 // ----------------------------------------------------------------------
-void PixTab::init(PixGui *p, PixTest *test, std::string tabname) {
+void PixTab::init(PixGui *p, PixTest *test, string tabname) {
   LOG(logINFO) << "PixTab::init()";
   fGui = p;
   fTest = test; 
@@ -171,6 +171,10 @@ void PixTab::handleButtons(Int_t id) {
       LOG(logINFO) << Form("Tab %s closed", fTabName.c_str());
       fGui->getTabs()->RemoveTab(fGui->getTabs()->GetCurrent());
       fGui->getTabs()->Layout();
+      delete fTabFrame; 
+      delete fhFrame; 
+      delete fV1; 
+      delete fV2; 
       delete this; 
       break;
     }

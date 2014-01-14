@@ -3,9 +3,10 @@
 
 #include "PixTab.hh"
 #include "PixParTab.hh"
+#include "PixTestFactory.hh"
 
-#include "PixTestAlive.hh"
-#include "PixTestGainCalibration.hh"
+// #include "PixTestAlive.hh"
+// #include "PixTestDacScan.hh"
  
 using namespace std;
 using namespace pxar;
@@ -133,6 +134,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // -- tab widget
   fTabs = new TGTab(fH2, fH2->GetDefaultWidth(), fH2->GetDefaultHeight());
   fTabs->SetTab(0);
+  fTabs->Connect("Selected(Int_t)", "PixGui", this, "selectedTab(Int_t)");
   
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 
@@ -303,7 +305,17 @@ void PixGui::doSetfConsole() {
 
 // ----------------------------------------------------------------------
 PixTest* PixGui::createTest(string testname) {
-  if (!testname.compare("PixelAlive")) return new PixTestAlive(fPixSetup, testname); 
-  if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(fPixSetup, testname); 
-  return 0; 
+  PixTestFactory *factory = PixTestFactory::instance(); 
+//   if (!testname.compare("PixelAlive")) return new PixTestAlive(fPixSetup, testname); 
+//   if (!testname.compare("DacScan")) return new PixTestDacScan(fPixSetup, testname); 
+  return factory->createTest(testname, fPixSetup);
+
+//   if (!testname.compare("GainCalibration")) return new PixTestGainCalibration(fPixSetup, testname); 
+//   return 0; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixGui::selectedTab(int i) {
+  cout << "Switched to tab " << i << endl;
 }
