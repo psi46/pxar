@@ -19,19 +19,17 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fAna = new TGLabel(fHFrame1, a);
   fDigi = new TGLabel(fHFrame2, d);
 
-  fNmrAna = new TGTextEntry(fHFrame1,fAnaFileBuffer = new TGTextBuffer(100));
-  fNmrDigi = new TGTextEntry(fHFrame2,fDigiFileBuffer = new TGTextBuffer(100));
+  fNmrAna = new TGTextEntry(fHFrame1, fAnaFileBuffer = new TGTextBuffer(100));
+  fNmrDigi = new TGTextEntry(fHFrame2, fDigiFileBuffer = new TGTextBuffer(100));
   fNmrAna->SetWidth(100);
   fNmrDigi->SetWidth(100);
 
-  fAnaButton = new TGTextButton(fHFrame1,"Draw", B_DRAWANA);
+  fAnaButton = new TGTextButton(fHFrame1," Draw ", B_DRAWANA);
   fAnaButton->ChangeOptions(fAnaButton->GetOptions() | kFixedWidth);
-  fAnaButton->Resize(70,35);
   fAnaButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 
-  fDigiButton = new TGTextButton(fHFrame2,"Draw", B_DRAWDIGI);
+  fDigiButton = new TGTextButton(fHFrame2," Draw ", B_DRAWDIGI);
   fDigiButton->ChangeOptions(fDigiButton->GetOptions() | kFixedWidth);
-  fDigiButton->Resize(70,35);
   fDigiButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 
   fActTime = time(NULL);
