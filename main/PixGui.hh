@@ -37,6 +37,7 @@ typedef char int8_t;
 #include "PixTest.hh"
 #include "PixTestParameters.hh"
 #include "PixSetup.hh"
+#include "PixMonitor.hh"
 
 //fixme #include "monitorSource.hh"
 
@@ -98,6 +99,7 @@ private:
   pxar::api              *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
+  PixMonitor             *fMonitor; 
 
   int                    fWidth, fHeight; 
 

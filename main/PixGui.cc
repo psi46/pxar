@@ -106,6 +106,15 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   hwControl->AddFrame(hvFrame);
 
+
+  // -- add monitoring 
+  fMonitor = new PixMonitor(hwControl, this);
+  // Timer to check the data - set to a thousand milliseconds
+  fTimer = new TTimer(1000);
+  fTimer->Connect("Timeout()", "PixMonitor", fMonitor, "Update()");
+  fTimer->TurnOn();
+    
+
   h1v2->AddFrame(hwControl, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
   // -- right frame
