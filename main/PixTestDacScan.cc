@@ -50,7 +50,10 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 void PixTestDacScan::init() {
   LOG(logINFO) << "PixTestDacScan::init()";
 
-  fDirectory = gDirectory->mkdir(fName.c_str()); 
+  fDirectory = gFile->GetDirectory(fName.c_str()); 
+  if (!fDirectory) {
+    fDirectory = gFile->mkdir(fName.c_str()); 
+  } 
   fDirectory->cd(); 
 
   TH1D *h1(0);

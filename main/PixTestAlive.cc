@@ -47,8 +47,11 @@ bool PixTestAlive::setParameter(string parName, string sval) {
 // ----------------------------------------------------------------------
 void PixTestAlive::init() {
   LOG(logINFO) << "PixTestAlive::init()";
-
-  fDirectory = gDirectory->mkdir(fName.c_str()); 
+  
+  fDirectory = gFile->GetDirectory(fName.c_str()); 
+  if (!fDirectory) {
+    fDirectory = gFile->mkdir(fName.c_str()); 
+  } 
   fDirectory->cd(); 
 
   TH2D *h2(0);

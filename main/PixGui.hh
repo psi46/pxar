@@ -49,6 +49,7 @@ public:
   void handleButtons(Int_t id = -1);
   void createTab(char*);
   void createParTab();
+  void selectedTab(int); 
 
   void doSetfConsole();
   void closeWindow();
@@ -62,8 +63,6 @@ public:
   pxar::api* getApi() {return fApi;}
   
 private: 
-  TTimer	*fTimer;
-  TGComboBox 	*fcmbTests;
 
   static const int TESTNUMBER = 300;
   enum CommandIdentifiers {
@@ -73,6 +72,8 @@ private:
     B_HV
   };
 
+  TTimer        	*fTimer;
+  TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
   TGCompositeFrame     	*fParTab;
   TGTextView		*fLogger;
