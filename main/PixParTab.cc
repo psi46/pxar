@@ -8,6 +8,7 @@
 #include <TGTab.h>
 #include <TGLabel.h>
 #include <TGButtonGroup.h>
+#include <cstdlib>
 
 #include "PixParTab.hh"
 #include "log.h"
