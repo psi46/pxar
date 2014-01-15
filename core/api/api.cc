@@ -1140,6 +1140,7 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 
 
 // Function to program the device with all the needed trimming and masking stuff
+// It sets both the needed PUC mask&trim bits and the DCOL enable bits.
 void api::MaskAndTrim() {
 
   // Run over all existing ROCs:
@@ -1183,6 +1184,23 @@ void api::MaskAndTrim() {
     }
   }
 
+}
+
+// Function to suppy all enabled pixels in the test range ("enable") with 
+// a roc_Pix_Cal bit:
+void api::SetCalibrateBits() {
+
+  // Run over all existing ROCs:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
+    // Loop over all pixels in this ROC and set the Cal bit:
+    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+      
+      if(pxit->enable == true) {
+	_hal->PixelSetCalibrate((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
+      }
+    }
+  }
 }
 
 
