@@ -402,7 +402,7 @@ namespace pxar {
     void MaskAndTrim();
 
     // FIXME missing documentation
-    void SetCalibrateBits();
+    void SetCalibrateBits(bool enable);
 
     /** Helper function to check validity of the pattern generator settings coming from the user space
      */

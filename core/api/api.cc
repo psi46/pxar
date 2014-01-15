@@ -1200,18 +1200,24 @@ void api::MaskAndTrim() {
 
 // Function to suppy all enabled pixels in the test range ("enable") with 
 // a roc_Pix_Cal bit:
-void api::SetCalibrateBits() {
+void api::SetCalibrateBits(bool enable) {
 
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
-    // Loop over all pixels in this ROC and set the Cal bit:
-    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+    // Check if the signal has to be turned on or off:
+    if(enable) {
+      // Loop over all pixels in this ROC and set the Cal bit:
+      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
       
-      if(pxit->enable == true) {
-	_hal->PixelSetCalibrate((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
+	if(pxit->enable == true) {
+	  _hal->PixelSetCalibrate((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
+	}
       }
+
     }
+    // Clear the signal for the full ROC:
+    else {_hal->RocClearCalibrate((int)(rocit-_dut->roc.begin()));}
   }
 }
 
