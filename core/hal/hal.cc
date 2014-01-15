@@ -527,6 +527,15 @@ void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t 
   _testboard->roc_Pix_Cal(column,row,flags&FLAG_USE_CALS);
 }
 
+void hal::RocClearCalibrate(uint8_t rocid) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  LOG(logDEBUGHAL) << "Clearing calibrate signal for ROC " << (int)rocid;
+ _testboard->roc_ClrCal();
+}
+
 
 // ---------------- TEST FUNCTIONS ----------------------
 

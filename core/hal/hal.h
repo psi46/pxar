@@ -190,7 +190,11 @@ namespace pxar {
     /** Set the Calibrate bit and CALS setting of a pixel
      */
     void PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags);
-    
+
+    /** Reset all Calibrate bits and clear the ROC rocid:
+     */
+    void RocClearCalibrate(uint8_t rocid);
+
     /** Set the Column Enable bit
      */
     void ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable);
