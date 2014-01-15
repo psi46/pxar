@@ -917,3 +917,68 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->uDelay(100);
   _testboard->Flush();
 }
+
+bool hal::daqStart(uint8_t deser160phase, bool use_deser400) {
+
+  LOG(logDEBUGHAL) << "Starting new DAQ session.";
+  uint32_t buffer = 50000000;
+
+  _testboard->Daq_Open(buffer);
+  _testboard->uDelay(100);
+
+  if(use_deser400) {
+    LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
+    // FIXME fill when DESR400 fw is available.
+  }
+  else {
+    LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
+		     << " Phase: " << (int)deser160phase;
+    _testboard->Daq_Select_Deser160(deser160phase);
+  }
+
+  _testboard->Daq_Start();
+  _testboard->uDelay(100);
+
+  return true;
+}
+
+void hal::daqTrigger(uint32_t nTrig) {
+
+  LOG(logDEBUGHAL) << "Triggering " << nTrig << "x";
+
+  for (uint32_t k = 0; k < nTrig; k++) {
+    _testboard->Pg_Single();
+    _testboard->uDelay(20);
+  }
+
+}
+
+bool hal::daqStop() {
+
+  LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
+
+  // Calling Daq_Stop here - calling Daq_Diable would also trigger
+  // a FIFO reset (deleting the recorded data)
+  _testboard->Daq_Stop();
+
+  return true;
+}
+
+std::vector<uint16_t> hal::daqRead() {
+
+  std::vector<uint16_t> data;
+  uint32_t buffersize = _testboard->Daq_GetSize();
+
+  LOG(logDEBUGHAL) << "Available data: " << buffersize;
+  int status = _testboard->Daq_Read(data,buffersize);
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+  LOG(logDEBUGHAL) << "Read " << data.size() << " data words.";
+  return data;
+}
+
+bool hal::daqReset() {
+
+  LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
+  _testboard->Daq_Close();
+  return true;
+}
