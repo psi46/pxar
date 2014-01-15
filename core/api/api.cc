@@ -933,26 +933,58 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   if(!status()) {return false;}
 
+  // FIXME maybe add check for already running DAQ? Some _daq flag in DUT?
+
+  LOG(logDEBUGAPI) << "Starting new DAQ session...";
   if(!pg_setup.empty()) {
     // Prepare new Pattern Generator:
     if(!verifyPatternGenerator(pg_setup)) return false;
     _hal->SetupPatternGenerator(pg_setup);
   }
   
-  // FIXME still not doing anything here...
-  return false;
+  // Setup the configured mask and trim state of the DUT:
+  MaskAndTrim();
+
+  // Set Calibrate bits in the PUCs (we use the testrange for that):
+  SetCalibrateBits(true);
+
+  // FIXME check the DUT if we have TBMs enabled or not and choose the right
+  // deserializer:
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],false);
+
+  return true;
 }
-    
+
+void api::daqTrigger(uint32_t nTrig) {
+  // Just passing the call to the HAL, not doing anything else here:
+  _hal->daqTrigger(nTrig);
+}
+
+std::vector<uint16_t> api::daqGetBuffer() {
+  // Reading out all data from the DTB and returning the raw blob:
+  std::vector<uint16_t> data = _hal->daqRead();
+  
+  // We read out everything, reset the buffer:
+  _hal->daqReset();
+  return data;
+}
+
 std::vector<pixel> api::daqGetEvent() {}
 
 bool api::daqStop() {
 
   if(!status()) {return false;}
 
-  // FIXME still not doing anything here...
+  _hal->daqStop();
+
+  // FIXME We should probably mask the full DUT again here
+
+  // Reset all the Calibrate bits and signals:
+  SetCalibrateBits(false);
 
   // Re-program the old Pattern Generator setup which is stored in the DUT.
   // Since these patterns are verified already, just write them:
+  LOG(logDEBUGAPI) << "Resetting Pattern Generator to previous state.";
   _hal->SetupPatternGenerator(_dut->pg_setup);
   
   return false;
