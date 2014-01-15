@@ -68,8 +68,10 @@ namespace pxar {
     os << std::setw(8) << ToString(level) << ": ";
     
     // For debug levels we want also function name and line number printed:
-    if (level != logINFO && level != logWARNING && level != logQUIET)
+    if (level == logDEBUG || level == logDEBUGAPI || level == logDEBUGHAL)
       os << "<" << file << "/" << function << ":L" << line << "> ";
+    else if(level == logDEBUGRPC)
+      os << "\"" << function << "\" ";
 
     return os;
   }

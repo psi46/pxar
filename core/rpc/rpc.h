@@ -13,7 +13,7 @@
 #include "log.h"
 
 #ifndef RPC_PROFILING
-#define RPC_PROFILING LOG(pxar::logDEBUGRPC) << " called.";
+#define RPC_PROFILING LOG(pxar::logDEBUGRPC) << "called.";
 #endif
 
 #ifdef RPC_MULTITHREADING
