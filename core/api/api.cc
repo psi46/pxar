@@ -1166,7 +1166,13 @@ void api::MaskAndTrim() {
       // We have more unmasked than masked pixels:
       LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " before masking single pixels.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
-      
+
+      // Disable all unneeded columns:
+      std::vector<bool> enabledColumns = _dut->getEnabledColumns((int)(rocit-_dut->roc.begin()));
+      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+	if(!(*it)) _hal->ColumnSetEnable((int)(rocit - _dut->roc.begin()),(int)(it - enabledColumns.begin()),(*it));
+      }
+
       // And then mask the required pixels:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
 	if(pxit->mask == true) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
@@ -1176,7 +1182,13 @@ void api::MaskAndTrim() {
       // Some are unmasked, but not too many. First mask that ROC:
       LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
-      
+
+      // Enable all needed columns:
+      std::vector<bool> enabledColumns = _dut->getEnabledColumns((int)(rocit-_dut->roc.begin()));
+      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+	if((*it)) _hal->ColumnSetEnable((int)(rocit - _dut->roc.begin()),(int)(it - enabledColumns.begin()),(*it));
+      }
+
       // And then unmask the required pixels with their trim values:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
 	if(pxit->mask == false) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
