@@ -354,7 +354,7 @@ int main(int argc, char* argv[]) {
     
     // ##########################################################
     // Call the third real test (a DACDAC scan for some pixels):
-    
+    /*
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
     _api->_dut->testPixel(33,12,true);
@@ -388,7 +388,7 @@ int main(int argc, char* argv[]) {
 	std::cout << std::endl;
       }
     }
-    
+    */
     // ##########################################################
 
     // ##########################################################
@@ -398,6 +398,41 @@ int main(int argc, char* argv[]) {
     _api->SignalProbe("A2","sda");
 
     // ##########################################################
+
+    // ##########################################################
+    // Do some Raw data acquisition:
+
+    // All on!
+    _api->_dut->testAllPixels(false);
+    _api->_dut->maskAllPixels(false);
+
+    for(int i = 0; i < 1; i++) {
+      _api->_dut->testPixel(i,5,true);
+      //_api->_dut->testPixel(i,6,true);
+      //_api->_dut->testPixel(i,7,true);
+      //_api->_dut->testPixel(i,8,true);
+      /*      _api->_dut->testPixel(i,9,true);
+      _api->_dut->testPixel(i,10,true);
+      _api->_dut->testPixel(i,11,true);
+      _api->_dut->testPixel(i,12,true);*/
+    }
+
+    _api->daqStart(pg_setup);
+    _api->daqTrigger(800);
+    _api->daqStop();
+    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+    
+    std::cout << "Raw DAQ data blob:" << std::endl;
+    for(std::vector<uint16_t>::iterator it = daqdat.begin();
+	it != daqdat.end();
+	++it) {
+      if(((*it) & 0xF000) > 0x4000) std::cout << std::endl;
+      std::cout << std::hex << std::setw(4) << std::setfill('0') << (*it) << " ";
+    }
+    std::cout << std::dec << std::endl;
+    
+    // ##########################################################
+
 
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
