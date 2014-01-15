@@ -463,6 +463,8 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
   if(mask) {
     // This is quite easy:
     LOG(logDEBUGHAL) << "Masking ROC " << (int)rocid;
+
+    // Mask the PUC and detach all DC from their readout (both done on NIOS):
     _testboard->roc_Chip_Mask();
   }
   else {
@@ -478,6 +480,12 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
       trim[position] = (*pxIt).trim;
     }
 
+    // FIXME we can do that in the TrimChip function on NIOS!
+    // Detach all Double Columns from their readout:
+    for(uint8_t col = 0; col < ROC_NUMCOLS; col++) {
+      _testboard->roc_Col_Enable(col,true);
+    }
+    
     // Trim the whole ROC:
     _testboard->TrimChip(trim);
   }
