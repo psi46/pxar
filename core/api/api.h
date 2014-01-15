@@ -446,6 +446,10 @@ namespace pxar {
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
 
+    /** Function returning for every column if it includes an enabled pixel for a specific ROC:
+     */
+    std::vector< bool > getEnabledColumns(size_t rocid);
+
     /** Function returning the enabled ROC configs
      */
     std::vector< rocConfig > getEnabledRocs();
