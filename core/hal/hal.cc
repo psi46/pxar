@@ -499,13 +499,32 @@ void hal::PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, ui
   if(mask) {
     LOG(logDEBUGHAL) << "Masking pixel " << (int)column << "," << (int)row 
 		     << " on ROC " << (int)rocid;
-  _testboard->roc_Pix_Mask(column, row);
+    _testboard->roc_Pix_Mask(column, row);
   }
   else {
     LOG(logDEBUGHAL) << "Trimming pixel " << (int)column << "," << (int)row 
 		     << " (" << (int)trim << ")";
     _testboard->roc_Pix_Trim(column,row,trim);
   }
+}
+
+void hal::ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // Set the Col Enable bit:
+  LOG(logDEBUGHAL) << "Setting Column " << (int)column << " enable bit to " << (int)enable;
+  _testboard->roc_Col_Enable(column,enable);
+}
+
+void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // Set the calibrate bit and the CALS setting:
+  _testboard->roc_Pix_Cal(column,row,flags&FLAG_USE_CALS);
 }
 
 

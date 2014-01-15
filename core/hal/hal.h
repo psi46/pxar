@@ -162,6 +162,14 @@ namespace pxar {
      */
     void PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, uint8_t trim = 15);
 
+    /** Set the Calibrate bit and CALS setting of a pixel
+     */
+    void PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags);
+    
+    /** Set the Column Enable bit
+     */
+    void ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable);
+
   private:
 
     /** Private instance of the testboard RPC interface, routes all
