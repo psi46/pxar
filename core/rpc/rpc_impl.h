@@ -164,15 +164,21 @@ public:
 	RPC_EXPORT void Pg_Loop(uint16_t period);
 
 	// --- data aquisition --------------------------------------------------
-	RPC_EXPORT uint32_t Daq_Open(uint32_t buffersize = 10000000); // max # of samples
-	RPC_EXPORT void Daq_Close();
-	RPC_EXPORT void Daq_Start();
-	RPC_EXPORT void Daq_Stop();
-	RPC_EXPORT uint32_t Daq_GetSize();
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize = 16384);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize, uint32_t &availsize);
+	RPC_EXPORT uint32_t Daq_Open(uint32_t buffersize, uint8_t channel); // max # of samples
+	RPC_EXPORT void Daq_Close(uint8_t channel);
+	RPC_EXPORT void Daq_Start(uint8_t channel);
+	RPC_EXPORT void Daq_Stop(uint8_t channel);
+	RPC_EXPORT uint32_t Daq_GetSize(uint8_t channel);
+	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize = 16384, uint8_t channel = 0);
+	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize, uint32_t &availsize, uint8_t channel);
+	
 	RPC_EXPORT void Daq_Select_ADC(uint16_t blocksize, uint8_t source, uint8_t start, uint8_t stop = 0);
 	RPC_EXPORT void Daq_Select_Deser160(uint8_t shift);
+	RPC_EXPORT void Daq_Select_Deser400();
+	RPC_EXPORT void Daq_Deser400_Reset(uint8_t reset);
+	RPC_EXPORT void Daq_DeselectAll();
+
+	RPC_EXPORT void SetClockSource(uint8_t source);
 
 
 	// --- ROC/module Communication -----------------------------------------
@@ -233,7 +239,10 @@ public:
 	RPC_EXPORT int8_t CalibratePixel(int16_t nTriggers, int16_t col, int16_t row, int16_t &nReadouts, int32_t &PHsum);
 	RPC_EXPORT int8_t CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1, int16_t dacRange1, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum);
 	RPC_EXPORT int8_t CalibrateDacDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1, int16_t dacRange1, int16_t dacReg2, int16_t dacRange2, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum);
-	RPC_EXPORT int8_t CalibrateMap(int16_t nTriggers, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum);
-	RPC_EXPORT int8_t TrimChip(vector<int8_t> &trim);
+	RPC_EXPORT int16_t CalibrateMap(int16_t nTriggers, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum, vectorR<uint32_t> &address);
+	RPC_EXPORT int16_t TrimChip(vector<int16_t> &trim);
+
+	// == Wafer Test functions =====================================================
+	RPC_EXPORT bool TestColPixel(uint8_t col, uint8_t trimbit, vectorR<uint8_t> &res);
 
 };
