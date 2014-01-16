@@ -577,22 +577,38 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // FIXME use the information from address vector!
-
   // Call the RPC command:
   int status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum, address);
   LOG(logDEBUGHAL) << "Function returns: " << status;
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
 
-  // Decide over what we get back in the value field:
-  if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
-    result->push_back(delinearize(rocid,nReadouts));
-    LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";
+  size_t n = nReadouts.size();
+  size_t p = PHsum.size();
+  size_t a = address.size();
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << (int)n
+		   << ", PHsum " << (int)p
+		   << ", address " << (int)a;
+
+  // Check if all information has been transmitted:
+  if(a != n || a != p || n != p) {
+    // FIXME custom exception?
+    LOG(logCRITICAL) << "Data size not as expected!";
+    return result;
   }
-  else {
-    result->push_back(delinearize(rocid,PHsum));
-    LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
+
+  // Log what we get back in the value field:
+  if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";}
+  else {LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";}
+
+  // Fill the return data vector:
+  std::vector<pixel> data;
+  for(std::vector<uint32_t>::iterator it = address.begin(); it != address.end(); ++it) {
+    if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { 
+      data.push_back(pixel((*it),nReadouts.at((int)(it - address.begin()))));
+    }
+    else { data.push_back(pixel((*it),PHsum.at((int)(it - address.begin()))));}
+    
   }
+  result->push_back(data);
 
   return result;
 }
