@@ -665,7 +665,7 @@ bool ConfigParameters::setTbParameter(std::string var, uint8_t val) {
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
     if (!fTbParameters[i].first.compare(var)) {
       fTbParameters[i].second = val;
-      cout << "ConfigParameters::setTbParameter> Updated " << fTbParameters[i].first << " to " << fTbParameters[i].second << endl;
+      cout << "ConfigParameters::setTbParameter> Updated " << fTbParameters[i].first << " to " << int(fTbParameters[i].second) << endl;
       return true; 
     }
   }

@@ -29,6 +29,8 @@ public:
 
 
   virtual void handleButtons(Int_t id = -1); 
+  virtual void selectRoc(Int_t id = -1); 
+  virtual void selectTbm(Int_t id = -1); 
 
   virtual void setTbParameter(); 
   virtual void setPowerSettings(); 
@@ -52,23 +54,25 @@ protected:
 
   std::string            fTabName; 
   
-  std::map<std::string, void*>  fTbTextEntries;
+  std::map<std::string, TGTextEntry*>  fTbTextEntries;
   std::vector<std::string>      fTbParIds;
 
-  std::map<std::string, void*>  fPowerTextEntries;
+  std::map<std::string, TGTextEntry*>  fPowerTextEntries;
   std::vector<std::string>      fPowerParIds;
 
-  std::map<std::string, void*>  fPgTextEntries;
+  std::map<std::string, TGTextEntry*>  fPgTextEntries;
   std::vector<std::string>      fPgParIds;
 
-  std::vector<std::map<std::string, void*> > fTbmTextEntries;
+  std::vector<std::map<std::string, TGTextEntry*> > fTbmTextEntries;
   std::vector<std::vector<std::string> >     fTbmParIds;
   std::vector<TGCheckButton*>                fSelectTbm;
+  int                                        fSelectedTbm;
 
-  std::vector<std::map<std::string, void*> > fRocTextEntries;
-  std::vector<std::vector<std::string> >     fRocParIds;
-  std::vector<TGCheckButton*>                fSelectRoc;
-
+  std::map<std::string, TGTextEntry*>          fRocTextEntries;
+  std::map<int, std::string>                   fRocTextMap;
+  std::vector<std::map<std::string, uint8_t> > fRocParIds;
+  std::vector<TGCheckButton*>                  fSelectRoc;
+  int                                          fSelectedRoc;
 
   PixGui                *fGui; 
   ConfigParameters      *fConfigParameters; 

@@ -88,12 +88,6 @@ int main(int argc, char *argv[]){
     try {
       api = new pxar::api("*", verbosity);
       std::vector<std::pair<std::string,uint8_t> > sig_delays = configParameters->getTbSigDelays(); 
-      // sig_delays.push_back(std::make_pair("clk",2));
-      // sig_delays.push_back(std::make_pair("ctr",20));
-      // sig_delays.push_back(std::make_pair("sda",19));
-      // sig_delays.push_back(std::make_pair("tin",7));
-      // sig_delays.push_back(std::make_pair("deser160phase",4));
-   
       std::vector<std::pair<std::string, double> > power_settings = configParameters->getTbPowerSettings();
       std::vector<std::pair<uint16_t, uint8_t> > pg_setup = configParameters->getTbPgSettings();
 
