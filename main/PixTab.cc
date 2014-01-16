@@ -100,6 +100,12 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame->AddFrame(bDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   
+  // -- create stop Button
+  TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
+  bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
+  hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
+
   // -- create print Button
   TGTextButton *bPrint = new TGTextButton(hFrame, " print ", B_PRINT);
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
@@ -160,6 +166,12 @@ void PixTab::handleButtons(Int_t id) {
   switch (id) {
     case B_DOTEST: {
       LOG(logINFO) << "and now what???";
+      break;
+    }
+
+    case B_DOSTOP: {
+      LOG(logINFO) << "and now what???";
+      break;
     }
 
     case B_PRINT: {

@@ -99,6 +99,7 @@ void PixTestSetup::doTest() {
     LOG(logQUIET)<< "WBC = " << iwbc;
     fPixSetup->getApi()->setDAC("wbc", iwbc);
     
+    gSystem->ProcessEvents();
     for (int iphase = 0; iphase < 255; ++iphase) {
       fPixSetup->getConfigParameters()->setTbParameter("deser160phase", iphase); 
       

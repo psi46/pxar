@@ -52,6 +52,7 @@ protected:
   static const int TESTNUMBER = 0;
   enum CommandIdentifiers {
     B_DOTEST = TESTNUMBER + 21,
+    B_DOSTOP,
     B_CLOSETAB,
     B_PRINT
   };
