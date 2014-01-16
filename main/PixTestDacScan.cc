@@ -17,13 +17,13 @@ ClassImp(PixTestDacScan)
 PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada") {
   PixTest::init(a, name);
   init(); 
-  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
+  //  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
 }
 
 
 //----------------------------------------------------------
 PixTestDacScan::PixTestDacScan() : PixTest() {
-  LOG(logINFO) << "PixTestDacScan ctor()";
+  //  LOG(logINFO) << "PixTestDacScan ctor()";
 }
 
 // ----------------------------------------------------------------------
@@ -48,7 +48,7 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::init() {
-  LOG(logINFO) << "PixTestDacScan::init()";
+  //  LOG(logINFO) << "PixTestDacScan::init()";
 
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
@@ -70,7 +70,7 @@ void PixTestDacScan::init() {
 
 //----------------------------------------------------------
 PixTestDacScan::~PixTestDacScan() {
-  LOG(logINFO) << "PixTestDacScan dtor";
+  //  LOG(logINFO) << "PixTestDacScan dtor";
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
@@ -83,6 +83,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+  PixTest::update(); 
   LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
   clearHist();
   // -- FIXME: Should/could separate better test from display?

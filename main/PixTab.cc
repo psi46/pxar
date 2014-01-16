@@ -245,7 +245,6 @@ void PixTab::previousHistogram() {
 
 // ----------------------------------------------------------------------
 void PixTab::update() {
-  cout << "PixTab::update()" << endl;
   TCanvas *c = fEc1->GetCanvas();
   c->cd();
   c->Modified(); 

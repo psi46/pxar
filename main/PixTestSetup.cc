@@ -87,6 +87,7 @@ PixTestSetup::~PixTestSetup() {
 
 // ----------------------------------------------------------------------
 void PixTestSetup::doTest() {
+  cout << "PixTab::update()" << endl;
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
   fApi->_dut->testAllPixels(false);
   fApi->_dut->testPixel(12, 34, true);
