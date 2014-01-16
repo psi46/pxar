@@ -155,7 +155,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    bool daqStart(uint8_t deser160phase, bool use_deser400);
+    bool daqStart(uint8_t deser160phase, uint8_t nTBMs);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -163,15 +163,15 @@ namespace pxar {
 
     /** Stopping the current DAQ session. This is not resetting the data buffers
      */
-    bool daqStop(bool use_deser400);
+    bool daqStop(uint8_t nTBMs);
 
     /** Reading out the full DAQ buffer
      */
-    std::vector<uint16_t> daqRead(bool use_deser400);
+    std::vector<uint16_t> daqRead(uint8_t nTBMs);
 
     /** Reset the DAQ buffer on the DTB, deleted all previously taken and not yet read out data!
      */
-    bool daqReset(bool use_deser400);
+    bool daqReset(uint8_t nTBMs);
 
 
     // Functions to set bits somewhere on the ROC:
