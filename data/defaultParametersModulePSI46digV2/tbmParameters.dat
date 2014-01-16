@@ -1,7 +1,6 @@
-  0     Single   0
-  1      Speed   1
-  2  Inputbias 128
-  3 Outputbias 128
-  4    Dacgain  49
-  5   Triggers   0
-  6       Mode   1
+ 4  clear       240  # 240 = $F0
+ 0  counters      1
+ 2  mode        192  # 192 = $C0
+ 8  pkam_set     16  #  16 = $10
+10  delays        0
+12  temperature   0

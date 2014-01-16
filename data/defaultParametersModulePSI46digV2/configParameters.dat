@@ -14,11 +14,12 @@ rootFileName Pretest.root
 
 nModules 1
 nRocs 16
+nTbms 16
 hubId 31
 tbmEnable 1
 tbmEmulator 0
 hvOn 0
-tbmChannel 0
+tbmChannel 1
 rocType psi46digv2
 tbmType tbm08
 
