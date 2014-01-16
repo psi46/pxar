@@ -237,16 +237,14 @@ void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector) {
   // Turn on the output power of the testboard if not already done:
   LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
   _testboard->Pon();
-  mDelay(400);
+  _testboard->Flush();
 
-  // Set the I2C address of the ROC we are configuring right now:
-  _testboard->roc_I2cAddr(rocId);
+  // Wait a little and let the power switch do its job:
   mDelay(300);
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << (int)rocId << ".";
   rocSetDACs(rocId,dacVector);
-  mDelay(300);
 
 }
 
@@ -699,6 +697,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
     result->push_back(data);
   }
 
+  LOG(logDEBUGHAL) << "Result has size " << result->size();
   return result;
 }
 

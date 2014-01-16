@@ -17,9 +17,17 @@ int main(int argc, char* argv[]) {
   std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
 
   // DTB delays
-  sig_delays.push_back(std::make_pair("clk",2));
-  sig_delays.push_back(std::make_pair("ctr",20));
+
+  // Board 84
+  /*  sig_delays.push_back(std::make_pair("clk",4));
+  sig_delays.push_back(std::make_pair("ctr",4));
   sig_delays.push_back(std::make_pair("sda",19));
+  sig_delays.push_back(std::make_pair("tin",9));*/
+  
+
+  sig_delays.push_back(std::make_pair("clk",2));
+  sig_delays.push_back(std::make_pair("ctr",2));
+  sig_delays.push_back(std::make_pair("sda",17));
   sig_delays.push_back(std::make_pair("tin",7));
   sig_delays.push_back(std::make_pair("deser160phase",4));
   // Nasty things to catch:
@@ -67,7 +75,7 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("VIColOr",99));
     dacs.push_back(std::make_pair("Vcal",220));
     dacs.push_back(std::make_pair("CalDel",122));
-    dacs.push_back(std::make_pair("CtrlReg",0));
+    dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
   }
   else {
@@ -93,7 +101,7 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("VIColOr",50));
     dacs.push_back(std::make_pair("Vcal",220));
     dacs.push_back(std::make_pair("CalDel",122));
-    dacs.push_back(std::make_pair("CtrlReg",0));
+    dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
     dacs.push_back(std::make_pair("WBCDEFG",100));
   }
@@ -123,7 +131,7 @@ int main(int argc, char* argv[]) {
 
     // Pattern Generator:
     pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
-    pg_setup.push_back(std::make_pair(0x0400,50)); // PG_CAL
+    pg_setup.push_back(std::make_pair(0x0400,106)); // PG_CAL
     pg_setup.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
 
     // TBM configuration:
@@ -182,20 +190,20 @@ int main(int argc, char* argv[]) {
     std::cout << "Analog current: " << _api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
 
+    _api->HVon();
+    sleep(1);
+
     // Set some DAC after the "real" DUT initialization (all active ROCs):
     _api->setDAC("Vcal",101,0);
     // And check if the DUT has the updated value:
     std::cout << "New Vcal value: " << (int)_api->_dut->getDAC(0,"vCaL") << std::endl;
 
-    // Do some debug readout: Pulseheight of px 3,3 with 10 triggers:
-    //fixme    _api->debug_ph(3,3,15,10);
 
     /*
     // Test power-cycling and re-programming:
     _api->Poff();
     //    sleep(1);
     _api->Pon();
-    _api->debug_ph(3,3,15,10);
     */
 
     // ##########################################################
@@ -299,11 +307,20 @@ int main(int argc, char* argv[]) {
     std::vector< pxar::pixel > mapdata = _api->getEfficiencyMap(0,nTrig);
     std::cout << "Data size returned: " << mapdata.size() << std::endl;
 
+    
     std::cout << "ASCII Sensor Efficiency Map:" << std::endl;
     unsigned int row = 0;
+    int oldroc = 0;
     for (std::vector< pxar::pixel >::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
       
       //std::cout << "Px " << (int)mapit->column << ", " << (int)mapit->row << " has efficiency " << (int)mapit->value << "/" << nTrig << " = " << (mapit->value/nTrig) << std::endl;
+      if(oldroc != (int)mapit->roc_id) {
+	char ch;
+	std::cout << "Press the \"Any\" key. Go home if you don't find it.";
+	std::cin >> ch;
+	oldroc = (int)mapit->roc_id;
+	std::cout << "Looking at ROC " << oldroc << " now" << std::endl;
+      }
 
       if((int)mapit->value == nTrig) std::cout << "X";
       else if((int)mapit->value == 0) std::cout << "-";
@@ -434,6 +451,7 @@ int main(int argc, char* argv[]) {
     
     // ##########################################################
 
+    _api->HVoff();
 
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;

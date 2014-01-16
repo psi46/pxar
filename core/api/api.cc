@@ -688,7 +688,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
 
   delete data;
   return *result;
-
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
@@ -875,8 +874,10 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
-  // FIXME do proper repacking instead of just returning the first vector entry!
-  return data->at(0);
+  // Repacking of all data segments into one long map vector:
+  std::vector<pixel>* result = repackMapData(data);
+  delete data;
+  return *result;
 }
 
 std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
@@ -904,8 +905,10 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
-  // FIXME do proper repacking instead of just returning the first vector entry!
-  return data->at(0);
+  // Repacking of all data segments into one long map vector:
+  std::vector<pixel>* result = repackMapData(data);
+  delete data;
+  return *result;
 }
 
 std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {
@@ -1086,9 +1089,27 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
 
 
+std::vector<pixel>* api::repackMapData (std::vector< std::vector<pixel> >* data) {
+
+  std::vector<pixel>* result = new std::vector<pixel>();
+  LOG(logDEBUGAPI) << "Simple Map Repack of " << data->size() << " data blocks.";
+
+  for(std::vector<std::vector<pixel> >::iterator it = data->begin(); it!= data->end(); ++it) {
+    for(std::vector<pixel>::iterator px = (*it).begin(); px != (*it).end(); ++px) {
+      result->push_back(*px);
+    }
+  }
+
+  LOG(logDEBUGAPI) << "Correctly repacked Map data for delivery.";
+  return result;
+}
+
 std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   uint8_t currentDAC = dacMin;
+
+  LOG(logDEBUGAPI) << "Packing range " << (int)dacMin << "-" << (int)dacMax << ", data has " << data->size() << " entries.";
+
   for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
     result->push_back(std::make_pair(currentDAC, *vecit));
     currentDAC++;
@@ -1147,22 +1168,23 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 
   // the size of the data blocks of each ROC
   int segmentsize = data->size()/nRocs;
+  LOG(logDEBUGAPI) << "Segment size: " << segmentsize;
 
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  // copy data segment of first ROC into the main data vector
-  result->insert(result->end(), data->begin(), data->begin()+segmentsize);
-
-  // loop over all remaining rocs to merge their data segments into one
-  for (uint8_t rocid = 1; rocid<nRocs;rocid++){
+  // Loop over each data segment:
+  for (int segment = 0; segment < segmentsize; segment++) {
     std::vector<pixel> pixjoined;
-    // loop over each data segment belonging to this roc
-    for (int segment = 0; segment<segmentsize;segment++){
-      // copy pixel over
-      pixjoined.reserve(pixjoined.size() + data->at(segment+segmentsize*rocid).size());
-      pixjoined.insert(pixjoined.end(), data->at(segment+segmentsize*rocid).begin(),data->at(segment+segmentsize*rocid).end());
+    // Loop over all ROCs to merge their data segments into one
+    for (uint8_t rocid = 0; rocid < nRocs;rocid++) {
+      // Copy all pixels over:
+      for(std::vector<pixel>::iterator it = data->at(segment+segmentsize*rocid).begin(); it != data->at(segment+segmentsize*rocid).end(); ++it) {
+	pixjoined.push_back((*it));
+      }
     }
     result->push_back(pixjoined);
   }
+
+  LOG(logDEBUGAPI) << "Joined data has " << result->size() << " segments with each " << result->at(0).size() << " entries.";
   return result;
 }
 
