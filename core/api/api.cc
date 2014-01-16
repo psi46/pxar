@@ -688,7 +688,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
 
   delete data;
   return *result;
-
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
@@ -1086,9 +1085,27 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
 
 
+std::vector<pixel>* api::repackMapData (std::vector< std::vector<pixel> >* data) {
+
+  std::vector<pixel>* result = new std::vector<pixel>();
+  LOG(logDEBUGAPI) << "Simple Map Repack of " << data->size() << " data blocks.";
+
+  for(std::vector<std::vector<pixel> >::iterator it = data->begin(); it!= data->end(); ++it) {
+    for(std::vector<pixel>::iterator px = (*it).begin(); px != (*it).end(); ++px) {
+      result->push_back(*px);
+    }
+  }
+
+  LOG(logDEBUGAPI) << "Correctly repacked Map data for delivery.";
+  return result;
+}
+
 std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   uint8_t currentDAC = dacMin;
+
+  LOG(logDEBUGAPI) << "Packing range " << (int)dacMin << "-" << (int)dacMax << ", data has " << data->size() << " entries.";
+
   for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
     result->push_back(std::make_pair(currentDAC, *vecit));
     currentDAC++;

@@ -378,6 +378,10 @@ namespace pxar {
      */
     std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param, bool forceSerial = false);
 
+    /** repacks map data from (possibly) several ROCs into one long vector of pixels
+     */
+    std::vector<pixel>* repackMapData (std::vector< std::vector<pixel> >* data);
+
     /** repacks Dac scan data into pairs of Dac values with fired pixel vectors
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax);
