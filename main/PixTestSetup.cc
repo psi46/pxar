@@ -87,6 +87,7 @@ PixTestSetup::~PixTestSetup() {
 
 // ----------------------------------------------------------------------
 void PixTestSetup::doTest() {
+  cout << "PixTab::update()" << endl;
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
   fApi->_dut->testAllPixels(false);
   fApi->_dut->testPixel(12, 34, true);
@@ -94,34 +95,30 @@ void PixTestSetup::doTest() {
   fApi->_dut->testPixel(48, 67, true);
   
 
-  for (int i = 0; i < 50; ++i) {
-    fPixSetup->getConfigParameters()->setTbParameter("clk", i); 
-    fPixSetup->getConfigParameters()->setTbParameter("ctr", i); 
-    fPixSetup->getConfigParameters()->setTbParameter("sda", i+15); 
-    fPixSetup->getConfigParameters()->setTbParameter("tin", i+5); 
-    for (int itct = 90; itct < 110; ++itct) {
-      fPixSetup->getConfigParameters()->setTbParameter("tct", itct); 
-
-      for (int iphase = 0; iphase < 255; ++iphase) {
-	fPixSetup->getConfigParameters()->setTbParameter("deser160phase", iphase); 
-	
-	vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
-	vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
-	vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
-	
-	LOG(logINFO) << "Re-programming TB"; 
-	
-	fApi->initTestboard(sig_delays, power_settings, pg_setup);
-	
-	std::vector< pxar::pixel > mapdata = fApi->getEfficiencyMap(0, fParNtrig);
-	
-	for (vector<pixel>::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
-	  if (mapit->value > 0) {
-	    cout << "**********************************************************************" << endl;
-	    cout << "Px col/row: " << (int)mapit->column << "/" << (int)mapit->row << " has efficiency " 
-		 << (int)mapit->value << "/" << fParNtrig << " = " << (mapit->value/fParNtrig) << endl;
-	    break;
-	  }
+  for (int iwbc = 90; iwbc < 110; ++iwbc) {
+    LOG(logQUIET)<< "WBC = " << iwbc;
+    fPixSetup->getApi()->setDAC("wbc", iwbc);
+    
+    gSystem->ProcessEvents();
+    for (int iphase = 0; iphase < 255; ++iphase) {
+      fPixSetup->getConfigParameters()->setTbParameter("deser160phase", iphase); 
+      
+      vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+      vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
+      vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
+      
+      LOG(logQUIET) << "Re-programming TB: wbc = " << iwbc << " deser160phase = " << iphase; 
+      
+      fApi->initTestboard(sig_delays, power_settings, pg_setup);
+      
+      std::vector< pxar::pixel > mapdata = fApi->getEfficiencyMap(0, fParNtrig);
+      
+      for (vector<pixel>::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
+	if (mapit->value > 0) {
+	  cout << "**********************************************************************" << endl;
+	  cout << "Px col/row: " << (int)mapit->column << "/" << (int)mapit->row << " has efficiency " 
+	       << (int)mapit->value << "/" << fParNtrig << " = " << (mapit->value/fParNtrig) << endl;
+	  break;
 	}
       }
     }

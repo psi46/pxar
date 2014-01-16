@@ -83,22 +83,30 @@ PixTestAlive::~PixTestAlive() {
 void PixTestAlive::doTest() {
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
   clearHist();
+  PixTest::update(); 
   // -- FIXME: Should/could separate better test from display?
   uint16_t flag(0); 
-  fApi->_dut->testAllPixels(true);
-  vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
+  if (fApi) fApi->_dut->testAllPixels(true);
+  vector<pixel> results; 
+  if (fApi) results = fApi->getEfficiencyMap(0, fParNtrig);
   LOG(logINFO) << " results.size(): " << results.size();
   for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
     TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
     if (h) {
       for (int i = 0; i < results.size(); ++i) {
-	//      cout << Form("i = %4d", i) << " col = " << int(results[i].column) << " row = " << int(results[i].row)
-	//	   << " results: " << int(results[i].value) << endl;
+	// 	cout << Form("i = %4d", i) << " col = " << int(results[i].column) << " row = " << int(results[i].row)
+	// 	  	   << " results: " << int(results[i].value) << endl;
 	h->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/fParNtrig); 
       }
     } else {
       LOG(logINFO) << "XX did not find " << Form("PixelAlive_C%d", ichip);
     }
+    if (0) {
+      h->Fill(5,5);
+      h->Fill(15,15);
+      h->Fill(25,25);
+    }
+    cout << h->GetTitle() << " with " << h->GetEntries() << " entries " << endl;
     h->Draw("colz");
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
     LOG(logINFO) << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 

@@ -35,7 +35,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fhFrame->AddFrame(fV2, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
 
   // -- fV1: create and add Embedded Canvas
-  fEc1 = new TRootEmbeddedCanvas("ec1", fV1, 500, 500);
+  fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 500, 500);
   fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
 
   // -- fV2: create parameter TGText boxes for test
@@ -51,7 +51,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
     hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    LOG(logINFO) << "Creating TGTextEntry for " << imap->first;
+    //    LOG(logINFO) << "Creating TGTextEntry for " << imap->first;
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, imap->first.c_str());
     tl->SetWidth(100);
@@ -100,6 +100,12 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame->AddFrame(bDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   
+  // -- create stop Button
+  TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
+  bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
+  hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
+
   // -- create print Button
   TGTextButton *bPrint = new TGTextButton(hFrame, " print ", B_PRINT);
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
@@ -133,7 +139,7 @@ PixTab::PixTab() {
 
 // ----------------------------------------------------------------------
 void PixTab::init(PixGui *p, PixTest *test, string tabname) {
-  LOG(logINFO) << "PixTab::init()";
+  //  LOG(logINFO) << "PixTab::init()";
   fGui = p;
   fTest = test; 
   fTabName = tabname; 
@@ -143,7 +149,7 @@ void PixTab::init(PixGui *p, PixTest *test, string tabname) {
 // ----------------------------------------------------------------------
 // PixTab destructor
 PixTab::~PixTab() {
-  LOG(logINFO) << "PixTab destructor";
+  //  LOG(logINFO) << "PixTab destructor";
 }
 
 
@@ -160,6 +166,12 @@ void PixTab::handleButtons(Int_t id) {
   switch (id) {
     case B_DOTEST: {
       LOG(logINFO) << "and now what???";
+      break;
+    }
+
+    case B_DOSTOP: {
+      LOG(logINFO) << "and now what???";
+      break;
     }
 
     case B_PRINT: {
@@ -188,7 +200,7 @@ void PixTab::handleButtons(Int_t id) {
 // ----------------------------------------------------------------------
 void PixTab::setParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixTab::setParameter: ";
+  //  LOG(logINFO)  << "PixTab::setParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
@@ -246,6 +258,7 @@ void PixTab::previousHistogram() {
 // ----------------------------------------------------------------------
 void PixTab::update() {
   TCanvas *c = fEc1->GetCanvas();
+  c->cd();
   c->Modified(); 
   c->Update(); 
 }

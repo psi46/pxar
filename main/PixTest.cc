@@ -11,20 +11,20 @@ ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
 PixTest::PixTest(PixSetup *a, string name) {
-  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
+  //  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
   init(a, name); 
 }
 
 // ----------------------------------------------------------------------
 PixTest::PixTest() {
-  LOG(logINFO) << "PixTest ctor()";
+  //  LOG(logINFO) << "PixTest ctor()";
   
 }
 
 
 // ----------------------------------------------------------------------
 void PixTest::init(PixSetup *a, string name) {
-  LOG(logINFO)  << "PixTest::init()";
+  //  LOG(logINFO)  << "PixTest::init()";
   fPixSetup       = a;
   fApi            = a->getApi(); 
   fTestParameters = a->getPixTestParameters(); 
@@ -37,12 +37,6 @@ void PixTest::init(PixSetup *a, string name) {
   }
 }
 
-
-// // ----------------------------------------------------------------------
-// bool PixTest::getParameter(string parName) {
-//   map<string, string> testPars = fTestParameters->getTestParameters(fName); 
-//   return false; 
-// }
 
 // ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
@@ -94,12 +88,12 @@ void PixTest::dumpParameters() {
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  LOG(logINFO) << "PixTestBase dtor()";
+  //  LOG(logINFO) << "PixTestBase dtor()";
 }
 
 // ----------------------------------------------------------------------
 void PixTest::testDone() {
-  LOG(logINFO) << "PixTest::testDone()";
+  //  LOG(logINFO) << "PixTest::testDone()";
   Emit("testDone()"); 
 }
 
@@ -112,14 +106,13 @@ void PixTest::update() {
 
 // ----------------------------------------------------------------------
 void PixTest::doTest() {
-  LOG(logINFO) << "PixTest::doTest()";
+  //  LOG(logINFO) << "PixTest::doTest()";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTest::doAnalysis() {
-  LOG(logINFO) << "PixTest::doAnalysis()";
-
+  //  LOG(logINFO) << "PixTest::doAnalysis()";
 }
 
 

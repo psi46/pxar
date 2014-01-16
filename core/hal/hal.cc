@@ -930,6 +930,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
 
   _testboard->Daq_Start(0);
   _testboard->uDelay(100);
+  _testboard->Flush();
   return true;
 }
 
