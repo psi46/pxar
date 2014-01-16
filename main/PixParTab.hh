@@ -63,10 +63,11 @@ protected:
   std::map<std::string, TGTextEntry*>  fPgTextEntries;
   std::vector<std::string>      fPgParIds;
 
-  std::vector<std::map<std::string, TGTextEntry*> > fTbmTextEntries;
-  std::vector<std::vector<std::string> >     fTbmParIds;
-  std::vector<TGCheckButton*>                fSelectTbm;
-  int                                        fSelectedTbm;
+  std::map<std::string, TGTextEntry*>          fTbmTextEntries;
+  std::map<int, std::string>                   fTbmTextMap;
+  std::vector<std::map<std::string, uint8_t> > fTbmParIds;
+  std::vector<TGCheckButton*>                  fSelectTbm;
+  int                                          fSelectedTbm;
 
   std::map<std::string, TGTextEntry*>          fRocTextEntries;
   std::map<int, std::string>                   fRocTextMap;

@@ -119,44 +119,50 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
   if (cmap.size() > 0) {
-    int itbm(0); 
+
+    int firsttbm(0); 
     for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
       if (kButtonDown == fSelectTbm[i]->GetState()) {
-	itbm = i; 
+	firsttbm = i; 
 	break;
       }
     }
-    amap = cmap[itbm];  
-    std::vector<std::string>     parids;
-    std::map<std::string, TGTextEntry*> textentries; 
-    for (unsigned int i = 0; i < amap.size(); ++i) {
-      hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
-      g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-      LOG(logINFO) << "Creating TGTextEntry for " << amap[i].first; 
-      tb = new TGTextBuffer(5); 
-      tl = new TGLabel(hFrame, amap[i].first.c_str());
-      tl->SetWidth(100);
-      hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+
+    
+    for (unsigned itbm = 0; itbm < fConfigParameters->getNtbms(); ++itbm) {
       
-      te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
-      hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
-      parids.push_back(amap[i].first); 
-      textentries.insert(make_pair(amap[i].first, te)); 
+      map<string, uint8_t>  parids;
+      amap = cmap[itbm];  
       
-      te->SetText(Form("%d", int(amap[i].second)));
-      te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
-      
-      tset = new TGTextButton(hFrame, "Set", i);
-      tset->Connect("Clicked()", "PixParTab", this, "setTbmParameter()");
-      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
-      
+      for (unsigned int i = 0; i < amap.size(); ++i) {
+	if (itbm == firsttbm) {
+	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
+	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+	  LOG(logINFO) << "Creating TGTextEntry for " << amap[i].first; 
+	  tb = new TGTextBuffer(5); 
+	  tl = new TGLabel(hFrame, amap[i].first.c_str());
+	  tl->SetWidth(100);
+	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+	  
+	  te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
+	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
+	  te->SetText(Form("%d", int(amap[i].second)));
+	  te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
+	  
+	  tset = new TGTextButton(hFrame, "Set", i);
+	  tset->Connect("Clicked()", "PixParTab", this, "setTbmParameter()");
+	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+	}
+	parids.insert(make_pair(amap[i].first, amap[i].second)); 
+	fTbmTextEntries.insert(make_pair(amap[i].first, te)); 
+	fTbmTextMap.insert(make_pair(i, amap[i].first)); 
+	
+      }
+      fTbmParIds.push_back(parids);
+      vFrame->AddFrame(g2Frame);
+      g1Frame->SetWidth(g2Frame->GetDefaultWidth());
     }
-    fTbmTextEntries.push_back(textentries);
-    fTbmParIds.push_back(parids);
-    vFrame->AddFrame(g2Frame);
-    g1Frame->SetWidth(g2Frame->GetDefaultWidth());
   }
-  
 
   // -- DAC Parameters
   vFrame = new TGVerticalFrame(fhFrame);
@@ -204,7 +210,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     for (unsigned iroc = 0; iroc < fConfigParameters->getNrocs(); ++iroc) {
 
       std::map<std::string, uint8_t>  parids;
-
       amap = cmap[iroc]; 
       unsigned int idac(0); 
       for (idac = 0; idac < 0.5*amap.size(); ++idac) {
@@ -417,21 +422,21 @@ void PixParTab::setTbmParameter() {
     LOG(logINFO) << "ASLFDKHAPIUDF ";
     return; 
   }
+
+  string sdac = fTbmTextMap[id]; 
+  string sval = fTbmTextEntries[sdac]->GetText(); 
+  uint8_t udac = atoi(sval.c_str()); 
+
   int itbm(-1); 
   for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
     if (kButtonDown == fSelectTbm[i]->GetState()) {
       itbm = i; 
-      break;
+      LOG(logINFO) << "TBM " << itbm << " is selected. id = " << id;
+      fTbmParIds[itbm][sdac] = udac;
+      LOG(logINFO)<< "xxx: ID = " << id << " TBM = " << itbm
+		  << " -> " << sdac << " set to int(udac) = " << int(udac);
+      fGui->getApi()->setTbmReg(sdac, udac, itbm);
     }
-  }
-  cout << "TBM " << itbm << " is selected" << endl;
-  if (itbm > -1) {
-    vector<string> v = fTbmParIds[itbm]; 
-    map<string, TGTextEntry*> t = fTbmTextEntries[itbm];
-    string svalue = ((TGTextEntry*)(t[v[id]]))->GetText(); 
-    uint8_t udac = atoi(svalue.c_str()); 
-    LOG(logINFO)<< "xxx: ID = " << id << " -> " << v[id] << " set to svalue = " << svalue << " int = " << int(udac);
-    fGui->getApi()->setTbmReg(v[id], udac, itbm);
   }
 
   // FIXME UPDATE CONFIGPARAMETERS!
@@ -511,12 +516,8 @@ void PixParTab::setRocParameter() {
   for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
     if (kButtonDown == fSelectRoc[i]->GetState()) {
       iroc = i; 
-      //      selectRoc(iroc); 
       LOG(logINFO) << "ROC " << iroc << " is selected. id = " << id;
-      
       fRocParIds[iroc][sdac]  = udac; 
-      //      fRocTextEntries[sdac]->SetText(Form("%d", udac)); 
-      //       uint8_t udac = atoi(sval.c_str()); 
       LOG(logINFO)<< "xxx: ID = " << id << " roc = " << iroc 
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
