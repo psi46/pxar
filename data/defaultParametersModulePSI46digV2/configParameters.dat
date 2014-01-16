@@ -6,8 +6,8 @@ tbParameters tbParameters.dat
 dacParameters dacParameters
 tbmParameters tbmParameters.dat
 trimParameters trimParameters
-maskFile defaultMaskFile.dat
 testParameters testParameters.dat
+maskFile defaultMaskFile.dat
 rootFileName Pretest.root
 
 -- configuration
@@ -20,6 +20,7 @@ tbmEmulator 0
 hvOn 0
 tbmChannel 0
 rocType psi46digv2
+tbmType tbm08
 
 halfModule 0
 
