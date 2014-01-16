@@ -171,12 +171,13 @@ int main(int argc, char* argv[]) {
   try {
     _api = new pxar::api("*",argv[1] ? argv[1] : "DEBUG");
   
+    //_api->flashTB("/tmp/dtb_v0111.flash");
+    //_api->flashTB("/tmp/Pixel/dtb_v01122.flash");
+    //_api->flashTB("/tmp/dtb_v1.14.flash");
+
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
 
-    //_api->flashTB("/tmp/dtb_v0111.flash");
-    //_api->flashTB("/tmp/Pixel/dtb_v01122.flash");
-    
     // Read DUT info, should result in error message, not initialized:
     _api->_dut->info();
 
