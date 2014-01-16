@@ -665,7 +665,6 @@ bool ConfigParameters::setTbParameter(std::string var, uint8_t val) {
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
     if (!fTbParameters[i].first.compare(var)) {
       fTbParameters[i].second = val;
-      cout << "ConfigParameters::setTbParameter> Updated " << fTbParameters[i].first << " to " << int(fTbParameters[i].second) << endl;
       return true; 
     }
   }
@@ -677,7 +676,6 @@ bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
   for (unsigned int i = 0; i < fTbPowerSettings.size(); ++i) {
     if (!fTbPowerSettings[i].first.compare(var)) {
       fTbPowerSettings[i].second = val;
-      cout << "ConfigParameters::setTbParameter> Updated " << fTbPowerSettings[i].first << " to " << fTbPowerSettings[i].second << endl;
       return true; 
     }
   }
