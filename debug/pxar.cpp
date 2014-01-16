@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
     std::cout << "New Vcal value: " << (int)_api->_dut->getDAC(0,"vCaL") << std::endl;
 
     // Do some debug readout: Pulseheight of px 3,3 with 10 triggers:
-    _api->debug_ph(3,3,15,10);
+    //fixme    _api->debug_ph(3,3,15,10);
 
     /*
     // Test power-cycling and re-programming:
