@@ -19,7 +19,16 @@ namespace pxar {
    */
   class pixel {
   public:
+
+    /** Default constructor for pixel objects
+     */
   pixel() : roc_id(0), column(0), row(0), value(0) {};
+
+    /** Constructor for pixel objects with address and value initialization
+     */
+  pixel(int32_t address, int32_t data) {
+    fill(address,data);
+  };
     /** Function to fill the pixel with linear encoded data from RPC transfer
      */
     inline void fill(int32_t address, int32_t data) {
