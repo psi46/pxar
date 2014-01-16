@@ -874,8 +874,10 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
-  // FIXME do proper repacking instead of just returning the first vector entry!
-  return data->at(0);
+  // Repacking of all data segments into one long map vector:
+  std::vector<pixel>* result = repackMapData(data);
+  delete data;
+  return *result;
 }
 
 std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
@@ -903,8 +905,10 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
   std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
-  // FIXME do proper repacking instead of just returning the first vector entry!
-  return data->at(0);
+  // Repacking of all data segments into one long map vector:
+  std::vector<pixel>* result = repackMapData(data);
+  delete data;
+  return *result;
 }
 
 std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {
