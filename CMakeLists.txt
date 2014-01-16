@@ -206,7 +206,8 @@ ENDIF(DOXYGEN_FOUND)
 # The code resides here:
 # https://github.com/kmorel/UseLATEX
 
-INCLUDE(cmake/UseLATEX.cmake)
-ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
-  NO_DEFAULT
-  )
+#ul: avoid unconditional cmake if no LaTeX is installed
+#INCLUDE(cmake/UseLATEX.cmake)
+#ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
+#  NO_DEFAULT
+#  )

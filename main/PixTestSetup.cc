@@ -35,8 +35,14 @@ bool PixTestSetup::setParameter(string parName, string sval) {
       fParameters[parName] = sval;
       LOG(logINFO) << "  ==> parName: " << parName;
       LOG(logINFO) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
-      if (!parName.compare("Vcal")) fParVcal = atoi(sval.c_str()); 
+      if (!parName.compare("Ntrig")) {
+	fParNtrig = atoi(sval.c_str()); 
+	LOG(logINFO) << "  ==> setting fParNtrig to " << fParNtrig; 
+      }
+      if (!parName.compare("Vcal")) {
+	fParVcal = atoi(sval.c_str()); 
+	LOG(logINFO) << "  ==> setting fParVcal to " << fParVcal; 
+      }
       break;
     }
   }
@@ -82,28 +88,42 @@ PixTestSetup::~PixTestSetup() {
 // ----------------------------------------------------------------------
 void PixTestSetup::doTest() {
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
-  clearHist();
-  // -- FIXME: Should/could separate better test from display?
-  uint16_t flag(0); 
-  fApi->_dut->testAllPixels(true);
-  vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
-  LOG(logINFO) << " results.size(): " << results.size();
-  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
-    if (h) {
-      for (int i = 0; i < results.size(); ++i) {
-	//      cout << Form("i = %4d", i) << " col = " << int(results[i].column) << " row = " << int(results[i].row)
-	//	   << " results: " << int(results[i].value) << endl;
-	h->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/fParNtrig); 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->testPixel(12, 34, true);
+  fApi->_dut->testPixel(34, 12, true);
+  fApi->_dut->testPixel(48, 67, true);
+  
+
+  for (int i = 0; i < 50; ++i) {
+    fPixSetup->getConfigParameters()->setTbParameter("clk", i); 
+    fPixSetup->getConfigParameters()->setTbParameter("ctr", i); 
+    fPixSetup->getConfigParameters()->setTbParameter("sda", i+15); 
+    fPixSetup->getConfigParameters()->setTbParameter("tin", i+5); 
+    for (int itct = 90; itct < 110; ++itct) {
+      fPixSetup->getConfigParameters()->setTbParameter("tct", itct); 
+
+      for (int iphase = 0; iphase < 255; ++iphase) {
+	fPixSetup->getConfigParameters()->setTbParameter("deser160phase", iphase); 
+	
+	vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+	vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
+	vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
+	
+	LOG(logINFO) << "Re-programming TB"; 
+	
+	fApi->initTestboard(sig_delays, power_settings, pg_setup);
+	
+	std::vector< pxar::pixel > mapdata = fApi->getEfficiencyMap(0, fParNtrig);
+	
+	for (vector<pixel>::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
+	  if (mapit->value > 0) {
+	    cout << "**********************************************************************" << endl;
+	    cout << "Px col/row: " << (int)mapit->column << "/" << (int)mapit->row << " has efficiency " 
+		 << (int)mapit->value << "/" << fParNtrig << " = " << (mapit->value/fParNtrig) << endl;
+	    break;
+	  }
+	}
       }
-    } else {
-      LOG(logINFO) << "XX did not find " << Form("PixelAlive_C%d", ichip);
     }
-    h->Draw("colz");
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    LOG(logINFO) << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
-		 << " begin? " << (fDisplayedHist == fHistList.begin())
-		 << " end? " << (fDisplayedHist == fHistList.end());
-    PixTest::update(); 
   }
 }
