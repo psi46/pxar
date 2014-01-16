@@ -20,6 +20,13 @@ public:
 
 	int32_t GetHostRpcCallCount() { return rpc_cmdListSize; }
 	bool GetHostRpcCallName(int32_t id, stringR &callName) { callName = rpc_cmdName[id]; return true; }
+	std::vector<std::string> GetHostRpcCallNames() { 
+	  std::vector<std::string> rpc_cmdList;
+	  for(size_t i = 0; i < rpc_cmdListSize; i++) {
+	    rpc_cmdList.push_back(rpc_cmdName[i]);
+	  }
+	  return rpc_cmdList;
+	}
 
 	// === RPC ==============================================================
 
@@ -31,6 +38,7 @@ public:
 
 	RPC_EXPORT int32_t GetRpcCallCount();
 	RPC_EXPORT bool    GetRpcCallName(int32_t id, stringR &callName);
+	//RPC_EXPORT int32_t GetRpcCallHash();
 
 	// === DTB connection ====================================================
 

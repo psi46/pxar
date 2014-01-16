@@ -75,6 +75,21 @@ bool hal::status() {
   return _initialized;
 }
 
+uint32_t hal::GetHashForString(const char * s)
+{
+  // Using some primes
+  uint32_t h = 31;
+  while (*s) { h = (h * 54059) ^ (s[0] * 76963); s++; }
+  return h%86969;
+}
+
+uint32_t hal::GetHashForStringVector(const std::vector<std::string> & v)
+{
+  uint32_t ret = 0;
+  for (size_t i=0; i < v.size(); i++) {ret += ((i+1)*(GetHashForString(v[i].c_str())));}
+  return ret;
+}
+
 void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
 
   // Set voltages and current limits:
@@ -251,6 +266,15 @@ void hal::mDelay(uint32_t ms) {
 
 void hal::CheckCompatibility(){
   
+  // Get hash for the Host RPC command list:
+  LOG(logDEBUGHAL) << "Hashing Host RPC command list.";
+  uint32_t hostCmdHash = GetHashForStringVector(_testboard->GetHostRpcCallNames());
+  LOG(logDEBUGHAL) << "Host Hash: " << hostCmdHash;
+
+  LOG(logDEBUGHAL) << "Fetching DTB RPC command hash.";
+  uint32_t dtbCmdHash = 0;//_testboard->GetRpcCallHash();
+  LOG(logDEBUGHAL) << "Host Hash: " << dtbCmdHash;
+
   // Get the number of RPC calls available on both ends:
   int32_t dtb_callcount = _testboard->GetRpcCallCount();
   int32_t host_callcount = _testboard->GetHostRpcCallCount();

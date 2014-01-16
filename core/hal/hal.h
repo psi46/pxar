@@ -250,6 +250,13 @@ namespace pxar {
      */
     void setTBvd(double VD);
 
+    /** Hash calculation for RPC string vector
+     */
+    uint32_t GetHashForStringVector(const std::vector<std::string> & v);
+
+    /** Simple hashing for one string
+     */
+    uint32_t GetHashForString(const char* s);
 
     /** Helper template function to compact and pack linear vectors into
      *  pixel struct vectors
