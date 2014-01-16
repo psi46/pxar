@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <TApplication.h> 
 #include <TFile.h> 
@@ -46,14 +47,13 @@ int main(int argc, char *argv[]){
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("DEBUGHAL"); 
-  bool debug(false), doRunGui(false), doRunScript(false), noAPI(false);
+  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("DEBUGHAL"), flashFile("nada"); 
+  bool doRunGui(false), doRunScript(false), noAPI(false), doUpdateFlash(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
       cout << "-c filename           read in commands from filename" << endl;
-      cout << "-D [--dir] path       directory with config files" << endl;
-      cout << "-d                    more debug printout (to be implemented)" << endl;
+      cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
       cout << "-n                    no DUT/API initialization" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
@@ -61,13 +61,28 @@ int main(int argc, char *argv[]){
       return 0;
     }
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
-    if (!strcmp(argv[i],"-D") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
-    if (!strcmp(argv[i],"-d"))                                {debug      = true; } 
+    if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
+
+  pxar::api *api(0);
+  if (doUpdateFlash) {
+    api = new pxar::api("*", verbosity);
+    struct stat buffer;   
+    if (stat(flashFile.c_str(), &buffer) == 0) {
+      
+      api->flashTB(flashFile);
+    } else {
+      LOG(logINFO) << "error: File " << flashFile << " not found" << endl;
+    }	  
+    delete api;
+    return 0; 
+  }
+
 
   ConfigParameters *configParameters = ConfigParameters::Singleton();
   configParameters->setDirectory(dir);
@@ -83,7 +98,6 @@ int main(int argc, char *argv[]){
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
   std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
 
-  pxar::api *api = 0;
   if (!noAPI) {
     try {
       api = new pxar::api("*", verbosity);
