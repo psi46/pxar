@@ -1168,22 +1168,23 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 
   // the size of the data blocks of each ROC
   int segmentsize = data->size()/nRocs;
+  LOG(logDEBUGAPI) << "Segment size: " << segmentsize;
 
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  // copy data segment of first ROC into the main data vector
-  result->insert(result->end(), data->begin(), data->begin()+segmentsize);
-
-  // loop over all remaining rocs to merge their data segments into one
-  for (uint8_t rocid = 1; rocid<nRocs;rocid++){
+  // Loop over each data segment:
+  for (int segment = 0; segment < segmentsize; segment++) {
     std::vector<pixel> pixjoined;
-    // loop over each data segment belonging to this roc
-    for (int segment = 0; segment<segmentsize;segment++){
-      // copy pixel over
-      pixjoined.reserve(pixjoined.size() + data->at(segment+segmentsize*rocid).size());
-      pixjoined.insert(pixjoined.end(), data->at(segment+segmentsize*rocid).begin(),data->at(segment+segmentsize*rocid).end());
+    // Loop over all ROCs to merge their data segments into one
+    for (uint8_t rocid = 0; rocid < nRocs;rocid++) {
+      // Copy all pixels over:
+      for(std::vector<pixel>::iterator it = data->at(segment+segmentsize*rocid).begin(); it != data->at(segment+segmentsize*rocid).end(); ++it) {
+	pixjoined.push_back((*it));
+      }
     }
     result->push_back(pixjoined);
   }
+
+  LOG(logDEBUGAPI) << "Joined data has " << result->size() << " segments with each " << result->at(0).size() << " entries.";
   return result;
 }
 
