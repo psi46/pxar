@@ -884,7 +884,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
-  // Setup the correct _hal calls for this test (ROC wide only)
+  // Setup the correct _hal calls for this test
   HalMemFnPixel pixelfn = &hal::PixelCalibrateMap;
   HalMemFnRoc rocfn = &hal::RocCalibrateMap;
   HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
@@ -913,8 +913,27 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
 
 std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {
 
-  if(!status()) {std::vector<pixel>();}
+  if(!status()) {return std::vector<pixel>();}
 
+  // Setup the correct _hal calls for this test
+  HalMemFnPixel pixelfn = NULL;
+  HalMemFnRoc rocfn = NULL;
+  HalMemFnModule modulefn = NULL;
+
+  // Load the test parameters into vector
+  std::vector<int32_t> param;
+  param.push_back(static_cast<int32_t>(flags));
+  param.push_back(static_cast<int32_t>(nTriggers));
+
+  // check if the flags indicate that the user explicitly asks for serial execution of test:
+  // FIXME: FLAGS NOT YET CHECKED!
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+
+  // Repacking of all data segments into one long map vector:
+  std::vector<pixel>* result = repackMapData(data);
+  delete data;
+  return *result;
 }
   
 int32_t api::getReadbackValue(std::string parameterName) {
