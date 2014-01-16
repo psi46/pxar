@@ -3,6 +3,12 @@
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
+#ifdef __CINT__
+#undef __GNUC__
+typedef char __signed; 
+typedef char int8_t; 
+#endif
+
 #include <stdint.h>
 #include <string>
 #include <vector>
