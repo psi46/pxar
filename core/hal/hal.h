@@ -127,9 +127,6 @@ namespace pxar {
     std::vector< std::vector<pixel> >* DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter);
     std::vector< std::vector<pixel> >* DummyModuleTestSkeleton(std::vector<int32_t> parameter);
 
-    //FIXME DEBUG
-    int32_t PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
-
     /** Function to return ROC maps of calibration pulses
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
@@ -166,15 +163,15 @@ namespace pxar {
 
     /** Stopping the current DAQ session. This is not resetting the data buffers
      */
-    bool daqStop();
+    bool daqStop(bool use_deser400);
 
     /** Reading out the full DAQ buffer
      */
-    std::vector<uint16_t> daqRead();
+    std::vector<uint16_t> daqRead(bool use_deser400);
 
     /** Reset the DAQ buffer on the DTB, deleted all previously taken and not yet read out data!
      */
-    bool daqReset();
+    bool daqReset(bool use_deser400);
 
 
     // Functions to set bits somewhere on the ROC:

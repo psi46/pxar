@@ -496,7 +496,7 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
     LOG(logDEBUGHAL) << "Updating mask bits & trim values of ROC " << (int)rocid;
 
     // Prepare configuration of the pixels, linearize vector:
-    std::vector<int8_t> trim;
+    std::vector<int16_t> trim;
     // Set default trim value to 15:
     for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(15); }
     for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
@@ -572,12 +572,15 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<int16_t> nReadouts;
   std::vector<int32_t> PHsum;
+  std::vector<uint32_t> address;
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
+  // FIXME use the information from address vector!
+
   // Call the RPC command:
-  int status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum);
+  int status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum, address);
   LOG(logDEBUGHAL) << "Function returns: " << status;
   LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
 
@@ -852,51 +855,6 @@ std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int3
   return result;
 }
 
-
-
-
-//FIXME DEBUG
-int32_t hal::PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers)
-{
-  LOG(logDEBUGHAL) << "Starting debug PH function for some readout, " << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Looking for pixel " << col << ", " << row << ", trim " << trim;
-
-  _testboard->Daq_Open(50000);
-  _testboard->Daq_Select_Deser160(4);
-  _testboard->uDelay(100);
-  _testboard->Daq_Start();
-  _testboard->uDelay(100);
-
-  _testboard->roc_Col_Enable(col, true);
-  _testboard->roc_Pix_Trim(col, row, trim);
-  _testboard->roc_Pix_Cal (col, row, false);
-
-  vector<uint16_t> data;
-
-  _testboard->uDelay(100);
-  for (int16_t k=0; k<nTriggers; k++)
-    {
-      _testboard->Pg_Single();
-      _testboard->uDelay(20);
-    }
-
-  _testboard->roc_Pix_Mask(col, row);
-  _testboard->roc_Col_Enable(col, false);
-  _testboard->roc_ClrCal();
-
-  _testboard->Daq_Stop();
-  _testboard->Daq_Read(data, 4000);
-  _testboard->Daq_Close();
-
-  LOG(logDEBUGHAL) << "Data length is " << data.size() << ":";
-  for(std::vector<uint16_t>::iterator it = data.begin(); it != data.end(); ++it) {
-    LOG(logDEBUGHAL) << std::hex << (*it) << std::dec;
-  }
-
-  return -9999;
-}
-
-
 // Testboard power switches:
 
 void hal::HVon() {
@@ -956,12 +914,17 @@ bool hal::daqStart(uint8_t deser160phase, bool use_deser400) {
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
   uint32_t buffer = 50000000;
 
-  _testboard->Daq_Open(buffer);
+  uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffer,0);
+  LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
+
   _testboard->uDelay(100);
 
   if(use_deser400) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
-    // FIXME fill when DESR400 fw is available.
+    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffer,1);
+    LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
+    _testboard->Daq_Select_Deser400();
+    _testboard->Daq_Start(1);
   }
   else {
     LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
@@ -969,9 +932,8 @@ bool hal::daqStart(uint8_t deser160phase, bool use_deser400) {
     _testboard->Daq_Select_Deser160(deser160phase);
   }
 
-  _testboard->Daq_Start();
+  _testboard->Daq_Start(0);
   _testboard->uDelay(100);
-
   return true;
 }
 
@@ -986,32 +948,55 @@ void hal::daqTrigger(uint32_t nTrig) {
 
 }
 
-bool hal::daqStop() {
+bool hal::daqStop(bool use_deser400) {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
 
   // Calling Daq_Stop here - calling Daq_Diable would also trigger
   // a FIFO reset (deleting the recorded data)
-  _testboard->Daq_Stop();
+  if(use_deser400) { _testboard->Daq_Stop(1); }
+  _testboard->Daq_Stop(0);
 
   return true;
 }
 
-std::vector<uint16_t> hal::daqRead() {
+std::vector<uint16_t> hal::daqRead(bool use_deser400) {
 
   std::vector<uint16_t> data;
-  uint32_t buffersize = _testboard->Daq_GetSize();
+  uint32_t buffersize_ch0, buffersize_ch1;
+  uint32_t remaining_buffer_ch0, remaining_buffer_ch1;
 
-  LOG(logDEBUGHAL) << "Available data: " << buffersize;
-  int status = _testboard->Daq_Read(data,buffersize);
+  buffersize_ch0 = _testboard->Daq_GetSize(0);
+  LOG(logDEBUGHAL) << "Available data in channel 0: " << buffersize_ch0;
+  if(use_deser400) {
+    buffersize_ch1 = _testboard->Daq_GetSize(1);
+    LOG(logDEBUGHAL) << "Available data in channel 1: " << buffersize_ch1;
+  }
+
+  // FIXME check if buffersize exceeds maximum transfer size and split if so:
+  int status = _testboard->Daq_Read(data,buffersize_ch0,remaining_buffer_ch0,0);
   LOG(logDEBUGHAL) << "Function returns: " << status;
-  LOG(logDEBUGHAL) << "Read " << data.size() << " data words.";
+  LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel 0, " 
+		   << remaining_buffer_ch0 << " words remaining in buffer.";
+
+  if(use_deser400) {
+    std::vector<uint16_t> data1;
+
+    status = _testboard->Daq_Read(data1, buffersize_ch1, remaining_buffer_ch1, 1);
+    LOG(logDEBUGHAL) << "Function returns: " << status;
+    LOG(logDEBUGHAL) << "Read " << data1.size() << " data words, " 
+		     << remaining_buffer_ch1 << " words remaining in buffer.";
+
+    data.insert( data.end(), data1.begin(), data1.end() );
+  }
+
   return data;
 }
 
-bool hal::daqReset() {
+bool hal::daqReset(bool use_deser400) {
 
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
-  _testboard->Daq_Close();
+  if(use_deser400) {_testboard->Daq_Close(1);}
+  _testboard->Daq_Close(0);
   return true;
 }
