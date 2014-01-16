@@ -17,9 +17,17 @@ int main(int argc, char* argv[]) {
   std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
 
   // DTB delays
-  sig_delays.push_back(std::make_pair("clk",2));
-  sig_delays.push_back(std::make_pair("ctr",20));
+
+  // Board 84
+  /*  sig_delays.push_back(std::make_pair("clk",4));
+  sig_delays.push_back(std::make_pair("ctr",4));
   sig_delays.push_back(std::make_pair("sda",19));
+  sig_delays.push_back(std::make_pair("tin",9));*/
+  
+
+  sig_delays.push_back(std::make_pair("clk",2));
+  sig_delays.push_back(std::make_pair("ctr",2));
+  sig_delays.push_back(std::make_pair("sda",17));
   sig_delays.push_back(std::make_pair("tin",7));
   sig_delays.push_back(std::make_pair("deser160phase",4));
   // Nasty things to catch:
@@ -67,7 +75,7 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("VIColOr",99));
     dacs.push_back(std::make_pair("Vcal",220));
     dacs.push_back(std::make_pair("CalDel",122));
-    dacs.push_back(std::make_pair("CtrlReg",0));
+    dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
   }
   else {
@@ -93,7 +101,7 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("VIColOr",50));
     dacs.push_back(std::make_pair("Vcal",220));
     dacs.push_back(std::make_pair("CalDel",122));
-    dacs.push_back(std::make_pair("CtrlReg",0));
+    dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
     dacs.push_back(std::make_pair("WBCDEFG",100));
   }
@@ -123,7 +131,7 @@ int main(int argc, char* argv[]) {
 
     // Pattern Generator:
     pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
-    pg_setup.push_back(std::make_pair(0x0400,50)); // PG_CAL
+    pg_setup.push_back(std::make_pair(0x0400,106)); // PG_CAL
     pg_setup.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
 
     // TBM configuration:
