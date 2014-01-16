@@ -114,12 +114,12 @@ public:
 	int8_t Get_INT8() { return int8_t(m_par[m_pos++]); }
 	uint8_t Get_UINT8() { return uint8_t(m_par[m_pos++]); }
 	bool Get_BOOL() { return Get_UINT8() != 0; }
-	int16_t Get_INT16() { int16_t x = Get_UINT8(); x += (uint16_t)Get_UINT8() << 8; return x; }
-	uint16_t Get_UINT16() { uint16_t x = Get_UINT8(); x += (uint16_t)Get_UINT8() << 8; return x; }
-	int32_t Get_INT32() { int32_t x = Get_UINT16(); x += (uint32_t)Get_UINT16() << 16; return x; }
-	uint32_t Get_UINT32() { uint32_t x = Get_UINT16(); x += (uint32_t)Get_UINT16() << 16; return x; }
- 	int64_t Get_INT64() { int64_t x = Get_UINT32(); x += (uint64_t)Get_UINT32() << 32; return x; }
-	uint64_t Get_UINT64() { uint64_t x = Get_UINT32(); x = (uint64_t)Get_UINT32() << 32; return x; }
+	int16_t Get_INT16() { int16_t x = Get_UINT8(); x += static_cast<uint16_t>(Get_UINT8()) << 8; return x; }
+	uint16_t Get_UINT16() { uint16_t x = Get_UINT8(); x += static_cast<uint16_t>(Get_UINT8()) << 8; return x; }
+	int32_t Get_INT32() { int32_t x = Get_UINT16(); x += static_cast<uint32_t>(Get_UINT16()) << 16; return x; }
+	uint32_t Get_UINT32() { uint32_t x = Get_UINT16(); x += static_cast<uint32_t>(Get_UINT16()) << 16; return x; }
+	int64_t Get_INT64() { int64_t x = Get_UINT32(); x += static_cast<uint64_t>(Get_UINT32()) << 32; return x; }
+	uint64_t Get_UINT64() { uint64_t x = Get_UINT32(); x = static_cast<uint64_t>(Get_UINT32()) << 32; return x; }
 };
 
 
