@@ -211,3 +211,8 @@ ENDIF(DOXYGEN_FOUND)
 #ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
 #  NO_DEFAULT
 #  )
+
+#######################################################
+# Print out system information useful for bug reports #
+############################################### #######
+include(PrintSystemInformation)
