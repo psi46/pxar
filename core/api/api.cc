@@ -919,14 +919,6 @@ int32_t api::getReadbackValue(std::string parameterName) {
   if(!status()) {return -1;}
 }
 
-int32_t api::debug_ph(int32_t col, int32_t row, int32_t trim, int16_t nTriggers) {
-
-  // Make sure our DUT is properly configured:
-  if(!status()) return -1;
-  return _hal->PH(col,row,trim,nTriggers);
-}
-
-
 
 /** DAQ functions **/
 bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
@@ -961,11 +953,14 @@ void api::daqTrigger(uint32_t nTrig) {
 }
 
 std::vector<uint16_t> api::daqGetBuffer() {
+
   // Reading out all data from the DTB and returning the raw blob:
-  std::vector<uint16_t> data = _hal->daqRead();
+  // FIXME select the right readout channels:
+  std::vector<uint16_t> data = _hal->daqRead(false);
   
   // We read out everything, reset the buffer:
-  _hal->daqReset();
+  // FIXME reset all channels:
+  _hal->daqReset(false);
   return data;
 }
 
@@ -975,7 +970,8 @@ bool api::daqStop() {
 
   if(!status()) {return false;}
 
-  _hal->daqStop();
+  // FIXME stop all active DAQ channels (with TBM: true)
+  _hal->daqStop(false);
 
   // FIXME We should probably mask the full DUT again here
 
