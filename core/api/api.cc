@@ -940,9 +940,9 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
   // Set Calibrate bits in the PUCs (we use the testrange for that):
   SetCalibrateBits(true);
 
-  // FIXME check the DUT if we have TBMs enabled or not and choose the right
+  // Check the DUT if we have TBMs enabled or not and choose the right
   // deserializer:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],false);
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms());
 
   return true;
 }
@@ -954,13 +954,13 @@ void api::daqTrigger(uint32_t nTrig) {
 
 std::vector<uint16_t> api::daqGetBuffer() {
 
-  // Reading out all data from the DTB and returning the raw blob:
-  // FIXME select the right readout channels:
-  std::vector<uint16_t> data = _hal->daqRead(false);
+  // Reading out all data from the DTB and returning the raw blob.
+  // Select the right readout channels depending on the number of TBMs
+  std::vector<uint16_t> data = _hal->daqRead(_dut->getNEnabledTbms());
   
   // We read out everything, reset the buffer:
-  // FIXME reset all channels:
-  _hal->daqReset(false);
+  // Reset all active channels:
+  _hal->daqReset(_dut->getNEnabledTbms());
   return data;
 }
 
@@ -970,8 +970,8 @@ bool api::daqStop() {
 
   if(!status()) {return false;}
 
-  // FIXME stop all active DAQ channels (with TBM: true)
-  _hal->daqStop(false);
+  // Stop all active DAQ channels (depending on number of TBMs)
+  _hal->daqStop(_dut->getNEnabledTbms());
 
   // FIXME We should probably mask the full DUT again here
 

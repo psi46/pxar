@@ -898,7 +898,7 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
-bool hal::daqStart(uint8_t deser160phase, bool use_deser400) {
+bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
   uint32_t buffer = 50000000;
@@ -908,7 +908,7 @@ bool hal::daqStart(uint8_t deser160phase, bool use_deser400) {
 
   _testboard->uDelay(100);
 
-  if(use_deser400) {
+  if(nTBMs > 0) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffer,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
@@ -937,19 +937,19 @@ void hal::daqTrigger(uint32_t nTrig) {
 
 }
 
-bool hal::daqStop(bool use_deser400) {
+bool hal::daqStop(uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
 
   // Calling Daq_Stop here - calling Daq_Diable would also trigger
   // a FIFO reset (deleting the recorded data)
-  if(use_deser400) { _testboard->Daq_Stop(1); }
+  if(nTBMs > 0) { _testboard->Daq_Stop(1); }
   _testboard->Daq_Stop(0);
 
   return true;
 }
 
-std::vector<uint16_t> hal::daqRead(bool use_deser400) {
+std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 
   std::vector<uint16_t> data;
   uint32_t buffersize_ch0, buffersize_ch1;
@@ -957,7 +957,7 @@ std::vector<uint16_t> hal::daqRead(bool use_deser400) {
 
   buffersize_ch0 = _testboard->Daq_GetSize(0);
   LOG(logDEBUGHAL) << "Available data in channel 0: " << buffersize_ch0;
-  if(use_deser400) {
+  if(nTBMs > 0) {
     buffersize_ch1 = _testboard->Daq_GetSize(1);
     LOG(logDEBUGHAL) << "Available data in channel 1: " << buffersize_ch1;
   }
@@ -968,7 +968,7 @@ std::vector<uint16_t> hal::daqRead(bool use_deser400) {
   LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel 0, " 
 		   << remaining_buffer_ch0 << " words remaining in buffer.";
 
-  if(use_deser400) {
+  if(nTBMs > 0) {
     std::vector<uint16_t> data1;
 
     status = _testboard->Daq_Read(data1, buffersize_ch1, remaining_buffer_ch1, 1);
@@ -982,10 +982,10 @@ std::vector<uint16_t> hal::daqRead(bool use_deser400) {
   return data;
 }
 
-bool hal::daqReset(bool use_deser400) {
+bool hal::daqReset(uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
-  if(use_deser400) {_testboard->Daq_Close(1);}
+  if(nTBMs > 0) {_testboard->Daq_Close(1);}
   _testboard->Daq_Close(0);
   return true;
 }
