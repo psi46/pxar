@@ -93,8 +93,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     ret = delays.insert( std::make_pair(sigRegister,sigValue) );
     if(ret.second == false) {
       LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
-		      << "\" value " << (int)ret.first->second
-		      << " with " << (int)sigValue;
+		      << "\" value " << static_cast<int>(ret.first->second)
+		      << " with " << static_cast<int>(sigValue);
       delays[sigRegister] = sigValue;
     }
   }
@@ -151,8 +151,8 @@ bool api::initDUT(std::string tbmtype,
       ret = newtbm.dacs.insert( std::make_pair(dacRegister,dacValue) );
       if(ret.second == false) {
 	LOG(logWARNING) << "Overwriting existing DAC \"" << dacIt->first 
-			<< "\" value " << (int)ret.first->second
-			<< " with " << (int)dacValue;
+			<< "\" value " << static_cast<int>(ret.first->second)
+			<< " with " << static_cast<int>(dacValue);
 	newtbm.dacs[dacRegister] = dacValue;
       }
     }
@@ -182,8 +182,8 @@ bool api::initDUT(std::string tbmtype,
       ret = newroc.dacs.insert( std::make_pair(dacRegister,dacValue) );
       if(ret.second == false) {
 	LOG(logWARNING) << "Overwriting existing DAC \"" << dacIt->first 
-			<< "\" value " << (int)ret.first->second
-			<< " with " << (int)dacValue;
+			<< "\" value " << static_cast<int>(ret.first->second)
+			<< " with " << static_cast<int>(dacValue);
 	newroc.dacs[dacRegister] = dacValue;
       }
     }
@@ -192,7 +192,10 @@ bool api::initDUT(std::string tbmtype,
     for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt) {
       // Check the trim value to be within boundaries:
       if((*pixIt).trim > 15) {
-	LOG(logWARNING) << "Pixel " << (int)(*pixIt).column << ", " << (int)(*pixIt).row << " trim value " << (int)(*pixIt).trim << " exceeds limit. Set to 15.";
+	LOG(logWARNING) << "Pixel " 
+			<< static_cast<int>((*pixIt).column) << ", " 
+			<< static_cast<int>((*pixIt).row )<< " trim value " 
+			<< static_cast<int>((*pixIt).trim) << " exceeds limit. Set to 15.";
 	(*pixIt).trim = 15;
       }
       // Push the pixelConfigs into the rocConfig:
@@ -223,13 +226,13 @@ bool api::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBM((uint8_t)(tbmit - enabledTbms.begin()),(*tbmit).dacs);
+    _hal->initTBM(static_cast<uint8_t>(tbmit - enabledTbms.begin()),(*tbmit).dacs);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   if(!enabledRocs.empty()) {LOG(logDEBUGAPI) << "Programming ROCs...";}
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
+    _hal->initROC(static_cast<uint8_t>(rocit - enabledRocs.begin()),(*rocit).dacs);
   }
 
   // As last step, write all the mask and trim information to the devices:
@@ -270,12 +273,13 @@ bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t 
   uint8_t regLimit = _dict->getSize(id, type);
   if(value > regLimit) {
     LOG(logWARNING) << "Register range overflow, set register \"" 
-		    << name << "\" (" << (int)id << ") to " 
-		    << (int)regLimit << " (was: " << (int)value << ")";
-    value = (uint8_t)regLimit;
+		    << name << "\" (" << static_cast<int>(id) << ") to " 
+		    << static_cast<int>(regLimit) << " (was: " << static_cast<int>(value) << ")";
+    value = static_cast<uint8_t>(regLimit);
   }
 
-  LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << (int)id << "): " << (int)value << " (max " << (int)regLimit << ")"; 
+  LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
+		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
   return true;
 }
 
@@ -291,9 +295,9 @@ uint8_t api::stringToDeviceCode(std::string name) {
 
   // And get the device code from the dictionary object:
   uint8_t _code = _devices->getDevCode(name);
-  LOG(logDEBUGAPI) << "Device type return: " << (int)_code;
+  LOG(logDEBUGAPI) << "Device type return: " << static_cast<int>(_code);
 
-  if(_code == 0x0) {LOG(logCRITICAL) << "Unknown device \"" << (int)_code << "\"!";}
+  if(_code == 0x0) {LOG(logCRITICAL) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
   return _code;
 }
 
@@ -388,7 +392,7 @@ bool api::SignalProbe(std::string probe, std::string name) {
   
     // And get the register value from the dictionary object:
     uint8_t signal = _dict->getSignal(name);
-    LOG(logDEBUGAPI) << "Probe signal return: " << (int)signal;
+    LOG(logDEBUGAPI) << "Probe signal return: " << static_cast<int>(signal);
 
     // Select the correct probe for the output:
     if(probe.compare("d1") == 0) {
@@ -410,7 +414,7 @@ bool api::SignalProbe(std::string probe, std::string name) {
   
     // And get the register value from the dictionary object:
     uint8_t signal = _dict->getSignal(name);
-    LOG(logDEBUGAPI) << "Probe signal return: " << (int)signal;
+    LOG(logDEBUGAPI) << "Probe signal return: " << static_cast<int>(signal);
 
     // Select the correct probe for the output:
     if(probe.compare("a1") == 0) {
@@ -447,32 +451,32 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
     for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 
       // Update the DUT DAC Value:
-      ret = _dut->roc.at((uint8_t)(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
+      ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
       if(ret.second == true) {
-	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << (int)dacValue;
+	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
       }
       else {
-	_dut->roc.at((uint8_t)(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
-	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << (int)dacValue;
+	_dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
+	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
       }
 
-      _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,dacValue);
+      _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
     }
   }
-  else if(_dut->roc.size() > (unsigned)rocid) {
+  else if(_dut->roc.size() > static_cast<size_t>(rocid)) {
     // Set the DAC only in the given ROC (even if that is disabled!)
 
     // Update the DUT DAC Value:
     ret = _dut->roc.at(rocid).dacs.insert( std::make_pair(dacRegister,dacValue) );
     if(ret.second == true) {
-      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << (int)dacValue;
+      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
     }
     else {
       _dut->roc.at(rocid).dacs[dacRegister] = dacValue;
-	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << (int)dacValue;
+      LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
     }
 
-    _hal->rocSetDAC((uint8_t)rocid,dacRegister,dacValue);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocid),dacRegister,dacValue);
   }
   else {
     LOG(logERROR) << "ROC " << rocid << " is not existing in the DUT!";
@@ -498,32 +502,32 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
     for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
 
       // Update the DUT DAC Value:
-      ret = _dut->tbm.at((uint8_t)(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
+      ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
       if(ret.second == true) {
-	LOG(logWARNING) << "DAC \"" << regName << "\" was not initialized. Created with value " << (int)regValue;
+	LOG(logWARNING) << "DAC \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
       }
       else {
-	_dut->tbm.at((uint8_t)(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
-	LOG(logDEBUGAPI) << "DAC \"" << regName << "\" updated with value " << (int)regValue;
+	_dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
+	LOG(logDEBUGAPI) << "DAC \"" << regName << "\" updated with value " << static_cast<int>(regValue);
       }
 
-      _hal->tbmSetReg((uint8_t) (tbmit - enabledTbms.begin()),_register,regValue);
+      _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
     }
   }
-  else if(_dut->tbm.size() > (unsigned)tbmid) {
+  else if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
 
     // Update the DUT register Value:
     ret = _dut->tbm.at(tbmid).dacs.insert( std::make_pair(_register,regValue) );
     if(ret.second == true) {
-      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << (int)regValue;
+      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
     }
     else {
       _dut->tbm.at(tbmid).dacs[_register] = regValue;
-	LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << (int)regValue;
+      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
     }
 
-    _hal->tbmSetReg((uint8_t)tbmid,_register,regValue);
+    _hal->tbmSetReg(static_cast<uint8_t>(tbmid),_register,regValue);
   }
   else {
     LOG(logERROR) << "ROC " << tbmid << " is not existing in the DUT!";
@@ -578,9 +582,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDacValue = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dacName);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << (int)oldDacValue;
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,oldDacValue);
+    uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << static_cast<int>(oldDacValue);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
   }
 
   delete data;
@@ -681,9 +685,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDacValue = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dacName);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << (int)oldDacValue;
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,oldDacValue);
+    uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << static_cast<int>(oldDacValue);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
   }
 
   delete data;
@@ -734,9 +738,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDacValue = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dacName);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << (int)oldDacValue;
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dacRegister,oldDacValue);
+    uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << static_cast<int>(oldDacValue);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
   }
 
   delete data;
@@ -804,12 +808,12 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDac1Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac1name);
-    uint8_t oldDac2Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac2name);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << (int)oldDac1Value;
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << (int)oldDac2Value;
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac1register,oldDac1Value);
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac2register,oldDac2Value);
+    uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);
+    uint8_t oldDac2Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac2name);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << static_cast<int>(oldDac1Value);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << static_cast<int>(oldDac2Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac1register,oldDac1Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
   delete data;
@@ -880,12 +884,12 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDac1Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac1name);
-    uint8_t oldDac2Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac2name);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << (int)oldDac1Value;
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << (int)oldDac2Value;
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac1register,oldDac1Value);
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac2register,oldDac2Value);
+    uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);
+    uint8_t oldDac2Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac2name);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << static_cast<int>(oldDac1Value);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << static_cast<int>(oldDac2Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac1register,oldDac1Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
   delete data;
@@ -950,12 +954,12 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDac1Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac1name);
-    uint8_t oldDac2Value = _dut->getDAC((size_t)(rocit - enabledRocs.begin()),dac2name);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << (int)oldDac1Value;
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << (int)oldDac2Value;
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac1register,oldDac1Value);
-    _hal->rocSetDAC((uint8_t) (rocit - enabledRocs.begin()),dac2register,oldDac2Value);
+    uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);
+    uint8_t oldDac2Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac2name);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << static_cast<int>(oldDac1Value);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << static_cast<int>(oldDac2Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac1register,oldDac1Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
   delete data;
@@ -1149,7 +1153,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
 	// execute call to HAL layer routine and save returned data in buffer
-	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)((uint8_t) (rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
+	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)(static_cast<uint8_t>(rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
 	// append rocdata to main data storage vector
 	if (!data) data = rocdata;
 	else {
@@ -1169,7 +1173,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
 	std::vector< std::vector<pixel> >* rocdata = NULL;
-	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels((uint8_t)(rocit - enabledRocs.begin()));
+	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels(static_cast<uint8_t>(rocit - enabledRocs.begin()));
 
 
 	LOG(logDEBUGAPI) << "\"The Loop\" for the current ROC contains " \
@@ -1177,7 +1181,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
-	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)((uint8_t) (rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
+	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)(static_cast<uint8_t>(rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
 	  // merge pixel data into roc data storage vector
 	  if (!rocdata){
 	    rocdata = buffer; // for first time call
@@ -1236,14 +1240,14 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   uint8_t currentDAC = dacMin;
 
-  LOG(logDEBUGAPI) << "Packing range " << (int)dacMin << "-" << (int)dacMax << ", data has " << data->size() << " entries.";
+  LOG(logDEBUGAPI) << "Packing range " << static_cast<int>(dacMin) << "-" << static_cast<int>(dacMax) << ", data has " << data->size() << " entries.";
 
   for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
     result->push_back(std::make_pair(currentDAC, *vecit));
     currentDAC++;
   }
 
-  LOG(logDEBUGAPI) << "Repack end: current " << (int)currentDAC << " (max " << (int)dacMax << ")";
+  LOG(logDEBUGAPI) << "Repack end: current " << static_cast<int>(currentDAC) << " (max " << static_cast<int>(dacMax) << ")";
   if (currentDAC!=dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
     LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values!";
@@ -1273,8 +1277,8 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
     else current2dac++;
   }
 
-  LOG(logDEBUGAPI) << "Repack end: current1 " << (int)current1dac << " (max " << (int)dac1max << "), current2 " 
-		   << (int)current2dac << " (max" << (int)dac2max << ")";
+  LOG(logDEBUGAPI) << "Repack end: current1 " << static_cast<int>(current1dac) << " (max " << static_cast<int>(dac1max) << "), current2 " 
+		   << static_cast<int>(current2dac) << " (max" << static_cast<int>(dac2max) << ")";
 
   if (current1dac != dac1max){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
@@ -1325,51 +1329,51 @@ void api::MaskAndTrim() {
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
     // Check if we can run on full ROCs:
-    uint16_t masked = _dut->getNMaskedPixels((uint8_t)(rocit-_dut->roc.begin()));
-    LOG(logDEBUGAPI) << "ROC " << (int)(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
+    uint16_t masked = _dut->getNMaskedPixels(static_cast<uint8_t>(rocit-_dut->roc.begin()));
+    LOG(logDEBUGAPI) << "ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
 
     // This ROC is completely unmasked, let's trim it:
     if(masked == 0) {
-      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " in one go.";
-      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
+      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " in one go.";
+      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),false,rocit->pixels);
       continue;
     }
     else if(masked == ROC_NUMROWS*ROC_NUMCOLS) {
-      LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " in one go.";
-      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
+      LOG(logDEBUGAPI) << "Masking ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " in one go.";
+      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),true);
       continue;
     }
     // Choose the version with less calls (less than half the pixels to change):
     else if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
       // We have more unmasked than masked pixels:
-      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " before masking single pixels.";
-      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
+      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " before masking single pixels.";
+      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),false,rocit->pixels);
 
       // Disable all unneeded columns:
-      std::vector<bool> enabledColumns = _dut->getEnabledColumns((int)(rocit-_dut->roc.begin()));
+      std::vector<bool> enabledColumns = _dut->getEnabledColumns(static_cast<int>(rocit-_dut->roc.begin()));
       for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-	if(!(*it)) _hal->ColumnSetEnable((int)(rocit - _dut->roc.begin()),(int)(it - enabledColumns.begin()),(*it));
+	if(!(*it)) _hal->ColumnSetEnable(static_cast<int>(rocit - _dut->roc.begin()),static_cast<int>(it - enabledColumns.begin()),(*it));
       }
 
       // And then mask the required pixels:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->mask == true) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
+	if(pxit->mask == true) {_hal->PixelSetMask(static_cast<int>(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
       }
     }
     else {
       // Some are unmasked, but not too many. First mask that ROC:
-      LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
-      _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
+      LOG(logDEBUGAPI) << "Masking ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
+      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),true);
 
       // Enable all needed columns:
-      std::vector<bool> enabledColumns = _dut->getEnabledColumns((int)(rocit-_dut->roc.begin()));
+      std::vector<bool> enabledColumns = _dut->getEnabledColumns(static_cast<int>(rocit-_dut->roc.begin()));
       for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-	if((*it)) _hal->ColumnSetEnable((int)(rocit - _dut->roc.begin()),(int)(it - enabledColumns.begin()),(*it));
+	if((*it)) _hal->ColumnSetEnable(static_cast<int>(rocit - _dut->roc.begin()),static_cast<int>(it - enabledColumns.begin()),(*it));
       }
 
       // And then unmask the required pixels with their trim values:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->mask == false) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
+	if(pxit->mask == false) {_hal->PixelSetMask(static_cast<int>(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
       }
     }
   }
@@ -1389,13 +1393,13 @@ void api::SetCalibrateBits(bool enable) {
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
       
 	if(pxit->enable == true) {
-	  _hal->PixelSetCalibrate((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
+	  _hal->PixelSetCalibrate(static_cast<int>(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
 	}
       }
 
     }
     // Clear the signal for the full ROC:
-    else {_hal->RocClearCalibrate((int)(rocit-_dut->roc.begin()));}
+    else {_hal->RocClearCalibrate(static_cast<int>(rocit-_dut->roc.begin()));}
   }
 }
 
@@ -1405,7 +1409,7 @@ bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     if((*it).second == 0 && it != pg_setup.end() -1 ) {
       LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
-		       << (int)(it - pg_setup.begin())  << ".";
+		       << static_cast<int>(it - pg_setup.begin())  << ".";
       return false;
     }
     // Check last entry for PG stop signal (delay = 0):
