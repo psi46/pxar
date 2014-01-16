@@ -25,7 +25,11 @@ hal::hal(std::string name) {
       PrintInfo();
 
       // Check if all RPC calls are matched:
-      CheckCompatibility();
+      if(!CheckCompatibility()) {
+	_testboard->Close();
+	// FIXME throw some custom exception here!
+	throw 1;
+      }
 
       // ...and do the obligatory welcome LED blink:
       _testboard->Welcome();
@@ -262,54 +266,58 @@ void hal::mDelay(uint32_t ms) {
   usleep(ms*1000);
 }
 
-void hal::CheckCompatibility(){
-  
-  // Get hash for the Host RPC command list:
-  LOG(logDEBUGHAL) << "Hashing Host RPC command list.";
-  uint32_t hostCmdHash = GetHashForStringVector(_testboard->GetHostRpcCallNames());
-  LOG(logDEBUGHAL) << "Host Hash: " << hostCmdHash;
+bool hal::CheckCompatibility(){
 
-  LOG(logDEBUGHAL) << "Fetching DTB RPC command hash.";
-  uint32_t dtbCmdHash = 0;//_testboard->GetRpcCallHash();
-  LOG(logDEBUGHAL) << "Host Hash: " << dtbCmdHash;
+  std::string dtb_hashcmd;
+  uint32_t hostCmdHash;
+  uint32_t dtbCmdHash;
 
-  // Get the number of RPC calls available on both ends:
-  int32_t dtb_callcount = _testboard->GetRpcCallCount();
-  int32_t host_callcount = _testboard->GetHostRpcCallCount();
+  // This is a legacy check for boards with an old firmware not featuring the hash function:
+  _testboard->GetRpcCallName(5,dtb_hashcmd);
+  if(dtb_hashcmd.compare("GetRpcCallHash$I") != 0) {
+    LOG(logCRITICAL) << "Your DTB flash file is outdated, it does not proved a RPC hash value for compatibility checks.";
+  }
+  else {
+    // Get hash for the Host RPC command list:
+    LOG(logDEBUGHAL) << "Hashing Host RPC command list.";
+    hostCmdHash = GetHashForStringVector(_testboard->GetHostRpcCallNames());
+    LOG(logDEBUGHAL) << "Host Hash: " << hostCmdHash;
+
+    // Get hash for the DTB RPC command list:
+    LOG(logDEBUGHAL) << "Fetching DTB RPC command hash.";
+    dtbCmdHash = _testboard->GetRpcCallHash();
+    LOG(logDEBUGHAL) << "Host Hash: " << dtbCmdHash;
+  }
 
   // If they don't match check RPC calls one by one and print offenders:
-  if(dtb_callcount != host_callcount) {
-    LOG(logERROR) << "RPC Call count of DTB and host do not match:";
-    LOG(logERROR) << "   " << dtb_callcount << " DTB RPC calls vs. ";
-    LOG(logERROR) << "   " << host_callcount << " host RPC calls defined!";
+  if(dtb_hashcmd.compare("GetRpcCallHash$I") != 0 || dtbCmdHash != hostCmdHash) {
+    LOG(logCRITICAL) << "RPC Call hashes of DTB and Host do not match!";
+
+    // Get the number of RPC calls available on both ends:
+    int32_t dtb_callcount = _testboard->GetRpcCallCount();
+    int32_t host_callcount = _testboard->GetHostRpcCallCount();
 
     for(int id = 0; id < max(dtb_callcount,host_callcount); id++) {
-
       std::string dtb_callname;
       std::string host_callname;
 
-      if(id < dtb_callcount) {
-	if(!_testboard->GetRpcCallName(id,dtb_callname)) {
-	  LOG(logERROR) << "Error in fetching DTB RPC call name.";
-	}
-      }
-      if(id < host_callcount) {
-	if(!_testboard->GetHostRpcCallName(id,host_callname)) {
-	  LOG(logERROR) << "Error in fetching host RPC call name.";
-	}
-      }
+      if(id < dtb_callcount) {_testboard->GetRpcCallName(id,dtb_callname);}
+      if(id < host_callcount) {_testboard->GetHostRpcCallName(id,host_callname);}
 
       if(dtb_callname.compare(host_callname) != 0) {
-	LOG(logERROR) << "ID " << id 
-		  << ": (DTB) \"" << dtb_callname 
-		  << "\" != (Host) \"" << host_callname << "\"";
+	LOG(logDEBUGHAL) << "ID " << id 
+			 << ": (DTB) \"" << dtb_callname 
+			 << "\" != (Host) \"" << host_callname << "\"";
       }
     }
 
     // For now, just print a message and don't to anything else:
-    LOG(logERROR) << "Please update your DTB with the correct flash file!";
-    // FIXME throw some exception here!
+    LOG(logCRITICAL) << "Please update your DTB with the correct flash file!";
+    return false;
   }
+
+  // We are though all checks, testboard is successfully connected:
+  return true;
 }
 
 bool hal::FindDTB(std::string &usbId) {

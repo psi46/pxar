@@ -38,7 +38,7 @@ public:
 
 	RPC_EXPORT int32_t GetRpcCallCount();
 	RPC_EXPORT bool    GetRpcCallName(int32_t id, stringR &callName);
-	//RPC_EXPORT int32_t GetRpcCallHash();
+	RPC_EXPORT uint32_t GetRpcCallHash();
 
 	// === DTB connection ====================================================
 

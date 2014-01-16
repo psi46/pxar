@@ -213,10 +213,10 @@ namespace pxar {
      */
     void PrintInfo();
 
-    /** Check for matching pxar / testboard software and firmware versions
+    /** Check for matching pxar / DTB firmware RPC call hashes
      * and scan the RPC commands one by one if ion doubt.
      */
-    void CheckCompatibility();
+    bool CheckCompatibility();
 
     /** Find attached USB devices that match the DTB naming scheme.
      *
