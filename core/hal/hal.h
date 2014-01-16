@@ -154,6 +154,31 @@ namespace pxar {
      */
     std::vector< std::vector<pixel> >* PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
+
+    // DAQ functions:
+    /** Starting a new data acquisition session
+     */
+    bool daqStart(uint8_t deser160phase, bool use_deser400);
+
+    /** Firing the pattern generator nTrig times with the programmed patterns
+     */
+    void daqTrigger(uint32_t nTrig);
+
+    /** Stopping the current DAQ session. This is not resetting the data buffers
+     */
+    bool daqStop();
+
+    /** Reading out the full DAQ buffer
+     */
+    std::vector<uint16_t> daqRead();
+
+    /** Reset the DAQ buffer on the DTB, deleted all previously taken and not yet read out data!
+     */
+    bool daqReset();
+
+
+    // Functions to set bits somewhere on the ROC:
+
     /** Mask all pixels on a specific ROC rocId
      */
     void RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels = std::vector<pixelConfig>());
@@ -161,6 +186,18 @@ namespace pxar {
     /** Mask the specified pixel on ROC rocId
      */
     void PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, uint8_t trim = 15);
+
+    /** Set the Calibrate bit and CALS setting of a pixel
+     */
+    void PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags);
+
+    /** Reset all Calibrate bits and clear the ROC rocid:
+     */
+    void RocClearCalibrate(uint8_t rocid);
+
+    /** Set the Column Enable bit
+     */
+    void ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable);
 
   private:
 

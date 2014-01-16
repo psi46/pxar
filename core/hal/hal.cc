@@ -463,6 +463,8 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
   if(mask) {
     // This is quite easy:
     LOG(logDEBUGHAL) << "Masking ROC " << (int)rocid;
+
+    // Mask the PUC and detach all DC from their readout (both done on NIOS):
     _testboard->roc_Chip_Mask();
   }
   else {
@@ -478,6 +480,12 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
       trim[position] = (*pxIt).trim;
     }
 
+    // FIXME we can do that in the TrimChip function on NIOS!
+    // Detach all Double Columns from their readout:
+    for(uint8_t col = 0; col < ROC_NUMCOLS; col++) {
+      _testboard->roc_Col_Enable(col,true);
+    }
+    
     // Trim the whole ROC:
     _testboard->TrimChip(trim);
   }
@@ -491,13 +499,41 @@ void hal::PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, ui
   if(mask) {
     LOG(logDEBUGHAL) << "Masking pixel " << (int)column << "," << (int)row 
 		     << " on ROC " << (int)rocid;
-  _testboard->roc_Pix_Mask(column, row);
+    _testboard->roc_Pix_Mask(column, row);
   }
   else {
     LOG(logDEBUGHAL) << "Trimming pixel " << (int)column << "," << (int)row 
 		     << " (" << (int)trim << ")";
     _testboard->roc_Pix_Trim(column,row,trim);
   }
+}
+
+void hal::ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // Set the Col Enable bit:
+  LOG(logDEBUGHAL) << "Setting Column " << (int)column << " enable bit to " << (int)enable;
+  _testboard->roc_Col_Enable(column,enable);
+}
+
+void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // Set the calibrate bit and the CALS setting:
+  _testboard->roc_Pix_Cal(column,row,flags&FLAG_USE_CALS);
+}
+
+void hal::RocClearCalibrate(uint8_t rocid) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  LOG(logDEBUGHAL) << "Clearing calibrate signal for ROC " << (int)rocid;
+ _testboard->roc_ClrCal();
 }
 
 
@@ -889,4 +925,69 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->SignalProbeA2(signal);
   _testboard->uDelay(100);
   _testboard->Flush();
+}
+
+bool hal::daqStart(uint8_t deser160phase, bool use_deser400) {
+
+  LOG(logDEBUGHAL) << "Starting new DAQ session.";
+  uint32_t buffer = 50000000;
+
+  _testboard->Daq_Open(buffer);
+  _testboard->uDelay(100);
+
+  if(use_deser400) {
+    LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
+    // FIXME fill when DESR400 fw is available.
+  }
+  else {
+    LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
+		     << " Phase: " << (int)deser160phase;
+    _testboard->Daq_Select_Deser160(deser160phase);
+  }
+
+  _testboard->Daq_Start();
+  _testboard->uDelay(100);
+
+  return true;
+}
+
+void hal::daqTrigger(uint32_t nTrig) {
+
+  LOG(logDEBUGHAL) << "Triggering " << nTrig << "x";
+
+  for (uint32_t k = 0; k < nTrig; k++) {
+    _testboard->Pg_Single();
+    _testboard->uDelay(20);
+  }
+
+}
+
+bool hal::daqStop() {
+
+  LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
+
+  // Calling Daq_Stop here - calling Daq_Diable would also trigger
+  // a FIFO reset (deleting the recorded data)
+  _testboard->Daq_Stop();
+
+  return true;
+}
+
+std::vector<uint16_t> hal::daqRead() {
+
+  std::vector<uint16_t> data;
+  uint32_t buffersize = _testboard->Daq_GetSize();
+
+  LOG(logDEBUGHAL) << "Available data: " << buffersize;
+  int status = _testboard->Daq_Read(data,buffersize);
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+  LOG(logDEBUGHAL) << "Read " << data.size() << " data words.";
+  return data;
+}
+
+bool hal::daqReset() {
+
+  LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
+  _testboard->Daq_Close();
+  return true;
 }

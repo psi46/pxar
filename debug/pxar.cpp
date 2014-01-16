@@ -321,12 +321,12 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Call the second real test (a DAC scan for some pixels):
-    /*
+    
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
-    _api->_dut->testPixel(34,12,true);
-    _api->_dut->testPixel(33,12,true);
-    _api->_dut->testPixel(34,11,true);
+    //    _api->_dut->testPixel(34,12,true);
+    //    _api->_dut->testPixel(33,12,true);
+    //    _api->_dut->testPixel(34,11,true);
     _api->_dut->testPixel(14,12,true);
 
     _api->_dut->info();
@@ -349,7 +349,7 @@ int main(int argc, char* argv[]) {
 	std::cout << "      pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
       }
     }
-    */
+    
     // ##########################################################
     
     // ##########################################################
@@ -358,24 +358,34 @@ int main(int argc, char* argv[]) {
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
     _api->_dut->testPixel(33,12,true);
-    _api->_dut->testPixel(14,12,true);
 
     // Call the test:
     nTrig = 10;
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > 
-      effscan2ddata = _api->getEfficiencyVsDACDAC("vdig", 0, 7, "vcomp", 0, 12, 0, nTrig);
+    int limit = 120;
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("caldel", 0, limit, "vthrcomp", 0, limit, 0, nTrig);
+    //std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("vbias_sf", 0, limit, "vcomp", 0, limit, 0, nTrig);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscan2ddata.size() << std::endl;
     
-    // Loop over dacdac values:
-    for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = effscan2ddata.begin();
-	dacit != effscan2ddata.end(); ++dacit) {
-      std::cout << "  dac1: " << (int)dacit->first << " dac2: " << (int)dacit->second.first
-		<< " has " << dacit->second.second.size() << " fired pixels " << std::endl;
-      // Loop over fired pixels and show value
-      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.second.begin(); pixit != dacit->second.second.end();++pixit){
-	std::cout << "      pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
+    int dac = 0;
+    std::cout << "VthrComp vs. CalDel:" << std::endl;
+    for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = effscan2ddata.begin(); dacit != effscan2ddata.end(); ++dacit) {
+      
+      if(dacit->second.second.empty()) {
+	std::cout << "-";
+	continue;
+      }
+      int value = dacit->second.second.at(0).value;
+      if(value == nTrig) std::cout << "X";
+      else if(value == 0) std::cout << " ";
+      else if(value > nTrig) std::cout << "#";
+      else std::cout << value;
+
+      dac++;
+      if(dac >= limit) { 
+	dac = 0;
+	std::cout << std::endl;
       }
     }
     */
@@ -388,6 +398,41 @@ int main(int argc, char* argv[]) {
     _api->SignalProbe("A2","sda");
 
     // ##########################################################
+
+    // ##########################################################
+    // Do some Raw data acquisition:
+
+    // All on!
+    _api->_dut->testAllPixels(false);
+    _api->_dut->maskAllPixels(false);
+
+    for(int i = 0; i < 1; i++) {
+      _api->_dut->testPixel(i,5,true);
+      //_api->_dut->testPixel(i,6,true);
+      //_api->_dut->testPixel(i,7,true);
+      //_api->_dut->testPixel(i,8,true);
+      /*      _api->_dut->testPixel(i,9,true);
+      _api->_dut->testPixel(i,10,true);
+      _api->_dut->testPixel(i,11,true);
+      _api->_dut->testPixel(i,12,true);*/
+    }
+
+    _api->daqStart(pg_setup);
+    _api->daqTrigger(800);
+    _api->daqStop();
+    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+    
+    std::cout << "Raw DAQ data blob:" << std::endl;
+    for(std::vector<uint16_t>::iterator it = daqdat.begin();
+	it != daqdat.end();
+	++it) {
+      if(((*it) & 0xF000) > 0x4000) std::cout << std::endl;
+      std::cout << std::hex << std::setw(4) << std::setfill('0') << (*it) << " ";
+    }
+    std::cout << std::dec << std::endl;
+    
+    // ##########################################################
+
 
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;

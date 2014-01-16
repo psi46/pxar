@@ -333,9 +333,10 @@ namespace pxar {
      */
     std::vector<pixel> daqGetEvent();
 
-    /** Function to fire the previously defined pattern commands once
+    /** Function to fire the previously defined pattern commands nTrig times, the
+     *  function parameter defaults to 1.
      */
-    void daqTrigger();
+    void daqTrigger(uint32_t nTrig = 1);
 
     /** Function to stop the running data acquisition
      *  This triggers also a reprogramming of the old (test-) Pattern Generator setup, so no additional
@@ -345,9 +346,9 @@ namespace pxar {
     bool daqStop();
 
     /** Function to return the full event buffer from the testboard RAM after the
-     *  data acquisition has been stopped.
+     *  data acquisition has been stopped. No decoding performed, raw data.
      */
-    // <?> daqGetBuffer();
+    std::vector<uint16_t> daqGetBuffer();
     
 
 
@@ -401,6 +402,9 @@ namespace pxar {
      */
     void MaskAndTrim();
 
+    // FIXME missing documentation
+    void SetCalibrateBits(bool enable);
+
     /** Helper function to check validity of the pattern generator settings coming from the user space
      */
     bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
@@ -442,6 +446,10 @@ namespace pxar {
     /** Function returning the enabled pixels configs for a specific ROC:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
+
+    /** Function returning for every column if it includes an enabled pixel for a specific ROC:
+     */
+    std::vector< bool > getEnabledColumns(size_t rocid);
 
     /** Function returning the enabled ROC configs
      */

@@ -933,26 +933,58 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   if(!status()) {return false;}
 
+  // FIXME maybe add check for already running DAQ? Some _daq flag in DUT?
+
+  LOG(logDEBUGAPI) << "Starting new DAQ session...";
   if(!pg_setup.empty()) {
     // Prepare new Pattern Generator:
     if(!verifyPatternGenerator(pg_setup)) return false;
     _hal->SetupPatternGenerator(pg_setup);
   }
   
-  // FIXME still not doing anything here...
-  return false;
+  // Setup the configured mask and trim state of the DUT:
+  MaskAndTrim();
+
+  // Set Calibrate bits in the PUCs (we use the testrange for that):
+  SetCalibrateBits(true);
+
+  // FIXME check the DUT if we have TBMs enabled or not and choose the right
+  // deserializer:
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],false);
+
+  return true;
 }
-    
+
+void api::daqTrigger(uint32_t nTrig) {
+  // Just passing the call to the HAL, not doing anything else here:
+  _hal->daqTrigger(nTrig);
+}
+
+std::vector<uint16_t> api::daqGetBuffer() {
+  // Reading out all data from the DTB and returning the raw blob:
+  std::vector<uint16_t> data = _hal->daqRead();
+  
+  // We read out everything, reset the buffer:
+  _hal->daqReset();
+  return data;
+}
+
 std::vector<pixel> api::daqGetEvent() {}
 
 bool api::daqStop() {
 
   if(!status()) {return false;}
 
-  // FIXME still not doing anything here...
+  _hal->daqStop();
+
+  // FIXME We should probably mask the full DUT again here
+
+  // Reset all the Calibrate bits and signals:
+  SetCalibrateBits(false);
 
   // Re-program the old Pattern Generator setup which is stored in the DUT.
   // Since these patterns are verified already, just write them:
+  LOG(logDEBUGAPI) << "Resetting Pattern Generator to previous state.";
   _hal->SetupPatternGenerator(_dut->pg_setup);
   
   return false;
@@ -1140,6 +1172,7 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 
 
 // Function to program the device with all the needed trimming and masking stuff
+// It sets both the needed PUC mask&trim bits and the DCOL enable bits.
 void api::MaskAndTrim() {
 
   // Run over all existing ROCs:
@@ -1165,7 +1198,13 @@ void api::MaskAndTrim() {
       // We have more unmasked than masked pixels:
       LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " before masking single pixels.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
-      
+
+      // Disable all unneeded columns:
+      std::vector<bool> enabledColumns = _dut->getEnabledColumns((int)(rocit-_dut->roc.begin()));
+      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+	if(!(*it)) _hal->ColumnSetEnable((int)(rocit - _dut->roc.begin()),(int)(it - enabledColumns.begin()),(*it));
+      }
+
       // And then mask the required pixels:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
 	if(pxit->mask == true) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
@@ -1175,7 +1214,13 @@ void api::MaskAndTrim() {
       // Some are unmasked, but not too many. First mask that ROC:
       LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
-      
+
+      // Enable all needed columns:
+      std::vector<bool> enabledColumns = _dut->getEnabledColumns((int)(rocit-_dut->roc.begin()));
+      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+	if((*it)) _hal->ColumnSetEnable((int)(rocit - _dut->roc.begin()),(int)(it - enabledColumns.begin()),(*it));
+      }
+
       // And then unmask the required pixels with their trim values:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
 	if(pxit->mask == false) {_hal->PixelSetMask((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
@@ -1183,6 +1228,29 @@ void api::MaskAndTrim() {
     }
   }
 
+}
+
+// Function to suppy all enabled pixels in the test range ("enable") with 
+// a roc_Pix_Cal bit:
+void api::SetCalibrateBits(bool enable) {
+
+  // Run over all existing ROCs:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
+    // Check if the signal has to be turned on or off:
+    if(enable) {
+      // Loop over all pixels in this ROC and set the Cal bit:
+      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+      
+	if(pxit->enable == true) {
+	  _hal->PixelSetCalibrate((int)(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
+	}
+      }
+
+    }
+    // Clear the signal for the full ROC:
+    else {_hal->RocClearCalibrate((int)(rocit-_dut->roc.begin()));}
+  }
 }
 
 
