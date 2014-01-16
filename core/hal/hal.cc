@@ -652,33 +652,6 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
   return result;
 }
 
-template <typename T>
-std::vector<pixel> hal::delinearize(uint8_t rocId, std::vector<T> tvec) {
-
-  // Loop over the full roc, since we have full-matrix readout:
-  std::vector<pixel> data;
-  int column = 0, row = 0;
-
-  for(typename std::vector<T>::iterator it = tvec.begin(); it < tvec.end(); ++it) {
-    pixel newpixel;
-    newpixel.column = column;
-    newpixel.row = row;
-    newpixel.roc_id = rocId;
-
-    newpixel.value = static_cast<int32_t>(*it);
-    data.push_back(newpixel);
-
-    // Translate linear vectors into 2D pixel addresses:
-    row++;
-    if(row >= ROC_NUMROWS) {
-      row = 0;
-      column++;
-    }
-  }
-
-  return data;
-}
-
 std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   int32_t dacreg = parameter.at(0);
