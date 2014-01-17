@@ -11,6 +11,7 @@ public:
   virtual ~PixTestDacScan();
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
+  void bookHist(std::string); 
   
   void doTest(); 
 
@@ -18,7 +19,8 @@ private:
 
   int     fParNtrig; 
   std::string fParDAC; 
-  std::pair<int, int> fPIX1, fPIX2, fPIX3, fPIX4; 
+  int     fParLoDAC, fParHiDAC;
+  std::vector<std::pair<int, int> > fPIX; 
 
   ClassDef(PixTestDacScan, 1);
 
