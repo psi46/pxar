@@ -4,6 +4,94 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cstdio>
+
+void DecodeTbmHeader(unsigned int raw)
+{
+  int evNr = raw >> 8;
+  int stkCnt = raw & 6;
+  printf("  EV(%3i) STF(%c) PKR(%c) STKCNT(%2i)",
+	 evNr,
+	 (raw&0x0080)?'1':'0',
+	 (raw&0x0040)?'1':'0',
+	 stkCnt
+	 );
+}
+
+void DecodeTbmTrailer(unsigned int raw)
+{
+  int dataId = (raw >> 6) & 0x3;
+  int data   = raw & 0x3f;
+  printf("  NTP(%c) RST(%c) RSR(%c) SYE(%c) SYT(%c) CTC(%c) CAL(%c) SF(%c) D%i(%2i)",
+	 (raw&0x8000)?'1':'0',
+	 (raw&0x4000)?'1':'0',
+	 (raw&0x2000)?'1':'0',
+	 (raw&0x1000)?'1':'0',
+	 (raw&0x0800)?'1':'0',
+	 (raw&0x0400)?'1':'0',
+	 (raw&0x0200)?'1':'0',
+	 (raw&0x0100)?'1':'0',
+	 dataId,
+	 data
+	 );
+}
+
+void DecodePixel(unsigned int raw)
+{
+  unsigned int ph = (raw & 0x0f) + ((raw >> 1) & 0xf0);
+  raw >>= 9;
+  int c =    (raw >> 12) & 7;
+  c = c*6 + ((raw >>  9) & 7);
+  int r =    (raw >>  6) & 7;
+  r = r*6 + ((raw >>  3) & 7);
+  r = r*6 + ( raw        & 7);
+  int y = 80 - r/2;
+  int x = 2*c + (r&1);
+  printf("   Pixel [%05o] %2i/%2i: %3u", raw, x, y, ph);
+}
+
+void Decode(std::vector<uint16_t> data) {
+
+  unsigned int hdr, trl;
+  unsigned int raw;
+  for (int i=0; i<data.size(); i++)
+    {
+      int d = data[i] & 0xf;
+      int q = (data[i]>>4) & 0xf;
+      switch (q)
+	{
+	case  0: printf("  0(%1X)", d); break;
+
+	case  1: printf("\n R1(%1X)", d); raw = d; break;
+	case  2: printf(" R2(%1X)", d);   raw = (raw<<4) + d; break;
+	case  3: printf(" R3(%1X)", d);   raw = (raw<<4) + d; break;
+	case  4: printf(" R4(%1X)", d);   raw = (raw<<4) + d; break;
+	case  5: printf(" R5(%1X)", d);   raw = (raw<<4) + d; break;
+	case  6: printf(" R6(%1X)", d);   raw = (raw<<4) + d;
+	  DecodePixel(raw);
+	  break;
+
+	case  7: printf("\nROC-HEADER(%1X): ", d); break;
+
+	case  8: printf("\n\nTBM H1(%1X) ", d); hdr = d; break;
+	case  9: printf("H2(%1X) ", d);       hdr = (hdr<<4) + d; break;
+	case 10: printf("H3(%1X) ", d);       hdr = (hdr<<4) + d; break;
+	case 11: printf("H4(%1X) ", d);       hdr = (hdr<<4) + d;
+	  DecodeTbmHeader(hdr);
+	  break;
+
+	case 12: printf("\nTBM T1(%1X) ", d); trl = d; break;
+	case 13: printf("T2(%1X) ", d);       trl = (trl<<4) + d; break;
+	case 14: printf("T3(%1X) ", d);       trl = (trl<<4) + d; break;
+	case 15: printf("T4(%1X) ", d);       trl = (trl<<4) + d;
+	  DecodeTbmTrailer(trl);
+	  break;
+	default : break;
+	}
+    }
+  printf("\n");
+
+}
 
 int main(int argc, char* argv[]) {
 
@@ -161,7 +249,10 @@ int main(int argc, char* argv[]) {
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
     // Initialize the DUT (power it up and stuff):
-    _api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels);
+    if (!_api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels)){
+      std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
+      return -2;
+    }
     // Read DUT info, should print above filled information:
     _api->_dut->info();
 
@@ -173,7 +264,7 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Call the first real test (pixel efficiency map):
-    
+
     // Enable all pixels first:
     _api->_dut->testAllPixels(true);
 
@@ -279,7 +370,7 @@ int main(int argc, char* argv[]) {
 	std::cout << std::endl;
       }
     }
-    
+
     // ##########################################################
 
 
@@ -365,32 +456,36 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Do some Raw data acquisition:
-
+    
     // All on!
     _api->_dut->testAllPixels(false);
     _api->_dut->maskAllPixels(false);
 
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < 3; i++) {
       _api->_dut->testPixel(i,5,true);
       //_api->_dut->testPixel(i,6,true);
       //_api->_dut->testPixel(i,7,true);
       //_api->_dut->testPixel(i,8,true);
-      /*      _api->_dut->testPixel(i,9,true);
-      _api->_dut->testPixel(i,10,true);
-      _api->_dut->testPixel(i,11,true);
-      _api->_dut->testPixel(i,12,true);*/
+      //_api->_dut->testPixel(i,9,true);
+      //_api->_dut->testPixel(i,10,true);
+      //_api->_dut->testPixel(i,11,true);
+      //_api->_dut->testPixel(i,12,true);
     }
 
     _api->daqStart(pg_setup);
-    _api->daqTrigger(800);
+    _api->daqTrigger(5);
     _api->daqStop();
     std::vector<uint16_t> daqdat = _api->daqGetBuffer();
-    
+
+    // Run the helper function:
+    if(module) Decode(daqdat);
+
     std::cout << "Raw DAQ data blob:" << std::endl;
     for(std::vector<uint16_t>::iterator it = daqdat.begin();
 	it != daqdat.end();
 	++it) {
       if(((*it) & 0xF000) > 0x4000) std::cout << std::endl;
+      if((*it) == 0x0080) std::cout << std::endl;
       std::cout << std::hex << std::setw(4) << std::setfill('0') << (*it) << " ";
     }
     std::cout << std::dec << std::endl;

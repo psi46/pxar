@@ -58,16 +58,24 @@ void PixTestSetup::init() {
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestSetup::bookHist(string name) {
+
   fDirectory->cd(); 
 
   TH2D *h2(0);
   fHistList.clear();
   for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h2 = new TH2D(Form("PixelAlive_C%d", i), Form("PixelAlive_C%d", i), 52, 0., 52., 80, 0., 80.); 
+    h2 = new TH2D(Form("Setup_C%d", i), Form("Setup_C%d", i), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     setTitles(h2, "col", "row"); 
     fHistList.push_back(h2); 
   }
+
 
 }
 
@@ -89,6 +97,9 @@ PixTestSetup::~PixTestSetup() {
 void PixTestSetup::doTest() {
   cout << "PixTab::update()" << endl;
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
+  //FIXME clearHist(); 
+
+  bookHist("bla");
   fApi->_dut->testAllPixels(false);
   fApi->_dut->testPixel(12, 34, true);
   fApi->_dut->testPixel(34, 12, true);

@@ -54,6 +54,13 @@ void PixTestAlive::init() {
   } 
   fDirectory->cd(); 
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestAlive::bookHist(string name) {
+  fDirectory->cd(); 
+
   TH2D *h2(0);
   fHistList.clear();
   for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
@@ -82,7 +89,8 @@ PixTestAlive::~PixTestAlive() {
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
-  clearHist();
+  //FIXME  clearHist();
+  bookHist("bla");
   PixTest::update(); 
   // -- FIXME: Should/could separate better test from display?
   uint16_t flag(0); 

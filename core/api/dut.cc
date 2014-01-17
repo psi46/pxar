@@ -5,62 +5,11 @@
 #include "api.h"
 #include "log.h"
 #include "dictionaries.h"
+#include "helper.h"
 #include <vector>
 #include <algorithm>
 
 using namespace pxar;
-
-/* =========================================================================== */
-
-/** Helper class to search vectors of pixelConfig, rocConfig and tbmConfig for 'enable' bit
- */
-class configEnableSet
-{
-  const bool _isEnable;
-
-public:
-  configEnableSet(const bool pEnable) : _isEnable(pEnable) {}
-
-  template<class ConfigType>
-  bool operator()(const ConfigType &config) const
-  {
-    return config.enable == _isEnable;
-  }
-};
-
-/** Helper class to search vectors of pixelConfig for 'mask' bit
- */
-class configMaskSet
-{
-  const bool _isMasked;
-
-public:
-  configMaskSet(const bool pMask) : _isMasked(pMask) {}
-
-  template<class ConfigType>
-  bool operator()(const ConfigType &config) const
-  {
-    return config.mask == _isMasked;
-  }
-};
-
-/** Helper class to search vectors of pixel or pixelConfig for 'column' and 'row' values
- */
-class findPixelXY
-{
-  const uint8_t _column;
-  const uint8_t _row;
-
-public:
-  findPixelXY(const uint8_t pColumn, const uint8_t pRow) : _column(pColumn), _row(pRow) {}
-
-  template<class ConfigType>
-  bool operator()(const ConfigType &config) const
-  {
-    return (config.row == _row) && (config.column == _column);
-  }
-};
-
 
 /* =========================================================================== */
 
@@ -96,15 +45,11 @@ void dut::info() {
 
 int32_t dut::getNEnabledPixels(uint8_t rocid) {
   if (!_initialized || rocid >= roc.size()) return 0;
-  // We currently hide the possibility to enable pixels on some ROCs only,
-  // so looking at ROC 0 as default is safe:
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configEnableSet(true));
 }
 
 int32_t dut::getNMaskedPixels(uint8_t rocid) {
   if (!_initialized || rocid >= roc.size()) return 0;
-  // We currently hide the possibility to enable pixels on some ROCs only,
-  // so looking at ROC 0 as default is safe:
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configMaskSet(true));
 }
 

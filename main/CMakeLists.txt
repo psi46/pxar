@@ -15,6 +15,7 @@ PixMonitor.cc
 PixTest.cc
 PixTestAlive.cc
 PixTestDacScan.cc
+PixTestDacDacScan.cc
 PixTestSetup.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
@@ -33,6 +34,7 @@ PixTab.hh
 PixTest.hh
 PixTestAlive.hh
 PixTestDacScan.hh
+PixTestDacDacScan.hh
 PixTestSetup.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
@@ -47,12 +49,12 @@ SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/main ${PROJECT_SOURCE_DIR}/core
 set(pxarGui_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/pxarGuiDict.cxx) 
 ROOT_GENERATE_DICTIONARY_OLD("${pxarGui_HEADERS}" "${pxarGui_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
 
-ADD_LIBRARY( pxarui SHARED ${pxarGui_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/pxarGuiDict.cxx )
+ADD_LIBRARY( pxarui SHARED ${pxarGui_SOURCES} ${pxarGui_DICTIONARY} )
 target_link_libraries(pxarui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
 
-add_executable(pxarGui pXar.cc ${pxarGui_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/pxarGuiDict.cxx)
-target_link_libraries(pxarGui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
+add_executable(pxarGui pXar.cc )
+target_link_libraries(pxarGui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} pxarui)
 
 INSTALL(TARGETS pxarui pxarGui
   RUNTIME DESTINATION bin

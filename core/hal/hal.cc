@@ -466,7 +466,9 @@ bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
   uint8_t regCore2 = 0xF0 | regId;
   LOG(logDEBUGHAL) << "Core 1: register " << std::hex << static_cast<int>(regCore1) << " = " << static_cast<int>(regValue) << std::dec;
   LOG(logDEBUGHAL) << "Core 2: register " << std::hex << static_cast<int>(regCore2) << " = " << static_cast<int>(regValue) << std::dec;
-  _testboard->tbm_Set(regId,regValue);
+
+  _testboard->tbm_Set(regCore1,regValue);
+  _testboard->tbm_Set(regCore2,regValue);
   return true;
 }
 
@@ -822,7 +824,7 @@ void hal::SignalProbeA2(uint8_t signal) {
 bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
-  uint32_t buffer = 50000000;
+  uint32_t buffer = 500000;
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffer,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
@@ -833,6 +835,11 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffer,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
+
+    // Reset the Deserializer 400, re-synchronize:
+    _testboard->Daq_Deser400_Reset(3);
+
+    // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
     _testboard->Daq_Start(1);
   }
@@ -867,6 +874,7 @@ bool hal::daqStop(uint8_t nTBMs) {
   // a FIFO reset (deleting the recorded data)
   if(nTBMs > 0) { _testboard->Daq_Stop(1); }
   _testboard->Daq_Stop(0);
+  _testboard->uDelay(100);
 
   return true;
 }
