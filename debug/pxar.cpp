@@ -160,13 +160,8 @@ int main(int argc, char* argv[]) {
 
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
-
-    // Read DUT info, should result in error message, not initialized:
-    _api->_dut->info();
-
     // Initialize the DUT (power it up and stuff):
     _api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels);
-
     // Read DUT info, should print above filled information:
     _api->_dut->info();
 
@@ -175,13 +170,6 @@ int main(int argc, char* argv[]) {
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
 
     _api->HVon();
-    sleep(1);
-
-    // Set some DAC after the "real" DUT initialization (all active ROCs):
-    _api->setDAC("Vcal",101,0);
-    // And check if the DUT has the updated value:
-    std::cout << "New Vcal value: " << (int)_api->_dut->getDAC(0,"vCaL") << std::endl;
-
 
     /*
     // Test power-cycling and re-programming:
