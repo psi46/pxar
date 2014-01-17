@@ -7,6 +7,7 @@
 #include <TCanvas.h>
 #include <TGTab.h>
 #include <TGLabel.h>
+#include <TH2.h>
 
 #include "PixTab.hh"
 #include "log.h"
@@ -234,7 +235,10 @@ void PixTab::clearCanvas() {
 void PixTab::nextHistogram() {
   TH1 *h = fTest->nextHist(); 
   if (h) {
-    h->Draw("colz");
+    if (h->InheritsFrom(TH2::Class()))
+      h->Draw("colz");
+    else 
+      h->Draw("");
     update(); 
   } else {
     LOG(logINFO) << "no previous histogram found ";
@@ -247,7 +251,10 @@ void PixTab::nextHistogram() {
 void PixTab::previousHistogram() {
   TH1 *h = fTest->previousHist(); 
   if (h) {
-    h->Draw("colz");
+    if (h->InheritsFrom(TH2::Class()))
+      h->Draw("colz");
+    else 
+      h->Draw("");
     update(); 
   } else {
     LOG(logINFO)  << "no previous histogram found ";

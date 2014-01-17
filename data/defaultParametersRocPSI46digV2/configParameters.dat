@@ -31,9 +31,3 @@ id 1.100
 va 1.900
 vd 2.600
 
--- adc parameters
-
-dataTriggerLevel -650
-emptyReadoutLength 7
-emptyReadoutLengthADC 8
-emptyReadoutLengthADCDual 8

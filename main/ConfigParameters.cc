@@ -157,7 +157,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("tbmEmulator")) { fTbmEmulator             = _ivalue; }
       else if (0 == _name.compare("tbmChannel")) { fTbmChannel                = _ivalue; }
 
-      else if (0 == _name.compare("ia")) { cout << "ia dvalue: " << dvalue << " _value: " << _value << endl; ia = (dvalue > 1000.?.001:1.) * dvalue; }
+      else if (0 == _name.compare("ia")) { ia = (dvalue > 1000.?.001:1.) * dvalue; }
       else if (0 == _name.compare("id")) { id = (dvalue > 1000.?.001:1.) * dvalue; }
       else if (0 == _name.compare("va")) { va = (dvalue > 1000.?.001:1.) * dvalue; }
       else if (0 == _name.compare("vd")) { vd = (dvalue > 1000.?.001:1.) * dvalue; }
