@@ -602,9 +602,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector<pixel> data;
   for(std::vector<uint32_t>::iterator it = address.begin(); it != address.end(); ++it) {
     if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { 
-      data.push_back(pixel((*it),nReadouts.at(static_cast<int>(it - address.begin()))));
+      data.push_back(pixel((*it),nReadouts.at(static_cast<size_t>(it - address.begin()))));
     }
-    else { data.push_back(pixel((*it),PHsum.at(static_cast<int>(it - address.begin()))));}
+    else { data.push_back(pixel((*it),PHsum.at(static_cast<size_t>(it - address.begin()))));}
     
   }
   result->push_back(data);
