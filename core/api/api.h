@@ -60,6 +60,9 @@ namespace pxar {
   pixelConfig() : 
     column(0), row(0), 
       trim(15), mask(true), enable(false) {};
+  pixelConfig(uint8_t _column, uint8_t _row, uint8_t _trim) : 
+    column(_column), row(_row), trim(_trim),
+      mask(true), enable(false) {};
     uint8_t column;
     uint8_t row;
     uint8_t trim;
