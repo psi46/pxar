@@ -30,19 +30,12 @@ int main(int argc, char* argv[]) {
   sig_delays.push_back(std::make_pair("sda",17));
   sig_delays.push_back(std::make_pair("tin",7));
   sig_delays.push_back(std::make_pair("deser160phase",4));
-  // Nasty things to catch:
-  sig_delays.push_back(std::make_pair("waggawagga",219));
-  sig_delays.push_back(std::make_pair("tin",7));
 
   // Power settings:
   power_settings.push_back(std::make_pair("va",1.9));
   power_settings.push_back(std::make_pair("vd",2.6));
   power_settings.push_back(std::make_pair("ia",1.190));
   power_settings.push_back(std::make_pair("id",1.10));
-  // Try to do some nasty stuff:
-  power_settings.push_back(std::make_pair("vxyz",-1.9));
-  power_settings.push_back(std::make_pair("vhaha",200.9));
-
 
   // Prepare some empty TBM vector:
   std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
@@ -79,8 +72,6 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("WBC",100));
   }
   else {
-    dacs.push_back(std::make_pair("Vdig",5));
-    // Let's try to trich the API and set Vdig again:
     dacs.push_back(std::make_pair("Vdig",7));
     dacs.push_back(std::make_pair("Vana",84));
     dacs.push_back(std::make_pair("Vsf",30));
@@ -103,7 +94,6 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("CalDel",122));
     dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
-    dacs.push_back(std::make_pair("WBCDEFG",100));
   }
 
   // Get some pixelConfigs up and running:
@@ -112,14 +102,7 @@ int main(int argc, char* argv[]) {
 
   for(int col = 0; col < 52; col++) {
     for(int row = 0; row < 80; row++) {
-      pxar::pixelConfig newpix;
-      newpix.column = col;
-      newpix.row = row;
-      newpix.trim = 15;
-      newpix.mask = true;
-      newpix.enable = false;
-
-      pixels.push_back(newpix);
+      pixels.push_back(pxar::pixelConfig(col,row,15));
     }
   }
 
@@ -177,13 +160,8 @@ int main(int argc, char* argv[]) {
 
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
-
-    // Read DUT info, should result in error message, not initialized:
-    _api->_dut->info();
-
     // Initialize the DUT (power it up and stuff):
     _api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels);
-
     // Read DUT info, should print above filled information:
     _api->_dut->info();
 
@@ -192,40 +170,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
 
     _api->HVon();
-    sleep(1);
 
-    // Set some DAC after the "real" DUT initialization (all active ROCs):
-    _api->setDAC("Vcal",101,0);
-    // And check if the DUT has the updated value:
-    std::cout << "New Vcal value: " << (int)_api->_dut->getDAC(0,"vCaL") << std::endl;
-
-
-    /*
-    // Test power-cycling and re-programming:
-    _api->Poff();
-    //    sleep(1);
-    _api->Pon();
-    */
-
-    // ##########################################################
-    // call a 'demo' (i.e. fake) DAC scan routine
-    /*
-    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > data = _api->getDebugVsDAC("vana", 20, 28, 50, 16);
-
-    // check out the data we received:
-    std::cout << " number of stored (DAC,pixels) pairs in data: " << data.size() << std::endl;
-    // loop over dac values:
-    for (std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = data.begin();dacit != data.end(); ++dacit){
-      std::cout << "   dac value: " << (int) dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
-      // loop over fired pixels and show value
-      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
-	std::cout << "       pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value <<  std::endl;
-      }
-    }
-    */
-    // ##########################################################
-
-    
     // ##########################################################
     // Call the first real test (pixel efficiency map):
     
