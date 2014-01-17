@@ -410,7 +410,7 @@ namespace pxar {
      *  (un)mask and trim them for the upcoming test according to the information stored
      *  in the DUT struct.
      */
-    void MaskAndTrim();
+    void MaskAndTrim(bool trim);
 
     // FIXME missing documentation
     void SetCalibrateBits(bool enable);
