@@ -594,50 +594,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   return *result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-										uint16_t flags, uint32_t nTriggers) {
-
-  if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
-  
-  // Check DAC range
-  if(dacMin > dacMax) {
-    // Swapping the range:
-    LOG(logWARNING) << "Swapping upper and lower bound.";
-    uint8_t temp = dacMin;
-    dacMin = dacMax;
-    dacMax = temp;
-  }
-
-  // Get the register number and check the range from dictionary:
-  uint8_t dacRegister;
-  if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
-    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
-  }
-  
-  // Setup the correct _hal calls for this test (FIXME:DUMMYONLY)
-  HalMemFnPixel pixelfn = &hal::DummyPixelTestSkeleton;
-  HalMemFnRoc rocfn = &hal::DummyRocTestSkeleton;
-  HalMemFnModule modulefn = &hal::DummyModuleTestSkeleton;
-
-  // Load the test parameters into vector
-  std::vector<int32_t> param;
-  param.push_back(static_cast<int32_t>(dacRegister));  
-  param.push_back(static_cast<int32_t>(dacMin));
-  param.push_back(static_cast<int32_t>(dacMax));
-  param.push_back(static_cast<int32_t>(flags));
-  param.push_back(static_cast<int32_t>(nTriggers));
-
-  // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
-  // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
-  delete data;
-  return *result;
-
-} // getPulseheightVsDAC
-
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint16_t flags, uint32_t nTriggers) {
 

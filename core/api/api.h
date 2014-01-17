@@ -254,11 +254,6 @@ namespace pxar {
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** DEBUG ROUTINE DELME FIXME WHATEVER
-     */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									 uint16_t flags = 0, uint32_t nTriggers=16);
-
     /** Method to scan a DAC and measure the efficiency
      *
      *  Returns a std vector of pairs containing set dac value and pixels, with the value of the pixel struct being
