@@ -216,6 +216,9 @@ bool api::programDUT() {
     return false;
   }
 
+  // First thing to do: startup DUT power if not yet done
+  _hal->Pon();
+
   // Start programming the devices here!
 
   // FIXME Device types not transmitted yet!
