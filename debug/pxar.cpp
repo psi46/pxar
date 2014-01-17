@@ -30,19 +30,12 @@ int main(int argc, char* argv[]) {
   sig_delays.push_back(std::make_pair("sda",17));
   sig_delays.push_back(std::make_pair("tin",7));
   sig_delays.push_back(std::make_pair("deser160phase",4));
-  // Nasty things to catch:
-  sig_delays.push_back(std::make_pair("waggawagga",219));
-  sig_delays.push_back(std::make_pair("tin",7));
 
   // Power settings:
   power_settings.push_back(std::make_pair("va",1.9));
   power_settings.push_back(std::make_pair("vd",2.6));
   power_settings.push_back(std::make_pair("ia",1.190));
   power_settings.push_back(std::make_pair("id",1.10));
-  // Try to do some nasty stuff:
-  power_settings.push_back(std::make_pair("vxyz",-1.9));
-  power_settings.push_back(std::make_pair("vhaha",200.9));
-
 
   // Prepare some empty TBM vector:
   std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
@@ -79,8 +72,6 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("WBC",100));
   }
   else {
-    dacs.push_back(std::make_pair("Vdig",5));
-    // Let's try to trich the API and set Vdig again:
     dacs.push_back(std::make_pair("Vdig",7));
     dacs.push_back(std::make_pair("Vana",84));
     dacs.push_back(std::make_pair("Vsf",30));
@@ -103,7 +94,6 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("CalDel",122));
     dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
-    dacs.push_back(std::make_pair("WBCDEFG",100));
   }
 
   // Get some pixelConfigs up and running:
