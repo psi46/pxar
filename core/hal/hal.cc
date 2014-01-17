@@ -171,8 +171,9 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     // Download the flash data
     string rec;
     uint16_t recordCount = 0;
+    LOG(logINFO) << "Download running... ";
+
     while (true) {
-      LOG(logINFO) << "\rDownload running... "; 
       // LOG doesn't works with flush, so we can't display the percentage:
       //             << ((int)(100 * recordCount / file_lines)) << " % " << flush;
       getline(flashFile, rec);
@@ -218,11 +219,6 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 
 void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
 
-  // Turn on the output power of the testboard if not already done:
-  LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
-  _testboard->Pon();
-  mDelay(400);
-
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
   // FIXME BEat: 31 is default hub address for the new modules:
@@ -232,24 +228,13 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   // Programm all registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting register vector for TBM " << (int)tbmId << ".";
   tbmSetRegs(tbmId,regVector);
-  mDelay(300);
-  
 }
 
 void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector) {
 
-  // Turn on the output power of the testboard if not already done:
-  LOG(logDEBUGHAL) << "Turn testboard ouput power on.";
-  _testboard->Pon();
-  _testboard->Flush();
-
-  // Wait a little and let the power switch do its job:
-  mDelay(300);
-
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << (int)rocId << ".";
   rocSetDACs(rocId,dacVector);
-
 }
 
 void hal::PrintInfo() {
@@ -855,8 +840,12 @@ std::vector< std::vector<pixel> >* hal::DummyModuleTestSkeleton(std::vector<int3
 
 void hal::HVon() {
   // Turn on HV and execute (flush):
+  LOG(logDEBUGHAL) << "Turning on High Voltage for sensor bias...";
   _testboard->HVon();
   _testboard->Flush();
+
+  // Wait a little and let the HV relais do its job:
+  mDelay(400);
 }
 
 void hal::HVoff() {
@@ -867,8 +856,12 @@ void hal::HVoff() {
  
 void hal::Pon() {
   // Turn on DUT power and execute (flush):
+  LOG(logDEBUGHAL) << "Powering up testboard DUT connection...";
   _testboard->Pon();
   _testboard->Flush();
+
+  // Wait a little and let the power switch do its job:
+  mDelay(300);
 }
 
 void hal::Poff() {
