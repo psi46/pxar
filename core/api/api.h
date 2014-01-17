@@ -60,6 +60,9 @@ namespace pxar {
   pixelConfig() : 
     column(0), row(0), 
       trim(15), mask(true), enable(false) {};
+  pixelConfig(uint8_t _column, uint8_t _row, uint8_t _trim) : 
+    column(_column), row(_row), trim(_trim),
+      mask(true), enable(false) {};
     uint8_t column;
     uint8_t row;
     uint8_t trim;
@@ -250,11 +253,6 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint16_t flags = 0, uint32_t nTriggers=16);
-
-    /** DEBUG ROUTINE DELME FIXME WHATEVER
-     */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getDebugVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									 uint16_t flags = 0, uint32_t nTriggers=16);
 
     /** Method to scan a DAC and measure the efficiency
      *
@@ -510,11 +508,19 @@ namespace pxar {
 
     /** Function to enable the given pixel on all ROCs:
      */
-    void testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid = -1);
+    void testPixel(uint8_t column, uint8_t row, bool enable);
+
+    /** Function to enable the given pixel on the specified ROC:
+     */
+    void testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid);
+
+    /** Function to mask the given pixel on all ROCs:
+     */
+    void maskPixel(uint8_t column, uint8_t row, bool mask);
 
     /** Function to mask the given pixel on a specific ROC
      */
-    void maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid = -1);
+    void maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid);
 
     /** Function to mask the all pixels in one column on a specific ROC
      */
