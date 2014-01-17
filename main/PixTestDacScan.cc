@@ -29,6 +29,9 @@ PixTestDacScan::PixTestDacScan() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestDacScan::setParameter(string parName, string sval) {
   bool found(false);
+  string str1, str2; 
+  string::size_type s1;
+  int pixc, pixr; 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
     LOG(logINFO) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
@@ -39,6 +42,57 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
       LOG(logINFO) << "  ==> sval:    " << sval;
       if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
       if (!parName.compare("DAC")) fParDAC = sval; 
+      if (!parName.compare("PIX1")) {
+	s1 = sval.find(","); 
+	if (string::npos != s1) {
+	  str1 = sval.substr(0, s1); 
+	  pixc = atoi(str1.c_str()); 
+	  str2 = sval.substr(s1+1); 
+	  pixr = atoi(str2.c_str()); 
+	  fPIX1 = make_pair(pixc, pixr); 
+	} else {
+	  fPIX1 = make_pair(-1, -1); 
+	}
+	cout << "PIX1: ->" << str1 << "<- ->" << str2 << "<-  => c/r = " << pixc << "/" << pixr << endl;
+      }
+      if (!parName.compare("PIX2")) {
+	s1 = sval.find(","); 
+	if (string::npos != s1) {
+	  str1 = sval.substr(0, s1); 
+	  pixc = atoi(str1.c_str()); 
+	  str2 = sval.substr(s1+1); 
+	  pixr = atoi(str2.c_str()); 
+	} else {
+	  fPIX2 = make_pair(-1, -1); 
+	}
+	cout << "PIX2: ->" << str1 << "<- ->" << str2 << "<-  => c/r = " << pixc << "/" << pixr << endl;
+      }
+      if (!parName.compare("PIX3")) {
+	s1 = sval.find(","); 
+	if (string::npos != s1) {
+	  str1 = sval.substr(0, s1); 
+	  pixc = atoi(str1.c_str()); 
+	  str2 = sval.substr(s1+1); 
+	  pixr = atoi(str2.c_str()); 
+	} else {
+	  fPIX3 = make_pair(-1, -1); 
+	}
+	cout << "PIX3: ->" << str1 << "<- ->" << str2 << "<-  => c/r = " << pixc << "/" << pixr << endl;
+      }
+      if (!parName.compare("PIX4")) {
+	s1 = sval.find(","); 
+	if (string::npos != s1) {
+	  str1 = sval.substr(0, s1); 
+	  pixc = atoi(str1.c_str()); 
+	  str2 = sval.substr(s1+1); 
+	  pixr = atoi(str2.c_str()); 
+	} else {
+	  fPIX4 = make_pair(-1, -1); 
+	}
+	cout << "PIX4: ->" << str1 << "<- ->" << str2 << "<-  => c/r = " << pixc << "/" << pixr << endl;
+      }
+
+
       break;
     }
   }
@@ -61,7 +115,7 @@ void PixTestDacScan::init() {
   for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h1 = new TH1D(Form("DacScan_C%d", i), Form("DacScan_C%d", i), 255, 0., 255.); 
     h1->SetMinimum(0.); 
-    setTitles(h1, "DAC", "#pixels"); 
+    setTitles(h1, "DAC", "# pixels"); 
     fHistList.push_back(h1); 
   }
 
@@ -88,7 +142,11 @@ void PixTestDacScan::doTest() {
   clearHist();
   // -- FIXME: Should/could separate better test from display?
   uint16_t flag(0); 
-  fApi->_dut->testAllPixels(true);
+  fApi->_dut->testAllPixels(false);
+  if (fPIX1.first > -1)  fApi->_dut->testPixel(fPIX1.first, fPIX1.first, true);
+  if (fPIX2.first > -1)  fApi->_dut->testPixel(fPIX2.first, fPIX2.first, true);
+  if (fPIX3.first > -1)  fApi->_dut->testPixel(fPIX3.first, fPIX3.first, true);
+
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, 0, 150, 0, fParNtrig);
 
   LOG(logINFO) << " dacscandata.size(): " << results.size();
