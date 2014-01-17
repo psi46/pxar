@@ -112,14 +112,7 @@ int main(int argc, char* argv[]) {
 
   for(int col = 0; col < 52; col++) {
     for(int row = 0; row < 80; row++) {
-      pxar::pixelConfig newpix;
-      newpix.column = col;
-      newpix.row = row;
-      newpix.trim = 15;
-      newpix.mask = true;
-      newpix.enable = false;
-
-      pixels.push_back(newpix);
+      pixels.push_back(pxar::pixelConfig(col,row,15));
     }
   }
 
