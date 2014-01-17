@@ -216,6 +216,9 @@ bool api::programDUT() {
     return false;
   }
 
+  // First thing to do: startup DUT power if not yet done
+  _hal->Pon();
+
   // Start programming the devices here!
 
   // FIXME Device types not transmitted yet!
@@ -232,8 +235,8 @@ bool api::programDUT() {
     _hal->initROC((uint8_t)(rocit - enabledRocs.begin()),(*rocit).dacs);
   }
 
-  // As last step, write all the mask and trim information to the devices:
-  MaskAndTrim();
+  // As last step, mask all pixels in the device:
+  MaskAndTrim(false);
 
   // The DUT is programmed, everything all right:
   _dut->_programmed = true;
@@ -1066,7 +1069,7 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
   }
   
   // Setup the configured mask and trim state of the DUT:
-  MaskAndTrim();
+  MaskAndTrim(true);
 
   // Set Calibrate bits in the PUCs (we use the testrange for that):
   SetCalibrateBits(true);
@@ -1104,7 +1107,8 @@ bool api::daqStop() {
   // Stop all active DAQ channels (depending on number of TBMs)
   _hal->daqStop(_dut->getNEnabledTbms());
 
-  // FIXME We should probably mask the full DUT again here
+  // Mask all pixels in the device again:
+  MaskAndTrim(false);
 
   // Reset all the Calibrate bits and signals:
   SetCalibrateBits(false);
@@ -1118,14 +1122,13 @@ bool api::daqStop() {
 }
 
 
-std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param,  bool forceSerial){
+std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param,  bool forceSerial) {
   
   // pointer to vector to hold our data
   std::vector< std::vector<pixel> >* data = NULL;
 
-
   // Do the masking/unmasking&trimming for all ROCs first
-  MaskAndTrim();
+  MaskAndTrim(true);
 
   // check if we might use parallel routine on whole module: 16 ROCs
   // must be enabled and parallel execution not disabled by user
@@ -1211,6 +1214,10 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   } // single roc fnc
   // now repack the data to join the individual ROC segments and return
   std::vector< std::vector<pixel> >* compactdata = compactRocLoopData(data, _dut->getNEnabledRocs());
+
+  // Test is over, mask the whole device again:
+  MaskAndTrim(false);
+
   delete data; // clean up
   return compactdata;
 } // expandLoop()
@@ -1319,7 +1326,8 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 
 // Function to program the device with all the needed trimming and masking stuff
 // It sets both the needed PUC mask&trim bits and the DCOL enable bits.
-void api::MaskAndTrim() {
+// if "trim is set to "false" it will just mask all ROCs.
+void api::MaskAndTrim(bool trim) {
 
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
@@ -1329,12 +1337,12 @@ void api::MaskAndTrim() {
     LOG(logDEBUGAPI) << "ROC " << (int)(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
 
     // This ROC is completely unmasked, let's trim it:
-    if(masked == 0) {
+    if(masked == 0 && trim) {
       LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << (int)(rocit-_dut->roc.begin()) << " in one go.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),false,rocit->pixels);
       continue;
     }
-    else if(masked == ROC_NUMROWS*ROC_NUMCOLS) {
+    else if(masked == ROC_NUMROWS*ROC_NUMCOLS || !trim) {
       LOG(logDEBUGAPI) << "Masking ROC " << (int)(rocit-_dut->roc.begin()) << " in one go.";
       _hal->RocSetMask((int)(rocit-_dut->roc.begin()),true);
       continue;
