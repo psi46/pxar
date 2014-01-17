@@ -370,7 +370,7 @@ void api::Poff() {
 }
 
 void api::Pon() {
-  _hal->Pon();
+  // Power is turned on when programming the DUT.
   // Re-program the DUT after power has been switched on:
   programDUT();
 }
