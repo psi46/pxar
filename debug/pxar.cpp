@@ -172,25 +172,6 @@ int main(int argc, char* argv[]) {
     _api->HVon();
 
     // ##########################################################
-    // call a 'demo' (i.e. fake) DAC scan routine
-    /*
-    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > data = _api->getDebugVsDAC("vana", 20, 28, 50, 16);
-
-    // check out the data we received:
-    std::cout << " number of stored (DAC,pixels) pairs in data: " << data.size() << std::endl;
-    // loop over dac values:
-    for (std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = data.begin();dacit != data.end(); ++dacit){
-      std::cout << "   dac value: " << (int) dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
-      // loop over fired pixels and show value
-      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
-	std::cout << "       pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value <<  std::endl;
-      }
-    }
-    */
-    // ##########################################################
-
-    
-    // ##########################################################
     // Call the first real test (pixel efficiency map):
     
     // Enable all pixels first:
