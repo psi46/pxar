@@ -282,7 +282,7 @@ vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
   if (fnTbms < 1) {
     a.push_back(make_pair(0x0800,25));    // PG_RESR
-    a.push_back(make_pair(0x0400,101+5)); // PG_CAL
+    a.push_back(make_pair(0x0400,100+5)); // PG_CAL
     a.push_back(make_pair(0x0200,16));    // PG_TRG
     a.push_back(make_pair(0x0100,0));     // PG_TOK
   } else {
