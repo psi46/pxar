@@ -18,6 +18,7 @@ private:
 
   int     fParNtrig; 
   std::string fParDAC; 
+  std::pair<int, int> fPIX1, fPIX2, fPIX3, fPIX4; 
 
   ClassDef(PixTestDacScan, 1);
 
