@@ -171,13 +171,6 @@ int main(int argc, char* argv[]) {
 
     _api->HVon();
 
-    /*
-    // Test power-cycling and re-programming:
-    _api->Poff();
-    //    sleep(1);
-    _api->Pon();
-    */
-
     // ##########################################################
     // call a 'demo' (i.e. fake) DAC scan routine
     /*
