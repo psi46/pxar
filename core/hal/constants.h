@@ -100,9 +100,22 @@ namespace pxar {
 #define SIG_MODE_HI      2
 
 
-// --- Testboard Clock / Timing------------------------------------------------
+// --- Testboard Clock / Timing -----------------------------------------------
 #define CLK_SRC_INT 0
 #define CLK_SRC_EXT 1
+
+// --- Clock Stretch and Clock Divider settings -------------------------------
+#define STRETCH_AFTER_TRG  0
+#define STRETCH_AFTER_CAL  1
+#define STRETCH_AFTER_RES  2
+#define STRETCH_AFTER_SYNC 3
+
+#define MHZ_1_25   5
+#define MHZ_2_5    4
+#define MHZ_5      3
+#define MHZ_10     2
+#define MHZ_20     1
+#define MHZ_40     0
 
 
 // --- Testboard digital signal probe -----------------------------------------
