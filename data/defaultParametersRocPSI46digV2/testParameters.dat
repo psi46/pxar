@@ -11,6 +11,18 @@ PIX1  11,20
 PIX2  20,30 
 PIX3  40,50 
 
+-- DacDacScan
+Ntrig 10
+DAC1   caldel
+DAC1LO 0
+DAC1HI 140
+DAC2   vthrcomp
+DAC2LO 0
+DAC2HI 140
+PIX1   11,20 
+PIX2   20,30 
+PIX3   40,50
+
 -- Setup
 Ntrig 10
 Vcal 200
