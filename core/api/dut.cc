@@ -313,9 +313,9 @@ void dut::maskColumn(uint8_t column, bool mask, int8_t rocid) {
   }
 }
 
-void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
+void dut:: maskPixel(uint8_t column, uint8_t row, bool mask) {
 
-  if(status() && rocid < 0) {
+  if(status()) {
     LOG(logDEBUGAPI) << "Set mask bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row)
 		     << " to " << static_cast<int>(mask) << " on all ROCs."; 
     // Loop over all ROCs
@@ -332,7 +332,11 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
       }
     }
   }
-  else if(status() && rocid < static_cast<int>(roc.size())) {
+}
+
+void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
     LOG(logDEBUGAPI) << "Set mask bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row) << " to " << static_cast<int>(mask) << " on ROC " << static_cast<int>(rocid);
     // Find pixel with specified column and row
     std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
@@ -347,12 +351,12 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid) {
   }
 }
 
-void dut::testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid) {
+void dut::testPixel(uint8_t column, uint8_t row, bool enable) {
 
   // Testing also means we need to set the mask state accordingly (inverted)
-  maskPixel(column,row,!enable,rocid);
+  maskPixel(column,row,!enable);
 
-  if(status() && rocid < 0) {
+  if(status()) {
     LOG(logDEBUGAPI) << "Set enable bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row) 
 		     << " to " << static_cast<int>(enable) << " on all ROCs.";
     // Loop over all ROCs
@@ -369,7 +373,14 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid) {
       }
     }
   }
-  else if(status() && rocid < static_cast<int>(roc.size())) {
+}
+
+void dut::testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid) {
+
+  // Testing also means we need to set the mask state accordingly (inverted)
+  maskPixel(column,row,!enable,rocid);
+
+  if(status() && rocid < roc.size()) {
     LOG(logDEBUGAPI) << "Set enable bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row) << " to " << static_cast<int>(enable) << " on ROC " << static_cast<int>(rocid);
 
     // Find pixel with specified column and row

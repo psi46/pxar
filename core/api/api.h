@@ -510,11 +510,19 @@ namespace pxar {
 
     /** Function to enable the given pixel on all ROCs:
      */
-    void testPixel(uint8_t column, uint8_t row, bool enable, int8_t rocid = -1);
+    void testPixel(uint8_t column, uint8_t row, bool enable);
+
+    /** Function to enable the given pixel on the specified ROC:
+     */
+    void testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid);
+
+    /** Function to mask the given pixel on all ROCs:
+     */
+    void maskPixel(uint8_t column, uint8_t row, bool mask);
 
     /** Function to mask the given pixel on a specific ROC
      */
-    void maskPixel(uint8_t column, uint8_t row, bool mask, int8_t rocid = -1);
+    void maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid);
 
     /** Function to mask the all pixels in one column on a specific ROC
      */
