@@ -22,6 +22,7 @@ public:
   PixTest();
   virtual ~PixTest();
   void init(PixSetup *, std::string name);
+  void bookHist(std::string name);
 
   void clearHist(); 
   virtual void doTest(); 

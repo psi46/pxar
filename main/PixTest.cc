@@ -39,6 +39,13 @@ void PixTest::init(PixSetup *a, string name) {
 
 
 // ----------------------------------------------------------------------
+void PixTest::bookHist(string name) {
+
+
+}
+
+
+// ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
   //  cout << " PixTest::setParameter wrong function" << endl;
   return false;
