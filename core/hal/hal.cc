@@ -661,16 +661,25 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // FIXME no DACMIN usage possible right now.
-
   // Call the RPC command:
-  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmax, nReadouts, PHsum);
+  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum);
   LOG(logDEBUGHAL) << "Function returns: " << status;
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
 
-  //FIXME no DACMIN setting possible, starting at 0 all the time:
-  //  for (int i=dacmin;i<dacmax;i++) {
-  for(int i=0; i < dacmax; i++) {
+  size_t n = nReadouts.size();
+  size_t p = PHsum.size();
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << (int)n
+		   << ", PHsum " << (int)p;
+
+  // Check if all information has been transmitted:
+  if(n != p || n != (dacmax-dacmin)) {
+    // FIXME custom exception?
+    LOG(logCRITICAL) << "Data size not as expected!";
+    return result;
+  }
+
+  // Read the vectors from the beginning, not from dacmin:
+  size_t it = 0;
+  for (int i = dacmin; i < dacmax; i++) {
     std::vector<pixel> data;
     pixel newpixel;
     newpixel.column = column;
@@ -678,16 +687,11 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
     newpixel.roc_id = rocid;
 
     // Decide over what we get back in the value field:
-    if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
-      // FIXME not nice, not safe:
-      newpixel.value =  static_cast<int32_t>(nReadouts[i]);
-    }
-    else {
-      // FIXME not nice, not safe:
-      newpixel.value =  static_cast<int32_t>(PHsum[i]);
-    }
+    if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
+    else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)); }
     data.push_back(newpixel);
     result->push_back(data);
+    it++;
   }
 
   LOG(logDEBUGHAL) << "Result has size " << result->size();
@@ -716,19 +720,26 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // FIXME no DACMIN usage possible right now.
-
   // Call the RPC command:
-  int status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1max, dac2reg, dac2max, nReadouts, PHsum);
+  int status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum);
   LOG(logDEBUGHAL) << "Function returns: " << status;
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << nReadouts.size() << ", PHsum " << PHsum.size();
 
-  //FIXME no DACMIN setting possible, starting at 0 all the time:
-  //  for (int i=dac1min;i<dac1max;i++) {
-  for(int i=0; i < dac1max; i++) {
-    //FIXME no DACMIN setting possible, starting at 0 all the time:
-    //for(int j=dac2min; j < dac2max; j++) {
-    for(int j=0; j < dac2max; j++) {
+  size_t n = nReadouts.size();
+  size_t p = PHsum.size();
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << (int)n
+		   << ", PHsum " << (int)p;
+
+  // Check if all information has been transmitted:
+  if(n != p || n != (dac1max-dac1min)*(dac2max-dac2min)) {
+    // FIXME custom exception?
+    LOG(logCRITICAL) << "Data size not as expected!";
+    return result;
+  }
+
+  // Read the vectors from the beginning, not from dacmin:
+  size_t it = 0;
+  for (int i = dac1min; i < dac1max; i++) {
+    for(int j = dac2min; j < dac2max; j++) {
       std::vector<pixel> data;
       pixel newpixel;
       newpixel.column = column;
@@ -736,19 +747,13 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
       newpixel.roc_id = rocid;
 
       // Decide over what we get back in the value field:
-      if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
-	// FIXME not nice, not safe:
-	newpixel.value =  static_cast<int32_t>(nReadouts[i]);
-      }
-      else {
-	// FIXME not nice, not safe:
-	newpixel.value =  static_cast<int32_t>(PHsum[i]);
-      }
+      if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
+      else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)); }
       data.push_back(newpixel);
       result->push_back(data);
+      it++;
     }
   }
-
   return result;
 }
 
