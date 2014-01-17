@@ -14,7 +14,7 @@ using namespace pxar;
 ClassImp(PixTestDacScan)
 
 // ----------------------------------------------------------------------
-PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada") {
+PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
   PixTest::init(a, name);
   init(); 
   //  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
@@ -105,7 +105,7 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 	  fPIX.push_back(make_pair(-1, -1)); 
 	}
       }
-
+      // FIXME: remove/update from fPIX if the user removes via the GUI!
 
       break;
     }
@@ -134,7 +134,7 @@ void PixTestDacScan::bookHist(string name) {
   for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h1 = new TH1D(Form("scanRange_%s_C%d", name.c_str(), i), Form("scanRange_%s_C%d", name.c_str(), i), 255, 0., 255.); 
     h1->SetMinimum(0.); 
-    setTitles(h1, "DAC", "a.u."); 
+    setTitles(h1, name.c_str(), "a.u."); 
     fHistList.push_back(h1); 
 
     for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
@@ -178,7 +178,6 @@ void PixTestDacScan::doTest() {
   bookHist(fParDAC);
 
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
-
   LOG(logINFO) << " dacscandata.size(): " << results.size();
   TH1D *h(0), *hsummary(0); 
   for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
@@ -187,7 +186,7 @@ void PixTestDacScan::doTest() {
       pair<uint8_t, vector<pixel> > v = results[i];
       int idac = v.first; 
       if (hsummary) {
-	hsummary->SetBinContent(idac, 1); 
+	hsummary->SetBinContent(idac+1, 1); 
       } else {
 	LOG(logINFO) << "XX did not find " << Form("scanRange_%s_C%d", fParDAC.c_str(), ichip);
       }
@@ -197,7 +196,7 @@ void PixTestDacScan::doTest() {
 	if (vpix[ipix].roc_id == ichip) {
 	  h = (TH1D*)fDirectory->Get(Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip));
 	  if (h) {
-	    h->SetBinContent(idac, vpix[ipix].value); 
+	    h->SetBinContent(idac+1, vpix[ipix].value); 
 	  } else {
 	    LOG(logINFO) << "XX did not find " << Form("NhitsVs%S_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
 	  }
