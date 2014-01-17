@@ -56,4 +56,23 @@ public:
 };
 
 
+/** Helper class to search vectors of pixel or pixelConfig for
+    'column' and 'row' values BEYOND the values given in the constructor
+ */
+class findPixelBeyondXY
+{
+  const uint8_t _column;
+  const uint8_t _row;
+
+public:
+  findPixelBeyondXY(const uint8_t pColumn, const uint8_t pRow) : _column(pColumn), _row(pRow) {}
+
+  template<class ConfigType>
+  bool operator()(const ConfigType &config) const
+  {
+    return (config.row > _row) || (config.column > _column);
+  }
+};
+
+
 #endif

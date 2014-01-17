@@ -5,6 +5,7 @@
 #include "api.h"
 #include "hal.h"
 #include "log.h"
+#include "helper.h"
 #include "dictionaries.h"
 #include <algorithm>
 #include <fstream>
@@ -120,15 +121,50 @@ bool api::initDUT(std::string tbmtype,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // First initialized the API's DUT instance with the information supplied.
-  // FIXME TODO: currently values are not checked for sanity! (Num pixels etc.)
-
+  // Verification/sanitry checks of supplied DUT configuration values
   // Check size of rocDACs and rocPixels against each other
   if(rocDACs.size() != rocPixels.size()) {
     LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
     LOG(logCRITICAL) << "This cannot end well...";
     return false;
   }
+  // check for presence of DAC/pixel configurations
+  if (rocDACs.size() == 0 || rocPixels.size() == 0){
+    LOG(logCRITICAL) << "No DAC/pixel configurations for any ROC supplied!";
+    return false;
+  }
+  // check individual pixel configs
+  for(std::vector<std::vector<pixelConfig> >::iterator rocit = rocPixels.begin();rocit != rocPixels.end(); rocit++){
+    // check pixel configuration sizes
+    if ((*rocit).size() == 0){
+      LOG(logWARNING) << "No pixel configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
+    }
+    if ((*rocit).size() > 4160){
+      LOG(logCRITICAL) << "Too many pixels (N_pixel="<< (*rocit).size() <<" > 4160) configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
+      return false;
+    }
+    // check individual pixel configurations
+    int nduplicates = 0;
+    for(std::vector<pixelConfig>::iterator pixit = (*rocit).begin();pixit != (*rocit).end(); pixit++){
+      if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelXY((*pixit).column,(*pixit).row)) > 1){
+	LOG(logCRITICAL) << "Config for pixel in column " << (int) (*pixit).column<< " and row "<< (int) (*pixit).row << " present multiple times in ROC " << (int)(rocit-rocPixels.begin()) << "!";
+	nduplicates++;
+      }
+    }
+    if (nduplicates>0){
+      return false;
+    }
+
+    // check for pixels out of range
+    if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0){
+      LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
+      return false;
+    }
+  }
+
+  LOG(logDEBUGAPI) << "We have " << rocDACs.size() << " DAC configs and " << rocPixels.size() << " pixel configs, with " << rocDACs.at(0).size() << " and " << rocPixels.at(0).size() << " entries for the first ROC, respectively.";
+
+  // First initialized the API's DUT instance with the information supplied.
 
   // FIXME masking not done yet.
 
