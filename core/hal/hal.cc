@@ -105,11 +105,11 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
     if(sigIt->first == SIG_DESER160PHASE) {
-      LOG(logDEBUGHAL) << "Set DTB deser160 phase to value " << (int)sigIt->second;
+      LOG(logDEBUGHAL) << "Set DTB deser160 phase to value " << static_cast<int>(sigIt->second);
       _testboard->Daq_Select_Deser160(sigIt->second);
     }
     else {
-      LOG(logDEBUGHAL) << "Set DTB delay " << (int)sigIt->first << " to value " << (int)sigIt->second;
+      LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
       // Also set the signal level, all levels default to 15 (highest) for now:
       _testboard->Sig_SetLevel(sigIt->first, 15);
@@ -133,8 +133,8 @@ void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_set
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     uint16_t cmd = (*it).first | (*it).second;
     LOG(logDEBUGHAL) << "Setting PG cmd " << std::hex << cmd << std::dec 
-		     << " (addr " << (int)addr << " pat " << std::hex << (int)(*it).first << std::dec
-		     << " del " << (int)(*it).second << ")";
+		     << " (addr " << static_cast<int>(addr) << " pat " << std::hex << static_cast<int>((*it).first) << std::dec
+		     << " del " << static_cast<int>((*it).second) << ")";
     _testboard->Pg_SetCmd(addr, cmd);
     addr++;
   }
@@ -171,7 +171,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 
     while (true) {
       // LOG doesn't works with flush, so we can't display the percentage:
-      //             << ((int)(100 * recordCount / file_lines)) << " % " << flush;
+      //             << static_cast<int>(100 * recordCount / file_lines) << " % " << flush;
       getline(flashFile, rec);
       if (flashFile.good()) {
 	if (rec.size() == 0) continue;
@@ -222,14 +222,14 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   _testboard->Flush();
 
   // Programm all registers according to the configuration data:
-  LOG(logDEBUGHAL) << "Setting register vector for TBM " << (int)tbmId << ".";
+  LOG(logDEBUGHAL) << "Setting register vector for TBM " << static_cast<int>(tbmId) << ".";
   tbmSetRegs(tbmId,regVector);
 }
 
 void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector) {
 
   // Programm all DAC registers according to the configuration data:
-  LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << (int)rocId << ".";
+  LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << static_cast<int>(rocId) << ".";
   rocSetDACs(rocId,dacVector);
 }
 
@@ -427,7 +427,7 @@ bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
   // Make sure we are writing to the correct ROC by setting the I2C address:
   _testboard->roc_I2cAddr(rocId);
 
-  LOG(logDEBUGHAL) << "Set DAC" << (int)dacId << " to " << (int)dacValue;
+  LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(dacId) << " to " << static_cast<int>(dacValue);
   _testboard->roc_SetDAC(dacId,dacValue);
   return true;
 }
@@ -449,15 +449,15 @@ bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
 bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
 
   // Make sure we are writing to the correct TBM by setting its sddress:
-  // FIXME Magic from Beat, need to understand this:
+  // FIXME Magic from Beat, need to understand this and be able to program also the second TBM:
   _testboard->mod_Addr(31);
 
-  LOG(logDEBUGHAL) << "Set Reg" << std::hex << (int)regId << std::dec << " to " << std::hex << (int)regValue << std::dec << " for both TBM cores.";
+  LOG(logDEBUGHAL) << "Set Reg" << std::hex << static_cast<int>(regId) << std::dec << " to " << std::hex << static_cast<int>(regValue) << std::dec << " for both TBM cores.";
   // Set this register for both TBM cores:
   uint8_t regCore1 = 0xE0 | regId;
   uint8_t regCore2 = 0xF0 | regId;
-  LOG(logDEBUGHAL) << "Core 1: register " << std::hex << (int)regCore1 << " = " << (int)regValue << std::dec;
-  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << (int)regCore2 << " = " << (int)regValue << std::dec;
+  LOG(logDEBUGHAL) << "Core 1: register " << std::hex << static_cast<int>(regCore1) << " = " << static_cast<int>(regValue) << std::dec;
+  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << static_cast<int>(regCore2) << " = " << static_cast<int>(regValue) << std::dec;
   _testboard->tbm_Set(regId,regValue);
   return true;
 }
@@ -469,14 +469,14 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
   // Check if we want to mask or unmask&trim:
   if(mask) {
     // This is quite easy:
-    LOG(logDEBUGHAL) << "Masking ROC " << (int)rocid;
+    LOG(logDEBUGHAL) << "Masking ROC " << static_cast<int>(rocid);
 
     // Mask the PUC and detach all DC from their readout (both done on NIOS):
     _testboard->roc_Chip_Mask();
   }
   else {
     // We really want to enable that full thing:
-    LOG(logDEBUGHAL) << "Updating mask bits & trim values of ROC " << (int)rocid;
+    LOG(logDEBUGHAL) << "Updating mask bits & trim values of ROC " << static_cast<int>(rocid);
 
     // Prepare configuration of the pixels, linearize vector:
     std::vector<int16_t> trim;
@@ -504,13 +504,13 @@ void hal::PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, ui
 
   // Check if we want to mask or unmask&trim:
   if(mask) {
-    LOG(logDEBUGHAL) << "Masking pixel " << (int)column << "," << (int)row 
-		     << " on ROC " << (int)rocid;
+    LOG(logDEBUGHAL) << "Masking pixel " << static_cast<int>(column) << "," << static_cast<int>(row)
+		     << " on ROC " << static_cast<int>(rocid);
     _testboard->roc_Pix_Mask(column, row);
   }
   else {
-    LOG(logDEBUGHAL) << "Trimming pixel " << (int)column << "," << (int)row 
-		     << " (" << (int)trim << ")";
+    LOG(logDEBUGHAL) << "Trimming pixel " << static_cast<int>(column) << "," << static_cast<int>(row)
+		     << " (" << static_cast<int>(trim) << ")";
     _testboard->roc_Pix_Trim(column,row,trim);
   }
 }
@@ -521,7 +521,7 @@ void hal::ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable) {
   _testboard->roc_I2cAddr(rocid);
 
   // Set the Col Enable bit:
-  LOG(logDEBUGHAL) << "Setting Column " << (int)column << " enable bit to " << (int)enable;
+  LOG(logDEBUGHAL) << "Setting Column " << static_cast<int>(column) << " enable bit to " << static_cast<int>(enable);
   _testboard->roc_Col_Enable(column,enable);
 }
 
@@ -539,7 +539,7 @@ void hal::RocClearCalibrate(uint8_t rocid) {
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  LOG(logDEBUGHAL) << "Clearing calibrate signal for ROC " << (int)rocid;
+  LOG(logDEBUGHAL) << "Clearing calibrate signal for ROC " << static_cast<int>(rocid);
  _testboard->roc_ClrCal();
 }
 
@@ -551,7 +551,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   int32_t flags = parameter.at(0);
   int32_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   std::vector<int16_t> nReadouts;
   std::vector<int32_t> PHsum;
@@ -567,9 +567,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   size_t n = nReadouts.size();
   size_t p = PHsum.size();
   size_t a = address.size();
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << (int)n
-		   << ", PHsum " << (int)p
-		   << ", address " << (int)a;
+  LOG(logDEBUGHAL) << "Data size: nReadouts " << static_cast<int>(n)
+		   << ", PHsum " << static_cast<int>(p)
+		   << ", address " << static_cast<int>(a);
 
   // Check if all information has been transmitted:
   if(a != n || a != p || n != p) {
@@ -586,9 +586,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector<pixel> data;
   for(std::vector<uint32_t>::iterator it = address.begin(); it != address.end(); ++it) {
     if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { 
-      data.push_back(pixel((*it),nReadouts.at((int)(it - address.begin()))));
+      data.push_back(pixel((*it),nReadouts.at(static_cast<size_t>(it - address.begin()))));
     }
-    else { data.push_back(pixel((*it),PHsum.at((int)(it - address.begin()))));}
+    else { data.push_back(pixel((*it),PHsum.at(static_cast<size_t>(it - address.begin()))));}
     
   }
   result->push_back(data);
@@ -601,7 +601,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
   int32_t flags = parameter.at(0);
   int32_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
   int16_t nReadouts;
   int32_t PHsum;
@@ -643,7 +643,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   int32_t flags = parameter.at(3);
   int32_t nTriggers = parameter.at(4);
 
-  LOG(logDEBUGHAL) << "Called PixelCalibrateDacScan with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called PixelCalibrateDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << dacreg << " from " << dacmin << " to " << dacmax;
 
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
@@ -697,7 +697,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
   int32_t flags = parameter.at(6);
   int32_t nTriggers = parameter.at(7);
 
-  LOG(logDEBUGHAL) << "Called PixelCalibrateDacDacScan with flags " << (int)flags << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called PixelCalibrateDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning field DAC " << dac1reg << " " << dac1min << "-" << dac1max 
 		   << ", DAC " << dac2reg << " " << dac2min << "-" << dac2max;
 
@@ -909,7 +909,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
   }
   else {
     LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
-		     << " Phase: " << (int)deser160phase;
+		     << " Phase: " << static_cast<int>(deser160phase);
     _testboard->Daq_Select_Deser160(deser160phase);
   }
 
