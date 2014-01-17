@@ -5,6 +5,7 @@
 #include "api.h"
 #include "hal.h"
 #include "log.h"
+#include "helper.h"
 #include "dictionaries.h"
 #include <algorithm>
 #include <fstream>
@@ -120,15 +121,52 @@ bool api::initDUT(std::string tbmtype,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // First initialized the API's DUT instance with the information supplied.
-  // FIXME TODO: currently values are not checked for sanity! (Num pixels etc.)
+    // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
 
+  // Verification/sanitry checks of supplied DUT configuration values
   // Check size of rocDACs and rocPixels against each other
   if(rocDACs.size() != rocPixels.size()) {
     LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
     LOG(logCRITICAL) << "This cannot end well...";
     return false;
   }
+  // check for presence of DAC/pixel configurations
+  if (rocDACs.size() == 0 || rocPixels.size() == 0){
+    LOG(logCRITICAL) << "No DAC/pixel configurations for any ROC supplied!";
+    return false;
+  }
+  // check individual pixel configs
+  for(std::vector<std::vector<pixelConfig> >::iterator rocit = rocPixels.begin();rocit != rocPixels.end(); rocit++){
+    // check pixel configuration sizes
+    if ((*rocit).size() == 0){
+      LOG(logWARNING) << "No pixel configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
+    }
+    if ((*rocit).size() > 4160){
+      LOG(logCRITICAL) << "Too many pixels (N_pixel="<< (*rocit).size() <<" > 4160) configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
+      return false;
+    }
+    // check individual pixel configurations
+    int nduplicates = 0;
+    for(std::vector<pixelConfig>::iterator pixit = (*rocit).begin();pixit != (*rocit).end(); pixit++){
+      if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelXY((*pixit).column,(*pixit).row)) > 1){
+	LOG(logCRITICAL) << "Config for pixel in column " << (int) (*pixit).column<< " and row "<< (int) (*pixit).row << " present multiple times in ROC " << (int)(rocit-rocPixels.begin()) << "!";
+	nduplicates++;
+      }
+    }
+    if (nduplicates>0){
+      return false;
+    }
+
+    // check for pixels out of range
+    if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0){
+      LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
+      return false;
+    }
+  }
+
+  LOG(logDEBUGAPI) << "We have " << rocDACs.size() << " DAC configs and " << rocPixels.size() << " pixel configs, with " << rocDACs.at(0).size() << " and " << rocPixels.at(0).size() << " entries for the first ROC, respectively.";
+
+  // First initialized the API's DUT instance with the information supplied.
 
   // FIXME masking not done yet.
 
@@ -449,7 +487,6 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
   if(rocid < 0) {
     // Set the DAC for all active ROCs:
-    // FIXME maybe go over expandLoop here?
     std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
     for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 
@@ -500,7 +537,6 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
 
   if(tbmid < 0) {
     // Set the register for all active TBMs:
-    // FIXME maybe go over expandLoop here?
     std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
     for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
 
@@ -582,7 +618,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
 
   // Reset the original value for the scanned DAC:
-  // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
@@ -641,7 +676,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
 
   // Reset the original value for the scanned DAC:
-  // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
@@ -694,7 +728,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
 
   // Reset the original value for the scanned DAC:
-  // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
@@ -764,7 +797,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
 
   // Reset the original value for the scanned DAC:
-  // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);
@@ -840,7 +872,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
 
   // Reset the original value for the scanned DAC:
-  // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);
@@ -910,7 +941,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
 
   // Reset the original value for the scanned DAC:
-  // FIXME maybe go over expandLoop here?
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
     uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);

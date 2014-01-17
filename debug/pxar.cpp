@@ -161,7 +161,10 @@ int main(int argc, char* argv[]) {
     // Initialize the testboard:
     _api->initTestboard(sig_delays, power_settings, pg_setup);
     // Initialize the DUT (power it up and stuff):
-    _api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels);
+    if (!_api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels)){
+      std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
+      return -2;
+    }
     // Read DUT info, should print above filled information:
     _api->_dut->info();
 
