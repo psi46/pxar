@@ -2,12 +2,4 @@
   1        ctr    2
   2        sda   17
   3        tin    7
- 12        rda   60
- 17        trc  120
- 18        tcc    6
- 19        tct  105
- 20        ttk   32
- 21       trep   40
- 22         cc    1
- 77        spd    0
 255 deser160phase 4
