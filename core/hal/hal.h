@@ -123,9 +123,6 @@ namespace pxar {
 
 
     // TEST COMMANDS
-    std::vector< std::vector<pixel> >* DummyPixelTestSkeleton(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
-    std::vector< std::vector<pixel> >* DummyRocTestSkeleton(uint8_t rocid, std::vector<int32_t> parameter);
-    std::vector< std::vector<pixel> >* DummyModuleTestSkeleton(std::vector<int32_t> parameter);
 
     /** Function to return ROC maps of calibration pulses
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
