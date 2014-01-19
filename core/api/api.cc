@@ -10,11 +10,6 @@
 #include <algorithm>
 #include <fstream>
 
-/** Define a macro for calls to member functions through pointers 
- *  to member functions (used in the loop expansion routines).
- *  Follows advice of http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
- */
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 
 using namespace pxar;
