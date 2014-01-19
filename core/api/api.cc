@@ -163,8 +163,6 @@ bool api::initDUT(std::string tbmtype,
 
   // First initialized the API's DUT instance with the information supplied.
 
-  // FIXME masking not done yet.
-
   // Initialize TBMs:
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){
     // Prepare a new TBM configuration
