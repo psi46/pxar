@@ -22,33 +22,33 @@
 
 namespace pxar {
 
-  /** Class for storing pixel readout data
+  /** Class for storing decoded pixel readout data
    */
   class pixel {
   public:
 
-    /** Default constructor for pixel objects
+    /** Default constructor for pixel objects, defaulting all member variables to zero
      */
   pixel() : roc_id(0), column(0), row(0), value(0) {};
 
-    /** Constructor for pixel objects with address and value initialization
+    /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(int32_t address, int32_t data) {
-    fill(address,data);
-  };
-    /** Function to fill the pixel with linear encoded data from RPC transfer
-     */
-    inline void fill(int32_t address, int32_t data) {
-      // Fill the data
-      value = data;
-      
-      // Split the address and distribute it over ROC, column and row:
-      // pixel column: max(51 -> 110011), requires 6bits
-      // pixel row: max(79 -> 1001111), requires 7bits
-      // roc id: max(15 -> 1111), requires 4bits
+  pixel(int32_t address, int32_t data) : value(data) { decode(address); };
 
-      // 32 bits:
-      // -------- ----IIII --CCCCCC -RRRRRRR
+    /** Function to fill the pixel with linear encoded data from RPC transfer.
+     *  The address transmitted from the NIOS soft core is encoded in the following
+     *  way:
+     *
+     *  Split the address and distribute it over ROC, column and row:
+     *   * pixel column: max(51 -> 110011), requires 6 bits (R)
+     *   * pixel row: max(79 -> 1001111), requires 7 bits (C)
+     *   * roc id: max(15 -> 1111), requires 4 bits (I)
+     *
+     *  So everything can be stored in one 32 bits variable:
+     *
+     *   ........ ....IIII ..CCCCCC .RRRRRRR
+     */
+    inline void decode(int32_t address) {
       roc_id = (address>>16)&15;
       column = (address>>8)&63;
       row = (address)&127;
@@ -59,8 +59,9 @@ namespace pxar {
     int32_t value;
   };
 
-  /** Class to store the configuration for single pixels (i.e. their mask state, trim bit settings
-   *  and whether they belong to the currently run test ("enable"). By default, pixels are masked.
+  /** Class to store the configuration for single pixels (i.e. their mask state,
+   *  trim bit settings and whether they belong to the currently run test ("enable").
+   *  By default, pixelConfigs have the  mask bit set.
    */
   class pixelConfig {
   public:
@@ -400,10 +401,10 @@ namespace pxar {
     std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
 
     /** Helper function for conversion from string to register value
-     *  Type tells it whether it is a DTB, TBM or ROC register to look for
-     * Range check for DAC and testboard register values. This function 
-     *  return the value itself if valid
-     *  or upper/lower range boundary in case of over/underflow:
+     *  Type tells it whether it is a DTB, TBM or ROC register to look for.
+     *  This function also performs a range check for DAC and testboard register
+     *  values. This function return the value itself if it is within the valid
+     *  range or upper/lower range boundary in case of over/underflow.
      */
     bool verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type);
 
@@ -412,15 +413,27 @@ namespace pxar {
     uint8_t stringToDeviceCode(std::string name);
 
     /** Routine to loop over all ROCs/pixels and figure out the most efficient way to
-     *  (un)mask and trim them for the upcoming test according to the information stored
-     *  in the DUT struct.
+     *  (un)mask and trim them for the upcoming test according to the information
+     *   stored in the DUT struct.
+     *
+     *  This function programs all attached devices with the needed trimming and
+     *  masking bits for the Pixel Unit Cells (PUC).
+     *  It sets both the needed PUC mask&trim bits and the DCOL enable bits.
+     *  If the bool parameter "trim" is set to "false" it will just mask all ROCs.
      */
     void MaskAndTrim(bool trim);
 
-    // FIXME missing documentation
+    /** Helper function to setup the attached devices for operation using calibrate
+     *  pulses. It sets the Pixel Unit Cell (PUC) Calibrate bit for every pixels 
+     *  enabled in the test range (those for which the "enable" flag has been set 
+     *  using the testPixel() DUT functions) 
+     */
     void SetCalibrateBits(bool enable);
 
-    /** Helper function to check validity of the pattern generator settings coming from the user space
+    /** Helper function to check validity of the pattern generator settings
+     *  coming from the user space. Right now this only checks for wrong/dangerous
+     *  delay settings either stopping the PG too early or not at all (missing
+     *  delay = 0 at the end of the pattern command list)
      */
     bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 

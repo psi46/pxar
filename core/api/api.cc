@@ -10,8 +10,6 @@
 #include <algorithm>
 #include <fstream>
 
-
-
 using namespace pxar;
 
 api::api(std::string usbId, std::string logLevel) {
@@ -284,8 +282,7 @@ bool api::status() {
   return false;
 }
 
-// Check if the given value lies within the valid range of the DAC. If value lies above/below valid range
-// return the upper/lower bondary. If value lies wqithin the range, return the value
+// Lookup register and check value range
 bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type) {
 
   // Convert the name to lower case for comparison:
@@ -336,7 +333,7 @@ uint8_t api::stringToDeviceCode(std::string name) {
 }
 
 
-/** DTB functions **/
+// DTB functions
 
 bool api::flashTB(std::string filename) {
 
@@ -467,7 +464,7 @@ bool api::SignalProbe(std::string probe, std::string name) {
 
 
   
-/** TEST functions **/
+// TEST functions
 
 bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   
@@ -1037,7 +1034,8 @@ int32_t api::getReadbackValue(std::string parameterName) {
 }
 
 
-/** DAQ functions **/
+// DAQ functions
+
 bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   if(!status()) {return false;}
@@ -1308,9 +1306,7 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 }
 
 
-// Function to program the device with all the needed trimming and masking stuff
-// It sets both the needed PUC mask&trim bits and the DCOL enable bits.
-// if "trim is set to "false" it will just mask all ROCs.
+// Mask/Unmask and trim the ROCs:
 void api::MaskAndTrim(bool trim) {
 
   // Run over all existing ROCs:
@@ -1368,8 +1364,7 @@ void api::MaskAndTrim(bool trim) {
 
 }
 
-// Function to suppy all enabled pixels in the test range ("enable") with 
-// a roc_Pix_Cal bit:
+// Program the calibrate bits in ROC PUCs:
 void api::SetCalibrateBits(bool enable) {
 
   // Run over all existing ROCs:
