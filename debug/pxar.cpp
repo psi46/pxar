@@ -242,14 +242,18 @@ int main(int argc, char* argv[]) {
   try {
     _api = new pxar::api("*",argv[1] ? argv[1] : "DEBUG");
   
-    //_api->flashTB("/tmp/dtb_v0111.flash");
-    //_api->flashTB("/tmp/Pixel/dtb_v01122.flash");
-    //_api->flashTB("/tmp/dtb_v1.14.flash");
-
     // Initialize the testboard:
-    _api->initTestboard(sig_delays, power_settings, pg_setup);
+    if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {
+      std::cout << "Something is fishy. We probably need to flash the DTB..." << std::endl;
+      std::cout << "Would you be so kind and provide the path to the flash file?" << std::endl;
+      std::string flashfile;
+      std::cin >> flashfile;
+      _api->flashTB(flashfile);
+      delete _api;
+      return 0;
+    }
     // Initialize the DUT (power it up and stuff):
-    if (!_api->initDUT("tbm08",tbmDACs,"psi46dig",rocDACs,rocPixels)){
+    if (!_api->initDUT("tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
       std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
       return -2;
     }
