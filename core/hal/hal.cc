@@ -418,10 +418,13 @@ void hal::setTBvd(double VD) {
 
 bool hal::rocSetDACs(uint8_t rocId, std::map< uint8_t, uint8_t > dacPairs) {
 
+  // Make sure we are writing to the correct ROC by setting the I2C address:
+  _testboard->roc_I2cAddr(rocId);
+
   // Iterate over all DAC id/value pairs and set the DAC
   for(std::map< uint8_t,uint8_t >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
-    // One of the DAC settings had an issue, abort:
-    if(!rocSetDAC(rocId, it->first, it->second)) return false;
+    LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(it->first) << " to " << static_cast<int>(it->second);
+    _testboard->roc_SetDAC(it->first,it->second);
   }
 
   // Send all queued commands to the testboard:

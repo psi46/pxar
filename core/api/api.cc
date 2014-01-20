@@ -10,13 +10,6 @@
 #include <algorithm>
 #include <fstream>
 
-/** Define a macro for calls to member functions through pointers 
- *  to member functions (used in the loop expansion routines).
- *  Follows advice of http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
- */
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-
-
 using namespace pxar;
 
 api::api(std::string usbId, std::string logLevel) {
@@ -168,8 +161,6 @@ bool api::initDUT(std::string tbmtype,
 
   // First initialized the API's DUT instance with the information supplied.
 
-  // FIXME masking not done yet.
-
   // Initialize TBMs:
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){
     // Prepare a new TBM configuration
@@ -291,8 +282,7 @@ bool api::status() {
   return false;
 }
 
-// Check if the given value lies within the valid range of the DAC. If value lies above/below valid range
-// return the upper/lower bondary. If value lies wqithin the range, return the value
+// Lookup register and check value range
 bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type) {
 
   // Convert the name to lower case for comparison:
@@ -343,7 +333,7 @@ uint8_t api::stringToDeviceCode(std::string name) {
 }
 
 
-/** DTB functions **/
+// DTB functions
 
 bool api::flashTB(std::string filename) {
 
@@ -474,9 +464,9 @@ bool api::SignalProbe(std::string probe, std::string name) {
 
 
   
-/** TEST functions **/
+// TEST functions
 
-bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
+bool api::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
   
   if(!status()) {return false;}
 
@@ -485,25 +475,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-  if(rocid < 0) {
-    // Set the DAC for all active ROCs:
-    std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
-    for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
-
-      // Update the DUT DAC Value:
-      ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
-      if(ret.second == true) {
-	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
-      }
-      else {
-	_dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
-	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
-      }
-
-      _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
-    }
-  }
-  else if(_dut->roc.size() > static_cast<size_t>(rocid)) {
+  if(_dut->roc.size() > rocid) {
     // Set the DAC only in the given ROC (even if that is disabled!)
 
     // Update the DUT DAC Value:
@@ -519,13 +491,42 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
     _hal->rocSetDAC(static_cast<uint8_t>(rocid),dacRegister,dacValue);
   }
   else {
-    LOG(logERROR) << "ROC " << rocid << " is not existing in the DUT!";
+    LOG(logERROR) << "ROC " << rocid << " does not exist in the DUT!";
     return false;
   }
   return true;
 }
 
-bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
+bool api::setDAC(std::string dacName, uint8_t dacValue) {
+  
+  if(!status()) {return false;}
+
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
+
+  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+  // Set the DAC for all active ROCs:
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
+
+    // Update the DUT DAC Value:
+    ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
+    if(ret.second == true) {
+      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
+    }
+    else {
+      _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
+      LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
+    }
+
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
+  }
+
+  return true;
+}
+
+bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
   if(!status()) {return 0;}
   
@@ -534,26 +535,7 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
   if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-
-  if(tbmid < 0) {
-    // Set the register for all active TBMs:
-    std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-    for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
-
-      // Update the DUT DAC Value:
-      ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
-      if(ret.second == true) {
-	LOG(logWARNING) << "DAC \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
-      }
-      else {
-	_dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
-	LOG(logDEBUGAPI) << "DAC \"" << regName << "\" updated with value " << static_cast<int>(regValue);
-      }
-
-      _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
-    }
-  }
-  else if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
+  if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
 
     // Update the DUT register Value:
@@ -569,8 +551,36 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
     _hal->tbmSetReg(static_cast<uint8_t>(tbmid),_register,regValue);
   }
   else {
-    LOG(logERROR) << "ROC " << tbmid << " is not existing in the DUT!";
+    LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
     return false;
+  }
+  return true;
+}
+
+bool api::setTbmReg(std::string regName, uint8_t regValue) {
+
+  if(!status()) {return 0;}
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t _register;
+  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
+
+  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+  // Set the register for all active TBMs:
+  std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
+  for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
+
+    // Update the DUT register Value:
+    ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
+    if(ret.second == true) {
+      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
+    }
+    else {
+      _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
+      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
+    }
+
+    _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
   }
   return true;
 }
@@ -1044,7 +1054,8 @@ int32_t api::getReadbackValue(std::string parameterName) {
 }
 
 
-/** DAQ functions **/
+// DAQ functions
+
 bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   if(!status()) {return false;}
@@ -1315,9 +1326,7 @@ std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::ve
 }
 
 
-// Function to program the device with all the needed trimming and masking stuff
-// It sets both the needed PUC mask&trim bits and the DCOL enable bits.
-// if "trim is set to "false" it will just mask all ROCs.
+// Mask/Unmask and trim the ROCs:
 void api::MaskAndTrim(bool trim) {
 
   // Run over all existing ROCs:
@@ -1375,8 +1384,7 @@ void api::MaskAndTrim(bool trim) {
 
 }
 
-// Function to suppy all enabled pixels in the test range ("enable") with 
-// a roc_Pix_Cal bit:
+// Program the calibrate bits in ROC PUCs:
 void api::SetCalibrateBits(bool enable) {
 
   // Run over all existing ROCs:
