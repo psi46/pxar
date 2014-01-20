@@ -557,13 +557,14 @@ namespace pxar {
 
   class dut {
     
-    /** Allow the API class to access private members of the DUT - noone else should be able to access them! 
+    /** Allow the API class to access private members of the DUT - noone else
+     *  should be able to access them! 
      */
     friend class api;
     
   public:
 
-    /** GET functions to read information **/
+    // GET functions to read information
 
     /** Info function printing a listing of the current DUT objects and their states
      */
@@ -588,10 +589,6 @@ namespace pxar {
     /** Function returning the enabled pixels configs for a specific ROC:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
-
-    /** Function returning for every column if it includes an enabled pixel for a specific ROC:
-     */
-    std::vector< bool > getEnabledColumns(size_t rocid);
 
     /** Function returning the enabled ROC configs
      */
@@ -658,20 +655,31 @@ namespace pxar {
 
     /** Function to mask the all pixels in one column on a specific ROC
      */
-    void maskColumn(uint8_t column, bool mask, int8_t rocid = -1);
+    void maskColumn(uint8_t column, bool mask, uint8_t rocid);
+
+    /** Function to mask the all pixels in one column on all ROCs
+     */
+    void maskColumn(uint8_t column, bool mask);
 
     /** Function to enable all pixels on all ROCs:
      */
-    void testAllPixels(bool enable, int8_t rocid = -1);
+    void testAllPixels(bool enable);
+
+    /** Function to enable all pixels on a specific ROC "rocid":
+     */
+    void testAllPixels(bool enable, uint8_t rocid);
+
+    /** Function to enable all pixels on a specific ROC "rocid":
+     */
+    void maskAllPixels(bool mask, uint8_t rocid);
 
     /** Function to enable all pixels on all ROCs:
      */
-    void maskAllPixels(bool mask, int8_t rocid = -1);
+    void maskAllPixels(bool mask);
    
     /** Function to check the status of the DUT
      */
     bool status();
-
 
   private:
 
@@ -685,11 +693,29 @@ namespace pxar {
      */
     bool _programmed;
 
+    /** Function returning for every column if it includes an enabled pixel
+     *  for a specific ROC:
+     */
+    std::vector< bool > getEnabledColumns(size_t rocid);
+
+    /** DUT member to hold all ROC configurations
+     */
     std::vector< rocConfig > roc;
+
+    /** DUT member to hold all TBM configurations
+     */
     std::vector< tbmConfig > tbm;
 
+    /** DUT member to hold all DTB signal delay configurations
+     */
     std::map<uint8_t,uint8_t> sig_delays;
+
+    /** Variables to store the DTB power limit settings
+     */
     double va, vd, ia, id;
+
+    /** DUT member to store the current Pattern Generator command list
+     */
     std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
 
   }; //class DUT

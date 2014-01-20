@@ -233,9 +233,22 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
     tbm[tbmId].enable = enable;
 }
 
-void dut::maskColumn(uint8_t column, bool mask, int8_t rocid) {
+void dut::maskColumn(uint8_t column, bool mask, uint8_t rocid) {
 
-  if(status() && rocid < 0) {
+  if(status() && rocid < roc.size()) {
+      LOG(logDEBUGAPI) << "Set mask bit of all pixels in column " << static_cast<int>(column) << " to " << static_cast<int>(mask) << " on ROC " << static_cast<int>(rocid);
+    
+      // Find all pixels with specified column
+      for(std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it) {
+	// Set enable bit
+	if(it->column == column) {it->mask = mask;}
+      }
+    }
+}
+
+void dut::maskColumn(uint8_t column, bool mask) {
+
+  if(status()) {
     LOG(logDEBUGAPI) << "Set mask bit of all pixels in column " << static_cast<int>(column)
 		     << " to " << static_cast<int>(mask) << " on all ROCs."; 
     // Loop over all ROCs
@@ -245,15 +258,6 @@ void dut::maskColumn(uint8_t column, bool mask, int8_t rocid) {
 	// Set enable bit
 	if(it->column == column) {it->mask = mask;}
       }
-    }
-  }
-  else if(status() && rocid < static_cast<int>(roc.size())) {
-    LOG(logDEBUGAPI) << "Set mask bit of all pixels in column " << static_cast<int>(column) << " to " << static_cast<int>(mask) << " on ROC " << static_cast<int>(rocid);
-
-    // Find all pixels with specified column
-    for(std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it) {
-      // Set enable bit
-      if(it->column == column) {it->mask = mask;}
     }
   }
 }
@@ -341,9 +345,9 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid) {
   }
 }
 
-void dut::maskAllPixels(bool mask, int8_t rocid) {
+void dut::maskAllPixels(bool mask) {
 
-  if(status() && rocid < 0) {
+  if(status()) {
     LOG(logDEBUGAPI) << "Set mask bit to " << static_cast<int>(mask) << " for all pixels on all ROCs.";
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
@@ -353,7 +357,11 @@ void dut::maskAllPixels(bool mask, int8_t rocid) {
       }
     }
   }
-  else if(status() && rocid < static_cast<int>(roc.size())) {
+}
+
+void dut::maskAllPixels(bool mask, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
     LOG(logDEBUGAPI) << "Set mask bit to " << static_cast<int>(mask) << " for all pixels on ROC " << static_cast<int>(rocid);
     // loop over all pixel, set enable according to parameter
     for (std::vector<pixelConfig>::iterator pixelit = roc.at(rocid).pixels.begin() ; pixelit != roc.at(rocid).pixels.end(); ++pixelit){
@@ -362,12 +370,26 @@ void dut::maskAllPixels(bool mask, int8_t rocid) {
   }
 }
 
-void dut::testAllPixels(bool enable, int8_t rocid) {
+void dut::testAllPixels(bool enable, uint8_t rocid) {
 
   // Testing also means we need to set the mask state accordingly (inverted)
   maskAllPixels(!enable);
 
-  if(status() && rocid < 0) {
+  if(status() && rocid < roc.size()) {
+    LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on ROC " << static_cast<int>(rocid);
+    // loop over all pixel, set enable according to parameter
+    for (std::vector<pixelConfig>::iterator pixelit = roc.at(rocid).pixels.begin() ; pixelit != roc.at(rocid).pixels.end(); ++pixelit){
+      pixelit->enable = enable;
+    }
+  }
+}
+
+void dut::testAllPixels(bool enable) {
+
+  // Testing also means we need to set the mask state accordingly (inverted)
+  maskAllPixels(!enable);
+
+  if(status()) {
     LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on all ROCs";
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
@@ -375,13 +397,6 @@ void dut::testAllPixels(bool enable, int8_t rocid) {
       for (std::vector<pixelConfig>::iterator pixelit = rocit->pixels.begin() ; pixelit != rocit->pixels.end(); ++pixelit){
 	pixelit->enable = enable;
       }
-    }
-  }
-  else if(status() && rocid < static_cast<int>(roc.size())) {
-    LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on ROC " << static_cast<int>(rocid);
-    // loop over all pixel, set enable according to parameter
-    for (std::vector<pixelConfig>::iterator pixelit = roc.at(rocid).pixels.begin() ; pixelit != roc.at(rocid).pixels.end(); ++pixelit){
-      pixelit->enable = enable;
     }
   }
 }
