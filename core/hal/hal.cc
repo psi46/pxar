@@ -676,7 +676,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
 		   << ", PHsum " << (int)p;
 
   // Check if all information has been transmitted:
-  if(n != p || n != (dacmax-dacmin)) {
+  if(n != p || n != static_cast<size_t>(dacmax-dacmin)) {
     // FIXME custom exception?
     LOG(logCRITICAL) << "Data size not as expected!";
     return result;
@@ -735,7 +735,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
 		   << ", PHsum " << (int)p;
 
   // Check if all information has been transmitted:
-  if(n != p || n != (dac1max-dac1min)*(dac2max-dac2min)) {
+  if(n != p || n != static_cast<size_t>((dac1max-dac1min)*(dac2max-dac2min))) {
     // FIXME custom exception?
     LOG(logCRITICAL) << "Data size not as expected!";
     return result;
