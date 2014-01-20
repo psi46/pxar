@@ -426,10 +426,13 @@ namespace pxar {
 
     // DAQ functions
 
-    /** Function to set up a new data acquisition
-     *  This function takes a new Pattern Generator setup as argument, if left empty the one which is currently
-     *  programmed via initTestboard is used. The given pattern generator only lives for the time of the 
-     *  data acquisition and is replaced by the previous one after stopping the DAQ.
+    /** Function to set up and initialize a new data acquisition session (DAQ)
+     *
+     *  This function takes a new Pattern Generator setup as argument, if left 
+     *  empty the one which is currently programmed via the api::initTestboard 
+     *  function is used. The given pattern generator only lives for the time 
+     *  of the data acquisition and is replaced by the previous one after 
+     *  stopping the DAQ.
      */
     bool daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
     
@@ -439,31 +442,35 @@ namespace pxar {
      */
     std::vector<pixel> daqGetEvent();
 
-    /** Function to fire the previously defined pattern commands nTrig times, the
-     *  function parameter defaults to 1.
+    /** Function to fire the previously defined pattern command list "nTrig"
+     *  times, the function parameter defaults to 1.
      */
     void daqTrigger(uint32_t nTrig = 1);
 
     /** Function to stop the running data acquisition
-     *  This triggers also a reprogramming of the old (test-) Pattern Generator setup, so no additional
-     *  steps are needed before one can do regular tests again. The patterns are taken from the DUT struct
-     *  in which they are stored from initTestboard.
+     *
+     *  This triggers also a reprogramming of the old (test-) Pattern Generator
+     *  setup, so no additional steps are needed before one can do regular 
+     *  tests again. The patterns are taken from the DUT struct in which they 
+     *  are stored by the api::initTestboard function.
      */
     bool daqStop();
 
-    /** Function to return the full event buffer from the testboard RAM after the
-     *  data acquisition has been stopped. No decoding performed, raw data.
+    /** Function to return the full event buffer from the testboard RAM after
+     *  the data acquisition has been stopped. No decoding is performed, this 
+     *  function returns the raw data blob from either of the deserializer
+     *  modules.
      */
     std::vector<uint16_t> daqGetBuffer();
-    
 
 
     /** DUT object for book keeping of settings
      */
     dut * _dut;
 
-    /** Status function for the API, returns true if everything is setup correctly
-     *  for operation
+    /** Status function for the API
+     *
+     *  Returns true if everything is setup correctly for operation
      */
     bool status();
     
