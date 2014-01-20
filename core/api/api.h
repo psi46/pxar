@@ -318,7 +318,8 @@ namespace pxar {
      *  This function will both update the bookkeeping value in the DUT
      *  struct and program the actual device.
      *
-     *  This function will set the respective register always in both cores of the TBM specified.
+     *  This function will set the respective register always in both cores of
+     *  the TBM specified.
      */
     bool setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid);
 
@@ -327,87 +328,103 @@ namespace pxar {
      *  This function will both update the bookkeeping value in the DUT
      *  struct and program the actual device.
      *
-     *  This function will set the respective register always in both cores of all TBMs.
+     *  This function will set the respective register always in both cores of
+     *  all TBMs configured in the DUT.
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
-    /** Method to scan a DAC and measure the pulse height
+    /** Method to scan a DAC range and measure the pulse height
      *
-     *  Returns a std vector of pairs containing set dac value and a pixel vector, with the value of the pixel struct being
-     *  the averaged pulse height over nTriggers triggers
+     *  Returns a vector of pairs containing set dac value and a pixel vector,
+     *  with the value of the pixel struct being the averaged pulse height
+     *  over "nTriggers" triggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint16_t flags = 0, uint32_t nTriggers=16);
+									       uint16_t flags = 0, uint32_t nTriggers = 16);
 
-    /** Method to scan a DAC and measure the efficiency
+    /** Method to scan a DAC range and measure the efficiency
      *
-     *  Returns a std vector of pairs containing set dac value and pixels, with the value of the pixel struct being
-     *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
+     *  Returns a vector of pairs containing set dac value and pixels,
+     *  with the value of the pixel struct being the number of hits in that
+     *  pixel. Efficiency == 1 for nhits == nTriggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 					  uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to scan a DAC and measure the pixel threshold
+    /** Method to scan a DAC range and measure the pixel threshold
      *
-     *  Returns a std vector of pairs containing set dac value and pixels, with the value of the pixel struct being
-     *  the threshold value of that pixel
+     *  Returns a vector of pairs containing set dac value and pixels,
+     *  with the value of the pixel struct being the threshold value of that
+     *  pixel.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
+     *  using an adapted binary search algorithm for optimal speed.
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 					 uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the pulse height
+    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the
+     *  pulse height
      *
-     *  Returns a std vector containing pairs of DAC1 values and pais of DAC2 values with a pixel vector
-     *  with the value of the pixel struct being the averaged pulse height over nTriggers triggers
+     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
+     *  values with a pixel vector. The value of the pixel struct is the
+     *  averaged pulse height over "nTriggers" triggers.
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					      uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the efficiency
+    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the efficiency
      *
-     *  Returns a std vector containing pairs of DAC1 values and pais of DAC2 values with a pixel vector
-     *  with the value of the pixel struct being the number of hits in that pixel.
-     *   Efficiency == 1 for nhits == nTriggers
+     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
+     *  values with a pixel vector. The value of the pixel struct is the
+     *  number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					     uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2)  and measure the threshold
+    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the threshold
      *
-     *  Returns a std vector containing pairs of DAC1 values and pais of DAC2 values with a pixel vector
-     *  with the value of the pixel struct being the averaged pixel threshold.
+     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
+     *  values with a pixel vector. The value of the pixel struct is the
+     *  averaged pixel threshold.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
+     *  using an adapted binary search algorithm for optimal speed.
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					    std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					    uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to get a chip map of the pulse height
+    /** Method to get a map of the pulse height
      *
-     *  Returns a std vector of pixels, with the value of the pixel struct being
-     *  the averaged pulse height over nTriggers triggers
+     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  the averaged pulse height over "nTriggers" triggers
      */
     std::vector<pixel> getPulseheightMap(uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to get a chip map of the efficiency
+    /** Method to get a map of the efficiency
      *
-     *  Returns a std vector of pixels, with the value of the pixel struct being
+     *  Returns a vector of pixels, with the value of the pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
     std::vector<pixel> getEfficiencyMap(uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to get a chip map of the pixel threshold
+    /** Method to get a map of the pixel threshold
      *
-     *  Returns a std vector of pixels, with the value of the pixel struct being
+     *  Returns a vector of pixels, with the value of the pixel struct being
      *  the threshold value of that pixel
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
+     *  using an adapted binary search algorithm for optimal speed.
      */
     std::vector<pixel> getThresholdMap(uint16_t flags = 0, uint32_t nTriggers=16);
 
     int32_t getReadbackValue(std::string parameterName);
 
 
-    /** DAQ functions **/
+    // DAQ functions
 
     /** Function to set up a new data acquisition
      *  This function takes a new Pattern Generator setup as argument, if left empty the one which is currently
