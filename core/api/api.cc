@@ -526,7 +526,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
   return true;
 }
 
-bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
+bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
   if(!status()) {return 0;}
   
@@ -535,26 +535,7 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
   if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-
-  if(tbmid < 0) {
-    // Set the register for all active TBMs:
-    std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-    for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
-
-      // Update the DUT DAC Value:
-      ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
-      if(ret.second == true) {
-	LOG(logWARNING) << "DAC \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
-      }
-      else {
-	_dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
-	LOG(logDEBUGAPI) << "DAC \"" << regName << "\" updated with value " << static_cast<int>(regValue);
-      }
-
-      _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
-    }
-  }
-  else if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
+  if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
 
     // Update the DUT register Value:
@@ -570,8 +551,36 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, int8_t tbmid) {
     _hal->tbmSetReg(static_cast<uint8_t>(tbmid),_register,regValue);
   }
   else {
-    LOG(logERROR) << "ROC " << tbmid << " is not existing in the DUT!";
+    LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
     return false;
+  }
+  return true;
+}
+
+bool api::setTbmReg(std::string regName, uint8_t regValue) {
+
+  if(!status()) {return 0;}
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t _register;
+  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
+
+  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+  // Set the register for all active TBMs:
+  std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
+  for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
+
+    // Update the DUT register Value:
+    ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
+    if(ret.second == true) {
+      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
+    }
+    else {
+      _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
+      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
+    }
+
+    _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
   }
   return true;
 }
