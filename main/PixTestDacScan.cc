@@ -205,7 +205,7 @@ void PixTestDacScan::doTest() {
       }
       fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
 
-      if (hsummary) hsummary->Draw();
+      if (h) h->Draw();
       PixTest::update(); 
     }
   }
