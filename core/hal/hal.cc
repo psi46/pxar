@@ -601,7 +601,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
     if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { 
       data.push_back(pixel((*it),nReadouts.at(static_cast<size_t>(it - address.begin()))));
     }
-    else { data.push_back(pixel((*it),PHsum.at(static_cast<size_t>(it - address.begin()))));}
+    else { 
+      data.push_back(pixel((*it),static_cast<int32_t>(PHsum.at(static_cast<size_t>(it-address.begin()))/nTriggers)));
+    }
     
   }
   result->push_back(data);
@@ -638,7 +640,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
     LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";
   }
   else {
-    newpixel.value =  static_cast<int32_t>(PHsum);
+    newpixel.value =  static_cast<int32_t>(PHsum/nTriggers);
     LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
   }
 
@@ -693,7 +695,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
 
     // Decide over what we get back in the value field:
     if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
-    else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)); }
+    else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)/nTriggers); }
     data.push_back(newpixel);
     result->push_back(data);
     it++;
@@ -753,7 +755,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
 
       // Decide over what we get back in the value field:
       if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
-      else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)); }
+      else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)/nTriggers); }
       data.push_back(newpixel);
       result->push_back(data);
       it++;
