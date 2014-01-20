@@ -79,8 +79,9 @@ namespace pxar {
   };
 
   /** Class for ROC states
-   *  Contains a DAC vector for their settings, a type flag and an enable switch
-   *  and a vector for pixelConfig
+   *
+   *  Contains a DAC map for the ROC programming settings, a type flag, enable switch
+   *  and a vector of pixelConfigs.
    */
   class rocConfig {
   public:
@@ -92,7 +93,8 @@ namespace pxar {
   };
 
   /** Class for TBM states
-   *  Contains a DAC vector for their settings, a type flag and an enable switch
+   *
+   *  Contains a register map for the device register settings, a type flag and an enable switch
    */
   class tbmConfig {
   public:
@@ -109,19 +111,47 @@ namespace pxar {
   /** Forward declaration, not including the header file!
    */
   class hal;
+
+
   /** Define typedefs to allow easy passing of member function
-   *   addresses from the HAL class, used e.g. in loop expansion routines.
-   *   Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
+   *  addresses from the HAL class, used e.g. in loop expansion routines.
+   *  Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
    */
   typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnPixel)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
   typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnRoc)(uint8_t rocid, std::vector<int32_t> parameter);
   typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnModule)(std::vector<int32_t> parameter);
 
 
-
   /** pxar API class definition
+   *
    *  this is the central API through which all calls from tests and user space
    *  functions have to be routed in order to interact with the hardware.
+   *
+   *  The API level aims to provide a set of high-level function from which
+   *  the "user" (or test implementation) can choose. This approach allows
+   *  to hide hardware specific functions and calls from the user space code
+   *  and automatize e.g. startup procedures.
+   *
+   *  All input from user space is checked before programming it to the 
+   *  devices. Register addresses have an internal lookup mechanism so the
+   *  user only hast to provide e.g. the DAC name to be programmed as a string.
+   *
+   *  Unless otherwise specified (some DAQ functions allow this) all data
+   *  returned from API functions is fully decoded and stored in C++ structures
+   *  using std::vectors and std::pairs to ease its handling.
+   *
+   *  Another concept implemented is the Device Under Test (DUT) which is a
+   *  class representing the attached hardware to be tested. In order to change
+   *  its configuration the user space code interacts with the _dut object and
+   *  alters its settings. This is programmed into the devices automatically
+   *  before the next test is executed. This approach allows both the efficient
+   *  execution of many RPC calls at once and reading back the actual device
+   *  configuration at any time during the tests.
+   *
+   *  Calls to test functions are automatically expanded in a way that they
+   *  cover the full device in the most efficient way available. Instead of
+   *  scanning 4160 pixels after another the code will select the function
+   *  to scan a full ROC in one go automatically.
    */
   class api {
 
