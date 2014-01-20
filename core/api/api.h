@@ -481,27 +481,37 @@ namespace pxar {
     hal * _hal;
 
     /** Routine to loop over all active ROCs/pixels and call the
-     *  appropriate pixel, ROC or module HAL methods for execution
+     *  appropriate pixel, ROC or module HAL methods for execution.
+     *
+     *  This provides the central functionality of the DUT concept, expandLoop
+     *  will check for the most efficient way to carry out a test requested by
+     *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
+     *  function, all depending on the configuration of the DUT.
      */
     std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param, bool forceSerial = false);
 
-    /** repacks map data from (possibly) several ROCs into one long vector of pixels
+    /** Repacks map data from (possibly) several ROCs into one long vector
+     *  of pixels.
      */
     std::vector<pixel>* repackMapData (std::vector< std::vector<pixel> >* data);
 
-    /** repacks Dac scan data into pairs of Dac values with fired pixel vectors
+    /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax);
 
-    /** repacks DacDac scan data into pairs of Dac values with fired pixel vectors
+    /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
+     *  vectors of the fired pixels.
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max);
 
-    /** compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into (data(roc0,roc1)) where the data blocks can be subdivided into e.g. DAC ranges
+    /** Compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into
+     *  (data(roc0,roc1)) where the data blocks can ueasily be subdivided into
+     *  e.g. DAC ranges of a scan.
      */
     std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
 
     /** Helper function for conversion from string to register value
+     *
      *  Type tells it whether it is a DTB, TBM or ROC register to look for.
      *  This function also performs a range check for DAC and testboard register
      *  values. This function return the value itself if it is within the valid
@@ -513,31 +523,34 @@ namespace pxar {
      */
     uint8_t stringToDeviceCode(std::string name);
 
-    /** Routine to loop over all ROCs/pixels and figure out the most efficient way to
-     *  (un)mask and trim them for the upcoming test according to the information
-     *   stored in the DUT struct.
+    /** Routine to loop over all ROCs/pixels and figure out the most efficient
+     *  way to (un)mask and trim them for the upcoming test according to the 
+     *  information stored in the DUT struct.
      *
      *  This function programs all attached devices with the needed trimming and
-     *  masking bits for the Pixel Unit Cells (PUC).
-     *  It sets both the needed PUC mask&trim bits and the DCOL enable bits.
-     *  If the bool parameter "trim" is set to "false" it will just mask all ROCs.
+     *  masking bits for the Pixel Unit Cells (PUC). It sets both the needed PUC
+     *  mask&trim bits and the DCOL enable bits. If the bool parameter "trim" is
+     *  set to "false" it will just mask all ROCs.
      */
     void MaskAndTrim(bool trim);
 
-    /** Helper function to setup the attached devices for operation using calibrate
-     *  pulses. It sets the Pixel Unit Cell (PUC) Calibrate bit for every pixels 
-     *  enabled in the test range (those for which the "enable" flag has been set 
-     *  using the testPixel() DUT functions) 
+    /** Helper function to setup the attached devices for operation using
+     *  calibrate pulses.
+     *
+     *  It sets the Pixel Unit Cell (PUC) Calibrate bit for
+     *  every pixels enabled in the test range (those for which the "enable" 
+     *  flag has been set using the dut::testPixel() functions) 
      */
     void SetCalibrateBits(bool enable);
 
     /** Helper function to check validity of the pattern generator settings
-     *  coming from the user space. Right now this only checks for wrong/dangerous
-     *  delay settings either stopping the PG too early or not at all (missing
-     *  delay = 0 at the end of the pattern command list)
+     *  coming from the user space.
+     *
+     *  Right now this only checks for wrong or 
+     *  dangerous delay settings either stopping the PG too early or not at
+     *  all (missing delay = 0 at the end of the pattern command list)
      */
     bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
-
 
   }; // class api
 
