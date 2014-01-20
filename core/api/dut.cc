@@ -11,9 +11,7 @@
 
 using namespace pxar;
 
-/* =========================================================================== */
-
-/** DUT class functions **/
+// DUT class functions
 
 void dut::info() {
   if (status()) {
