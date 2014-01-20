@@ -25,6 +25,10 @@ namespace pxar {
      */
     bool status();
 
+    /** Function to check the compatibility of the HAL with the DTB
+     */
+    bool compatible() { return _compatible; }
+
 
     // DEVICE INITIALIZATION
 
@@ -204,6 +208,11 @@ namespace pxar {
      *  operations" status
      */
     bool _initialized;
+
+    /** Compatibility status of the HAL RPC calls with the DTB. If not set the
+     *  DTB cannot be initialized, onlz flashing is allowed then.
+     */
+    bool _compatible;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard

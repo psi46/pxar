@@ -8,8 +8,9 @@ using namespace pxar;
 
 hal::hal(std::string name) {
 
-  // Reset the state of the HAL instance:
+  // Reset the states of the HAL instance:
   _initialized = false;
+  _compatible = false;
 
   // Get a new CTestboard class instance:
   _testboard = new CTestboard();
@@ -25,15 +26,17 @@ hal::hal(std::string name) {
       PrintInfo();
 
       // Check if all RPC calls are matched:
-      if(!CheckCompatibility()) {
-	_testboard->Close();
-	// FIXME throw some custom exception here!
-	throw 1;
-      }
+      if(CheckCompatibility()) {
+	// Set compatibility flag
+	_compatible = true;
 
-      // ...and do the obligatory welcome LED blink:
-      _testboard->Welcome();
-      _testboard->Flush();
+	// ...and do the obligatory welcome LED blink:
+	_testboard->Welcome();
+	_testboard->Flush();
+
+	// Finally, initialize the testboard:
+	_testboard->Init();
+      }
     }
     catch(CRpcError &e) {
       // Something went wrong:
@@ -50,9 +53,6 @@ hal::hal(std::string name) {
     LOG(logCRITICAL) << "Make sure you have permission to access USB devices.";
     LOG(logCRITICAL) << "(see documentation for UDEV configuration examples)";
   }
-  
-  // Finally, initialize the testboard:
-  _testboard->Init();
 }
 
 hal::~hal() {
@@ -72,10 +72,9 @@ hal::~hal() {
 
 bool hal::status() {
 
-  if(!_initialized) {
+  if(!_initialized || !_compatible) {
     LOG(logERROR) << "Testboard not initialized yet!";
   }
-
   return _initialized;
 }
 
@@ -300,6 +299,7 @@ bool hal::CheckCompatibility(){
     LOG(logCRITICAL) << "Please update your DTB with the correct flash file!";
     return false;
   }
+  else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
 
   // We are though all checks, testboard is successfully connected:
   return true;

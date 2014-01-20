@@ -37,6 +37,9 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
 			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
+  // Check the HAL status before doing anything else:
+  if(!_hal->compatible()) return false;
+
   // Collect and check the testboard configuration settings
 
   // Read the power settings and make sure we got all:
