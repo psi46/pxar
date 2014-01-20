@@ -236,7 +236,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	fRocTextMap.insert(make_pair(idac, amap[idac].first));
       }
       
-      for (idac = 0.5*amap.size(); idac < amap.size(); ++idac) {
+      for (idac = 0.5*amap.size()+1; idac < amap.size(); ++idac) {
 	if (iroc == firstroc) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));

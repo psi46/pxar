@@ -238,7 +238,7 @@ void PixTestDacDacScan::doTest() {
     }
 
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    if (hsummary) hsummary->Draw("colz");
+    if (h) h->Draw("colz");
     PixTest::update(); 
   }
 
