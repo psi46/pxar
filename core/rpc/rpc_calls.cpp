@@ -7,7 +7,7 @@
 
 const char CTestboard::rpc_timestamp[] = "";
 
-const unsigned int CTestboard::rpc_cmdListSize = 100;
+const unsigned int CTestboard::rpc_cmdListSize = 103;
 
 const char *CTestboard::rpc_cmdName[] =
 {
@@ -34,83 +34,86 @@ const char *CTestboard::rpc_cmdName[] =
 	/*    20 */ "cDelay$vS",
 	/*    21 */ "uDelay$vS",
 	/*    22 */ "SetClockSource$vC",
-	/*    23 */ "Sig_SetMode$vCC",
-	/*    24 */ "Sig_SetPRBS$vCC",
-	/*    25 */ "Sig_SetDelay$vCSc",
-	/*    26 */ "Sig_SetLevel$vCC",
-	/*    27 */ "Sig_SetOffset$vC",
-	/*    28 */ "Sig_SetLVDS$v",
-	/*    29 */ "Sig_SetLCDS$v",
-	/*    30 */ "SignalProbeD1$vC",
-	/*    31 */ "SignalProbeD2$vC",
-	/*    32 */ "SignalProbeA1$vC",
-	/*    33 */ "SignalProbeA2$vC",
-	/*    34 */ "SignalProbeADC$vCC",
-	/*    35 */ "Pon$v",
-	/*    36 */ "Poff$v",
-	/*    37 */ "_SetVD$vS",
-	/*    38 */ "_SetVA$vS",
-	/*    39 */ "_SetID$vS",
-	/*    40 */ "_SetIA$vS",
-	/*    41 */ "_GetVD$S",
-	/*    42 */ "_GetVA$S",
-	/*    43 */ "_GetID$S",
-	/*    44 */ "_GetIA$S",
-	/*    45 */ "HVon$v",
-	/*    46 */ "HVoff$v",
-	/*    47 */ "ResetOn$v",
-	/*    48 */ "ResetOff$v",
-	/*    49 */ "GetStatus$C",
-	/*    50 */ "SetRocAddress$vC",
-	/*    51 */ "Pg_SetCmd$vSS",
-	/*    52 */ "Pg_Stop$v",
-	/*    53 */ "Pg_Single$v",
-	/*    54 */ "Pg_Trigger$v",
-	/*    55 */ "Pg_Loop$vS",
-	/*    56 */ "Daq_Open$IIC",
-	/*    57 */ "Daq_Close$vC",
-	/*    58 */ "Daq_Start$vC",
-	/*    59 */ "Daq_Stop$vC",
-	/*    60 */ "Daq_GetSize$IC",
-	/*    61 */ "Daq_Read$C2SSC",
-	/*    62 */ "Daq_Read$C2SS0IC",
-	/*    63 */ "Daq_Select_ADC$vSCCC",
-	/*    64 */ "Daq_Select_Deser160$vC",
-	/*    65 */ "Daq_Select_Deser400$v",
-	/*    66 */ "Daq_Deser400_Reset$vC",
-	/*    67 */ "Daq_DeselectAll$v",
-	/*    68 */ "roc_I2cAddr$vC",
-	/*    69 */ "roc_ClrCal$v",
-	/*    70 */ "roc_SetDAC$vCC",
-	/*    71 */ "roc_Pix$vCCC",
-	/*    72 */ "roc_Pix_Trim$vCCC",
-	/*    73 */ "roc_Pix_Mask$vCC",
-	/*    74 */ "roc_Pix_Cal$vCCb",
-	/*    75 */ "roc_Col_Enable$vCb",
-	/*    76 */ "roc_Col_Mask$vC",
-	/*    77 */ "roc_Chip_Mask$v",
-	/*    78 */ "TBM_Present$b",
-	/*    79 */ "tbm_Enable$vb",
-	/*    80 */ "tbm_Addr$vCC",
-	/*    81 */ "mod_Addr$vC",
-	/*    82 */ "tbm_Set$vCC",
-	/*    83 */ "tbm_Get$bC0C",
-	/*    84 */ "tbm_GetRaw$bC0I",
-	/*    85 */ "GetPixelAddressInverted$b",
-	/*    86 */ "CountReadouts$ii",
-	/*    87 */ "CountReadouts$iii",
-	/*    88 */ "CountReadouts$iiii",
-	/*    89 */ "PH$iiiis",
-	/*    90 */ "PixelThreshold$iiiiiiiiiii",
-	/*    91 */ "test_pixel_address$bii",
-	/*    92 */ "CalibratePixel$csss0s0i",
-	/*    93 */ "CalibrateDacScan$cssssss2s2i",
-	/*    94 */ "CalibrateDacDacScan$csssssssss2s2i",
-	/*    95 */ "TrimChip$s1s",
-	/*    96 */ "CalibrateMap$ss2s2i2I",
-	/*    97 */ "TestColPixel$bCC2C",
-	/*    98 */ "Ethernet_Send$v3c",
-	/*    99 */ "Ethernet_RecvPackets$I"
+	/*    23 */ "IsClockPresent$b",
+	/*    24 */ "SetClock$vC",
+	/*    25 */ "SetClockStretch$vCSS",
+	/*    26 */ "Sig_SetMode$vCC",
+	/*    27 */ "Sig_SetPRBS$vCC",
+	/*    28 */ "Sig_SetDelay$vCSc",
+	/*    29 */ "Sig_SetLevel$vCC",
+	/*    30 */ "Sig_SetOffset$vC",
+	/*    31 */ "Sig_SetLVDS$v",
+	/*    32 */ "Sig_SetLCDS$v",
+	/*    33 */ "SignalProbeD1$vC",
+	/*    34 */ "SignalProbeD2$vC",
+	/*    35 */ "SignalProbeA1$vC",
+	/*    36 */ "SignalProbeA2$vC",
+	/*    37 */ "SignalProbeADC$vCC",
+	/*    38 */ "Pon$v",
+	/*    39 */ "Poff$v",
+	/*    40 */ "_SetVD$vS",
+	/*    41 */ "_SetVA$vS",
+	/*    42 */ "_SetID$vS",
+	/*    43 */ "_SetIA$vS",
+	/*    44 */ "_GetVD$S",
+	/*    45 */ "_GetVA$S",
+	/*    46 */ "_GetID$S",
+	/*    47 */ "_GetIA$S",
+	/*    48 */ "HVon$v",
+	/*    49 */ "HVoff$v",
+	/*    50 */ "ResetOn$v",
+	/*    51 */ "ResetOff$v",
+	/*    52 */ "GetStatus$C",
+	/*    53 */ "SetRocAddress$vC",
+	/*    54 */ "Pg_SetCmd$vSS",
+	/*    55 */ "Pg_Stop$v",
+	/*    56 */ "Pg_Single$v",
+	/*    57 */ "Pg_Trigger$v",
+	/*    58 */ "Pg_Loop$vS",
+	/*    59 */ "Daq_Open$IIC",
+	/*    60 */ "Daq_Close$vC",
+	/*    61 */ "Daq_Start$vC",
+	/*    62 */ "Daq_Stop$vC",
+	/*    63 */ "Daq_GetSize$IC",
+	/*    64 */ "Daq_Read$C2SSC",
+	/*    65 */ "Daq_Read$C2SS0IC",
+	/*    66 */ "Daq_Select_ADC$vSCCC",
+	/*    67 */ "Daq_Select_Deser160$vC",
+	/*    68 */ "Daq_Select_Deser400$v",
+	/*    69 */ "Daq_Deser400_Reset$vC",
+	/*    70 */ "Daq_DeselectAll$v",
+	/*    71 */ "roc_I2cAddr$vC",
+	/*    72 */ "roc_ClrCal$v",
+	/*    73 */ "roc_SetDAC$vCC",
+	/*    74 */ "roc_Pix$vCCC",
+	/*    75 */ "roc_Pix_Trim$vCCC",
+	/*    76 */ "roc_Pix_Mask$vCC",
+	/*    77 */ "roc_Pix_Cal$vCCb",
+	/*    78 */ "roc_Col_Enable$vCb",
+	/*    79 */ "roc_Col_Mask$vC",
+	/*    80 */ "roc_Chip_Mask$v",
+	/*    81 */ "TBM_Present$b",
+	/*    82 */ "tbm_Enable$vb",
+	/*    83 */ "tbm_Addr$vCC",
+	/*    84 */ "mod_Addr$vC",
+	/*    85 */ "tbm_Set$vCC",
+	/*    86 */ "tbm_Get$bC0C",
+	/*    87 */ "tbm_GetRaw$bC0I",
+	/*    88 */ "GetPixelAddressInverted$b",
+	/*    89 */ "CountReadouts$ii",
+	/*    90 */ "CountReadouts$iii",
+	/*    91 */ "CountReadouts$iiii",
+	/*    92 */ "PH$iiiis",
+	/*    93 */ "PixelThreshold$iiiiiiiiiii",
+	/*    94 */ "test_pixel_address$bii",
+	/*    95 */ "CalibratePixel$csss0s0i",
+	/*    96 */ "CalibrateDacScan$cssssss2s2i",
+	/*    97 */ "CalibrateDacDacScan$csssssssss2s2i",
+	/*    98 */ "TrimChip$s1s",
+	/*    99 */ "CalibrateMap$ss2s2i2I",
+	/*   100 */ "TestColPixel$bCC2C",
+	/*   101 */ "Ethernet_Send$v3c",
+	/*   102 */ "Ethernet_RecvPackets$I"
 };
 
 uint16_t CTestboard::GetRpcVersion()
@@ -487,21 +490,25 @@ void CTestboard::SetClockSource(uint8_t rpc_par1)
 	} catch (CRpcError &e) { e.SetFunction(22); throw; };
 }
 
-void CTestboard::Sig_SetMode(uint8_t rpc_par1, uint8_t rpc_par2)
+bool CTestboard::IsClockPresent()
 { RPC_PROFILING
+	bool rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(23);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
-	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
+	rpc_io->Flush();
+	msg.Receive(*rpc_io);
+	msg.Check(rpc_clientCallId,1);
+	rpc_par0 = msg.Get_BOOL();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(23); throw; };
+	return rpc_par0;
 }
 
-void CTestboard::Sig_SetPRBS(uint8_t rpc_par1, uint8_t rpc_par2)
+void CTestboard::SetClock(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(24);
@@ -509,13 +516,12 @@ void CTestboard::Sig_SetPRBS(uint8_t rpc_par1, uint8_t rpc_par2)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
-	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(24); throw; };
 }
 
-void CTestboard::Sig_SetDelay(uint8_t rpc_par1, uint16_t rpc_par2, int8_t rpc_par3)
+void CTestboard::SetClockStretch(uint8_t rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(25);
@@ -524,13 +530,13 @@ void CTestboard::Sig_SetDelay(uint8_t rpc_par1, uint16_t rpc_par2, int8_t rpc_pa
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Put_UINT16(rpc_par2);
-	msg.Put_INT8(rpc_par3);
+	msg.Put_UINT16(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(25); throw; };
 }
 
-void CTestboard::Sig_SetLevel(uint8_t rpc_par1, uint8_t rpc_par2)
+void CTestboard::Sig_SetMode(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(26);
@@ -544,7 +550,7 @@ void CTestboard::Sig_SetLevel(uint8_t rpc_par1, uint8_t rpc_par2)
 	} catch (CRpcError &e) { e.SetFunction(26); throw; };
 }
 
-void CTestboard::Sig_SetOffset(uint8_t rpc_par1)
+void CTestboard::Sig_SetPRBS(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(27);
@@ -552,36 +558,42 @@ void CTestboard::Sig_SetOffset(uint8_t rpc_par1)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(27); throw; };
 }
 
-void CTestboard::Sig_SetLVDS()
+void CTestboard::Sig_SetDelay(uint8_t rpc_par1, uint16_t rpc_par2, int8_t rpc_par3)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(28);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT16(rpc_par2);
+	msg.Put_INT8(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(28); throw; };
 }
 
-void CTestboard::Sig_SetLCDS()
+void CTestboard::Sig_SetLevel(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(29);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(29); throw; };
 }
 
-void CTestboard::SignalProbeD1(uint8_t rpc_par1)
+void CTestboard::Sig_SetOffset(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(30);
@@ -594,33 +606,31 @@ void CTestboard::SignalProbeD1(uint8_t rpc_par1)
 	} catch (CRpcError &e) { e.SetFunction(30); throw; };
 }
 
-void CTestboard::SignalProbeD2(uint8_t rpc_par1)
+void CTestboard::Sig_SetLVDS()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(31);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(31); throw; };
 }
 
-void CTestboard::SignalProbeA1(uint8_t rpc_par1)
+void CTestboard::Sig_SetLCDS()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(32);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(32); throw; };
 }
 
-void CTestboard::SignalProbeA2(uint8_t rpc_par1)
+void CTestboard::SignalProbeD1(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(33);
@@ -633,7 +643,7 @@ void CTestboard::SignalProbeA2(uint8_t rpc_par1)
 	} catch (CRpcError &e) { e.SetFunction(33); throw; };
 }
 
-void CTestboard::SignalProbeADC(uint8_t rpc_par1, uint8_t rpc_par2)
+void CTestboard::SignalProbeD2(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(34);
@@ -641,76 +651,76 @@ void CTestboard::SignalProbeADC(uint8_t rpc_par1, uint8_t rpc_par2)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
-	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(34); throw; };
 }
 
-void CTestboard::Pon()
+void CTestboard::SignalProbeA1(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(35);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(35); throw; };
 }
 
-void CTestboard::Poff()
+void CTestboard::SignalProbeA2(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(36);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(36); throw; };
 }
 
-void CTestboard::_SetVD(uint16_t rpc_par1)
+void CTestboard::SignalProbeADC(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(37);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT16(rpc_par1);
+	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(37); throw; };
 }
 
-void CTestboard::_SetVA(uint16_t rpc_par1)
+void CTestboard::Pon()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(38);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT16(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(38); throw; };
 }
 
-void CTestboard::_SetID(uint16_t rpc_par1)
+void CTestboard::Poff()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(39);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT16(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(39); throw; };
 }
 
-void CTestboard::_SetIA(uint16_t rpc_par1)
+void CTestboard::_SetVD(uint16_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(40);
@@ -723,61 +733,46 @@ void CTestboard::_SetIA(uint16_t rpc_par1)
 	} catch (CRpcError &e) { e.SetFunction(40); throw; };
 }
 
-uint16_t CTestboard::_GetVD()
+void CTestboard::_SetVA(uint16_t rpc_par1)
 { RPC_PROFILING
-	uint16_t rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(41);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT16(rpc_par1);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,2);
-	rpc_par0 = msg.Get_UINT16();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(41); throw; };
-	return rpc_par0;
 }
 
-uint16_t CTestboard::_GetVA()
+void CTestboard::_SetID(uint16_t rpc_par1)
 { RPC_PROFILING
-	uint16_t rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(42);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT16(rpc_par1);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,2);
-	rpc_par0 = msg.Get_UINT16();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(42); throw; };
-	return rpc_par0;
 }
 
-uint16_t CTestboard::_GetID()
+void CTestboard::_SetIA(uint16_t rpc_par1)
 { RPC_PROFILING
-	uint16_t rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(43);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT16(rpc_par1);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,2);
-	rpc_par0 = msg.Get_UINT16();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(43); throw; };
-	return rpc_par0;
 }
 
-uint16_t CTestboard::_GetIA()
+uint16_t CTestboard::_GetVD()
 { RPC_PROFILING
 	uint16_t rpc_par0;
 	try {
@@ -795,43 +790,61 @@ uint16_t CTestboard::_GetIA()
 	return rpc_par0;
 }
 
-void CTestboard::HVon()
+uint16_t CTestboard::_GetVA()
 { RPC_PROFILING
+	uint16_t rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(45);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
+	rpc_io->Flush();
+	msg.Receive(*rpc_io);
+	msg.Check(rpc_clientCallId,2);
+	rpc_par0 = msg.Get_UINT16();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(45); throw; };
+	return rpc_par0;
 }
 
-void CTestboard::HVoff()
+uint16_t CTestboard::_GetID()
 { RPC_PROFILING
+	uint16_t rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(46);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
+	rpc_io->Flush();
+	msg.Receive(*rpc_io);
+	msg.Check(rpc_clientCallId,2);
+	rpc_par0 = msg.Get_UINT16();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(46); throw; };
+	return rpc_par0;
 }
 
-void CTestboard::ResetOn()
+uint16_t CTestboard::_GetIA()
 { RPC_PROFILING
+	uint16_t rpc_par0;
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(47);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
+	rpc_io->Flush();
+	msg.Receive(*rpc_io);
+	msg.Check(rpc_clientCallId,2);
+	rpc_par0 = msg.Get_UINT16();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(47); throw; };
+	return rpc_par0;
 }
 
-void CTestboard::ResetOff()
+void CTestboard::HVon()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(48);
@@ -843,11 +856,47 @@ void CTestboard::ResetOff()
 	} catch (CRpcError &e) { e.SetFunction(48); throw; };
 }
 
+void CTestboard::HVoff()
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(49);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(49); throw; };
+}
+
+void CTestboard::ResetOn()
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(50);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(50); throw; };
+}
+
+void CTestboard::ResetOff()
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(51);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(51); throw; };
+}
+
 uint8_t CTestboard::GetStatus()
 { RPC_PROFILING
 	uint8_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(49);
+	uint16_t rpc_clientCallId = rpc_GetCallId(52);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -857,27 +906,27 @@ uint8_t CTestboard::GetStatus()
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_UINT8();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(49); throw; };
+	} catch (CRpcError &e) { e.SetFunction(52); throw; };
 	return rpc_par0;
 }
 
 void CTestboard::SetRocAddress(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(50);
+	uint16_t rpc_clientCallId = rpc_GetCallId(53);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(50); throw; };
+	} catch (CRpcError &e) { e.SetFunction(53); throw; };
 }
 
 void CTestboard::Pg_SetCmd(uint16_t rpc_par1, uint16_t rpc_par2)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(51);
+	uint16_t rpc_clientCallId = rpc_GetCallId(54);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -885,63 +934,63 @@ void CTestboard::Pg_SetCmd(uint16_t rpc_par1, uint16_t rpc_par2)
 	msg.Put_UINT16(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(51); throw; };
-}
-
-void CTestboard::Pg_Stop()
-{ RPC_PROFILING
-	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(52);
-	RPC_THREAD_LOCK
-	rpcMessage msg;
-	msg.Create(rpc_clientCallId);
-	msg.Send(*rpc_io);
-	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(52); throw; };
-}
-
-void CTestboard::Pg_Single()
-{ RPC_PROFILING
-	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(53);
-	RPC_THREAD_LOCK
-	rpcMessage msg;
-	msg.Create(rpc_clientCallId);
-	msg.Send(*rpc_io);
-	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(53); throw; };
-}
-
-void CTestboard::Pg_Trigger()
-{ RPC_PROFILING
-	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(54);
-	RPC_THREAD_LOCK
-	rpcMessage msg;
-	msg.Create(rpc_clientCallId);
-	msg.Send(*rpc_io);
-	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(54); throw; };
 }
 
-void CTestboard::Pg_Loop(uint16_t rpc_par1)
+void CTestboard::Pg_Stop()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(55);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT16(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(55); throw; };
+}
+
+void CTestboard::Pg_Single()
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(56);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(56); throw; };
+}
+
+void CTestboard::Pg_Trigger()
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(57);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(57); throw; };
+}
+
+void CTestboard::Pg_Loop(uint16_t rpc_par1)
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(58);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Put_UINT16(rpc_par1);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(58); throw; };
 }
 
 uint32_t CTestboard::Daq_Open(uint32_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	uint32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(56);
+	uint16_t rpc_clientCallId = rpc_GetCallId(59);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -953,54 +1002,54 @@ uint32_t CTestboard::Daq_Open(uint32_t rpc_par1, uint8_t rpc_par2)
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_UINT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(56); throw; };
+	} catch (CRpcError &e) { e.SetFunction(59); throw; };
 	return rpc_par0;
 }
 
 void CTestboard::Daq_Close(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(57);
+	uint16_t rpc_clientCallId = rpc_GetCallId(60);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(57); throw; };
+	} catch (CRpcError &e) { e.SetFunction(60); throw; };
 }
 
 void CTestboard::Daq_Start(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(58);
+	uint16_t rpc_clientCallId = rpc_GetCallId(61);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(58); throw; };
+	} catch (CRpcError &e) { e.SetFunction(61); throw; };
 }
 
 void CTestboard::Daq_Stop(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(59);
+	uint16_t rpc_clientCallId = rpc_GetCallId(62);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(59); throw; };
+	} catch (CRpcError &e) { e.SetFunction(62); throw; };
 }
 
 uint32_t CTestboard::Daq_GetSize(uint8_t rpc_par1)
 { RPC_PROFILING
 	uint32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(60);
+	uint16_t rpc_clientCallId = rpc_GetCallId(63);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1011,7 +1060,7 @@ uint32_t CTestboard::Daq_GetSize(uint8_t rpc_par1)
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_UINT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(60); throw; };
+	} catch (CRpcError &e) { e.SetFunction(63); throw; };
 	return rpc_par0;
 }
 
@@ -1019,7 +1068,7 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 { RPC_PROFILING
 	uint8_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(61);
+	uint16_t rpc_clientCallId = rpc_GetCallId(64);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1032,7 +1081,7 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 	rpc_par0 = msg.Get_UINT8();
 	rpc_Receive(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(61); throw; };
+	} catch (CRpcError &e) { e.SetFunction(64); throw; };
 	return rpc_par0;
 }
 
@@ -1040,7 +1089,7 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 { RPC_PROFILING
 	uint8_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(62);
+	uint16_t rpc_clientCallId = rpc_GetCallId(65);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1055,14 +1104,14 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 	rpc_par3 = msg.Get_UINT32();
 	rpc_Receive(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(62); throw; };
+	} catch (CRpcError &e) { e.SetFunction(65); throw; };
 	return rpc_par0;
 }
 
 void CTestboard::Daq_Select_ADC(uint16_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint8_t rpc_par4)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(63);
+	uint16_t rpc_clientCallId = rpc_GetCallId(66);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1072,99 +1121,60 @@ void CTestboard::Daq_Select_ADC(uint16_t rpc_par1, uint8_t rpc_par2, uint8_t rpc
 	msg.Put_UINT8(rpc_par4);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(63); throw; };
-}
-
-void CTestboard::Daq_Select_Deser160(uint8_t rpc_par1)
-{ RPC_PROFILING
-	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(64);
-	RPC_THREAD_LOCK
-	rpcMessage msg;
-	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
-	msg.Send(*rpc_io);
-	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(64); throw; };
-}
-
-void CTestboard::Daq_Select_Deser400()
-{ RPC_PROFILING
-	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(65);
-	RPC_THREAD_LOCK
-	rpcMessage msg;
-	msg.Create(rpc_clientCallId);
-	msg.Send(*rpc_io);
-	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(65); throw; };
-}
-
-void CTestboard::Daq_Deser400_Reset(uint8_t rpc_par1)
-{ RPC_PROFILING
-	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(66);
-	RPC_THREAD_LOCK
-	rpcMessage msg;
-	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
-	msg.Send(*rpc_io);
-	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(66); throw; };
 }
 
-void CTestboard::Daq_DeselectAll()
+void CTestboard::Daq_Select_Deser160(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(67);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(67); throw; };
 }
 
-void CTestboard::roc_I2cAddr(uint8_t rpc_par1)
+void CTestboard::Daq_Select_Deser400()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(68);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(68); throw; };
 }
 
-void CTestboard::roc_ClrCal()
+void CTestboard::Daq_Deser400_Reset(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(69);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(69); throw; };
 }
 
-void CTestboard::roc_SetDAC(uint8_t rpc_par1, uint8_t rpc_par2)
+void CTestboard::Daq_DeselectAll()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(70);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
-	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(70); throw; };
 }
 
-void CTestboard::roc_Pix(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3)
+void CTestboard::roc_I2cAddr(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(71);
@@ -1172,29 +1182,24 @@ void CTestboard::roc_Pix(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
-	msg.Put_UINT8(rpc_par2);
-	msg.Put_UINT8(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(71); throw; };
 }
 
-void CTestboard::roc_Pix_Trim(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3)
+void CTestboard::roc_ClrCal()
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(72);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT8(rpc_par1);
-	msg.Put_UINT8(rpc_par2);
-	msg.Put_UINT8(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(72); throw; };
 }
 
-void CTestboard::roc_Pix_Mask(uint8_t rpc_par1, uint8_t rpc_par2)
+void CTestboard::roc_SetDAC(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(73);
@@ -1208,7 +1213,7 @@ void CTestboard::roc_Pix_Mask(uint8_t rpc_par1, uint8_t rpc_par2)
 	} catch (CRpcError &e) { e.SetFunction(73); throw; };
 }
 
-void CTestboard::roc_Pix_Cal(uint8_t rpc_par1, uint8_t rpc_par2, bool rpc_par3)
+void CTestboard::roc_Pix(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(74);
@@ -1217,13 +1222,13 @@ void CTestboard::roc_Pix_Cal(uint8_t rpc_par1, uint8_t rpc_par2, bool rpc_par3)
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Put_UINT8(rpc_par2);
-	msg.Put_BOOL(rpc_par3);
+	msg.Put_UINT8(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(74); throw; };
 }
 
-void CTestboard::roc_Col_Enable(uint8_t rpc_par1, bool rpc_par2)
+void CTestboard::roc_Pix_Trim(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(75);
@@ -1231,13 +1236,14 @@ void CTestboard::roc_Col_Enable(uint8_t rpc_par1, bool rpc_par2)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
-	msg.Put_BOOL(rpc_par2);
+	msg.Put_UINT8(rpc_par2);
+	msg.Put_UINT8(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(75); throw; };
 }
 
-void CTestboard::roc_Col_Mask(uint8_t rpc_par1)
+void CTestboard::roc_Pix_Mask(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(76);
@@ -1245,28 +1251,71 @@ void CTestboard::roc_Col_Mask(uint8_t rpc_par1)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(76); throw; };
 }
 
-void CTestboard::roc_Chip_Mask()
+void CTestboard::roc_Pix_Cal(uint8_t rpc_par1, uint8_t rpc_par2, bool rpc_par3)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(77);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
+	msg.Put_BOOL(rpc_par3);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(77); throw; };
+}
+
+void CTestboard::roc_Col_Enable(uint8_t rpc_par1, bool rpc_par2)
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(78);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
+	msg.Put_BOOL(rpc_par2);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(78); throw; };
+}
+
+void CTestboard::roc_Col_Mask(uint8_t rpc_par1)
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(79);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(79); throw; };
+}
+
+void CTestboard::roc_Chip_Mask()
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(80);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(80); throw; };
 }
 
 bool CTestboard::TBM_Present()
 { RPC_PROFILING
 	bool rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(78);
+	uint16_t rpc_clientCallId = rpc_GetCallId(81);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1276,27 +1325,27 @@ bool CTestboard::TBM_Present()
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_BOOL();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(78); throw; };
+	} catch (CRpcError &e) { e.SetFunction(81); throw; };
 	return rpc_par0;
 }
 
 void CTestboard::tbm_Enable(bool rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(79);
+	uint16_t rpc_clientCallId = rpc_GetCallId(82);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_BOOL(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(79); throw; };
+	} catch (CRpcError &e) { e.SetFunction(82); throw; };
 }
 
 void CTestboard::tbm_Addr(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(80);
+	uint16_t rpc_clientCallId = rpc_GetCallId(83);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1304,26 +1353,26 @@ void CTestboard::tbm_Addr(uint8_t rpc_par1, uint8_t rpc_par2)
 	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(80); throw; };
+	} catch (CRpcError &e) { e.SetFunction(83); throw; };
 }
 
 void CTestboard::mod_Addr(uint8_t rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(81);
+	uint16_t rpc_clientCallId = rpc_GetCallId(84);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Put_UINT8(rpc_par1);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(81); throw; };
+	} catch (CRpcError &e) { e.SetFunction(84); throw; };
 }
 
 void CTestboard::tbm_Set(uint8_t rpc_par1, uint8_t rpc_par2)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(82);
+	uint16_t rpc_clientCallId = rpc_GetCallId(85);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1331,14 +1380,14 @@ void CTestboard::tbm_Set(uint8_t rpc_par1, uint8_t rpc_par2)
 	msg.Put_UINT8(rpc_par2);
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(82); throw; };
+	} catch (CRpcError &e) { e.SetFunction(85); throw; };
 }
 
 bool CTestboard::tbm_Get(uint8_t rpc_par1, uint8_t &rpc_par2)
 { RPC_PROFILING
 	bool rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(83);
+	uint16_t rpc_clientCallId = rpc_GetCallId(86);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1351,7 +1400,7 @@ bool CTestboard::tbm_Get(uint8_t rpc_par1, uint8_t &rpc_par2)
 	rpc_par0 = msg.Get_BOOL();
 	rpc_par2 = msg.Get_UINT8();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(83); throw; };
+	} catch (CRpcError &e) { e.SetFunction(86); throw; };
 	return rpc_par0;
 }
 
@@ -1359,7 +1408,7 @@ bool CTestboard::tbm_GetRaw(uint8_t rpc_par1, uint32_t &rpc_par2)
 { RPC_PROFILING
 	bool rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(84);
+	uint16_t rpc_clientCallId = rpc_GetCallId(87);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1372,7 +1421,7 @@ bool CTestboard::tbm_GetRaw(uint8_t rpc_par1, uint32_t &rpc_par2)
 	rpc_par0 = msg.Get_BOOL();
 	rpc_par2 = msg.Get_UINT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(84); throw; };
+	} catch (CRpcError &e) { e.SetFunction(87); throw; };
 	return rpc_par0;
 }
 
@@ -1380,7 +1429,7 @@ bool CTestboard::GetPixelAddressInverted()
 { RPC_PROFILING
 	bool rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(85);
+	uint16_t rpc_clientCallId = rpc_GetCallId(88);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1390,7 +1439,7 @@ bool CTestboard::GetPixelAddressInverted()
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_BOOL();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(85); throw; };
+	} catch (CRpcError &e) { e.SetFunction(88); throw; };
 	return rpc_par0;
 }
 
@@ -1398,7 +1447,7 @@ int32_t CTestboard::CountReadouts(int32_t rpc_par1)
 { RPC_PROFILING
 	int32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(86);
+	uint16_t rpc_clientCallId = rpc_GetCallId(89);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1409,7 +1458,7 @@ int32_t CTestboard::CountReadouts(int32_t rpc_par1)
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(86); throw; };
+	} catch (CRpcError &e) { e.SetFunction(89); throw; };
 	return rpc_par0;
 }
 
@@ -1417,7 +1466,7 @@ int32_t CTestboard::CountReadouts(int32_t rpc_par1, int32_t rpc_par2)
 { RPC_PROFILING
 	int32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(87);
+	uint16_t rpc_clientCallId = rpc_GetCallId(90);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1429,7 +1478,7 @@ int32_t CTestboard::CountReadouts(int32_t rpc_par1, int32_t rpc_par2)
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(87); throw; };
+	} catch (CRpcError &e) { e.SetFunction(90); throw; };
 	return rpc_par0;
 }
 
@@ -1437,7 +1486,7 @@ int32_t CTestboard::CountReadouts(int32_t rpc_par1, int32_t rpc_par2, int32_t rp
 { RPC_PROFILING
 	int32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(88);
+	uint16_t rpc_clientCallId = rpc_GetCallId(91);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1450,7 +1499,7 @@ int32_t CTestboard::CountReadouts(int32_t rpc_par1, int32_t rpc_par2, int32_t rp
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(88); throw; };
+	} catch (CRpcError &e) { e.SetFunction(91); throw; };
 	return rpc_par0;
 }
 
@@ -1458,7 +1507,7 @@ int32_t CTestboard::PH(int32_t rpc_par1, int32_t rpc_par2, int32_t rpc_par3, int
 { RPC_PROFILING
 	int32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(89);
+	uint16_t rpc_clientCallId = rpc_GetCallId(92);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1472,7 +1521,7 @@ int32_t CTestboard::PH(int32_t rpc_par1, int32_t rpc_par2, int32_t rpc_par3, int
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(89); throw; };
+	} catch (CRpcError &e) { e.SetFunction(92); throw; };
 	return rpc_par0;
 }
 
@@ -1480,7 +1529,7 @@ int32_t CTestboard::PixelThreshold(int32_t rpc_par1, int32_t rpc_par2, int32_t r
 { RPC_PROFILING
 	int32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(90);
+	uint16_t rpc_clientCallId = rpc_GetCallId(93);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1500,7 +1549,7 @@ int32_t CTestboard::PixelThreshold(int32_t rpc_par1, int32_t rpc_par2, int32_t r
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(90); throw; };
+	} catch (CRpcError &e) { e.SetFunction(93); throw; };
 	return rpc_par0;
 }
 
@@ -1508,7 +1557,7 @@ bool CTestboard::test_pixel_address(int32_t rpc_par1, int32_t rpc_par2)
 { RPC_PROFILING
 	bool rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(91);
+	uint16_t rpc_clientCallId = rpc_GetCallId(94);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1520,7 +1569,7 @@ bool CTestboard::test_pixel_address(int32_t rpc_par1, int32_t rpc_par2)
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_BOOL();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(91); throw; };
+	} catch (CRpcError &e) { e.SetFunction(94); throw; };
 	return rpc_par0;
 }
 
@@ -1528,7 +1577,7 @@ int8_t CTestboard::CalibratePixel(int16_t rpc_par1, int16_t rpc_par2, int16_t rp
 { RPC_PROFILING
 	int8_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(92);
+	uint16_t rpc_clientCallId = rpc_GetCallId(95);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1545,7 +1594,7 @@ int8_t CTestboard::CalibratePixel(int16_t rpc_par1, int16_t rpc_par2, int16_t rp
 	rpc_par4 = msg.Get_INT16();
 	rpc_par5 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(92); throw; };
+	} catch (CRpcError &e) { e.SetFunction(95); throw; };
 	return rpc_par0;
 }
 
@@ -1553,7 +1602,7 @@ int8_t CTestboard::CalibrateDacScan(int16_t rpc_par1, int16_t rpc_par2, int16_t 
 { RPC_PROFILING
 	int8_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(93);
+	uint16_t rpc_clientCallId = rpc_GetCallId(96);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1571,7 +1620,7 @@ int8_t CTestboard::CalibrateDacScan(int16_t rpc_par1, int16_t rpc_par2, int16_t 
 	rpc_Receive(*rpc_io, rpc_par7);
 	rpc_Receive(*rpc_io, rpc_par8);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(93); throw; };
+	} catch (CRpcError &e) { e.SetFunction(96); throw; };
 	return rpc_par0;
 }
 
@@ -1579,7 +1628,7 @@ int8_t CTestboard::CalibrateDacDacScan(int16_t rpc_par1, int16_t rpc_par2, int16
 { RPC_PROFILING
 	int8_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(94);
+	uint16_t rpc_clientCallId = rpc_GetCallId(97);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1600,7 +1649,7 @@ int8_t CTestboard::CalibrateDacDacScan(int16_t rpc_par1, int16_t rpc_par2, int16
 	rpc_Receive(*rpc_io, rpc_par10);
 	rpc_Receive(*rpc_io, rpc_par11);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(94); throw; };
+	} catch (CRpcError &e) { e.SetFunction(97); throw; };
 	return rpc_par0;
 }
 
@@ -1608,7 +1657,7 @@ int16_t CTestboard::TrimChip(vector<int16_t> &rpc_par1)
 { RPC_PROFILING
 	int16_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(95);
+	uint16_t rpc_clientCallId = rpc_GetCallId(98);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1619,7 +1668,7 @@ int16_t CTestboard::TrimChip(vector<int16_t> &rpc_par1)
 	msg.Check(rpc_clientCallId,2);
 	rpc_par0 = msg.Get_INT16();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(95); throw; };
+	} catch (CRpcError &e) { e.SetFunction(98); throw; };
 	return rpc_par0;
 }
 
@@ -1627,7 +1676,7 @@ int16_t CTestboard::CalibrateMap(int16_t rpc_par1, vectorR<int16_t> &rpc_par2, v
 { RPC_PROFILING
 	int16_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(96);
+	uint16_t rpc_clientCallId = rpc_GetCallId(99);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1641,7 +1690,7 @@ int16_t CTestboard::CalibrateMap(int16_t rpc_par1, vectorR<int16_t> &rpc_par2, v
 	rpc_Receive(*rpc_io, rpc_par3);
 	rpc_Receive(*rpc_io, rpc_par4);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(96); throw; };
+	} catch (CRpcError &e) { e.SetFunction(99); throw; };
 	return rpc_par0;
 }
 
@@ -1649,7 +1698,7 @@ bool CTestboard::TestColPixel(uint8_t rpc_par1, uint8_t rpc_par2, vectorR<uint8_
 { RPC_PROFILING
 	bool rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(97);
+	uint16_t rpc_clientCallId = rpc_GetCallId(100);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1662,28 +1711,28 @@ bool CTestboard::TestColPixel(uint8_t rpc_par1, uint8_t rpc_par2, vectorR<uint8_
 	rpc_par0 = msg.Get_BOOL();
 	rpc_Receive(*rpc_io, rpc_par3);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(97); throw; };
+	} catch (CRpcError &e) { e.SetFunction(100); throw; };
 	return rpc_par0;
 }
 
 void CTestboard::Ethernet_Send(string &rpc_par1)
 { RPC_PROFILING
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(98);
+	uint16_t rpc_clientCallId = rpc_GetCallId(101);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
 	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(98); throw; };
+	} catch (CRpcError &e) { e.SetFunction(101); throw; };
 }
 
 uint32_t CTestboard::Ethernet_RecvPackets()
 { RPC_PROFILING
 	uint32_t rpc_par0;
 	try {
-	uint16_t rpc_clientCallId = rpc_GetCallId(99);
+	uint16_t rpc_clientCallId = rpc_GetCallId(102);
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
@@ -1693,7 +1742,7 @@ uint32_t CTestboard::Ethernet_RecvPackets()
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_UINT32();
 	RPC_THREAD_UNLOCK
-	} catch (CRpcError &e) { e.SetFunction(99); throw; };
+	} catch (CRpcError &e) { e.SetFunction(102); throw; };
 	return rpc_par0;
 }
 

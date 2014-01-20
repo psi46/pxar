@@ -119,6 +119,11 @@ public:
 	RPC_EXPORT void Sig_SetLVDS();
 	RPC_EXPORT void Sig_SetLCDS();
 
+	// --- Clock Settings ---------------------------------------------------
+	RPC_EXPORT bool IsClockPresent();
+	RPC_EXPORT void SetClock(uint8_t MHz);
+	RPC_EXPORT void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);
+
 
 	// --- digital signal probe ---------------------------------------------
 	RPC_EXPORT void SignalProbeD1(uint8_t signal);
