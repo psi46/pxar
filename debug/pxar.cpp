@@ -413,21 +413,22 @@ int main(int argc, char* argv[]) {
     
     // ##########################################################
     // Call the third real test (a DACDAC scan for some pixels):
-    /*
+    
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
     _api->_dut->testPixel(33,12,true);
 
     // Call the test:
     nTrig = 10;
+    int lower = 40;
     int limit = 120;
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("caldel", 0, limit, "vthrcomp", 0, limit, 0, nTrig);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("caldel", lower, limit, "vthrcomp", lower, limit, 0, nTrig);
     //std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("vbias_sf", 0, limit, "vcomp", 0, limit, 0, nTrig);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscan2ddata.size() << std::endl;
     
-    int dac = 0;
+    int dac = lower;
     std::cout << "VthrComp vs. CalDel:" << std::endl;
     for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = effscan2ddata.begin(); dacit != effscan2ddata.end(); ++dacit) {
       
@@ -443,11 +444,11 @@ int main(int argc, char* argv[]) {
 
       dac++;
       if(dac >= limit) { 
-	dac = 0;
+	dac = lower;
 	std::cout << std::endl;
       }
     }
-    */
+    
     // ##########################################################
 
     // ##########################################################
