@@ -466,7 +466,7 @@ bool api::SignalProbe(std::string probe, std::string name) {
   
 // TEST functions
 
-bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
+bool api::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
   
   if(!status()) {return false;}
 
@@ -475,25 +475,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
   if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-  if(rocid < 0) {
-    // Set the DAC for all active ROCs:
-    std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
-    for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
-
-      // Update the DUT DAC Value:
-      ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
-      if(ret.second == true) {
-	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
-      }
-      else {
-	_dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
-	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
-      }
-
-      _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
-    }
-  }
-  else if(_dut->roc.size() > static_cast<size_t>(rocid)) {
+  if(_dut->roc.size() > rocid) {
     // Set the DAC only in the given ROC (even if that is disabled!)
 
     // Update the DUT DAC Value:
@@ -509,9 +491,38 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, int8_t rocid) {
     _hal->rocSetDAC(static_cast<uint8_t>(rocid),dacRegister,dacValue);
   }
   else {
-    LOG(logERROR) << "ROC " << rocid << " is not existing in the DUT!";
+    LOG(logERROR) << "ROC " << rocid << " does not exist in the DUT!";
     return false;
   }
+  return true;
+}
+
+bool api::setDAC(std::string dacName, uint8_t dacValue) {
+  
+  if(!status()) {return false;}
+
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
+
+  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+  // Set the DAC for all active ROCs:
+  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
+  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
+
+    // Update the DUT DAC Value:
+    ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
+    if(ret.second == true) {
+      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
+    }
+    else {
+      _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
+      LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
+    }
+
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
+  }
+
   return true;
 }
 
