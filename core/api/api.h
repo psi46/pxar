@@ -233,26 +233,33 @@ namespace pxar {
     bool programDUT(); 
   
 
-    /** DTB functions **/
+    // DTB functions
 
-    /** Function to flash a new firmware onto the DTB via
-     *  the regular USB connection.
+    /** Function to flash a new firmware onto the DTB via the USB connection.
      */
     bool flashTB(std::string filename);
 
     /** Function to read out analog DUT supply current on the testboard
+     *
+     *  The current will be returned in units of Ampere
      */
     double getTBia();
 
     /** Function to read out analog DUT supply voltage on the testboard
+     *
+     *  The voltage will be returned in units of Volts
      */
     double getTBva();
 
     /** Function to read out digital DUT supply current on the testboard
+     *
+     *  The current will be returned in units of Ampere
      */
     double getTBid();
 
     /** Function to read out digital DUT supply voltage on the testboard
+     *
+     *  The voltage will be returned in units of Volts
      */
     double getTBvd();
 
@@ -285,20 +292,18 @@ namespace pxar {
      */
     //getScopeData();
 
-    /** Function to select the channel of the integrated digital scope on the DTB
-     */
-    //setScopeChannel();
 
 
-
-    /** TEST functions **/
+    // TEST functions
 
     /** Set a DAC value on the DUT (ROCs)
-     *  The "rocid" parameter can be used to select a specific ROC to program. If rocid is set to
-     *  a value < 0 all enabled ROCs will be programmed with the given DAC value.
+     *
+     *  The "rocid" parameter can be used to select a specific ROC to program.
+     *  If rocid is set to a value < 0 all enabled ROCs will be programmed with
+     *  the given DAC value.
      *
      *  This function will both update the bookkeeping value in the DUT
-     *  struct and program the actual device 
+     *  struct and program the actual device.
      */
     bool setDAC(std::string dacName, uint8_t dacValue, int8_t rocid = -1);
 
