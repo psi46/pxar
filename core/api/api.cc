@@ -42,31 +42,34 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 
   // Collect and check the testboard configuration settings
 
-  // Read the power settings and make sure we got all:
-  double va = 0, vd = 0, ia = 0, id = 0;
+  // Read the power settings and make sure we got all, these here are the allowed limits:
+  double va = 2.5, vd = 3.0, ia = 3.0, id = 3.0;
   for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
     std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
 
     if((*it).second < 0) {
-      LOG(logERROR) << "Negative value for power setting " << (*it).first << "! Skipping.";
+      LOG(logERROR) << "Negative value for power setting \"" << (*it).first << "\". Using default limit.";
       continue;
     }
 
-    // FIXME Range Checks!
     if((*it).first.compare("va") == 0) { 
-      va = (*it).second;
+      if((*it).second > va) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << va; }
+      else { va = (*it).second; }
       _dut->va = va;
     }
     else if((*it).first.compare("vd") == 0) {
-      vd = (*it).second;
+      if((*it).second > vd) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << vd; }
+      else {vd = (*it).second; }
       _dut->vd = vd;
     }
     else if((*it).first.compare("ia") == 0) {
-      ia = (*it).second;
+      if((*it).second > ia) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << ia; }
+      else { ia = (*it).second; }
       _dut->ia = ia;
     }
     else if((*it).first.compare("id") == 0) {
-      id = (*it).second;
+      if((*it).second > id) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << id; }
+      else { id = (*it).second; }
       _dut->id = id;
     }
     else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
