@@ -158,35 +158,60 @@ namespace pxar {
   public:
 
     /** Default constructor for the libpxar API
-     *  Fetches a new HAL instance and opens the testboard connection
+     *
+     *  Fetches a new HAL instance and opens the connection to the testboard
+     *  specified in the "usbId" parameter. An asterisk as "usbId" acts as
+     *  wildcard. If only one DTB is connected the algorithm will automatically
+     *  connect to this board, if several are connected it will throw a warning.
      */
     api(std::string usbId = "*", std::string logLevel = "WARNING");
 
     /** Default destructor for libpxar API
+     *
+     *  Will power down the DTB, disconnect properly from the testboard,
+     *  and destroy the HAL object.
      */
     ~api();
 
-    /** Returns the version string for the pxar API
+    /** Returns the version string for the pxar API.
+     *
+     *  When using a git checkout the version number will be calculated at
+     *  compile time from the latest tagged version plus the number of commits
+     *  on top of that. In this case the version number also contains the
+     *  commit hash of the latest commit for reference.
+     *
+     *  In case of a tarball install the version number is hardcoded in the
+     *  CMakeLists.txt file.
      */
     std::string getVersion() {return PACKAGE_STRING;};
 
     /** Initializer method for the testboard
+     *
      *  Initializes the tesboard with signal delay settings, and voltage/current
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
-     *  Name lookup via central dictionaries.
+     *
+     *  The name lookup is performed via the central API dictionaries.
+     *
+     *  All user inputs are checked for sanity. This includes range checks on
+     *  the current limits set, a sanity check for the pattern generator command
+     *  list (including a check for delay = 0 at the end of the list).
      */
     bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
                        std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
   
     /** Initializer method for the DUT (attached devices)
+     *
      *  This function requires the types and DAC settings for all TBMs and ROCs
      *  contained in the setup. All values will be checked for validity (DAC
      *  ranges, position and number of pixels, etc.)
      *
-     *  All parameters are supplied via vectors, the size of the vector represents
-     *  the number of devices.
+     *  All parameters are supplied via vectors, the size of the vector
+     *  represents the number of devices. DAC names and device types should be
+     *  provided as strings. The respective register addresses will be looked up
+     *  internally. Strings are checked case-insensitive, old and new DAC names
+     *  are both supported.
      */
     bool initDUT(std::string tbmtype, 
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
@@ -195,13 +220,15 @@ namespace pxar {
 		 std::vector<std::vector<pixelConfig> > rocPixels);
 
     /** Programming method for the DUT (attached devices)
+     *
      *  This function requires the DUT structure to be filled (initialized).
      *
-     *  All parameters are taken from the DUT struct, the enabled devices are programmed.
-     *  This function needs to be called after power cycling the testboard output (using Poff,
-     *  Pon).
+     *  All parameters are taken from the DUT struct, the enabled devices are 
+     *  programmed. This function needs to be called after power cycling the 
+     *  testboard output (using Poff, Pon).
      *
-     *  A DUT flag is set which prevents test functions to be executed if not programmed.
+     *  A DUT flag is set which prevents test functions to be executed if 
+     *  not programmed.
      */
     bool programDUT(); 
   
