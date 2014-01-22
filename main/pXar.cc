@@ -130,7 +130,7 @@ int main(int argc, char *argv[]){
   } else {
     char * p;
     do {
-      p = Getline("psi46expert> ");
+      p = Getline("pxar> ");
       if (sysCommand.Parse(p)) execute(a, &sysCommand);
     } while ((strcmp(p,"exit\n") != 0) && (strcmp(p,"q\n") != 0));
 
@@ -172,23 +172,20 @@ void runTest(PixTest *b) {
 // ----------------------------------------------------------------------
 void execute(PixSetup &a, SysCommand *sysCommand) {
   PixTestFactory *factory = PixTestFactory::instance(); 
-  do {
-    LOG(logINFO) << "sysCommand.toString(): " << sysCommand->toString();
-    if (sysCommand->TargetIsTest()) 
-      runTest(factory->createTest(sysCommand->toString(), &a)); 
-    else if (sysCommand->Keyword("gui")) 
-      runGui(a, 0, 0);
-    else if (sysCommand->TargetIsTB()) 
-      LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
-      //FIXME  a.getTBInterface()->Execute(sysCommand);
-    else if (sysCommand->TargetIsROC()) 
-      LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
-      //FIXME      a.getTBInterface()->Execute(sysCommand);
-    else 
-      LOG(logINFO) << "dunno what to do";
-    //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
-  } while (sysCommand->Next());
-  //  tbInterface->Flush();
+  LOG(logINFO) << "sysCommand.toString(): " << sysCommand->toString();
+  if (sysCommand->TargetIsTest()) 
+    runTest(factory->createTest(sysCommand->toString(), &a)); 
+  else if (sysCommand->Keyword("gui")) 
+    runGui(a, 0, 0);
+  else if (sysCommand->TargetIsTB()) 
+    LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
+  //FIXME  a.getTBInterface()->Execute(sysCommand);
+  else if (sysCommand->TargetIsROC()) 
+    LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
+  //FIXME      a.getTBInterface()->Execute(sysCommand);
+  else 
+    LOG(logINFO) << "dunno what to do";
+  //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
 }
 
 // ----------------------------------------------------------------------
