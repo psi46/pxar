@@ -222,13 +222,6 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
       ival = atoi(str3.c_str()); 
     }
     uval = ival;
-    // const unsigned char* us =  reinterpret_cast<const unsigned char*>(str3.c_str());
-    // const uint8_t *us2 =  reinterpret_cast<const uint8_t*>(str3.data());
-    // uval = ival;  does not work at all          
-    // uval = *us;   strips off trailing digits   
-    // uval = *us2;  strips off trailing digits   
-    //    uval = translate(ival); 
-    //    cout << "    str3 = " << str3 << " ival = " << ival << " uval = " << uval << " int(uval) = " << int(uval) << endl;
     rocDacs.push_back(make_pair(str2, uval)); 
 
   }
