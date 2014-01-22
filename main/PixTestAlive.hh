@@ -20,7 +20,6 @@ private:
   int     fParNtrig; 
   int     fParVcal; 
 
-  std::vector<TH2D*> fMaps; 
   ClassDef(PixTestAlive, 1);
 
 };
