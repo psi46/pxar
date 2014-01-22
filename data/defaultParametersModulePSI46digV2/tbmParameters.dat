@@ -1,6 +1,6 @@
- 4  clear       240  # 240 = $F0
- 0  counters      1
- 2  mode        192  # 192 = $C0
- 8  pkam_set     16  #  16 = $10
-10  delays        0
-12  temperature   0
+  0       clear   0xF0
+  1    counters   0x01
+  2        mode   0xC0
+  3    pkam_set   0x10
+  4      delays   0x00
+  5 temperature   0x00

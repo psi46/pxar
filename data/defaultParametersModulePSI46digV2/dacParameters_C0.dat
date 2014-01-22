@@ -1,29 +1,21 @@
-  1       Vdig   6
-  2       Vana 128
-  3        Vsf 150
-  4      Vcomp  10
-  5 Vleak_comp   0
-  6      VrgPr   0
-  7     VwllPr  35
-  8      VrgSh   0
-  9     VwllSh  35
- 10    VhldDel 160
- 11      Vtrim   7
- 12   VthrComp  80
+  1       Vdig   8
+  2       Vana 136
+  3        Vsf  40
+  4      Vcomp  12
+  7     VwllPr  60
+  9     VwllSh  60
+ 10    VhldDel 117
+ 11      Vtrim  29
+ 12   VthrComp  50
  13 VIBias_Bus  30
- 14   Vbias_sf  10
- 15  VoffsetOp  77
- 16   VIbiasOp  50
- 17  VOffsetRO 120
- 18       VIon 130
- 19  VIbias_PH 220
- 20  VIref_ADC  29
- 21 VIbias_roc 220
+ 14   Vbias_sf   6
+ 15  VoffsetOp  60
+ 17  VOffsetRO 150
+ 18       VIon  45
+ 19  Vcomp_ADC  50
+ 20  VIref_ADC  70
  22    VIColOr  99
- 23      Vnpix   0
- 24    VSumCol   0
- 25       Vcal 199
- 26     CalDel  62
- 27  RangeTemp   0
-253    CtrlReg   0
+ 25       Vcal 200
+ 26     CalDel  68
+253    CtrlReg   4
 254        WBC 100

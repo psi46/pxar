@@ -8,18 +8,18 @@ tbmParameters tbmParameters.dat
 trimParameters trimParameters
 testParameters testParameters.dat
 maskFile defaultMaskFile.dat
-rootFileName Pretest.root
+rootFileName pxar.root
 
 -- configuration
 
 nModules 1
 nRocs 16
-nTbms 16
+nTbms 1
 hubId 31
 tbmEnable 1
 tbmEmulator 0
 hvOn 0
-tbmChannel 1
+tbmChannel 0
 rocType psi46digv2
 tbmType tbm08
 
@@ -32,9 +32,3 @@ id 1.100
 va 1.900
 vd 2.600
 
--- adc parameters
-
-dataTriggerLevel -176
-emptyReadoutLength 54
-emptyReadoutLengthADC 64
-emptyReadoutLengthADCDual 40
