@@ -216,8 +216,11 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
       LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
     }
     
-    // -- why, oh why?!
-    ival = atoi(str3.c_str()); 
+    if (string::npos != str3.find("0x")) {
+      sscanf(str3.c_str(), "%x", &ival);  
+    } else {
+      ival = atoi(str3.c_str()); 
+    }
     uval = ival;
     // const unsigned char* us =  reinterpret_cast<const unsigned char*>(str3.c_str());
     // const uint8_t *us2 =  reinterpret_cast<const uint8_t*>(str3.data());
@@ -286,9 +289,9 @@ vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
     a.push_back(make_pair(0x0200,16));    // PG_TRG
     a.push_back(make_pair(0x0100,0));     // PG_TOK
   } else {
-    a.push_back(std::make_pair(0x1000,15)); // PG_REST
-    a.push_back(std::make_pair(0x0400,50)); // PG_CAL
-    a.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
+    a.push_back(std::make_pair(0x1000,15));    // PG_REST
+    a.push_back(std::make_pair(0x0400,100+5)); // PG_CAL
+    a.push_back(std::make_pair(0x2200,0));     // PG_TRG PG_SYNC
   }
 
   return a;
