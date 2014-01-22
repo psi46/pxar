@@ -41,8 +41,43 @@ void PixTest::init(PixSetup *a, string name) {
 // ----------------------------------------------------------------------
 void PixTest::bookHist(string name) {
 
+}
+
+
+// ----------------------------------------------------------------------
+vector<TH2D*> PixTest::thresholdMaps(string type, string name, int ntrig) {
 
 }
+
+
+// ----------------------------------------------------------------------
+vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
+
+  vector<pixel> results; 
+  if (fApi) results = fApi->getEfficiencyMap(0, ntrig);
+
+  fDirectory->cd(); 
+  vector<TH2D*> maps;
+  TH2D *h2(0); 
+  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+    h2 = new TH2D(Form("%s_C%d", name.c_str(), i), Form("%s_C%d", name.c_str(), i), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.); 
+    h2->SetDirectory(fDirectory); 
+    setTitles(h2, "col", "row"); 
+    maps.push_back(h2); 
+  }
+  
+  for (int i = 0; i < results.size(); ++i) {
+    cout << "results[i].roc_id = " << int(results[i].roc_id) 
+	 << " col/row = " << int(results[i].column) << "/" << int(results[i].row)
+	 << endl;
+    h2 = maps[results[i].roc_id];
+    if (h2) h2->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/ntrig); 
+  }
+
+  return maps; 
+}
+
 
 
 // ----------------------------------------------------------------------

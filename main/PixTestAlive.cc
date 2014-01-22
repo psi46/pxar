@@ -61,14 +61,7 @@ void PixTestAlive::init() {
 void PixTestAlive::bookHist(string name) {
   fDirectory->cd(); 
 
-  TH2D *h2(0);
   fHistList.clear();
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h2 = new TH2D(Form("PixelAlive_C%d", i), Form("PixelAlive_C%d", i), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    setTitles(h2, "col", "row"); 
-    fHistList.push_back(h2); 
-  }
 
 }
 
@@ -89,37 +82,18 @@ PixTestAlive::~PixTestAlive() {
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
-  //FIXME  clearHist();
-  bookHist("bla");
   PixTest::update(); 
-  // -- FIXME: Should/could separate better test from display?
-  uint16_t flag(0); 
+
   if (fApi) fApi->_dut->testAllPixels(true);
-  vector<pixel> results; 
-  if (fApi) results = fApi->getEfficiencyMap(0, fParNtrig);
-  LOG(logINFO) << " results.size(): " << results.size();
-  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    TH2D *h = (TH2D*)fDirectory->Get(Form("PixelAlive_C%d", ichip));
-    if (h) {
-      for (int i = 0; i < results.size(); ++i) {
-	// 	cout << Form("i = %4d", i) << " col = " << int(results[i].column) << " row = " << int(results[i].row)
-	// 	  	   << " results: " << int(results[i].value) << endl;
-	h->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/fParNtrig); 
-      }
-    } else {
-      LOG(logINFO) << "XX did not find " << Form("PixelAlive_C%d", ichip);
-    }
-    if (0) {
-      h->Fill(5,5);
-      h->Fill(15,15);
-      h->Fill(25,25);
-    }
-    cout << h->GetTitle() << " with " << h->GetEntries() << " entries " << endl;
-    h->Draw("colz");
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    LOG(logINFO) << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
-		 << " begin? " << (fDisplayedHist == fHistList.begin())
-		 << " end? " << (fDisplayedHist == fHistList.end());
-    PixTest::update(); 
-  }
+  vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig); 
+  copy(test2.begin(), test2.end(), back_inserter(fHistList));
+
+  TH2D *h = (TH2D*)(*fHistList.begin());
+
+  h->Draw("colz");
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  LOG(logINFO) << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
+	       << " begin? " << (fDisplayedHist == fHistList.begin())
+	       << " end? " << (fDisplayedHist == fHistList.end());
+  PixTest::update(); 
 }

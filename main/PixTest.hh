@@ -7,6 +7,7 @@
 
 #include <TQObject.h> 
 #include <TH1.h> 
+#include <TH2.h> 
 #include <TDirectory.h> 
 #include <TFile.h>
 #include <TSystem.h>
@@ -23,6 +24,9 @@ public:
   virtual ~PixTest();
   void init(PixSetup *, std::string name);
   void bookHist(std::string name);
+
+  std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
+  std::vector<TH2D*> thresholdMaps(std::string type = "vcal", std::string name = "vcalmap", int ntrig = 10); 
 
   void clearHist(); 
   virtual void doTest(); 
