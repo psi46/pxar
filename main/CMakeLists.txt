@@ -16,6 +16,7 @@ PixTest.cc
 PixTestAlive.cc
 PixTestDacScan.cc
 PixTestDacDacScan.cc
+PixTestTrim.cc
 PixTestSetup.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
@@ -35,6 +36,7 @@ PixTest.hh
 PixTestAlive.hh
 PixTestDacScan.hh
 PixTestDacDacScan.hh
+PixTestTrim.hh
 PixTestSetup.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
