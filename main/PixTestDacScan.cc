@@ -177,6 +177,8 @@ void PixTestDacScan::doTest() {
   }
   bookHist(fParDAC);
 
+  // -- FIXME This code is crap. Replace as in PixelAlive
+
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
   LOG(logINFO) << " dacscandata.size(): " << results.size();
   TH1D *h(0), *hsummary(0); 

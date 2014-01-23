@@ -197,6 +197,9 @@ void PixTestDacDacScan::doTest() {
   string name = fParDAC1 + string(":") + fParDAC2; 
   bookHist(name);
 
+
+  // -- FIXME This code is crap. Replace as in PixelAlive
+
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > > 
     results = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 					  fParDAC2, fParLoDAC2, fParHiDAC2, 
