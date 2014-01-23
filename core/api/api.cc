@@ -1039,7 +1039,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = NULL;
+  HalMemFnPixel pixelfn = &hal::PixelThresholdMap;
   HalMemFnRoc rocfn = &hal::RocThresholdMap;
   HalMemFnModule modulefn = NULL;
 
