@@ -20,7 +20,6 @@ private:
   int     fParNtrig; 
   std::string fParDAC; 
   int     fParLoDAC, fParHiDAC;
-  std::vector<std::pair<int, int> > fPIX; 
 
   ClassDef(PixTestDacScan, 1);
 
