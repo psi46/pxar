@@ -23,9 +23,11 @@ int8_t CTestboard::fallback_Daq_Disable() {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
   Daq_Stop(0);
-  //Daq_Stop(1);
+  if(TBM_Present()) { Daq_Stop(1); }
+
   Daq_Close(0);
-  //Daq_Close(1);
+  if(TBM_Present()) { Daq_Close(1); }
+
   return 1;
 }
 
