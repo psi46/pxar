@@ -1029,19 +1029,25 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   return *result;
 }
 
-std::vector<pixel> api::getThresholdMap(uint16_t flags, uint32_t nTriggers) {
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uint32_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
+  uint8_t dacRegister, dacValue = 0;
+  if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) {
+    return std::vector<pixel>();
+  }
+
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = NULL;
-  HalMemFnRoc rocfn = NULL;
+  HalMemFnPixel pixelfn = &hal::PixelThresholdMap;
+  HalMemFnRoc rocfn = &hal::RocThresholdMap;
   HalMemFnModule modulefn = NULL;
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
+  param.push_back(static_cast<int32_t>(dacRegister));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
