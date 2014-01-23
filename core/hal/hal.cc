@@ -574,7 +574,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum, address);
+  int status = _testboard->fallback_CalibrateMap(nTriggers, nReadouts, PHsum, address);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
@@ -728,7 +728,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum);
+  int status = _testboard->fallback_CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
