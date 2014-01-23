@@ -611,6 +611,60 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   return result;
 }
 
+std::vector< std::vector<pixel> >* hal::RocThresholdMap(uint8_t rocid, std::vector<int32_t> parameter) {
+
+  int32_t flags = parameter.at(0);
+  int32_t nTriggers = parameter.at(1);
+  int32_t dacReg = parameter.at(2);
+
+  LOG(logDEBUGHAL) << "Called RocThresholdMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<int16_t> threshold;
+  std::vector<uint32_t> address;
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // Call the RPC command:
+  int status = _testboard->fallback_ThresholdMap(nTriggers, dacReg, flags & FLAG_THRSCAN_RISING, flags & FLAG_XTALK, flags & FLAG_USE_CALS, threshold, address);
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+
+  size_t t = threshold.size();
+  size_t a = address.size();
+  LOG(logDEBUGHAL) << "Data size: threshold " << static_cast<int>(t)
+		   << ", address " << static_cast<int>(a);
+
+  // Check if all information has been transmitted:
+  // FIXME have no address data yet!
+  /*  if(a != t) {
+    // FIXME custom exception?
+    LOG(logCRITICAL) << "Data size not as expected!";
+    return result;
+  }*/
+
+  // Fill the return data vector:
+  std::vector<pixel> data;
+  uint8_t column = 0, row = 0;
+  for(std::vector<int16_t>::iterator it = threshold.begin(); it != threshold.end(); ++it) {
+
+    pixel newpixel;
+    newpixel.column = column;
+    newpixel.row = row;
+    newpixel.roc_id = rocid;
+    newpixel.value =  static_cast<int32_t>(*it);
+    data.push_back(newpixel);
+
+    row++;
+    if(row >= ROC_NUMROWS) {
+      column++;
+      row = 0;
+    }
+  }
+
+  result->push_back(data);
+  return result;
+}
+
 std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   int32_t flags = parameter.at(0);
@@ -643,6 +697,42 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
     newpixel.value =  static_cast<int32_t>(PHsum/nTriggers);
     LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
   }
+
+  data.push_back(newpixel);
+  result->push_back(data);
+
+  return result;
+}
+
+std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  int32_t flags = parameter.at(0);
+  int32_t nTriggers = parameter.at(1);
+  int32_t dacReg = parameter.at(2);
+
+  // Fixed variables for now:
+  int32_t start = (flags & FLAG_THRSCAN_RISING ? 0 : 255);
+  int32_t step = (flags & FLAG_THRSCAN_RISING ? 1 : -1); // Step size: take fine grained for single pixel.
+  int32_t thrLevel = nTriggers/2; // Level defined as threshold: 50% response
+
+  LOG(logDEBUGHAL) << "Called PixelThresholdMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers, start " << start << " stepsize " << step << " register " << dacReg;
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<pixel> data;
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(rocid);
+
+  // Call the RPC command:
+  //FIXME trimming just set to 15?! Remove from NIOS function, should be set by HAL!
+  int32_t value = _testboard->PixelThreshold(column, row, start, step, thrLevel, nTriggers, dacReg, 
+					     flags & FLAG_XTALK, flags & FLAG_USE_CALS, 15);
+  LOG(logDEBUGHAL) << "Function returns: " << value;
+
+  pixel newpixel;
+  newpixel.column = column;
+  newpixel.row = row;
+  newpixel.roc_id = rocid;
+  newpixel.value =  value;
 
   data.push_back(newpixel);
   result->push_back(data);
