@@ -14,6 +14,7 @@
 #include <TGTextBuffer.h>
 #include <TGTextEntry.h>
 #include <TGTextView.h>
+#include <TGStatusBar.h>
 
 #include "PixGui.hh"
 #include "PixTest.hh"
@@ -25,6 +26,7 @@ public:
   void init(PixGui *p, PixTest *test, std::string tabname); 
   virtual ~PixTab();
   std::string getName() {return fTabName;}
+  void statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected);
 
   virtual void handleButtons(Int_t id = -1); 
   virtual void setParameter(); 
@@ -47,6 +49,7 @@ protected:
   vector<std::string>      fParIds;
 
   TRootEmbeddedCanvas  	*fEc1;
+  TGStatusBar           *fStatusBar;
   //  std::list<TH1*>::iterator fDisplayedHist; 
   
   static const int TESTNUMBER = 0;

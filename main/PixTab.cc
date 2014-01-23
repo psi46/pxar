@@ -37,7 +37,20 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   // -- fV1: create and add Embedded Canvas
   fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 500, 500);
-  fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
+  fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 0, 0, 10, 0));
+
+
+  // -- status bar
+  Int_t wid = fEc1->GetCanvasWindowId();  
+  TCanvas *myc = new TCanvas("MyCanvas", 10, 10, wid);
+  fEc1->AdoptCanvas(myc);
+  myc->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "statusBarUpdate(Int_t,Int_t,Int_t,TObject*)");
+
+  Int_t parts[] = {30, 15, 15, 40};
+  fStatusBar = new TGStatusBar(fV1, 50, 10, kVerticalFrame);
+  fStatusBar->SetParts(parts, 4);
+  fStatusBar->Draw3DCorner(kFALSE);
+  fV1->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX, 0, 0, 10, 0));
 
   // -- fV2: create parameter TGText boxes for test
   map<string, string> amap = fTest->getParameters();
@@ -270,3 +283,24 @@ void PixTab::update() {
   c->Update(); 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected) {
+  const char *text0, *text1, *text3;
+  char text2[50];
+  text0 = selected->GetTitle();
+  //  SetStatusText(text0,0);
+  fStatusBar->SetText(text0, 0);
+  text1 = selected->GetName();
+  //  SetStatusText(text1,1);
+  fStatusBar->SetText(text1, 1);
+  if (event == kKeyPress)
+    sprintf(text2, "%c", (char) px);
+  else
+    sprintf(text2, "%d,%d", px, py);
+  //  SetStatusText(text2,2);
+  fStatusBar->SetText(text2, 2);
+  text3 = selected->GetObjectInfo(px,py);
+  //  SetStatusText(text3,3);
+  fStatusBar->SetText(text3, 3);
+}
