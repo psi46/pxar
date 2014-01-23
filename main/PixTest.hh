@@ -14,6 +14,7 @@
 
 #include "api.h"
 
+#include "PixInitFunc.hh"
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
 
@@ -26,7 +27,11 @@ public:
   void bookHist(std::string name);
 
   std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
-  std::vector<TH2D*> thresholdMaps(std::string type = "vcal", std::string name = "vcalmap", int ntrig = 10); 
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int result = 3); 
+  std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
+
+  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
+  void threshold(TH1 *); 
 
   void clearHist(); 
   virtual void doTest(); 
@@ -41,8 +46,8 @@ public:
 		 float size = 0.05, float xoff = 1.1, float yoff = 1.1, float lsize = 0.05, int font = 42);
 
   virtual bool setParameter(std::string parName, std::string sval); 
-
-
+  
+  
   void testDone(); // *SIGNAL*
   void update();  // *SIGNAL*
   TH1* nextHist(); 
@@ -53,7 +58,10 @@ protected:
   pxar::api            *fApi;
   PixSetup             *fPixSetup; 
   PixTestParameters    *fTestParameters; 
-  
+  PixInitFunc          *fPIF;   
+
+  double               fThreshold, fThresholdE, fSigma, fSigmaE; 
+
   std::string           fName; 
 
   std::map<std::string, std::string> fParameters;
@@ -61,6 +69,8 @@ protected:
   TDirectory            *fDirectory; 
   std::list<TH1*>       fHistList;
   std::list<TH1*>::iterator fDisplayedHist;  
+
+  std::vector<std::pair<int, int> > fPIX; // range of enabled pixels for time-consuming tests
 
   ClassDef(PixTest, 1); // testing PixTest
 
