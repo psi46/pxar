@@ -451,6 +451,7 @@ int main(int argc, char* argv[]) {
     
     // ##########################################################
 
+
     // ##########################################################
     // Let's spy a bit on the DTB scope ports:
 
@@ -458,6 +459,36 @@ int main(int argc, char* argv[]) {
     _api->SignalProbe("A2","sda");
 
     // ##########################################################
+
+
+    // ##########################################################
+    // Try a threshold map:
+
+    _api->_dut->testAllPixels(true);
+
+    // Call the test:
+    int nTrig5 = 10;
+    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,nTrig5);
+    std::cout << "Data size returned: " << thrmap.size() << std::endl;
+
+    
+    std::cout << "ASCII Sensor Threshold Map:" << std::endl;
+    unsigned int row2 = 0;
+    for (std::vector< pxar::pixel >::iterator mapit = thrmap.begin(); mapit != thrmap.end(); ++mapit) {
+      
+      if((int)mapit->value == nTrig5) std::cout << "X";
+      else if((int)mapit->value == 0) std::cout << "-";
+      else if((int)mapit->value > nTrig5) std::cout << "#";
+      else std::cout << (int)mapit->value;
+      row2++;
+      if(row2 >= 80) { 
+	row2 = 0;
+	std::cout << std::endl;
+      }
+    }
+
+    // ##########################################################
+
 
     // ##########################################################
     // Do some Raw data acquisition:
