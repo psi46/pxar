@@ -419,7 +419,7 @@ namespace pxar {
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
      *  using an adapted binary search algorithm for optimal speed.
      */
-    std::vector<pixel> getThresholdMap(uint16_t flags = 0, uint32_t nTriggers=16);
+    std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags = 0, uint32_t nTriggers=16);
 
     int32_t getReadbackValue(std::string parameterName);
 
