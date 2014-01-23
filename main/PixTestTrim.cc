@@ -168,45 +168,11 @@ PixTestTrim::~PixTestTrim() {
 void PixTestTrim::doTest() {
   PixTest::update(); 
   LOG(logINFO) << "PixTestTrim::doTest() ntrig = " << fParNtrig;
-  //FIXME  clearHist();
-  // -- FIXME: Should/could separate better test from display?
-  uint16_t flag(0); 
-  fApi->_dut->testAllPixels(false);
-  for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    if (fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
-  }
-  bookHist(fParDAC);
 
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
-  LOG(logINFO) << " dacscandata.size(): " << results.size();
-  TH1D *h(0), *hsummary(0); 
-  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    hsummary = (TH1D*)fDirectory->Get(Form("scanRange_%s_C%d", fParDAC.c_str(), ichip));
-    for (unsigned int i = 0; i < results.size(); ++i) {
-      pair<uint8_t, vector<pixel> > v = results[i];
-      int idac = v.first; 
-      if (hsummary) {
-	hsummary->SetBinContent(idac+1, 1); 
-      } else {
-	LOG(logINFO) << "XX did not find " << Form("scanRange_%s_C%d", fParDAC.c_str(), ichip);
-      }
+  fPIX.clear(); 
+  if (fApi) fApi->_dut->testAllPixels(true);
+  vector<TH1*> thr0 = scurveMaps("vcal", "TrimThr0", fParNtrig); 
 
-      vector<pixel> vpix = v.second;
-      for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-	if (vpix[ipix].roc_id == ichip) {
-	  h = (TH1D*)fDirectory->Get(Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip));
-	  if (h) {
-	    h->SetBinContent(idac+1, vpix[ipix].value); 
-	  } else {
-	    LOG(logINFO) << "XX did not find " << Form("NhitsVs%S_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
-	  }
-	}
-	
-      }
-      fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
 
-      if (h) h->Draw();
-      PixTest::update(); 
-    }
-  }
+  PixTest::update(); 
 }
