@@ -4,6 +4,8 @@
 #include "constants.h"
 #include "log.h"
 
+#define DAQ_READ_SIZE 32768
+
 int8_t CTestboard::fallback_Daq_Enable(int32_t block) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
@@ -31,15 +33,15 @@ int8_t CTestboard::fallback_Daq_Disable() {
   return 1;
 }
 
-int8_t CTestboard::fallback_Daq_Read(vector<uint16_t> &data, uint16_t daq_read_size_2, uint32_t &n) {
+int8_t CTestboard::fallback_Daq_Read(vector<uint16_t> &data, uint16_t daq_read_size, uint32_t &n) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
   vector<uint16_t> data1;
-  Daq_Read(data, daq_read_size_2, n, 0);
+  Daq_Read(data, daq_read_size, n, 0);
 
   if(TBM_Present()) { 
-    Daq_Read(data1, daq_read_size_2, n, 1);
+    Daq_Read(data1, daq_read_size, n, 1);
     data.insert( data.end(), data1.begin(), data1.end() );
   }
   return 1;
@@ -63,7 +65,6 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
 
   int16_t ok = -1;
   uint32_t avail_size = 0;
-  uint16_t daq_read_size = 32768;
 
   nReadouts.clear();
   PHsum.clear();
@@ -73,7 +74,7 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
   PHsum.resize(ROC_NUMCOLS * ROC_NUMROWS, 0);
   adress.resize(ROC_NUMCOLS * ROC_NUMROWS, 0);
 
-  fallback_Daq_Enable(daq_read_size);
+  fallback_Daq_Enable(DAQ_READ_SIZE);
   vector<uint16_t> data;
   vector<uint16_t> data2;
 
@@ -101,10 +102,10 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
     //read data
     data.clear();
     data2.clear();
-    Daq_Read(data, daq_read_size, avail_size, 0);
+    Daq_Read(data, DAQ_READ_SIZE, avail_size, 0);
     if (TBM_Present()){
       avail_size=0;
-      Daq_Read(data2, daq_read_size, avail_size, 1);
+      Daq_Read(data2, DAQ_READ_SIZE, avail_size, 1);
     }
 
     //decode readouts
@@ -139,7 +140,6 @@ int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReado
 
   nReadouts = 0;
   PHsum = 0;
-  uint16_t daq_read_size = 32768;
   uint32_t avail_size = 0;
   int16_t ok = -1;
 
@@ -154,7 +154,7 @@ int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReado
       uDelay(4);
     }
 
-  fallback_Daq_Read(data, daq_read_size, avail_size);
+  fallback_Daq_Read(data, DAQ_READ_SIZE, avail_size);
 
   ok = fallback_Decode(data, nhits, ph, adr);
 
@@ -171,14 +171,13 @@ int8_t CTestboard::fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, 
 					   int16_t dacLower1, int16_t dacUpper1, int16_t dacReg2, int16_t dacLower2, int16_t dacUpper2, vector<int16_t> &nReadouts, vector<int32_t> &PHsum) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called."; 
-  uint16_t daq_read_size = 32768;
   int16_t n;
   int32_t ph;
 
   roc_Col_Enable(col, true);
   roc_Pix_Cal(col, row, false);
   uDelay(5);
-  fallback_Daq_Enable(daq_read_size);
+  fallback_Daq_Enable(DAQ_READ_SIZE);
   for (int i = dacLower1; i < dacUpper1; i++)
     {
       roc_SetDAC(dacReg1, i);
@@ -370,9 +369,7 @@ int32_t CTestboard::fallback_PixelThreshold(int32_t col, int32_t row, int32_t st
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
-  uint16_t daq_read_size = 32768;
-
-  fallback_Daq_Enable(daq_read_size);
+  fallback_Daq_Enable(DAQ_READ_SIZE);
   int calRow = row;
 
   roc_Pix_Trim(col, row, trim);
