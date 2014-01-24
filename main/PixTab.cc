@@ -8,6 +8,7 @@
 #include <TGTab.h>
 #include <TGLabel.h>
 #include <TH2.h>
+#include <TStyle.h>
 
 #include "PixTab.hh"
 #include "log.h"
@@ -42,13 +43,13 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   // -- status bar
   Int_t wid = fEc1->GetCanvasWindowId();  
-  TCanvas *myc = new TCanvas("MyCanvas", 10, 10, wid);
+  TCanvas *myc = new TCanvas(Form("%sCanvas", tabname.c_str()), 10, 10, wid);
   fEc1->AdoptCanvas(myc);
   myc->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "statusBarUpdate(Int_t,Int_t,Int_t,TObject*)");
 
-  Int_t parts[] = {30, 15, 15, 40};
+  Int_t parts[] = {45, 55};
   fStatusBar = new TGStatusBar(fV1, 50, 10, kVerticalFrame);
-  fStatusBar->SetParts(parts, 4);
+  fStatusBar->SetParts(parts, 2);
   fStatusBar->Draw3DCorner(kFALSE);
   fV1->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX, 0, 0, 10, 0));
 
@@ -246,12 +247,15 @@ void PixTab::clearCanvas() {
 
 // ----------------------------------------------------------------------
 void PixTab::nextHistogram() {
+  clearCanvas();
+
   TH1 *h = fTest->nextHist(); 
   if (h) {
-    if (h->InheritsFrom(TH2::Class()))
+    if (h->InheritsFrom(TH2::Class())) {
       h->Draw("colz");
-    else 
-      h->Draw("");
+    } else {
+      h->Draw();
+    }
     update(); 
   } else {
     LOG(logINFO) << "no previous histogram found ";
@@ -262,12 +266,14 @@ void PixTab::nextHistogram() {
 
 // ----------------------------------------------------------------------
 void PixTab::previousHistogram() {
+  clearCanvas();
   TH1 *h = fTest->previousHist(); 
   if (h) {
-    if (h->InheritsFrom(TH2::Class()))
+    if (h->InheritsFrom(TH2::Class())) {
       h->Draw("colz");
-    else 
-      h->Draw("");
+    } else {
+      h->Draw();
+    }
     update(); 
   } else {
     LOG(logINFO)  << "no previous histogram found ";
@@ -278,6 +284,22 @@ void PixTab::previousHistogram() {
 // ----------------------------------------------------------------------
 void PixTab::update() {
   TCanvas *c = fEc1->GetCanvas();
+  TList* l = c->GetListOfPrimitives();
+  TIter next(l);
+  while (TObject *h = next()) {
+    if (h->InheritsFrom(TH1::Class())) {
+      if (h->InheritsFrom(TH2::Class())) {
+	gStyle->SetOptStat(0); 
+	h->Draw("colz"); // this is maybe not required
+	break;
+      }	else {
+	gStyle->SetOptStat(1111111); 
+	h->Draw();
+	break;
+      }
+    }
+  }
+  
   c->cd();
   c->Modified(); 
   c->Update(); 
@@ -286,21 +308,33 @@ void PixTab::update() {
 
 // ----------------------------------------------------------------------
 void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected) {
-  const char *text0, *text1, *text3;
-  char text2[50];
-  text0 = selected->GetTitle();
-  //  SetStatusText(text0,0);
+  const char *text0, *text2;
+  text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
-  text1 = selected->GetName();
-  //  SetStatusText(text1,1);
-  fStatusBar->SetText(text1, 1);
-  if (event == kKeyPress)
-    sprintf(text2, "%c", (char) px);
-  else
-    sprintf(text2, "%d,%d", px, py);
-  //  SetStatusText(text2,2);
-  fStatusBar->SetText(text2, 2);
-  text3 = selected->GetObjectInfo(px,py);
-  //  SetStatusText(text3,3);
-  fStatusBar->SetText(text3, 3);
+  //  char text1[50];
+  //   if (event == kKeyPress)
+  //     sprintf(text1, "%c", (char) px);
+  //   else
+  //     sprintf(text1, "%d,%d", px, py);
+  //   fStatusBar->SetText(text1, 1);
+  if (selected->InheritsFrom(TH1::Class())) {
+    string trafo = selected->GetObjectInfo(px,py);
+    string::size_type s1 = trafo.find("binx"); 
+    string trafo1 = trafo.substr(s1).c_str(); 
+    float x, y, val; 
+    if (selected->InheritsFrom(TH2::Class())) {
+      sscanf(trafo1.c_str(), "binx=%f, biny=%f, binc=%f", &x, &y, &val);
+      if (52 == ((TH2D*)selected)->GetNbinsX() && 80 == ((TH2D*)selected)->GetNbinsY()) {
+	text2 = Form("c=%.0f, r=%.0f, value=%4.3f", x-1, y-1, val); 
+      } else {
+	text2 = trafo.c_str(); 
+      }
+    } else {
+      sscanf(trafo1.c_str(), "binx=%f, binc=%f", &x, &val);
+      text2 = Form("x=%.0f, value=%4.3f", x-1, val); 
+    }
+  } else {
+    text2 = selected->GetObjectInfo(px,py);
+  }
+  fStatusBar->SetText(text2, 1);
 }
