@@ -72,8 +72,8 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   f->SetParameter(1, 1.); 
   if (jbin == ibin) {
     cout << "XXXXXXXXXXX PixInitFunc: STEP FUNCTION " << endl;
-    f->FixParameter(0., h->GetBinCenter(jbin)); 
-    f->SetParameter(1., 0.); 
+    f->FixParameter(0, h->GetBinCenter(jbin)); 
+    f->SetParameter(1, 0.); 
   }
   f->FixParameter(2, 1.); 
   f->SetParameter(3, 0.5*h->GetMaximum()); 
