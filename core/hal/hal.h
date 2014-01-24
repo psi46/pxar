@@ -228,6 +228,12 @@ namespace pxar {
      */
     bool _compatible;
 
+    /** Fallback mode switch, allows to run all high level tests locally in software
+     *  instead of on the NIOS II softcore. This comes with great test speed degradation
+     *  and should only be used in case of problems due to firmware limitations.
+     */
+    bool _fallback_mode;
+
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
      */
