@@ -391,14 +391,12 @@ int32_t CTestboard::fallback_Threshold(int32_t start, int32_t step, int32_t thrL
 
 int32_t CTestboard::fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
 					    int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg,
-					    int32_t xtalk, int32_t cals, int32_t trim) {
+					    int32_t xtalk, int32_t cals) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
   fallback_Daq_Enable(DAQ_READ_SIZE);
   int calRow = row;
-
-  roc_Pix_Trim(col, row, trim);
 
   if (xtalk) {
     if (row == ROC_NUMROWS - 1)
@@ -422,7 +420,7 @@ void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int
   int32_t thr, startValue;
   for (int col = 0; col < ROC_NUMCOLS; col++)
     {
-      roc_Col_Enable(col, 1);
+      roc_Col_Enable(col, true);
       for (int row = 0; row < ROC_NUMROWS; row++)
 	{
 	  if (step < 0) startValue = start[col*ROC_NUMROWS + row] + 10;
@@ -432,7 +430,7 @@ void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int
 	  thr = PixelThreshold(col, row, startValue, step, thrLevel, nTrig, dacReg, xtalk, cals, 15);
 	  res[col*ROC_NUMROWS + row] = thr;
 	}
-      roc_Col_Enable(col, 0);
+      roc_Col_Enable(col, false);
     }
 }
 

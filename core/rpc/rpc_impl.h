@@ -275,7 +275,7 @@ public:
 				   int32_t nTrig, int32_t dacReg);
 	int32_t fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
 					int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg,
-					int32_t xtalk, int32_t cals, int32_t trim);
+					int32_t xtalk, int32_t cals);
 	void fallback_ChipThresholdIntern(int32_t start[], int32_t step, int32_t thrLevel, int32_t nTrig, 
 					  int32_t dacReg, bool xtalk, bool cals, int32_t res[]);
 	int8_t fallback_ThresholdMap(int32_t nTrig, int32_t dacReg, bool rising, bool xtalk, bool cals, 
