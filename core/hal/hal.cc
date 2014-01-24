@@ -738,7 +738,7 @@ std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t
   // Call the RPC command:
   //FIXME trimming just set to 15?! Remove from NIOS function, should be set by HAL!
   int32_t value = _testboard->PixelThreshold(column, row, start, step, thrLevel, nTriggers, dacReg, 
-					     flags & FLAG_XTALK, flags & FLAG_USE_CALS, 15);
+					     flags & FLAG_XTALK, flags & FLAG_USE_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << value;
 
   pixel newpixel;
