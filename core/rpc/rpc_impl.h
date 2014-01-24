@@ -280,4 +280,6 @@ public:
 					  int32_t dacReg, bool xtalk, bool cals, int32_t res[]);
 	int8_t fallback_ThresholdMap(int32_t nTrig, int32_t dacReg, bool rising, bool xtalk, bool cals, 
 				     vectorR<int16_t> &thrValue, vectorR<uint32_t> &addr);
+	void fallback_SetPixelAddressInverted(bool status);
+
 };

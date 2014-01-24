@@ -5,6 +5,7 @@
 #include "log.h"
 
 #define DAQ_READ_SIZE 32768
+bool roc_pixeladdress_inverted;
 
 int8_t CTestboard::fallback_Daq_Enable(int32_t block) {
 
@@ -236,6 +237,10 @@ void CTestboard::fallback_DecodeTbmTrailer(unsigned int raw, int16_t &dataId, in
   data   = raw & 0x3f;
 }
 
+void CTestboard::fallback_SetPixelAddressInverted(bool status) {
+  roc_pixeladdress_inverted = status;
+}
+
 void CTestboard::fallback_DecodePixel(unsigned int raw, int16_t &n, int16_t &ph, int16_t &col, int16_t &row) 
 {
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
@@ -243,13 +248,23 @@ void CTestboard::fallback_DecodePixel(unsigned int raw, int16_t &n, int16_t &ph,
   n = 1;
   ph = (raw & 0x0f) + ((raw >> 1) & 0xf0);
   raw >>= 9;
-  int c =    (raw >> 12) & 7;
-  c = c*6 + ((raw >>  9) & 7);
-  int r =    (raw >>  6) & 7;
-  r = r*6 + ((raw >>  3) & 7);
-  r = r*6 + ( raw        & 7);
-  row = 80 - r/2;
-  col = 2*c + (r&1);
+
+  int c = (raw >> 12) & 7;
+  c = c * 6 + ((raw >> 9) & 7);
+
+  int r2 = (raw >> 6) & 7;
+  if(roc_pixeladdress_inverted) r2 ^= 0x7;
+
+  int r1 = (raw >> 3) & 7;
+  if(roc_pixeladdress_inverted) r1 ^= 0x7;
+
+  int r0 = (raw) & 7;
+  if(roc_pixeladdress_inverted) r0 ^= 0x7;
+
+  int r = r2*36 + r1*6 + r0;
+  row = 80 - r / 2;
+  col = 2 * c + (r & 1);
+
 }
 
 int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, std::vector<uint16_t> &ph, std::vector<uint32_t> &adr)

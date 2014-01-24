@@ -240,9 +240,13 @@ void hal::initROC(uint8_t rocId, uint8_t roctype, std::map< uint8_t,uint8_t > da
   // Set the pixel address inverted flag if we have the PSI46digV1 chip
   if(roctype == ROC_PSI46DIG || roctype == ROC_PSI46DIG_TRIG) {
     LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
-    _testboard->SetPixelAddressInverted(true);
+    if(_fallback_mode) {_testboard->fallback_SetPixelAddressInverted(true); }
+    else { _testboard->SetPixelAddressInverted(true); }
   }
-  else { _testboard->SetPixelAddressInverted(false); }
+  else {
+    if(_fallback_mode) {_testboard->fallback_SetPixelAddressInverted(false); }
+    else { _testboard->SetPixelAddressInverted(false); }
+}
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << static_cast<int>(rocId) << ".";
