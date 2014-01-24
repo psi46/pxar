@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("DEBUGHAL"), flashFile("nada"); 
+  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
   bool doRunGui(false), doRunScript(false), noAPI(false), doUpdateFlash(false);
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
