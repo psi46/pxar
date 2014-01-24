@@ -17,9 +17,7 @@ public:
 
 private:
 
-  int     fParNtrig; 
-  std::string fParDAC; 
-  int     fParLoDAC, fParHiDAC;
+  int     fParVcal, fParNtrig, fParVcthrCompLo, fParVcthrCompHi, fParVcalLo, fParVcalHi; 
   std::vector<std::pair<int, int> > fPIX; 
 
   ClassDef(PixTestTrim, 1);

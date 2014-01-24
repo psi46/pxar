@@ -69,13 +69,6 @@ void PixTestAlive::bookHist(string name) {
 //----------------------------------------------------------
 PixTestAlive::~PixTestAlive() {
   LOG(logINFO) << "PixTestAlive dtor";
-  std::list<TH1*>::iterator il; 
-  fDirectory->cd(); 
-  for (il = fHistList.begin(); il != fHistList.end(); ++il) {
-    LOG(logINFO) << "Write out " << (*il)->GetName();
-    (*il)->SetDirectory(fDirectory); 
-    (*il)->Write(); 
-  }
 }
 
 
@@ -90,10 +83,7 @@ void PixTestAlive::doTest() {
 
   TH2D *h = (TH2D*)(*fHistList.begin());
 
-  h->Draw("colz");
+  h->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  LOG(logINFO) << "fDisplayedHist = " << (*fDisplayedHist)->GetName() 
-	       << " begin? " << (fDisplayedHist == fHistList.begin())
-	       << " end? " << (fDisplayedHist == fHistList.end());
   PixTest::update(); 
 }

@@ -53,8 +53,9 @@ void PixTest::bookHist(string name) {
 // result & 0x2 == 2 -> return distributions (projections) of maps
 // result & 0x4 == 4 -> return all pixel histograms with outlayer threshold/sigma
 // result & 0x8 == 8 -> return all pixel histograms 
-vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result) {
+vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   vector<TH1*>          rmaps; 
+  vector<TH1*>          emaps; 
   vector<vector<TH1*> > maps; 
   vector<TH1*>          resultMaps; 
 
@@ -88,7 +89,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result)
 
   vector<pixel>  results;
   int ic, ir, iroc, val; 
-  int dacmin(20), dacmax(80); 
   for (int idac = dacmin; idac < dacmax; ++idac) {
     results.clear(); 
     cout << " idac = " << idac << endl;
@@ -108,6 +108,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result)
 
   TH1* h2(0), *h3(0); 
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+    rmaps.clear();
     rmaps = maps[iroc];
     h2 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
@@ -116,17 +117,20 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result)
     h3 = new TH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  52, 0., 52., 80, 0., 80.); 
-    
+
+    double averageStep(0.); 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       threshold(rmaps[i]); 
       ic = i/80; 
       ir = i%80; 
+      averageStep += fThreshold;
       h2->SetBinContent(ic+1, ir+1, fThreshold); 
       h2->SetBinError(ic+1, ir+1, fThresholdE); 
 
       h3->SetBinContent(ic+1, ir+1, fSigma); 
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
     }
+    averageStep /= rmaps.size(); 
 
     if (result & 0x1) {
       fHistList.push_back(h2); 
@@ -135,13 +139,20 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result)
 
     if (result & 0x2) {
       TH1* d1 = distribution((TH2D*)h2, 100, 0., 100.); 
-      resultMaps.push_back(d1); 
+      fHistList.push_back(d1); 
       TH1* d2 = distribution((TH2D*)h3, 100, 0., 100.); 
-      resultMaps.push_back(d2); 
+      fHistList.push_back(d2); 
     }
 
     if (result & 0x4) {
-      //      copy(emaps.begin(), emaps.end(), back_inserter(fHistList));
+      cout << "average step: " << averageStep << endl;
+      for (unsigned int i = 0; i < rmaps.size(); ++i) {
+	if (TMath::Abs(rmaps[i]->GetFunction("PIF_err")->GetParameter(0) - averageStep) > 10) {
+	  cout << "  adding " << rmaps[i]->GetName() << endl;
+	  emaps.push_back(rmaps[i]); 
+	}
+      }
+      copy(emaps.begin(), emaps.end(), back_inserter(fHistList));
     }
 
     if (result & 0x8) {
@@ -176,11 +187,11 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
   }
   
   for (int i = 0; i < results.size(); ++i) {
-    cout << "results[i].roc_id = " << int(results[i].roc_id) 
-	 << " col/row = " << int(results[i].column) << "/" << int(results[i].row)
-	 << endl;
+    //     cout << "results[i].roc_id = " << int(results[i].roc_id) 
+    // 	 << " col/row = " << int(results[i].column) << "/" << int(results[i].row)
+    // 	 << endl;
     h2 = maps[results[i].roc_id];
-    if (h2) h2->SetBinContent(results[i].column +1, results[i].row + 1, static_cast<float>(results[i].value)/ntrig); 
+    if (h2) h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
   }
 
   return maps; 
@@ -304,7 +315,14 @@ void PixTest::dumpParameters() {
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  //  LOG(logINFO) << "PixTestBase dtor()";
+  LOG(logINFO) << "PixTestBase dtor()";
+  std::list<TH1*>::iterator il; 
+  fDirectory->cd(); 
+  for (il = fHistList.begin(); il != fHistList.end(); ++il) {
+    LOG(logINFO) << "Write out " << (*il)->GetName();
+    (*il)->SetDirectory(fDirectory); 
+    (*il)->Write(); 
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -398,6 +416,17 @@ void PixTest::threshold(TH1 *h) {
   fThresholdE = f->GetParError(0); 
   fSigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
   fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
+
+  if (fThreshold < 0) {
+    int ibin = h->FindFirstBinAbove(0.); 
+    int jbin = h->FindFirstBinAbove(0.9*h->GetMaximum());
+    fThreshold = h->GetBinCenter(0.5*(ibin+jbin)); 
+    fThresholdE = 1+(TMath::Abs(ibin-jbin)); 
+
+    fSigma = fThresholdE; 
+    fSigmaE = fThresholdE; 
+  }
+  
 }
 
 

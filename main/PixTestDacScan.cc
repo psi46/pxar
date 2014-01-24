@@ -153,14 +153,7 @@ void PixTestDacScan::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestDacScan::~PixTestDacScan() {
-  //  LOG(logINFO) << "PixTestDacScan dtor";
-  std::list<TH1*>::iterator il; 
-  fDirectory->cd(); 
-  for (il = fHistList.begin(); il != fHistList.end(); ++il) {
-    LOG(logINFO) << "Write out " << (*il)->GetName();
-    (*il)->SetDirectory(fDirectory); 
-    (*il)->Write(); 
-  }
+  LOG(logINFO) << "PixTestDacScan dtor";
 }
 
 
