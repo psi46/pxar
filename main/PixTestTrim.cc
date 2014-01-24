@@ -16,7 +16,8 @@ ClassImp(PixTestTrim)
 // ----------------------------------------------------------------------
 PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), 
   fParVcal(-1), fParNtrig(-1), 
-  fParVcthrCompLo(-1), fParVcthrCompHi(-1) {
+  fParVcthrCompLo(-1), fParVcthrCompHi(-1),
+  fParVcalLo(-1), fParVcalHi(-1) {
   PixTest::init(a, name);
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
@@ -51,11 +52,18 @@ bool PixTestTrim::setParameter(string parName, string sval) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logINFO) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
+      if (!parName.compare("VcalLo")) {
+	fParVcalLo = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVcalLo  ->" << fParVcalLo << "<- from sval = " << sval;
+      }
+      if (!parName.compare("VcalHi")) {
+	fParVcalHi = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
+      }
       if (!parName.compare("VcthrCompLo")) {
 	fParVcthrCompLo = atoi(sval.c_str()); 
 	LOG(logINFO) << "  setting fParVcthrCompLo  ->" << fParVcthrCompLo << "<- from sval = " << sval;
       }
-
       if (!parName.compare("VcthrCompHi")) {
 	fParVcthrCompHi = atoi(sval.c_str()); 
 	LOG(logINFO) << "  setting fParVcthrCompHi  ->" << fParVcthrCompHi << "<- from sval = " << sval;
@@ -84,23 +92,7 @@ void PixTestTrim::bookHist(string name) {
   fDirectory->cd(); 
 
   TH1D *h1(0);
-  fHistList.clear();
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h1 = new TH1D(Form("scanRange_%s_C%d", name.c_str(), i), Form("scanRange_%s_C%d", name.c_str(), i), 255, 0., 255.); 
-    h1->SetMinimum(0.); 
-    setTitles(h1, name.c_str(), "a.u."); 
-    fHistList.push_back(h1); 
-
-    for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-      h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    255, 0., 255.); 
-      h1->SetMinimum(0.); 
-      setTitles(h1, "DAC", "# pixels"); 
-      fHistList.push_back(h1); 
-    }
-   
-  }
+  //  fHistList.clear();
 
 }
 
@@ -118,8 +110,7 @@ void PixTestTrim::doTest() {
 
   fPIX.clear(); 
   if (fApi) fApi->_dut->testAllPixels(true);
-  vector<TH1*> thr0 = scurveMaps("vcal", "TrimThr0", fParNtrig, 7); 
-
+  vector<TH1*> thr0 = scurveMaps("vcal", "TrimThr0", fParNtrig, fParVcalLo, fParVcalHi, 7); 
 
   PixTest::update(); 
 }
