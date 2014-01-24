@@ -427,7 +427,7 @@ void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int
 	  else startValue = start[col*ROC_NUMROWS + row];
 	  if (startValue < 0) startValue = 0;
 	  else if (startValue > 255) startValue = 255;
-	  thr = PixelThreshold(col, row, startValue, step, thrLevel, nTrig, dacReg, xtalk, cals, 15);
+	  thr = PixelThreshold(col, row, startValue, step, thrLevel, nTrig, dacReg, xtalk, cals);
 	  res[col*ROC_NUMROWS + row] = thr;
 	}
       roc_Col_Enable(col, false);
