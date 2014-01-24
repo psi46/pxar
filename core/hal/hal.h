@@ -176,6 +176,10 @@ namespace pxar {
      */
     void daqTrigger(uint32_t nTrig);
 
+    /** Firing the pattern generator continuously every "period" clock cycles
+     */
+    void daqTriggerLoop(uint16_t period);
+
     /** Stopping the current DAQ session. This is not resetting the data buffers
      */
     bool daqStop(uint8_t nTBMs);

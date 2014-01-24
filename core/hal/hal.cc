@@ -978,6 +978,13 @@ void hal::daqTrigger(uint32_t nTrig) {
 
 }
 
+void hal::daqTriggerLoop(uint16_t period) {
+  
+  LOG(logDEBUGHAL) << "Trigger loop every " << period << " clock cycles started.";
+  _testboard->Pg_Loop(period);
+  _testboard->uDelay(20);
+}
+
 bool hal::daqStop(uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
