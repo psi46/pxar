@@ -14,7 +14,9 @@ using namespace pxar;
 ClassImp(PixTestTrim)
 
 // ----------------------------------------------------------------------
-PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
+PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), 
+  fParVcal(-1), fParNtrig(-1), 
+  fParVcthrCompLo(-1), fParVcthrCompHi(-1) {
   PixTest::init(a, name);
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
@@ -45,67 +47,19 @@ bool PixTestTrim::setParameter(string parName, string sval) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logINFO) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
-      if (!parName.compare("DAC")) {
-	fParDAC = sval; 
-	LOG(logINFO) << "  setting fParDAC  ->" << fParDAC << "<- from sval = " << sval;
+      if (!parName.compare("Vcal")) {
+	fParVcal = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
-      if (!parName.compare("DACLO")) {
-	fParLoDAC = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParLoDAC  ->" << fParLoDAC << "<- from sval = " << sval;
+      if (!parName.compare("VcthrCompLo")) {
+	fParVcthrCompLo = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVcthrCompLo  ->" << fParVcthrCompLo << "<- from sval = " << sval;
       }
-      if (!parName.compare("DACHI")) {
-	fParHiDAC = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParHiDAC  ->" << fParHiDAC << "<- from sval = " << sval;
+
+      if (!parName.compare("VcthrCompHi")) {
+	fParVcthrCompHi = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVcthrCompHi  ->" << fParVcthrCompHi << "<- from sval = " << sval;
       }
-      if (!parName.compare("PIX1")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
-      }
-      if (!parName.compare("PIX2")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
-      }
-      if (!parName.compare("PIX3")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
-      }
-      if (!parName.compare("PIX4")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
-      }
-      // FIXME: remove/update from fPIX if the user removes via the GUI!
 
       break;
     }
@@ -153,14 +107,7 @@ void PixTestTrim::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestTrim::~PixTestTrim() {
-  //  LOG(logINFO) << "PixTestTrim dtor";
-  std::list<TH1*>::iterator il; 
-  fDirectory->cd(); 
-  for (il = fHistList.begin(); il != fHistList.end(); ++il) {
-    LOG(logINFO) << "Write out " << (*il)->GetName();
-    (*il)->SetDirectory(fDirectory); 
-    (*il)->Write(); 
-  }
+  LOG(logINFO) << "PixTestTrim dtor";
 }
 
 
@@ -171,7 +118,7 @@ void PixTestTrim::doTest() {
 
   fPIX.clear(); 
   if (fApi) fApi->_dut->testAllPixels(true);
-  vector<TH1*> thr0 = scurveMaps("vcal", "TrimThr0", fParNtrig); 
+  vector<TH1*> thr0 = scurveMaps("vcal", "TrimThr0", fParNtrig, 7); 
 
 
   PixTest::update(); 
