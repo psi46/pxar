@@ -83,8 +83,6 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
   vector<uint16_t> ph;
   vector<uint32_t> adr;
 
-
-
   for (uint8_t col = 0; col < ROC_NUMCOLS; col++) {
     roc_Col_Enable(col, true);
     for (uint8_t row = 0; row < ROC_NUMROWS; row++) {
@@ -103,6 +101,7 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
     //read data
     data.clear();
     data2.clear();
+
     Daq_Read(data, DAQ_READ_SIZE, avail_size, 0);
     if (TBM_Present()){
       avail_size=0;
@@ -113,8 +112,10 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
     n.clear();
     ph.clear();
     adr.clear();
-    ok = fallback_Decode(data, n, ph, adr);
-    ok = fallback_Decode(data2, n, ph, adr);
+    // Decode Channel 0
+    ok = fallback_Decode(data, n, ph, adr, 0);
+    // Decode Channel 1
+    ok = fallback_Decode(data2, n, ph, adr, 1);
 
     int colR = -1, rowR = -1;
 
@@ -267,22 +268,23 @@ void CTestboard::fallback_DecodePixel(unsigned int raw, int16_t &n, int16_t &ph,
 
 }
 
-int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, std::vector<uint16_t> &ph, std::vector<uint32_t> &adr)
+int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, std::vector<uint16_t> &ph, std::vector<uint32_t> &adr, int16_t channel)
 { 
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
+  //  LOG(pxar::logDEBUGHAL) << "Start with ROC id " << (int)roc_n;
 
   //  uint32_t words_remaining = 0;
   uint16_t hdr, trl;
+  int16_t roc_n = -1 + channel*8;
   unsigned int raw;
   int16_t n_pix = 0, ph_pix = 0, col = 0, row = 0, evNr = 0, stkCnt = 0, dataId = 0, dataNr = 0;
-  int16_t roc_n = -1;
   int16_t tbm_n = 1;
   uint32_t address;
   int pos = 0;
 
   //Module readout
-  if (TBM_Present()){
+  if (TBM_Present()) {
     LOG(pxar::logDEBUGRPC) << "TBM detected, decoding DESER400 data.";
     for (size_t i = 0; i < data.size(); i++) {
       int d = data[i] & 0xf;
@@ -315,7 +317,7 @@ int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vecto
 	case 11: hdr = (hdr<<4) + d; 
 	  fallback_DecodeTbmHeader(hdr, evNr, stkCnt);
 	  tbm_n = tbm_n ^ 0x01;
-	  roc_n = -1;
+	  roc_n = -1 + channel*8;
 	  break;
 
 	case 12: trl = d; break;

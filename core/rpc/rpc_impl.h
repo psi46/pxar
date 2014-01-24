@@ -270,7 +270,7 @@ public:
 	void fallback_DecodeTbmHeader(unsigned int raw, int16_t &evNr, int16_t &stkCnt);
 	void fallback_DecodePixel(unsigned int raw, int16_t &n, int16_t &ph, int16_t &col, int16_t &row);
 	int8_t fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, 
-			       std::vector<uint16_t> &ph, std::vector<uint32_t> &adr);
+			       std::vector<uint16_t> &ph, std::vector<uint32_t> &adr, int16_t roc_n = 0);
 	int32_t fallback_Threshold(int32_t start, int32_t step, int32_t thrLevel,
 				   int32_t nTrig, int32_t dacReg);
 	int32_t fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
