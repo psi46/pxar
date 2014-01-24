@@ -53,7 +53,7 @@ void PixTest::bookHist(string name) {
 // result & 0x2 == 2 -> return distributions (projections) of maps
 // result & 0x4 == 4 -> return all pixel histograms with outlayer threshold/sigma
 // result & 0x8 == 8 -> return all pixel histograms 
-vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result) {
+vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   vector<TH1*>          rmaps; 
   vector<TH1*>          emaps; 
   vector<vector<TH1*> > maps; 
@@ -89,7 +89,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int result)
 
   vector<pixel>  results;
   int ic, ir, iroc, val; 
-  int dacmin(20), dacmax(80); 
   for (int idac = dacmin; idac < dacmax; ++idac) {
     results.clear(); 
     cout << " idac = " << idac << endl;
@@ -417,6 +416,17 @@ void PixTest::threshold(TH1 *h) {
   fThresholdE = f->GetParError(0); 
   fSigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
   fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
+
+  if (fThreshold < 0) {
+    int ibin = h->FindFirstBinAbove(0.); 
+    int jbin = h->FindFirstBinAbove(0.9*h->GetMaximum());
+    fThreshold = h->GetBinCenter(0.5*(ibin+jbin)); 
+    fThresholdE = 1+(TMath::Abs(ibin-jbin)); 
+
+    fSigma = fThresholdE; 
+    fSigmaE = fThresholdE; 
+  }
+  
 }
 
 

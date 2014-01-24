@@ -27,7 +27,7 @@ public:
   void bookHist(std::string name);
 
   std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int result = 3); 
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
   std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
 
   TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
