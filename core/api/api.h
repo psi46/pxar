@@ -447,6 +447,11 @@ namespace pxar {
      */
     void daqTrigger(uint32_t nTrig = 1);
 
+    /** Function to fire the previously defined pattern command list
+     *  continuously every "period" clock cycles (default: 1000)
+     */
+    void daqTriggerLoop(uint16_t period = 1000);
+
     /** Function to stop the running data acquisition
      *
      *  This triggers also a reprogramming of the old (test-) Pattern Generator

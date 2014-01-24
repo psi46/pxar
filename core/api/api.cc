@@ -1099,6 +1099,11 @@ void api::daqTrigger(uint32_t nTrig) {
   _hal->daqTrigger(nTrig);
 }
 
+void api::daqTriggerLoop(uint16_t period) {
+  // Just passing the call to the HAL, not doing anything else here:
+  _hal->daqTriggerLoop(period);
+}
+
 std::vector<uint16_t> api::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.

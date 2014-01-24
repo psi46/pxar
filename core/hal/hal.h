@@ -176,6 +176,10 @@ namespace pxar {
      */
     void daqTrigger(uint32_t nTrig);
 
+    /** Firing the pattern generator continuously every "period" clock cycles
+     */
+    void daqTriggerLoop(uint16_t period);
+
     /** Stopping the current DAQ session. This is not resetting the data buffers
      */
     bool daqStop(uint8_t nTBMs);
@@ -227,6 +231,12 @@ namespace pxar {
      *  DTB cannot be initialized, onlz flashing is allowed then.
      */
     bool _compatible;
+
+    /** Fallback mode switch, allows to run all high level tests locally in software
+     *  instead of on the NIOS II softcore. This comes with great test speed degradation
+     *  and should only be used in case of problems due to firmware limitations.
+     */
+    bool _fallback_mode;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard

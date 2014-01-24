@@ -259,6 +259,9 @@ public:
 	int16_t fallback_CalibrateMap(int16_t nTriggers, vector<int16_t> &nReadouts, vector<int32_t> &PHsum, 
 				      vector<uint32_t> &adress);
 	int8_t fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReadouts, int32_t &PHsum);
+	int8_t fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
+					 int16_t dacLower1, int16_t dacUpper1, vectorR<int16_t> &nReadouts,
+					 vectorR<int32_t> &PHsum);
 	int8_t fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
 					    int16_t dacLower1, int16_t dacUpper1, int16_t dacReg2, 
 					    int16_t dacLower2, int16_t dacUpper2, vector<int16_t> &nReadouts, 
@@ -272,7 +275,7 @@ public:
 				   int32_t nTrig, int32_t dacReg);
 	int32_t fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
 					int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg,
-					int32_t xtalk, int32_t cals, int32_t trim);
+					int32_t xtalk, int32_t cals);
 	void fallback_ChipThresholdIntern(int32_t start[], int32_t step, int32_t thrLevel, int32_t nTrig, 
 					  int32_t dacReg, bool xtalk, bool cals, int32_t res[]);
 	int8_t fallback_ThresholdMap(int32_t nTrig, int32_t dacReg, bool rising, bool xtalk, bool cals, 

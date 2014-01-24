@@ -166,6 +166,32 @@ int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReado
   return ok;
 }
 
+int8_t CTestboard::fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
+					     int16_t dacLower1, int16_t dacUpper1, vectorR<int16_t> &nReadouts,
+					     vectorR<int32_t> &PHsum) {
+  LOG(pxar::logDEBUGRPC) << "(fallback mode) called."; 
+
+  int16_t n;
+  int32_t ph;
+
+  roc_Col_Enable(col, true);
+  roc_Pix_Cal(col, row, false);
+  uDelay(5);
+
+  fallback_Daq_Enable(DAQ_READ_SIZE);
+  for (int i = dacLower1; i < dacUpper1; i++)
+    {
+      roc_SetDAC(dacReg1, i);
+      fallback_CalibrateReadouts(nTriggers, n, ph);
+      nReadouts.push_back(n);
+      PHsum.push_back(ph);
+    }
+  fallback_Daq_Disable();
+  roc_ClrCal();
+  roc_Col_Enable(col, false);
+
+  return 1;
+}
 
 int8_t CTestboard::fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
 					   int16_t dacLower1, int16_t dacUpper1, int16_t dacReg2, int16_t dacLower2, int16_t dacUpper2, vector<int16_t> &nReadouts, vector<int32_t> &PHsum) {
@@ -365,14 +391,12 @@ int32_t CTestboard::fallback_Threshold(int32_t start, int32_t step, int32_t thrL
 
 int32_t CTestboard::fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
 					    int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg,
-					    int32_t xtalk, int32_t cals, int32_t trim) {
+					    int32_t xtalk, int32_t cals) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
   fallback_Daq_Enable(DAQ_READ_SIZE);
   int calRow = row;
-
-  roc_Pix_Trim(col, row, trim);
 
   if (xtalk) {
     if (row == ROC_NUMROWS - 1)
@@ -396,7 +420,7 @@ void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int
   int32_t thr, startValue;
   for (int col = 0; col < ROC_NUMCOLS; col++)
     {
-      roc_Col_Enable(col, 1);
+      roc_Col_Enable(col, true);
       for (int row = 0; row < ROC_NUMROWS; row++)
 	{
 	  if (step < 0) startValue = start[col*ROC_NUMROWS + row] + 10;
@@ -406,7 +430,7 @@ void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int
 	  thr = PixelThreshold(col, row, startValue, step, thrLevel, nTrig, dacReg, xtalk, cals, 15);
 	  res[col*ROC_NUMROWS + row] = thr;
 	}
-      roc_Col_Enable(col, 0);
+      roc_Col_Enable(col, false);
     }
 }
 

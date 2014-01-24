@@ -11,6 +11,7 @@ hal::hal(std::string name) {
   // Reset the states of the HAL instance:
   _initialized = false;
   _compatible = false;
+  _fallback_mode = false;
 
   // Get a new CTestboard class instance:
   _testboard = new CTestboard();
@@ -218,9 +219,14 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 
 void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
 
+  // We have TBMs - this means we currently need the software fallback mode:
+  _fallback_mode = true;
+  LOG(logWARNING) << "You are now running in NIOS II softcore fallback mode. "
+		  << "This might increase the test run duration dramatically!";
+
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
-  // FIXME BEat: 31 is default hub address for the new modules:
+  // FIXME Beat: 31 is default hub address for the new modules:
   _testboard->mod_Addr(31);
   _testboard->Flush();
 
@@ -574,7 +580,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->fallback_CalibrateMap(nTriggers, nReadouts, PHsum, address);
+  int status;
+  if(_fallback_mode) { status = _testboard->fallback_CalibrateMap(nTriggers, nReadouts, PHsum, address); }
+  else { status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum, address); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
@@ -626,7 +634,12 @@ std::vector< std::vector<pixel> >* hal::RocThresholdMap(uint8_t rocid, std::vect
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->fallback_ThresholdMap(nTriggers, dacReg, flags & FLAG_THRSCAN_RISING, flags & FLAG_XTALK, flags & FLAG_USE_CALS, threshold, address);
+  int status;
+  // FIXME the non-fallback ThresholdMap is not yet exported as RPC command!
+  //if(_fallback_mode) { 
+  status = _testboard->fallback_ThresholdMap(nTriggers, dacReg, flags & FLAG_THRSCAN_RISING, flags & FLAG_XTALK, flags & FLAG_USE_CALS, threshold, address);
+    //}
+  //else { status = _testboard->ThresholdMap(nTriggers, dacReg, flags & FLAG_THRSCAN_RISING, flags & FLAG_XTALK, flags & FLAG_USE_CALS, threshold, address); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t t = threshold.size();
@@ -759,7 +772,9 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum);
+  int status;
+  if(_fallback_mode) { status = _testboard->fallback_CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum); }
+  else { status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
@@ -818,7 +833,9 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->fallback_CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum);
+  int status;
+  if(_fallback_mode) { status = _testboard->fallback_CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum); }
+  else { status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
@@ -961,9 +978,19 @@ void hal::daqTrigger(uint32_t nTrig) {
 
 }
 
+void hal::daqTriggerLoop(uint16_t period) {
+  
+  LOG(logDEBUGHAL) << "Trigger loop every " << period << " clock cycles started.";
+  _testboard->Pg_Loop(period);
+  _testboard->uDelay(20);
+}
+
 bool hal::daqStop(uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
+
+  // Stop the Pattern Generator, just in case (also stops Pg_Loop())
+  _testboard->Pg_Stop();
 
   // Calling Daq_Stop here - calling Daq_Diable would also trigger
   // a FIFO reset (deleting the recorded data)
