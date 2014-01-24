@@ -617,6 +617,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   // Fill the return data vector:
   std::vector<pixel> data;
   for(std::vector<uint32_t>::iterator it = address.begin(); it != address.end(); ++it) {
+
+    if((((*it)>>16)&15) != rocid) { LOG(logDEBUGHAL) << "Wrong ROC id returned, expected: " << (int)rocid << " != " << (int)(((*it)>>16)&15); }
+
     if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { 
       data.push_back(pixel((*it),nReadouts.at(static_cast<size_t>(it - address.begin()))));
     }
