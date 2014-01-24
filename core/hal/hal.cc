@@ -759,7 +759,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum);
+  int status = _testboard->fallback_CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();

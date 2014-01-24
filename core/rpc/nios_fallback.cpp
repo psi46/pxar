@@ -166,6 +166,32 @@ int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReado
   return ok;
 }
 
+int8_t CTestboard::fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
+					     int16_t dacLower1, int16_t dacUpper1, vectorR<int16_t> &nReadouts,
+					     vectorR<int32_t> &PHsum) {
+  LOG(pxar::logDEBUGRPC) << "(fallback mode) called."; 
+
+  int16_t n;
+  int32_t ph;
+
+  roc_Col_Enable(col, true);
+  roc_Pix_Cal(col, row, false);
+  uDelay(5);
+
+  fallback_Daq_Enable(DAQ_READ_SIZE);
+  for (int i = dacLower1; i < dacUpper1; i++)
+    {
+      roc_SetDAC(dacReg1, i);
+      fallback_CalibrateReadouts(nTriggers, n, ph);
+      nReadouts.push_back(n);
+      PHsum.push_back(ph);
+    }
+  fallback_Daq_Disable();
+  roc_ClrCal();
+  roc_Col_Enable(col, false);
+
+  return 1;
+}
 
 int8_t CTestboard::fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
 					   int16_t dacLower1, int16_t dacUpper1, int16_t dacReg2, int16_t dacLower2, int16_t dacUpper2, vector<int16_t> &nReadouts, vector<int32_t> &PHsum) {
