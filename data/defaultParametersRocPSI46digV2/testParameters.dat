@@ -26,8 +26,8 @@ Ntrig       10
 Vcal        40
 VcalLo      25 
 VcalHi      75 
-VcthrCompLo 0 
-VcthrCompHi 50 
+VthrCompLo  0 
+VthrCompHi  50 
 
 -- Setup
 Ntrig 10
