@@ -26,12 +26,17 @@ public:
   void init(PixSetup *, std::string name);
   void bookHist(std::string name);
 
+  int pixelThreshold(string dac, int ntrig, int dacmin, int dacmax);
   std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
   std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
 
   TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
-  void threshold(TH1 *); 
+  bool threshold(TH1 *); 
+  int simpleThreshold(TH1 *); 
+  
+  void cache(std::string dacname); 
+  void restore(std::string dacname); 
 
   void clearHist(); 
   virtual void doTest(); 
@@ -65,6 +70,9 @@ protected:
   std::string           fName; 
 
   std::map<std::string, std::string> fParameters;
+
+  std::vector<uint8_t>  fCacheVal; 
+  std::string           fCacheDac;
 
   TDirectory            *fDirectory; 
   std::list<TH1*>       fHistList;
