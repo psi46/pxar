@@ -12,12 +12,15 @@ public:
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void bookHist(std::string); 
-  
+
+  int adjustVtrim(); 
+  TH2D* trimStep(); 
+
   void doTest(); 
 
 private:
 
-  int     fParVcal, fParNtrig, fParVcthrCompLo, fParVcthrCompHi, fParVcalLo, fParVcalHi; 
+  int     fParVcal, fParNtrig, fParVthrCompLo, fParVthrCompHi, fParVcalLo, fParVcalHi; 
   std::vector<std::pair<int, int> > fPIX; 
 
   ClassDef(PixTestTrim, 1);

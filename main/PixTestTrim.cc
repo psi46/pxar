@@ -16,7 +16,7 @@ ClassImp(PixTestTrim)
 // ----------------------------------------------------------------------
 PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), 
   fParVcal(-1), fParNtrig(-1), 
-  fParVcthrCompLo(-1), fParVcthrCompHi(-1),
+  fParVthrCompLo(-1), fParVthrCompHi(-1),
   fParVcalLo(-1), fParVcalHi(-1) {
   PixTest::init(a, name);
   init(); 
@@ -60,13 +60,13 @@ bool PixTestTrim::setParameter(string parName, string sval) {
 	fParVcalHi = atoi(sval.c_str()); 
 	LOG(logINFO) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
       }
-      if (!parName.compare("VcthrCompLo")) {
-	fParVcthrCompLo = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVcthrCompLo  ->" << fParVcthrCompLo << "<- from sval = " << sval;
+      if (!parName.compare("VthrCompLo")) {
+	fParVthrCompLo = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVthrCompLo  ->" << fParVthrCompLo << "<- from sval = " << sval;
       }
-      if (!parName.compare("VcthrCompHi")) {
-	fParVcthrCompHi = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVcthrCompHi  ->" << fParVcthrCompHi << "<- from sval = " << sval;
+      if (!parName.compare("VthrCompHi")) {
+	fParVthrCompHi = atoi(sval.c_str()); 
+	LOG(logINFO) << "  setting fParVthrCompHi  ->" << fParVthrCompHi << "<- from sval = " << sval;
       }
 
       break;
@@ -110,7 +110,143 @@ void PixTestTrim::doTest() {
 
   fPIX.clear(); 
   if (fApi) fApi->_dut->testAllPixels(true);
-  vector<TH1*> thr0 = scurveMaps("vcal", "TrimThr0", fParNtrig, fParVcalLo, fParVcalHi, 7); 
+
+  int RFLAG(7); 
+
+  // -- determine minimal VthrComp 
+  LOG(logINFO) << "TRIM determine minimal VthrComp"; 
+  vector<TH1*> thr0 = scurveMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi, RFLAG); 
+  TH2D *h(0); 
+  for (unsigned int i = 0; i < thr0.size(); ++i) {
+    cout << "   " << thr0[i]->GetName() << endl;
+    if (!strcmp("thr_TrimThr0_VthrComp_C0", thr0[i]->GetName())) {
+      h = (TH2D*)thr0[i]; 
+      break;
+    }
+  }
+
+
+  if (0 == h) {
+    LOG(logINFO) << "histogram thr_TrimThr0_VthrComp_C0 not found"; 
+    return;
+  }
+
+  double minThr(999.); 
+  int ix(-1), iy(-1); 
+  for (int ic = 0; ic < h->GetNbinsX(); ++ic) {
+    for (int ir = 0; ir < h->GetNbinsY(); ++ir) {
+      if (h->GetBinContent(ic+1, ir+1) < minThr) {
+	minThr = h->GetBinContent(ic+1, ir+1);
+	ix = ic; 
+	iy = ir; 
+      }
+    }
+  }
+  LOG(logINFO) << "  minimal VthrComp threshold" << minThr << " for pixel " << ix << "/" << iy;
+
+  LOG(logINFO) << "TRIM determine highest Vcal thresho"; 
+  vector<TH1*> thr1 = scurveMaps("Vcal", "TrimThr1", fParNtrig, fParVcalLo, fParVcalHi, RFLAG); 
+  for (unsigned int i = 0; i < thr1.size(); ++i) {
+    if (!strcmp("thr_TrimThr1_Vcal_C0", thr1[i]->GetName())) {
+      h = (TH2D*)thr1[i]; 
+      break;
+    }
+  }
+  double maxThr(-1.); 
+  for (int ic = 0; ic < h->GetNbinsX(); ++ic) {
+    for (int ir = 0; ir < h->GetNbinsY(); ++ir) {
+      if (h->GetBinContent(ic+1, ir+1) > maxThr) {
+	maxThr = h->GetBinContent(ic+1, ir+1);
+	ix = ic; 
+	iy = ir; 
+      }
+    }
+  }
+  LOG(logINFO) << "  maximal Vcal threshold " << maxThr << " for pixel " << ix << "/" << iy;
+
+  // -- determine Vtrim for pixel with highest VCAl threshold
+  if (fApi) fApi->_dut->testAllPixels(false);
+  fApi->_dut->testPixel(ix, iy, true);
+  int vtrim = adjustVtrim(); 
+  LOG(logINFO) << "  determine Vtrim =  " << vtrim;
+
 
   PixTest::update(); 
+}
+
+// ----------------------------------------------------------------------
+int PixTestTrim::adjustVtrim() {
+  int vtrim = -1;
+  int thr(255), thrOld(255);
+  int ntrig(10); 
+  do {
+    vtrim++;
+    fApi->setDAC("Vtrim", vtrim);
+    thrOld = thr;
+    thr = pixelThreshold("Vcal", ntrig, 0, 100); 
+    LOG(logINFO) << vtrim << " thr " << thr;
+  }
+  while (((thr > fParVcal) || (thrOld > fParVcal) || (thr < 10)) && (vtrim < 200));
+  vtrim += 5;
+  fApi->setDAC("Vtrim", vtrim);
+  LOG(logINFO) << "Vtrim set to " <<  vtrim;
+  return vtrim;
+}
+
+
+// ----------------------------------------------------------------------
+TH2D* PixTestTrim::trimStep(int correction, TH2D *calMapOld) {
+  TH2D* betterCalMap = GetMap("VcalThresholdMap");
+  int trim;
+  
+  //save trim map
+  TH2D *trimMap = roc->TrimMap();
+  
+  //set new trim bits
+  for (int i = 0; i < ROCNUMCOLS; i++) {
+      for (int k = 0; k < ROCNUMROWS; k++) {
+	if (aTestRange->IncludesPixel(roc->GetChipId(), i, k)) {
+	  trim = (int)trimMap->GetBinContent(i+1, k+1);
+	  if (calMapOld->GetBinContent(i+1, k+1) > vcal) trim-=correction;
+	  else trim+=correction;
+          
+	  if (trim < 0) trim = 0;
+	  if (trim > 15) trim = 15;
+	  GetPixel(i,k)->SetTrim(trim);
+	}
+      }
+  }
+  AddMap(roc->TrimMap());
+  
+  //measure new result
+  TH2D *calMap = thresholdMap->GetMap("VcalThresholdMap", roc, aTestRange, nTrig);
+  AddMap(calMap);
+  
+  // test if the result got better
+  for (int i = 0; i < ROCNUMCOLS; i++)
+    {
+      for (int k = 0; k < ROCNUMROWS; k++)
+	{
+	  if (aTestRange->IncludesPixel(roc->GetChipId(), i, k))
+	    {
+	      trim = GetPixel(i,k)->GetTrim();
+              
+	      if (TMath::Abs(calMap->GetBinContent(i+1, k+1) - vcal) <= TMath::Abs(calMapOld->GetBinContent(i+1, k+1) - vcal))
+		{
+		  // it's better now
+		  betterCalMap->SetBinContent(i+1, k+1, calMap->GetBinContent(i+1, k+1));
+		}
+	      else
+		{
+		  // it's worse
+		  betterCalMap->SetBinContent(i+1, k+1, calMapOld->GetBinContent(i+1, k+1));
+		  GetPixel(i,k)->SetTrim((int)trimMap->GetBinContent(i+1, k+1));
+		}
+	    }
+	}
+    }
+  
+  AddMap(roc->TrimMap());
+  
+  return betterCalMap;
 }
