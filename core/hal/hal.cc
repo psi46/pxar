@@ -235,7 +235,14 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   tbmSetRegs(tbmId,regVector);
 }
 
-void hal::initROC(uint8_t rocId, std::map< uint8_t,uint8_t > dacVector) {
+void hal::initROC(uint8_t rocId, uint8_t roctype, std::map< uint8_t,uint8_t > dacVector) {
+
+  // Set the pixel address inverted flag if we have the PSI46digV1 chip
+  if(roctype == ROC_PSI46DIG || roctype == ROC_PSI46DIG_TRIG) {
+    LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
+    _testboard->SetPixelAddressInverted(true);
+  }
+  else { _testboard->SetPixelAddressInverted(false); }
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << static_cast<int>(rocId) << ".";

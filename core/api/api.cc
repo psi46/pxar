@@ -270,7 +270,7 @@ bool api::programDUT() {
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   if(!enabledRocs.empty()) {LOG(logDEBUGAPI) << "Programming ROCs...";}
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    _hal->initROC(static_cast<uint8_t>(rocit - enabledRocs.begin()),(*rocit).dacs);
+    _hal->initROC(static_cast<uint8_t>(rocit - enabledRocs.begin()),(*rocit).type, (*rocit).dacs);
   }
 
   // As last step, mask all pixels in the device:
