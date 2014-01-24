@@ -982,6 +982,9 @@ bool hal::daqStop(uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
 
+  // Stop the Pattern Generator, just in case (also stops Pg_Loop())
+  _testboard->Pg_Stop();
+
   // Calling Daq_Stop here - calling Daq_Diable would also trigger
   // a FIFO reset (deleting the recorded data)
   if(nTBMs > 0) { _testboard->Daq_Stop(1); }
