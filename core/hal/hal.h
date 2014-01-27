@@ -1,7 +1,7 @@
 #ifndef PXAR_HAL_H
 #define PXAR_HAL_H
 
-#include "rpc_impl.h"
+#include "rpc_calls.h"
 #include "api.h"
 
 namespace pxar {

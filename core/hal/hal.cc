@@ -1,6 +1,5 @@
 #include "hal.h"
 #include "log.h"
-#include "rpc_impl.h"
 #include "constants.h"
 #include <fstream>
 
