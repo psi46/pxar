@@ -9,6 +9,7 @@
 #include "dictionaries.h"
 #include <algorithm>
 #include <fstream>
+#include "config.h"
 
 using namespace pxar;
 
@@ -32,6 +33,8 @@ api::~api() {
   delete _dut;
   delete _hal;
 }
+
+std::string api::getVersion() {return PACKAGE_STRING;};
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
