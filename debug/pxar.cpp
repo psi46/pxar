@@ -340,9 +340,7 @@ int main(int argc, char* argv[]) {
     _api->_dut->maskPixel(17,28,true);
     _api->_dut->maskPixel(17,52,true);
     _api->_dut->maskPixel(17,53,true);
-
-    //_api->_dut->maskColumn(8,true);
-
+    
     // Call the test:
     int nTrig = 10;
     std::vector< pxar::pixel > mapdata = _api->getEfficiencyMap(0,nTrig);
@@ -354,15 +352,6 @@ int main(int argc, char* argv[]) {
     int oldroc = 0;
     for (std::vector< pxar::pixel >::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
       
-      //std::cout << "Px " << (int)mapit->column << ", " << (int)mapit->row << " has efficiency " << (int)mapit->value << "/" << nTrig << " = " << (mapit->value/nTrig) << std::endl;
-      if(oldroc != (int)mapit->roc_id) {
-	char ch;
-	std::cout << "Press the \"Any\" key. Go home if you don't find it.";
-	std::cin >> ch;
-	oldroc = (int)mapit->roc_id;
-	std::cout << "Looking at ROC " << oldroc << " now" << std::endl;
-      }
-
       if((int)mapit->value == nTrig) std::cout << "X";
       else if((int)mapit->value == 0) std::cout << "-";
       else if((int)mapit->value > nTrig) std::cout << "#";
@@ -374,7 +363,7 @@ int main(int argc, char* argv[]) {
 	std::cout << std::endl;
       }
     }
-
+    
     // ##########################################################
 
 
@@ -394,7 +383,7 @@ int main(int argc, char* argv[]) {
     // Call the test:
     unsigned nTrig2 = 10;
     std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
-      effscandata = _api->getEfficiencyVsDAC("caldel", 0, 150, 0, nTrig2);
+      effscandata = _api->getEfficiencyVsDAC("caldel", 70, 150, 0, nTrig2);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata.size() << std::endl;
@@ -405,7 +394,7 @@ int main(int argc, char* argv[]) {
       std::cout << "  dac value: " << (int)dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
       // Loop over fired pixels and show value
       for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
-	std::cout << "      pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
+	std::cout << "    ROC " << (int)pixit->roc_id << "  pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
       }
     }
     
@@ -463,7 +452,7 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Try a threshold map:
-
+    /*
     _api->_dut->testAllPixels(true);
 
     // Call the test:
@@ -485,6 +474,27 @@ int main(int argc, char* argv[]) {
 	row2 = 0;
 	std::cout << std::endl;
       }
+    }
+    */
+    // ##########################################################
+
+
+    // ##########################################################
+    // Try threshold for a single pixel:
+    
+    _api->_dut->testAllPixels(false);
+    _api->_dut->testPixel(5,5,true);
+
+    // Call the test:
+    int nTrig6 = 10;
+    std::vector< pxar::pixel > thrmap1 = _api->getThresholdMap("vthrcomp",0x0,nTrig6);
+    std::cout << "Data size returned: " << thrmap1.size() << std::endl;
+
+    
+    for (std::vector< pxar::pixel >::iterator mapit = thrmap1.begin(); mapit != thrmap1.end(); ++mapit) {
+      std::cout << "Threshold for pixel " 
+		<< (int)mapit->column << "," << (int)mapit->row << " is " 
+		<< (int)mapit->value << std::endl;
     }
 
     // ##########################################################
