@@ -285,6 +285,9 @@ namespace pxar {
      */
     uint32_t GetHashForString(const char* s);
 
+    /** Read all data from one TBM channel data stream
+     */
+    std::vector<uint16_t> daqReadChannel(uint8_t channel);
   };
 
 }

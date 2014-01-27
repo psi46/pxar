@@ -1017,32 +1017,40 @@ bool hal::daqStop(uint8_t nTBMs) {
 
 std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 
-  std::vector<uint16_t> data;
-  uint32_t buffersize_ch0, buffersize_ch1;
-  uint32_t remaining_buffer_ch0, remaining_buffer_ch1;
+  // Read all data from the first channel:
+  std::vector<uint16_t> data = daqReadChannel(0);
 
-  buffersize_ch0 = _testboard->Daq_GetSize(0);
-  LOG(logDEBUGHAL) << "Available data in channel 0: " << buffersize_ch0;
+  // Also read the second channel if needed:
   if(nTBMs > 0) {
-    buffersize_ch1 = _testboard->Daq_GetSize(1);
-    LOG(logDEBUGHAL) << "Available data in channel 1: " << buffersize_ch1;
+    std::vector<uint16_t> data1 = daqReadChannel(1);
+    data.insert( data.end(), data1.begin(), data1.end() );
   }
 
-  // FIXME check if buffersize exceeds maximum transfer size and split if so:
-  int status = _testboard->Daq_Read(data,buffersize_ch0,remaining_buffer_ch0,0);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-  LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel 0, " 
-		   << remaining_buffer_ch0 << " words remaining in buffer.";
+  return data;
+}
 
-  if(nTBMs > 0) {
-    std::vector<uint16_t> data1;
+std::vector<uint16_t> hal::daqReadChannel(uint8_t channel) {
 
-    status = _testboard->Daq_Read(data1, buffersize_ch1, remaining_buffer_ch1, 1);
+  int status = 0;
+  std::vector<uint16_t> data;
+  uint32_t buffer_remaining;
+
+  // Maximal allowed block size for DAQ read:
+  uint32_t buffer_max = 32768;
+  uint32_t buffer_read;
+
+  buffer_remaining = _testboard->Daq_GetSize(channel);
+  LOG(logDEBUGHAL) << "Available data in channel " << channel << ": " 
+		   << buffer_remaining;
+
+  // Keep on reading out while we have remainig data:
+  while(buffer_remaining > 0) {
+    buffer_read = max(buffer_remaining, buffer_max);
+    status = _testboard->Daq_Read(data,buffer_read,buffer_remaining,channel);
     LOG(logDEBUGHAL) << "Function returns: " << status;
-    LOG(logDEBUGHAL) << "Read " << data1.size() << " data words, " 
-		     << remaining_buffer_ch1 << " words remaining in buffer.";
-
-    data.insert( data.end(), data1.begin(), data1.end() );
+    LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel "
+		     << channel << ", " 
+		     << buffer_remaining << " words remaining in buffer.";
   }
 
   return data;
