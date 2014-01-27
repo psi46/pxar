@@ -196,57 +196,58 @@ int PixTestTrim::adjustVtrim() {
 
 // ----------------------------------------------------------------------
 TH2D* PixTestTrim::trimStep(int correction, TH2D *calMapOld) {
-  TH2D* betterCalMap = GetMap("VcalThresholdMap");
-  int trim;
+//   TH2D* betterCalMap = GetMap("VcalThresholdMap");
+//   int trim;
   
-  //save trim map
-  TH2D *trimMap = roc->TrimMap();
+//   //save trim map
+//   TH2D *trimMap = roc->TrimMap();
   
-  //set new trim bits
-  for (int i = 0; i < ROCNUMCOLS; i++) {
-      for (int k = 0; k < ROCNUMROWS; k++) {
-	if (aTestRange->IncludesPixel(roc->GetChipId(), i, k)) {
-	  trim = (int)trimMap->GetBinContent(i+1, k+1);
-	  if (calMapOld->GetBinContent(i+1, k+1) > vcal) trim-=correction;
-	  else trim+=correction;
+//   //set new trim bits
+//   for (int i = 0; i < ROCNUMCOLS; i++) {
+//       for (int k = 0; k < ROCNUMROWS; k++) {
+// 	if (aTestRange->IncludesPixel(roc->GetChipId(), i, k)) {
+// 	  trim = (int)trimMap->GetBinContent(i+1, k+1);
+// 	  if (calMapOld->GetBinContent(i+1, k+1) > vcal) trim-=correction;
+// 	  else trim+=correction;
           
-	  if (trim < 0) trim = 0;
-	  if (trim > 15) trim = 15;
-	  GetPixel(i,k)->SetTrim(trim);
-	}
-      }
-  }
-  AddMap(roc->TrimMap());
+// 	  if (trim < 0) trim = 0;
+// 	  if (trim > 15) trim = 15;
+// 	  GetPixel(i,k)->SetTrim(trim);
+// 	}
+//       }
+//   }
+//   AddMap(roc->TrimMap());
   
-  //measure new result
-  TH2D *calMap = thresholdMap->GetMap("VcalThresholdMap", roc, aTestRange, nTrig);
-  AddMap(calMap);
+//   //measure new result
+//   TH2D *calMap = thresholdMap->GetMap("VcalThresholdMap", roc, aTestRange, nTrig);
+//   AddMap(calMap);
   
-  // test if the result got better
-  for (int i = 0; i < ROCNUMCOLS; i++)
-    {
-      for (int k = 0; k < ROCNUMROWS; k++)
-	{
-	  if (aTestRange->IncludesPixel(roc->GetChipId(), i, k))
-	    {
-	      trim = GetPixel(i,k)->GetTrim();
+//   // test if the result got better
+//   for (int i = 0; i < ROCNUMCOLS; i++)
+//     {
+//       for (int k = 0; k < ROCNUMROWS; k++)
+// 	{
+// 	  if (aTestRange->IncludesPixel(roc->GetChipId(), i, k))
+// 	    {
+// 	      trim = GetPixel(i,k)->GetTrim();
               
-	      if (TMath::Abs(calMap->GetBinContent(i+1, k+1) - vcal) <= TMath::Abs(calMapOld->GetBinContent(i+1, k+1) - vcal))
-		{
-		  // it's better now
-		  betterCalMap->SetBinContent(i+1, k+1, calMap->GetBinContent(i+1, k+1));
-		}
-	      else
-		{
-		  // it's worse
-		  betterCalMap->SetBinContent(i+1, k+1, calMapOld->GetBinContent(i+1, k+1));
-		  GetPixel(i,k)->SetTrim((int)trimMap->GetBinContent(i+1, k+1));
-		}
-	    }
-	}
-    }
+// 	      if (TMath::Abs(calMap->GetBinContent(i+1, k+1) - vcal) <= TMath::Abs(calMapOld->GetBinContent(i+1, k+1) - vcal))
+// 		{
+// 		  // it's better now
+// 		  betterCalMap->SetBinContent(i+1, k+1, calMap->GetBinContent(i+1, k+1));
+// 		}
+// 	      else
+// 		{
+// 		  // it's worse
+// 		  betterCalMap->SetBinContent(i+1, k+1, calMapOld->GetBinContent(i+1, k+1));
+// 		  GetPixel(i,k)->SetTrim((int)trimMap->GetBinContent(i+1, k+1));
+// 		}
+// 	    }
+// 	}
+//     }
   
-  AddMap(roc->TrimMap());
+//   AddMap(roc->TrimMap());
   
-  return betterCalMap;
+//   return betterCalMap;
+  return 0;
 }

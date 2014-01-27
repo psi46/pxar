@@ -14,7 +14,7 @@ public:
   void bookHist(std::string); 
 
   int adjustVtrim(); 
-  TH2D* trimStep(); 
+  TH2D* trimStep(int corrections, TH2D *calMapOld); 
 
   void doTest(); 
 
