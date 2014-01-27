@@ -86,4 +86,5 @@ void PixTestAlive::doTest() {
   h->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
+  LOG(logINFO) << "PixTestAlive::doTest() done";
 }
