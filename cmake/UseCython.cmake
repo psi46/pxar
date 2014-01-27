@@ -97,7 +97,7 @@ function( compile_pyx _name generated_file )
 
     # Determine if it is a C or C++ file.
     get_source_file_property( property_is_cxx ${pyx_file} CYTHON_IS_CXX )
-    if( ${property_is_cxx} )
+    if( property_is_cxx )
       set( cxx_arg "--cplus" )
       set( extension ${CYTHON_CXX_EXTENSION} )
       set( pyx_lang "CXX" )
