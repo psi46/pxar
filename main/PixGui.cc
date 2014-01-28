@@ -159,19 +159,43 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 // ----------------------------------------------------------------------
 PixGui::~PixGui() {
   LOG(logINFO) << "PixGui::destructor";
+  delete fTimer;
+  delete fMonitor; 
+  delete fcmbTests;
+  delete fTabs;
+  delete fParTab;
+  delete fRootFileNameBuffer;
+  delete fbtnPower;
+  delete fbtnHV;
+  delete fpowerSlider;
+  delete fhvSlider;
+  delete flblPower;
+  delete flblHV;
+  delete fH1;
+  delete fH2;
+
 }
 
 
+// ----------------------------------------------------------------------
+void PixGui::Cleanup() {
+    gApplication->Terminate(0);
+}
+
 
 // ----------------------------------------------------------------------
-void PixGui::closeWindow() {
-  // Close Window
-  if (fApi) {
-    fApi->HVoff();
-    fApi->Poff();
-  }
+void PixGui::CloseWindow() {
+  std::vector<PixTest*>::iterator il; 
+  for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+    delete (*il); 
+  } 
+  
   if (fTimer) fTimer->TurnOff();
+  if (fApi) delete fApi; 
+  
   DestroyWindow();
+  gApplication->Terminate(0);
+
 }
 // ----------------------------------------------------------------------
 void PixGui::handleButtons(Int_t id) {
@@ -192,16 +216,7 @@ void PixGui::handleButtons(Int_t id) {
   }
   case B_EXIT: {
     LOG(logINFO) << "PixGui::exit called";
-    std::vector<PixTest*>::iterator il; 
-    for (il = fTestList.begin(); il != fTestList.end(); ++il) {
-      delete (*il); 
-    } 
-
-    //    delete this; 
-    //delete fTb;
-    //CloseWindow();
-    if (fApi) delete fApi; 
-    gApplication->Terminate(0);
+    CloseWindow();
   }
   case B_POWER: {
     if(fPower == true) {
