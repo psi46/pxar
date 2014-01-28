@@ -5,12 +5,11 @@
 
 using namespace pxar;
 
-hal::hal(std::string name) {
-
-  // Reset the states of the HAL instance:
-  _initialized = false;
-  _compatible = false;
-  _fallback_mode = false;
+hal::hal(std::string name) :
+  _initialized(false),
+  _compatible(false),
+  _fallback_mode(false)
+{
 
   // Get a new CTestboard class instance:
   _testboard = new CTestboard();
