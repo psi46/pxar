@@ -1116,7 +1116,11 @@ std::vector<uint16_t> api::daqGetBuffer() {
   return data;
 }
 
-std::vector<pixel> api::daqGetEvent() {}
+std::vector<pixel> api::daqGetEvent() {
+  // FIXME: needs to actually interact with the HAL and get DATA
+  std::vector<pixel>* myvec = new std::vector<pixel>();
+  return *myvec;
+}
 
 bool api::daqStop() {
 
