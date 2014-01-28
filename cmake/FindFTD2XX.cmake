@@ -12,26 +12,43 @@ PATHS   /usr/local/include
         /usr/include
         /usr/include/libftd2xx
         /usr/local/include/libftd2xx
+	/opt/local/include
+	/sw/include
+	${PROJECT_SOURCE_DIR}/extern/ftd2xx
 )
 
+# determine if we run a 64bit compiler or not
+set(bitness i386)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(bitness amd64)
+endif()
+
+SET(FTD2XX_LIBNAME ftd2xx)
+IF(WIN32)
+  SET(FTD2XX_LIBNAME ftd2xx.lib)
+ENDIF(WIN32)
+
 FIND_LIBRARY(FTD2XX_LIBRARY
-NAMES ftd2xx
+NAMES ${FTD2XX_LIBNAME}
 PATHS /usr/lib
       /usr/local/lib
+      /opt/local/lib
+      /sw/lib
+      ${PROJECT_SOURCE_DIR}/extern/ftd2xx/${bitness}
 )
 
 IF (FTD2XX_LIBRARY)
   IF(FTD2XX_INCLUDE_DIR)
-    IF(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h")
+    IF(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h" OR WIN32)
       SET(FTD2XX_FOUND TRUE)
       MESSAGE(STATUS "Found libFTD2XX: ${FTD2XX_INCLUDE_DIR}, ${FTD2XX_LIBRARY}")
-    ELSE(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h")
+    ELSE(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h" OR WIN32)
       SET(FTD2XX_FOUND FALSE)
       MESSAGE(STATUS "libFTD2XX WinTypes.h header NOT FOUND in ${FTD2XX_INCLUDE_DIR}!")
-    ENDIF(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h")
+    ENDIF(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h" OR WIN32)
   ELSE(FTD2XX_INCLUDE_DIR)
     SET(FTD2XX_FOUND FALSE)
-    MESSAGE(STATUS "libFTD2XX headers NOT FOUND. Make sure to install the development headers!")
+    MESSAGE(STATUS "libFTD2XX headers NOT FOUND. Make sure to install the development headers! Please refer to the documentation for instructions.")
   ENDIF(FTD2XX_INCLUDE_DIR)
 ELSE (FTD2XX_LIBRARY)
     SET(FTD2XX_FOUND FALSE)
