@@ -11,6 +11,9 @@ PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
 SET(PXAR_VERSION "0.2.9")
 
+# Additional packages to be searched for by cmake
+LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+
 # Check if this is a source tarball build
 IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)
@@ -33,8 +36,6 @@ ENDIF(NOT SOURCE_PACKAGE)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 
-include( Platform.cmake)
-
 # Set the correct build type and allow command line options:
 IF(!CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Relwithdebinfo)
@@ -42,6 +43,8 @@ ENDIF(!CMAKE_BUILD_TYPE)
 
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+
+include( cmake/Platform.cmake)
 
 # Build options and their defaults:
 OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
@@ -51,14 +54,9 @@ OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source v
 # Check prerequisities for pXar build #
 #######################################
 
-# Additional packages to be searched for by cmake
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
-
 # Check for libusb-1.0 package:
-if(NOT WIN32)
-  FIND_PACKAGE(libusb-1.0 REQUIRED)
-  INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
-endif(NOT WIN32)
+FIND_PACKAGE(libusb-1.0 REQUIRED)
+INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
 
 # Include packages for threading:
 FIND_PACKAGE(Threads)
