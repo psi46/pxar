@@ -72,8 +72,6 @@ inline std::string NowTime()
 
 #else
 
-#include <sys/time.h>
-
   template <typename T>
     std::string pxarLog<T>::NowTime() {
     char buffer[11];
