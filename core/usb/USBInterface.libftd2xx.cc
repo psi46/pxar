@@ -217,8 +217,8 @@ void CUSB::WriteCommand(unsigned char x){
 
 void CUSB::Flush()
 {
-	uint32_t bytesWritten;
-	uint32_t bytesToWrite = m_posW;
+	DWORD bytesWritten;
+	DWORD bytesToWrite = m_posW;
 	m_posW = 0;
 
 	if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
@@ -236,7 +236,7 @@ bool CUSB::FillBuffer(uint32_t minBytesToRead)
 {
 	if (!isUSB_open) return false;
 
-	uint32_t bytesAvailable, bytesToRead;
+	DWORD bytesAvailable, bytesToRead;
 
 	ftdiStatus = FT_GetQueueStatus(ftHandle, &bytesAvailable);
 	if (ftdiStatus != FT_OK) return false;
@@ -313,7 +313,7 @@ bool CUSB::Show()
 {
   if( !isUSB_open ) return false;
   std::cout << "USB";
-  uint32_t bytesAvailable;
+  DWORD bytesAvailable;
   ftdiStatus = FT_GetQueueStatus( ftHandle, &bytesAvailable );
   if( ftdiStatus != FT_OK ) {
     std::cout << " not OK\n";
@@ -333,7 +333,7 @@ int CUSB::GetQueue()
 {
   if( !isUSB_open ) return -1;
 
-  uint32_t bytesAvailable;
+  DWORD bytesAvailable;
   ftdiStatus = FT_GetQueueStatus( ftHandle, &bytesAvailable );
   if( ftdiStatus != FT_OK ) {
     std::cout << " CUSB::GetQeue(): USB connection not OK\n";

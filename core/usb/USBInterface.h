@@ -13,6 +13,9 @@
 
 #ifdef WIN32
 #include <Windows.h>
+#else
+typedef uint32_t* LPDWORD;
+typedef uint32_t DWORD;
 #endif
 
 #ifdef HAVE_LIBFTDI
@@ -42,12 +45,12 @@ class CUSB : public CRpcIo
 #endif
 
   uint32_t enumPos, enumCount;
-  uint32_t m_timeout; // maximum time to wait for read/write call in ms
+  uint32_t m_timeout; // maximum time to awit for read/write call in ms
 
   uint32_t m_posW;
   unsigned char m_bufferW[USBWRITEBUFFERSIZE];
 
-  uint32_t m_posR, m_sizeR;
+  DWORD m_posR, m_sizeR;
   unsigned char m_bufferR[USBREADBUFFERSIZE];
 
   bool FillBuffer(uint32_t minBytesToRead);
