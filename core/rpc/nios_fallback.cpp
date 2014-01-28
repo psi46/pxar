@@ -275,9 +275,9 @@ int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vecto
   //  LOG(pxar::logDEBUGHAL) << "Start with ROC id " << (int)roc_n;
 
   //  uint32_t words_remaining = 0;
-  uint16_t hdr, trl;
+  uint16_t hdr = 0, trl = 0;
   int16_t roc_n = -1 + channel*8;
-  unsigned int raw;
+  unsigned int raw = 0;
   int16_t n_pix = 0, ph_pix = 0, col = 0, row = 0, evNr = 0, stkCnt = 0, dataId = 0, dataNr = 0;
   int16_t tbm_n = 1;
   uint32_t address;
@@ -336,7 +336,7 @@ int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vecto
       // check header
       if ((data[pos] & 0x8ffc) != 0x87f8)
 	return -2; // wrong header
-      int hdr = data[pos++] & 0xfff;
+      pos++; //int hdr = data[pos++] & 0xfff;
       // read pixels while not data end or trailer
       while (!(pos >= int(data.size()) || (data[pos] & 0x8000))) {
 	// store 24 bits in raw
