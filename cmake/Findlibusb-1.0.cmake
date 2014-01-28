@@ -42,9 +42,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*lusb0_usb.h)
+file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*libusb.h)
 if (extern_file)
-  get_filename_component(extern_lib_include_path ${extern_file} PATH)
+  # strip file name
+  get_filename_component(extern_lib_tmp_path ${extern_file} PATH)
+  # strip 'libusb-1.0' path component
+  get_filename_component(extern_lib_include_path ${extern_lib_tmp_path} PATH)
+  # strip down to main lib dir
   get_filename_component(extern_lib_path ${extern_lib_include_path} PATH)
   MESSAGE(STATUS "Found libusb in 'extern' subfolder: ${extern_lib_path}")
 endif(extern_file)
@@ -55,7 +59,7 @@ if (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
   find_path(LIBUSB_1_INCLUDE_DIR
     NAMES
-	libusb.h lusb0_usb.h
+	libusb-1.0/libusb.h libusb.h
     PATHS
       /usr/include
       /usr/local/include
@@ -66,15 +70,23 @@ else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 	  libusb-1.0
   )
 
+ MESSAGE(STATUS "Found libusb include dir: ${LIBUSB_1_INCLUDE_DIR} using hint of ${extern_lib_include_path}")
+
+# determine if we run a 64bit compiler or not
+set(bitness 32)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(bitness 64)
+endif()
+
   find_library(LIBUSB_1_LIBRARY
     NAMES
-      usb-1.0 usb libusb
+      usb-1.0 usb libusb-1.0
     PATHS
       /usr/lib
       /usr/local/lib
       /opt/local/lib
       /sw/lib
-      ${extern_lib_path}/lib/msvc
+      ${extern_lib_path}/MS${bitness}/dll
   )
 
   set(LIBUSB_1_INCLUDE_DIRS
