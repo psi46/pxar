@@ -13,6 +13,15 @@
 
 #include "config.h"
 
+/** Export classes from the DLL under WIN32 */
+#ifdef WIN32
+#define DLLEXPORT __declspec( dllexport )
+#else
+#define DLLEXPORT
+#endif
+
+
+
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
  *  Follows advice of http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
@@ -24,7 +33,7 @@ namespace pxar {
 
   /** Class for storing decoded pixel readout data
    */
-  class pixel {
+  class DLLEXPORT pixel {
   public:
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
@@ -63,7 +72,7 @@ namespace pxar {
    *  trim bit settings and whether they belong to the currently run test ("enable").
    *  By default, pixelConfigs have the  mask bit set.
    */
-  class pixelConfig {
+  class DLLEXPORT pixelConfig {
   public:
   pixelConfig() : 
     column(0), row(0), 
@@ -83,7 +92,7 @@ namespace pxar {
    *  Contains a DAC map for the ROC programming settings, a type flag, enable switch
    *  and a vector of pixelConfigs.
    */
-  class rocConfig {
+  class DLLEXPORT rocConfig {
   public:
   rocConfig() : pixels(), dacs(), type(0), enable(true) {};
     std::vector< pixelConfig > pixels;
@@ -96,7 +105,7 @@ namespace pxar {
    *
    *  Contains a register map for the device register settings, a type flag and an enable switch
    */
-  class tbmConfig {
+  class DLLEXPORT tbmConfig {
   public:
   tbmConfig() : dacs(), type(0), enable(true) {};
     std::map< uint8_t,uint8_t > dacs;
@@ -153,7 +162,7 @@ namespace pxar {
    *  scanning 4160 pixels after another the code will select the function
    *  to scan a full ROC in one go automatically.
    */
-  class api {
+  class DLLEXPORT api {
 
   public:
 
@@ -560,7 +569,7 @@ namespace pxar {
   }; // class api
 
 
-  class dut {
+  class DLLEXPORT dut {
     
     /** Allow the API class to access private members of the DUT - noone else
      *  should be able to access them! 
