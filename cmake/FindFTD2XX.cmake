@@ -45,13 +45,8 @@ PATHS /usr/lib
 
 IF (FTD2XX_LIBRARY)
   IF(FTD2XX_INCLUDE_DIR)
-    IF(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h" OR WIN32)
       SET(FTD2XX_FOUND TRUE)
       MESSAGE(STATUS "Found libFTD2XX: ${FTD2XX_INCLUDE_DIR}, ${FTD2XX_LIBRARY}")
-    ELSE(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h" OR WIN32)
-      SET(FTD2XX_FOUND FALSE)
-      MESSAGE(STATUS "libFTD2XX WinTypes.h header NOT FOUND in ${FTD2XX_INCLUDE_DIR}!")
-    ENDIF(EXISTS "${FTD2XX_INCLUDE_DIR}/WinTypes.h" OR WIN32)
   ELSE(FTD2XX_INCLUDE_DIR)
     SET(FTD2XX_FOUND FALSE)
     MESSAGE(STATUS "libFTD2XX headers NOT FOUND. Make sure to install the development headers! Please refer to the documentation for instructions.")
