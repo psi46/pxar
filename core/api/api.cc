@@ -34,7 +34,7 @@ api::~api() {
   delete _hal;
 }
 
-std::string api::getVersion() {return PACKAGE_STRING;};
+std::string api::getVersion() { return PACKAGE_STRING; }
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
