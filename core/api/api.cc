@@ -26,7 +26,6 @@ api::api(std::string usbId, std::string logLevel) {
 
   // Get the DUT up and running:
   _dut = new dut();
-  _dut->_initialized = false;
 }
 
 api::~api() {
