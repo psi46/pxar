@@ -46,12 +46,14 @@ public:
   PixGui(const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup);
   ~PixGui();
 
+  void Cleanup(); 
+  void CloseWindow();
+
   void handleButtons(Int_t id = -1);
   void createTab(const char*);
   void createParTab();
   void selectedTab(int); 
 
-  void closeWindow();
   PixTest* createTest(std::string); 
 
   TGCompositeFrame	*fhFrame;
@@ -75,9 +77,6 @@ private:
   TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
   TGCompositeFrame     	*fParTab;
-  TGTextView		*fLogger;
-  TGTextEntry		*fConsole;
-  TGTextBuffer		*fConsoleBuffer;
   TGTextBuffer          *fRootFileNameBuffer;
   TGTextButton		*fbtnPower;
   TGTextButton		*fbtnHV;
@@ -87,14 +86,10 @@ private:
   TGLabel		*flblHV;
   TGHorizontalFrame 	*fH1;
   TGHorizontalFrame	*fH2;
-  std::vector<TH1*>      fHistList; 
   std::vector<PixTest *> fTestList; 
   bool			 fDebug;
   bool			 fPower, fHV;
 
-
-  SysCommand             *fSysCommand;
-  
   PixSetup               *fPixSetup; 
   pxar::api              *fApi;
   ConfigParameters       *fConfigParameters;  
