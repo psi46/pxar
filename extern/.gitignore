@@ -1,0 +1,4 @@
+# ignore this directory as it contains external packages
+*
+# but not the gitignore list
+!.gitignore
