@@ -57,6 +57,7 @@ protected:
     B_DOTEST = TESTNUMBER + 21,
     B_DOSTOP,
     B_CLOSETAB,
+    B_MODMAP,
     B_PRINT
   };
 
