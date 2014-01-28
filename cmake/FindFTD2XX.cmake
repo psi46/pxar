@@ -6,6 +6,12 @@
 #  FTD2XX_INCLUDE_DIR - ~ the ftd2xx include directory 
 #  FTD2XX_LIBRARY - Link these to use ftd2xx
 
+file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ftd2xx.h)
+if (extern_file)
+  get_filename_component(extern_lib_path ${extern_file} PATH)
+  MESSAGE(STATUS "Found FTD2XX library in 'extern' subfolder: ${extern_lib_path}")
+endif(extern_file)
+
 FIND_PATH(FTD2XX_INCLUDE_DIR 
 NAMES   ftd2xx.h
 PATHS   /usr/local/include
@@ -14,7 +20,7 @@ PATHS   /usr/local/include
         /usr/local/include/libftd2xx
 	/opt/local/include
 	/sw/include
-	${PROJECT_SOURCE_DIR}/extern/ftd2xx
+	${extern_lib_path}
 )
 
 # determine if we run a 64bit compiler or not
@@ -34,7 +40,7 @@ PATHS /usr/lib
       /usr/local/lib
       /opt/local/lib
       /sw/lib
-      ${PROJECT_SOURCE_DIR}/extern/ftd2xx/${bitness}
+      ${extern_lib_path}/${bitness}
 )
 
 IF (FTD2XX_LIBRARY)
