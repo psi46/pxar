@@ -33,11 +33,7 @@ ENDIF(NOT SOURCE_PACKAGE)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 
-SET(GCC_COMPILE_FLAGS "-Wall -Wextra -g -Wno-deprecated -pedantic -Wno-long-long")
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}" )
-
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" CACHE STRING "Debug options." FORCE )
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -Wall"  CACHE STRING "Relwithdebinfo options." FORCE )
+include( Platform.cmake)
 
 # Set the correct build type and allow command line options:
 IF(!CMAKE_BUILD_TYPE)
@@ -59,8 +55,10 @@ OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source v
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 # Check for libusb-1.0 package:
-FIND_PACKAGE(libusb-1.0 REQUIRED)
-INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
+if(NOT WIN32)
+  FIND_PACKAGE(libusb-1.0 REQUIRED)
+  INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
+endif(NOT WIN32)
 
 # Include packages for threading:
 FIND_PACKAGE(Threads)
@@ -75,7 +73,7 @@ SET(FTDI_LINK_LIBRARY "")
 
 IF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
   # We have none of the two options available, this doesn't work!
-  MESSAGE(FATAL_ERROR "No FTDI library found. Provide either libftdi or libftd2xx!")
+  MESSAGE(FATAL_ERROR "No FTDI library found. Provide either libftdi or libftd2xx! Please refer to the documentation for detailed instructions.")
 ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
   # One of the options is available, let's figure out which one to use!
   IF(USE_FTD2XX AND FTD2XX_FOUND)
