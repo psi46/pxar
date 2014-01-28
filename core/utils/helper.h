@@ -4,6 +4,39 @@
 #ifndef PXAR_HELPER_H
 #define PXAR_HELPER_H
 
+#ifdef WIN32
+# include <Windows.h>
+#else
+# include <sys/time.h>
+#endif
+
+
+/* ============================================================================== */
+/** Helper function to handle sleep routines across multiple platforms 
+ */
+namespace util
+{
+  void mSleep(unsigned ms) {
+#ifdef WIN32
+    Sleep(ms);
+#else
+    usleep(ms * 1000);
+#endif
+  }
+
+  inline std::tm localtime( std::time_t t )
+  {
+#ifdef _MSC_VER >= 1400 
+    // MSVCRT (2005+): std::localtime is threadsafe
+    return *std::localtime(&t) ;
+#else 
+    // POSIX
+    std::tm temp ;
+    return *::localtime_r( &t, &temp ) ;
+#endif 
+    // _MSC_VER
+  }
+}
 /* =========================================================================== */
 
 /** Helper class to search vectors of pixelConfig, rocConfig and tbmConfig for 'enable' bit

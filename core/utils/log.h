@@ -6,11 +6,23 @@
 #define PXAR_LOG_H
 
 #include <sstream>
+#ifndef WIN32
 #include <sys/time.h>
+#else
+#include <time.h>
+#include <windows.h>
+#endif
+
+#if defined ( WIN32 )
+#define __func__ __FUNCTION__
+#endif
+
 #include <iomanip>
 #include <cstdio>
 #include <stdint.h>
 #include <string.h>
+
+#include "helper.h"
 
 namespace pxar {
 
@@ -51,15 +63,11 @@ namespace pxar {
   template <typename T>
     std::string pxarLog<T>::NowTime() {
     char buffer[11];
-    time_t t;
+    std::time_t t;
     time(&t);
-    tm r = * localtime(&t);//{0};
-    strftime(buffer, sizeof(buffer), "%X", localtime_r(&t, &r));
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    char result[100] = {0};
-    std::sprintf(result, "%s.%03ld", buffer, static_cast<long>(tv.tv_usec) / 1000); 
-    return result;
+    std::tm r = util::localtime(t);//{0};
+    strftime(buffer, sizeof(buffer), "%X", &r);
+    return buffer;
   }
 
   template <typename T>

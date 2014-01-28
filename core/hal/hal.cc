@@ -3,6 +3,7 @@
 #include "rpc_impl.h"
 #include "constants.h"
 #include <fstream>
+#include "helper.h"
 
 using namespace pxar;
 
@@ -264,7 +265,7 @@ void hal::PrintInfo() {
 
 void hal::mDelay(uint32_t ms) {
   // Wait for the given time in milliseconds:
-  usleep(ms*1000);
+  util::mSleep(ms);
 }
 
 bool hal::CheckCompatibility(){
