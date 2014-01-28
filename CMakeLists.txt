@@ -40,9 +40,9 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Wcast-a
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -Wall"  CACHE STRING "Relwithdebinfo options." FORCE )
 
 # Set the correct build type and allow command line options:
-IF(!CMAKE_BUILD_TYPE)
+IF(NOT DEFINED ${CMAKE_BUILD_TYPE})
   SET(CMAKE_BUILD_TYPE Relwithdebinfo)
-ENDIF(!CMAKE_BUILD_TYPE)
+ENDIF(NOT DEFINED ${CMAKE_BUILD_TYPE})
 
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
