@@ -1,6 +1,9 @@
+#ifndef WIN32
 #include <libusb-1.0/libusb.h>
-#include <cstdio>
 #include <cstring>
+#endif
+
+#include <cstdio>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -105,9 +108,14 @@ bool CUSB::Open(char serialNumber[])
 
   m_posR = m_sizeR = m_posW = 0;
   ftdiStatus = FT_OpenEx(serialNumber, FT_OPEN_BY_SERIAL_NUMBER, &ftHandle);
-  if( ftdiStatus != FT_OK) {
-    /* maybe the ftdi_sio and usbserial kernel modules are attached to the device */
-    /* try to detach them using the libusb library directly */
+  if( ftdiStatus != FT_OK)
+#ifdef _WIN32
+    return false;
+#else
+  {
+    /** maybe the ftdi_sio and usbserial kernel modules are attached to 
+        the device. Try to detach them using the libusb library directly
+    */
 
     /* prepare libusb structures */
     libusb_device ** list;
@@ -173,6 +181,7 @@ bool CUSB::Open(char serialNumber[])
     if( ftdiStatus != FT_OK)
       return false;
   }
+#endif
 	
   ftdiStatus = FT_SetBitMode(ftHandle, 0xFF, 0x40);
   if (ftdiStatus != FT_OK) return false;
