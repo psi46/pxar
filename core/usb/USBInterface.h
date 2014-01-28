@@ -11,6 +11,10 @@
 #ifndef USB_H
 #define USB_H
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
 #ifdef HAVE_LIBFTDI
 #include <ftdi.h>
 #else
