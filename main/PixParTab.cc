@@ -550,19 +550,48 @@ void PixParTab::setRocParameter() {
 // ----------------------------------------------------------------------
 void PixParTab::saveTbParameters() {
   LOG(logINFO) << "save Tb parameters"; 
+  fConfigParameters->writeTbParameterFile();
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveTbmParameters() {
   LOG(logINFO) << "save Tbm parameters"; 
+  fConfigParameters->writeTbmParameterFiles(getSelectedTbms());
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveDacParameters() {
   LOG(logINFO) << "save DAC parameters"; 
+  fConfigParameters->writeDacParameterFiles(getSelectedRocs());
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveTrimParameters() {
   LOG(logINFO) << "save Trim parameters"; 
+  fConfigParameters->writeTrimFiles(getSelectedRocs());
+
 }
+
+
+// ----------------------------------------------------------------------
+vector<int> PixParTab::getSelectedTbms() {
+  vector<int> result; 
+  for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
+    if (kButtonDown == fSelectTbm[i]->GetState()) {
+      result.push_back(i); 
+    }
+  }
+  return result;
+}
+
+// ----------------------------------------------------------------------
+vector<int> PixParTab::getSelectedRocs() {
+  vector<int> result; 
+  for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
+    if (kButtonDown == fSelectRoc[i]->GetState()) {
+      result.push_back(i); 
+    }
+  }
+  return result;
+}
+

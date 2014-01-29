@@ -31,6 +31,8 @@ public:
   virtual void handleButtons(Int_t id = -1); 
   virtual void selectRoc(Int_t id = -1); 
   virtual void selectTbm(Int_t id = -1); 
+  virtual std::vector<int> PixParTab::getSelectedRocs();
+  virtual std::vector<int> PixParTab::getSelectedTbms();
 
   virtual void setTbParameter(); 
   virtual void setPowerSettings(); 
