@@ -256,29 +256,29 @@ public:
 	int8_t fallback_Daq_Disable();
 	int8_t fallback_Daq_Read(vector<uint16_t> &data, uint16_t daq_read_size_2, uint32_t &n);
 	int8_t fallback_TrimChip(vector<int16_t> &trim);
-	int16_t fallback_CalibrateMap(int16_t nTriggers, vector<int16_t> &nReadouts, vector<int32_t> &PHsum, 
+	int16_t fallback_CalibrateMap(uint16_t nTriggers, vector<int16_t> &nReadouts, vector<int32_t> &PHsum, 
 				      vector<uint32_t> &adress);
-	int8_t fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReadouts, int32_t &PHsum);
-	int8_t fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
-					 int16_t dacLower1, int16_t dacUpper1, vectorR<int16_t> &nReadouts,
+	int8_t fallback_CalibrateReadouts(uint16_t nTriggers, int16_t &nReadouts, int32_t &PHsum);
+	int8_t fallback_CalibrateDacScan(uint16_t nTriggers, uint8_t col, uint8_t row, uint8_t dacReg1,
+					 uint8_t dacLower1, uint8_t dacUpper1, vectorR<int16_t> &nReadouts,
 					 vectorR<int32_t> &PHsum);
-	int8_t fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
-					    int16_t dacLower1, int16_t dacUpper1, int16_t dacReg2, 
-					    int16_t dacLower2, int16_t dacUpper2, vector<int16_t> &nReadouts, 
+	int8_t fallback_CalibrateDacDacScan(uint16_t nTriggers, uint8_t col, uint8_t row, uint8_t dacReg1,
+					    uint8_t dacLower1, uint8_t dacUpper1, uint8_t dacReg2, 
+					    uint8_t dacLower2, uint8_t dacUpper2, vector<int16_t> &nReadouts, 
 					    vector<int32_t> &PHsum);
 	void fallback_DecodeTbmTrailer(unsigned int raw, int16_t &dataId, int16_t &data);
 	void fallback_DecodeTbmHeader(unsigned int raw, int16_t &evNr, int16_t &stkCnt);
 	void fallback_DecodePixel(unsigned int raw, int16_t &n, int16_t &ph, int16_t &col, int16_t &row);
 	int8_t fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, 
-			       std::vector<uint16_t> &ph, std::vector<uint32_t> &adr, int16_t roc_n = 0);
+			       std::vector<uint16_t> &ph, std::vector<uint32_t> &adr, uint8_t channel = 0);
 	int32_t fallback_Threshold(int32_t start, int32_t step, int32_t thrLevel,
-				   int32_t nTrig, int32_t dacReg);
-	int32_t fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
-					int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg,
-					int32_t xtalk, int32_t cals);
-	void fallback_ChipThresholdIntern(int32_t start[], int32_t step, int32_t thrLevel, int32_t nTrig, 
-					  int32_t dacReg, bool xtalk, bool cals, int32_t res[]);
-	int8_t fallback_ThresholdMap(int32_t nTrig, int32_t dacReg, bool rising, bool xtalk, bool cals, 
+				   uint32_t nTrig, uint8_t dacReg);
+	int32_t fallback_PixelThreshold(uint8_t col, uint8_t row, int32_t start,
+					int32_t step, int32_t thrLevel, uint32_t nTrig, uint8_t dacReg,
+					bool xtalk, bool cals);
+	void fallback_ChipThresholdIntern(int32_t start[], int32_t step, int32_t thrLevel, uint32_t nTrig, 
+					  uint8_t dacReg, bool xtalk, bool cals, int32_t res[]);
+	int8_t fallback_ThresholdMap(uint32_t nTrig, uint8_t dacReg, bool rising, bool xtalk, bool cals, 
 				     vectorR<int16_t> &thrValue, vectorR<uint32_t> &addr);
 	void fallback_SetPixelAddressInverted(bool status);
 

@@ -60,7 +60,7 @@ int8_t CTestboard::fallback_TrimChip(vector<int16_t> &trim) {
   return 1;
 }
 
-int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum, vectorR<uint32_t> &adress)
+int16_t CTestboard::fallback_CalibrateMap(uint16_t nTriggers, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum, vectorR<uint32_t> &adress)
 {
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
@@ -136,7 +136,7 @@ int16_t CTestboard::fallback_CalibrateMap(int16_t nTriggers, vectorR<int16_t> &n
   return ok;
 }
 
-int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReadouts, int32_t &PHsum){
+int8_t CTestboard::fallback_CalibrateReadouts(uint16_t nTriggers, int16_t &nReadouts, int32_t &PHsum){
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
@@ -150,7 +150,7 @@ int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReado
   vector<uint16_t> data;
   uDelay(5);
 
-  for (int16_t i = 0; i < nTriggers; i++)
+  for (uint16_t i = 0; i < nTriggers; i++)
     {
       Pg_Single();
       uDelay(4);
@@ -168,8 +168,8 @@ int8_t CTestboard::fallback_CalibrateReadouts(int16_t nTriggers, int16_t &nReado
   return ok;
 }
 
-int8_t CTestboard::fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
-					     int16_t dacLower1, int16_t dacUpper1, vectorR<int16_t> &nReadouts,
+int8_t CTestboard::fallback_CalibrateDacScan(uint16_t nTriggers, uint8_t col, uint8_t row, uint8_t dacReg1,
+					     uint8_t dacLower1, uint8_t dacUpper1, vectorR<int16_t> &nReadouts,
 					     vectorR<int32_t> &PHsum) {
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called."; 
 
@@ -181,7 +181,7 @@ int8_t CTestboard::fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int
   uDelay(5);
 
   fallback_Daq_Enable(DAQ_READ_SIZE);
-  for (int i = dacLower1; i < dacUpper1; i++)
+  for (uint8_t i = dacLower1; i < dacUpper1; i++)
     {
       roc_SetDAC(dacReg1, i);
       fallback_CalibrateReadouts(nTriggers, n, ph);
@@ -195,8 +195,10 @@ int8_t CTestboard::fallback_CalibrateDacScan(int16_t nTriggers, int16_t col, int
   return 1;
 }
 
-int8_t CTestboard::fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1,
-					   int16_t dacLower1, int16_t dacUpper1, int16_t dacReg2, int16_t dacLower2, int16_t dacUpper2, vector<int16_t> &nReadouts, vector<int32_t> &PHsum) {
+int8_t CTestboard::fallback_CalibrateDacDacScan(uint16_t nTriggers, uint8_t col, uint8_t row,
+						uint8_t dacReg1, uint8_t dacLower1, uint8_t dacUpper1, 
+						uint8_t dacReg2, uint8_t dacLower2, uint8_t dacUpper2, 
+						vector<int16_t> &nReadouts, vector<int32_t> &PHsum) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called."; 
   int16_t n;
@@ -206,7 +208,7 @@ int8_t CTestboard::fallback_CalibrateDacDacScan(int16_t nTriggers, int16_t col, 
   roc_Pix_Cal(col, row, false);
   uDelay(5);
   fallback_Daq_Enable(DAQ_READ_SIZE);
-  for (int i = dacLower1; i < dacUpper1; i++)
+  for (uint8_t i = dacLower1; i < dacUpper1; i++)
     {
       roc_SetDAC(dacReg1, i);
       for (int k = dacLower2; k < dacUpper2; k++)
@@ -268,7 +270,7 @@ void CTestboard::fallback_DecodePixel(unsigned int raw, int16_t &n, int16_t &ph,
 
 }
 
-int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, std::vector<uint16_t> &ph, std::vector<uint32_t> &adr, int16_t channel)
+int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vector<uint16_t> &n, std::vector<uint16_t> &ph, std::vector<uint32_t> &adr, uint8_t channel)
 { 
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
@@ -360,7 +362,7 @@ int8_t CTestboard::fallback_Decode(const std::vector<uint16_t> &data, std::vecto
 
 
 int32_t CTestboard::fallback_Threshold(int32_t start, int32_t step, int32_t thrLevel,
-			      int32_t nTrig, int32_t dacReg) {
+				       uint32_t nTrig, uint8_t dacReg) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
@@ -406,9 +408,9 @@ int32_t CTestboard::fallback_Threshold(int32_t start, int32_t step, int32_t thrL
   return result;
 }
 
-int32_t CTestboard::fallback_PixelThreshold(int32_t col, int32_t row, int32_t start,
-					    int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg,
-					    int32_t xtalk, int32_t cals) {
+int32_t CTestboard::fallback_PixelThreshold(uint8_t col, uint8_t row, int32_t start,
+					    int32_t step, int32_t thrLevel, uint32_t nTrig, uint8_t dacReg,
+					    bool xtalk, bool cals) {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
@@ -429,16 +431,16 @@ int32_t CTestboard::fallback_PixelThreshold(int32_t col, int32_t row, int32_t st
   return res;
 }
 
-void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg, bool xtalk, bool cals, int32_t res[])
+void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int32_t thrLevel, uint32_t nTrig, uint8_t dacReg, bool xtalk, bool cals, int32_t res[])
 {
 
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
   int32_t thr, startValue;
-  for (int col = 0; col < ROC_NUMCOLS; col++)
+  for (uint8_t col = 0; col < ROC_NUMCOLS; col++)
     {
       roc_Col_Enable(col, true);
-      for (int row = 0; row < ROC_NUMROWS; row++)
+      for (uint8_t row = 0; row < ROC_NUMROWS; row++)
 	{
 	  if (step < 0) startValue = start[col*ROC_NUMROWS + row] + 10;
 	  else startValue = start[col*ROC_NUMROWS + row];
@@ -451,7 +453,7 @@ void CTestboard::fallback_ChipThresholdIntern(int32_t start[], int32_t step, int
     }
 }
 
-int8_t CTestboard::fallback_ThresholdMap(int32_t nTrig, int32_t dacReg, bool rising, bool xtalk, bool cals, vectorR<int16_t> &thrValue, vectorR<uint32_t> & /*addr*/)
+int8_t CTestboard::fallback_ThresholdMap(uint32_t nTrig, uint8_t dacReg, bool rising, bool xtalk, bool cals, vectorR<int16_t> &thrValue, vectorR<uint32_t> & /*addr*/)
 {
   LOG(pxar::logDEBUGRPC) << "(fallback mode) called.";
 
@@ -469,12 +471,12 @@ int8_t CTestboard::fallback_ThresholdMap(int32_t nTrig, int32_t dacReg, bool ris
     roughStep = 4;
   }
 
-  for (int i = 0; i < ROC_NUMROWS * ROC_NUMCOLS; i++) { roughThr[i] = startValue; }
+  for (uint32_t i = 0; i < ROC_NUMROWS * ROC_NUMCOLS; i++) { roughThr[i] = startValue; }
 
   fallback_ChipThresholdIntern(roughThr, roughStep, 0, 1, dacReg, xtalk, cals, roughThr);
   fallback_ChipThresholdIntern(roughThr, step, thrLevel, nTrig, dacReg, xtalk, cals, res);
 
-  for (int i = 0; i < ROC_NUMROWS * ROC_NUMCOLS; i++) { thrValue.push_back(res[i]); }
+  for (uint32_t i = 0; i < ROC_NUMROWS * ROC_NUMCOLS; i++) { thrValue.push_back(res[i]); }
 
   return 1;
 }
