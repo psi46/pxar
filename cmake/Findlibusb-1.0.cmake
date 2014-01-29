@@ -100,7 +100,7 @@ else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 	SET(LIBUSB_1_DLL ${libusb_lib_path}/dll/libusb-1.0.dll)
       endif(EXISTS ${libusb_lib_path}/dll/libusb-1.0.dll)
     endif(EXISTS ${libusb_lib_path}/libusb-1.0.dll)
-  endif(WIN32 AND FTD2XX_LIBRARY)
+  endif(WIN32 AND LIBUSB_1_LIBRARY)
   
   
   set(LIBUSB_1_INCLUDE_DIRS
