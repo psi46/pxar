@@ -70,8 +70,6 @@ else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 	  libusb-1.0
   )
 
- MESSAGE(STATUS "Found libusb include dir: ${LIBUSB_1_INCLUDE_DIR} using hint of ${extern_lib_include_path}")
-
 # determine if we run a 64bit compiler or not
 set(bitness 32)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
