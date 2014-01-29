@@ -123,16 +123,34 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
   rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+ rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
   TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
   output->SetText(fConfigParameters->getRootFileName().c_str());
   output->MoveResize(100, 60, 120, output->GetDefaultHeight());
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
-  rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  
-  
+  rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight,5,5,3,4));
+ 
   h1v3->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft,5,5,3,4));
+
+
+  TGHorizontalFrame *dirFrame = new TGHorizontalFrame(h1v3, 150,75);
+  dirFrame->SetName("dirFrame");
+
+  TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
+  dirButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+
+  TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
+  doutput->SetText(fConfigParameters->getDirectory().c_str());
+  doutput->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  doutput->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
+  dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight,5,5,3,4));
+ 
+  h1v3->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft,5,5,3,4));
+
+
+
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
 
 
@@ -222,8 +240,13 @@ void PixGui::handleButtons(Int_t id) {
   gClient->GetColorByName("green", green);
  
   switch (id) {
+  case B_DIRECTORY: {
+    LOG(logINFO) << Form("changing base directory: %s", fDirNameBuffer->GetString());
+    fConfigParameters->setDirectory(fDirNameBuffer->GetString()); 
+    break;
+  }
   case B_FILENAME: {
-    LOG(logINFO) << Form("fRootFileNameBuffer: %s", fRootFileNameBuffer->GetString());
+    LOG(logINFO) << Form("changing rootfilenme: %s", fRootFileNameBuffer->GetString());
     string oldName = gFile->GetName();
     gFile->Close();
     system(Form("/bin/mv %s %s", oldName.c_str(), fRootFileNameBuffer->GetString())); 
