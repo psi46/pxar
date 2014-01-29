@@ -47,6 +47,7 @@ public:
   
   
   std::string getName() {return fName; }
+  void resetDirectory();
   std::map<std::string, std::string> getParameters() {return fParameters;} 
   bool getParameter(std::string parName, int &); 
   bool getParameter(std::string parName, float &); 

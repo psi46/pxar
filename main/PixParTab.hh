@@ -31,6 +31,8 @@ public:
   virtual void handleButtons(Int_t id = -1); 
   virtual void selectRoc(Int_t id = -1); 
   virtual void selectTbm(Int_t id = -1); 
+  virtual std::vector<int> PixParTab::getSelectedRocs();
+  virtual std::vector<int> PixParTab::getSelectedTbms();
 
   virtual void setTbParameter(); 
   virtual void setPowerSettings(); 
@@ -38,6 +40,11 @@ public:
   virtual void setTbmParameter(); 
   virtual void setRocParameter(); 
   virtual void initTestboard(); 
+
+  virtual void saveTbParameters();
+  virtual void saveTbmParameters();
+  virtual void saveDacParameters();
+  virtual void saveTrimParameters();
 
   std::string getName() {return fTabName;}
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}

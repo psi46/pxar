@@ -102,6 +102,10 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
   }
 
+  tset = new TGTextButton(g1Frame, "Save Parameters");
+  tset->Connect("Clicked()", "PixParTab", this, "saveTbParameters()");
+  g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
+
   vFrame->AddFrame(g1Frame);
 
   // -- TBM Parameters
@@ -163,6 +167,11 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       vFrame->AddFrame(g2Frame);
       g1Frame->SetWidth(g2Frame->GetDefaultWidth());
     }
+
+
+    tset = new TGTextButton(g2Frame, "Save Parameters");
+    tset->Connect("Clicked()", "PixParTab", this, "saveTbmParameters()");
+    g2Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
   }
 
   // -- DAC Parameters
@@ -264,6 +273,14 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     
       fRocParIds.push_back(parids);
     }
+
+    tset = new TGTextButton(g1Frame, "Save DAC");
+    tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
+    g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
+
+    tset = new TGTextButton(g1Frame, "Save Trim");
+    tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
+    g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
   }
 
   fTabFrame->Layout();
@@ -528,3 +545,53 @@ void PixParTab::setRocParameter() {
   // FIXME UPDATE CONFIGPARAMETERS!
  
 } 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::saveTbParameters() {
+  LOG(logINFO) << "save Tb parameters"; 
+  fConfigParameters->writeTbParameterFile();
+}
+
+// ----------------------------------------------------------------------
+void PixParTab::saveTbmParameters() {
+  LOG(logINFO) << "save Tbm parameters"; 
+  fConfigParameters->writeTbmParameterFiles(getSelectedTbms());
+}
+
+// ----------------------------------------------------------------------
+void PixParTab::saveDacParameters() {
+  LOG(logINFO) << "save DAC parameters"; 
+  fConfigParameters->writeDacParameterFiles(getSelectedRocs());
+}
+
+// ----------------------------------------------------------------------
+void PixParTab::saveTrimParameters() {
+  LOG(logINFO) << "save Trim parameters"; 
+  fConfigParameters->writeTrimFiles(getSelectedRocs());
+
+}
+
+
+// ----------------------------------------------------------------------
+vector<int> PixParTab::getSelectedTbms() {
+  vector<int> result; 
+  for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
+    if (kButtonDown == fSelectTbm[i]->GetState()) {
+      result.push_back(i); 
+    }
+  }
+  return result;
+}
+
+// ----------------------------------------------------------------------
+vector<int> PixParTab::getSelectedRocs() {
+  vector<int> result; 
+  for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
+    if (kButtonDown == fSelectRoc[i]->GetState()) {
+      result.push_back(i); 
+    }
+  }
+  return result;
+}
+

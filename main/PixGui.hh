@@ -53,6 +53,7 @@ public:
   void createTab(const char*);
   void createParTab();
   void selectedTab(int); 
+  void changeRootFile();
 
   PixTest* createTest(std::string); 
 
@@ -68,6 +69,7 @@ private:
   static const int TESTNUMBER = 300;
   enum CommandIdentifiers {
     B_FILENAME = TESTNUMBER + 21,
+    B_DIRECTORY, 
     B_EXIT,
     B_POWER,
     B_HV
@@ -77,9 +79,8 @@ private:
   TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
   TGCompositeFrame     	*fParTab;
-  TGTextBuffer          *fRootFileNameBuffer;
-  TGTextButton		*fbtnPower;
-  TGTextButton		*fbtnHV;
+  TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer;
+  TGTextButton		*fbtnPower, *fbtnHV;
   TGSlider		*fpowerSlider;
   TGSlider		*fhvSlider;
   TGLabel		*flblPower;
@@ -97,6 +98,7 @@ private:
   PixMonitor             *fMonitor; 
 
   int                    fWidth, fHeight; 
+  std::string            fOldDirectory;
 
   ClassDef(PixGui, 1); //
 
