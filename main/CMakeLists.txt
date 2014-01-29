@@ -8,6 +8,7 @@ INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
 SET (pxarGui_SOURCES
 ConfigParameters.cc
 PixInitFunc.cc
+PixUtil.cc
 PixGui.cc
 PixSetup.cc
 PixTab.cc
@@ -29,6 +30,7 @@ SysCommand.cc
 set(pxarGui_HEADERS
 ConfigParameters.hh
 PixInitFunc.hh
+PixUtil.hh
 PixGui.hh
 PixSetup.hh
 PixParTab.hh
