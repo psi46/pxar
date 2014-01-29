@@ -29,6 +29,13 @@ VcalHi      75
 VthrCompLo  0 
 VthrCompHi  50 
 
+-- Scurves
+Ntrig 50
+DAC   Vcal 
+DacLo 0
+DacHi 100
+
+
 -- Setup
 Ntrig 10
 Vcal 200

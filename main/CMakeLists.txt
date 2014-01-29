@@ -18,6 +18,7 @@ PixTest.cc
 PixTestAlive.cc
 PixTestDacScan.cc
 PixTestDacDacScan.cc
+PixTestScurves.cc
 PixTestTrim.cc
 PixTestSetup.cc
 PixTestFactory.cc
@@ -40,6 +41,7 @@ PixTest.hh
 PixTestAlive.hh
 PixTestDacScan.hh
 PixTestDacDacScan.hh
+PixTestScurves.hh
 PixTestTrim.hh
 PixTestSetup.hh
 PixTestFactory.hh

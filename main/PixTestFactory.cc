@@ -7,6 +7,7 @@
 #include "PixTestDacScan.hh"
 #include "PixTestDacDacScan.hh"
 #include "PixTestTrim.hh"
+#include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
 #include "PixTestGainCalibration.hh"
 
@@ -45,6 +46,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("DacScan")) return new PixTestDacScan(a, "DacScan"); 
   if (!name.compare("DacDacScan")) return new PixTestDacDacScan(a, "DacDacScan"); 
   if (!name.compare("Trim")) return new PixTestTrim(a, "Trim"); 
+  if (!name.compare("Scurves")) return new PixTestScurves(a, "Scurves"); 
   if (!name.compare("Setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare("GainCalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   return 0; 
