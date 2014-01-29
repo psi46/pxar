@@ -43,6 +43,15 @@ bool PixTestTbm::setParameter(string parName, string sval) {
   return found; 
 }
 
+// ----------------------------------------------------------------------
+void PixTestTbm::setToolTips() {
+  fTestTip    = string("test functionality of TBM channels\n")
+    + string("TO BE DEVELOPED!!")
+    ;
+  fSummaryTip = string("to be seen ... ")
+    ;
+}
+
 
 // ----------------------------------------------------------------------
 void PixTestTbm::init() {
