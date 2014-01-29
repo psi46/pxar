@@ -1062,9 +1062,11 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   return *result;
 }
   
-int32_t api::getReadbackValue(std::string parameterName) {
+int32_t api::getReadbackValue(std::string /*parameterName*/) {
 
   if(!status()) {return -1;}
+  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
+  return -1;
 }
 
 
@@ -1118,7 +1120,11 @@ std::vector<uint16_t> api::daqGetBuffer() {
   return data;
 }
 
-std::vector<pixel> api::daqGetEvent() {}
+std::vector<pixel> api::daqGetEvent() {
+
+  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
+  return std::vector<pixel>();
+}
 
 bool api::daqStop() {
 
