@@ -53,6 +53,7 @@ public:
   void createTab(const char*);
   void createParTab();
   void selectedTab(int); 
+  void changeRootFile();
 
   PixTest* createTest(std::string); 
 
@@ -97,6 +98,7 @@ private:
   PixMonitor             *fMonitor; 
 
   int                    fWidth, fHeight; 
+  std::string            fOldDirectory;
 
   ClassDef(PixGui, 1); //
 

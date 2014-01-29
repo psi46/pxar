@@ -1,13 +1,16 @@
 #include "PixGui.hh"
+
+#include <TSystem.h>
+
 #include "log.h"
 
 #include "PixTab.hh"
 #include "PixParTab.hh"
 #include "PixTestFactory.hh"
+#include "PixUtil.hh"
 
-// #include "PixTestAlive.hh"
-// #include "PixTestDacScan.hh"
- 
+
+
 using namespace std;
 using namespace pxar;
 
@@ -19,6 +22,8 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   
 
   SetWindowName("pXar");
+
+  fOldDirectory = "nada"; 
 
   ULong_t red;  gClient->GetColorByName("red", red);
   ULong_t green;  gClient->GetColorByName("green", green);
@@ -242,20 +247,20 @@ void PixGui::handleButtons(Int_t id) {
   switch (id) {
   case B_DIRECTORY: {
     LOG(logINFO) << Form("changing base directory: %s", fDirNameBuffer->GetString());
+    fOldDirectory = fConfigParameters->getDirectory(); 
+    if (0 == gSystem->OpenDirectory(fDirNameBuffer->GetString())) {
+      LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it"; 
+      int bla = gSystem->MakeDirectory(fDirNameBuffer->GetString()); 
+      if (bla < 0)  LOG(logWARNING) << " failed to create directory " << fDirNameBuffer->GetString();
+    } 
+    
     fConfigParameters->setDirectory(fDirNameBuffer->GetString()); 
+    changeRootFile();
     break;
   }
   case B_FILENAME: {
     LOG(logINFO) << Form("changing rootfilenme: %s", fRootFileNameBuffer->GetString());
-    string oldName = gFile->GetName();
-    gFile->Close();
-    system(Form("/bin/mv %s %s", oldName.c_str(), fRootFileNameBuffer->GetString())); 
-    TFile *f = TFile::Open(fRootFileNameBuffer->GetString(), "UPDATE"); 
-    std::vector<PixTest*>::iterator il; 
-    for (il = fTestList.begin(); il != fTestList.end(); ++il) {
-      (*il)->resetDirectory();
-    } 
-    
+    changeRootFile(); 
     break;
   }
   case B_EXIT: {
@@ -350,4 +355,21 @@ PixTest* PixGui::createTest(string testname) {
 void PixGui::selectedTab(int id) {
     LOG(logINFO) << "Switched to tab " << id;
     fTabs->SetTab(id); 
+}
+
+
+// ----------------------------------------------------------------------
+void PixGui::changeRootFile() {
+  string oldRootFilePath = gFile->GetName();
+  cout << "oldRootFilePath: " << oldRootFilePath << endl;
+  gFile->Close();
+
+  string newRootFilePath = fConfigParameters->getDirectory() + "/" + fRootFileNameBuffer->GetString();
+
+  gSystem->Rename(oldRootFilePath.c_str(), newRootFilePath.c_str()); 
+  TFile *f = TFile::Open(newRootFilePath.c_str(), "UPDATE"); 
+  std::vector<PixTest*>::iterator il; 
+  for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+    (*il)->resetDirectory();
+  } 
 }
