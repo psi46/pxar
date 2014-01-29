@@ -1,14 +1,14 @@
 #ifndef WIN32
 #include <libusb-1.0/libusb.h>
 #include <cstring>
+#include <unistd.h>
+#include <time.h> // needed for usleep function
 #endif
 
 #include <cstdio>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include <unistd.h>
-#include <time.h> // needed for usleep function
 
 #include "USBInterface.h"
 
@@ -365,7 +365,11 @@ bool CUSB::WaitForFilledQueue( int32_t pSize, int32_t pMaxWait )
   int32_t bytesWaiting = GetQueue();
   while( ( ( waitCounter*10 < pMaxWait) || pMaxWait < 0 ) && bytesWaiting < pSize ) {
     if( (waitCounter+1) % 100 == 0 ) std::cout << "USB waiting for " << pSize << " data, t = " << waitCounter*10 << " ms, bytes to fetch so far = " << bytesWaiting << std::endl;
+#ifdef WIN32
+    Sleep(10);
+#else
     usleep(10000); // wait 10 ms
+#endif // WIN32
     waitCounter++;
     bytesWaiting = GetQueue();
   }
