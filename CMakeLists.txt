@@ -54,10 +54,6 @@ OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source v
 # Check prerequisities for pXar build #
 #######################################
 
-# Check for libusb-1.0 package:
-FIND_PACKAGE(libusb-1.0 REQUIRED)
-INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
-
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
@@ -107,6 +103,11 @@ ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
   ENDIF(NOT USE_FTD2XX AND NOT FTDI_FOUND)
 ENDIF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
 
+# Check for libusb-1.0 package (not required on Windows w/ FTD2XX library):
+IF(NOT WIN32 OR NOT FTD2XX_FOUND)
+  FIND_PACKAGE(libusb-1.0 REQUIRED)
+  INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
+ENDIF(NOT WIN32 OR NOT FTD2XX_FOUND)
 
 # Find Python libraries
 #FIND_PACKAGE(PythonLibs)
