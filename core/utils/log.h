@@ -5,12 +5,22 @@
 #ifndef PXAR_LOG_H
 #define PXAR_LOG_H
 
-#include <sstream>
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <sys/time.h>
+#endif //WIN32
+
+#ifdef WIN32
+#define __func__ __FUNCTION__
+#endif // WIN32
+
+#include <sstream>
 #include <iomanip>
 #include <cstdio>
 #include <stdint.h>
 #include <string.h>
+
 
 namespace pxar {
 
@@ -48,12 +58,31 @@ namespace pxar {
   template <typename T>
     pxarLog<T>::pxarLog() {}
 
+
+#ifdef WIN32
+
+  template <typename T>
+    std::string pxarLog<T>::NowTime(){
+    const int MAX_LEN = 200;
+    char buffer[MAX_LEN];
+    if (GetTimeFormatA(LOCALE_USER_DEFAULT, 0, 0, 
+            "HH':'mm':'ss", buffer, MAX_LEN) == 0)
+        return "Error in NowTime()";
+
+    char result[100] = {0};
+    static DWORD first = GetTickCount();
+    std::sprintf(result, "%s.%03ld", buffer, static_cast<long>(GetTickCount() - first) % 1000); 
+    return result;
+}
+
+#else
+
   template <typename T>
     std::string pxarLog<T>::NowTime() {
     char buffer[11];
     time_t t;
     time(&t);
-    tm r = * localtime(&t);//{0};
+    tm r = * localtime(&t);
     strftime(buffer, sizeof(buffer), "%X", localtime_r(&t, &r));
     struct timeval tv;
     gettimeofday(&tv, 0);
@@ -61,6 +90,8 @@ namespace pxar {
     std::sprintf(result, "%s.%03ld", buffer, static_cast<long>(tv.tv_usec) / 1000); 
     return result;
   }
+
+#endif //WIN32
 
   template <typename T>
     std::ostringstream& pxarLog<T>::Get(TLogLevel level, std::string file, std::string function, uint32_t line) {

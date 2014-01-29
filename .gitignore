@@ -10,5 +10,6 @@ obj/
 
 # ignore backup files of any sort of editor:
 ~*
+*~
 .*
 \#*

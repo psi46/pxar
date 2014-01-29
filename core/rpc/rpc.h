@@ -6,7 +6,9 @@
 #include <vector>
 #include <stdint.h>
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 #include "rpc_io.h"
 #include "rpc_error.h"

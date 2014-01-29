@@ -1,11 +1,14 @@
+#ifndef WIN32
 #include <libusb-1.0/libusb.h>
-#include <cstdio>
 #include <cstring>
+#include <unistd.h>
+#include <time.h> // needed for usleep function
+#endif
+
+#include <cstdio>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include <unistd.h>
-#include <time.h> // needed for usleep function
 
 #include "USBInterface.h"
 
@@ -105,9 +108,14 @@ bool CUSB::Open(char serialNumber[])
 
   m_posR = m_sizeR = m_posW = 0;
   ftdiStatus = FT_OpenEx(serialNumber, FT_OPEN_BY_SERIAL_NUMBER, &ftHandle);
-  if( ftdiStatus != FT_OK) {
-    /* maybe the ftdi_sio and usbserial kernel modules are attached to the device */
-    /* try to detach them using the libusb library directly */
+  if( ftdiStatus != FT_OK)
+#ifdef _WIN32
+    return false;
+#else
+  {
+    /** maybe the ftdi_sio and usbserial kernel modules are attached to 
+        the device. Try to detach them using the libusb library directly
+    */
 
     /* prepare libusb structures */
     libusb_device ** list;
@@ -173,6 +181,7 @@ bool CUSB::Open(char serialNumber[])
     if( ftdiStatus != FT_OK)
       return false;
   }
+#endif
 	
   ftdiStatus = FT_SetBitMode(ftHandle, 0xFF, 0x40);
   if (ftdiStatus != FT_OK) return false;
@@ -211,8 +220,8 @@ void CUSB::WriteCommand(unsigned char x){
 
 void CUSB::Flush()
 {
-	uint32_t bytesWritten;
-	uint32_t bytesToWrite = m_posW;
+	DWORD bytesWritten;
+	DWORD bytesToWrite = m_posW;
 	m_posW = 0;
 
 	if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
@@ -230,7 +239,7 @@ bool CUSB::FillBuffer(uint32_t minBytesToRead)
 {
 	if (!isUSB_open) return false;
 
-	uint32_t bytesAvailable, bytesToRead;
+	DWORD bytesAvailable, bytesToRead;
 
 	ftdiStatus = FT_GetQueueStatus(ftHandle, &bytesAvailable);
 	if (ftdiStatus != FT_OK) return false;
@@ -307,7 +316,7 @@ bool CUSB::Show()
 {
   if( !isUSB_open ) return false;
   std::cout << "USB";
-  uint32_t bytesAvailable;
+  DWORD bytesAvailable;
   ftdiStatus = FT_GetQueueStatus( ftHandle, &bytesAvailable );
   if( ftdiStatus != FT_OK ) {
     std::cout << " not OK\n";
@@ -327,7 +336,7 @@ int CUSB::GetQueue()
 {
   if( !isUSB_open ) return -1;
 
-  uint32_t bytesAvailable;
+  DWORD bytesAvailable;
   ftdiStatus = FT_GetQueueStatus( ftHandle, &bytesAvailable );
   if( ftdiStatus != FT_OK ) {
     std::cout << " CUSB::GetQeue(): USB connection not OK\n";
@@ -356,7 +365,11 @@ bool CUSB::WaitForFilledQueue( int32_t pSize, int32_t pMaxWait )
   int32_t bytesWaiting = GetQueue();
   while( ( ( waitCounter*10 < pMaxWait) || pMaxWait < 0 ) && bytesWaiting < pSize ) {
     if( (waitCounter+1) % 100 == 0 ) std::cout << "USB waiting for " << pSize << " data, t = " << waitCounter*10 << " ms, bytes to fetch so far = " << bytesWaiting << std::endl;
+#ifdef WIN32
+    Sleep(10);
+#else
     usleep(10000); // wait 10 ms
+#endif // WIN32
     waitCounter++;
     bytesWaiting = GetQueue();
   }
