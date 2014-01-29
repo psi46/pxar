@@ -43,6 +43,12 @@ PATHS /usr/lib
       ${extern_lib_path}/${bitness}
 )
 
+# set path to DLL for later installation
+IF(WIN32 AND FTD2XX_LIBRARY)
+  get_filename_component(ftd2xx_lib_path ${FTD2XX_LIBRARY} PATH)
+  SET(FTD2XX_DLL ${ftd2xx_lib_path}/ftd2xx.dll)
+endif(WIN32 AND FTD2XX_LIBRARY)
+
 IF (FTD2XX_LIBRARY)
   IF(FTD2XX_INCLUDE_DIR)
       SET(FTD2XX_FOUND TRUE)

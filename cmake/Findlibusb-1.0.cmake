@@ -59,40 +59,56 @@ if (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
   find_path(LIBUSB_1_INCLUDE_DIR
     NAMES
-	libusb-1.0/libusb.h libusb.h
+    libusb-1.0/libusb.h libusb.h
     PATHS
-      /usr/include
-      /usr/local/include
-      /opt/local/include
-      /sw/include
-      ${extern_lib_include_path}
-	PATH_SUFFIXES
-	  libusb-1.0
-  )
+    /usr/include
+    /usr/local/include
+    /opt/local/include
+    /sw/include
+    ${extern_lib_include_path}
+    PATH_SUFFIXES
+    libusb-1.0
+    )
 
-# determine if we run a 64bit compiler or not
-set(bitness 32)
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(bitness 64)
-endif()
-
+  # determine if we run a 64bit compiler or not
+  set(bitness 32)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(bitness 64)
+  endif()
+  
   find_library(LIBUSB_1_LIBRARY
     NAMES
-      usb-1.0 usb libusb-1.0
+    usb-1.0 usb libusb-1.0
     PATHS
-      /usr/lib
-      /usr/local/lib
-      /opt/local/lib
-      /sw/lib
-      ${extern_lib_path}/MS${bitness}/dll
-  )
-
+    /usr/lib
+    /usr/local/lib
+    /opt/local/lib
+    /sw/lib
+    ${extern_lib_path}/MS${bitness}/dll
+    )
+  
+  # set path to DLL for later installation
+  IF(WIN32 AND LIBUSB_1_LIBRARY)
+    # strip file name
+    get_filename_component(libusb_lib_path ${LIBUSB_1_LIBRARY} PATH)
+    if(EXISTS ${libusb_lib_path}/libusb-1.0.dll)
+      SET(LIBUSB_1_DLL ${libusb_lib_path}/libusb-1.0.dll)
+    else()
+      #strip last directory level
+      get_filename_component(libusb_lib_path ${libusb_lib_path} PATH)
+      if(EXISTS ${libusb_lib_path}/dll/libusb-1.0.dll)
+	SET(LIBUSB_1_DLL ${libusb_lib_path}/dll/libusb-1.0.dll)
+      endif(EXISTS ${libusb_lib_path}/dll/libusb-1.0.dll)
+    endif(EXISTS ${libusb_lib_path}/libusb-1.0.dll)
+  endif(WIN32 AND FTD2XX_LIBRARY)
+  
+  
   set(LIBUSB_1_INCLUDE_DIRS
     ${LIBUSB_1_INCLUDE_DIR}
-  )
+    )
   set(LIBUSB_1_LIBRARIES
     ${LIBUSB_1_LIBRARY}
-)
+    )
 
   if (LIBUSB_1_INCLUDE_DIRS AND LIBUSB_1_LIBRARIES)
      set(LIBUSB_1_FOUND TRUE)
