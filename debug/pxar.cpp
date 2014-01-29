@@ -55,8 +55,8 @@ void DecodePixel(unsigned int raw)
 
 void Decode(std::vector<uint16_t> data) {
 
-  unsigned int hdr, trl;
-  unsigned int raw;
+  unsigned int hdr(0), trl(0);
+  unsigned int raw(0);
   for (unsigned int i=0; i<data.size(); i++)
     {
       int d = data[i] & 0xf;
