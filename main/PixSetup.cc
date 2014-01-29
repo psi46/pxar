@@ -13,7 +13,8 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp, SysComma
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fSysCommand        = sc; 
-  init(); 
+  fDoAnalysisOnly    = false; 
+ init(); 
   LOG(logINFO) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)";
 }
 

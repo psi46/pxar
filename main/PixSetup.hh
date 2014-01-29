@@ -23,8 +23,11 @@ public:
   ConfigParameters * getConfigParameters()  {return fConfigParameters;}
   SysCommand*        getSysCommand()  {return fSysCommand;}
   pxar::api*         getApi() {return fApi;}
+  bool               doAnalysisOnly() {return fDoAnalysisOnly;}
+  void               setDoAnalysisOnly(bool x) {fDoAnalysisOnly = x;}
 private: 
   bool              fDebug; 
+  bool              fDoAnalysisOnly; 
   SysCommand        *fSysCommand;
   pxar::api         *fApi; 
   PixTestParameters *fPixTestParameters; 
