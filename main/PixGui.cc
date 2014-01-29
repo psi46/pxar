@@ -41,11 +41,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
   // -- left frame
-  TGGroupFrame *tabControl = new TGGroupFrame(h1v1, "Open tabs");
+  TGGroupFrame *tabControl = new TGGroupFrame(h1v1, "Open test tabs");
 
   TGHorizontalFrame *testChooser = new TGHorizontalFrame(tabControl);
   testChooser->SetName("testChooser");
-  testChooser->AddFrame(new TGLabel(testChooser, "Choose test "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
+  testChooser->AddFrame(new TGLabel(testChooser, "Choose "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
 
   fcmbTests = new TGComboBox(testChooser);
   fcmbTests->SetWidth(150);
@@ -53,11 +53,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fcmbTests->Connect("Selected(char*)", "PixGui", this, "selectedTab(int)");
 
   tabControl->AddFrame(testChooser);
-  testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, 5, 50, 3, 4));
+  testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
   testChooser->SetWidth(tabControl->GetWidth());
 
   h1v1->AddFrame(tabControl, new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
-  h1v1->SetWidth(800);
+  h1v1->SetWidth(testChooser->GetWidth());
 
   // -- middle frame
   TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
@@ -83,7 +83,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // HV
   TGHorizontalFrame *hvFrame = new TGHorizontalFrame(hwControl, 150,75);
   hvFrame->SetName("hvFrame");
-  hvFrame->AddFrame(new TGLabel(hvFrame, "HV: "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
+  hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
   fbtnHV->Resize(70,35);
@@ -96,7 +96,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fbtnHV->SetText("Off");
   }
 
-  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 22, 5, 3, 7));
+  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
 
   hwControl->AddFrame(hvFrame);
 
@@ -107,6 +107,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fTimer->TurnOn();
     
   h1v2->AddFrame(hwControl, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  h1v1->SetWidth(400);
 
   // -- right frame
   TGTextButton *exitButton = new TGTextButton(h1v3, "exit", B_EXIT);
@@ -114,15 +115,26 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
   exitButton->ChangeBackground(red);
+  h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight,5,5,3,4));
 
 
-  h1v3->AddFrame(new TGLabel(h1v3, "root file:"), new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  TGTextEntry *output = new TGTextEntry(h1v3, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
-  output->SetText("bla");
-  output->MoveResize(200, 60, 200, output->GetDefaultHeight());
+  TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(h1v3, 150,75);
+  rootfileFrame->SetName("rootfileFrame");
+
+  TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
+  rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+
+  TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
+  output->SetText(fConfigParameters->getRootFileName().c_str());
+  output->MoveResize(100, 60, 120, output->GetDefaultHeight());
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
-  h1v3->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  
+  
+  h1v3->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft,5,5,3,4));
+  h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
+
 
   // -- tab widget
   fTabs = new TGTab(fH2, fH2->GetDefaultWidth(), fH2->GetDefaultHeight());
@@ -143,9 +155,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fcmbTests->Select(0);
 
 
-  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 2, 20, 2, 2));
-  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX | kLHintsExpandY, 20, 20, 2, 2));
-  fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 20, 2, 2, 2));
+  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
+  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , 2, 2, 2, 2));
+  fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
 
   AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
   AddFrame(fH2, new TGLayoutHints(kLHintsBottom | kLHintsExpandY | kLHintsExpandX));
@@ -212,6 +224,15 @@ void PixGui::handleButtons(Int_t id) {
   switch (id) {
   case B_FILENAME: {
     LOG(logINFO) << Form("fRootFileNameBuffer: %s", fRootFileNameBuffer->GetString());
+    string oldName = gFile->GetName();
+    gFile->Close();
+    system(Form("/bin/mv %s %s", oldName.c_str(), fRootFileNameBuffer->GetString())); 
+    TFile *f = TFile::Open(fRootFileNameBuffer->GetString(), "UPDATE"); 
+    std::vector<PixTest*>::iterator il; 
+    for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+      (*il)->resetDirectory();
+    } 
+    
     break;
   }
   case B_EXIT: {
