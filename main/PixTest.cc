@@ -50,6 +50,11 @@ void PixTest::bookHist(string name) {
 }
 
 
+// ----------------------------------------------------------------------
+void PixTest::resetDirectory() {
+  fDirectory = gFile->GetDirectory(fName.c_str()); 
+}
+
 
 // ----------------------------------------------------------------------
 int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
