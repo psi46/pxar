@@ -39,6 +39,11 @@ public:
   virtual void setRocParameter(); 
   virtual void initTestboard(); 
 
+  virtual void saveTbParameters();
+  virtual void saveTbmParameters();
+  virtual void saveDacParameters();
+  virtual void saveTrimParameters();
+
   std::string getName() {return fTabName;}
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}
   TGCompositeFrame* getHorizontalFrame() {return fhFrame;}
