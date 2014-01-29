@@ -2,11 +2,3 @@
   9        sda  19
  10        ctr   4
  11        tin   9
- 12        rda  60
- 17        trc 120
- 18        tcc   6
- 19        tct 105
- 20        ttk  32
- 21       trep  40
- 22         cc   1
- 77        spd   0

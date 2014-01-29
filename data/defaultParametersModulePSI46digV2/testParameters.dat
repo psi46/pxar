@@ -1,12 +1,41 @@
--- PixelAlive 
+-- DacScan
+Ntrig 10
+DAC   caldel
+DACLO 0
+DACHI 250
+PIX1  11,20 
+PIX2  20,30 
+PIX3  40,50 
+
+-- DacDacScan
+Ntrig 10
+DAC1   caldel
+DAC1LO 0
+DAC1HI 120
+DAC2   vthrcomp
+DAC2LO 0
+DAC2HI 120
+PIX1   11,20 
+
+-- Trim
+Ntrig       10
+Vcal        40
+VcalLo      25 
+VcalHi      75 
+VthrCompLo  0 
+VthrCompHi  50 
+
+-- Scurves
+Ntrig 50
+DAC   Vcal 
+DacLo 0
+DacHi 100
+
+
+-- Setup
 Ntrig 10
 Vcal 200
 
--- GainCalibration
-TrimVcal 60
-TrimNTrig 10
-TrimDoubleWbc 1
-TrimVtrim -1
-TrimVthrcomp -1
-TrimAdjustCalDel 0
-
+-- Tbm
+Ntrig 10
+Vcal 200

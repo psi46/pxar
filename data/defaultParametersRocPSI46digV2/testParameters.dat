@@ -2,10 +2,6 @@
 Ntrig 10
 Vcal 200
 
--- Tbm
-Ntrig 10
-Vcal 200
-
 -- DacScan
 Ntrig 10
 DAC   caldel
