@@ -90,18 +90,22 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   hFrame = new TGHorizontalFrame(fV2); 
   TGTextButton * previous = new TGTextButton(hFrame, "Previous");
+  previous->SetToolTipText("display previous histogram in this test's list");
   previous->Connect("Clicked()", "PixTab", this, "previousHistogram()");
   hFrame->AddFrame(previous, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * next = new TGTextButton(hFrame, "Next");
+  next->SetToolTipText("display next histogram in this test's list");
   next->Connect("Clicked()", "PixTab", this, "nextHistogram()");
   hFrame->AddFrame(next, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * update = new TGTextButton(hFrame, "Update");
+  update->SetToolTipText("update canvas");
   update->Connect("Clicked()", "PixTab", this, "update()");
   hFrame->AddFrame(update, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * clear = new TGTextButton(hFrame, "Clear");
+  clear->SetToolTipText("clear canvas");
   clear->Connect("Clicked()", "PixTab", this, "clearCanvas()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
@@ -111,24 +115,28 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame = new TGHorizontalFrame(fV2); 
   // -- create doTest Button
   TGTextButton *bDoTest = new TGTextButton(hFrame, " doTest ", B_DOTEST);
+  bDoTest->SetToolTipText("run the test algorithm (patience may be required)");
   bDoTest->ChangeOptions(bDoTest->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
+  bStop->SetToolTipText("not yet implemented (should interrupt the test at a convenient place)");
   bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create print Button
   TGTextButton *bPrint = new TGTextButton(hFrame, " print ", B_PRINT);
+  bPrint->SetToolTipText("create a pdf of the canvas");
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bPrint->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create module map button
   TGTextButton *bModMap = new TGTextButton(hFrame, " summary ", B_MODMAP);
+  bModMap->SetToolTipText("combine all ROC summary plots into one module summary plot");
   bModMap->ChangeOptions(bModMap->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
@@ -136,6 +144,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
   bClose->ChangeOptions(bClose->GetOptions() | kFixedWidth);
+  bClose->SetToolTipText("close the test tab");
   hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, 2, 20, 2, 2));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   

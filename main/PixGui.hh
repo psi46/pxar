@@ -63,6 +63,7 @@ public:
   int getWidth() {return fWidth;}
   int getHeight() {return fHeight;}
   pxar::api* getApi() {return fApi;}
+  PixSetup* getPixSetup() {return fPixSetup;}
   
 private: 
 

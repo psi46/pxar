@@ -73,6 +73,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   powerFrame->AddFrame(new TGLabel(powerFrame, "Power: "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
 
   fbtnPower = new TGTextButton(powerFrame, "Off", B_POWER);
+  fbtnPower->SetToolTipText("Turn on/off power of DTB");
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fPower) {
@@ -91,6 +92,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
+  fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off HV for module":"Turn on/off HV for ROC");
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fHV) {
@@ -116,6 +118,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   // -- right frame
   TGTextButton *exitButton = new TGTextButton(h1v3, "exit", B_EXIT);
+  exitButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
   exitButton->ChangeOptions(exitButton->GetOptions() );
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
@@ -127,8 +130,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   rootfileFrame->SetName("rootfileFrame");
 
   TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
+  rootfileButton->SetToolTipText("change the rootfile name");
   rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
- rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
   TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
   output->SetText(fConfigParameters->getRootFileName().c_str());
@@ -144,6 +148,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
   dirButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  dirButton->SetToolTipText("change the output directory; will move the rootfile as well");
   dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
 
   TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
@@ -177,7 +182,6 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     createTab(tests[i].c_str()); 
   }
   fcmbTests->Select(0);
-
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
   fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , 2, 2, 2, 2));
