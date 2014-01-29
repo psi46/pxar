@@ -17,6 +17,11 @@
 #include <sys/time.h>
 #endif //WIN32
 
+#ifdef WIN32
+#define __func__ __FUNCTION__
+#endif // WIN32
+
+
 namespace pxar {
 
   enum TLogLevel {
