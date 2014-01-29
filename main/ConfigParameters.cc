@@ -348,7 +348,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   
   // -- parse lines
   unsigned int ival(0), irow(0), icol(0); 
-  uint8_t uval(0), urow(0), ucol(0); 
+  uint8_t uval(0); 
   
   string::size_type s1, s2; 
   string str1, str2, str3;
@@ -377,8 +377,6 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     icol = atoi(str2.c_str()); 
     irow = atoi(str3.c_str()); 
     uval = ival;
-    ucol = icol;
-    urow = irow;
     unsigned int index = icol*80+irow; 
     if (index <= v.size()) {
       v[index].trim = uval; 
