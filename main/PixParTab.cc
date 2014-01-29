@@ -110,7 +110,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   // -- TBM Parameters
   TGCompositeFrame *bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
-  for (int i = 0; i < fConfigParameters->getNtbms(); ++i) {
+  for (unsigned int i = 0; i < fConfigParameters->getNtbms(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectTbm.push_back(tcb); 
@@ -125,7 +125,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
   if (cmap.size() > 0) {
 
-    int firsttbm(0); 
+    unsigned int firsttbm(0); 
     for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
       if (kButtonDown == fSelectTbm[i]->GetState()) {
 	firsttbm = i; 
@@ -186,7 +186,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
   
   bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
-  for (int i = 0; i < fConfigParameters->getNrocs(); ++i) {
+  for (unsigned int i = 0; i < fConfigParameters->getNrocs(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
@@ -209,7 +209,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   
   cmap = fConfigParameters->getRocDacs();
   if (cmap.size() > 0) {
-    int firstroc(0); 
+    unsigned int firstroc(0); 
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
       if (kButtonDown == fSelectRoc[i]->GetState()) {
 	firstroc = i; 
@@ -381,7 +381,7 @@ void PixParTab::setPgSettings() {
   string svalue = ((TGTextEntry*)(fPgTextEntries[fPgParIds[id]]))->GetText(); 
   uint8_t udac = atoi(svalue.c_str()); 
 
-  cout << "FIXME FIXME: ID = " << id << " -> " << fPgParIds[id] << " set to " << svalue << endl;
+  cout << "FIXME FIXME: ID = " << id << " -> " << fPgParIds[id] << " set to " << int(udac) << " from svalue = " << svalue << endl;
 
   initTestboard(); 
 
@@ -489,8 +489,6 @@ void PixParTab::selectRoc(int iroc) {
 
   fSelectedRoc = iroc; 
 
-  std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
-
   map<string, uint8_t> amap = fRocParIds[fSelectedRoc]; 
   for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
     fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second)); 
@@ -530,7 +528,6 @@ void PixParTab::setRocParameter() {
   uint8_t udac = atoi(sval.c_str()); 
 
   int iroc(-1); 
-  int cacheSelectedRoc = fSelectedRoc; 
   for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
     if (kButtonDown == fSelectRoc[i]->GetState()) {
       iroc = i; 
