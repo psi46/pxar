@@ -5,12 +5,13 @@
 #include <algorithm>
 
 #include <cstdlib>
-#include <string.h>
 #include <stdio.h>
 
 #include <TString.h>
 
 #include "log.h"
+#include "dictionaries.h"
+
 #include "ConfigParameters.hh"
 #include "PixUtil.hh"
 
@@ -522,7 +523,7 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
   string filename; 
   for (int i = 0; i < fnTbms; ++i) {
-    filename = Form("%s", fTbmParametersFileName.c_str()); 
+    filename = fDirectory + "/" + fTbmParametersFileName; 
     vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
     fTbmParameters.push_back(rocDacs); 
   }
@@ -622,6 +623,10 @@ bool ConfigParameters::writeTrimFiles(vector<int> rocs) {
 bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
   string fname = fDirectory + "/" + getDACParametersFileName();
   ofstream OUT;
+  RegisterDictionary *rd = RegisterDictionary::getInstance();
+  string data; 
+  int reg(0); 
+
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
     cout << "  -> open " << Form("%s_C%d.dat.new", fname.c_str(), rocs[iroc]) << endl;
     OUT.open(Form("%s_C%d.dat.new", fname.c_str(), rocs[iroc]));
@@ -629,7 +634,14 @@ bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
       return false; 
     } 
 
-    OUT << "hello trim" << endl;
+    
+    for (int idac = 0; idac < fDacParameters[iroc].size(); ++idac) {
+      data = fDacParameters[iroc][idac].first;
+      std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+      reg = rd->getRegister(data, ROC_REG);
+      OUT << Form("%3d %10s %3d", reg, fDacParameters[iroc][idac].first.c_str(), int(fDacParameters[iroc][idac].second)) << endl;
+    }
+
     OUT.close();
   }
 
@@ -638,6 +650,32 @@ bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbmParameterFiles(vector<int> tbms) {
+  string fname = fDirectory + "/" + getTbmParametersFileName();
+  ofstream OUT;
+  RegisterDictionary *rd = RegisterDictionary::getInstance();
+  string data; 
+  int reg(0); 
+
+  cout << " tbms.size()   " << tbms.size() << endl;
+  for (unsigned int itbm = 0; itbm < tbms.size(); ++itbm) {
+    cout << "  -> open " << Form("%s.new", fname.c_str(), tbms[itbm]) << endl;
+    //    OUT.open(Form("%s_C%d.dat.new", fname.c_str(), rtbms[itbm]));
+    OUT.open(Form("%s.new", fname.c_str()));
+    if (!OUT.is_open()) {
+      return false; 
+    } 
+
+    for (int idac = 0; idac < fTbmParameters[itbm].size(); ++idac) {
+      data = fTbmParameters[itbm][idac].first;
+      std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+      reg = rd->getRegister(data, TBM_REG);
+      cout << Form("%3d %11s   0x%02X", reg, fTbmParameters[itbm][idac].first.c_str(), int(fTbmParameters[itbm][idac].second)) << endl;
+      OUT << Form("%3d %11s   0x%02X", reg, fTbmParameters[itbm][idac].first.c_str(), int(fTbmParameters[itbm][idac].second)) << endl;
+    }
+
+    OUT.close();
+  }
+
   return true;
 }
 
