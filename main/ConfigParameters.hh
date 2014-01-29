@@ -32,11 +32,11 @@ public:
 
   static ConfigParameters* Singleton();
 
-  std::string getTBParametersFileName()   {return fTBParametersFileName;}
-  std::string getDACParametersFileName()  {return fDACParametersFileName;}
-  std::string getTbmParametersFileName()  {return fTbmParametersFileName;}
-  std::string getTrimParametersFileName() {return fTrimParametersFileName;}
-  std::string getTestParametersFileName() {return fTestParametersFileName;}
+  std::string getTBParameterFileName()    {return fTBParametersFileName;}
+  std::string getDACParameterFileName()   {return fDACParametersFileName;}
+  std::string getTbmParameterFileName()   {return fTbmParametersFileName;}
+  std::string getTrimParameterFileName()  {return fTrimParametersFileName;}
+  std::string getTestParameterFileName()  {return fTestParametersFileName;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}

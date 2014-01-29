@@ -608,28 +608,43 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFiles(vector<int> rocs) {
-  string fname = fDirectory + "/" + getTrimParametersFileName();
-  ofstream OUT(fname.c_str());
-  if (!OUT.is_open()) {
-    return false; 
-  } 
-
-  OUT << "hello trim" << endl;
-  OUT.close();
-  return true;
-}
-
-// ----------------------------------------------------------------------
-bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
-  string fname = fDirectory + "/" + getDACParametersFileName();
+  string fname = fDirectory + "/" + getTrimParameterFileName();
   ofstream OUT;
   RegisterDictionary *rd = RegisterDictionary::getInstance();
   string data; 
   int reg(0); 
 
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    cout << "  -> open " << Form("%s_C%d.dat.new", fname.c_str(), rocs[iroc]) << endl;
-    OUT.open(Form("%s_C%d.dat.new", fname.c_str(), rocs[iroc]));
+    cout << "  -> open " << Form("%s_C%d.dat", fname.c_str(), rocs[iroc]) << endl;
+    OUT.open(Form("%s_C%d.dat", fname.c_str(), rocs[iroc]));
+    if (!OUT.is_open()) {
+      return false; 
+    } 
+
+    
+    for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
+      pxar::pixelConfig a =  fRocPixelConfigs[iroc][ipix];
+      OUT << Form("%2d   Pix %2d %2d", a.trim, a.column, a.row) << endl;
+    }
+
+    OUT.close();
+  }
+
+  return true;
+
+}
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
+  string fname = fDirectory + "/" + getDACParameterFileName();
+  ofstream OUT;
+  RegisterDictionary *rd = RegisterDictionary::getInstance();
+  string data; 
+  int reg(0); 
+
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    cout << "  -> open " << Form("%s_C%d.dat", fname.c_str(), rocs[iroc]) << endl;
+    OUT.open(Form("%s_C%d.dat", fname.c_str(), rocs[iroc]));
     if (!OUT.is_open()) {
       return false; 
     } 
@@ -650,7 +665,7 @@ bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbmParameterFiles(vector<int> tbms) {
-  string fname = fDirectory + "/" + getTbmParametersFileName();
+  string fname = fDirectory + "/" + getTbmParameterFileName();
   ofstream OUT;
   RegisterDictionary *rd = RegisterDictionary::getInstance();
   string data; 
@@ -658,9 +673,9 @@ bool ConfigParameters::writeTbmParameterFiles(vector<int> tbms) {
 
   cout << " tbms.size()   " << tbms.size() << endl;
   for (unsigned int itbm = 0; itbm < tbms.size(); ++itbm) {
-    cout << "  -> open " << Form("%s.new", fname.c_str(), tbms[itbm]) << endl;
-    //    OUT.open(Form("%s_C%d.dat.new", fname.c_str(), rtbms[itbm]));
-    OUT.open(Form("%s.new", fname.c_str()));
+    cout << "  -> open " << Form("%s", fname.c_str(), tbms[itbm]) << endl;
+    //    OUT.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
+    OUT.open(Form("%s", fname.c_str()));
     if (!OUT.is_open()) {
       return false; 
     } 
@@ -681,6 +696,28 @@ bool ConfigParameters::writeTbmParameterFiles(vector<int> tbms) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbParameterFile() {
+  string fname = fDirectory + "/" + getTBParameterFileName();
+  ofstream OUT;
+  RegisterDictionary *rd = RegisterDictionary::getInstance();
+  string data; 
+  int reg(0); 
+
+  cout << "  -> open " << Form("%s", fname.c_str()) << endl;
+  OUT.open(Form("%s", fname.c_str()));
+  if (!OUT.is_open()) {
+    return false; 
+  } 
+  
+  for (int idac = 0; idac < fTbParameters.size(); ++idac) {
+    data = fTbParameters[idac].first;
+    std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+    reg = rd->getRegister(data, DTB_REG);
+    cout << Form("%3d %10s %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+    OUT << Form("%3d %10s %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+  }
+  
+  OUT.close();
+
   return true;
 }
 
