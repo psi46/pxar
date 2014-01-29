@@ -5,12 +5,6 @@
 #ifndef PXAR_LOG_H
 #define PXAR_LOG_H
 
-#include <sstream>
-#include <iomanip>
-#include <cstdio>
-#include <stdint.h>
-#include <string.h>
-
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -20,6 +14,12 @@
 #ifdef WIN32
 #define __func__ __FUNCTION__
 #endif // WIN32
+
+#include <sstream>
+#include <iomanip>
+#include <cstdio>
+#include <stdint.h>
+#include <string.h>
 
 
 namespace pxar {
@@ -61,8 +61,8 @@ namespace pxar {
 
 #ifdef WIN32
 
-inline std::string NowTime()
-{
+  template <typename T>
+    std::string pxarLog<T>::NowTime(){
     const int MAX_LEN = 200;
     char buffer[MAX_LEN];
     if (GetTimeFormatA(LOCALE_USER_DEFAULT, 0, 0, 
