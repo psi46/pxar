@@ -2,6 +2,7 @@
 
 #include <TApplication.h>
 #include <TGButton.h>
+#include <TGToolTip.h>
 #include <TRandom.h>
 #include <TSystem.h>
 #include <TCanvas.h>
@@ -26,7 +27,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   UInt_t h = fGui->getTabs()->GetHeight(); 
 
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
- 
+
   //  fhFrame = new TGHorizontalFrame(fTabFrame, w, h);
   fhFrame = new TGCompositeFrame(fTabFrame, w, h, kHorizontalFrame);
   
@@ -83,6 +84,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+    tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+    tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 
     ++cnt;
   }
