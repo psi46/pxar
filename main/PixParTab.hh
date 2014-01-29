@@ -5,6 +5,7 @@
 
 #include <TQObject.h> 
 #include <TGFrame.h>
+#include <TGToolTip.h>
 #include <TGTab.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TGSlider.h>

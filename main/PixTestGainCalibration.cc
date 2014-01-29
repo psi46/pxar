@@ -34,6 +34,14 @@ void PixTestGainCalibration::init() {
   fDirectory->cd(); 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTestGainCalibration::setToolTips() {
+  fTestTip    = string("measure and fit pulse height vs VCAL\n") + string("TO BE FINISHED!!"); 
+  fSummaryTip = string("summary plot to be implemented")
+    ;
+}
+
 // ----------------------------------------------------------------------
 bool PixTestGainCalibration::setParameter(string parName, string sval) {
   bool found(false);

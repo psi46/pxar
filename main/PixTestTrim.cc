@@ -76,12 +76,23 @@ bool PixTestTrim::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::init() {
+  setToolTips(); 
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
   fDirectory->cd(); 
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestTrim::setToolTips() {
+  fTestTip    = string(Form("trimming results in a uniform in-time threshold\n")
+		       + string("TO BE FINISHED!!"))
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
 }
 
 // ----------------------------------------------------------------------

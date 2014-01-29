@@ -36,12 +36,20 @@ void PixTest::init(PixSetup *a, string name) {
   fCacheVal.clear();    
 
   fName = name;
+  setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
     setParameter(imap->first, imap->second); 
   }
 }
+
+// ----------------------------------------------------------------------
+void PixTest::setToolTips() {
+  fTestTip = "generic tool tip for a test";
+  fSummaryTip = "generic tool tip for a the summary plot";
+}
+
 
 
 // ----------------------------------------------------------------------

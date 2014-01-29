@@ -35,8 +35,14 @@ bool PixTestAlive::setParameter(string parName, string sval) {
       fParameters[parName] = sval;
       LOG(logINFO) << "  ==> parName: " << parName;
       LOG(logINFO) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
-      if (!parName.compare("Vcal")) fParVcal = atoi(sval.c_str()); 
+      if (!parName.compare("Ntrig")) {
+	fParNtrig = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("Vcal")) {
+	fParVcal = atoi(sval.c_str()); 
+	setToolTips();
+      }
       break;
     }
   }
@@ -47,13 +53,24 @@ bool PixTestAlive::setParameter(string parName, string sval) {
 // ----------------------------------------------------------------------
 void PixTestAlive::init() {
   LOG(logINFO) << "PixTestAlive::init()";
-  
+
+  setToolTips();
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
   fDirectory->cd(); 
 
+}
+
+// ----------------------------------------------------------------------
+void PixTestAlive::setToolTips() {
+  fTestTip    = string("send Ntrig \"calibrates\" and count how many hits were measured\n")
+    + string("the result is a hitmap, not an efficiency map")
+    ;
+  fSummaryTip = string("all ROCs are displayed side-by-side. Note the orientation:\n")
+    + string("the canvas bottom corresponds to the narrow module side with the cable")
+    ;
 }
 
 

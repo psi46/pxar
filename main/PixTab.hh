@@ -32,6 +32,7 @@ public:
   virtual void setParameter(); 
 
   void update();
+  void updateToolTips();
   void clearCanvas();
   void nextHistogram();
   void previousHistogram();
@@ -41,7 +42,6 @@ protected:
   // -- frames and widgets
   TGCompositeFrame     	*fTabFrame;
   TGCompositeFrame     	*fhFrame;
-  //  TGHorizontalFrame     *fhFrame;
   TGVerticalFrame 	*fV1;
   TGVerticalFrame 	*fV2;
 
@@ -50,7 +50,8 @@ protected:
 
   TRootEmbeddedCanvas  	*fEc1;
   TGStatusBar           *fStatusBar;
-  //  std::list<TH1*>::iterator fDisplayedHist; 
+
+  TGTextButton          *fbDoTest, *fbModMap; 
   
   static const int TESTNUMBER = 0;
   enum CommandIdentifiers {

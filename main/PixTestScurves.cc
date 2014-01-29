@@ -53,6 +53,7 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 	LOG(logINFO) << "  setting fParDacHi  ->" << fParDacHi << "<- from sval = " << sval;
       }
 
+      setToolTips();
       break;
     }
   }
@@ -62,7 +63,17 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 
 
 // ----------------------------------------------------------------------
+void PixTestScurves::setToolTips() {
+  fTestTip    = string(Form("measure and fit s-curves for DAC %s\n", fParDac.c_str())) + string("TO BE FINISHED!!"); 
+  fSummaryTip = string("summary plot to be implemented")
+    ;
+}
+
+// ----------------------------------------------------------------------
 void PixTestScurves::init() {
+
+  setToolTips(); 
+
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 

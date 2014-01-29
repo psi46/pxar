@@ -38,10 +38,12 @@ bool PixTestSetup::setParameter(string parName, string sval) {
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logINFO) << "  ==> setting fParNtrig to " << fParNtrig; 
+	setToolTips();
       }
       if (!parName.compare("Vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logINFO) << "  ==> setting fParVcal to " << fParVcal; 
+	setToolTips();
       }
       break;
     }
@@ -53,12 +55,23 @@ bool PixTestSetup::setParameter(string parName, string sval) {
 // ----------------------------------------------------------------------
 void PixTestSetup::init() {
   LOG(logINFO) << "PixTestSetup::init()";
-  
+
+  setToolTips();
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestSetup::setToolTips() {
+  fTestTip    = string(Form("scan testboard parameter settings and check for valid readout\n")
+		       + string("TO BE IMPLEMENTED!!"))
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
 }
 
 

@@ -128,6 +128,7 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 void PixTestDacDacScan::init() {
   LOG(logINFO) << "PixTestDacDacScan::init()";
 
+  setToolTips(); 
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
@@ -136,6 +137,16 @@ void PixTestDacDacScan::init() {
 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTestDacDacScan::setToolTips() {
+  fTestTip    = string(Form("scan the two DACs %s vs %s and ",  fParDAC1.c_str(), fParDAC2.c_str()))
+    + string("determine the number of hits for each setting")
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
+
+}
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::bookHist(string name) {

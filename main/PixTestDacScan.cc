@@ -117,11 +117,22 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::init() {
+  setToolTips(); 
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
   fDirectory->cd(); 
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestDacScan::setToolTips() {
+  fTestTip    = string(Form("scan the DAC %s and determine the number of hits vs DAC value\n", fParDAC.c_str()))
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
 
 }
 
