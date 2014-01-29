@@ -642,7 +642,7 @@ gl_putc(int c)
        CharToOemBuff((char const *)&c,&ch,1);
 #endif
 
-       (void)write(1, &ch, 1);
+       if(write(1, &ch, 1));
     }
 #if defined(unix) || defined(MSDOS) || defined(WIN32)
 #ifdef TIOCSETP         /* BSD in RAW mode, map NL to NL,CR */
@@ -670,7 +670,7 @@ gl_puts(const char *buf)
      free(OemBuf);
     }
 #else
-    (void)write(1, buf, len);
+    if(write(1, buf, len));
 #endif
 }
 
@@ -688,7 +688,7 @@ gl_error(const char *buf)
       free(OemBuf);
     }
 #else
-    (void)write(2, buf, len);
+    if(write(2, buf, len));
 #endif
     exit(1);
 }
