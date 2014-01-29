@@ -12,7 +12,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   exec_program(lsb_release ARGS "--description -s" OUTPUT_VARIABLE _linux_dist)
 endif()
  
-MESSAGE( STATUS "This is CMake " ${CMAKE_VERSION} " (" ${CMAKE_COMMAND}") running on " ${CMAKE_SYSTEM_NAME} " (" ${CMAKE_SYSTEM_VERSION} " " ${_linux_dist} ")")
+MESSAGE( STATUS "This is CMake " ${CMAKE_VERSION} " (" ${CMAKE_COMMAND} ") running on " ${CMAKE_SYSTEM_NAME} " (" ${CMAKE_SYSTEM_VERSION} " " ${_linux_dist} ")")
 
 # determine compiler type (32/64bit)
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )

@@ -2,7 +2,10 @@
 
 #pragma once
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
+
 #include <inttypes.h>
 
 #include "rpc_error.h"

@@ -1121,7 +1121,7 @@ std::vector<uint16_t> api::daqGetBuffer() {
 }
 
 std::vector<pixel> api::daqGetEvent() {
-
+  // FIXME: needs to actually interact with the HAL and get DATA
   LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
   return std::vector<pixel>();
 }

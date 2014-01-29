@@ -1,4 +1,7 @@
+#ifndef WIN32
 #include <unistd.h>
+#endif
+
 #include "pxar.h"
 #include <iomanip>
 #include <iostream>
