@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
     }
   }
 
-  PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParametersFileName()); 
+  PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
   SysCommand sysCommand;
   PixSetup a(api, ptp, configParameters, &sysCommand);  
 
