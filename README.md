@@ -14,3 +14,4 @@ To install pXar under Windows, please follow these steps:
 - create a build directory in the pxar folder
 - open a shell (optimally the Visual Studio "Developer Command Prompt" from the Start Menu entries for Visual Studio (Tools subfolder) which opens a cmd.exe session with the necessary environment variables already set), enter the build directory and run ```cmake ..```
 - now run ```MSBUILD.exe pxar.sln /p:Configuration=Release```
+  or  ```MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release``` to install the library into the source directory.
