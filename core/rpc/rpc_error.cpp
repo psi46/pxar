@@ -1,7 +1,7 @@
 // rpc_error.cpp
 
 #include "rpc_error.h"
-#include "rpc_impl.h"
+#include "rpc_calls.h"
 
 
 const char *CRpcError::GetMsg()

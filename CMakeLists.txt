@@ -37,9 +37,9 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRE
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Set the correct build type and allow command line options:
-IF(!CMAKE_BUILD_TYPE)
+IF(NOT DEFINED ${CMAKE_BUILD_TYPE})
   SET(CMAKE_BUILD_TYPE Relwithdebinfo)
-ENDIF(!CMAKE_BUILD_TYPE)
+ENDIF(NOT DEFINED ${CMAKE_BUILD_TYPE})
 
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
@@ -203,11 +203,16 @@ ENDIF(DOXYGEN_FOUND)
 # The code resides here:
 # https://github.com/kmorel/UseLATEX
 
-#ul: avoid unconditional cmake if no LaTeX is installed
-#INCLUDE(cmake/UseLATEX.cmake)
-#ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
-#  NO_DEFAULT
-#  )
+FIND_PACKAGE(LATEX)
+IF(LATEX_COMPILER)
+  MESSAGE(STATUS "Found LaTeX compiler.")
+  INCLUDE(cmake/UseLATEX.cmake)
+  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
+    NO_DEFAULT
+    )
+ELSE(LATEX_COMPILER)
+  MESSAGE(STATUS "No LaTeX found, cannot compile user manual.")
+ENDIF(LATEX_COMPILER)
 
 #######################################################
 # Print out system information useful for bug reports #

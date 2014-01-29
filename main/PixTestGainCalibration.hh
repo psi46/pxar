@@ -10,7 +10,8 @@ public:
   PixTestGainCalibration();
   virtual ~PixTestGainCalibration();
   virtual bool setParameter(std::string parName, std::string sval); 
-  
+  void init(); 
+
   void doTest(); 
   
   

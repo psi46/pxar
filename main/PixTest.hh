@@ -38,11 +38,16 @@ public:
   void cache(std::string dacname); 
   void restore(std::string dacname); 
 
+  TH2D* moduleMap(std::string histname); 
+  void fillMap(TH2D *hmod, TH2D *hroc, int iroc); 
+
   void clearHist(); 
   virtual void doTest(); 
   virtual void doAnalysis();
   
+  
   std::string getName() {return fName; }
+  void resetDirectory();
   std::map<std::string, std::string> getParameters() {return fParameters;} 
   bool getParameter(std::string parName, int &); 
   bool getParameter(std::string parName, float &); 

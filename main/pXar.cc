@@ -90,7 +90,12 @@ int main(int argc, char *argv[]){
   LOG(logINFO) << "pxar: reading config parameters from " << cfgFile;
   if (!configParameters->readConfigParameterFile(cfgFile)) return 1;
 
-  if (!rootfile.compare("nada.root")) rootfile = configParameters->getRootFileName();
+  if (!rootfile.compare("nada.root")) {
+    rootfile = configParameters->getDirectory() + "/" + configParameters->getRootFileName();
+  } else {
+    configParameters->setRootFileName(rootfile); 
+    rootfile  = configParameters->getDirectory() + "/" + rootfile;
+  }
   LOG(logINFO)<< "pxar: dumping results into " << rootfile;
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   

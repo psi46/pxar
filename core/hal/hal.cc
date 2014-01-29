@@ -1,17 +1,15 @@
 #include "hal.h"
 #include "log.h"
-#include "rpc_impl.h"
 #include "constants.h"
 #include <fstream>
 
 using namespace pxar;
 
-hal::hal(std::string name) {
-
-  // Reset the states of the HAL instance:
-  _initialized = false;
-  _compatible = false;
-  _fallback_mode = false;
+hal::hal(std::string name) :
+  _initialized(false),
+  _compatible(false),
+  _fallback_mode(false)
+{
 
   // Get a new CTestboard class instance:
   _testboard = new CTestboard();
@@ -274,8 +272,7 @@ void hal::mDelay(uint32_t ms) {
 bool hal::CheckCompatibility(){
 
   std::string dtb_hashcmd;
-  uint32_t hostCmdHash;
-  uint32_t dtbCmdHash;
+  uint32_t hostCmdHash = 0, dtbCmdHash = 0;
 
   // This is a legacy check for boards with an old firmware not featuring the hash function:
   _testboard->GetRpcCallName(5,dtb_hashcmd);
@@ -378,7 +375,7 @@ bool hal::FindDTB(std::string &usbId) {
 
   LOG(logINFO) << "Please choose DTB (0-" << (nDev-1) << "): ";
   char choice[8];
-  fgets(choice, 8, stdin);
+  if(fgets(choice, 8, stdin) == NULL) return false;
   sscanf (choice, "%ud", &nr);
   if (nr >= devList.size()) {
     nr = 0;
@@ -478,7 +475,8 @@ bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t /*tbmId*/, uint8_t regId, uint8_t regValue) {
+  // FIXME currently only one TBM supported...
 
   // Make sure we are writing to the correct TBM by setting its sddress:
   // FIXME Magic from Beat, need to understand this and be able to program also the second TBM:
@@ -1021,32 +1019,40 @@ bool hal::daqStop(uint8_t nTBMs) {
 
 std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 
-  std::vector<uint16_t> data;
-  uint32_t buffersize_ch0, buffersize_ch1;
-  uint32_t remaining_buffer_ch0, remaining_buffer_ch1;
+  // Read all data from the first channel:
+  std::vector<uint16_t> data = daqReadChannel(0);
 
-  buffersize_ch0 = _testboard->Daq_GetSize(0);
-  LOG(logDEBUGHAL) << "Available data in channel 0: " << buffersize_ch0;
+  // Also read the second channel if needed:
   if(nTBMs > 0) {
-    buffersize_ch1 = _testboard->Daq_GetSize(1);
-    LOG(logDEBUGHAL) << "Available data in channel 1: " << buffersize_ch1;
+    std::vector<uint16_t> data1 = daqReadChannel(1);
+    data.insert( data.end(), data1.begin(), data1.end() );
   }
 
-  // FIXME check if buffersize exceeds maximum transfer size and split if so:
-  int status = _testboard->Daq_Read(data,buffersize_ch0,remaining_buffer_ch0,0);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-  LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel 0, " 
-		   << remaining_buffer_ch0 << " words remaining in buffer.";
+  return data;
+}
 
-  if(nTBMs > 0) {
-    std::vector<uint16_t> data1;
+std::vector<uint16_t> hal::daqReadChannel(uint8_t channel) {
 
-    status = _testboard->Daq_Read(data1, buffersize_ch1, remaining_buffer_ch1, 1);
+  int status = 0;
+  std::vector<uint16_t> data;
+  uint32_t buffer_remaining;
+
+  // Maximal allowed block size for DAQ read:
+  uint32_t buffer_max = 32768;
+  uint32_t buffer_read;
+
+  buffer_remaining = _testboard->Daq_GetSize(channel);
+  LOG(logDEBUGHAL) << "Available data in channel " << channel << ": " 
+		   << buffer_remaining;
+
+  // Keep on reading out while we have remainig data:
+  while(buffer_remaining > 0) {
+    buffer_read = max(buffer_remaining, buffer_max);
+    status = _testboard->Daq_Read(data,buffer_read,buffer_remaining,channel);
     LOG(logDEBUGHAL) << "Function returns: " << status;
-    LOG(logDEBUGHAL) << "Read " << data1.size() << " data words, " 
-		     << remaining_buffer_ch1 << " words remaining in buffer.";
-
-    data.insert( data.end(), data1.begin(), data1.end() );
+    LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel "
+		     << channel << ", " 
+		     << buffer_remaining << " words remaining in buffer.";
   }
 
   return data;

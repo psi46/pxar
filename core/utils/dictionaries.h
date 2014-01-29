@@ -223,6 +223,7 @@ namespace pxar {
       _devices["psi46digv2_b"]  = ROC_PSI46DIGV2_B;
       _devices["psi46digv2"]    = ROC_PSI46DIGV2;
       _devices["psi46digv3"]    = ROC_PSI46DIGV3;
+      _devices["psi46digv2.1"]  = ROC_PSI46DIGV3;
 
       // TBM flavors:
       // FIXME this is just an example.

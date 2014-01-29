@@ -50,6 +50,11 @@ void PixTest::bookHist(string name) {
 }
 
 
+// ----------------------------------------------------------------------
+void PixTest::resetDirectory() {
+  fDirectory = gFile->GetDirectory(fName.c_str()); 
+}
+
 
 // ----------------------------------------------------------------------
 int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
@@ -496,4 +501,51 @@ void PixTest::restore(string dacname) {
   
   fCacheVal.clear(); 
   fCacheDac = "nada"; 
+}
+
+
+// ----------------------------------------------------------------------
+TH2D* PixTest::moduleMap(string histname) {
+  LOG(logINFO) << "moduleMap histname: " << histname; 
+  TH1* h0 = (*fDisplayedHist);
+  if (!h0->InheritsFrom(TH2::Class())) {
+    return 0; 
+  }
+  TH2D *h1 = (TH2D*)h0; 
+  string h1name = h1->GetName();
+  string::size_type s1 = h1name.find("_C"); 
+  string barename = h1name.substr(0, s1);
+  string h2name = barename + string("_mod"); 
+  LOG(logINFO) << "h1->GetName() = " << h1name << " -> " << h2name; 
+  TH2D *h2 = new TH2D(h2name.c_str(), h2name.c_str(), 
+		      2*80, 0., 2*80., 8*52, 0., 8*52); 
+  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
+    TH2D *hroc = (TH2D*)fDirectory->Get(Form("%s_C%d", barename.c_str(), ichip)); 
+    if (hroc) fillMap(h2, hroc, ichip); 
+  }
+
+  fHistList.push_back(h2); 
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+
+  if (h2) h2->Draw();
+  update(); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::fillMap(TH2D *hmod, TH2D *hroc, int iroc) {
+  int mxOffset(iroc<8?159:0), mxDirection(iroc<8?-1:+1); 
+  int myOffset(iroc<8?52*(iroc%8):52*(16-iroc)-1), myDirection(iroc<8?1:-1);
+
+  int mx, my; 
+  for (int rx = 0; rx < hroc->GetNbinsX(); ++rx) {
+    for (int ry = 0; ry < hroc->GetNbinsY(); ++ry) {
+      mx = mxOffset + mxDirection*ry;
+      my = myOffset + myDirection*rx;
+      //       if (0) cout << "mod x: " << mx
+      // 		  << " mod y: " << my
+      // 		  << endl;
+      hmod->Fill(mx, my, hroc->GetBinContent(rx+1, ry+1)); 
+    }
+  }
+
 }

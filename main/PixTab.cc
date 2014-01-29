@@ -126,6 +126,12 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bPrint->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
+
+  // -- create module map button
+  TGTextButton *bModMap = new TGTextButton(hFrame, " summary ", B_MODMAP);
+  bModMap->ChangeOptions(bModMap->GetOptions() | kFixedWidth);
+  hFrame->AddFrame(bModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  bModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
@@ -186,6 +192,11 @@ void PixTab::handleButtons(Int_t id) {
 
     case B_DOSTOP: {
       LOG(logINFO) << "and now what???";
+      break;
+    }
+
+    case B_MODMAP: {
+      fTest->moduleMap("what");
       break;
     }
 
@@ -326,6 +337,8 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
       sscanf(trafo1.c_str(), "binx=%f, biny=%f, binc=%f", &x, &y, &val);
       if (52 == ((TH2D*)selected)->GetNbinsX() && 80 == ((TH2D*)selected)->GetNbinsY()) {
 	text2 = Form("c=%.0f, r=%.0f, value=%4.3f", x-1, y-1, val); 
+      } else if (160 == ((TH2D*)selected)->GetNbinsX() && 416 == ((TH2D*)selected)->GetNbinsY()) {
+	text2 = Form("x=%.0f, y=%.0f, value=%4.3f", x-1, y-1, val); 
       } else {
 	text2 = trafo.c_str(); 
       }

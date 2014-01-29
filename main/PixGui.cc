@@ -1,13 +1,16 @@
 #include "PixGui.hh"
+
+#include <TSystem.h>
+
 #include "log.h"
 
 #include "PixTab.hh"
 #include "PixParTab.hh"
 #include "PixTestFactory.hh"
+#include "PixUtil.hh"
 
-// #include "PixTestAlive.hh"
-// #include "PixTestDacScan.hh"
- 
+
+
 using namespace std;
 using namespace pxar;
 
@@ -19,6 +22,8 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   
 
   SetWindowName("pXar");
+
+  fOldDirectory = "nada"; 
 
   ULong_t red;  gClient->GetColorByName("red", red);
   ULong_t green;  gClient->GetColorByName("green", green);
@@ -41,11 +46,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
   // -- left frame
-  TGGroupFrame *tabControl = new TGGroupFrame(h1v1, "Open tabs");
+  TGGroupFrame *tabControl = new TGGroupFrame(h1v1, "Open test tabs");
 
   TGHorizontalFrame *testChooser = new TGHorizontalFrame(tabControl);
   testChooser->SetName("testChooser");
-  testChooser->AddFrame(new TGLabel(testChooser, "Choose test "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
+  testChooser->AddFrame(new TGLabel(testChooser, "Choose "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
 
   fcmbTests = new TGComboBox(testChooser);
   fcmbTests->SetWidth(150);
@@ -53,11 +58,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fcmbTests->Connect("Selected(char*)", "PixGui", this, "selectedTab(int)");
 
   tabControl->AddFrame(testChooser);
-  testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, 5, 50, 3, 4));
+  testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
   testChooser->SetWidth(tabControl->GetWidth());
 
   h1v1->AddFrame(tabControl, new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
-  h1v1->SetWidth(800);
+  h1v1->SetWidth(testChooser->GetWidth());
 
   // -- middle frame
   TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
@@ -83,7 +88,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // HV
   TGHorizontalFrame *hvFrame = new TGHorizontalFrame(hwControl, 150,75);
   hvFrame->SetName("hvFrame");
-  hvFrame->AddFrame(new TGLabel(hvFrame, "HV: "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
+  hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
   fbtnHV->Resize(70,35);
@@ -96,7 +101,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fbtnHV->SetText("Off");
   }
 
-  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 22, 5, 3, 7));
+  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
 
   hwControl->AddFrame(hvFrame);
 
@@ -107,6 +112,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fTimer->TurnOn();
     
   h1v2->AddFrame(hwControl, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  h1v1->SetWidth(400);
 
   // -- right frame
   TGTextButton *exitButton = new TGTextButton(h1v3, "exit", B_EXIT);
@@ -114,15 +120,44 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
   exitButton->ChangeBackground(red);
+  h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight,5,5,3,4));
 
 
-  h1v3->AddFrame(new TGLabel(h1v3, "root file:"), new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  TGTextEntry *output = new TGTextEntry(h1v3, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
-  output->SetText("bla");
-  output->MoveResize(200, 60, 200, output->GetDefaultHeight());
+  TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(h1v3, 150,75);
+  rootfileFrame->SetName("rootfileFrame");
+
+  TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
+  rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+ rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+
+  TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
+  output->SetText(fConfigParameters->getRootFileName().c_str());
+  output->MoveResize(100, 60, 120, output->GetDefaultHeight());
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
-  h1v3->AddFrame(output, new TGLayoutHints(kLHintsLeft,5,5,3,4));
-  h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+  rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight,5,5,3,4));
+ 
+  h1v3->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft,5,5,3,4));
+
+
+  TGHorizontalFrame *dirFrame = new TGHorizontalFrame(h1v3, 150,75);
+  dirFrame->SetName("dirFrame");
+
+  TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
+  dirButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft,5,5,3,4));
+
+  TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
+  doutput->SetText(fConfigParameters->getDirectory().c_str());
+  doutput->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  doutput->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
+  dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight,5,5,3,4));
+ 
+  h1v3->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft,5,5,3,4));
+
+
+
+  h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
+
 
   // -- tab widget
   fTabs = new TGTab(fH2, fH2->GetDefaultWidth(), fH2->GetDefaultHeight());
@@ -143,9 +178,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fcmbTests->Select(0);
 
 
-  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 2, 20, 2, 2));
-  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX | kLHintsExpandY, 20, 20, 2, 2));
-  fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 20, 2, 2, 2));
+  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
+  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , 2, 2, 2, 2));
+  fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
 
   AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
   AddFrame(fH2, new TGLayoutHints(kLHintsBottom | kLHintsExpandY | kLHintsExpandX));
@@ -159,19 +194,43 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 // ----------------------------------------------------------------------
 PixGui::~PixGui() {
   LOG(logINFO) << "PixGui::destructor";
+  delete fTimer;
+  delete fMonitor; 
+  delete fcmbTests;
+  delete fTabs;
+  delete fParTab;
+  delete fRootFileNameBuffer;
+  delete fbtnPower;
+  delete fbtnHV;
+  delete fpowerSlider;
+  delete fhvSlider;
+  delete flblPower;
+  delete flblHV;
+  delete fH1;
+  delete fH2;
+
 }
 
 
+// ----------------------------------------------------------------------
+void PixGui::Cleanup() {
+    gApplication->Terminate(0);
+}
+
 
 // ----------------------------------------------------------------------
-void PixGui::closeWindow() {
-  // Close Window
-  if (fApi) {
-    fApi->HVoff();
-    fApi->Poff();
-  }
+void PixGui::CloseWindow() {
+  std::vector<PixTest*>::iterator il; 
+  for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+    delete (*il); 
+  } 
+  
   if (fTimer) fTimer->TurnOff();
+  if (fApi) delete fApi; 
+  
   DestroyWindow();
+  gApplication->Terminate(0);
+
 }
 // ----------------------------------------------------------------------
 void PixGui::handleButtons(Int_t id) {
@@ -186,22 +245,27 @@ void PixGui::handleButtons(Int_t id) {
   gClient->GetColorByName("green", green);
  
   switch (id) {
+  case B_DIRECTORY: {
+    LOG(logINFO) << Form("changing base directory: %s", fDirNameBuffer->GetString());
+    fOldDirectory = fConfigParameters->getDirectory(); 
+    if (0 == gSystem->OpenDirectory(fDirNameBuffer->GetString())) {
+      LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it"; 
+      int bla = gSystem->MakeDirectory(fDirNameBuffer->GetString()); 
+      if (bla < 0)  LOG(logWARNING) << " failed to create directory " << fDirNameBuffer->GetString();
+    } 
+    
+    fConfigParameters->setDirectory(fDirNameBuffer->GetString()); 
+    changeRootFile();
+    break;
+  }
   case B_FILENAME: {
-    LOG(logINFO) << Form("fRootFileNameBuffer: %s", fRootFileNameBuffer->GetString());
+    LOG(logINFO) << Form("changing rootfilenme: %s", fRootFileNameBuffer->GetString());
+    changeRootFile(); 
     break;
   }
   case B_EXIT: {
     LOG(logINFO) << "PixGui::exit called";
-    std::vector<PixTest*>::iterator il; 
-    for (il = fTestList.begin(); il != fTestList.end(); ++il) {
-      delete (*il); 
-    } 
-
-    //    delete this; 
-    //delete fTb;
-    //CloseWindow();
-    if (fApi) delete fApi; 
-    gApplication->Terminate(0);
+    CloseWindow();
   }
   case B_POWER: {
     if(fPower == true) {
@@ -291,4 +355,21 @@ PixTest* PixGui::createTest(string testname) {
 void PixGui::selectedTab(int id) {
     LOG(logINFO) << "Switched to tab " << id;
     fTabs->SetTab(id); 
+}
+
+
+// ----------------------------------------------------------------------
+void PixGui::changeRootFile() {
+  string oldRootFilePath = gFile->GetName();
+  cout << "oldRootFilePath: " << oldRootFilePath << endl;
+  gFile->Close();
+
+  string newRootFilePath = fConfigParameters->getDirectory() + "/" + fRootFileNameBuffer->GetString();
+
+  gSystem->Rename(oldRootFilePath.c_str(), newRootFilePath.c_str()); 
+  TFile *f = TFile::Open(newRootFilePath.c_str(), "UPDATE"); 
+  std::vector<PixTest*>::iterator il; 
+  for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+    (*il)->resetDirectory();
+  } 
 }

@@ -46,12 +46,15 @@ public:
   PixGui(const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup);
   ~PixGui();
 
+  void Cleanup(); 
+  void CloseWindow();
+
   void handleButtons(Int_t id = -1);
   void createTab(const char*);
   void createParTab();
   void selectedTab(int); 
+  void changeRootFile();
 
-  void closeWindow();
   PixTest* createTest(std::string); 
 
   TGCompositeFrame	*fhFrame;
@@ -66,6 +69,7 @@ private:
   static const int TESTNUMBER = 300;
   enum CommandIdentifiers {
     B_FILENAME = TESTNUMBER + 21,
+    B_DIRECTORY, 
     B_EXIT,
     B_POWER,
     B_HV
@@ -75,26 +79,18 @@ private:
   TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
   TGCompositeFrame     	*fParTab;
-  TGTextView		*fLogger;
-  TGTextEntry		*fConsole;
-  TGTextBuffer		*fConsoleBuffer;
-  TGTextBuffer          *fRootFileNameBuffer;
-  TGTextButton		*fbtnPower;
-  TGTextButton		*fbtnHV;
+  TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer;
+  TGTextButton		*fbtnPower, *fbtnHV;
   TGSlider		*fpowerSlider;
   TGSlider		*fhvSlider;
   TGLabel		*flblPower;
   TGLabel		*flblHV;
   TGHorizontalFrame 	*fH1;
   TGHorizontalFrame	*fH2;
-  std::vector<TH1*>      fHistList; 
   std::vector<PixTest *> fTestList; 
   bool			 fDebug;
   bool			 fPower, fHV;
 
-
-  SysCommand             *fSysCommand;
-  
   PixSetup               *fPixSetup; 
   pxar::api              *fApi;
   ConfigParameters       *fConfigParameters;  
@@ -102,6 +98,7 @@ private:
   PixMonitor             *fMonitor; 
 
   int                    fWidth, fHeight; 
+  std::string            fOldDirectory;
 
   ClassDef(PixGui, 1); //
 
