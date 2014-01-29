@@ -149,7 +149,7 @@ void PixTestDacDacScan::bookHist(string name) {
   //  TH1D *h1(0);
   TH2D *h2(0);
   fHistList.clear();
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h2 = new TH2D(Form("scanRange_%s_%s_C%d", dac1.c_str(), dac2.c_str(), i), 
 		  Form("scanRange_%s_%s_C%d", dac1.c_str(), dac2.c_str(), i), 
 		  255, 0., 255., 255, 0., 255.); 
@@ -200,7 +200,7 @@ void PixTestDacDacScan::doTest() {
 
   LOG(logINFO) << " dacscandata.size(): " << results.size();
   TH2D *h(0), *hsummary(0); 
-  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
+  for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
     hsummary = (TH2D*)fDirectory->Get(Form("scanRange_%s_%s_C%d", fParDAC1.c_str(), fParDAC2.c_str(), ichip));
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];

@@ -46,7 +46,7 @@ void PixTest::init(PixSetup *a, string name) {
 
 // ----------------------------------------------------------------------
 void PixTest::bookHist(string name) {
-
+  LOG(logDEBUG) << "Nothing done with " << name; 
 }
 
 
@@ -62,9 +62,9 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig);
   int val(0); 
-  for (int idac = 0; idac < results.size(); ++idac) {
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dacval = results[idac].first; 
-    for (int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
       val = results[idac].second[ipix].value;
       h->Fill(dacval, val);
     }
@@ -88,10 +88,10 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   cout << "book histograms" << endl;
   TH1* h1(0); 
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     rmaps.clear();
-    for (int ic = 0; ic < 52; ++ic) {
-      for (int ir = 0; ir < 80; ++ir) {
+    for (unsigned int ic = 0; ic < 52; ++ic) {
+      for (unsigned int ir = 0; ir < 80; ++ir) {
 	h1 = new TH1D(Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, i), 
 		      Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, i), 
 		      256, 0., 256.);
@@ -204,7 +204,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
   fDirectory->cd(); 
   vector<TH2D*> maps;
   TH2D *h2(0); 
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h2 = new TH2D(Form("%s_C%d", name.c_str(), i), Form("%s_C%d", name.c_str(), i), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -212,7 +212,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
     maps.push_back(h2); 
   }
   
-  for (int i = 0; i < results.size(); ++i) {
+  for (unsigned int i = 0; i < results.size(); ++i) {
     //     cout << "results[i].roc_id = " << int(results[i].roc_id) 
     // 	 << " col/row = " << int(results[i].column) << "/" << int(results[i].row)
     // 	 << endl;
@@ -241,7 +241,7 @@ vector<TH1*> PixTest::mapsVsDac(string name, string dac, int ntrig) {
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig);
 
   // -- book histograms (the return vector is not over rocs, but rather DAC values
-  for (int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc){
+  for (unsigned int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc){
     h2 = new TH2D(Form("%s_thr_%s_C%d", name.c_str(), dac.c_str(), iroc), Form("%s_C%d", name.c_str(), iroc), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -274,7 +274,6 @@ vector<TH1*> PixTest::mapsVsDac(string name, string dac, int ntrig) {
 
 
   for (unsigned int id = 0; id < results.size(); ++id) {
-    int idac = results[id].first;
     for (unsigned int i = 0; results[id].second.size(); ++i) {
       h2 = maps2d[results[id].second[i].roc_id];
       if (h2) h2->SetBinContent(results[id].second[i].column +1, results[id].second[i].row + 1, 
@@ -293,7 +292,7 @@ vector<TH1*> PixTest::mapsVsDac(string name, string dac, int ntrig) {
 
 // ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
-  //  cout << " PixTest::setParameter wrong function" << endl;
+  LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
   return false;
 }
 
@@ -456,7 +455,8 @@ bool PixTest::threshold(TH1 *h) {
     fSigma = fThresholdE; 
     fSigmaE = fThresholdE; 
   }
-  
+
+  return true;
 }
 
 
@@ -481,7 +481,7 @@ void PixTest::cache(string dacname) {
   }
   
   LOG(logINFO) << "Cache " << dacname;
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     fCacheVal.push_back(fApi->_dut->getDAC(i, dacname)); 
   }
 }
@@ -495,7 +495,7 @@ void PixTest::restore(string dacname) {
   }
 
   LOG(logINFO) << "Restore " << dacname;
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     fApi->setDAC(dacname, fCacheVal[i], i); 
   }
   
@@ -519,7 +519,7 @@ TH2D* PixTest::moduleMap(string histname) {
   LOG(logINFO) << "h1->GetName() = " << h1name << " -> " << h2name; 
   TH2D *h2 = new TH2D(h2name.c_str(), h2name.c_str(), 
 		      2*80, 0., 2*80., 8*52, 0., 8*52); 
-  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
+  for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
     TH2D *hroc = (TH2D*)fDirectory->Get(Form("%s_C%d", barename.c_str(), ichip)); 
     if (hroc) fillMap(h2, hroc, ichip); 
   }
@@ -529,6 +529,7 @@ TH2D* PixTest::moduleMap(string histname) {
 
   if (h2) h2->Draw();
   update(); 
+  return h2; 
 }
 
 // ----------------------------------------------------------------------

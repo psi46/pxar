@@ -322,10 +322,9 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   const char *text0, *text2;
   text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
-  //  char text1[50];
-  //   if (event == kKeyPress)
-  //     sprintf(text1, "%c", (char) px);
-  //   else
+  if (event == kKeyPress) {
+    LOG(logINFO) << "key pressed?"; 
+  }
   //     sprintf(text1, "%d,%d", px, py);
   //   fStatusBar->SetText(text1, 1);
   if (selected->InheritsFrom(TH1::Class())) {

@@ -60,9 +60,7 @@ void PixTestAlive::init() {
 // ----------------------------------------------------------------------
 void PixTestAlive::bookHist(string name) {
   fDirectory->cd(); 
-
-  fHistList.clear();
-
+  LOG(logINFO) << "nothing done with " << name; 
 }
 
 

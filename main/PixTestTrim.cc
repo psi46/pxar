@@ -35,9 +35,6 @@ PixTestTrim::PixTestTrim() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestTrim::setParameter(string parName, string sval) {
   bool found(false);
-  string str1, str2; 
-  string::size_type s1;
-  int pixc, pixr; 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
     LOG(logINFO) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
@@ -91,7 +88,7 @@ void PixTestTrim::init() {
 void PixTestTrim::bookHist(string name) {
   fDirectory->cd(); 
 
-  TH1D *h1(0);
+  LOG(logDEBUG) << "nothing done with " << name;
   //  fHistList.clear();
 
 }
@@ -196,6 +193,8 @@ int PixTestTrim::adjustVtrim() {
 
 // ----------------------------------------------------------------------
 TH2D* PixTestTrim::trimStep(int correction, TH2D *calMapOld) {
+
+  LOG(logDEBUG) << "nothing done with " << correction << " or " << calMapOld;
 //   TH2D* betterCalMap = GetMap("VcalThresholdMap");
 //   int trim;
   

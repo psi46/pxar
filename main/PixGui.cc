@@ -167,10 +167,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 
   PixParTab *t = new PixParTab(this, fConfigParameters, "h/w"); 
+  (void)t;
 
   fcmbTests->AddEntry("Ignore this ...", 0);
   vector<string> tests = fTestParameters->getTests();
-  for (int i = 0; i < tests.size(); ++i) {
+  for (unsigned int i = 0; i < tests.size(); ++i) {
     fcmbTests->AddEntry(tests[i].c_str(), i+1);
     cout << "CREATE TAB FOR TEST " << i << endl;
     createTab(tests[i].c_str()); 
@@ -251,7 +252,10 @@ void PixGui::handleButtons(Int_t id) {
     if (0 == gSystem->OpenDirectory(fDirNameBuffer->GetString())) {
       LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it"; 
       int bla = gSystem->MakeDirectory(fDirNameBuffer->GetString()); 
-      if (bla < 0)  LOG(logWARNING) << " failed to create directory " << fDirNameBuffer->GetString();
+      if (bla < 0)  {
+	LOG(logWARNING) << " failed to create directory " << fDirNameBuffer->GetString();
+	break;
+      }
     } 
     
     fConfigParameters->setDirectory(fDirNameBuffer->GetString()); 
@@ -368,6 +372,7 @@ void PixGui::changeRootFile() {
 
   gSystem->Rename(oldRootFilePath.c_str(), newRootFilePath.c_str()); 
   TFile *f = TFile::Open(newRootFilePath.c_str(), "UPDATE"); 
+  (void)f;
   std::vector<PixTest*>::iterator il; 
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
     (*il)->resetDirectory();

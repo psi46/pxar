@@ -135,7 +135,6 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
       else if (0 == _name.compare("customModule")) { fCustomModule              = _ivalue; }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
-      else if (0 == _name.compare("dataTriggerLevel")) { fDataTriggerLevel          = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADCDual")) { fEmptyReadoutLengthADCDual = _ivalue; }
@@ -300,10 +299,10 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
   }
 
   // -- read all trim files and create pixelconfig vector
-  for (int i = 0; i < fnRocs; ++i) {
+  for (unsigned int i = 0; i < fnRocs; ++i) {
     vector<pxar::pixelConfig> v;
-    for (int ic = 0; ic < fnCol; ++ic) {
-      for (int ir = 0; ir < fnRow; ++ir) {
+    for (uint8_t ic = 0; ic < fnCol; ++ic) {
+      for (uint8_t ir = 0; ir < fnRow; ++ir) {
 	pxar::pixelConfig a; 
 	a.column = ic; 
 	a.row = ir; 
@@ -416,7 +415,6 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
   
   // -- parse lines
   unsigned int iroc(0), irow(0), icol(0); 
-  uint8_t uval(0), urow(0), ucol(0); 
   
   string::size_type s1, s2, s3; 
   string str1, str2, str3;
@@ -437,9 +435,9 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
       str3 = lines[i].substr(s1+1); 
       iroc = atoi(str3.c_str()); 
       //      cout << "masking all pixels for ROC " << iroc << endl;
-      if (iroc >= 0 && iroc < fnRocs) {
-	for (unsigned int ic = 0; ic < fnCol; ++ic) {
-	  for (unsigned int ir = 0; ir < fnRow; ++ir) {
+      if (iroc < fnRocs) {
+	for (uint8_t ic = 0; ic < fnCol; ++ic) {
+	  for (uint8_t ir = 0; ir < fnRow; ++ir) {
 	    v[iroc].push_back(make_pair(ic, ir)); 
 	  }
 	}  
@@ -456,7 +454,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
       iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
       irow = atoi(lines[i].substr(s2).c_str()); 
       //      cout << "-> MASKING ROC " << iroc << " row " << irow << endl;
-      if (iroc >= 0 && iroc < fnRocs && irow > 0 && irow < fnRow) {
+      if (iroc < fnRocs && irow < fnRow) {
 	for (unsigned int ic = 0; ic < fnCol; ++ic) {
 	  v[iroc].push_back(make_pair(ic, irow)); 
 	}  
@@ -473,7 +471,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
       iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
       icol = atoi(lines[i].substr(s2).c_str()); 
       //      cout << "-> MASKING ROC " << iroc << " col " << icol << endl;
-      if (iroc >= 0 && iroc < fnRocs && icol > 0 && icol < fnCol) {
+      if (iroc < fnRocs && icol < fnCol) {
 	for (unsigned int ir = 0; ir < fnRow; ++ir) {
 	  v[iroc].push_back(make_pair(icol, ir)); 
 	}  
@@ -492,7 +490,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
       icol = atoi(lines[i].substr(s2, s3-s2-1).c_str()); 
       irow = atoi(lines[i].substr(s3).c_str()); 
       //      cout << "-> MASKING ROC " << iroc << " col " << icol << " row " << irow << endl;
-      if (iroc >= 0 && iroc < fnRocs && icol > 0 && icol < fnCol && irow > 0 && irow < fnRow) {
+      if (iroc < fnRocs && icol < fnCol && irow < fnRow) {
 	v[iroc].push_back(make_pair(icol, irow)); 
       } else {
 	LOG(logINFO) << "illegal ROC/row/col coordinates in line " << i << ": " << lines[i];
@@ -509,7 +507,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
   string filename; 
-  for (int i = 0; i < fnRocs; ++i) {
+  for (unsigned int i = 0; i < fnRocs; ++i) {
     filename = Form("%s/%s_C%d.dat", fDirectory.c_str(), fDACParametersFileName.c_str(), i); 
     vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
     fDacParameters.push_back(rocDacs); 
@@ -522,7 +520,7 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
   string filename; 
-  for (int i = 0; i < fnTbms; ++i) {
+  for (unsigned int i = 0; i < fnTbms; ++i) {
     filename = fDirectory + "/" + fTbmParametersFileName; 
     vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
     fTbmParameters.push_back(rocDacs); 
@@ -610,12 +608,8 @@ bool ConfigParameters::writeConfigParameterFile() {
 bool ConfigParameters::writeTrimFiles(vector<int> rocs) {
   string fname = fDirectory + "/" + getTrimParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
-  string data; 
-  int reg(0); 
 
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    cout << "  -> open " << Form("%s_C%d.dat", fname.c_str(), rocs[iroc]) << endl;
     OUT.open(Form("%s_C%d.dat", fname.c_str(), rocs[iroc]));
     if (!OUT.is_open()) {
       return false; 
@@ -643,14 +637,13 @@ bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
   int reg(0); 
 
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    cout << "  -> open " << Form("%s_C%d.dat", fname.c_str(), rocs[iroc]) << endl;
     OUT.open(Form("%s_C%d.dat", fname.c_str(), rocs[iroc]));
     if (!OUT.is_open()) {
       return false; 
     } 
 
     
-    for (int idac = 0; idac < fDacParameters[iroc].size(); ++idac) {
+    for (unsigned int idac = 0; idac < fDacParameters[iroc].size(); ++idac) {
       data = fDacParameters[iroc][idac].first;
       std::transform(data.begin(), data.end(), data.begin(), ::tolower);
       reg = rd->getRegister(data, ROC_REG);
@@ -671,20 +664,17 @@ bool ConfigParameters::writeTbmParameterFiles(vector<int> tbms) {
   string data; 
   int reg(0); 
 
-  cout << " tbms.size()   " << tbms.size() << endl;
   for (unsigned int itbm = 0; itbm < tbms.size(); ++itbm) {
-    cout << "  -> open " << Form("%s", fname.c_str(), tbms[itbm]) << endl;
     //    OUT.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
-    OUT.open(Form("%s", fname.c_str()));
+    OUT.open(fname.c_str());
     if (!OUT.is_open()) {
       return false; 
     } 
 
-    for (int idac = 0; idac < fTbmParameters[itbm].size(); ++idac) {
+    for (unsigned int idac = 0; idac < fTbmParameters[itbm].size(); ++idac) {
       data = fTbmParameters[itbm][idac].first;
       std::transform(data.begin(), data.end(), data.begin(), ::tolower);
       reg = rd->getRegister(data, TBM_REG);
-      cout << Form("%3d %11s   0x%02X", reg, fTbmParameters[itbm][idac].first.c_str(), int(fTbmParameters[itbm][idac].second)) << endl;
       OUT << Form("%3d %11s   0x%02X", reg, fTbmParameters[itbm][idac].first.c_str(), int(fTbmParameters[itbm][idac].second)) << endl;
     }
 
@@ -702,17 +692,15 @@ bool ConfigParameters::writeTbParameterFile() {
   string data; 
   int reg(0); 
 
-  cout << "  -> open " << Form("%s", fname.c_str()) << endl;
   OUT.open(Form("%s", fname.c_str()));
   if (!OUT.is_open()) {
     return false; 
   } 
   
-  for (int idac = 0; idac < fTbParameters.size(); ++idac) {
+  for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
     reg = rd->getRegister(data, DTB_REG);
-    cout << Form("%3d %10s %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
     OUT << Form("%3d %10s %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
   }
   
@@ -723,6 +711,8 @@ bool ConfigParameters::writeTbParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTestParameterFile(string whichTest) {
+  string bla = "nothing done with " +  whichTest; 
+  LOG(logINFO) << bla; 
   return true;
 }
 

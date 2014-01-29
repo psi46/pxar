@@ -108,18 +108,18 @@ void PixTestParameters::dump() {
 }
 
 
-// ----------------------------------------------------------------------
-bool PixTestParameters::setTestParameter(std::string testname, std::string parname, std::string value) {
+// // ----------------------------------------------------------------------
+// bool PixTestParameters::setTestParameter(std::string testname, std::string parname, std::string value) {
 
-  for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
-    LOG(logINFO) << "PixTestParameters: ->" << imap->first << "<-";
-    map<string, string> pars = imap->second; 
-    for (map<string, string>::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
-      LOG(logINFO) << "  " << imap2->first << ": " << imap2->second;
-    }
-  }
+//   for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+//     LOG(logINFO) << "PixTestParameters: ->" << imap->first << "<-";
+//     map<string, string> pars = imap->second; 
+//     for (map<string, string>::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
+//       LOG(logINFO) << "  " << imap2->first << ": " << imap2->second;
+//     }
+//   }
   
-  return true; 
-}
+//   return true; 
+// }
 
 

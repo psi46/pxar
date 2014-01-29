@@ -30,9 +30,6 @@ PixTestScurves::PixTestScurves() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestScurves::setParameter(string parName, string sval) {
   bool found(false);
-  string str1, str2; 
-  string::size_type s1;
-  int pixc, pixr; 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
     LOG(logINFO) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
@@ -78,7 +75,7 @@ void PixTestScurves::init() {
 void PixTestScurves::bookHist(string name) {
   fDirectory->cd(); 
 
-  TH1D *h1(0);
+  LOG(logDEBUG) << "nothing done with " << name;
   //  fHistList.clear();
 
 }
@@ -101,7 +98,6 @@ void PixTestScurves::doTest() {
   
   int RFLAG(7); 
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG); 
-  TH2D *h(0); 
 
   // -- and now do the analysis...
   // FIXME
