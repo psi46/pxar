@@ -11,8 +11,6 @@
 #include <map>
 #include <stdint.h>
 
-#include "config.h"
-
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
  *  Follows advice of http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
@@ -183,7 +181,7 @@ namespace pxar {
      *  In case of a tarball install the version number is hardcoded in the
      *  CMakeLists.txt file.
      */
-    std::string getVersion() {return PACKAGE_STRING;};
+    std::string getVersion();
 
     /** Initializer method for the testboard
      *
@@ -568,6 +566,11 @@ namespace pxar {
     friend class api;
     
   public:
+
+    /** Default DUT constructor
+     */
+    dut() : _initialized(false), _programmed(false), roc(), tbm(), sig_delays(),
+      va(0), vd(0), ia(0), id(0), pg_setup() {};
 
     // GET functions to read information
 

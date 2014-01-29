@@ -40,9 +40,9 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Wcast-a
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -Wall"  CACHE STRING "Relwithdebinfo options." FORCE )
 
 # Set the correct build type and allow command line options:
-IF(!CMAKE_BUILD_TYPE)
+IF(NOT DEFINED ${CMAKE_BUILD_TYPE})
   SET(CMAKE_BUILD_TYPE Relwithdebinfo)
-ENDIF(!CMAKE_BUILD_TYPE)
+ENDIF(NOT DEFINED ${CMAKE_BUILD_TYPE})
 
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
@@ -206,11 +206,16 @@ ENDIF(DOXYGEN_FOUND)
 # The code resides here:
 # https://github.com/kmorel/UseLATEX
 
-#ul: avoid unconditional cmake if no LaTeX is installed
-#INCLUDE(cmake/UseLATEX.cmake)
-#ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
-#  NO_DEFAULT
-#  )
+FIND_PACKAGE(LATEX)
+IF(LATEX_COMPILER)
+  MESSAGE(STATUS "Found LaTeX compiler.")
+  INCLUDE(cmake/UseLATEX.cmake)
+  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
+    NO_DEFAULT
+    )
+ELSE(LATEX_COMPILER)
+  MESSAGE(STATUS "No LaTeX found, cannot compile user manual.")
+ENDIF(LATEX_COMPILER)
 
 #######################################################
 # Print out system information useful for bug reports #

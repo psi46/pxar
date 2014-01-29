@@ -9,6 +9,7 @@
 #include "dictionaries.h"
 #include <algorithm>
 #include <fstream>
+#include "config.h"
 
 using namespace pxar;
 
@@ -25,13 +26,14 @@ api::api(std::string usbId, std::string logLevel) {
 
   // Get the DUT up and running:
   _dut = new dut();
-  _dut->_initialized = false;
 }
 
 api::~api() {
   delete _dut;
   delete _hal;
 }
+
+std::string api::getVersion() { return PACKAGE_STRING; }
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
@@ -1060,9 +1062,11 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   return *result;
 }
   
-int32_t api::getReadbackValue(std::string parameterName) {
+int32_t api::getReadbackValue(std::string /*parameterName*/) {
 
   if(!status()) {return -1;}
+  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
+  return -1;
 }
 
 
@@ -1116,7 +1120,11 @@ std::vector<uint16_t> api::daqGetBuffer() {
   return data;
 }
 
-std::vector<pixel> api::daqGetEvent() {}
+std::vector<pixel> api::daqGetEvent() {
+
+  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
+  return std::vector<pixel>();
+}
 
 bool api::daqStop() {
 

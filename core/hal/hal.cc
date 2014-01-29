@@ -5,12 +5,11 @@
 
 using namespace pxar;
 
-hal::hal(std::string name) {
-
-  // Reset the states of the HAL instance:
-  _initialized = false;
-  _compatible = false;
-  _fallback_mode = false;
+hal::hal(std::string name) :
+  _initialized(false),
+  _compatible(false),
+  _fallback_mode(false)
+{
 
   // Get a new CTestboard class instance:
   _testboard = new CTestboard();
@@ -269,8 +268,7 @@ void hal::mDelay(uint32_t ms) {
 bool hal::CheckCompatibility(){
 
   std::string dtb_hashcmd;
-  uint32_t hostCmdHash;
-  uint32_t dtbCmdHash;
+  uint32_t hostCmdHash = 0, dtbCmdHash = 0;
 
   // This is a legacy check for boards with an old firmware not featuring the hash function:
   _testboard->GetRpcCallName(5,dtb_hashcmd);
@@ -373,7 +371,7 @@ bool hal::FindDTB(std::string &usbId) {
 
   LOG(logINFO) << "Please choose DTB (0-" << (nDev-1) << "): ";
   char choice[8];
-  fgets(choice, 8, stdin);
+  if(fgets(choice, 8, stdin) == NULL) return false;
   sscanf (choice, "%ud", &nr);
   if (nr >= devList.size()) {
     nr = 0;
@@ -473,7 +471,8 @@ bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t /*tbmId*/, uint8_t regId, uint8_t regValue) {
+  // FIXME currently only one TBM supported...
 
   // Make sure we are writing to the correct TBM by setting its sddress:
   // FIXME Magic from Beat, need to understand this and be able to program also the second TBM:
