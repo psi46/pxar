@@ -231,35 +231,6 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
     tbm[tbmId].enable = enable;
 }
 
-void dut::maskColumn(uint8_t column, bool mask, uint8_t rocid) {
-
-  if(status() && rocid < roc.size()) {
-      LOG(logDEBUGAPI) << "Set mask bit of all pixels in column " << static_cast<int>(column) << " to " << static_cast<int>(mask) << " on ROC " << static_cast<int>(rocid);
-    
-      // Find all pixels with specified column
-      for(std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it) {
-	// Set enable bit
-	if(it->column == column) {it->mask = mask;}
-      }
-    }
-}
-
-void dut::maskColumn(uint8_t column, bool mask) {
-
-  if(status()) {
-    LOG(logDEBUGAPI) << "Set mask bit of all pixels in column " << static_cast<int>(column)
-		     << " to " << static_cast<int>(mask) << " on all ROCs."; 
-    // Loop over all ROCs
-    for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
-      // Find all pixels with specified column
-      for(std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it) {
-	// Set enable bit
-	if(it->column == column) {it->mask = mask;}
-      }
-    }
-  }
-}
-
 void dut:: maskPixel(uint8_t column, uint8_t row, bool mask) {
 
   if(status()) {
