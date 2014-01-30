@@ -234,8 +234,6 @@ void dut::setTBMEnable(size_t tbmId, bool enable) {
 void dut:: maskPixel(uint8_t column, uint8_t row, bool mask) {
 
   if(status()) {
-    LOG(logDEBUGAPI) << "Set mask bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row)
-		     << " to " << static_cast<int>(mask) << " on all ROCs."; 
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
       // Find pixel with specified column and row
@@ -255,7 +253,6 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask) {
 void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid) {
 
   if(status() && rocid < roc.size()) {
-    LOG(logDEBUGAPI) << "Set mask bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row) << " to " << static_cast<int>(mask) << " on ROC " << static_cast<int>(rocid);
     // Find pixel with specified column and row
     std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
 							 roc.at(rocid).pixels.end(),
@@ -275,8 +272,6 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable) {
   maskPixel(column,row,!enable);
 
   if(status()) {
-    LOG(logDEBUGAPI) << "Set enable bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row) 
-		     << " to " << static_cast<int>(enable) << " on all ROCs.";
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
       // Find pixel with specified column and row
@@ -299,8 +294,6 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid) {
   maskPixel(column,row,!enable,rocid);
 
   if(status() && rocid < roc.size()) {
-    LOG(logDEBUGAPI) << "Set enable bit of pixel " << static_cast<int>(column) << ", " << static_cast<int>(row) << " to " << static_cast<int>(enable) << " on ROC " << static_cast<int>(rocid);
-
     // Find pixel with specified column and row
     std::vector<pixelConfig>::iterator it = std::find_if(roc.at(rocid).pixels.begin(),
 							 roc.at(rocid).pixels.end(),
