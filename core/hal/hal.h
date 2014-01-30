@@ -287,7 +287,7 @@ namespace pxar {
 
     /** Read all data from one TBM channel data stream
      */
-    std::vector<uint16_t> daqReadChannel(uint8_t channel);
+    std::vector<uint16_t> * daqReadChannel(uint8_t channel);
   };
 
 }

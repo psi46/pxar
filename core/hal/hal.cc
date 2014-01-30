@@ -1023,21 +1023,21 @@ bool hal::daqStop(uint8_t nTBMs) {
 std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 
   // Read all data from the first channel:
-  std::vector<uint16_t> data = daqReadChannel(0);
+  std::vector<uint16_t> * data = daqReadChannel(0);
 
   // Also read the second channel if needed:
   if(nTBMs > 0) {
-    std::vector<uint16_t> data1 = daqReadChannel(1);
-    data.insert( data.end(), data1.begin(), data1.end() );
+    std::vector<uint16_t> * data1 = daqReadChannel(1);
+    data->insert( data->end(), data1->begin(), data1->end() );
   }
 
-  return data;
+  return *data;
 }
 
-std::vector<uint16_t> hal::daqReadChannel(uint8_t channel) {
+std::vector<uint16_t> * hal::daqReadChannel(uint8_t channel) {
 
   int status = 0;
-  std::vector<uint16_t> daqdata;
+  std::vector<uint16_t> * daqdata = new std::vector<uint16_t>();
   uint32_t buffer_remaining;
 
   // Maximal allowed block size for DAQ read
@@ -1059,7 +1059,7 @@ std::vector<uint16_t> hal::daqReadChannel(uint8_t channel) {
     LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel "
 		     << static_cast<int>(channel) << ", " 
 		     << buffer_remaining << " words remaining in buffer.";
-    daqdata.insert(daqdata.end(), data.begin(), data.end());
+    daqdata->insert(daqdata->end(), data.begin(), data.end());
   }
 
   return daqdata;
