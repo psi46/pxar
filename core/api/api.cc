@@ -13,7 +13,10 @@
 
 using namespace pxar;
 
-api::api(std::string usbId, std::string logLevel) {
+api::api(std::string usbId, std::string logLevel) : 
+  _daq_running(false), 
+  _daq_buffersize(0)
+{
 
   LOG(logQUIET) << "Instanciating API for " << PACKAGE_STRING;
 
@@ -1075,8 +1078,10 @@ int32_t api::getReadbackValue(std::string /*parameterName*/) {
 bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   if(!status()) {return false;}
+  if(daqStatus()) {return false;}
 
-  // FIXME maybe add check for already running DAQ? Some _daq flag in DUT?
+  // Allocate the maximum memory allowed: 50M samples
+  _daq_buffersize = 50000000;
 
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
   if(!pg_setup.empty()) {
@@ -1093,26 +1098,54 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   // Check the DUT if we have TBMs enabled or not and choose the right
   // deserializer:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms());
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms(), _daq_buffersize);
 
+  _daq_running = true;
+  return true;
+}
+
+bool api::daqStatus() {
+
+  // Check if a DAQ session is running:
+  if(!_daq_running) {
+    LOG(logDEBUGAPI) << "DAQ not running!";
+    return false;
+  }
+
+  // Check if we still have enough buffer memory left (with some safety margin).
+  // Only filling buffer up to 90% in order not to lose data.
+  uint32_t filled_buffer = _hal->daqBufferStatus();
+  if(filled_buffer > 0.9*_daq_buffersize) {
+    LOG(logDEBUGAPI) << "DAQ buffer about to overflow!";
+    return false;
+  }
+
+  LOG(logDEBUGAPI) << "Everything alright, buffer size " << filled_buffer
+		   << "/" << _daq_buffersize;
   return true;
 }
 
 void api::daqTrigger(uint32_t nTrig) {
-  // Just passing the call to the HAL, not doing anything else here:
-  _hal->daqTrigger(nTrig);
+
+  if(daqStatus()) {
+    // Just passing the call to the HAL, not doing anything else here:
+    _hal->daqTrigger(nTrig);
+  }
 }
 
 void api::daqTriggerLoop(uint16_t period) {
-  // Pattern Generator loop doesn't work for delay periods smaller than
-  // 110 clock cycles, so limit it to that:
-  if(period < 110) {
-    period = 110;
-    LOG(logWARNING) << "Loop period setting too small for Pattern generator. "
-		    << "Setting loop delay to " << period << " clk";
-  }
 
-  _hal->daqTriggerLoop(period);
+  if(daqStatus()) {
+    // Pattern Generator loop doesn't work for delay periods smaller than
+    // 110 clock cycles, so limit it to that:
+    if(period < 110) {
+      period = 110;
+      LOG(logWARNING) << "Loop period setting too small for Pattern generator. "
+		      << "Setting loop delay to " << period << " clk";
+    }
+    
+    _hal->daqTriggerLoop(period);
+  }
 }
 
 std::vector<uint16_t> api::daqGetBuffer() {
@@ -1128,6 +1161,9 @@ std::vector<uint16_t> api::daqGetBuffer() {
 }
 
 std::vector<pixel> api::daqGetEvent() {
+
+  if(!daqStatus()) {return std::vector<pixel>();}
+
   // FIXME: needs to actually interact with the HAL and get DATA
   LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
   return std::vector<pixel>();
@@ -1136,7 +1172,10 @@ std::vector<pixel> api::daqGetEvent() {
 bool api::daqStop() {
 
   if(!status()) {return false;}
+  if(!daqStatus()) {return false;}
 
+  _daq_running = false;
+  
   // Stop all active DAQ channels (depending on number of TBMs)
   _hal->daqStop(_dut->getNEnabledTbms());
 
