@@ -950,22 +950,21 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
-bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
+bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
-  // Maximum allocated buffer size: 50M samples:
-  uint32_t buffer = 50000000;
-  // FIXME maybe we have to adapt that soze when having more than one channel
-  // need to test when I have a module available.
+  // FIXME maybe we have to split the total buffer size when having more than one channel
+  // need to test when I have a module available:
+  // if(nTBMs > 0) buffersize /= 2*nTBMs
 
-  uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffer,0);
+  uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
 
   _testboard->uDelay(100);
 
   if(nTBMs > 0) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
-    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffer,1);
+    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
 
     // Reset the Deserializer 400, re-synchronize:
@@ -1003,6 +1002,16 @@ void hal::daqTriggerLoop(uint16_t period) {
   LOG(logDEBUGHAL) << "Trigger loop every " << period << " clock cycles started.";
   _testboard->Pg_Loop(period);
   _testboard->uDelay(20);
+}
+
+uint32_t hal::daqBufferStatus() {
+
+  uint32_t buffered_data = 0;
+  // Summing up data words in all DAQ channels:
+  for(uint8_t channel = 0; channel < 8; channel++) {
+    buffered_data += _testboard->Daq_GetSize(channel);
+  }
+  return buffered_data;
 }
 
 bool hal::daqStop(uint8_t nTBMs) {
