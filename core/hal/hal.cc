@@ -952,7 +952,10 @@ void hal::SignalProbeA2(uint8_t signal) {
 bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
-  uint32_t buffer = 500000;
+  // Maximum allocated buffer size: 50M samples:
+  uint32_t buffer = 50000000;
+  // FIXME maybe we have to adapt that soze when having more than one channel
+  // need to test when I have a module available.
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffer,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
@@ -1034,28 +1037,32 @@ std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 std::vector<uint16_t> hal::daqReadChannel(uint8_t channel) {
 
   int status = 0;
-  std::vector<uint16_t> data;
+  std::vector<uint16_t> daqdata;
   uint32_t buffer_remaining;
 
-  // Maximal allowed block size for DAQ read:
-  uint32_t buffer_max = 32768;
+  // Maximal allowed block size for DAQ read
+  // Setting even one word more results in getting an empty vector back!
+  uint32_t buffer_max = 32767;
   uint32_t buffer_read;
 
   buffer_remaining = _testboard->Daq_GetSize(channel);
-  LOG(logDEBUGHAL) << "Available data in channel " << channel << ": " 
-		   << buffer_remaining;
+  LOG(logDEBUGHAL) << "Available data in channel " << static_cast<int>(channel) << ": " 
+		   << buffer_remaining << " words";
 
   // Keep on reading out while we have remainig data:
   while(buffer_remaining > 0) {
-    buffer_read = max(buffer_remaining, buffer_max);
+    std::vector<uint16_t> data;
+    buffer_read = min(buffer_remaining, buffer_max);
+    LOG(logDEBUGHAL) << "Attempting to read " << buffer_read << " words from buffer.";
     status = _testboard->Daq_Read(data,buffer_read,buffer_remaining,channel);
     LOG(logDEBUGHAL) << "Function returns: " << status;
     LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel "
-		     << channel << ", " 
+		     << static_cast<int>(channel) << ", " 
 		     << buffer_remaining << " words remaining in buffer.";
+    daqdata.insert(daqdata.end(), data.begin(), data.end());
   }
 
-  return data;
+  return daqdata;
 }
 
 bool hal::daqReset(uint8_t nTBMs) {
