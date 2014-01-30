@@ -117,11 +117,22 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::init() {
+  setToolTips(); 
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
   fDirectory->cd(); 
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestDacScan::setToolTips() {
+  fTestTip    = string(Form("scan the DAC %s and determine the number of hits vs DAC value\n", fParDAC.c_str()))
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
 
 }
 
@@ -131,7 +142,7 @@ void PixTestDacScan::bookHist(string name) {
 
   TH1D *h1(0);
   fHistList.clear();
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h1 = new TH1D(Form("scanRange_%s_C%d", name.c_str(), i), Form("scanRange_%s_C%d", name.c_str(), i), 255, 0., 255.); 
     h1->SetMinimum(0.); 
     setTitles(h1, name.c_str(), "a.u."); 
@@ -163,7 +174,6 @@ void PixTestDacScan::doTest() {
   LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
   //FIXME  clearHist();
   // -- FIXME: Should/could separate better test from display?
-  uint16_t flag(0); 
   fApi->_dut->testAllPixels(false);
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
     if (fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
@@ -175,7 +185,7 @@ void PixTestDacScan::doTest() {
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
   LOG(logINFO) << " dacscandata.size(): " << results.size();
   TH1D *h(0), *hsummary(0); 
-  for (int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
+  for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
     hsummary = (TH1D*)fDirectory->Get(Form("scanRange_%s_C%d", fParDAC.c_str(), ichip));
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, vector<pixel> > v = results[i];
@@ -193,7 +203,7 @@ void PixTestDacScan::doTest() {
 	  if (h) {
 	    h->SetBinContent(idac+1, vpix[ipix].value); 
 	  } else {
-	    LOG(logINFO) << "XX did not find " << Form("NhitsVs%S_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
+	    LOG(logINFO) << "XX did not find " << Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
 	  }
 	}
 	

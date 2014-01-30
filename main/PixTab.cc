@@ -2,6 +2,7 @@
 
 #include <TApplication.h>
 #include <TGButton.h>
+#include <TGToolTip.h>
 #include <TRandom.h>
 #include <TSystem.h>
 #include <TCanvas.h>
@@ -26,7 +27,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   UInt_t h = fGui->getTabs()->GetHeight(); 
 
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
- 
+
   //  fhFrame = new TGHorizontalFrame(fTabFrame, w, h);
   fhFrame = new TGCompositeFrame(fTabFrame, w, h, kHorizontalFrame);
   
@@ -83,6 +84,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+    tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+    tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 
     ++cnt;
   }
@@ -90,18 +93,22 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   hFrame = new TGHorizontalFrame(fV2); 
   TGTextButton * previous = new TGTextButton(hFrame, "Previous");
+  previous->SetToolTipText("display previous histogram in this test's list");
   previous->Connect("Clicked()", "PixTab", this, "previousHistogram()");
   hFrame->AddFrame(previous, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * next = new TGTextButton(hFrame, "Next");
+  next->SetToolTipText("display next histogram in this test's list");
   next->Connect("Clicked()", "PixTab", this, "nextHistogram()");
   hFrame->AddFrame(next, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * update = new TGTextButton(hFrame, "Update");
+  update->SetToolTipText("update canvas");
   update->Connect("Clicked()", "PixTab", this, "update()");
   hFrame->AddFrame(update, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * clear = new TGTextButton(hFrame, "Clear");
+  clear->SetToolTipText("clear canvas");
   clear->Connect("Clicked()", "PixTab", this, "clearCanvas()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
@@ -110,36 +117,41 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   hFrame = new TGHorizontalFrame(fV2); 
   // -- create doTest Button
-  TGTextButton *bDoTest = new TGTextButton(hFrame, " doTest ", B_DOTEST);
-  bDoTest->ChangeOptions(bDoTest->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(bDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
-  bDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
+  fbDoTest = new TGTextButton(hFrame, " doTest ", B_DOTEST);
+  fbDoTest->ChangeOptions(fbDoTest->GetOptions() | kFixedWidth);
+  hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  fbDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
+  bStop->SetToolTipText("not yet implemented (should interrupt the test at a convenient place)");
   bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create print Button
   TGTextButton *bPrint = new TGTextButton(hFrame, " print ", B_PRINT);
+  bPrint->SetToolTipText("create a pdf of the canvas");
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
   bPrint->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create module map button
-  TGTextButton *bModMap = new TGTextButton(hFrame, " summary ", B_MODMAP);
-  bModMap->ChangeOptions(bModMap->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(bModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
-  bModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
+  fbModMap = new TGTextButton(hFrame, " summary ", B_MODMAP);
+  fbModMap->ChangeOptions(fbModMap->GetOptions() | kFixedWidth);
+  hFrame->AddFrame(fbModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  fbModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
   bClose->ChangeOptions(bClose->GetOptions() | kFixedWidth);
+  bClose->SetToolTipText("close the test tab");
   hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, 2, 20, 2, 2));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));
+
+  updateToolTips();
 
 //   fhFrame->MapSubwindows();
 //   fhFrame->Resize(fhFrame->GetDefaultSize());
@@ -245,7 +257,7 @@ void PixTab::setParameter() {
   fTest->setParameter(fParIds[id], svalue); 
 
   if (1) fTest->dumpParameters();
-  
+  updateToolTips();
 } 
 
 
@@ -322,10 +334,9 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   const char *text0, *text2;
   text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
-  //  char text1[50];
-  //   if (event == kKeyPress)
-  //     sprintf(text1, "%c", (char) px);
-  //   else
+  if (event == kKeyPress) {
+    LOG(logINFO) << "key pressed?"; 
+  }
   //     sprintf(text1, "%d,%d", px, py);
   //   fStatusBar->SetText(text1, 1);
   if (selected->InheritsFrom(TH1::Class())) {
@@ -350,4 +361,20 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
     text2 = selected->GetObjectInfo(px,py);
   }
   fStatusBar->SetText(text2, 1);
+}
+
+
+// ----------------------------------------------------------------------
+void PixTab::updateToolTips() {
+  string tooltip = string(Form("%s test algorithm (patience may be required)", fTest->getName().c_str())) 
+    + string("\n") + fTest->getTestTip()
+    ;
+
+  fbDoTest->SetToolTipText(tooltip.c_str()); 
+  
+  tooltip = string(Form("summary plot for %s", fTest->getName().c_str())) 
+    + string("\n") + fTest->getSummaryTip()
+    ;
+  fbModMap->SetToolTipText(tooltip.c_str());
+  
 }

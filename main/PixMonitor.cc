@@ -20,15 +20,19 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fDigi = new TGLabel(fHFrame2, d);
 
   fNmrAna = new TGTextEntry(fHFrame1, fAnaFileBuffer = new TGTextBuffer(100));
+  fNmrAna->SetToolTipText(Form("Total analog current drawn by %s", (fGui->getPixSetup()->getConfigParameters()->getNrocs()>1?"module":"ROC")));
   fNmrDigi = new TGTextEntry(fHFrame2, fDigiFileBuffer = new TGTextBuffer(100));
   fNmrAna->SetWidth(100);
   fNmrDigi->SetWidth(100);
+  fNmrDigi->SetToolTipText(Form("Total digital current drawn by %s", (fGui->getPixSetup()->getConfigParameters()->getNrocs()>1?"module":"ROC")));
 
   fAnaButton = new TGTextButton(fHFrame1," Draw ", B_DRAWANA);
+  fAnaButton->SetToolTipText("not yet implemented");
   fAnaButton->ChangeOptions(fAnaButton->GetOptions() | kFixedWidth);
   fAnaButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 
   fDigiButton = new TGTextButton(fHFrame2," Draw ", B_DRAWDIGI);
+  fDigiButton->SetToolTipText("not yet implemented");
   fDigiButton->ChangeOptions(fDigiButton->GetOptions() | kFixedWidth);
   fDigiButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 

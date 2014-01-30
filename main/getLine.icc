@@ -642,7 +642,7 @@ gl_putc(int c)
        CharToOemBuff((char const *)&c,&ch,1);
 #endif
 
-       write(1, &ch, 1);
+       if(write(1, &ch, 1)){;}
     }
 #if defined(unix) || defined(MSDOS) || defined(WIN32)
 #ifdef TIOCSETP         /* BSD in RAW mode, map NL to NL,CR */
@@ -670,7 +670,7 @@ gl_puts(const char *buf)
      free(OemBuf);
     }
 #else
-    write(1, buf, len);
+    if(write(1, buf, len)){;}
 #endif
 }
 
@@ -688,7 +688,7 @@ gl_error(const char *buf)
       free(OemBuf);
     }
 #else
-    write(2, buf, len);
+    if(write(2, buf, len)){;}
 #endif
     exit(1);
 }
@@ -1420,7 +1420,8 @@ Gl_histadd(char *buf)
                   char line[BUFSIZ];
 
                   fp = fopen(gl_histfile, "r");
-                  tmpnam(tname);
+		  char *bla  = tmpnam(tname);
+		  (void)bla; 
                   ftmp = fopen(tname, "w");
                   if (fp && ftmp) {
                      int nline = 0;
@@ -1429,7 +1430,7 @@ Gl_histadd(char *buf)
                         gl_savehist = 1;  /* prevent from becoming 0 */
                         if (nline > HIST_SIZE-HIST_SAVE) {
                            gl_savehist++;
-                           fprintf(ftmp, "%s", line);
+			   fprintf(ftmp, "%s", line);
                         }
                      }
                   }

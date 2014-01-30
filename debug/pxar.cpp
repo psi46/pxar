@@ -55,9 +55,9 @@ void DecodePixel(unsigned int raw)
 
 void Decode(std::vector<uint16_t> data) {
 
-  unsigned int hdr, trl;
-  unsigned int raw;
-  for (int i=0; i<data.size(); i++)
+  unsigned int hdr(0), trl(0);
+  unsigned int raw(0);
+  for (unsigned int i=0; i<data.size(); i++)
     {
       int d = data[i] & 0xf;
       int q = (data[i]>>4) & 0xf;
@@ -352,7 +352,6 @@ int main(int argc, char* argv[]) {
     
     std::cout << "ASCII Sensor Efficiency Map:" << std::endl;
     unsigned int row = 0;
-    int oldroc = 0;
     for (std::vector< pxar::pixel >::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
       
       if((int)mapit->value == nTrig) std::cout << "X";

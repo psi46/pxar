@@ -5,6 +5,7 @@
 
 #include <TQObject.h> 
 #include <TGFrame.h>
+#include <TGToolTip.h>
 #include <TGTab.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TGSlider.h>
@@ -31,8 +32,8 @@ public:
   virtual void handleButtons(Int_t id = -1); 
   virtual void selectRoc(Int_t id = -1); 
   virtual void selectTbm(Int_t id = -1); 
-  virtual std::vector<int> PixParTab::getSelectedRocs();
-  virtual std::vector<int> PixParTab::getSelectedTbms();
+  virtual std::vector<int> getSelectedRocs();
+  virtual std::vector<int> getSelectedTbms();
 
   virtual void setTbParameter(); 
   virtual void setPowerSettings(); 

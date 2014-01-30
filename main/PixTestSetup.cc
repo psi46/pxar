@@ -38,10 +38,12 @@ bool PixTestSetup::setParameter(string parName, string sval) {
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logINFO) << "  ==> setting fParNtrig to " << fParNtrig; 
+	setToolTips();
       }
       if (!parName.compare("Vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logINFO) << "  ==> setting fParVcal to " << fParVcal; 
+	setToolTips();
       }
       break;
     }
@@ -53,12 +55,23 @@ bool PixTestSetup::setParameter(string parName, string sval) {
 // ----------------------------------------------------------------------
 void PixTestSetup::init() {
   LOG(logINFO) << "PixTestSetup::init()";
-  
+
+  setToolTips();
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestSetup::setToolTips() {
+  fTestTip    = string(Form("scan testboard parameter settings and check for valid readout\n")
+		       + string("TO BE IMPLEMENTED!!"))
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
 }
 
 
@@ -69,8 +82,8 @@ void PixTestSetup::bookHist(string name) {
 
   TH2D *h2(0);
   fHistList.clear();
-  for (int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h2 = new TH2D(Form("Setup_C%d", i), Form("Setup_C%d", i), 52, 0., 52., 80, 0., 80.); 
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+    h2 = new TH2D(Form("Setup_%s_C%d", name.c_str(), i), Form("Setup_%s_C%d", name.c_str(), i), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     setTitles(h2, "col", "row"); 
     fHistList.push_back(h2); 

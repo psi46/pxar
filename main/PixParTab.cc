@@ -3,6 +3,7 @@
 
 #include <TApplication.h>
 #include <TGButton.h>
+#include <TGToolTip.h>
 #include <TRandom.h>
 #include <TSystem.h>
 #include <TCanvas.h>
@@ -75,6 +76,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     te->Connect("ReturnPressed()", "PixParTab", this, "setTbParameter()");
 
     tset = new TGTextButton(hFrame, "Set", i);
+    tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+    tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
     tset->Connect("Clicked()", "PixParTab", this, "setTbParameter()");
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
   }
@@ -98,11 +101,14 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     te->Connect("ReturnPressed()", "PixParTab", this, "setPowerSettings()");
 
     tset = new TGTextButton(hFrame, "Set", i);
+    tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+    tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
     tset->Connect("Clicked()", "PixParTab", this, "setPowerSettings()");
     hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
   }
 
   tset = new TGTextButton(g1Frame, "Save Parameters");
+  tset->SetToolTipText(Form("Write the testboard parameters to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveTbParameters()");
   g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
 
@@ -110,7 +116,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   // -- TBM Parameters
   TGCompositeFrame *bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
-  for (int i = 0; i < fConfigParameters->getNtbms(); ++i) {
+  for (unsigned int i = 0; i < fConfigParameters->getNtbms(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectTbm.push_back(tcb); 
@@ -125,7 +131,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
   if (cmap.size() > 0) {
 
-    int firsttbm(0); 
+    unsigned int firsttbm(0); 
     for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
       if (kButtonDown == fSelectTbm[i]->GetState()) {
 	firsttbm = i; 
@@ -155,6 +161,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
 	  
 	  tset = new TGTextButton(hFrame, "Set", i);
+	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 	  tset->Connect("Clicked()", "PixParTab", this, "setTbmParameter()");
 	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 	}
@@ -170,6 +178,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
 
     tset = new TGTextButton(g2Frame, "Save Parameters");
+    tset->SetToolTipText(Form("Write the TBM parameters of all selected TBMs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
     tset->Connect("Clicked()", "PixParTab", this, "saveTbmParameters()");
     g2Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
   }
@@ -181,12 +190,14 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   hFrame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX); 
   vFrame->AddFrame(hFrame); 
   hFrame->AddFrame(tset = new TGTextButton(hFrame, "Select all", B_SELECTALL));
+  tset->SetToolTipText("select all ROCs.\nSetting a DAC will affect all selected ROCs.\nTo view the DACs for a specific ROC, select *only* that ROC.");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
   hFrame->AddFrame(tset = new TGTextButton(hFrame, "Deselect all", B_DESELECTALL));
+  tset->SetToolTipText("deselect all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
   
   bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
-  for (int i = 0; i < fConfigParameters->getNrocs(); ++i) {
+  for (unsigned int i = 0; i < fConfigParameters->getNrocs(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
@@ -209,7 +220,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   
   cmap = fConfigParameters->getRocDacs();
   if (cmap.size() > 0) {
-    int firstroc(0); 
+    unsigned int firstroc(0); 
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
       if (kButtonDown == fSelectRoc[i]->GetState()) {
 	firstroc = i; 
@@ -236,6 +247,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  te->SetText(Form("%d", int(amap[idac].second)));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
 	  tset = new TGTextButton(hFrame, "Set", idac);
+	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 	  tset->Connect("Clicked()", "PixParTab", this, "setRocParameter()");
 	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 	}
@@ -261,6 +274,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
 	  
 	  tset = new TGTextButton(hFrame, "Set", idac);
+	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
+	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 	  tset->Connect("Clicked()", "PixParTab", this, "setRocParameter()");
 	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 
@@ -275,10 +290,12 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     }
 
     tset = new TGTextButton(g1Frame, "Save DAC");
+    tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
     tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
     g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
 
     tset = new TGTextButton(g1Frame, "Save Trim");
+    tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
     tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
     g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, 2, 2, 2, 2)); 
   }
@@ -381,7 +398,7 @@ void PixParTab::setPgSettings() {
   string svalue = ((TGTextEntry*)(fPgTextEntries[fPgParIds[id]]))->GetText(); 
   uint8_t udac = atoi(svalue.c_str()); 
 
-  cout << "FIXME FIXME: ID = " << id << " -> " << fPgParIds[id] << " set to " << svalue << endl;
+  cout << "FIXME FIXME: ID = " << id << " -> " << fPgParIds[id] << " set to " << int(udac) << " from svalue = " << svalue << endl;
 
   initTestboard(); 
 
@@ -489,8 +506,6 @@ void PixParTab::selectRoc(int iroc) {
 
   fSelectedRoc = iroc; 
 
-  std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
-
   map<string, uint8_t> amap = fRocParIds[fSelectedRoc]; 
   for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
     fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second)); 
@@ -530,7 +545,6 @@ void PixParTab::setRocParameter() {
   uint8_t udac = atoi(sval.c_str()); 
 
   int iroc(-1); 
-  int cacheSelectedRoc = fSelectedRoc; 
   for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
     if (kButtonDown == fSelectRoc[i]->GetState()) {
       iroc = i; 

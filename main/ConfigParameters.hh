@@ -72,8 +72,8 @@ public:
 
   void setGuiMode(bool a) {fGuiMode = a;}
 
-  int getNrocs() {return fnRocs;}
-  int getNtbms() {return fnTbms;}
+  unsigned int getNrocs() {return fnRocs;}
+  unsigned int getNtbms() {return fnTbms;}
 
   double getIa() {return ia;}
   double getId() {return id;}
@@ -89,8 +89,8 @@ private:
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
   std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
 
-  int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fDataTriggerLevel, fHalfModule;
-  int fCustomModule;
+  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
+  int fCustomModule, fHalfModule;
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;

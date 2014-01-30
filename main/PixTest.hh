@@ -25,6 +25,9 @@ public:
   virtual ~PixTest();
   void init(PixSetup *, std::string name);
   void bookHist(std::string name);
+  virtual void setToolTips();
+  virtual std::string getSummaryTip() {return fSummaryTip;}
+  virtual std::string getTestTip() {return fTestTip;}
 
   int pixelThreshold(string dac, int ntrig, int dacmin, int dacmax);
   std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
@@ -72,7 +75,7 @@ protected:
 
   double               fThreshold, fThresholdE, fSigma, fSigmaE; 
 
-  std::string           fName; 
+  std::string           fName, fTestTip, fSummaryTip; 
 
   std::map<std::string, std::string> fParameters;
 

@@ -47,7 +47,9 @@ void PixInitFunc::resetLimits() {
 
 // ----------------------------------------------------------------------
 void PixInitFunc::limitPar(int ipar, double lo, double hi) {
-
+  fLimit[ipar] = true; 
+  fLimitLo[ipar] = lo; 
+  fLimitHi[ipar] = hi; 
 }
 
 

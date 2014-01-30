@@ -632,7 +632,7 @@ char * SysCommand::toString() {
   switch (type)
     {
     case kTest:
-      sprintf(buf, "");
+      sprintf(buf, " ");
       break;
     case kTB:
       sprintf(buf, "TB:");

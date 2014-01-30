@@ -1,17 +1,18 @@
-#ifndef PIXTESTSETUP_H
-#define PIXTESTSETUP_H
+#ifndef PIXTESTTBM_H
+#define PIXTESTTBM_H
 
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestSetup: public PixTest {
+class PixTestTbm: public PixTest {
 public:
-  PixTestSetup(PixSetup *, std::string);
-  PixTestSetup();
-  virtual ~PixTestSetup();
+  PixTestTbm(PixSetup *, std::string);
+  PixTestTbm();
+  virtual ~PixTestTbm();
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
+  
   void bookHist(std::string); 
 
   void doTest(); 
@@ -21,7 +22,7 @@ private:
   int     fParNtrig; 
   int     fParVcal; 
 
-  ClassDef(PixTestSetup, 1);
+  ClassDef(PixTestTbm, 1);
 
 };
 #endif
