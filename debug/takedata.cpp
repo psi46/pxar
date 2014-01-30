@@ -151,11 +151,14 @@ int main(int argc, char* argv[]) {
     uint32_t daq_check_triggers = 0;
     
     // Send the triggers:
-    _api->daqTrigger(triggers);
-
-    //FIXME not working...
-    //_api->daqTriggerLoop(10);
-
+    if(triggers != 0) {
+      _api->daqTrigger(triggers);
+    }
+    else {
+      _api->daqTriggerLoop(10);
+      while(_api->daqStatus()) {sleep(1);}
+    }
+    
     // Stop the DAQ:
     _api->daqStop();
 
