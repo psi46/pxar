@@ -16,13 +16,13 @@ PixTestDacDacScan::PixTestDacDacScan(PixSetup *a, std::string name) :
 PixTest(a, name), fParNtrig(-1), fParDAC1("nada"), fParDAC2("nada"), fParLoDAC1(-1), fParHiDAC1(-1), fParLoDAC2(-1), fParHiDAC2(-1) {
   PixTest::init(a, name);
   init(); 
-  LOG(logINFO) << "PixTestDacDacScan ctor(PixSetup &a, string, TGTab *)";
+  LOG(logDEBUG) << "PixTestDacDacScan ctor(PixSetup &a, string, TGTab *)";
 }
 
 
 //----------------------------------------------------------
 PixTestDacDacScan::PixTestDacDacScan() : PixTest() {
-  LOG(logINFO) << "PixTestDacDacScan ctor()";
+  LOG(logDEBUG) << "PixTestDacDacScan ctor()";
 }
 
 // ----------------------------------------------------------------------
@@ -32,38 +32,38 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
   string::size_type s1;
   int pixc, pixr; 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << "---> " << imap->first;
+    LOG(logDEBUG) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC1")) {
 	fParDAC1 = sval; 
-	LOG(logINFO) << "  setting fParDAC1  ->" << fParDAC1 << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParDAC1  ->" << fParDAC1 << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC2")) {
 	fParDAC2 = sval; 
-	LOG(logINFO) << "  setting fParDAC2  ->" << fParDAC2 << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParDAC2  ->" << fParDAC2 << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC1LO")) {
 	fParLoDAC1 = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParLoDAC1  ->" << fParLoDAC1 << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParLoDAC1  ->" << fParLoDAC1 << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC1HI")) {
 	fParHiDAC1 = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParHiDAC1  ->" << fParHiDAC1 << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParHiDAC1  ->" << fParHiDAC1 << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC2LO")) {
 	fParLoDAC2 = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParLoDAC2  ->" << fParLoDAC2 << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParLoDAC2  ->" << fParLoDAC2 << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC2HI")) {
 	fParHiDAC2 = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParHiDAC2  ->" << fParHiDAC2 << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParHiDAC2  ->" << fParHiDAC2 << "<- from sval = " << sval;
       }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 
@@ -126,7 +126,7 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::init() {
-  LOG(logINFO) << "PixTestDacDacScan::init()";
+  LOG(logDEBUG) << "PixTestDacDacScan::init()";
 
   setToolTips(); 
   fDirectory = gFile->GetDirectory(fName.c_str()); 
@@ -155,7 +155,7 @@ void PixTestDacDacScan::bookHist(string name) {
   string::size_type s1 = name.find(":"); 
   string dac1 = name.substr(0, s1); 
   string dac2 = name.substr(s1+1); 
-  LOG(logINFO) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-" << " from name = " << name;
+  LOG(logDEBUG) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-" << " from name = " << name;
   
   //  TH1D *h1(0);
   TH2D *h2(0);
@@ -184,7 +184,7 @@ void PixTestDacDacScan::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestDacDacScan::~PixTestDacDacScan() {
-  LOG(logINFO) << "PixTestDacDacScan dtor";
+  LOG(logDEBUG) << "PixTestDacDacScan dtor";
 }
 
 
@@ -209,7 +209,7 @@ void PixTestDacDacScan::doTest() {
 					  fParDAC2, fParLoDAC2, fParHiDAC2, 
 					  0, fParNtrig);
 
-  LOG(logINFO) << " dacscandata.size(): " << results.size();
+  LOG(logDEBUG) << " dacscandata.size(): " << results.size();
   TH2D *h(0), *hsummary(0); 
   for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
     hsummary = (TH2D*)fDirectory->Get(Form("scanRange_%s_%s_C%d", fParDAC1.c_str(), fParDAC2.c_str(), ichip));
@@ -222,7 +222,7 @@ void PixTestDacDacScan::doTest() {
       if (hsummary) {
 	hsummary->SetBinContent(idac1, idac2, 1); 
       } else {
-	LOG(logINFO) << "XX did not find " << Form("scanRange_%s_%s_C%d", fParDAC1.c_str(), fParDAC2.c_str(), ichip);
+	LOG(logDEBUG) << "XX did not find " << Form("scanRange_%s_%s_C%d", fParDAC1.c_str(), fParDAC2.c_str(), ichip);
       }
 
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
@@ -231,11 +231,12 @@ void PixTestDacDacScan::doTest() {
 					  fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip)); 
 	  if (h) {
 	    h->Fill(idac1+1, idac2+1, wpix[ipix].value); 
-	    if (wpix[ipix].value > 0) cout << Form("pix = %3d/%3d dacs = %3d/%3d value = %3d", 
-						   wpix[ipix].column, wpix[ipix].row, idac1, idac2, wpix[ipix].value) 
-					   << endl;
+	    if (wpix[ipix].value > 0) {
+	      LOG(logDEBUG) << Form("pix = %3d/%3d dacs = %3d/%3d value = %3d", 
+				    wpix[ipix].column, wpix[ipix].row, idac1, idac2, wpix[ipix].value) ;
+	    }
 	  } else {
-	    LOG(logINFO) << "XX did not find " << Form("nhits_%s_%s_c%d_r%d_C%d", 
+	    LOG(logDEBUG) << "XX did not find " << Form("nhits_%s_%s_c%d_r%d_C%d", 
 						       fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip);
 	  }
 

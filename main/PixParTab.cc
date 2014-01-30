@@ -42,7 +42,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   TGTabElement *tabel = fGui->getTabs()->GetTabTab(fTabName.c_str());
   tabel->ChangeBackground(colDarkSeaGreen);
 
-
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
   TGTextBuffer *tb(0); 
@@ -61,7 +60,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   for (unsigned int i = 0; i < amap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    LOG(logINFO) << "Creating TGTextEntry for " << amap[i].first; 
+    LOG(logDEBUG) << "Creating TGTextEntry for " << amap[i].first; 
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
@@ -86,7 +85,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   for (unsigned int i = 0; i < dmap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    LOG(logINFO) << "Creating TGTextEntry for " << dmap[i].first; 
+    LOG(logDEBUG) << "Creating TGTextEntry for " << dmap[i].first; 
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, dmap[i].first.c_str());
     tl->SetWidth(100);
@@ -149,7 +148,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	if (itbm == firsttbm) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  LOG(logINFO) << "Creating TGTextEntry for " << amap[i].first; 
+	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[i].first; 
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[i].first.c_str());
 	  tl->SetWidth(100);
@@ -237,7 +236,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	if (iroc == firstroc) {
 	  hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
 	  g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  LOG(logINFO) << "Creating TGTextEntry for " << amap[idac].first; 
+	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[idac].first; 
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
 	  tl->SetWidth(100);
@@ -262,7 +261,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	if (iroc == firstroc) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  LOG(logINFO) << "Creating TGTextEntry for " << amap[idac].first; 
+	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[idac].first; 
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
 	  tl->SetWidth(100);
@@ -315,7 +314,7 @@ PixParTab::PixParTab() {
 
 // ----------------------------------------------------------------------
 void PixParTab::init(PixGui *p, ConfigParameters *cfg, std::string tabname) {
-  LOG(logINFO) << "PixParTab::init()";
+  LOG(logDEBUG) << "PixParTab::init()";
   fGui = p;
   fConfigParameters = cfg; 
   fTabName = tabname; 
@@ -324,7 +323,7 @@ void PixParTab::init(PixGui *p, ConfigParameters *cfg, std::string tabname) {
 // ----------------------------------------------------------------------
 // PixParTab destructor
 PixParTab::~PixParTab() {
-  LOG(logINFO) << "PixParTab destructor";
+  LOG(logDEBUG) << "PixParTab destructor";
 }
 
 
@@ -340,7 +339,7 @@ void PixParTab::handleButtons(Int_t id) {
   
   switch (id) {
   case B_SELECTALL: {
-    LOG(logINFO) << "SELECT ALL";
+    LOG(logDEBUG) << "SELECT ALL";
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
       fSelectRoc[i]->SetState(kButtonDown); 
     }
@@ -348,7 +347,7 @@ void PixParTab::handleButtons(Int_t id) {
   }
 
   case B_DESELECTALL: {
-    LOG(logINFO) << "DESELECT ALL";
+    LOG(logDEBUG) << "DESELECT ALL";
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
       fSelectRoc[i]->SetState(kButtonUp); 
     }
@@ -362,13 +361,13 @@ void PixParTab::handleButtons(Int_t id) {
 // ----------------------------------------------------------------------
 void PixParTab::setTbParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixParTab::setTbParameter: ";
+  LOG(logDEBUG)  << "PixParTab::setTbParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
     return; 
   }
 
@@ -385,13 +384,13 @@ void PixParTab::setTbParameter() {
 // ----------------------------------------------------------------------
 void PixParTab::setPgSettings() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixParTab::setPgSettings: ";
+  LOG(logDEBUG)  << "PixParTab::setPgSettings: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
     return; 
   }
 
@@ -408,13 +407,13 @@ void PixParTab::setPgSettings() {
 // ----------------------------------------------------------------------
 void PixParTab::setPowerSettings() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixParTab::setPowerSettings: ";
+  LOG(logDEBUG)  << "PixParTab::setPowerSettings: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
     return; 
   }
 
@@ -438,7 +437,7 @@ void PixParTab::initTestboard() {
   vector<pair<string, double> > power_settings = fConfigParameters->getTbPowerSettings();
   vector<pair<uint16_t, uint8_t> > pg_setup = fConfigParameters->getTbPgSettings();;
 
-  LOG(logINFO) << "Re-programming TB"; 
+  LOG(logDEBUG) << "Re-programming TB"; 
 
   fGui->getApi()->initTestboard(sig_delays, power_settings, pg_setup);
 
@@ -448,13 +447,13 @@ void PixParTab::initTestboard() {
 // ----------------------------------------------------------------------
 void PixParTab::setTbmParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixParTab::setTbmParameter: ";
+  LOG(logDEBUG)  << "PixParTab::setTbmParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
     return; 
   }
 
@@ -466,9 +465,9 @@ void PixParTab::setTbmParameter() {
   for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
     if (kButtonDown == fSelectTbm[i]->GetState()) {
       itbm = i; 
-      LOG(logINFO) << "TBM " << itbm << " is selected. id = " << id;
+      LOG(logDEBUG) << "TBM " << itbm << " is selected. id = " << id;
       fTbmParIds[itbm][sdac] = udac;
-      LOG(logINFO)<< "xxx: ID = " << id << " TBM = " << itbm
+      LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
       fGui->getApi()->setTbmReg(sdac, udac, itbm);
     }
@@ -491,7 +490,7 @@ void PixParTab::selectRoc(int iroc) {
     iroc = btn->WidgetId();
   }
 
-  LOG(logINFO) << "selectRoc: iroc = " << iroc << " selected? " << selected;
+  LOG(logDEBUG) << "selectRoc: iroc = " << iroc << " selected? " << selected;
 
   if (false == selected) {
     iroc = 0;
@@ -501,7 +500,7 @@ void PixParTab::selectRoc(int iroc) {
 	break;
       }
     }
-    LOG(logINFO) << "choosing first selected ROC (or 0) instead: " << iroc << endl;
+    LOG(logDEBUG) << "choosing first selected ROC (or 0) instead: " << iroc << endl;
   }
 
   fSelectedRoc = iroc; 
@@ -522,7 +521,7 @@ void PixParTab::selectTbm(int id) {
     id = btn->WidgetId();
   }
 
-  LOG(logINFO) << "selectTbm: id = " << id;
+  LOG(logDEBUG) << "selectTbm: id = " << id;
   fSelectedTbm = id; 
 }
 
@@ -530,13 +529,13 @@ void PixParTab::selectTbm(int id) {
 // ----------------------------------------------------------------------
 void PixParTab::setRocParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logINFO)  << "PixParTab::setRocParameter: ";
+  LOG(logDEBUG)  << "PixParTab::setRocParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
     return; 
   }
 
@@ -548,9 +547,9 @@ void PixParTab::setRocParameter() {
   for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
     if (kButtonDown == fSelectRoc[i]->GetState()) {
       iroc = i; 
-      LOG(logINFO) << "ROC " << iroc << " is selected. id = " << id;
+      LOG(logDEBUG) << "ROC " << iroc << " is selected. id = " << id;
       fRocParIds[iroc][sdac]  = udac; 
-      LOG(logINFO)<< "xxx: ID = " << id << " roc = " << iroc 
+      LOG(logDEBUG)<< "xxx: ID = " << id << " roc = " << iroc 
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
     }
@@ -563,25 +562,25 @@ void PixParTab::setRocParameter() {
 
 // ----------------------------------------------------------------------
 void PixParTab::saveTbParameters() {
-  LOG(logINFO) << "save Tb parameters"; 
+  LOG(logDEBUG) << "save Tb parameters"; 
   fConfigParameters->writeTbParameterFile();
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveTbmParameters() {
-  LOG(logINFO) << "save Tbm parameters"; 
+  LOG(logDEBUG) << "save Tbm parameters"; 
   fConfigParameters->writeTbmParameterFiles(getSelectedTbms());
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveDacParameters() {
-  LOG(logINFO) << "save DAC parameters"; 
+  LOG(logDEBUG) << "save DAC parameters"; 
   fConfigParameters->writeDacParameterFiles(getSelectedRocs());
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveTrimParameters() {
-  LOG(logINFO) << "save Trim parameters"; 
+  LOG(logDEBUG) << "save Trim parameters"; 
   fConfigParameters->writeTrimFiles(getSelectedRocs());
 
 }

@@ -105,14 +105,14 @@ int main(int argc, char *argv[]){
   
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
-  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
+  vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
+  vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
+  vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
+  vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
   if (!noAPI) {
     try {
       api = new pxar::api("*", verbosity);
-      std::vector<std::pair<std::string,uint8_t> > sig_delays = configParameters->getTbSigDelays(); 
-      std::vector<std::pair<std::string, double> > power_settings = configParameters->getTbPowerSettings();
-      std::vector<std::pair<uint16_t, uint8_t> > pg_setup = configParameters->getTbPgSettings();
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
       api->initDUT(configParameters->getTbmType(), tbmDACs, 

@@ -25,9 +25,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   fOldDirectory = "nada"; 
 
-  ULong_t red;  gClient->GetColorByName("red", red);
-  ULong_t green;  gClient->GetColorByName("green", green);
-  ULong_t yellow;  gClient->GetColorByName("yellow", yellow);
+  gClient->GetColorByName("red", fRed);
+  gClient->GetColorByName("green", fGreen);
+  gClient->GetColorByName("yellow", fYellow);
   
   fPixSetup = setup;
   fApi = fPixSetup->getApi();
@@ -35,7 +35,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fTestParameters = fPixSetup->getPixTestParameters(); 
   
   fPower = true;
-  fHV = false;
+  if (fConfigParameters->getHvOn()) {
+    fHV = true; 
+  } else {
+    fHV = false;
+  }
   
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
   fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
@@ -77,10 +81,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fPower) {
-    fbtnPower->ChangeBackground(green);
+    fbtnPower->ChangeBackground(fGreen);
     fbtnPower->SetText("On");
   }  else {
-    fbtnPower->ChangeBackground(red);
+    fbtnPower->ChangeBackground(fRed);
     fbtnPower->SetText("Off");
   }
   powerFrame->AddFrame(fbtnPower, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
@@ -96,11 +100,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fHV) {
-    fbtnHV->ChangeBackground(green);
-    fbtnHV->SetText("On");
+    hvOn();    
   } else {
-    fbtnHV->ChangeBackground(red);
-    fbtnHV->SetText("Off");
+    hvOff();
   }
 
   hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
@@ -122,7 +124,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   exitButton->ChangeOptions(exitButton->GetOptions() );
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
-  exitButton->ChangeBackground(red);
+  exitButton->ChangeBackground(fRed);
   h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight,5,5,3,4));
 
 
@@ -178,7 +180,6 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   vector<string> tests = fTestParameters->getTests();
   for (unsigned int i = 0; i < tests.size(); ++i) {
     fcmbTests->AddEntry(tests[i].c_str(), i+1);
-    cout << "CREATE TAB FOR TEST " << i << endl;
     createTab(tests[i].c_str()); 
   }
   fcmbTests->Select(0);
@@ -198,7 +199,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
 // ----------------------------------------------------------------------
 PixGui::~PixGui() {
-  LOG(logINFO) << "PixGui::destructor";
+  LOG(logDEBUG) << "PixGui::destructor";
   delete fTimer;
   delete fMonitor; 
   delete fcmbTests;
@@ -243,15 +244,10 @@ void PixGui::handleButtons(Int_t id) {
     TGButton *btn = (TGButton *) gTQSender;
     id = btn->WidgetId();
   }
-  ULong_t red;
-  ULong_t green;
-
-  gClient->GetColorByName("red", red);
-  gClient->GetColorByName("green", green);
  
   switch (id) {
   case B_DIRECTORY: {
-    LOG(logINFO) << Form("changing base directory: %s", fDirNameBuffer->GetString());
+    LOG(logDEBUG) << Form("changing base directory: %s", fDirNameBuffer->GetString());
     fOldDirectory = fConfigParameters->getDirectory(); 
     if (0 == gSystem->OpenDirectory(fDirNameBuffer->GetString())) {
       LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it"; 
@@ -272,38 +268,30 @@ void PixGui::handleButtons(Int_t id) {
     break;
   }
   case B_EXIT: {
-    LOG(logINFO) << "PixGui::exit called";
+    LOG(logDEBUG) << "PixGui::exit called";
     CloseWindow();
   }
   case B_POWER: {
     if(fPower == true) {
       fPower = false;
-      fbtnPower->ChangeBackground(red);
+      fbtnPower->ChangeBackground(fRed);
       fbtnPower->SetText("Off");
       fApi->Poff(); 
-      LOG(logINFO) << "Power set Off";
+      LOG(logDEBUG) << "Power set Off";
     } else {
       fPower = true;
-      fbtnPower->ChangeBackground(green);
+      fbtnPower->ChangeBackground(fGreen);
       fbtnPower->SetText("On");
       fApi->Pon(); 
-      LOG(logINFO) << "Power set On";
+      LOG(logDEBUG) << "Power set On";
     }
     break;
   }
   case B_HV: {
     if(fHV == true) {
-      fHV = false;
-      fbtnHV->ChangeBackground(red);
-      fbtnHV->SetText("Off");
-      fApi->HVoff(); 
-      LOG(logINFO) << "HV set Off";
+      hvOff();
     } else {
-      fHV = true;
-      fbtnHV->ChangeBackground(green);
-      fbtnHV->SetText("On");
-      fApi->HVon(); 
-      LOG(logINFO) << "HV set On";
+      hvOn();
     }
     break;  
   }
@@ -311,6 +299,26 @@ void PixGui::handleButtons(Int_t id) {
     break;
   }
 }
+
+// ----------------------------------------------------------------------
+void PixGui::hvOn() {
+  fHV = true;
+  fbtnHV->ChangeBackground(fGreen);
+  fbtnHV->SetText("On");
+  fApi->HVon(); 
+  LOG(logDEBUG) << "HV set On";
+}
+
+
+// ----------------------------------------------------------------------
+void PixGui::hvOff() {
+  fHV = false;
+  fbtnHV->ChangeBackground(fRed);
+  fbtnHV->SetText("Off");
+  fApi->HVoff(); 
+  LOG(logDEBUG) << "HV set Off";
+}
+
 
 
 // --------------------------------------------------------------------------------
@@ -334,7 +342,7 @@ void PixGui::createTab(const char*csel) {
 
   PixTest *pt = createTest(string(csel));
   if (0 == pt) {
-    LOG(logINFO) << "ERROR: " << csel << " not known, nothing created";
+    LOG(logDEBUG) << "ERROR: " << csel << " not known, nothing created";
     return;
   }
 
@@ -346,7 +354,7 @@ void PixGui::createTab(const char*csel) {
   MapSubwindows();
   Resize(GetDefaultSize());
   MapWindow();
-  LOG(logINFO) << "csel = " << csel;
+  LOG(logDEBUG) << "csel = " << csel;
   fTabs->SetTab(csel); 
   
 }
@@ -361,15 +369,14 @@ PixTest* PixGui::createTest(string testname) {
 
 // ----------------------------------------------------------------------
 void PixGui::selectedTab(int id) {
-    LOG(logINFO) << "Switched to tab " << id;
-    fTabs->SetTab(id); 
+  LOG(logDEBUG) << "Switched to tab " << id;
+  fTabs->SetTab(id); 
 }
 
 
 // ----------------------------------------------------------------------
 void PixGui::changeRootFile() {
   string oldRootFilePath = gFile->GetName();
-  cout << "oldRootFilePath: " << oldRootFilePath << endl;
   gFile->Close();
 
   string newRootFilePath = fConfigParameters->getDirectory() + "/" + fRootFileNameBuffer->GetString();
