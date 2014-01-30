@@ -9,6 +9,14 @@
 #include <cstring>
 #include <cstdio>
 #include <stdlib.h>
+#include <signal.h>
+
+bool daq_loop = true;
+
+void sighandler(int sig) {
+  std::cout << "Signal " << sig << " caught..." << std::endl;
+  daq_loop = false;
+}
 
 int main(int argc, char* argv[]) {
 
@@ -146,6 +154,12 @@ int main(int argc, char* argv[]) {
       _api->_dut->testPixel(i,6,true);
     }
 
+    // Setup signal handlers to allow interruption:
+    signal(SIGABRT, &sighandler);
+    signal(SIGTERM, &sighandler);
+    signal(SIGINT, &sighandler);
+
+    
     // Start the DAQ:
     _api->daqStart(pg_setup);
     uint32_t daq_check_triggers = 0;
@@ -155,8 +169,10 @@ int main(int argc, char* argv[]) {
       _api->daqTrigger(triggers);
     }
     else {
-      _api->daqTriggerLoop(10);
-      while(_api->daqStatus()) {sleep(1);}
+      _api->daqTriggerLoop(1000);
+      while(_api->daqStatus() && daq_loop) {
+	sleep(1);
+      }
     }
     
     // Stop the DAQ:
