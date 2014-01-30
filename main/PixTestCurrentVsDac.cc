@@ -72,16 +72,16 @@ void PixTestCurrentVsDac::bookHist(string name) // general booking routine
   fHistList.clear();
   for( uint32_t i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i ) {
 
-    h1 = new TH1D( Form( "Ia_vs_%s_C%02d", name.c_str(), i),
-		   Form( "Ia vs %s C%02d", name.c_str(), i),
+    h1 = new TH1D( Form( "Ia_vs_%s_C%d", name.c_str(), i),
+		   Form( "Ia vs %s C%d", name.c_str(), i),
 		   256, 0, 256 );
     h1->SetMinimum(0);
     h1->SetStats(0);
     setTitles( h1, Form( "%s [DAC]", name.c_str() ), "analog current [mA]" );
     fHistList.push_back(h1);
 
-    h1 = new TH1D( Form( "Id_vs_%s_C%02d", name.c_str(), i),
-		   Form( "Id vs %s C%02d", name.c_str(), i),
+    h1 = new TH1D( Form( "Id_vs_%s_C%d", name.c_str(), i),
+		   Form( "Id vs %s C%d", name.c_str(), i),
 		   256, 0, 256 );
     h1->SetMinimum(0);
     h1->SetStats(0);
@@ -119,8 +119,8 @@ void PixTestCurrentVsDac::doTest() {
   
   for( uint32_t roc = 0; roc < fPixSetup->getConfigParameters()->getNrocs(); ++roc ) {
     
-    hia = (TH1D*)fDirectory->Get( Form( "Ia_vs_%s_C%02d", fParDAC.c_str(), roc ) );
-    hid = (TH1D*)fDirectory->Get( Form( "Id_vs_%s_C%02d", fParDAC.c_str(), roc ) );
+    hia = (TH1D*)fDirectory->Get( Form( "Ia_vs_%s_C%d", fParDAC.c_str(), roc ) );
+    hid = (TH1D*)fDirectory->Get( Form( "Id_vs_%s_C%d", fParDAC.c_str(), roc ) );
     
     if( hia && hid ) {
       
@@ -142,7 +142,7 @@ void PixTestCurrentVsDac::doTest() {
     }
     else {
       LOG(logINFO) << "XX did not find "
-		   << Form( "Ia_vs_%s_C%02d", fParDAC.c_str(), roc );
+		   << Form( "Ia_vs_%s_C%d", fParDAC.c_str(), roc );
     }
     fDisplayedHist = find( fHistList.begin(), fHistList.end(), hid );
     if( hid ) hid->Draw();
