@@ -122,9 +122,6 @@ void PixTestScurves::doTest() {
   int RFLAG(7); 
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG); 
 
-  // -- and now do the analysis...
-  // FIXME
-
   LOG(logINFO) << "PixTestScurves::doTest() done ";
   PixTest::update(); 
 }
