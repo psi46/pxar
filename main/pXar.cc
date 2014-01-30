@@ -8,6 +8,7 @@
 #include <TApplication.h> 
 #include <TFile.h> 
 #include <TROOT.h> 
+#include <TStyle.h> // DP 
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
