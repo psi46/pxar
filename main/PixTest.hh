@@ -56,7 +56,7 @@ public:
   bool getParameter(std::string parName, float &); 
   void dumpParameters(); 
   void setTitles(TH1 *h, const char *sx, const char *sy, 
-		 float size = 0.05, float xoff = 1.1, float yoff = 1.1, float lsize = 0.05, int font = 42);
+		 float size = 0.05, float xoff = 1.3, float yoff = 1.8, float lsize = 0.05, int font = 62); // DP
 
   virtual bool setParameter(std::string parName, std::string sval); 
   

@@ -414,8 +414,8 @@ void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size,
   } else {
     h->SetXTitle(sx);                  h->SetYTitle(sy); 
     h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
-    h->SetTitleSize(size, "x");        h->SetTitleSize(size, "y");
-    h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
+    //DP h->SetTitleSize(size, "x");        h->SetTitleSize(size, "y");
+    //DP h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
     h->SetLabelFont(font, "x");        h->SetLabelFont(font, "y");
     h->GetXaxis()->SetTitleFont(font); h->GetYaxis()->SetTitleFont(font);
     h->SetNdivisions(508, "X");

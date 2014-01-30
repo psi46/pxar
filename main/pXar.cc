@@ -7,6 +7,7 @@
 
 #include <TApplication.h> 
 #include <TFile.h> 
+#include <TStyle.h> // DP
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
@@ -35,7 +36,7 @@ void runTest(PixTest *b);
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
   
-  LOG(logINFO) << "*** Welcome to pxar ***";
+  LOG(logINFO) << "=== Welcome to pxar ===";
 
   if (0) {
     uint16_t x = 0; 
@@ -208,6 +209,42 @@ void execute(PixSetup &a, SysCommand *sysCommand) {
 void runGui(PixSetup &a, int argc, char *argv[]) {
   TApplication theApp("App", &argc, argv);
   theApp.SetReturnFromRun(true);
+
+  //DP:
+
+  gStyle->SetTickLength( -0.02, "x" ); // tick marks outside
+  gStyle->SetTickLength( -0.02, "y");
+  gStyle->SetTickLength( -0.01, "z");
+
+  gStyle->SetLabelOffset( 0.022, "x" );
+  gStyle->SetLabelOffset( 0.022, "y" );
+  gStyle->SetLabelOffset( 0.022, "z" );
+
+  gStyle->SetTitleOffset( 1.3, "x" );
+  gStyle->SetTitleOffset( 1.6, "y" );
+  gStyle->SetTitleOffset( 1.7, "z" );
+
+  gStyle->SetLabelFont( 62, "X" );
+  gStyle->SetLabelFont( 62, "Y" );
+  gStyle->SetLabelFont( 62, "z" );
+
+  gStyle->SetTitleFont( 62, "X" );
+  gStyle->SetTitleFont( 62, "Y" );
+  gStyle->SetTitleFont( 62, "z" );
+
+  gStyle->SetLineWidth(1);// frames
+  gStyle->SetHistLineColor(4); // 4=blau
+  gStyle->SetHistLineWidth(3);
+  gStyle->SetHistFillColor(5); // 5=gelb
+  //  gStyle->SetHistFillStyle(4050); // 4050 = half transparent
+  gStyle->SetHistFillStyle(1001); // 1001 = solid
+
+  gStyle->SetFrameLineWidth(2);
+
+  gStyle->SetPalette(1); // rainbow colors
+
+  gStyle->SetHistMinimumZero(); // no zero suppression
+
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);
   theApp.Run();
   LOG(logINFO) << "closing down 0 ";

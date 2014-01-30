@@ -1,8 +1,12 @@
+
+// switchyard for gui tests
+
 #include <iostream>
 
 #include "PixTestFactory.hh"
 #include "log.h"
 
+#include "CurrentvsDac.hh"
 #include "PixTestAlive.hh"
 #include "PixTestTbm.hh"
 #include "PixTestDacScan.hh"
@@ -43,6 +47,7 @@ PixTestFactory::~PixTestFactory() {
 // ----------------------------------------------------------------------
 PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   
+  if( !name.compare( "CurvsDac" ) ) return new CurrentvsDac( a, "CurvsDac" ); 
   if (!name.compare("PixelAlive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("Tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("DacScan")) return new PixTestDacScan(a, "DacScan"); 
