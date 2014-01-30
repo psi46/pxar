@@ -241,66 +241,34 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
 
 
 // ----------------------------------------------------------------------
-vector<TH1*> PixTest::mapsVsDac(string name, string dac, int ntrig) {
+vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig, int dacmin, int dacmax) {
 
-  int dacmin(0), dacmax(255); 
+  vector<TH2D*>  maps; 
+  vector<TH1*>   resultMaps; 
 
-  fDirectory->cd(); 
-  vector<TH1*> maps;
-  vector<TH2D*> maps2d;
-  vector<TH1D*> maps1d;  
-  vector<TH1D*> mapspix;
-  TH1D *h1(0); 
-  TH2D *h2(0); 
-
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig);
-
-  // -- book histograms (the return vector is not over rocs, but rather DAC values
-  for (unsigned int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc){
-    h2 = new TH2D(Form("%s_thr_%s_C%d", name.c_str(), dac.c_str(), iroc), Form("%s_C%d", name.c_str(), iroc), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    maps.push_back(h2); 
-    maps2d.push_back(h2); 
-
-
-    h1 = new TH1D(Form("%s_hits_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  Form("%s_hits_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  256, 0., 256.); 
-    h1->SetMinimum(0.); 
-    setTitles(h1, "DAC", "# pixels"); 
-    maps.push_back(h1); 
-    maps1d.push_back(h1); 
-
-    if (fPIX.size() > 0) {
-      for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-	h1 = new TH1D(Form("%s_hits_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), fPIX[ip].first, fPIX[ip].second, iroc), 
-		      Form("%s_hits_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), fPIX[ip].first, fPIX[ip].second, iroc), 
-		      255, 0., 255.); 
-	h1->SetMinimum(0.); 
-	setTitles(h1, "DAC", "# pixels"); 
-	maps.push_back(h1); 
-	mapspix.push_back(h1); 
-      }
-    }
-
-  }
-
-
-  for (unsigned int id = 0; id < results.size(); ++id) {
-    for (unsigned int i = 0; results[id].second.size(); ++i) {
-      h2 = maps2d[results[id].second[i].roc_id];
-      if (h2) h2->SetBinContent(results[id].second[i].column +1, results[id].second[i].row + 1, 
-				static_cast<float>(results[id].second[i].value)/ntrig); 
-
-    }
+  TH1* h1(0); 
+  TH2D* h2(0); 
+  fDirectory->cd();
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+    h1 = new TH2D(Form("%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+		  Form("%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+		  52, 0., 52., 80, 0., 80.);
+    resultMaps.push_back(h1); 
   }
   
-  // -- FIXME: decode results and fill histograms
-  // -- FIXME: add threshold finding
-
-  return maps; 
+  int ic, ir, iroc, val; 
+  std::vector<pixel> results = fApi->getThresholdMap(dac, 0, ntrig);
+  for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
+    ic =   results[ipix].column; 
+    ir =   results[ipix].row; 
+    iroc = results[ipix].roc_id; 
+    val =  results[ipix].value;
+    cout << "roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val << endl;
+    ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
+  }
+  copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
+  
+  return resultMaps; 
 }
 
 

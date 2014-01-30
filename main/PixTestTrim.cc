@@ -118,9 +118,15 @@ void PixTestTrim::doTest() {
   LOG(logINFO) << "PixTestTrim::doTest() ntrig = " << fParNtrig;
 
   fPIX.clear(); 
-  if (fApi) fApi->_dut->testAllPixels(true);
-
+  if (fApi) fApi->_dut->testAllPixels(false);
+  sparseRoc(10); 
   int RFLAG(7); 
+  vector<TH1*> thr00 = thrMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi); 
+  vector<TH1*> thr01 = scurveMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi, RFLAG); 
+  
+  
+  PixTest::update(); 
+  return;
 
   // -- determine minimal VthrComp 
   LOG(logINFO) << "TRIM determine minimal VthrComp"; 
