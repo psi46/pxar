@@ -33,18 +33,20 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   
   // -- 2 vertical frames
   fV1 = new TGVerticalFrame(fhFrame);
-  fhFrame->AddFrame(fV1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
+  fhFrame->AddFrame(fV1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5)); // DP
   fV2 = new TGVerticalFrame(fhFrame);
-  fhFrame->AddFrame(fV2, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
+  fhFrame->AddFrame(fV2, new TGLayoutHints(kLHintsRight | kLHintsExpandY, 5, 5, 5, 5)); // DP
 
   // -- fV1: create and add Embedded Canvas
-  fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 500, 500);
-  fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 0, 0, 10, 0));
-
+  fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 700, 500); // DP
+  fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
 
   // -- status bar
   Int_t wid = fEc1->GetCanvasWindowId();  
   TCanvas *myc = new TCanvas(Form("%sCanvas", tabname.c_str()), 10, 10, wid);
+  myc->SetBottomMargin(0.10); // DP
+  myc->SetLeftMargin(0.12);
+  myc->SetRightMargin(0.18);
   fEc1->AdoptCanvas(myc);
   myc->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "statusBarUpdate(Int_t,Int_t,Int_t,TObject*)");
 
@@ -119,34 +121,34 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   // -- create doTest Button
   fbDoTest = new TGTextButton(hFrame, " doTest ", B_DOTEST);
   fbDoTest->ChangeOptions(fbDoTest->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 10, 2, 2)); // DP
   fbDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
   bStop->SetToolTipText("not yet implemented (should interrupt the test at a convenient place)");
   bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 10, 2, 2)); //DP
   bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create print Button
   TGTextButton *bPrint = new TGTextButton(hFrame, " print ", B_PRINT);
   bPrint->SetToolTipText("create a pdf of the canvas");
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 10, 2, 2));
   bPrint->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create module map button
   fbModMap = new TGTextButton(hFrame, " summary ", B_MODMAP);
   fbModMap->ChangeOptions(fbModMap->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(fbModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(fbModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 10, 2, 2));
   fbModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
   bClose->ChangeOptions(bClose->GetOptions() | kFixedWidth);
   bClose->SetToolTipText("close the test tab");
-  hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, 2, 10, 2, 2));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));

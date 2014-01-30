@@ -26,7 +26,7 @@ PixTestCurrentVsDac::PixTestCurrentVsDac( PixSetup *a, std::string name )
 //----------------------------------------------------------
 PixTestCurrentVsDac::PixTestCurrentVsDac() : PixTest()
 {
-  LOG(logINFO) << "PixTestCurrentVsDac ctor()";
+  //LOG(logDEBUG) << "PixTestCurrentVsDac ctor()";
 }
 
 // ----------------------------------------------------------------------
@@ -35,7 +35,7 @@ bool PixTestCurrentVsDac::setParameter( string parName, string sval )
   bool found(false);
 
   for( map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap ) {
-    LOG(logINFO) << "---> " << imap->first;
+    LOG(logDEBUG) << "---> " << imap->first;
     if( 0 == imap->first.compare(parName) ) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
@@ -43,7 +43,7 @@ bool PixTestCurrentVsDac::setParameter( string parName, string sval )
 
       if( !parName.compare( "DAC" ) ) {
 	fParDAC = sval;
-	LOG(logINFO) << "  setting fParDAC  ->" << fParDAC
+	LOG(logDEBUG) << "PixTestCurrentVsDac setting fParDAC  ->" << fParDAC
 		     << "<- from sval = " << sval;
       }
 
@@ -93,11 +93,11 @@ void PixTestCurrentVsDac::bookHist(string name) // general booking routine
 //----------------------------------------------------------
 PixTestCurrentVsDac::~PixTestCurrentVsDac()
 {
-  //  LOG(logINFO) << "PixTestCurrentVsDac dtor";
+  LOG(logDEBUG) << "PixTestCurrentVsDac dtor";
   std::list<TH1*>::iterator il;
   fDirectory->cd();
   for( il = fHistList.begin(); il != fHistList.end(); ++il) {
-    LOG(logINFO) << "Write out " << (*il)->GetName();
+    LOG(logDEBUG) << "Write out " << (*il)->GetName();
     (*il)->SetDirectory(fDirectory);
     (*il)->Write();
   }
