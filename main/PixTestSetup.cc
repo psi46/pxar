@@ -108,6 +108,7 @@ PixTestSetup::~PixTestSetup() {
 
 // ----------------------------------------------------------------------
 void PixTestSetup::doTest() {
+  fDirectory->cd();
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
   //FIXME clearHist(); 
 

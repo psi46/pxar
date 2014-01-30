@@ -77,10 +77,10 @@ int main(int argc, char *argv[]){
   }
 
   struct stat buffer;   
-  if (stat("./rootlogon.C", &buffer) == 0) {
-    gROOT->ProcessLine(".x ./rootlogon.C;");
+  if (stat("rootlogon.C", &buffer) == 0) {
+    gROOT->ProcessLine(".x rootlogon.C");
   } else {
-    LOG(logINFO) << "no ./rootlogon.C found, live with the defaults provided";
+    LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
   }
 
   pxar::api *api(0);

@@ -89,6 +89,7 @@ PixTestAlive::~PixTestAlive() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
+  fDirectory->cd();
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
   PixTest::update(); 
 

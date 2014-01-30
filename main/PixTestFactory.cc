@@ -25,7 +25,7 @@ PixTestFactory* PixTestFactory::fInstance = 0;
 
 // ----------------------------------------------------------------------
 PixTestFactory* PixTestFactory::instance() {
-  LOG(logINFO) << "PixTestFactory* PixTestFactory::instance()";
+  LOG(logDEBUG) << "PixTestFactory* PixTestFactory::instance()";
   if (0 == fInstance) {
     fInstance = new PixTestFactory;
   }
@@ -36,12 +36,12 @@ PixTestFactory* PixTestFactory::instance() {
 
 // ----------------------------------------------------------------------
 PixTestFactory::PixTestFactory() {
-  LOG(logINFO) << "PixTestFactory::PixTestFactory()";
+  LOG(logDEBUG) << "PixTestFactory::PixTestFactory()";
 }
 
 // ----------------------------------------------------------------------
 PixTestFactory::~PixTestFactory() {
-  LOG(logINFO) << "PixTestFactory::~PixTestFactory()";
+  LOG(logDEBUG) << "PixTestFactory::~PixTestFactory()";
 }
 
 // ----------------------------------------------------------------------
