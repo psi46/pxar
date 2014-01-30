@@ -1,5 +1,6 @@
 #include "hal.h"
 #include "log.h"
+#include "timer.h"
 #include "constants.h"
 #include <fstream>
 
@@ -1022,6 +1023,8 @@ bool hal::daqStop(uint8_t nTBMs) {
 
 std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 
+  timer t;
+
   // Read all data from the first channel:
   std::vector<uint16_t> * data = daqReadChannel(0);
 
@@ -1031,6 +1034,7 @@ std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
     data->insert( data->end(), data1->begin(), data1->end() );
   }
 
+  LOG(logDEBUGHAL) << "Read full buffer in " << t << "ms.";
   return *data;
 }
 
