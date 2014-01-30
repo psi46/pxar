@@ -27,6 +27,7 @@ VthrCompHi  50
 
 -- Scurves
 Ntrig 50
+Npix  10
 DAC   Vcal 
 DacLo 0
 DacHi 100
