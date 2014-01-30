@@ -15,6 +15,7 @@ PixTab.cc
 PixParTab.cc
 PixMonitor.cc
 PixTest.cc
+PixTestCurrentVsDac.cc
 PixTestAlive.cc
 PixTestTbm.cc
 PixTestDacScan.cc
@@ -39,6 +40,7 @@ PixParTab.hh
 PixMonitor.hh
 PixTab.hh
 PixTest.hh
+PixTestCurrentVsDac.hh
 PixTestAlive.hh
 PixTestTbm.hh
 PixTestDacScan.hh

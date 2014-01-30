@@ -1,8 +1,12 @@
+
+// switchyard for gui tests
+
 #include <iostream>
 
 #include "PixTestFactory.hh"
 #include "log.h"
 
+#include "PixTestCurrentVsDac.hh"
 #include "PixTestAlive.hh"
 #include "PixTestTbm.hh"
 #include "PixTestDacScan.hh"
@@ -21,7 +25,7 @@ PixTestFactory* PixTestFactory::fInstance = 0;
 
 // ----------------------------------------------------------------------
 PixTestFactory* PixTestFactory::instance() {
-  LOG(logDEBUG) << "PixTestFactory* PixTestFactory::instance()";
+  LOG(logINFO) << "PixTestFactory* PixTestFactory::instance()";
   if (0 == fInstance) {
     fInstance = new PixTestFactory;
   }
@@ -32,17 +36,18 @@ PixTestFactory* PixTestFactory::instance() {
 
 // ----------------------------------------------------------------------
 PixTestFactory::PixTestFactory() {
-  LOG(logDEBUG) << "PixTestFactory::PixTestFactory()";
+  LOG(logINFO) << "PixTestFactory::PixTestFactory()";
 }
 
 // ----------------------------------------------------------------------
 PixTestFactory::~PixTestFactory() {
-  LOG(logDEBUG) << "PixTestFactory::~PixTestFactory()";
+  LOG(logINFO) << "PixTestFactory::~PixTestFactory()";
 }
 
 // ----------------------------------------------------------------------
 PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   
+  if( !name.compare("CurVsDac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
   if (!name.compare("PixelAlive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("Tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("DacScan")) return new PixTestDacScan(a, "DacScan"); 

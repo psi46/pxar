@@ -302,21 +302,25 @@ void PixGui::handleButtons(Int_t id) {
 
 // ----------------------------------------------------------------------
 void PixGui::hvOn() {
-  fHV = true;
-  fbtnHV->ChangeBackground(fGreen);
-  fbtnHV->SetText("On");
-  fApi->HVon(); 
-  LOG(logDEBUG) << "HV set On";
+  if (fApi) {
+    fHV = true;
+    fbtnHV->ChangeBackground(fGreen);
+    fbtnHV->SetText("On");
+    fApi->HVon(); 
+    LOG(logDEBUG) << "HV set On";
+  }
 }
 
 
 // ----------------------------------------------------------------------
 void PixGui::hvOff() {
-  fHV = false;
-  fbtnHV->ChangeBackground(fRed);
-  fbtnHV->SetText("Off");
-  fApi->HVoff(); 
-  LOG(logDEBUG) << "HV set Off";
+  if (fApi) {
+    fHV = false;
+    fbtnHV->ChangeBackground(fRed);
+    fbtnHV->SetText("Off");
+    fApi->HVoff(); 
+    LOG(logDEBUG) << "HV set Off";
+  }
 }
 
 
