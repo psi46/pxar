@@ -159,7 +159,7 @@ namespace pxar {
    *  scanning 4160 pixels after another the code will select the function
    *  to scan a full ROC in one go automatically.
    */
-  class DLLEXPORT api {
+  class DLLEXPORT pxarCore {
 
   public:
 
@@ -170,14 +170,14 @@ namespace pxar {
      *  wildcard. If only one DTB is connected the algorithm will automatically
      *  connect to this board, if several are connected it will throw a warning.
      */
-    api(std::string usbId = "*", std::string logLevel = "WARNING");
+    pxarCore(std::string usbId = "*", std::string logLevel = "WARNING");
 
     /** Default destructor for libpxar API
      *
      *  Will power down the DTB, disconnect properly from the testboard,
      *  and destroy the HAL object.
      */
-    ~api();
+    ~pxarCore();
 
     /** Returns the version string for the pxar API.
      *
@@ -193,7 +193,7 @@ namespace pxar {
 
     /** Initializer method for the testboard
      *
-     *  Initializes the tesboard with signal delay settings, and voltage/current
+     *  Initializes the testboard with signal delay settings, and voltage/current
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
      *
@@ -435,7 +435,7 @@ namespace pxar {
     /** Function to set up and initialize a new data acquisition session (DAQ)
      *
      *  This function takes a new Pattern Generator setup as argument, if left 
-     *  empty the one which is currently programmed via the api::initTestboard 
+     *  empty the one which is currently programmed via the pxarCore::initTestboard 
      *  function is used. The given pattern generator only lives for the time 
      *  of the data acquisition and is replaced by the previous one after 
      *  stopping the DAQ.
@@ -471,7 +471,7 @@ namespace pxar {
      *  This triggers also a reprogramming of the old (test-) Pattern Generator
      *  setup, so no additional steps are needed before one can do regular 
      *  tests again. The patterns are taken from the DUT struct in which they 
-     *  are stored by the api::initTestboard function.
+     *  are stored by the pxarCore::initTestboard function.
      */
     bool daqStop();
 
@@ -579,7 +579,7 @@ namespace pxar {
      */
     uint32_t _daq_buffersize;
 
-  }; // class api
+  }; // class pxarCore
 
 
   class DLLEXPORT dut {
@@ -587,7 +587,7 @@ namespace pxar {
     /** Allow the API class to access private members of the DUT - noone else
      *  should be able to access them! 
      */
-    friend class api;
+    friend class pxarCore;
     
   public:
 

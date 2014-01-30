@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*",argv[1] ? argv[1] : "DEBUG");
+    _api = new pxar::pxarCore("*",argv[1] ? argv[1] : "DEBUG");
   
     // Initialize the testboard:
     if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {
