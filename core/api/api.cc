@@ -1415,6 +1415,7 @@ void api::SetCalibrateBits(bool enable) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
+    LOG(logDEBUGAPI) << "Configuring calibrate bits in all enabled PUCs of ROC " << static_cast<int>(rocit-_dut->roc.begin());
     // Check if the signal has to be turned on or off:
     if(enable) {
       // Loop over all pixels in this ROC and set the Cal bit:

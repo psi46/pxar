@@ -669,14 +669,6 @@ namespace pxar {
      */
     void maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid);
 
-    /** Function to mask the all pixels in one column on a specific ROC
-     */
-    void maskColumn(uint8_t column, bool mask, uint8_t rocid);
-
-    /** Function to mask the all pixels in one column on all ROCs
-     */
-    void maskColumn(uint8_t column, bool mask);
-
     /** Function to enable all pixels on all ROCs:
      */
     void testAllPixels(bool enable);
