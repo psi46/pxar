@@ -7,6 +7,7 @@
 
 #include <TApplication.h> 
 #include <TFile.h> 
+#include <TROOT.h> 
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
@@ -73,6 +74,13 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
+  }
+
+  struct stat buffer;   
+  if (stat("./rootlogon.C", &buffer) == 0) {
+    gROOT->ProcessLine(".x ./rootlogon.C;");
+  } else {
+    LOG(logINFO) << "no ./rootlogon.C found, live with the defaults provided";
   }
 
   pxar::api *api(0);
