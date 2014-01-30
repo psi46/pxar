@@ -19,7 +19,7 @@ public:
 private:
 
   std::string fParDac;
-  int         fParNtrig, fParDacLo, fParDacHi;
+  int         fParNtrig, fParNpix, fParDacLo, fParDacHi;
 
   ClassDef(PixTestScurves, 1);
 

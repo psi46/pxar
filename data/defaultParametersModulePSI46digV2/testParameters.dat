@@ -27,6 +27,7 @@ VthrCompHi  50
 
 -- Scurves
 Ntrig 50
+Npix  10
 DAC   Vcal 
 DacLo 0
 DacHi 100
@@ -39,3 +40,6 @@ Vcal 200
 -- Tbm
 Ntrig 10
 Vcal 200
+
+-- CurVsDac
+DAC Vana

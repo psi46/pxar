@@ -79,6 +79,7 @@ public:
   double getId() {return id;}
   double getVa() {return va;}
   double getVd() {return vd;}
+  bool   getHvOn() {return fHvOn;}
 
 private:
 

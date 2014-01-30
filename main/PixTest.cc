@@ -86,16 +86,14 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // ----------------------------------------------------------------------
 // result & 0x1 == 1 -> return maps 
 // result & 0x2 == 2 -> return distributions (projections) of maps
-// result & 0x4 == 4 -> return all pixel histograms with outlayer threshold/sigma
-// result & 0x8 == 8 -> return all pixel histograms 
+// result & 0x4 == 4 -> write to file: all pixel histograms with outlayer threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   vector<TH1*>          rmaps; 
-  vector<TH1*>          emaps; 
   vector<vector<TH1*> > maps; 
   vector<TH1*>          resultMaps; 
 
-  cout << "book histograms" << endl;
   TH1* h1(0); 
+  fDirectory->cd();
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     rmaps.clear();
     for (unsigned int ic = 0; ic < 52; ++ic) {
@@ -111,21 +109,35 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   cache(dac); 
 
-  cout << "api::getEfficiencyMap" << endl;
 
-  vector<pixel>  results;
   int ic, ir, iroc, val; 
-  for (int idac = dacmin; idac < dacmax; ++idac) {
-    results.clear(); 
-    cout << " idac = " << idac << endl;
-    fApi->setDAC(dac, idac);
-    results = fApi->getEfficiencyMap(0, ntrig);
-    for (unsigned int i = 0; i < results.size(); ++i) {
-      ic = results[i].column; 
-      ir = results[i].row; 
-      iroc = results[i].roc_id; 
-      val = results[i].value;
-      maps[iroc][ic*80+ir]->Fill(idac, val);
+  if (0) {
+    vector<pixel>  results;
+    for (int idac = dacmin; idac < dacmax; ++idac) {
+      LOG(logINFO) << dac << ": " << idac;
+      results.clear(); 
+      fApi->setDAC(dac, idac);
+      results = fApi->getEfficiencyMap(0, ntrig);
+      for (unsigned int i = 0; i < results.size(); ++i) {
+	ic = results[i].column; 
+	ir = results[i].row; 
+	iroc = results[i].roc_id; 
+	val = results[i].value;
+	maps[iroc][ic*80+ir]->Fill(idac, val);
+      }
+    }
+  }
+  if (1) {
+    vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig); 
+    for (unsigned int idac = 0; idac < results.size(); ++idac) {
+      int dac = results[idac].first; 
+      for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+	ic =   results[idac].second[ipix].column; 
+	ir =   results[idac].second[ipix].row; 
+	iroc = results[idac].second[ipix].roc_id; 
+	val =  results[idac].second[ipix].value;
+	maps[iroc][ic*80+ir]->Fill(dac, val);
+      }
     }
   }
 
@@ -144,51 +156,46 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  52, 0., 52., 80, 0., 80.); 
 
-    double averageStep(0.); 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
+      if (rmaps[i]->GetSumOfWeights() < 1) {
+	delete rmaps[i];
+	continue;
+      }
       bool ok = threshold(rmaps[i]); 
       if (!ok) {
 	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
-	emaps.push_back(rmaps[i]); 
       }
       ic = i/80; 
       ir = i%80; 
-      averageStep += fThreshold;
       h2->SetBinContent(ic+1, ir+1, fThreshold); 
       h2->SetBinError(ic+1, ir+1, fThresholdE); 
 
       h3->SetBinContent(ic+1, ir+1, fSigma); 
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
+
+      // -- write all hists to file if requested
+      if (result & 0x4) {
+	rmaps[i]->SetDirectory(fDirectory); 
+	rmaps[i]->Write();
+      }
+      delete rmaps[i];
     }
-    averageStep /= rmaps.size(); 
 
     if (result & 0x1) {
+      resultMaps.push_back(h2); 
       fHistList.push_back(h2); 
+      resultMaps.push_back(h3); 
       fHistList.push_back(h3); 
     }
 
+    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
     if (result & 0x2) {
-      TH1* d1 = distribution((TH2D*)h2, 100, 0., 100.); 
-      resultMaps.push_back(h2); 
+      TH1* d1 = distribution((TH2D*)h2, 100, 0., 100., zeroSuppressed); 
+      resultMaps.push_back(d1); 
       fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 100.); 
-      resultMaps.push_back(h2); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      resultMaps.push_back(d2); 
       fHistList.push_back(d2); 
-    }
-
-    if (result & 0x4) {
-      cout << "average step: " << averageStep << endl;
-      for (unsigned int i = 0; i < rmaps.size(); ++i) {
-	if (TMath::Abs(rmaps[i]->GetFunction("PIF_err")->GetParameter(0) - averageStep) > 10) {
-	  cout << "  adding " << rmaps[i]->GetName() << endl;
-	  emaps.push_back(rmaps[i]); 
-	}
-      }
-      copy(emaps.begin(), emaps.end(), back_inserter(fHistList));
-    }
-
-    if (result & 0x8) {
-      copy(rmaps.begin(), rmaps.end(), back_inserter(fHistList));
     }
 
   }
@@ -348,7 +355,7 @@ void PixTest::dumpParameters() {
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  LOG(logINFO) << "PixTestBase dtor(), writing out histograms";
+  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
@@ -415,7 +422,7 @@ TH1* PixTest::previousHist() {
 void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size, 
 			float xoff, float yoff, float lsize, int font) {
   if (h == 0) {
-    LOG(logINFO) << " Histogram not defined";
+    LOG(logDEBUG) << " Histogram not defined";
   } else {
     h->SetXTitle(sx);                  h->SetYTitle(sy); 
     h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
@@ -437,7 +444,7 @@ void PixTest::clearHist() {
 
 // ----------------------------------------------------------------------
 int PixTest::simpleThreshold(TH1 *h) {
-  return (h->FindFirstBinAbove(0.5*h->GetMaximum()) - 1);
+  return h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum()));
 }
 
 
@@ -469,10 +476,11 @@ bool PixTest::threshold(TH1 *h) {
 
 
 // ----------------------------------------------------------------------
-TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax) {
+TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax, bool zeroSuppressed) {
   TH1D *h1 = new TH1D(Form("dist_%s", h2->GetName()), Form("dist_%s", h2->GetName()), nbins, xmin, xmax); 
   for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
     for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+      if (zeroSuppressed && h2->GetBinContent(ix+1, iy+1) < 1e-6) continue;
       h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
     }
   }
@@ -485,10 +493,10 @@ void PixTest::cache(string dacname) {
   if (!fCacheDac.compare("nada")) {
     fCacheDac = dacname; 
   } else {
-    LOG(logINFO) << "XXXX Error: cached " << fCacheDac << ", not yet restored";
+    LOG(logWARNING) << "Error: cached " << fCacheDac << ", not yet restored";
   }
   
-  LOG(logINFO) << "Cache " << dacname;
+  LOG(logDEBUG) << "Cache " << dacname;
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     fCacheVal.push_back(fApi->_dut->getDAC(i, dacname)); 
   }
@@ -498,11 +506,11 @@ void PixTest::cache(string dacname) {
 // ----------------------------------------------------------------------
 void PixTest::restore(string dacname) {
   if (dacname.compare(fCacheDac)) {
-    LOG(logINFO) << "XXXX Error: restoring " << dacname << ", but cached " << fCacheDac;
+    LOG(logWARNING) << "Error: restoring " << dacname << ", but cached " << fCacheDac;
     return;
   }
 
-  LOG(logINFO) << "Restore " << dacname;
+  LOG(logDEBUG) << "Restore " << dacname;
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     fApi->setDAC(dacname, fCacheVal[i], i); 
   }
@@ -514,7 +522,7 @@ void PixTest::restore(string dacname) {
 
 // ----------------------------------------------------------------------
 TH2D* PixTest::moduleMap(string histname) {
-  LOG(logINFO) << "moduleMap histname: " << histname; 
+  LOG(logDEBUG) << "moduleMap histname: " << histname; 
   TH1* h0 = (*fDisplayedHist);
   if (!h0->InheritsFrom(TH2::Class())) {
     return 0; 
@@ -524,7 +532,7 @@ TH2D* PixTest::moduleMap(string histname) {
   string::size_type s1 = h1name.find("_C"); 
   string barename = h1name.substr(0, s1);
   string h2name = barename + string("_mod"); 
-  LOG(logINFO) << "h1->GetName() = " << h1name << " -> " << h2name; 
+  LOG(logDEBUG) << "h1->GetName() = " << h1name << " -> " << h2name; 
   TH2D *h2 = new TH2D(h2name.c_str(), h2name.c_str(), 
 		      2*80, 0., 2*80., 8*52, 0., 8*52); 
   for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
@@ -557,4 +565,38 @@ void PixTest::fillMap(TH2D *hmod, TH2D *hroc, int iroc) {
     }
   }
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::sparseRoc(int npix) {
+  
+  if (!fApi) return;
+
+  int cnt(0); 
+  if (npix < 11) {
+    for (int i = 0; i < npix; ++i) {
+      fApi->_dut->testPixel(5*i, 5*i, true);  
+    }
+    return;
+  } else if (npix < 101) {
+    for (int i = 0; i < 50; ++i) {
+      fApi->_dut->testPixel(i, 5 + 0.5*i, true);  
+      ++cnt;
+      fApi->_dut->testPixel(i, 15 + 0.5*i, true);  
+      ++cnt;
+      if (cnt == npix) return;
+    }
+  } else if (npix < 1001) {
+    for (int i = 0; i < 50; ++i) {
+      for (int j = 0; j < 10; ++j) {
+	fApi->_dut->testPixel(i, i + 2*j, true);  
+	fApi->_dut->testPixel(i, i + 5*j, true);  
+	++cnt; 
+	if (cnt == npix) return;
+      }
+    }
+  } else{
+    fApi->_dut->testAllPixels(true);
+  }
 }

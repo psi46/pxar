@@ -170,7 +170,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    bool daqStart(uint8_t deser160phase, uint8_t nTBMs);
+    bool daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = 50000000);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -183,6 +183,10 @@ namespace pxar {
     /** Stopping the current DAQ session. This is not resetting the data buffers
      */
     bool daqStop(uint8_t nTBMs);
+
+    /**
+     */
+    uint32_t daqBufferStatus();
 
     /** Reading out the full DAQ buffer
      */
@@ -287,7 +291,7 @@ namespace pxar {
 
     /** Read all data from one TBM channel data stream
      */
-    std::vector<uint16_t> daqReadChannel(uint8_t channel);
+    std::vector<uint16_t> * daqReadChannel(uint8_t channel);
   };
 
 }

@@ -7,7 +7,7 @@
 
 #include <TApplication.h> 
 #include <TFile.h> 
-#include <TStyle.h> // DP
+#include <TROOT.h> 
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
@@ -76,6 +76,13 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
+  struct stat buffer;   
+  if (stat("rootlogon.C", &buffer) == 0) {
+    gROOT->ProcessLine(".x rootlogon.C");
+  } else {
+    LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
+  }
+
   pxar::api *api(0);
   if (doUpdateFlash) {
     api = new pxar::api("*", verbosity);
@@ -106,14 +113,14 @@ int main(int argc, char *argv[]){
   
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
-  std::vector<std::vector<pxar::pixelConfig> > rocPixels = configParameters->getRocPixelConfig();
+  vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
+  vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
+  vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
+  vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
   if (!noAPI) {
     try {
       api = new pxar::api("*", verbosity);
-      std::vector<std::pair<std::string,uint8_t> > sig_delays = configParameters->getTbSigDelays(); 
-      std::vector<std::pair<std::string, double> > power_settings = configParameters->getTbPowerSettings();
-      std::vector<std::pair<uint16_t, uint8_t> > pg_setup = configParameters->getTbPgSettings();
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
       api->initDUT(configParameters->getTbmType(), tbmDACs, 

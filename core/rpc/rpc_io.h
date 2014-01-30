@@ -6,7 +6,7 @@
 #include <unistd.h>
 #endif
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #include "rpc_error.h"
 

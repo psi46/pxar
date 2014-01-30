@@ -200,12 +200,12 @@ void PixTab::handleButtons(Int_t id) {
   
   switch (id) {
     case B_DOTEST: {
-      LOG(logINFO) << "and now what???";
+      LOG(logDEBUG) << "and now what???";
       break;
     }
 
     case B_DOSTOP: {
-      LOG(logINFO) << "and now what???";
+      LOG(logDEBUG) << "and now what???";
       break;
     }
 
@@ -223,7 +223,7 @@ void PixTab::handleButtons(Int_t id) {
 
     case B_CLOSETAB: {
       delete fEc1; fEc1 = 0;
-      LOG(logINFO) << Form("Tab %s closed", fTabName.c_str());
+      LOG(logDEBUG) << Form("Tab %s closed", fTabName.c_str());
       fGui->getTabs()->RemoveTab(fGui->getTabs()->GetCurrent());
       fGui->getTabs()->Layout();
       delete fTabFrame; 
@@ -246,13 +246,13 @@ void PixTab::setParameter() {
   int id(-1); 
   id = btn->WidgetId();
   if (-1 == id) {
-    LOG(logINFO) << "ASLFDKHAPIUDF ";
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
     return; 
   }
 
   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
   
-  LOG(logINFO) << "xxxPressed():  ID = " << id 
+  LOG(logDEBUG) << "xxxPressed():  ID = " << id 
 	       << " -> " << fParIds[id] 
 	       << " to value " << svalue;
 
@@ -283,7 +283,7 @@ void PixTab::nextHistogram() {
     }
     update(); 
   } else {
-    LOG(logINFO) << "no previous histogram found ";
+    LOG(logDEBUG) << "no previous histogram found ";
   }
 
 }
@@ -301,7 +301,7 @@ void PixTab::previousHistogram() {
     }
     update(); 
   } else {
-    LOG(logINFO)  << "no previous histogram found ";
+    LOG(logDEBUG)  << "no previous histogram found ";
   }
 }
 
@@ -337,7 +337,7 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
   if (event == kKeyPress) {
-    LOG(logINFO) << "key pressed?"; 
+    LOG(logDEBUG) << "key pressed?"; 
   }
   //     sprintf(text1, "%d,%d", px, py);
   //   fStatusBar->SetText(text1, 1);

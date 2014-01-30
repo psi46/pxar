@@ -15,26 +15,26 @@ ClassImp(PixTestAlive)
 PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
   PixTest::init(a, name);
   init(); 
-  LOG(logINFO) << "PixTestAlive ctor(PixSetup &a, string, TGTab *)";
+  LOG(logDEBUG) << "PixTestAlive ctor(PixSetup &a, string, TGTab *)";
 }
 
 
 //----------------------------------------------------------
 PixTestAlive::PixTestAlive() : PixTest() {
-  LOG(logINFO) << "PixTestAlive ctor()";
+  LOG(logDEBUG) << "PixTestAlive ctor()";
 }
 
 // ----------------------------------------------------------------------
 bool PixTestAlive::setParameter(string parName, string sval) {
   bool found(false);
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << "---> " << imap->first;
+    LOG(logDEBUG) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
 
       fParameters[parName] = sval;
-      LOG(logINFO) << "  ==> parName: " << parName;
-      LOG(logINFO) << "  ==> sval:    " << sval;
+      LOG(logDEBUG) << "  ==> parName: " << parName;
+      LOG(logDEBUG) << "  ==> sval:    " << sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
@@ -52,7 +52,7 @@ bool PixTestAlive::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::init() {
-  LOG(logINFO) << "PixTestAlive::init()";
+  LOG(logDEBUG) << "PixTestAlive::init()";
 
   setToolTips();
   fDirectory = gFile->GetDirectory(fName.c_str()); 
@@ -77,18 +77,19 @@ void PixTestAlive::setToolTips() {
 // ----------------------------------------------------------------------
 void PixTestAlive::bookHist(string name) {
   fDirectory->cd(); 
-  LOG(logINFO) << "nothing done with " << name; 
+  LOG(logDEBUG) << "nothing done with " << name; 
 }
 
 
 //----------------------------------------------------------
 PixTestAlive::~PixTestAlive() {
-  LOG(logINFO) << "PixTestAlive dtor";
+  LOG(logDEBUG) << "PixTestAlive dtor";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
+  fDirectory->cd();
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
   PixTest::update(); 
 

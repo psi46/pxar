@@ -170,7 +170,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "  readDacFile  reading " << fname;
+  LOG(logINFO) << "      reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -218,9 +218,11 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
 
 // ----------------------------------------------------------------------
 vector<pair<string, uint8_t> >  ConfigParameters::getTbParameters() {
-  string filename = fDirectory + "/" + fTBParametersFileName; 
-  fTbParameters = readDacFile(filename); 
-  fReadTbParameters = true; 
+  if (!fReadTbParameters) {
+    string filename = fDirectory + "/" + fTBParametersFileName; 
+    fTbParameters = readDacFile(filename); 
+    fReadTbParameters = true; 
+  }
   return fTbParameters;
 }
 
@@ -261,6 +263,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
 
 // ----------------------------------------------------------------------
 vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
+
   vector<pair<uint16_t, uint8_t> > a;
 
   if (fnTbms < 1) {
@@ -339,7 +342,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "  readTrimFile reading " << fname;
+  LOG(logINFO) << "      reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -404,7 +407,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "  readMaskFile reading " << fname;
+  LOG(logINFO) << "      reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -504,26 +507,30 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
-  string filename; 
-  for (unsigned int i = 0; i < fnRocs; ++i) {
-    filename = Form("%s/%s_C%d.dat", fDirectory.c_str(), fDACParametersFileName.c_str(), i); 
-    vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
-    fDacParameters.push_back(rocDacs); 
+  if (!fReadDacParameters) {
+    string filename; 
+    for (unsigned int i = 0; i < fnRocs; ++i) {
+      filename = Form("%s/%s_C%d.dat", fDirectory.c_str(), fDACParametersFileName.c_str(), i); 
+      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
+      fDacParameters.push_back(rocDacs); 
+    }
+    fReadDacParameters = true; 
   }
-  fReadDacParameters = true; 
   return fDacParameters; 
 }
 
 
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
-  string filename; 
-  for (unsigned int i = 0; i < fnTbms; ++i) {
-    filename = fDirectory + "/" + fTbmParametersFileName; 
-    vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
-    fTbmParameters.push_back(rocDacs); 
+  if (!fReadTbmParameters) {
+    string filename; 
+    for (unsigned int i = 0; i < fnTbms; ++i) {
+      filename = fDirectory + "/" + fTbmParametersFileName; 
+      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
+      fTbmParameters.push_back(rocDacs); 
+    }
+    fReadTbmParameters = true; 
   }
-  fReadTbmParameters = true; 
   return fTbmParameters; 
 }
 

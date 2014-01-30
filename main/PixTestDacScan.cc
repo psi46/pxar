@@ -19,7 +19,7 @@ PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name)
   init(); 
   //  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logINFO) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
+    LOG(logDEBUG) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
   }
 }
 
@@ -36,26 +36,26 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
   string::size_type s1;
   int pixc, pixr; 
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << "---> " << imap->first;
+    LOG(logDEBUG) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC")) {
 	fParDAC = sval; 
-	LOG(logINFO) << "  setting fParDAC  ->" << fParDAC << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC << "<- from sval = " << sval;
       }
       if (!parName.compare("DACLO")) {
 	fParLoDAC = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParLoDAC  ->" << fParLoDAC << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC << "<- from sval = " << sval;
       }
       if (!parName.compare("DACHI")) {
 	fParHiDAC = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParHiDAC  ->" << fParHiDAC << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC << "<- from sval = " << sval;
       }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 
@@ -164,12 +164,13 @@ void PixTestDacScan::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestDacScan::~PixTestDacScan() {
-  LOG(logINFO) << "PixTestDacScan dtor";
+  LOG(logDEBUG) << "PixTestDacScan dtor";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
   //FIXME  clearHist();
@@ -183,7 +184,7 @@ void PixTestDacScan::doTest() {
   // -- FIXME This code is crap. Replace as in PixelAlive
 
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
-  LOG(logINFO) << " dacscandata.size(): " << results.size();
+  LOG(logDEBUG) << " dacscandata.size(): " << results.size();
   TH1D *h(0), *hsummary(0); 
   for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
     hsummary = (TH1D*)fDirectory->Get(Form("scanRange_%s_C%d", fParDAC.c_str(), ichip));
@@ -193,7 +194,7 @@ void PixTestDacScan::doTest() {
       if (hsummary) {
 	hsummary->SetBinContent(idac+1, 1); 
       } else {
-	LOG(logINFO) << "XX did not find " << Form("scanRange_%s_C%d", fParDAC.c_str(), ichip);
+	LOG(logDEBUG) << "XX did not find " << Form("scanRange_%s_C%d", fParDAC.c_str(), ichip);
       }
 
       vector<pixel> vpix = v.second;
@@ -203,7 +204,7 @@ void PixTestDacScan::doTest() {
 	  if (h) {
 	    h->SetBinContent(idac+1, vpix[ipix].value); 
 	  } else {
-	    LOG(logINFO) << "XX did not find " << Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
+	    LOG(logDEBUG) << "XX did not find " << Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
 	  }
 	}
 	

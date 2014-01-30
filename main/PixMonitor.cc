@@ -56,7 +56,6 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
 
 // ----------------------------------------------------------------------
 PixMonitor::~PixMonitor() {
-  cout << "PixMonitor destructor" << endl;
 }
 
 

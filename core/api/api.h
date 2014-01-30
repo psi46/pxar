@@ -441,6 +441,14 @@ namespace pxar {
      *  stopping the DAQ.
      */
     bool daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+
+    /** Function to get back the DAQ status
+     *
+     *  For a running DAQ with free buffer memory left, this function returns
+     *  TRUE. In case of a problem with the DAQ (not started, buffer overflow
+     *  or full...) it returns FALSE.
+     */
+    bool daqStatus();
     
     /** Function to read out the earliest event in buffer from the currently
      *  data acquisition. If no event is buffered, the function will wait for
@@ -563,6 +571,14 @@ namespace pxar {
      */
     bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
+    /** Status of the DAQ
+     */
+    bool _daq_running;
+
+    /** Allocated memory size on the DTB for the currently running DAQ session
+     */
+    uint32_t _daq_buffersize;
+
   }; // class api
 
 
@@ -668,14 +684,6 @@ namespace pxar {
     /** Function to mask the given pixel on a specific ROC
      */
     void maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid);
-
-    /** Function to mask the all pixels in one column on a specific ROC
-     */
-    void maskColumn(uint8_t column, bool mask, uint8_t rocid);
-
-    /** Function to mask the all pixels in one column on all ROCs
-     */
-    void maskColumn(uint8_t column, bool mask);
 
     /** Function to enable all pixels on all ROCs:
      */

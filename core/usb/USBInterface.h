@@ -26,7 +26,7 @@ typedef uint32_t DWORD;
 
 #include "rpc_io.h"
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #define USBWRITEBUFFERSIZE  150000
 #define USBREADBUFFERSIZE   150000

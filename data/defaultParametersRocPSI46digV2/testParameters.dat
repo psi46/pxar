@@ -40,3 +40,5 @@ DacHi 100
 Ntrig 10
 Vcal 200
 
+-- CurVsDac
+DAC Vana

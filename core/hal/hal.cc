@@ -1,5 +1,6 @@
 #include "hal.h"
 #include "log.h"
+#include "timer.h"
 #include "constants.h"
 #include <fstream>
 
@@ -949,19 +950,21 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
-bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs) {
+bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
-  uint32_t buffer = 500000;
+  // FIXME maybe we have to split the total buffer size when having more than one channel
+  // need to test when I have a module available:
+  // if(nTBMs > 0) buffersize /= 2*nTBMs
 
-  uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffer,0);
+  uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
 
   _testboard->uDelay(100);
 
   if(nTBMs > 0) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
-    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffer,1);
+    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
 
     // Reset the Deserializer 400, re-synchronize:
@@ -1001,6 +1004,16 @@ void hal::daqTriggerLoop(uint16_t period) {
   _testboard->uDelay(20);
 }
 
+uint32_t hal::daqBufferStatus() {
+
+  uint32_t buffered_data = 0;
+  // Summing up data words in all DAQ channels:
+  for(uint8_t channel = 0; channel < 8; channel++) {
+    buffered_data += _testboard->Daq_GetSize(channel);
+  }
+  return buffered_data;
+}
+
 bool hal::daqStop(uint8_t nTBMs) {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
@@ -1019,43 +1032,50 @@ bool hal::daqStop(uint8_t nTBMs) {
 
 std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
 
+  timer t;
+
   // Read all data from the first channel:
-  std::vector<uint16_t> data = daqReadChannel(0);
+  std::vector<uint16_t> * data = daqReadChannel(0);
 
   // Also read the second channel if needed:
   if(nTBMs > 0) {
-    std::vector<uint16_t> data1 = daqReadChannel(1);
-    data.insert( data.end(), data1.begin(), data1.end() );
+    std::vector<uint16_t> * data1 = daqReadChannel(1);
+    data->insert( data->end(), data1->begin(), data1->end() );
   }
 
-  return data;
+  LOG(logDEBUGHAL) << "Read full buffer in " << t << "ms.";
+  return *data;
 }
 
-std::vector<uint16_t> hal::daqReadChannel(uint8_t channel) {
+std::vector<uint16_t> * hal::daqReadChannel(uint8_t channel) {
 
   int status = 0;
-  std::vector<uint16_t> data;
+  std::vector<uint16_t> * daqdata = new std::vector<uint16_t>();
   uint32_t buffer_remaining;
 
-  // Maximal allowed block size for DAQ read:
-  uint32_t buffer_max = 32768;
+  // Maximal allowed block size for DAQ read
+  // Setting even one word more results in getting an empty vector back!
+  uint32_t buffer_max = 32767;
   uint32_t buffer_read;
 
   buffer_remaining = _testboard->Daq_GetSize(channel);
-  LOG(logDEBUGHAL) << "Available data in channel " << channel << ": " 
-		   << buffer_remaining;
+  LOG(logDEBUGHAL) << "Available data in channel " << static_cast<int>(channel) << ": " 
+		   << buffer_remaining << " words";
 
   // Keep on reading out while we have remainig data:
   while(buffer_remaining > 0) {
-    buffer_read = max(buffer_remaining, buffer_max);
+    std::vector<uint16_t> data;
+    buffer_read = min(buffer_remaining, buffer_max);
+    LOG(logDEBUGHAL) << "Attempting to read " << buffer_read << " words from buffer.";
     status = _testboard->Daq_Read(data,buffer_read,buffer_remaining,channel);
     LOG(logDEBUGHAL) << "Function returns: " << status;
     LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel "
-		     << channel << ", " 
+		     << static_cast<int>(channel) << ", " 
 		     << buffer_remaining << " words remaining in buffer.";
+    daqdata->insert(daqdata->end(), data.begin(), data.end());
   }
 
-  return data;
+  return daqdata;
 }
 
 bool hal::daqReset(uint8_t nTBMs) {

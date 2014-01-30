@@ -22,7 +22,7 @@ PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name),
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logINFO) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
+    LOG(logDEBUG) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
   }
 }
 
@@ -36,34 +36,34 @@ PixTestTrim::PixTestTrim() : PixTest() {
 bool PixTestTrim::setParameter(string parName, string sval) {
   bool found(false);
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << "---> " << imap->first;
+    LOG(logDEBUG) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       if (!parName.compare("Vcal")) {
 	fParVcal = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
       if (!parName.compare("VcalLo")) {
 	fParVcalLo = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVcalLo  ->" << fParVcalLo << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParVcalLo  ->" << fParVcalLo << "<- from sval = " << sval;
       }
       if (!parName.compare("VcalHi")) {
 	fParVcalHi = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
       }
       if (!parName.compare("VthrCompLo")) {
 	fParVthrCompLo = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVthrCompLo  ->" << fParVthrCompLo << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParVthrCompLo  ->" << fParVthrCompLo << "<- from sval = " << sval;
       }
       if (!parName.compare("VthrCompHi")) {
 	fParVthrCompHi = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParVthrCompHi  ->" << fParVthrCompHi << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParVthrCompHi  ->" << fParVthrCompHi << "<- from sval = " << sval;
       }
 
       break;
@@ -107,12 +107,13 @@ void PixTestTrim::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestTrim::~PixTestTrim() {
-  LOG(logINFO) << "PixTestTrim dtor";
+  LOG(logDEBUG) << "PixTestTrim dtor";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestTrim::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestTrim::doTest() ntrig = " << fParNtrig;
 
@@ -126,7 +127,7 @@ void PixTestTrim::doTest() {
   vector<TH1*> thr0 = scurveMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi, RFLAG); 
   TH2D *h(0); 
   for (unsigned int i = 0; i < thr0.size(); ++i) {
-    cout << "   " << thr0[i]->GetName() << endl;
+    LOG(logDEBUG) << "   " << thr0[i]->GetName();
     if (!strcmp("thr_TrimThr0_VthrComp_C0", thr0[i]->GetName())) {
       h = (TH2D*)thr0[i]; 
       break;
@@ -192,7 +193,7 @@ int PixTestTrim::adjustVtrim() {
     fApi->setDAC("Vtrim", vtrim);
     thrOld = thr;
     thr = pixelThreshold("Vcal", ntrig, 0, 100); 
-    LOG(logINFO) << vtrim << " thr " << thr;
+    LOG(logDEBUG) << vtrim << " thr " << thr;
   }
   while (((thr > fParVcal) || (thrOld > fParVcal) || (thr < 10)) && (vtrim < 200));
   vtrim += 5;
