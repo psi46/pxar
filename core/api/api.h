@@ -571,6 +571,8 @@ namespace pxar {
      */
     bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
+    uint32_t getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
+
     /** Status of the DAQ
      */
     bool _daq_running;
@@ -578,6 +580,11 @@ namespace pxar {
     /** Allocated memory size on the DTB for the currently running DAQ session
      */
     uint32_t _daq_buffersize;
+
+    /** Minimal Pattern Generator Loop period, calculated from the sum of
+     *  all PG commands
+     */
+    bool _daq_minimum_period;
 
   }; // class api
 
