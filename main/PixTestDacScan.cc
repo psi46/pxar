@@ -170,6 +170,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
   //FIXME  clearHist();

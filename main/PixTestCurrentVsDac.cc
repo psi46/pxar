@@ -104,8 +104,8 @@ PixTestCurrentVsDac::~PixTestCurrentVsDac()
 }
 
 // ----------------------------------------------------------------------
-void PixTestCurrentVsDac::doTest()
-{
+void PixTestCurrentVsDac::doTest() {
+  fDirectory->cd();
   PixTest::update();
 
   LOG(logINFO) << "PixTestCurrentVsDac::doTest() DAC = " << fParDAC;
@@ -116,28 +116,28 @@ void PixTestCurrentVsDac::doTest()
 
   TH1D *hia(0);
   TH1D *hid(0);
-
+  
   for( uint32_t roc = 0; roc < fPixSetup->getConfigParameters()->getNrocs(); ++roc ) {
-
+    
     hia = (TH1D*)fDirectory->Get( Form( "Ia_vs_%s_C%02d", fParDAC.c_str(), roc ) );
     hid = (TH1D*)fDirectory->Get( Form( "Id_vs_%s_C%02d", fParDAC.c_str(), roc ) );
-
+    
     if( hia && hid ) {
-
+      
       // remember DAC
-
+      
       uint8_t dacval = fApi->_dut->getDAC( roc, fParDAC );
-
+      
       // loop over DAC
-
+      
       for( int idac = 0; idac < 256; ++idac ) {
-
+	
 	fApi->setDAC( fParDAC, idac, roc );
 	// delay
 	hia->SetBinContent( idac+1, fApi->getTBia()*1E3 );
 	hid->SetBinContent( idac+1, fApi->getTBid()*1E3 );
       }
-
+      
       fApi->setDAC( fParDAC, dacval, roc ); // restore
     }
     else {

@@ -142,6 +142,7 @@ void PixTestDacDacScan::init() {
 void PixTestDacDacScan::setToolTips() {
   fTestTip    = string(Form("scan the two DACs %s vs %s and ",  fParDAC1.c_str(), fParDAC2.c_str()))
     + string("determine the number of hits for each setting")
+    + string("\nNOTE: There is currently a limitation that the total number of scanned points is less than 2^14!")
     ;
   fSummaryTip = string("summary plot to be implemented")
     ;
@@ -190,6 +191,7 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestDacDacScan::doTest() ntrig = " << fParNtrig;
   //FIXME  clearHist();
@@ -203,6 +205,11 @@ void PixTestDacDacScan::doTest() {
 
 
   // -- FIXME This code is crap. Replace as in PixelAlive
+
+  if ((fParHiDAC1-fParLoDAC1)*(fParHiDAC2-fParLoDAC2) > 16383) {
+    LOG(logERROR) << "You cannot scan more than 2^14 points simultaneously -- nothing done";
+    return;
+  }
 
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > > 
     results = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 

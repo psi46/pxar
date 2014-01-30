@@ -113,6 +113,7 @@ PixTestTrim::~PixTestTrim() {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestTrim::doTest() ntrig = " << fParNtrig;
 
