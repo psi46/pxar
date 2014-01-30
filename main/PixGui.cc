@@ -25,9 +25,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   fOldDirectory = "nada"; 
 
-  ULong_t red;  gClient->GetColorByName("red", red);
-  ULong_t green;  gClient->GetColorByName("green", green);
-  ULong_t yellow;  gClient->GetColorByName("yellow", yellow);
+  gClient->GetColorByName("red", fRed);
+  gClient->GetColorByName("green", fGreen);
+  gClient->GetColorByName("yellow", fYellow);
   
   fPixSetup = setup;
   fApi = fPixSetup->getApi();
@@ -35,7 +35,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fTestParameters = fPixSetup->getPixTestParameters(); 
   
   fPower = true;
-  fHV = false;
+  if (fConfigParameters->getHvOn()) {
+    fHV = true; 
+  } else {
+    fHV = false;
+  }
   
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
   fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
@@ -77,10 +81,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fPower) {
-    fbtnPower->ChangeBackground(green);
+    fbtnPower->ChangeBackground(fGreen);
     fbtnPower->SetText("On");
   }  else {
-    fbtnPower->ChangeBackground(red);
+    fbtnPower->ChangeBackground(fRed);
     fbtnPower->SetText("Off");
   }
   powerFrame->AddFrame(fbtnPower, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
@@ -96,11 +100,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fHV) {
-    fbtnHV->ChangeBackground(green);
-    fbtnHV->SetText("On");
+    hvOn();    
   } else {
-    fbtnHV->ChangeBackground(red);
-    fbtnHV->SetText("Off");
+    hvOff();
   }
 
   hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, 5, 5, 3, 4));
@@ -122,7 +124,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   exitButton->ChangeOptions(exitButton->GetOptions() );
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
-  exitButton->ChangeBackground(red);
+  exitButton->ChangeBackground(fRed);
   h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight,5,5,3,4));
 
 
@@ -242,11 +244,6 @@ void PixGui::handleButtons(Int_t id) {
     TGButton *btn = (TGButton *) gTQSender;
     id = btn->WidgetId();
   }
-  ULong_t red;
-  ULong_t green;
-
-  gClient->GetColorByName("red", red);
-  gClient->GetColorByName("green", green);
  
   switch (id) {
   case B_DIRECTORY: {
@@ -277,13 +274,13 @@ void PixGui::handleButtons(Int_t id) {
   case B_POWER: {
     if(fPower == true) {
       fPower = false;
-      fbtnPower->ChangeBackground(red);
+      fbtnPower->ChangeBackground(fRed);
       fbtnPower->SetText("Off");
       fApi->Poff(); 
       LOG(logDEBUG) << "Power set Off";
     } else {
       fPower = true;
-      fbtnPower->ChangeBackground(green);
+      fbtnPower->ChangeBackground(fGreen);
       fbtnPower->SetText("On");
       fApi->Pon(); 
       LOG(logDEBUG) << "Power set On";
@@ -292,17 +289,9 @@ void PixGui::handleButtons(Int_t id) {
   }
   case B_HV: {
     if(fHV == true) {
-      fHV = false;
-      fbtnHV->ChangeBackground(red);
-      fbtnHV->SetText("Off");
-      fApi->HVoff(); 
-      LOG(logDEBUG) << "HV set Off";
+      hvOff();
     } else {
-      fHV = true;
-      fbtnHV->ChangeBackground(green);
-      fbtnHV->SetText("On");
-      fApi->HVon(); 
-      LOG(logDEBUG) << "HV set On";
+      hvOn();
     }
     break;  
   }
@@ -310,6 +299,26 @@ void PixGui::handleButtons(Int_t id) {
     break;
   }
 }
+
+// ----------------------------------------------------------------------
+void PixGui::hvOn() {
+  fHV = true;
+  fbtnHV->ChangeBackground(fGreen);
+  fbtnHV->SetText("On");
+  fApi->HVon(); 
+  LOG(logDEBUG) << "HV set On";
+}
+
+
+// ----------------------------------------------------------------------
+void PixGui::hvOff() {
+  fHV = false;
+  fbtnHV->ChangeBackground(fRed);
+  fbtnHV->SetText("Off");
+  fApi->HVoff(); 
+  LOG(logDEBUG) << "HV set Off";
+}
+
 
 
 // --------------------------------------------------------------------------------
@@ -360,8 +369,8 @@ PixTest* PixGui::createTest(string testname) {
 
 // ----------------------------------------------------------------------
 void PixGui::selectedTab(int id) {
-    LOG(logDEBUG) << "Switched to tab " << id;
-    fTabs->SetTab(id); 
+  LOG(logDEBUG) << "Switched to tab " << id;
+  fTabs->SetTab(id); 
 }
 
 

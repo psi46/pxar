@@ -54,6 +54,9 @@ public:
   void createParTab();
   void selectedTab(int); 
   void changeRootFile();
+  bool isHvOn() {return fHV;}
+  void hvOn();
+  void hvOff();
 
   PixTest* createTest(std::string); 
 
@@ -100,6 +103,8 @@ private:
 
   int                    fWidth, fHeight; 
   std::string            fOldDirectory;
+
+  ULong_t                fRed, fGreen, fYellow; 
 
   ClassDef(PixGui, 1); //
 
