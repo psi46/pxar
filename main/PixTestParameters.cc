@@ -34,7 +34,7 @@ vector<string> PixTestParameters::getTests() {
 bool PixTestParameters::readTestParameterFile(string file) {
   ifstream is(file.c_str()); 
   if (!is.is_open()) {
-    LOG(logINFO) << "cannot read " << file;
+    LOG(logDEBUG) << "cannot read " << file;
     return false;
   }
 
@@ -98,10 +98,10 @@ map<string, string> PixTestParameters::getTestParameters(string testName) {
 // ----------------------------------------------------------------------
 void PixTestParameters::dump() {
   for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
-    LOG(logINFO) << "PixTestParameters: ->" << imap->first << "<-";
+    LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
     map<string, string> pars = imap->second; 
     for (map<string, string>::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
-      LOG(logINFO) << "  " << imap2->first << ": " << imap2->second;
+      LOG(logDEBUG) << "  " << imap2->first << ": " << imap2->second;
     }
   }
   
@@ -112,10 +112,10 @@ void PixTestParameters::dump() {
 // bool PixTestParameters::setTestParameter(std::string testname, std::string parname, std::string value) {
 
 //   for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
-//     LOG(logINFO) << "PixTestParameters: ->" << imap->first << "<-";
+//     LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
 //     map<string, string> pars = imap->second; 
 //     for (map<string, string>::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
-//       LOG(logINFO) << "  " << imap2->first << ": " << imap2->second;
+//       LOG(logDEBUG) << "  " << imap2->first << ": " << imap2->second;
 //     }
 //   }
   

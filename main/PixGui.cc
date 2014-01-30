@@ -178,7 +178,6 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   vector<string> tests = fTestParameters->getTests();
   for (unsigned int i = 0; i < tests.size(); ++i) {
     fcmbTests->AddEntry(tests[i].c_str(), i+1);
-    cout << "CREATE TAB FOR TEST " << i << endl;
     createTab(tests[i].c_str()); 
   }
   fcmbTests->Select(0);
@@ -198,7 +197,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
 // ----------------------------------------------------------------------
 PixGui::~PixGui() {
-  LOG(logINFO) << "PixGui::destructor";
+  LOG(logDEBUG) << "PixGui::destructor";
   delete fTimer;
   delete fMonitor; 
   delete fcmbTests;
@@ -251,7 +250,7 @@ void PixGui::handleButtons(Int_t id) {
  
   switch (id) {
   case B_DIRECTORY: {
-    LOG(logINFO) << Form("changing base directory: %s", fDirNameBuffer->GetString());
+    LOG(logDEBUG) << Form("changing base directory: %s", fDirNameBuffer->GetString());
     fOldDirectory = fConfigParameters->getDirectory(); 
     if (0 == gSystem->OpenDirectory(fDirNameBuffer->GetString())) {
       LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it"; 
@@ -272,7 +271,7 @@ void PixGui::handleButtons(Int_t id) {
     break;
   }
   case B_EXIT: {
-    LOG(logINFO) << "PixGui::exit called";
+    LOG(logDEBUG) << "PixGui::exit called";
     CloseWindow();
   }
   case B_POWER: {
@@ -281,13 +280,13 @@ void PixGui::handleButtons(Int_t id) {
       fbtnPower->ChangeBackground(red);
       fbtnPower->SetText("Off");
       fApi->Poff(); 
-      LOG(logINFO) << "Power set Off";
+      LOG(logDEBUG) << "Power set Off";
     } else {
       fPower = true;
       fbtnPower->ChangeBackground(green);
       fbtnPower->SetText("On");
       fApi->Pon(); 
-      LOG(logINFO) << "Power set On";
+      LOG(logDEBUG) << "Power set On";
     }
     break;
   }
@@ -297,13 +296,13 @@ void PixGui::handleButtons(Int_t id) {
       fbtnHV->ChangeBackground(red);
       fbtnHV->SetText("Off");
       fApi->HVoff(); 
-      LOG(logINFO) << "HV set Off";
+      LOG(logDEBUG) << "HV set Off";
     } else {
       fHV = true;
       fbtnHV->ChangeBackground(green);
       fbtnHV->SetText("On");
       fApi->HVon(); 
-      LOG(logINFO) << "HV set On";
+      LOG(logDEBUG) << "HV set On";
     }
     break;  
   }
@@ -334,7 +333,7 @@ void PixGui::createTab(const char*csel) {
 
   PixTest *pt = createTest(string(csel));
   if (0 == pt) {
-    LOG(logINFO) << "ERROR: " << csel << " not known, nothing created";
+    LOG(logDEBUG) << "ERROR: " << csel << " not known, nothing created";
     return;
   }
 
@@ -346,7 +345,7 @@ void PixGui::createTab(const char*csel) {
   MapSubwindows();
   Resize(GetDefaultSize());
   MapWindow();
-  LOG(logINFO) << "csel = " << csel;
+  LOG(logDEBUG) << "csel = " << csel;
   fTabs->SetTab(csel); 
   
 }
@@ -361,7 +360,7 @@ PixTest* PixGui::createTest(string testname) {
 
 // ----------------------------------------------------------------------
 void PixGui::selectedTab(int id) {
-    LOG(logINFO) << "Switched to tab " << id;
+    LOG(logDEBUG) << "Switched to tab " << id;
     fTabs->SetTab(id); 
 }
 
@@ -369,7 +368,6 @@ void PixGui::selectedTab(int id) {
 // ----------------------------------------------------------------------
 void PixGui::changeRootFile() {
   string oldRootFilePath = gFile->GetName();
-  cout << "oldRootFilePath: " << oldRootFilePath << endl;
   gFile->Close();
 
   string newRootFilePath = fConfigParameters->getDirectory() + "/" + fRootFileNameBuffer->GetString();

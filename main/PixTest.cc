@@ -94,7 +94,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   vector<vector<TH1*> > maps; 
   vector<TH1*>          resultMaps; 
 
-  cout << "book histograms" << endl;
   TH1* h1(0); 
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     rmaps.clear();
@@ -111,13 +110,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   cache(dac); 
 
-  cout << "api::getEfficiencyMap" << endl;
 
   vector<pixel>  results;
   int ic, ir, iroc, val; 
   for (int idac = dacmin; idac < dacmax; ++idac) {
     results.clear(); 
-    cout << " idac = " << idac << endl;
     fApi->setDAC(dac, idac);
     results = fApi->getEfficiencyMap(0, ntrig);
     for (unsigned int i = 0; i < results.size(); ++i) {
@@ -177,10 +174,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     }
 
     if (result & 0x4) {
-      cout << "average step: " << averageStep << endl;
       for (unsigned int i = 0; i < rmaps.size(); ++i) {
 	if (TMath::Abs(rmaps[i]->GetFunction("PIF_err")->GetParameter(0) - averageStep) > 10) {
-	  cout << "  adding " << rmaps[i]->GetName() << endl;
 	  emaps.push_back(rmaps[i]); 
 	}
       }
@@ -348,7 +343,7 @@ void PixTest::dumpParameters() {
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  LOG(logINFO) << "PixTestBase dtor(), writing out histograms";
+  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
@@ -415,7 +410,7 @@ TH1* PixTest::previousHist() {
 void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size, 
 			float xoff, float yoff, float lsize, int font) {
   if (h == 0) {
-    LOG(logINFO) << " Histogram not defined";
+    LOG(logDEBUG) << " Histogram not defined";
   } else {
     h->SetXTitle(sx);                  h->SetYTitle(sy); 
     h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
@@ -485,10 +480,10 @@ void PixTest::cache(string dacname) {
   if (!fCacheDac.compare("nada")) {
     fCacheDac = dacname; 
   } else {
-    LOG(logINFO) << "XXXX Error: cached " << fCacheDac << ", not yet restored";
+    LOG(logWARNING) << "Error: cached " << fCacheDac << ", not yet restored";
   }
   
-  LOG(logINFO) << "Cache " << dacname;
+  LOG(logDEBUG) << "Cache " << dacname;
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     fCacheVal.push_back(fApi->_dut->getDAC(i, dacname)); 
   }
@@ -498,11 +493,11 @@ void PixTest::cache(string dacname) {
 // ----------------------------------------------------------------------
 void PixTest::restore(string dacname) {
   if (dacname.compare(fCacheDac)) {
-    LOG(logINFO) << "XXXX Error: restoring " << dacname << ", but cached " << fCacheDac;
+    LOG(logWARNING) << "Error: restoring " << dacname << ", but cached " << fCacheDac;
     return;
   }
 
-  LOG(logINFO) << "Restore " << dacname;
+  LOG(logDEBUG) << "Restore " << dacname;
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     fApi->setDAC(dacname, fCacheVal[i], i); 
   }
@@ -514,7 +509,7 @@ void PixTest::restore(string dacname) {
 
 // ----------------------------------------------------------------------
 TH2D* PixTest::moduleMap(string histname) {
-  LOG(logINFO) << "moduleMap histname: " << histname; 
+  LOG(logDEBUG) << "moduleMap histname: " << histname; 
   TH1* h0 = (*fDisplayedHist);
   if (!h0->InheritsFrom(TH2::Class())) {
     return 0; 
@@ -524,7 +519,7 @@ TH2D* PixTest::moduleMap(string histname) {
   string::size_type s1 = h1name.find("_C"); 
   string barename = h1name.substr(0, s1);
   string h2name = barename + string("_mod"); 
-  LOG(logINFO) << "h1->GetName() = " << h1name << " -> " << h2name; 
+  LOG(logDEBUG) << "h1->GetName() = " << h1name << " -> " << h2name; 
   TH2D *h2 = new TH2D(h2name.c_str(), h2name.c_str(), 
 		      2*80, 0., 2*80., 8*52, 0., 8*52); 
   for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {

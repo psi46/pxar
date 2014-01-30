@@ -24,33 +24,33 @@ PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name)
 
 //----------------------------------------------------------
 PixTestScurves::PixTestScurves() : PixTest() {
-  //  LOG(logINFO) << "PixTestScurves ctor()";
+  //  LOG(logDEBUG) << "PixTestScurves ctor()";
 }
 
 // ----------------------------------------------------------------------
 bool PixTestScurves::setParameter(string parName, string sval) {
   bool found(false);
   for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << "---> " << imap->first;
+    LOG(logDEBUG) << "---> " << imap->first;
     if (0 == imap->first.compare(parName)) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC")) {
 	fParDac = sval;
-	LOG(logINFO) << "  setting fParDac  ->" << fParDac << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParDac  ->" << fParDac << "<- from sval = " << sval;
       }
       if (!parName.compare("DacLo")) {
 	fParDacLo = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParDacLo  ->" << fParDacLo << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParDacLo  ->" << fParDacLo << "<- from sval = " << sval;
       }
       if (!parName.compare("DacHi")) {
 	fParDacHi = atoi(sval.c_str()); 
-	LOG(logINFO) << "  setting fParDacHi  ->" << fParDacHi << "<- from sval = " << sval;
+	LOG(logDEBUG) << "  setting fParDacHi  ->" << fParDacHi << "<- from sval = " << sval;
       }
 
       setToolTips();
@@ -94,7 +94,7 @@ void PixTestScurves::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestScurves::~PixTestScurves() {
-  LOG(logINFO) << "PixTestScurves dtor";
+  LOG(logDEBUG) << "PixTestScurves dtor";
 }
 
 
