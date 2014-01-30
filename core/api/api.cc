@@ -1435,6 +1435,8 @@ void api::SetCalibrateBits(bool enable) {
 
 bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
   
+  uint32_t delay_sum = 0;
+
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     if((*it).second == 0 && it != pg_setup.end() -1 ) {
       LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
@@ -1446,7 +1448,9 @@ bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
       LOG(logWARNING) << "No delay = 0 found on last entry. Setting last delay to 0 to stop the pattern generator.";
       (*it).second = 0;
     }
+    delay_sum += (*it).second;
   }
 
+  LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return true;
 }
