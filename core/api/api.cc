@@ -1104,7 +1104,14 @@ void api::daqTrigger(uint32_t nTrig) {
 }
 
 void api::daqTriggerLoop(uint16_t period) {
-  // Just passing the call to the HAL, not doing anything else here:
+  // Pattern Generator loop doesn't work for delay periods smaller than
+  // 110 clock cycles, so limit it to that:
+  if(period < 110) {
+    period = 110;
+    LOG(logWARNING) << "Loop period setting too small for Pattern generator. "
+		    << "Setting loop delay to " << period << " clk";
+  }
+
   _hal->daqTriggerLoop(period);
 }
 
