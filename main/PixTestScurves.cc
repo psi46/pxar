@@ -15,7 +15,7 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), 
+  fParDac(""), fParNtrig(-1), fParNpix(-1), 
   fParDacLo(-1), fParDacHi(-1) {
   PixTest::init(a, name);
   init(); 
@@ -39,6 +39,10 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+      }
+      if (!parName.compare("Npix")) {
+	fParNpix = atoi(sval.c_str()); 
+	LOG(logDEBUG) << "  setting fParNpix  ->" << fParNpix << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC")) {
 	fParDac = sval;
@@ -64,8 +68,13 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 
 // ----------------------------------------------------------------------
 void PixTestScurves::setToolTips() {
-  fTestTip    = string(Form("measure and fit s-curves for DAC %s\n", fParDac.c_str())) + string("TO BE FINISHED!!"); 
-  fSummaryTip = string("summary plot to be implemented")
+  fTestTip    = string(Form("measure and fit s-curves for DAC %s\n", fParDac.c_str())); 
+  fSummaryTip = string("all ROCs are displayed side-by-side. Note the orientation:")
+    + string("\nthe canvas bottom corresponds to the narrow module side with the cable")
+    + string("\nexplanations for all plots: ")
+    + string("thr_* shows the map of the s-curve thresholds")
+    + string("\nsig_* shows the map of the s-curve widths")
+    + string("\ndist_* shows the distribution/projections of the threshold and width maps")
     ;
 }
 
@@ -100,19 +109,23 @@ PixTestScurves::~PixTestScurves() {
 
 // ----------------------------------------------------------------------
 void PixTestScurves::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestScurves::doTest() ntrig = " << fParNtrig 
+	       << " using npix = " << fParNpix
 	       << " scanning DAC " << fParDac 
 	       << " from " << fParDacLo << " .. " << fParDacHi;
 
-  if (fApi) fApi->_dut->testAllPixels(true);
-  
+  if (fApi) fApi->_dut->testAllPixels(false);
+  sparseRoc(fParNpix); 
+
   int RFLAG(7); 
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG); 
 
   // -- and now do the analysis...
   // FIXME
 
+  LOG(logINFO) << "PixTestScurves::doTest() done ";
   PixTest::update(); 
 }
 

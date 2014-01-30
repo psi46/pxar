@@ -34,7 +34,9 @@ public:
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
   std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
 
-  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
+  virtual void sparseRoc(int npix = 8);
+
+  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax, bool zeroSuppressed = false); 
   bool threshold(TH1 *); 
   int simpleThreshold(TH1 *); 
   
