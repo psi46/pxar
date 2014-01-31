@@ -542,6 +542,9 @@ int main(int argc, char* argv[]) {
 
     _api->HVoff();
 
+    // What is the range of caldel?
+    std::cout << (int)_api->getDACRange("caldeL") << std::endl;
+
     // And end that whole thing correcly:
     std::cout << "Done." << std::endl;
     delete _api;
