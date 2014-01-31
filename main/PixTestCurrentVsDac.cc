@@ -113,7 +113,7 @@ void PixTestCurrentVsDac::doTest()
 
   LOG(logINFO) << "PixTestCurrentVsDac::doTest() DAC = " << fParDAC;
 
-  uint8_t maxDac = getDACRange( fParDAC );
+  uint8_t maxDac = fApi->getDACRange( fParDAC );
 
   if( maxDac == 0 ) {
     LOG(logINFO) << "ERROR: " << fParDAC << " is not a ROC register";
