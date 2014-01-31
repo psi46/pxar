@@ -1016,7 +1016,7 @@ uint32_t hal::daqBufferStatus() {
 
 bool hal::daqStop(uint8_t nTBMs) {
 
-  LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers.";
+  LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers, Ch0: " << _testboard->Daq_GetSize(0);
 
   // Stop the Pattern Generator, just in case (also stops Pg_Loop())
   _testboard->Pg_Stop();
