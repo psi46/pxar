@@ -16,9 +16,24 @@ cdef extern from "api.h" namespace "pxar":
         void decode(int32_t address)
 
 cdef extern from "api.h" namespace "pxar":
+    cdef cppclass pixelConfig:
+        uint8_t trim
+        uint8_t column
+        uint8_t row
+        bool mask
+        bool enable
+        pixelConfig()
+        pixelConfig(uint8_t column, uint8_t row, uint8_t trim)
+
+cdef extern from "api.h" namespace "pxar":
     cdef cppclass pxarCore:
         pxarCore(string usbId, string logLevel) except +
         string getVersion()
-        bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, vector[pair[string, double] ] power_settings, vector[pair[uint16_t, uint8_t]] pg_setup) except +
-
-
+        bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, 
+                           vector[pair[string, double] ] power_settings, 
+                           vector[pair[uint16_t, uint8_t]] pg_setup) except +
+        bool initDUT(string tbmtype,
+                     vector[vector[pair[string,uint8_t]]] tbmDACs,
+                     string roctype,
+                     vector[vector[pair[string,uint8_t]]] rocDACs,
+                     vector[vector[pixelConfig]] rocPixels) except +
