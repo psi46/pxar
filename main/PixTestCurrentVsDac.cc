@@ -1,8 +1,8 @@
 
 // scan a DAC, measure currents
 
-#include <stdlib.h>     /* atof, atoi */
-#include <algorithm>    // std::find
+#include <stdlib.h>  // atof, atoi
+#include <algorithm> // std::find
 #include <iostream>
 
 #include <TH1.h>
@@ -39,7 +39,8 @@ bool PixTestCurrentVsDac::setParameter( string parName, string sval )
     LOG(logDEBUG) << "---> " << imap->first;
     if( 0 == imap->first.compare(parName) ) {
       found = true;
-      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
+      sval.erase( remove( sval.begin(), sval.end(), ' ' ), sval.end() );
+
       fParameters[parName] = sval;
 
       if( !parName.compare( "DAC" ) ) {
@@ -66,6 +67,8 @@ void PixTestCurrentVsDac::init()
 void PixTestCurrentVsDac::bookHist(string name) // general booking routine
 {
   fDirectory->cd();
+
+  // Improvement: change binning for 4-bit DACs...
 
   TH1D *h1(0);
   fHistList.clear();
@@ -110,6 +113,13 @@ void PixTestCurrentVsDac::doTest()
 
   LOG(logINFO) << "PixTestCurrentVsDac::doTest() DAC = " << fParDAC;
 
+  uint8_t maxDac = getDACRange( fParDAC );
+
+  if( maxDac == 0 ) {
+    LOG(logINFO) << "ERROR: " << fParDAC << " is not a ROC register";
+    return;
+  }
+
   fApi->_dut->testAllPixels(false);
 
   bookHist( fParDAC );
@@ -129,19 +139,23 @@ void PixTestCurrentVsDac::doTest()
 
       uint8_t dacval = fApi->_dut->getDAC( roc, fParDAC );
 
-      // loop over DAC
+      fApi->setDAC( fParDAC, 0, roc ); // start at zero
 
-      for( int idac = 0; idac < 256; ++idac ) {
+      // delay:
+
+      sw.Start(kTRUE); // reset stopwatch
+      do {
+	sw.Start(kFALSE); // continue
+	fApi->getTBia()*1E3; // [mA]
+      }
+      while( sw.RealTime() < 0.1 ); // [s]
+
+      // loop over DAC:
+
+      for( uint32_t idac = 0; idac <= maxDac; ++idac ) {
 
 	fApi->setDAC( fParDAC, idac, roc );
-
-	sw.Start(kTRUE); // reset
-	do {
-	  sw.Start(kFALSE); // continue
-	  double ia = fApi->getTBia()*1E3; // [mA]
-	}
-	while( sw.RealTime() < 0.1 );
-
+	// delay?
 	hia->SetBinContent( idac+1, fApi->getTBia()*1E3 );
 	hid->SetBinContent( idac+1, fApi->getTBid()*1E3 );
 
