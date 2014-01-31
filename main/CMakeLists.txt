@@ -23,6 +23,7 @@ PixTestDacDacScan.cc
 PixTestScurves.cc
 PixTestTrim.cc
 PixTestSetup.cc
+PixTestSetCalDel.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
 PixTestParameters.cc
@@ -48,6 +49,7 @@ PixTestDacDacScan.hh
 PixTestScurves.hh
 PixTestTrim.hh
 PixTestSetup.hh
+PixTestSetCalDel.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
 PixTestParameters.hh

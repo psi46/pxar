@@ -327,6 +327,10 @@ namespace pxar {
      */
     bool setDAC(std::string dacName, uint8_t dacValue);
 
+    /** Get the valid range of a given DAC
+     */
+    uint8_t getDACRange(std::string dacName);
+
     /** Set a register value on a specific TBM of the DUT
      *
      *  The "tbmid" parameter can be used to select a specific TBM to program.

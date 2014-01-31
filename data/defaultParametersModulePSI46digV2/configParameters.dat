@@ -18,7 +18,7 @@ nTbms 1
 hubId 31
 tbmEnable 1
 tbmEmulator 0
-hvOn 0
+hvOn 1
 tbmChannel 0
 rocType psi46digv2
 tbmType tbm08
