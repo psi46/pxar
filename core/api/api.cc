@@ -538,6 +538,20 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
   return true;
 }
 
+uint8_t api::getDACRange(std::string dacName) {
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  uint8_t val = 0;
+  if(!verifyRegister(dacName, dacRegister, val, ROC_REG)) return 0;
+  
+  // Get singleton DAC dictionary object:
+  RegisterDictionary * _dict = RegisterDictionary::getInstance();
+
+  // Read register value limit:
+  return _dict->getSize(dacRegister, ROC_REG);
+}
+
 bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
   if(!status()) {return 0;}
