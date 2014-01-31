@@ -119,73 +119,67 @@ void PixTestTrim::doTest() {
 
   fPIX.clear(); 
   if (fApi) fApi->_dut->testAllPixels(false);
+  if (fApi)    fApi->setDAC("Vcal", fParVcal);
   sparseRoc(10); 
   int RFLAG(7); 
-  vector<TH1*> thr00 = thrMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi); 
-  vector<TH1*> thr01 = scurveMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi, RFLAG); 
-  
-  
-  PixTest::update(); 
-  return;
 
   // -- determine minimal VthrComp 
   LOG(logINFO) << "TRIM determine minimal VthrComp"; 
-  vector<TH1*> thr0 = scurveMaps("VthrComp", "TrimThr0", fParNtrig, fParVthrCompLo, fParVthrCompHi, RFLAG); 
-  TH2D *h(0); 
-  for (unsigned int i = 0; i < thr0.size(); ++i) {
-    LOG(logDEBUG) << "   " << thr0[i]->GetName();
-    if (!strcmp("thr_TrimThr0_VthrComp_C0", thr0[i]->GetName())) {
-      h = (TH2D*)thr0[i]; 
-      break;
-    }
-  }
+  vector<TH1*> thr0 = thrMaps("VthrComp", "TrimThr0", fParNtrig); 
 
-
-  if (0 == h) {
-    LOG(logINFO) << "histogram thr_TrimThr0_VthrComp_C0 not found"; 
-    return;
-  }
-
-  double minThr(999.); 
-  int ix(-1), iy(-1); 
-  for (int ic = 0; ic < h->GetNbinsX(); ++ic) {
-    for (int ir = 0; ir < h->GetNbinsY(); ++ir) {
-      if (h->GetBinContent(ic+1, ir+1) < minThr) {
-	minThr = h->GetBinContent(ic+1, ir+1);
-	ix = ic; 
-	iy = ir; 
+  vector<int> VthrComp; 
+  TH2D* h(0); 
+  for (unsigned int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc) {
+    LOG(logDEBUG) << "   " << thr0[iroc]->GetName();
+    if (!strcmp(Form("thr_TrimThr0_VthrComp_C%d", iroc), thr0[iroc]->GetName())) {
+      h = (TH2D*)thr0[iroc]; 
+      double minThr(999.); 
+      int ix(-1), iy(-1); 
+      for (int ic = 0; ic < h->GetNbinsX(); ++ic) {
+	for (int ir = 0; ir < h->GetNbinsY(); ++ir) {
+	  if (h->GetBinContent(ic+1, ir+1) > 1e-5 && h->GetBinContent(ic+1, ir+1) < minThr) {
+	    minThr = h->GetBinContent(ic+1, ir+1);
+	    ix = ic; 
+	    iy = ir; 
+	  }
+	}
       }
+      LOG(logINFO) << " roc " << iroc << "  has minimal VthrComp threshold" << minThr << " for pixel " << ix << "/" << iy;
+      VthrComp.push_back(minThr); 
+      fApi->setDAC("VthrComp", minThr, iroc); 
     }
   }
-  LOG(logINFO) << "  minimal VthrComp threshold" << minThr << " for pixel " << ix << "/" << iy;
 
-  LOG(logINFO) << "TRIM determine highest Vcal thresho"; 
-  vector<TH1*> thr1 = scurveMaps("Vcal", "TrimThr1", fParNtrig, fParVcalLo, fParVcalHi, RFLAG); 
-  for (unsigned int i = 0; i < thr1.size(); ++i) {
-    if (!strcmp("thr_TrimThr1_Vcal_C0", thr1[i]->GetName())) {
-      h = (TH2D*)thr1[i]; 
-      break;
-    }
-  }
-  double maxThr(-1.); 
-  for (int ic = 0; ic < h->GetNbinsX(); ++ic) {
-    for (int ir = 0; ir < h->GetNbinsY(); ++ir) {
-      if (h->GetBinContent(ic+1, ir+1) > maxThr) {
-	maxThr = h->GetBinContent(ic+1, ir+1);
-	ix = ic; 
-	iy = ir; 
+  // -- determine maximal VCAL
+  LOG(logINFO) << "TRIM determine highest Vcal "; 
+  fApi->setDAC("CtrlReg", 0); 
+  vector<TH1*> thr1 = thrMaps("Vcal", "TrimThr1", fParNtrig); 
+  vector<int> Vcal; 
+  for (unsigned int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc) {
+    int ix(-1), iy(-1); 
+    LOG(logDEBUG) << "   " << thr1[iroc]->GetName();
+    if (!strcmp(Form("thr_TrimThr1_Vcal_C%d", iroc), thr1[iroc]->GetName())) {
+      h = (TH2D*)thr1[iroc]; 
+      double maxVcal(-1.); 
+      int ix(-1), iy(-1); 
+      for (int ic = 0; ic < h->GetNbinsX(); ++ic) {
+	for (int ir = 0; ir < h->GetNbinsY(); ++ir) {
+	  if (h->GetBinContent(ic+1, ir+1) > 1e-5 && h->GetBinContent(ic+1, ir+1) > maxVcal) {
+	    maxVcal = h->GetBinContent(ic+1, ir+1);
+	    ix = ic; 
+	    iy = ir; 
+	  }
+	}
       }
+      LOG(logINFO) << " roc " << iroc << "  has maximal Vcal " << maxVcal << " for pixel " << ix << "/" << iy;
+      Vcal.push_back(maxVcal); 
+      fApi->setDAC("Vcal", maxVcal, iroc); 
     }
   }
-  LOG(logINFO) << "  maximal Vcal threshold " << maxThr << " for pixel " << ix << "/" << iy;
 
-  // -- determine Vtrim for pixel with highest VCAl threshold
-  if (fApi) fApi->_dut->testAllPixels(false);
-  fApi->_dut->testPixel(ix, iy, true);
-  int vtrim = adjustVtrim(); 
-  LOG(logINFO) << "  determine Vtrim =  " << vtrim;
+  
 
-
+  
   PixTest::update(); 
 }
 

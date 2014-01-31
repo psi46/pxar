@@ -32,7 +32,7 @@ public:
   int pixelThreshold(string dac, int ntrig, int dacmin, int dacmax);
   std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
-  std::vector<TH1*> thrMaps(string dac, string name, int ntrig = 10, int daclo = 0, int dachi = 255);
+  std::vector<TH1*> thrMaps(string dac, string name, int ntrig = 10);
 
   //  std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
 
