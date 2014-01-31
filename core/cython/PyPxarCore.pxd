@@ -5,7 +5,6 @@ from libcpp.pair cimport pair
 from libcpp.string cimport string
 from libcpp cimport bool
 
-
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:
         uint8_t roc_id
@@ -18,7 +17,8 @@ cdef extern from "api.h" namespace "pxar":
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pxarCore:
-        pxarCore(string usbId, string logLevel)
+        pxarCore(string usbId, string logLevel) except +
         string getVersion()
-        bool initTestboard(vector[pair[string,uint8_t] ] sig_delays, vector[pair[string,double] ] power_settings, vector[pair[uint16_t, uint8_t] ] pg_setup)
+        bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, vector[pair[string, double] ] power_settings, vector[pair[uint16_t, uint8_t]] pg_setup) except +
+
 

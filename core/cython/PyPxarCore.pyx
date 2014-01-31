@@ -1,9 +1,9 @@
 # distutils: language = c++
 from libcpp cimport bool
-from libcpp.vector cimport vector
 from libc.stdint cimport uint8_t, int8_t, uint16_t, int16_t, int32_t, uint32_t
 from libcpp.string cimport string
-from libcpp cimport bool
+from libcpp.pair cimport pair
+from libcpp.vector cimport vector
 
 cimport PyPxarCore
 
@@ -31,6 +31,7 @@ cdef class Pixel:
         def __get__(self): return self.thisptr.value
         def __set__(self, value): self.thisptr.value = value
 
+
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
     def __cinit__(self, usbId = "*", logLevel = "WARNING"):
@@ -44,16 +45,16 @@ cdef class PyPxarCore:
         power_settings = voltage/current limit settings
         pg_setup = initial pattern generator setup
         """
-        cdef vector[pair[string, char]] sd
+        cdef vector[pair[string, int]] sd
         cdef vector[pair[string, double]] ps
-        cdef vector[pair[uint16_t, char]] pgs
+        cdef vector[pair[int, int ]] pgs
         for key, value in sig_delays.items():
-            sd.push_back(tuple[key,value])
+            sd.push_back((key,value))
         for key, value in power_settings.items():
-            sd.push_back(tuple[key,value])
+            ps.push_back((key,value))
         for key, value in pg_setup.items():
-            sd.push_back(tuple[key,value])
-        return self.initTestboard(sd, ps, pgs)
+            pgs.push_back((key,value))
+        return self.thisptr.initTestboard(sd, ps, pgs)
     def getVersion(self):
-        return self.getVersion()
+        return self.thisptr.getVersion()
     
