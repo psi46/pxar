@@ -14,6 +14,7 @@
 #include "PixTestTrim.hh"
 #include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
+#include "PixTestSetCalDel.hh"
 #include "PixTestGainCalibration.hh"
 
 using namespace std;
@@ -55,6 +56,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("Trim")) return new PixTestTrim(a, "Trim"); 
   if (!name.compare("Scurves")) return new PixTestScurves(a, "Scurves"); 
   if (!name.compare("Setup")) return new PixTestSetup(a, "Setup"); 
+  if (!name.compare( "SetCalDel")) return new PixTestSetCalDel(a, "SetCalDel"); 
   if (!name.compare("GainCalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   return 0; 
 }

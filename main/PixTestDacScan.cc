@@ -153,7 +153,7 @@ void PixTestDacScan::bookHist(string name) {
 		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
 		    255, 0., 255.); 
       h1->SetMinimum(0.); 
-      setTitles(h1, "DAC", "# pixels"); 
+      setTitles(h1, Form("%s [DAC]", name.c_str()), "readouts");
       fHistList.push_back(h1); 
     }
    
