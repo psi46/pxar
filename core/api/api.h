@@ -70,6 +70,7 @@ namespace pxar {
   /** Class to store events containing a header and a std::vector of pixels
    */
   class DLLEXPORT event {
+  public:
     uint16_t header;
     std::vector<pixel> pixels;
   };
