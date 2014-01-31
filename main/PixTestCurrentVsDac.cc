@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include <TH1.h>
+#include <TStopwatch.h>
 
 #include "PixTestCurrentVsDac.hh"
 #include "log.h"
@@ -15,7 +16,7 @@ using namespace pxar;
 
 ClassImp(PixTestCurrentVsDac)
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 PixTestCurrentVsDac::PixTestCurrentVsDac( PixSetup *a, std::string name )
 : PixTest(a, name), fParDAC("nada")
 {
@@ -23,13 +24,13 @@ PixTestCurrentVsDac::PixTestCurrentVsDac( PixSetup *a, std::string name )
   init();
 }
 
-//----------------------------------------------------------
+//------------------------------------------------------------------------------
 PixTestCurrentVsDac::PixTestCurrentVsDac() : PixTest()
 {
   //LOG(logDEBUG) << "PixTestCurrentVsDac ctor()";
 }
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 bool PixTestCurrentVsDac::setParameter( string parName, string sval )
 {
   bool found(false);
@@ -46,15 +47,13 @@ bool PixTestCurrentVsDac::setParameter( string parName, string sval )
 	LOG(logDEBUG) << "PixTestCurrentVsDac setting fParDAC  ->" << fParDAC
 		     << "<- from sval = " << sval;
       }
-
       break;
     }
   }
-  
   return found;
 }
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PixTestCurrentVsDac::init()
 {
   fDirectory = gFile->GetDirectory( fName.c_str() );
@@ -63,7 +62,7 @@ void PixTestCurrentVsDac::init()
   fDirectory->cd();
 }
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PixTestCurrentVsDac::bookHist(string name) // general booking routine
 {
   fDirectory->cd();
@@ -90,7 +89,7 @@ void PixTestCurrentVsDac::bookHist(string name) // general booking routine
   }
 }
 
-//----------------------------------------------------------
+//------------------------------------------------------------------------------
 PixTestCurrentVsDac::~PixTestCurrentVsDac()
 {
   LOG(logDEBUG) << "PixTestCurrentVsDac dtor";
@@ -103,8 +102,9 @@ PixTestCurrentVsDac::~PixTestCurrentVsDac()
   }
 }
 
-// ----------------------------------------------------------------------
-void PixTestCurrentVsDac::doTest() {
+//------------------------------------------------------------------------------
+void PixTestCurrentVsDac::doTest()
+{
   fDirectory->cd();
   PixTest::update();
 
@@ -116,28 +116,37 @@ void PixTestCurrentVsDac::doTest() {
 
   TH1D *hia(0);
   TH1D *hid(0);
-  
+  TStopwatch sw;
+
   for( uint32_t roc = 0; roc < fPixSetup->getConfigParameters()->getNrocs(); ++roc ) {
-    
+
     hia = (TH1D*)fDirectory->Get( Form( "Ia_vs_%s_C%d", fParDAC.c_str(), roc ) );
     hid = (TH1D*)fDirectory->Get( Form( "Id_vs_%s_C%d", fParDAC.c_str(), roc ) );
-    
+
     if( hia && hid ) {
-      
+
       // remember DAC
-      
+
       uint8_t dacval = fApi->_dut->getDAC( roc, fParDAC );
-      
+
       // loop over DAC
-      
+
       for( int idac = 0; idac < 256; ++idac ) {
-	
+
 	fApi->setDAC( fParDAC, idac, roc );
-	// delay
+
+	sw.Start(kTRUE); // reset
+	do {
+	  sw.Start(kFALSE); // continue
+	  double ia = fApi->getTBia()*1E3; // [mA]
+	}
+	while( sw.RealTime() < 0.1 );
+
 	hia->SetBinContent( idac+1, fApi->getTBia()*1E3 );
 	hid->SetBinContent( idac+1, fApi->getTBid()*1E3 );
+
       }
-      
+
       fApi->setDAC( fParDAC, dacval, roc ); // restore
     }
     else {
