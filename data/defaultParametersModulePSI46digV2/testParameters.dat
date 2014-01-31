@@ -50,3 +50,7 @@ Vcal 200
 
 -- CurVsDac
 DAC Vana
+
+
+-- SetVana
+targetIa 24
