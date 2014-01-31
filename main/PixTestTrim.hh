@@ -14,6 +14,9 @@ public:
   void setToolTips();
   void bookHist(std::string); 
 
+  void trimBitTest();
+
+
   int adjustVtrim(); 
   TH2D* trimStep(int corrections, TH2D *calMapOld); 
 

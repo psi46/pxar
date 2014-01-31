@@ -121,7 +121,6 @@ void PixTestTrim::doTest() {
   if (fApi) fApi->_dut->testAllPixels(false);
   if (fApi)    fApi->setDAC("Vcal", fParVcal);
   sparseRoc(10); 
-  int RFLAG(7); 
 
   // -- determine minimal VthrComp 
   LOG(logINFO) << "TRIM determine minimal VthrComp"; 
@@ -156,7 +155,6 @@ void PixTestTrim::doTest() {
   vector<TH1*> thr1 = thrMaps("Vcal", "TrimThr1", fParNtrig); 
   vector<int> Vcal; 
   for (unsigned int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc) {
-    int ix(-1), iy(-1); 
     LOG(logDEBUG) << "   " << thr1[iroc]->GetName();
     if (!strcmp(Form("thr_TrimThr1_Vcal_C%d", iroc), thr1[iroc]->GetName())) {
       h = (TH2D*)thr1[iroc]; 
@@ -182,6 +180,49 @@ void PixTestTrim::doTest() {
   
   PixTest::update(); 
 }
+
+
+// ----------------------------------------------------------------------
+void PixTestTrim::trimBitTest() {
+  
+  vector<int>vtrim; 
+  vtrim.push_back(250);
+  vtrim.push_back(200);
+  vtrim.push_back(180);
+  vtrim.push_back(140);
+
+  vector<int>btrim; 
+  btrim.push_back(14);
+  btrim.push_back(13);
+  btrim.push_back(11);
+  btrim.push_back(7);
+
+  vector<vector<TH1*> > steps; 
+
+  ConfigParameters *cp = fPixSetup->getConfigParameters();
+  // -- start untrimmed
+  cp->setTrimBits(15);
+  fApi->setDAC("Vtrim", 0); 
+  vector<TH1*> thr0 = thrMaps("Vcal", "TrimBitsThr0", fParNtrig); 
+
+  // -- now loop over all trim bits
+  vector<TH1*> thr;
+  for (unsigned int iv = 0; iv < vtrim.size(); ++iv) {
+    thr.clear();
+    cp->setTrimBits(btrim[iv]);
+    fApi->initDUT(cp->getTbmType(), cp->getTbmDacs(), 
+		  cp->getRocType(), cp->getRocDacs(), 
+		  cp->getRocPixelConfig());
+    
+    fApi->setDAC("Vtrim", vtrim[iv]); 
+    thr = thrMaps("Vcal", "TrimThr0", fParNtrig); 
+    steps.push_back(thr); 
+  }
+
+  
+}
+
+
 
 // ----------------------------------------------------------------------
 int PixTestTrim::adjustVtrim() {
