@@ -1076,7 +1076,7 @@ uint16_t hal::dtbSource::FillBuffer() {
   pos = 0;
   do {
     // FIXME read all channels!
-    dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize);
+    dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, 0);
     /*
     if (dtbRemainingSize < 100000) {
       if      (dtbRemainingSize > 1000) tb->mDelay(  1);
