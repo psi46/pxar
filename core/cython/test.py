@@ -1,10 +1,6 @@
 import PyPxarCore
-from PyPxarCore import Pixel
-p = Pixel()
-p.decode(12345)
-print p.column
-p2 = Pixel()
-print p2.column
+from PyPxarCore import Pixel, PixelConfig, PyPxarCore
+
 
 # collect some basic settings
 
@@ -31,9 +27,66 @@ pg_setup = {
 0x0100:0}     # PG_TOK
 
 # Start an API instance from the core pXar library
-from PyPxarCore import PyPxarCore
-api = PyPxarCore()
+api = PyPxarCore(usbId="*",logLevel="DEBUGAPI")
 print api.getVersion()
-api.initTestboard(pg_setup = pg_setup, 
-                  power_settings = power_settings, 
-                  sig_delays = sig_delays)
+if not api.initTestboard(pg_setup = pg_setup, 
+                         power_settings = power_settings, 
+                         sig_delays = sig_delays):
+    print "WARNING: could not init DTB -- possible firmware mismatch."
+    print "Please check if a new FW version is available"
+    exit
+
+tbmDACs = [{
+        "clear":0xF0,       # Init TBM, Reset ROC
+        "counters":0x01,    # Disable PKAM Counter
+        "mode":0xC0,        # Set Mode = Calibration
+        "pkam_set":0x10,    # Set PKAM Counter
+        "delays":0x00,      # Set Delays
+        "temperature": 0x00 # Turn off Temperature Measurement
+        }]
+
+print "Have DAC config for " + str(len(tbmDACs)) + " TBMs:"
+for idx, tbmDAC in enumerate(tbmDACs):
+    for key in tbmDAC:
+        print "  TBM dac: " + str(key) + " = " + str(tbmDAC[key])
+
+
+dacs = {
+    "Vdig":7,
+    "Vana":84,
+    "Vsf":30,
+    "Vcomp":12,
+    "VwllPr":60,
+    "VwllSh":60,
+    "VhldDel":230,
+    "Vtrim":29,
+    "VthrComp":86,
+    "VIBias_Bus":1,
+    "Vbias_sf":6,
+    "VoffsetOp":40,
+    "VOffsetRO":129,
+    "VIon":120,
+    "Vcomp_ADC":100,
+    "VIref_ADC":91,
+    "VIbias_roc":150,
+    "VIColOr":50,
+    "Vcal":220,
+    "CalDel":122,
+    "CtrlReg":4,
+    "WBC":100
+    }
+
+pixels = list()
+for column in range(0, 51):
+    for row in range(0, 79):
+        pixels.append(PixelConfig(column,row,15))
+
+print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
+
+rocPixels = list()
+rocDacs = list()
+for rocs in range(0,15):
+    rocPixels.append(pixels)
+    rocDacs.append(dacs)
+
+api.initDUT("tbm08",tbmDACs,"psi46digv2",rocDacs,rocPixels)
