@@ -590,15 +590,34 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector<int32_t> PHsum;
   std::vector<uint32_t> address;
 
+  // Set up the pipe works:
+  dtbSource src(_testboard, true);
+  dtbEventSplitter splitter;
+  dtbEventDecoder decoder;
+  dataSink<event*> pump;
+
+  src >> splitter >> decoder >> pump;
+
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
+  daqStart(4,0,50000000);
   // Call the RPC command:
   int status;
   if(_fallback_mode) { status = _testboard->fallback_CalibrateMap(nTriggers, nReadouts, PHsum, address); }
   else { status = _testboard->CalibrateMap(nTriggers, flags&FLAG_USE_CALS); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
+  daqStop(0);
+
+  //  std::vector<uint16_t> dat = daqRead(0);
+  //  LOG(logDEBUGHAL) << "dat size: " << dat.size();
+  try {
+    while (1) pump.Get();
+  }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+  
   size_t n = nReadouts.size();
   size_t p = PHsum.size();
   size_t a = address.size();
@@ -1084,4 +1103,100 @@ bool hal::daqReset(uint8_t nTBMs) {
   if(nTBMs > 0) {_testboard->Daq_Close(1);}
   _testboard->Daq_Close(0);
   return true;
+}
+
+
+uint16_t hal::dtbSource::FillBuffer() {
+  pos = 0;
+  do {
+    // FIXME read all channels!
+    dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize);
+    /*
+    if (dtbRemainingSize < 100000) {
+      if      (dtbRemainingSize > 1000) tb->mDelay(  1);
+      else if (dtbRemainingSize >    0) tb->mDelay( 10);
+      else                              tb->mDelay(100);
+    }
+    */
+    LOG(logDEBUGHAL) << "Buffer size: " << buffer.size();
+    if (buffer.size() == 0) {
+      if (stopAtEmptyData) throw dsBufferEmpty();
+      if (dtbState) throw dsBufferOverflow();
+    }
+  } while (buffer.size() == 0);
+
+  LOG(logDEBUGHAL) << "----------------";
+  std::stringstream os;
+  for (unsigned int i=0; i<buffer.size(); i++) {
+    os << " " << std::setw(4) << std::hex << (unsigned int)(buffer[i]);
+  }
+  LOG(logDEBUGHAL) << os << std::dec;
+  LOG(logDEBUGHAL) << "----------------";
+
+  return lastSample = buffer[pos++];
+}
+
+
+hal::dataRecord* hal::dtbEventSplitter::Read() {
+  record.Clear();
+
+  if (GetLast() & 0x4000) Get();
+  if (!(GetLast() & 0x8000)) {
+    record.SetStartError();
+    while (!(GetLast() & 0x8000)) Get();
+  }
+
+  do {
+    if (record.GetSize() >= 40000) {
+      record.SetOverflow();
+      break;
+    }
+    record.Add(GetLast() & 0x0fff);
+    
+  } while ((Get() & 0xc000) == 0);
+  
+  if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
+  else record.SetEndError();
+
+  /* FIXME
+  std::stringstream os;
+  for (unsigned int i=0; i<record.data.size(); i++)
+    os << " " << std::setw(4) << std::hex 
+       << static_cast<uint16_t>(record.data[i]);
+  LOG(logDEBUGHAL) << os;
+  */
+  return &record;
+}
+
+event* hal::dtbEventDecoder::Read() {
+  dataRecord *sample = Get();
+  roc_event.header = 0;
+  roc_event.pixels.clear();
+  unsigned int n = sample->GetSize();
+  if (n > 0) {
+    if (n > 1) roc_event.pixels.reserve((n-1)/2);
+    roc_event.header = (*sample)[0];
+    unsigned int pos = 1;
+    while (pos < n-1) {
+      pixel pix;
+      pix.raw =  (*sample)[pos++] << 12;
+      pix.raw += (*sample)[pos++];
+      pix.decodeRaw();
+      roc_event.pixels.push_back(pix);
+    }
+  }
+
+  /*
+  LOG(logDEBUGHAL) << "====== " << std::hex << std::setw(3) << static_cast<unit16_t>(roc_event.header) << " ======";
+  std::stringstream os;
+  for (unsigned int i=0; i<roc_event.pixels.size(); i++)
+    os << " " << std::hex << std::setw(6) << static_cast<uint32_t>(roc_event.pixels.at(i).raw) << " ("
+       << std::setw(5) << static_cast<uint32_t>(roc_event.pixels.at(i).raw >> 9) << ") ["
+       << std::setw(3) << std::dec << static_cast<int>(roc_event.pixels.at(i).column) << ", "
+       << std::setw(3) << static_cast<int>(roc_event.pixels.at(i).row) << ", "
+       << std::setw(3) << static_cast<int>(roc_event.pixels.at(i).value);
+  LOG(logDEBUGHAL) << os;
+  */
+
+  return &roc_event;
 }
