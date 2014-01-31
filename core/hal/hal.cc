@@ -581,7 +581,7 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 
 std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  int32_t flags = parameter.at(0);
+  uint16_t flags = parameter.at(0);
   int32_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
@@ -596,7 +596,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   // Call the RPC command:
   int status;
   if(_fallback_mode) { status = _testboard->fallback_CalibrateMap(nTriggers, nReadouts, PHsum, address); }
-  else { status = _testboard->CalibrateMap(nTriggers, nReadouts, PHsum, address); }
+  else { status = _testboard->CalibrateMap(nTriggers, flags&FLAG_USE_CALS); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
