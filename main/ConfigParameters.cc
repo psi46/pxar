@@ -337,6 +337,20 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
 
 
 // ----------------------------------------------------------------------
+void ConfigParameters::setTrimBits(int trim) {
+
+  for (unsigned int iroc = 0; iroc < fRocPixelConfigs.size(); ++iroc) {
+    for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
+      fRocPixelConfigs[iroc][ipix].trim = trim; 
+    }
+  }
+      
+      
+
+}
+
+
+// ----------------------------------------------------------------------
 void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) {
 
   // -- read in file
@@ -356,7 +370,6 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   string::size_type s1, s2; 
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
-    //    cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     PixUtil::replaceAll(lines[i], "\t", " "); 
     PixUtil::replaceAll(lines[i], "Pix", " "); 
@@ -375,7 +388,6 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
       LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
     }
     
-    // -- why, oh why?!
     ival = atoi(str1.c_str()); 
     icol = atoi(str2.c_str()); 
     irow = atoi(str3.c_str()); 
@@ -386,9 +398,6 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     } else {
       LOG(logINFO) << " not matching entry in trim vector found for row/col = " << irow << "/" << icol;
     }
-    //     cout << "col/row = " << icol << "/" << irow << " trim = " << ival 
-    // 	 << " pixelConfig: " << int(v[index].column) << "/" << int(v[index].row)
-    // 	 << endl;
   }
 
 

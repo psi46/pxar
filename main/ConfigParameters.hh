@@ -70,6 +70,7 @@ public:
   void setMaskFileName(std::string filename) {fDebugFileName = filename;}
   void setDirectory(std::string dirname) {fDirectory = dirname;}
 
+  void setTrimBits(int trim); 
   void setGuiMode(bool a) {fGuiMode = a;}
 
   unsigned int getNrocs() {return fnRocs;}
