@@ -6,6 +6,7 @@ namespace shapes {
   public:
     int x0, y0, x1, y1;
     Rectangle(std::pair<uint16_t, uint16_t> x, std::pair<uint16_t, uint16_t> y);
+    //Rectangle(std::vector<uint16_t > values);
     Rectangle(std::vector<uint16_t > values);
     ~Rectangle();
     int getLength();
