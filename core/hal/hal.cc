@@ -586,9 +586,6 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
 
   LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<int16_t> nReadouts;
-  std::vector<int32_t> PHsum;
-  std::vector<uint32_t> address;
 
   // Set up the pipe works:
   dtbSource src(_testboard, true);
@@ -601,14 +598,9 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  daqStart(4,0,50000000);
   // Call the RPC command:
-  int status;
-  if(_fallback_mode) { status = _testboard->fallback_CalibrateMap(nTriggers, nReadouts, PHsum, address); }
-  else { status = _testboard->CalibrateMap(nTriggers, flags&FLAG_USE_CALS); }
+  int status = _testboard->CalibrateMap(nTriggers, flags&FLAG_USE_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop(0);
 
   //  std::vector<uint16_t> dat = daqRead(0);
   //  LOG(logDEBUGHAL) << "dat size: " << dat.size();
@@ -618,38 +610,12 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
   
-  size_t n = nReadouts.size();
-  size_t p = PHsum.size();
-  size_t a = address.size();
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << static_cast<int>(n)
-		   << ", PHsum " << static_cast<int>(p)
-		   << ", address " << static_cast<int>(a);
-
-  // Check if all information has been transmitted:
-  if(a != n || a != p || n != p) {
-    // FIXME custom exception?
-    LOG(logCRITICAL) << "Data size not as expected!";
-    return result;
-  }
-
   // Log what we get back in the value field:
   if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";}
   else {LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";}
 
   // Fill the return data vector:
   std::vector<pixel> data;
-  for(std::vector<uint32_t>::iterator it = address.begin(); it != address.end(); ++it) {
-
-    if((((*it)>>16)&15) != rocid) { LOG(logDEBUGHAL) << "Wrong ROC id returned, expected: " << (int)rocid << " != " << (int)(((*it)>>16)&15); }
-
-    if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { 
-      data.push_back(pixel((*it),nReadouts.at(static_cast<size_t>(it - address.begin()))));
-    }
-    else { 
-      data.push_back(pixel((*it),static_cast<int32_t>(PHsum.at(static_cast<size_t>(it-address.begin()))/nTriggers)));
-    }
-    
-  }
   result->push_back(data);
 
   return result;
