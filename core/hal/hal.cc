@@ -1083,21 +1083,24 @@ uint16_t hal::dtbSource::FillBuffer() {
       else if (dtbRemainingSize >    0) tb->mDelay( 10);
       else                              tb->mDelay(100);
     }
-    */
     LOG(logDEBUGHAL) << "Buffer size: " << buffer.size();
+    */
+    
     if (buffer.size() == 0) {
       if (stopAtEmptyData) throw dsBufferEmpty();
       if (dtbState) throw dsBufferOverflow();
     }
   } while (buffer.size() == 0);
 
+  /*
   LOG(logDEBUGHAL) << "----------------";
   std::stringstream os;
-  for (unsigned int i=0; i<buffer.size(); i++) {
-    os << " " << std::setw(4) << std::hex << (unsigned int)(buffer[i]);
+  for (unsigned int i = 0; i < buffer.size(); i++) {
+    os << " " << std::setw(4) << std::hex << (unsigned int)(buffer.at(i));
   }
-  LOG(logDEBUGHAL) << os << std::dec;
+  LOG(logDEBUGHAL) << os.str();
   LOG(logDEBUGHAL) << "----------------";
+  */
 
   return lastSample = buffer[pos++];
 }
@@ -1124,13 +1127,15 @@ hal::dataRecord* hal::dtbEventSplitter::Read() {
   if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
   else record.SetEndError();
 
-  /* FIXME
+  /*
+  LOG(logDEBUGHAL) << "-------------------------";
   std::stringstream os;
   for (unsigned int i=0; i<record.data.size(); i++)
     os << " " << std::setw(4) << std::hex 
        << static_cast<uint16_t>(record.data[i]);
-  LOG(logDEBUGHAL) << os;
+  LOG(logDEBUGHAL) << os.str();
   */
+
   return &record;
 }
 
@@ -1153,15 +1158,14 @@ event* hal::dtbEventDecoder::Read() {
   }
 
   /*
-  LOG(logDEBUGHAL) << "====== " << std::hex << std::setw(3) << static_cast<unit16_t>(roc_event.header) << " ======";
+  LOG(logDEBUGHAL) << "====== " << std::hex << std::setw(3) << static_cast<uint16_t>(roc_event.header) << " ======";
   std::stringstream os;
-  for (unsigned int i=0; i<roc_event.pixels.size(); i++)
-    os << " " << std::hex << std::setw(6) << static_cast<uint32_t>(roc_event.pixels.at(i).raw) << " ("
-       << std::setw(5) << static_cast<uint32_t>(roc_event.pixels.at(i).raw >> 9) << ") ["
-       << std::setw(3) << std::dec << static_cast<int>(roc_event.pixels.at(i).column) << ", "
-       << std::setw(3) << static_cast<int>(roc_event.pixels.at(i).row) << ", "
-       << std::setw(3) << static_cast<int>(roc_event.pixels.at(i).value);
-  LOG(logDEBUGHAL) << os;
+  for (unsigned int i=0; i < roc_event.pixels.size(); i++)
+    os << " " << std::hex << std::setw(6) << static_cast<uint32_t>(roc_event.pixels.at(i).raw) << " ["
+       << std::setw(2) << std::dec << static_cast<int>(roc_event.pixels.at(i).column) << ","
+       << std::setw(2) << static_cast<int>(roc_event.pixels.at(i).row) << ","
+       << std::setw(3) << static_cast<int>(roc_event.pixels.at(i).value) << "]";
+  LOG(logDEBUGHAL) << os.str();
   */
 
   return &roc_event;
