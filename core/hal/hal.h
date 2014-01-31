@@ -309,8 +309,6 @@ namespace pxar {
     };
 
     // DTB data source class
-    //FIXME move to central place:
-    #define DTB_SOURCE_BLOCK_SIZE 4096
     class dtbSource : public dataSource<uint16_t> {
       volatile bool stopAtEmptyData;
 

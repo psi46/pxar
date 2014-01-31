@@ -20,6 +20,8 @@ namespace pxar {
 // All internal flags are > 16bit, cannot be set from outside:
 #define FLAG_INTERNAL_GET_EFFICIENCY 0x10000
 
+// --- Data Transmission settings ----------------------------------------------
+#define DTB_SOURCE_BLOCK_SIZE 32767
 
 // --- TBM Types ---------------------------------------------------------------
 // FIXME just an example...
