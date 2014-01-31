@@ -59,7 +59,17 @@ namespace pxar {
       column = (address>>8)&63;
       row = (address)&127;
     };
-    void decodeRaw();
+    // FIXME does not work with inverted address yet!
+    inline void decodeRaw() {
+      value = (raw & 0x0f) + ((raw >> 1) & 0xf0);
+      int c =    (raw >> 21) & 7;
+      c = c*6 + ((raw >> 18) & 7);
+      int r =    (raw >> 15) & 7;
+      r = r*6 + ((raw >> 12) & 7);
+      r = r*6 + ((raw >>  9) & 7);
+      column = 80 - r/2;
+      row = 2*c + (r&1);
+    };
     uint32_t raw;
     uint8_t roc_id;
     uint8_t column;
