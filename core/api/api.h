@@ -59,10 +59,19 @@ namespace pxar {
       column = (address>>8)&63;
       row = (address)&127;
     };
+    void decodeRaw();
+    uint32_t raw;
     uint8_t roc_id;
     uint8_t column;
     uint8_t row;
     int32_t value;
+  };
+
+  /** Class to store events containing a header and a std::vector of pixels
+   */
+  class DLLEXPORT event {
+    uint16_t header;
+    std::vector<pixel> pixels;
   };
 
   /** Class to store the configuration for single pixels (i.e. their mask state,
