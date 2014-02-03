@@ -41,11 +41,12 @@ bool PixTestSetVana::setParameter( string parName, string sval ) // called from 
     if( 0 == imap->first.compare(parName) ) {
       found = true;
       sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
+
       fParameters[parName] = sval;
 
       if( !parName.compare( "targetIa" ) ) {
 	fTargetIa = atoi( sval.c_str() );  // [mA/ROC]
-	LOG(logINFO) << "PixTestSetVana target Ia " << fTargetIa << " mA/ROC";
+	LOG(logDEBUG) << "PixTestSetVana target Ia " << fTargetIa << " mA/ROC";
       }
       break;
     }
@@ -96,14 +97,14 @@ void PixTestSetVana::doTest()
 
   int vana16[16] = {0};
 
-  uint32_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
+  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
 
   // set all ROCs to minimum:
 
-  for( uint32_t roc = 0; roc < nRocs; ++roc ) {
+  for( size_t roc = 0; roc < nRocs; ++roc ) {
     vana16[roc] = fApi->_dut->getDAC( roc, "vana" ); // remember as start value
     fApi->setDAC( "vana", 0, roc ); // off
-  } // rocs
+  }
 
   double i016 = fApi->getTBia()*1E3;
 
@@ -184,8 +185,9 @@ void PixTestSetVana::doTest()
 
       diff = fTargetIa + extra - (ia - i015);
 
-      LOG(logINFO) << "ROC " << roc << " iter " << iter
-		   << " Vana " << vana
+      LOG(logINFO) << "ROC " << setw(2) << roc
+		   << " iter " << setw(2) << iter
+		   << " Vana " << setw(3) << vana
 		   << " Ia " << ia-i015 << " mA";
     } // iter
 
@@ -194,14 +196,25 @@ void PixTestSetVana::doTest()
 
   } // rocs
 
+  TH1D *hsum = new TH1D( "VanaSettings", "Vana per ROC;ROC;Vana [DAC]",
+			 16, -0.5, 15.5 );
+  hsum->SetStats(0); // no stats
+  hsum->SetMinimum(0);
+  hsum->SetMaximum(256);
+  fHistList.push_back(hsum);
+
   // set all ROCs to optimum:
 
-  for( uint32_t roc = 0; roc < nRocs; ++roc ) {
+  for( size_t roc = 0; roc < nRocs; ++roc ) {
     fApi->setDAC( "vana", vana16[roc], roc );
     LOG(logINFO) << "ROC " << setw(2) << roc
-		 << " Vana " << vana16[roc];
+		 << " Vana " << setw(3) << vana16[roc];
+    hsum->Fill( roc, vana16[roc] );
   }
 
+  hsum->Draw();
+  PixTest::update();
+  
   double ia16 = fApi->getTBia()*1E3; // [mA]
 
   sw.Start(kTRUE); // reset
