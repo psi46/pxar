@@ -1,6 +1,9 @@
 #ifndef WIN32
 #include <unistd.h>
+#else
+#include <Windows.h>
 #endif
+
 
 #include "pxar.h"
 #include <iomanip>
@@ -171,7 +174,11 @@ int main(int argc, char* argv[]) {
     else {
       _api->daqTriggerLoop(1000);
       while(_api->daqStatus() && daq_loop) {
+#ifdef WIN32
+	Sleep(1000);
+#else
 	sleep(1);
+#endif
       }
     }
     
