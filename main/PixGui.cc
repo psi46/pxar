@@ -109,7 +109,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   hwControl->AddFrame(hvFrame);
 
-  // monitoring 
+  // h/w monitoring 
   fMonitor = new PixMonitor(hwControl, this);
   fTimer = new TTimer(1000);
   fTimer->Connect("Timeout()", "PixMonitor", fMonitor, "Update()");
@@ -119,13 +119,24 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   h1v1->SetWidth(400);
 
   // -- right frame
-  TGTextButton *exitButton = new TGTextButton(h1v3, "exit", B_EXIT);
+  TGHorizontalFrame *bFrame = new TGHorizontalFrame(h1v3); 
+  h1v3->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4)); 
+  TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
   exitButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
   exitButton->ChangeOptions(exitButton->GetOptions() );
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
   exitButton->ChangeBackground(fRed);
-  h1v3->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight,5,5,3,4));
+  bFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight,5,5,3,4));
+
+
+  TGTextButton *writeButton = new TGTextButton(bFrame, "write cfg files", B_WRITEALLFILES);
+  writeButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
+  writeButton->ChangeOptions(writeButton->GetOptions() );
+  writeButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  writeButton->Resize(70,35);
+  writeButton->ChangeBackground(fYellow);
+  bFrame->AddFrame(writeButton, new TGLayoutHints(kLHintsBottom | kLHintsLeft,5,5,3,4));
 
 
   TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(h1v3, 150,75);
@@ -270,6 +281,13 @@ void PixGui::handleButtons(Int_t id) {
   case B_EXIT: {
     LOG(logDEBUG) << "PixGui::exit called";
     CloseWindow();
+    break;
+  }
+
+  case B_WRITEALLFILES: {
+    LOG(logDEBUG) << "PixGui::writeAllFiles called";
+    fConfigParameters->writeAllFiles();
+    break;
   }
   case B_POWER: {
     if(fPower == true) {
