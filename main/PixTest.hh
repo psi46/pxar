@@ -50,6 +50,7 @@ public:
 
   void clearHist(); 
   virtual void doTest(); 
+  virtual void runCommand(std::string command); 
   virtual void doAnalysis();
   
   

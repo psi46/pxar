@@ -29,6 +29,7 @@ public:
   void statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected);
 
   virtual void handleButtons(Int_t id = -1); 
+  virtual void buttonClicked(); 
   virtual void setParameter(); 
 
   void update();

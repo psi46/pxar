@@ -59,6 +59,13 @@ void PixTest::bookHist(string name) {
 
 
 // ----------------------------------------------------------------------
+void PixTest::runCommand(std::string command) {
+  LOG(logDEBUG) << "Nothing done with " << command; 
+
+}
+
+
+// ----------------------------------------------------------------------
 void PixTest::resetDirectory() {
   fDirectory = gFile->GetDirectory(fName.c_str()); 
 }
