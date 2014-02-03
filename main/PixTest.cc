@@ -258,7 +258,6 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
   vector<TH1*>   resultMaps; 
 
   TH1* h1(0); 
-  TH2D* h2(0); 
   fDirectory->cd();
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     h1 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
@@ -268,8 +267,9 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
   }
   
   int ic, ir, iroc, val; 
-  cout << "get map " << dac << " ntrig = " << ntrig << endl;
+  LOG(logDEBUG) << "start threshold map for dac = " << dac; 
   std::vector<pixel> results = fApi->getThresholdMap(dac, 0, ntrig);
+  LOG(logDEBUG) << "finished threshold map for dac = " << dac; 
   for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
     ic =   results[ipix].column; 
     ir =   results[ipix].row; 
