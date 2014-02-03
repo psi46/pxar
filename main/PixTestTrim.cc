@@ -87,6 +87,18 @@ void PixTestTrim::init() {
 
 
 // ----------------------------------------------------------------------
+void PixTestTrim::runCommand(std::string command) {
+  
+  LOG(logDEBUG) << "running command: " << command;
+  if (!command.compare("TrimBits")) {
+    trimBitTest(); 
+    return;
+  }
+  LOG(logDEBUG) << "did not find command ->" << command << "<-";
+}
+
+
+// ----------------------------------------------------------------------
 void PixTestTrim::setToolTips() {
   fTestTip    = string(Form("trimming results in a uniform in-time threshold\n")
 		       + string("TO BE FINISHED!!"))
