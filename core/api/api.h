@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <stdint.h>
+#include <iostream>
 
 /** Export classes from the DLL under WIN32 */
 #ifdef WIN32
@@ -41,6 +42,10 @@ namespace pxar {
      */
   pixel(int32_t address, int32_t data) : value(data) { decode(address); };
 
+    /** Constructor for pixel objects with rawdata pixel address & value initialization.
+     */
+  pixel(uint32_t rawdata) : roc_id(0) { decodeRaw(rawdata); };
+
     /** Function to fill the pixel with linear encoded data from RPC transfer.
      *  The address transmitted from the NIOS soft core is encoded in the following
      *  way:
@@ -60,7 +65,7 @@ namespace pxar {
       row = (address)&127;
     };
     // FIXME does not work with inverted address yet!
-    inline void decodeRaw() {
+    inline void decodeRaw(uint32_t raw) {
       value = (raw & 0x0f) + ((raw >> 1) & 0xf0);
       int c =    (raw >> 21) & 7;
       c = c*6 + ((raw >> 18) & 7);
@@ -70,11 +75,20 @@ namespace pxar {
       row = 80 - r/2;
       column = 2*c + (r&1);
     };
-    uint32_t raw;
     uint8_t roc_id;
     uint8_t column;
     uint8_t row;
     int32_t value;
+
+  private:
+    /** Overloaded ostream operator for simple printing of pixel data
+     */
+    friend std::ostream & operator<<(std::ostream &out, pixel& px) {
+      out << static_cast<int>(px.roc_id)
+	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
+	  << "," << static_cast<int>(px.value) << "]";
+      return out;
+    };
   };
 
   /** Class to store events containing a header and a std::vector of pixels
