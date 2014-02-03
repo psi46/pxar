@@ -98,7 +98,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   cnt = 1000; 
   for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
     if (!imap->second.compare("button")) {
-      cout << "adding " << imap->first << " " << imap->second << endl;
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
       tset = new TGTextButton(hFrame, imap->first.c_str(), cnt);
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
@@ -260,9 +259,6 @@ void PixTab::buttonClicked() {
   if (!fGui->getTabs()) return;
 
   TGButton *btn = (TGButton*)gTQSender;
-  int id = btn->WidgetId();
-  
-  cout << "PixTab::buttonClicked() command: " << btn->GetTitle() << endl;
   fTest->runCommand(btn->GetTitle()); 
 
 } 
