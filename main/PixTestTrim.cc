@@ -226,13 +226,14 @@ void PixTestTrim::trimBitTest() {
     thr.clear();
     cp->setTrimBits(btrim[iv]);
     LOG(logDEBUG) << "trimBitTest initDUT with trim bits = " << btrim[iv]; 
+    // FIXME: getRocPixelConfig SHOULD NOT RE-READ trim bit files and mask files...
     fApi->initDUT(cp->getTbmType(), cp->getTbmDacs(), 
 		  cp->getRocType(), cp->getRocDacs(), 
 		  cp->getRocPixelConfig());
     
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
-    thr = thrMaps("Vcal", "TrimThr0", fParNtrig); 
+    thr = thrMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig); 
     steps.push_back(thr); 
   }
 
