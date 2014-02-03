@@ -196,6 +196,8 @@ void PixTestTrim::doTest() {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::trimBitTest() {
+
+  LOG(logINFO) << "trimBitTest start "; 
   
   vector<int>vtrim; 
   vtrim.push_back(250);
@@ -215,6 +217,7 @@ void PixTestTrim::trimBitTest() {
   // -- start untrimmed
   cp->setTrimBits(15);
   fApi->setDAC("Vtrim", 0); 
+  LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
   vector<TH1*> thr0 = thrMaps("Vcal", "TrimBitsThr0", fParNtrig); 
 
   // -- now loop over all trim bits
@@ -222,15 +225,18 @@ void PixTestTrim::trimBitTest() {
   for (unsigned int iv = 0; iv < vtrim.size(); ++iv) {
     thr.clear();
     cp->setTrimBits(btrim[iv]);
+    LOG(logDEBUG) << "trimBitTest initDUT with trim bits = " << btrim[iv]; 
     fApi->initDUT(cp->getTbmType(), cp->getTbmDacs(), 
 		  cp->getRocType(), cp->getRocDacs(), 
 		  cp->getRocPixelConfig());
     
     fApi->setDAC("Vtrim", vtrim[iv]); 
+    LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
     thr = thrMaps("Vcal", "TrimThr0", fParNtrig); 
     steps.push_back(thr); 
   }
 
+  LOG(logINFO) << "trimBitTest done "; 
   
 }
 
