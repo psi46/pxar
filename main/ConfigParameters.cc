@@ -646,6 +646,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "dacParameters %s\n",  fDACParametersFileName.c_str());
   fprintf(file, "tbmParameters %s\n",  fTbmParametersFileName.c_str());
   fprintf(file, "trimParameters %s\n", fTrimParametersFileName.c_str());
+  fprintf(file, "maskFile %s\n",       fMaskFileName.c_str());
   fprintf(file, "testParameters %s\n", fTestParametersFileName.c_str());
   fprintf(file, "rootFileName %s\n\n", fRootFileName.c_str());
 
@@ -655,15 +656,17 @@ bool ConfigParameters::writeConfigParameterFile() {
 
   fprintf(file, "nModules %i\n", fnModules);
   fprintf(file, "nRocs %i\n", fnRocs);
+  fprintf(file, "nTbms %i\n", fnTbms);
   fprintf(file, "hubId %i\n", fHubId);
   fprintf(file, "tbmEnable %i\n", fTbmEnable);
   fprintf(file, "tbmEmulator %i\n", fTbmEmulator);
   fprintf(file, "hvOn %i\n", fHvOn);
-  fprintf(file, "tbmChannel %i\n\n", fTbmChannel);
-  fprintf(file, "halfModule %i\n\n", fHalfModule);
-  fprintf(file, "rocType %s\n\n", fRocType.c_str());
-  fprintf(file, "tbmType %s\n\n", fTbmType.c_str());
+  fprintf(file, "tbmChannel %i\n", fTbmChannel);
+  fprintf(file, "rocType %s\n", fRocType.c_str());
+  if (fnTbms > 0) fprintf(file, "tbmType %s\n", fTbmType.c_str());
+  fprintf(file, "halfModule %i\n", fHalfModule);
 
+  fprintf(file, "\n");
   fprintf(file, "-- voltages and current limits\n\n");
 
   fprintf(file, "ia %i\n"  , static_cast<int>(ia * 1000));
