@@ -275,7 +275,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
     ir =   results[ipix].row; 
     iroc = results[ipix].roc_id; 
     val =  results[ipix].value;
-    LOG(logDEBUG) << resultMaps[iroc]->GetName() << " roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val;
+    //    LOG(logDEBUG) << resultMaps[iroc]->GetName() << " roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val;
     ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
   }
   copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
