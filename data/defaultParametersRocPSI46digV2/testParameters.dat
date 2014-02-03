@@ -28,6 +28,7 @@ VcalLo      25
 VcalHi      75 
 VthrCompLo  0 
 VthrCompHi  50 
+TrimBits button
 
 -- Scurves
 Ntrig 50
@@ -42,3 +43,7 @@ Vcal 200
 
 -- CurVsDac
 DAC Vana
+
+
+-- SetVana
+targetIa 24

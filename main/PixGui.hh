@@ -75,6 +75,7 @@ private:
     B_FILENAME = TESTNUMBER + 21,
     B_DIRECTORY, 
     B_EXIT,
+    B_WRITEALLFILES,
     B_POWER,
     B_HV
   };

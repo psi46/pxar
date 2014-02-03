@@ -22,7 +22,14 @@ public:
 
   void initialize();
   bool readConfigParameterFile(std::string filename);
+  void readAllConfigParameterFiles();
+  void readRocPixelConfig();
+  void readTbParameters();
+  void readRocDacs();
+  void readTbmDacs();
 
+  
+  void writeAllFiles();
   bool writeConfigParameterFile();
   bool writeTrimFiles(std::vector<int>);
   bool writeDacParameterFiles(std::vector<int>);
@@ -70,6 +77,7 @@ public:
   void setMaskFileName(std::string filename) {fDebugFileName = filename;}
   void setDirectory(std::string dirname) {fDirectory = dirname;}
 
+  void setTrimBits(int trim); 
   void setGuiMode(bool a) {fGuiMode = a;}
 
   unsigned int getNrocs() {return fnRocs;}

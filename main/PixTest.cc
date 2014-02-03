@@ -59,6 +59,13 @@ void PixTest::bookHist(string name) {
 
 
 // ----------------------------------------------------------------------
+void PixTest::runCommand(std::string command) {
+  LOG(logDEBUG) << "Nothing done with " << command; 
+
+}
+
+
+// ----------------------------------------------------------------------
 void PixTest::resetDirectory() {
   fDirectory = gFile->GetDirectory(fName.c_str()); 
 }
@@ -173,12 +180,16 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       h3->SetBinContent(ic+1, ir+1, fSigma); 
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
 
-      // -- write all hists to file if requested
       if (result & 0x4) {
+	cout << "add " << rmaps[i]->GetName() << endl;
+	fHistList.push_back(rmaps[i]);
+      }
+      // -- write all hists to file if requested
+      if (0 && result & 0x4) {
 	rmaps[i]->SetDirectory(fDirectory); 
 	rmaps[i]->Write();
+	delete rmaps[i];
       }
-      delete rmaps[i];
     }
 
     if (result & 0x1) {
@@ -241,32 +252,36 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
 
 
 // ----------------------------------------------------------------------
-vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig, int dacmin, int dacmax) {
+vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
   vector<TH2D*>  maps; 
   vector<TH1*>   resultMaps; 
 
   TH1* h1(0); 
-  TH2D* h2(0); 
   fDirectory->cd();
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h1 = new TH2D(Form("%s_%s_C%d", name.c_str(), dac.c_str(), i), 
-		  Form("%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+    h1 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
 		  52, 0., 52., 80, 0., 80.);
     resultMaps.push_back(h1); 
   }
   
   int ic, ir, iroc, val; 
+  LOG(logDEBUG) << "start threshold map for dac = " << dac; 
   std::vector<pixel> results = fApi->getThresholdMap(dac, 0, ntrig);
+  LOG(logDEBUG) << "finished threshold map for dac = " << dac; 
   for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
     ic =   results[ipix].column; 
     ir =   results[ipix].row; 
     iroc = results[ipix].roc_id; 
     val =  results[ipix].value;
-    cout << "roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val << endl;
+    //    LOG(logDEBUG) << resultMaps[iroc]->GetName() << " roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val;
     ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
   }
   copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  if (h1) h1->Draw("colz");
+  PixTest::update(); 
   
   return resultMaps; 
 }
