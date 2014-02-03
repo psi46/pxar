@@ -87,6 +87,34 @@ ConfigParameters*  ConfigParameters::Singleton() {
 
 
 // ----------------------------------------------------------------------
+void ConfigParameters::readAllConfigParameterFiles() {
+  readTbParameters();
+  readRocPixelConfig();
+  readRocDacs();
+  readTbmDacs();
+}
+
+
+// ----------------------------------------------------------------------
+void ConfigParameters::writeAllFiles() {
+  writeConfigParameterFile();
+  writeTbParameterFile();
+
+  vector<int> writeIdx; 
+
+  for (unsigned int i = 0; i < fnTbms; ++i) writeIdx.push_back(i); 
+  writeTbmParameterFiles(writeIdx); 
+
+  writeIdx.clear();
+  for (unsigned int i = 0; i < fnRocs; ++i) writeIdx.push_back(i); 
+  writeDacParameterFiles(writeIdx);
+  writeTrimFiles(writeIdx);
+
+}
+
+
+
+// ----------------------------------------------------------------------
 bool ConfigParameters::readConfigParameterFile(string file) {
   ifstream _input(file.c_str());
   if (!_input.is_open())
@@ -219,11 +247,19 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
 // ----------------------------------------------------------------------
 vector<pair<string, uint8_t> >  ConfigParameters::getTbParameters() {
   if (!fReadTbParameters) {
+    readTbParameters();
+  }
+  return  fTbParameters;
+}
+
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readTbParameters() {
+  if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
     fReadTbParameters = true; 
   }
-  return fTbParameters;
 }
 
 // ----------------------------------------------------------------------
@@ -251,7 +287,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   sigdelays.push_back("tin");
   sigdelays.push_back("deser160phase");
 
-  if (!fReadTbParameters) getTbParameters();
+  if (!fReadTbParameters) readTbParameters();
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
     for (unsigned int j = 0; j < sigdelays.size(); ++j) {
       if (0 == fTbParameters[i].first.compare(sigdelays[j])) a.push_back(make_pair(sigdelays[j], fTbParameters[i].second));
@@ -283,13 +319,21 @@ vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
 // ----------------------------------------------------------------------
 vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
-  string filename; 
+  if (!fReadRocPixelConfig) {
+    readRocPixelConfig(); 
+  }
+  return fRocPixelConfigs;
+}
 
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readRocPixelConfig() {
+  string filename; 
   // -- read one mask file containing entire DUT mask
   filename = fDirectory + "/" + fMaskFileName; 
   vector<bool> rocmasked; 
   for (unsigned int i = 0; i < fnRocs; ++i) rocmasked.push_back(false); 
-
+  
   vector<vector<pair<int, int> > > vmask = readMaskFile(filename); 
   for (unsigned int i = 0; i < vmask.size(); ++i) {
     vector<pair<int, int> > v = vmask[i]; 
@@ -300,7 +344,7 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
       }
     }
   }
-
+  
   // -- read all trim files and create pixelconfig vector
   for (unsigned int i = 0; i < fnRocs; ++i) {
     vector<pxar::pixelConfig> v;
@@ -329,30 +373,28 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
     readTrimFile(filename, v); 
     fRocPixelConfigs.push_back(v); 
   }
-
+  
   fReadRocPixelConfig = true; 
-  return fRocPixelConfigs;
-
 }
 
 
 // ----------------------------------------------------------------------
 void ConfigParameters::setTrimBits(int trim) {
-
+  
   for (unsigned int iroc = 0; iroc < fRocPixelConfigs.size(); ++iroc) {
     for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
       fRocPixelConfigs[iroc][ipix].trim = trim; 
     }
   }
-      
-      
-
+  
+  
+  
 }
 
 
 // ----------------------------------------------------------------------
 void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) {
-
+  
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
@@ -517,6 +559,15 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
   if (!fReadDacParameters) {
+    readRocDacs();
+  }
+  return fDacParameters; 
+}
+
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readRocDacs() {
+  if (!fReadDacParameters) {
     string filename; 
     for (unsigned int i = 0; i < fnRocs; ++i) {
       filename = Form("%s/%s_C%d.dat", fDirectory.c_str(), fDACParametersFileName.c_str(), i); 
@@ -525,12 +576,19 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
     }
     fReadDacParameters = true; 
   }
-  return fDacParameters; 
 }
 
 
 // ----------------------------------------------------------------------
 vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
+  if (!fReadTbmParameters) {
+    readTbmDacs();
+  }
+  return fTbmParameters; 
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readTbmDacs() {
   if (!fReadTbmParameters) {
     string filename; 
     for (unsigned int i = 0; i < fnTbms; ++i) {
@@ -540,7 +598,6 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
     }
     fReadTbmParameters = true; 
   }
-  return fTbmParameters; 
 }
 
 
@@ -617,6 +674,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fclose(file);
   return true;
 }
+
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFiles(vector<int> rocs) {
@@ -725,7 +783,7 @@ bool ConfigParameters::writeTbParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTestParameterFile(string whichTest) {
-  string bla = "nothing done with " +  whichTest; 
+  string bla = "no implementation for dumping test parameters " +  whichTest; 
   LOG(logINFO) << bla; 
   return true;
 }

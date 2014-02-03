@@ -22,7 +22,14 @@ public:
 
   void initialize();
   bool readConfigParameterFile(std::string filename);
+  void readAllConfigParameterFiles();
+  void readRocPixelConfig();
+  void readTbParameters();
+  void readRocDacs();
+  void readTbmDacs();
 
+  
+  void writeAllFiles();
   bool writeConfigParameterFile();
   bool writeTrimFiles(std::vector<int>);
   bool writeDacParameterFiles(std::vector<int>);
