@@ -120,6 +120,7 @@ namespace pxar {
   dtbSource(CTestboard * src, uint8_t daqchannel, bool endlessStream)
     : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), lastSample(0x4000), pos(0) {};
   dtbSource() : connected(false) {};
+    bool isConnected() { return connected; };
 
     // --- control and status
     uint8_t  GetState() { return dtbState; }
