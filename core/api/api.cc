@@ -1199,8 +1199,8 @@ bool api::daqStop() {
 
   _daq_running = false;
   
-  // Stop all active DAQ channels (depending on number of TBMs)
-  _hal->daqStop(_dut->getNEnabledTbms());
+  // Stop all active DAQ channels:
+  _hal->daqStop();
 
   // Mask all pixels in the device again:
   MaskAndTrim(false);

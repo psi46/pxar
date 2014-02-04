@@ -181,9 +181,10 @@ namespace pxar {
      */
     void daqTriggerLoop(uint16_t period);
 
-    /** Stopping the current DAQ session. This is not resetting the data buffers
+    /** Stopping the current DAQ session. This is not resetting the data buffers.
+     *  All DAQ channels are stopped.
      */
-    bool daqStop(uint8_t nTBMs);
+    bool daqStop();
 
     /**
      */

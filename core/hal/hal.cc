@@ -999,7 +999,7 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
-bool hal::daqStop(uint8_t nTBMs) {
+bool hal::daqStop() {
 
   LOG(logDEBUGHAL) << "Stopped DAQ session. Data still in buffers, Ch0: " << _testboard->Daq_GetSize(0);
 
@@ -1008,8 +1008,8 @@ bool hal::daqStop(uint8_t nTBMs) {
 
   // Calling Daq_Stop here - calling Daq_Diable would also trigger
   // a FIFO reset (deleting the recorded data)
-  if(nTBMs > 0) { _testboard->Daq_Stop(1); }
-  _testboard->Daq_Stop(0);
+  // Stopping DAQ for all 8 possible channels
+  for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Stop(channel); }
   _testboard->uDelay(100);
 
   return true;
