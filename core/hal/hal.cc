@@ -1063,10 +1063,10 @@ std::vector<uint16_t> * hal::daqReadChannel(uint8_t channel) {
   return daqdata;
 }
 
-bool hal::daqReset(uint8_t nTBMs) {
+bool hal::daqClear() {
 
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
-  if(nTBMs > 0) {_testboard->Daq_Close(1);}
-  _testboard->Daq_Close(0);
+  for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
+
   return true;
 }

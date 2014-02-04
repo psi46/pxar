@@ -196,7 +196,7 @@ namespace pxar {
 
     /** Reset the DAQ buffer on the DTB, deleted all previously taken and not yet read out data!
      */
-    bool daqReset(uint8_t nTBMs);
+    bool daqClear();
 
 
     // Functions to set bits somewhere on the ROC:

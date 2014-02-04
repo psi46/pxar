@@ -1179,13 +1179,13 @@ std::vector<uint16_t> api::daqGetBuffer() {
   
   // We read out everything, reset the buffer:
   // Reset all active channels:
-  _hal->daqReset(_dut->getNEnabledTbms());
+  _hal->daqClear();
   return data;
 }
 
 std::vector<pixel> api::daqGetEvent() {
 
-  if(!daqStatus()) {return std::vector<pixel>();}
+  if(!daqStatus()) { return std::vector<pixel>(); }
 
   // FIXME: needs to actually interact with the HAL and get DATA
   LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
