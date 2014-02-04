@@ -968,7 +968,72 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
   _testboard->Daq_Start(0);
   _testboard->uDelay(100);
   _testboard->Flush();
+
+  // Set up the pipe works:
+  src = dtbSource(_testboard,true);
+  src >> splitter;
+
   return true;
+}
+
+event hal::daqEvent() {
+  dataSink<event*> eventpump;
+  event evt;
+  splitter >> decoder >> eventpump;
+
+  try { evt = *eventpump.Get(); }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return evt;
+}
+
+std::vector<event> hal::daqAllEvents() {
+  dataSink<event*> eventpump;
+  std::vector<event> evt;
+  splitter >> decoder >> eventpump;
+
+  try { while(1) { evt.push_back(*eventpump.Get()); } }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return evt;
+}
+
+std::vector<pixel> hal::daqAllPixels() {
+  dataSink<pixel*> pixelpump;
+  std::vector<pixel> px;
+  splitter >> decoder >> pixelate >> pixelpump;
+
+  try { while(1) { px.push_back(*pixelpump.Get()); } }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return px;
+}
+
+rawEvent hal::daqRawEvent() {
+  dataSink<rawEvent*> rawpump;
+  rawEvent raw;
+  splitter >> rawpump;
+
+  try { raw = *rawpump.Get(); }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return raw;
+}
+
+std::vector<rawEvent> hal::daqAllRawEvents() {
+  dataSink<rawEvent*> rawpump;
+  std::vector<rawEvent> raw;
+  splitter >> rawpump;
+
+  try { while(1) { raw.push_back(*rawpump.Get()); } }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return raw;
 }
 
 void hal::daqTrigger(uint32_t nTrig) {

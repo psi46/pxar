@@ -190,11 +190,27 @@ namespace pxar {
      */
     uint32_t daqBufferStatus();
 
-    /** Reading out the full DAQ buffer
+    /** Reading out the full undecoded DAQ buffer
      */
-    std::vector<uint16_t> daqRead(uint8_t nTBMs);
+    std::vector<rawEvent> daqAllRawEvents();
 
-    /** Reset the DAQ buffer on the DTB, deleted all previously taken and not yet read out data!
+    /** Read the next decoded event from the FIFO buffer
+     */
+    event daqEvent();
+
+    /** Read the next raw (undecoded) event from the FIFO buffer
+     */
+    rawEvent daqRawEvent();
+
+    /** Read all remaining decoded events from the FIFO buffer
+     */
+    std::vector<event> daqAllEvents();
+
+    /** Read all remaining raw (undecoded) events from the FIFO buffer
+     */
+    std::vector<pixel> daqAllPixels();
+
+    /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
     bool daqClear();
 
@@ -299,6 +315,7 @@ namespace pxar {
     dtbSource src;
     dtbEventSplitter splitter;
     dtbEventDecoder decoder;
+    dtbEventToPixels pixelate;
   };
 }
 #endif
