@@ -5,6 +5,7 @@
 #include "api.h"
 #include "hal.h"
 #include "log.h"
+#include "timer.h"
 #include "helper.h"
 #include "dictionaries.h"
 #include <algorithm>
@@ -1028,7 +1029,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
 
   // We want the efficiency back from the Map function, so let's set the internal flag:
-  int32_t internal_flags = 0;
+  uint32_t internal_flags = 0;
   internal_flags |= flags;
   internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
   LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
@@ -1221,6 +1222,8 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   // pointer to vector to hold our data
   std::vector< std::vector<pixel> >* data = NULL;
 
+  // Start test timer:
+  timer t;
 
   // Do the masking/unmasking&trimming for all ROCs first
   MaskAndTrim(true);
@@ -1312,6 +1315,9 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
+
+  // Print timer value:
+  LOG(logDEBUGAPI) << "Test took " << t << "ms.";
 
   delete data; // clean up
   return compactdata;
