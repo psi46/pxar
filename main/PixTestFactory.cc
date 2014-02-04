@@ -2,6 +2,7 @@
 // switchyard for gui tests
 
 #include <iostream>
+#include <algorithm>
 
 #include "PixTestFactory.hh"
 #include "log.h"
@@ -48,7 +49,7 @@ PixTestFactory::~PixTestFactory() {
 
 // ----------------------------------------------------------------------
 PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
-  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+  ::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
   if( !name.compare("curvsdac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
   if (!name.compare("dacscan")) return new PixTestDacScan(a, "DacScan"); 
