@@ -581,7 +581,7 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 
 std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  uint16_t flags = parameter.at(0);
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   int32_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
