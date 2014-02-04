@@ -11,11 +11,25 @@
 #include <map>
 #include <stdint.h>
 
-// --- PXAR Flags---------------------------------------------------------------
-// These flags are all < 16bit and can be set by the user:
+// PXAR Flags
+
+/** Flag to force the API loop expansion to do tests ROC-by-ROC instead of looping over
+ *  the full module in one go.
+ */
 #define FLAG_FORCE_SERIAL  0x0001
+
+/** Flag to send the calibration pulses through the sensor pad instead of directly
+ *  to the preamplifier.
+ */
 #define FLAG_CALS          0x0002
+
+/** Flag to enable cross-talk measurements by pulsing the neighbor row instead of the
+ *  row to be measured.
+ */
 #define FLAG_XTALK         0x0004
+
+/** Flag to define the threshold edge (falling/rising edge) for scans.
+ */
 #define FLAG_RISING_EDGE   0x0008
 
 /** Export classes from the DLL under WIN32 */
