@@ -11,6 +11,13 @@
 #include <map>
 #include <stdint.h>
 
+// --- PXAR Flags---------------------------------------------------------------
+// These flags are all < 16bit and can be set by the user:
+#define FLAG_FORCE_SERIAL  0x0001
+#define FLAG_CALS          0x0002
+#define FLAG_XTALK         0x0004
+#define FLAG_RISING_EDGE   0x0008
+
 /** Export classes from the DLL under WIN32 */
 #ifdef WIN32
 #define DLLEXPORT __declspec( dllexport )
