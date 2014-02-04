@@ -1009,6 +1009,7 @@ bool hal::daqStop() {
   // Calling Daq_Stop here - calling Daq_Diable would also trigger
   // a FIFO reset (deleting the recorded data)
   // Stopping DAQ for all 8 possible channels
+  // FIXME provide daq_stop_all NIOS funktion?
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Stop(channel); }
   _testboard->uDelay(100);
 
@@ -1065,6 +1066,10 @@ std::vector<uint16_t> * hal::daqReadChannel(uint8_t channel) {
 
 bool hal::daqClear() {
 
+  // Disconnect the data pipe from the DTB:
+  src = dtbSource();
+
+  // FIXME provide daq_clear_all NIOS funktion?
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
 
