@@ -1,4 +1,17 @@
+#ifndef PXAR_TYPES_H
+#define PXAR_TYPES_H
+
+#include <stdint.h>
 #include <iostream>
+#include <vector>
+#include <map>
+
+/** Export classes from the DLL under WIN32 */
+#ifdef WIN32
+#define DLLEXPORT __declspec( dllexport )
+#else
+#define DLLEXPORT
+#endif
 
 namespace pxar {
 
@@ -159,3 +172,4 @@ namespace pxar {
   };
 
 }
+#endif

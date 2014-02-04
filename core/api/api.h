@@ -47,7 +47,6 @@
  */
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
-
 namespace pxar {
 
   /** Forward declaration, implementation follows below...
