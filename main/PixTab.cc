@@ -71,9 +71,9 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
     hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    //    LOG(logINFO) << "Creating TGTextEntry for " << imap->first;
     tb = new TGTextBuffer(5); 
-    tl = new TGLabel(hFrame, imap->first.c_str());
+    cout << imap->first.c_str() << " stripped: " << PixTest::stripPos(imap->first.c_str()) << endl;
+    tl = new TGLabel(hFrame, PixTest::stripPos(imap->first).c_str());
     tl->SetWidth(100);
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 
@@ -99,7 +99,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
     if (!imap->second.compare("button")) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
-      tset = new TGTextButton(hFrame, imap->first.c_str(), cnt);
+      tset = new TGTextButton(hFrame, PixTest::stripPos(imap->first).c_str(), cnt);
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       tset->SetToolTipText("run this test");
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
