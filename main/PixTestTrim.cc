@@ -215,7 +215,11 @@ void PixTestTrim::trimBitTest() {
 
   ConfigParameters *cp = fPixSetup->getConfigParameters();
   // -- start untrimmed
-  cp->setTrimBits(15);
+  bool ok = cp->setTrimBits(15);
+  if (!ok) {
+    LOG(logWARNING) << "could not set trim bits to " << 15; 
+    return;
+  }
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
   vector<TH1*> thr0 = thrMaps("Vcal", "TrimBitsThr0", fParNtrig); 
@@ -224,7 +228,12 @@ void PixTestTrim::trimBitTest() {
   vector<TH1*> thr;
   for (unsigned int iv = 0; iv < vtrim.size(); ++iv) {
     thr.clear();
-    cp->setTrimBits(btrim[iv]);
+    ok = cp->setTrimBits(btrim[iv]);
+    if (!ok) {
+      LOG(logWARNING) << "could not set trim bits to " << btrim[iv]; 
+      continue;
+    }
+
     LOG(logDEBUG) << "trimBitTest initDUT with trim bits = " << btrim[iv]; 
     // FIXME: getRocPixelConfig SHOULD NOT RE-READ trim bit files and mask files...
     fApi->initDUT(cp->getTbmType(), cp->getTbmDacs(), 

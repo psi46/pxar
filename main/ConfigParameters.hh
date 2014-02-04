@@ -65,6 +65,9 @@ public:
 
   bool setTbParameter(std::string, uint8_t);
   bool setTbPowerSettings(std::string, double);
+  bool setTbmDac(std::string var, uint8_t val, int itbm = -1);
+  bool setRocDac(std::string var, uint8_t val, int iroc = -1);
+  bool setTrimBits(int trim); 
 
   void setTBParameterFileName(std::string filename) {fTBParametersFileName = filename;}
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
@@ -77,7 +80,6 @@ public:
   void setMaskFileName(std::string filename) {fDebugFileName = filename;}
   void setDirectory(std::string dirname) {fDirectory = dirname;}
 
-  void setTrimBits(int trim); 
   void setGuiMode(bool a) {fGuiMode = a;}
 
   unsigned int getNrocs() {return fnRocs;}

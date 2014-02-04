@@ -9,13 +9,6 @@
 
 namespace pxar {
 
-// --- PXAR Flags---------------------------------------------------------------
-// These flags are all < 16bit and can be set by the user:
-#define FLAG_FORCE_SERIAL   0x0001
-#define FLAG_USE_CALS       0x0002
-#define FLAG_XTALK          0x0004
-#define FLAG_THRSCAN_RISING 0x0008
-
 // --- PXAR Internal Flags------------------------------------------------------
 // All internal flags are > 16bit, cannot be set from outside:
 #define FLAG_INTERNAL_GET_EFFICIENCY 0x10000

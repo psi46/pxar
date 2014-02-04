@@ -564,7 +564,7 @@ void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t 
   _testboard->roc_I2cAddr(rocid);
 
   // Set the calibrate bit and the CALS setting:
-  _testboard->roc_Pix_Cal(column,row,flags&FLAG_USE_CALS);
+  _testboard->roc_Pix_Cal(column,row,flags&FLAG_CALS);
 }
 
 void hal::RocClearCalibrate(uint8_t rocid) {
@@ -639,9 +639,9 @@ std::vector< std::vector<pixel> >* hal::RocThresholdMap(uint8_t rocid, std::vect
   int status;
   // FIXME the non-fallback ThresholdMap is not yet exported as RPC command!
   //if(_fallback_mode) { 
-  status = _testboard->fallback_ThresholdMap(nTriggers, dacReg, flags & FLAG_THRSCAN_RISING, flags & FLAG_XTALK, flags & FLAG_USE_CALS, threshold, address);
+  status = _testboard->fallback_ThresholdMap(nTriggers, dacReg, flags & FLAG_RISING_EDGE, flags & FLAG_XTALK, flags & FLAG_CALS, threshold, address);
     //}
-  //else { status = _testboard->ThresholdMap(nTriggers, dacReg, flags & FLAG_THRSCAN_RISING, flags & FLAG_XTALK, flags & FLAG_USE_CALS, threshold, address); }
+  //else { status = _testboard->ThresholdMap(nTriggers, dacReg, flags & FLAG_RISING_EDGE, flags & FLAG_XTALK, flags & FLAG_CALS, threshold, address); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t t = threshold.size();
@@ -726,8 +726,8 @@ std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t
   int32_t dacReg = parameter.at(2);
 
   // Fixed variables for now:
-  int32_t start = (flags & FLAG_THRSCAN_RISING ? 0 : 255);
-  int32_t step = (flags & FLAG_THRSCAN_RISING ? 1 : -1); // Step size: take fine grained for single pixel.
+  int32_t start = (flags & FLAG_RISING_EDGE ? 0 : 255);
+  int32_t step = (flags & FLAG_RISING_EDGE ? 1 : -1); // Step size: take fine grained for single pixel.
   int32_t thrLevel = nTriggers/2; // Level defined as threshold: 50% response
 
   LOG(logDEBUGHAL) << "Called PixelThresholdMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers, start " << start << " stepsize " << step << " register " << dacReg;
@@ -740,7 +740,7 @@ std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t
   // Call the RPC command:
   //FIXME trimming just set to 15?! Remove from NIOS function, should be set by HAL!
   int32_t value = _testboard->PixelThreshold(column, row, start, step, thrLevel, nTriggers, dacReg, 
-					     flags & FLAG_XTALK, flags & FLAG_USE_CALS);
+					     flags & FLAG_XTALK, flags & FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << value;
 
   pixel newpixel;
