@@ -393,11 +393,17 @@ namespace pxar {
      */
     bool daqStatus();
     
-    /** Function to read out the earliest event in buffer from the currently
-     *  data acquisition. If no event is buffered, the function will wait for
-     *  the next event to arrive and then return it.
+    /** Function to read out the earliest event in buffer from the current
+     *  data acquisition session. If no event is buffered, the function will 
+     *  wait for the next event to arrive and then return it.
      */
-    std::vector<pixel> daqGetEvent();
+    event daqGetEvent();
+
+    /** Function to read out the earliest raw data record in buffer from the 
+     *  current data acquisition session. If no event is buffered, the function 
+     *  will wait for the next event to arrive and then return it.
+     */
+    rawEvent daqGetRawEvent();
 
     /** Function to fire the previously defined pattern command list "nTrig"
      *  times, the function parameter defaults to 1.
@@ -423,8 +429,14 @@ namespace pxar {
      *  function returns the raw data blob from either of the deserializer
      *  modules.
      */
-    std::vector<uint16_t> daqGetBuffer();
+    std::vector<rawEvent> daqGetRawBuffer();
 
+    /** Function to return the full event buffer from the testboard RAM after
+     *  the data acquisition has been stopped. All data is decoded and the 
+     *  function returns decoded pixels separated in events with additional
+     *  header information available.
+     */
+    std::vector<event> daqGetEventBuffer();
 
     /** DUT object for book keeping of settings
      */

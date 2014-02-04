@@ -1171,11 +1171,11 @@ void api::daqTriggerLoop(uint16_t period) {
   }
 }
 
-std::vector<uint16_t> api::daqGetBuffer() {
+std::vector<rawEvent> api::daqGetRawBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs
-  std::vector<uint16_t> data = _hal->daqRead(_dut->getNEnabledTbms());
+  std::vector<rawEvent> data = _hal->daqAllRawEvents();
   
   // We read out everything, reset the buffer:
   // Reset all active channels:
@@ -1183,13 +1183,34 @@ std::vector<uint16_t> api::daqGetBuffer() {
   return data;
 }
 
-std::vector<pixel> api::daqGetEvent() {
+std::vector<event> api::daqGetEventBuffer() {
 
-  if(!daqStatus()) { return std::vector<pixel>(); }
+  // Reading out all data from the DTB and returning the decoded event buffer.
+  // Select the right readout channels depending on the number of TBMs
+  std::vector<event> data = _hal->daqAllEvents();
+  
+  // We read out everything, reset the buffer:
+  // Reset all active channels:
+  _hal->daqClear();
+  return data;
+}
 
-  // FIXME: needs to actually interact with the HAL and get DATA
-  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
-  return std::vector<pixel>();
+event api::daqGetEvent() {
+
+  // Check DAQ status:
+  if(!daqStatus()) { return event(); }
+
+  // Return the next decoded event from the FIFO buffer:
+  return _hal->daqEvent();
+}
+
+rawEvent api::daqGetRawEvent() {
+
+  // Check DAQ status:
+  if(!daqStatus()) { return rawEvent(); }
+
+  // Return the next raw data record from the FIFO buffer:
+  return _hal->daqRawEvent();
 }
 
 bool api::daqStop() {
