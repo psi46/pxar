@@ -17,11 +17,14 @@ public:
   
   void doTest(); 
   void setCalDel();
+  void setVana();
+  void setVthrCompId();
   void saveDacs(); 
 
 private:
 
   int     fParNtrig; 
+  int     fTargetIa; 
 
   ClassDef(PixTestPretest, 1);
 
