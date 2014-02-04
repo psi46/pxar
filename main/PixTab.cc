@@ -65,12 +65,23 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   int cnt(0); 
   for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
+
     if (!imap->second.compare("button")) {
+      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
+      tset = new TGTextButton(hFrame, PixTest::stripPos(imap->first).c_str(), cnt);
+      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+      tset->SetToolTipText("run this test");
+      tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
+      tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
+      fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+      ++cnt; 
       continue;
     }
 
+
     hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+    
     tb = new TGTextBuffer(5); 
     cout << imap->first.c_str() << " stripped: " << PixTest::stripPos(imap->first.c_str()) << endl;
     tl = new TGLabel(hFrame, PixTest::stripPos(imap->first).c_str());
@@ -92,21 +103,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 
     ++cnt;
-  }
-
-  // -- add buttons
-  cnt = 1000; 
-  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
-    if (!imap->second.compare("button")) {
-      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
-      tset = new TGTextButton(hFrame, PixTest::stripPos(imap->first).c_str(), cnt);
-      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
-      tset->SetToolTipText("run this test");
-      tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
-      tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
-      fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-      ++cnt; 
-    }
   }
 
   hFrame = new TGHorizontalFrame(fV2); 
