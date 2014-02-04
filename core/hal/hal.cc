@@ -972,23 +972,72 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 }
 
 event hal::daqEvent() {
-  dataSink<event*> eventpump;
-  event evt;
-  splitter0 >> decoder0 >> eventpump;
 
-  try { evt = *eventpump.Get(); }
+  event current_event;
+
+  dataSink<event*> eventpump0, eventpump1, eventpump2, eventpump3;
+  splitter0 >> decoder0 >> eventpump0;
+
+  if(src1.isConnected()) { splitter1 >> decoder1 >> eventpump1; }
+  if(src2.isConnected()) { splitter2 >> decoder2 >> eventpump2; }
+  if(src3.isConnected()) { splitter3 >> decoder3 >> eventpump3; }
+
+  // FIXME check carefully: in principle we expect the same number of triggers
+  // (==events) on each pipe. Throw a critical if difference is found?
+  try {
+    // Read the next event from each of the pipes:
+    current_event = *eventpump0.Get();
+    if(src1.isConnected()) {
+      event tmp = *eventpump1.Get(); 
+      current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+    }
+    if(src2.isConnected()) {
+      event tmp = *eventpump2.Get(); 
+      current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+    }
+    if(src3.isConnected()) {
+      event tmp = *eventpump3.Get(); 
+      current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+    }
+  }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
-  return evt;
+  return current_event;
 }
 
 std::vector<event> hal::daqAllEvents() {
-  dataSink<event*> eventpump;
-  std::vector<event> evt;
-  splitter0 >> decoder0 >> eventpump;
 
-  try { while(1) { evt.push_back(*eventpump.Get()); } }
+  std::vector<event> evt;
+
+  dataSink<event*> eventpump0, eventpump1, eventpump2, eventpump3;
+  splitter0 >> decoder0 >> eventpump0;
+
+  if(src1.isConnected()) { splitter1 >> decoder1 >> eventpump1; }
+  if(src2.isConnected()) { splitter2 >> decoder2 >> eventpump2; }
+  if(src3.isConnected()) { splitter3 >> decoder3 >> eventpump3; }
+
+  // FIXME check carefully: in principle we expect the same number of triggers
+  // (==events) on each pipe. Throw a critical if difference is found?
+  try {
+    while(1) {
+      // Read the next event from each of the pipes:
+      event current_event = *eventpump0.Get();
+      if(src1.isConnected()) {
+	event tmp = *eventpump1.Get(); 
+	current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+      }
+      if(src2.isConnected()) {
+	event tmp = *eventpump2.Get(); 
+	current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+      }
+      if(src3.isConnected()) {
+	event tmp = *eventpump3.Get(); 
+	current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+      }
+      evt.push_back(current_event);
+    }
+  }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
@@ -996,11 +1045,27 @@ std::vector<event> hal::daqAllEvents() {
 }
 
 std::vector<pixel> hal::daqAllPixels() {
-  dataSink<pixel*> pixelpump;
-  std::vector<pixel> px;
-  splitter0 >> decoder0 >> pixelate0 >> pixelpump;
 
-  try { while(1) { px.push_back(*pixelpump.Get()); } }
+  dataSink<pixel*> pixelpump0, pixelpump1, pixelpump2, pixelpump3;
+  splitter0 >> decoder0 >> pixelate0 >> pixelpump0;
+
+  if(src1.isConnected()) { splitter1 >> decoder1 >> pixelate1 >> pixelpump1; }
+  if(src2.isConnected()) { splitter2 >> decoder2 >> pixelate2 >> pixelpump2; }
+  if(src3.isConnected()) { splitter3 >> decoder3 >> pixelate3 >> pixelpump3; }
+
+  std::vector<pixel> px;
+
+  // FIXME in principle we expect the same number of triggers on
+  // each pipe, but not necessarily the same number of pixels!
+  try {
+    while(1) {
+      // Just push one pixel after another, from all the pipes:
+      px.push_back(*pixelpump0.Get());
+      if(src1.isConnected()) { px.push_back(*pixelpump1.Get()); }
+      if(src1.isConnected()) { px.push_back(*pixelpump2.Get()); }
+      if(src1.isConnected()) { px.push_back(*pixelpump3.Get()); }
+    }
+  }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
@@ -1008,23 +1073,71 @@ std::vector<pixel> hal::daqAllPixels() {
 }
 
 rawEvent hal::daqRawEvent() {
-  dataSink<rawEvent*> rawpump;
-  rawEvent raw;
-  splitter0 >> rawpump;
 
-  try { raw = *rawpump.Get(); }
+  rawEvent current_event;
+  dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
+  splitter0 >> rawpump0;
+
+  if(src1.isConnected()) { splitter1 >> rawpump1; }
+  if(src2.isConnected()) { splitter2 >> rawpump2; }
+  if(src3.isConnected()) { splitter3 >> rawpump3; }
+
+  // FIXME check carefully: in principle we expect the same number of triggers
+  // (==events) on each pipe. Throw a critical if difference is found?
+  try {
+    // Read the next event from each of the pipes:
+    current_event = *rawpump0.Get();
+    if(src1.isConnected()) {
+      rawEvent tmp = *rawpump1.Get();
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+    }
+    if(src2.isConnected()) {
+      rawEvent tmp = *rawpump2.Get();
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+    }
+    if(src3.isConnected()) {
+      rawEvent tmp = *rawpump3.Get();
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+    }
+  }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
-  return raw;
+  return current_event;
 }
 
 std::vector<rawEvent> hal::daqAllRawEvents() {
-  dataSink<rawEvent*> rawpump;
-  std::vector<rawEvent> raw;
-  splitter0 >> rawpump;
 
-  try { while(1) { raw.push_back(*rawpump.Get()); } }
+  std::vector<rawEvent> raw;
+
+  dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
+  splitter0 >> rawpump0;
+
+  if(src1.isConnected()) { splitter1 >> rawpump1; }
+  if(src2.isConnected()) { splitter2 >> rawpump2; }
+  if(src3.isConnected()) { splitter3 >> rawpump3; }
+
+  // FIXME check carefully: in principle we expect the same number of triggers
+  // (==events) on each pipe. Throw a critical if difference is found?
+  try {
+    while(1) {
+      // Read the next event from each of the pipes:
+      rawEvent current_event = *rawpump0.Get();
+      if(src1.isConnected()) {
+	rawEvent tmp = *rawpump1.Get();
+	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+      }
+      if(src2.isConnected()) {
+	rawEvent tmp = *rawpump2.Get();
+	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+      }
+      if(src3.isConnected()) {
+	rawEvent tmp = *rawpump3.Get();
+	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+      }
+      raw.push_back(current_event);
+    }
+  }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
