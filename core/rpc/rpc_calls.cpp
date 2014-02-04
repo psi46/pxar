@@ -107,9 +107,9 @@ const char *CTestboard::rpc_cmdName[] =
 	/*    93 */ "PH$iiiis",
 	/*    94 */ "PixelThreshold$iiiiiiiibb",
 	/*    95 */ "test_pixel_address$bii",
-	/*    96 */ "CalibratePixel$csss0s0i",
-	/*    97 */ "CalibrateDacScan$cssssss2s2i",
-	/*    98 */ "CalibrateDacDacScan$csssssssss2s2i",
+	/*    96 */ "CalibratePixel$cSCCb",
+	/*    97 */ "CalibrateDacScan$cSCCCCCb",
+	/*    98 */ "CalibrateDacDacScan$cSCCCCCCCCb",
 	/*    99 */ "TrimChip$s1s",
 	/*   100 */ "CalibrateMap$sSb",
 	/*   101 */ "TestColPixel$bCC2C",
@@ -1586,7 +1586,7 @@ bool CTestboard::test_pixel_address(int32_t rpc_par1, int32_t rpc_par2)
 	return rpc_par0;
 }
 
-int8_t CTestboard::CalibratePixel(int16_t rpc_par1, int16_t rpc_par2, int16_t rpc_par3, int16_t &rpc_par4, int32_t &rpc_par5)
+int8_t CTestboard::CalibratePixel(uint16_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, bool rpc_par4)
 { RPC_PROFILING
 	int8_t rpc_par0;
 	try {
@@ -1594,24 +1594,21 @@ int8_t CTestboard::CalibratePixel(int16_t rpc_par1, int16_t rpc_par2, int16_t rp
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_INT16(rpc_par1);
-	msg.Put_INT16(rpc_par2);
-	msg.Put_INT16(rpc_par3);
-	msg.Put_INT16(rpc_par4);
-	msg.Put_INT32(rpc_par5);
+	msg.Put_UINT16(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
+	msg.Put_UINT8(rpc_par3);
+	msg.Put_BOOL(rpc_par4);
 	msg.Send(*rpc_io);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,7);
+	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_INT8();
-	rpc_par4 = msg.Get_INT16();
-	rpc_par5 = msg.Get_INT32();
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(96); throw; };
 	return rpc_par0;
 }
 
-int8_t CTestboard::CalibrateDacScan(int16_t rpc_par1, int16_t rpc_par2, int16_t rpc_par3, int16_t rpc_par4, int16_t rpc_par5, int16_t rpc_par6, vectorR<int16_t> &rpc_par7, vectorR<int32_t> &rpc_par8)
+int8_t CTestboard::CalibrateDacScan(uint16_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, bool rpc_par7)
 { RPC_PROFILING
 	int8_t rpc_par0;
 	try {
@@ -1619,25 +1616,24 @@ int8_t CTestboard::CalibrateDacScan(int16_t rpc_par1, int16_t rpc_par2, int16_t 
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_INT16(rpc_par1);
-	msg.Put_INT16(rpc_par2);
-	msg.Put_INT16(rpc_par3);
-	msg.Put_INT16(rpc_par4);
-	msg.Put_INT16(rpc_par5);
-	msg.Put_INT16(rpc_par6);
+	msg.Put_UINT16(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
+	msg.Put_UINT8(rpc_par3);
+	msg.Put_UINT8(rpc_par4);
+	msg.Put_UINT8(rpc_par5);
+	msg.Put_UINT8(rpc_par6);
+	msg.Put_BOOL(rpc_par7);
 	msg.Send(*rpc_io);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_INT8();
-	rpc_Receive(*rpc_io, rpc_par7);
-	rpc_Receive(*rpc_io, rpc_par8);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(97); throw; };
 	return rpc_par0;
 }
 
-int8_t CTestboard::CalibrateDacDacScan(int16_t rpc_par1, int16_t rpc_par2, int16_t rpc_par3, int16_t rpc_par4, int16_t rpc_par5, int16_t rpc_par6, int16_t rpc_par7, int16_t rpc_par8, int16_t rpc_par9, vectorR<int16_t> &rpc_par10, vectorR<int32_t> &rpc_par11)
+int8_t CTestboard::CalibrateDacDacScan(uint16_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, bool rpc_par10)
 { RPC_PROFILING
 	int8_t rpc_par0;
 	try {
@@ -1645,22 +1641,21 @@ int8_t CTestboard::CalibrateDacDacScan(int16_t rpc_par1, int16_t rpc_par2, int16
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_INT16(rpc_par1);
-	msg.Put_INT16(rpc_par2);
-	msg.Put_INT16(rpc_par3);
-	msg.Put_INT16(rpc_par4);
-	msg.Put_INT16(rpc_par5);
-	msg.Put_INT16(rpc_par6);
-	msg.Put_INT16(rpc_par7);
-	msg.Put_INT16(rpc_par8);
-	msg.Put_INT16(rpc_par9);
+	msg.Put_UINT16(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
+	msg.Put_UINT8(rpc_par3);
+	msg.Put_UINT8(rpc_par4);
+	msg.Put_UINT8(rpc_par5);
+	msg.Put_UINT8(rpc_par6);
+	msg.Put_UINT8(rpc_par7);
+	msg.Put_UINT8(rpc_par8);
+	msg.Put_UINT8(rpc_par9);
+	msg.Put_BOOL(rpc_par10);
 	msg.Send(*rpc_io);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_INT8();
-	rpc_Receive(*rpc_io, rpc_par10);
-	rpc_Receive(*rpc_io, rpc_par11);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(98); throw; };
 	return rpc_par0;
