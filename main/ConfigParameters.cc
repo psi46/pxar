@@ -379,20 +379,6 @@ void ConfigParameters::readRocPixelConfig() {
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setTrimBits(int trim) {
-  
-  for (unsigned int iroc = 0; iroc < fRocPixelConfigs.size(); ++iroc) {
-    for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
-      fRocPixelConfigs[iroc][ipix].trim = trim; 
-    }
-  }
-  
-  
-  
-}
-
-
-// ----------------------------------------------------------------------
 void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) {
   
   // -- read in file
@@ -612,6 +598,49 @@ bool ConfigParameters::setTbParameter(std::string var, uint8_t val) {
   return false; 
 }
 
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::setTbmDac(std::string var, uint8_t val, int itbm) {
+  bool changed(false);
+  for (unsigned int i = 0; i < fTbmParameters.size(); ++i) {
+    if (itbm < 0 || itbm == static_cast<int>(i)) {
+      for (unsigned int idac = 0; idac < fTbmParameters[i].size(); ++idac) {
+	if (!fTbmParameters[i][idac].first.compare(var)) {
+	  fTbmParameters[i][idac].second = val;
+	  changed = true; 
+	  break;
+	}
+      }
+    }
+  }
+  if (changed) {
+    return true;
+  } 
+  return false; 
+}
+
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::setRocDac(std::string var, uint8_t val, int iroc) {
+  bool changed(false);
+  for (unsigned int i = 0; i < fDacParameters.size(); ++i) {
+    if (iroc < 0 || iroc == static_cast<int>(i)) {
+      for (unsigned int idac = 0; idac < fDacParameters[i].size(); ++idac) {
+	if (!fDacParameters[i][idac].first.compare(var)) {
+	  fDacParameters[i][idac].second = val;
+	  changed = true; 
+	  break;
+	}
+      }
+    }
+  }
+  if (changed) {
+    return true;
+  } 
+  return false; 
+}
+
+
 // ----------------------------------------------------------------------
 bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
   for (unsigned int i = 0; i < fTbPowerSettings.size(); ++i) {
@@ -622,6 +651,17 @@ bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
   }
   return false; 
 
+}
+
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::setTrimBits(int trim) {
+  for (unsigned int iroc = 0; iroc < fRocPixelConfigs.size(); ++iroc) {
+    for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
+      fRocPixelConfigs[iroc][ipix].trim = trim; 
+    }
+  }
+  return true;
 }
 
 
@@ -776,7 +816,7 @@ bool ConfigParameters::writeTbParameterFile() {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
     reg = rd->getRegister(data, DTB_REG);
-    OUT << Form("%3d %10s %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+    OUT << Form("%3d %15s  %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
   }
   
   OUT.close();

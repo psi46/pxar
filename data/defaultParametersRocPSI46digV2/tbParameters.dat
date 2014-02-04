@@ -1,5 +1,5 @@
-  0        clk    2
-  1        ctr    2
-  2        sda   17
-  3        tin    7
-255 deser160phase 4
+  0             clk    2
+  1             ctr    2
+  2             sda   17
+  3             tin    7
+254   deser160phase    4
