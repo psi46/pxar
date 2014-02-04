@@ -95,8 +95,6 @@ namespace pxar {
   };
 
 
-  // Event data record definition
-  // FIXME docu!
   /** Class to store raw evet data records containing a list of flags to indicate the 
    *  event status as well as a vector of uint16_t data records containing the actual
    *  event data in undecoded raw format.
@@ -123,7 +121,7 @@ namespace pxar {
 	
     unsigned int GetSize() { return data.size(); }
     void Add(uint16_t value) { data.push_back(value); }
-    uint16_t operator[](int index) { return data[index]; }
+    uint16_t operator[](int index) { return data.at(index); }
   };
 
   /** Class to store the configuration for single pixels (i.e. their mask state,
