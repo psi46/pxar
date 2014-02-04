@@ -1,6 +1,5 @@
--- PixelAlive 
-Ntrig 10
-Vcal 200
+-- CurVsDac
+DAC Vana
 
 -- DacScan
 Ntrig 10
@@ -21,14 +20,27 @@ DAC2LO 0
 DAC2HI 120
 PIX1   11,20 
 
--- Trim
-Ntrig       10
-Vcal        40
-VcalLo      25 
-VcalHi      75 
-VthrCompLo  0 
-VthrCompHi  50 
-TrimBits button
+-- PixelAlive 
+Ntrig 10
+Vcal 200
+
+-- PhDacScan
+Ntrig 10
+DAC   Vcal
+DACLO 0
+DACHI 200
+PIX1  11,20
+
+
+-- Pretest
+SaveDacs       button
+PIX1           11,20 
+Ntrig          10
+setCalDel      button
+targetIa       24
+setVana        button
+setVthrCompId  button
+
 
 -- Scurves
 Ntrig 50
@@ -41,17 +53,15 @@ DacHi 100
 Ntrig 10
 Vcal 200
 
--- SetCalDel
-Ntrig 50
-PIX1  11,20
-
 -- Tbm
 Ntrig 10
 Vcal 200
 
--- CurVsDac
-DAC Vana
-
-
--- SetVana
-targetIa 24
+-- Trim
+TrimBits button
+Ntrig       10
+Vcal        40
+VcalLo      25 
+VcalHi      75 
+VthrCompLo  0 
+VthrCompHi  50 
