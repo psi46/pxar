@@ -757,11 +757,11 @@ std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t
 
 std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  int32_t dacreg = parameter.at(0);
-  int32_t dacmin = parameter.at(1);
-  int32_t dacmax = parameter.at(2);
+  uint8_t dacreg = parameter.at(0);
+  uint8_t dacmin = parameter.at(1);
+  uint8_t dacmax = parameter.at(2);
   int32_t flags = parameter.at(3);
-  int32_t nTriggers = parameter.at(4);
+  uint16_t nTriggers = parameter.at(4);
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << dacreg << " from " << dacmin << " to " << dacmax;
@@ -776,7 +776,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   // Call the RPC command:
   int status;
   if(_fallback_mode) { status = _testboard->fallback_CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum); }
-  else { status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum); }
+  else { status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, flags & FLAG_CALS); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
@@ -814,14 +814,14 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
 
 std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  int32_t dac1reg = parameter.at(0);
-  int32_t dac1min = parameter.at(1);
-  int32_t dac1max = parameter.at(2);
-  int32_t dac2reg = parameter.at(3);
-  int32_t dac2min = parameter.at(4);
-  int32_t dac2max = parameter.at(5);
+  uint8_t dac1reg = parameter.at(0);
+  uint8_t dac1min = parameter.at(1);
+  uint8_t dac1max = parameter.at(2);
+  uint8_t dac2reg = parameter.at(3);
+  uint8_t dac2min = parameter.at(4);
+  uint8_t dac2max = parameter.at(5);
   int32_t flags = parameter.at(6);
-  int32_t nTriggers = parameter.at(7);
+  uint16_t nTriggers = parameter.at(7);
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning field DAC " << dac1reg << " " << dac1min << "-" << dac1max 
@@ -837,7 +837,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
   // Call the RPC command:
   int status;
   if(_fallback_mode) { status = _testboard->fallback_CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum); }
-  else { status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum); }
+  else { status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, flags & FLAG_CALS); }
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   size_t n = nReadouts.size();
