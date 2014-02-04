@@ -165,7 +165,6 @@ int main(int argc, char* argv[]) {
     
     // Start the DAQ:
     _api->daqStart(pg_setup);
-    uint32_t daq_check_triggers = 0;
     
     // Send the triggers:
     if(triggers != 0) {
@@ -186,24 +185,14 @@ int main(int argc, char* argv[]) {
     _api->daqStop();
 
     // And read out the full buffer:
-    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+    std::vector<pxar::rawEvent> daqdat = _api->daqGetRawBuffer();
 
-    std::cout << "Size of data read from board: " << daqdat.size() << std::endl;
-    // Count triggers:
-    for(std::vector<uint16_t>::iterator it = daqdat.begin();
-	it != daqdat.end();
-	++it) {
-      if(((*it) & 0xF000) > 0x4000 || (*it) == 0x0080) {
-	// std::cout << std::endl;
-	daq_check_triggers++;
-      }
-    }
-    std::cout << "Found " << daq_check_triggers << " triggers in data, expected " << triggers << std::endl;
+    std::cout << "Found " << daqdat.size() << " triggers in data, expected " << triggers << std::endl;
 
     // Write all the data to the file:
     FILE * pFile;
     pFile = fopen(filename != "" ? filename.c_str() : "defaultdata.dat","w");
-    fwrite (&daqdat[0], sizeof(uint16_t), daqdat.size(), pFile); 
+    //    fwrite (&daqdat[0], sizeof(uint16_t), daqdat.size(), pFile); 
     fclose(pFile);
 
     // ##########################################################
