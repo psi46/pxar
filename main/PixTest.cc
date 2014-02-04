@@ -60,8 +60,8 @@ void PixTest::bookHist(string name) {
 
 // ----------------------------------------------------------------------
 void PixTest::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "Nothing done with " << command; 
-
 }
 
 
