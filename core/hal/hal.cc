@@ -1060,54 +1060,6 @@ bool hal::daqStop() {
   return true;
 }
 
-std::vector<uint16_t> hal::daqRead(uint8_t nTBMs) {
-
-  timer t;
-
-  // Read all data from the first channel:
-  std::vector<uint16_t> * data = daqReadChannel(0);
-
-  // Also read the second channel if needed:
-  if(nTBMs > 0) {
-    std::vector<uint16_t> * data1 = daqReadChannel(1);
-    data->insert( data->end(), data1->begin(), data1->end() );
-  }
-
-  LOG(logDEBUGHAL) << "Read full buffer in " << t << "ms.";
-  return *data;
-}
-
-std::vector<uint16_t> * hal::daqReadChannel(uint8_t channel) {
-
-  int status = 0;
-  std::vector<uint16_t> * daqdata = new std::vector<uint16_t>();
-  uint32_t buffer_remaining;
-
-  // Maximal allowed block size for DAQ read
-  // Setting even one word more results in getting an empty vector back!
-  uint32_t buffer_max = 32767;
-  uint32_t buffer_read;
-
-  buffer_remaining = _testboard->Daq_GetSize(channel);
-  LOG(logDEBUGHAL) << "Available data in channel " << static_cast<int>(channel) << ": " 
-		   << buffer_remaining << " words";
-
-  // Keep on reading out while we have remainig data:
-  while(buffer_remaining > 0) {
-    std::vector<uint16_t> data;
-    buffer_read = min(buffer_remaining, buffer_max);
-    LOG(logDEBUGHAL) << "Attempting to read " << buffer_read << " words from buffer.";
-    status = _testboard->Daq_Read(data,buffer_read,buffer_remaining,channel);
-    LOG(logDEBUGHAL) << "Function returns: " << status;
-    LOG(logDEBUGHAL) << "Read " << data.size() << " data words in channel "
-		     << static_cast<int>(channel) << ", " 
-		     << buffer_remaining << " words remaining in buffer.";
-    daqdata->insert(daqdata->end(), data.begin(), data.end());
-  }
-
-  return daqdata;
-}
-
 bool hal::daqClear() {
 
   // Disconnect the data pipe from the DTB:
