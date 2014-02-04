@@ -14,6 +14,7 @@
 #include "PixTestTrim.hh"
 #include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
+#include "PixTestPretest.hh"
 #include "PixTestSetVana.hh"
 #include "PixTestSetCalDel.hh"
 #include "PixTestGainCalibration.hh"
@@ -48,17 +49,19 @@ PixTestFactory::~PixTestFactory() {
 
 // ----------------------------------------------------------------------
 PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
-  
-  if( !name.compare("CurVsDac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
-  if (!name.compare("PixelAlive")) return new PixTestAlive(a, "PixelAlive"); 
-  if (!name.compare("Tbm")) return new PixTestTbm(a, "Tbm"); 
-  if (!name.compare("DacScan")) return new PixTestDacScan(a, "DacScan"); 
-  if (!name.compare("DacDacScan")) return new PixTestDacDacScan(a, "DacDacScan"); 
-  if (!name.compare("Trim")) return new PixTestTrim(a, "Trim"); 
-  if (!name.compare("Scurves")) return new PixTestScurves(a, "Scurves"); 
-  if (!name.compare("Setup")) return new PixTestSetup(a, "Setup"); 
-  if (!name.compare( "SetVana")) return new PixTestSetVana(a, "SetVana"); 
-  if (!name.compare( "SetCalDel")) return new PixTestSetCalDel(a, "SetCalDel"); 
-  if (!name.compare("GainCalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
+  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
+  if( !name.compare("curvsdac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
+  if (!name.compare("dacscan")) return new PixTestDacScan(a, "DacScan"); 
+  if (!name.compare("dacdacscan")) return new PixTestDacDacScan(a, "DacDacScan"); 
+  if (!name.compare("gaincalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
+  if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
+  if (!name.compare("pretest")) return new PixTestPretest(a, "Pretest"); 
+  if (!name.compare("scurves")) return new PixTestScurves(a, "Scurves"); 
+  if (!name.compare("setcaldel")) return new PixTestSetCalDel(a, "SetCalDel"); 
+  if (!name.compare("setup")) return new PixTestSetup(a, "Setup"); 
+  if (!name.compare("setvana")) return new PixTestSetVana(a, "SetVana"); 
+  if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
+  if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
   return 0; 
 }
