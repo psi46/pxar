@@ -470,11 +470,10 @@ void PixParTab::setTbmParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
       fGui->getApi()->setTbmReg(sdac, udac, itbm);
+      fConfigParameters->setTbmDac(sdac, udac, itbm);       
     }
   }
 
-  // FIXME UPDATE CONFIGPARAMETERS!
-  
 } 
 
 
@@ -552,11 +551,10 @@ void PixParTab::setRocParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " roc = " << iroc 
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
+      fConfigParameters->setRocDac(sdac, udac, iroc);       
     }
   }
 
-  // FIXME UPDATE CONFIGPARAMETERS!
- 
 } 
 
 
