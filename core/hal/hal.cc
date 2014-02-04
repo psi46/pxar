@@ -588,8 +588,8 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
   // Prepare for data acquisition:
-  //  src = dtbSource(_testboard,true);
-  src >> splitter;
+  src0 = dtbSource(_testboard,0,true);
+  src0 >> splitter0;
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
@@ -677,8 +677,8 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
  // Prepare for data acquisition:
-  src = dtbSource(_testboard,true);
-  src >> splitter;
+  src0 = dtbSource(_testboard,0,true);
+  src0 >> splitter0;
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
@@ -917,19 +917,39 @@ void hal::SignalProbeA2(uint8_t signal) {
 bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
-  // FIXME maybe we have to split the total buffer size when having more than one channel
-  // need to test when I have a module available:
-  // if(nTBMs > 0) buffersize /= 2*nTBMs
+
+  // Split the total buffer size when having more than one channel
+  if(nTBMs > 0) buffersize /= 2*nTBMs;
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
+  src0 = dtbSource(_testboard,0,true);
+  src0 >> splitter0;
 
   _testboard->uDelay(100);
 
   if(nTBMs > 0) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
+
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
+    src1 = dtbSource(_testboard,1,true);
+    src1 >> splitter1;
+
+
+    if(nTBMs > 1) {
+      LOG(logDEBUGHAL) << "Two TBMs detected, enabling more DAQ channels.";
+
+      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
+      src2 = dtbSource(_testboard,2,true);
+      src2 >> splitter2;
+
+      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
+      src3 = dtbSource(_testboard,3,true);
+      src3 >> splitter3;
+    }
 
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
@@ -948,17 +968,13 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
   _testboard->uDelay(100);
   _testboard->Flush();
 
-  // Set up the pipe works:
-  src = dtbSource(_testboard,true);
-  src >> splitter;
-
   return true;
 }
 
 event hal::daqEvent() {
   dataSink<event*> eventpump;
   event evt;
-  splitter >> decoder >> eventpump;
+  splitter0 >> decoder0 >> eventpump;
 
   try { evt = *eventpump.Get(); }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -970,7 +986,7 @@ event hal::daqEvent() {
 std::vector<event> hal::daqAllEvents() {
   dataSink<event*> eventpump;
   std::vector<event> evt;
-  splitter >> decoder >> eventpump;
+  splitter0 >> decoder0 >> eventpump;
 
   try { while(1) { evt.push_back(*eventpump.Get()); } }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -982,7 +998,7 @@ std::vector<event> hal::daqAllEvents() {
 std::vector<pixel> hal::daqAllPixels() {
   dataSink<pixel*> pixelpump;
   std::vector<pixel> px;
-  splitter >> decoder >> pixelate >> pixelpump;
+  splitter0 >> decoder0 >> pixelate0 >> pixelpump;
 
   try { while(1) { px.push_back(*pixelpump.Get()); } }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -994,7 +1010,7 @@ std::vector<pixel> hal::daqAllPixels() {
 rawEvent hal::daqRawEvent() {
   dataSink<rawEvent*> rawpump;
   rawEvent raw;
-  splitter >> rawpump;
+  splitter0 >> rawpump;
 
   try { raw = *rawpump.Get(); }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -1006,7 +1022,7 @@ rawEvent hal::daqRawEvent() {
 std::vector<rawEvent> hal::daqAllRawEvents() {
   dataSink<rawEvent*> rawpump;
   std::vector<rawEvent> raw;
-  splitter >> rawpump;
+  splitter0 >> rawpump;
 
   try { while(1) { raw.push_back(*rawpump.Get()); } }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -1063,7 +1079,8 @@ bool hal::daqStop() {
 bool hal::daqClear() {
 
   // Disconnect the data pipe from the DTB:
-  src = dtbSource();
+  src0 = dtbSource();
+  src1 = dtbSource();
 
   // FIXME provide daq_clear_all NIOS funktion?
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
