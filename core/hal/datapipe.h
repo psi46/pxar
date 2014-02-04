@@ -1,4 +1,9 @@
+#ifndef PXAR_DATAPIPE_H
+#define PXAR_DATAPIPE_H
+
 #include <exception>
+#include "datatypes.h"
+#include "rpc_calls.h"
 
 namespace pxar {
 
@@ -73,4 +78,76 @@ namespace pxar {
     return out;
   }
 
+
+  class dsBufferOverflow : public dataPipeException {
+  public:
+  dsBufferOverflow() : dataPipeException("Buffer overflow") {};
+  };
+
+  class dsBufferEmpty : public dataPipeException
+  {
+  public:
+  dsBufferEmpty() : dataPipeException("Buffer empty") {};
+  };
+
+  // DTB data source class
+  class dtbSource : public dataSource<uint16_t> {
+    volatile bool stopAtEmptyData;
+
+    // --- DTB control/state
+    CTestboard * tb;
+    uint32_t dtbRemainingSize;
+    uint8_t  dtbState;
+
+    // --- data buffer
+    uint16_t lastSample;
+    unsigned int pos;
+    std::vector<uint16_t> buffer;
+    uint16_t FillBuffer();
+
+    // --- virtual data access methods
+    uint16_t Read() { 
+      return (pos < buffer.size()) ? lastSample = buffer[pos++] : FillBuffer();
+    }
+    uint16_t ReadLast() { return lastSample; }
+  public:
+  dtbSource(CTestboard * src, bool endlessStream)
+    : stopAtEmptyData(endlessStream), tb(src), lastSample(0x4000), pos(0) {};
+    // FIXME add some disable state here!
+    dtbSource() {};
+
+    // --- control and status
+    uint8_t  GetState() { return dtbState; }
+    uint32_t GetRemainingSize() { return dtbRemainingSize; }
+    void Stop() { stopAtEmptyData = true; }
+  };
+
+  // DTB data event splitter
+  class dtbEventSplitter : public dataPipe<uint16_t, rawEvent*> {
+    rawEvent record;
+    rawEvent* Read();
+    rawEvent* ReadLast() { return &record; }
+  public:
+    dtbEventSplitter() {}
+  };
+
+  // DTB data decoding class
+  class dtbEventDecoder : public dataPipe<rawEvent*, event*> {
+    event roc_event;
+    event* Read();
+    event* ReadLast() { return &roc_event; }
+  };
+
+  // Events to pixels only:
+  class dtbEventToPixels : public dataPipe<event*, pixel*> {
+    pixel pix;
+    event* buffered_event;
+    std::vector<pixel>::iterator it;
+    pixel* Read();
+    pixel* ReadLast() { return &pix; }
+  public:
+  dtbEventToPixels() : buffered_event(NULL) {};
+  };
+
 }
+#endif

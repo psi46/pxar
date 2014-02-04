@@ -294,92 +294,10 @@ namespace pxar {
      */
     std::vector<uint16_t> * daqReadChannel(uint8_t channel);
 
-
-    // FIXME Exceptions for data pipes
-
-    class dsBufferOverflow : public dataPipeException {
-    public:
-    dsBufferOverflow() : dataPipeException("Buffer overflow") {};
-    };
-
-    class dsBufferEmpty : public dataPipeException
-    {
-    public:
-    dsBufferEmpty() : dataPipeException("Buffer empty") {};
-    };
-
-    // DTB data source class
-    class dtbSource : public dataSource<uint16_t> {
-      volatile bool stopAtEmptyData;
-
-      // --- DTB control/state
-      CTestboard * tb;
-      uint32_t dtbRemainingSize;
-      uint8_t  dtbState;
-
-      // --- data buffer
-      uint16_t lastSample;
-      unsigned int pos;
-      vector<uint16_t> buffer;
-      uint16_t FillBuffer();
-
-      // --- virtual data access methods
-      uint16_t Read() { 
-	return (pos < buffer.size()) ? lastSample = buffer[pos++] : FillBuffer();
-      }
-      uint16_t ReadLast() { return lastSample; }
-    public:
-    dtbSource(CTestboard * src, bool endlessStream)
-      : stopAtEmptyData(endlessStream), tb(src), lastSample(0x4000), pos(0) {}
-
-      // --- control and status
-      uint8_t  GetState() { return dtbState; }
-      uint32_t GetRemainingSize() { return dtbRemainingSize; }
-      void Stop() { stopAtEmptyData = true; }
-    };
-
-    // Event data record definition
-    class dataRecord {
-      /*
-	bit 0 = misaligned start
-	bit 1 = no end detected
-	bit 2 = overflow
-      */
-      vector<uint16_t> data;
-      unsigned int flags;
-    public:
-      void SetStartError() { flags |= 1; }
-      void SetEndError()   { flags |= 2; }
-      void SetOverflow()   { flags |= 4; }
-      void ResetStartError() { flags &= ~1; }
-      void ResetEndError()   { flags &= ~2; }
-      void ResetOverflow()   { flags &= ~4; }
-      void Clear() { flags = 0; data.clear(); }
-      bool IsStartError() { return (flags & 1) != 0; }
-      bool IsEndError()   { return (flags & 2) != 0; }
-      bool IsOverflow()   { return (flags & 4) != 0; }
-	
-      unsigned int GetSize() { return data.size(); }
-      void Add(uint16_t value) { data.push_back(value); }
-      uint16_t operator[](int index) { return data[index]; }
-    };
-
-    // DTB data event splitter
-    class dtbEventSplitter : public dataPipe<uint16_t, dataRecord*> {
-      dataRecord record;
-      dataRecord* Read();
-      dataRecord* ReadLast() { return &record; }
-    public:
-      dtbEventSplitter() {}
-    };
-
-    // DTB data decoding class
-    class dtbEventDecoder : public dataPipe<dataRecord*, event*> {
-      event roc_event;
-      event* Read();
-      event* ReadLast() { return &roc_event; }
-    };
-
+    // Our default pipe work buffers:
+    dtbSource src;
+    dtbEventSplitter splitter;
+    dtbEventDecoder decoder;
   };
 }
 #endif
