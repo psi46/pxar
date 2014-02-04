@@ -1160,7 +1160,7 @@ void api::daqTriggerLoop(uint16_t period) {
 
   if(daqStatus()) {
     // Pattern Generator loop doesn't work for delay periods smaller than
-    // 110 clock cycles, so limit it to that:
+    // the pattern generator duration, so limit it to that:
     if(period < _daq_minimum_period) {
       period = _daq_minimum_period;
       LOG(logWARNING) << "Loop period setting too small for configured "
