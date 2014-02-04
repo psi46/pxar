@@ -127,7 +127,12 @@ void PixTestPretest::doTest() {
   PixTest::update(); 
   LOG(logINFO) << "PixTestPretest::doTest() ntrig = " << fParNtrig;
 
+  setVana();
+  saveDacs();
   setCalDel(); 
+  saveDacs();
+  setVthrCompId();
+  saveDacs();
 }
 
 
