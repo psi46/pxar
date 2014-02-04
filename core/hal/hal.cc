@@ -599,7 +599,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command:
-  int status = _testboard->CalibrateMap(nTriggers, flags&FLAG_USE_CALS);
+  int status = _testboard->CalibrateMap(nTriggers, flags&FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
   //  std::vector<uint16_t> dat = daqRead(0);
