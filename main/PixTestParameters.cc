@@ -3,6 +3,8 @@
 #include <string>
 #include <algorithm> /* for 'remove()' */
 
+#include <TH1.h> // fake include to pull in Form
+
 #include "PixTestParameters.hh"
 #include "log.h"
 
@@ -51,6 +53,7 @@ bool PixTestParameters::readTestParameterFile(string file) {
 
     // -- found a new test, read all its parameters until you hit the next '--'
     if (string::npos != line.find("--")) {
+      int testCnt(0); 
       string::size_type m1 = line.find(" "); 
       if (m1 < line.size()) {
 	testName = line.substr(m1+1); 
@@ -70,9 +73,10 @@ bool PixTestParameters::readTestParameterFile(string file) {
 	
 	string::size_type m1 = line.find(" "); 
 	if (m1 < line.size()) {
-	  parName = line.substr(0, m1); 
+	  parName = string(Form("pos%2d::", testCnt)) + line.substr(0, m1); 
 	  parValString = line.substr(m1); 
 	  testparameters.insert(make_pair(parName, parValString)); 
+	  ++testCnt;
 	} else {
 	  break;
 	}

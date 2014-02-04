@@ -47,6 +47,8 @@ public:
   virtual void saveDacParameters();
   virtual void saveTrimParameters();
 
+  virtual void updateSelection(); 
+
   std::string getName() {return fTabName;}
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}
   TGCompositeFrame* getHorizontalFrame() {return fhFrame;}

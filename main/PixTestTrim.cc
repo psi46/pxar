@@ -88,9 +88,9 @@ void PixTestTrim::init() {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::runCommand(std::string command) {
-  
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
-  if (!command.compare("TrimBits")) {
+  if (!command.compare("trimbits")) {
     trimBitTest(); 
     return;
   }

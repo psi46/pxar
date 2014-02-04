@@ -131,7 +131,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
 
   TGTextButton *writeButton = new TGTextButton(bFrame, "write cfg files", B_WRITEALLFILES);
-  writeButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
+  writeButton->SetToolTipText("write all config files (ROC/TBM DAC, trim bits, DTB setup, config file)");
   writeButton->ChangeOptions(writeButton->GetOptions() );
   writeButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   writeButton->Resize(70,35);

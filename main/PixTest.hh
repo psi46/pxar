@@ -65,6 +65,7 @@ public:
 
   virtual bool setParameter(std::string parName, std::string sval); 
   
+  static std::string stripPos(std::string); 
   
   void testDone(); // *SIGNAL*
   void update();  // *SIGNAL*

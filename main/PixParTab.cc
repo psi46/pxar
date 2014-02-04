@@ -125,6 +125,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     fSelectedTbm = 0;
   }
   vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
+  updateSelection();
 
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
@@ -206,6 +207,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     fSelectRoc[0]->SetState(kButtonDown);
     fSelectedRoc = 0; 
   }
+  updateSelection();
   
   vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
 
@@ -508,7 +510,7 @@ void PixParTab::selectRoc(int iroc) {
   for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
     fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second)); 
   }
-
+  updateSelection();
 }
 
 
@@ -522,6 +524,7 @@ void PixParTab::selectTbm(int id) {
 
   LOG(logDEBUG) << "selectTbm: id = " << id;
   fSelectedTbm = id; 
+  updateSelection();
 }
 
 
@@ -606,3 +609,9 @@ vector<int> PixParTab::getSelectedRocs() {
   return result;
 }
 
+
+// ----------------------------------------------------------------------
+void PixParTab::updateSelection() {
+  fConfigParameters->setSelectedRocs(getSelectedRocs());
+  fConfigParameters->setSelectedTbms(getSelectedTbms());
+}

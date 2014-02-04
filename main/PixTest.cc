@@ -45,6 +45,13 @@ void PixTest::init(PixSetup *a, string name) {
 }
 
 // ----------------------------------------------------------------------
+string PixTest::stripPos(string name) {
+  string::size_type m1 = name.find("::"); 
+  name = name.substr(m1+2); 
+  return name; 
+}
+
+// ----------------------------------------------------------------------
 void PixTest::setToolTips() {
   fTestTip = "generic tool tip for a test";
   fSummaryTip = "generic tool tip for a the summary plot";
@@ -60,8 +67,8 @@ void PixTest::bookHist(string name) {
 
 // ----------------------------------------------------------------------
 void PixTest::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "Nothing done with " << command; 
-
 }
 
 
