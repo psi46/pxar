@@ -15,7 +15,10 @@
 #include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
 #include "PixTestSetVana.hh"
+#include "PixTestSetVthrComp.hh"
 #include "PixTestSetCalDel.hh"
+#include "PixTestPhDacScan.hh"
+#include "PixTestPhMap.hh"
 #include "PixTestGainCalibration.hh"
 
 using namespace std;
@@ -58,7 +61,10 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("Scurves")) return new PixTestScurves(a, "Scurves"); 
   if (!name.compare("Setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare( "SetVana")) return new PixTestSetVana(a, "SetVana"); 
+  if( !name.compare( "SetVthrComp" ) ) return new PixTestSetVthrComp( a, "SetVthrComp" ); 
   if (!name.compare( "SetCalDel")) return new PixTestSetCalDel(a, "SetCalDel"); 
+  if( !name.compare( "PhVsDac" ) ) return new PixTestPhDacScan( a, "PhVsDac" ); 
+  if( !name.compare( "PhMap" ) ) return new PixTestPhMap( a, "PhMap" ); 
   if (!name.compare("GainCalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   return 0; 
 }

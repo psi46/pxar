@@ -1,11 +1,12 @@
 
 // scan a DAC, measure currents
 
-#include <stdlib.h>     /* atof, atoi */
-#include <algorithm>    // std::find
+#include <stdlib.h>  // atof, atoi
+#include <algorithm> // std::find
 #include <iostream>
 
 #include <TH1.h>
+#include <TStopwatch.h>
 
 #include "PixTestCurrentVsDac.hh"
 #include "log.h"
@@ -15,7 +16,7 @@ using namespace pxar;
 
 ClassImp(PixTestCurrentVsDac)
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 PixTestCurrentVsDac::PixTestCurrentVsDac( PixSetup *a, std::string name )
 : PixTest(a, name), fParDAC("nada")
 {
@@ -23,22 +24,25 @@ PixTestCurrentVsDac::PixTestCurrentVsDac( PixSetup *a, std::string name )
   init();
 }
 
-//----------------------------------------------------------
+//------------------------------------------------------------------------------
 PixTestCurrentVsDac::PixTestCurrentVsDac() : PixTest()
 {
   //LOG(logDEBUG) << "PixTestCurrentVsDac ctor()";
 }
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 bool PixTestCurrentVsDac::setParameter( string parName, string sval )
 {
   bool found(false);
 
   for( map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap ) {
+
     LOG(logDEBUG) << "---> " << imap->first;
+
     if( 0 == imap->first.compare(parName) ) {
       found = true;
-      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
+      sval.erase( remove( sval.begin(), sval.end(), ' ' ), sval.end() );
+
       fParameters[parName] = sval;
 
       if( !parName.compare( "DAC" ) ) {
@@ -46,15 +50,13 @@ bool PixTestCurrentVsDac::setParameter( string parName, string sval )
 	LOG(logDEBUG) << "PixTestCurrentVsDac setting fParDAC  ->" << fParDAC
 		     << "<- from sval = " << sval;
       }
-
       break;
     }
   }
-  
   return found;
 }
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PixTestCurrentVsDac::init()
 {
   fDirectory = gFile->GetDirectory( fName.c_str() );
@@ -63,10 +65,12 @@ void PixTestCurrentVsDac::init()
   fDirectory->cd();
 }
 
-// ----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PixTestCurrentVsDac::bookHist(string name) // general booking routine
 {
   fDirectory->cd();
+
+  // Improvement: change binning for 4-bit DACs...
 
   TH1D *h1(0);
   fHistList.clear();
@@ -90,7 +94,7 @@ void PixTestCurrentVsDac::bookHist(string name) // general booking routine
   }
 }
 
-//----------------------------------------------------------
+//------------------------------------------------------------------------------
 PixTestCurrentVsDac::~PixTestCurrentVsDac()
 {
   LOG(logDEBUG) << "PixTestCurrentVsDac dtor";
@@ -103,12 +107,20 @@ PixTestCurrentVsDac::~PixTestCurrentVsDac()
   }
 }
 
-// ----------------------------------------------------------------------
-void PixTestCurrentVsDac::doTest() {
+//------------------------------------------------------------------------------
+void PixTestCurrentVsDac::doTest()
+{
   fDirectory->cd();
   PixTest::update();
 
   LOG(logINFO) << "PixTestCurrentVsDac::doTest() DAC = " << fParDAC;
+
+  uint8_t maxDac = fApi->getDACRange( fParDAC );
+
+  if( maxDac == 0 ) {
+    LOG(logINFO) << "ERROR: " << fParDAC << " is not a ROC register";
+    return;
+  }
 
   fApi->_dut->testAllPixels(false);
 
@@ -116,28 +128,41 @@ void PixTestCurrentVsDac::doTest() {
 
   TH1D *hia(0);
   TH1D *hid(0);
-  
+  TStopwatch sw;
+
   for( uint32_t roc = 0; roc < fPixSetup->getConfigParameters()->getNrocs(); ++roc ) {
-    
+
     hia = (TH1D*)fDirectory->Get( Form( "Ia_vs_%s_C%d", fParDAC.c_str(), roc ) );
     hid = (TH1D*)fDirectory->Get( Form( "Id_vs_%s_C%d", fParDAC.c_str(), roc ) );
-    
+
     if( hia && hid ) {
-      
+
       // remember DAC
-      
+
       uint8_t dacval = fApi->_dut->getDAC( roc, fParDAC );
-      
-      // loop over DAC
-      
-      for( int idac = 0; idac < 256; ++idac ) {
-	
+
+      fApi->setDAC( fParDAC, 0, roc ); // start at zero
+
+      // delay:
+
+      sw.Start(kTRUE); // reset stopwatch
+      do {
+	sw.Start(kFALSE); // continue
+	fApi->getTBia()*1E3; // [mA]
+      }
+      while( sw.RealTime() < 0.1 ); // [s]
+
+      // loop over DAC:
+
+      for( uint32_t idac = 0; idac <= maxDac; ++idac ) {
+
 	fApi->setDAC( fParDAC, idac, roc );
-	// delay
+	// delay?
 	hia->SetBinContent( idac+1, fApi->getTBia()*1E3 );
 	hid->SetBinContent( idac+1, fApi->getTBid()*1E3 );
+
       }
-      
+
       fApi->setDAC( fParDAC, dacval, roc ); // restore
     }
     else {
