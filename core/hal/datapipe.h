@@ -98,6 +98,7 @@ namespace pxar {
     CTestboard * tb;
     uint32_t dtbRemainingSize;
     uint8_t  dtbState;
+    bool connected;
 
     // --- data buffer
     uint16_t lastSample;
@@ -107,14 +108,17 @@ namespace pxar {
 
     // --- virtual data access methods
     uint16_t Read() { 
+      if(!connected) throw dpNotConnected();
       return (pos < buffer.size()) ? lastSample = buffer[pos++] : FillBuffer();
     }
-    uint16_t ReadLast() { return lastSample; }
+    uint16_t ReadLast() {
+      if(!connected) throw dpNotConnected();
+      return lastSample;
+    }
   public:
   dtbSource(CTestboard * src, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), lastSample(0x4000), pos(0) {};
-    // FIXME add some disable state here!
-    dtbSource() {};
+    : stopAtEmptyData(endlessStream), tb(src), connected(true), lastSample(0x4000), pos(0) {};
+  dtbSource() : connected(false) {};
 
     // --- control and status
     uint8_t  GetState() { return dtbState; }
