@@ -587,37 +587,25 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
-  // Set up the pipe works:
-  dtbSource src(_testboard, true);
-  dtbEventSplitter splitter;
-  dtbEventDecoder decoder;
-  dataSink<event*> pump;
-
-  src >> splitter >> decoder >> pump;
+  // Prepare for data acquisition:
+  //  src = dtbSource(_testboard,true);
+  src >> splitter;
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // Call the RPC command:
+  // Call the RPC command containing the trigger loop:
   int status = _testboard->CalibrateMap(nTriggers, flags&FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
-  //  std::vector<uint16_t> dat = daqRead(0);
-  //  LOG(logDEBUGHAL) << "dat size: " << dat.size();
-  try {
-    while (1) pump.Get();
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
-  
-  // Log what we get back in the value field:
-  if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";}
-  else {LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";}
+  std::vector<pixel> data = daqAllPixels();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+
+  // Clear & reset the DAQ buffer on the testboard.
+  daqClear();
 
   // Fill the return data vector:
-  std::vector<pixel> data;
   result->push_back(data);
-
   return result;
 }
 
@@ -687,35 +675,26 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  int16_t nReadouts;
-  int32_t PHsum;
-  std::vector<pixel> data;
+
+ // Prepare for data acquisition:
+  src = dtbSource(_testboard,true);
+  src >> splitter;
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // Call the RPC command:
-  int status = _testboard->CalibratePixel(nTriggers, column, row, nReadouts, PHsum);
+  // Call the RPC command containing the trigger loop:
+  int status = _testboard->CalibratePixel(nTriggers, column, row, flags & FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
-  pixel newpixel;
-  newpixel.column = column;
-  newpixel.row = row;
-  newpixel.roc_id = rocid;
+  std::vector<pixel> data = daqAllPixels();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
 
-  // Decide over what we get back in the value field:
-  if(flags & FLAG_INTERNAL_GET_EFFICIENCY) {
-    newpixel.value =  static_cast<int32_t>(nReadouts);
-    LOG(logDEBUGHAL) << "Returning nReadouts for efficiency measurement.";
-  }
-  else {
-    newpixel.value =  static_cast<int32_t>(PHsum/nTriggers);
-    LOG(logDEBUGHAL) << "Returning PHsum for pulse height averaging.";
-  }
+  // Clear & reset the DAQ buffer on the testboard.
+  daqClear();
 
-  data.push_back(newpixel);
+  // Fill the return data vector:
   result->push_back(data);
-
   return result;
 }
 
