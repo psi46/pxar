@@ -245,6 +245,7 @@ public:
 	RPC_EXPORT int8_t CalibrateDacScan(uint16_t nTriggers, uint8_t col, uint8_t row, uint8_t dacReg1, uint8_t dacLower1, uint8_t dacUpper1, bool flag_use_cals);
 	RPC_EXPORT int8_t CalibrateDacDacScan(uint16_t nTriggers, uint8_t col, uint8_t row, uint8_t dacReg1, uint8_t dacLower1, uint8_t dacUpper1, uint8_t dacReg2, uint8_t dacLower2, uint8_t dacUpper2, bool flags_use_cals);
 	RPC_EXPORT int16_t CalibrateMap(uint16_t nTriggers, bool flag_use_cals);
+	RPC_EXPORT int16_t CalibrateModule(vector<uint8_t> &roc_i2c, uint16_t nTriggers, bool flag_use_cals);
 	RPC_EXPORT int16_t TrimChip(vector<int16_t> &trim);
 
 	// == Wafer Test functions =====================================================
