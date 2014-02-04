@@ -27,6 +27,8 @@ PixTestSetVana.cc
 PixTestSetVthrComp.cc
 PixTestSetCalDel.cc
 PixTestFactory.cc
+PixTestPhDacScan.cc
+PixTestPhMap.cc
 PixTestGainCalibration.cc
 PixTestParameters.cc
 SysCommand.cc
@@ -55,6 +57,8 @@ PixTestSetVana.hh
 PixTestSetVthrComp.hh
 PixTestSetCalDel.hh
 PixTestFactory.hh
+PixTestPhDacScan.hh
+PixTestPhMap.hh
 PixTestGainCalibration.hh
 PixTestParameters.hh
 SysCommand.hh
