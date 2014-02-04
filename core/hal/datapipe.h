@@ -96,6 +96,7 @@ namespace pxar {
 
     // --- DTB control/state
     CTestboard * tb;
+    uint8_t channel;
     uint32_t dtbRemainingSize;
     uint8_t  dtbState;
     bool connected;
@@ -116,8 +117,8 @@ namespace pxar {
       return lastSample;
     }
   public:
-  dtbSource(CTestboard * src, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), connected(true), lastSample(0x4000), pos(0) {};
+  dtbSource(CTestboard * src, uint8_t daqchannel, bool endlessStream)
+    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), lastSample(0x4000), pos(0) {};
   dtbSource() : connected(false) {};
 
     // --- control and status
