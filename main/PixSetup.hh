@@ -15,6 +15,7 @@
 class PixSetup: public TObject {
 public:
   PixSetup(pxar::api *, PixTestParameters *, ConfigParameters *, SysCommand *);
+  PixSetup(std::string verbosity, PixTestParameters *, ConfigParameters *, SysCommand *);
   PixSetup();
   ~PixSetup();
   void init(); 
@@ -25,6 +26,8 @@ public:
   pxar::api*         getApi() {return fApi;}
   bool               doAnalysisOnly() {return fDoAnalysisOnly;}
   void               setDoAnalysisOnly(bool x) {fDoAnalysisOnly = x;}
+  void               killApi(); 
+
 private: 
   bool              fDebug; 
   bool              fDoAnalysisOnly; 

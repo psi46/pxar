@@ -30,12 +30,10 @@ PixTestScurves::PixTestScurves() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestScurves::setParameter(string parName, string sval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;

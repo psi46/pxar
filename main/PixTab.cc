@@ -55,7 +55,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fV1->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX, 0, 0, 10, 0));
 
   // -- fV2: create parameter TGText boxes for test
-  map<string, string> amap = fTest->getParameters();
+  vector<pair<string, string> > amap = fTest->getParameters();
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
   TGTextBuffer *tb(0); 
@@ -64,11 +64,11 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   TGHorizontalFrame *hFrame(0); 
 
   int cnt(0); 
-  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
-
-    if (!imap->second.compare("button")) {
+  //  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
+  for (unsigned int i = 0; i < amap.size(); ++i) {
+    if (amap[i].second == "button") {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
-      tset = new TGTextButton(hFrame, PixTest::stripPos(imap->first).c_str(), cnt);
+      tset = new TGTextButton(hFrame, amap[i].first.c_str(), cnt);
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
       tset->SetToolTipText("run this test");
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
@@ -83,17 +83,16 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
     
     tb = new TGTextBuffer(5); 
-    cout << imap->first.c_str() << " stripped: " << PixTest::stripPos(imap->first.c_str()) << endl;
-    tl = new TGLabel(hFrame, PixTest::stripPos(imap->first).c_str());
+    tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 
     te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
     hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
-    fParIds.push_back(imap->first); 
-    fParTextEntries.insert(make_pair(imap->first, te)); 
+    fParIds.push_back(amap[i].first); 
+    fParTextEntries.insert(make_pair(amap[i].first, te)); 
 
-    te->SetText(imap->second.c_str());
+    te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
 
     tset = new TGTextButton(hFrame, "Set", cnt);
@@ -275,7 +274,7 @@ void PixTab::setParameter() {
   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
   
   LOG(logDEBUG) << "xxxPressed():  ID = " << id 
-	       << " -> " << fParIds[id] 
+		<< " -> " << fParIds[id]
 	       << " to value " << svalue;
 
   fTest->setParameter(fParIds[id], svalue); 

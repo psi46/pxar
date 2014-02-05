@@ -39,8 +39,10 @@ void PixTest::init(PixSetup *a, string name) {
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    setParameter(imap->first, imap->second); 
+  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
+    setParameter(fParameters[i].first, fParameters[i].second); 
   }
 }
 
@@ -297,7 +299,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
 // ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
-  LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
+  //   LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
   return false;
 }
 
@@ -305,14 +307,13 @@ bool PixTest::setParameter(string parName, string value) {
 // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, int &ival) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    if (0 == imap->first.compare(parName)) {
+  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
+      ival = atoi(fParameters[i].first.c_str()); 
       break;
     }
-  }
-  if (found) {
-    ival = atoi(fParameters[parName].c_str()); 
   }
   return found; 
 }
@@ -321,14 +322,12 @@ bool PixTest::getParameter(std::string parName, int &ival) {
   // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, float &fval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
+      fval = atof(fParameters[i].first.c_str()); 
       break;
     }
-  }
-  if (found) {
-    fval = atof(fParameters[parName].c_str()); 
   }
   return found; 
 }
@@ -337,8 +336,8 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 // ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
   LOG(logINFO) << "Parameters for test" << getName();
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << imap->first << ": " << imap->second;
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    LOG(logINFO) << fParameters[i].first << ": " << fParameters[i].second;
   }
 }
 
