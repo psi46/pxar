@@ -592,6 +592,10 @@ namespace pxar {
      */
     std::vector< uint8_t > getEnabledRocIDs();
 
+    /** Function returning the I2C addresses of all enabled ROCs in a uint8_t vector:
+     */
+    std::vector< uint8_t > getEnabledRocI2Caddr();
+
     /** Function returning the enabled TBM configs
      */
     std::vector< tbmConfig > getEnabledTbms();
