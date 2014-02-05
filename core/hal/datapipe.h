@@ -143,17 +143,5 @@ namespace pxar {
     event* Read();
     event* ReadLast() { return &roc_event; }
   };
-
-  // Events to pixels only:
-  class dtbEventToPixels : public dataPipe<event*, pixel*> {
-    pixel pix;
-    event* buffered_event;
-    std::vector<pixel>::iterator it;
-    pixel* Read();
-    pixel* ReadLast() { return &pix; }
-  public:
-  dtbEventToPixels() : buffered_event(NULL) {};
-  };
-
 }
 #endif

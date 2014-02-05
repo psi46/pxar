@@ -88,30 +88,4 @@ namespace pxar {
     return &roc_event;
   }
 
-  pixel* dtbEventToPixels::Read() {
-
-    // Check if data is left in current event:
-    while(buffered_event == NULL || it == buffered_event->pixels.end()) {
-      // Get a new event:
-      buffered_event = Get();
-      
-      // Empty event:
-      if(buffered_event->pixels.size() == 0) {
-	buffered_event = NULL;
-      }
-      else {
-	// Event with pixels:
-	it = buffered_event->pixels.begin();
-      }
-    }
-    
-    // Copy data:
-    pix = *it;
-    // LOG(logDEBUGHAL) << (*it);
-
-    // Increment iterator:
-    ++it;
-    return &pix;
-  }
-
 }
