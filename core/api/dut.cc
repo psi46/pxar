@@ -111,6 +111,19 @@ std::vector< rocConfig > dut::getEnabledRocs() {
   return result;
 }
 
+std::vector< uint8_t > dut::getEnabledRocIDs() {
+
+  std::vector< uint8_t > result = std::vector<uint8_t>();
+
+  if (!_initialized) return result;
+
+  // search for rocs that have enable set
+  for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
+    if (it->enable) result.push_back(static_cast<uint8_t>(it - roc.begin()));
+  }
+  return result;
+}
+
 std::vector< tbmConfig > dut::getEnabledTbms() {
   std::vector< tbmConfig > result;
   if (!_initialized) return result;

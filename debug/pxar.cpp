@@ -269,6 +269,14 @@ int main(int argc, char* argv[]) {
 
     _api->HVon();
 
+    // Testing new DUT functions:
+    std::vector<uint8_t> enabledrocs = _api->_dut->getEnabledRocIDs();
+    std::cout << "The following " << enabledrocs.size() << " ROCs are enabled:" << std::endl;
+    for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
+      std::cout << "ROC " << (int)(*it) << ", ";
+    }
+    std::cout << std::endl;
+
     // ##########################################################
     // Call the first real test (pixel efficiency map):
 

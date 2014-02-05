@@ -163,6 +163,7 @@ namespace pxar {
       _registers["wbc"]        = dacConfig(ROC_DAC_WBC,255,ROC_REG);
 
       _registers["readback"]   = dacConfig(ROC_DAC_Readback,15,ROC_REG);
+      _registers["rbreg"]      = dacConfig(ROC_DAC_Readback,15,ROC_REG);
 
       // DACs removed from psi46digV3 (?):
       _registers["vbias_sf"]   = dacConfig(ROC_DAC_Vbias_sf,15,ROC_REG);
