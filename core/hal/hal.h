@@ -260,6 +260,10 @@ namespace pxar {
      */
     bool _fallback_mode;
 
+    // FIXME can't we find a smarter solution to this?!
+    uint8_t nTBMs;
+    uint8_t deser160phase;
+
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
      */

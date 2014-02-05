@@ -9,7 +9,9 @@ using namespace pxar;
 hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
-  _fallback_mode(false)
+  _fallback_mode(false),
+  nTBMs(0),
+  deser160phase(4)
 {
 
   // Get a new CTestboard class instance:
@@ -110,6 +112,8 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
     if(sigIt->first == SIG_DESER160PHASE) {
       LOG(logDEBUGHAL) << "Set DTB deser160 phase to value " << static_cast<int>(sigIt->second);
       _testboard->Daq_Select_Deser160(sigIt->second);
+      // FIXME
+      deser160phase = sigIt->second;
     }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
@@ -225,6 +229,9 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
+  // FIXME
+  nTBMs++;
+
   // FIXME Beat: 31 is default hub address for the new modules:
   _testboard->mod_Addr(31);
   _testboard->Flush();
