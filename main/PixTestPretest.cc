@@ -122,11 +122,11 @@ void PixTestPretest::doTest() {
   LOG(logINFO) << "PixTestPretest::doTest() ntrig = " << fParNtrig;
 
   setVana();
-  saveDacs();
+  //  saveDacs();
   setCalDel(); 
-  saveDacs();
+  //  saveDacs();
   setVthrCompId();
-  saveDacs();
+  //  saveDacs();
 }
 
 
@@ -174,7 +174,6 @@ void PixTestPretest::setCalDel() {
     if( fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
   }
   
-  return;
   bookHist("caldel");
   
   string DacName = "caldel";
@@ -255,7 +254,7 @@ void PixTestPretest::setVana() {
   fDirectory->cd();
   PixTest::update();
   
-  LOG(logINFO) << "PixTestSetVana::doTest() target Ia " << fTargetIa << " mA/ROC";
+  LOG(logINFO) << "PixTestPretest::setVana() start, target Ia " << fTargetIa << " mA/ROC";
   
   fApi->_dut->testAllPixels(false);
   
@@ -389,7 +388,7 @@ void PixTestPretest::setVana() {
   }
   while( sw.RealTime() < 0.1 );
 
-  LOG(logINFO) << "Module Ia " << ia16 << " mA = " << ia16/nRocs << " mA/ROC";
+  LOG(logINFO) << "PixTestPretest::setVana() done, Module Ia " << ia16 << " mA = " << ia16/nRocs << " mA/ROC";
 
 }
 
@@ -397,7 +396,7 @@ void PixTestPretest::setVana() {
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompId() {
 
-  LOG(logINFO) << "PixTestSetVthrComp::doTest()";
+  LOG(logINFO) << "PixTestPretest::setVthrCompId() start";
 
   fDirectory->cd();
   PixTest::update();
@@ -454,7 +453,7 @@ void PixTestPretest::setVthrCompId() {
 
   for( uint32_t roc = 0; roc < nRocs; ++roc ) {
 
-    LOG(logINFO) << "ROC " << setw(2) << roc;
+    LOG(logDEBUG) << "ROC " << setw(2) << roc;
       
     hid = hsts[roc];
 
@@ -476,7 +475,7 @@ void PixTestPretest::setVthrCompId() {
 
     // analyze:
 
-    LOG(logINFO) << "current peak " << hid->GetMaximum()
+    LOG(logDEBUG) << "current peak " << hid->GetMaximum()
 		 << " mA at DAC " << hid->GetMaximumBin();
 
     double maxd1 = 0;
@@ -514,21 +513,21 @@ void PixTestPretest::setVthrCompId() {
       if( d22 > maxd22 ) { maxd22 = d22; maxi22 = i-1; }
       if( d29 > maxd29 ) { maxd29 = d29; maxi29 = i-1; }
     }
-    LOG(logINFO) << "[SetComp] max d1  " << maxd1  << " at " << maxi1;
-    LOG(logINFO) << "[SetComp] max d2  " << maxd2  << " at " << maxi2;
-    LOG(logINFO) << "[SetComp] max d4  " << maxd4  << " at " << maxi4;
-    LOG(logINFO) << "[SetComp] max d7  " << maxd7  << " at " << maxi7;
-    LOG(logINFO) << "[SetComp] max d11 " << maxd11 << " at " << maxi11;
-    LOG(logINFO) << "[SetComp] max d16 " << maxd16 << " at " << maxi16;
-    LOG(logINFO) << "[SetComp] max d22 " << maxd22 << " at " << maxi22;
-    LOG(logINFO) << "[SetComp] max d29 " << maxd29 << " at " << maxi29;
+    LOG(logDEBUG) << "[SetComp] max d1  " << maxd1  << " at " << maxi1;
+    LOG(logDEBUG) << "[SetComp] max d2  " << maxd2  << " at " << maxi2;
+    LOG(logDEBUG) << "[SetComp] max d4  " << maxd4  << " at " << maxi4;
+    LOG(logDEBUG) << "[SetComp] max d7  " << maxd7  << " at " << maxi7;
+    LOG(logDEBUG) << "[SetComp] max d11 " << maxd11 << " at " << maxi11;
+    LOG(logDEBUG) << "[SetComp] max d16 " << maxd16 << " at " << maxi16;
+    LOG(logDEBUG) << "[SetComp] max d22 " << maxd22 << " at " << maxi22;
+    LOG(logDEBUG) << "[SetComp] max d29 " << maxd29 << " at " << maxi29;
 
     //int32_t val = maxi22 - 8; // safety
     int32_t val = maxi29 - 8; // safety
     if( val < 0 ) val = 0;
     vthr16[roc] = val;
 
-    LOG(logINFO) << "set VthrComp to " << val;
+    LOG(logDEBUG) << "set VthrComp to " << val;
 
   } // rocs
 
@@ -553,5 +552,6 @@ void PixTestPretest::setVthrCompId() {
   PixTest::update();
 
   // flush?
+  LOG(logINFO) << "PixTestPretest::setVthrCompId() done";
 
 }
