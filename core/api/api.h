@@ -64,7 +64,7 @@ namespace pxar {
    */
   typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnPixel)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
   typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnRoc)(uint8_t rocid, std::vector<int32_t> parameter);
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnModule)(std::vector<int32_t> parameter);
+  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnModule)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
 
 
   /** pxar API class definition

@@ -1026,7 +1026,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   // Setup the correct _hal calls for this test
   HalMemFnPixel pixelfn = &hal::PixelCalibrateMap;
   HalMemFnRoc rocfn = &hal::RocCalibrateMap;
-  HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
+  HalMemFnModule modulefn = &hal::ModuleCalibrateMap;
 
   // We want the efficiency back from the Map function, so let's set the internal flag:
   uint32_t internal_flags = 0;
@@ -1254,8 +1254,12 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   if (_dut->getModuleEnable() && !forceSerial && modulefn != NULL){
 
     LOG(logDEBUGAPI) << "\"The Loop\" contains one call to \'modulefn\'";
+
+    // FIXME get the correct enabled ROC I2C addresses from the config:
+    std::vector<uint8_t> rocs_i2c;
+
     // execute call to HAL layer routine
-    data = CALL_MEMBER_FN(*_hal,modulefn)(param);
+    data = CALL_MEMBER_FN(*_hal,modulefn)(rocs_i2c, param);
   } 
   else {
 
