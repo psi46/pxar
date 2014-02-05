@@ -39,10 +39,9 @@ void PixTest::init(PixSetup *a, string name) {
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
 
-  LOG(logDEBUG) << "PixTest::init() setting parameters"; 
   //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
-    LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].first << "<-"; 
+    LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
     setParameter(fParameters[i].first, fParameters[i].second); 
   }
 }
