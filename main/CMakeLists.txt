@@ -20,11 +20,10 @@ PixTestAlive.cc
 PixTestTbm.cc
 PixTestDacScan.cc
 PixTestDacDacScan.cc
+PixTestPhDacScan.cc
 PixTestScurves.cc
 PixTestTrim.cc
 PixTestSetup.cc
-PixTestSetVana.cc
-PixTestSetCalDel.cc
 PixTestPretest.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
@@ -48,11 +47,10 @@ PixTestAlive.hh
 PixTestTbm.hh
 PixTestDacScan.hh
 PixTestDacDacScan.hh
+PixTestPhDacScan.hh
 PixTestScurves.hh
 PixTestTrim.hh
 PixTestSetup.hh
-PixTestSetVana.hh
-PixTestSetCalDel.hh
 PixTestPretest.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
