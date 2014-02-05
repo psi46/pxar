@@ -84,6 +84,14 @@ int main(int argc, char *argv[]){
     LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
   }
 
+  if (doRunScript) {
+    TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
+    interpreter->ExecuteFile(cmdFile.c_str());
+    interpreter->Terminate(0);
+    LOG(logINFO) << "terminate and shut down"; 
+  }
+
+
   pxar::api *api(0);
   if (doUpdateFlash) {
     api = new pxar::api("*", verbosity);
@@ -159,19 +167,6 @@ int main(int argc, char *argv[]){
 	if (sysCommand.Parse(p)) execute(a, &sysCommand);
       } while ((strcmp(p,"exit\n") != 0) && (strcmp(p,"q\n") != 0));
     }
-
-    if (cmdFile == "nada") {
-      TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
-      interpreter->SetPrompt("pXar [%d] ");
-      interpreter->Run();
-    } else {
-      TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
-      interpreter->ExecuteFile(cmdFile.c_str());
-      interpreter->Run();
-    }
-    LOG(logINFO) << "terminate and shut down"; 
-    delete api;
-
   }
 
   LOG(logINFO) << "closing down 1";
