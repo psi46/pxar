@@ -154,6 +154,7 @@ namespace pxar {
     std::vector< pixelConfig > pixels;
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
+    uint8_t i2c_address;
     bool enable;
   };
 
