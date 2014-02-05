@@ -1207,6 +1207,8 @@ bool hal::daqClear() {
   // Disconnect the data pipe from the DTB:
   src0 = dtbSource();
   src1 = dtbSource();
+  src2 = dtbSource();
+  src3 = dtbSource();
 
   // FIXME provide daq_clear_all NIOS funktion?
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
