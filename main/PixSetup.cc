@@ -15,7 +15,7 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp, SysComma
   fSysCommand        = sc; 
   fDoAnalysisOnly    = false; 
   init(); 
-  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc)";
+  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc), api = " << fApi;
 }
 
 // ----------------------------------------------------------------------

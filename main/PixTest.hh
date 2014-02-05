@@ -56,7 +56,7 @@ public:
   
   std::string getName() {return fName; }
   void resetDirectory();
-  std::map<std::string, std::string> getParameters() {return fParameters;} 
+  std::vector<std::pair<std::string, std::string> > getParameters() {return fParameters;} 
   bool getParameter(std::string parName, int &); 
   bool getParameter(std::string parName, float &); 
   void dumpParameters(); 
@@ -83,7 +83,7 @@ protected:
 
   std::string           fName, fTestTip, fSummaryTip; 
 
-  std::map<std::string, std::string> fParameters;
+  std::vector<std::pair<std::string, std::string> > fParameters;
 
   std::vector<uint8_t>  fCacheVal; 
   std::string           fCacheDac;

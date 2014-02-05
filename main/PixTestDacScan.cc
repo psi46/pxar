@@ -35,27 +35,25 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC")) {
 	fParDAC = sval; 
-	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DACLO")) {
 	fParLoDAC = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DACHI")) {
 	fParHiDAC = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 

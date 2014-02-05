@@ -31,39 +31,37 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC1")) {
 	fParDAC1 = sval; 
-	LOG(logDEBUG) << "  setting fParDAC1  ->" << fParDAC1 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC2")) {
 	fParDAC2 = sval; 
-	LOG(logDEBUG) << "  setting fParDAC2  ->" << fParDAC2 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC1LO")) {
 	fParLoDAC1 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParLoDAC1  ->" << fParLoDAC1 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC1HI")) {
 	fParHiDAC1 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParHiDAC1  ->" << fParHiDAC1 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC2LO")) {
 	fParLoDAC2 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParLoDAC2  ->" << fParLoDAC2 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC2HI")) {
 	fParHiDAC2 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParHiDAC2  ->" << fParHiDAC2 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 

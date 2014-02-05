@@ -8,6 +8,7 @@
 #include <TApplication.h> 
 #include <TFile.h> 
 #include <TROOT.h> 
+#include <TRint.h> 
 
 #include "SysCommand.hh"
 #include "ConfigParameters.hh"
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]){
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
+  string dir("."), cmdFile("nada"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
   bool doRunGui(false), 
     doRunScript(false), 
     noAPI(false), 
@@ -150,14 +151,26 @@ int main(int argc, char *argv[]){
 
   if (doRunGui) {
     runGui(a, argc, argv); 
-  } else if (doRunScript) {
-    runFile(a, cmdFile);    
   } else {
-    char * p;
-    do {
-      p = Getline("pxar> ");
-      if (sysCommand.Parse(p)) execute(a, &sysCommand);
-    } while ((strcmp(p,"exit\n") != 0) && (strcmp(p,"q\n") != 0));
+    if (0) {
+      char * p;
+      do {
+	p = Getline("pxar> ");
+	if (sysCommand.Parse(p)) execute(a, &sysCommand);
+      } while ((strcmp(p,"exit\n") != 0) && (strcmp(p,"q\n") != 0));
+    }
+
+    if (cmdFile == "nada") {
+      TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
+      interpreter->SetPrompt("pXar [%d] ");
+      interpreter->Run();
+    } else {
+      TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
+      interpreter->ExecuteFile(cmdFile.c_str());
+      interpreter->Run();
+    }
+    LOG(logINFO) << "terminate and shut down"; 
+    delete api;
 
   }
 

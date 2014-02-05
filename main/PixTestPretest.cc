@@ -40,13 +40,10 @@ bool PixTestPretest::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
-  for (map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName) ) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true;
       sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
-      fParameters[parName] = sval;
       if( !parName.compare("targetIa")) {
 	fTargetIa = atoi(sval.c_str());  // [mA/ROC]
 	LOG(logDEBUG) << "target Ia " << fTargetIa << " mA/ROC";
@@ -66,9 +63,6 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 	  str2 = sval.substr(s1+1);
 	  pixr = atoi(str2.c_str());
 	  fPIX.push_back( make_pair(pixc, pixr) );
-	}
-	else {
-	  fPIX.push_back( make_pair(-1, -1) );
 	}
       }
       // FIXME: remove/update from fPIX if the user removes via the GUI!
@@ -175,11 +169,12 @@ void PixTestPretest::setCalDel() {
   PixTest::update(); 
 
   fApi->_dut->testAllPixels(false);
-  LOG(logINFO) << "PixTestPretest::setCalDel() fApi->_dut->testAllPixels(false)";
+  LOG(logINFO) << "PixTestPretest::setCalDel() fApi->_dut->testAllPixels(false)" << " fPIX.size() = " << fPIX.size(); 
   for( unsigned int i = 0; i < fPIX.size(); ++i) {
     if( fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
   }
   
+  return;
   bookHist("caldel");
   
   string DacName = "caldel";

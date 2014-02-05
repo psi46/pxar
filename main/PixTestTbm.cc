@@ -27,14 +27,12 @@ PixTestTbm::PixTestTbm() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestTbm::setParameter(string parName, string sval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    LOG(logINFO) << "---> " << fParameters[i].first;
+    if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
-
-      fParameters[parName] = sval;
-      LOG(logINFO) << "  ==> parName: " << parName;
-      LOG(logINFO) << "  ==> sval:    " << sval;
+      LOG(logDEBUG) << "  ==> parName: " << parName;
+      LOG(logDEBUG) << "  ==> sval:    " << sval;
       if (!parName.compare("Ntrig")) fParNtrig = atoi(sval.c_str()); 
       if (!parName.compare("Vcal")) fParVcal = atoi(sval.c_str()); 
       break;

@@ -26,7 +26,7 @@ PixTestParameters::PixTestParameters(string file) {
 // ----------------------------------------------------------------------
 vector<string> PixTestParameters::getTests() {
   vector<string> a; 
-  for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+  for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
     a.push_back(imap->first);
   }
   return a;
@@ -40,7 +40,7 @@ bool PixTestParameters::readTestParameterFile(string file) {
     return false;
   }
 
-  map<string, string> testparameters;
+  vector<pair<string, string> > testparameters;
   string testName, parName, parValString; 
   bool oneTooMuch(false); 
   string line; 
@@ -73,9 +73,9 @@ bool PixTestParameters::readTestParameterFile(string file) {
 	
 	string::size_type m1 = line.find(" "); 
 	if (m1 < line.size()) {
-	  parName = string(Form("pos%2d::", testCnt)) + line.substr(0, m1); 
-	  parValString = line.substr(m1); 
-	  testparameters.insert(make_pair(parName, parValString)); 
+	  parName = line.substr(0, m1); 
+	  parValString = line.substr(m1+1); 
+	  testparameters.push_back(make_pair(parName, parValString)); 
 	  ++testCnt;
 	} else {
 	  break;
@@ -94,17 +94,17 @@ bool PixTestParameters::readTestParameterFile(string file) {
 
 
 // ----------------------------------------------------------------------
-map<string, string> PixTestParameters::getTestParameters(string testName) {
+vector<pair<string, string> > PixTestParameters::getTestParameters(string testName) {
   return  fTests[testName]; 
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestParameters::dump() {
-  for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+  for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
     LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
-    map<string, string> pars = imap->second; 
-    for (map<string, string>::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
+    vector<pair<string, string> > pars = imap->second; 
+    for (vector<pair<string, string> >::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
       LOG(logDEBUG) << "  " << imap2->first << ": " << imap2->second;
     }
   }

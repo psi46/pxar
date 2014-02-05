@@ -45,15 +45,6 @@ void PixTestGainCalibration::setToolTips() {
 // ----------------------------------------------------------------------
 bool PixTestGainCalibration::setParameter(string parName, string sval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    if (0 == imap->first.compare(parName)) {
-      found = true; 
-      break;
-    }
-  }
-  if (found) {
-    fParameters[parName] = sval;
-  }
 
   return found;
 }
