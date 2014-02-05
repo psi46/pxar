@@ -1258,8 +1258,8 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
     LOG(logDEBUGAPI) << "\"The Loop\" contains one call to \'modulefn\'";
 
-    // FIXME get the correct enabled ROC I2C addresses from the config:
-    std::vector<uint8_t> rocs_i2c;
+    // Get the I2C addresses for all enabled ROCs from the config:
+    std::vector<uint8_t> rocs_i2c = _dut->getEnabledRocI2Caddr();
 
     // execute call to HAL layer routine
     data = CALL_MEMBER_FN(*_hal,modulefn)(rocs_i2c, param);
@@ -1278,7 +1278,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
 	// execute call to HAL layer routine and save returned data in buffer
-	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)(static_cast<uint8_t>(rocit - enabledRocs.begin()), param); // rocit - enabledRocs.begin() == index
+	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
 	if (!data) data = rocdata;
 	else {
@@ -1306,7 +1306,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
-	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)(static_cast<uint8_t>(rocit - enabledRocs.begin()), pixit->column, pixit->row, param);
+	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column, pixit->row, param);
 	  // merge pixel data into roc data storage vector
 	  if (!rocdata){
 	    rocdata = buffer; // for first time call
