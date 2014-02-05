@@ -595,8 +595,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
   // Prepare for data acquisition:
-  src0 = dtbSource(_testboard,0,true);
-  src0 >> splitter0;
+  daqStart(deser160phase,nTBMs);
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
@@ -604,6 +603,8 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   // Call the RPC command containing the trigger loop:
   int status = _testboard->CalibrateMap(nTriggers, flags&FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
+
+  daqStop();
 
   std::vector<pixel> data = daqAllPixels();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
@@ -684,8 +685,7 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
  // Prepare for data acquisition:
-  src0 = dtbSource(_testboard,0,true);
-  src0 >> splitter0;
+  daqStart(deser160phase,nTBMs);
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
@@ -693,6 +693,8 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
   // Call the RPC command containing the trigger loop:
   int status = _testboard->CalibratePixel(nTriggers, column, row, flags & FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
+
+  daqStop();
 
   std::vector<pixel> data = daqAllPixels();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
