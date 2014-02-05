@@ -23,15 +23,14 @@ namespace pxar {
     } while (buffer.size() == 0);
 
     /*
-      LOG(logDEBUGHAL) << "----------------";
-      std::stringstream os;
-      for (unsigned int i = 0; i < buffer.size(); i++) {
-      os << " " << std::setw(4) << std::hex << (unsigned int)(buffer.at(i));
-      }
-      LOG(logDEBUGHAL) << os.str();
-      LOG(logDEBUGHAL) << "----------------";
+    LOG(logDEBUGHAL) << "----------------";
+    std::stringstream os;
+    for (unsigned int i = 0; i < buffer.size(); i++) {
+      os << " " << std::setw(4) << std::setfill('0') << std::hex << (unsigned int)(buffer.at(i));
+    }
+    LOG(logDEBUGHAL) << os.str();
+    LOG(logDEBUGHAL) << "----------------";
     */
-
     return lastSample = buffer[pos++];
   }
 
@@ -56,16 +55,14 @@ namespace pxar {
   
     if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
     else record.SetEndError();
-
     /*
-      LOG(logDEBUGHAL) << "-------------------------";
-      std::stringstream os;
-      for (unsigned int i=0; i<record.data.size(); i++)
-      os << " " << std::setw(4) << std::hex 
-      << static_cast<uint16_t>(record.data[i]);
-      LOG(logDEBUGHAL) << os.str();
+    LOG(logDEBUGHAL) << "-------------------------";
+    std::stringstream os;
+    for (unsigned int i=0; i<record.GetSize(); i++)
+      os << " " << std::setw(4) << std::setfill('0') << std::hex 
+	 << static_cast<uint16_t>(record[i]);
+    LOG(logDEBUGHAL) << os.str();
     */
-
     return &record;
   }
 
@@ -86,7 +83,7 @@ namespace pxar {
       }
     }
 
-    // LOG(logDEBUGHAL) << roc_event;
+    //LOG(logDEBUGHAL) << roc_event;
 
     return &roc_event;
   }
