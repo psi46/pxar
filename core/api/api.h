@@ -658,6 +658,10 @@ namespace pxar {
      */
     std::vector< rocConfig > getEnabledRocs();
 
+    /** Function returning the Ids of all enabled ROCs in a uint8_t vector:
+     */
+    std::vector< uint8_t > getEnabledRocIDs();
+
     /** Function returning the enabled TBM configs
      */
     std::vector< tbmConfig > getEnabledTbms();
