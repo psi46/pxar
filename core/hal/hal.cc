@@ -752,47 +752,41 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   uint16_t nTriggers = parameter.at(4);
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Scanning DAC " << dacreg << " from " << dacmin << " to " << dacmax;
+  LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
+		   << " from " << static_cast<int>(dacmin) 
+		   << " to " << static_cast<int>(dacmax);
 
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<int16_t> nReadouts;
-  std::vector<int32_t> PHsum;
+
+ // Prepare for data acquisition:
+  daqStart(deser160phase,nTBMs);
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // Call the RPC command:
-  int status;
-  if(_fallback_mode) { status = _testboard->fallback_CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, nReadouts, PHsum); }
-  else { status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, flags & FLAG_CALS); }
+  // Call the RPC command containing the trigger loop:
+  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, flags & FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
-  size_t n = nReadouts.size();
-  size_t p = PHsum.size();
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << (int)n
-		   << ", PHsum " << (int)p;
+  daqStop();
 
-  // Check if all information has been transmitted:
-  if(n != p || n != static_cast<size_t>(dacmax-dacmin)) {
-    // FIXME custom exception?
-    LOG(logCRITICAL) << "Data size not as expected!";
-    return result;
-  }
+  std::vector<pixel> data = daqAllPixels();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+
+  // Clear & reset the DAQ buffer on the testboard.
+  daqClear();
 
   // Read the vectors from the beginning, not from dacmin:
   size_t it = 0;
   for (int i = dacmin; i < dacmax; i++) {
-    std::vector<pixel> data;
-    pixel newpixel;
-    newpixel.column = column;
-    newpixel.row = row;
-    newpixel.roc_id = rocid;
+    std::vector<pixel> tmp;
+    tmp.push_back(data.at(it));
 
-    // Decide over what we get back in the value field:
+    /*    // Decide over what we get back in the value field:
     if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
     else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)/nTriggers); }
-    data.push_back(newpixel);
-    result->push_back(data);
+    data.push_back(newpixel);*/
+    result->push_back(tmp);
     it++;
   }
 
