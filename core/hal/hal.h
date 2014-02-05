@@ -129,6 +129,15 @@ namespace pxar {
 
     // TEST COMMANDS
 
+    /** Function to return Module maps of calibration pulses
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
+     *  Private flags allow selection of output value (pulse height or efficiency)
+     *
+     *  The rocid vector parameter allows to select ROCs with arbitrary I2C addresses. Usually module
+     *  I2C addresses range from 0-15 but for special purposes this might be different.
+     */
+    std::vector< std::vector<pixel> >* ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
+
     /** Function to return ROC maps of calibration pulses
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)

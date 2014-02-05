@@ -617,6 +617,35 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   return result;
 }
 
+std::vector< std::vector<pixel> >* hal::ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
+
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
+  uint16_t nTriggers = parameter.at(1);
+
+  LOG(logDEBUGHAL) << "Called ModuleCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Function will take care of " << rocids.size() << " ROCs.";
+  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+
+  // Prepare for data acquisition:
+  daqStart(deser160phase,nTBMs);
+
+  // Call the RPC command containing the trigger loop:
+  int status = _testboard->CalibrateModule(rocids, nTriggers, flags&FLAG_CALS);
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+
+  daqStop();
+
+  std::vector<pixel> data = daqAllPixels();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+
+  // Clear & reset the DAQ buffer on the testboard.
+  daqClear();
+
+  // Fill the return data vector:
+  result->push_back(data);
+  return result;
+}
+
 std::vector< std::vector<pixel> >* hal::RocThresholdMap(uint8_t rocid, std::vector<int32_t> parameter) {
 
   int32_t flags = parameter.at(0);
