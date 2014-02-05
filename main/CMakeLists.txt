@@ -5,7 +5,7 @@ INCLUDE_DIRECTORIES( . )
 FIND_PACKAGE(ROOT REQUIRED)
 INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
 
-SET (pxarGui_SOURCES
+SET (pXar_SOURCES
 ConfigParameters.cc
 PixInitFunc.cc
 PixUtil.cc
@@ -32,7 +32,7 @@ SysCommand.cc
 )
 
 # fill list of header files 
-set(pxarGui_HEADERS
+set(pXar_HEADERS
 ConfigParameters.hh
 PixInitFunc.hh
 PixUtil.hh
@@ -62,17 +62,17 @@ SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/main ${PROJECT_SOURCE_DIR}/core
 
 # set everything needed for the root dictonary and create the
 # dictionary
-set(pxarGui_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/pxarGuiDict.cxx) 
-ROOT_GENERATE_DICTIONARY_OLD("${pxarGui_HEADERS}" "${pxarGui_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
+set(pXar_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/pXarDict.cxx) 
+ROOT_GENERATE_DICTIONARY_OLD("${pXar_HEADERS}" "${pXar_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
 
-ADD_LIBRARY( pxarui SHARED ${pxarGui_SOURCES} ${pxarGui_DICTIONARY} )
+ADD_LIBRARY( pxarui SHARED ${pXar_SOURCES} ${pXar_DICTIONARY} )
 target_link_libraries(pxarui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
 
-add_executable(pxarGui pXar.cc )
-target_link_libraries(pxarGui ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} pxarui)
+add_executable(pXar pXar.cc )
+target_link_libraries(pXar ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} pxarui)
 
-INSTALL(TARGETS pxarui pxarGui
+INSTALL(TARGETS pxarui pXar
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
