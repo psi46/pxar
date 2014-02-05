@@ -213,6 +213,9 @@ bool api::initDUT(std::string tbmtype,
     // Set the ROC type (get value from dictionary)
     newroc.type = stringToDeviceCode(roctype);
     if(newroc.type == 0x0) return false;
+
+    newroc.i2c_address = static_cast<uint8_t>(rocIt - rocDACs.begin());
+    LOG(logDEBUGAPI) << "I2C address for the next ROC is: " << static_cast<int>(newroc.i2c_address);
     
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*rocIt).begin(); dacIt != (*rocIt).end(); ++dacIt){
