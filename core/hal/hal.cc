@@ -591,7 +591,7 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(rocid) << ".";
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
   // Prepare for data acquisition:
@@ -623,7 +623,10 @@ std::vector< std::vector<pixel> >* hal::ModuleCalibrateMap(std::vector<uint8_t> 
   uint16_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called ModuleCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Function will take care of " << rocids.size() << " ROCs.";
+  LOG(logDEBUGHAL) << "Function will take care of " << rocids.size() << " ROCs with the I2C addresses:";
+  std::stringstream os;
+  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
+  LOG(logDEBUGHAL) << os.str();
   std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
   // Prepare for data acquisition:
