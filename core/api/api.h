@@ -662,6 +662,10 @@ namespace pxar {
     /** Function to enable all pixels on all ROCs:
      */
     void maskAllPixels(bool mask);
+
+    /** Function to update all trim bits of a given ROC.
+     */
+    bool updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid);
    
     /** Function to check the status of the DUT
      */
