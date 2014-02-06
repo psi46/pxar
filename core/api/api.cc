@@ -1383,14 +1383,84 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
 
   uint8_t currentDAC = dacMin;
+  std::vector<pixel> current_vector;
 
   LOG(logDEBUGAPI) << "Packing range " << static_cast<int>(dacMin) << "-" << static_cast<int>(dacMax) << ", data has " << data.size() << " entries.";
 
-  /*for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
-    result->push_back(std::make_pair(currentDAC, *vecit));
-    currentDAC++;
-    }*/
+  for(size_t dac = dacMin; dac <= dacMax; dac++) {
+    result->push_back(std::make_pair(dac,std::vector<pixel>()));
+  }
 
+  uint32_t triggers = 0;
+  std::map<pixel,uint16_t> triggercount;
+
+  // Loop over all events we have:
+  for(std::vector<event*>::iterator eventit = data.begin(); eventit!= data.end(); ++eventit) {
+
+    // Every event is one trigger:
+    triggers++;
+
+    // For every event, loop over all contained pixels:
+    for(std::vector<pixel>::iterator pixit = (*eventit)->pixels.begin(); pixit != (*eventit)->pixels.end(); ++pixit) {
+      LOG(logDEBUGAPI) << "-- new DAC loop";
+      // Loop over result vector of DAC settings and check for existing pixels:
+      for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = result->begin();
+	  it != result->end(); ++it) {
+
+	// Check if we have that particular pixel already in our current DAC setting:
+	std::vector<pixel>::iterator px = std::find_if(it->second.begin(),
+						       it->second.end(),
+						       findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+	// We know that pixel for this DAC value:
+	if(px != it->second.end()) {
+	  LOG(logDEBUGAPI) << "Pixel " << *pixit << " is known for DAC " << static_cast<int>(it->first);
+	  // Check if this is still a trigger of the same DAC:
+	  if(triggercount[(*pixit)] < nTriggers) {
+	    LOG(logDEBUGAPI) << "But triggers are pending...";
+	    if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { (*px).value++; }
+	    else { (*px).value += (*pixit).value; }
+	    triggercount[*pixit]++;
+	    break;
+	  }
+	  else LOG(logDEBUGAPI) << "Looking further...";
+	}
+	// We haven't seen this pixel for this particular DAC value:
+	else {
+	  LOG(logDEBUGAPI) << "Pixel " << *pixit << " is new for DAC " << static_cast<int>(it->first);
+	  // Reset trigger count for pixel:
+	  std::pair<std::map<pixel,uint16_t>::iterator,bool> ret;
+	  ret = triggercount.insert(std::make_pair(*pixit,1));
+	  if(ret.second == false) { triggercount[*pixit] = 1; }
+	  
+	  // Add the pixel:
+	  if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { (*pixit).value = 1; }
+	  it->second.push_back(*pixit);
+	  //it->second.resize(it->second.size()+1,*px);
+	  //it->second.insert(it->second.end());
+	  break;
+	}
+      }
+
+      /*
+      if(px != current_vector.end()) {
+	LOG(logDEBUGAPI) << "Found existing pixel for DAC " << (int)currentDAC;
+	// Add the value!
+	if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { (*px).value++; }
+	else { (*px).value += (*pixit).value; }
+      }
+      else {
+	LOG(logDEBUGAPI) << "Found new pixel " << (*pixit) << " for DAC " << (int)currentDAC;
+	// Add a new pixel
+	if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { (*pixit).value = 1; }
+	current_vector.push_back(*pixit);
+      }
+	*/
+
+    } // loop over pixels
+
+  } // loop over events
+
+  /*
   LOG(logDEBUGAPI) << "Repack end: current " << static_cast<int>(currentDAC) << " (max " << static_cast<int>(dacMax) << ")";
   if (currentDAC!=dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
@@ -1398,6 +1468,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
     delete result;
     return NULL;
   }
+  */
 
   LOG(logDEBUGAPI) << "Correctly repacked DacScan data for delivery.";
   return result;
@@ -1419,7 +1490,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
       current1dac++;
     }
     else current2dac++;
-    }*/
+    }
 
   LOG(logDEBUGAPI) << "Repack end: current1 " << static_cast<int>(current1dac) << " (max " << static_cast<int>(dac1max) << "), current2 " 
 		   << static_cast<int>(current2dac) << " (max" << static_cast<int>(dac2max) << ")";
@@ -1430,7 +1501,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
     delete result;
     return NULL;
   }
-  
+  */
   LOG(logDEBUGAPI) << "Correctly repacked DacDacScan data for delivery.";
   return result;
 }
