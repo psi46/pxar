@@ -9,13 +9,13 @@
 #include <cstring>
 #include <cstdio>
 
-void asciimap(std::vector<pxar::pixel> data, int nTrig) {
+void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
 
   for(int column = 0; column < 52; column++) {
     for(int row = 0; row < 80; row++) {
       bool found = false;
       for (std::vector< pxar::pixel >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
-	if(mapit->row == row && mapit->column == column) {
+	if(mapit->row == row && mapit->column == column && mapit->roc_id == roc) {
 	  if((int)mapit->value == nTrig) std::cout << "X";
 	  else if((int)mapit->value == 0) std::cout << "-";
 	  else if((int)mapit->value > nTrig) std::cout << "#";
