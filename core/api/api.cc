@@ -1246,10 +1246,10 @@ bool api::daqStop() {
 }
 
 
-std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param,  bool forceSerial) {
+std::vector<event*> api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param,  bool forceSerial) {
   
   // pointer to vector to hold our data
-  std::vector< std::vector<pixel> >* data = NULL;
+  std::vector<event*> data = std::vector<event*>();
 
   // Start test timer:
   timer t;
@@ -1281,19 +1281,18 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
       LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " calls to \'rocfn\'";
 
-      for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
+      for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 	// execute call to HAL layer routine and save returned data in buffer
-	std::vector< std::vector<pixel> >* rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
+	std::vector<event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
-	if (!data) data = rocdata;
+        if (data.empty()) data = rocdata;
 	else {
-	  data->reserve( data->size() + rocdata->size());
-	  data->insert(data->end(), rocdata->begin(), rocdata->end());
-	  delete rocdata;
+	  data.reserve(data.size() + rocdata.size());
+	  data.insert(data.end(), rocdata.begin(), rocdata.end());
 	}
       } // roc loop
     } 
-    else if (pixelfn != NULL){
+    else if (pixelfn != NULL) {
 
       // -> we operate on single pixels
       // loop over all enabled ROCs
@@ -1302,7 +1301,7 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
       LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " enabled ROCs.";
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-	std::vector< std::vector<pixel> >* rocdata = NULL;
+	std::vector<event*> rocdata = std::vector<event*>();
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels(static_cast<uint8_t>(rocit - enabledRocs.begin()));
 
 
@@ -1311,40 +1310,30 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
 
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
-	  std::vector< std::vector<pixel> >* buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column, pixit->row, param);
+	  std::vector<event*> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column, pixit->row, param);
 	  // merge pixel data into roc data storage vector
-	  if (!rocdata){
+	  if (rocdata.empty()){
 	    rocdata = buffer; // for first time call
 	  } else {
-	    // loop over all entries in outer vector (i.e. over vectors of pixel)
-	    for (std::vector<std::vector<pixel> >::iterator vecit = buffer->begin(); vecit != buffer->end(); ++vecit){
-	      std::vector<pixel>::iterator pixelit = vecit->begin();
-	      // loop over all entries in buffer and add fired pixels to existing pixel vector
-	      while (pixelit != vecit->end()){
-		rocdata->at(vecit-buffer->begin()).push_back(*pixelit);
-		pixelit++;
-	      }
-	    }
-	    delete buffer;
+	    // Add buffer vector to the end of existing event data:
+	    rocdata.reserve(rocdata.size() + buffer.size());
+	    rocdata.insert(rocdata.end(), buffer.begin(), buffer.end());
 	  }
 	} // pixel loop
 	// append rocdata to main data storage vector
-	if (!data) data = rocdata;
+        if (data.empty()) data = rocdata;
 	else {
-	  data->reserve( data->size() + rocdata->size());
-	  data->insert(data->end(), rocdata->begin(), rocdata->end());
-	  delete rocdata;
+	  data.reserve(data.size() + rocdata.size());
+	  data.insert(data.end(), rocdata.begin(), rocdata.end());
 	}
       } // roc loop
     }// single pixel fnc
     else {
       // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
       LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?!";
-      return NULL;
+      return data;
     }
   } // single roc fnc
-  // now repack the data to join the individual ROC segments and return
-  std::vector< std::vector<pixel> >* compactdata = compactRocLoopData(data, _dut->getNEnabledRocs());
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
@@ -1352,42 +1341,41 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
   // Print timer value:
   LOG(logDEBUGAPI) << "Test took " << t << "ms.";
 
-  delete data; // clean up
-  return compactdata;
+  return data;
 } // expandLoop()
 
 
 
-std::vector<pixel>* api::repackMapData (std::vector< std::vector<pixel> >* data) {
+std::vector<pixel>* api::repackMapData (std::vector<event*> data) {
 
   std::vector<pixel>* result = new std::vector<pixel>();
-  LOG(logDEBUGAPI) << "Simple Map Repack of " << data->size() << " data blocks.";
+  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks.";
 
-  for(std::vector<std::vector<pixel> >::iterator it = data->begin(); it!= data->end(); ++it) {
+  /*  for(std::vector<std::vector<pixel> >::iterator it = data->begin(); it!= data->end(); ++it) {
     for(std::vector<pixel>::iterator px = (*it).begin(); px != (*it).end(); ++px) {
       result->push_back(*px);
     }
-  }
+    }*/
 
   LOG(logDEBUGAPI) << "Correctly repacked Map data for delivery.";
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax){
+std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   uint8_t currentDAC = dacMin;
 
-  LOG(logDEBUGAPI) << "Packing range " << static_cast<int>(dacMin) << "-" << static_cast<int>(dacMax) << ", data has " << data->size() << " entries.";
+  LOG(logDEBUGAPI) << "Packing range " << static_cast<int>(dacMin) << "-" << static_cast<int>(dacMax) << ", data has " << data.size() << " entries.";
 
-  for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
+  /*for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
     result->push_back(std::make_pair(currentDAC, *vecit));
     currentDAC++;
-  }
+    }*/
 
   LOG(logDEBUGAPI) << "Repack end: current " << static_cast<int>(currentDAC) << " (max " << static_cast<int>(dacMax) << ")";
   if (currentDAC!=dacMax){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values!";
+    LOG(logCRITICAL) << "data structure size not as expected! " << data.size() << " data blocks do not fit to " << dacMax-dacMin << " DAC values!";
     delete result;
     return NULL;
   }
@@ -1396,14 +1384,14 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max) {
 
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = new std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
 
   uint8_t current1dac = dac1min;
   uint8_t current2dac = dac2min;
 
-  for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
+  /*  for (std::vector<std::vector<pixel> >::iterator vecit = data->begin(); vecit!=data->end();++vecit){
 
     result->push_back(std::make_pair(current1dac, std::make_pair(current2dac, *vecit)));
 
@@ -1412,14 +1400,14 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
       current1dac++;
     }
     else current2dac++;
-  }
+    }*/
 
   LOG(logDEBUGAPI) << "Repack end: current1 " << static_cast<int>(current1dac) << " (max " << static_cast<int>(dac1max) << "), current2 " 
 		   << static_cast<int>(current2dac) << " (max" << static_cast<int>(dac2max) << ")";
 
   if (current1dac != dac1max){
     // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << (dac1max-dac1min)*(dac2max-dac2min) << " DAC values!";
+    LOG(logCRITICAL) << "data structure size not as expected! " << data.size() << " data blocks do not fit to " << (dac1max-dac1min)*(dac2max-dac2min) << " DAC values!";
     delete result;
     return NULL;
   }
