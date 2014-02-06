@@ -91,22 +91,7 @@ void PixTestSetCalDel::setToolTips()
 
 //------------------------------------------------------------------------------
 void PixTestSetCalDel::bookHist(string name) {
-  fDirectory->cd();
-
-  TH1D *h1(0);
-  fHistList.clear();
-
-  for( unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i ) {
-
-    for( unsigned int ip = 0; ip < fPIX.size(); ++ip ) {
-      h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i),
-		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i),
-		    256, -0.5, 255.5 );
-      h1->SetMinimum(0.);
-      setTitles( h1, Form( "%s [DAC]", name.c_str() ), "readouts" );
-      fHistList.push_back(h1);
-    }
-  }
+  LOG(logDEBUG) << "nothing done with " << name;
 }
 
 //------------------------------------------------------------------------------
@@ -116,85 +101,130 @@ PixTestSetCalDel::~PixTestSetCalDel() {
 
 //------------------------------------------------------------------------------
 void PixTestSetCalDel::doTest() {
+
   fDirectory->cd();
+  fHistList.clear();
   PixTest::update(); 
+
   LOG(logINFO) << "PixTestSetCalDel::doTest() ntrig = " << fParNtrig;
-  //FIXME  clearHist();
-  // -- FIXME: Should/could separate better test from display?
+
+  // activate one pixel per ROC:
 
   fApi->_dut->testAllPixels(false);
-  for( unsigned int i = 0; i < fPIX.size(); ++i) {
-    if( fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+
+  if( fPIX[0].first > -1 )
+    fApi->_dut->testPixel(fPIX[0].first, fPIX[0].second, true);
+  else {
+    LOG(logWARNING) << "PixTestSetCalDel: no pixel defined, return";
+    return;
   }
 
-  bookHist("caldel");
+  // set maximum pulse (minimal time walk):
+
+  uint8_t cal = fApi->_dut->getDAC( 0, "Vcal" );
+  uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
+
+  fApi->setDAC( "Vcal", 255 ); // all ROCs large Vcal
+  fApi->setDAC( "CtrlReg", 4 ); // all ROCs large Vcal
+
+  // measure:
 
   string DacName = "caldel";
 
   vector <pair <uint8_t, vector<pixel> > > results =
     fApi->getEfficiencyVsDAC( DacName, 0, 255, 0, fParNtrig ); // dac, pixels
 
-  LOG(logDEBUG) << " dacscandata.size(): " << results.size();
+  // histos:
 
-  TH1D *h(0);
+  vector<TH1D*> hsts;
+  TH1D *h1(0);
+  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
+  for( size_t roc = 0; roc < nRocs; ++roc ) {
+
+    h1 = new TH1D( Form( "NhitsVsCalDel_c%d_r%d_C%d",
+			 fPIX[0].first, fPIX[0].second, int(roc) ),
+		   Form( "readouts vs CalDel c%d r%d C%d",
+			 fPIX[0].first, fPIX[0].second, int(roc) ),
+		   256, -0.5, 255.5 );
+    h1->SetStats(0); // no stats
+    h1->SetMinimum(0);
+    setTitles( h1, "CalDel [DAC]", "readouts" );
+    hsts.push_back(h1);
+    fHistList.push_back(h1);
+  }
+
+  TH1D *hsum = new TH1D( "CalDelSettings", "CalDel per ROC;ROC;CalDel [DAC]",
+			 16, -0.5, 15.5 );
+  hsum->SetStats(0); // no stats
+  hsum->SetMinimum(0);
+  hsum->SetMaximum(256);
+  fHistList.push_back(hsum);
 
   int i0[16] = {0};
   int i9[16] = {0};
   int nm[16] = {0};
 
-  for( unsigned int i = 0; i < results.size(); ++i ) { // dac values
+  for( uint32_t i = 0; i < results.size(); ++i ) { // dac values
 
-    pair<uint8_t, vector<pixel> > v = results[i];
-    int caldel = v.first;
+    int caldel = result[i].first;
 
-    vector<pixel> vpix = v.second; // pixels from all rocs
+    vector<pixel> vpix = result[i].second; // pixels from all rocs
 
-    for( unsigned int ipx = 0; ipx < vpix.size(); ++ipx ) {
+    for( uint32_t ipx = 0; ipx < vpix.size(); ++ipx ) {
 
       int roc = vpix.at(ipx).roc_id;
 
-      int nn = vpix.at(ipx).value;
+      if( roc >= 0 && roc < nRocs &&
+	  vpix[ipx].column == fPIX[0].first &&
+	  vpix[ipx].row == fPIX[0].second ) {
 
-      if( nn > nm[roc] ) {
-	nm[roc] = nn;
-	i0[roc] = caldel; // begin of plateau
-      }
-      if( nn == nm[roc] )
-	i9[roc] = caldel; // end of plateau
+	int nn = vpix.at(ipx).value;
 
-      h = (TH1D*)fDirectory->Get( Form( "NhitsVs%s_c%d_r%d_C%d",
-					DacName.c_str(), vpix.at(ipx).column, vpix.at(ipx).row, roc ) );
+	if( nn > nm[roc] ) {
+	  nm[roc] = nn;
+	  i0[roc] = caldel; // begin of plateau
+	}
+	if( nn == nm[roc] )
+	  i9[roc] = caldel; // end of plateau
 
-      if( h ) {
-	h->Fill( caldel, nn );
-      }
-      else {
-	LOG(logDEBUG) << "XX did not find "
-		      << Form( "NhitsVs%s_c%d_r%d_C%d",
-			       DacName.c_str(), vpix.at(ipx).column, vpix.at(ipx).row, roc );
-      }
+	h1 = hsts.at(roc);
+	h1->Fill( caldel, nn );
+
+      } // valid
+
     } // pixels and rocs
+
   } // caldel vals
 
   for( list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il ) {
     (*il)->Draw();
     PixTest::update();
   }
-  fDisplayedHist = fHistList.end();
 
-  //h = (TH1D*)(*fHistList.begin() );
-  //h->Draw();
-
-  for( unsigned int roc = 0; roc < fPixSetup->getConfigParameters()->getNrocs(); ++roc ) {
+  for( size_t roc = 0; roc < nRocs; ++roc ) {
 
     LOG(logINFO) << "ROC " << setw(2) << roc
 		 << ": eff plateau from " << setw(3) << i0[roc]
 		 << " to " << setw(3) << i9[roc];
     if( i9[roc] > 0 ) {
+
       int i2 = i0[roc] + (i9[roc]-i0[roc])/4;
+
       fApi->setDAC( DacName, i2, roc );
+
       LOG(logINFO) << "ROC " << setw(2) << roc
 		   << ": set CalDel to " << i2;
+
+      hsum->Fill( roc, i2 );
     }
   } // rocs
+
+  fApi->setDAC( "Vcal", cal ); // restore
+  fApi->setDAC( "CtrlReg", ctl ); // restore
+
+  //flush?
+
+  hsum->Draw();
+  PixTest::update();
+  fDisplayedHist = find( fHistList.begin(), fHistList.end(), hsum );
 }

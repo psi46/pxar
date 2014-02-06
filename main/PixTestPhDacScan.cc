@@ -180,6 +180,6 @@ void PixTestPhDacScan::doTest()
     (*il)->Draw();
     PixTest::update();
   }
-  fDisplayedHist = fHistList.begin();
+  fDisplayedHist = find( fHistList.begin(), fHistList.end(), h1 );
 
 }
