@@ -467,7 +467,7 @@ namespace pxar {
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels.
      */
-    std::vector<pixel>* repackMapData (std::vector<event*> data);
+    std::vector<pixel>* repackMapData (std::vector<event*> data, uint32_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */

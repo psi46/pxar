@@ -1011,7 +1011,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackMapData(data);
+  std::vector<pixel>* result = repackMapData(data, flags);
 
   return *result;
 }
@@ -1042,7 +1042,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackMapData(data);
+  std::vector<pixel>* result = repackMapData(data, internal_flags);
 
   return *result;
 }
@@ -1073,7 +1073,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackMapData(data);
+  std::vector<pixel>* result = repackMapData(data, flags);
 
   return *result;
 }
@@ -1346,16 +1346,34 @@ std::vector<event*> api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, Ha
 
 
 
-std::vector<pixel>* api::repackMapData (std::vector<event*> data) {
+std::vector<pixel>* api::repackMapData (std::vector<event*> data, uint32_t flags) {
 
   std::vector<pixel>* result = new std::vector<pixel>();
-  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks.";
+  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, flags at " << flags << ".";
 
-  /*  for(std::vector<std::vector<pixel> >::iterator it = data->begin(); it!= data->end(); ++it) {
-    for(std::vector<pixel>::iterator px = (*it).begin(); px != (*it).end(); ++px) {
-      result->push_back(*px);
-    }
-    }*/
+  // Loop over all events we have:
+  for(std::vector<event*>::iterator eventit = data.begin(); eventit!= data.end(); ++eventit) {
+
+    // For every event, loop over all contained pixels:
+    for(std::vector<pixel>::iterator pixit = (*eventit)->pixels.begin(); pixit != (*eventit)->pixels.end(); ++pixit) {
+
+      // Check if we have that particular pixel already in our map:
+      std::vector<pixel>::iterator px = std::find_if(result->begin(),
+						     result->end(),
+						     findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+
+      if(px != result->end()) {
+	// Add the value!
+	if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { (*px).value++; }
+	else { (*px).value += (*pixit).value; }
+      }
+      else {
+	// Add a new pixel
+	if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { (*pixit).value = 1; }
+	result->push_back(*pixit);
+      }
+    } // loop over pixels
+  } // loop over events
 
   LOG(logDEBUGAPI) << "Correctly repacked Map data for delivery.";
   return result;
