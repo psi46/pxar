@@ -66,6 +66,26 @@ namespace pxar {
     uint8_t row;
     int32_t value;
 
+    /** Overloaded comparison operator
+     */
+    bool operator == (const pixel& px) {
+      return ((px.roc_id == roc_id )
+	      && (px.column == column)
+	      && (px.row == row));
+    };
+
+    /** Overloaded < operator
+     */
+    bool operator < (const pixel& px) const {
+      if(roc_id == px.roc_id) {
+	if(column == px.column) {
+	  return row < px.row;
+	}
+	return column < px.column;
+      }
+      return roc_id < px.roc_id;
+    }
+
   private:
     /** Overloaded ostream operator for simple printing of pixel data
      */
@@ -87,7 +107,7 @@ namespace pxar {
     /** Overloaded ostream operator for simple printing of event data
      */
     friend std::ostream & operator<<(std::ostream &out, event& evt) {
-      out << "====== " << std::hex << static_cast<uint16_t>(evt.header) << " ====== ";
+      out << "====== " << std::hex << static_cast<uint16_t>(evt.header) << std::dec << " ====== ";
       for (std::vector<pixel>::iterator it = evt.pixels.begin(); it != evt.pixels.end(); ++it)
 	out << (*it) << " ";
       return out;
