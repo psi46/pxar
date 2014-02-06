@@ -8,7 +8,7 @@ void script(string testname = "PixelAlive", string rootfilename = "PixelAlive.ro
   
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
 
-  PixSetup *ap = new PixSetup("DEBUG", ptp, configParameters, 0);  
+  PixSetup *ap = new PixSetup("DEBUG", ptp, configParameters);  
 
   cout << "pxar: dumping results into " << rootfile << endl;
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
