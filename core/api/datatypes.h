@@ -102,6 +102,7 @@ namespace pxar {
   class DLLEXPORT event {
   public:
     uint16_t header;
+    uint16_t trailer;
     std::vector<pixel> pixels;
   private:
     /** Overloaded ostream operator for simple printing of event data
