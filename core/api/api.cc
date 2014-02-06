@@ -653,7 +653,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
 
@@ -665,7 +665,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
     _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
   }
 
-  delete data;
   return *result;
 }
 
@@ -711,7 +710,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
 
@@ -723,7 +722,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
     _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
   }
 
-  delete data;
   return *result;
 }
 
@@ -763,7 +761,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
 
@@ -775,7 +773,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
     _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
   }
 
-  delete data;
   return *result;
 }
 
@@ -832,7 +829,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
 
@@ -847,7 +844,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
     _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
-  delete data;
   return *result;
 }
 
@@ -907,7 +903,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
 
@@ -922,7 +918,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
     _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
-  delete data;
   return *result;
 }
 
@@ -976,7 +971,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max);
 
@@ -991,7 +986,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
     _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
-  delete data;
   return *result;
 }
 
@@ -1014,11 +1008,11 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data);
-  delete data;
+
   return *result;
 }
 
@@ -1045,11 +1039,11 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data);
-  delete data;
+
   return *result;
 }
 
