@@ -359,8 +359,7 @@ void PixGui::createParTab() {
 
 
 // --------------------------------------------------------------------------------
-void PixGui::createTab(const char*csel) {
-  string tname = csel; 
+void PixGui::createTab(const char* csel) {
 
   PixTest *pt = createTest(string(csel));
   if (0 == pt) {
@@ -376,7 +375,6 @@ void PixGui::createTab(const char*csel) {
   MapSubwindows();
   Resize(GetDefaultSize());
   MapWindow();
-  LOG(logDEBUG) << "csel = " << csel;
   fTabs->SetTab(csel); 
   
 }
