@@ -636,6 +636,10 @@ std::vector<event*> hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> par
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+  size_t missing = nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " events.";
+  }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
@@ -646,7 +650,7 @@ std::vector<event*> hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> par
 std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   int32_t flags = parameter.at(0);
-  int32_t nTriggers = parameter.at(1);
+  uint16_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
 
@@ -664,6 +668,10 @@ std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+  size_t missing = nTriggers - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " events.";
+  }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
@@ -699,6 +707,10 @@ std::vector<event*> hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, ui
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+  size_t missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " events.";
+  }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
@@ -719,8 +731,13 @@ std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column,
   uint16_t nTriggers = parameter.at(7);
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Scanning field DAC " << dac1reg << " " << dac1min << "-" << dac1max 
-		   << ", DAC " << dac2reg << " " << dac2min << "-" << dac2max;
+
+  LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
+		   << " from " << static_cast<int>(dac1min) 
+		   << " to " << static_cast<int>(dac1max)
+		   << " vs. DAC " << static_cast<int>(dac2reg) 
+		   << " from " << static_cast<int>(dac2min) 
+		   << " to " << static_cast<int>(dac2max);
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -736,6 +753,10 @@ std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column,
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+  size_t missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " events.";
+  }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
