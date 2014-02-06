@@ -38,19 +38,25 @@ public:
   }
 };
 
-/** Helper class to search vectors of pixel or pixelConfig for 'column' and 'row' values
+/** Helper class to search vectors of pixel or pixelConfig for 'column' and 'row' (and 'roc_id') values
  */
 class findPixelXY
 {
   const uint8_t _column;
   const uint8_t _row;
+  const uint8_t _roc;
+  const bool _check_roc;
 
 public:
-  findPixelXY(const uint8_t pColumn, const uint8_t pRow) : _column(pColumn), _row(pRow) {}
+ findPixelXY(const uint8_t pColumn, const uint8_t pRow)
+   : _column(pColumn), _row(pRow), _roc(0), _check_roc(false) {}
+ findPixelXY(const uint8_t pColumn, const uint8_t pRow, const uint8_t pRoc) 
+   : _column(pColumn), _row(pRow), _roc(pRoc), _check_roc(true) {}
 
   template<class ConfigType>
   bool operator()(const ConfigType &config) const
   {
+    if(_check_roc) return (config.row == _row) && (config.column == _column) && (config.roc_id == _roc);
     return (config.row == _row) && (config.column == _column);
   }
 };

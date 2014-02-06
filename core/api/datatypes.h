@@ -70,7 +70,7 @@ namespace pxar {
     /** Overloaded ostream operator for simple printing of pixel data
      */
     friend std::ostream & operator<<(std::ostream &out, pixel& px) {
-      out << static_cast<int>(px.roc_id)
+      out << "ROC " << static_cast<int>(px.roc_id)
 	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
 	  << "," << static_cast<int>(px.value) << "]";
       return out;
@@ -138,6 +138,7 @@ namespace pxar {
       mask(true), enable(false) {};
     uint8_t column;
     uint8_t row;
+    uint8_t roc_id;
     uint8_t trim;
     bool mask;
     bool enable;
