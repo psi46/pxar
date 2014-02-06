@@ -15,19 +15,6 @@ ClassImp(PixTest)
 // ----------------------------------------------------------------------
 PixTest::PixTest(PixSetup *a, string name) {
   //  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
-  init(a, name); 
-}
-
-// ----------------------------------------------------------------------
-PixTest::PixTest() {
-  //  LOG(logINFO) << "PixTest ctor()";
-  
-}
-
-
-// ----------------------------------------------------------------------
-void PixTest::init(PixSetup *a, string name) {
-  //  LOG(logINFO)  << "PixTest::init()";
   fPIF            = new PixInitFunc(); 
   fPixSetup       = a;
   fApi            = a->getApi(); 
@@ -38,8 +25,22 @@ void PixTest::init(PixSetup *a, string name) {
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
+  //  init(a, name); 
+}
+
+// ----------------------------------------------------------------------
+PixTest::PixTest() {
+  //  LOG(logINFO) << "PixTest ctor()";
+  
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::init() {
+  //  LOG(logINFO)  << "PixTest::init()";
 
   //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  LOG(logDEBUG) << "    fParameters.size() = " << fParameters.size();
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
     setParameter(fParameters[i].first, fParameters[i].second); 
@@ -299,7 +300,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
 // ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
-  //   LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
+  LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
   return false;
 }
 
