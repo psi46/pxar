@@ -46,8 +46,8 @@ protected:
   TGVerticalFrame 	*fV1;
   TGVerticalFrame 	*fV2;
 
-  map<std::string, void*>  fParTextEntries;
-  vector<std::string>      fParIds;
+  std::map<std::string, void*>  fParTextEntries;
+  std::vector<std::string>      fParIds;
 
   TRootEmbeddedCanvas  	*fEc1;
   TGStatusBar           *fStatusBar;

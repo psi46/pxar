@@ -28,7 +28,6 @@ PixTestPretest.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
 PixTestParameters.cc
-SysCommand.cc
 )
 
 # fill list of header files 
@@ -55,7 +54,6 @@ PixTestPretest.hh
 PixTestFactory.hh
 PixTestGainCalibration.hh
 PixTestParameters.hh
-SysCommand.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/main ${PROJECT_SOURCE_DIR}/core/api ${ROOT_INCLUDE_DIR} )

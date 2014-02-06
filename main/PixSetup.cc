@@ -8,25 +8,23 @@ using namespace pxar;
 ClassImp(PixSetup)
 
 // ----------------------------------------------------------------------
-PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc) {
+PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp) {
   fApi               = a; 
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
-  fSysCommand        = sc; 
   fDoAnalysisOnly    = false; 
   init(); 
-  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc), api = " << fApi;
+  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp), api = " << fApi;
 }
 
 
 // ----------------------------------------------------------------------
-PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc) {
+PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp) {
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
-  fSysCommand        = sc; 
   fDoAnalysisOnly    = false; 
   init(); 
-  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp, SysCommand *sc), api = " << fApi;
+  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp), api = " << fApi;
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = fConfigParameters->getTbmDacs(); 
@@ -51,7 +49,6 @@ PixSetup::PixSetup() {
   fApi               = 0; 
   fPixTestParameters = 0; 
   fConfigParameters  = 0; 
-  fSysCommand        = 0; 
   init(); 
   LOG(logDEBUG) << "PixSetup ctor()";
 }
