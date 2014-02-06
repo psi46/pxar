@@ -5,6 +5,7 @@
 #include "api.h"
 #include "hal.h"
 #include "log.h"
+#include "timer.h"
 #include "helper.h"
 #include "dictionaries.h"
 #include <algorithm>
@@ -15,7 +16,8 @@ using namespace pxar;
 
 pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
-  _daq_buffersize(0)
+  _daq_buffersize(0),
+  _daq_minimum_period(0)
 {
 
   LOG(logQUIET) << "Instanciating API for " << PACKAGE_STRING;
@@ -537,6 +539,20 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue) {
   return true;
 }
 
+uint8_t pxarCore::getDACRange(std::string dacName) {
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t dacRegister;
+  uint8_t val = 0;
+  if(!verifyRegister(dacName, dacRegister, val, ROC_REG)) return 0;
+  
+  // Get singleton DAC dictionary object:
+  RegisterDictionary * _dict = RegisterDictionary::getInstance();
+
+  // Read register value limit:
+  return _dict->getSize(dacRegister, ROC_REG);
+}
+
 bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
   if(!status()) {return 0;}
@@ -1013,7 +1029,7 @@ std::vector<pixel> pxarCore::getEfficiencyMap(uint16_t flags, uint32_t nTriggers
   HalMemFnModule modulefn = NULL; //&hal::DummyModuleTestSkeleton; FIXME parallel later?
 
   // We want the efficiency back from the Map function, so let's set the internal flag:
-  int32_t internal_flags = 0;
+  uint32_t internal_flags = 0;
   internal_flags |= flags;
   internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
   LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
@@ -1088,6 +1104,13 @@ bool pxarCore::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
     // Prepare new Pattern Generator:
     if(!verifyPatternGenerator(pg_setup)) return false;
     _hal->SetupPatternGenerator(pg_setup);
+
+    // Calculate minimum PG period:
+    _daq_minimum_period = getPatternGeneratorDelaySum(pg_setup);
+  }
+  else {
+    // Calculate minimum PG period from stored Pattern Generator:
+    _daq_minimum_period = getPatternGeneratorDelaySum(_dut->pg_setup);
   }
   
   // Setup the configured mask and trim state of the DUT:
@@ -1138,12 +1161,12 @@ void pxarCore::daqTriggerLoop(uint16_t period) {
   if(daqStatus()) {
     // Pattern Generator loop doesn't work for delay periods smaller than
     // 110 clock cycles, so limit it to that:
-    if(period < 110) {
-      period = 110;
-      LOG(logWARNING) << "Loop period setting too small for Pattern generator. "
+    if(period < _daq_minimum_period) {
+      period = _daq_minimum_period;
+      LOG(logWARNING) << "Loop period setting too small for configured "
+		      << "Pattern generator. "
 		      << "Setting loop delay to " << period << " clk";
     }
-    
     _hal->daqTriggerLoop(period);
   }
 }
@@ -1199,6 +1222,8 @@ std::vector< std::vector<pixel> >* pxarCore::expandLoop(HalMemFnPixel pixelfn, H
   // pointer to vector to hold our data
   std::vector< std::vector<pixel> >* data = NULL;
 
+  // Start test timer:
+  timer t;
 
   // Do the masking/unmasking&trimming for all ROCs first
   MaskAndTrim(true);
@@ -1290,6 +1315,9 @@ std::vector< std::vector<pixel> >* pxarCore::expandLoop(HalMemFnPixel pixelfn, H
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
+
+  // Print timer value:
+  LOG(logDEBUGAPI) << "Test took " << t << "ms.";
 
   delete data; // clean up
   return compactdata;
@@ -1496,7 +1524,15 @@ bool pxarCore::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > 
     }
     delay_sum += (*it).second;
   }
+  return true;
+}
+
+uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+
+  uint32_t delay_sum = 0;
+
+  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) { delay_sum += (*it).second; }
 
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
-  return true;
+  return delay_sum;
 }

@@ -55,7 +55,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fV1->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX, 0, 0, 10, 0));
 
   // -- fV2: create parameter TGText boxes for test
-  map<string, string> amap = fTest->getParameters();
+  vector<pair<string, string> > amap = fTest->getParameters();
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
   TGTextBuffer *tb(0); 
@@ -64,21 +64,35 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   TGHorizontalFrame *hFrame(0); 
 
   int cnt(0); 
-  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
+  //  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
+  for (unsigned int i = 0; i < amap.size(); ++i) {
+    if (amap[i].second == "button") {
+      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
+      tset = new TGTextButton(hFrame, amap[i].first.c_str(), cnt);
+      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+      tset->SetToolTipText("run this subtest");
+      tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
+      tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
+      fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+      ++cnt; 
+      continue;
+    }
+
+
     hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    //    LOG(logINFO) << "Creating TGTextEntry for " << imap->first;
+    
     tb = new TGTextBuffer(5); 
-    tl = new TGLabel(hFrame, imap->first.c_str());
+    tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
 
     te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
     hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
-    fParIds.push_back(imap->first); 
-    fParTextEntries.insert(make_pair(imap->first, te)); 
+    fParIds.push_back(amap[i].first); 
+    fParTextEntries.insert(make_pair(amap[i].first, te)); 
 
-    te->SetText(imap->second.c_str());
+    te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
 
     tset = new TGTextButton(hFrame, "Set", cnt);
@@ -89,7 +103,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
     ++cnt;
   }
-
 
   hFrame = new TGHorizontalFrame(fV2); 
   TGTextButton * previous = new TGTextButton(hFrame, "Previous");
@@ -108,8 +121,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame->AddFrame(update, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * clear = new TGTextButton(hFrame, "Clear");
-  clear->SetToolTipText("clear canvas");
-  clear->Connect("Clicked()", "PixTab", this, "clearCanvas()");
+  clear->SetToolTipText("clear canvas and resest histogram list");
+  clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));
@@ -236,6 +249,16 @@ void PixTab::handleButtons(Int_t id) {
 
 
 // ----------------------------------------------------------------------
+void PixTab::buttonClicked() {
+
+  if (!fGui->getTabs()) return;
+
+  TGButton *btn = (TGButton*)gTQSender;
+  fTest->runCommand(btn->GetTitle()); 
+
+} 
+
+// ----------------------------------------------------------------------
 void PixTab::setParameter() {
   if (!fGui->getTabs()) return;
   //  LOG(logINFO)  << "PixTab::setParameter: ";
@@ -251,15 +274,19 @@ void PixTab::setParameter() {
   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
   
   LOG(logDEBUG) << "xxxPressed():  ID = " << id 
-	       << " -> " << fParIds[id] 
+		<< " -> " << fParIds[id]
 	       << " to value " << svalue;
 
   fTest->setParameter(fParIds[id], svalue); 
-
-  if (1) fTest->dumpParameters();
   updateToolTips();
 } 
 
+
+// ----------------------------------------------------------------------
+void PixTab::clearHistList() {
+  clearCanvas();
+  fTest->clearHistList();
+}
 
 // ----------------------------------------------------------------------
 void PixTab::clearCanvas() {
@@ -334,9 +361,11 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   const char *text0, *text2;
   text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
+
   if (event == kKeyPress) {
     LOG(logDEBUG) << "key pressed?"; 
   }
+
   //     sprintf(text1, "%d,%d", px, py);
   //   fStatusBar->SetText(text1, 1);
   if (selected->InheritsFrom(TH1::Class())) {

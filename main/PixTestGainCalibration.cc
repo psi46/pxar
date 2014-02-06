@@ -9,23 +9,23 @@ ClassImp(PixTestGainCalibration)
 
 //----------------------------------------------------------
 PixTestGainCalibration::PixTestGainCalibration(PixSetup *a, std::string name): PixTest(a, name) {
-  LOG(logINFO) << "PixTestGainCalibration ctor(PixSetup &, string)";
+  LOG(logDEBUG) << "PixTestGainCalibration ctor(PixSetup &, string)";
   init(); 
 }
 
 //----------------------------------------------------------
 PixTestGainCalibration::PixTestGainCalibration(): PixTest() {
-  LOG(logINFO) << "PixTestGainCalibration ctor()";
+  LOG(logDEBUG) << "PixTestGainCalibration ctor()";
 }
 
 //----------------------------------------------------------
 PixTestGainCalibration::~PixTestGainCalibration() {
-  LOG(logINFO) << "PixTestGainCalibration dtor()";
+  LOG(logDEBUG) << "PixTestGainCalibration dtor()";
 }
 
 //----------------------------------------------------------
 void PixTestGainCalibration::init() {
-  LOG(logINFO) << "PixTestGainCalibration::init()";
+  LOG(logDEBUG) << "PixTestGainCalibration::init()";
   
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
@@ -45,15 +45,7 @@ void PixTestGainCalibration::setToolTips() {
 // ----------------------------------------------------------------------
 bool PixTestGainCalibration::setParameter(string parName, string sval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    if (0 == imap->first.compare(parName)) {
-      found = true; 
-      break;
-    }
-  }
-  if (found) {
-    fParameters[parName] = sval;
-  }
+  LOG(logDEBUG) << "nothing done with " << parName << " and " << sval;
 
   return found;
 }

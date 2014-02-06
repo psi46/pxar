@@ -22,7 +22,14 @@ public:
 
   void initialize();
   bool readConfigParameterFile(std::string filename);
+  void readAllConfigParameterFiles();
+  void readRocPixelConfig();
+  void readTbParameters();
+  void readRocDacs();
+  void readTbmDacs();
 
+  
+  void writeAllFiles();
   bool writeConfigParameterFile();
   bool writeTrimFiles(std::vector<int>);
   bool writeDacParameterFiles(std::vector<int>);
@@ -58,6 +65,9 @@ public:
 
   bool setTbParameter(std::string, uint8_t);
   bool setTbPowerSettings(std::string, double);
+  bool setTbmDac(std::string var, uint8_t val, int itbm = -1);
+  bool setRocDac(std::string var, uint8_t val, int iroc = -1);
+  bool setTrimBits(int trim); 
 
   void setTBParameterFileName(std::string filename) {fTBParametersFileName = filename;}
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
@@ -74,6 +84,10 @@ public:
 
   unsigned int getNrocs() {return fnRocs;}
   unsigned int getNtbms() {return fnTbms;}
+  std::vector<int> getSelectedRocs() {return fSelectedRocs;}
+  std::vector<int> getSelectedTbms() {return fSelectedTbms;}
+  void setSelectedRocs(std::vector<int> v) {fSelectedRocs = v;}
+  void setSelectedTbms(std::vector<int> v) {fSelectedTbms = v;}
 
   double getIa() {return ia;}
   double getId() {return id;}
@@ -89,6 +103,7 @@ private:
   std::vector<std::pair<uint16_t, uint8_t> > fTbPgSettings;
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
   std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
+  std::vector<int> fSelectedRocs, fSelectedTbms;
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fCustomModule, fHalfModule;

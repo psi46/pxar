@@ -129,39 +129,39 @@ namespace pxar {
     // TEST COMMANDS
 
     /** Function to return ROC maps of calibration pulses
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
     std::vector< std::vector<pixel> >* RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter);
 
     /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel.
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
     std::vector< std::vector<pixel> >* PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     /** Function to return ROC maps of thresholds
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS), cross-talk
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS), cross-talk
      *  settings (FLAG_XTALK) and the possibility to reverse the scanning (FLAG_RISING).
      *  The parameters additionally contain the DAC register to be scanned for threshold setting.
      */
     std::vector< std::vector<pixel> >* RocThresholdMap(uint8_t rocid, std::vector<int32_t> parameter);
 
     /** Function to return "Pixel maps" of threshold values, i.e. measuring the threshold for a single pixel.
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS), cross-talk
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS), cross-talk
      *  settings (FLAG_XTALK) and the possibility to reverse the scanning (FLAG_RISING).
      *  The parameters additionally contain the DAC register to be scanned for threshold setting.
      */
     std::vector< std::vector<pixel> >* PixelThresholdMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     /** Function to scan a given DAC for a pixel
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
     std::vector< std::vector<pixel> >* PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     /** Function to scan two given DAC ranges for a pixel
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_USE_CALS)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
     std::vector< std::vector<pixel> >* PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);

@@ -14,7 +14,7 @@ ClassImp(PixTestDacDacScan)
 // ----------------------------------------------------------------------
 PixTestDacDacScan::PixTestDacDacScan(PixSetup *a, std::string name) : 
 PixTest(a, name), fParNtrig(-1), fParDAC1("nada"), fParDAC2("nada"), fParLoDAC1(-1), fParHiDAC1(-1), fParLoDAC2(-1), fParHiDAC2(-1) {
-  PixTest::init(a, name);
+  PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDacDacScan ctor(PixSetup &a, string, TGTab *)";
 }
@@ -31,39 +31,37 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC1")) {
 	fParDAC1 = sval; 
-	LOG(logDEBUG) << "  setting fParDAC1  ->" << fParDAC1 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC2")) {
 	fParDAC2 = sval; 
-	LOG(logDEBUG) << "  setting fParDAC2  ->" << fParDAC2 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC1LO")) {
 	fParLoDAC1 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParLoDAC1  ->" << fParLoDAC1 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC1HI")) {
 	fParHiDAC1 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParHiDAC1  ->" << fParHiDAC1 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC2LO")) {
 	fParLoDAC2 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParLoDAC2  ->" << fParLoDAC2 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC2HI")) {
 	fParHiDAC2 = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParHiDAC2  ->" << fParHiDAC2 << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 
@@ -142,6 +140,7 @@ void PixTestDacDacScan::init() {
 void PixTestDacDacScan::setToolTips() {
   fTestTip    = string(Form("scan the two DACs %s vs %s and ",  fParDAC1.c_str(), fParDAC2.c_str()))
     + string("determine the number of hits for each setting")
+    + string("\nNOTE: There is currently a limitation that the total number of scanned points is less than 2^14!")
     ;
   fSummaryTip = string("summary plot to be implemented")
     ;
@@ -190,6 +189,7 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestDacDacScan::doTest() ntrig = " << fParNtrig;
   //FIXME  clearHist();
@@ -203,6 +203,11 @@ void PixTestDacDacScan::doTest() {
 
 
   // -- FIXME This code is crap. Replace as in PixelAlive
+
+  if ((fParHiDAC1-fParLoDAC1)*(fParHiDAC2-fParLoDAC2) > 16383) {
+    LOG(logERROR) << "You cannot scan more than 2^14 points simultaneously -- nothing done";
+    return;
+  }
 
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > > 
     results = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 

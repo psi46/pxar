@@ -13,7 +13,7 @@ ClassImp(PixTestSetup)
 
 // ----------------------------------------------------------------------
 PixTestSetup::PixTestSetup(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
-  PixTest::init(a, name);
+  PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestSetup ctor(PixSetup &a, string, TGTab *)";
 }
@@ -27,12 +27,10 @@ PixTestSetup::PixTestSetup() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestSetup::setParameter(string parName, string sval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true; 
 
-      fParameters[parName] = sval;
       LOG(logDEBUG) << "  ==> parName: " << parName;
       LOG(logDEBUG) << "  ==> sval:    " << sval;
       if (!parName.compare("Ntrig")) {
@@ -108,6 +106,7 @@ PixTestSetup::~PixTestSetup() {
 
 // ----------------------------------------------------------------------
 void PixTestSetup::doTest() {
+  fDirectory->cd();
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
   //FIXME clearHist(); 
 

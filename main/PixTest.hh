@@ -23,18 +23,22 @@ public:
   PixTest(PixSetup *a, std::string name);
   PixTest();
   virtual ~PixTest();
-  void init(PixSetup *, std::string name);
+  void init();
   void bookHist(std::string name);
   virtual void setToolTips();
   virtual std::string getSummaryTip() {return fSummaryTip;}
   virtual std::string getTestTip() {return fTestTip;}
 
-  int pixelThreshold(string dac, int ntrig, int dacmin, int dacmax);
+  int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
   std::vector<TH2D*> efficiencyMaps(std::string name, int ntrig = 10); 
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
-  std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
+  std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig = 10);
 
-  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
+  //  std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
+
+  virtual void sparseRoc(int npix = 8);
+
+  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax, bool zeroSuppressed = false); 
   bool threshold(TH1 *); 
   int simpleThreshold(TH1 *); 
   
@@ -44,14 +48,15 @@ public:
   TH2D* moduleMap(std::string histname); 
   void fillMap(TH2D *hmod, TH2D *hroc, int iroc); 
 
-  void clearHist(); 
+  void clearHistList(); 
   virtual void doTest(); 
+  virtual void runCommand(std::string command); 
   virtual void doAnalysis();
   
   
   std::string getName() {return fName; }
   void resetDirectory();
-  std::map<std::string, std::string> getParameters() {return fParameters;} 
+  std::vector<std::pair<std::string, std::string> > getParameters() {return fParameters;} 
   bool getParameter(std::string parName, int &); 
   bool getParameter(std::string parName, float &); 
   void dumpParameters(); 
@@ -60,6 +65,7 @@ public:
 
   virtual bool setParameter(std::string parName, std::string sval); 
   
+  static std::string stripPos(std::string); 
   
   void testDone(); // *SIGNAL*
   void update();  // *SIGNAL*
@@ -77,7 +83,7 @@ protected:
 
   std::string           fName, fTestTip, fSummaryTip; 
 
-  std::map<std::string, std::string> fParameters;
+  std::vector<std::pair<std::string, std::string> > fParameters;
 
   std::vector<uint8_t>  fCacheVal; 
   std::string           fCacheDac;

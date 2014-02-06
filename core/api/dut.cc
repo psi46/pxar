@@ -111,6 +111,19 @@ std::vector< rocConfig > dut::getEnabledRocs() {
   return result;
 }
 
+std::vector< uint8_t > dut::getEnabledRocIDs() {
+
+  std::vector< uint8_t > result = std::vector<uint8_t>();
+
+  if (!_initialized) return result;
+
+  // search for rocs that have enable set
+  for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
+    if (it->enable) result.push_back(static_cast<uint8_t>(it - roc.begin()));
+  }
+  return result;
+}
+
 std::vector< tbmConfig > dut::getEnabledTbms() {
   std::vector< tbmConfig > result;
   if (!_initialized) return result;
@@ -361,6 +374,27 @@ void dut::testAllPixels(bool enable) {
       }
     }
   }
+}
+
+
+bool dut::updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
+    // Loop over all trimbit pixelConfigs we got as parameter:
+    for (std::vector<pixelConfig>::iterator it = trimming.begin(); it != trimming.end(); ++it){
+
+      // Find the pixel in the given ROC pixels vector:
+      std::vector<pixelConfig>::iterator px = std::find_if(roc.at(rocid).pixels.begin(),
+							   roc.at(rocid).pixels.end(),
+							   findPixelXY(it->column,it->row));
+      // Pixel was not found:
+      if(px == roc.at(0).pixels.end()) return false;
+      // Pixel was found, set the new trimming values:
+      px->trim = it->trim;
+    }
+    return true;
+  }
+  else { return false; }
 }
 
 bool dut::status() {

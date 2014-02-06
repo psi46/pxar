@@ -125,6 +125,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     fSelectedTbm = 0;
   }
   vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
+  updateSelection();
 
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
   vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
@@ -206,6 +207,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     fSelectRoc[0]->SetState(kButtonDown);
     fSelectedRoc = 0; 
   }
+  updateSelection();
   
   vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
 
@@ -470,11 +472,10 @@ void PixParTab::setTbmParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
       fGui->getApi()->setTbmReg(sdac, udac, itbm);
+      fConfigParameters->setTbmDac(sdac, udac, itbm);       
     }
   }
 
-  // FIXME UPDATE CONFIGPARAMETERS!
-  
 } 
 
 
@@ -509,7 +510,7 @@ void PixParTab::selectRoc(int iroc) {
   for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
     fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second)); 
   }
-
+  updateSelection();
 }
 
 
@@ -523,6 +524,7 @@ void PixParTab::selectTbm(int id) {
 
   LOG(logDEBUG) << "selectTbm: id = " << id;
   fSelectedTbm = id; 
+  updateSelection();
 }
 
 
@@ -552,11 +554,10 @@ void PixParTab::setRocParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " roc = " << iroc 
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
+      fConfigParameters->setRocDac(sdac, udac, iroc);       
     }
   }
 
-  // FIXME UPDATE CONFIGPARAMETERS!
- 
 } 
 
 
@@ -608,3 +609,9 @@ vector<int> PixParTab::getSelectedRocs() {
   return result;
 }
 
+
+// ----------------------------------------------------------------------
+void PixParTab::updateSelection() {
+  fConfigParameters->setSelectedRocs(getSelectedRocs());
+  fConfigParameters->setSelectedTbms(getSelectedTbms());
+}

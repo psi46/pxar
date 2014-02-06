@@ -11,6 +11,27 @@
 #include <map>
 #include <stdint.h>
 
+// PXAR Flags
+
+/** Flag to force the API loop expansion to do tests ROC-by-ROC instead of looping over
+ *  the full module in one go.
+ */
+#define FLAG_FORCE_SERIAL  0x0001
+
+/** Flag to send the calibration pulses through the sensor pad instead of directly
+ *  to the preamplifier.
+ */
+#define FLAG_CALS          0x0002
+
+/** Flag to enable cross-talk measurements by pulsing the neighbor row instead of the
+ *  row to be measured.
+ */
+#define FLAG_XTALK         0x0004
+
+/** Flag to define the threshold edge (falling/rising edge) for scans.
+ */
+#define FLAG_RISING_EDGE   0x0008
+
 /** Export classes from the DLL under WIN32 */
 #ifdef WIN32
 #define DLLEXPORT __declspec( dllexport )
@@ -318,6 +339,10 @@ namespace pxar {
      */
     bool setDAC(std::string dacName, uint8_t dacValue);
 
+    /** Get the valid range of a given DAC
+     */
+    uint8_t getDACRange(std::string dacName);
+
     /** Set a register value on a specific TBM of the DUT
      *
      *  The "tbmid" parameter can be used to select a specific TBM to program.
@@ -571,6 +596,8 @@ namespace pxar {
      */
     bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
+    uint32_t getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
+
     /** Status of the DAQ
      */
     bool _daq_running;
@@ -578,6 +605,11 @@ namespace pxar {
     /** Allocated memory size on the DTB for the currently running DAQ session
      */
     uint32_t _daq_buffersize;
+
+    /** Minimal Pattern Generator Loop period, calculated from the sum of
+     *  all PG commands
+     */
+    bool _daq_minimum_period;
 
   }; // class pxarCore
 
@@ -625,6 +657,10 @@ namespace pxar {
     /** Function returning the enabled ROC configs
      */
     std::vector< rocConfig > getEnabledRocs();
+
+    /** Function returning the Ids of all enabled ROCs in a uint8_t vector:
+     */
+    std::vector< uint8_t > getEnabledRocIDs();
 
     /** Function returning the enabled TBM configs
      */
@@ -700,6 +736,10 @@ namespace pxar {
     /** Function to enable all pixels on all ROCs:
      */
     void maskAllPixels(bool mask);
+
+    /** Function to update all trim bits of a given ROC.
+     */
+    bool updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid);
    
     /** Function to check the status of the DUT
      */

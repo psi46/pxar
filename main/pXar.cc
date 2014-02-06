@@ -8,8 +8,8 @@
 #include <TApplication.h> 
 #include <TFile.h> 
 #include <TROOT.h> 
+#include <TRint.h> 
 
-#include "SysCommand.hh"
 #include "ConfigParameters.hh"
 #include "PixTestParameters.hh"
 
@@ -26,8 +26,6 @@
 using namespace std;
 using namespace pxar; 
 
-void runFile(PixSetup &a, string cmdFile);
-void execute(PixSetup &a, SysCommand *command);
 void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
 void runTest(PixTest *b);
 
@@ -48,7 +46,7 @@ int main(int argc, char *argv[]){
 
 
   // -- command line arguments
-  string dir("."), cmdFile("cal.sys"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
+  string dir("."), cmdFile("nada"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
   bool doRunGui(false), 
     doRunScript(false), 
     noAPI(false), 
@@ -77,11 +75,19 @@ int main(int argc, char *argv[]){
   }
 
   struct stat buffer;   
-  if (stat("./rootlogon.C", &buffer) == 0) {
-    gROOT->ProcessLine(".x ./rootlogon.C;");
+  if (stat("rootlogon.C", &buffer) == 0) {
+    gROOT->ProcessLine(".x rootlogon.C");
   } else {
-    LOG(logINFO) << "no ./rootlogon.C found, live with the defaults provided";
+    LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
   }
+
+  if (doRunScript) {
+    TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
+    interpreter->ExecuteFile(cmdFile.c_str());
+    interpreter->Terminate(0);
+    LOG(logINFO) << "terminate and shut down"; 
+  }
+
 
   pxar::api *api(0);
   if (doUpdateFlash) {
@@ -137,8 +143,7 @@ int main(int argc, char *argv[]){
   }
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
-  SysCommand sysCommand;
-  PixSetup a(api, ptp, configParameters, &sysCommand);  
+  PixSetup a(api, ptp, configParameters);  
 
   LOG(logINFO)<< "pxar: dumping results into " << rootfile;
   TFile *rfile(0); 
@@ -150,16 +155,7 @@ int main(int argc, char *argv[]){
 
   if (doRunGui) {
     runGui(a, argc, argv); 
-  } else if (doRunScript) {
-    runFile(a, cmdFile);    
-  } else {
-    char * p;
-    do {
-      p = Getline("pxar> ");
-      if (sysCommand.Parse(p)) execute(a, &sysCommand);
-    } while ((strcmp(p,"exit\n") != 0) && (strcmp(p,"q\n") != 0));
-
-  }
+  } 
 
   LOG(logINFO) << "closing down 1";
   
@@ -178,38 +174,11 @@ int main(int argc, char *argv[]){
   return 0;
 }
 
-// ----------------------------------------------------------------------
-void runFile(PixSetup &a, string cmdFile) {
-  LOG(logINFO) << "Executing file " << cmdFile;
-  a.getSysCommand()->Read(cmdFile.c_str());
-  execute(a, a.getSysCommand());
-}
-
 
 // ----------------------------------------------------------------------
 void runTest(PixTest *b) {
   if (b) b->doTest();
   else LOG(logINFO) << "test not known";
-}
-
-
-// ----------------------------------------------------------------------
-void execute(PixSetup &a, SysCommand *sysCommand) {
-  PixTestFactory *factory = PixTestFactory::instance(); 
-  LOG(logINFO) << "sysCommand.toString(): " << sysCommand->toString();
-  if (sysCommand->TargetIsTest()) 
-    runTest(factory->createTest(sysCommand->toString(), &a)); 
-  else if (sysCommand->Keyword("gui")) 
-    runGui(a, 0, 0);
-  else if (sysCommand->TargetIsTB()) 
-    LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
-  //FIXME  a.getTBInterface()->Execute(sysCommand);
-  else if (sysCommand->TargetIsROC()) 
-    LOG(logINFO) << "FIXME  a.getTBInterface()->Execute(sysCommand);";
-  //FIXME      a.getTBInterface()->Execute(sysCommand);
-  else 
-    LOG(logINFO) << "dunno what to do";
-  //    else if (sysCommand->Keyword("gaincalibration"))  runTest(factory->createTest("gaincalibration", a)); 
 }
 
 // ----------------------------------------------------------------------

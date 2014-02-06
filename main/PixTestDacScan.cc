@@ -15,7 +15,7 @@ ClassImp(PixTestDacScan)
 
 // ----------------------------------------------------------------------
 PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
-  PixTest::init(a, name);
+  PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
@@ -35,27 +35,25 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if (0 == imap->first.compare(parName)) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      fParameters[parName] = sval;
       if (!parName.compare("Ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DAC")) {
 	fParDAC = sval; 
-	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DACLO")) {
 	fParLoDAC = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("DACHI")) {
 	fParHiDAC = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC << "<- from sval = " << sval;
+	setToolTips();
       }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 
@@ -153,7 +151,7 @@ void PixTestDacScan::bookHist(string name) {
 		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
 		    255, 0., 255.); 
       h1->SetMinimum(0.); 
-      setTitles(h1, "DAC", "# pixels"); 
+      setTitles(h1, Form("%s [DAC]", name.c_str()), "readouts");
       fHistList.push_back(h1); 
     }
    
@@ -170,6 +168,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+  fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
   //FIXME  clearHist();

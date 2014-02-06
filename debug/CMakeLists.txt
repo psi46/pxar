@@ -18,7 +18,8 @@ if(WIN32 AND FTD2XX_DLL)
   add_custom_command(TARGET testpxar POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${FTD2XX_DLL}
-    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR})
+    ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
   # copy FTD2XX DLL into bin directory when running INSTALL step
-  install(CODE "copy_files(\"${FTD2XX_DLL}\" \"${CMAKE_INSTALL_PREFIX}/bin\")")
+  # WARNING: the "FILE(COPY)" command requires CMake 2.8 or later (our compatability macro does not work in the install cmake script)
+  install(CODE "FILE(COPY \"${FTD2XX_DLL}\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/bin\")")
 endif()

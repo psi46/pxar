@@ -32,7 +32,6 @@ typedef char int8_t;
 
 #include "api.h"
 
-#include "SysCommand.hh"
 #include "ConfigParameters.hh"
 #include "PixTest.hh"
 #include "PixTestParameters.hh"
@@ -75,6 +74,7 @@ private:
     B_FILENAME = TESTNUMBER + 21,
     B_DIRECTORY, 
     B_EXIT,
+    B_WRITEALLFILES,
     B_POWER,
     B_HV
   };

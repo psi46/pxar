@@ -29,6 +29,7 @@ public:
   void statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected);
 
   virtual void handleButtons(Int_t id = -1); 
+  virtual void buttonClicked(); 
   virtual void setParameter(); 
 
   void update();
@@ -36,6 +37,7 @@ public:
   void clearCanvas();
   void nextHistogram();
   void previousHistogram();
+  void clearHistList();
   
 protected: 
 
@@ -45,8 +47,8 @@ protected:
   TGVerticalFrame 	*fV1;
   TGVerticalFrame 	*fV2;
 
-  map<std::string, void*>  fParTextEntries;
-  vector<std::string>      fParIds;
+  std::map<std::string, void*>  fParTextEntries;
+  std::vector<std::string>      fParIds;
 
   TRootEmbeddedCanvas  	*fEc1;
   TGStatusBar           *fStatusBar;

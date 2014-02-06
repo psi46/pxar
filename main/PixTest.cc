@@ -15,19 +15,6 @@ ClassImp(PixTest)
 // ----------------------------------------------------------------------
 PixTest::PixTest(PixSetup *a, string name) {
   //  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
-  init(a, name); 
-}
-
-// ----------------------------------------------------------------------
-PixTest::PixTest() {
-  //  LOG(logINFO) << "PixTest ctor()";
-  
-}
-
-
-// ----------------------------------------------------------------------
-void PixTest::init(PixSetup *a, string name) {
-  //  LOG(logINFO)  << "PixTest::init()";
   fPIF            = new PixInitFunc(); 
   fPixSetup       = a;
   fApi            = a->getApi(); 
@@ -38,10 +25,33 @@ void PixTest::init(PixSetup *a, string name) {
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
+  //  init(a, name); 
+}
 
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    setParameter(imap->first, imap->second); 
+// ----------------------------------------------------------------------
+PixTest::PixTest() {
+  //  LOG(logINFO) << "PixTest ctor()";
+  
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::init() {
+  //  LOG(logINFO)  << "PixTest::init()";
+
+  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  LOG(logDEBUG) << "    fParameters.size() = " << fParameters.size();
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
+    setParameter(fParameters[i].first, fParameters[i].second); 
   }
+}
+
+// ----------------------------------------------------------------------
+string PixTest::stripPos(string name) {
+  string::size_type m1 = name.find("::"); 
+  name = name.substr(m1+2); 
+  return name; 
 }
 
 // ----------------------------------------------------------------------
@@ -55,6 +65,13 @@ void PixTest::setToolTips() {
 // ----------------------------------------------------------------------
 void PixTest::bookHist(string name) {
   LOG(logDEBUG) << "Nothing done with " << name; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "Nothing done with " << command; 
 }
 
 
@@ -86,15 +103,14 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // ----------------------------------------------------------------------
 // result & 0x1 == 1 -> return maps 
 // result & 0x2 == 2 -> return distributions (projections) of maps
-// result & 0x4 == 4 -> return all pixel histograms with outlayer threshold/sigma
-// result & 0x8 == 8 -> return all pixel histograms 
+// result & 0x4 == 4 -> write to file: all pixel histograms with outlayer threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   vector<TH1*>          rmaps; 
-  vector<TH1*>          emaps; 
   vector<vector<TH1*> > maps; 
   vector<TH1*>          resultMaps; 
 
   TH1* h1(0); 
+  fDirectory->cd();
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
     rmaps.clear();
     for (unsigned int ic = 0; ic < 52; ++ic) {
@@ -111,18 +127,34 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   cache(dac); 
 
 
-  vector<pixel>  results;
   int ic, ir, iroc, val; 
-  for (int idac = dacmin; idac < dacmax; ++idac) {
-    results.clear(); 
-    fApi->setDAC(dac, idac);
-    results = fApi->getEfficiencyMap(0, ntrig);
-    for (unsigned int i = 0; i < results.size(); ++i) {
-      ic = results[i].column; 
-      ir = results[i].row; 
-      iroc = results[i].roc_id; 
-      val = results[i].value;
-      maps[iroc][ic*80+ir]->Fill(idac, val);
+  if (0) {
+    vector<pixel>  results;
+    for (int idac = dacmin; idac < dacmax; ++idac) {
+      LOG(logINFO) << dac << ": " << idac;
+      results.clear(); 
+      fApi->setDAC(dac, idac);
+      results = fApi->getEfficiencyMap(0, ntrig);
+      for (unsigned int i = 0; i < results.size(); ++i) {
+	ic = results[i].column; 
+	ir = results[i].row; 
+	iroc = results[i].roc_id; 
+	val = results[i].value;
+	maps[iroc][ic*80+ir]->Fill(idac, val);
+      }
+    }
+  }
+  if (1) {
+    vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig); 
+    for (unsigned int idac = 0; idac < results.size(); ++idac) {
+      int dac = results[idac].first; 
+      for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+	ic =   results[idac].second[ipix].column; 
+	ir =   results[idac].second[ipix].row; 
+	iroc = results[idac].second[ipix].roc_id; 
+	val =  results[idac].second[ipix].value;
+	maps[iroc][ic*80+ir]->Fill(dac, val);
+      }
     }
   }
 
@@ -141,49 +173,50 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  52, 0., 52., 80, 0., 80.); 
 
-    double averageStep(0.); 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
+      if (rmaps[i]->GetSumOfWeights() < 1) {
+	delete rmaps[i];
+	continue;
+      }
       bool ok = threshold(rmaps[i]); 
       if (!ok) {
 	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
-	emaps.push_back(rmaps[i]); 
       }
       ic = i/80; 
       ir = i%80; 
-      averageStep += fThreshold;
       h2->SetBinContent(ic+1, ir+1, fThreshold); 
       h2->SetBinError(ic+1, ir+1, fThresholdE); 
 
       h3->SetBinContent(ic+1, ir+1, fSigma); 
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
+
+      if (result & 0x4) {
+	cout << "add " << rmaps[i]->GetName() << endl;
+	fHistList.push_back(rmaps[i]);
+      }
+      // -- write all hists to file if requested
+      if (0 && result & 0x4) {
+	rmaps[i]->SetDirectory(fDirectory); 
+	rmaps[i]->Write();
+	delete rmaps[i];
+      }
     }
-    averageStep /= rmaps.size(); 
 
     if (result & 0x1) {
+      resultMaps.push_back(h2); 
       fHistList.push_back(h2); 
+      resultMaps.push_back(h3); 
       fHistList.push_back(h3); 
     }
 
+    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
     if (result & 0x2) {
-      TH1* d1 = distribution((TH2D*)h2, 100, 0., 100.); 
-      resultMaps.push_back(h2); 
+      TH1* d1 = distribution((TH2D*)h2, 100, 0., 100., zeroSuppressed); 
+      resultMaps.push_back(d1); 
       fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 100.); 
-      resultMaps.push_back(h2); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      resultMaps.push_back(d2); 
       fHistList.push_back(d2); 
-    }
-
-    if (result & 0x4) {
-      for (unsigned int i = 0; i < rmaps.size(); ++i) {
-	if (TMath::Abs(rmaps[i]->GetFunction("PIF_err")->GetParameter(0) - averageStep) > 10) {
-	  emaps.push_back(rmaps[i]); 
-	}
-      }
-      copy(emaps.begin(), emaps.end(), back_inserter(fHistList));
-    }
-
-    if (result & 0x8) {
-      copy(rmaps.begin(), rmaps.end(), back_inserter(fHistList));
     }
 
   }
@@ -229,66 +262,38 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
 
 
 // ----------------------------------------------------------------------
-vector<TH1*> PixTest::mapsVsDac(string name, string dac, int ntrig) {
+vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
-  int dacmin(0), dacmax(255); 
+  vector<TH2D*>  maps; 
+  vector<TH1*>   resultMaps; 
 
-  fDirectory->cd(); 
-  vector<TH1*> maps;
-  vector<TH2D*> maps2d;
-  vector<TH1D*> maps1d;  
-  vector<TH1D*> mapspix;
-  TH1D *h1(0); 
-  TH2D *h2(0); 
-
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig);
-
-  // -- book histograms (the return vector is not over rocs, but rather DAC values
-  for (unsigned int iroc = 0; iroc < fPixSetup->getConfigParameters()->getNrocs(); ++iroc){
-    h2 = new TH2D(Form("%s_thr_%s_C%d", name.c_str(), dac.c_str(), iroc), Form("%s_C%d", name.c_str(), iroc), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    maps.push_back(h2); 
-    maps2d.push_back(h2); 
-
-
-    h1 = new TH1D(Form("%s_hits_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  Form("%s_hits_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  256, 0., 256.); 
-    h1->SetMinimum(0.); 
-    setTitles(h1, "DAC", "# pixels"); 
-    maps.push_back(h1); 
-    maps1d.push_back(h1); 
-
-    if (fPIX.size() > 0) {
-      for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-	h1 = new TH1D(Form("%s_hits_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), fPIX[ip].first, fPIX[ip].second, iroc), 
-		      Form("%s_hits_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), fPIX[ip].first, fPIX[ip].second, iroc), 
-		      255, 0., 255.); 
-	h1->SetMinimum(0.); 
-	setTitles(h1, "DAC", "# pixels"); 
-	maps.push_back(h1); 
-	mapspix.push_back(h1); 
-      }
-    }
-
-  }
-
-
-  for (unsigned int id = 0; id < results.size(); ++id) {
-    for (unsigned int i = 0; results[id].second.size(); ++i) {
-      h2 = maps2d[results[id].second[i].roc_id];
-      if (h2) h2->SetBinContent(results[id].second[i].column +1, results[id].second[i].row + 1, 
-				static_cast<float>(results[id].second[i].value)/ntrig); 
-
-    }
+  TH1* h1(0); 
+  fDirectory->cd();
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+    h1 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+		  52, 0., 52., 80, 0., 80.);
+    resultMaps.push_back(h1); 
   }
   
-  // -- FIXME: decode results and fill histograms
-  // -- FIXME: add threshold finding
-
-  return maps; 
+  int ic, ir, iroc, val; 
+  LOG(logDEBUG) << "start threshold map for dac = " << dac; 
+  std::vector<pixel> results = fApi->getThresholdMap(dac, 0, ntrig);
+  LOG(logDEBUG) << "finished threshold map for dac = " << dac; 
+  for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
+    ic =   results[ipix].column; 
+    ir =   results[ipix].row; 
+    iroc = results[ipix].roc_id; 
+    val =  results[ipix].value;
+    //    LOG(logDEBUG) << resultMaps[iroc]->GetName() << " roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val;
+    ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
+  }
+  copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  if (h1) h1->Draw("colz");
+  PixTest::update(); 
+  
+  return resultMaps; 
 }
 
 
@@ -303,14 +308,13 @@ bool PixTest::setParameter(string parName, string value) {
 // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, int &ival) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    if (0 == imap->first.compare(parName)) {
+  //  FIXME This is likely not the intended behavior
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
+      ival = atoi(fParameters[i].first.c_str()); 
       break;
     }
-  }
-  if (found) {
-    ival = atoi(fParameters[parName].c_str()); 
   }
   return found; 
 }
@@ -319,14 +323,13 @@ bool PixTest::getParameter(std::string parName, int &ival) {
   // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, float &fval) {
   bool found(false);
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    if (0 == imap->first.compare(parName)) {
+  //  FIXME This is likely not the intended behavior
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
+      fval = atof(fParameters[i].first.c_str()); 
       break;
     }
-  }
-  if (found) {
-    fval = atof(fParameters[parName].c_str()); 
   }
   return found; 
 }
@@ -335,8 +338,9 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 // ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
   LOG(logINFO) << "Parameters for test" << getName();
-  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-    LOG(logINFO) << imap->first << ": " << imap->second;
+  //  FIXME This is likely not the intended behavior
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    LOG(logINFO) << fParameters[i].first << ": " << fParameters[i].second;
   }
 }
 
@@ -380,6 +384,7 @@ void PixTest::doAnalysis() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::nextHist() {
+  if (fHistList.size() == 0) return 0; 
   std::list<TH1*>::iterator itmp = fDisplayedHist;  
   ++itmp;
   if (itmp == fHistList.end()) {
@@ -394,6 +399,7 @@ TH1* PixTest::nextHist() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::previousHist() {
+  if (fHistList.size() == 0) return 0; 
   if (fDisplayedHist == fHistList.begin()) {
     // -- wrap around and point to last histogram in list
     fDisplayedHist = fHistList.end(); 
@@ -423,16 +429,18 @@ void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size,
 }
 
 // ----------------------------------------------------------------------
-void PixTest::clearHist() {
+void PixTest::clearHistList() {
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-    (*il)->Reset();
+    //    (*il)->Reset();
+    delete (*il);
   }
+  fHistList.clear();
 }
 
 
 // ----------------------------------------------------------------------
 int PixTest::simpleThreshold(TH1 *h) {
-  return (h->FindFirstBinAbove(0.5*h->GetMaximum()) - 1);
+  return h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum()));
 }
 
 
@@ -464,10 +472,11 @@ bool PixTest::threshold(TH1 *h) {
 
 
 // ----------------------------------------------------------------------
-TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax) {
+TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax, bool zeroSuppressed) {
   TH1D *h1 = new TH1D(Form("dist_%s", h2->GetName()), Form("dist_%s", h2->GetName()), nbins, xmin, xmax); 
   for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
     for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+      if (zeroSuppressed && h2->GetBinContent(ix+1, iy+1) < 1e-6) continue;
       h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
     }
   }
@@ -552,4 +561,38 @@ void PixTest::fillMap(TH2D *hmod, TH2D *hroc, int iroc) {
     }
   }
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::sparseRoc(int npix) {
+  
+  if (!fApi) return;
+
+  int cnt(0); 
+  if (npix < 11) {
+    for (int i = 0; i < npix; ++i) {
+      fApi->_dut->testPixel(5*i, 5*i, true);  
+    }
+    return;
+  } else if (npix < 101) {
+    for (int i = 0; i < 50; ++i) {
+      fApi->_dut->testPixel(i, 5 + 0.5*i, true);  
+      ++cnt;
+      fApi->_dut->testPixel(i, 15 + 0.5*i, true);  
+      ++cnt;
+      if (cnt == npix) return;
+    }
+  } else if (npix < 1001) {
+    for (int i = 0; i < 50; ++i) {
+      for (int j = 0; j < 10; ++j) {
+	fApi->_dut->testPixel(i, i + 2*j, true);  
+	fApi->_dut->testPixel(i, i + 5*j, true);  
+	++cnt; 
+	if (cnt == npix) return;
+      }
+    }
+  } else{
+    fApi->_dut->testAllPixels(true);
+  }
 }
