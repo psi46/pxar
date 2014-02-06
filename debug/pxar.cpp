@@ -397,8 +397,15 @@ int main(int argc, char* argv[]) {
 
     
     std::cout << "ASCII Sensor Efficiency Map:" << std::endl;
-    asciimap(mapdata,nTrig);
+    
+    enabledrocs = _api->_dut->getEnabledRocIDs();
+    for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
+      asciimap(mapdata,nTrig,(*it));
+      std::cout << std::endl << std::endl;
+    }
 
+    
+    
     // ##########################################################
 
 
