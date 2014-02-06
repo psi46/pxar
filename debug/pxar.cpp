@@ -9,6 +9,27 @@
 #include <cstring>
 #include <cstdio>
 
+void asciimap(std::vector<pxar::pixel> data, int nTrig) {
+
+  for(int column = 0; column < 52; column++) {
+    for(int row = 0; row < 80; row++) {
+      bool found = false;
+      for (std::vector< pxar::pixel >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
+	if(mapit->row == row && mapit->column == column) {
+	  if((int)mapit->value == nTrig) std::cout << "X";
+	  else if((int)mapit->value == 0) std::cout << "-";
+	  else if((int)mapit->value > nTrig) std::cout << "#";
+	  else std::cout << (int)mapit->value;
+	  found = true;
+	  break;
+	}
+      }
+      if(!found) std::cout << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
 void DecodeTbmHeader(unsigned int raw)
 {
   int evNr = raw >> 8;
@@ -276,6 +297,12 @@ int main(int argc, char* argv[]) {
       std::cout << "ROC " << (int)(*it) << ", ";
     }
     std::cout << std::endl;
+    std::vector<uint8_t> roci2c = _api->_dut->getEnabledRocI2Caddr();
+    std::cout << roci2c.size() << " ROCs are enabled, their I2C addresses aree:" << std::endl;
+    for(std::vector<uint8_t>::iterator it = roci2c.begin(); it != roci2c.end(); ++it) {
+      std::cout << "I2C " << (int)(*it) << ", ";
+    }
+    std::cout << std::endl;
 
     // ##########################################################
     // Call the first real test (pixel efficiency map):
@@ -359,21 +386,8 @@ int main(int argc, char* argv[]) {
 
     
     std::cout << "ASCII Sensor Efficiency Map:" << std::endl;
-    unsigned int row = 0;
-    for (std::vector< pxar::pixel >::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
-      
-      if((int)mapit->value == nTrig) std::cout << "X";
-      else if((int)mapit->value == 0) std::cout << "-";
-      else if((int)mapit->value > nTrig) std::cout << "#";
-      else std::cout << (int)mapit->value;
+    asciimap(mapdata,nTrig);
 
-      row++;
-      if(row >= 80) { 
-	row = 0;
-	std::cout << std::endl;
-      }
-    }
-    
     // ##########################################################
 
 
