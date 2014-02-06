@@ -586,13 +586,41 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 
 // ---------------- TEST FUNCTIONS ----------------------
 
-std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {
+std::vector<event*> hal::ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
+
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
+  uint16_t nTriggers = parameter.at(1);
+
+  LOG(logDEBUGHAL) << "Called ModuleCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Function will take care of " << rocids.size() << " ROCs with the I2C addresses:";
+  std::stringstream os;
+  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
+  LOG(logDEBUGHAL) << os.str();
+
+  // Prepare for data acquisition:
+  daqStart(deser160phase,nTBMs);
+
+  // Call the RPC command containing the trigger loop:
+  int status = _testboard->CalibrateModule(rocids, nTriggers, flags&FLAG_CALS);
+  LOG(logDEBUGHAL) << "Function returns: " << status;
+
+  daqStop();
+
+  std::vector<event*> data = daqAllEvents();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+
+  // Clear & reset the DAQ buffer on the testboard.
+  daqClear();
+
+  return data;
+}
+
+std::vector<event*> hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {
 
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(rocid) << ".";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -606,115 +634,21 @@ std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vect
 
   daqStop();
 
-  std::vector<pixel> data = daqAllPixels();
+  std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
 
-  // Fill the return data vector:
-  result->push_back(data);
-  return result;
+  return data;
 }
 
-std::vector< std::vector<pixel> >* hal::ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
-
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  uint16_t nTriggers = parameter.at(1);
-
-  LOG(logDEBUGHAL) << "Called ModuleCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Function will take care of " << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-
-  // Prepare for data acquisition:
-  daqStart(deser160phase,nTBMs);
-
-  // Call the RPC command containing the trigger loop:
-  int status = _testboard->CalibrateModule(rocids, nTriggers, flags&FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop();
-
-  std::vector<pixel> data = daqAllPixels();
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
-
-  // Clear & reset the DAQ buffer on the testboard.
-  daqClear();
-
-  // Fill the return data vector:
-  result->push_back(data);
-  return result;
-}
-
-std::vector< std::vector<pixel> >* hal::RocThresholdMap(uint8_t rocid, std::vector<int32_t> parameter) {
-
-  int32_t flags = parameter.at(0);
-  int32_t nTriggers = parameter.at(1);
-  int32_t dacReg = parameter.at(2);
-
-  LOG(logDEBUGHAL) << "Called RocThresholdMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<int16_t> threshold;
-  std::vector<uint32_t> address;
-
-  // Set the correct ROC I2C address:
-  _testboard->roc_I2cAddr(rocid);
-
-  // Call the RPC command:
-  int status;
-  // FIXME the non-fallback ThresholdMap is not yet exported as RPC command!
-  //if(_fallback_mode) { 
-  status = _testboard->fallback_ThresholdMap(nTriggers, dacReg, flags & FLAG_RISING_EDGE, flags & FLAG_XTALK, flags & FLAG_CALS, threshold, address);
-    //}
-  //else { status = _testboard->ThresholdMap(nTriggers, dacReg, flags & FLAG_RISING_EDGE, flags & FLAG_XTALK, flags & FLAG_CALS, threshold, address); }
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  size_t t = threshold.size();
-  size_t a = address.size();
-  LOG(logDEBUGHAL) << "Data size: threshold " << static_cast<int>(t)
-		   << ", address " << static_cast<int>(a);
-
-  // Check if all information has been transmitted:
-  // FIXME have no address data yet!
-  /*  if(a != t) {
-    // FIXME custom exception?
-    LOG(logCRITICAL) << "Data size not as expected!";
-    return result;
-  }*/
-
-  // Fill the return data vector:
-  std::vector<pixel> data;
-  uint8_t column = 0, row = 0;
-  for(std::vector<int16_t>::iterator it = threshold.begin(); it != threshold.end(); ++it) {
-
-    pixel newpixel;
-    newpixel.column = column;
-    newpixel.row = row;
-    newpixel.roc_id = rocid;
-    newpixel.value =  static_cast<int32_t>(*it);
-    data.push_back(newpixel);
-
-    row++;
-    if(row >= ROC_NUMROWS) {
-      column++;
-      row = 0;
-    }
-  }
-
-  result->push_back(data);
-  return result;
-}
-
-std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   int32_t flags = parameter.at(0);
   int32_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
  // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -728,54 +662,17 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t
 
   daqStop();
 
-  std::vector<pixel> data = daqAllPixels();
+  std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
 
-  // Fill the return data vector:
-  result->push_back(data);
-  return result;
+  return data;
 }
 
-std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  int32_t flags = parameter.at(0);
-  int32_t nTriggers = parameter.at(1);
-  int32_t dacReg = parameter.at(2);
-
-  // Fixed variables for now:
-  int32_t start = (flags & FLAG_RISING_EDGE ? 0 : 255);
-  int32_t step = (flags & FLAG_RISING_EDGE ? 1 : -1); // Step size: take fine grained for single pixel.
-  int32_t thrLevel = nTriggers/2; // Level defined as threshold: 50% response
-
-  LOG(logDEBUGHAL) << "Called PixelThresholdMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers, start " << start << " stepsize " << step << " register " << dacReg;
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<pixel> data;
-
-  // Set the correct ROC I2C address:
-  _testboard->roc_I2cAddr(rocid);
-
-  // Call the RPC command:
-  //FIXME trimming just set to 15?! Remove from NIOS function, should be set by HAL!
-  int32_t value = _testboard->PixelThreshold(column, row, start, step, thrLevel, nTriggers, dacReg, 
-					     flags & FLAG_XTALK, flags & FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << value;
-
-  pixel newpixel;
-  newpixel.column = column;
-  newpixel.row = row;
-  newpixel.roc_id = rocid;
-  newpixel.value =  value;
-
-  data.push_back(newpixel);
-  result->push_back(data);
-
-  return result;
-}
-
-std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   uint8_t dacreg = parameter.at(0);
   uint8_t dacmin = parameter.at(1);
@@ -787,8 +684,6 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax);
-
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
 
  // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -802,31 +697,17 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uin
 
   daqStop();
 
-  std::vector<pixel> data = daqAllPixels();
+  std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
 
   // Clear & reset the DAQ buffer on the testboard.
   daqClear();
 
-  // Read the vectors from the beginning, not from dacmin:
-  size_t it = 0;
-  for (int i = dacmin; i < dacmax; i++) {
-    std::vector<pixel> tmp;
-    tmp.push_back(data.at(it));
-
-    /*    // Decide over what we get back in the value field:
-    if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
-    else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)/nTriggers); }
-    data.push_back(newpixel);*/
-    result->push_back(tmp);
-    it++;
-  }
-
-  LOG(logDEBUGHAL) << "Result has size " << result->size();
-  return result;
+  return data;
 }
 
-std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   uint8_t dac1reg = parameter.at(0);
   uint8_t dac1min = parameter.at(1);
@@ -841,50 +722,25 @@ std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, 
   LOG(logDEBUGHAL) << "Scanning field DAC " << dac1reg << " " << dac1min << "-" << dac1max 
 		   << ", DAC " << dac2reg << " " << dac2min << "-" << dac2max;
 
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<int16_t> nReadouts;
-  std::vector<int32_t> PHsum;
+  // Prepare for data acquisition:
+  daqStart(deser160phase,nTBMs);
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
 
-  // Call the RPC command:
-  int status;
-  if(_fallback_mode) { status = _testboard->fallback_CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, nReadouts, PHsum); }
-  else { status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, flags & FLAG_CALS); }
+  // Call the RPC command containing the trigger loop:
+  int status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, flags & FLAG_CALS);
   LOG(logDEBUGHAL) << "Function returns: " << status;
 
-  size_t n = nReadouts.size();
-  size_t p = PHsum.size();
-  LOG(logDEBUGHAL) << "Data size: nReadouts " << (int)n
-		   << ", PHsum " << (int)p;
+  daqStop();
 
-  // Check if all information has been transmitted:
-  if(n != p || n != static_cast<size_t>((dac1max-dac1min)*(dac2max-dac2min))) {
-    // FIXME custom exception?
-    LOG(logCRITICAL) << "Data size not as expected!";
-    return result;
-  }
+  std::vector<event*> data = daqAllEvents();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
 
-  // Read the vectors from the beginning, not from dacmin:
-  size_t it = 0;
-  for (int i = dac1min; i < dac1max; i++) {
-    for(int j = dac2min; j < dac2max; j++) {
-      std::vector<pixel> data;
-      pixel newpixel;
-      newpixel.column = column;
-      newpixel.row = row;
-      newpixel.roc_id = rocid;
+  // Clear & reset the DAQ buffer on the testboard.
+  daqClear();
 
-      // Decide over what we get back in the value field:
-      if(flags & FLAG_INTERNAL_GET_EFFICIENCY) { newpixel.value =  static_cast<int32_t>(nReadouts.at(it)); }
-      else { newpixel.value =  static_cast<int32_t>(PHsum.at(it)/nTriggers); }
-      data.push_back(newpixel);
-      result->push_back(data);
-      it++;
-    }
-  }
-  return result;
+  return data;
 }
 
 // Testboard power switches:

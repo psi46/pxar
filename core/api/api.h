@@ -62,9 +62,9 @@ namespace pxar {
    *  addresses from the HAL class, used e.g. in loop expansion routines.
    *  Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
    */
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnPixel)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnRoc)(uint8_t rocid, std::vector<int32_t> parameter);
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnModule)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
+  typedef  std::vector<event*> (hal::*HalMemFnPixel)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+  typedef  std::vector<event*> (hal::*HalMemFnRoc)(uint8_t rocid, std::vector<int32_t> parameter);
+  typedef  std::vector<event*> (hal::*HalMemFnModule)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
 
 
   /** pxar API class definition
