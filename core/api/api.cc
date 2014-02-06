@@ -1057,8 +1057,8 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::PixelThresholdMap;
-  HalMemFnRoc rocfn = &hal::RocThresholdMap;
+  HalMemFnPixel pixelfn = &hal::PixelCalibrateDacScan;
+  HalMemFnRoc rocfn = NULL;
   HalMemFnModule modulefn = NULL;
 
   // Load the test parameters into vector
@@ -1070,11 +1070,11 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector< std::vector<pixel> >* data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
+  std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data);
-  delete data;
+
   return *result;
 }
   
