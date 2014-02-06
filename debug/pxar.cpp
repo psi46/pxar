@@ -317,6 +317,10 @@ int main(int argc, char* argv[]) {
     // Enable all pixels first:
     _api->_dut->testAllPixels(true);
 
+    //_api->_dut->maskAllPixels(true);
+    _api->_dut->maskPixel(0,0,false);
+    _api->_dut->maskPixel(51,79,false);
+
     // Head:
     for(int i = 25; i < 55; i++) _api->_dut->maskPixel(5,i,true);
 
@@ -385,7 +389,7 @@ int main(int argc, char* argv[]) {
     _api->_dut->maskPixel(17,28,true);
     _api->_dut->maskPixel(17,52,true);
     _api->_dut->maskPixel(17,53,true);
-    
+
     // Call the test:
     int nTrig = 10;
     std::vector< pxar::pixel > mapdata = _api->getEfficiencyMap(0,nTrig);
@@ -527,20 +531,20 @@ int main(int argc, char* argv[]) {
 		<< (int)mapit->column << "," << (int)mapit->row << " is " 
 		<< (int)mapit->value << std::endl;
     }
-
+    */
     // ##########################################################
 
 
     // ##########################################################
     // Do some Raw data acquisition:
-    
+    /*
     // All on!
     _api->_dut->testAllPixels(false);
     _api->_dut->maskAllPixels(false);
 
     for(int i = 0; i < 3; i++) {
       _api->_dut->testPixel(i,5,true);
-      //_api->_dut->testPixel(i,6,true);
+      _api->_dut->testPixel(i,6,true);
       //_api->_dut->testPixel(i,7,true);
       //_api->_dut->testPixel(i,8,true);
       //_api->_dut->testPixel(i,9,true);
