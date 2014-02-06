@@ -14,10 +14,8 @@ using namespace pxar;
 ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
-PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), 
-  fParDacLo(-1), fParDacHi(-1) {
-  PixTest::init(a, name);
+PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1) {
+  PixTest::init();
   init(); 
 }
 

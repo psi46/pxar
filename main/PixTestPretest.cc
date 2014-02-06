@@ -15,11 +15,9 @@ using namespace pxar;
 
 ClassImp(PixTestPretest)
 
-//------------------------------------------------------------------------------
-PixTestPretest::PixTestPretest( PixSetup *a, std::string name) :
-PixTest(a, name), fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), fParNtrig(-1)
-{
-  PixTest::init(a, name);
+// ----------------------------------------------------------------------
+PixTestPretest::PixTestPretest( PixSetup *a, std::string name) : PixTest(a, name), fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), fParNtrig(-1) {
+  PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestPretest ctor(PixSetup &a, string, TGTab *)";
   for( unsigned int i = 0; i < fPIX.size(); ++i) {
@@ -29,12 +27,13 @@ PixTest(a, name), fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), fParNtrig(-1
   }
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 PixTestPretest::PixTestPretest() : PixTest() {
   //  LOG(logINFO) << "PixTestPretest ctor()";
 }
 
-//------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------
 bool PixTestPretest::setParameter(string parName, string sval) {
   bool found(false);
   string str1, str2; 
@@ -43,20 +42,20 @@ bool PixTestPretest::setParameter(string parName, string sval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true;
-      sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
+      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
 
-      if( !parName.compare("targetIa") ) {
+      if (!parName.compare("targetIa")) {
 	fTargetIa = atoi(sval.c_str());  // [mA/ROC]
 	LOG(logDEBUG) << "target Ia " << fTargetIa << " mA/ROC";
       }
 
-      if( !parName.compare("noiseWidth") ) {
+      if (!parName.compare("noiseWidth")) {
 	fNoiseWidth = atoi(sval.c_str());  // half-width of Id noise peak
 	LOG(logDEBUG) << "Id vs VthrComp noise peak width "
 		      << fNoiseWidth << " DAC units";
       }
 
-      if( !parName.compare("noiseMargin") ) {
+      if (!parName.compare("noiseMargin")) {
 	fNoiseMargin = atoi(sval.c_str());  // safety margin below noise
 	LOG(logDEBUG) << "safety margin for VthrComp below noise "
 		      << fNoiseMargin << " DAC units";
@@ -85,9 +84,8 @@ bool PixTestPretest::setParameter(string parName, string sval) {
   return found;
 }
 
-//------------------------------------------------------------------------------
-void PixTestPretest::init()
-{
+// ----------------------------------------------------------------------
+void PixTestPretest::init() {
   setToolTips();
   fDirectory = gFile->GetDirectory( fName.c_str() );
   if( !fDirectory ) {
@@ -96,25 +94,27 @@ void PixTestPretest::init()
   fDirectory->cd();
 }
 
-//------------------------------------------------------------------------------
-void PixTestPretest::setToolTips()
-{
-  fTestTip = string( "scan and set CalDel using one pixel");
+
+// ----------------------------------------------------------------------
+void PixTestPretest::setToolTips() {
+  fTestTip = string( "Pretest: set Vana, VthrComp, and CalDel");
   fSummaryTip = string("summary plot to be implemented");
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 void PixTestPretest::bookHist(string name) {
+  fDirectory->cd(); 
+
+  LOG(logDEBUG) << "nothing done with " << name;
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 PixTestPretest::~PixTestPretest() {
   LOG(logDEBUG) << "PixTestPretest dtor";
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 void PixTestPretest::doTest() {
-
   fDirectory->cd();
   fHistList.clear();
   PixTest::update();
@@ -421,8 +421,7 @@ void PixTestPretest::setVthrCompId() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestPretest::setCalDel()
-{
+void PixTestPretest::setCalDel() {
   LOG(logINFO) << "PixTestPretest::setCalDel() start";
 
   fApi->_dut->testAllPixels(false);
