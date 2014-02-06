@@ -201,23 +201,19 @@ namespace pxar {
 
     /** Reading out the full undecoded DAQ buffer
      */
-    std::vector<rawEvent> daqAllRawEvents();
+    std::vector<rawEvent*> daqAllRawEvents();
 
     /** Read the next decoded event from the FIFO buffer
      */
-    event daqEvent();
+    event* daqEvent();
 
     /** Read the next raw (undecoded) event from the FIFO buffer
      */
-    rawEvent daqRawEvent();
+    rawEvent* daqRawEvent();
 
     /** Read all remaining decoded events from the FIFO buffer
      */
-    std::vector<event> daqAllEvents();
-
-    /** Read all remaining raw (undecoded) events from the FIFO buffer
-     */
-    std::vector<pixel> daqAllPixels();
+    std::vector<event*> daqAllEvents();
 
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
@@ -340,10 +336,6 @@ namespace pxar {
     dtbEventDecoder decoder2;
     dtbEventDecoder decoder3;
 
-    dtbEventToPixels pixelate0;
-    dtbEventToPixels pixelate1;
-    dtbEventToPixels pixelate2;
-    dtbEventToPixels pixelate3;
   };
 }
 #endif

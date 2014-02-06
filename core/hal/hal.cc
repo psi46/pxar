@@ -862,9 +862,9 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
   return true;
 }
 
-event hal::daqEvent() {
+event* hal::daqEvent() {
 
-  event current_event;
+  event* current_event = NULL;
 
   dataSink<event*> eventpump0, eventpump1, eventpump2, eventpump3;
   splitter0 >> decoder0 >> eventpump0;
@@ -877,18 +877,18 @@ event hal::daqEvent() {
   // (==events) on each pipe. Throw a critical if difference is found?
   try {
     // Read the next event from each of the pipes:
-    current_event = *eventpump0.Get();
+    current_event = eventpump0.Get();
     if(src1.isConnected()) {
-      event tmp = *eventpump1.Get(); 
-      current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+      event* tmp = eventpump1.Get(); 
+      current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
     if(src2.isConnected()) {
-      event tmp = *eventpump2.Get(); 
-      current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+      event* tmp = eventpump2.Get(); 
+      current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
     if(src3.isConnected()) {
-      event tmp = *eventpump3.Get(); 
-      current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+      event* tmp = eventpump3.Get(); 
+      current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
   }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -897,9 +897,9 @@ event hal::daqEvent() {
   return current_event;
 }
 
-std::vector<event> hal::daqAllEvents() {
+std::vector<event*> hal::daqAllEvents() {
 
-  std::vector<event> evt;
+  std::vector<event*> evt;
 
   dataSink<event*> eventpump0, eventpump1, eventpump2, eventpump3;
   splitter0 >> decoder0 >> eventpump0;
@@ -913,18 +913,18 @@ std::vector<event> hal::daqAllEvents() {
   try {
     while(1) {
       // Read the next event from each of the pipes:
-      event current_event = *eventpump0.Get();
+      event* current_event = eventpump0.Get();
       if(src1.isConnected()) {
-	event tmp = *eventpump1.Get(); 
-	current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+	event* tmp = eventpump1.Get(); 
+	current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
       if(src2.isConnected()) {
-	event tmp = *eventpump2.Get(); 
-	current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+	event* tmp = eventpump2.Get(); 
+	current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
       if(src3.isConnected()) {
-	event tmp = *eventpump3.Get(); 
-	current_event.pixels.insert(current_event.pixels.end(), tmp.pixels.begin(), tmp.pixels.end());
+	event* tmp = eventpump3.Get(); 
+	current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
       evt.push_back(current_event);
     }
@@ -935,37 +935,10 @@ std::vector<event> hal::daqAllEvents() {
   return evt;
 }
 
-std::vector<pixel> hal::daqAllPixels() {
+rawEvent* hal::daqRawEvent() {
 
-  dataSink<pixel*> pixelpump0, pixelpump1, pixelpump2, pixelpump3;
-  splitter0 >> decoder0 >> pixelate0 >> pixelpump0;
+  rawEvent* current_event = NULL;
 
-  if(src1.isConnected()) { splitter1 >> decoder1 >> pixelate1 >> pixelpump1; }
-  if(src2.isConnected()) { splitter2 >> decoder2 >> pixelate2 >> pixelpump2; }
-  if(src3.isConnected()) { splitter3 >> decoder3 >> pixelate3 >> pixelpump3; }
-
-  std::vector<pixel> px;
-
-  // FIXME in principle we expect the same number of triggers on
-  // each pipe, but not necessarily the same number of pixels!
-  try {
-    while(1) {
-      // Just push one pixel after another, from all the pipes:
-      px.push_back(*pixelpump0.Get());
-      if(src1.isConnected()) { px.push_back(*pixelpump1.Get()); }
-      if(src1.isConnected()) { px.push_back(*pixelpump2.Get()); }
-      if(src1.isConnected()) { px.push_back(*pixelpump3.Get()); }
-    }
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
-
-  return px;
-}
-
-rawEvent hal::daqRawEvent() {
-
-  rawEvent current_event;
   dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
   splitter0 >> rawpump0;
 
@@ -977,18 +950,18 @@ rawEvent hal::daqRawEvent() {
   // (==events) on each pipe. Throw a critical if difference is found?
   try {
     // Read the next event from each of the pipes:
-    current_event = *rawpump0.Get();
+    current_event = rawpump0.Get();
     if(src1.isConnected()) {
       rawEvent tmp = *rawpump1.Get();
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
     }
     if(src2.isConnected()) {
       rawEvent tmp = *rawpump2.Get();
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
     }
     if(src3.isConnected()) {
       rawEvent tmp = *rawpump3.Get();
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
     }
   }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
@@ -997,9 +970,9 @@ rawEvent hal::daqRawEvent() {
   return current_event;
 }
 
-std::vector<rawEvent> hal::daqAllRawEvents() {
+std::vector<rawEvent*> hal::daqAllRawEvents() {
 
-  std::vector<rawEvent> raw;
+  std::vector<rawEvent*> raw;
 
   dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
   splitter0 >> rawpump0;
@@ -1013,18 +986,18 @@ std::vector<rawEvent> hal::daqAllRawEvents() {
   try {
     while(1) {
       // Read the next event from each of the pipes:
-      rawEvent current_event = *rawpump0.Get();
+      rawEvent* current_event = rawpump0.Get();
       if(src1.isConnected()) {
 	rawEvent tmp = *rawpump1.Get();
-	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
       }
       if(src2.isConnected()) {
 	rawEvent tmp = *rawpump2.Get();
-	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
       }
       if(src3.isConnected()) {
 	rawEvent tmp = *rawpump3.Get();
-	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event.Add(tmp[record]); }
+	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
       }
       raw.push_back(current_event);
     }
