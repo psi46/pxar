@@ -38,23 +38,35 @@ namespace pxar {
   rawEvent* dtbEventSplitter::Read() {
     record.Clear();
 
-    if (GetLast() & 0x4000) Get();
+    // If last one had event end marker, get a new sample:
+    if (GetLast() & 0x4000) { Get(); }
+
+    // If new sample does not have start marker keep on reading until we find it:
     if (!(GetLast() & 0x8000)) {
       record.SetStartError();
       while (!(GetLast() & 0x8000)) Get();
     }
 
+    // Else keep reading and adding samples until we find any marker.
     do {
+      // If total event size is too big, break:
       if (record.GetSize() >= 40000) {
 	record.SetOverflow();
 	break;
       }
+
+      // FIXME Very first event starts with 0xC - which srews up empty event detection here!
+      // If the event start sample is also event end sample, write and quit:
+      if((GetLast() & 0xc000) == 0xc000) { break; }
+
       record.Add(GetLast() & 0x0fff);
-    
     } while ((Get() & 0xc000) == 0);
-  
+
+    // Check if the last read sample has event end marker:
     if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
+    // Else set event end error:
     else record.SetEndError();
+
     /*
     LOG(logDEBUGHAL) << "-------------------------";
     std::stringstream os;
@@ -83,7 +95,7 @@ namespace pxar {
       }
     }
 
-    //LOG(logDEBUGHAL) << roc_event << " at " << &roc_event;
+    //LOG(logDEBUGHAL) << roc_event;
 
     return &roc_event;
   }
