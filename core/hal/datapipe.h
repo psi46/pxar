@@ -24,6 +24,8 @@ namespace pxar {
     // The inheritor must define ReadLast and Read:
     virtual T ReadLast() = 0;
     virtual T Read() = 0;
+    virtual bool ReadState() = 0;
+    virtual uint8_t ReadChannel() = 0;
   public:
     virtual ~dataSource() {}
     template <class S> friend class dataSink;
@@ -38,6 +40,8 @@ namespace pxar {
     ~nullSource() {}
     T ReadLast() { throw dpNotConnected(); }
     T Read()     { return ReadLast();     }
+    bool ReadState() { return false; }
+    uint8_t ReadChannel() { throw dpNotConnected(); }
     template <class TO> friend class dataSink;
   };
 
@@ -53,6 +57,8 @@ namespace pxar {
   dataSink() : src(&null) {}
     T GetLast() { return src->ReadLast(); }
     T Get() { return src->Read(); }
+    bool GetState() { return src->ReadState(); }
+    uint8_t GetChannel() { return src->ReadChannel(); }
     void GetAll() { while (true) Get(); }
     template <class TI, class TO> friend void operator >> (dataSource<TI> &, dataSink<TO> &); 
     template  <class TI, class TO> friend dataSource<TO>& operator >> (dataSource<TI> &in, dataPipe<TI,TO> &out);
@@ -100,6 +106,7 @@ namespace pxar {
     uint32_t dtbRemainingSize;
     uint8_t  dtbState;
     bool connected;
+    bool tbm_present;
 
     // --- data buffer
     uint16_t lastSample;
@@ -116,9 +123,17 @@ namespace pxar {
       if(!connected) throw dpNotConnected();
       return lastSample;
     }
+    bool ReadState() {
+      if(!connected) throw dpNotConnected();
+      return tbm_present;
+    }
+    uint8_t ReadChannel() {
+      if(!connected) throw dpNotConnected();
+      return channel;
+    }
   public:
-  dtbSource(CTestboard * src, uint8_t daqchannel, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), lastSample(0x4000), pos(0) {};
+  dtbSource(CTestboard * src, uint8_t daqchannel, bool module, bool endlessStream)
+    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), tbm_present(module), lastSample(0x4000), pos(0) {};
   dtbSource() : connected(false) {};
     bool isConnected() { return connected; };
 
@@ -131,8 +146,17 @@ namespace pxar {
   // DTB data event splitter
   class dtbEventSplitter : public dataPipe<uint16_t, rawEvent*> {
     rawEvent record;
-    rawEvent* Read();
+    rawEvent* Read() {
+      if(GetState()) return SplitDeser400();
+      else return SplitDeser160();
+    };
     rawEvent* ReadLast() { return &record; }
+    bool ReadState() { return GetState(); }
+    uint8_t ReadChannel() { return GetChannel(); }
+
+    // The splitter routines:
+    rawEvent* SplitDeser160();
+    rawEvent* SplitDeser400();
   public:
     dtbEventSplitter() {}
   };
@@ -140,8 +164,16 @@ namespace pxar {
   // DTB data decoding class
   class dtbEventDecoder : public dataPipe<rawEvent*, event*> {
     event roc_event;
-    event* Read();
+    event* Read() {
+      if(GetState()) return DecodeDeser400();
+      else return DecodeDeser160();
+    };
     event* ReadLast() { return &roc_event; }
+    bool ReadState() { return GetState(); }
+    uint8_t ReadChannel() { return GetChannel(); }
+
+    event* DecodeDeser160();
+    event* DecodeDeser400();
   };
 }
 #endif
