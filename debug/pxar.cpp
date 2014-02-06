@@ -265,7 +265,14 @@ int main(int argc, char* argv[]) {
   // Create new API instance:
   try {
     _api = new pxar::api("*",argv[1] ? argv[1] : "DEBUG");
-  
+
+    // Allow CLI parameter flashing:
+    if(argc > 2 && strcmp(argv[2],"-f") == 0) {
+      if(argc > 3) _api->flashTB(argv[3]);
+      delete _api;
+      return 0;
+    }
+
     // Initialize the testboard:
     if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {
       std::cout << "Something is fishy. We probably need to flash the DTB..." << std::endl;
