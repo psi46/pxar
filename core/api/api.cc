@@ -1172,8 +1172,13 @@ std::vector<rawEvent> api::daqGetRawBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs
-  std::vector<rawEvent> data = _hal->daqAllRawEvents();
-  
+  std::vector<rawEvent> data = std::vector<rawEvent>();
+  std::vector<rawEvent*> buffer = _hal->daqAllRawEvents();
+
+  // Dereference all vector entries and give data back:
+  for(std::vector<rawEvent*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
+    data.push_back(**it);
+  }  
   // We read out everything, reset the buffer:
   // Reset all active channels:
   _hal->daqClear();
@@ -1184,7 +1189,13 @@ std::vector<event> api::daqGetEventBuffer() {
 
   // Reading out all data from the DTB and returning the decoded event buffer.
   // Select the right readout channels depending on the number of TBMs
-  std::vector<event> data = _hal->daqAllEvents();
+  std::vector<event> data = std::vector<event>();
+  std::vector<event*> buffer = _hal->daqAllEvents();
+
+  // Dereference all vector entries and give data back:
+  for(std::vector<event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
+    data.push_back(**it);
+  }
   
   // We read out everything, reset the buffer:
   // Reset all active channels:
@@ -1198,7 +1209,7 @@ event api::daqGetEvent() {
   if(!daqStatus()) { return event(); }
 
   // Return the next decoded event from the FIFO buffer:
-  return _hal->daqEvent();
+  return (*_hal->daqEvent());
 }
 
 rawEvent api::daqGetRawEvent() {
@@ -1207,7 +1218,7 @@ rawEvent api::daqGetRawEvent() {
   if(!daqStatus()) { return rawEvent(); }
 
   // Return the next raw data record from the FIFO buffer:
-  return _hal->daqRawEvent();
+  return (*_hal->daqRawEvent());
 }
 
 bool api::daqStop() {
