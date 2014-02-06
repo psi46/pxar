@@ -48,7 +48,7 @@ public:
   TH2D* moduleMap(std::string histname); 
   void fillMap(TH2D *hmod, TH2D *hroc, int iroc); 
 
-  void clearHist(); 
+  void clearHistList(); 
   virtual void doTest(); 
   virtual void runCommand(std::string command); 
   virtual void doAnalysis();

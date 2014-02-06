@@ -308,7 +308,7 @@ bool PixTest::setParameter(string parName, string value) {
 // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, int &ival) {
   bool found(false);
-  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
@@ -323,6 +323,7 @@ bool PixTest::getParameter(std::string parName, int &ival) {
   // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, float &fval) {
   bool found(false);
+  //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
@@ -337,6 +338,7 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 // ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
   LOG(logINFO) << "Parameters for test" << getName();
+  //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     LOG(logINFO) << fParameters[i].first << ": " << fParameters[i].second;
   }
@@ -382,6 +384,7 @@ void PixTest::doAnalysis() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::nextHist() {
+  if (fHistList.size() == 0) return 0; 
   std::list<TH1*>::iterator itmp = fDisplayedHist;  
   ++itmp;
   if (itmp == fHistList.end()) {
@@ -396,6 +399,7 @@ TH1* PixTest::nextHist() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::previousHist() {
+  if (fHistList.size() == 0) return 0; 
   if (fDisplayedHist == fHistList.begin()) {
     // -- wrap around and point to last histogram in list
     fDisplayedHist = fHistList.end(); 
@@ -425,10 +429,12 @@ void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size,
 }
 
 // ----------------------------------------------------------------------
-void PixTest::clearHist() {
+void PixTest::clearHistList() {
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-    (*il)->Reset();
+    //    (*il)->Reset();
+    delete (*il);
   }
+  fHistList.clear();
 }
 
 

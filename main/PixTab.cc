@@ -121,8 +121,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame->AddFrame(update, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   TGTextButton * clear = new TGTextButton(hFrame, "Clear");
-  clear->SetToolTipText("clear canvas");
-  clear->Connect("Clicked()", "PixTab", this, "clearCanvas()");
+  clear->SetToolTipText("clear canvas and resest histogram list");
+  clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
 
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));
@@ -278,11 +278,15 @@ void PixTab::setParameter() {
 	       << " to value " << svalue;
 
   fTest->setParameter(fParIds[id], svalue); 
-
-  if (1) fTest->dumpParameters();
   updateToolTips();
 } 
 
+
+// ----------------------------------------------------------------------
+void PixTab::clearHistList() {
+  clearCanvas();
+  fTest->clearHistList();
+}
 
 // ----------------------------------------------------------------------
 void PixTab::clearCanvas() {
@@ -357,9 +361,11 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   const char *text0, *text2;
   text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
+
   if (event == kKeyPress) {
     LOG(logDEBUG) << "key pressed?"; 
   }
+
   //     sprintf(text1, "%d,%d", px, py);
   //   fStatusBar->SetText(text1, 1);
   if (selected->InheritsFrom(TH1::Class())) {
