@@ -70,7 +70,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
       tset = new TGTextButton(hFrame, amap[i].first.c_str(), cnt);
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
-      tset->SetToolTipText("run this test");
+      tset->SetToolTipText("run this subtest");
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
