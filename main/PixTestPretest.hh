@@ -9,22 +9,24 @@ public:
   PixTestPretest(PixSetup *, std::string);
   PixTestPretest();
   virtual ~PixTestPretest();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
   void setToolTips();
-  void runCommand(std::string); 
-  void bookHist(std::string); 
-  
-  void doTest(); 
-  void setCalDel();
+  void runCommand(std::string);
+  void bookHist(std::string);
+
+  void doTest();
   void setVana();
   void setVthrCompId();
-  void saveDacs(); 
+  void setCalDel();
+  void saveDacs();
 
 private:
 
-  int     fParNtrig; 
-  int     fTargetIa; 
+  int     fTargetIa;
+  int     fNoiseWidth;
+  int     fNoiseMargin;
+  int     fParNtrig;
 
   ClassDef(PixTestPretest, 1);
 

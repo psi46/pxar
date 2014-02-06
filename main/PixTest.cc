@@ -15,19 +15,6 @@ ClassImp(PixTest)
 // ----------------------------------------------------------------------
 PixTest::PixTest(PixSetup *a, string name) {
   //  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
-  init(a, name); 
-}
-
-// ----------------------------------------------------------------------
-PixTest::PixTest() {
-  //  LOG(logINFO) << "PixTest ctor()";
-  
-}
-
-
-// ----------------------------------------------------------------------
-void PixTest::init(PixSetup *a, string name) {
-  //  LOG(logINFO)  << "PixTest::init()";
   fPIF            = new PixInitFunc(); 
   fPixSetup       = a;
   fApi            = a->getApi(); 
@@ -38,8 +25,22 @@ void PixTest::init(PixSetup *a, string name) {
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
+  //  init(a, name); 
+}
+
+// ----------------------------------------------------------------------
+PixTest::PixTest() {
+  //  LOG(logINFO) << "PixTest ctor()";
+  
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::init() {
+  //  LOG(logINFO)  << "PixTest::init()";
 
   //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  LOG(logDEBUG) << "    fParameters.size() = " << fParameters.size();
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
     setParameter(fParameters[i].first, fParameters[i].second); 
@@ -299,7 +300,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
 // ----------------------------------------------------------------------
 bool PixTest::setParameter(string parName, string value) {
-  //   LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
+  LOG(logDEBUG) << " PixTest::setParameter wrong function" << parName << " " << value;
   return false;
 }
 
@@ -307,7 +308,7 @@ bool PixTest::setParameter(string parName, string value) {
 // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, int &ival) {
   bool found(false);
-  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
+  //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
@@ -322,6 +323,7 @@ bool PixTest::getParameter(std::string parName, int &ival) {
   // ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, float &fval) {
   bool found(false);
+  //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
@@ -336,6 +338,7 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 // ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
   LOG(logINFO) << "Parameters for test" << getName();
+  //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     LOG(logINFO) << fParameters[i].first << ": " << fParameters[i].second;
   }
@@ -381,6 +384,7 @@ void PixTest::doAnalysis() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::nextHist() {
+  if (fHistList.size() == 0) return 0; 
   std::list<TH1*>::iterator itmp = fDisplayedHist;  
   ++itmp;
   if (itmp == fHistList.end()) {
@@ -395,6 +399,7 @@ TH1* PixTest::nextHist() {
 
 // ----------------------------------------------------------------------
 TH1* PixTest::previousHist() {
+  if (fHistList.size() == 0) return 0; 
   if (fDisplayedHist == fHistList.begin()) {
     // -- wrap around and point to last histogram in list
     fDisplayedHist = fHistList.end(); 
@@ -424,10 +429,12 @@ void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size,
 }
 
 // ----------------------------------------------------------------------
-void PixTest::clearHist() {
+void PixTest::clearHistList() {
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-    (*il)->Reset();
+    //    (*il)->Reset();
+    delete (*il);
   }
+  fHistList.clear();
 }
 
 

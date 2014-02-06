@@ -13,7 +13,7 @@ ClassImp(PixTestTbm)
 
 // ----------------------------------------------------------------------
 PixTestTbm::PixTestTbm(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
-  PixTest::init(a, name);
+  PixTest::init();
   init(); 
   LOG(logINFO) << "PixTestTbm ctor(PixSetup &a, string, TGTab *)";
 }
