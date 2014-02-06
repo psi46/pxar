@@ -83,7 +83,7 @@ namespace pxar {
       }
     }
 
-    //LOG(logDEBUGHAL) << roc_event;
+    //LOG(logDEBUGHAL) << roc_event << " at " << &roc_event;
 
     return &roc_event;
   }

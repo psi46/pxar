@@ -864,7 +864,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
 event* hal::daqEvent() {
 
-  event* current_event = NULL;
+  event* current_event = new event();
 
   dataSink<event*> eventpump0, eventpump1, eventpump2, eventpump3;
   splitter0 >> decoder0 >> eventpump0;
@@ -876,8 +876,8 @@ event* hal::daqEvent() {
   // FIXME check carefully: in principle we expect the same number of triggers
   // (==events) on each pipe. Throw a critical if difference is found?
   try {
-    // Read the next event from each of the pipes:
-    current_event = eventpump0.Get();
+    // Read the next event from each of the pipes, copy the data:
+    *current_event = *eventpump0.Get();
     if(src1.isConnected()) {
       event* tmp = eventpump1.Get(); 
       current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
@@ -913,7 +913,7 @@ std::vector<event*> hal::daqAllEvents() {
   try {
     while(1) {
       // Read the next event from each of the pipes:
-      event* current_event = eventpump0.Get();
+      event* current_event = new event(*eventpump0.Get());
       if(src1.isConnected()) {
 	event* tmp = eventpump1.Get(); 
 	current_event->pixels.insert(current_event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
@@ -937,7 +937,7 @@ std::vector<event*> hal::daqAllEvents() {
 
 rawEvent* hal::daqRawEvent() {
 
-  rawEvent* current_event = NULL;
+  rawEvent* current_event = new rawEvent();
 
   dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
   splitter0 >> rawpump0;
@@ -949,8 +949,8 @@ rawEvent* hal::daqRawEvent() {
   // FIXME check carefully: in principle we expect the same number of triggers
   // (==events) on each pipe. Throw a critical if difference is found?
   try {
-    // Read the next event from each of the pipes:
-    current_event = rawpump0.Get();
+    // Read the next event from each of the pipes, copy the data:
+    *current_event = *rawpump0.Get();
     if(src1.isConnected()) {
       rawEvent tmp = *rawpump1.Get();
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
@@ -986,7 +986,7 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
   try {
     while(1) {
       // Read the next event from each of the pipes:
-      rawEvent* current_event = rawpump0.Get();
+      rawEvent* current_event = new rawEvent(*rawpump0.Get());
       if(src1.isConnected()) {
 	rawEvent tmp = *rawpump1.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_event->Add(tmp[record]); }
