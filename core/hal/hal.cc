@@ -835,7 +835,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,true);
+  src0 = dtbSource(_testboard,0,(nTBMs > 0),true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
@@ -845,7 +845,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,true);
+    src1 = dtbSource(_testboard,1,(nTBMs > 0),true);
     src1 >> splitter1;
 
 
@@ -854,12 +854,12 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,true);
+      src2 = dtbSource(_testboard,2,(nTBMs > 0),true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,true);
+      src3 = dtbSource(_testboard,3,(nTBMs > 0),true);
       src3 >> splitter3;
     }
 
