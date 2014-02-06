@@ -655,7 +655,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -712,7 +712,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
   std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,internal_flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -763,7 +763,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<event*> data = expandLoop(pixelfn, rocfn, modulefn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -1379,8 +1379,9 @@ std::vector<pixel>* api::repackMapData (std::vector<event*> data, uint32_t flags
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax){
+std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+
   uint8_t currentDAC = dacMin;
 
   LOG(logDEBUGAPI) << "Packing range " << static_cast<int>(dacMin) << "-" << static_cast<int>(dacMax) << ", data has " << data.size() << " entries.";
