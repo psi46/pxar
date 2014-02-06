@@ -32,7 +32,6 @@ typedef char int8_t;
 
 #include "api.h"
 
-#include "SysCommand.hh"
 #include "ConfigParameters.hh"
 #include "PixTest.hh"
 #include "PixTestParameters.hh"
