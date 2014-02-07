@@ -465,7 +465,7 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Try threshold for a single pixel:
-    
+    /*
     _api->_dut->testAllPixels(false);
     _api->_dut->testPixel(5,5,true);
 
@@ -486,7 +486,7 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Do some Raw data acquisition:
-    /*
+
     // All on!
     _api->_dut->testAllPixels(false);
     _api->_dut->maskAllPixels(false);
@@ -503,23 +503,21 @@ int main(int argc, char* argv[]) {
     }
 
     _api->daqStart(pg_setup);
-    _api->daqTrigger(5);
+    uint32_t daq_triggers = 5;
+
+    _api->daqTrigger(daq_triggers);
+
+    //_api->daqTriggerLoop(10);
+    //sleep(2);
     _api->daqStop();
-    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+    std::vector<pxar::event> daqdat = _api->daqGetEventBuffer();
 
-    // Run the helper function:
-    if(module) Decode(daqdat);
-
-    std::cout << "Raw DAQ data blob:" << std::endl;
-    for(std::vector<uint16_t>::iterator it = daqdat.begin();
-	it != daqdat.end();
-	++it) {
-      if(((*it) & 0xF000) > 0x4000) std::cout << std::endl;
-      if((*it) == 0x0080) std::cout << std::endl;
-      std::cout << std::hex << std::setw(4) << std::setfill('0') << (*it) << " ";
+    std::cout << "Event number read from board: " << daqdat.size() << std::endl;
+    std::cout << "DAQ data blob:" << std::endl;
+    for(std::vector<pxar::event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+      std::cout << (*it) << std::endl;
     }
-    std::cout << std::dec << std::endl;
-    
+
     // ##########################################################
 
     _api->HVoff();
