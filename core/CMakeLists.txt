@@ -5,9 +5,15 @@ INCLUDE_DIRECTORIES(rpc usb hal utils)
 FILE(GLOB LIB_SOURCE_FILES 
   "rpc/*.cpp"
   "api/*.cc"
-  "hal/*.cc"
   "utils/*.cc"
   )
+
+option(BUILD_dummydtb "Replace HAL with dummy implementation ('virtual DTB')?" OFF)
+IF(BUILD_dummydtb)
+  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/dummy_hal.cc")
+ELSE(BUILD_dummydtb)
+  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/hal.cc")
+ENDIF(BUILD_dummydtb)
 
 FILE(GLOB LIB_HEADER_FILES
   "rpc/*.h"
