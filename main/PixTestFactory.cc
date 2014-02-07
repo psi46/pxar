@@ -17,6 +17,7 @@
 #include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
 #include "PixTestPretest.hh"
+#include "PixTestDaq.hh"
 #include "PixTestGainCalibration.hh"
 
 using namespace std;
@@ -62,5 +63,6 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
+  if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
   return 0; 
 }

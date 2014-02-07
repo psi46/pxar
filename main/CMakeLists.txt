@@ -15,6 +15,7 @@ PixTab.cc
 PixParTab.cc
 PixMonitor.cc
 PixTest.cc
+PixTestDaq.cc
 PixTestCurrentVsDac.cc
 PixTestAlive.cc
 PixTestTbm.cc
@@ -37,10 +38,11 @@ PixInitFunc.hh
 PixUtil.hh
 PixGui.hh
 PixSetup.hh
+PixTab.hh
 PixParTab.hh
 PixMonitor.hh
-PixTab.hh
 PixTest.hh
+PixTestDaq.hh
 PixTestCurrentVsDac.hh
 PixTestAlive.hh
 PixTestTbm.hh
@@ -51,8 +53,8 @@ PixTestScurves.hh
 PixTestTrim.hh
 PixTestSetup.hh
 PixTestPretest.hh
-PixTestFactory.hh
 PixTestGainCalibration.hh
+PixTestFactory.hh
 PixTestParameters.hh
 )
 

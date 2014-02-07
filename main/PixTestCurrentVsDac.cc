@@ -19,7 +19,7 @@ ClassImp(PixTestCurrentVsDac)
 PixTestCurrentVsDac::PixTestCurrentVsDac( PixSetup *a, std::string name )
 : PixTest(a, name), fParDAC("nada")
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
 }
 

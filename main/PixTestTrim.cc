@@ -14,11 +14,8 @@ using namespace pxar;
 ClassImp(PixTestTrim)
 
 // ----------------------------------------------------------------------
-PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParVcal(-1), fParNtrig(-1), 
-  fParVthrCompLo(-1), fParVthrCompHi(-1),
-  fParVcalLo(-1), fParVcalHi(-1) {
-  PixTest::init(a, name);
+PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), fParVcal(-1), fParNtrig(-1), fParVthrCompLo(-1), fParVthrCompHi(-1), fParVcalLo(-1), fParVcalHi(-1) {
+  PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
@@ -110,8 +107,6 @@ void PixTestTrim::bookHist(string name) {
   fDirectory->cd(); 
 
   LOG(logDEBUG) << "nothing done with " << name;
-  //  fHistList.clear();
-
 }
 
 

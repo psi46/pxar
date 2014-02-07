@@ -13,16 +13,15 @@ using namespace pxar;
 ClassImp(PixTestPhDacScan)
 
 //------------------------------------------------------------------------------
-PixTestPhDacScan::PixTestPhDacScan( PixSetup *a, std::string name )
-: PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1)
-{
-  PixTest::init( a, name );
+PixTestPhDacScan::PixTestPhDacScan( PixSetup *a, std::string name ) : PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
+  PixTest::init();
   init();
-
-  for( size_t i = 0; i < fPIX.size(); ++i )
+  
+  for (size_t i = 0; i < fPIX.size(); ++i)  {
     LOG(logDEBUG) << "  setting fPIX" << i
-		 <<  " ->" << fPIX[i].first
-		 << "/" << fPIX[i].second;
+		  <<  " ->" << fPIX[i].first
+		  << "/" << fPIX[i].second;
+  }
 }
 
 //------------------------------------------------------------------------------
