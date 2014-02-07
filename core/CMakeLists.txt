@@ -12,7 +12,7 @@ option(BUILD_dummydtb "Replace HAL with dummy implementation ('virtual DTB')?" O
 IF(BUILD_dummydtb)
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/dummy_hal.cc")
 ELSE(BUILD_dummydtb)
-  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/hal.cc")
+  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/hal.cc" "hal/datapipe.cc")
 ENDIF(BUILD_dummydtb)
 
 FILE(GLOB LIB_HEADER_FILES
