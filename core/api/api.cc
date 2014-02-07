@@ -1527,7 +1527,7 @@ bool pxarCore::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > 
   return true;
 }
 
-uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
 
   uint32_t delay_sum = 0;
 
