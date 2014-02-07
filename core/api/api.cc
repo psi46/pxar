@@ -1310,6 +1310,13 @@ std::vector< std::vector<pixel> >* api::expandLoop(HalMemFnPixel pixelfn, HalMem
       return NULL;
     }
   } // single roc fnc
+
+  // check that we ended up with data
+  if (!data){
+    LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
+    return NULL;
+  }
+
   // now repack the data to join the individual ROC segments and return
   std::vector< std::vector<pixel> >* compactdata = compactRocLoopData(data, _dut->getNEnabledRocs());
 
