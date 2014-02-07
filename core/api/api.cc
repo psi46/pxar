@@ -1385,10 +1385,6 @@ std::vector<event*> api::condenseTriggers(std::vector<event*> data, uint16_t nTr
     packed.push_back(evt);
   }
 
-  for(std::vector<event*>::iterator eventit = packed.begin(); eventit!= packed.end(); ++eventit) {
-    LOG(logDEBUGAPI) << **eventit;
-  }
-
   return packed;
 }
 
