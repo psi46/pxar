@@ -96,7 +96,23 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.enable
         def __set__(self, enable): self.thisptr.enable = enable
 
-    
+
+cdef class DUT:
+    cdef dut *thisptr # hold the C++ instance
+    def __cinit__(self):
+        self.thisptr = new dut()
+    def __dealloc__(self):
+        del self.thisptr
+    cdef c_clone(self, dut* d):
+        del self.thisptr
+        thisptr = d
+    def status(self):
+        return self.thisptr.status()
+    def testAllPixels(self, bool enable, rocid = None):
+        if rocid is not None:
+            self.thisptr.testAllPixels(enable,rocid)
+        else:
+            self.thisptr.testAllPixels(enable)
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -104,6 +120,11 @@ cdef class PyPxarCore:
         self.thisptr = new pxarCore(usbId, logLevel)
     def __dealloc__(self):
         del self.thisptr
+    property dut:
+        def __get__(self):
+            d = DUT()
+            d.c_clone(self.thisptr._dut)
+            return d
     def initTestboard(self,sig_delays, power_settings, pg_setup):
         """ Initializer method for the testboard
         Parameters are dictionaries in the form {"name":value}:
@@ -192,7 +213,7 @@ cdef class PyPxarCore:
         cdef vector[pair[uint8_t, vector[pixel]]] r
         r = self.thisptr.getPulseheightVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
         for d in range(r.size()):
-            print "test"
+            print d
         return "test"
 #    def vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):

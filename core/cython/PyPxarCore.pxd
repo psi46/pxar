@@ -42,8 +42,50 @@ cdef extern from "api.h" namespace "pxar":
         tbmConfig()
 
 cdef extern from "api.h" namespace "pxar":
+    cdef cppclass dut:
+        dut()
+        info()
+        int32_t getNEnabledPixels(uint8_t rocid)
+        int32_t getNMaskedPixels(uint8_t rocid)
+        int32_t getNEnabledTbms()
+        int32_t getNEnabledRocs()
+        vector[pixelConfig] getEnabledPixels(size_t rocid)
+        vector[rocConfig] getEnabledRocs()
+        vector[uint8_t] getEnabledRocIDs()
+        vector[tbmConfig] getEnabledTbms()
+        bool getPixelEnabled(uint8_t column, uint8_t row)
+        bool getAllPixelEnable()
+        bool getModuleEnable()
+        pixelConfig getPixelConfig(size_t rocid, uint8_t column, uint8_t row)
+        uint8_t getDAC(size_t rocId, string dacName)
+        vector[pair[uint8_t,uint8_t]] getDACs(size_t rocId)
+        void printDACs(size_t rocId)
+        void setROCEnable(size_t rocId, bool enable)
+        void setTBMEnable(size_t tbmId, bool enable)
+        void testPixel(uint8_t column, uint8_t row, bool enable)
+        void testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid)
+        void maskPixel(uint8_t column, uint8_t row, bool mask)
+        void maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid)
+        void testAllPixels(bool enable)
+        void testAllPixels(bool enable, uint8_t rocid)
+        void maskAllPixels(bool mask, uint8_t rocid)
+        void maskAllPixels(bool mask)
+        bool updateTrimBits(vector[pixelConfig] trimming, uint8_t rocid)
+        bool status()
+        bool _initialized
+        bool _programmed
+        vector[bool] getEnabledColumns(size_t rocid)
+        vector[rocConfig] roc
+        vector[tbmConfig] tbm
+        map[uint8_t,uint8_t] sig_delays
+        double va, vd, ia, id
+        vector[pair[uint16_t,uint8_t]] pg_setup
+
+
+cdef extern from "api.h" namespace "pxar":
     cdef cppclass pxarCore:
         pxarCore(string usbId, string logLevel) except +
+        dut* _dut
         string getVersion()
         bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, 
                            vector[pair[string, double] ] power_settings, 
@@ -54,9 +96,9 @@ cdef extern from "api.h" namespace "pxar":
                      vector[vector[pair[string,uint8_t]]] rocDACs,
                      vector[vector[pixelConfig]] rocPixels) except +
 
-        bool programDUT()
+        bool programDUT() except +
         bool status()
-        bool flashTB(string filename)
+        bool flashTB(string filename) except +
         double getTBia()
         double getTBva()
         double getTBid()
@@ -65,27 +107,27 @@ cdef extern from "api.h" namespace "pxar":
         void HVon()
         void Poff()
         void Pon()
-        bool SignalProbe(string probe, string name)
-        bool setDAC(string dacName, uint8_t dacValue, uint8_t rocid)
-        bool setDAC(string dacName, uint8_t dacValue)
-        uint8_t getDACRange(string dacName)
-        bool setTbmReg(string regName, uint8_t regValue, uint8_t tbmid)
-        bool setTbmReg(string regName, uint8_t regValue)
-        vector[pair[uint8_t, vector[pixel]]] getPulseheightVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers) 
-        vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers)
-        vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers)
-        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers)
-        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getEfficiencyVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers)
-        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getThresholdVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers)
-        vector[pixel] getPulseheightMap(uint16_t flags, uint32_t nTriggers)
-        vector[pixel] getEfficiencyMap(uint16_t flags, uint32_t nTriggers)
-        vector[pixel] getThresholdMap(string dacName, uint16_t flags, uint32_t nTriggers)
-        int32_t getReadbackValue(string parameterName)
-        bool daqStart(vector[pair[uint16_t, uint8_t]] pg_setup)
-        bool daqStatus()
-        void daqTrigger(uint32_t nTrig)
-        void daqTriggerLoop(uint16_t period)
-        vector[uint16_t] daqGetBuffer()
-        vector[pixel] daqGetEvent()
-        bool daqStop()
+        bool SignalProbe(string probe, string name) except +
+        bool setDAC(string dacName, uint8_t dacValue, uint8_t rocid) except +
+        bool setDAC(string dacName, uint8_t dacValue) except +
+        uint8_t getDACRange(string dacName) except +
+        bool setTbmReg(string regName, uint8_t regValue, uint8_t tbmid) except +
+        bool setTbmReg(string regName, uint8_t regValue) except +
+        vector[pair[uint8_t, vector[pixel]]] getPulseheightVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers)  except +
+        vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers) except +
+        vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers) except +
+        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) except +
+        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getEfficiencyVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) except +
+        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getThresholdVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) except +
+        vector[pixel] getPulseheightMap(uint16_t flags, uint32_t nTriggers) except +
+        vector[pixel] getEfficiencyMap(uint16_t flags, uint32_t nTriggers) except +
+        vector[pixel] getThresholdMap(string dacName, uint16_t flags, uint32_t nTriggers) except +
+        int32_t getReadbackValue(string parameterName) except +
+        bool daqStart(vector[pair[uint16_t, uint8_t]] pg_setup) except +
+        bool daqStatus() except +
+        void daqTrigger(uint32_t nTrig) except +
+        void daqTriggerLoop(uint16_t period) except +
+        vector[uint16_t] daqGetBuffer() except +
+        vector[pixel] daqGetEvent() except +
+        bool daqStop() except +
 

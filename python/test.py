@@ -79,7 +79,9 @@ dacs = {
 pixels = list()
 for column in range(0, 51):
     for row in range(0, 79):
-        pixels.append(PixelConfig(column,row,15))
+        p = PixelConfig(column,row,15)
+        #p.enable = True
+        pixels.append(p)
 
 print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
 
@@ -90,3 +92,10 @@ for rocs in range(0,15):
     rocDacs.append(dacs)
 
 api.initDUT("tbm08",tbmDACs,"psi46digv2",rocDacs,rocPixels)
+
+print "pixel 35 is " + str(pixels[35].enable)
+
+api.dut.status()
+api.dut.testAllPixels(True)
+print " enabled all pixels"
+api.getPulseheightVsDAC("vcal", 15, 32)
