@@ -77,7 +77,7 @@ namespace pxar {
       os << " " << std::setw(4) << std::setfill('0') << std::hex 
 	 << static_cast<uint16_t>(record[i]);
     LOG(logDEBUGHAL) << os.str();
-*/
+    */
     return &record;
   }
 
@@ -114,13 +114,14 @@ namespace pxar {
     // Else set event end error:
     else record.SetEndError();
 
-
+    /*
     LOG(logDEBUGHAL) << "-------------------------";
     std::stringstream os;
     for (unsigned int i=0; i<record.GetSize(); i++)
       os << " " << std::setw(4) << std::setfill('0') << std::hex 
 	 << static_cast<uint16_t>(record[i]);
     LOG(logDEBUGHAL) << os.str();
+    */
 
     return &record;
   }
