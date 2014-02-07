@@ -1349,7 +1349,9 @@ std::vector<event*> api::condenseTriggers(std::vector<event*> data, uint16_t nTr
 
   std::vector<event*> packed;
   for(std::vector<event*>::iterator eventit = data.begin(); eventit!= data.end(); eventit += nTriggers) {
+
     event * evt = new event();
+    std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
 
     for(std::vector<event*>::iterator it = eventit; it != eventit+nTriggers; ++it) {
 
@@ -1363,17 +1365,30 @@ std::vector<event*> api::condenseTriggers(std::vector<event*> data, uint16_t nTr
 	// Pixel is known:
 	if(px != evt->pixels.end()) {
 	  if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { px->value += 1; }
-	  else { px->value += pixit->value; }
+	  else { px->value += pixit->value; pxcount[*px]++; }
 	}
 	// Pixel is new:
 	else {
 	  if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { pixit->value = 1; }
+	  else { pxcount.insert(std::make_pair(*pixit,1)); }
 	  evt->pixels.push_back(*pixit);
 	}
       }
     }
+
+    // Divide the pulseheight by the number of triggers received:
+    if(!(flags&FLAG_INTERNAL_GET_EFFICIENCY)) {
+      for(std::vector<pixel>::iterator px = evt->pixels.begin(); px != evt->pixels.end(); ++px) {
+	px->value/=pxcount[*px];
+      }
+    }
     packed.push_back(evt);
   }
+
+  for(std::vector<event*>::iterator eventit = packed.begin(); eventit!= packed.end(); ++eventit) {
+    LOG(logDEBUGAPI) << **eventit;
+  }
+
   return packed;
 }
 
