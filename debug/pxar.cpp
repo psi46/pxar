@@ -55,6 +55,35 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
   std::cout << "|" << std::endl;
 }
 
+void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, int nTrig, uint8_t roc = 0) {
+
+  std::cout << std::endl;
+  for(int trig = nTrig; trig >= 0; trig--) {
+    std::cout << "|";
+
+    for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
+
+      bool found = false;
+      if(!mapit->second.empty()) {
+	for(std::vector<pxar::pixel>::iterator it = mapit->second.begin(); it != mapit->second.end(); ++it) {
+	  if(it->roc_id == roc) {
+	    if(it->value == trig) { std::cout << "o"; found = true; }
+	    else if(it->value > trig) { std::cout << "."; found = true; }
+	    break;
+	  }
+	}
+      }
+      else if(trig == 0) { found = true; std::cout << "o"; }
+      if(!found) std::cout << " ";
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "|";
+  for(size_t trig = 0; trig < data.size(); trig++) { std::cout << "_"; }
+  std::cout << std::endl << std::endl;
+}
+
 void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
 
   for(int column = 0; column < 52; column++) {
@@ -382,22 +411,24 @@ int main(int argc, char* argv[]) {
     
 
     // Call the test:
-    unsigned nTrig2 = 10;
+    unsigned nTrig2 = 20;
     std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
-      effscandata = _api->getEfficiencyVsDAC("caldel", 70, 150, 0, nTrig2);
+      effscandata = _api->getEfficiencyVsDAC("caldel", 80, 170, 0, nTrig2);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata.size() << std::endl;
     
     // Loop over dac values:
-    for(std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = effscandata.begin();
+    /*    for(std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = effscandata.begin();
 	dacit != effscandata.end(); ++dacit) {
       std::cout << "  dac value: " << (int)dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
       // Loop over fired pixels and show value
       for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
 	std::cout << "    ROC " << (int)pixit->roc_id << "  pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
       }
-    }
+      }*/
+
+    asciihisto(effscandata,nTrig2,0);
 
     // ##########################################################
     
