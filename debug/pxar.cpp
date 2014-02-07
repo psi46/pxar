@@ -9,6 +9,52 @@
 #include <cstring>
 #include <cstdio>
 
+void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > data, int nTrig, uint8_t roc = 0) {
+
+  uint8_t dac1lower = data.front().first;
+  uint8_t dac2lower = data.front().second.first;
+
+  uint8_t dac1higher = data.back().first;
+  uint8_t dac2higher = data.back().second.first;
+
+  std::cout << std::setw(4) << " ";
+  for(int i = 0; i < (dac2higher-dac2lower+3); i++) { std::cout << "_"; }
+  std::cout << std::endl;
+
+  for(int dac1 = dac1lower; dac1 <= dac1higher; dac1++) {
+
+    std::cout << std::setw(4);
+    if(dac1%10 == 0) std::cout << static_cast<int>(dac1);
+    else std::cout << " ";
+    std::cout << "|";
+
+    for(int dac2 = dac2lower; dac2 <= dac2higher; dac2++) {
+
+      bool found = false;
+      for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = data.begin(); dacit != data.end(); ++dacit) {
+    
+	if((dacit->first == dac1) && (dacit->second.first == dac2) && (!dacit->second.second.empty())) {
+	  for (std::vector< pxar::pixel >::iterator pixit = dacit->second.second.begin(); pixit != dacit->second.second.end(); ++pixit) {
+	    if(pixit->roc_id == roc) {
+	      found = true;
+	      int value = dacit->second.second.at(0).value;
+	      if(value == nTrig) std::cout << "X";
+	      else if(value > nTrig) std::cout << "#";
+	      else std::cout << value;
+	    }
+	  }
+	}
+      }
+      if(!found) std::cout << " ";
+    }
+    std::cout <<  "|" << std::endl;
+  }
+
+  std::cout << std::setw(5) << "|";
+  for(int i = 0; i < (dac2higher-dac2lower+1); i++) { std::cout << "_"; }
+  std::cout << "|" << std::endl;
+}
+
 void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
 
   for(int column = 0; column < 52; column++) {
