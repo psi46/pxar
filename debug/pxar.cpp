@@ -59,7 +59,8 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
 
   std::cout << std::endl;
   for(int trig = nTrig; trig >= 0; trig--) {
-    std::cout << "|";
+    if(trig%5 == 0) std::cout << std::setw(2) << trig << " |";
+    else std::cout << std::setw(2) << " " << " |";
 
     for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 
@@ -79,8 +80,28 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
     std::cout << std::endl;
   }
   
-  std::cout << "|";
-  for(size_t trig = 0; trig < data.size(); trig++) { std::cout << "_"; }
+  std::cout << "   |";
+  for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
+  std::cout << std::endl << "    ";
+  uint8_t daclower = data.front().first;
+  uint8_t dachigher= data.back().first;
+
+  // Axis ticks
+  for(size_t dac = daclower; dac <= dachigher; dac++) { 
+    if(dac%10 == 0) { std::cout << "'"; }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << "    ";
+
+  // Axis labels
+  for(size_t dac = daclower; dac <= dachigher; dac++) { 
+    if(dac%10 == 0) {
+      std::cout << dac;
+      if(dac > 10) dac++;
+      if(dac > 100) dac++;
+    }
+    else std::cout << " ";
+  }
   std::cout << std::endl << std::endl;
 }
 
