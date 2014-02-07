@@ -370,12 +370,12 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Call the second real test (a DAC scan for some pixels):
-    
+
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
     //    _api->_dut->testPixel(34,12,true);
     //    _api->_dut->testPixel(33,12,true);
-    //    _api->_dut->testPixel(34,11,true);
+    _api->_dut->testPixel(34,11,true);
     _api->_dut->testPixel(14,12,true);
 
     _api->_dut->info();
@@ -398,46 +398,29 @@ int main(int argc, char* argv[]) {
 	std::cout << "    ROC " << (int)pixit->roc_id << "  pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
       }
     }
-    
+
     // ##########################################################
     
     // ##########################################################
     // Call the third real test (a DACDAC scan for some pixels):
-    
+
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
     _api->_dut->testPixel(33,12,true);
 
     // Call the test:
-    nTrig = 10;
-    int lower = 40;
-    int limit = 120;
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("caldel", lower, limit, "vthrcomp", lower, limit, 0, nTrig);
-    //std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("vbias_sf", 0, limit, "vcomp", 0, limit, 0, nTrig);
+    int nTrig3 = 10;
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > effscan2ddata = _api->getEfficiencyVsDACDAC("caldel", 60, 180, "vthrcomp", 0, 140, 0, nTrig3);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscan2ddata.size() << std::endl;
-    
-    int dac = lower;
-    std::cout << "VthrComp vs. CalDel:" << std::endl;
-    for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = effscan2ddata.begin(); dacit != effscan2ddata.end(); ++dacit) {
-      
-      if(dacit->second.second.empty()) {
-	std::cout << "-";
-	continue;
-      }
-      int value = dacit->second.second.at(0).value;
-      if(value == nTrig) std::cout << "X";
-      else if(value == 0) std::cout << " ";
-      else if(value > nTrig) std::cout << "#";
-      else std::cout << value;
 
-      dac++;
-      if(dac >= limit) { 
-	dac = lower;
-	std::cout << std::endl;
-      }
+    for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator it = effscan2ddata.begin(); it != effscan2ddata.end(); ++it) {
+      //if(!it->second.second.empty()) 
+      //	std::cout << "DAC1 " << (int)it->first << " DAC2 " << (int)it->second.first << " " << it->second.second.size() << " pixels." << std::endl;
     }
+
+    asciitornado(effscan2ddata,nTrig,0);
     
     // ##########################################################
 
