@@ -202,104 +202,129 @@ void hal::RocClearCalibrate(uint8_t /*rocid*/) {
 
 // ---------------- TEST FUNCTIONS ----------------------
 
-std::vector< std::vector<pixel> >* hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> /*parameter*/) {
+std::vector<event*> hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> /*parameter*/) {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<pixel> data;
-  for (int i=0;i<42;i++) {
+
+  std::vector<event*> result;
+  for (int i=0; i < 42; i++) {
+    event * newevt = new event();
     pixel newpixel;
     newpixel.column = rand()%51;
     newpixel.row = rand()%71;
     newpixel.roc_id = rocid;
     newpixel.value = 42;
-    data.push_back(newpixel);
+    newevt->pixels.push_back(newpixel);
+    result.push_back(newevt);
   }
-  result->push_back(data);
   return result;
 }
 
-std::vector< std::vector<pixel> >* hal::RocThresholdMap(uint8_t rocid, std::vector<int32_t> /*parameter*/) {
+std::vector<event*> hal::ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> /*parameter*/) {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<pixel> data;
-  for (int i=0;i<42;i++) {
+
+  std::vector<event*> result;
+  for (int i=0; i < 42; i++) {
+    event * newevt = new event();
+    for(std::vector<uint8_t>::iterator rocid = rocids.begin(); rocid != rocids.end(); rocid++) {
+      pixel newpixel;
+      newpixel.column = rand()%51;
+      newpixel.row = rand()%71;
+      newpixel.roc_id = *rocid;
+      newpixel.value = 42;
+      newevt->pixels.push_back(newpixel);
+    }
+    result.push_back(newevt);
+  }
+  return result;
+}
+
+std::vector<event*> hal::RocThresholdMap(uint8_t rocid, std::vector<int32_t> /*parameter*/) {
+  LOG(logDEBUGHAL) << "Dummy HAL method called.";
+
+  std::vector<event*> result;
+  for (int i=0; i < 42; i++) {
+    event * newevt = new event();
     pixel newpixel;
     newpixel.column = rand()%51;
     newpixel.row = rand()%71;
     newpixel.roc_id = rocid;
     newpixel.value = 42;
-    data.push_back(newpixel);
+    newevt->pixels.push_back(newpixel);
+    result.push_back(newevt);
   }
-  result->push_back(data);
   return result;
 }
 
-std::vector< std::vector<pixel> >* hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> /*parameter*/) {
+std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> /*parameter*/) {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<pixel> data;
+
+  std::vector<event*> result;
+  event * newevt = new event();
   pixel newpixel;
   newpixel.column = column;
   newpixel.row = row;
   newpixel.roc_id = rocid;
   newpixel.value = 42;
-  data.push_back(newpixel);
-  result->push_back(data);
+  newevt->pixels.push_back(newpixel);
+  result.push_back(newevt);
   return result;
 }
 
-std::vector< std::vector<pixel> >* hal::PixelThresholdMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> /*parameter*/) {
+std::vector<event*> hal::PixelThresholdMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> /*parameter*/) {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  std::vector<pixel> data;
+
+  std::vector<event*> result;
+  event * newevt = new event();
   pixel newpixel;
   newpixel.column = column;
   newpixel.row = row;
   newpixel.roc_id = rocid;
   newpixel.value = 42;
-  data.push_back(newpixel);
-  result->push_back(data);
+  newevt->pixels.push_back(newpixel);
+  result.push_back(newevt);
   return result;
 }
 
-std::vector< std::vector<pixel> >* hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
   int32_t dacmin = parameter.at(1);
   int32_t dacmax = parameter.at(2);
 
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  std::vector<event*> result;
   for (int i=dacmin;i<dacmax;i++){
-    std::vector<pixel> data;
+    event * newevt = new event();
     pixel newpixel;
     newpixel.column = column;
     newpixel.row = row;
     newpixel.roc_id = rocid;
     newpixel.value = 42;
-    data.push_back(newpixel);
-    result->push_back(data);
+    newevt->pixels.push_back(newpixel);
+    result.push_back(newevt);
   }
   return result;
 }
 
-std::vector< std::vector<pixel> >* hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
   int32_t dac1min = parameter.at(1);
   int32_t dac1max = parameter.at(2);
   int32_t dac2min = parameter.at(4);
   int32_t dac2max = parameter.at(5);
 
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
+  uint16_t nTriggers = parameter.at(7);
+
+  std::vector<event*> result;
 
   for (int i=dac1min;i<dac1max;i++){
-    for (int k=dac1min;k<dac1max;k++){
-      std::vector<pixel> data;
+    for (int k=dac2min;k<dac2max;k++){
+      event * newevt = new event();
       pixel newpixel;
       newpixel.column = column;
       newpixel.row = row;
       newpixel.roc_id = rocid;
       newpixel.value = 42;
-      data.push_back(newpixel);
-      result->push_back(data);
+      newevt->pixels.push_back(newpixel);
+      for(size_t t = 0; t < nTriggers; t++) { result.push_back(newevt); }
     }
   }
   return result;
@@ -362,22 +387,34 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
-bool hal::daqStop(uint8_t /*nTBMs*/) {
+bool hal::daqStop() {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
   return true;
 }
 
-std::vector<uint16_t> hal::daqRead(uint8_t /*nTBMs*/) {
-  LOG(logDEBUGHAL) << "Dummy HAL method called.";
-  return std::vector<uint16_t>() ;
-}
-
-std::vector<uint16_t> * hal::daqReadChannel(uint8_t /*channel*/) {
-  LOG(logDEBUGHAL) << "Dummy HAL method called.";
-  return new std::vector<uint16_t>;
-}
-
-bool hal::daqReset(uint8_t /*nTBMs*/) {
+bool hal::daqClear() {
   LOG(logDEBUGHAL) << "Dummy HAL method called.";
   return true;
+}
+
+rawEvent* hal::daqRawEvent() {
+  LOG(logDEBUGHAL) << "Dummy HAL method called.";
+  rawEvent * evt = new rawEvent();
+  return evt;
+}
+
+event* hal::daqEvent() {
+  LOG(logDEBUGHAL) << "Dummy HAL method called.";
+  event * evt = new event();
+  return evt;
+}
+
+std::vector<rawEvent*> hal::daqAllRawEvents() {
+  LOG(logDEBUGHAL) << "Dummy HAL method called.";
+  return std::vector<rawEvent*>();
+}
+
+std::vector<event*> hal::daqAllEvents() {
+  LOG(logDEBUGHAL) << "Dummy HAL method called.";
+  return std::vector<event*>();
 }
