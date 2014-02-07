@@ -449,7 +449,12 @@ int main(int argc, char* argv[]) {
       }
       }*/
 
-    asciihisto(effscandata,nTrig2,0);
+    enabledrocs = _api->_dut->getEnabledRocIDs();
+    for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
+      std::cout << "CalDel Can for ROC " << (int)(*it) << std::endl;
+      asciihisto(effscandata,nTrig2,0);
+      std::cout << std::endl;
+    }
 
     // ##########################################################
     
