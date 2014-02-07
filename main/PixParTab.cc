@@ -14,6 +14,7 @@
 
 #include "PixParTab.hh"
 #include "log.h"
+#include "dictionaries.h"
 
 
 using namespace std;
@@ -115,20 +116,32 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   // -- TBM Parameters
   TGCompositeFrame *bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
-  for (unsigned int i = 0; i < fConfigParameters->getNtbms(); ++i) {
+  //xx  for (unsigned int i = 0; i < fConfigParameters->getNtbms(); ++i) {
+  vector<vector<pair<string, uint8_t> > > cmap;
+  for (int i = 0; i < fGui->getApi()->_dut->getNTbms(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectTbm.push_back(tcb); 
+    vector<pair<uint8_t, uint8_t> > tmap = fGui->getApi()->_dut->getTbmDACs(i);
+    vector<pair<string, uint8_t> > smap = fConfigParameters->vReg2Name(tmap, TBM_REG);
+    cmap.push_back(smap); 
   }
   if (fSelectTbm.size() > 0) {
-    fSelectTbm[0]->SetState(kButtonDown);
     fSelectedTbm = 0;
+    // -- by default enable all present
+    for (unsigned itbm = 0; itbm < fSelectTbm.size(); ++itbm) {
+      fSelectTbm[itbm]->SetState(kButtonDown);
+    }
   }
   vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, 1, 1, 1, 1));  
   updateSelection();
 
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
-  vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
+
+  
+  //xx  vector<vector<pair<string, uint8_t> > >   cmap = fConfigParameters->getTbmDacs();
+
+
   if (cmap.size() > 0) {
 
     unsigned int firsttbm(0); 
@@ -140,13 +153,14 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     }
 
     
-    for (unsigned itbm = 0; itbm < fConfigParameters->getNtbms(); ++itbm) {
+    //xx    for (unsigned itbm = 0; itbm < fConfigParameters->getNtbms(); ++itbm) {
+    for (int itbm = 0; itbm < fGui->getApi()->_dut->getNTbms(); ++itbm) {
       
       map<string, uint8_t>  parids;
       amap = cmap[itbm];  
       
       for (unsigned int i = 0; i < amap.size(); ++i) {
-	if (itbm == firsttbm) {
+	if (static_cast<unsigned int>(itbm) == firsttbm) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
 	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[i].first; 
@@ -197,15 +211,22 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
   
   bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
-  for (unsigned int i = 0; i < fConfigParameters->getNrocs(); ++i) {
+  cmap.clear();  //xx = fConfigParameters->getRocDacs();
+  for (int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectRoc.push_back(tcb); 
+    vector<pair<uint8_t, uint8_t> > tmap = fGui->getApi()->_dut->getDACs(i);
+    vector<pair<string, uint8_t> > smap = fConfigParameters->vReg2Name(tmap, ROC_REG);
+    cmap.push_back(smap); 
   }
   if (fSelectRoc.size() > 0) {
-    fSelectRoc[0]->SetState(kButtonDown);
     fSelectedRoc = 0; 
+    // -- by default enable all present
+    for (unsigned iroc = 0; iroc < fSelectRoc.size(); ++iroc) {
+      fSelectRoc[iroc]->SetState(kButtonDown);
+    }
   }
   updateSelection();
   
@@ -219,7 +240,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   g2Frame = new TGGroupFrame(hFrame, "DACs of first selected ROC");
   hFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, 2, 2, 2, 2));
   
-  cmap = fConfigParameters->getRocDacs();
   if (cmap.size() > 0) {
     unsigned int firstroc(0); 
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
@@ -229,13 +249,14 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       }
     }
     
-    for (unsigned iroc = 0; iroc < fConfigParameters->getNrocs(); ++iroc) {
+    for (int iroc = 0; iroc < fGui->getApi()->_dut->getNRocs(); ++iroc) {
+      //xx for (unsigned iroc = 0; iroc < fConfigParameters->getNrocs(); ++iroc) {
 
       std::map<std::string, uint8_t>  parids;
       amap = cmap[iroc]; 
       unsigned int idac(0); 
       for (idac = 0; idac < 0.5*amap.size(); ++idac) {
-	if (iroc == firstroc) {
+	if (static_cast<unsigned int>(iroc) == firstroc) {
 	  hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
 	  g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
 	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[idac].first; 
@@ -260,7 +281,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       }
       
       for (idac = 0.5*amap.size()+1; idac < amap.size(); ++idac) {
-	if (iroc == firstroc) {
+	if (static_cast<unsigned int>(iroc) == firstroc) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
 	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[idac].first; 
@@ -345,6 +366,7 @@ void PixParTab::handleButtons(Int_t id) {
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
       fSelectRoc[i]->SetState(kButtonDown); 
     }
+    updateSelection();
     break;
   }
 
@@ -353,6 +375,7 @@ void PixParTab::handleButtons(Int_t id) {
     for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
       fSelectRoc[i]->SetState(kButtonUp); 
     }
+    updateSelection();
     break;
   }
     
@@ -472,7 +495,7 @@ void PixParTab::setTbmParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
       fGui->getApi()->setTbmReg(sdac, udac, itbm);
-      fConfigParameters->setTbmDac(sdac, udac, itbm);       
+      //xx fConfigParameters->setTbmDac(sdac, udac, itbm);       
     }
   }
 
@@ -554,7 +577,7 @@ void PixParTab::setRocParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " roc = " << iroc 
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
-      fConfigParameters->setRocDac(sdac, udac, iroc);       
+      //xx fConfigParameters->setRocDac(sdac, udac, iroc);       
     }
   }
 
@@ -570,19 +593,34 @@ void PixParTab::saveTbParameters() {
 // ----------------------------------------------------------------------
 void PixParTab::saveTbmParameters() {
   LOG(logDEBUG) << "save Tbm parameters"; 
-  fConfigParameters->writeTbmParameterFiles(getSelectedTbms());
+  //xx  fConfigParameters->writeTbmParameterFiles(getSelectedTbms());
+  //  vector<uint8_t> tbms = fGui->getApi()->_dut->getEnabledTbmIDs(); 
+  //  for (unsigned int itbm = 0; itbm < tbms.size(); ++itbm) {
+  int itbm(0); 
+  fConfigParameters->writeTbmParameterFile(0, fGui->getApi()->_dut->getTbmDACs(itbm)); 
+  //  }
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::saveDacParameters() {
   LOG(logDEBUG) << "save DAC parameters"; 
-  fConfigParameters->writeDacParameterFiles(getSelectedRocs());
+  //xx  fConfigParameters->writeDacParameterFiles(getSelectedRocs());
+  vector<uint8_t> rocs = fGui->getApi()->_dut->getEnabledRocIDs(); 
+  LOG(logDEBUG) << " rocs.size() = " << rocs.size(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fConfigParameters->writeDacParameterFile(rocs[iroc], fGui->getApi()->_dut->getDACs(rocs[iroc])); 
+  }
 }
+
 
 // ----------------------------------------------------------------------
 void PixParTab::saveTrimParameters() {
   LOG(logDEBUG) << "save Trim parameters"; 
-  fConfigParameters->writeTrimFiles(getSelectedRocs());
+  //xx  fConfigParameters->writeTrimFiles(getSelectedRocs());
+  vector<uint8_t> rocs = fGui->getApi()->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fConfigParameters->writeTrimFile(rocs[iroc], fGui->getApi()->_dut->getEnabledPixels(rocs[iroc])); 
+  }
 
 }
 
@@ -612,6 +650,22 @@ vector<int> PixParTab::getSelectedRocs() {
 
 // ----------------------------------------------------------------------
 void PixParTab::updateSelection() {
-  fConfigParameters->setSelectedRocs(getSelectedRocs());
-  fConfigParameters->setSelectedTbms(getSelectedTbms());
+  vector<int> selectedRocs = getSelectedRocs(); 
+  for (int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
+    fGui->getApi()->_dut->setROCEnable(i, false); 
+  }
+  for (unsigned i = 0; i < selectedRocs.size(); ++i) {
+    fGui->getApi()->_dut->setROCEnable(selectedRocs[i], true); 
+  }
+
+  vector<int> selectedTbms = getSelectedTbms(); 
+  for (int i = 0; i < fGui->getApi()->_dut->getNTbms(); ++i) {
+    fGui->getApi()->_dut->setTBMEnable(i, false); 
+  }
+  for (unsigned i = 0; i < selectedTbms.size(); ++i) {
+    fGui->getApi()->_dut->setTBMEnable(selectedTbms[i], true); 
+  }
+
+  //xx fConfigParameters->setSelectedRocs(getSelectedRocs());
+  //xx fConfigParameters->setSelectedTbms(getSelectedTbms());
 }

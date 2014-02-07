@@ -61,6 +61,10 @@ int32_t dut::getNEnabledRocs() {
   return count;
 }
 
+int32_t dut::getNRocs() {
+  return roc.size();
+}
+
 int32_t dut::getNEnabledTbms() {
   if (!status()) return 0;
   // loop over result, count enabled TBMs
@@ -71,6 +75,9 @@ int32_t dut::getNEnabledTbms() {
   return count;
 }
 
+int32_t dut::getNTbms() {
+  return tbm.size();
+}
 
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
@@ -223,6 +230,20 @@ std::vector< std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {
 
     for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
+      vec.push_back(*it);
+    }
+    return vec;
+  }
+  else return std::vector< std::pair<uint8_t,uint8_t> >();
+}
+
+std::vector< std::pair<uint8_t,uint8_t> > dut::getTbmDACs(size_t tbmId) {
+
+  if(status() && tbmId < tbm.size()) {
+    std::vector< std::pair<uint8_t,uint8_t> > vec;
+
+    for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin(); 
+	it != tbm.at(tbmId).dacs.end(); ++it) {
       vec.push_back(*it);
     }
     return vec;

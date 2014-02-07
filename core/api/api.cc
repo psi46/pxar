@@ -1331,9 +1331,15 @@ std::vector<event*> api::expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, Ha
     else {
       // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
       LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?!";
-      return data;
+      return NULL;
     }
   } // single roc fnc
+
+  // check that we ended up with data
+  if (!data){
+    LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
+    return NULL;
+  }
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);

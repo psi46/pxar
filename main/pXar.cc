@@ -17,7 +17,6 @@
 #include "PixTestFactory.hh"
 #include "PixGui.hh"
 #include "PixSetup.hh"
-#include "getLine.icc"
 
 #include "api.h"
 #include "log.h"

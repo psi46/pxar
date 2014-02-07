@@ -155,7 +155,13 @@ void PixTestPretest::runCommand(std::string command) {
 // ----------------------------------------------------------------------
 void PixTestPretest::saveDacs() {
   LOG(logINFO) << "Write DAC parameters to file";
-  fPixSetup->getConfigParameters()->writeDacParameterFiles(fPixSetup->getConfigParameters()->getSelectedRocs());
+
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
+  }
+
+  //  fPixSetup->getConfigParameters()->writeDacParameterFiles(fPixSetup->getConfigParameters()->getSelectedRocs());
 }
 
 // ----------------------------------------------------------------------

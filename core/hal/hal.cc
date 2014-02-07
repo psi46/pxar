@@ -153,7 +153,7 @@ void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_set
 bool hal::flashTestboard(std::ifstream& flashFile) {
 
   if (_testboard->UpgradeGetVersion() == 0x0100) {
-    LOG(logINFO) << "Staring DTB firmware upgrade...";
+    LOG(logINFO) << "Starting DTB firmware upgrade...";
 
     // Reading lines of file:
     string line;
