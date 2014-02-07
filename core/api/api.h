@@ -464,10 +464,14 @@ namespace pxar {
      */
     std::vector<event*> expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param, bool forceSerial = false);
 
+    /** Merges all consecutive triggers into one event
+     */
+    std::vector<event*> condenseTriggers(std::vector<event*> data, uint16_t nTriggers, uint32_t flags);
+    
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels.
      */
-    std::vector<pixel>* repackMapData (std::vector<event*> data, uint32_t flags);
+    std::vector<pixel>* repackMapData (std::vector<event*> data, uint16_t nTriggers, uint32_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */
@@ -476,7 +480,7 @@ namespace pxar {
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags);
 
     /** Compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into
      *  (data(roc0,roc1)) where the data blocks can ueasily be subdivided into
