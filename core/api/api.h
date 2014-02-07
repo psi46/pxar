@@ -646,9 +646,17 @@ namespace pxar {
      */
     int32_t getNEnabledTbms();
 
+    /** Function returning the number of TBMs:
+     */
+    int32_t getNTbms();
+
     /** Function returning the number of enabled ROCs:
      */
     int32_t getNEnabledRocs();
+
+    /** Function returning the number of ROCs:
+     */
+    int32_t getNRocs();
 
     /** Function returning the enabled pixels configs for a specific ROC:
      */
@@ -690,6 +698,10 @@ namespace pxar {
      */
     std::vector<std::pair<uint8_t,uint8_t> > getDACs(size_t rocId);
 
+    /** Function to read current values from all DAC on TBM tbmId
+     */
+    std::vector< std::pair<uint8_t,uint8_t> > getTbmDACs(size_t tbmId);
+
     /** Helper function to print current values from all DAC on ROC rocId
      *  to stdout
      */
@@ -701,7 +713,7 @@ namespace pxar {
      */
     void setROCEnable(size_t rocId, bool enable);
 
-    /** Function to enable the given ROC:
+    /** Function to enable the given TBM:
      */
     void setTBMEnable(size_t tbmId, bool enable);
 
