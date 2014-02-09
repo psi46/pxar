@@ -16,15 +16,13 @@ ClassImp(PixTestSetPh)
 PixTestSetPh::PixTestSetPh( PixSetup *a, std::string name )
 : PixTest(a, name), fParNtrig(-1)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
-  LOG(logDEBUG) << "PixTestSetPh ctor(PixSetup &a, string, TGTab *)";
 }
 
 //------------------------------------------------------------------------------
 PixTestSetPh::PixTestSetPh() : PixTest()
 {
-  LOG(logDEBUG) << "PixTestSetPh ctor()";
 }
 
 //------------------------------------------------------------------------------
@@ -32,17 +30,11 @@ bool PixTestSetPh::setParameter( string parName, string sval )
 {
   bool found(false);
 
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
+    if( fParameters[i].first == parName ) {
 
-    if( 0 == imap->first.compare(parName) ) {
       found = true;
-
-      fParameters[parName] = sval;
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
 
       if( !parName.compare( "Ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
@@ -69,13 +61,19 @@ bool PixTestSetPh::setParameter( string parName, string sval )
 //------------------------------------------------------------------------------
 void PixTestSetPh::init()
 {
-  LOG(logDEBUG) << "PixTestSetPh::init()";
+  LOG(logINFO) << "PixTestSetPh::init()";
 
   fDirectory = gFile->GetDirectory( fName.c_str() );
-  if( !fDirectory) {
+  if( !fDirectory )
     fDirectory = gFile->mkdir( fName.c_str() );
-  }
   fDirectory->cd();
+}
+
+// ----------------------------------------------------------------------
+void PixTestSetPh::setToolTips()
+{
+  fTestTip = string( "tune PH into ADC range using VOffsetRO and VIref_ADC");
+  fSummaryTip = string("summary plot to be implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -341,11 +339,12 @@ void PixTestSetPh::doTest()
       if( ph0 <= 0 ) continue;
       int ph4 = hmax[roc]->GetBinContent(i+1);
       if( ph4 <= 0 ) continue;
-      if( roc == 0 )
+      if( roc == 0 ) {
 	LOG(logINFO) << "VOffsetRO " << setw(3) << i
 		     << ": min " << setw(3) << ph0
 		     << ", max " << setw(3) << ph4
 		     << ", mid " << setw(3) << (ph0+ph4)/2;
+      }
       if( ( ph0 + ph4 ) / 2 < 133 ) {
 	voffset_opt[roc] = i;
 	break;

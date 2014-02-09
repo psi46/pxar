@@ -17,7 +17,7 @@ PixTestDacScanPix::PixTestDacScanPix( PixSetup *a, std::string name )
 : PixTest(a, name), fParNtrig(-1), fParDAC("nada"),
   fParLoDAC(-1), fParHiDAC(-1)
 {
-  PixTest::init(a, name);
+  PixTest::init();
   init();
 }
 
@@ -31,17 +31,13 @@ bool PixTestDacScanPix::setParameter( string parName, string sval )
 {
   bool found(false);
 
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
-
-    if( 0 == imap->first.compare(parName) ) {
+    if( fParameters[i].first == parName ) {
 
       found = true;
 
       sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
-      fParameters[parName] = sval;
 
       if( !parName.compare("Ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );

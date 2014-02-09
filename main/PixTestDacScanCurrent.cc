@@ -18,14 +18,13 @@ ClassImp(PixTestDacScanCurrent)
 PixTestDacScanCurrent::PixTestDacScanCurrent( PixSetup *a, std::string name )
 : PixTest(a, name), fParDAC("nada")
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
 }
 
 //------------------------------------------------------------------------------
 PixTestDacScanCurrent::PixTestDacScanCurrent() : PixTest()
 {
-  //LOG(logDEBUG) << "PixTestDacScanCurrent ctor()";
 }
 
 //------------------------------------------------------------------------------
@@ -33,15 +32,13 @@ bool PixTestDacScanCurrent::setParameter( string parName, string sval )
 {
   bool found(false);
 
-  for( map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
+    if( fParameters[i].first == parName ) {
 
-    if( 0 == imap->first.compare(parName) ) {
       found = true;
-      sval.erase( remove( sval.begin(), sval.end(), ' ' ), sval.end() );
 
-      fParameters[parName] = sval;
+      sval.erase( remove( sval.begin(), sval.end(), ' ' ), sval.end() );
 
       if( !parName.compare( "DAC" ) ) {
 	fParDAC = sval;
@@ -61,6 +58,13 @@ void PixTestDacScanCurrent::init()
   if( !fDirectory )
     fDirectory = gFile->mkdir( fName.c_str() );
   fDirectory->cd();
+}
+
+// ----------------------------------------------------------------------
+void PixTestDacScanCurrent::setToolTips()
+{
+  fTestTip = string( "measure ROC currents vs DAC");
+  fSummaryTip = string("summary plot to be implemented");
 }
 
 //------------------------------------------------------------------------------

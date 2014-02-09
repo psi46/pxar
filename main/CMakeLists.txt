@@ -18,7 +18,7 @@ PixTest.cc
 PixTestFactory.cc
 PixTestParameters.cc
 PixTestPretest.cc
-PixTestSetTrim.cc
+# PixTestSetTrim.cc
 PixTestSetPh.cc
 PixTestMap.cc
 PixTestMapPh.cc
@@ -51,7 +51,7 @@ PixTest.hh
 PixTestFactory.hh
 PixTestParameters.hh
 PixTestPretest.hh
-PixTestSetTrim.hh
+# PixTestSetTrim.hh
 PixTestSetPh.hh
 PixTestMap.hh
 PixTestMapPh.hh

@@ -16,7 +16,7 @@ ClassImp(PixTestMapThr)
 PixTestMapThr::PixTestMapThr( PixSetup *a, std::string name )
 : PixTest(a, name), fParNtrig(-1)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestMapThr ctor(PixSetup &a, string, TGTab *)";
 }
@@ -32,18 +32,11 @@ bool PixTestMapThr::setParameter( string parName, string sval )
 {
   bool found(false);
 
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
-
-    if( 0 == imap->first.compare(parName) ) {
+    if( fParameters[i].first == parName ) {
 
       found = true;
-
-      fParameters[parName] = sval;
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
 
       if( !parName.compare( "Ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
@@ -64,6 +57,13 @@ void PixTestMapThr::init()
     fDirectory = gFile->mkdir( fName.c_str() );
   }
   fDirectory->cd();
+}
+
+// ----------------------------------------------------------------------
+void PixTestMapThr::setToolTips()
+{
+  fTestTip = string( "measure threshold map");
+  fSummaryTip = string("summary plot to be implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void PixTestMapThr::doTest()
 
   // measure:
 
-  uint16_t flags = FLAG_THRSCAN_RISING;
+  uint16_t flags = FLAG_RISING_EDGE;
   vector<pixel> vpix =
     fApi->getThresholdMap( "Vcal", flags, fParNtrig ); // all pix, all ROCs
 

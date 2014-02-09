@@ -2,7 +2,6 @@
 #define PIXTESTSETTRIM_H
 
 #include "api.h"
-#include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
 class PixTestSetTrim: public PixTest {
@@ -12,6 +11,7 @@ public:
   virtual ~PixTestSetTrim();
   virtual bool setParameter(std::string parName, std::string sval);
   void init();
+  void setToolTips();
   void bookHist(std::string);
   void RocThrMap( uint8_t roc, uint32_t nTrig,
 		  bool xtalk, bool cals );

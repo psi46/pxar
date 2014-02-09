@@ -9,7 +9,7 @@
 
 #include "PixTestDacScanCurrent.hh"
 #include "PixTestPretest.hh"
-#include "PixTestSetTrim.hh"
+//#include "PixTestSetTrim.hh"
 #include "PixTestSetPh.hh"
 #include "PixTestMap.hh"
 #include "PixTestMapPh.hh"
@@ -62,7 +62,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
 
   if( !name.compare("curvsdac" ) ) return new PixTestDacScanCurrent(a, "CurVsDac" );
   if (!name.compare("pretest")) return new PixTestPretest(a, "Pretest");
-  if( !name.compare( "settrim" ) ) return new PixTestSetTrim( a, "SetTrim" ); 
+  //  if( !name.compare( "settrim" ) ) return new PixTestSetTrim( a, "SetTrim" ); 
   if( !name.compare( "setph" ) ) return new PixTestSetPh( a, "SetPh" ); 
   if( !name.compare( "mapalive" ) ) return new PixTestMap( a, "MapAlive" ); 
   if( !name.compare( "mapph" ) ) return new PixTestMapPh( a, "MapPh" ); 

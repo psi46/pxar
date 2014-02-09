@@ -18,7 +18,7 @@ PixTestDacScanPh::PixTestDacScanPh( PixSetup *a, std::string name )
   fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1),
   fParCals(0)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
 }
 
@@ -33,16 +33,13 @@ bool PixTestDacScanPh::setParameter( string parName, string sval )
 {
   bool found(false);
 
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
-
-    if( 0 == imap->first.compare(parName) ) {
+    if( fParameters[i].first == parName ) {
 
       found = true;
+
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end() );
-      fParameters[parName] = sval;
 
       if( !parName.compare( "Ntrig" ) ) {
 	fParNtrig = atoi( sval.c_str() );
@@ -101,6 +98,13 @@ void PixTestDacScanPh::init()
   fDirectory->cd();
 }
 
+// ----------------------------------------------------------------------
+void PixTestDacScanPh::setToolTips()
+{
+  fTestTip = string( "measure pixel pulse height vs DAC");
+  fSummaryTip = string("summary plot to be implemented");
+}
+
 //------------------------------------------------------------------------------
 void PixTestDacScanPh::bookHist(string name) // general booking routine
 {
@@ -152,8 +156,8 @@ void PixTestDacScanPh::doTest()
   // measure:
 
   uint16_t flags = 0;
-  if( fParCals ) flags = FLAG_USE_CALS;
-  LOG(logINFO) << "flag " << FLAG_USE_CALS;
+  if( fParCals ) flags = FLAG_CALS;
+  LOG(logINFO) << "flag " << flags;
   uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
   if( fParCals ) {
     fApi->setDAC( "CtrlReg", 4 ); // all ROCs large Vcal
@@ -223,7 +227,7 @@ void PixTestDacScanPh::doTest()
 
   // test:
 
-  flags = FLAG_THRSCAN_RISING;
+  flags = FLAG_RISING_EDGE;
   vector<pixel> vpix9 = fApi->getThresholdMap( "Vcal", flags, fParNtrig );
   for( size_t ipx = 0; ipx < vpix9.size(); ++ipx )
     LOG(logINFO)

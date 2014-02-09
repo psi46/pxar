@@ -18,7 +18,7 @@ PixTestDacScanThr::PixTestDacScanThr( PixSetup *a, std::string name )
   fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1),
   fParCals(0)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
 
   for( size_t i = 0; i < fPIX.size(); ++i )
@@ -39,16 +39,13 @@ bool PixTestDacScanThr::setParameter( string parName, string sval )
   bool found(false);
   string::size_type s1;
 
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
-
-    if( 0 == imap->first.compare(parName) ) {
+    if( fParameters[i].first == parName ) {
 
       found = true;
+
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      fParameters[parName] = sval;
 
       if( !parName.compare( "Ntrig" ) ) {
 	fParNtrig = atoi( sval.c_str() );
@@ -104,6 +101,13 @@ void PixTestDacScanThr::init()
     fDirectory = gFile->mkdir(fName.c_str());
   }
   fDirectory->cd();
+}
+
+// ----------------------------------------------------------------------
+void PixTestDacScanThr::setToolTips()
+{
+  fTestTip = string( "measure pixel threshold vs DAC");
+  fSummaryTip = string("summary plot to be implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -171,8 +175,8 @@ void PixTestDacScanThr::doTest()
 
   // measure:
 
-  uint16_t flags = FLAG_THRSCAN_RISING; // thr in Vcal units
-  if( fParCals ) flags |= FLAG_USE_CALS;
+  uint16_t flags = FLAG_RISING_EDGE; // thr in Vcal units
+  if( fParCals ) flags |= FLAG_CALS;
   LOG(logINFO) << "flag " << flags;
 
   vector < pair < uint8_t, vector<pixel> > > result;

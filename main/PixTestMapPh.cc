@@ -16,7 +16,7 @@ ClassImp(PixTestMapPh)
 PixTestMapPh::PixTestMapPh( PixSetup *a, std::string name )
 : PixTest(a, name), fParNtrig(-1), fParCals(0)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestMapPh ctor(PixSetup &a, string, TGTab *)";
 }
@@ -31,17 +31,12 @@ PixTestMapPh::PixTestMapPh() : PixTest()
 bool PixTestMapPh::setParameter( string parName, string sval )
 {
   bool found(false);
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    if( 0 == imap->first.compare(parName) ) {
+    if( fParameters[i].first == parName ) {
+
       found = true;
-
-      fParameters[parName] = sval;
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
 
       if( !parName.compare( "Ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
@@ -65,6 +60,13 @@ void PixTestMapPh::init()
     fDirectory = gFile->mkdir( fName.c_str() );
   }
   fDirectory->cd();
+}
+
+// ----------------------------------------------------------------------
+void PixTestMapPh::setToolTips()
+{
+  fTestTip = string( "measure pulse height map");
+  fSummaryTip = string("summary plot to be implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -100,8 +102,8 @@ void PixTestMapPh::doTest()
   // measure:
 
   uint16_t flags = 0;
-  if( fParCals ) flags = FLAG_USE_CALS;
-  LOG(logINFO) << "flag " << FLAG_USE_CALS;
+  if( fParCals ) flags = FLAG_CALS;
+  LOG(logINFO) << "flag " << flags;
 
   uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
   if( fParCals ) {

@@ -17,7 +17,7 @@ ClassImp(PixTestSetTrim)
 PixTestSetTrim::PixTestSetTrim( PixSetup *a, std::string name )
 : PixTest(a, name), fParVcal(-1), fParNtrig(-1)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestSetTrim ctor(PixSetup &a, string, TGTab *)";
 }
@@ -33,18 +33,13 @@ bool PixTestSetTrim::setParameter( string parName, string sval )
 {
   bool found(false);
 
-  for( map<string,string>::iterator imap = fParameters.begin();
-       imap != fParameters.end(); ++imap ) {
+  for( uint32_t i = 0; i < fParameters.size(); ++i ) {
 
-    LOG(logDEBUG) << "---> " << imap->first;
-
-    if( 0 == imap->first.compare(parName) ) {
+    if( fParameters[i].first == parName ) {
 
       found = true;
 
-      fParameters[parName] = sval;
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
+      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
 
       if( !parName.compare( "TargetVcal" ) )
 	fParVcal = atoi( sval.c_str() );
@@ -52,6 +47,7 @@ bool PixTestSetTrim::setParameter( string parName, string sval )
       if( !parName.compare( "Ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
 
+      setToolTips();
       break;
     }
   }
@@ -68,6 +64,16 @@ void PixTestSetTrim::init()
     fDirectory = gFile->mkdir( fName.c_str() );
   }
   fDirectory->cd();
+}
+
+//------------------------------------------------------------------------------
+void PixTestSetTrim::setToolTips()
+{
+  fTestTip = string( "set Vtrim and trim bits to get TargetVcal threshold")
+    ;
+  fSummaryTip = string("summary plot to be implemented")
+    ;
+
 }
 
 //------------------------------------------------------------------------------
@@ -110,9 +116,9 @@ void PixTestSetTrim::RocThrMap( uint8_t roc, uint32_t nTrig,
 
   // measure:
 
-  uint16_t flags = FLAG_THRSCAN_RISING;
+  uint16_t flags = FLAG_RISING_EDGE;
   if( xtalk ) flags |= FLAG_XTALK;
-  if( cals ) flags |= FLAG_USE_CALS;
+  if( cals ) flags |= FLAG_CALS;
 
   vector<pixel> vpix = fApi->getThresholdMap( "Vcal", flags, nTrig );
 
@@ -294,7 +300,7 @@ void PixTestSetTrim::doTest()
   size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
   bool cals = 0;
   bool xtalk = 0;
-  uint16_t flags = FLAG_THRSCAN_RISING;
+  uint16_t flags = FLAG_RISING_EDGE;
   int nok = 0;
 
   uint8_t cal = fApi->_dut->getDAC( 0, "Vcal" );

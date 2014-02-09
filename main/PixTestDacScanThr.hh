@@ -2,7 +2,6 @@
 #define PIXTESTDACSCANTHR_H
 
 #include "api.h"
-#include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
 class PixTestDacScanThr: public PixTest {
@@ -12,6 +11,7 @@ public:
   virtual ~PixTestDacScanThr();
   virtual bool setParameter(std::string parName, std::string sval);
   void init();
+  void setToolTips();
   void bookHist(std::string);
 
   void doTest();
