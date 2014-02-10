@@ -130,25 +130,31 @@ namespace pxar {
     // TEST COMMANDS
 
     /** Function to return Module maps of calibration pulses
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
-     *  Private flags allow selection of output value (pulse height or efficiency)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and 
+     *  possibility for cross-talk measurement (FLAG_XTALK)
      *
      *  The rocid vector parameter allows to select ROCs with arbitrary I2C addresses. Usually module
      *  I2C addresses range from 0-15 but for special purposes this might be different.
      */
-    std::vector<event*> ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
+    std::vector<event*> MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
 
     /** Function to return ROC maps of calibration pulses
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
-     *  Private flags allow selection of output value (pulse height or efficiency)
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and 
+     *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<event*> RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter);
+    std::vector<event*> SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter);
 
-    /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel.
-     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
-     *  Private flags allow selection of output value (pulse height or efficiency)
+    /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel on multiple ROCs.
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
+     *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<event*> PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<event*> MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+
+    /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel on one ROC.
+     *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
+     *  possibility for cross-talk measurement (FLAG_XTALK)
+     */
+    std::vector<event*> SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     /** Function to return ROC maps of thresholds
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS), cross-talk
@@ -168,13 +174,13 @@ namespace pxar {
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
-    std::vector<event*> PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<event*> SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
     /** Function to scan two given DAC ranges for a pixel
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS)
      *  Private flags allow selection of output value (pulse height or efficiency)
      */
-    std::vector<event*> PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<event*> SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
 
     // DAQ functions:

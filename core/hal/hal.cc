@@ -586,13 +586,13 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 
 // ---------------- TEST FUNCTIONS ----------------------
 
-std::vector<event*> hal::ModuleCalibrateMap(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
+std::vector<event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = parameter.at(1);
 
   LOG(logDEBUGHAL) << "Called ModuleCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Function will take care of " << rocids.size() << " ROCs with the I2C addresses:";
+  LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
   std::stringstream os;
   for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
   LOG(logDEBUGHAL) << os.str();
@@ -601,38 +601,58 @@ std::vector<event*> hal::ModuleCalibrateMap(std::vector<uint8_t> rocids, std::ve
   daqStart(deser160phase,nTBMs);
 
   // Call the RPC command containing the trigger loop:
-  int status = _testboard->CalibrateModule(rocids, nTriggers, flags&FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop();
+  _testboard->LoopMultiRocAllPixelsCalibrate(rocids, nTriggers, flags);
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
 
   // Clear & reset the DAQ buffer on the testboard.
+  daqStop();
+  daqClear();
+  return data;
+}
+
+std::vector<event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
+  uint16_t nTriggers = parameter.at(1);
+
+  LOG(logDEBUGHAL) << "Called MultiRocOnePixelCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
+		   << static_cast<int>(row) << " on "
+		   << rocids.size() << " ROCs with the I2C addresses:";
+  std::stringstream os;
+  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
+  LOG(logDEBUGHAL) << os.str();
+
+  // Prepare for data acquisition:
+  daqStart(deser160phase,nTBMs);
+
+  // Call the RPC command containing the trigger loop:
+  _testboard->LoopMultiRocOnePixelCalibrate(rocids, column, row, nTriggers, flags);
+
+  std::vector<event*> data = daqAllEvents();
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
+
+  // Clear & reset the DAQ buffer on the testboard.
+  daqStop();
   daqClear();
 
   return data;
 }
 
-std::vector<event*> hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> parameter) {
+std::vector<event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter) {
 
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called RocCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(rocid) << ".";
+  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(rocid) << ".";
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
 
-  // Set the correct ROC I2C address:
-  _testboard->roc_I2cAddr(rocid);
-
   // Call the RPC command containing the trigger loop:
-  int status = _testboard->CalibrateMap(nTriggers, flags&FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop();
+  _testboard->LoopSingleRocAllPixelsCalibrate(rocid, nTriggers, flags);
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
@@ -642,17 +662,19 @@ std::vector<event*> hal::RocCalibrateMap(uint8_t rocid, std::vector<int32_t> par
   }
 
   // Clear & reset the DAQ buffer on the testboard.
+  daqStop();
   daqClear();
-
   return data;
 }
 
-std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   int32_t flags = parameter.at(0);
   uint16_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called PixelCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called SingleRocOnePixelCalibrate for pixel " << static_cast<int>(column) << ","
+		   << static_cast<int>(row) << " with flags " << static_cast<int>(flags) << ", running "
+		   << nTriggers << " triggers.";
 
  // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -661,10 +683,7 @@ std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command containing the trigger loop:
-  int status = _testboard->CalibratePixel(nTriggers, column, row, flags & FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop();
+  _testboard->LoopSingleRocOnePixelCalibrate(rocid, column, row, nTriggers, flags);
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
@@ -674,13 +693,14 @@ std::vector<event*> hal::PixelCalibrateMap(uint8_t rocid, uint8_t column, uint8_
   }
 
   // Clear & reset the DAQ buffer on the testboard.
+  daqStop();
   daqClear();
 
   return data;
 }
 
 
-std::vector<event*> hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   uint8_t dacreg = parameter.at(0);
   uint8_t dacmin = parameter.at(1);
@@ -696,14 +716,8 @@ std::vector<event*> hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, ui
  // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
 
-  // Set the correct ROC I2C address:
-  _testboard->roc_I2cAddr(rocid);
-
   // Call the RPC command containing the trigger loop:
-  int status = _testboard->CalibrateDacScan(nTriggers, column, row, dacreg, dacmin, dacmax, flags & FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop();
+  _testboard->LoopSingleRocOnePixelDacScan(rocid, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
 
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
@@ -713,13 +727,13 @@ std::vector<event*> hal::PixelCalibrateDacScan(uint8_t rocid, uint8_t column, ui
   }
 
   // Clear & reset the DAQ buffer on the testboard.
+  daqStop();
   daqClear();
-
   return data;
 }
 
 
-std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   uint8_t dac1reg = parameter.at(0);
   uint8_t dac1min = parameter.at(1);
@@ -746,11 +760,8 @@ std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column,
   _testboard->roc_I2cAddr(rocid);
 
   // Call the RPC command containing the trigger loop:
-  int status = _testboard->CalibrateDacDacScan(nTriggers, column, row, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max, flags & FLAG_CALS);
-  LOG(logDEBUGHAL) << "Function returns: " << status;
-
-  daqStop();
-
+  _testboard->LoopSingleRocOnePixelDacDacScan(rocid, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
+  
   std::vector<event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " events.";
   size_t missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers - data.size();
@@ -759,8 +770,8 @@ std::vector<event*> hal::PixelCalibrateDacDacScan(uint8_t rocid, uint8_t column,
   }
 
   // Clear & reset the DAQ buffer on the testboard.
+  daqStop();
   daqClear();
-
   return data;
 }
 
