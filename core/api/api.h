@@ -690,6 +690,14 @@ namespace pxar {
     /** Function to update all trim bits of a given ROC.
      */
     bool updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid);
+
+    /** Function to update trim bits for one particular pixel on a given ROC.
+     */
+    bool updateTrimBits(uint8_t column, uint8_t row, uint8_t trim, uint8_t rocid);
+
+    /** Function to update trim bits for one particular pixel on a given ROC.
+     */
+    bool updateTrimBits(pixelConfig trim, uint8_t rocid);
    
     /** Function to check the status of the DUT
      */
