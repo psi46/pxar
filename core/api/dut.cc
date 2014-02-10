@@ -397,6 +397,39 @@ void dut::testAllPixels(bool enable) {
   }
 }
 
+bool dut::updateTrimBits(pixelConfig trimming, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
+
+    // Find the pixel in the given ROC pixels vector:
+    std::vector<pixelConfig>::iterator px = std::find_if(roc.at(rocid).pixels.begin(),
+							 roc.at(rocid).pixels.end(),
+							 findPixelXY(trimming.column,trimming.row));
+    // Pixel was not found:
+    if(px == roc.at(0).pixels.end()) return false;
+    // Pixel was found, set the new trimming values:
+    px->trim = trimming.trim;
+    return true;
+  }
+  else { return false; }
+}
+
+bool dut::updateTrimBits(uint8_t column, uint8_t row, uint8_t trim, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
+
+    // Find the pixel in the given ROC pixels vector:
+    std::vector<pixelConfig>::iterator px = std::find_if(roc.at(rocid).pixels.begin(),
+							 roc.at(rocid).pixels.end(),
+							 findPixelXY(column,row));
+    // Pixel was not found:
+    if(px == roc.at(0).pixels.end()) return false;
+    // Pixel was found, set the new trimming values:
+    px->trim = trim;
+    return true;
+  }
+  else { return false; }
+}
 
 bool dut::updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid) {
 
