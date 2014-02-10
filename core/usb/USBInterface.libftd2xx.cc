@@ -21,7 +21,7 @@ CUSB::CUSB(){
   ftHandle = 0;
   ftdiStatus = 0;
   enumPos = enumCount = 0;
-  m_timeout = 15000; // maximum time to wait for read call in ms
+  m_timeout = 150000; // maximum time to wait for read call in ms
  }
 
  CUSB::~CUSB(){
