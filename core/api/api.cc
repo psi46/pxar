@@ -636,9 +636,10 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelDacScan;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacScan;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacScan;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacScan;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacScan;
 
   // We want the pulse height back from the Map function, no internal flag needed.
 
@@ -689,9 +690,10 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelDacScan;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacScan;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacScan;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacScan;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacScan;
 
  // We want the efficiency back from the Map function, so let's set the internal flag:
   int32_t internal_flags = 0;
@@ -746,9 +748,10 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = NULL;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = NULL;
+  HalMemFnPixelParallel multipixelfn = NULL;
+  HalMemFnRocSerial     rocfn        = NULL;
+  HalMemFnRocParallel   multirocfn   = NULL;
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
@@ -809,9 +812,10 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelDacDacScan;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacDacScan;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacDacScan;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacDacScan;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacDacScan;
 
  // We want the pulse height back from the DacDac function, so no internal flags needed.
 
@@ -879,9 +883,10 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelDacDacScan;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacDacScan;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacDacScan;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacDacScan;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacDacScan;
 
  // We want the efficiency back from the Map function, so let's set the internal flag:
   int32_t internal_flags = 0;
@@ -953,9 +958,10 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = NULL;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = NULL;
+  HalMemFnPixelParallel multipixelfn = NULL;
+  HalMemFnRocSerial     rocfn        = NULL;
+  HalMemFnRocParallel   multirocfn   = NULL;
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
@@ -994,9 +1000,10 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   if(!status()) {return std::vector<pixel>();}
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelCalibrate;
-  HalMemFnRoc rocfn = &hal::SingleRocAllPixelsCalibrate;
-  HalMemFnModule modulefn = &hal::MultiRocAllPixelsCalibrate;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelCalibrate;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelCalibrate;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsCalibrate;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsCalibrate;
 
   // We want the pulse height back from the Map function, no flag needed.
 
@@ -1021,9 +1028,10 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   if(!status()) {return std::vector<pixel>();}
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelCalibrate;
-  HalMemFnRoc rocfn = &hal::SingleRocAllPixelsCalibrate;
-  HalMemFnModule modulefn = &hal::MultiRocAllPixelsCalibrate;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelCalibrate;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelCalibrate;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsCalibrate;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsCalibrate;
 
   // We want the efficiency back from the Map function, so let's set the internal flag:
   uint32_t internal_flags = 0;
@@ -1057,9 +1065,10 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixel pixelfn = &hal::SingleRocOnePixelDacScan;
-  HalMemFnRoc rocfn = NULL;
-  HalMemFnModule modulefn = NULL;
+  HalMemFnPixelSerial   pixelfn      = NULL;
+  HalMemFnPixelParallel multipixelfn = NULL;
+  HalMemFnRocSerial     rocfn        = NULL;
+  HalMemFnRocParallel   multirocfn   = NULL;
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
