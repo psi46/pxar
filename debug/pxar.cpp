@@ -427,6 +427,7 @@ int main(int argc, char* argv[]) {
     //    _api->_dut->testPixel(33,12,true);
     _api->_dut->testPixel(34,11,true);
     _api->_dut->testPixel(14,12,true);
+    _api->_dut->maskPixel(14,12,false);
 
     _api->_dut->info();
     
@@ -463,7 +464,9 @@ int main(int argc, char* argv[]) {
 
     // disable pixel(s)
     _api->_dut->testAllPixels(false);
+    _api->_dut->maskAllPixels(true);
     _api->_dut->testPixel(33,12,true);
+    _api->_dut->maskPixel(33,12,false);
 
     // Call the test:
     int nTrig3 = 10;
@@ -525,6 +528,7 @@ int main(int argc, char* argv[]) {
     /*
     _api->_dut->testAllPixels(false);
     _api->_dut->testPixel(5,5,true);
+    _api->_dut->maskPixel(5,5,false);
 
     // Call the test:
     int nTrig6 = 10;

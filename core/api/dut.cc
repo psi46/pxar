@@ -315,9 +315,6 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid) {
 
 void dut::testPixel(uint8_t column, uint8_t row, bool enable) {
 
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskPixel(column,row,!enable);
-
   if(status()) {
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
@@ -336,9 +333,6 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable) {
 }
 
 void dut::testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid) {
-
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskPixel(column,row,!enable,rocid);
 
   if(status() && rocid < roc.size()) {
     // Find pixel with specified column and row
@@ -381,9 +375,6 @@ void dut::maskAllPixels(bool mask, uint8_t rocid) {
 
 void dut::testAllPixels(bool enable, uint8_t rocid) {
 
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskAllPixels(!enable);
-
   if(status() && rocid < roc.size()) {
     LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on ROC " << static_cast<int>(rocid);
     // loop over all pixel, set enable according to parameter
@@ -394,9 +385,6 @@ void dut::testAllPixels(bool enable, uint8_t rocid) {
 }
 
 void dut::testAllPixels(bool enable) {
-
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskAllPixels(!enable);
 
   if(status()) {
     LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on all ROCs";
