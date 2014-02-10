@@ -1545,36 +1545,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
   return result;
 }
 
-std::vector< std::vector<pixel> >* api::compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs){
-  if (data->size() % nRocs != 0) {
-    // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
-    LOG(logCRITICAL) << "data structure size not as expected! " << data->size() << " data blocks do not fit to " << nRocs << " active ROCs!";
-    return NULL;
-  }
-
-  // the size of the data blocks of each ROC
-  int segmentsize = data->size()/nRocs;
-  LOG(logDEBUGAPI) << "Segment size: " << segmentsize;
-
-  std::vector< std::vector<pixel> >* result = new std::vector< std::vector<pixel> >();
-  // Loop over each data segment:
-  for (int segment = 0; segment < segmentsize; segment++) {
-    std::vector<pixel> pixjoined;
-    // Loop over all ROCs to merge their data segments into one
-    for (uint8_t rocid = 0; rocid < nRocs;rocid++) {
-      // Copy all pixels over:
-      for(std::vector<pixel>::iterator it = data->at(segment+segmentsize*rocid).begin(); it != data->at(segment+segmentsize*rocid).end(); ++it) {
-	pixjoined.push_back((*it));
-      }
-    }
-    result->push_back(pixjoined);
-  }
-
-  LOG(logDEBUGAPI) << "Joined data has " << result->size() << " segments with each " << result->at(0).size() << " entries.";
-  return result;
-}
-
-
 // Mask/Unmask and trim the ROCs:
 void api::MaskAndTrim(bool trim) {
 

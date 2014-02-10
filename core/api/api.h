@@ -484,12 +484,6 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags);
 
-    /** Compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into
-     *  (data(roc0,roc1)) where the data blocks can ueasily be subdivided into
-     *  e.g. DAC ranges of a scan.
-     */
-    std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
-
     /** Helper function for conversion from string to register value
      *
      *  Type tells it whether it is a DTB, TBM or ROC register to look for.
