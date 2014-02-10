@@ -1,14 +1,14 @@
-#ifndef PIXTESTDACSCAN_H
-#define PIXTESTDACSCAN_H
+#ifndef PIXTESTDACSCANPIX_H
+#define PIXTESTDACSCANPIX_H
 
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestDacScan: public PixTest {
+class PixTestDacScanPix: public PixTest {
 public:
-  PixTestDacScan(PixSetup *, std::string);
-  PixTestDacScan();
-  virtual ~PixTestDacScan();
+  PixTestDacScanPix(PixSetup *, std::string);
+  PixTestDacScanPix();
+  virtual ~PixTestDacScanPix();
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
@@ -22,7 +22,7 @@ private:
   std::string fParDAC; 
   int     fParLoDAC, fParHiDAC;
 
-  ClassDef(PixTestDacScan, 1);
+  ClassDef(PixTestDacScanPix, 1);
 
 };
 #endif

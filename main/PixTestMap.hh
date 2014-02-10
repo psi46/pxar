@@ -1,14 +1,14 @@
-#ifndef PIXTESTALIVE_H
-#define PIXTESTALIVE_H
+#ifndef PIXTESTMAP_H
+#define PIXTESTMAP_H
 
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestAlive: public PixTest {
+class PixTestMap: public PixTest {
 public:
-  PixTestAlive(PixSetup *, std::string);
-  PixTestAlive();
-  virtual ~PixTestAlive();
+  PixTestMap(PixSetup *, std::string);
+  PixTestMap();
+  virtual ~PixTestMap();
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
@@ -21,7 +21,7 @@ private:
   int     fParNtrig; 
   int     fParVcal; 
 
-  ClassDef(PixTestAlive, 1);
+  ClassDef(PixTestMap, 1);
 
 };
 #endif
