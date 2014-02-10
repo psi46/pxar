@@ -335,19 +335,6 @@ namespace pxar {
 					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
 					     uint16_t flags = 0, uint32_t nTriggers=16);
 
-    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the threshold
-     *
-     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
-     *  values with a pixel vector. The value of the pixel struct is the
-     *  averaged pixel threshold.
-     *
-     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
-     *  using an adapted binary search algorithm for optimal speed.
-     */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					    std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					    uint16_t flags = 0, uint32_t nTriggers=16);
-
     /** Method to get a map of the pulse height
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
