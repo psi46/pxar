@@ -487,30 +487,24 @@ int main(int argc, char* argv[]) {
 
     // ##########################################################
     // Try a threshold map:
-    /*
+
     _api->_dut->testAllPixels(true);
+    _api->_dut->maskAllPixels(false);
+
+    //_api->_dut->testPixel(5,5,true);
+    //_api->_dut->maskPixel(5,5,false);
 
     // Call the test:
     int nTrig5 = 10;
-    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,nTrig5);
+    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,20,FLAG_RISING_EDGE,nTrig5);
     std::cout << "Data size returned: " << thrmap.size() << std::endl;
 
-    
-    std::cout << "ASCII Sensor Threshold Map:" << std::endl;
-    unsigned int row2 = 0;
-    for (std::vector< pxar::pixel >::iterator mapit = thrmap.begin(); mapit != thrmap.end(); ++mapit) {
-      
-      if((int)mapit->value == nTrig5) std::cout << "X";
-      else if((int)mapit->value == 0) std::cout << "-";
-      else if((int)mapit->value > nTrig5) std::cout << "#";
-      else std::cout << (int)mapit->value;
-      row2++;
-      if(row2 >= 80) { 
-	row2 = 0;
-	std::cout << std::endl;
-      }
+    // Threshold map:
+    enabledrocs = _api->_dut->getEnabledRocIDs();
+    for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
+      asciimap(thrmap,255,(*it));
+      std::cout << std::endl << std::endl;
     }
-    */
     // ##########################################################
 
 
