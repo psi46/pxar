@@ -9,7 +9,7 @@
 #include <cstring>
 #include <cstdio>
 
-void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > data, int nTrig, uint8_t roc = 0) {
+void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
 
   uint8_t dac1lower = data.front().first;
   uint8_t dac2lower = data.front().second.first;
@@ -35,7 +35,7 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
     
 	if((dacit->first == dac1) && (dacit->second.first == dac2) && (!dacit->second.second.empty())) {
 	  for (std::vector< pxar::pixel >::iterator pixit = dacit->second.second.begin(); pixit != dacit->second.second.end(); ++pixit) {
-	    if(pixit->roc_id == roc) {
+	    if(pixit->roc_id == roc && pixit->column == column && pixit->row == row) {
 	      found = true;
 	      int value = dacit->second.second.at(0).value;
 	      if(value == nTrig) std::cout << "X";
@@ -55,7 +55,7 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
   std::cout << "|" << std::endl;
 }
 
-void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, int nTrig, uint8_t roc = 0) {
+void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
 
   std::cout << std::endl;
   for(int trig = nTrig; trig >= 0; trig--) {
@@ -67,7 +67,7 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
       bool found = false;
       if(!mapit->second.empty()) {
 	for(std::vector<pxar::pixel>::iterator it = mapit->second.begin(); it != mapit->second.end(); ++it) {
-	  if(it->roc_id == roc) {
+	  if(it->roc_id == roc && it->column == column && it->row == row) {
 	    if(it->value == trig) { std::cout << "o"; found = true; }
 	    else if(it->value > trig) { std::cout << "."; found = true; }
 	    break;
@@ -441,20 +441,10 @@ int main(int argc, char* argv[]) {
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata.size() << std::endl;
     
-    // Loop over dac values:
-    /*    for(std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator dacit = effscandata.begin();
-	dacit != effscandata.end(); ++dacit) {
-      std::cout << "  dac value: " << (int)dacit->first << " has " << dacit->second.size() << " fired pixels " << std::endl;
-      // Loop over fired pixels and show value
-      for (std::vector<pxar::pixel>::iterator pixit = dacit->second.begin(); pixit != dacit->second.end();++pixit){
-	std::cout << "    ROC " << (int)pixit->roc_id << "  pixel " << (int)  pixit->column << ", " << (int)  pixit->row << " has value "<< (int)  pixit->value << std::endl;
-      }
-      }*/
-
     enabledrocs = _api->_dut->getEnabledRocIDs();
     for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
-      std::cout << "CalDel Can for ROC " << (int)(*it) << std::endl;
-      asciihisto(effscandata,nTrig2,0);
+      std::cout << "CalDel scan for ROC " << (int)(*it) << std::endl;
+      asciihisto(effscandata,nTrig2,14,12,0);
       std::cout << std::endl;
     }
 
@@ -481,8 +471,8 @@ int main(int argc, char* argv[]) {
       //	std::cout << "DAC1 " << (int)it->first << " DAC2 " << (int)it->second.first << " " << it->second.second.size() << " pixels." << std::endl;
     }
 
-    asciitornado(effscan2ddata,nTrig,0);
-    
+    asciitornado(effscan2ddata,nTrig3,33,12,0);
+
     // ##########################################################
 
 
