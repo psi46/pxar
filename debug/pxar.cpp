@@ -282,6 +282,7 @@ int main(int argc, char* argv[]) {
 
     // Enable all pixels first:
     _api->_dut->testAllPixels(true);
+    _api->_dut->maskAllPixels(false);
 
     // Head:
     for(int i = 25; i < 55; i++) _api->_dut->maskPixel(5,i,true);
