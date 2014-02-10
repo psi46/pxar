@@ -591,7 +591,7 @@ std::vector<event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = parameter.at(1);
 
-  LOG(logDEBUGHAL) << "Called ModuleCalibrateMap with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
   std::stringstream os;
   for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
