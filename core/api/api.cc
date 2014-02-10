@@ -1470,6 +1470,73 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   return result;
 }
 
+std::vector<pixel>* api::repackThresholdMapData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags) {
+  std::vector<pixel>* result = new std::vector<pixel>();
+  // Threshold is the 50% efficiency level:
+  uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
+  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold;
+
+  // FIXME implement threshold edge RISING / FALLING flag
+  // Measure time:
+  timer t;
+
+  // First, pack the data as it would be a regular Dac Scan:
+  std::vector<std::pair<uint8_t,std::vector<pixel> > >* packed_dac = repackDacScanData(data,dacMin,dacMax,nTriggers,FLAG_INTERNAL_GET_EFFICIENCY);
+
+  // Efficiency map:
+  std::map<pixel,uint8_t> oldvalue;  
+
+  // Then loop over all pixels and DAC settings:
+  for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = packed_dac->begin(); it != packed_dac->end(); ++it) {
+    // For every DAC value, loop over all pixels:
+    for(std::vector<pixel>::iterator pixit = it->second.begin(); pixit != it->second.end(); ++pixit) {
+      // Check if we have that particular pixel already in:
+      std::vector<pixel>::iterator px = std::find_if(result->begin(),
+						     result->end(),
+						     findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+      // Pixel is known:
+      if(px != result->end()) {
+	// Calculate efficiency deltas:
+	uint8_t delta_old = abs(oldvalue[*px] - threshold);
+	uint8_t delta_new = abs(pixit->value - threshold);
+
+	// Check which value is closer to the threshold:
+	if(delta_new < delta_old) { 
+	  // Update the DAC threshold value for the pixel:
+	  px->value = it->first;
+	  // Update the oldvalue map:
+	  oldvalue[*px] = pixit->value;
+	}
+      }
+      // Pixel is new, just adding it:
+      else {
+	// Store the pixel with original efficiency
+	oldvalue.insert(std::make_pair(*pixit,pixit->value));
+	// Push pixel to result vector with current DAC as value field:
+	pixit->value = it->first;
+	result->push_back(*pixit);
+      }
+    }
+  }
+
+  LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdMap data for delivery.";
+  LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
+  return result;
+}
+
+std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
+
+  // Measure time:
+  timer t;
+
+  // First, pack the data as it would be a regular Dac Scan:
+  //std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data,dacMin,dacMax,nTriggers,FLAG_INTERNAL_GET_EFFICIENCY);
+
+  std::vector<std::pair<uint8_t,std::vector<pixel> > >* result = new std::vector<std::pair<uint8_t,std::vector<pixel> > >();
+  
+  return result;
+}
+
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = new std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
 
