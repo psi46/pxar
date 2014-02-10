@@ -1400,6 +1400,12 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 std::vector<event*> api::condenseTriggers(std::vector<event*> data, uint16_t nTriggers, uint32_t flags) {
 
   std::vector<event*> packed;
+
+  if(data.size()%nTriggers != 0) {
+    LOG(logCRITICAL) << "Data size does not correspond to " << nTriggers << " triggers! Aborting data processing!";
+    return packed;
+  }
+
   for(std::vector<event*>::iterator eventit = data.begin(); eventit!= data.end(); eventit += nTriggers) {
 
     event * evt = new event();
