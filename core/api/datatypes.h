@@ -143,6 +143,16 @@ namespace pxar {
     unsigned int GetSize() { return data.size(); }
     void Add(uint16_t value) { data.push_back(value); }
     uint16_t operator[](int index) { return data.at(index); }
+
+  private:
+    /** Overloaded ostream operator for simple printing of raw data blobs
+     */
+    friend std::ostream & operator<<(std::ostream &out, rawEvent& record) {
+      out << "====== " << std::hex << static_cast<uint16_t>(record.flags) << std::dec << " ====== ";
+      for (std::vector<uint16_t>::iterator it = record.data.begin(); it != record.data.end(); ++it)
+	out << std::hex << (*it) << std::dec << " ";
+      return out;
+    };
   };
 
   /** Class to store the configuration for single pixels (i.e. their mask state,
