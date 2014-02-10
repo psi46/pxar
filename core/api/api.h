@@ -308,11 +308,22 @@ namespace pxar {
      *  with the value of the pixel struct being the threshold value of that
      *  pixel.
      *
-     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
-     *  using an adapted binary search algorithm for optimal speed.
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					 uint16_t flags = 0, uint32_t nTriggers=16);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16);
+
+    /** Method to scan a DAC range and measure the pixel threshold
+     *
+     *  Returns a vector of pairs containing set dac value and pixels,
+     *  with the value of the pixel struct being the threshold value of that
+     *  pixel.
+     *
+     *  This function allows to specify a range for the threshold DAC to be searched,
+     *  this can be used to speed up the procedure by limiting the range.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the
      *  pulse height
@@ -352,13 +363,25 @@ namespace pxar {
     /** Method to get a map of the pixel threshold
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
-     *  the threshold value of that pixel
+     *  the threshold value of that pixel.
      *
-     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
-     *  using an adapted binary search algorithm for optimal speed.
+     *  This function allows to specify a range for the threshold DAC to be searched,
+     *  this can be used to speed up the procedure by limiting the range.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     */
+    std::vector<pixel> getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers);
+
+    /** Method to get a map of the pixel threshold
+     *
+     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  the threshold value of that pixel.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
      */
     std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags = 0, uint32_t nTriggers=16);
 
+    // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
 

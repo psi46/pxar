@@ -727,37 +727,59 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   return *result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									      uint16_t flags, uint32_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) {
+  // Get the full DAC range for scanning:
+  uint8_t dac1min = 0;
+  uint8_t dac1max = getDACRange(dacName);
+  return getThresholdVsDAC(dacName, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers);
+}
+
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
-  // Check DAC range
-  if(dacMin > dacMax) {
+  // Check DAC ranges
+  if(dac1min > dac1max) {
     // Swapping the range:
     LOG(logWARNING) << "Swapping upper and lower bound.";
-    uint8_t temp = dacMin;
-    dacMin = dacMax;
-    dacMax = temp;
+    uint8_t temp = dac1min;
+    dac1min = dac1max;
+    dac1max = temp;
+  }
+  if(dac2min > dac2max) {
+    // Swapping the range:
+    LOG(logWARNING) << "Swapping upper and lower bound.";
+    uint8_t temp = dac2min;
+    dac2min = dac2max;
+    dac2max = temp;
   }
 
   // Get the register number and check the range from dictionary:
-  uint8_t dacRegister;
-  if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
+  uint8_t dac1register, dac2register;
+  if(!verifyRegister(dac1name, dac1register, dac1max, ROC_REG)) {
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+  }
+  if(!verifyRegister(dac2name, dac2register, dac2max, ROC_REG)) {
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
 
   // Setup the correct _hal calls for this test
-  HalMemFnPixelSerial   pixelfn      = NULL;
-  HalMemFnPixelParallel multipixelfn = NULL;
-  HalMemFnRocSerial     rocfn        = NULL;
-  HalMemFnRocParallel   multirocfn   = NULL;
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacDacScan;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacDacScan;
+  // In Principle these functions exist, but they would take years to run and fill up the buffer
+  HalMemFnRocSerial     rocfn        = NULL; // &hal::SingleRocAllPixelsDacDacScan;
+  HalMemFnRocParallel   multirocfn   = NULL; // &hal::MultiRocAllPixelsDacDacScan;
+
+ // We want the pulse height back from the DacDac function, so no internal flags needed.
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
-  param.push_back(static_cast<int32_t>(dacRegister));  
-  param.push_back(static_cast<int32_t>(dacMin));
-  param.push_back(static_cast<int32_t>(dacMax));
+  param.push_back(static_cast<int32_t>(dac1register));  
+  param.push_back(static_cast<int32_t>(dac1min));
+  param.push_back(static_cast<int32_t>(dac1max));
+  param.push_back(static_cast<int32_t>(dac2register));  
+  param.push_back(static_cast<int32_t>(dac2min));
+  param.push_back(static_cast<int32_t>(dac2max));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
 
@@ -766,14 +788,17 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    uint8_t oldDacValue = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dacName);
-    LOG(logDEBUGAPI) << "Reset DAC \"" << dacName << "\" to original value " << static_cast<int>(oldDacValue);
-    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,oldDacValue);
+    uint8_t oldDac1Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac1name);
+    uint8_t oldDac2Value = _dut->getDAC(static_cast<size_t>(rocit - enabledRocs.begin()),dac2name);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac1name << "\" to original value " << static_cast<int>(oldDac1Value);
+    LOG(logDEBUGAPI) << "Reset DAC \"" << dac2name << "\" to original value " << static_cast<int>(oldDac2Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac1register,oldDac1Value);
+    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dac2register,oldDac2Value);
   }
 
   return *result;
@@ -987,25 +1012,35 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
 }
 
 std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uint32_t nTriggers) {
+  // Get the full DAC range for scanning:
+  uint8_t dacMin = 0;
+  uint8_t dacMax = getDACRange(dacName);
+  return getThresholdMap(dacName, dacMin, dacMax, flags, nTriggers);
+}
+
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
-  uint8_t dacRegister, dacValue = 0;
-  if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) {
+  // Scan the maximum DAC range for threshold:
+  uint8_t dacRegister;
+  if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
     return std::vector<pixel>();
   }
 
-  // Setup the correct _hal calls for this test
-  HalMemFnPixelSerial   pixelfn      = NULL;
-  HalMemFnPixelParallel multipixelfn = NULL;
-  HalMemFnRocSerial     rocfn        = NULL;
-  HalMemFnRocParallel   multirocfn   = NULL;
+  // Setup the correct _hal calls for this test, a threshold map is a 1D dac scan:
+  HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacScan;
+  HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacScan;
+  HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacScan;
+  HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacScan;
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
+  param.push_back(static_cast<int32_t>(dacRegister));  
+  param.push_back(static_cast<int32_t>(dacMin));
+  param.push_back(static_cast<int32_t>(dacMax));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
-  param.push_back(static_cast<int32_t>(dacRegister));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
@@ -1013,7 +1048,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackMapData(data, nTriggers, flags);
+  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags);
 
   return *result;
 }
