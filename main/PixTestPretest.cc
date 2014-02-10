@@ -44,18 +44,18 @@ bool PixTestPretest::setParameter(string parName, string sval) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
 
-      if (!parName.compare("targetIa")) {
+      if (!parName.compare("TargetIa")) {
 	fTargetIa = atoi(sval.c_str());  // [mA/ROC]
 	LOG(logDEBUG) << "target Ia " << fTargetIa << " mA/ROC";
       }
 
-      if (!parName.compare("noiseWidth")) {
+      if (!parName.compare("NoiseWidth")) {
 	fNoiseWidth = atoi(sval.c_str());  // half-width of Id noise peak
 	LOG(logDEBUG) << "Id vs VthrComp noise peak width "
 		      << fNoiseWidth << " DAC units";
       }
 
-      if (!parName.compare("noiseMargin")) {
+      if (!parName.compare("NoiseMargin")) {
 	fNoiseMargin = atoi(sval.c_str());  // safety margin below noise
 	LOG(logDEBUG) << "safety margin for VthrComp below noise "
 		      << fNoiseMargin << " DAC units";
@@ -115,11 +115,12 @@ PixTestPretest::~PixTestPretest() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::doTest() {
+
   fDirectory->cd();
   fHistList.clear();
   PixTest::update();
 
-  LOG(logINFO) << "PixTestPretest::doTest() ntrig = " << fParNtrig;
+  LOG(logINFO) << "PixTestPretest::doTest()";
 
   setVana();
   //  saveDacs();
@@ -127,28 +128,37 @@ void PixTestPretest::doTest() {
   //  saveDacs();
   setCalDel();
   //  saveDacs();
+
+  LOG(logINFO) << "PixTestPretest done";
 }
 
 // ----------------------------------------------------------------------
-void PixTestPretest::runCommand(std::string command) {
+void PixTestPretest::runCommand(std::string command) // one step at a time
+{
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+
   LOG(logDEBUG) << "running command: " << command;
-  if (!command.compare("setcaldel")) {
-    setCalDel(); 
-    return;
-  }
-  if (!command.compare("savedacs")) {
-    saveDacs(); 
-    return;
-  }
+
   if (!command.compare("setvana")) {
     setVana(); 
     return;
   }
+
   if (!command.compare("setvthrcompid")) {
     setVthrCompId(); 
     return;
   }
+
+  if (!command.compare("setcaldel")) {
+    setCalDel(); 
+    return;
+  }
+
+  if (!command.compare("savedacs")) {
+    saveDacs(); 
+    return;
+  }
+
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
@@ -306,7 +316,7 @@ void PixTestPretest::setVana() {
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompId() {
 
-  LOG(logINFO) << "PixTestPretest::setVthrCompId() start";
+  LOG(logINFO) << "PixTestPretest::setVthrCompId start";
 
   vector<TH1D*> hsts;
   TH1D *h1(0);
@@ -390,7 +400,7 @@ void PixTestPretest::setVthrCompId() {
       double d = hid->GetBinContent(i+fNoiseWidth) - ni;
       if( d > maxd ) { maxd = d; maxi = i-1; }
     }
-    LOG(logDEBUG) << "[SetComp] max d" << fNoiseWidth
+    LOG(logDEBUG) << "[setVthrCompId] max d" << fNoiseWidth
 		  << maxd << " at " << maxi;
 
     int32_t val = maxi - fNoiseMargin; // safety
@@ -421,9 +431,7 @@ void PixTestPretest::setVthrCompId() {
   hsum->Draw();
   PixTest::update();
 
-  // flush?
-  LOG(logINFO) << "PixTestPretest::setVthrCompId() done";
-
+  LOG(logINFO) << "PixTestPretest::setVthrCompId done";
 }
 
 // ----------------------------------------------------------------------
@@ -547,11 +555,10 @@ void PixTestPretest::setCalDel() {
   fApi->setDAC( "Vcal", cal ); // restore
   fApi->setDAC( "CtrlReg", ctl ); // restore
 
-  //flush?
-
   hsum->Draw();
   PixTest::update();
   fDisplayedHist = find( fHistList.begin(), fHistList.end(), hsum );
 
+  LOG(logINFO) << "PixTestPretest::setCalDel done";
   // FIXME update configparameters with new caldel!
 }
