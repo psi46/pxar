@@ -10,7 +10,6 @@ using namespace pxar;
 hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
-  _fallback_mode(false),
   nTBMs(0),
   deser160phase(4)
 {
@@ -223,11 +222,6 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 
 void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
 
-  // We have TBMs - this means we currently need the software fallback mode:
-  _fallback_mode = true;
-  LOG(logWARNING) << "You are now running in NIOS II softcore fallback mode. "
-		  << "This might increase the test run duration dramatically!";
-
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
   // FIXME
@@ -247,13 +241,8 @@ void hal::initROC(uint8_t rocId, uint8_t roctype, std::map< uint8_t,uint8_t > da
   // Set the pixel address inverted flag if we have the PSI46digV1 chip
   if(roctype == ROC_PSI46DIG || roctype == ROC_PSI46DIG_TRIG) {
     LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
-    if(_fallback_mode) {_testboard->fallback_SetPixelAddressInverted(true); }
-    else { _testboard->SetPixelAddressInverted(true); }
+    LOG(logCRITICAL) << "FIXME: This is currently not supported by pxar! FIle a bug report if needed!";
   }
-  else {
-    if(_fallback_mode) {_testboard->fallback_SetPixelAddressInverted(false); }
-    else { _testboard->SetPixelAddressInverted(false); }
-}
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << static_cast<int>(rocId) << ".";
