@@ -1,6 +1,7 @@
 #include "hal.h"
 #include "log.h"
 #include "timer.h"
+#include "helper.h"
 #include "constants.h"
 #include <fstream>
 
@@ -593,9 +594,7 @@ std::vector<event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
 
   LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
+  LOG(logDEBUGHAL) << listVector(rocids);
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -626,9 +625,7 @@ std::vector<event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, 
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
 		   << static_cast<int>(row) << " on "
 		   << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
+  LOG(logDEBUGHAL) << listVector(rocids);
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -719,9 +716,7 @@ std::vector<event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
 
  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
+  LOG(logDEBUGHAL) << listVector(rocids);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax);
@@ -758,9 +753,7 @@ std::vector<event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
 		   << static_cast<int>(row) << " on "
 		   << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
+  LOG(logDEBUGHAL) << listVector(rocids);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax);
@@ -864,9 +857,7 @@ std::vector<event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
 
  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
+  LOG(logDEBUGHAL) << listVector(rocids);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
 		   << " from " << static_cast<int>(dac1min) 
 		   << " to " << static_cast<int>(dac1max)
@@ -909,9 +900,7 @@ std::vector<event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
 		   << static_cast<int>(row) << " on "
 		   << rocids.size() << " ROCs with the I2C addresses:";
-  std::stringstream os;
-  for(std::vector<uint8_t>::iterator it = rocids.begin(); it!= rocids.end(); ++it) { os << static_cast<int>(*it) << " "; }
-  LOG(logDEBUGHAL) << os.str();
+  LOG(logDEBUGHAL) << listVector(rocids);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
 		   << " from " << static_cast<int>(dac1min) 
 		   << " to " << static_cast<int>(dac1max)

@@ -1,4 +1,5 @@
 #include "datapipe.h"
+#include "helper.h"
 #include "constants.h"
 
 namespace pxar {
@@ -26,11 +27,7 @@ namespace pxar {
     LOG(logDEBUGHAL) << "----------------";
     LOG(logDEBUGHAL) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
     LOG(logDEBUGHAL) << "----------------";
-    std::stringstream os;
-    for (unsigned int i = 0; i < buffer.size(); i++) {
-      os << " " << std::setw(4) << std::setfill('0') << std::hex << (unsigned int)(buffer.at(i));
-    }
-    LOG(logDEBUGHAL) << os.str();
+    LOG(logDEBUGHAL) << listVector(buffer,true);
     LOG(logDEBUGHAL) << "----------------";
     */
 
@@ -72,11 +69,7 @@ namespace pxar {
 
     /*
     LOG(logDEBUGHAL) << "-------------------------";
-    std::stringstream os;
-    for (unsigned int i=0; i<record.GetSize(); i++)
-      os << " " << std::setw(4) << std::setfill('0') << std::hex 
-	 << static_cast<uint16_t>(record[i]);
-    LOG(logDEBUGHAL) << os.str();
+    LOG(logDEBUGHAL) << listVector(record,true);
     */
     return &record;
   }
@@ -116,11 +109,7 @@ namespace pxar {
 
     /*
     LOG(logDEBUGHAL) << "-------------------------";
-    std::stringstream os;
-    for (unsigned int i=0; i<record.GetSize(); i++)
-      os << " " << std::setw(4) << std::setfill('0') << std::hex 
-	 << static_cast<uint16_t>(record[i]);
-    LOG(logDEBUGHAL) << os.str();
+    LOG(logDEBUGHAL) << listVector(record,true);
     */
 
     return &record;
