@@ -1519,6 +1519,9 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<event*> data, uint8
     }
   }
 
+  // Sort the output map by ROC->col->row - just because we are so nice:
+  std::sort(result->begin(),result->end());
+
   LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdMap data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
