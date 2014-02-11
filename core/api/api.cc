@@ -1431,6 +1431,9 @@ std::vector<pixel>* api::repackMapData (std::vector<event*> data, uint16_t nTrig
     } // loop over pixels
   } // loop over events
 
+  // Sort the output map by ROC->col->row - just because we are so nice:
+  std::sort(result->begin(),result->end());
+
   LOG(logDEBUGAPI) << "Correctly repacked Map data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
