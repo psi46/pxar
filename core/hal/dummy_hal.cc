@@ -151,46 +151,46 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 
 // ---------------- TEST FUNCTIONS ----------------------
 
-std::vector<event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
   // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   // uint16_t nTriggers = parameter.at(1);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 }
 
-std::vector<event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   // uint16_t nTriggers = parameter.at(1);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 }
 
-std::vector<event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter) {
 
   // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   // uint16_t nTriggers = parameter.at(1);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // int32_t flags = parameter.at(0);
   // uint16_t nTriggers = parameter.at(1);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
 
-std::vector<event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
   // uint8_t dacreg = parameter.at(0);
   // uint8_t dacmin = parameter.at(1);
@@ -199,12 +199,12 @@ std::vector<event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
   // uint16_t nTriggers = parameter.at(4);
 
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // uint8_t dacreg = parameter.at(0);
   // uint8_t dacmin = parameter.at(1);
@@ -212,26 +212,12 @@ std::vector<event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
   // int32_t flags = parameter.at(3);
   // uint16_t nTriggers = parameter.at(4);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
-
-  // uint8_t dacreg = parameter.at(0);
-  // uint8_t dacmin = parameter.at(1);
-  // uint8_t dacmax = parameter.at(2);
-  // int32_t flags = parameter.at(3);
-  // uint16_t nTriggers = parameter.at(4);
-
-
-  std::vector<event*> data;
-  return data;
-
-}
-
-std::vector<event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
   // uint8_t dacreg = parameter.at(0);
   // uint8_t dacmin = parameter.at(1);
@@ -240,12 +226,26 @@ std::vector<event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
   // uint16_t nTriggers = parameter.at(4);
 
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+
+  // uint8_t dacreg = parameter.at(0);
+  // uint8_t dacmin = parameter.at(1);
+  // uint8_t dacmax = parameter.at(2);
+  // int32_t flags = parameter.at(3);
+  // uint16_t nTriggers = parameter.at(4);
+
+
+  std::vector<Event*> data;
+  return data;
+
+}
+
+std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
   // uint8_t dac1reg = parameter.at(0);
   // uint8_t dac1min = parameter.at(1);
@@ -257,12 +257,12 @@ std::vector<event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
   // uint16_t nTriggers = parameter.at(7);
 
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // uint8_t dac1reg = parameter.at(0);
   // uint8_t dac1min = parameter.at(1);
@@ -274,12 +274,12 @@ std::vector<event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
   // uint16_t nTriggers = parameter.at(7);
 
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
   // uint8_t dac1reg = parameter.at(0);
   // uint8_t dac1min = parameter.at(1);
@@ -290,12 +290,12 @@ std::vector<event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
   // int32_t flags = parameter.at(6);
   // uint16_t nTriggers = parameter.at(7);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
 
-std::vector<event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // uint8_t dac1reg = parameter.at(0);
   // uint8_t dac1min = parameter.at(1);
@@ -306,7 +306,7 @@ std::vector<event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t colu
   // int32_t flags = parameter.at(6);
   // uint16_t nTriggers = parameter.at(7);
 
-  std::vector<event*> data;
+  std::vector<Event*> data;
   return data;
 
 }
@@ -349,23 +349,23 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
   return true;
 }
 
-event* hal::daqEvent() {
+Event* hal::daqEvent() {
 
-  event* current_event = new event();
+  Event* current_Event = new Event();
 
-  return current_event;
+  return current_Event;
 }
 
-std::vector<event*> hal::daqAllEvents() {
+std::vector<Event*> hal::daqAllEvents() {
 
-  std::vector<event*> evt;
+  std::vector<Event*> evt;
   return evt;
 }
 
 rawEvent* hal::daqRawEvent() {
 
-  rawEvent* current_event = new rawEvent();
-  return current_event;
+  rawEvent* current_Event = new rawEvent();
+  return current_Event;
 }
 
 std::vector<rawEvent*> hal::daqAllRawEvents() {

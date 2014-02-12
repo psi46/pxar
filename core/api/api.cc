@@ -654,7 +654,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags);
 
@@ -712,7 +712,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,internal_flags);
 
@@ -786,7 +786,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
 
@@ -858,7 +858,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
 
@@ -933,7 +933,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,internal_flags);
 
@@ -971,7 +971,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data, nTriggers, flags);
@@ -1003,7 +1003,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data, nTriggers, internal_flags);
@@ -1045,7 +1045,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
-  std::vector<event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags);
@@ -1160,15 +1160,15 @@ std::vector<rawEvent> api::daqGetRawBuffer() {
   return data;
 }
 
-std::vector<event> api::daqGetEventBuffer() {
+std::vector<Event> api::daqGetEventBuffer() {
 
-  // Reading out all data from the DTB and returning the decoded event buffer.
+  // Reading out all data from the DTB and returning the decoded Event buffer.
   // Select the right readout channels depending on the number of TBMs
-  std::vector<event> data = std::vector<event>();
-  std::vector<event*> buffer = _hal->daqAllEvents();
+  std::vector<Event> data = std::vector<Event>();
+  std::vector<Event*> buffer = _hal->daqAllEvents();
 
   // Dereference all vector entries and give data back:
-  for(std::vector<event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
+  for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
   }
   
@@ -1178,12 +1178,12 @@ std::vector<event> api::daqGetEventBuffer() {
   return data;
 }
 
-event api::daqGetEvent() {
+Event api::daqGetEvent() {
 
   // Check DAQ status:
-  if(!daqStatus()) { return event(); }
+  if(!daqStatus()) { return Event(); }
 
-  // Return the next decoded event from the FIFO buffer:
+  // Return the next decoded Event from the FIFO buffer:
   return (*_hal->daqEvent());
 }
 
@@ -1221,10 +1221,10 @@ bool api::daqStop() {
 }
 
 
-std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param,  bool forceSerial) {
+std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param,  bool forceSerial) {
   
   // pointer to vector to hold our data
-  std::vector<event*> data = std::vector<event*>();
+  std::vector<Event*> data = std::vector<Event*>();
 
   // Start test timer:
   timer t;
@@ -1252,7 +1252,7 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       
       // Get one of the enabled ROCs:
       std::vector<uint8_t> enabledRocs = _dut->getEnabledRocIDs();
-      std::vector<event*> rocdata = std::vector<event*>();
+      std::vector<Event*> rocdata = std::vector<Event*>();
       std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels(enabledRocs.front());
 
       LOG(logDEBUGAPI) << "\"The Loop\" contains "
@@ -1260,13 +1260,13 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 
       for (std::vector<pixelConfig>::iterator px = enabledPixels.begin(); px != enabledPixels.end(); ++px) {
 	// execute call to HAL layer routine and store data in buffer
-	std::vector<event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column, px->row, param);
+	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column, px->row, param);
 
 	// merge pixel data into roc data storage vector
 	if (rocdata.empty()){
 	  rocdata = buffer; // for first time call
 	} else {
-	  // Add buffer vector to the end of existing event data:
+	  // Add buffer vector to the end of existing Event data:
 	  rocdata.reserve(rocdata.size() + buffer.size());
 	  rocdata.insert(rocdata.end(), buffer.begin(), buffer.end());
 	}
@@ -1295,7 +1295,7 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 	// execute call to HAL layer routine and save returned data in buffer
-	std::vector<event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
+	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
         if (data.empty()) data = rocdata;
 	else {
@@ -1313,7 +1313,7 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " enabled ROCs.";
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-	std::vector<event*> rocdata = std::vector<event*>();
+	std::vector<Event*> rocdata = std::vector<Event*>();
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels(static_cast<uint8_t>(rocit - enabledRocs.begin()));
 
 
@@ -1322,12 +1322,12 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
-	  std::vector<event*> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column, pixit->row, param);
+	  std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column, pixit->row, param);
 	  // merge pixel data into roc data storage vector
 	  if (rocdata.empty()){
 	    rocdata = buffer; // for first time call
 	  } else {
-	    // Add buffer vector to the end of existing event data:
+	    // Add buffer vector to the end of existing Event data:
 	    rocdata.reserve(rocdata.size() + buffer.size());
 	    rocdata.insert(rocdata.end(), buffer.begin(), buffer.end());
 	  }
@@ -1363,21 +1363,21 @@ std::vector<event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 } // expandLoop()
 
 
-std::vector<event*> api::condenseTriggers(std::vector<event*> data, uint16_t nTriggers, uint32_t flags) {
+std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, uint32_t flags) {
 
-  std::vector<event*> packed;
+  std::vector<Event*> packed;
 
   if(data.size()%nTriggers != 0) {
     LOG(logCRITICAL) << "Data size does not correspond to " << nTriggers << " triggers! Aborting data processing!";
     return packed;
   }
 
-  for(std::vector<event*>::iterator eventit = data.begin(); eventit!= data.end(); eventit += nTriggers) {
+  for(std::vector<Event*>::iterator Eventit = data.begin(); Eventit!= data.end(); Eventit += nTriggers) {
 
-    event * evt = new event();
+    Event * evt = new Event();
     std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
 
-    for(std::vector<event*>::iterator it = eventit; it != eventit+nTriggers; ++it) {
+    for(std::vector<Event*>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
 
       // Loop over all contained pixels:
       for(std::vector<pixel>::iterator pixit = (*it)->pixels.begin(); pixit != (*it)->pixels.end(); ++pixit) {
@@ -1412,7 +1412,7 @@ std::vector<event*> api::condenseTriggers(std::vector<event*> data, uint16_t nTr
   return packed;
 }
 
-std::vector<pixel>* api::repackMapData (std::vector<event*> data, uint16_t nTriggers, uint32_t flags) {
+std::vector<pixel>* api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint32_t flags) {
 
   std::vector<pixel>* result = new std::vector<pixel>();
   LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, flags at " << flags << ".";
@@ -1420,16 +1420,16 @@ std::vector<pixel>* api::repackMapData (std::vector<event*> data, uint16_t nTrig
   // Measure time:
   timer t;
 
-  // First reduce triggers, we have #nTriggers events which belong together:
-  std::vector<event*> packed = condenseTriggers(data, nTriggers, flags);
+  // First reduce triggers, we have #nTriggers Events which belong together:
+  std::vector<Event*> packed = condenseTriggers(data, nTriggers, flags);
 
-  // Loop over all events we have:
-  for(std::vector<event*>::iterator eventit = packed.begin(); eventit!= packed.end(); ++eventit) {
-    // For every event, loop over all contained pixels:
-    for(std::vector<pixel>::iterator pixit = (*eventit)->pixels.begin(); pixit != (*eventit)->pixels.end(); ++pixit) {
+  // Loop over all Events we have:
+  for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
+    // For every Event, loop over all contained pixels:
+    for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
       result->push_back(*pixit);
     } // loop over pixels
-  } // loop over events
+  } // loop over Events
 
   // Sort the output map by ROC->col->row - just because we are so nice:
   std::sort(result->begin(),result->end());
@@ -1439,14 +1439,14 @@ std::vector<pixel>* api::repackMapData (std::vector<event*> data, uint16_t nTrig
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags){
+std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
 
   // Measure time:
   timer t;
 
-  // First reduce triggers, we have #nTriggers events which belong together:
-  std::vector<event*> packed = condenseTriggers(data, nTriggers, flags);
+  // First reduce triggers, we have #nTriggers Events which belong together:
+  std::vector<Event*> packed = condenseTriggers(data, nTriggers, flags);
 
   if(packed.size() % static_cast<size_t>(dacMax-dacMin+1) != 0) {
     LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>(dacMax-dacMin+1) << " DAC values!";
@@ -1460,11 +1460,11 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
 
   uint8_t currentDAC = dacMin;
   // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
-  for(std::vector<event*>::iterator eventit = packed.begin(); eventit!= packed.end(); ++eventit) {
+  for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     if(currentDAC > dacMax) { currentDAC = dacMin; }
     result->at(currentDAC-dacMin).second.insert(result->at(currentDAC-dacMin).second.end(),
-						(*eventit)->pixels.begin(),
-						(*eventit)->pixels.end());
+						(*Eventit)->pixels.begin(),
+						(*Eventit)->pixels.end());
     currentDAC++;
   }
   
@@ -1473,7 +1473,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   return result;
 }
 
-std::vector<pixel>* api::repackThresholdMapData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags) {
+std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags) {
   std::vector<pixel>* result = new std::vector<pixel>();
   // Threshold is the 50% efficiency level:
   uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
@@ -1530,7 +1530,7 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<event*> data, uint8
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
 
   // Measure time:
   timer t;
@@ -1543,14 +1543,14 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = new std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
 
   // Measure time:
   timer t;
 
-  // First reduce triggers, we have #nTriggers events which belong together:
-  std::vector<event*> packed = condenseTriggers(data, nTriggers, flags);
+  // First reduce triggers, we have #nTriggers Events which belong together:
+  std::vector<Event*> packed = condenseTriggers(data, nTriggers, flags);
 
   if(packed.size() % static_cast<size_t>((dac1max-dac1min+1)*(dac2max-dac2min+1)) != 0) {
     LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>((dac1max-dac1min+1)*(dac2max-dac2min+1)) << " DAC values!";
@@ -1573,15 +1573,15 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
   uint8_t current1dac = dac1min;
   uint8_t current2dac = dac2min;
   // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
-  for(std::vector<event*>::iterator eventit = packed.begin(); eventit!= packed.end(); ++eventit) {
+  for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     if(current1dac > dac1max) { current1dac = dac1min; }
     if(current2dac > dac2max) { 
       current2dac = dac2min;
       current1dac++;
     }
     result->at((current1dac-dac1min)*(dac2max-dac2min+1) + (current2dac-dac2min)).second.second.insert(result->at((current1dac-dac1min)*(dac2max-dac2min+1) + (current2dac-dac2min)).second.second.end(),
-						(*eventit)->pixels.begin(),
-						(*eventit)->pixels.end());
+						(*Eventit)->pixels.begin(),
+						(*Eventit)->pixels.end());
     current2dac++;
   }
   

@@ -97,17 +97,17 @@ namespace pxar {
     };
   };
 
-  /** Class to store events containing a header and a std::vector of pixels
+  /** Class to store Events containing a header and a std::vector of pixels
    */
-  class DLLEXPORT event {
+  class DLLEXPORT Event {
   public:
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
   private:
-    /** Overloaded ostream operator for simple printing of event data
+    /** Overloaded ostream operator for simple printing of Event data
      */
-    friend std::ostream & operator<<(std::ostream &out, event& evt) {
+    friend std::ostream & operator<<(std::ostream &out, Event& evt) {
       out << "====== " << std::hex << static_cast<uint16_t>(evt.header) << std::dec << " ====== ";
       for (std::vector<pixel>::iterator it = evt.pixels.begin(); it != evt.pixels.end(); ++it)
 	out << (*it) << " ";
@@ -117,8 +117,8 @@ namespace pxar {
 
 
   /** Class to store raw evet data records containing a list of flags to indicate the 
-   *  event status as well as a vector of uint16_t data records containing the actual
-   *  event data in undecoded raw format.
+   *  Event status as well as a vector of uint16_t data records containing the actual
+   *  Event data in undecoded raw format.
    */
   class rawEvent {
     /*
