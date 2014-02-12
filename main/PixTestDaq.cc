@@ -110,24 +110,12 @@ void PixTestDaq::doTest() {
   fApi->daqStop();
 
   // And read out the full buffer:
-  vector<uint16_t> daqdat = fApi->daqGetBuffer();
+  // Either fetching undecoded raw data events or decoded events, check API documentation!
+  vector<pxar::rawEvent> daqdat = fApi->daqGetRawBuffer();
 
-  cout << "Size of data read from board: " << daqdat.size() << endl;
-  // Count triggers:
-  uint32_t daq_check_triggers(0);
-  int lcnt(0); 
-  for(vector<uint16_t>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-    cout << Form("%4X ", (*it));
-    ++lcnt;
-    if(((*it) & 0xF000) > 0x4000 || (*it) == 0x0080) {
-      ++daq_check_triggers;
-      cout << endl;
-    }
-  }
-  cout << endl;
-  
-  cout << "Found " << daq_check_triggers << " triggers in data, expected " << fParNtrig << endl;
+  cout << "Number of events read from board: " << daqdat.size() << endl;
 
+  // We should store the data, probably...
 
   LOG(logINFO) << "PixTestDaq::doTest() done";
 }
