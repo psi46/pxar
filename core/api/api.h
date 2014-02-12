@@ -62,10 +62,10 @@ namespace pxar {
    *  addresses from the HAL class, used e.g. in loop expansion routines.
    *  Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
    */
-  typedef  std::vector<event*> (hal::*HalMemFnRocParallel)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
-  typedef  std::vector<event*> (hal::*HalMemFnPixelParallel)(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
-  typedef  std::vector<event*> (hal::*HalMemFnRocSerial)(uint8_t rocid, std::vector<int32_t> parameter);
-  typedef  std::vector<event*> (hal::*HalMemFnPixelSerial)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnRocParallel)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnPixelParallel)(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnRocSerial)(uint8_t rocid, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnPixelSerial)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
 
 
 
@@ -174,7 +174,7 @@ namespace pxar {
      *  programmed. This function needs to be called after power cycling the 
      *  testboard output (using Poff, Pon).
      *
-     *  A DUT flag is set which prevents test functions to be executed if 
+     *  A DUT flag is set which prEvents test functions to be executed if 
      *  not programmed.
      */
     bool programDUT(); 
@@ -405,15 +405,15 @@ namespace pxar {
      */
     bool daqStatus();
     
-    /** Function to read out the earliest event in buffer from the current
-     *  data acquisition session. If no event is buffered, the function will 
-     *  wait for the next event to arrive and then return it.
+    /** Function to read out the earliest Event in buffer from the current
+     *  data acquisition session. If no Event is buffered, the function will 
+     *  wait for the next Event to arrive and then return it.
      */
-    event daqGetEvent();
+    Event daqGetEvent();
 
     /** Function to read out the earliest raw data record in buffer from the 
-     *  current data acquisition session. If no event is buffered, the function 
-     *  will wait for the next event to arrive and then return it.
+     *  current data acquisition session. If no Event is buffered, the function 
+     *  will wait for the next Event to arrive and then return it.
      */
     rawEvent daqGetRawEvent();
 
@@ -436,19 +436,19 @@ namespace pxar {
      */
     bool daqStop();
 
-    /** Function to return the full event buffer from the testboard RAM after
+    /** Function to return the full Event buffer from the testboard RAM after
      *  the data acquisition has been stopped. No decoding is performed, this 
      *  function returns the raw data blob from either of the deserializer
      *  modules.
      */
     std::vector<rawEvent> daqGetRawBuffer();
 
-    /** Function to return the full event buffer from the testboard RAM after
+    /** Function to return the full Event buffer from the testboard RAM after
      *  the data acquisition has been stopped. All data is decoded and the 
-     *  function returns decoded pixels separated in events with additional
+     *  function returns decoded pixels separated in Events with additional
      *  header information available.
      */
-    std::vector<event> daqGetEventBuffer();
+    std::vector<Event> daqGetEventBuffer();
 
     /** DUT object for book keeping of settings
      */
@@ -474,34 +474,34 @@ namespace pxar {
      *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
      *  function, all depending on the configuration of the DUT.
      */
-    std::vector<event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false);
+    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false);
 
-    /** Merges all consecutive triggers into one event
+    /** Merges all consecutive triggers into one Event
      */
-    std::vector<event*> condenseTriggers(std::vector<event*> data, uint16_t nTriggers, uint32_t flags);
+    std::vector<Event*> condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, uint32_t flags);
     
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels.
      */
-    std::vector<pixel>* repackMapData (std::vector<event*> data, uint16_t nTriggers, uint32_t flags);
+    std::vector<pixel>* repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint32_t flags);
 
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels and returns the threshold value.
      */
-    std::vector<pixel>* repackThresholdMapData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags);
+    std::vector<pixel>* repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector<event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors and return the threshold value.
      */
-    std::vector<std::pair<uint8_t,std::vector<pixel> > >* repackThresholdDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags);
+    std::vector<std::pair<uint8_t,std::vector<pixel> > >* repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags);
 
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags);
 
     /** Helper function for conversion from string to register value
      *

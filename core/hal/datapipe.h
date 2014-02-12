@@ -143,7 +143,7 @@ namespace pxar {
     void Stop() { stopAtEmptyData = true; }
   };
 
-  // DTB data event splitter
+  // DTB data Event splitter
   class dtbEventSplitter : public dataPipe<uint16_t, rawEvent*> {
     rawEvent record;
     rawEvent* Read() {
@@ -162,18 +162,18 @@ namespace pxar {
   };
 
   // DTB data decoding class
-  class dtbEventDecoder : public dataPipe<rawEvent*, event*> {
-    event roc_event;
-    event* Read() {
+  class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
+    Event roc_Event;
+    Event* Read() {
       if(GetState()) return DecodeDeser400();
       else return DecodeDeser160();
     };
-    event* ReadLast() { return &roc_event; }
+    Event* ReadLast() { return &roc_Event; }
     bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
 
-    event* DecodeDeser160();
-    event* DecodeDeser400();
+    Event* DecodeDeser160();
+    Event* DecodeDeser400();
   };
 }
 #endif

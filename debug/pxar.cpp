@@ -556,11 +556,11 @@ int main(int argc, char* argv[]) {
     //_api->daqTriggerLoop(10);
     //sleep(2);
     _api->daqStop();
-    std::vector<pxar::event> daqdat = _api->daqGetEventBuffer();
+    std::vector<pxar::Event> daqdat = _api->daqGetEventBuffer();
 
     std::cout << "Event number read from board: " << daqdat.size() << std::endl;
     std::cout << "DAQ data blob:" << std::endl;
-    for(std::vector<pxar::event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+    for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       std::cout << (*it) << std::endl;
     }
 

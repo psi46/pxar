@@ -38,7 +38,7 @@ namespace pxar {
   rawEvent* dtbEventSplitter::SplitDeser400() {
     record.Clear();
 
-    // If last one had event end marker, get a new sample:
+    // If last one had Event end marker, get a new sample:
     if (GetLast() & 0x00f0) { Get(); }
 
     // If new sample does not have start marker keep on reading until we find it:
@@ -49,22 +49,22 @@ namespace pxar {
 
     // Else keep reading and adding samples until we find any marker.
     do {
-      // If total event size is too big, break:
+      // If total Event size is too big, break:
       if (record.GetSize() >= 40000) {
 	record.SetOverflow();
 	break;
       }
 
-      // FIXME Very first event starts with 0xC - which srews up empty event detection here!
-      // If the event start sample is also event end sample, write and quit:
+      // FIXME Very first Event starts with 0xC - which srews up empty Event detection here!
+      // If the Event start sample is also Event end sample, write and quit:
       //if((GetLast() & 0xf000) == 0xf000) { break; }
 
       record.Add(GetLast() & 0x00ff);
     } while ((Get() & 0x00f0) != 0x00f0);
 
-    // Check if the last read sample has event end marker:
+    // Check if the last read sample has Event end marker:
     if (GetLast() & 0x00f0) record.Add(GetLast() & 0x00ff);
-    // Else set event end error:
+    // Else set Event end error:
     else record.SetEndError();
 
     /*
@@ -78,7 +78,7 @@ namespace pxar {
   rawEvent* dtbEventSplitter::SplitDeser160() {
     record.Clear();
 
-    // If last one had event end marker, get a new sample:
+    // If last one had Event end marker, get a new sample:
     if (GetLast() & 0x4000) { Get(); }
 
     // If new sample does not have start marker keep on reading until we find it:
@@ -89,22 +89,22 @@ namespace pxar {
 
     // Else keep reading and adding samples until we find any marker.
     do {
-      // If total event size is too big, break:
+      // If total Event size is too big, break:
       if (record.GetSize() >= 40000) {
 	record.SetOverflow();
 	break;
       }
 
-      // FIXME Very first event starts with 0xC - which srews up empty event detection here!
-      // If the event start sample is also event end sample, write and quit:
+      // FIXME Very first Event starts with 0xC - which srews up empty Event detection here!
+      // If the Event start sample is also Event end sample, write and quit:
       if((GetLast() & 0xc000) == 0xc000) { break; }
 
       record.Add(GetLast() & 0x0fff);
     } while ((Get() & 0xc000) == 0);
 
-    // Check if the last read sample has event end marker:
+    // Check if the last read sample has Event end marker:
     if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
-    // Else set event end error:
+    // Else set Event end error:
     else record.SetEndError();
 
     /*
@@ -116,11 +116,11 @@ namespace pxar {
   }
 
 
-  event* dtbEventDecoder::DecodeDeser400() {
+  Event* dtbEventDecoder::DecodeDeser400() {
 
-    roc_event.header = 0;
-    roc_event.trailer = 0;
-    roc_event.pixels.clear();
+    roc_Event.header = 0;
+    roc_Event.trailer = 0;
+    roc_Event.pixels.clear();
 
     rawEvent *sample = Get();
 
@@ -147,7 +147,7 @@ namespace pxar {
 	{
 	pixel pix(raw);
 	pix.roc_id = roc_n;
-	roc_event.pixels.push_back(pix);
+	roc_Event.pixels.push_back(pix);
 	break;
 	}
       case  7: roc_n++; break;
@@ -156,7 +156,7 @@ namespace pxar {
       case  9: hdr = (hdr<<4) + d; break;
       case 10: hdr = (hdr<<4) + d; break;
       case 11: hdr = (hdr<<4) + d;
-	roc_event.header = hdr;
+	roc_Event.header = hdr;
 	roc_n = -1 + GetChannel() * 8;
 	break;
 
@@ -164,33 +164,33 @@ namespace pxar {
       case 13: trl = (trl<<4) + d; break;
       case 14: trl = (trl<<4) + d; break;
       case 15: trl = (trl<<4) + d;
-	roc_event.trailer = trl;
+	roc_Event.trailer = trl;
 	break;
       }
     }
 
-    // LOG(logDEBUGHAL) << roc_event;
-    return &roc_event;
+    // LOG(logDEBUGHAL) << roc_Event;
+    return &roc_Event;
   }
 
-  event* dtbEventDecoder::DecodeDeser160() {
+  Event* dtbEventDecoder::DecodeDeser160() {
     rawEvent *sample = Get();
-    roc_event.header = 0;
-    roc_event.pixels.clear();
+    roc_Event.header = 0;
+    roc_Event.pixels.clear();
     unsigned int n = sample->GetSize();
     if (n > 0) {
-      if (n > 1) roc_event.pixels.reserve((n-1)/2);
-      roc_event.header = (*sample)[0];
+      if (n > 1) roc_Event.pixels.reserve((n-1)/2);
+      roc_Event.header = (*sample)[0];
       unsigned int pos = 1;
       while (pos < n-1) {
 	uint32_t raw = (*sample)[pos++] << 12;
 	raw += (*sample)[pos++];
 	pixel pix(raw);
-	roc_event.pixels.push_back(pix);
+	roc_Event.pixels.push_back(pix);
       }
     }
 
-    //LOG(logDEBUGHAL) << roc_event;
-    return &roc_event;
+    //LOG(logDEBUGHAL) << roc_Event;
+    return &roc_Event;
   }
 }
