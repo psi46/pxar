@@ -101,6 +101,7 @@ namespace pxar {
    */
   class DLLEXPORT event {
   public:
+  event() : header(0), trailer(0), pixels() {};
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
@@ -121,14 +122,8 @@ namespace pxar {
    *  event data in undecoded raw format.
    */
   class rawEvent {
-    /*
-      bit 0 = misaligned start
-      bit 1 = no end detected
-      bit 2 = overflow
-    */
-    std::vector<uint16_t> data;
-    unsigned int flags;
   public:
+  rawEvent() : flags(0), data() {};
     void SetStartError() { flags |= 1; }
     void SetEndError()   { flags |= 2; }
     void SetOverflow()   { flags |= 4; }
@@ -145,6 +140,14 @@ namespace pxar {
     uint16_t operator[](int index) { return data.at(index); }
 
   private:
+    /*
+      bit 0 = misaligned start
+      bit 1 = no end detected
+      bit 2 = overflow
+    */
+    unsigned int flags;
+    std::vector<uint16_t> data;
+
     /** Overloaded ostream operator for simple printing of raw data blobs
      */
     friend std::ostream & operator<<(std::ostream &out, rawEvent& record) {
