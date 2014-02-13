@@ -1415,10 +1415,10 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
 
   if(packed.size() % static_cast<size_t>(dacMax-dacMin+1) != 0) {
     LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>(dacMax-dacMin+1) << " DAC values!";
+    return result;
   }
-  else {
-    LOG(logDEBUGAPI) << "Packing DAC range " << static_cast<int>(dacMin) << " - " << static_cast<int>(dacMax) << ", data has " << packed.size() << " entries.";
-  }
+
+  LOG(logDEBUGAPI) << "Packing DAC range " << static_cast<int>(dacMin) << " - " << static_cast<int>(dacMax) << ", data has " << packed.size() << " entries.";
 
   // Prepare the result vector
   for(size_t dac = dacMin; dac <= dacMax; dac++) { result->push_back(std::make_pair(dac,std::vector<pixel>())); }
@@ -1444,7 +1444,6 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
   LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " << (rising_edge ? "rising":"falling") << " edge";
 
-  // FIXME implement threshold edge RISING / FALLING flag
   // Measure time:
   timer t;
 
@@ -1475,15 +1474,14 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
 	uint8_t delta_new = abs(pixit->value - threshold);
 	bool positive_slope = (pixit->value-oldvalue[*px] > 0 ? true : false);
-	if(!positive_slope) { break; }
-
 	// Check which value is closer to the threshold:
-	if(delta_new < delta_old) { 
-	  // Update the DAC threshold value for the pixel:
-	  px->value = it->first;
-	  // Update the oldvalue map:
-	  oldvalue[*px] = pixit->value;
-	}
+	if(!positive_slope) { break; }
+	if(!(delta_new < delta_old)) { break; }
+
+	// Update the DAC threshold value for the pixel:
+	px->value = it->first;
+	// Update the oldvalue map:
+	oldvalue[*px] = pixit->value;
       }
       // Pixel is new, just adding it:
       else {
@@ -1506,14 +1504,82 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
 
 std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool rising_edge) {
 
+  std::vector<std::pair<uint8_t,std::vector<pixel> > >* result = new std::vector<std::pair<uint8_t,std::vector<pixel> > >();
+
+  // Threshold is the 50% efficiency level:
+  uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
+  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " << (rising_edge ? "rising":"falling") << " edge";
+
   // Measure time:
   timer t;
 
-  // First, pack the data as it would be a regular Dac Scan:
-  //std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data,dacMin,dacMax,nTriggers,FLAG_INTERNAL_GET_EFFICIENCY);
+  // First, pack the data as it would be a regular DacDac Scan:
+  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >* packed_dacdac = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
 
-  std::vector<std::pair<uint8_t,std::vector<pixel> > >* result = new std::vector<std::pair<uint8_t,std::vector<pixel> > >();
-  
+  // Efficiency map:
+  std::map<uint8_t,std::map<pixel,uint8_t> > oldvalue;  
+
+  // Then loop over all pixels and DAC settings, start from the back if we are looking for falling edge.
+  // This ensures that we end up having the correct edge, even if the efficiency suddenly changes from 0 to max.
+  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it_start;
+  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it_end;
+  int increase_op;
+  if(rising_edge) { it_start = packed_dacdac->begin(); it_end = packed_dacdac->end(); increase_op = 1; }
+  else { it_start = packed_dacdac->end(); it_end = packed_dacdac->begin(); increase_op = -1;  }
+
+  for(std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it = it_start; it != it_end; it += increase_op) {
+
+    // For every DAC/DAC entry, loop over all pixels:
+    for(std::vector<pixel>::iterator pixit = it->second.second.begin(); pixit != it->second.second.end(); ++pixit) {
+      
+      // Find the current DAC2 value in the result vector (simple replace for find_if):
+      std::vector<std::pair<uint8_t, std::vector<pixel> > >::iterator dac;
+      for(dac = result->begin(); dac != result->end(); ++dac) { if(it->second.first == dac->first) break; }
+
+      // Didn't find the DAC2 value:
+      if(dac == result->end()) {
+	LOG(logDEBUGAPI) << "New DAC value: " << (int)it->second.first;
+	result->push_back(std::make_pair(it->second.first,std::vector<pixel>()));
+	dac = result->end() - 1;
+	// Also add an entry for bookkeeping:
+	oldvalue.insert(std::make_pair(it->second.first,std::map<pixel,uint8_t>()));
+      }
+      
+      // Check if we have that particular pixel already in:
+      std::vector<pixel>::iterator px = std::find_if(dac->second.begin(),
+						     dac->second.end(),
+						     findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+
+      // Pixel is known:
+      if(px != dac->second.end()) {
+	// Calculate efficiency deltas and slope:
+	uint8_t delta_old = abs(oldvalue[dac->first][*px] - threshold);
+	uint8_t delta_new = abs(pixit->value - threshold);
+	bool positive_slope = (pixit->value - oldvalue[dac->first][*px] > 0 ? true : false);
+	// Check which value is closer to the threshold:
+	if(!positive_slope) { break; }
+	if(!(delta_new < delta_old)) { break; }
+
+	LOG(logDEBUGAPI) << "Updating pixel " << (*pixit) << " for DAC value " << (int)it->second.first << " to threshold " << (int)it->first;
+	// Update the DAC threshold value for the pixel:
+	px->value = it->first;
+	// Update the oldvalue map:
+	oldvalue[dac->first][*px] = pixit->value;
+      }
+      // Pixel is new, just adding it:
+      else {
+	LOG(logDEBUGAPI) << "New pixel " << (*pixit) << " for DAC value " << (int)it->second.first << ", threshold " << (int)it->first;
+	// Store the pixel with original efficiency
+	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value));
+	// Push pixel to result vector with current DAC as value field:
+	pixit->value = it->first;
+	dac->second.push_back(*pixit);
+      }
+    }
+  }
+
+  LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdDacScan data for delivery.";
+  LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
 }
 
@@ -1528,12 +1594,12 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
 
   if(packed.size() % static_cast<size_t>((dac1max-dac1min+1)*(dac2max-dac2min+1)) != 0) {
     LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>((dac1max-dac1min+1)*(dac2max-dac2min+1)) << " DAC values!";
+    return result;
   }
-  else {
-    LOG(logDEBUGAPI) << "Packing DAC range [" << static_cast<int>(dac1min) << " - " << static_cast<int>(dac1max) 
-		     << "]x[" << static_cast<int>(dac2min) << " - " << static_cast<int>(dac2max)
-		     << "], data has " << packed.size() << " entries.";
-  }
+
+  LOG(logDEBUGAPI) << "Packing DAC range [" << static_cast<int>(dac1min) << " - " << static_cast<int>(dac1max) 
+		   << "]x[" << static_cast<int>(dac2min) << " - " << static_cast<int>(dac2max)
+		   << "], data has " << packed.size() << " entries.";
 
   // Prepare the result vector
   for(size_t dac1 = dac1min; dac1 <= dac1max; dac1++) {
@@ -1546,16 +1612,20 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
 
   uint8_t current1dac = dac1min;
   uint8_t current2dac = dac2min;
+
   // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
+  int i = 0;
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
-    if(current1dac > dac1max) { current1dac = dac1min; }
-    if(current2dac > dac2max) { 
+    if(current2dac > dac2max) {
       current2dac = dac2min;
       current1dac++;
     }
+    if(current1dac > dac1max) { current1dac = dac1min; }
+
     result->at((current1dac-dac1min)*(dac2max-dac2min+1) + (current2dac-dac2min)).second.second.insert(result->at((current1dac-dac1min)*(dac2max-dac2min+1) + (current2dac-dac2min)).second.second.end(),
-						(*Eventit)->pixels.begin(),
-						(*Eventit)->pixels.end());
+												       (*Eventit)->pixels.begin(),
+												       (*Eventit)->pixels.end());
+    i++;
     current2dac++;
   }
   
