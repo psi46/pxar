@@ -62,7 +62,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   for (unsigned int i = 0; i < amap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    LOG(logDEBUG) << "Creating TGTextEntry for " << amap[i].first; 
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
@@ -87,7 +86,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   for (unsigned int i = 0; i < dmap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    LOG(logDEBUG) << "Creating TGTextEntry for " << dmap[i].first; 
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, dmap[i].first.c_str());
     tl->SetWidth(100);
@@ -163,7 +161,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	if (static_cast<unsigned int>(itbm) == firsttbm) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[i].first; 
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[i].first.c_str());
 	  tl->SetWidth(100);
@@ -259,7 +256,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	if (static_cast<unsigned int>(iroc) == firstroc) {
 	  hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
 	  g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[idac].first; 
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
 	  tl->SetWidth(100);
@@ -284,7 +280,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	if (static_cast<unsigned int>(iroc) == firstroc) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  LOG(logDEBUG) << "Creating TGTextEntry for " << amap[idac].first; 
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
 	  tl->SetWidth(100);
@@ -337,14 +332,12 @@ PixParTab::PixParTab() {
 
 // ----------------------------------------------------------------------
 void PixParTab::init(PixGui *p, ConfigParameters *cfg, std::string tabname) {
-  LOG(logDEBUG) << "PixParTab::init()";
   fGui = p;
   fConfigParameters = cfg; 
   fTabName = tabname; 
 }
 
 // ----------------------------------------------------------------------
-// PixParTab destructor
 PixParTab::~PixParTab() {
   LOG(logDEBUG) << "PixParTab destructor";
 }

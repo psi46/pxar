@@ -29,7 +29,6 @@ PixTestFactory* PixTestFactory::fInstance = 0;
 
 // ----------------------------------------------------------------------
 PixTestFactory* PixTestFactory::instance() {
-  LOG(logDEBUG) << "PixTestFactory* PixTestFactory::instance()";
   if (0 == fInstance) {
     fInstance = new PixTestFactory;
   }
