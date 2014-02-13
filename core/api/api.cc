@@ -652,11 +652,10 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,false);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -695,26 +694,19 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacScan;
   HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacScan;
 
- // We want the efficiency back from the Map function, so let's set the internal flag:
-  int32_t internal_flags = 0;
-  internal_flags |= flags;
-  internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
-  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
-
   // Load the test parameters into vector
   std::vector<int32_t> param;
   param.push_back(static_cast<int32_t>(dacRegister));  
   param.push_back(static_cast<int32_t>(dacMin));
   param.push_back(static_cast<int32_t>(dacMax));
-  param.push_back(static_cast<int32_t>(internal_flags));
+  param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
-  bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,internal_flags);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,true);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -770,8 +762,6 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   HalMemFnRocSerial     rocfn        = NULL; // &hal::SingleRocAllPixelsDacDacScan;
   HalMemFnRocParallel   multirocfn   = NULL; // &hal::MultiRocAllPixelsDacDacScan;
 
- // We want the pulse height back from the DacDac function, so no internal flags needed.
-
   // Load the test parameters into vector
   std::vector<int32_t> param;
   param.push_back(static_cast<int32_t>(dac1register));  
@@ -784,11 +774,10 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -842,8 +831,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacDacScan;
   HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacDacScan;
 
- // We want the pulse height back from the DacDac function, so no internal flags needed.
-
   // Load the test parameters into vector
   std::vector<int32_t> param;
   param.push_back(static_cast<int32_t>(dac1register));  
@@ -856,11 +843,10 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,false);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -913,12 +899,6 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsDacDacScan;
   HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsDacDacScan;
 
- // We want the efficiency back from the Map function, so let's set the internal flag:
-  int32_t internal_flags = 0;
-  internal_flags |= flags;
-  internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
-  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
-
   // Load the test parameters into vector
   std::vector<int32_t> param;
   param.push_back(static_cast<int32_t>(dac1register));  
@@ -927,15 +907,14 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(dac2register));  
   param.push_back(static_cast<int32_t>(dac2min));
   param.push_back(static_cast<int32_t>(dac2max));
-  param.push_back(static_cast<int32_t>(internal_flags));
+  param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
-  bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,internal_flags);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -961,20 +940,17 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
   HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsCalibrate;
   HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsCalibrate;
 
-  // We want the pulse height back from the Map function, no flag needed.
-
   // Load the test parameters into vector
   std::vector<int32_t> param;
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackMapData(data, nTriggers, flags);
+  std::vector<pixel>* result = repackMapData(data, nTriggers, false);
 
   return *result;
 }
@@ -989,24 +965,17 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   HalMemFnRocSerial     rocfn        = &hal::SingleRocAllPixelsCalibrate;
   HalMemFnRocParallel   multirocfn   = &hal::MultiRocAllPixelsCalibrate;
 
-  // We want the efficiency back from the Map function, so let's set the internal flag:
-  uint32_t internal_flags = 0;
-  internal_flags |= flags;
-  internal_flags |= FLAG_INTERNAL_GET_EFFICIENCY;
-  LOG(logDEBUGAPI) << "Efficiency flag set, flags now at " << internal_flags;
-
   // Load the test parameters into vector
   std::vector<int32_t> param;
-  param.push_back(static_cast<int32_t>(internal_flags));
+  param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
-  bool forceSerial = internal_flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackMapData(data, nTriggers, internal_flags);
+  std::vector<pixel>* result = repackMapData(data, nTriggers, true);
 
   return *result;
 }
@@ -1043,12 +1012,11 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  // FIXME: FLAGS NOT YET CHECKED!
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags);
+  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers);
 
   return *result;
 }
@@ -1363,7 +1331,7 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 } // expandLoop()
 
 
-std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, uint32_t flags) {
+std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency) {
 
   std::vector<Event*> packed;
 
@@ -1388,12 +1356,12 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 						       findPixelXY(pixit->column, pixit->row, pixit->roc_id));
 	// Pixel is known:
 	if(px != evt->pixels.end()) {
-	  if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { px->value += 1; }
+	  if(efficiency) { px->value += 1; }
 	  else { px->value += pixit->value; pxcount[*px]++; }
 	}
 	// Pixel is new:
 	else {
-	  if(flags&FLAG_INTERNAL_GET_EFFICIENCY) { pixit->value = 1; }
+	  if(efficiency) { pixit->value = 1; }
 	  else { pxcount.insert(std::make_pair(*pixit,1)); }
 	  evt->pixels.push_back(*pixit);
 	}
@@ -1401,7 +1369,7 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
     }
 
     // Divide the pulseheight by the number of triggers received:
-    if(!(flags&FLAG_INTERNAL_GET_EFFICIENCY)) {
+    if(!efficiency) {
       for(std::vector<pixel>::iterator px = evt->pixels.begin(); px != evt->pixels.end(); ++px) {
 	px->value/=pxcount[*px];
       }
@@ -1412,16 +1380,16 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
   return packed;
 }
 
-std::vector<pixel>* api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint32_t flags) {
+std::vector<pixel>* api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, bool efficiency) {
 
   std::vector<pixel>* result = new std::vector<pixel>();
-  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, flags at " << flags << ".";
+  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, returning " << (efficiency ? "efficiency" : "averaged pulse height") << ".";
 
   // Measure time:
   timer t;
 
   // First reduce triggers, we have #nTriggers Events which belong together:
-  std::vector<Event*> packed = condenseTriggers(data, nTriggers, flags);
+  std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
 
   // Loop over all Events we have:
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
@@ -1439,14 +1407,14 @@ std::vector<pixel>* api::repackMapData (std::vector<Event*> data, uint16_t nTrig
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags){
+std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool efficiency){
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = new std::vector< std::pair<uint8_t, std::vector<pixel> > >();
 
   // Measure time:
   timer t;
 
   // First reduce triggers, we have #nTriggers Events which belong together:
-  std::vector<Event*> packed = condenseTriggers(data, nTriggers, flags);
+  std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
 
   if(packed.size() % static_cast<size_t>(dacMax-dacMin+1) != 0) {
     LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>(dacMax-dacMin+1) << " DAC values!";
@@ -1473,7 +1441,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   return result;
 }
 
-std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint32_t flags) {
+std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers) {
   std::vector<pixel>* result = new std::vector<pixel>();
   // Threshold is the 50% efficiency level:
   uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
@@ -1484,7 +1452,7 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   timer t;
 
   // First, pack the data as it would be a regular Dac Scan:
-  std::vector<std::pair<uint8_t,std::vector<pixel> > >* packed_dac = repackDacScanData(data,dacMin,dacMax,nTriggers,FLAG_INTERNAL_GET_EFFICIENCY);
+  std::vector<std::pair<uint8_t,std::vector<pixel> > >* packed_dac = repackDacScanData(data, dacMin, dacMax, nTriggers, true);
 
   // Efficiency map:
   std::map<pixel,uint8_t> oldvalue;  
@@ -1530,7 +1498,7 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers) {
 
   // Measure time:
   timer t;
@@ -1543,14 +1511,14 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint32_t flags) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool efficiency) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = new std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();
 
   // Measure time:
   timer t;
 
   // First reduce triggers, we have #nTriggers Events which belong together:
-  std::vector<Event*> packed = condenseTriggers(data, nTriggers, flags);
+  std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
 
   if(packed.size() % static_cast<size_t>((dac1max-dac1min+1)*(dac2max-dac2min+1)) != 0) {
     LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>((dac1max-dac1min+1)*(dac2max-dac2min+1)) << " DAC values!";
