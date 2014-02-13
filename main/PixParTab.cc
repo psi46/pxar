@@ -15,8 +15,6 @@
 
 #include "PixParTab.hh"
 #include "log.h"
-#include "dictionaries.h"
-
 
 using namespace std;
 using namespace pxar;
@@ -123,8 +121,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectTbm.push_back(tcb); 
-    vector<pair<uint8_t, uint8_t> > tmap = fGui->getApi()->_dut->getTbmDACs(i);
-    vector<pair<string, uint8_t> > smap = fConfigParameters->vReg2Name(tmap, TBM_REG);
+    vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getTbmDACs(i);
     cmap.push_back(smap); 
   }
   if (fSelectTbm.size() > 0) {
@@ -219,8 +216,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2)); 
     fSelectRoc.push_back(tcb); 
-    vector<pair<uint8_t, uint8_t> > tmap = fGui->getApi()->_dut->getDACs(i);
-    vector<pair<string, uint8_t> > smap = fConfigParameters->vReg2Name(tmap, ROC_REG);
+    vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getDACs(i);
     cmap.push_back(smap); 
   }
   if (fSelectRoc.size() > 0) {

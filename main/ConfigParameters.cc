@@ -753,11 +753,10 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<uint8_t, uint8_t> > v) {
+bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8_t> > v) {
   string fname = fDirectory + "/" + getDACParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
-  int reg, val; 
+  int val; 
   string regName; 
 
   OUT.open(Form("%s_C%d.dat", fname.c_str(), iroc));
@@ -766,10 +765,9 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<uint8_t, uint
   } 
   
   for (unsigned int idac = 0; idac < v.size(); ++idac) {
-    reg = v[idac].first;
-    val = v[idac].second;
-    regName = rd->getName(reg, ROC_REG);
-    OUT << Form("%3d %10s %3d", reg, regName.c_str(), int(val)) << endl;
+    regName = v.at(idac).first;
+    val = v.at(idac).second;
+    OUT << Form("0 %10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
   }
   
   OUT.close();
@@ -778,11 +776,10 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<uint8_t, uint
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<uint8_t, uint8_t> > v) {
+bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > v) {
   string fname = fDirectory + "/" + getTbmParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
-  int reg, val; 
+  int val; 
   string regName; 
 
   LOG(logDEBUG) << "nothing done for the time being with " << itbm << ", working with one TBM at the moment";
@@ -793,10 +790,9 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<uint8_t, uint
   } 
   
   for (unsigned int idac = 0; idac < v.size(); ++idac) {
-    reg = v[idac].first;
-    val = v[idac].second;
-    regName = rd->getName(reg, TBM_REG);
-    OUT << Form("%3d %11s   0x%02X", reg, regName.c_str(), int(val)) << endl;
+    regName = v.at(idac).first;
+    val = v.at(idac).second;
+    OUT << Form("0 %11s   0x%02X", regName.c_str(), static_cast<int>(val)) << endl;
   }
   
   OUT.close();

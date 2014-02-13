@@ -32,9 +32,9 @@ public:
   void writeAllFiles();
   bool writeConfigParameterFile();
   // NB: if you add a variable name after the second argument, the dictionary will not compile anymore??!?!
-  bool writeDacParameterFile(int iroc, std::vector<std::pair<uint8_t, uint8_t> > );
+  bool writeDacParameterFile(int iroc, std::vector<std::pair<std::string, uint8_t> > );
   bool writeTrimFile(int iroc, std::vector<pxar::pixelConfig> );
-  bool writeTbmParameterFile(int itbm, std::vector<std::pair<uint8_t, uint8_t> > );
+  bool writeTbmParameterFile(int itbm, std::vector<std::pair<std::string, uint8_t> > );
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
