@@ -777,7 +777,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   bool forceSerial = flags & FLAG_FORCE_SERIAL;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags&FLAG_RISING_EDGE);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -1016,7 +1016,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers);
+  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags&FLAG_RISING_EDGE);
 
   return *result;
 }
@@ -1438,11 +1438,11 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   return result;
 }
 
-std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers) {
+std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool rising_edge) {
   std::vector<pixel>* result = new std::vector<pixel>();
   // Threshold is the 50% efficiency level:
   uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
-  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold;
+  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " << (rising_edge ? "rising":"falling") << " edge";
 
   // FIXME implement threshold edge RISING / FALLING flag
   // Measure time:
@@ -1454,8 +1454,15 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   // Efficiency map:
   std::map<pixel,uint8_t> oldvalue;  
 
-  // Then loop over all pixels and DAC settings:
-  for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = packed_dac->begin(); it != packed_dac->end(); ++it) {
+  // Then loop over all pixels and DAC settings, start from the back if we are looking for falling edge.
+  // This ensures that we end up having the correct edge, even if the efficiency suddenly changes from 0 to max.
+  std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it_start;
+  std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it_end;
+  int increase_op;
+  if(rising_edge) { it_start = packed_dac->begin(); it_end = packed_dac->end(); increase_op = 1; }
+  else { it_start = packed_dac->end(); it_end = packed_dac->begin(); increase_op = -1;  }
+
+  for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
     // For every DAC value, loop over all pixels:
     for(std::vector<pixel>::iterator pixit = it->second.begin(); pixit != it->second.end(); ++pixit) {
       // Check if we have that particular pixel already in:
@@ -1464,9 +1471,11 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
 						     findPixelXY(pixit->column, pixit->row, pixit->roc_id));
       // Pixel is known:
       if(px != result->end()) {
-	// Calculate efficiency deltas:
+	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
 	uint8_t delta_new = abs(pixit->value - threshold);
+	bool positive_slope = (pixit->value-oldvalue[*px] > 0 ? true : false);
+	if(!positive_slope) { break; }
 
 	// Check which value is closer to the threshold:
 	if(delta_new < delta_old) { 
@@ -1495,7 +1504,7 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool rising_edge) {
 
   // Measure time:
   timer t;

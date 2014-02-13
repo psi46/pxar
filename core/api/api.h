@@ -488,7 +488,7 @@ namespace pxar {
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels and returns the threshold value.
      */
-    std::vector<pixel>* repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers);
+    std::vector<pixel>* repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool rising_edge);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */
@@ -496,7 +496,7 @@ namespace pxar {
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors and return the threshold value.
      */
-    std::vector<std::pair<uint8_t,std::vector<pixel> > >* repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers);
+    std::vector<std::pair<uint8_t,std::vector<pixel> > >* repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool rising_edge);
 
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
