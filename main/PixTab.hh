@@ -70,6 +70,8 @@ protected:
   PixGui               *fGui; 
   PixTest              *fTest; 
 
+  int                   fBorderN, fBorderT, fBorderL;  // normal, tiny, large
+  
   ClassDef(PixTab, 1)
 
 };
