@@ -18,17 +18,17 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
   uint8_t dac2higher = data.back().second.first;
 
   std::cout << std::setw(4) << " ";
-  for(int i = 0; i < (dac2higher-dac2lower+3); i++) { std::cout << "_"; }
+  for(int i = 0; i < (dac1higher-dac1lower+3); i++) { std::cout << "_"; }
   std::cout << std::endl;
 
-  for(int dac1 = dac1lower; dac1 <= dac1higher; dac1++) {
+  for(int dac2 = dac2higher; dac2 >= dac2lower; dac2--) {
 
     std::cout << std::setw(4);
-    if(dac1%10 == 0) std::cout << static_cast<int>(dac1);
+    if(dac2%10 == 0) std::cout << static_cast<int>(dac2);
     else std::cout << " ";
     std::cout << "|";
-
-    for(int dac2 = dac2lower; dac2 <= dac2higher; dac2++) {
+    
+    for(int dac1 = dac1lower; dac1 <= dac1higher; dac1++) {
 
       bool found = false;
       for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = data.begin(); dacit != data.end(); ++dacit) {
@@ -51,8 +51,26 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
   }
 
   std::cout << std::setw(5) << "|";
-  for(int i = 0; i < (dac2higher-dac2lower+1); i++) { std::cout << "_"; }
-  std::cout << "|" << std::endl;
+  for(int i = 0; i < (dac1higher-dac1lower+1); i++) { std::cout << "_"; }
+  std::cout << "|" << std::endl << "    ";
+
+  // Axis ticks
+  for(size_t dac = dac1lower; dac <= dac1higher; dac++) { 
+    if(dac%10 == 0) { std::cout << "'"; }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << "    ";
+
+  // Axis labels
+  for(size_t dac = dac1lower; dac <= dac1higher; dac++) { 
+    if(dac%10 == 0) {
+      std::cout << dac;
+      if(dac > 10) dac++;
+      if(dac > 100) dac++;
+    }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << std::endl;
 }
 
 void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
