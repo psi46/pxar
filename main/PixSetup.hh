@@ -24,11 +24,15 @@ public:
   pxar::api*         getApi() {return fApi;}
   bool               doAnalysisOnly() {return fDoAnalysisOnly;}
   void               setDoAnalysisOnly(bool x) {fDoAnalysisOnly = x;}
+  bool               useRootLogon() {return fUseRootLogon;} 
+  void               setUseRootLogon(bool x) {fUseRootLogon = x;} 
   void               killApi(); 
 
 private: 
   bool              fDebug; 
   bool              fDoAnalysisOnly; 
+  bool              fUseRootLogon;
+
   pxar::api         *fApi; 
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
