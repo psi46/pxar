@@ -649,11 +649,11 @@ namespace pxar {
 
     /** Function to read current values from all DAC on ROC rocId
      */
-    std::vector<std::pair<uint8_t,uint8_t> > getDACs(size_t rocId);
+    std::vector<std::pair<std::string,uint8_t> > getDACs(size_t rocId);
 
     /** Function to read current values from all DAC on TBM tbmId
      */
-    std::vector< std::pair<uint8_t,uint8_t> > getTbmDACs(size_t tbmId);
+    std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
     /** Helper function to print current values from all DAC on ROC rocId
      *  to stdout

@@ -223,32 +223,38 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {
   else return 0x0;
 }
 
-std::vector< std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {
+std::vector< std::pair<std::string,uint8_t> > dut::getDACs(size_t rocId) {
 
   if(status() && rocId < roc.size()) {
-    std::vector< std::pair<uint8_t,uint8_t> > vec;
+    std::vector< std::pair<std::string,uint8_t> > vec;
+
+    // Get singleton DAC dictionary object:
+    RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
     for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
-      vec.push_back(*it);
+      vec.push_back(std::make_pair(_dict->getName(it->first,ROC_REG),it->second));
     }
     return vec;
   }
-  else return std::vector< std::pair<uint8_t,uint8_t> >();
+  else return std::vector< std::pair<std::string,uint8_t> >();
 }
 
-std::vector< std::pair<uint8_t,uint8_t> > dut::getTbmDACs(size_t tbmId) {
+std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
 
   if(status() && tbmId < tbm.size()) {
-    std::vector< std::pair<uint8_t,uint8_t> > vec;
+    std::vector< std::pair<std::string,uint8_t> > vec;
+
+    // Get singleton DAC dictionary object:
+    RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
     for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin(); 
 	it != tbm.at(tbmId).dacs.end(); ++it) {
-      vec.push_back(*it);
+      vec.push_back(std::make_pair(_dict->getName(it->first,TBM_REG),it->second));
     }
     return vec;
   }
-  else return std::vector< std::pair<uint8_t,uint8_t> >();
+  else return std::vector< std::pair<std::string,uint8_t> >();
 }
 
 void dut::printDACs(size_t rocId) {
