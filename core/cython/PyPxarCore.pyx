@@ -5,6 +5,7 @@ from libcpp.string cimport string
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 from libcpp.map cimport map
+import numpy
 
 cimport PyPxarCore
 
@@ -97,34 +98,13 @@ cdef class RocConfig:
         def __set__(self, enable): self.thisptr.enable = enable
 
 
-cdef class DUT:
-    cdef dut *thisptr # hold the C++ instance
-    def __cinit__(self):
-        self.thisptr = new dut()
-    def __dealloc__(self):
-        del self.thisptr
-    cdef c_clone(self, dut* d):
-        del self.thisptr
-        thisptr = d
-    def status(self):
-        return self.thisptr.status()
-    def testAllPixels(self, bool enable, rocid = None):
-        if rocid is not None:
-            self.thisptr.testAllPixels(enable,rocid)
-        else:
-            self.thisptr.testAllPixels(enable)
-
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
     def __cinit__(self, usbId = "*", logLevel = "WARNING"):
         self.thisptr = new pxarCore(usbId, logLevel)
+        self.dut = None
     def __dealloc__(self):
         del self.thisptr
-    property dut:
-        def __get__(self):
-            d = DUT()
-            d.c_clone(self.thisptr._dut)
-            return d
     def initTestboard(self,sig_delays, power_settings, pg_setup):
         """ Initializer method for the testboard
         Parameters are dictionaries in the form {"name":value}:
@@ -172,7 +152,16 @@ cdef class PyPxarCore:
         return self.thisptr.initDUT(tbmtype, td, roctype,rd,rpcs)
     def getVersion(self):
         return self.thisptr.getVersion()
-
+    def testAllPixels(self, bool enable, rocid = None):
+        if rocid is not None:
+            self.thisptr._dut.testAllPixels(enable,rocid)
+        else:
+            self.thisptr._dut.testAllPixels(enable)
+    def testPixel(self, int col, int row, bool enable, rocid = None):
+        if rocid is not None:
+            self.thisptr._dut.testPixel(col, row, enable,rocid)
+        else:
+            self.thisptr._dut.testPixel(col, row, enable)
     def programDUT(self):
         return self.thisptr.programDUT()
     def status(self):
@@ -180,13 +169,13 @@ cdef class PyPxarCore:
     def flashTB(self, string filename):
         return self.thisptr.flashTB(filename)
     def getTBia(self):
-        return self.thisptr.getTBia()
+        return float(self.thisptr.getTBia())
     def getTBva(self):
-        return self.thisptr.getTBva()
+        return float(self.thisptr.getTBva())
     def getTBid(self):
-        return self.thisptr.getTBid()
+        return float(self.thisptr.getTBid())
     def getTBvd(self):
-        return self.thisptr.getTBvd()
+        return float(self.thisptr.getTBvd())
     def HVoff(self):
         self.thisptr.HVoff()
     def HVon(self):
@@ -211,18 +200,74 @@ cdef class PyPxarCore:
             return self.thisptr.setTbmReg(regName, regValue, tbmid)
     def getPulseheightVsDAC(self, string dacName, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
+        #TODO understand why this returns empty data
         r = self.thisptr.getPulseheightVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
-        for d in range(r.size()):
+        hits = []
+        #TODO not hardcode col, row, understand if indices are ok
+        #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
+        s = (52, 80, dacMax-dacMin)
+        for i in range(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
             print d
-        return "test"
+            for pix in range(r[d].second.size()):
+                print r[d].second[pix].value
+                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
+        return numpy.array(hits)
 #    def vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
-#    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+    def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+        cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
+        r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers)
+        hits = []
+        #TODO not hardcode col, row, check if indices make sense, currently not running!
+        #PYXAR expects a matrix for each from dacMin to dacMax for each activated pixel in DUT
+        s = (52, 80, dac1max-dac1min, dac2max-dac2min)
+        for i in range(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
+            print d
+            for pix in xrange(r[d].second.second.size()):
+                print r[d].second.second[pix].value
+                hits[r[d].second.second[pix].roc_id][r[d].second.second[pix].column][r[d].second.second[pix].row][d][d] = r[d].second.second[pix].value
+        return numpy.array(hits)
 #    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getThresholdVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
-#    def vector[pixel] getPulseheightMap(self, uint16_t flags, uint32_t nTriggers):
-#    def vector[pixel] getEfficiencyMap(self, uint16_t flags, uint32_t nTriggers):
-#    def vector[pixel] getThresholdMap(self, string dacName, uint16_t flags, uint32_t nTriggers):
+    def getPulseheightMap(self, int flags, int nTriggers):
+        cdef vector[pixel] r
+        r = self.thisptr.getPulseheightMap(flags, nTriggers)
+        #TODO wrap data refilling into single function, rather than copy paste
+        s = self.dut.get_roc_shape()
+        hits = []
+        for i in xrange(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
+            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
+        return numpy.array(hits)
+
+    def getEfficiencyMap(self, int flags, int nTriggers):
+        cdef vector[pixel] r
+        r = self.thisptr.getEfficiencyMap(flags, nTriggers)
+        #TODO wrap data refilling into single function, rather than copy paste
+        s = self.dut.get_roc_shape()
+        hits = []
+        for i in xrange(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
+            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
+        return numpy.array(hits)
+
+    def getThresholdMap(self, string dacName, int flags, int nTriggers):
+        cdef vector[pixel] r
+        #TODO wrap data refilling into single function, rather than copy paste
+        r = self.thisptr.getThresholdMap(dacName, flags, nTriggers)
+        s = self.dut.get_roc_shape()
+        hits = []
+        for i in xrange(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
+            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
+        return numpy.array(hits)
 #    def int32_t getReadbackValue(self, string parameterName):
 #    def bool daqStart(self, vector[pair[uint16_t, uint8_t]] pg_setup):
 #    def bool daqStatus(self):
