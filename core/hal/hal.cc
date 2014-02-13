@@ -555,7 +555,7 @@ void hal::ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable) {
   _testboard->roc_Col_Enable(column,enable);
 }
 
-void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags) {
+void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, uint16_t flags) {
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(rocid);
@@ -578,8 +578,8 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 
 std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  uint16_t nTriggers = parameter.at(1);
+  uint16_t flags = static_cast<uint16_t>(parameter.at(0));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
@@ -607,8 +607,8 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
 
 std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  uint16_t nTriggers = parameter.at(1);
+  uint16_t flags = static_cast<uint16_t>(parameter.at(0));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Called MultiRocOnePixelCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
@@ -639,8 +639,8 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, 
 
 std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  uint16_t nTriggers = parameter.at(1);
+  uint16_t flags = static_cast<uint16_t>(parameter.at(0));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(rocid) << ".";
 
@@ -666,8 +666,8 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
 
 std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  int32_t flags = parameter.at(0);
-  uint16_t nTriggers = parameter.at(1);
+  uint16_t flags = static_cast<uint16_t>(parameter.at(0));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Called SingleRocOnePixelCalibrate for pixel " << static_cast<int>(column) << ","
 		   << static_cast<int>(row) << " with flags " << static_cast<int>(flags) << ", running "
@@ -697,11 +697,11 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t colum
 
 std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  uint8_t dacreg = parameter.at(0);
-  uint8_t dacmin = parameter.at(1);
-  uint8_t dacmax = parameter.at(2);
-  int32_t flags = parameter.at(3);
-  uint16_t nTriggers = parameter.at(4);
+  uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
@@ -732,11 +732,11 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
 
 std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint8_t dacreg = parameter.at(0);
-  uint8_t dacmin = parameter.at(1);
-  uint8_t dacmax = parameter.at(2);
-  int32_t flags = parameter.at(3);
-  uint16_t nTriggers = parameter.at(4);
+  uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
  LOG(logDEBUGHAL) << "Called MultiRocOnePixelDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
@@ -769,11 +769,11 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
 
 std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  uint8_t dacreg = parameter.at(0);
-  uint8_t dacmin = parameter.at(1);
-  uint8_t dacmax = parameter.at(2);
-  int32_t flags = parameter.at(3);
-  uint16_t nTriggers = parameter.at(4);
+  uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
@@ -802,11 +802,11 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
 
 std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint8_t dacreg = parameter.at(0);
-  uint8_t dacmin = parameter.at(1);
-  uint8_t dacmax = parameter.at(2);
-  int32_t flags = parameter.at(3);
-  uint16_t nTriggers = parameter.at(4);
+  uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
   LOG(logDEBUGHAL) << "Called SingleRocOnePixelDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
@@ -835,14 +835,14 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
 
 std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  uint8_t dac1reg = parameter.at(0);
-  uint8_t dac1min = parameter.at(1);
-  uint8_t dac1max = parameter.at(2);
-  uint8_t dac2reg = parameter.at(3);
-  uint8_t dac2min = parameter.at(4);
-  uint8_t dac2max = parameter.at(5);
-  int32_t flags = parameter.at(6);
-  uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2reg = static_cast<uint8_t>(parameter.at(3));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << rocids.size() << " ROCs with the I2C addresses:";
@@ -876,14 +876,14 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
 
 std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint8_t dac1reg = parameter.at(0);
-  uint8_t dac1min = parameter.at(1);
-  uint8_t dac1max = parameter.at(2);
-  uint8_t dac2reg = parameter.at(3);
-  uint8_t dac2min = parameter.at(4);
-  uint8_t dac2max = parameter.at(5);
-  int32_t flags = parameter.at(6);
-  uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2reg = static_cast<uint8_t>(parameter.at(3));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
   LOG(logDEBUGHAL) << "Called MultiRocOnePixelDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
@@ -919,14 +919,14 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
 
 std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  uint8_t dac1reg = parameter.at(0);
-  uint8_t dac1min = parameter.at(1);
-  uint8_t dac1max = parameter.at(2);
-  uint8_t dac2reg = parameter.at(3);
-  uint8_t dac2min = parameter.at(4);
-  uint8_t dac2max = parameter.at(5);
-  int32_t flags = parameter.at(6);
-  uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2reg = static_cast<uint8_t>(parameter.at(3));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
 
@@ -959,14 +959,14 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
 
 std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint8_t dac1reg = parameter.at(0);
-  uint8_t dac1min = parameter.at(1);
-  uint8_t dac1max = parameter.at(2);
-  uint8_t dac2reg = parameter.at(3);
-  uint8_t dac2min = parameter.at(4);
-  uint8_t dac2max = parameter.at(5);
-  int32_t flags = parameter.at(6);
-  uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2reg = static_cast<uint8_t>(parameter.at(3));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
   LOG(logDEBUGHAL) << "Called SingleRocOnePixelDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
 
