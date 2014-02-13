@@ -616,7 +616,7 @@ bool api::setTbmReg(std::string regName, uint8_t regValue) {
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-										uint16_t flags, uint32_t nTriggers) {
+										uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -670,7 +670,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint16_t flags, uint32_t nTriggers) {
+									       uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -727,14 +727,14 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   return *result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
   // Get the full DAC range for scanning:
   uint8_t dac1min = 0;
   uint8_t dac1max = getDACRange(dacName);
   return getThresholdVsDAC(dacName, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint32_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -807,7 +807,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 													std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-													uint16_t flags, uint32_t nTriggers){
+													uint16_t flags, uint16_t nTriggers){
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
 
@@ -878,7 +878,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 
 std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 												       std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-												       uint16_t flags, uint32_t nTriggers) {
+												       uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
 
@@ -951,7 +951,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   return *result;
 }
 
-std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
+std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
@@ -979,7 +979,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint32_t nTriggers) {
   return *result;
 }
 
-std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
+std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
@@ -1011,14 +1011,14 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint32_t nTriggers) {
   return *result;
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uint32_t nTriggers) {
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uint16_t nTriggers) {
   // Get the full DAC range for scanning:
   uint8_t dacMin = 0;
   uint8_t dacMax = getDACRange(dacName);
   return getThresholdMap(dacName, dacMin, dacMax, flags, nTriggers);
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint32_t nTriggers) {
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
