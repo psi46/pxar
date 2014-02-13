@@ -38,12 +38,7 @@ PixTest::PixTest() {
 
 // ----------------------------------------------------------------------
 void PixTest::init() {
-  //  LOG(logINFO)  << "PixTest::init()";
-
-  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-  LOG(logDEBUG) << "    fParameters.size() = " << fParameters.size();
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
-    LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
     setParameter(fParameters[i].first, fParameters[i].second); 
   }
 }
@@ -426,7 +421,6 @@ void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size,
   } else {
     h->SetXTitle(sx);                  h->SetYTitle(sy); 
     if (fPixSetup->useRootLogon()) {
-      cout << "hello world: " << gStyle->GetTitleSize("X") << endl;
       h->SetTitleOffset(gStyle->GetTitleOffset("X"), "x");  h->SetTitleOffset(gStyle->GetTitleOffset("Y"), "y");
       h->SetTitleSize(gStyle->GetTitleSize("X"), "x");        h->SetTitleSize(gStyle->GetTitleSize("Y"), "y");
       h->SetLabelSize(gStyle->GetLabelSize("X"), "x");       h->SetLabelSize(gStyle->GetLabelSize("Y"), "y");
