@@ -15,6 +15,7 @@
 #include <TSystem.h>
 
 class PixGui; 
+
 class PixMonitor: public TQObject {
 public:
   PixMonitor(TGGroupFrame *f, PixGui *p);

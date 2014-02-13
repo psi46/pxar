@@ -22,7 +22,11 @@ ClassImp(PixTab)
 // ----------------------------------------------------------------------
 PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   init(p, test, tabname); 
-  
+
+  fBorderN = 2; 
+  fBorderL = 10; 
+  fBorderT = 1;
+
   UInt_t w = fGui->getTabs()->GetWidth(); 
   UInt_t h = fGui->getTabs()->GetHeight(); 
 
@@ -33,13 +37,13 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   
   // -- 2 vertical frames
   fV1 = new TGVerticalFrame(fhFrame);
-  fhFrame->AddFrame(fV1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
+  fhFrame->AddFrame(fV1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fV2 = new TGVerticalFrame(fhFrame);
-  fhFrame->AddFrame(fV2, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 15, 15, 15, 15));
+  fhFrame->AddFrame(fV2, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   // -- fV1: create and add Embedded Canvas
   fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 500, 500);
-  fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 0, 0, 10, 0));
+  fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 1, 1, 1, 1));
 
 
   // -- status bar
@@ -52,7 +56,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fStatusBar = new TGStatusBar(fV1, 50, 10, kVerticalFrame);
   fStatusBar->SetParts(parts, 2);
   fStatusBar->Draw3DCorner(kFALSE);
-  fV1->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX, 0, 0, 10, 0));
+  fV1->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
 
   // -- fV2: create parameter TGText boxes for test
   vector<pair<string, string> > amap = fTest->getParameters();
@@ -69,12 +73,11 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     if (amap[i].second == "button") {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
       tset = new TGTextButton(hFrame, amap[i].first.c_str(), cnt);
-      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN)); 
       tset->SetToolTipText("run this subtest");
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-      ++cnt; 
       continue;
     }
 
@@ -85,10 +88,10 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
-    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN)); 
 
     te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
-    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
+    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderN, fBorderN, fBorderN, fBorderN)); 
     fParIds.push_back(amap[i].first); 
     fParTextEntries.insert(make_pair(amap[i].first, te)); 
 
@@ -97,7 +100,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
-    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2)); 
+    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN)); 
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
     tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 
@@ -108,61 +111,61 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   TGTextButton * previous = new TGTextButton(hFrame, "Previous");
   previous->SetToolTipText("display previous histogram in this test's list");
   previous->Connect("Clicked()", "PixTab", this, "previousHistogram()");
-  hFrame->AddFrame(previous, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
+  hFrame->AddFrame(previous, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextButton * next = new TGTextButton(hFrame, "Next");
   next->SetToolTipText("display next histogram in this test's list");
   next->Connect("Clicked()", "PixTab", this, "nextHistogram()");
-  hFrame->AddFrame(next, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
+  hFrame->AddFrame(next, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextButton * update = new TGTextButton(hFrame, "Update");
   update->SetToolTipText("update canvas");
   update->Connect("Clicked()", "PixTab", this, "update()");
-  hFrame->AddFrame(update, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
+  hFrame->AddFrame(update, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextButton * clear = new TGTextButton(hFrame, "Clear");
   clear->SetToolTipText("clear canvas and resest histogram list");
   clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
-  hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 3, 4));
+  hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));
+  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
   hFrame = new TGHorizontalFrame(fV2); 
   // -- create doTest Button
   fbDoTest = new TGTextButton(hFrame, " doTest ", B_DOTEST);
   fbDoTest->ChangeOptions(fbDoTest->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
   bStop->SetToolTipText("not yet implemented (should interrupt the test at a convenient place)");
   bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create print Button
   TGTextButton *bPrint = new TGTextButton(hFrame, " print ", B_PRINT);
   bPrint->SetToolTipText("create a pdf of the canvas");
   bPrint->ChangeOptions(bPrint->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(bPrint, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bPrint->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
 
   // -- create module map button
   fbModMap = new TGTextButton(hFrame, " summary ", B_MODMAP);
   fbModMap->ChangeOptions(fbModMap->GetOptions() | kFixedWidth);
-  hFrame->AddFrame(fbModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(fbModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
   bClose->ChangeOptions(bClose->GetOptions() | kFixedWidth);
   bClose->SetToolTipText("close the test tab");
-  hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, 2, 20, 2, 2));
+  hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
-  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 5, 3, 4));
+  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
   updateToolTips();
 
@@ -170,7 +173,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 //   fhFrame->Resize(fhFrame->GetDefaultSize());
 //   fhFrame->MapWindow();
 
-  fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
+  fTabFrame->AddFrame(fhFrame, 
+		      new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fTabFrame->MapSubwindows();
   fTabFrame->Resize(fTabFrame->GetDefaultSize());
   fTabFrame->MapWindow();
@@ -254,6 +258,7 @@ void PixTab::buttonClicked() {
   if (!fGui->getTabs()) return;
 
   TGButton *btn = (TGButton*)gTQSender;
+  LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
   fTest->runCommand(btn->GetTitle()); 
 
 } 

@@ -2,6 +2,7 @@
 #include "log.h"
 
 #include "PixGui.hh"
+#include "PixSetup.hh"
 
 using namespace std;
 using namespace pxar; 

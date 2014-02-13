@@ -3,6 +3,7 @@
 
 #include <TMinuit.h>
 #include <TMath.h>
+#include <TStyle.h>
 
 #include "PixTest.hh"
 #include "log.h"
@@ -37,12 +38,7 @@ PixTest::PixTest() {
 
 // ----------------------------------------------------------------------
 void PixTest::init() {
-  //  LOG(logINFO)  << "PixTest::init()";
-
-  //  for (map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap) {
-  LOG(logDEBUG) << "    fParameters.size() = " << fParameters.size();
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
-    LOG(logDEBUG) << "    setting parameter: ->"  << fParameters[i].first << "<- to ->" << fParameters[i].second << "<-"; 
     setParameter(fParameters[i].first, fParameters[i].second); 
   }
 }
@@ -111,50 +107,36 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   TH1* h1(0); 
   fDirectory->cd();
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+
+  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
     rmaps.clear();
     for (unsigned int ic = 0; ic < 52; ++ic) {
       for (unsigned int ir = 0; ir < 80; ++ir) {
-	h1 = new TH1D(Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, i), 
-		      Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, i), 
+	h1 = new TH1D(Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, rocIds[iroc]), 
+		      Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, rocIds[iroc]), 
 		      256, 0., 256.);
 	rmaps.push_back(h1); 
       }
     }
     maps.push_back(rmaps); 
   }
-
+  
   cache(dac); 
-
+  
 
   int ic, ir, iroc, val; 
-  if (0) {
-    vector<pixel>  results;
-    for (int idac = dacmin; idac < dacmax; ++idac) {
-      LOG(logINFO) << dac << ": " << idac;
-      results.clear(); 
-      fApi->setDAC(dac, idac);
-      results = fApi->getEfficiencyMap(0, ntrig);
-      for (unsigned int i = 0; i < results.size(); ++i) {
-	ic = results[i].column; 
-	ir = results[i].row; 
-	iroc = results[i].roc_id; 
-	val = results[i].value;
-	maps[iroc][ic*80+ir]->Fill(idac, val);
-      }
-    }
-  }
-  if (1) {
-    vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig); 
-    for (unsigned int idac = 0; idac < results.size(); ++idac) {
-      int dac = results[idac].first; 
-      for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
-	ic =   results[idac].second[ipix].column; 
-	ir =   results[idac].second[ipix].row; 
-	iroc = results[idac].second[ipix].roc_id; 
-	val =  results[idac].second[ipix].value;
-	maps[iroc][ic*80+ir]->Fill(dac, val);
-      }
+  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig); 
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
+    int dac = results[idac].first; 
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+      ic =   results[idac].second[ipix].column; 
+      ir =   results[idac].second[ipix].row; 
+      iroc = results[idac].second[ipix].roc_id; 
+      val =  results[idac].second[ipix].value;
+      maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
     }
   }
 
@@ -165,12 +147,12 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
     rmaps.clear();
     rmaps = maps[iroc];
-    h2 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+    h2 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
 
-    h3 = new TH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+    h3 = new TH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
@@ -240,19 +222,33 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
   fDirectory->cd(); 
   vector<TH2D*> maps;
   TH2D *h2(0); 
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h2 = new TH2D(Form("%s_C%d", name.c_str(), i), Form("%s_C%d", name.c_str(), i), 52, 0., 52., 80, 0., 80.); 
+
+  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  cout << "# enabled rocs = " << rocIds.size() << " result vector length = " << results.size() << endl;
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+      cout << " rocIds[" << i << "] = " << int(rocIds[i]) << endl;
+  }
+
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
+    h2 = new TH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
     setTitles(h2, "col", "row"); 
     maps.push_back(h2); 
   }
   
+  int idx(-1); 
   for (unsigned int i = 0; i < results.size(); ++i) {
     //     cout << "results[i].roc_id = " << int(results[i].roc_id) 
     // 	 << " col/row = " << int(results[i].column) << "/" << int(results[i].row)
     // 	 << endl;
-    h2 = maps[results[i].roc_id];
+    idx = id2idx[results[i].roc_id];
+    if (results[i].column == 0 && results[i].row == 0) {
+      cout << "roc_id = " << int(results[i].roc_id) << " corrected(roc_id) = " << int(rocIds[results[i].roc_id]) << " idx = " << idx << endl;
+    }
+    h2 = maps[idx];
     if (h2) h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
   }
 
@@ -269,9 +265,14 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
   TH1* h1(0); 
   fDirectory->cd();
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h1 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
-		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), i), 
+
+  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
+    h1 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  52, 0., 52., 80, 0., 80.);
     resultMaps.push_back(h1); 
   }
@@ -283,7 +284,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
   for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
     ic =   results[ipix].column; 
     ir =   results[ipix].row; 
-    iroc = results[ipix].roc_id; 
+    iroc = id2idx[results[ipix].roc_id]; 
     val =  results[ipix].value;
     //    LOG(logDEBUG) << resultMaps[iroc]->GetName() << " roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val;
     ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
@@ -419,12 +420,21 @@ void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size,
     LOG(logDEBUG) << " Histogram not defined";
   } else {
     h->SetXTitle(sx);                  h->SetYTitle(sy); 
-    h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
-    h->SetTitleSize(size, "x");        h->SetTitleSize(size, "y");
-    h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
-    h->SetLabelFont(font, "x");        h->SetLabelFont(font, "y");
-    h->GetXaxis()->SetTitleFont(font); h->GetYaxis()->SetTitleFont(font);
-    h->SetNdivisions(508, "X");
+    if (fPixSetup->useRootLogon()) {
+      h->SetTitleOffset(gStyle->GetTitleOffset("X"), "x");  h->SetTitleOffset(gStyle->GetTitleOffset("Y"), "y");
+      h->SetTitleSize(gStyle->GetTitleSize("X"), "x");        h->SetTitleSize(gStyle->GetTitleSize("Y"), "y");
+      h->SetLabelSize(gStyle->GetLabelSize("X"), "x");       h->SetLabelSize(gStyle->GetLabelSize("Y"), "y");
+      h->SetLabelFont(gStyle->GetLabelFont());        h->SetLabelFont(gStyle->GetLabelFont(), "y");
+      h->GetXaxis()->SetTitleFont(gStyle->GetTitleFont("X")); h->GetYaxis()->SetTitleFont(gStyle->GetTitleFont("Y"));
+      h->SetNdivisions(gStyle->GetNdivisions("X"), "X");
+    } else {
+      h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
+      h->SetTitleSize(size, "x");        h->SetTitleSize(size, "y");
+      h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
+      h->SetLabelFont(font, "x");        h->SetLabelFont(font, "y");
+      h->GetXaxis()->SetTitleFont(font); h->GetYaxis()->SetTitleFont(font);
+      h->SetNdivisions(508, "X");
+    }
   }
 }
 

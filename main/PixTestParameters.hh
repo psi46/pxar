@@ -7,8 +7,8 @@
 class PixTestParameters {
 public:
 
-  PixTestParameters(std::string file); 
-  bool readTestParameterFile(std::string file);
+  PixTestParameters(std::string file, bool verbose = false); 
+  bool readTestParameterFile(std::string file, bool verbose);
   std::vector<std::pair<std::string, std::string> > getTestParameters(std::string testName);
   std::vector<std::string> getTests(); 
   void dump(); 
