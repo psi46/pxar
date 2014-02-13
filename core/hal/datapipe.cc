@@ -14,7 +14,7 @@ namespace pxar {
 	else if (dtbRemainingSize >    0) tb->mDelay( 10);
 	else                              tb->mDelay(100);
 	}
-	LOG(logDEBUGHAL) << "Buffer size: " << buffer.size();
+	LOG(logDEBUGPIPES) << "Buffer size: " << buffer.size();
       */
     
       if (buffer.size() == 0) {
@@ -23,13 +23,11 @@ namespace pxar {
       }
     } while (buffer.size() == 0);
 
-    /*
-    LOG(logDEBUGHAL) << "----------------";
-    LOG(logDEBUGHAL) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
-    LOG(logDEBUGHAL) << "----------------";
-    LOG(logDEBUGHAL) << listVector(buffer,true);
-    LOG(logDEBUGHAL) << "----------------";
-    */
+    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
+    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << listVector(buffer,true);
+    LOG(logDEBUGPIPES) << "----------------";
 
     return lastSample = buffer[pos++];
   }
@@ -67,10 +65,9 @@ namespace pxar {
     // Else set Event end error:
     else record.SetEndError();
 
-    /*
-    LOG(logDEBUGHAL) << "-------------------------";
-    LOG(logDEBUGHAL) << listVector(record,true);
-    */
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << listVector(record.data,true);
+
     return &record;
   }
 
@@ -107,10 +104,8 @@ namespace pxar {
     // Else set Event end error:
     else record.SetEndError();
 
-    /*
-    LOG(logDEBUGHAL) << "-------------------------";
-    LOG(logDEBUGHAL) << listVector(record,true);
-    */
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << listVector(record.data,true);
 
     return &record;
   }
@@ -165,7 +160,7 @@ namespace pxar {
       }
     }
 
-    // LOG(logDEBUGHAL) << roc_Event;
+    LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
 
@@ -187,7 +182,7 @@ namespace pxar {
       }
     }
 
-    //LOG(logDEBUGHAL) << roc_Event;
+    LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
 }

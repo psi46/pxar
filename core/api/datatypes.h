@@ -124,7 +124,7 @@ namespace pxar {
    */
   class rawEvent {
   public:
-  rawEvent() : flags(0), data() {};
+  rawEvent() : data(), flags(0) {};
     void SetStartError() { flags |= 1; }
     void SetEndError()   { flags |= 2; }
     void SetOverflow()   { flags |= 4; }
@@ -140,6 +140,8 @@ namespace pxar {
     void Add(uint16_t value) { data.push_back(value); }
     uint16_t operator[](int index) { return data.at(index); }
 
+    std::vector<uint16_t> data;
+
   private:
     /*
       bit 0 = misaligned start
@@ -147,7 +149,6 @@ namespace pxar {
       bit 2 = overflow
     */
     unsigned int flags;
-    std::vector<uint16_t> data;
 
     /** Overloaded ostream operator for simple printing of raw data blobs
      */
