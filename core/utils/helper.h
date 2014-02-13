@@ -80,7 +80,23 @@ public:
   }
 };
 
-/** Helper function to return a printed list of an integet vector, used to shield
+/** Helper class to search vectors of rocConfigs in order to find the correct i2c_address
+ */
+class findRoc
+{
+  const uint8_t _i2c_address;
+
+public:
+ findRoc(const uint8_t pI2cAddress) : _i2c_address(pI2cAddress) {}
+
+  template<class ConfigType>
+  bool operator()(const ConfigType &config) const
+  {
+    return (config.i2c_address == _i2c_address);
+  }
+};
+
+/** Helper function to return a printed list of an integer vector, used to shield
  *  debug code from being executed if debug level is not sufficient
  */
 template <typename T>
