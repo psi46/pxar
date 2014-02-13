@@ -102,6 +102,7 @@ namespace pxar {
   class DLLEXPORT Event {
   public:
   Event() : header(0), trailer(0), pixels() {};
+    void Clear() { header = 0; trailer = 0; pixels.clear(); };
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;

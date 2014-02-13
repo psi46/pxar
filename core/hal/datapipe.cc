@@ -118,10 +118,7 @@ namespace pxar {
 
   Event* dtbEventDecoder::DecodeDeser400() {
 
-    roc_Event.header = 0;
-    roc_Event.trailer = 0;
-    roc_Event.pixels.clear();
-
+    roc_Event.Clear();
     rawEvent *sample = Get();
 
     uint16_t hdr = 0, trl = 0;
@@ -129,7 +126,6 @@ namespace pxar {
 
     // Get the right ROC id, channel 0: 0-7, channel 1: 8-15
     int16_t roc_n = -1 + GetChannel() * 8; 
-    
     
     for (unsigned int i = 0; i < sample->GetSize(); i++) {
       int d = (*sample)[i] & 0xf;
@@ -174,9 +170,10 @@ namespace pxar {
   }
 
   Event* dtbEventDecoder::DecodeDeser160() {
+
+    roc_Event.Clear();
+
     rawEvent *sample = Get();
-    roc_Event.header = 0;
-    roc_Event.pixels.clear();
     unsigned int n = sample->GetSize();
     if (n > 0) {
       if (n > 1) roc_Event.pixels.reserve((n-1)/2);
