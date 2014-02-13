@@ -785,7 +785,7 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<uint8_t, uint
   int reg, val; 
   string regName; 
 
-  LOG(logDEBUG) << "nothing done for the time being with " << itbm;
+  LOG(logDEBUG) << "nothing done for the time being with " << itbm << ", working with one TBM at the moment";
   //    OUT.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
   OUT.open(fname.c_str());
   if (!OUT.is_open()) {
