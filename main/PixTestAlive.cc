@@ -93,7 +93,10 @@ void PixTestAlive::doTest() {
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
   PixTest::update(); 
 
-  if (fApi) fApi->_dut->testAllPixels(true);
+  if (fApi) {
+    fApi->_dut->testAllPixels(true);
+    fApi->_dut->maskAllPixels(false);
+  }
   vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig); 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
 

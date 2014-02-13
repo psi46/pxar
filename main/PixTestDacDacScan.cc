@@ -195,8 +195,12 @@ void PixTestDacDacScan::doTest() {
   //FIXME  clearHist();
 
   fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    if (fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+    if (fPIX[i].first > -1)  {
+      fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+      fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+    }
   }
   string name = fParDAC1 + string(":") + fParDAC2; 
   bookHist(name);
