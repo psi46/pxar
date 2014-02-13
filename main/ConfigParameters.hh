@@ -40,7 +40,6 @@ public:
 
   static ConfigParameters* Singleton();
 
-  std::vector<std::pair<std::string, uint8_t> > vReg2Name(std::vector<std::pair<uint8_t, uint8_t> > , uint8_t type); 
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
   std::string getDACParameterFileName()   {return fDACParametersFileName;}
   std::string getTbmParameterFileName()   {return fTbmParametersFileName;}

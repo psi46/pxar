@@ -13,7 +13,6 @@
 
 #include "ConfigParameters.hh"
 #include "PixUtil.hh"
-#include "dictionaries.h"
 
 using namespace std;
 using namespace pxar;
@@ -718,22 +717,6 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 
 // ----------------------------------------------------------------------
-vector<pair<string, uint8_t> > ConfigParameters::vReg2Name(vector<pair<uint8_t, uint8_t> > v, uint8_t type) {
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
-  vector<pair<string, uint8_t> > result; 
-  string name; 
-  uint8_t reg, val;
-  for (unsigned i = 0; i < v.size(); ++i) {
-    reg = v[i].first; 
-    val = v[i].second; 
-    name = rd->getName(reg, type); 
-    result.push_back(make_pair(name, val)); 
-  }
-  return result;
-}
-
-
-// ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   string fname = fDirectory + "/" + getTrimParameterFileName();
   ofstream OUT;
@@ -804,9 +787,7 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
 bool ConfigParameters::writeTbParameterFile() {
   string fname = fDirectory + "/" + getTBParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
   string data; 
-  int reg(0); 
 
   OUT.open(Form("%s", fname.c_str()));
   if (!OUT.is_open()) {
@@ -816,8 +797,7 @@ bool ConfigParameters::writeTbParameterFile() {
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-    reg = rd->getRegister(data, DTB_REG);
-    OUT << Form("%3d %15s  %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+    OUT << Form("0 %15s  %3d", fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
   }
   
   OUT.close();
