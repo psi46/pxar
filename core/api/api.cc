@@ -1423,7 +1423,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   // Prepare the result vector
   for(size_t dac = dacMin; dac <= dacMax; dac++) { result->push_back(std::make_pair(dac,std::vector<pixel>())); }
 
-  uint8_t currentDAC = dacMin;
+  size_t currentDAC = dacMin;
   // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     if(currentDAC > dacMax) { currentDAC = dacMin; }
@@ -1610,8 +1610,8 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
     }
   }
 
-  uint8_t current1dac = dac1min;
-  uint8_t current2dac = dac2min;
+  size_t current1dac = dac1min;
+  size_t current2dac = dac2min;
 
   // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
   int i = 0;
