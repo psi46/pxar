@@ -78,7 +78,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-      ++cnt; 
       continue;
     }
 
@@ -259,6 +258,7 @@ void PixTab::buttonClicked() {
   if (!fGui->getTabs()) return;
 
   TGButton *btn = (TGButton*)gTQSender;
+  LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
   fTest->runCommand(btn->GetTitle()); 
 
 } 
