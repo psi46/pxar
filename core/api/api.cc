@@ -1036,9 +1036,6 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
 
-  // Allocate the maximum memory allowed: 50M samples
-  _daq_buffersize = 50000000;
-
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
   if(!pg_setup.empty()) {
     // Prepare new Pattern Generator:
@@ -1061,7 +1058,7 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   // Check the DUT if we have TBMs enabled or not and choose the right
   // deserializer:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms(), _daq_buffersize);
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms());
 
   _daq_running = true;
   return true;

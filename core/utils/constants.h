@@ -10,7 +10,9 @@
 namespace pxar {
 
 // --- Data Transmission settings ----------------------------------------------
-#define DTB_SOURCE_BLOCK_SIZE 32767
+#define DTB_SOURCE_BLOCK_SIZE  32767
+#define DTB_SOURCE_BUFFER_SIZE 50000000
+
 
 // --- TBM Types ---------------------------------------------------------------
 // FIXME just an example...

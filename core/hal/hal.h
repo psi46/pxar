@@ -223,7 +223,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    bool daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = 50000000);
+    bool daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
