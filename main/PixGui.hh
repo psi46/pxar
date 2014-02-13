@@ -32,13 +32,12 @@ typedef char int8_t;
 
 #include "api.h"
 
-#include "ConfigParameters.hh"
-#include "PixTest.hh"
-#include "PixTestParameters.hh"
-#include "PixSetup.hh"
-#include "PixMonitor.hh"
-
-//fixme #include "monitorSource.hh"
+class ConfigParameters;
+class PixParTab;
+class PixMonitor;
+class PixSetup;
+class PixTest; 
+class PixTestParameters;
 
 class PixGui: public TGMainFrame {
 public:
@@ -50,7 +49,7 @@ public:
 
   void handleButtons(Int_t id = -1);
   void createTab(const char*);
-  void createParTab();
+  //  void createParTab();
   void selectedTab(int); 
   void changeRootFile();
   bool isHvOn() {return fHV;}
@@ -82,7 +81,7 @@ private:
   TTimer        	*fTimer;
   TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
-  TGCompositeFrame     	*fParTab;
+  //  TGCompositeFrame     	*fParTab;
   TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer;
   TGTextButton		*fbtnPower, *fbtnHV;
   TGSlider		*fpowerSlider;
@@ -100,11 +99,14 @@ private:
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
   PixMonitor             *fMonitor; 
+  PixParTab              *fParTab;
 
   int                    fWidth, fHeight; 
   std::string            fOldDirectory;
 
   ULong_t                fRed, fGreen, fYellow; 
+
+  int                    fBorderN, fBorderT, fBorderL;  // normal, tiny, large
 
   ClassDef(PixGui, 1); //
 

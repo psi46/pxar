@@ -48,6 +48,7 @@ public:
   virtual void saveTrimParameters();
 
   virtual void updateSelection(); 
+  virtual void updateParameters();
 
   std::string getName() {return fTabName;}
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}
@@ -92,6 +93,8 @@ protected:
   enum CommandIdentifiers {
     B_SELECTALL = 120,  B_DESELECTALL = 121
   };
+
+  int                   fBorderR, fBorderL, fBorderT, fBorderB;
 
 
   ClassDef(PixParTab, 1)

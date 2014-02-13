@@ -505,6 +505,23 @@ void PixParTab::setTbmParameter() {
 
 
 // ----------------------------------------------------------------------
+void PixParTab::updateParameters() {
+  LOG(logDEBUG)  << "PixParTab::updateParameters: ";
+
+  for (int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
+    map<string, uint8_t> amap = fRocParIds[i]; 
+    for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
+      mapit->second = fGui->getApi()->_dut->getDAC(i, mapit->first);
+      if (i == fSelectedRoc) fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second)); 
+    }
+  }
+
+  updateSelection();
+
+} 
+
+
+// ----------------------------------------------------------------------
 void PixParTab::selectRoc(int iroc) {
 
   bool selected(false); 
