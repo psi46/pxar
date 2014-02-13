@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib> 
+#include <bitset>
 
 #include <TApplication.h>
 #include <TGButton.h>
@@ -171,7 +172,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  
 	  te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
 	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, 2, 2, 2, 2)); 
-	  te->SetText(Form("%d", int(amap[i].second)));
+	  std::bitset<8> bits(amap[i].second);
+	    te->SetText(Form("%s", bits.to_string().c_str()));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
 	  
 	  tset = new TGTextButton(hFrame, "Set", i);
@@ -484,7 +486,9 @@ void PixParTab::setTbmParameter() {
 
   string sdac = fTbmTextMap[id]; 
   string sval = fTbmTextEntries[sdac]->GetText(); 
-  uint8_t udac = atoi(sval.c_str()); 
+  //  uint8_t udac = atoi(sval.c_str()); 
+  bitset<8> bits(sval); 
+  uint8_t udac = bits.to_ulong();
 
   int itbm(-1); 
   for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {

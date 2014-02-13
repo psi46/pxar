@@ -19,6 +19,8 @@ void singleTest(string testname = "PixelAlive", string rootfilename = "PixelAliv
   
   PixTestAlive *pt = factory->createTest(testname, ap); 
   pt->doTest();
+  pt->setParameter("Ntrig", "12");
+  pt->doTest();
 
   delete pt; 
   rfile->Write();
