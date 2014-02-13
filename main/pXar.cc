@@ -50,7 +50,9 @@ int main(int argc, char *argv[]){
     doRunScript(false), 
     noAPI(false), 
     doUpdateFlash(false),
-    doAnalysisOnly(false);
+    doAnalysisOnly(false),
+    doUseRootLogon(false)
+    ;
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
@@ -75,7 +77,9 @@ int main(int argc, char *argv[]){
 
   struct stat buffer;   
   if (stat("rootlogon.C", &buffer) == 0) {
-    gROOT->ProcessLine(".x rootlogon.C");
+    LOG(logINFO) << "reading rootlogon.C, will use gStyle settings from there";
+    gROOT->Macro("rootlogon.C");
+    doUseRootLogon = true; 
   } else {
     LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
   }
@@ -134,7 +138,6 @@ int main(int argc, char *argv[]){
       LOG(logINFO) << "DUT info: ";
       api->_dut->info(); 
       
-      
     } catch (...) {
       LOG(logINFO)<< "pxar caught an exception from the board. Exiting.";
       return -1;
@@ -143,6 +146,7 @@ int main(int argc, char *argv[]){
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
   PixSetup a(api, ptp, configParameters);  
+  a.setUseRootLogon(doUseRootLogon); 
 
   LOG(logINFO)<< "pxar: dumping results into " << rootfile;
   TFile *rfile(0); 
