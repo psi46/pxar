@@ -208,11 +208,6 @@ void PixTestDacDacScan::doTest() {
 
   // -- FIXME This code is crap. Replace as in PixelAlive
 
-  if ((fParHiDAC1-fParLoDAC1)*(fParHiDAC2-fParLoDAC2) > 16383) {
-    LOG(logERROR) << "You cannot scan more than 2^14 points simultaneously -- nothing done";
-    return;
-  }
-
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > > 
     results = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 					  fParDAC2, fParLoDAC2, fParHiDAC2, 
