@@ -167,6 +167,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB)); 
 	  
 	  te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(70); 
+	  te->SetToolTipText("note that the numbers are in binary format (in case this is not obvious)");
 	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB)); 
 	  std::bitset<8> bits(amap[i].second);
 	    te->SetText(Form("%s", bits.to_string().c_str()));
@@ -662,13 +663,17 @@ vector<int> PixParTab::getSelectedRocs() {
 
 // ----------------------------------------------------------------------
 void PixParTab::updateSelection() {
+  map<int, int> id2idx; 
   vector<int> selectedRocs = getSelectedRocs(); 
   for (int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
     fGui->getApi()->_dut->setROCEnable(i, false); 
   }
   for (unsigned i = 0; i < selectedRocs.size(); ++i) {
     fGui->getApi()->_dut->setROCEnable(selectedRocs[i], true); 
+    id2idx.insert(make_pair(selectedRocs[i], i)); 
   }
+
+  fGui->updateSelectedRocs(id2idx);
 
   vector<int> selectedTbms = getSelectedTbms(); 
   for (int i = 0; i < fGui->getApi()->_dut->getNTbms(); ++i) {
