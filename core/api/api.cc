@@ -10,13 +10,14 @@
 #include "dictionaries.h"
 #include <algorithm>
 #include <fstream>
+#include "constants.h"
 #include "config.h"
 
 using namespace pxar;
 
 pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
-  _daq_buffersize(0),
+  _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
   _daq_minimum_period(0)
 {
 
@@ -1058,7 +1059,7 @@ bool pxarCore::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   // Check the DUT if we have TBMs enabled or not and choose the right
   // deserializer:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms());
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms(),_daq_buffersize);
 
   _daq_running = true;
   return true;
