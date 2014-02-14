@@ -162,6 +162,16 @@ cdef class PyPxarCore:
             self.thisptr._dut.testPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.testPixel(col, row, enable)
+    def maskAllPixels(self, bool enable, rocid = None):
+        if rocid is not None:
+            self.thisptr._dut.maskAllPixels(enable,rocid)
+        else:
+            self.thisptr._dut.maskAllPixels(enable)
+    def maskPixel(self, int col, int row, bool enable, rocid = None):
+        if rocid is not None:
+            self.thisptr._dut.maskPixel(col, row, enable,rocid)
+        else:
+            self.thisptr._dut.maskPixel(col, row, enable)
     def programDUT(self):
         return self.thisptr.programDUT()
     def status(self):
