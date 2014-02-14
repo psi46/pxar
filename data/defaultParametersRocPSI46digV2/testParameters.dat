@@ -1,6 +1,7 @@
 -- CurVsDac
 DAC Vana
 
+
 -- DAQ
 Ntrig 100
 
@@ -35,15 +36,15 @@ DACHI 200
 PIX1  11,20
 
 -- Pretest
-targetIa 24
-setVana button
-noiseWidth 22
-noiseMargin 15
+targetIa      24
+setVana       button
+noiseWidth    22
+noiseMargin   15
 setVthrCompId button
-PIX1 11,20 
-Ntrig 10
-setCalDel button
-SaveDacs button
+PIX           11,20 
+Ntrig         10
+setCalDel     button
+SaveDacs      button
 
 -- Scurves
 Ntrig 50
