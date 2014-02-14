@@ -154,7 +154,6 @@ void PixTestPretest::saveDacs() {
     fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
   }
 
-  //  fPixSetup->getConfigParameters()->writeDacParameterFiles(fPixSetup->getConfigParameters()->getSelectedRocs());
 }
 
 // ----------------------------------------------------------------------
@@ -164,34 +163,31 @@ void PixTestPretest::setVana() {
 
   fApi->_dut->testAllPixels(false);
 
-  int vana16[16] = {0};
+  vector<uint8_t> vanaStart;
+  vector<double> rocIana;
 
-  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
-
-  // set all ROCs to minimum:
-
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    vana16[roc] = fApi->_dut->getDAC( roc, "vana" ); // remember as start value
-    fApi->setDAC( "vana", 0, roc ); // off
+  // -- cache setting and switch off all(!) ROCs
+  int nRocs = fApi->_dut->getNRocs(); 
+  for (size_t iroc = 0; iroc < nRocs; ++iroc) {
+    vanaStart.push_back(fApi->_dut->getDAC(iroc, "vana"));
+    rocIana.push_back(0.); 
+    fApi->setDAC("vana", 0, iroc);
   }
-
+  
   double i016 = fApi->getTBia()*1E3;
 
+  // FIXME this should not be a stopwatch, but a delay
   TStopwatch sw;
-
   sw.Start(kTRUE); // reset
   do {
     sw.Start(kFALSE); // continue
     i016 = fApi->getTBia()*1E3;
-  }
-  while( sw.RealTime() < 0.1 );
+  } while (sw.RealTime() < 0.1);
 
   LOG(logINFO) << "delay " << sw.RealTime() << " s"
 	       << ", Stopwatch counter " << sw.Counter();
 
-  // i016 = nRocs * current01
   // subtract one ROC to get the offset from the other Rocs (on average):
-
   double i015 = (nRocs-1) * i016 / nRocs; // = 0 for single chip tests
 
   LOG(logINFO) << "offset current from other " << nRocs-1 << " ROCs is "
@@ -203,20 +199,20 @@ void PixTestPretest::setVana() {
   const double eps = 0.25; // [mA] convergence
   const double slope = 6; // 255 DACs / 40 mA
 
-  for( uint32_t roc = 0; roc < nRocs; ++roc ) {
-
-    int vana = vana16[roc];
+  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+    if (!selectedRoc(roc)) {
+      LOG(logDEBUG) << "skipping ROC idx = " << roc << " (not selected) for Vana tuning"; 
+      continue;
+    }
+    int vana = vanaStart[roc];
     fApi->setDAC( "vana", vana, roc ); // start value
-    // delay
 
     double ia = fApi->getTBia()*1E3; // [mA], just to be sure to flush usb
-
     sw.Start(kTRUE); // reset
     do {
       sw.Start(kFALSE); // continue
       ia = fApi->getTBia()*1E3; // [mA]
-    }
-    while( sw.RealTime() < 0.1 );
+    } while (sw.RealTime() < 0.1);
 
     LOG(logINFO) << "delay " << sw.RealTime() << " s"
 		 << ", Stopwatch counter " << sw.Counter();
@@ -260,26 +256,38 @@ void PixTestPretest::setVana() {
 		   << " Ia " << ia-i015 << " mA";
     } // iter
 
-    vana16[roc] = vana; // remember best
+    rocIana[roc] = ia-i015;
+    vanaStart[roc] = vana; // remember best
     fApi->setDAC( "vana", 0, roc ); // switch off for next ROC
 
   } // rocs
 
-  TH1D *hsum = new TH1D( "VanaSettings", "Vana per ROC;ROC;Vana [DAC]", 16, -0.5, 15.5 );
-  hsum->SetStats(0); // no stats
+  TH1D *hsum = new TH1D("VanaSettings", "Vana per ROC", nRocs, 0., nRocs);
+  setTitles(hsum, "ROC", "Vana [DAC]"); 
+  hsum->SetStats(0);
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
-  // set all ROCs to optimum:
+  TH1D *hcurr = new TH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
+  setTitles(hcurr, "ROC", "Vana [DAC]"); 
+  hcurr->SetStats(0); // no stats
+  hcurr->SetMinimum(0);
+  hcurr->SetMaximum(30.0);
+  fHistList.push_back(hcurr);
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    fApi->setDAC( "vana", vana16[roc], roc );
-    LOG(logINFO) << "ROC " << setw(2) << roc
-		 << " Vana " << setw(3) << vana16[roc];
-    hsum->Fill( roc, vana16[roc] );
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
+
+  for (size_t roc = 0; roc < nRocs; ++roc) {
+    // -- reset all ROCs to optimum or cached value
+    fApi->setDAC( "vana", vanaStart[roc], roc );
+    LOG(logINFO) << "ROC " << setw(2) << roc << " Vana " << setw(3) << int(vanaStart[roc]);
+    // -- histogramming only for those ROCs that were selected
+    if (!selectedRoc(roc)) continue;
+    hsum->Fill(roc, vanaStart[roc] );
+    hcurr->Fill(roc, rocIana[roc]); 
   }
-
+  
   hsum->Draw();
   PixTest::update();
   
