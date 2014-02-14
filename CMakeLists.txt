@@ -165,14 +165,14 @@ ADD_SUBDIRECTORY(core)
 option(BUILD_pxarui  "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
 IF(BUILD_pxarui)
 
-  # Build the tests and test library
-  ADD_SUBDIRECTORY(tests)
-
   # Build the pXar executable
   ADD_SUBDIRECTORY(main)
 
   # Build the pXar GUI
   ADD_SUBDIRECTORY(gui)
+
+  # Build the tests and test library
+  ADD_SUBDIRECTORY(tests)
 
 ENDIF(BUILD_pxarui)
 
