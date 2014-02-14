@@ -59,7 +59,7 @@ if (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
   find_path(LIBUSB_1_INCLUDE_DIR
     NAMES
-    libusb-1.0/libusb.h libusb.h
+    libusb.h
     PATHS
     /usr/include
     /usr/local/include
