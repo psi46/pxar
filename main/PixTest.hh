@@ -74,7 +74,7 @@ public:
   
 
 protected: 
-  pxar::api            *fApi;
+  pxar::pxarCore       *fApi;
   PixSetup             *fPixSetup; 
   PixTestParameters    *fTestParameters; 
   PixInitFunc          *fPIF;   

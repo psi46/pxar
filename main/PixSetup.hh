@@ -13,7 +13,7 @@
 
 class PixSetup: public TObject {
 public:
-  PixSetup(pxar::api *, PixTestParameters *, ConfigParameters *);
+  PixSetup(pxar::pxarCore *, PixTestParameters *, ConfigParameters *);
   PixSetup(std::string verbosity, PixTestParameters *, ConfigParameters *);
   PixSetup();
   ~PixSetup();
@@ -21,7 +21,7 @@ public:
 
   PixTestParameters* getPixTestParameters() {return fPixTestParameters;}
   ConfigParameters * getConfigParameters()  {return fConfigParameters;}
-  pxar::api*         getApi() {return fApi;}
+  pxar::pxarCore*    getApi() {return fApi;}
   bool               doAnalysisOnly() {return fDoAnalysisOnly;}
   void               setDoAnalysisOnly(bool x) {fDoAnalysisOnly = x;}
   bool               useRootLogon() {return fUseRootLogon;} 
@@ -33,7 +33,7 @@ private:
   bool              fDoAnalysisOnly; 
   bool              fUseRootLogon;
 
-  pxar::api         *fApi; 
+  pxar::pxarCore    *fApi; 
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
 

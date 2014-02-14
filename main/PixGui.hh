@@ -63,7 +63,7 @@ public:
 
   int getWidth() {return fWidth;}
   int getHeight() {return fHeight;}
-  pxar::api* getApi() {return fApi;}
+  pxar::pxarCore* getApi() {return fApi;}
   PixSetup* getPixSetup() {return fPixSetup;}
   
 private: 
@@ -95,7 +95,7 @@ private:
   bool			 fPower, fHV;
 
   PixSetup               *fPixSetup; 
-  pxar::api              *fApi;
+  pxar::pxarCore         *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
   PixMonitor             *fMonitor; 
