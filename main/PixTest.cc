@@ -617,3 +617,9 @@ bool PixTest::selectedRoc(int iroc) {
   }
   return true;
 }
+
+
+// ----------------------------------------------------------------------
+void PixTest::setId2Idx(std::map<int, int> a) {
+  fId2Idx = a;
+}

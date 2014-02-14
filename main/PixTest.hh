@@ -65,7 +65,7 @@ public:
 
   virtual bool setParameter(std::string parName, std::string sval); 
 
-  void setId2Idx(std::map<int, int> a) {fId2Idx = a;}
+  void setId2Idx(std::map<int, int> a);
   bool selectedRoc(int id);
 
   static std::string stripPos(std::string); 
