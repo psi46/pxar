@@ -10,6 +10,7 @@
 #include <TGLabel.h>
 #include <TH2.h>
 #include <TStyle.h>
+#include <TBrowser.h>
 
 #include "PixTab.hh"
 #include "log.h"
@@ -157,6 +158,13 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fbModMap->ChangeOptions(fbModMap->GetOptions() | kFixedWidth);
   hFrame->AddFrame(fbModMap, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbModMap->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
+
+  // -- create TBrowser button
+  fbBrowser = new TGTextButton(hFrame, " browser ", B_BROWSER);
+  fbBrowser->ChangeOptions(fbBrowser->GetOptions() | kFixedWidth);
+  fbBrowser->SetToolTipText("open a TBrowser (for easier histogram navigation)");
+  hFrame->AddFrame(fbBrowser, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
+  fbBrowser->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
@@ -221,6 +229,11 @@ void PixTab::handleButtons(Int_t id) {
 
     case B_DOSTOP: {
       LOG(logDEBUG) << "and now what???";
+      break;
+    }
+
+    case B_BROWSER: {
+      new TBrowser(getName().c_str(), fTest->getDirectory()); 
       break;
     }
 

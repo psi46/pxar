@@ -53,7 +53,7 @@ protected:
   TRootEmbeddedCanvas  	*fEc1;
   TGStatusBar           *fStatusBar;
 
-  TGTextButton          *fbDoTest, *fbModMap; 
+  TGTextButton          *fbDoTest, *fbModMap, *fbBrowser; 
   
   static const int TESTNUMBER = 0;
   enum CommandIdentifiers {
@@ -61,6 +61,7 @@ protected:
     B_DOSTOP,
     B_CLOSETAB,
     B_MODMAP,
+    B_BROWSER,
     B_PRINT
   };
 
