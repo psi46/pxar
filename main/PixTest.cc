@@ -574,6 +574,7 @@ void PixTest::fillMap(TH2D *hmod, TH2D *hroc, int iroc) {
 }
 
 
+
 // ----------------------------------------------------------------------
 void PixTest::sparseRoc(int npix) {
   
@@ -605,4 +606,20 @@ void PixTest::sparseRoc(int npix) {
   } else{
     fApi->_dut->testAllPixels(true);
   }
+}
+
+
+// ----------------------------------------------------------------------
+bool PixTest::selectedRoc(int iroc) {
+  vector<uint8_t> v = fApi->_dut->getEnabledRocIDs();
+  if (v.end() == find(v.begin(), v.end(), iroc)) {
+    return false;
+  }
+  return true;
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::setId2Idx(std::map<int, int> a) {
+  fId2Idx = a;
 }

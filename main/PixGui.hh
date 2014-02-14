@@ -8,6 +8,7 @@ typedef char int8_t;
 #endif 
 
 #include <vector>
+#include <map>
 #include <iostream>
 #include <string>
 
@@ -65,6 +66,8 @@ public:
   int getHeight() {return fHeight;}
   pxar::pxarCore* getApi() {return fApi;}
   PixSetup* getPixSetup() {return fPixSetup;}
+
+  void updateSelectedRocs(std::map<int, int> a); 
   
 private: 
 

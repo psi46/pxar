@@ -154,7 +154,6 @@ void PixTestPretest::saveDacs() {
     fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
   }
 
-  //  fPixSetup->getConfigParameters()->writeDacParameterFiles(fPixSetup->getConfigParameters()->getSelectedRocs());
 }
 
 // ----------------------------------------------------------------------
@@ -164,34 +163,31 @@ void PixTestPretest::setVana() {
 
   fApi->_dut->testAllPixels(false);
 
-  int vana16[16] = {0};
+  vector<uint8_t> vanaStart;
+  vector<double> rocIana;
 
-  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
-
-  // set all ROCs to minimum:
-
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    vana16[roc] = fApi->_dut->getDAC( roc, "vana" ); // remember as start value
-    fApi->setDAC( "vana", 0, roc ); // off
+  // -- cache setting and switch off all(!) ROCs
+  int nRocs = fApi->_dut->getNRocs(); 
+  for (size_t iroc = 0; iroc < nRocs; ++iroc) {
+    vanaStart.push_back(fApi->_dut->getDAC(iroc, "vana"));
+    rocIana.push_back(0.); 
+    fApi->setDAC("vana", 0, iroc);
   }
-
+  
   double i016 = fApi->getTBia()*1E3;
 
+  // FIXME this should not be a stopwatch, but a delay
   TStopwatch sw;
-
   sw.Start(kTRUE); // reset
   do {
     sw.Start(kFALSE); // continue
     i016 = fApi->getTBia()*1E3;
-  }
-  while( sw.RealTime() < 0.1 );
+  } while (sw.RealTime() < 0.1);
 
   LOG(logINFO) << "delay " << sw.RealTime() << " s"
 	       << ", Stopwatch counter " << sw.Counter();
 
-  // i016 = nRocs * current01
   // subtract one ROC to get the offset from the other Rocs (on average):
-
   double i015 = (nRocs-1) * i016 / nRocs; // = 0 for single chip tests
 
   LOG(logINFO) << "offset current from other " << nRocs-1 << " ROCs is "
@@ -203,20 +199,20 @@ void PixTestPretest::setVana() {
   const double eps = 0.25; // [mA] convergence
   const double slope = 6; // 255 DACs / 40 mA
 
-  for( uint32_t roc = 0; roc < nRocs; ++roc ) {
-
-    int vana = vana16[roc];
-    fApi->setDAC( "vana", vana, roc ); // start value
-    // delay
+  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+    if (!selectedRoc(roc)) {
+      LOG(logDEBUG) << "skipping ROC idx = " << roc << " (not selected) for Vana tuning"; 
+      continue;
+    }
+    int vana = vanaStart[roc];
+    fApi->setDAC("vana", vana, roc); // start value
 
     double ia = fApi->getTBia()*1E3; // [mA], just to be sure to flush usb
-
     sw.Start(kTRUE); // reset
     do {
       sw.Start(kFALSE); // continue
       ia = fApi->getTBia()*1E3; // [mA]
-    }
-    while( sw.RealTime() < 0.1 );
+    } while (sw.RealTime() < 0.1);
 
     LOG(logINFO) << "delay " << sw.RealTime() << " s"
 		 << ", Stopwatch counter " << sw.Counter();
@@ -228,21 +224,23 @@ void PixTestPretest::setVana() {
 		 << " Vana " << vana
 		 << " Ia " << ia-i015 << " mA";
 
-    while( TMath::Abs(diff) > eps && iter < 11 && vana > 0 && vana < 255 ) {
+    while (TMath::Abs(diff) > eps && iter < 11 && vana > 0 && vana < 255) {
 
-      int stp = int( TMath::Abs(slope*diff) );
-      if( stp == 0 ) stp = 1;
-      if( diff < 0 ) stp = -stp;
+      int stp = static_cast<int>(TMath::Abs(slope*diff));
+      if (stp == 0) stp = 1;
+      if (diff < 0) stp = -stp;
 
       vana += stp;
 
-      if( vana < 0 )
+      if (vana < 0) {
 	vana = 0;
-      else
-	if( vana > 255 )
+      } else {
+	if (vana > 255) {
 	  vana = 255;
+	}
+      }
 
-      fApi->setDAC( "vana", vana, roc );
+      fApi->setDAC("vana", vana, roc);
       iter++;
 
       sw.Start(kTRUE); // reset
@@ -260,27 +258,38 @@ void PixTestPretest::setVana() {
 		   << " Ia " << ia-i015 << " mA";
     } // iter
 
-    vana16[roc] = vana; // remember best
+    rocIana[roc] = ia-i015; // more or less identical for all ROCS?!
+    vanaStart[roc] = vana; // remember best
     fApi->setDAC( "vana", 0, roc ); // switch off for next ROC
 
   } // rocs
 
-  TH1D *hsum = new TH1D( "VanaSettings", "Vana per ROC;ROC;Vana [DAC]", 16, -0.5, 15.5 );
-  hsum->SetStats(0); // no stats
+  TH1D *hsum = new TH1D("VanaSettings", "Vana per ROC", nRocs, 0., nRocs);
+  setTitles(hsum, "ROC", "Vana [DAC]"); 
+  hsum->SetStats(0);
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
-  // set all ROCs to optimum:
+  TH1D *hcurr = new TH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
+  setTitles(hcurr, "ROC", "Vana [DAC]"); 
+  hcurr->SetStats(0); // no stats
+  hcurr->SetMinimum(0);
+  hcurr->SetMaximum(30.0);
+  fHistList.push_back(hcurr);
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    fApi->setDAC( "vana", vana16[roc], roc );
-    LOG(logINFO) << "ROC " << setw(2) << roc
-		 << " Vana " << setw(3) << vana16[roc];
-    hsum->Fill( roc, vana16[roc] );
+  for (size_t roc = 0; roc < nRocs; ++roc) {
+    // -- reset all ROCs to optimum or cached value
+    fApi->setDAC( "vana", vanaStart[roc], roc );
+    LOG(logINFO) << "ROC " << setw(2) << roc << " Vana " << setw(3) << int(vanaStart[roc]);
+    // -- histogramming only for those ROCs that were selected
+    if (!selectedRoc(roc)) continue;
+    hsum->Fill(roc, vanaStart[roc] );
+    hcurr->Fill(roc, rocIana[roc]); 
   }
-
+  
   hsum->Draw();
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
   PixTest::update();
   
   double ia16 = fApi->getTBia()*1E3; // [mA]
@@ -304,13 +313,13 @@ void PixTestPretest::setVthrCompId() {
   vector<TH1D*> hsts;
   TH1D *h1(0);
 
-  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
+  int nRocs = fApi->_dut->getNRocs(); 
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-
-    h1 = new TH1D( Form( "Id_vs_VthrComp_C%d", int(roc) ),
-		   Form( "Id vs VthrComp C%d", int(roc) ),
-		   256, -0.5, 255.5 );
+  for (size_t roc = 0; roc < nRocs; ++roc) {
+    if (!selectedRoc(roc)) continue;
+    h1 = new TH1D(Form("Id_vs_VthrComp_C%d", int(roc)),	
+		  Form("Id vs VthrComp C%d", int(roc)),
+		   256, 0., 256.);
     h1->SetMinimum(0);
     h1->SetStats(0);
     setTitles( h1, "VthrComp [DAC]", "ROC digital current [mA]" );
@@ -320,16 +329,13 @@ void PixTestPretest::setVthrCompId() {
 
   fApi->_dut->testAllPixels(true); // enable all pix: more noise
 
-  // set all ROCs to minimum Id:
+  vector<int> rocVsf, rocVthrComp; 
+  for (size_t roc = 0; roc < nRocs; ++roc) {
+    rocVsf.push_back(fApi->_dut->getDAC(roc, "Vsf" )); 
+    rocVthrComp.push_back(fApi->_dut->getDAC(roc, "VthrComp")); 
 
-  int vsf16[16] = {0};
-  int vthr16[16] = {0};
-
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    vsf16[roc] = fApi->_dut->getDAC( roc, "Vsf" ); // remember
-    vthr16[roc] = fApi->_dut->getDAC( roc, "VthrComp" ); // remember
-    fApi->setDAC( "Vsf", 33, roc ); // small
-    fApi->setDAC( "VthrComp", 0, roc ); // off
+    fApi->setDAC("Vsf", 33, roc); // small
+    fApi->setDAC("VthrComp", 0, roc); // off
   }
 
   double i016 = fApi->getTBid()*1E3;
@@ -350,25 +356,22 @@ void PixTestPretest::setVthrCompId() {
 
   // loope over ROCs:
 
-  for( uint32_t roc = 0; roc < nRocs; ++roc ) {
+  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+    if (!selectedRoc(roc)) continue;
 
     LOG(logDEBUG) << "ROC " << setw(2) << roc;
       
     hid = hsts[roc];
 
-    // loop over DAC:
-
-    for( size_t idac = 0; idac < 256; ++idac ) {
-
-      fApi->setDAC( "VthrComp", idac, roc );
+    for (size_t idac = 0; idac < 256; ++idac) {
+      fApi->setDAC("VthrComp", idac, roc);
       // delay?
-      hid->Fill( idac, fApi->getTBid()*1E3 - i015 );
+      hid->Fill(idac, fApi->getTBid()*1E3 - i015);
+    } 
 
-    } // dac
+    fApi->setDAC("VthrComp", 0, roc); // switch off
 
-    fApi->setDAC( "VthrComp", 0, roc ); // switch off
-
-    if( hid ) hid->Draw();
+    if (hid) hid->Draw();
     PixTest::update();
 
     // analyze:
@@ -378,46 +381,49 @@ void PixTestPretest::setVthrCompId() {
 
     double maxd = 0;
     int maxi = 0;
-    for( int i = 1; i <= 256-fNoiseWidth; ++i ) { // histo bin counting starts at 1
+    for (int i = 1; i <= 256-fNoiseWidth; ++i) { // histo bin counting starts at 1
       double ni = hid->GetBinContent(i);
       double d = hid->GetBinContent(i+fNoiseWidth) - ni;
-      if( d > maxd ) { maxd = d; maxi = i-1; }
+      if (d > maxd) { 
+	maxd = d; 
+	maxi = i-1; 
+      }
     }
     LOG(logDEBUG) << "[SetComp] max d" << fNoiseWidth
 		  << maxd << " at " << maxi;
 
     int32_t val = maxi - fNoiseMargin; // safety
-    if( val < 0 ) val = 0;
-    vthr16[roc] = val;
-
+    if (val < 0) val = 0;
+    rocVthrComp[roc] = val;
     LOG(logDEBUG) << "set VthrComp to " << val;
 
   } // rocs
 
-  TH1D *hsum = new TH1D( "VthrCompSettings", "VthrComp per ROC;ROC;VthrComp [DAC]",
-			 16, -0.5, 15.5 );
+  TH1D *hsum = new TH1D("VthrCompSettings", "VthrComp per ROC",  nRocs, 0., nRocs);
+  setTitles(hsum, "ROC", "VthrComp [DAC]"); 
   hsum->SetStats(0); // no stats
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
-  // restore:
-
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    fApi->setDAC( "Vsf", vsf16[roc], roc );
-    fApi->setDAC( "VthrComp", vthr16[roc], roc );
+  for (size_t roc = 0; roc < nRocs; ++roc) {
+    // -- (re)set all
+    fApi->setDAC("Vsf", rocVsf[roc], roc);
+    fApi->setDAC("VthrComp", rocVthrComp[roc], roc);
+    // -- report on/histogram only selected ROCs
     LOG(logINFO) << "ROC " << setw(2) << roc
-		 << " VthrComp " << setw(3) << vthr16[roc];
-    hsum->Fill( roc, vthr16[roc] );
+		 << " VthrComp " << setw(3) << rocVthrComp[roc];
+    hsum->Fill(roc, rocVthrComp[roc]);
   }
 
   hsum->Draw();
   PixTest::update();
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
 
-  // flush?
   LOG(logINFO) << "PixTestPretest::setVthrCompId() done";
 
 }
+
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setCalDel() {
@@ -444,31 +450,19 @@ void PixTestPretest::setCalDel() {
   string DacName = "caldel";
 
   // measure:
-
-  cout << "start fApi->getEfficiencyVsDAC(" << DacName << ", " <<  0 << ", " << 250 << ", " << 0 << ", " << fParNtrig << ");" << endl;
   vector<pair<uint8_t, vector<pixel> > > results =  fApi->getEfficiencyVsDAC(DacName, 0, 250, 0, fParNtrig);
-  cout << "done  fApi->getEfficiencyVsDAC(...);" << endl;
 
   // histos:
-
   vector<TH1D*> hsts;
   TH1D *h1(0);
-
-  //dp  uint32_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
-  //  for (uint32_t i = 0; i < nRocs; ++i)  {
-
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-    int i = rocIds[iroc];
-    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d",
-		       DacName.c_str(), fPIX[0].first, fPIX[0].second, i),
-		  Form("NhitsVs%s_c%d_r%d_C%d",
-		       DacName.c_str(), fPIX[0].first, fPIX[0].second, i),
-		  256, -0.5, 255.5 );
+  int nRocs = fApi->_dut->getNEnabledRocs();
+  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+    if (!selectedRoc(iroc)) continue;
+    h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
+		  Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
+		  256, 0., 256.);
     h1->SetMinimum(0);
-    setTitles( h1, Form( "%s [DAC]", DacName.c_str() ), "readouts" );
+    setTitles(h1, Form( "%s [DAC]", DacName.c_str() ), "readouts");
     fHistList.push_back(h1);
     hsts.push_back(h1);
   }
@@ -479,6 +473,7 @@ void PixTestPretest::setCalDel() {
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
+  // FIXME this is so bad
   int i0[35] = {0};
   int i9[35] = {0};
   int nm[35] = {0};
@@ -490,21 +485,21 @@ void PixTestPretest::setCalDel() {
     for (size_t ipx = 0; ipx < vpix.size(); ++ipx)  {
       uint32_t roc = vpix.at(ipx).roc_id;
 
-      if (static_cast<unsigned int>(id2idx[roc]) < rocIds.size()
+      if (static_cast<unsigned int>(fId2Idx[roc]) < nRocs
 	  && vpix[ipx].column == fPIX[0].first 
 	  && vpix[ipx].row == fPIX[0].second
 	  ) {
 
 	int nn = vpix.at(ipx).value;
 
-	if (nn > nm[id2idx[roc]]) {
-	  nm[id2idx[roc]] = nn;
-	  i0[id2idx[roc]] = caldel; // begin of plateau
+	if (nn > nm[fId2Idx[roc]]) {
+	  nm[fId2Idx[roc]] = nn;
+	  i0[fId2Idx[roc]] = caldel; // begin of plateau
 	}
-	if (nn == nm[id2idx[roc]] )
-	  i9[id2idx[roc]] = caldel; // end of plateau
+	if (nn == nm[fId2Idx[roc]] )
+	  i9[fId2Idx[roc]] = caldel; // end of plateau
 
-	h1 = hsts.at(id2idx[roc]);
+	h1 = hsts.at(fId2Idx[roc]);
 	h1->Fill(caldel, nn);
 	
       } // valid
@@ -513,21 +508,21 @@ void PixTestPretest::setCalDel() {
     
   } // caldel vals
 
-  for (size_t roc = 0; roc < rocIds.size(); ++roc) {
-    hsts[id2idx[roc]]->Draw();
+  for (size_t roc = 0; roc < nRocs; ++roc) {
+    hsts[fId2Idx[roc]]->Draw();
     PixTest::update();
   }
 
   // set CalDel:
-  for (uint32_t roc = 0; roc < rocIds.size(); ++roc) {
-    if (i9[id2idx[roc]] > 0 ) {
+  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+    if (i9[fId2Idx[roc]] > 0 ) {
 
-      int i2 = i0[id2idx[roc]] + (i9[id2idx[roc]]-i0[id2idx[roc]])/4;
+      int i2 = i0[fId2Idx[roc]] + (i9[fId2Idx[roc]]-i0[fId2Idx[roc]])/4;
       fApi->setDAC(DacName, i2, roc);
       
       LOG(logINFO) << "ROC " << setw(2) << roc
-		   << ": eff plateau from " << setw(3) << i0[id2idx[roc]]
-		   << " to " << setw(3) << i9[id2idx[roc]]
+		   << ": eff plateau from " << setw(3) << i0[fId2Idx[roc]]
+		   << " to " << setw(3) << i9[fId2Idx[roc]]
 		   << ": set CalDel to " << i2;
 
       hsum->Fill(roc, i2);

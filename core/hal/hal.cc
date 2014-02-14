@@ -11,7 +11,8 @@ hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
   nTBMs(0),
-  deser160phase(4)
+  deser160phase(4),
+  rocType(0)
 {
 
   // Get a new CTestboard class instance:
@@ -236,13 +237,14 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   tbmSetRegs(tbmId,regVector);
 }
 
-void hal::initROC(uint8_t rocId, uint8_t roctype, std::map< uint8_t,uint8_t > dacVector) {
+void hal::initROC(uint8_t rocId, uint8_t type, std::map< uint8_t,uint8_t > dacVector) {
 
   // Set the pixel address inverted flag if we have the PSI46digV1 chip
-  if(roctype == ROC_PSI46DIG || roctype == ROC_PSI46DIG_TRIG) {
+  if(type == ROC_PSI46DIG || type == ROC_PSI46DIG_TRIG) {
     LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
-    LOG(logCRITICAL) << "FIXME: This is currently not supported by pxar! FIle a bug report if needed!";
   }
+  // FIXME
+  rocType = type;
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC " << static_cast<int>(rocId) << ".";
@@ -596,7 +598,7 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per pixel per trigger, all ROCs are triggered in parallel:
-  size_t missing = nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
+  int missing = nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -627,7 +629,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per trigger, all ROCs are triggered in parallel:
-  size_t missing = nTriggers - data.size();
+  int missing = nTriggers - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -655,7 +657,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We are expecting one Event per pixel per trigger, only one ROC is triggered:
-  size_t missing = nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
+  int missing = nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -684,7 +686,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t colum
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We are expecting one Event per trigger:
-  size_t missing = nTriggers - data.size();
+  int missing = nTriggers - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -721,7 +723,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We are expecting one Event per DAC setting per trigger per pixel:
-  size_t missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -758,7 +760,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC value per trigger:
-  size_t missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers - data.size();
+  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -791,7 +793,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC value per trigger per pixel:
-  size_t missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -824,7 +826,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC value per trigger:
-  size_t missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers - data.size();
+  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -865,7 +867,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC1 value per DAC2 value per trigger per pixel:
-  size_t missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
+  int missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -908,7 +910,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC1 value per DAC2 value per trigger:
-  size_t missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers - data.size();
+  int missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -948,7 +950,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC1 value per DAC2 value per trigger per pixel:
-  size_t missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+  int missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -988,7 +990,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t colu
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC1 value per DAC2 value per trigger:
-  size_t missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers - data.size();
+  int missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -1068,7 +1070,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,(nTBMs > 0),true);
+  src0 = dtbSource(_testboard,0,(nTBMs > 0),rocType,true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
@@ -1078,7 +1080,7 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,(nTBMs > 0),true);
+    src1 = dtbSource(_testboard,1,(nTBMs > 0),rocType,true);
     src1 >> splitter1;
 
 
@@ -1087,12 +1089,12 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,(nTBMs > 0),true);
+      src2 = dtbSource(_testboard,2,(nTBMs > 0),rocType,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,(nTBMs > 0),true);
+      src3 = dtbSource(_testboard,3,(nTBMs > 0),rocType,true);
       src3 >> splitter3;
     }
 

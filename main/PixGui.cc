@@ -202,6 +202,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     createTab(tests[i].c_str()); 
   }
   fcmbTests->Select(0);
+  fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , fBorderN, fBorderN, fBorderN, fBorderN));
@@ -417,4 +418,15 @@ void PixGui::changeRootFile() {
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
     (*il)->resetDirectory();
   } 
+}
+
+
+// ----------------------------------------------------------------------
+void PixGui::updateSelectedRocs(map<int, int> a) {
+
+  for (unsigned int i = 0; i < fTestList.size(); ++i) {
+    fTestList[i]->setId2Idx(a); 
+  }
+
+
 }

@@ -120,7 +120,10 @@ namespace pxar {
     unsigned int raw = 0;
 
     // Get the right ROC id, channel 0: 0-7, channel 1: 8-15
-    int16_t roc_n = -1 + GetChannel() * 8; 
+    int16_t roc_n = -1 + GetChannel() * 8;
+
+    // Check if ROC has inverted pixel address (ROC_PSI46DIG):
+    bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     
     for (unsigned int i = 0; i < sample->GetSize(); i++) {
       int d = (*sample)[i] & 0xf;
@@ -136,10 +139,10 @@ namespace pxar {
       case  5: raw = (raw<<4) + d; break;
       case  6: raw = (raw<<4) + d;
 	{
-	pixel pix(raw);
-	pix.roc_id = roc_n;
-	roc_Event.pixels.push_back(pix);
-	break;
+	  pixel pix(raw,invertedAddress);
+	  pix.roc_id = roc_n;
+	  roc_Event.pixels.push_back(pix);
+	  break;
 	}
       case  7: roc_n++; break;
 
@@ -168,6 +171,9 @@ namespace pxar {
 
     roc_Event.Clear();
 
+    // Check if ROC has inverted pixel address (ROC_PSI46DIG):
+    bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
+
     rawEvent *sample = Get();
     unsigned int n = sample->GetSize();
     if (n > 0) {
@@ -177,7 +183,7 @@ namespace pxar {
       while (pos < n-1) {
 	uint32_t raw = (*sample)[pos++] << 12;
 	raw += (*sample)[pos++];
-	pixel pix(raw);
+	pixel pix(raw,invertedAddress);
 	roc_Event.pixels.push_back(pix);
       }
     }
