@@ -75,9 +75,9 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 // ----------------------------------------------------------------------
 void PixTestPretest::init() {
   setToolTips();
-  fDirectory = gFile->GetDirectory( fName.c_str() );
+  fDirectory = gFile->GetDirectory(fName.c_str());
   if( !fDirectory ) {
-    fDirectory = gFile->mkdir( fName.c_str() );
+    fDirectory = gFile->mkdir(fName.c_str());
   }
   fDirectory->cd();
 }
@@ -158,6 +158,8 @@ void PixTestPretest::saveDacs() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVana() {
+  PixTest::update(); 
+  fDirectory->cd();
 
   LOG(logINFO) << "PixTestPretest::setVana() start, target Ia " << fTargetIa << " mA/ROC";
 
@@ -264,14 +266,14 @@ void PixTestPretest::setVana() {
 
   } // rocs
 
-  TH1D *hsum = new TH1D("VanaSettings", "Vana per ROC", nRocs, 0., nRocs);
+  TH1D *hsum = bookTH1D("VanaSettings", "Vana per ROC", nRocs, 0., nRocs);
   setTitles(hsum, "ROC", "Vana [DAC]"); 
   hsum->SetStats(0);
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
-  TH1D *hcurr = new TH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
+  TH1D *hcurr = bookTH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
   setTitles(hcurr, "ROC", "Vana [DAC]"); 
   hcurr->SetStats(0); // no stats
   hcurr->SetMinimum(0);
@@ -288,10 +290,6 @@ void PixTestPretest::setVana() {
     hcurr->Fill(roc, rocIana[roc]); 
   }
   
-  hsum->Draw();
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
-  PixTest::update();
-  
   double ia16 = fApi->getTBia()*1E3; // [mA]
 
   sw.Start(kTRUE); // reset
@@ -301,13 +299,19 @@ void PixTestPretest::setVana() {
   }
   while( sw.RealTime() < 0.1 );
 
+
+  hsum->Draw();
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
+  PixTest::update();
+
   LOG(logINFO) << "PixTestPretest::setVana() done, Module Ia " << ia16 << " mA = " << ia16/nRocs << " mA/ROC";
 
 }
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompId() {
-
+  PixTest::update(); 
+  fDirectory->cd();
   LOG(logINFO) << "PixTestPretest::setVthrCompId() start";
 
   vector<TH1D*> hsts;
@@ -317,7 +321,7 @@ void PixTestPretest::setVthrCompId() {
 
   for (size_t roc = 0; roc < nRocs; ++roc) {
     if (!selectedRoc(roc)) continue;
-    h1 = new TH1D(Form("Id_vs_VthrComp_C%d", int(roc)),	
+    h1 = bookTH1D(Form("Id_vs_VthrComp_C%d", int(roc)),	
 		  Form("Id vs VthrComp C%d", int(roc)),
 		   256, 0., 256.);
     h1->SetMinimum(0);
@@ -399,7 +403,7 @@ void PixTestPretest::setVthrCompId() {
 
   } // rocs
 
-  TH1D *hsum = new TH1D("VthrCompSettings", "VthrComp per ROC",  nRocs, 0., nRocs);
+  TH1D *hsum = bookTH1D("VthrCompSettings", "VthrComp per ROC",  nRocs, 0., nRocs);
   setTitles(hsum, "ROC", "VthrComp [DAC]"); 
   hsum->SetStats(0); // no stats
   hsum->SetMinimum(0);
@@ -417,8 +421,8 @@ void PixTestPretest::setVthrCompId() {
   }
 
   hsum->Draw();
-  PixTest::update();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
+  PixTest::update();
 
   LOG(logINFO) << "PixTestPretest::setVthrCompId() done";
 
@@ -427,6 +431,9 @@ void PixTestPretest::setVthrCompId() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setCalDel() {
+  PixTest::update(); 
+  fDirectory->cd();
+ 
   LOG(logINFO) << "PixTestPretest::setCalDel() start";
 
   fApi->_dut->testAllPixels(false);
@@ -458,7 +465,7 @@ void PixTestPretest::setCalDel() {
   int nRocs = fApi->_dut->getNEnabledRocs();
   for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
     if (!selectedRoc(iroc)) continue;
-    h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
+    h1 = bookTH1D(Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
 		  Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
 		  256, 0., 256.);
     h1->SetMinimum(0);
@@ -467,7 +474,7 @@ void PixTestPretest::setCalDel() {
     hsts.push_back(h1);
   }
 
-  TH1D *hsum = new TH1D( "CalDelSettings", "CalDel per ROC;ROC;CalDel [DAC]", 16, 0., 16.);
+  TH1D *hsum = bookTH1D( "CalDelSettings", "CalDel per ROC;ROC;CalDel [DAC]", 16, 0., 16.);
   hsum->SetStats(0); // no stats
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
