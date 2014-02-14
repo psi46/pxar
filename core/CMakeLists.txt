@@ -5,6 +5,7 @@ INCLUDE_DIRECTORIES(rpc usb hal utils)
 FILE(GLOB LIB_SOURCE_FILES 
   "rpc/*.cpp"
   "api/*.cc"
+  "hal/datapipe.cc"
   "utils/*.cc"
   )
 

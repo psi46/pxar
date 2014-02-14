@@ -6,10 +6,18 @@
 #ifndef PXAR_API_H
 #define PXAR_API_H
 
+/** Export classes from the DLL under WIN32 */
+#ifdef WIN32
+#define DLLEXPORT __declspec( dllexport )
+#else
+#define DLLEXPORT
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
 #include <stdint.h>
+#include "datatypes.h"
 
 // PXAR Flags
 
@@ -32,13 +40,6 @@
  */
 #define FLAG_RISING_EDGE   0x0008
 
-/** Export classes from the DLL under WIN32 */
-#ifdef WIN32
-#define DLLEXPORT __declspec( dllexport )
-#else
-#define DLLEXPORT
-#endif
-
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
@@ -46,90 +47,7 @@
  */
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
-
 namespace pxar {
-
-  /** Class for storing decoded pixel readout data
-   */
-  class DLLEXPORT pixel {
-  public:
-
-    /** Default constructor for pixel objects, defaulting all member variables to zero
-     */
-  pixel() : roc_id(0), column(0), row(0), value(0) {};
-
-    /** Constructor for pixel objects with address and value initialization.
-     */
-  pixel(int32_t address, int32_t data) : value(data) { decode(address); };
-
-    /** Function to fill the pixel with linear encoded data from RPC transfer.
-     *  The address transmitted from the NIOS soft core is encoded in the following
-     *  way:
-     *
-     *  Split the address and distribute it over ROC, column and row:
-     *   * pixel column: max(51 -> 110011), requires 6 bits (R)
-     *   * pixel row: max(79 -> 1001111), requires 7 bits (C)
-     *   * roc id: max(15 -> 1111), requires 4 bits (I)
-     *
-     *  So everything can be stored in one 32 bits variable:
-     *
-     *   ........ ....IIII ..CCCCCC .RRRRRRR
-     */
-    inline void decode(int32_t address) {
-      roc_id = (address>>16)&15;
-      column = (address>>8)&63;
-      row = (address)&127;
-    };
-    uint8_t roc_id;
-    uint8_t column;
-    uint8_t row;
-    int32_t value;
-  };
-
-  /** Class to store the configuration for single pixels (i.e. their mask state,
-   *  trim bit settings and whether they belong to the currently run test ("enable").
-   *  By default, pixelConfigs have the  mask bit set.
-   */
-  class DLLEXPORT pixelConfig {
-  public:
-  pixelConfig() : 
-    column(0), row(0), 
-      trim(15), mask(true), enable(false) {};
-  pixelConfig(uint8_t _column, uint8_t _row, uint8_t _trim) : 
-    column(_column), row(_row), trim(_trim),
-      mask(true), enable(false) {};
-    uint8_t column;
-    uint8_t row;
-    uint8_t trim;
-    bool mask;
-    bool enable;
-  };
-
-  /** Class for ROC states
-   *
-   *  Contains a DAC map for the ROC programming settings, a type flag, enable switch
-   *  and a vector of pixelConfigs.
-   */
-  class DLLEXPORT rocConfig {
-  public:
-  rocConfig() : pixels(), dacs(), type(0), enable(true) {};
-    std::vector< pixelConfig > pixels;
-    std::map< uint8_t,uint8_t > dacs;
-    uint8_t type;
-    bool enable;
-  };
-
-  /** Class for TBM states
-   *
-   *  Contains a register map for the device register settings, a type flag and an enable switch
-   */
-  class DLLEXPORT tbmConfig {
-  public:
-  tbmConfig() : dacs(), type(0), enable(true) {};
-    std::map< uint8_t,uint8_t > dacs;
-    uint8_t type;
-    bool enable;
-  };
 
   /** Forward declaration, implementation follows below...
    */
@@ -144,9 +62,11 @@ namespace pxar {
    *  addresses from the HAL class, used e.g. in loop expansion routines.
    *  Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
    */
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnPixel)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnRoc)(uint8_t rocid, std::vector<int32_t> parameter);
-  typedef  std::vector< std::vector<pixel> >* (hal::*HalMemFnModule)(std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnRocParallel)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnPixelParallel)(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnRocSerial)(uint8_t rocid, std::vector<int32_t> parameter);
+  typedef  std::vector<Event*> (hal::*HalMemFnPixelSerial)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+
 
 
   /** pxar API class definition
@@ -254,7 +174,7 @@ namespace pxar {
      *  programmed. This function needs to be called after power cycling the 
      *  testboard output (using Poff, Pon).
      *
-     *  A DUT flag is set which prevents test functions to be executed if 
+     *  A DUT flag is set which prEvents test functions to be executed if 
      *  not programmed.
      */
     bool programDUT(); 
@@ -371,7 +291,7 @@ namespace pxar {
      *  over "nTriggers" triggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint16_t flags = 0, uint32_t nTriggers = 16);
+									       uint16_t flags = 0, uint16_t nTriggers = 16);
 
     /** Method to scan a DAC range and measure the efficiency
      *
@@ -380,7 +300,7 @@ namespace pxar {
      *  pixel. Efficiency == 1 for nhits == nTriggers
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					  uint16_t flags = 0, uint32_t nTriggers=16);
+					  uint16_t flags = 0, uint16_t nTriggers=16);
 
     /** Method to scan a DAC range and measure the pixel threshold
      *
@@ -388,11 +308,22 @@ namespace pxar {
      *  with the value of the pixel struct being the threshold value of that
      *  pixel.
      *
-     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
-     *  using an adapted binary search algorithm for optimal speed.
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					 uint16_t flags = 0, uint32_t nTriggers=16);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint16_t nTriggers=16);
+
+    /** Method to scan a DAC range and measure the pixel threshold
+     *
+     *  Returns a vector of pairs containing set dac value and pixels,
+     *  with the value of the pixel struct being the threshold value of that
+     *  pixel.
+     *
+     *  This function allows to specify a range for the threshold DAC to be searched,
+     *  this can be used to speed up the procedure by limiting the range.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the
      *  pulse height
@@ -403,7 +334,7 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					      uint16_t flags = 0, uint32_t nTriggers=16);
+					      uint16_t flags = 0, uint16_t nTriggers=16);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the efficiency
      *
@@ -413,45 +344,44 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					     uint16_t flags = 0, uint32_t nTriggers=16);
-
-    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the threshold
-     *
-     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
-     *  values with a pixel vector. The value of the pixel struct is the
-     *  averaged pixel threshold.
-     *
-     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
-     *  using an adapted binary search algorithm for optimal speed.
-     */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getThresholdVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					    std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					    uint16_t flags = 0, uint32_t nTriggers=16);
+					     uint16_t flags = 0, uint16_t nTriggers=16);
 
     /** Method to get a map of the pulse height
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
      *  the averaged pulse height over "nTriggers" triggers
      */
-    std::vector<pixel> getPulseheightMap(uint16_t flags = 0, uint32_t nTriggers=16);
+    std::vector<pixel> getPulseheightMap(uint16_t flags = 0, uint16_t nTriggers=16);
 
     /** Method to get a map of the efficiency
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      */
-    std::vector<pixel> getEfficiencyMap(uint16_t flags = 0, uint32_t nTriggers=16);
+    std::vector<pixel> getEfficiencyMap(uint16_t flags = 0, uint16_t nTriggers=16);
 
     /** Method to get a map of the pixel threshold
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
-     *  the threshold value of that pixel
+     *  the threshold value of that pixel.
      *
-     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel
-     *  using an adapted binary search algorithm for optimal speed.
+     *  This function allows to specify a range for the threshold DAC to be searched,
+     *  this can be used to speed up the procedure by limiting the range.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
      */
-    std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags = 0, uint32_t nTriggers=16);
+    std::vector<pixel> getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers);
 
+    /** Method to get a map of the pixel threshold
+     *
+     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  the threshold value of that pixel.
+     *
+     *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     */
+    std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags = 0, uint16_t nTriggers=16);
+
+    // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
 
@@ -475,11 +405,17 @@ namespace pxar {
      */
     bool daqStatus();
     
-    /** Function to read out the earliest event in buffer from the currently
-     *  data acquisition. If no event is buffered, the function will wait for
-     *  the next event to arrive and then return it.
+    /** Function to read out the earliest Event in buffer from the current
+     *  data acquisition session. If no Event is buffered, the function will 
+     *  wait for the next Event to arrive and then return it.
      */
-    std::vector<pixel> daqGetEvent();
+    Event daqGetEvent();
+
+    /** Function to read out the earliest raw data record in buffer from the 
+     *  current data acquisition session. If no Event is buffered, the function 
+     *  will wait for the next Event to arrive and then return it.
+     */
+    rawEvent daqGetRawEvent();
 
     /** Function to fire the previously defined pattern command list "nTrig"
      *  times, the function parameter defaults to 1.
@@ -500,13 +436,19 @@ namespace pxar {
      */
     bool daqStop();
 
-    /** Function to return the full event buffer from the testboard RAM after
+    /** Function to return the full Event buffer from the testboard RAM after
      *  the data acquisition has been stopped. No decoding is performed, this 
      *  function returns the raw data blob from either of the deserializer
      *  modules.
      */
-    std::vector<uint16_t> daqGetBuffer();
+    std::vector<rawEvent> daqGetRawBuffer();
 
+    /** Function to return the full Event buffer from the testboard RAM after
+     *  the data acquisition has been stopped. All data is decoded and the 
+     *  function returns decoded pixels separated in Events with additional
+     *  header information available.
+     */
+    std::vector<Event> daqGetEventBuffer();
 
     /** DUT object for book keeping of settings
      */
@@ -532,27 +474,34 @@ namespace pxar {
      *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
      *  function, all depending on the configuration of the DUT.
      */
-    std::vector< std::vector<pixel> >* expandLoop(HalMemFnPixel pixelfn, HalMemFnRoc rocfn, HalMemFnModule modulefn, std::vector<int32_t> param, bool forceSerial = false);
+    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false);
 
+    /** Merges all consecutive triggers into one Event
+     */
+    std::vector<Event*> condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency);
+    
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels.
      */
-    std::vector<pixel>* repackMapData (std::vector< std::vector<pixel> >* data);
+    std::vector<pixel>* repackMapData (std::vector<Event*> data, uint16_t nTriggers, bool efficiency);
+
+    /** Repacks map data from (possibly) several ROCs into one long vector
+     *  of pixels and returns the threshold value.
+     */
+    std::vector<pixel>* repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool rising_edge);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dacMin, uint8_t dacMax);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool efficiency);
+
+    /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors and return the threshold value.
+     */
+    std::vector<std::pair<uint8_t,std::vector<pixel> > >* repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool rising_edge);
 
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector< std::vector<pixel> >* data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max);
-
-    /** Compacts data over ROC loops (ROC0<data>,ROC1<data>, ...) into
-     *  (data(roc0,roc1)) where the data blocks can ueasily be subdivided into
-     *  e.g. DAC ranges of a scan.
-     */
-    std::vector< std::vector<pixel> >* compactRocLoopData (std::vector< std::vector<pixel> >* data, uint8_t nRocs);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool efficiency);
 
     /** Helper function for conversion from string to register value
      *
@@ -646,9 +595,17 @@ namespace pxar {
      */
     int32_t getNEnabledTbms();
 
+    /** Function returning the number of TBMs:
+     */
+    int32_t getNTbms();
+
     /** Function returning the number of enabled ROCs:
      */
     int32_t getNEnabledRocs();
+
+    /** Function returning the number of ROCs:
+     */
+    int32_t getNRocs();
 
     /** Function returning the enabled pixels configs for a specific ROC:
      */
@@ -661,6 +618,10 @@ namespace pxar {
     /** Function returning the Ids of all enabled ROCs in a uint8_t vector:
      */
     std::vector< uint8_t > getEnabledRocIDs();
+
+    /** Function returning the I2C addresses of all enabled ROCs in a uint8_t vector:
+     */
+    std::vector< uint8_t > getEnabledRocI2Caddr();
 
     /** Function returning the enabled TBM configs
      */
@@ -688,7 +649,11 @@ namespace pxar {
 
     /** Function to read current values from all DAC on ROC rocId
      */
-    std::vector<std::pair<uint8_t,uint8_t> > getDACs(size_t rocId);
+    std::vector<std::pair<std::string,uint8_t> > getDACs(size_t rocId);
+
+    /** Function to read current values from all DAC on TBM tbmId
+     */
+    std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
     /** Helper function to print current values from all DAC on ROC rocId
      *  to stdout
@@ -701,7 +666,7 @@ namespace pxar {
      */
     void setROCEnable(size_t rocId, bool enable);
 
-    /** Function to enable the given ROC:
+    /** Function to enable the given TBM:
      */
     void setTBMEnable(size_t tbmId, bool enable);
 
@@ -740,6 +705,14 @@ namespace pxar {
     /** Function to update all trim bits of a given ROC.
      */
     bool updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid);
+
+    /** Function to update trim bits for one particular pixel on a given ROC.
+     */
+    bool updateTrimBits(uint8_t column, uint8_t row, uint8_t trim, uint8_t rocid);
+
+    /** Function to update trim bits for one particular pixel on a given ROC.
+     */
+    bool updateTrimBits(pixelConfig trim, uint8_t rocid);
    
     /** Function to check the status of the DUT
      */

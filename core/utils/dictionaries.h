@@ -87,12 +87,11 @@ namespace pxar {
   private:
     RegisterDictionary() {
       //------- DTB registers -----------------------------
-      // FIXME what are the upper values for signal delays?
       _registers["clk"]           = dacConfig(SIG_CLK,255,DTB_REG);
       _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
       _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
       _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
-      _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,255,DTB_REG);
+      _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
 
       //------- TBM registers -----------------------------

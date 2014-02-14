@@ -19,8 +19,8 @@ bool bothAreSpaces(char lhs, char rhs) {
 
 
 // ----------------------------------------------------------------------
-PixTestParameters::PixTestParameters(string file) {
-  readTestParameterFile(file);
+PixTestParameters::PixTestParameters(string file, bool verbose) {
+  readTestParameterFile(file, verbose);
 }
 
 // ----------------------------------------------------------------------
@@ -33,7 +33,7 @@ vector<string> PixTestParameters::getTests() {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestParameters::readTestParameterFile(string file) {
+bool PixTestParameters::readTestParameterFile(string file, bool verbose) {
   ifstream is(file.c_str()); 
   if (!is.is_open()) {
     LOG(logDEBUG) << "cannot read " << file;
@@ -87,7 +87,7 @@ bool PixTestParameters::readTestParameterFile(string file) {
     testparameters.clear();
   }
 
-  dump();
+  if (verbose) dump();
 
   return true;
 }

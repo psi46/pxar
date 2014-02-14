@@ -61,6 +61,10 @@ int32_t dut::getNEnabledRocs() {
   return count;
 }
 
+int32_t dut::getNRocs() {
+  return roc.size();
+}
+
 int32_t dut::getNEnabledTbms() {
   if (!status()) return 0;
   // loop over result, count enabled TBMs
@@ -71,6 +75,9 @@ int32_t dut::getNEnabledTbms() {
   return count;
 }
 
+int32_t dut::getNTbms() {
+  return tbm.size();
+}
 
 
 std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
@@ -120,6 +127,19 @@ std::vector< uint8_t > dut::getEnabledRocIDs() {
   // search for rocs that have enable set
   for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
     if (it->enable) result.push_back(static_cast<uint8_t>(it - roc.begin()));
+  }
+  return result;
+}
+
+std::vector< uint8_t > dut::getEnabledRocI2Caddr() {
+
+  std::vector< uint8_t > result = std::vector<uint8_t>();
+
+  if (!_initialized) return result;
+
+  // search for rocs that have enable set
+  for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
+    if (it->enable) result.push_back(it->i2c_address);
   }
   return result;
 }
@@ -203,18 +223,38 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {
   else return 0x0;
 }
 
-std::vector< std::pair<uint8_t,uint8_t> > dut::getDACs(size_t rocId) {
+std::vector< std::pair<std::string,uint8_t> > dut::getDACs(size_t rocId) {
 
   if(status() && rocId < roc.size()) {
-    std::vector< std::pair<uint8_t,uint8_t> > vec;
+    std::vector< std::pair<std::string,uint8_t> > vec;
+
+    // Get singleton DAC dictionary object:
+    RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
     for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
-      vec.push_back(*it);
+      vec.push_back(std::make_pair(_dict->getName(it->first,ROC_REG),it->second));
     }
     return vec;
   }
-  else return std::vector< std::pair<uint8_t,uint8_t> >();
+  else return std::vector< std::pair<std::string,uint8_t> >();
+}
+
+std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
+
+  if(status() && tbmId < tbm.size()) {
+    std::vector< std::pair<std::string,uint8_t> > vec;
+
+    // Get singleton DAC dictionary object:
+    RegisterDictionary * _dict = RegisterDictionary::getInstance();
+
+    for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin(); 
+	it != tbm.at(tbmId).dacs.end(); ++it) {
+      vec.push_back(std::make_pair(_dict->getName(it->first,TBM_REG),it->second));
+    }
+    return vec;
+  }
+  else return std::vector< std::pair<std::string,uint8_t> >();
 }
 
 void dut::printDACs(size_t rocId) {
@@ -281,9 +321,6 @@ void dut:: maskPixel(uint8_t column, uint8_t row, bool mask, uint8_t rocid) {
 
 void dut::testPixel(uint8_t column, uint8_t row, bool enable) {
 
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskPixel(column,row,!enable);
-
   if(status()) {
     // Loop over all ROCs
     for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
@@ -302,9 +339,6 @@ void dut::testPixel(uint8_t column, uint8_t row, bool enable) {
 }
 
 void dut::testPixel(uint8_t column, uint8_t row, bool enable, uint8_t rocid) {
-
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskPixel(column,row,!enable,rocid);
 
   if(status() && rocid < roc.size()) {
     // Find pixel with specified column and row
@@ -347,9 +381,6 @@ void dut::maskAllPixels(bool mask, uint8_t rocid) {
 
 void dut::testAllPixels(bool enable, uint8_t rocid) {
 
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskAllPixels(!enable);
-
   if(status() && rocid < roc.size()) {
     LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on ROC " << static_cast<int>(rocid);
     // loop over all pixel, set enable according to parameter
@@ -360,9 +391,6 @@ void dut::testAllPixels(bool enable, uint8_t rocid) {
 }
 
 void dut::testAllPixels(bool enable) {
-
-  // Testing also means we need to set the mask state accordingly (inverted)
-  maskAllPixels(!enable);
 
   if(status()) {
     LOG(logDEBUGAPI) << "Set enable bit to " << static_cast<int>(enable) << " for all pixels on all ROCs";
@@ -376,6 +404,39 @@ void dut::testAllPixels(bool enable) {
   }
 }
 
+bool dut::updateTrimBits(pixelConfig trimming, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
+
+    // Find the pixel in the given ROC pixels vector:
+    std::vector<pixelConfig>::iterator px = std::find_if(roc.at(rocid).pixels.begin(),
+							 roc.at(rocid).pixels.end(),
+							 findPixelXY(trimming.column,trimming.row));
+    // Pixel was not found:
+    if(px == roc.at(0).pixels.end()) return false;
+    // Pixel was found, set the new trimming values:
+    px->trim = trimming.trim;
+    return true;
+  }
+  else { return false; }
+}
+
+bool dut::updateTrimBits(uint8_t column, uint8_t row, uint8_t trim, uint8_t rocid) {
+
+  if(status() && rocid < roc.size()) {
+
+    // Find the pixel in the given ROC pixels vector:
+    std::vector<pixelConfig>::iterator px = std::find_if(roc.at(rocid).pixels.begin(),
+							 roc.at(rocid).pixels.end(),
+							 findPixelXY(column,row));
+    // Pixel was not found:
+    if(px == roc.at(0).pixels.end()) return false;
+    // Pixel was found, set the new trimming values:
+    px->trim = trim;
+    return true;
+  }
+  else { return false; }
+}
 
 bool dut::updateTrimBits(std::vector<pixelConfig> trimming, uint8_t rocid) {
 

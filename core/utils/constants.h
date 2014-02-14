@@ -9,9 +9,9 @@
 
 namespace pxar {
 
-// --- PXAR Internal Flags------------------------------------------------------
-// All internal flags are > 16bit, cannot be set from outside:
-#define FLAG_INTERNAL_GET_EFFICIENCY 0x10000
+// --- Data Transmission settings ----------------------------------------------
+#define DTB_SOURCE_BLOCK_SIZE  32767
+#define DTB_SOURCE_BUFFER_SIZE 50000000
 
 
 // --- TBM Types ---------------------------------------------------------------

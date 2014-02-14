@@ -10,7 +10,6 @@
 #include <TString.h>
 
 #include "log.h"
-#include "dictionaries.h"
 
 #include "ConfigParameters.hh"
 #include "PixUtil.hh"
@@ -100,15 +99,13 @@ void ConfigParameters::writeAllFiles() {
   writeConfigParameterFile();
   writeTbParameterFile();
 
-  vector<int> writeIdx; 
+//   for (unsigned int i = 0; i < fnTbms; ++i) writeIdx.push_back(i); 
+//   writeTbmParameterFiles(writeIdx); 
 
-  for (unsigned int i = 0; i < fnTbms; ++i) writeIdx.push_back(i); 
-  writeTbmParameterFiles(writeIdx); 
-
-  writeIdx.clear();
-  for (unsigned int i = 0; i < fnRocs; ++i) writeIdx.push_back(i); 
-  writeDacParameterFiles(writeIdx);
-  writeTrimFiles(writeIdx);
+//   writeIdx.clear();
+//   for (unsigned int i = 0; i < fnRocs; ++i) writeIdx.push_back(i); 
+//   writeDacParameterFiles(writeIdx);
+//   writeTrimFiles(writeIdx);
 
 }
 
@@ -720,92 +717,77 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTrimFiles(vector<int> rocs) {
+bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   string fname = fDirectory + "/" + getTrimParameterFileName();
   ofstream OUT;
 
-  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    OUT.open(Form("%s_C%d.dat", fname.c_str(), rocs[iroc]));
-    if (!OUT.is_open()) {
-      return false; 
-    } 
-
+  OUT.open(Form("%s_C%d.dat", fname.c_str(), iroc));
+  if (!OUT.is_open()) {
+    return false; 
+  } 
     
-    for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
-      pxar::pixelConfig a =  fRocPixelConfigs[iroc][ipix];
-      OUT << Form("%2d   Pix %2d %2d", a.trim, a.column, a.row) << endl;
-    }
-
-    OUT.close();
+  for (unsigned int ipix = 0; ipix < v.size(); ++ipix) {
+    OUT << Form("%2d   Pix %2d %2d", v[ipix].trim, v[ipix].column, v[ipix].row) << endl;
   }
-
+  
+  OUT.close();
   return true;
-
 }
 
+
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeDacParameterFiles(vector<int> rocs) {
+bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8_t> > v) {
   string fname = fDirectory + "/" + getDACParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
-  string data; 
-  int reg(0); 
+  int val; 
+  string regName; 
 
-  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    OUT.open(Form("%s_C%d.dat", fname.c_str(), rocs[iroc]));
-    if (!OUT.is_open()) {
-      return false; 
-    } 
-
-    
-    for (unsigned int idac = 0; idac < fDacParameters[iroc].size(); ++idac) {
-      data = fDacParameters[iroc][idac].first;
-      std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-      reg = rd->getRegister(data, ROC_REG);
-      OUT << Form("%3d %10s %3d", reg, fDacParameters[iroc][idac].first.c_str(), int(fDacParameters[iroc][idac].second)) << endl;
-    }
-
-    OUT.close();
+  OUT.open(Form("%s_C%d.dat", fname.c_str(), iroc));
+  if (!OUT.is_open()) {
+    return false; 
+  } 
+  
+  for (unsigned int idac = 0; idac < v.size(); ++idac) {
+    regName = v.at(idac).first;
+    val = v.at(idac).second;
+    OUT << Form("0 %10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
   }
-
+  
+  OUT.close();
   return true;
 }
+
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTbmParameterFiles(vector<int> tbms) {
+bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > v) {
   string fname = fDirectory + "/" + getTbmParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
-  string data; 
-  int reg(0); 
+  int val; 
+  string regName; 
 
-  for (unsigned int itbm = 0; itbm < tbms.size(); ++itbm) {
-    //    OUT.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
-    OUT.open(fname.c_str());
-    if (!OUT.is_open()) {
-      return false; 
-    } 
-
-    for (unsigned int idac = 0; idac < fTbmParameters[itbm].size(); ++idac) {
-      data = fTbmParameters[itbm][idac].first;
-      std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-      reg = rd->getRegister(data, TBM_REG);
-      OUT << Form("%3d %11s   0x%02X", reg, fTbmParameters[itbm][idac].first.c_str(), int(fTbmParameters[itbm][idac].second)) << endl;
-    }
-
-    OUT.close();
+  LOG(logDEBUG) << "nothing done for the time being with " << itbm << ", working with one TBM at the moment";
+  //    OUT.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
+  OUT.open(fname.c_str());
+  if (!OUT.is_open()) {
+    return false; 
+  } 
+  
+  for (unsigned int idac = 0; idac < v.size(); ++idac) {
+    regName = v.at(idac).first;
+    val = v.at(idac).second;
+    OUT << Form("0 %11s   0x%02X", regName.c_str(), static_cast<int>(val)) << endl;
   }
-
+  
+  OUT.close();
   return true;
 }
+
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbParameterFile() {
   string fname = fDirectory + "/" + getTBParameterFileName();
   ofstream OUT;
-  RegisterDictionary *rd = RegisterDictionary::getInstance();
   string data; 
-  int reg(0); 
 
   OUT.open(Form("%s", fname.c_str()));
   if (!OUT.is_open()) {
@@ -815,8 +797,7 @@ bool ConfigParameters::writeTbParameterFile() {
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-    reg = rd->getRegister(data, DTB_REG);
-    OUT << Form("%3d %15s  %3d", reg, fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+    OUT << Form("0 %15s  %3d", fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
   }
   
   OUT.close();

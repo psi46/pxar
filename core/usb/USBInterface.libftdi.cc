@@ -130,7 +130,7 @@ uint32_t FindAllUSB(struct ftdi_device_list ** devlist){
 
 CUSB::CUSB(){
       m_posR = m_sizeR = m_posW = 0;
-      m_timeout = 15000; // maximum time to wait for read call in ms
+      m_timeout = 150000; // maximum time to wait for read call in ms
       isUSB_open = false;
       ftdiStatus = 0;
       enumPos = enumCount = 0;

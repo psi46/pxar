@@ -34,6 +34,7 @@ namespace pxar {
     logDEBUGAPI,
     logDEBUGHAL,
     logDEBUGRPC,
+    logDEBUGPIPES,
     logDEBUGUSB
   };
 
@@ -99,7 +100,7 @@ namespace pxar {
     os << std::setw(8) << ToString(level) << ": ";
     
     // For debug levels we want also function name and line number printed:
-    if (level == logDEBUG || level == logDEBUGAPI || level == logDEBUGHAL)
+    if (level != logINFO && level != logQUIET && level != logDEBUGRPC && level != logWARNING && level != logDEBUGPIPES)
       os << "<" << file << "/" << function << ":L" << line << "> ";
     else if(level == logDEBUGRPC)
       os << "\"" << function << "\" ";
@@ -121,7 +122,7 @@ namespace pxar {
 
   template <typename T>
     std::string pxarLog<T>::ToString(TLogLevel level) {
-    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGUSB"};
+    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGPIPES", "DEBUGUSB"};
     return buffer[level];
   }
 
@@ -129,6 +130,8 @@ namespace pxar {
     TLogLevel pxarLog<T>::FromString(const std::string& level) {
     if (level == "DEBUGUSB")
       return logDEBUGUSB;
+    if( level == "DEBUGPIPES")
+      return logDEBUGPIPES;
     if (level == "DEBUGRPC")
       return logDEBUGRPC;
     if (level == "DEBUGHAL")

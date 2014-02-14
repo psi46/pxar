@@ -1,8 +1,5 @@
-
-// set Vana to target Ia, set VthrComp below noise, set CalDel
-
-#include <stdlib.h>  // atof, atoi
-#include <algorithm> // std::find
+#include <stdlib.h>  
+#include <algorithm> 
 
 #include <TStopwatch.h>
 
@@ -19,12 +16,6 @@ ClassImp(PixTestPretest)
 PixTestPretest::PixTestPretest( PixSetup *a, std::string name) : PixTest(a, name), fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), fParNtrig(-1) {
   PixTest::init();
   init(); 
-  //  LOG(logINFO) << "PixTestPretest ctor(PixSetup &a, string, TGTab *)";
-  for( unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logDEBUG) << " PixTestPretest setting fPIX" << i
-		  <<  " ->" << fPIX[i].first
-		  << "/" << fPIX[i].second;
-  }
 }
 
 // ----------------------------------------------------------------------
@@ -46,28 +37,25 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 
       if (!parName.compare("targetIa")) {
 	fTargetIa = atoi(sval.c_str());  // [mA/ROC]
-	LOG(logDEBUG) << "target Ia " << fTargetIa << " mA/ROC";
+	LOG(logDEBUG) << "setting fTargetIa    = " << fTargetIa << " mA/ROC";
       }
 
       if (!parName.compare("noiseWidth")) {
-	fNoiseWidth = atoi(sval.c_str());  // half-width of Id noise peak
-	LOG(logDEBUG) << "Id vs VthrComp noise peak width "
-		      << fNoiseWidth << " DAC units";
+	fNoiseWidth = atoi(sval.c_str());  
+	LOG(logDEBUG) << "setting fNoiseWidth  = " << fNoiseWidth << " DAC units";
       }
 
       if (!parName.compare("noiseMargin")) {
 	fNoiseMargin = atoi(sval.c_str());  // safety margin below noise
-	LOG(logDEBUG) << "safety margin for VthrComp below noise "
-		      << fNoiseMargin << " DAC units";
+	LOG(logDEBUG) << "setting fNoiseMargin = " << fNoiseMargin << " DAC units";
       }
 
       if (!parName.compare("Ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
-	LOG(logDEBUG) << " PixTestPretest setting fParNtrig  ->" << fParNtrig
-		      << "<- from sval = " << sval;
+	LOG(logDEBUG) << "setting fParNtrig    = " << fParNtrig; 
       }
 
-      if (!parName.compare("PIX1") ) {
+      if (!parName.compare("PIX") ) {
 	s1 = sval.find(",");
 	if (string::npos != s1) {
 	  str1 = sval.substr(0, s1);
@@ -121,12 +109,17 @@ void PixTestPretest::doTest() {
 
   LOG(logINFO) << "PixTestPretest::doTest() ntrig = " << fParNtrig;
 
+  LOG(logINFO) << "PixTestPretest::setVana()";
   setVana();
   //  saveDacs();
+  LOG(logINFO) << "PixTestPretest::setVthrCompId()";
   setVthrCompId(); // the order is important, VthrComp changes timing
   //  saveDacs();
+  LOG(logINFO) << "PixTestPretest::setCalDel()";
   setCalDel();
-  //  saveDacs();
+
+  LOG(logINFO) << "PixTestPretest::saveDacs()";
+  saveDacs();
 }
 
 // ----------------------------------------------------------------------
@@ -155,7 +148,13 @@ void PixTestPretest::runCommand(std::string command) {
 // ----------------------------------------------------------------------
 void PixTestPretest::saveDacs() {
   LOG(logINFO) << "Write DAC parameters to file";
-  fPixSetup->getConfigParameters()->writeDacParameterFiles(fPixSetup->getConfigParameters()->getSelectedRocs());
+
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
+  }
+
+  //  fPixSetup->getConfigParameters()->writeDacParameterFiles(fPixSetup->getConfigParameters()->getSelectedRocs());
 }
 
 // ----------------------------------------------------------------------
@@ -426,11 +425,10 @@ void PixTestPretest::setCalDel() {
 
   fApi->_dut->testAllPixels(false);
 
-  // one pixel per ROC:
-
-  if( fPIX[0].first > -1 )
+  if (fPIX[0].first > -1)  {
     fApi->_dut->testPixel(fPIX[0].first, fPIX[0].second, true);
-  else {
+    fApi->_dut->maskPixel(fPIX[0].first, fPIX[0].second, false);
+  } else {
     LOG(logWARNING) << "PreTest: no pixel defined, return";
     return;
   }
@@ -440,24 +438,30 @@ void PixTestPretest::setCalDel() {
   uint8_t cal = fApi->_dut->getDAC( 0, "Vcal" );
   uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
 
-  fApi->setDAC( "Vcal", 255 ); // all ROCs large Vcal
-  fApi->setDAC( "CtrlReg", 4 ); // all ROCs large Vcal
+  fApi->setDAC("Vcal", 250);
+  fApi->setDAC("CtrlReg", 0);
 
   string DacName = "caldel";
 
   // measure:
-  
-  vector <pair <uint8_t, vector<pixel> > > // dac, pixels
-    results =  fApi->getEfficiencyVsDAC( DacName, 0, 255, 0, fParNtrig );
+
+  cout << "start fApi->getEfficiencyVsDAC(" << DacName << ", " <<  0 << ", " << 250 << ", " << 0 << ", " << fParNtrig << ");" << endl;
+  vector<pair<uint8_t, vector<pixel> > > results =  fApi->getEfficiencyVsDAC(DacName, 0, 250, 0, fParNtrig);
+  cout << "done  fApi->getEfficiencyVsDAC(...);" << endl;
 
   // histos:
 
   vector<TH1D*> hsts;
   TH1D *h1(0);
-  uint32_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
 
-  for( uint32_t i = 0; i < nRocs; ++i ) {
+  //dp  uint32_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
+  //  for (uint32_t i = 0; i < nRocs; ++i)  {
 
+  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    int i = rocIds[iroc];
+    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
     h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d",
 		       DacName.c_str(), fPIX[0].first, fPIX[0].second, i),
 		  Form("NhitsVs%s_c%d_r%d_C%d",
@@ -469,83 +473,71 @@ void PixTestPretest::setCalDel() {
     hsts.push_back(h1);
   }
 
-  TH1D *hsum = new TH1D( "CalDelSettings", "CalDel per ROC;ROC;CalDel [DAC]",
-			 16, -0.5, 15.5 );
+  TH1D *hsum = new TH1D( "CalDelSettings", "CalDel per ROC;ROC;CalDel [DAC]", 16, 0., 16.);
   hsum->SetStats(0); // no stats
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
-  // analyze:
+  int i0[35] = {0};
+  int i9[35] = {0};
+  int nm[35] = {0};
 
-  int i0[16] = {0};
-  int i9[16] = {0};
-  int nm[16] = {0};
-
-  for( size_t i = 0; i < results.size(); ++i ) { // dac values
-
+  for (size_t i = 0; i < results.size(); ++i) { 
     int caldel = results[i].first;
+    vector<pixel> vpix = results[i].second; 
 
-    vector<pixel> vpix = results[i].second; // pixels from all rocs
-
-    for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
-
+    for (size_t ipx = 0; ipx < vpix.size(); ++ipx)  {
       uint32_t roc = vpix.at(ipx).roc_id;
 
-      if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+      if (static_cast<unsigned int>(id2idx[roc]) < rocIds.size()
+	  && vpix[ipx].column == fPIX[0].first 
+	  && vpix[ipx].row == fPIX[0].second
+	  ) {
 
 	int nn = vpix.at(ipx).value;
 
-	if( nn > nm[roc] ) {
-	  nm[roc] = nn;
-	  i0[roc] = caldel; // begin of plateau
+	if (nn > nm[id2idx[roc]]) {
+	  nm[id2idx[roc]] = nn;
+	  i0[id2idx[roc]] = caldel; // begin of plateau
 	}
-	if( nn == nm[roc] )
-	  i9[roc] = caldel; // end of plateau
+	if (nn == nm[id2idx[roc]] )
+	  i9[id2idx[roc]] = caldel; // end of plateau
 
-	h1 = hsts.at(roc);
-	h1->Fill( caldel, nn );
-
+	h1 = hsts.at(id2idx[roc]);
+	h1->Fill(caldel, nn);
+	
       } // valid
-
+      
     } // pixels and rocs
-
+    
   } // caldel vals
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
-    hsts[roc]->Draw();
+  for (size_t roc = 0; roc < rocIds.size(); ++roc) {
+    hsts[id2idx[roc]]->Draw();
     PixTest::update();
   }
 
   // set CalDel:
+  for (uint32_t roc = 0; roc < rocIds.size(); ++roc) {
+    if (i9[id2idx[roc]] > 0 ) {
 
-  for( uint32_t roc = 0; roc < nRocs; ++roc ) {
-
-    if( i9[roc] > 0 ) {
-
-      int i2 = i0[roc] + (i9[roc]-i0[roc])/4;
-
-      fApi->setDAC( DacName, i2, roc );
-
+      int i2 = i0[id2idx[roc]] + (i9[id2idx[roc]]-i0[id2idx[roc]])/4;
+      fApi->setDAC(DacName, i2, roc);
+      
       LOG(logINFO) << "ROC " << setw(2) << roc
-		   << ": eff plateau from " << setw(3) << i0[roc]
-		   << " to " << setw(3) << i9[roc]
+		   << ": eff plateau from " << setw(3) << i0[id2idx[roc]]
+		   << " to " << setw(3) << i9[id2idx[roc]]
 		   << ": set CalDel to " << i2;
 
-      hsum->Fill( roc, i2 );
+      hsum->Fill(roc, i2);
     }
   } // rocs
 
   fApi->setDAC( "Vcal", cal ); // restore
   fApi->setDAC( "CtrlReg", ctl ); // restore
 
-  //flush?
-
   hsum->Draw();
   PixTest::update();
-  fDisplayedHist = find( fHistList.begin(), fHistList.end(), hsum );
-
-  // FIXME update configparameters with new caldel!
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
 }

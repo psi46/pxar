@@ -180,5 +180,4 @@ void PixTestPhDacScan::doTest()
     PixTest::update();
   }
   fDisplayedHist = find( fHistList.begin(), fHistList.end(), h1 );
-
 }
