@@ -418,3 +418,14 @@ void PixGui::changeRootFile() {
     (*il)->resetDirectory();
   } 
 }
+
+
+// ----------------------------------------------------------------------
+void PixGui::updateSelectedRocs(map<int, int> a) {
+
+  for (unsigned int i = 0; i < fTestList.size(); ++i) {
+    fTestList[i]->setId2Idx(a); 
+  }
+
+
+}
