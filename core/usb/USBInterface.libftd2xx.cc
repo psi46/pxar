@@ -1,5 +1,5 @@
 #ifndef WIN32
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 #include <cstring>
 #include <unistd.h>
 #include <time.h> // needed for usleep function

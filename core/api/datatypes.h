@@ -30,7 +30,7 @@ namespace pxar {
 
     /** Constructor for pixel objects with rawdata pixel address & value initialization.
      */
-  pixel(uint32_t rawdata) : roc_id(0) { decodeRaw(rawdata); };
+  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); };
 
     /** Function to fill the pixel with linear encoded data from RPC transfer.
      *  The address transmitted from the NIOS soft core is encoded in the following
@@ -51,13 +51,19 @@ namespace pxar {
       row = (address)&127;
     };
     // FIXME does not work with inverted address yet!
-    inline void decodeRaw(uint32_t raw) {
+    inline void decodeRaw(uint32_t raw, bool invert) {
       value = (raw & 0x0f) + ((raw >> 1) & 0xf0);
       int c =    (raw >> 21) & 7;
       c = c*6 + ((raw >> 18) & 7);
-      int r =    (raw >> 15) & 7;
-      r = r*6 + ((raw >> 12) & 7);
-      r = r*6 + ((raw >>  9) & 7);
+
+      int r2 =    (raw >> 15) & 7;
+      if(invert) { r2 ^= 0x7; }
+      int r1 = (raw >> 12) & 7;
+      if(invert) { r1 ^= 0x7; }
+      int r0 = (raw >>  9) & 7;
+      if(invert) { r0 ^= 0x7; }
+      int r = r2*36 + r1*6 + r0;
+
       row = 80 - r/2;
       column = 2*c + (r&1);
     };
@@ -102,6 +108,7 @@ namespace pxar {
   class DLLEXPORT Event {
   public:
   Event() : header(0), trailer(0), pixels() {};
+    void Clear() { header = 0; trailer = 0; pixels.clear(); };
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
@@ -123,7 +130,7 @@ namespace pxar {
    */
   class rawEvent {
   public:
-  rawEvent() : flags(0), data() {};
+  rawEvent() : data(), flags(0) {};
     void SetStartError() { flags |= 1; }
     void SetEndError()   { flags |= 2; }
     void SetOverflow()   { flags |= 4; }
@@ -139,6 +146,8 @@ namespace pxar {
     void Add(uint16_t value) { data.push_back(value); }
     uint16_t operator[](int index) { return data.at(index); }
 
+    std::vector<uint16_t> data;
+
   private:
     /*
       bit 0 = misaligned start
@@ -146,7 +155,6 @@ namespace pxar {
       bit 2 = overflow
     */
     unsigned int flags;
-    std::vector<uint16_t> data;
 
     /** Overloaded ostream operator for simple printing of raw data blobs
      */

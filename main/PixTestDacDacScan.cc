@@ -195,19 +195,18 @@ void PixTestDacDacScan::doTest() {
   //FIXME  clearHist();
 
   fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    if (fPIX[i].first > -1)  fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+    if (fPIX[i].first > -1)  {
+      fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+      fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+    }
   }
   string name = fParDAC1 + string(":") + fParDAC2; 
   bookHist(name);
 
 
   // -- FIXME This code is crap. Replace as in PixelAlive
-
-  if ((fParHiDAC1-fParLoDAC1)*(fParHiDAC2-fParLoDAC2) > 16383) {
-    LOG(logERROR) << "You cannot scan more than 2^14 points simultaneously -- nothing done";
-    return;
-  }
 
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > > 
     results = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 

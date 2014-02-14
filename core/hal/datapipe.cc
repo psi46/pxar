@@ -14,7 +14,7 @@ namespace pxar {
 	else if (dtbRemainingSize >    0) tb->mDelay( 10);
 	else                              tb->mDelay(100);
 	}
-	LOG(logDEBUGHAL) << "Buffer size: " << buffer.size();
+	LOG(logDEBUGPIPES) << "Buffer size: " << buffer.size();
       */
     
       if (buffer.size() == 0) {
@@ -23,13 +23,11 @@ namespace pxar {
       }
     } while (buffer.size() == 0);
 
-    /*
-    LOG(logDEBUGHAL) << "----------------";
-    LOG(logDEBUGHAL) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
-    LOG(logDEBUGHAL) << "----------------";
-    LOG(logDEBUGHAL) << listVector(buffer,true);
-    LOG(logDEBUGHAL) << "----------------";
-    */
+    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
+    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << listVector(buffer,true);
+    LOG(logDEBUGPIPES) << "----------------";
 
     return lastSample = buffer[pos++];
   }
@@ -67,10 +65,9 @@ namespace pxar {
     // Else set Event end error:
     else record.SetEndError();
 
-    /*
-    LOG(logDEBUGHAL) << "-------------------------";
-    LOG(logDEBUGHAL) << listVector(record,true);
-    */
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << listVector(record.data,true);
+
     return &record;
   }
 
@@ -107,10 +104,8 @@ namespace pxar {
     // Else set Event end error:
     else record.SetEndError();
 
-    /*
-    LOG(logDEBUGHAL) << "-------------------------";
-    LOG(logDEBUGHAL) << listVector(record,true);
-    */
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << listVector(record.data,true);
 
     return &record;
   }
@@ -118,18 +113,17 @@ namespace pxar {
 
   Event* dtbEventDecoder::DecodeDeser400() {
 
-    roc_Event.header = 0;
-    roc_Event.trailer = 0;
-    roc_Event.pixels.clear();
-
+    roc_Event.Clear();
     rawEvent *sample = Get();
 
     uint16_t hdr = 0, trl = 0;
     unsigned int raw = 0;
 
     // Get the right ROC id, channel 0: 0-7, channel 1: 8-15
-    int16_t roc_n = -1 + GetChannel() * 8; 
-    
+    int16_t roc_n = -1 + GetChannel() * 8;
+
+    // Check if ROC has inverted pixel address (ROC_PSI46DIG):
+    bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     
     for (unsigned int i = 0; i < sample->GetSize(); i++) {
       int d = (*sample)[i] & 0xf;
@@ -145,10 +139,10 @@ namespace pxar {
       case  5: raw = (raw<<4) + d; break;
       case  6: raw = (raw<<4) + d;
 	{
-	pixel pix(raw);
-	pix.roc_id = roc_n;
-	roc_Event.pixels.push_back(pix);
-	break;
+	  pixel pix(raw,invertedAddress);
+	  pix.roc_id = roc_n;
+	  roc_Event.pixels.push_back(pix);
+	  break;
 	}
       case  7: roc_n++; break;
 
@@ -169,14 +163,18 @@ namespace pxar {
       }
     }
 
-    // LOG(logDEBUGHAL) << roc_Event;
+    LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
 
   Event* dtbEventDecoder::DecodeDeser160() {
+
+    roc_Event.Clear();
+
+    // Check if ROC has inverted pixel address (ROC_PSI46DIG):
+    bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
+
     rawEvent *sample = Get();
-    roc_Event.header = 0;
-    roc_Event.pixels.clear();
     unsigned int n = sample->GetSize();
     if (n > 0) {
       if (n > 1) roc_Event.pixels.reserve((n-1)/2);
@@ -185,12 +183,12 @@ namespace pxar {
       while (pos < n-1) {
 	uint32_t raw = (*sample)[pos++] << 12;
 	raw += (*sample)[pos++];
-	pixel pix(raw);
+	pixel pix(raw,invertedAddress);
 	roc_Event.pixels.push_back(pix);
       }
     }
 
-    //LOG(logDEBUGHAL) << roc_Event;
+    LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
 }

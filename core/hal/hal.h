@@ -52,7 +52,7 @@ namespace pxar {
      *  testboard output if necessary, sets the ROC's I2C address and then
      *  programs all DAC registers for the given ROC.
      */
-    void initROC(uint8_t rocId, uint8_t roctype, std::map< uint8_t,uint8_t > dacVector);
+    void initROC(uint8_t rocId, uint8_t type, std::map< uint8_t,uint8_t > dacVector);
 
     /** turn off HV
      */
@@ -306,6 +306,7 @@ namespace pxar {
     // FIXME can't we find a smarter solution to this?!
     uint8_t nTBMs;
     uint8_t deser160phase;
+    uint8_t rocType;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
