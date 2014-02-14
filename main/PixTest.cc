@@ -1,6 +1,8 @@
 #include <iostream>
 #include <stdlib.h>     /* atof, atoi */
 
+#include <TKey.h>
+#include <TClass.h>
 #include <TMinuit.h>
 #include <TMath.h>
 #include <TStyle.h>
@@ -622,4 +624,34 @@ bool PixTest::selectedRoc(int iroc) {
 // ----------------------------------------------------------------------
 void PixTest::setId2Idx(std::map<int, int> a) {
   fId2Idx = a;
+}
+
+
+// ----------------------------------------------------------------------
+TH1D* PixTest::bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax) {
+  int cnt = histCycle(sname); 
+  LOG(logDEBUG) << "bookTH1D " << Form("%s_V%d", sname.c_str(), cnt);
+  return new TH1D(Form("%s_V%d", sname.c_str(), cnt), Form("%s (V%d)", title.c_str(), cnt), nbins, xmin, xmax); 
+} 
+
+
+// ----------------------------------------------------------------------
+TH2D* PixTest::bookTH2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, 
+			int nbinsy, double ymin, double ymax) {
+  int cnt = histCycle(sname); 
+  LOG(logDEBUG) << "bookTH2D " << Form("%sV%d", sname.c_str(), cnt);
+  return new TH2D(Form("%s_V%d", sname.c_str(), cnt), Form("%s (V%d)", title.c_str(), cnt), nbinsx, xmin, xmax, nbinsy, ymin, ymax); 
+}
+
+
+// ----------------------------------------------------------------------
+int PixTest::histCycle(string hname) {
+  TH1* h(0); 
+  int cnt(0); 
+  h = (TH1*)fDirectory->FindObject(Form("%s_V%d", hname.c_str(), cnt));
+  while (h) {
+    ++cnt;
+    h = (TH1*)fDirectory->FindObject(Form("%s_V%d", hname.c_str(), cnt));
+  }
+  return cnt;
 }
