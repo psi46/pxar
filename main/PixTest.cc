@@ -234,7 +234,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     id2idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h2 = new TH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
     setTitles(h2, "col", "row"); 
