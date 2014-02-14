@@ -91,12 +91,14 @@ void PixTestDaq::doTest() {
 
   // All on!
   fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(false);
+  //fApi->_dut->maskAllPixels(true);
 
   // Set some pixels up for getting calibrate signals:
   for (int i = 0; i < 3; ++i) {
     fApi->_dut->testPixel(i, 5, true);
+    fApi->_dut->maskPixel(i, 5, false);
     fApi->_dut->testPixel(i, 6, true);
+    fApi->_dut->maskPixel(i, 6, false);
   }
 
     
@@ -111,10 +113,13 @@ void PixTestDaq::doTest() {
 
   // And read out the full buffer:
   // Either fetching undecoded raw data events or decoded events, check API documentation!
-  vector<pxar::rawEvent> daqdat = fApi->daqGetRawBuffer();
+  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
 
   cout << "Number of events read from board: " << daqdat.size() << endl;
-
+  
+  for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+    cout << (*it) << std::endl;
+  }
   // We should store the data, probably...
 
   LOG(logINFO) << "PixTestDaq::doTest() done";
