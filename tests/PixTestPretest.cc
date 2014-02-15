@@ -576,7 +576,7 @@ void PixTestPretest::setPhRange() {
   uint8_t cal = fApi->_dut->getDAC( 0, "Vcal" );
   uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
 
-  fApi->setDAC( "CtrlReg", 4 ); // all ROCs large Vcal
+  fApi->setDAC( "CtrlReg", 0 ); // all ROCs large Vcal
   LOG(logINFO) << "CtrlReg 4 (large Vcal)";
 
   // Minimize ADC gain for finding the midpoint

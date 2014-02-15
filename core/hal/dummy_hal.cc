@@ -142,7 +142,7 @@ void hal::PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, ui
 void hal::ColumnSetEnable(uint8_t rocid, uint8_t column, bool enable) {
 }
 
-void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, int32_t flags) {
+void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, uint16_t flags) {
 }
 
 void hal::RocClearCalibrate(uint8_t rocid) {
