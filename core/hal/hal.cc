@@ -2,6 +2,7 @@
 #include "log.h"
 #include "timer.h"
 #include "helper.h"
+#include "config.h"
 #include "constants.h"
 #include <fstream>
 
@@ -314,7 +315,8 @@ bool hal::CheckCompatibility(){
     }
 
     // For now, just print a message and don't to anything else:
-    LOG(logCRITICAL) << "Please update your DTB with the correct flash file!";
+    LOG(logCRITICAL) << "Please update your DTB with the correct flash file.";
+    LOG(logCRITICAL) << "Get Firmware " << PACKAGE_FIRMWARE << " from " << PACKAGE_FIRMWARE_URL;
     return false;
   }
   else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
