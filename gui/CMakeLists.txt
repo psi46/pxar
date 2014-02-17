@@ -29,7 +29,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${GUILIB_HEADERS}" "${GUILIB_DICTIONARY}" "${MY_IN
 # create a shared library
 ADD_LIBRARY( pxargui SHARED ${GUILIB_SOURCES} ${GUILIB_DICTIONARY} )
 # link against our core library, the UI lib (for now), the root stuff, and the USB libs
-target_link_libraries( pxargui pxartests pxarutils ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
+target_link_libraries( pxargui pxartests pxarutil ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
 # install the lib in the appropriate directory
 INSTALL(TARGETS pxargui
