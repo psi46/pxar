@@ -1,10 +1,6 @@
 # Build tests library
 
-# ROOT provides, well, ROOT:
-FIND_PACKAGE(ROOT REQUIRED)
-INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
-
-# for now, we also need includes from the "main" folder
+# for now, we also need includes from the "util" folder
 INCLUDE_DIRECTORIES( . ${PROJECT_SOURCE_DIR}/util)
 
 SET (TESTLIB_SOURCES
@@ -52,7 +48,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${TESTLIB_HEADERS}" "${TESTLIB_DICTIONARY}" "${MY_
 
 # create a shared library
 ADD_LIBRARY( pxartests SHARED ${TESTLIB_SOURCES} ${TESTLIB_DICTIONARY} )
-# link against our core library, the UI lib (for now), the root stuff, and the USB libs
+# link against our core library, the util lib, the root stuff, and the USB libs
 target_link_libraries(pxartests pxarutil ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
 # install the lib in the appropriate directory

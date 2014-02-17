@@ -1,10 +1,6 @@
-# Build gui library
+# Build GUI library
 
-# ROOT provides, well, ROOT:
-FIND_PACKAGE(ROOT REQUIRED)
-INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
-
-# for now, we also need includes from the "main" folder
+# we also need includes from the util and tests directories
 INCLUDE_DIRECTORIES( . ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests)
 
 SET (GUILIB_SOURCES
@@ -33,7 +29,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${GUILIB_HEADERS}" "${GUILIB_DICTIONARY}" "${MY_IN
 # create a shared library
 ADD_LIBRARY( pxargui SHARED ${GUILIB_SOURCES} ${GUILIB_DICTIONARY} )
 # link against our core library, the UI lib (for now), the root stuff, and the USB libs
-target_link_libraries( pxargui pxartests ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
+target_link_libraries( pxargui pxartests pxarutils ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
 # install the lib in the appropriate directory
 INSTALL(TARGETS pxargui
