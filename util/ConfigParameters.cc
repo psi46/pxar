@@ -215,7 +215,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     PixUtil::replaceAll(lines[i], "\t", " "); 
     string::iterator new_end = unique(lines[i].begin(), lines[i].end(), PixUtil::bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
-    if (0 == lines[i].length()) continue;
+    if (lines[i].length() < 2) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
     s1 = lines[i].find(" "); 

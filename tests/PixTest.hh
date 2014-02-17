@@ -34,6 +34,10 @@ public:
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig = 10);
 
+  int histCycle(std::string hname);
+  TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
+  TH2D* bookTH2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, int nbinsy, double ymin, double max); 
+
   //  std::vector<TH1*> mapsVsDac(std::string name, std::string dac, int ntrig = 10); 
 
   virtual void sparseRoc(int npix = 8);
@@ -56,6 +60,7 @@ public:
   
   std::string getName() {return fName; }
   void resetDirectory();
+  TDirectory* getDirectory() {return fDirectory;}
   std::vector<std::pair<std::string, std::string> > getParameters() {return fParameters;} 
   bool getParameter(std::string parName, int &); 
   bool getParameter(std::string parName, float &); 

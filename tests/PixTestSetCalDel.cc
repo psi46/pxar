@@ -21,7 +21,7 @@ ClassImp(PixTestSetCalDel)
 PixTestSetCalDel::PixTestSetCalDel( PixSetup *a, std::string name) :
 PixTest(a, name), fParNtrig(-1)
 {
-  PixTest::init(a, name);
+  PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestSetCalDel ctor(PixSetup &a, string, TGTab *)";
   for( unsigned int i = 0; i < fPIX.size(); ++i) {
