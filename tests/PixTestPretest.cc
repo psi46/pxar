@@ -55,7 +55,7 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 	LOG(logDEBUG) << "setting fParNtrig    = " << fParNtrig; 
       }
 
-      if (!parName.compare("PIX") ) {
+      if (!parName.compare("PIX") || !parName.compare("PIX1") ) {
 	s1 = sval.find(",");
 	if (string::npos != s1) {
 	  str1 = sval.substr(0, s1);
