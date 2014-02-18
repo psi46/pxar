@@ -78,16 +78,6 @@ void PixTestSetup::bookHist(string name) {
 
   fDirectory->cd(); 
 
-  TH2D *h2(0);
-  fHistList.clear();
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h2 = new TH2D(Form("Setup_%s_C%d", name.c_str(), i), Form("Setup_%s_C%d", name.c_str(), i), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    setTitles(h2, "col", "row"); 
-    fHistList.push_back(h2); 
-  }
-
-
 }
 
 
@@ -111,38 +101,65 @@ void PixTestSetup::doTest() {
   //FIXME clearHist(); 
 
   bookHist("bla");
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->testPixel(12, 34, true);
-  fApi->_dut->testPixel(34, 12, true);
-  fApi->_dut->testPixel(48, 67, true);
-  
+ 
+  vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
+  vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
 
-  for (int iwbc = 90; iwbc < 110; ++iwbc) {
-    LOG(logQUIET)<< "WBC = " << iwbc;
-    fPixSetup->getApi()->setDAC("wbc", iwbc);
-    
-    gSystem->ProcessEvents();
-    for (int iphase = 0; iphase < 255; ++iphase) {
-      fPixSetup->getConfigParameters()->setTbParameter("deser160phase", iphase); 
-      
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  fApi->_dut->testPixel(12, 34, true);
+  fApi->_dut->maskPixel(12, 34, false);
+  
+  fApi->_dut->testPixel(34, 12, true);
+  fApi->_dut->maskPixel(34, 12, false);
+  
+  fApi->_dut->testPixel(48, 67, true);
+  fApi->_dut->maskPixel(48, 67, false);
+
+
+  TH2D *h2 = new TH2D("setupDaq", "setup DAQ", 5, -2., 3., 25, 0., 25.); 
+  fHistList.push_back(h2); 
+  TH1D *h1 = new TH1D("setupDaq1d", "setup DAQ 1D", 5*25, 0., 5*25.); 
+  fHistList.push_back(h1); 
+
+  TH2D *h3 = new TH2D("setupEff", "setup Eff", 5, -2., 3., 25, 0., 25.); 
+  fHistList.push_back(h3); 
+  TH1D *h4 = new TH1D("setupEff1d", "setup Eff1D", 5*25, 0., 5*25.); 
+  fHistList.push_back(h4); 
+
+  for (int iclk = 0; iclk < 25; ++iclk) {
+    for (int ioffset = -2; ioffset < 2; ++ioffset) {
+      fPixSetup->getConfigParameters()->setTbParameter("clk", iclk); 
+      fPixSetup->getConfigParameters()->setTbParameter("ctr", iclk); 
+      fPixSetup->getConfigParameters()->setTbParameter("sda", iclk+15+ioffset); 
+      fPixSetup->getConfigParameters()->setTbParameter("tin", iclk+5+ioffset); 
+
+
       vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
-      vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
-      vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
-      
-      LOG(logQUIET) << "Re-programming TB: wbc = " << iwbc << " deser160phase = " << iphase; 
+      fPixSetup->getConfigParameters()->dumpParameters(sig_delays); 
       
       fApi->initTestboard(sig_delays, power_settings, pg_setup);
       
-      std::vector< pxar::pixel > mapdata = fApi->getEfficiencyMap(0, fParNtrig);
-      
-      for (vector<pixel>::iterator mapit = mapdata.begin(); mapit != mapdata.end(); ++mapit) {
-	if (mapit->value > 0) {
-// 	  cout << "**********************************************************************" << endl;
-// 	  cout << "Px col/row: " << (int)mapit->column << "/" << (int)mapit->row << " has efficiency " 
-// 	       << (int)mapit->value << "/" << fParNtrig << " = " << (mapit->value/fParNtrig) << endl;
-	  break;
-	}
-      }
+      fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+      fApi->daqTrigger(fParNtrig);
+      fApi->daqStop();
+      vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+      vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
+
+      cout << "clk = " << iclk << " number of DAQ events read from board: " << daqdat.size() 
+	   << " eff map size: " << results.size()
+	   << endl;
+
+      h2->Fill(ioffset, iclk, daqdat.size()); 
+      h1->Fill(iclk*5 + ioffset, daqdat.size()); 
+      h3->Fill(ioffset, iclk, results.size()); 
+      h4->Fill(iclk*5 + ioffset, results.size()); 
     }
   }
+
+  h2->Draw("colz");
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+  PixTest::update(); 
+  LOG(logINFO) << "PixTestSetup::doTest() done";
 }
