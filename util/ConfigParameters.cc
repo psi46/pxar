@@ -813,3 +813,11 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
 }
 
 
+// ----------------------------------------------------------------------
+void ConfigParameters::dumpParameters(vector<pair<string, uint8_t> > v) {
+  string line; 
+  for (unsigned i = 0; i < v.size(); ++i) {
+    line += string(Form(" %s: %3d", v[i].first.c_str(), static_cast<int>(v[i].second))); 
+  }
+  LOG(logDEBUG) << line; 
+}

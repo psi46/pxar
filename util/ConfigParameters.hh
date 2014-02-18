@@ -38,6 +38,8 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
+  void dumpParameters(std::vector<std::pair<std::string, uint8_t> >); 
+
   static ConfigParameters* Singleton();
 
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
