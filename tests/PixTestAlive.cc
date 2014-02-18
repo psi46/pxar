@@ -12,7 +12,7 @@ using namespace pxar;
 ClassImp(PixTestAlive)
 
 // ----------------------------------------------------------------------
-PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
+PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParVcal(-1) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestAlive ctor(PixSetup &a, string, TGTab *)";
@@ -35,7 +35,7 @@ bool PixTestAlive::setParameter(string parName, string sval) {
       LOG(logDEBUG) << "  ==> parName: " << parName;
       LOG(logDEBUG) << "  ==> sval:    " << sval;
       if (!parName.compare("Ntrig")) {
-	fParNtrig = atoi(sval.c_str()); 
+	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
       if (!parName.compare("Vcal")) {
@@ -90,13 +90,11 @@ PixTestAlive::~PixTestAlive() {
 void PixTestAlive::doTest() {
   PixTest::update(); 
   fDirectory->cd();
-  LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << fParNtrig;
+  LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
 
-  if (fApi) {
-    fApi->_dut->testAllPixels(true);
-    fApi->_dut->maskAllPixels(false);
-  }
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
   vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig); 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
 

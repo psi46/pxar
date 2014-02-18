@@ -216,7 +216,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 }
 
 // ----------------------------------------------------------------------
-vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
+vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
   vector<pixel> results; 
   if (fApi) results = fApi->getEfficiencyMap(0, ntrig);
@@ -227,10 +227,6 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, int ntrig) {
 
   map<int, int> id2idx; // map the ROC ID onto the index of the ROC
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  cout << "# enabled rocs = " << rocIds.size() << " result vector length = " << results.size() << endl;
-  for (unsigned int i = 0; i < rocIds.size(); ++i) {
-      cout << " rocIds[" << i << "] = " << int(rocIds[i]) << endl;
-  }
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     id2idx.insert(make_pair(rocIds[iroc], iroc)); 
