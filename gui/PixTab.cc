@@ -398,7 +398,7 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
       } else if (160 == ((TH2D*)selected)->GetNbinsX() && 416 == ((TH2D*)selected)->GetNbinsY()) {
 	text2 = Form("x=%.0f, y=%.0f, value=%4.3f", x-1, y-1, val); 
       } else {
-	text2 = trafo.c_str(); 
+	text2 = trafo1.c_str(); 
       }
     } else {
       sscanf(trafo1.c_str(), "binx=%f, binc=%f", &x, &val);
