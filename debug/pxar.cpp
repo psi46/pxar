@@ -92,8 +92,9 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
 	  }
 	}
       }
-      else if(trig == 0) { found = true; std::cout << "o"; }
-      if(!found) std::cout << " ";
+
+      if(!found && trig == 0) { std::cout << "o"; }
+      else if(!found) std::cout << " ";
     }
     std::cout << std::endl;
   }
