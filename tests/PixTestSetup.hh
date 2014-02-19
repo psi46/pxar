@@ -19,6 +19,7 @@ public:
 private:
 
   int     fParNtrig; 
+  int     fParNtests;
   int     fParVcal; 
 
   ClassDef(PixTestSetup, 1);

@@ -38,6 +38,11 @@ bool PixTestSetup::setParameter(string parName, string sval) {
 	LOG(logDEBUG) << "  ==> setting fParNtrig to " << fParNtrig; 
 	setToolTips();
       }
+      if (!parName.compare("Ntests")) {
+	fParNtests = atoi(sval.c_str()); 
+	LOG(logDEBUG) << "  ==> setting fParNtests to " << fParNtests; 
+	setToolTips();
+      }
       if (!parName.compare("Vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  ==> setting fParVcal to " << fParVcal; 
@@ -97,7 +102,7 @@ PixTestSetup::~PixTestSetup() {
 // ----------------------------------------------------------------------
 void PixTestSetup::doTest() {
   fDirectory->cd();
-  LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig;
+  LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig << " and ntests = " << fParNtests;
   //FIXME clearHist(); 
 
   bookHist("bla");
@@ -106,60 +111,69 @@ void PixTestSetup::doTest() {
   vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
 
 
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-  fApi->_dut->testPixel(12, 34, true);
-  fApi->_dut->maskPixel(12, 34, false);
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
+  int offset[] = {-1, 0, 1, 2, 3, 4, 5, 6};
+  const int NCLK(20), NOFF(7), NDESER(7); ;
   
-  fApi->_dut->testPixel(34, 12, true);
-  fApi->_dut->maskPixel(34, 12, false);
-  
-  fApi->_dut->testPixel(48, 67, true);
-  fApi->_dut->maskPixel(48, 67, false);
+  TH2D *h3[NDESER]; 
 
+  for (int ideser = 0; ideser < NDESER; ++ideser) {
+    h3[ideser] = new TH2D(Form("setupEff_deser%d", ideser), Form("setupEff_deser%d", ideser), NOFF, -1., 6., NCLK, 0., NCLK); 
+    fHistList.push_back(h3[ideser]); 
+  }
 
-  TH2D *h2 = new TH2D("setupDaq", "setup DAQ", 5, -2., 3., 25, 0., 25.); 
-  fHistList.push_back(h2); 
-  TH1D *h1 = new TH1D("setupDaq1d", "setup DAQ 1D", 5*25, 0., 5*25.); 
-  fHistList.push_back(h1); 
+  unsigned int npix(0);
+  for (int iroc = 0; iroc < fApi->_dut->getNEnabledRocs(); ++iroc) {
+    npix += fApi->_dut->getNEnabledPixels(iroc); 
+  }
 
-  TH2D *h3 = new TH2D("setupEff", "setup Eff", 5, -2., 3., 25, 0., 25.); 
-  fHistList.push_back(h3); 
-  TH1D *h4 = new TH1D("setupEff1d", "setup Eff1D", 5*25, 0., 5*25.); 
-  fHistList.push_back(h4); 
+  LOG(logINFO) << " total enabled ROCs: " << fApi->_dut->getNEnabledRocs() 
+	       << " with total enabled pixels: " << npix;
 
-  for (int iclk = 0; iclk < 25; ++iclk) {
-    for (int ioffset = -2; ioffset < 2; ++ioffset) {
-      fPixSetup->getConfigParameters()->setTbParameter("clk", iclk); 
-      fPixSetup->getConfigParameters()->setTbParameter("ctr", iclk); 
-      fPixSetup->getConfigParameters()->setTbParameter("sda", iclk+15+ioffset); 
-      fPixSetup->getConfigParameters()->setTbParameter("tin", iclk+5+ioffset); 
-
-
-      vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
-      fPixSetup->getConfigParameters()->dumpParameters(sig_delays); 
-      
-      fApi->initTestboard(sig_delays, power_settings, pg_setup);
-      
-      fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-      fApi->daqTrigger(fParNtrig);
-      fApi->daqStop();
-      vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
-      vector<pixel> results = fApi->getEfficiencyMap(0, fParNtrig);
-
-      cout << "clk = " << iclk << " number of DAQ events read from board: " << daqdat.size() 
-	   << " eff map size: " << results.size()
-	   << endl;
-
-      h2->Fill(ioffset, iclk, daqdat.size()); 
-      h1->Fill(iclk*5 + ioffset, daqdat.size()); 
-      h3->Fill(ioffset, iclk, results.size()); 
-      h4->Fill(iclk*5 + ioffset, results.size()); 
+  vector<pixel> results;
+  for (int ideser = 0; ideser < NDESER; ++ideser) {
+    for (int iclk = 0; iclk < NCLK; ++iclk) {
+      for (int ioffset = 0; ioffset < NOFF; ++ioffset) {
+	cout << "xxx> starting loop point: " << " deser160phase = " << ideser << " iclk = " << iclk << " offset = " << offset[ioffset] << endl;
+	fPixSetup->getConfigParameters()->setTbParameter("clk", iclk); 
+	fPixSetup->getConfigParameters()->setTbParameter("ctr", iclk); 
+	fPixSetup->getConfigParameters()->setTbParameter("sda", iclk+15+offset[ioffset]); 
+	fPixSetup->getConfigParameters()->setTbParameter("tin", iclk+5+offset[ioffset]); 
+	fPixSetup->getConfigParameters()->setTbParameter("deser160phase", ideser); 
+	
+	vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+	fPixSetup->getConfigParameters()->dumpParameters(sig_delays); 
+	
+	fApi->initTestboard(sig_delays, power_settings, pg_setup);
+	
+	cout << "xxx> getEfficiencyMap: " << endl;
+	for (int i = 0; i < fParNtests; ++i) {
+	  results.clear();
+	  results = fApi->getEfficiencyMap(0, fParNtrig);
+	  cout << "clk = " << iclk << " offset = " << offset[ioffset] << " eff map size: " << results.size()  << endl;
+	  if (npix == results.size()) h3[ideser]->Fill(offset[ioffset], iclk); 
+	  if (0 == results.size()) break; // bail out for failures
+	}
+      }
     }
   }
 
-  h2->Draw("colz");
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+  h3[0]->Draw("colz");
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h3[0]);
   PixTest::update(); 
+
+  for (int ideser = 0; ideser < NDESER; ++ideser) {
+    for (int ix = 0; ix < h3[ideser]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < h3[ideser]->GetNbinsY(); ++iy) {
+	if (fParNtests == h3[ideser]->GetBinContent(ix+1, iy+1)) {
+	  LOG(logINFO) << " Found 100% PixelAlive success rate for deser160phase = " << ideser 
+		       << " CLK = " << h3[ideser]->GetYaxis()->GetBinCenter(iy+1) 
+		       << " OFFSET = " << h3[ideser]->GetXaxis()->GetBinCenter(ix+1);
+	}
+      }
+    }
+  }
   LOG(logINFO) << "PixTestSetup::doTest() done";
 }
