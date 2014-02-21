@@ -93,6 +93,8 @@ void PixTestAlive::doTest() {
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
 
+  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
