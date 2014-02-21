@@ -254,7 +254,7 @@ void PixGui::CloseWindow() {
   if (fTimer) fTimer->TurnOff();
   if (fApi) delete fApi; 
   
-  DestroyWindow();
+  //  DestroyWindow();
   gApplication->Terminate(0);
 
 }
