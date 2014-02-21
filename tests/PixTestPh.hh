@@ -3,16 +3,7 @@
 
 #include "api.h"
 #include "PixTest.hh"
-#include <TMultiGraph.h>
 
-class TestPixel{
-  public:
-  int roc, row, col, value;
-  TNamed * h;
-  TestPixel( int iroc, int icol, int irow ){
-        roc=iroc; col=icol; row=irow;
-  }
-};
 
 class PixTestPh: public PixTest {
 public:

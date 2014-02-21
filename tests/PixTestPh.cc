@@ -16,7 +16,7 @@ ClassImp(PixTestPh)
 //------------------------------------------------------------------------------
 PixTestPh::PixTestPh( PixSetup *a, std::string name ) :  PixTest(a, name),
     fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) ,
-    fParDAC2("None"), fParDAC2Lo(-1), fParDAC2Hi(-1), fParDAC2Step(0)
+    fParDAC2("None"), fParDAC2Hi(-1), fParDAC2Lo(-1), fParDAC2Step(0)
 {
   PixTest::init();
   init();
