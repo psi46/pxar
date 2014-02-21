@@ -256,6 +256,10 @@ public:
 
 
 	// == Trigger Loop functions for Host-side DAQ ROC/Module testing ==============
+	// Exported RPC-Calls for the Trimbit storage setup:
+	RPC_EXPORT bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
+	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<int8_t> &trimvalues);
+
 	// Exported RPC-Calls for Maps
 	RPC_EXPORT void LoopMultiRocAllPixelsCalibrate(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags);
 	RPC_EXPORT void LoopMultiRocOnePixelCalibrate(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags);
