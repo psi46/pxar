@@ -14,7 +14,6 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp) {
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
   init(); 
-  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp), api = " << fApi;
 }
 
 
@@ -24,7 +23,6 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
   init(); 
-  LOG(logDEBUG) << "PixSetup ctor(pxar::api *a, PixTestParameters *tp, ConfigParameters *cp), api = " << fApi;
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = fConfigParameters->getTbmDacs(); 

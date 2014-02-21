@@ -93,14 +93,28 @@ void PixTestAlive::doTest() {
   LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
 
+
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig); 
-  copy(test2.begin(), test2.end(), back_inserter(fHistList));
 
+//   fApi->_dut->testAllPixels(false);
+//   fApi->_dut->maskAllPixels(true);
+
+//   for (int i = 0; i < 52; ++i) {
+//     fApi->_dut->testPixel(i, i+10, true);
+//     fApi->_dut->maskPixel(i, i+10, false);
+//   }
+
+  vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig); 
+  for (unsigned int i = 0; i < test2.size(); ++i) {
+    fHistOptions.insert(make_pair(test2[i], "colz"));
+  }
+
+  copy(test2.begin(), test2.end(), back_inserter(fHistList));
+  
   TH2D *h = (TH2D*)(*fHistList.begin());
 
-  h->Draw();
+  h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
   LOG(logINFO) << "PixTestAlive::doTest() done";

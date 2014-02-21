@@ -141,17 +141,13 @@ void PixTestDacScan::bookHist(string name) {
   TH1D *h1(0);
   fHistList.clear();
   for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h1 = new TH1D(Form("scanRange_%s_C%d", name.c_str(), i), Form("scanRange_%s_C%d", name.c_str(), i), 255, 0., 255.); 
-    h1->SetMinimum(0.); 
-    setTitles(h1, name.c_str(), "a.u."); 
-    fHistList.push_back(h1); 
-
     for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
       h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
 		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
 		    255, 0., 255.); 
       h1->SetMinimum(0.); 
       setTitles(h1, Form("%s [DAC]", name.c_str()), "readouts");
+      if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
       fHistList.push_back(h1); 
     }
    
@@ -187,17 +183,11 @@ void PixTestDacScan::doTest() {
 
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
   LOG(logDEBUG) << " dacscandata.size(): " << results.size();
-  TH1D *h(0), *hsummary(0); 
+  TH1D *h(0); 
   for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    hsummary = (TH1D*)fDirectory->Get(Form("scanRange_%s_C%d", fParDAC.c_str(), ichip));
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, vector<pixel> > v = results[i];
       int idac = v.first; 
-      if (hsummary) {
-	hsummary->SetBinContent(idac+1, 1); 
-      } else {
-	LOG(logDEBUG) << "XX did not find " << Form("scanRange_%s_C%d", fParDAC.c_str(), ichip);
-      }
 
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
@@ -211,12 +201,15 @@ void PixTestDacScan::doTest() {
 	}
 	
       }
-      fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-
     }
-
-    if (h) h->Draw();
-    PixTest::update(); 
-
+    
   }
+
+
+  fDisplayedHist = fHistList.begin();
+  for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+    (*il)->Draw((getHistOption(*il)).c_str()); 
+  }
+  PixTest::update(); 
+
 }
