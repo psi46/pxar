@@ -201,12 +201,15 @@ void PixTestDacScan::doTest() {
 	}
 	
       }
-      fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-
     }
-
-    if (h) h->Draw();
-    PixTest::update(); 
-
+    
   }
+
+
+  fDisplayedHist = fHistList.begin();
+  for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+    (*il)->Draw((getHistOption(*il)).c_str()); 
+  }
+  PixTest::update(); 
+
 }
