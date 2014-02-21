@@ -179,7 +179,7 @@ void PixTestPretest::setVana() {
 
   // -- cache setting and switch off all(!) ROCs
   int nRocs = fApi->_dut->getNRocs(); 
-  for (size_t iroc = 0; iroc < nRocs; ++iroc) {
+  for (int iroc = 0; iroc < nRocs; ++iroc) {
     vanaStart.push_back(fApi->_dut->getDAC(iroc, "vana"));
     rocIana.push_back(0.); 
     fApi->setDAC("vana", 0, iroc);
@@ -210,7 +210,7 @@ void PixTestPretest::setVana() {
   const double eps = 0.25; // [mA] convergence
   const double slope = 6; // 255 DACs / 40 mA
 
-  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     if (!selectedRoc(roc)) {
       LOG(logDEBUG) << "skipping ROC idx = " << roc << " (not selected) for Vana tuning"; 
       continue;
@@ -289,7 +289,7 @@ void PixTestPretest::setVana() {
   hcurr->SetMaximum(30.0);
   fHistList.push_back(hcurr);
 
-  for (size_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     // -- reset all ROCs to optimum or cached value
     fApi->setDAC( "vana", vanaStart[roc], roc );
     LOG(logINFO) << "ROC " << setw(2) << roc << " Vana " << setw(3) << int(vanaStart[roc]);
@@ -328,7 +328,7 @@ void PixTestPretest::setVthrCompId() {
 
   int nRocs = fApi->_dut->getNRocs(); 
 
-  for (size_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     if (!selectedRoc(roc)) continue;
     h1 = bookTH1D(Form("Id_vs_VthrComp_C%d", int(roc)),	
 		  Form("Id vs VthrComp C%d", int(roc)),
@@ -343,7 +343,7 @@ void PixTestPretest::setVthrCompId() {
   fApi->_dut->testAllPixels(true); // enable all pix: more noise
 
   vector<int> rocVsf, rocVthrComp; 
-  for (size_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     rocVsf.push_back(fApi->_dut->getDAC(roc, "Vsf" )); 
     rocVthrComp.push_back(fApi->_dut->getDAC(roc, "VthrComp")); 
 
@@ -369,7 +369,7 @@ void PixTestPretest::setVthrCompId() {
 
   // loope over ROCs:
 
-  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     if (!selectedRoc(roc)) continue;
 
     LOG(logDEBUG) << "ROC " << setw(2) << roc;
@@ -419,7 +419,7 @@ void PixTestPretest::setVthrCompId() {
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
-  for (size_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     // -- (re)set all
     fApi->setDAC("Vsf", rocVsf[roc], roc);
     fApi->setDAC("VthrComp", rocVthrComp[roc], roc);
@@ -472,7 +472,7 @@ void PixTestPretest::setCalDel() {
   vector<TH1D*> hsts;
   TH1D *h1(0);
   int nRocs = fApi->_dut->getNEnabledRocs();
-  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+  for (int iroc = 0; iroc < nRocs; ++iroc) {
     if (!selectedRoc(iroc)) continue;
     h1 = bookTH1D(Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
 		  Form("NhitsVs%s_c%d_r%d_C%d", DacName.c_str(), fPIX[0].first, fPIX[0].second, fId2Idx[iroc]),
@@ -501,7 +501,7 @@ void PixTestPretest::setCalDel() {
     for (size_t ipx = 0; ipx < vpix.size(); ++ipx)  {
       uint32_t roc = vpix.at(ipx).roc_id;
 
-      if (static_cast<unsigned int>(fId2Idx[roc]) < nRocs
+      if (fId2Idx[roc] < nRocs
 	  && vpix[ipx].column == fPIX[0].first 
 	  && vpix[ipx].row == fPIX[0].second
 	  ) {
@@ -524,13 +524,13 @@ void PixTestPretest::setCalDel() {
     
   } // caldel vals
 
-  for (size_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     hsts[fId2Idx[roc]]->Draw();
     PixTest::update();
   }
 
   // set CalDel:
-  for (uint32_t roc = 0; roc < nRocs; ++roc) {
+  for (int roc = 0; roc < nRocs; ++roc) {
     if (i9[fId2Idx[roc]] > 0 ) {
 
       int i2 = i0[fId2Idx[roc]] + (i9[fId2Idx[roc]]-i0[fId2Idx[roc]])/4;
@@ -594,14 +594,14 @@ void PixTestPretest::setPhRange() {
   fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true );
   fApi->_dut->maskPixel( fPIX[0].first, fPIX[0].second, false );
 
-  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
+  int nRocs = fPixSetup->getConfigParameters()->getNrocs();
 
   int pix_ph[16];
   int min_vcal[16]; // large Vcal, after trimming
   bool not_enough = 0;
   bool too_much = 0;
 
-  for( size_t i = 0; i < 16; ++i ) {
+  for (size_t i = 0; i < 16; ++i ) {
     pix_ph[i] = -1;
     min_vcal[i] = 8;
   }
@@ -610,7 +610,7 @@ void PixTestPretest::setPhRange() {
 
   do {
 
-    for( size_t roc = 0; roc < nRocs; ++roc )
+    for (int roc = 0; roc < nRocs; ++roc )
       fApi->setDAC( "Vcal", min_vcal[roc], roc );
 
     // measure:
@@ -636,7 +636,7 @@ void PixTestPretest::setPhRange() {
     // check:
     not_enough = 0;
     too_much = 0;
-    for( size_t roc = 0; roc < nRocs; ++roc ) {
+    for (int roc = 0; roc < nRocs; ++roc ) {
       if( pix_ph[roc] <= 0 ) {
 	min_vcal[roc] += 2;
 	not_enough = 1;
@@ -654,7 +654,7 @@ void PixTestPretest::setPhRange() {
     return;
   }
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
     min_vcal[roc] += 2; // safety
     fApi->setDAC( "Vcal", min_vcal[roc], roc );
     LOG(logINFO) << "ROC " << setw(2) << roc
@@ -665,7 +665,7 @@ void PixTestPretest::setPhRange() {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // scan PH vs VOffsetRO for one pixel per ROC at min Vcal
 
-  for( size_t roc = 0; roc < nRocs; ++roc )
+  for (int roc = 0; roc < nRocs; ++roc )
     fApi->setDAC( "Vcal", min_vcal[roc], roc );
 
   string dacName = "VOffsetRO";
@@ -677,7 +677,7 @@ void PixTestPretest::setPhRange() {
   vector<TH1D*> hmin;
   TH1D *h1(0);
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     h1 = new TH1D( Form( "PH_vs_%s_at_Vcal_%2d_c%02d_r%02d_C%02d",
 			 dacName.c_str(), min_vcal[roc],
@@ -718,7 +718,7 @@ void PixTestPretest::setPhRange() {
 
   } // dac values
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
     hmin[roc]->Draw();
     PixTest::update();
   }
@@ -735,7 +735,7 @@ void PixTestPretest::setPhRange() {
 
   vector<TH1D*> hmax;
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     h1 = new TH1D( Form( "PH_vs_%s_at_Vcal_%2d_c%02d_r%02d_C%02d",
 			 dacName.c_str(), max_vcal,
@@ -776,7 +776,7 @@ void PixTestPretest::setPhRange() {
 
   } // dac values
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
     hmax[roc]->Draw();
     PixTest::update();
   }
@@ -790,7 +790,7 @@ void PixTestPretest::setPhRange() {
   for( size_t i = 0; i < 16; ++i )
     voffset_opt[i] = -1;
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     for( int i = 0; i < 256; ++i ) {
       int ph0 = hmin[roc]->GetBinContent(i+1);
@@ -812,7 +812,7 @@ void PixTestPretest::setPhRange() {
 
   // Abort if the mid VoffsetOp could not be found
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     if( voffset_opt[roc] == -1 ) {
       LOG(logINFO)
@@ -846,7 +846,7 @@ void PixTestPretest::setPhRange() {
 
   vector<TH1D*> href;
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     h1 = new TH1D( Form( "PH_vs_%s_at_Vcal_%2d_c%02d_r%02d_C%02d",
 			 dacName.c_str(), max_vcal,
@@ -887,7 +887,7 @@ void PixTestPretest::setPhRange() {
 
   } // dac values
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
     href[roc]->Draw();
     PixTest::update();
   }
@@ -899,7 +899,7 @@ void PixTestPretest::setPhRange() {
   for( size_t i = 0; i < 16; ++i )
     viref_adc_opt[i] = -1;
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
     for( int i = 0; i < 256; ++i ) {
       int ph = href[roc]->GetBinContent(i+1);
       if( ph <= 0 ) continue;
@@ -936,7 +936,7 @@ void PixTestPretest::setPhRange() {
   vector<TH1D*> hsts9;
   //TH1D *h1(0);
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     h2 = new TH2D( Form( "maxPhMap_C%d", int(roc) ),
 		   Form( "max PH map ROC %d", int(roc) ),
@@ -979,7 +979,7 @@ void PixTestPretest::setPhRange() {
       if( h1 ) h1->Fill( vpix[ipx].value );
     }
 
-    for( size_t roc = 0; roc < nRocs; ++roc ) {
+    for (int roc = 0; roc < nRocs; ++roc ) {
       h2 = maps9[roc];
       h2->Draw("colz");
       PixTest::update();
@@ -990,7 +990,7 @@ void PixTestPretest::setPhRange() {
 
     again = 0;
 
-    for( size_t roc = 0; roc < nRocs; ++roc ) {
+    for (int roc = 0; roc < nRocs; ++roc ) {
 
       LOG(logINFO) << "max Ph map for ROC " << roc;
 
@@ -1030,7 +1030,7 @@ void PixTestPretest::setPhRange() {
   vector<TH2D*> maps0;
   vector<TH1D*> hsts0;
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     h2 = new TH2D( Form( "minPhMap_C%d", int(roc) ),
 		   Form( "min PH map ROC %d", int(roc) ),
@@ -1055,7 +1055,7 @@ void PixTestPretest::setPhRange() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  for( size_t roc = 0; roc < nRocs; ++roc )
+  for (int roc = 0; roc < nRocs; ++roc )
     fApi->setDAC( "Vcal", min_vcal[roc], roc );
 
   LOG(logINFO) << "check against underflow...";
@@ -1069,7 +1069,7 @@ void PixTestPretest::setPhRange() {
     // protection against non-responding pixels
     // (distinguish PH zero from no entry)
 
-    for( size_t roc = 0; roc < nRocs; ++roc ) {
+    for (int roc = 0; roc < nRocs; ++roc ) {
       h2 = maps0[roc];
       for( int ix = 0; ix < h2->GetNbinsX(); ++ix )
 	for( int iy = 0; iy < h2->GetNbinsY(); ++iy )
@@ -1093,7 +1093,7 @@ void PixTestPretest::setPhRange() {
       if( h1 ) h1->Fill( vpix[ipx].value );
     }
 
-    for( size_t roc = 0; roc < nRocs; ++roc ) {
+    for (int roc = 0; roc < nRocs; ++roc ) {
       h2 = maps0[roc];
       h2->Draw("colz");
       PixTest::update();
@@ -1104,7 +1104,7 @@ void PixTestPretest::setPhRange() {
 
     again = 0;
 
-    for( size_t roc = 0; roc < nRocs; ++roc ) {
+    for (int roc = 0; roc < nRocs; ++roc ) {
 
       LOG(logINFO) << "min Ph map for ROC " << roc;
 
@@ -1153,7 +1153,7 @@ void PixTestPretest::setPhRange() {
   fApi->_dut->testAllPixels(false); // mask and disable all
   fApi->_dut->maskAllPixels(true); // mask and disable all
 
-  for( size_t roc = 0; roc < nRocs; ++roc ) {
+  for (int roc = 0; roc < nRocs; ++roc ) {
 
     LOG(logINFO) << "Ph range fine tuning for ROC " << roc;
 
