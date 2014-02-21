@@ -122,10 +122,12 @@ void PixTestPhDacScan::doTest()
   // activate one pixel per ROC:
 
   fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
-  if( fPIX[0].first > -1 )
-    fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true );
-
+  if( fPIX[0].first > -1 ) {
+    fApi->_dut->testPixel(fPIX[0].first, fPIX[0].second, true);
+    fApi->_dut->maskPixel(fPIX[0].first, fPIX[0].second, false);
+  }
   // book histos:
 
   vector<TH1D*> hsts;
