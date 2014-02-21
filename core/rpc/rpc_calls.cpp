@@ -7,7 +7,7 @@
 
 const char CTestboard::rpc_timestamp[] = "";
 
-const unsigned int CTestboard::rpc_cmdListSize = 117;
+const unsigned int CTestboard::rpc_cmdListSize = 118;
 
 const char *CTestboard::rpc_cmdName[] =
 {
@@ -127,7 +127,8 @@ const char *CTestboard::rpc_cmdName[] =
 	/*   113 */ "LoopMultiRocAllPixelsDacDacScan$v1CSSCCCCCC",
 	/*   114 */ "LoopMultiRocOnePixelDacDacScan$v1CCCSSCCCCCC",
 	/*   115 */ "LoopSingleRocAllPixelsDacDacScan$vCSSCCCCCC",
-	/*   116 */ "LoopSingleRocOnePixelDacDacScan$vCCCSSCCCCCC"
+	/*   116 */ "LoopSingleRocOnePixelDacDacScan$vCCCSSCCCCCC",
+	/*   117 */ "LoopCheckerBoard$vCCCSSCCCCCC"
 };
 
 uint16_t CTestboard::GetRpcVersion()
@@ -2020,5 +2021,28 @@ void CTestboard::LoopSingleRocOnePixelDacDacScan(uint8_t rpc_par1, uint8_t rpc_p
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(116); throw; };
+}
+
+void CTestboard::LoopCheckerBoard(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11)
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(117);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Put_UINT8(rpc_par1);
+	msg.Put_UINT8(rpc_par2);
+	msg.Put_UINT8(rpc_par3);
+	msg.Put_UINT16(rpc_par4);
+	msg.Put_UINT16(rpc_par5);
+	msg.Put_UINT8(rpc_par6);
+	msg.Put_UINT8(rpc_par7);
+	msg.Put_UINT8(rpc_par8);
+	msg.Put_UINT8(rpc_par9);
+	msg.Put_UINT8(rpc_par10);
+	msg.Put_UINT8(rpc_par11);
+	msg.Send(*rpc_io);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(117); throw; };
 }
 
