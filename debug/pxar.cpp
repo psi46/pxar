@@ -339,6 +339,12 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl;
 
+    // Fetch all the DACs with names from the DUT:
+    std::vector<std::pair<std::string,uint8_t> > dutdacs = _api->_dut->getDACs(0);
+    for(std::vector<std::pair<std::string,uint8_t> >::iterator it = dutdacs.begin(); it != dutdacs.end(); ++it) {
+      std::cout << "Name: " << it->first << ", value: " << (int)(it->second) << std::endl;
+    }
+
     // ##########################################################
     // Call the first real test (pixel efficiency map):
 
