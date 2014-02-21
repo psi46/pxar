@@ -674,7 +674,6 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 
   vector<pair<uint8_t, vector<pixel> > > scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, 0, ntrig);
   LOG(logDEBUG) << " getMaximumVthrComp.size(): " << scans.size();
-  TH1D *h(0); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   vector<TH1*> scanHists;
