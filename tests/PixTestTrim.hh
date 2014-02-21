@@ -18,15 +18,16 @@ public:
   void trimBitTest();
 
   int adjustVtrim(); 
-  TH2D* trimStep(int corrections, TH2D *calMapOld); 
-
+  std::vector<TH1*> trimStep(int corrections, std::vector<TH1*> calMapOld); 
+  void setTrimBits(); 
   void doTest(); 
 
 private:
 
   int     fParVcal, fParNtrig, fParVthrCompLo, fParVthrCompHi, fParVcalLo, fParVcalHi; 
   std::vector<std::pair<int, int> > fPIX; 
-
+  int     fTrimBits[16][52][80]; 
+  
   ClassDef(PixTestTrim, 1);
 
 };
