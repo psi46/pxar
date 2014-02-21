@@ -45,6 +45,7 @@ namespace pxar {
 #define ROC_PSI46DIG_TRIG  0x04
 #define ROC_PSI46DIGV2_B   0x05
 #define ROC_PSI46DIGV2     0x06
+#define ROC_PSI46DIGV21    0x07
 #define ROC_PSI46DIGV3     0x07
 
 
