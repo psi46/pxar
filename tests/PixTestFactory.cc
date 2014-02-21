@@ -19,6 +19,7 @@
 #include "PixTestPretest.hh"
 #include "PixTestDaq.hh"
 #include "PixTestGainCalibration.hh"
+#include "PixTestPh.hh"
 
 using namespace std;
 using namespace pxar;
@@ -63,5 +64,6 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
+  if (!name.compare("ph")) return new PixTestPh(a, "Ph");
   return 0; 
 }
