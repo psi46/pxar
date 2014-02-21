@@ -190,7 +190,7 @@ void PixTestDacDacScan::doTest() {
     for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
       h2 = bookTH2D(Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
 		    Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    255, 0., 255., 255, 0., 255.); 
+		    256, 0., 256., 256, 0., 256.); 
       h2->SetMinimum(0.); 
       setTitles(h2, dac1.c_str(), dac2.c_str()); 
       fHistList.push_back(h2);
@@ -221,7 +221,7 @@ void PixTestDacDacScan::doTest() {
 	if (wpix[ipix].roc_id == ichip) {
 	  h = maps[Form("nhits_%s_%s_c%d_r%d_C%d", fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip)];
 	  if (h) {
-	    h->Fill(idac1+1, idac2+1, wpix[ipix].value); 
+	    h->Fill(idac1, idac2, wpix[ipix].value); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find " << Form("nhits_%s_%s_c%d_r%d_C%d", 
 						       fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip);

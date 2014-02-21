@@ -144,7 +144,7 @@ void PixTestDacScan::bookHist(string name) {
     for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
       h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
 		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    255, 0., 255.); 
+		    256, 0., 256.); 
       h1->SetMinimum(0.); 
       setTitles(h1, Form("%s [DAC]", name.c_str()), "readouts");
       if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
@@ -194,7 +194,7 @@ void PixTestDacScan::doTest() {
 	if (vpix[ipix].roc_id == ichip) {
 	  h = (TH1D*)fDirectory->Get(Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip));
 	  if (h) {
-	    h->SetBinContent(idac+1, vpix[ipix].value); 
+	    h->Fill(idac, vpix[ipix].value); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find " << Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
 	  }
