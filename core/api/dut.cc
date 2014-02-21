@@ -224,17 +224,16 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {
 }
 
 std::vector< std::pair<std::string,uint8_t> > dut::getDACs(size_t rocId) {
+
   if(status() && rocId < roc.size()) {
     std::vector< std::pair<std::string,uint8_t> > vec;
 
     // Get singleton DAC dictionary object:
     RegisterDictionary * _dict = RegisterDictionary::getInstance();
- 
+
     for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
-        uint8_t version=0; // name depends on roc version, better introduce some map here
-        if (roc.at(rocId).type==ROC_PSI46DIGV21){ version=2; }else{ version=1; }
-        vec.push_back(std::make_pair(_dict->getName(it->first,ROC_REG, version),it->second));
+      vec.push_back(std::make_pair(_dict->getName(it->first,ROC_REG),it->second));
     }
     return vec;
   }
