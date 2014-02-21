@@ -65,3 +65,12 @@ VcalLo      25
 VcalHi      75 
 VthrCompLo  0 
 VthrCompHi  50 
+
+-- Ph
+Ntrig 10
+DAC   Vcal
+DACLO 0
+DACHI 200
+PIX1  11,20
+DAC2  PHOffset
+DAC2Range 0,256,16
