@@ -315,14 +315,15 @@ void PixTab::clearCanvas() {
 
 // ----------------------------------------------------------------------
 void PixTab::nextHistogram() {
-  clearCanvas();
-
   TH1 *h = fTest->nextHist(); 
   if (h) {
+    string option = fTest->getHistOption(h);
+    if (string::npos == option.find("same")) clearCanvas();
     if (h->InheritsFrom(TH2::Class())) {
-      h->Draw("colz");
+      h->Draw(option.c_str());
     } else {
-      h->Draw();
+      //      cout << "h: " << h->GetName() << " option: " << option << endl;
+      h->Draw(option.c_str());
     }
     update(); 
   } else {
@@ -334,13 +335,15 @@ void PixTab::nextHistogram() {
 
 // ----------------------------------------------------------------------
 void PixTab::previousHistogram() {
-  clearCanvas();
   TH1 *h = fTest->previousHist(); 
   if (h) {
+    string option = fTest->getHistOption(h);
+    if (string::npos == option.find("same")) clearCanvas();
     if (h->InheritsFrom(TH2::Class())) {
-      h->Draw("colz");
+      h->Draw(option.c_str());
     } else {
-      h->Draw();
+      //      cout << "h: " << h->GetName() << " option: " << option << endl;
+      h->Draw(option.c_str());
     }
     update(); 
   } else {
@@ -358,12 +361,9 @@ void PixTab::update() {
     if (h->InheritsFrom(TH1::Class())) {
       if (h->InheritsFrom(TH2::Class())) {
 	gStyle->SetOptStat(0); 
-	h->Draw("colz"); // this is maybe not required
 	break;
       }	else {
 	gStyle->SetOptStat(1111111); 
-	h->Draw();
-	break;
       }
     }
   }

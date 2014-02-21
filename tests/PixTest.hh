@@ -34,6 +34,7 @@ public:
   virtual void setToolTips();
   virtual std::string getSummaryTip() {return fSummaryTip;}
   virtual std::string getTestTip() {return fTestTip;}
+  virtual std::string getHistOption(TH1*);
 
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
@@ -104,6 +105,7 @@ protected:
 
   TDirectory            *fDirectory; 
   std::list<TH1*>       fHistList;
+  std::map<TH1*, std::string> fHistOptions;
   std::list<TH1*>::iterator fDisplayedHist;  
 
   std::vector<std::pair<int, int> > fPIX; // range of enabled pixels for time-consuming tests

@@ -151,33 +151,6 @@ void PixTestDacDacScan::setToolTips() {
 void PixTestDacDacScan::bookHist(string name) {
   fDirectory->cd(); 
 
-  string::size_type s1 = name.find(":"); 
-  string dac1 = name.substr(0, s1); 
-  string dac2 = name.substr(s1+1); 
-  LOG(logDEBUG) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-" << " from name = " << name;
-  
-  //  TH1D *h1(0);
-  TH2D *h2(0);
-  fHistList.clear();
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    h2 = new TH2D(Form("scanRange_%s_%s_C%d", dac1.c_str(), dac2.c_str(), i), 
-		  Form("scanRange_%s_%s_C%d", dac1.c_str(), dac2.c_str(), i), 
-		  255, 0., 255., 255, 0., 255.); 
-    h2->SetMinimum(0.); 
-    setTitles(h2, dac1.c_str(), dac2.c_str()); 
-    fHistList.push_back(h2); 
-
-    for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-      h2 = new TH2D(Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    255, 0., 255., 255, 0., 255.); 
-      h2->SetMinimum(0.); 
-      setTitles(h2, dac1.c_str(), dac2.c_str()); 
-      fHistList.push_back(h2); 
-    }
-   
-  }
-
 }
 
 
@@ -204,6 +177,28 @@ void PixTestDacDacScan::doTest() {
   }
   string name = fParDAC1 + string(":") + fParDAC2; 
   bookHist(name);
+  // -- FIXME also applies to the next few lines
+  string::size_type s1 = name.find(":"); 
+  string dac1 = name.substr(0, s1); 
+  string dac2 = name.substr(s1+1); 
+  LOG(logDEBUG) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-";
+  
+  //  TH1D *h1(0);
+  TH2D *h2(0);
+  map<string, TH2D*> maps;
+  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
+    for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
+      h2 = bookTH2D(Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
+		    Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
+		    255, 0., 255., 255, 0., 255.); 
+      h2->SetMinimum(0.); 
+      setTitles(h2, dac1.c_str(), dac2.c_str()); 
+      fHistList.push_back(h2);
+      fHistOptions.insert(make_pair(h2, "colz")); 
+      maps.insert(make_pair(Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, i), h2)); 
+    }
+   
+  }
 
 
   // -- FIXME This code is crap. Replace as in PixelAlive
@@ -213,32 +208,20 @@ void PixTestDacDacScan::doTest() {
 					  fParDAC2, fParLoDAC2, fParHiDAC2, 
 					  0, fParNtrig);
 
-  LOG(logDEBUG) << " dacscandata.size(): " << results.size();
-  TH2D *h(0), *hsummary(0); 
+  TH2D *h(0); 
   for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    hsummary = (TH2D*)fDirectory->Get(Form("scanRange_%s_%s_C%d", fParDAC1.c_str(), fParDAC2.c_str(), ichip));
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];
       int idac1 = v.first; 
       pair<uint8_t, vector<pixel> > w = v.second;      
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
-      if (hsummary) {
-	hsummary->SetBinContent(idac1, idac2, 1); 
-      } else {
-	LOG(logDEBUG) << "XX did not find " << Form("scanRange_%s_%s_C%d", fParDAC1.c_str(), fParDAC2.c_str(), ichip);
-      }
 
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
 	if (wpix[ipix].roc_id == ichip) {
-	  h = (TH2D*)fDirectory->Get(Form("nhits_%s_%s_c%d_r%d_C%d", 
-					  fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip)); 
+	  h = maps[Form("nhits_%s_%s_c%d_r%d_C%d", fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip)];
 	  if (h) {
 	    h->Fill(idac1+1, idac2+1, wpix[ipix].value); 
-	    if (wpix[ipix].value > 0) {
-	      LOG(logDEBUG) << Form("pix = %3d/%3d dacs = %3d/%3d value = %3d", 
-				    wpix[ipix].column, wpix[ipix].row, idac1, idac2, wpix[ipix].value) ;
-	    }
 	  } else {
 	    LOG(logDEBUG) << "XX did not find " << Form("nhits_%s_%s_c%d_r%d_C%d", 
 						       fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, ichip);
@@ -250,7 +233,7 @@ void PixTestDacDacScan::doTest() {
     }
 
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    if (h) h->Draw("colz");
+    if (h) h->Draw(getHistOption(h).c_str());
     PixTest::update(); 
   }
 

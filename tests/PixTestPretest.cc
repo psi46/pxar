@@ -461,7 +461,7 @@ void PixTestPretest::setCalDel() {
   uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
 
   fApi->setDAC("Vcal", 250);
-  fApi->setDAC("CtrlReg", 0);
+  fApi->setDAC("CtrlReg", 4);
 
   string DacName = "caldel";
 

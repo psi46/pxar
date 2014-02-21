@@ -220,6 +220,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
   vector<pixel> results; 
   if (fApi) results = fApi->getEfficiencyMap(0, ntrig);
+  LOG(logDEBUG) << " eff result size = " << results.size(); 
 
   fDirectory->cd(); 
   vector<TH2D*> maps;
@@ -239,15 +240,16 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   
   int idx(-1); 
   for (unsigned int i = 0; i < results.size(); ++i) {
-    //     cout << "results[i].roc_id = " << int(results[i].roc_id) 
-    // 	 << " col/row = " << int(results[i].column) << "/" << int(results[i].row)
-    // 	 << endl;
     idx = id2idx[results[i].roc_id];
-    if (results[i].column == 0 && results[i].row == 0) {
-      cout << "roc_id = " << int(results[i].roc_id) << " corrected(roc_id) = " << int(rocIds[results[i].roc_id]) << " idx = " << idx << endl;
-    }
     h2 = maps[idx];
-    if (h2) h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+    if (h2) {
+      if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
+	LOG(logINFO) << "ROC/row/col = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row) 
+		      << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
+		      << " now adding " << static_cast<float>(results[i].value);
+      }
+      h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+    }
   }
 
   return maps; 
@@ -650,4 +652,14 @@ int PixTest::histCycle(string hname) {
     h = (TH1*)fDirectory->FindObject(Form("%s_V%d", hname.c_str(), cnt));
   }
   return cnt;
+}
+
+// ----------------------------------------------------------------------
+string PixTest::getHistOption(TH1* h) {   
+  map<TH1*, string>::iterator end = fHistOptions.end(); 
+  for (map<TH1*, string>::iterator pos = fHistOptions.begin(); 
+       pos != end; ++pos) {
+    if (h == pos->first) return pos->second;
+  }
+  return string("");
 }

@@ -114,13 +114,13 @@ void PixTestSetup::doTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int offset[] = {-1, 0, 1, 2, 3, 4, 5, 6};
-  const int NCLK(20), NOFF(7), NDESER(7); ;
+  int offset[] = {-1, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+  const int NCLK(20), NOFF(9), NDESER(7); ;
   
   TH2D *h3[NDESER]; 
 
   for (int ideser = 0; ideser < NDESER; ++ideser) {
-    h3[ideser] = new TH2D(Form("setupEff_deser%d", ideser), Form("setupEff_deser%d", ideser), NOFF, -1., 6., NCLK, 0., NCLK); 
+    h3[ideser] = new TH2D(Form("setupEff_deser%d", ideser), Form("setupEff_deser%d", ideser), NOFF, -1., 8., NCLK, 0., NCLK); 
     fHistList.push_back(h3[ideser]); 
   }
 
