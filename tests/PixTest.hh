@@ -52,6 +52,7 @@ public:
   TH1D* distribution(TH2D *, int nbins, double xmin, double xmax, bool zeroSuppressed = false); 
   bool threshold(TH1 *); 
   int simpleThreshold(TH1 *); 
+  std::vector<int> getMaximumVthrComp(int ntrig, double frac = 0.8, int reserve = 10);
   
   void cache(std::string dacname); 
   void restore(std::string dacname); 
@@ -78,6 +79,7 @@ public:
   virtual bool setParameter(std::string parName, std::string sval); 
 
   void setId2Idx(std::map<int, int> a);
+  int getIdFromIdx(int idx); 
   bool selectedRoc(int id);
 
   static std::string stripPos(std::string); 
