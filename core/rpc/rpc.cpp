@@ -82,7 +82,7 @@ void rpc_DataSink(CRpcIo &rpc_io, uint16_t size)
 }
 
 
-void rpc_Receive(CRpcIo &rpc_io, std::string &x)
+void rpc_Receive(CRpcIo &rpc_io, string &x)
 {
 	CDataHeader msg;
 	msg.RecvHeader(rpc_io);
@@ -99,7 +99,7 @@ void rpc_Receive(CRpcIo &rpc_io, std::string &x)
 
 // === tools ================================================================
 
-void rpc_TranslateCallName(const std::string &in, std::string &out)
+void rpc_TranslateCallName(const string &in, string &out)
 {
 	out.clear();
 

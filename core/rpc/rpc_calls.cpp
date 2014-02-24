@@ -12,7 +12,7 @@ const unsigned int CTestboard::rpc_cmdListSize = 117;
 const char *CTestboard::rpc_cmdName[] =
 {
 	/*     0 */ "GetRpcVersion$S",
-	/*     1 */ "GetRpcCallId$i4c",
+	/*     1 */ "GetRpcCallId$i3c",
 	/*     2 */ "GetRpcTimestamp$v4c",
 	/*     3 */ "GetRpcCallCount$i",
 	/*     4 */ "GetRpcCallName$bi4c",
@@ -24,7 +24,7 @@ const char *CTestboard::rpc_cmdName[] =
 	/*    10 */ "GetSWVersion$S",
 	/*    11 */ "UpgradeGetVersion$S",
 	/*    12 */ "UpgradeStart$CS",
-	/*    13 */ "UpgradeData$C4c",
+	/*    13 */ "UpgradeData$C3c",
 	/*    14 */ "UpgradeError$C",
 	/*    15 */ "UpgradeErrorMsg$v4c",
 	/*    16 */ "UpgradeExec$vS",
@@ -110,22 +110,22 @@ const char *CTestboard::rpc_cmdName[] =
 	/*    96 */ "CalibratePixel$csss0s0i",
 	/*    97 */ "CalibrateDacScan$cssssss2s2i",
 	/*    98 */ "CalibrateDacDacScan$csssssssss2s2i",
-	/*    99 */ "TrimChip$s2s",
+	/*    99 */ "TrimChip$s1s",
 	/*   100 */ "CalibrateMap$ss2s2i2I",
-	/*   101 */ "TriggerRow$sss2ss",
+	/*   101 */ "TriggerRow$sss1ss",
 	/*   102 */ "TestColPixel$bCC2C",
-	/*   103 */ "Ethernet_Send$v4c",
+	/*   103 */ "Ethernet_Send$v3c",
 	/*   104 */ "Ethernet_RecvPackets$I",
-	/*   105 */ "LoopMultiRocAllPixelsCalibrate$v2CSS",
-	/*   106 */ "LoopMultiRocOnePixelCalibrate$v2CCCSS",
+	/*   105 */ "LoopMultiRocAllPixelsCalibrate$v1CSS",
+	/*   106 */ "LoopMultiRocOnePixelCalibrate$v1CCCSS",
 	/*   107 */ "LoopSingleRocAllPixelsCalibrate$vCSS",
 	/*   108 */ "LoopSingleRocOnePixelCalibrate$vCCCSS",
-	/*   109 */ "LoopMultiRocAllPixelsDacScan$v2CSSCCC",
-	/*   110 */ "LoopMultiRocOnePixelDacScan$v2CCCSSCCC",
+	/*   109 */ "LoopMultiRocAllPixelsDacScan$v1CSSCCC",
+	/*   110 */ "LoopMultiRocOnePixelDacScan$v1CCCSSCCC",
 	/*   111 */ "LoopSingleRocAllPixelsDacScan$vCSSCCC",
 	/*   112 */ "LoopSingleRocOnePixelDacScan$vCCCSSCCC",
-	/*   113 */ "LoopMultiRocAllPixelsDacDacScan$v2CSSCCCCCC",
-	/*   114 */ "LoopMultiRocOnePixelDacDacScan$v2CCCSSCCCCCC",
+	/*   113 */ "LoopMultiRocAllPixelsDacDacScan$v1CSSCCCCCC",
+	/*   114 */ "LoopMultiRocOnePixelDacDacScan$v1CCCSSCCCCCC",
 	/*   115 */ "LoopSingleRocAllPixelsDacDacScan$vCSSCCCCCC",
 	/*   116 */ "LoopSingleRocOnePixelDacDacScan$vCCCSSCCCCCC"
 };
@@ -148,7 +148,7 @@ uint16_t CTestboard::GetRpcVersion()
 	return rpc_par0;
 }
 
-int32_t CTestboard::GetRpcCallId(stringR &rpc_par1)
+int32_t CTestboard::GetRpcCallId(string &rpc_par1)
 { RPC_PROFILING
 	int32_t rpc_par0;
 	try {
@@ -157,11 +157,11 @@ int32_t CTestboard::GetRpcCallId(stringR &rpc_par1)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
+	rpc_Send(*rpc_io, rpc_par1);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
 	msg.Check(rpc_clientCallId,4);
 	rpc_par0 = msg.Get_INT32();
-	rpc_Receive(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(1); throw; };
 	return rpc_par0;
@@ -362,7 +362,7 @@ uint8_t CTestboard::UpgradeStart(uint16_t rpc_par1)
 	return rpc_par0;
 }
 
-uint8_t CTestboard::UpgradeData(stringR &rpc_par1)
+uint8_t CTestboard::UpgradeData(string &rpc_par1)
 { RPC_PROFILING
 	uint8_t rpc_par0;
 	try {
@@ -371,11 +371,11 @@ uint8_t CTestboard::UpgradeData(stringR &rpc_par1)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
+	rpc_Send(*rpc_io, rpc_par1);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
 	msg.Check(rpc_clientCallId,1);
 	rpc_par0 = msg.Get_UINT8();
-	rpc_Receive(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(13); throw; };
 	return rpc_par0;
@@ -1679,7 +1679,7 @@ int8_t CTestboard::CalibrateDacDacScan(int16_t rpc_par1, int16_t rpc_par2, int16
 	return rpc_par0;
 }
 
-int16_t CTestboard::TrimChip(vectorR<int16_t> &rpc_par1)
+int16_t CTestboard::TrimChip(vector<int16_t> &rpc_par1)
 { RPC_PROFILING
 	int16_t rpc_par0;
 	try {
@@ -1688,11 +1688,11 @@ int16_t CTestboard::TrimChip(vectorR<int16_t> &rpc_par1)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
+	rpc_Send(*rpc_io, rpc_par1);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
 	msg.Check(rpc_clientCallId,2);
 	rpc_par0 = msg.Get_INT16();
-	rpc_Receive(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(99); throw; };
 	return rpc_par0;
@@ -1720,7 +1720,7 @@ int16_t CTestboard::CalibrateMap(int16_t rpc_par1, vectorR<int16_t> &rpc_par2, v
 	return rpc_par0;
 }
 
-int16_t CTestboard::TriggerRow(int16_t rpc_par1, int16_t rpc_par2, vectorR<int16_t> &rpc_par3, int16_t rpc_par4)
+int16_t CTestboard::TriggerRow(int16_t rpc_par1, int16_t rpc_par2, vector<int16_t> &rpc_par3, int16_t rpc_par4)
 { RPC_PROFILING
 	int16_t rpc_par0;
 	try {
@@ -1732,11 +1732,11 @@ int16_t CTestboard::TriggerRow(int16_t rpc_par1, int16_t rpc_par2, vectorR<int16
 	msg.Put_INT16(rpc_par2);
 	msg.Put_INT16(rpc_par4);
 	msg.Send(*rpc_io);
+	rpc_Send(*rpc_io, rpc_par3);
 	rpc_io->Flush();
 	msg.Receive(*rpc_io);
 	msg.Check(rpc_clientCallId,2);
 	rpc_par0 = msg.Get_INT16();
-	rpc_Receive(*rpc_io, rpc_par3);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(101); throw; };
 	return rpc_par0;
@@ -1763,7 +1763,7 @@ bool CTestboard::TestColPixel(uint8_t rpc_par1, uint8_t rpc_par2, vectorR<uint8_
 	return rpc_par0;
 }
 
-void CTestboard::Ethernet_Send(stringR &rpc_par1)
+void CTestboard::Ethernet_Send(string &rpc_par1)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(103);
@@ -1771,10 +1771,7 @@ void CTestboard::Ethernet_Send(stringR &rpc_par1)
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(103); throw; };
 }
@@ -1797,7 +1794,7 @@ uint32_t CTestboard::Ethernet_RecvPackets()
 	return rpc_par0;
 }
 
-void CTestboard::LoopMultiRocAllPixelsCalibrate(vectorR<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3)
+void CTestboard::LoopMultiRocAllPixelsCalibrate(vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(105);
@@ -1807,15 +1804,12 @@ void CTestboard::LoopMultiRocAllPixelsCalibrate(vectorR<uint8_t> &rpc_par1, uint
 	msg.Put_UINT16(rpc_par2);
 	msg.Put_UINT16(rpc_par3);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(105); throw; };
 }
 
-void CTestboard::LoopMultiRocOnePixelCalibrate(vectorR<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5)
+void CTestboard::LoopMultiRocOnePixelCalibrate(vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(106);
@@ -1827,10 +1821,7 @@ void CTestboard::LoopMultiRocOnePixelCalibrate(vectorR<uint8_t> &rpc_par1, uint8
 	msg.Put_UINT16(rpc_par4);
 	msg.Put_UINT16(rpc_par5);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(106); throw; };
 }
@@ -1867,7 +1858,7 @@ void CTestboard::LoopSingleRocOnePixelCalibrate(uint8_t rpc_par1, uint8_t rpc_pa
 	} catch (CRpcError &e) { e.SetFunction(108); throw; };
 }
 
-void CTestboard::LoopMultiRocAllPixelsDacScan(vectorR<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6)
+void CTestboard::LoopMultiRocAllPixelsDacScan(vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(109);
@@ -1880,15 +1871,12 @@ void CTestboard::LoopMultiRocAllPixelsDacScan(vectorR<uint8_t> &rpc_par1, uint16
 	msg.Put_UINT8(rpc_par5);
 	msg.Put_UINT8(rpc_par6);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(109); throw; };
 }
 
-void CTestboard::LoopMultiRocOnePixelDacScan(vectorR<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8)
+void CTestboard::LoopMultiRocOnePixelDacScan(vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(110);
@@ -1903,10 +1891,7 @@ void CTestboard::LoopMultiRocOnePixelDacScan(vectorR<uint8_t> &rpc_par1, uint8_t
 	msg.Put_UINT8(rpc_par7);
 	msg.Put_UINT8(rpc_par8);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(110); throw; };
 }
@@ -1949,7 +1934,7 @@ void CTestboard::LoopSingleRocOnePixelDacScan(uint8_t rpc_par1, uint8_t rpc_par2
 	} catch (CRpcError &e) { e.SetFunction(112); throw; };
 }
 
-void CTestboard::LoopMultiRocAllPixelsDacDacScan(vectorR<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9)
+void CTestboard::LoopMultiRocAllPixelsDacDacScan(vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(113);
@@ -1965,15 +1950,12 @@ void CTestboard::LoopMultiRocAllPixelsDacDacScan(vectorR<uint8_t> &rpc_par1, uin
 	msg.Put_UINT8(rpc_par8);
 	msg.Put_UINT8(rpc_par9);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(113); throw; };
 }
 
-void CTestboard::LoopMultiRocOnePixelDacDacScan(vectorR<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11)
+void CTestboard::LoopMultiRocOnePixelDacDacScan(vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11)
 { RPC_PROFILING
 	try {
 	uint16_t rpc_clientCallId = rpc_GetCallId(114);
@@ -1991,10 +1973,7 @@ void CTestboard::LoopMultiRocOnePixelDacDacScan(vectorR<uint8_t> &rpc_par1, uint
 	msg.Put_UINT8(rpc_par10);
 	msg.Put_UINT8(rpc_par11);
 	msg.Send(*rpc_io);
-	rpc_io->Flush();
-	msg.Receive(*rpc_io);
-	msg.Check(rpc_clientCallId,0);
-	rpc_Receive(*rpc_io, rpc_par1);
+	rpc_Send(*rpc_io, rpc_par1);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(114); throw; };
 }
