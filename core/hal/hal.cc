@@ -158,23 +158,23 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     LOG(logINFO) << "Starting DTB firmware upgrade...";
 
     // Reading lines of file:
-    string line;
+    std::string line;
     size_t file_lines;
     for (file_lines = 0; getline(flashFile, line); ++file_lines)
       ;
     flashFile.clear(flashFile.goodbit);
-    flashFile.seekg(ios::beg);
+    flashFile.seekg(std::ios::beg);
 
     // Check if upgrade is possible
     if (_testboard->UpgradeStart(0x0100) != 0) {
-      string msg;
+      std::string msg;
       _testboard->UpgradeErrorMsg(msg);
       LOG(logCRITICAL) << "UPGRADE: " << msg.data();
       return false;
     }
 
     // Download the flash data
-    string rec;
+    std::string rec;
     uint16_t recordCount = 0;
     LOG(logINFO) << "Download running... ";
 
@@ -186,7 +186,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 	if (rec.size() == 0) continue;
 	recordCount++;
 	if (_testboard->UpgradeData(rec) != 0) {
-	  string msg;
+	  std::string msg;
 	  _testboard->UpgradeErrorMsg(msg);
 	  LOG(logCRITICAL) << "UPGRADE: " << msg.data();
 	  return false;
@@ -200,7 +200,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     }
       
     if (_testboard->UpgradeError() != 0) {
-      string msg;
+      std::string msg;
       _testboard->UpgradeErrorMsg(msg);
       LOG(logCRITICAL) << "UPGRADE: " << msg.data();
       return false;
@@ -300,7 +300,7 @@ bool hal::CheckCompatibility(){
     int32_t dtb_callcount = _testboard->GetRpcCallCount();
     int32_t host_callcount = _testboard->GetHostRpcCallCount();
 
-    for(int id = 0; id < max(dtb_callcount,host_callcount); id++) {
+    for(int id = 0; id < std::max(dtb_callcount,host_callcount); id++) {
       std::string dtb_callname;
       std::string host_callname;
 
