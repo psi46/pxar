@@ -1,0 +1,19 @@
+  1       Vdig   6
+  2       Vana  78
+  3        Vsf  30
+  4      Vcomp  12
+  7     VwllPr 150
+  9     VwllSh 150
+ 10    VhldDel 250
+ 11      Vtrim  29
+ 12   VthrComp  75
+ 13 VIBias_Bus  30
+ 17   PHOffset 170
+ 19  Vcomp_ADC  50
+ 20    PHScale 130
+ 22    VIColOr  20
+ 25       Vcal 200
+ 26     CalDel 110
+253    CtrlReg   0
+254        WBC  98
+255   Readback   0

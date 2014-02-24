@@ -82,6 +82,7 @@ void PixTestSetup::setToolTips() {
 void PixTestSetup::bookHist(string name) {
 
   fDirectory->cd(); 
+  LOG(logDEBUG) << "nothing done with " << name;
 
 }
 

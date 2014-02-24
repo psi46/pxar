@@ -266,32 +266,30 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
   TH1* h1(0); 
   fDirectory->cd();
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h1 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+    h1 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
 		  52, 0., 52., 80, 0., 80.);
     resultMaps.push_back(h1); 
+    fHistOptions.insert(make_pair(h1, "colz"));
   }
   
   int ic, ir, iroc, val; 
   LOG(logDEBUG) << "start threshold map for dac = " << dac; 
-  std::vector<pixel> results = fApi->getThresholdMap(dac, 0, ntrig);
-  LOG(logDEBUG) << "finished threshold map for dac = " << dac; 
+
+  std::vector<pixel> results = fApi->getThresholdMap(dac, FLAG_RISING_EDGE, ntrig);
+  LOG(logDEBUG) << "finished threshold map for dac = " << dac << " results size = " << results.size(); 
   for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
     ic =   results[ipix].column; 
     ir =   results[ipix].row; 
-    iroc = id2idx[results[ipix].roc_id]; 
+    iroc = fId2Idx[results[ipix].roc_id]; 
     val =  results[ipix].value;
-    //    LOG(logDEBUG) << resultMaps[iroc]->GetName() << " roc/col/row = " << iroc << "/" << ic << "/" << ir << " val = " << val;
     ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
   }
   copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  if (h1) h1->Draw("colz");
+  if (h1) h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   
   return resultMaps; 
@@ -584,13 +582,16 @@ void PixTest::sparseRoc(int npix) {
   if (npix < 11) {
     for (int i = 0; i < npix; ++i) {
       fApi->_dut->testPixel(5*i, 5*i, true);  
+      fApi->_dut->maskPixel(5*i, 5*i, false);  
     }
     return;
   } else if (npix < 101) {
     for (int i = 0; i < 50; ++i) {
       fApi->_dut->testPixel(i, 5 + 0.5*i, true);  
+      fApi->_dut->maskPixel(i, 5 + 0.5*i, false);  
       ++cnt;
       fApi->_dut->testPixel(i, 15 + 0.5*i, true);  
+      fApi->_dut->maskPixel(i, 15 + 0.5*i, false);  
       ++cnt;
       if (cnt == npix) return;
     }
@@ -598,13 +599,16 @@ void PixTest::sparseRoc(int npix) {
     for (int i = 0; i < 50; ++i) {
       for (int j = 0; j < 10; ++j) {
 	fApi->_dut->testPixel(i, i + 2*j, true);  
+	fApi->_dut->maskPixel(i, i + 2*j, false);  
 	fApi->_dut->testPixel(i, i + 5*j, true);  
+	fApi->_dut->maskPixel(i, i + 5*j, false);  
 	++cnt; 
 	if (cnt == npix) return;
       }
     }
   } else{
     fApi->_dut->testAllPixels(true);
+    fApi->_dut->maskAllPixels(false);
   }
 }
 
@@ -662,4 +666,70 @@ string PixTest::getHistOption(TH1* h) {
     if (h == pos->first) return pos->second;
   }
   return string("");
+}
+
+
+// ----------------------------------------------------------------------
+vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
+
+  vector<pair<uint8_t, vector<pixel> > > scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, 0, ntrig);
+  LOG(logDEBUG) << " getMaximumVthrComp.size(): " << scans.size();
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  vector<TH1*> scanHists;
+  vector<int> npixels; 
+  TH1* h1;
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    h1 = bookTH1D(Form("maxVthrComp_C%d", rocIds[iroc]),  Form("maxVthrComp_C%d", rocIds[iroc]),  255, 0., 255.);
+    scanHists.push_back(h1); 
+    npixels.push_back(fApi->_dut->getNEnabledPixels(rocIds[iroc])); 
+  }
+
+  int idx(-1); 
+  for (unsigned int i = 0; i < scans.size(); ++i) {
+    pair<uint8_t, vector<pixel> > v = scans[i];
+    int idac = v.first; 
+    
+    vector<pixel> vpix = v.second;
+    for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
+      idx = fId2Idx[vpix[ipix].roc_id]; 
+      scanHists[idx]->Fill(idac, vpix[ipix].value); 
+    }
+  }
+
+  vector<int> results; 
+  for (unsigned int i = 0; i < scanHists.size(); ++i) {
+    scanHists[i]->Draw();
+    update();
+    bool onPlateau(false); 
+    int idac(1); 
+    int plateau = ntrig*npixels[i];
+    for (idac = 1; idac < 255; ++idac) {
+      if (scanHists[i]->GetBinContent(idac) > frac*plateau
+	  && scanHists[i]->GetBinContent(idac+1) > frac*plateau
+	  && scanHists[i]->GetBinContent(idac+2) > frac*plateau
+	  && scanHists[i]->GetBinContent(idac+3) > frac*plateau
+	  ) {
+	onPlateau = true;
+      } else {
+	if (onPlateau) {
+	  break;
+	}
+      }
+    }
+    idac -= reserve; 
+    fHistList.push_back(scanHists[i]); 
+    results.push_back(idac); 
+  }
+  return results;
+}
+
+
+// ----------------------------------------------------------------------
+int PixTest::getIdFromIdx(int idx) {
+  map<int, int>::iterator end = fId2Idx.end(); 
+  for (map<int, int>::iterator il = fId2Idx.begin(); il != end; ++il) {
+    if (il->second == idx) return il->first;
+  }
+  return -1; 
 }
