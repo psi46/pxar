@@ -29,8 +29,6 @@
 #define RPC_THREAD_UNLOCK
 #endif
 
-using namespace std;
-
 #define RPC_TYPE_ATB      0x8F
 #define RPC_TYPE_DTB      0xC0
 #define RPC_TYPE_DTB_DATA 0xC1
@@ -49,7 +47,7 @@ extern const char rpc_timestamp[];
 	{ \
 		int id = rpc_cmdId[x]; \
 		if (id >= 0) return id; \
-		string name(rpc_cmdName[x]); \
+		std::string name(rpc_cmdName[x]); \
 		rpc_cmdId[x] = id = GetRpcCallId(name); \
 		if (id >= 0) return id; \
 		throw CRpcError(CRpcError::UNKNOWN_CMD); \
@@ -127,8 +125,8 @@ public:
 
 // === data =================================================================
 
-#define vectorR vector
-#define stringR string
+#define vectorR std::vector
+#define stringR std::string
 
 
 class CDataHeader
@@ -149,14 +147,14 @@ void rpc_DataSink(CRpcIo &rpc_io, uint16_t size);
 
 
 template <class T>
-inline void rpc_Send(CRpcIo &rpc_io, const vector<T> &x)
+inline void rpc_Send(CRpcIo &rpc_io, const std::vector<T> &x)
 {
 	rpc_SendRaw(rpc_io, 0, &(x[0]), sizeof(T)*x.size());
 }
 
 
 template <class T>
-void rpc_Receive(CRpcIo &rpc_io, vector<T> &x)
+void rpc_Receive(CRpcIo &rpc_io, std::vector<T> &x)
 {
 	CDataHeader msg;
 	msg.RecvHeader(rpc_io);
@@ -170,15 +168,15 @@ void rpc_Receive(CRpcIo &rpc_io, vector<T> &x)
 }
 
 
-inline void rpc_Send(CRpcIo &rpc_io, const string &x)
+inline void rpc_Send(CRpcIo &rpc_io, const std::string &x)
 {
 	rpc_SendRaw(rpc_io, 0, x.c_str(), x.length());
 }
 
 
-void rpc_Receive(CRpcIo &rpc_io, string &x);
+void rpc_Receive(CRpcIo &rpc_io, std::string &x);
 
 
 // === tools ================================================================
 
-void rpc_TranslateCallName(const string &in, string &out);
+void rpc_TranslateCallName(const std::string &in, std::string &out);
