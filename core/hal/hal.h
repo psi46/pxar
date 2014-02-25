@@ -43,6 +43,10 @@ namespace pxar {
      */
     bool flashTestboard(std::ifstream& flashFile);
 
+    /** Initialize NIOS storage for trim bits with the available I2C address space
+     */
+    void initNIOS(std::vector<uint8_t> roc_i2c);
+
     /** Initialize attached TBMs with their settings and configuration
      */
     void initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector);
@@ -268,7 +272,7 @@ namespace pxar {
 
     /** Mask all pixels on a specific ROC rocId
      */
-    void RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels = std::vector<pixelConfig>());
+    void RocSetMask(uint8_t rocid, std::vector<pixelConfig> pixels = std::vector<pixelConfig>());
 
     /** Mask the specified pixel on ROC rocId
      */

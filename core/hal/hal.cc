@@ -222,6 +222,15 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
+void hal::initNIOS(std::vector<uint8_t> roc_i2c) {
+
+  LOG(logDEBUGHAL) << "Writing the following available I2C devices into NIOS storage:";
+  LOG(logDEBUGHAL) << listVector(roc_i2c);
+
+  // Write all ROC I2C addresses to the NIOS storage:
+  _testboard->SetI2CAddresses(roc_i2c);
+}
+
 void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
 
   // Turn the TBM on:
@@ -496,10 +505,29 @@ bool hal::tbmSetReg(uint8_t /*tbmId*/, uint8_t regId, uint8_t regValue) {
   return true;
 }
 
-void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) {
+void hal::RocSetMask(uint8_t rocid, std::vector<pixelConfig> pixels) {
 
-  _testboard->roc_I2cAddr(rocid);
-  
+  // Prepare the trim vector containing both mask bit and trim bits:
+  std::vector<int8_t> trim;
+
+  // Set the default to "masked":
+  for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(15); }
+
+  // Write the information from the pixel configs:
+  for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
+    size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
+    if(pxIt->mask) trim[position] = -1;
+    else trim[position] = pxIt->trim;
+  }
+
+  LOG(logDEBUGHAL) << "Updating trimming & masking configuration for ROC with I2C address " 
+		   << static_cast<int>(rocid) << " on the NIOS.";
+
+  _testboard->SetTrimValues(rocid,trim);
+
+  /*
+  //_testboard->roc_I2cAddr(rocid);
+
   // Check if we want to mask or unmask&trim:
   if(mask) {
     // This is quite easy:
@@ -530,6 +558,7 @@ void hal::RocSetMask(uint8_t rocid, bool mask, std::vector<pixelConfig> pixels) 
     // Trim the whole ROC:
     _testboard->TrimChip(trim);
   }
+  */
 }
 
 void hal::PixelSetMask(uint8_t rocid, uint8_t column, uint8_t row, bool mask, uint8_t trim) {
