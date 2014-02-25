@@ -270,6 +270,9 @@ bool api::programDUT() {
 
   // Start programming the devices here!
 
+  // Write all configured DUT I2C addresses to the NIOS storage:
+  _hal->initNIOS(_dut->getRocI2Caddr());
+
   // FIXME Device types not transmitted yet!
 
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
@@ -1196,7 +1199,8 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   timer t;
 
   // Do the masking/unmasking&trimming for all ROCs first
-  MaskAndTrim(true);
+  // FIXME masking all:
+  MaskAndTrim(false);
 
   // check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
@@ -1641,6 +1645,10 @@ void api::MaskAndTrim(bool trim) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
+    // Build vector containing trim and mask for this ROC:
+    _hal->RocSetMask(rocit->i2c_address, rocit->pixels);
+
+    /*
     // Check if we can run on full ROCs:
     uint16_t masked = _dut->getNMaskedPixels(static_cast<uint8_t>(rocit-_dut->roc.begin()));
     LOG(logDEBUGAPI) << "ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
@@ -1689,6 +1697,8 @@ void api::MaskAndTrim(bool trim) {
 	if(pxit->mask == false) {_hal->PixelSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
       }
     }
+*/
+
   }
 
 }
