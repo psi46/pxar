@@ -596,6 +596,7 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
   // Call the RPC command containing the trigger loop:
   _testboard->LoopMultiRocAllPixelsCalibrate(rocids, nTriggers, flags);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -604,7 +605,6 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -627,6 +627,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, 
   // Call the RPC command containing the trigger loop:
   _testboard->LoopMultiRocOnePixelCalibrate(rocids, column, row, nTriggers, flags);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -635,7 +636,6 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, 
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
 
   return data;
@@ -658,6 +658,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   // Call the RPC command containing the trigger loop:
   _testboard->LoopSingleRocAllPixelsCalibrate(rocid, nTriggers, flags);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -666,7 +667,6 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -687,6 +687,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t colum
   // Call the RPC command containing the trigger loop:
   _testboard->LoopSingleRocOnePixelCalibrate(rocid, column, row, nTriggers, flags);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -695,7 +696,6 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t colum
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
 
   return data;
@@ -724,6 +724,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
   // Call the RPC command containing the trigger loop:
   _testboard->LoopMultiRocAllPixelsDacScan(rocids, nTriggers, flags, dacreg, dacmin, dacmax);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -732,7 +733,6 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -761,6 +761,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
   // Call the RPC command containing the trigger loop:
   _testboard->LoopMultiRocOnePixelDacScan(rocids, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -769,7 +770,6 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -797,6 +797,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
   // Call the RPC command containing the trigger loop:
   _testboard->LoopSingleRocAllPixelsDacScan(rocid, nTriggers, flags, dacreg, dacmin, dacmax);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -805,7 +806,6 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -830,6 +830,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
   // Call the RPC command containing the trigger loop:
   _testboard->LoopSingleRocOnePixelDacScan(rocid, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -838,7 +839,6 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -871,6 +871,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
   // Call the RPC command containing the trigger loop:
   _testboard->LoopMultiRocAllPixelsDacDacScan(rocids, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -879,7 +880,6 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -914,6 +914,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
   // Call the RPC command containing the trigger loop:
   _testboard->LoopMultiRocOnePixelDacDacScan(rocids, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -922,7 +923,6 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -957,6 +957,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
   // Call the RPC command containing the trigger loop:
   _testboard->LoopSingleRocAllPixelsDacDacScan(rocid, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -965,7 +966,6 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
@@ -997,6 +997,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t colu
   // Call the RPC command containing the trigger loop:
   _testboard->LoopSingleRocOnePixelDacDacScan(rocid, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
   LOG(logDEBUGHAL) << "Loop finished, " << daqBufferStatus() << " words in buffer, loop took " << t << "ms.";
+  daqStop();
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
@@ -1005,7 +1006,6 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t colu
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
-  daqStop();
   daqClear();
   return data;
 }
