@@ -92,8 +92,9 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
 	  }
 	}
       }
-      else if(trig == 0) { found = true; std::cout << "o"; }
-      if(!found) std::cout << " ";
+
+      if(!found && trig == 0) { std::cout << "o"; }
+      else if(!found) std::cout << " ";
     }
     std::cout << std::endl;
   }
@@ -337,6 +338,12 @@ int main(int argc, char* argv[]) {
       std::cout << "I2C " << (int)(*it) << ", ";
     }
     std::cout << std::endl;
+
+    // Fetch all the DACs with names from the DUT:
+    std::vector<std::pair<std::string,uint8_t> > dutdacs = _api->_dut->getDACs(0);
+    for(std::vector<std::pair<std::string,uint8_t> >::iterator it = dutdacs.begin(); it != dutdacs.end(); ++it) {
+      std::cout << "Name: " << it->first << ", value: " << (int)(it->second) << std::endl;
+    }
 
     // ##########################################################
     // Call the first real test (pixel efficiency map):

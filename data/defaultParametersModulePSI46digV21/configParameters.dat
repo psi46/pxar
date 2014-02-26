@@ -1,0 +1,34 @@
+testboardName *
+
+-- parameter files
+
+tbParameters tbParameters.dat
+dacParameters dacParameters
+tbmParameters tbmParameters.dat
+trimParameters trimParameters
+testParameters testParameters.dat
+maskFile defaultMaskFile.dat
+rootFileName pxar.root
+
+-- configuration
+
+nModules 1
+nRocs 16
+nTbms 1
+hubId 31
+tbmEnable 1
+tbmEmulator 0
+hvOn 1
+tbmChannel 0
+rocType psi46digv2.1
+tbmType tbm08
+
+halfModule 0
+
+-- voltages and current limits
+
+ia 1.190
+id 1.100
+va 1.900
+vd 2.600
+

@@ -2,13 +2,22 @@
 
 INCLUDE_DIRECTORIES(rpc usb hal utils)
 
-FILE(GLOB LIB_SOURCE_FILES 
-  "rpc/*.cpp"
-  "api/*.cc"
+SET(LIB_SOURCE_FILES
+  # RPC
+  "rpc/rpc_calls.cpp"
+  "rpc/rpc.cpp"
+  "rpc/rpc_error.cpp"
+  "rpc/rpc_io.cpp"
+  # API
+  "api/api.cc"
+  "api/datatypes.cc"
+  "api/dut.cc"
+  # HAL (w/o hal.cc, see below)
   "hal/datapipe.cc"
-  "utils/*.cc"
+  # Utils
   )
 
+# option to replace HAL implementation with "dummy" HAL (for testing of UI code w/o DTB)
 option(BUILD_dummydtb "Replace HAL with dummy implementation ('virtual DTB')?" OFF)
 IF(BUILD_dummydtb)
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/dummy_hal.cc")
@@ -16,18 +25,11 @@ ELSE(BUILD_dummydtb)
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} "hal/hal.cc")
 ENDIF(BUILD_dummydtb)
 
-FILE(GLOB LIB_HEADER_FILES
-  "rpc/*.h"
-  "usb/*.h"
-  "api/*.h"
-  "hal/*.h"
-  "utils/*.h"
-  )
-
+# add USB source files (depending on FTDI library used)
 IF(USE_FTD2XX)
-  FILE(GLOB SOURCE_FILES_FTDI "usb/USBInterface.libftd2xx.cc")
+  SET(SOURCE_FILES_FTDI "usb/USBInterface.libftd2xx.cc")
 ELSE(USE_FTD2XX)
-  FILE(GLOB SOURCE_FILES_FTDI "usb/USBInterface.libftdi.cc")
+  SET(SOURCE_FILES_FTDI "usb/USBInterface.libftdi.cc")
 ENDIF(USE_FTD2XX)
 SET(LIB_SOURCES ${LIB_SOURCE_FILES} ${SOURCE_FILES_FTDI})
 

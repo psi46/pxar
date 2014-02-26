@@ -22,15 +22,15 @@ namespace pxar {
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
      */
-  pixel() : roc_id(0), column(0), row(0), value(0) {};
+  pixel() : roc_id(0), column(0), row(0), value(0) {}
 
     /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(int32_t address, int32_t data) : value(data) { decode(address); };
+  pixel(int32_t address, int32_t data) : value(data) { decode(address); }
 
     /** Constructor for pixel objects with rawdata pixel address & value initialization.
      */
-  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); };
+  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
 
     /** Function to fill the pixel with linear encoded data from RPC transfer.
      *  The address transmitted from the NIOS soft core is encoded in the following
@@ -49,24 +49,8 @@ namespace pxar {
       roc_id = (address>>16)&15;
       column = (address>>8)&63;
       row = (address)&127;
-    };
-    // FIXME does not work with inverted address yet!
-    inline void decodeRaw(uint32_t raw, bool invert) {
-      value = (raw & 0x0f) + ((raw >> 1) & 0xf0);
-      int c =    (raw >> 21) & 7;
-      c = c*6 + ((raw >> 18) & 7);
-
-      int r2 =    (raw >> 15) & 7;
-      if(invert) { r2 ^= 0x7; }
-      int r1 = (raw >> 12) & 7;
-      if(invert) { r1 ^= 0x7; }
-      int r0 = (raw >>  9) & 7;
-      if(invert) { r0 ^= 0x7; }
-      int r = r2*36 + r1*6 + r0;
-
-      row = 80 - r/2;
-      column = 2*c + (r&1);
-    };
+    }
+    void decodeRaw(uint32_t raw, bool invert);
     uint8_t roc_id;
     uint8_t column;
     uint8_t row;
@@ -78,7 +62,7 @@ namespace pxar {
       return ((px.roc_id == roc_id )
 	      && (px.column == column)
 	      && (px.row == row));
-    };
+    }
 
     /** Overloaded < operator
      */
@@ -100,15 +84,15 @@ namespace pxar {
 	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
 	  << "," << static_cast<int>(px.value) << "]";
       return out;
-    };
+    }
   };
 
   /** Class to store Events containing a header and a std::vector of pixels
    */
   class DLLEXPORT Event {
   public:
-  Event() : header(0), trailer(0), pixels() {};
-    void Clear() { header = 0; trailer = 0; pixels.clear(); };
+  Event() : header(0), trailer(0), pixels() {}
+    void Clear() { header = 0; trailer = 0; pixels.clear(); }
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
@@ -120,7 +104,7 @@ namespace pxar {
       for (std::vector<pixel>::iterator it = evt.pixels.begin(); it != evt.pixels.end(); ++it)
 	out << (*it) << " ";
       return out;
-    };
+    }
   };
 
 
@@ -130,21 +114,21 @@ namespace pxar {
    */
   class rawEvent {
   public:
-  rawEvent() : data(), flags(0) {};
+  rawEvent() : data(), flags(0) {}
     void SetStartError() { flags |= 1; }
     void SetEndError()   { flags |= 2; }
     void SetOverflow()   { flags |= 4; }
-    void ResetStartError() { flags &= ~1; }
-    void ResetEndError()   { flags &= ~2; }
-    void ResetOverflow()   { flags &= ~4; }
+    void ResetStartError() { flags &= static_cast<unsigned int>(~1); }
+    void ResetEndError()   { flags &= static_cast<unsigned int>(~2); }
+    void ResetOverflow()   { flags &= static_cast<unsigned int>(~4); }
     void Clear() { flags = 0; data.clear(); }
     bool IsStartError() { return (flags & 1) != 0; }
     bool IsEndError()   { return (flags & 2) != 0; }
     bool IsOverflow()   { return (flags & 4) != 0; }
 	
-    unsigned int GetSize() { return data.size(); }
+    size_t GetSize() { return data.size(); }
     void Add(uint16_t value) { data.push_back(value); }
-    uint16_t operator[](int index) { return data.at(index); }
+    uint16_t operator[](size_t index) { return data.at(index); }
 
     std::vector<uint16_t> data;
 
@@ -163,7 +147,7 @@ namespace pxar {
       for (std::vector<uint16_t>::iterator it = record.data.begin(); it != record.data.end(); ++it)
 	out << std::hex << (*it) << std::dec << " ";
       return out;
-    };
+    }
   };
 
   /** Class to store the configuration for single pixels (i.e. their mask state,
@@ -174,10 +158,10 @@ namespace pxar {
   public:
   pixelConfig() : 
     column(0), row(0), 
-      trim(15), mask(true), enable(false) {};
+      trim(15), mask(true), enable(false) {}
   pixelConfig(uint8_t _column, uint8_t _row, uint8_t _trim) : 
     column(_column), row(_row), trim(_trim),
-      mask(true), enable(false) {};
+      mask(true), enable(false) {}
     uint8_t column;
     uint8_t row;
     uint8_t roc_id;
@@ -193,7 +177,7 @@ namespace pxar {
    */
   class DLLEXPORT rocConfig {
   public:
-  rocConfig() : pixels(), dacs(), type(0), enable(true) {};
+  rocConfig() : pixels(), dacs(), type(0), enable(true) {}
     std::vector< pixelConfig > pixels;
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
@@ -207,7 +191,7 @@ namespace pxar {
    */
   class DLLEXPORT tbmConfig {
   public:
-  tbmConfig() : dacs(), type(0), enable(true) {};
+  tbmConfig() : dacs(), type(0), enable(true) {}
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
     bool enable;

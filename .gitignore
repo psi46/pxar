@@ -13,3 +13,6 @@ obj/
 *~
 .*
 \#*
+
+# auto-generated files should not be added 
+usertests/PixUserTestFactory.cc

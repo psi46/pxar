@@ -28,7 +28,7 @@ using namespace pxar;
 void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
 void runTest(PixTest *b);
 
-
+ 
 
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){

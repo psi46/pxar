@@ -10,6 +10,7 @@ ENDIF(COMMAND CMAKE_POLICY)
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
 SET(PXAR_VERSION "0.5.0")
+SET(PXAR_FW_VERSION "1.26")
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -27,7 +28,9 @@ IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
-    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD | "sed 's,^release-,,;s,-,+,;s,-,~,;'" OUTPUT_VARIABLE PXAR_LIB_VERSION) 
+    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE PXAR_LIB_VERSION)
+    STRING(REGEX REPLACE "^release-" "" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
+    STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
     MESSAGE("-- Determined API version ${PXAR_LIB_VERSION}.")
   ELSE(GIT_FOUND)
     SET(PXAR_LIB_VERSION PXAR_VERSION)
@@ -165,14 +168,21 @@ ADD_SUBDIRECTORY(core)
 option(BUILD_pxarui  "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
 IF(BUILD_pxarui)
 
+  # this UI and its libraries depend on ROOT:
+  FIND_PACKAGE(ROOT REQUIRED)
+  INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
+
+  # Build the tests and test library
+  ADD_SUBDIRECTORY(util)
+
+  # Build the tests and test library
+  ADD_SUBDIRECTORY(tests)
+
   # Build the pXar executable
   ADD_SUBDIRECTORY(main)
 
   # Build the pXar GUI
   ADD_SUBDIRECTORY(gui)
-
-  # Build the tests and test library
-  ADD_SUBDIRECTORY(tests)
 
 ENDIF(BUILD_pxarui)
 

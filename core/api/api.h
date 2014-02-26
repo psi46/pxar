@@ -575,7 +575,7 @@ namespace pxar {
     /** Default DUT constructor
      */
     dut() : _initialized(false), _programmed(false), roc(), tbm(), sig_delays(),
-      va(0), vd(0), ia(0), id(0), pg_setup() {};
+      va(0), vd(0), ia(0), id(0), pg_setup() {}
 
     // GET functions to read information
 
@@ -585,27 +585,27 @@ namespace pxar {
 
     /** Function returning the number of enabled pixels on a specific ROC:
      */
-    int32_t getNEnabledPixels(uint8_t rocid);
+    size_t getNEnabledPixels(uint8_t rocid);
 
     /** Function returning the number of masked pixels on a specific ROC:
      */
-    int32_t getNMaskedPixels(uint8_t rocid);
+    size_t getNMaskedPixels(uint8_t rocid);
 
     /** Function returning the number of enabled TBMs:
      */
-    int32_t getNEnabledTbms();
+    size_t getNEnabledTbms();
 
     /** Function returning the number of TBMs:
      */
-    int32_t getNTbms();
+    size_t getNTbms();
 
     /** Function returning the number of enabled ROCs:
      */
-    int32_t getNEnabledRocs();
+    size_t getNEnabledRocs();
 
     /** Function returning the number of ROCs:
      */
-    int32_t getNRocs();
+    size_t getNRocs();
 
     /** Function returning the enabled pixels configs for a specific ROC:
      */

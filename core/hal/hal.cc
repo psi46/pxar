@@ -2,8 +2,14 @@
 #include "log.h"
 #include "timer.h"
 #include "helper.h"
+#include "config.h"
 #include "constants.h"
 #include <fstream>
+#include <algorithm>
+
+#ifdef WIN32
+#define NOMINMAX
+#endif
 
 using namespace pxar;
 
@@ -157,23 +163,23 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     LOG(logINFO) << "Starting DTB firmware upgrade...";
 
     // Reading lines of file:
-    string line;
+    std::string line;
     size_t file_lines;
     for (file_lines = 0; getline(flashFile, line); ++file_lines)
       ;
     flashFile.clear(flashFile.goodbit);
-    flashFile.seekg(ios::beg);
+    flashFile.seekg(std::ios::beg);
 
     // Check if upgrade is possible
     if (_testboard->UpgradeStart(0x0100) != 0) {
-      string msg;
+      std::string msg;
       _testboard->UpgradeErrorMsg(msg);
       LOG(logCRITICAL) << "UPGRADE: " << msg.data();
       return false;
     }
 
     // Download the flash data
-    string rec;
+    std::string rec;
     uint16_t recordCount = 0;
     LOG(logINFO) << "Download running... ";
 
@@ -185,7 +191,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 	if (rec.size() == 0) continue;
 	recordCount++;
 	if (_testboard->UpgradeData(rec) != 0) {
-	  string msg;
+	  std::string msg;
 	  _testboard->UpgradeErrorMsg(msg);
 	  LOG(logCRITICAL) << "UPGRADE: " << msg.data();
 	  return false;
@@ -199,7 +205,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     }
       
     if (_testboard->UpgradeError() != 0) {
-      string msg;
+      std::string msg;
       _testboard->UpgradeErrorMsg(msg);
       LOG(logCRITICAL) << "UPGRADE: " << msg.data();
       return false;
@@ -299,7 +305,7 @@ bool hal::CheckCompatibility(){
     int32_t dtb_callcount = _testboard->GetRpcCallCount();
     int32_t host_callcount = _testboard->GetHostRpcCallCount();
 
-    for(int id = 0; id < max(dtb_callcount,host_callcount); id++) {
+    for(int id = 0; id < std::max(dtb_callcount,host_callcount); id++) {
       std::string dtb_callname;
       std::string host_callname;
 
@@ -314,7 +320,8 @@ bool hal::CheckCompatibility(){
     }
 
     // For now, just print a message and don't to anything else:
-    LOG(logCRITICAL) << "Please update your DTB with the correct flash file!";
+    LOG(logCRITICAL) << "Please update your DTB with the correct flash file.";
+    LOG(logCRITICAL) << "Get Firmware " << PACKAGE_FIRMWARE << " from " << PACKAGE_FIRMWARE_URL;
     return false;
   }
   else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
@@ -644,7 +651,10 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  int expected = nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
+
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(rocid) << ".";
+  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -657,7 +667,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We are expecting one Event per pixel per trigger, only one ROC is triggered:
-  int missing = nTriggers*ROC_NUMROWS*ROC_NUMCOLS - data.size();
+  int missing = expected - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -777,10 +787,13 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
   uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
+  int expected = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
+
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax);
+  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
 
  // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -793,7 +806,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC value per trigger per pixel:
-  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+  int missing = expected - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
@@ -930,6 +943,8 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
   uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  int expected = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
+
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
 
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
@@ -938,6 +953,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
 		   << " vs. DAC " << static_cast<int>(dac2reg) 
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max);
+  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
 
   // Prepare for data acquisition:
   daqStart(deser160phase,nTBMs);
@@ -950,7 +966,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We expect one Event per DAC1 value per DAC2 value per trigger per pixel:
-  int missing = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+  int missing = expected - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.

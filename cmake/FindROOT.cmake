@@ -13,6 +13,7 @@
 SET(ROOT_CONFIG_SEARCHPATH
   ${SIMPATH}/tools/root/bin
   $ENV{ROOTSYS}/bin
+  /usr/local/bin
   /opt/local/bin
   /root/bin
 )

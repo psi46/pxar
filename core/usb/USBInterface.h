@@ -70,7 +70,7 @@ public:
   bool Enum(char name[], uint32_t pos);
   bool Open(char serialNumber[]);
   void Close();
-  bool Connected() { return isUSB_open; };
+  bool Connected() { return isUSB_open; }
   void Write(uint32_t bytesToWrite, const void *buffer);
   void WriteCommand(unsigned char x);
   void Flush();

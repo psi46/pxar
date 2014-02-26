@@ -1,0 +1,76 @@
+-- CurVsDac
+DAC Vana
+
+
+-- DAQ
+Ntrig 100
+
+-- DacScan
+Ntrig 10
+DAC   caldel
+DACLO 0
+DACHI 250
+PIX1  11,20 
+PIX2  20,30 
+PIX3  40,50 
+
+-- DacDacScan
+Ntrig 10
+DAC1   caldel
+DAC1LO 0
+DAC1HI 150
+DAC2   vthrcomp
+DAC2LO 0
+DAC2HI 150
+PIX1   11,20 
+
+-- PixelAlive 
+Ntrig 10
+Vcal 200
+
+-- PhDacScan
+Ntrig 10
+DAC   Vcal
+DACLO 0
+DACHI 200
+PIX1  11,20
+
+-- Pretest
+targetIa      24
+setVana       button
+noiseWidth    22
+noiseMargin   15
+setVthrCompId button
+PIX           11,20 
+Ntrig         10
+setCalDel     button
+SaveDacs      button
+
+-- Scurves
+Ntrig 50
+Npix  10
+DAC   Vcal 
+DacLo 0
+DacHi 100
+
+-- Setup
+Ntrig 10
+Vcal 200
+
+-- Trim
+TrimBits button
+Ntrig       10
+Vcal        40
+VcalLo      25 
+VcalHi      75 
+VthrCompLo  0 
+VthrCompHi  50 
+
+-- Ph
+Ntrig 10
+DAC   Vcal
+DACLO 0
+DACHI 200
+PIX1  11,20
+DAC2  PHOffset
+DAC2Range 0,256,16
