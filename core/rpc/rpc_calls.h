@@ -47,26 +47,26 @@ public:
 	  if (!usb.Open(&(name[0]))) return false;
 	  if (init) Init();
 	  return true;
-	};
+	}
 
 	void Close() {
 	  usb.Close();
 	  rpc_Clear();
-	};
+	}
 
-	bool EnumFirst(unsigned int &nDevices) { return usb.EnumFirst(nDevices); };
+	bool EnumFirst(unsigned int &nDevices) { return usb.EnumFirst(nDevices); }
 	bool EnumNext(string &name) {
 	  char s[64];
 	  if (!usb.EnumNext(s)) return false;
 	  name = s;
 	  return true;
-	};
+	}
 	bool Enum(unsigned int pos, string &name) {
 	  char s[64];
 	  if (!usb.Enum(s, pos)) return false;
 	  name = s;
 	  return true;
-	};
+	}
 
 	void SetTimeout(unsigned int timeout) { usb.SetTimeout(timeout); }
 

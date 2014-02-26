@@ -575,7 +575,7 @@ namespace pxar {
     /** Default DUT constructor
      */
     dut() : _initialized(false), _programmed(false), roc(), tbm(), sig_delays(),
-      va(0), vd(0), ia(0), id(0), pg_setup() {};
+      va(0), vd(0), ia(0), id(0), pg_setup() {}
 
     // GET functions to read information
 

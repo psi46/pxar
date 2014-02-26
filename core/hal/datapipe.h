@@ -9,12 +9,12 @@ namespace pxar {
 
   class dataPipeException : public std::runtime_error {
   public:
-  dataPipeException(const char *message) : std::runtime_error(message) {};
+  dataPipeException(const char *message) : std::runtime_error(message) {}
   };
     
   class dpNotConnected : public dataPipeException {
   public:
-  dpNotConnected() : dataPipeException("Not connected") {};
+  dpNotConnected() : dataPipeException("Not connected") {}
   };
 
   // Data pipe classes
@@ -90,13 +90,13 @@ namespace pxar {
 
   class dsBufferOverflow : public dataPipeException {
   public:
-  dsBufferOverflow() : dataPipeException("Buffer overflow") {};
+  dsBufferOverflow() : dataPipeException("Buffer overflow") {}
   };
 
   class dsBufferEmpty : public dataPipeException
   {
   public:
-  dsBufferEmpty() : dataPipeException("Buffer empty") {};
+  dsBufferEmpty() : dataPipeException("Buffer empty") {}
   };
 
   // DTB data source class
@@ -141,9 +141,9 @@ namespace pxar {
     }
   public:
   dtbSource(CTestboard * src, uint8_t daqchannel, bool module, uint8_t roctype, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), tbm_present(module), devicetype(roctype), lastSample(0x4000), pos(0) {};
-  dtbSource() : connected(false) {};
-    bool isConnected() { return connected; };
+    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), tbm_present(module), devicetype(roctype), lastSample(0x4000), pos(0) {}
+  dtbSource() : connected(false) {}
+    bool isConnected() { return connected; }
 
     // --- control and status
     uint8_t  GetState() { return dtbState; }
@@ -157,7 +157,7 @@ namespace pxar {
     rawEvent* Read() {
       if(GetState()) return SplitDeser400();
       else return SplitDeser160();
-    };
+    }
     rawEvent* ReadLast() { return &record; }
     bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
@@ -176,7 +176,7 @@ namespace pxar {
     Event* Read() {
       if(GetState()) return DecodeDeser400();
       else return DecodeDeser160();
-    };
+    }
     Event* ReadLast() { return &roc_Event; }
     bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }

@@ -22,15 +22,15 @@ namespace pxar {
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
      */
-  pixel() : roc_id(0), column(0), row(0), value(0) {};
+  pixel() : roc_id(0), column(0), row(0), value(0) {}
 
     /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(int32_t address, int32_t data) : value(data) { decode(address); };
+  pixel(int32_t address, int32_t data) : value(data) { decode(address); }
 
     /** Constructor for pixel objects with rawdata pixel address & value initialization.
      */
-  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); };
+  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
 
     /** Function to fill the pixel with linear encoded data from RPC transfer.
      *  The address transmitted from the NIOS soft core is encoded in the following
@@ -49,7 +49,7 @@ namespace pxar {
       roc_id = (address>>16)&15;
       column = (address>>8)&63;
       row = (address)&127;
-    };
+    }
     void decodeRaw(uint32_t raw, bool invert);
     uint8_t roc_id;
     uint8_t column;
@@ -62,7 +62,7 @@ namespace pxar {
       return ((px.roc_id == roc_id )
 	      && (px.column == column)
 	      && (px.row == row));
-    };
+    }
 
     /** Overloaded < operator
      */
@@ -84,15 +84,15 @@ namespace pxar {
 	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
 	  << "," << static_cast<int>(px.value) << "]";
       return out;
-    };
+    }
   };
 
   /** Class to store Events containing a header and a std::vector of pixels
    */
   class DLLEXPORT Event {
   public:
-  Event() : header(0), trailer(0), pixels() {};
-    void Clear() { header = 0; trailer = 0; pixels.clear(); };
+  Event() : header(0), trailer(0), pixels() {}
+    void Clear() { header = 0; trailer = 0; pixels.clear(); }
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
@@ -104,7 +104,7 @@ namespace pxar {
       for (std::vector<pixel>::iterator it = evt.pixels.begin(); it != evt.pixels.end(); ++it)
 	out << (*it) << " ";
       return out;
-    };
+    }
   };
 
 
@@ -114,7 +114,7 @@ namespace pxar {
    */
   class rawEvent {
   public:
-  rawEvent() : data(), flags(0) {};
+  rawEvent() : data(), flags(0) {}
     void SetStartError() { flags |= 1; }
     void SetEndError()   { flags |= 2; }
     void SetOverflow()   { flags |= 4; }
@@ -147,7 +147,7 @@ namespace pxar {
       for (std::vector<uint16_t>::iterator it = record.data.begin(); it != record.data.end(); ++it)
 	out << std::hex << (*it) << std::dec << " ";
       return out;
-    };
+    }
   };
 
   /** Class to store the configuration for single pixels (i.e. their mask state,
@@ -158,10 +158,10 @@ namespace pxar {
   public:
   pixelConfig() : 
     column(0), row(0), 
-      trim(15), mask(true), enable(false) {};
+      trim(15), mask(true), enable(false) {}
   pixelConfig(uint8_t _column, uint8_t _row, uint8_t _trim) : 
     column(_column), row(_row), trim(_trim),
-      mask(true), enable(false) {};
+      mask(true), enable(false) {}
     uint8_t column;
     uint8_t row;
     uint8_t roc_id;
@@ -177,7 +177,7 @@ namespace pxar {
    */
   class DLLEXPORT rocConfig {
   public:
-  rocConfig() : pixels(), dacs(), type(0), enable(true) {};
+  rocConfig() : pixels(), dacs(), type(0), enable(true) {}
     std::vector< pixelConfig > pixels;
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
@@ -191,7 +191,7 @@ namespace pxar {
    */
   class DLLEXPORT tbmConfig {
   public:
-  tbmConfig() : dacs(), type(0), enable(true) {};
+  tbmConfig() : dacs(), type(0), enable(true) {}
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
     bool enable;

@@ -28,10 +28,10 @@ namespace pxar {
    */
   class dacConfig {
   public:
-    dacConfig() {};
-  dacConfig(uint8_t id, uint8_t size) : _type(0), _id(id), _size(size), _preferred(true) {};
-  dacConfig(uint8_t id, uint8_t size, uint8_t type) : _type(type), _id(id), _size(size), _preferred(true) {};
-  dacConfig(uint8_t id, uint8_t size, uint8_t type, bool preferred) : _type(type), _id(id), _size(size), _preferred(preferred) {};
+    dacConfig() {}
+  dacConfig(uint8_t id, uint8_t size) : _type(0), _id(id), _size(size), _preferred(true) {}
+  dacConfig(uint8_t id, uint8_t size, uint8_t type) : _type(type), _id(id), _size(size), _preferred(true) {}
+  dacConfig(uint8_t id, uint8_t size, uint8_t type, bool preferred) : _type(type), _id(id), _size(size), _preferred(preferred) {}
     uint8_t _type;
     uint8_t _id;
     uint8_t _size;
@@ -184,7 +184,7 @@ namespace pxar {
       _registers["vibias_roc"]   = dacConfig(ROC_DAC_VIbias_roc,255,ROC_REG);
       _registers["vnpix"]   = dacConfig(ROC_DAC_Vnpix,255,ROC_REG);
       _registers["vsumcol"]   = dacConfig(ROC_DAC_VsumCol,255,ROC_REG);
-    };
+    }
 
     std::map<std::string, dacConfig> _registers;
     // Dont forget to declare these two. You want to make sure they
@@ -233,7 +233,7 @@ namespace pxar {
       _devices["tbm07"]         = TBM_07;
       _devices["tbm07a"]        = TBM_07A;
       _devices["tbm08"]         = TBM_08;
-    };
+    }
 
     std::map<std::string, uint8_t> _devices;
     DeviceDictionary(DeviceDictionary const&); // Don't Implement
@@ -278,7 +278,7 @@ namespace pxar {
       _signals["clkg"]   = PROBE_CLKG;
       _signals["crc"]    = PROBE_CRC;
 
-    };
+    }
 
     std::map<std::string, uint8_t> _signals;
     ProbeDictionary(ProbeDictionary const&); // Don't Implement
@@ -318,7 +318,7 @@ namespace pxar {
       _signals["tout"]   = PROBEA_TOUT;
       _signals["off"]    = PROBEA_OFF;
 
-    };
+    }
 
     std::map<std::string, uint8_t> _signals;
     ProbeADictionary(ProbeADictionary const&); // Don't Implement
