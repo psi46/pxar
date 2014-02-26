@@ -643,6 +643,7 @@ bool ConfigParameters::setRocDac(std::string var, uint8_t val, int iroc) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
+  
   for (unsigned int i = 0; i < fTbPowerSettings.size(); ++i) {
     if (!fTbPowerSettings[i].first.compare(var)) {
       fTbPowerSettings[i].second = val;
