@@ -5,6 +5,11 @@
 #include "config.h"
 #include "constants.h"
 #include <fstream>
+#include <algorithm>
+
+#ifdef WIN32
+#define NOMINMAX
+#endif
 
 using namespace pxar;
 
