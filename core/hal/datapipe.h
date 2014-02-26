@@ -1,15 +1,15 @@
 #ifndef PXAR_DATAPIPE_H
 #define PXAR_DATAPIPE_H
 
-#include <exception>
+#include <stdexcept>
 #include "datatypes.h"
 #include "rpc_calls.h"
 
 namespace pxar {
 
-  class dataPipeException : public std::exception {
+  class dataPipeException : public std::runtime_error {
   public:
-  dataPipeException(const char */*message*/) : std::exception() {};
+  dataPipeException(const char *message) : std::runtime_error(message) {};
   };
     
   class dpNotConnected : public dataPipeException {
