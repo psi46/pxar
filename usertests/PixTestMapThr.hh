@@ -1,27 +1,27 @@
 // -- author: Daniel Pitzl
-#ifndef PIXTESTSETCALDEL_H
-#define PIXTESTSETCALDEL_H
+#ifndef PIXTESTMAPTHR_H
+#define PIXTESTMAPTHR_H
 
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestSetCalDel: public PixTest {
+class PixTestMapThr: public PixTest {
 public:
-  PixTestSetCalDel(PixSetup *, std::string);
-  PixTestSetCalDel();
-  virtual ~PixTestSetCalDel();
+  PixTestMapThr(PixSetup *, std::string);
+  PixTestMapThr();
+  virtual ~PixTestMapThr();
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
   void bookHist(std::string); 
-  
+
   void doTest(); 
 
 private:
 
   int     fParNtrig; 
 
-  ClassDef(PixTestSetCalDel, 1);
+  ClassDef(PixTestMapThr, 1);
 
 };
 #endif

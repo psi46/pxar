@@ -1,4 +1,4 @@
-
+// -- author: Daniel Pitzl
 // set Vana to get desired target Ia per ROC
 
 #include <cmath>      // fabs

@@ -1,3 +1,4 @@
+// -- author: Daniel Pitzl
 #ifndef PIXTESTSETVANA_H
 #define PIXTESTSETVANA_H
 
