@@ -6,6 +6,7 @@
 #define PXAR_LOG_H
 
 #ifdef WIN32
+#define NOMINMAX
 #include <windows.h>
 #else
 #include <sys/time.h>

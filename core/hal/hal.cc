@@ -5,6 +5,7 @@
 #include "config.h"
 #include "constants.h"
 #include <fstream>
+#include <algorithm>
 
 using namespace pxar;
 

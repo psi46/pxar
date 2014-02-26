@@ -1,4 +1,4 @@
-
+// -- author: Daniel Pitzl
 // set Vana to get desired target Ia per ROC
 
 #include <cmath>      // fabs
@@ -21,7 +21,7 @@ ClassImp(PixTestSetVana)
 PixTestSetVana::PixTestSetVana( PixSetup *a, std::string name )
 : PixTest(a, name), fTargetIa(24)
 {
-  PixTest::init( a, name );
+  PixTest::init();
   init();
 }
 
@@ -32,25 +32,23 @@ PixTestSetVana::PixTestSetVana() : PixTest()
 }
 
 //------------------------------------------------------------------------------
-bool PixTestSetVana::setParameter( string parName, string sval ) // called from PixTest
-{
+bool PixTestSetVana::setParameter( string parName, string sval ) {
   bool found(false);
+  string stripParName; 
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
+      found = true; 
 
-  for( map<string,string>::iterator imap = fParameters.begin(); imap != fParameters.end(); ++imap ) {
-    LOG(logDEBUG) << "---> " << imap->first;
-    if( 0 == imap->first.compare(parName) ) {
-      found = true;
-      sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
-      fParameters[parName] = sval;
-
-      if( !parName.compare( "targetIa" ) ) {
-	fTargetIa = atoi( sval.c_str() );  // [mA/ROC]
-	LOG(logINFO) << "PixTestSetVana target Ia " << fTargetIa << " mA/ROC";
+      LOG(logDEBUG) << "  ==> parName: " << parName;
+      LOG(logDEBUG) << "  ==> sval:    " << sval;
+      if (!parName.compare("targetIa")) {
+	fTargetIa = atoi(sval.c_str()); 
+	setToolTips();
       }
       break;
     }
   }
-  return found;
+  return found; 
 }
 
 //------------------------------------------------------------------------------
@@ -65,6 +63,7 @@ void PixTestSetVana::init()
 //------------------------------------------------------------------------------
 void PixTestSetVana::bookHist(string name) // no histos
 {
+  LOG(logDEBUG) << "not using " << name; 
   fDirectory->cd();
   fHistList.clear();
 }

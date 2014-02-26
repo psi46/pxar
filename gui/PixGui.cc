@@ -7,6 +7,7 @@
 #include "PixTab.hh"
 #include "PixParTab.hh"
 #include "PixTestFactory.hh"
+#include "PixUserTestFactory.hh"
 #include "PixUtil.hh"
 
 #include "ConfigParameters.hh"
@@ -392,7 +393,10 @@ void PixGui::createTab(const char* csel) {
 // ----------------------------------------------------------------------
 PixTest* PixGui::createTest(string testname) {
   PixTestFactory *factory = PixTestFactory::instance(); 
-  return factory->createTest(testname, fPixSetup);
+  PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
+  PixTest *t =  factory->createTest(testname, fPixSetup);
+  if (0 == t) t = userfactory->createTest(testname, fPixSetup);
+  return t;
 }
 
 
