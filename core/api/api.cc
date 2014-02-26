@@ -83,7 +83,7 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
   }
 
-  if(va == 0 || vd == 0 || ia == 0 || id == 0) {
+  if(va < 0.01 || vd < 0.01 || ia < 0.01 || id < 0.01) {
     LOG(logCRITICAL) << "Power settings are not suffient. Please check and re-configure!";
     return false;
   }
