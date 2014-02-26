@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <bitset>
 
 #include <cstdlib>
 #include <stdio.h>
@@ -184,6 +185,11 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
   _input.close();
 
+  fTbPowerSettings.push_back(make_pair("ia", ia));   
+  fTbPowerSettings.push_back(make_pair("id", id)); 
+  fTbPowerSettings.push_back(make_pair("va", va));   
+  fTbPowerSettings.push_back(make_pair("vd", vd)); 
+  
   return true;
 }
 
@@ -255,6 +261,7 @@ void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
+    dumpParameters(fTbParameters);
     fReadTbParameters = true; 
   }
 }
@@ -266,11 +273,7 @@ vector<pair<string, double> >  ConfigParameters::getTbPowerSettings() {
     LOG(logINFO) << "Read config files first!" << endl;    
     return v; 
   }
-  v.push_back(make_pair("ia", ia));   
-  v.push_back(make_pair("id", id)); 
-  v.push_back(make_pair("va", va));   
-  v.push_back(make_pair("vd", vd)); 
-  return v; 
+  return fTbPowerSettings; 
 }
 
 // ----------------------------------------------------------------------
@@ -300,13 +303,13 @@ vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
   vector<pair<uint16_t, uint8_t> > a;
 
   if (fnTbms < 1) {
-    a.push_back(make_pair(0x0800,25));    // PG_RESR
-    a.push_back(make_pair(0x0400,100+5)); // PG_CAL
-    a.push_back(make_pair(0x0200,16));    // PG_TRG
-    a.push_back(make_pair(0x0100,0));     // PG_TOK
+    a.push_back(make_pair(0x0800,25));    // PG_RESR b001000 
+    a.push_back(make_pair(0x0400,100+5)); // PG_CAL  b000100
+    a.push_back(make_pair(0x0200,16));    // PG_TRG  b000010
+    a.push_back(make_pair(0x0100,0));     // PG_TOK  b000001
   } else {
     a.push_back(std::make_pair(0x1000,15));    // PG_REST
-    a.push_back(std::make_pair(0x0400,100+5)); // PG_CAL
+    a.push_back(std::make_pair(0x0400,100+6)); // PG_CAL
     a.push_back(std::make_pair(0x2200,0));     // PG_TRG PG_SYNC
   }
 
@@ -821,3 +824,23 @@ void ConfigParameters::dumpParameters(vector<pair<string, uint8_t> > v) {
   }
   LOG(logDEBUG) << line; 
 }
+
+// ----------------------------------------------------------------------
+void ConfigParameters::dumpParameters(vector<pair<string, double> > v) {
+  string line; 
+  for (unsigned i = 0; i < v.size(); ++i) {
+    line += string(Form(" %s: %3f", v[i].first.c_str(), v[i].second)); 
+  }
+  LOG(logDEBUG) << line; 
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::dumpParameters(vector<pair<uint16_t, uint8_t> > v) {
+  string line; 
+  for (unsigned i = 0; i < v.size(); ++i) {
+    std::bitset<8> bits(v[i].second);
+    line += string(Form(" %x: %s", v[i].first, bits.to_string().c_str()));  
+  }
+  LOG(logDEBUG) << line; 
+}
+

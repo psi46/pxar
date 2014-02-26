@@ -39,6 +39,8 @@ public:
   bool writeTestParameterFile(std::string test="all");
 
   void dumpParameters(std::vector<std::pair<std::string, uint8_t> >); 
+  void dumpParameters(std::vector<std::pair<std::string, double> >); 
+  void dumpParameters(std::vector<std::pair<uint16_t, uint8_t> >); 
 
   static ConfigParameters* Singleton();
 
