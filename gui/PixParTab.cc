@@ -380,7 +380,6 @@ void PixParTab::handleButtons(Int_t id) {
 // ----------------------------------------------------------------------
 void PixParTab::setTbParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logDEBUG)  << "PixParTab::setTbParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
@@ -393,7 +392,7 @@ void PixParTab::setTbParameter() {
   string svalue = ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText(); 
   uint8_t udac = atoi(svalue.c_str()); 
 
-  cout << "FIXME FIXME: ID = " << id << " -> " << fTbParIds[id] << " set to " << svalue << endl;
+  LOG(logDEBUG)  << "PixParTab::setTbParameter: " << fTbParIds[id] << ": " << int(udac);
   fConfigParameters->setTbParameter(fTbParIds[id], udac); 
 
   initTestboard(); 
@@ -403,7 +402,6 @@ void PixParTab::setTbParameter() {
 // ----------------------------------------------------------------------
 void PixParTab::setPgSettings() {
   if (!fGui->getTabs()) return;
-  LOG(logDEBUG)  << "PixParTab::setPgSettings: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
@@ -415,9 +413,6 @@ void PixParTab::setPgSettings() {
 
   string svalue = ((TGTextEntry*)(fPgTextEntries[fPgParIds[id]]))->GetText(); 
   uint8_t udac = atoi(svalue.c_str()); 
-
-  cout << "FIXME FIXME: ID = " << id << " -> " << fPgParIds[id] << " set to " << int(udac) << " from svalue = " << svalue << endl;
-
   initTestboard(); 
 
 } 
@@ -426,7 +421,6 @@ void PixParTab::setPgSettings() {
 // ----------------------------------------------------------------------
 void PixParTab::setPowerSettings() {
   if (!fGui->getTabs()) return;
-  LOG(logDEBUG)  << "PixParTab::setPowerSettings: ";
 
   TGButton *btn = (TGButton *) gTQSender;
   int id(-1); 
@@ -439,12 +433,9 @@ void PixParTab::setPowerSettings() {
   string svalue = ((TGTextEntry*)(fPowerTextEntries[fPowerParIds[id]]))->GetText(); 
   double udac = atof(svalue.c_str()); 
   
-  cout << "FIXME FIXME: ID = " << id << " -> " << fPowerParIds[id] << " set to " << svalue << endl;
+  LOG(logDEBUG)  << "PixParTab::setPowerSettings: " << fPowerParIds[id] << ": " << udac; 
   fConfigParameters->setTbPowerSettings(fPowerParIds[id], udac); 
-  
   initTestboard(); 
-
-  // FIXME UPDATE CONFIGPARAMETERS!
 
 } 
 
@@ -455,9 +446,7 @@ void PixParTab::initTestboard() {
   vector<pair<string, uint8_t> > sig_delays = fConfigParameters->getTbSigDelays();
   vector<pair<string, double> > power_settings = fConfigParameters->getTbPowerSettings();
   vector<pair<uint16_t, uint8_t> > pg_setup = fConfigParameters->getTbPgSettings();;
-
-  LOG(logDEBUG) << "Re-programming TB"; 
-
+  
   fGui->getApi()->initTestboard(sig_delays, power_settings, pg_setup);
 
 }
