@@ -118,17 +118,17 @@ namespace pxar {
     void SetStartError() { flags |= 1; }
     void SetEndError()   { flags |= 2; }
     void SetOverflow()   { flags |= 4; }
-    void ResetStartError() { flags &= ~1; }
-    void ResetEndError()   { flags &= ~2; }
-    void ResetOverflow()   { flags &= ~4; }
+    void ResetStartError() { flags &= static_cast<unsigned int>(~1); }
+    void ResetEndError()   { flags &= static_cast<unsigned int>(~2); }
+    void ResetOverflow()   { flags &= static_cast<unsigned int>(~4); }
     void Clear() { flags = 0; data.clear(); }
     bool IsStartError() { return (flags & 1) != 0; }
     bool IsEndError()   { return (flags & 2) != 0; }
     bool IsOverflow()   { return (flags & 4) != 0; }
 	
-    unsigned int GetSize() { return data.size(); }
+    size_t GetSize() { return data.size(); }
     void Add(uint16_t value) { data.push_back(value); }
-    uint16_t operator[](int index) { return data.at(index); }
+    uint16_t operator[](size_t index) { return data.at(index); }
 
     std::vector<uint16_t> data;
 
