@@ -41,41 +41,41 @@ void dut::info() {
   }
 }
 
-int32_t dut::getNEnabledPixels(uint8_t rocid) {
+size_t dut::getNEnabledPixels(uint8_t rocid) {
   if (!_initialized || rocid >= roc.size()) return 0;
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configEnableSet(true));
 }
 
-int32_t dut::getNMaskedPixels(uint8_t rocid) {
+size_t dut::getNMaskedPixels(uint8_t rocid) {
   if (!_initialized || rocid >= roc.size()) return 0;
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configMaskSet(true));
 }
 
-int32_t dut::getNEnabledRocs() {
+size_t dut::getNEnabledRocs() {
   if (!status()) return 0;
   // loop over result, count enabled ROCs
-  int32_t count = 0;
+  size_t count = 0;
   for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
     if (it->enable) count++;
   }
   return count;
 }
 
-int32_t dut::getNRocs() {
+size_t dut::getNRocs() {
   return roc.size();
 }
 
-int32_t dut::getNEnabledTbms() {
+size_t dut::getNEnabledTbms() {
   if (!status()) return 0;
   // loop over result, count enabled TBMs
-  int32_t count = 0;
+  size_t count = 0;
   for (std::vector<tbmConfig>::iterator it = tbm.begin(); it != tbm.end(); ++it){
     if (it->enable) count++;
   }
   return count;
 }
 
-int32_t dut::getNTbms() {
+size_t dut::getNTbms() {
   return tbm.size();
 }
 
