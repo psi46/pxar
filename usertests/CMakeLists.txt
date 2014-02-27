@@ -18,7 +18,7 @@ FILE(WRITE ${FACTORYSOURCE}
 "#include \"PixUserTestFactory.hh\" \n"
 )
 
-FOREACH(loop_var IN LISTS FHEADERS)
+FOREACH(loop_var ${FHEADERS})
 string(REPLACE "${PROJECT_SOURCE_DIR}/usertests/" "" testname0 ${loop_var} )
 FILE(APPEND ${FACTORYSOURCE} "#include \"${testname0}\" \n")
 ENDFOREACH(loop_var)
@@ -44,7 +44,7 @@ FILE(APPEND ${FACTORYSOURCE}
 "  ::transform(name.begin(), name.end(), name.begin(), ::tolower); \n"
 )
 
-FOREACH(loop_var IN LISTS FHEADERS)
+FOREACH(loop_var ${FHEADERS})
 STRING(REPLACE "${PROJECT_SOURCE_DIR}/usertests/" "" testname1 ${loop_var} )
 STRING(REPLACE ".hh" "" testname2 ${testname1} )
 STRING(REPLACE "PixTest" "" testname3 ${testname2} )
