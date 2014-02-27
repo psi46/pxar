@@ -299,6 +299,12 @@ bool api::status() {
   return false;
 }
 
+// HAL isDummy function, checks whether a dummy DTB is attached
+bool api::isDummy() {
+  return _hal->isDummy();
+}
+
+
 // Lookup register and check value range
 bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type) {
 

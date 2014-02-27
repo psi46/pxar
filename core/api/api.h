@@ -459,6 +459,12 @@ namespace pxar {
      *  Returns true if everything is setup correctly for operation
      */
     bool status();
+
+    /** Status function for the HAL
+     *
+     *  Returns true if the attached HAL is a dummy DTB
+     */
+    bool isDummy();
     
   private:
 

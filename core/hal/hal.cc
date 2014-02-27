@@ -83,6 +83,12 @@ bool hal::status() {
   return _initialized;
 }
 
+
+bool hal::isDummy() {
+  return false;
+}
+
+
 uint32_t hal::GetHashForString(const char * s)
 {
   // Using some primes
