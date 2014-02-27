@@ -7,10 +7,6 @@
 #include <fstream>
 #include <algorithm>
 
-#ifdef WIN32
-#define NOMINMAX
-#endif
-
 using namespace pxar;
 
 hal::hal(std::string name) :
