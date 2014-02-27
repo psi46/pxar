@@ -9,7 +9,7 @@ using namespace pxar;
 
 hal::hal(std::string name) :
   _initialized(false),
-  _compatible(true),
+  _compatible(false),
   nTBMs(0),
   deser160phase(4)
 {
@@ -20,10 +20,6 @@ hal::~hal() {
 
 bool hal::status() {
   return _initialized;
-}
-
-bool hal::isDummy() {
-  return true;
 }
 
 uint32_t hal::GetHashForString(const char * s)
@@ -57,7 +53,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
 void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
 }
 
-void hal::initROC(uint8_t rocId, uint8_t type, std::map< uint8_t,uint8_t > dacVector) {
+void hal::initROC(uint8_t rocId, uint8_t roctype, std::map< uint8_t,uint8_t > dacVector) {
 }
 
 void hal::PrintInfo() {

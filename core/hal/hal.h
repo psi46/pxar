@@ -27,10 +27,6 @@ namespace pxar {
      */
     bool status();
 
-    /** Function to check whether a dummy DTB is attached
-     */
-    bool isDummy();
-
     /** Function to check the compatibility of the HAL with the DTB
      */
     bool compatible() { return _compatible; }
