@@ -362,68 +362,139 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
 
 std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  // uint8_t dac1reg = parameter.at(0);
-  // uint8_t dac1min = parameter.at(1);
-  // uint8_t dac1max = parameter.at(2);
-  // uint8_t dac2reg = parameter.at(3);
-  // uint8_t dac2min = parameter.at(4);
-  // uint8_t dac2max = parameter.at(5);
-  // int32_t flags = parameter.at(6);
-  // uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
-
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-  return data;
 
+  // Create a working band:
+  uint8_t dachalf1 = (dac1max-dac1min)/2*0.8;
+  uint8_t dachalf2 = (dac2max-dac2min)/2*1.2;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac1 = 0; dac1 < (dac1max-dac1min+1); dac1++) {
+	for(size_t dac2 = 0; dac2 < (dac2max-dac2min+1); dac2++) {
+	  for(size_t k = 0; k < nTriggers; k++) {
+	    Event* evt = new Event();
+	    for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
+	      // Mimic some working band of the two DACs:
+	      if(dac1 > dachalf1 && dac2 < dachalf2) evt->pixels.push_back(pixel(*roc,i,j,90));
+	    }
+	    data.push_back(evt);
+	  }
+	}
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  // uint8_t dac1reg = parameter.at(0);
-  // uint8_t dac1min = parameter.at(1);
-  // uint8_t dac1max = parameter.at(2);
-  // uint8_t dac2reg = parameter.at(3);
-  // uint8_t dac2min = parameter.at(4);
-  // uint8_t dac2max = parameter.at(5);
-  // int32_t flags = parameter.at(6);
-  // uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
-
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers << " events.";
   std::vector<Event*> data;
-  return data;
 
+  // Create a working band:
+  uint8_t dachalf1 = (dac1max-dac1min)/2*0.8;
+  uint8_t dachalf2 = (dac2max-dac2min)/2*1.2;
+
+  for(size_t dac1 = 0; dac1 < (dac1max-dac1min+1); dac1++) {
+    for(size_t dac2 = 0; dac2 < (dac2max-dac2min+1); dac2++) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	Event* evt = new Event();
+	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
+	  // Mimic some working band of the two DACs:
+	  if(dac1 > dachalf1 && dac2 < dachalf2) evt->pixels.push_back(pixel(*roc,column,row,90));
+	}
+	data.push_back(evt);
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  // uint8_t dac1reg = parameter.at(0);
-  // uint8_t dac1min = parameter.at(1);
-  // uint8_t dac1max = parameter.at(2);
-  // uint8_t dac2reg = parameter.at(3);
-  // uint8_t dac2min = parameter.at(4);
-  // uint8_t dac2max = parameter.at(5);
-  // int32_t flags = parameter.at(6);
-  // uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-  return data;
 
+  // Create a working band:
+  uint8_t dachalf1 = (dac1max-dac1min)/2*0.8;
+  uint8_t dachalf2 = (dac2max-dac2min)/2*1.2;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac1 = 0; dac1 < (dac1max-dac1min+1); dac1++) {
+	for(size_t dac2 = 0; dac2 < (dac2max-dac2min+1); dac2++) {
+	  for(size_t k = 0; k < nTriggers; k++) {
+	    Event* evt = new Event();
+	    // Mimic some working band of the two DACs:
+	    if(dac1 > dachalf1 && dac2 < dachalf2) evt->pixels.push_back(pixel(rocid,i,j,90));
+	    data.push_back(evt);
+	  }
+	}
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  // uint8_t dac1reg = parameter.at(0);
-  // uint8_t dac1min = parameter.at(1);
-  // uint8_t dac1max = parameter.at(2);
-  // uint8_t dac2reg = parameter.at(3);
-  // uint8_t dac2min = parameter.at(4);
-  // uint8_t dac2max = parameter.at(5);
-  // int32_t flags = parameter.at(6);
-  // uint16_t nTriggers = parameter.at(7);
+  uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
+  uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
+  uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers << " events.";
   std::vector<Event*> data;
-  return data;
 
+  // Create a working band:
+  uint8_t dacquat1 = (dac1max-dac1min)/4;
+  uint8_t dacquat2 = (dac2max-dac2min)/4;
+
+  for(size_t dac1 = 0; dac1 < (dac1max-dac1min+1); dac1++) {
+    for(size_t dac2 = 0; dac2 < (dac2max-dac2min+1); dac2++) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	Event* evt = new Event();
+	// Mimic some working band of the two DACs:
+	if(dac2 < (dac1*1.2+dacquat1) && dac2 > (dac1*0.8-dacquat1))
+	  evt->pixels.push_back(pixel(rocid,column,row,90));
+	data.push_back(evt);
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 // Testboard power switches:
