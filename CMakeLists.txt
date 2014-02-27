@@ -232,6 +232,7 @@ IF(LATEX_COMPILER)
     doc/usermanual/tutorial.tex
     doc/usermanual/tests.tex
     doc/usermanual/usertests.tex
+    doc/usermanual/references.tex
     NO_DEFAULT
     )
 ELSE(LATEX_COMPILER)
