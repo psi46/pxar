@@ -3,6 +3,12 @@
 \label{s:tutorial}
 % ======================================================================
 
+If you encounter any problems that you cannot solve, please check in 
+\url{https://twiki.cern.ch/twiki/bin/viewauth/CMS/Pxar#FAQ} for a
+similar problem and solution, post a question to
+\href{https://hypernews.cern.ch/HyperNews/CMS/get/pixel-psi46-testboard.html}{\tt
+  pixel-psi46-testboard hypernews}, or open an issue at \url{https://github.com/psi46/pxar/issues/new}.
+
 % ----------------------------------------------------------------------
 \subsection{Installation}
 \label{ss:installation}
@@ -17,12 +23,12 @@ You need the following packages/programs on your computer:
   \item USB (header files)
   \item FTDI drivers
 \end{itemize}
-
+\fixme[add much more details. Volunteers?!]
 
 % ----------------------------------------------------------------------
 \subsection{Setup}
 \label{ss:setup}
-The \pxar code is hosted at github.com/psi46/pxar. Get it with 
+The \pxar code is hosted at \url{https://github.com/psi46/pxar}. Get it with 
 {\tt
 \begin{verbatim}
 git clone git@github.com:psi46/pxar 
@@ -30,14 +36,82 @@ cd pxar
 mkdir build
 \end{verbatim}
 }
-This implies that you have set up git on your computer, and 
+If you run into problems here, you likely should setup git correctly
+(see section~\ref{ss:installation}). 
+
+For the time being, it is recommended that you get the HEAD of the
+master branch. 
 
 
 % ----------------------------------------------------------------------
 \subsection{Compilation}
 \label{ss:compilation}
+Assuming that you start from the {\tt pxar} directory, do
+{\tt
+\begin{verbatim}
+cd build
+cmake -DBUILD_pxarui=ON ..
+make [-j4] install [VERBOSE=1]
+\begin{verbatim}
+}
+This will install by default the library into pxar/lib and the
+executables into pxar/bin 
+(both directories are subfolders of your local pxar folder).
 
+Other cmake build options include
+{\tt
+\begin{verbatim}
+cmake -DBUILD_pxarui=OFF ..
+cmake -DBUILD_dummydtb=ON ..
+\end{verbatim}
+}
+
+% ----------------------------------------------------------------------
+\subsection{DTB firmware}
+\label{ss:firmware}
+
+
+To properly operated the DTB, you also need to have the matching
+firmware loaded onto that device. The firmware can be obtained from 
+\url{https://github.com/psi46/pixel-dtb-firmware/tree/master/FLASH} and the loaded
+onto the DTB (its FPGA) with the following statements (assuming that
+you are in directory {\tt pxar}): 
+{\tt
+\begin{verbatim}
+cd ..
+git clone git@github.com:psi46/pixel-dtb-firmware.git
+cd pxar/main
+../bin/pXar -f ../../pixel-dtb-firmware/FLASH/FLASHFILE
+\end{verbatim}
+} 
+where {\tt FLASHFILE} should be replaced with the name of the most
+recent version. The download will take a while. Follow the
+instructions at the end: Wait until all 4 LEDs turn off and
+power-cycle the DTB.
 
 % ----------------------------------------------------------------------
 \subsection{Program execution}
 \label{ss:run}
+The simplest way to run something of the \pxar framework is to use the
+standalone test program: 
+{\tt
+\begin{verbatim}
+../bin/testpxar
+\end{verbatim}
+}
+
+To run the GUI, do 
+{\tt
+\begin{verbatim}
+../bin/pXar -d ../data/defaultParametersRocPSI46digV2 -g [-v WARNING|QUIET|...]
+../bin/pXar -d ../data/defaultParametersModulePSI46digV2 -g [-v WARNING|QUIET|...]
+\end{verbatim}
+}
+
+and without the GUI, using a 'standard' ROOT C++ macro
+{\tt
+\begin{verbatim}
+../bin/pXar -d ../data/defaultParametersRocPSI46digV2 \
+  -c '../scripts/singleTest.C("DacScan", "DacScan.root")'
+\end{verbatim}
+}
