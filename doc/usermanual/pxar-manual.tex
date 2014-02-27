@@ -9,6 +9,7 @@
 \usepackage{booktabs}
 
 \usepackage{hyperref}
+\usepackage{xspace}
 
 \usepackage{graphicx} % Required for the inclusion of images
 \usepackage{listings}
@@ -16,10 +17,11 @@
 
 \renewcommand{\labelenumi}{\alph{enumi}.} % Make numbering in the enumerate environment by letter rather than number (e.g. section 6)
 
-
 %----------------------------------------------------------------------------------------
 %	DOCUMENT INFORMATION
 %----------------------------------------------------------------------------------------
+
+\input{doc/usermanual/symbols.tex}
 
 \title{pxar User Manual} % Title
 
@@ -43,5 +45,12 @@ PSI46 Chips and Modules with the Digital Testboard (DTB).
 \tableofcontents
 
 \newpage
+
+\input{doc/usermanual/introduction.tex}
+\input{doc/usermanual/hwOverview.tex}
+\input{doc/usermanual/swOverview.tex}
+\input{doc/usermanual/tutorial.tex}
+\input{doc/usermanual/tests.tex}
+\input{doc/usermanual/usertests.tex}
 
 \end{document}
