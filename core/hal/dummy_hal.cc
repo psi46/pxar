@@ -250,57 +250,114 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t colum
 
 std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  // uint8_t dacreg = parameter.at(0);
-  // uint8_t dacmin = parameter.at(1);
-  // uint8_t dacmax = parameter.at(2);
-  // int32_t flags = parameter.at(3);
-  // uint16_t nTriggers = parameter.at(4);
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
-
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-  return data;
 
+  uint8_t dachalf = (dacmax-dacmin)/2;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac = 0; dac < (dacmax-dacmin+1); dac++) {
+	for(size_t k = 0; k < nTriggers; k++) {
+	  Event* evt = new Event();
+	  for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
+	    // Mimic some edge adt 50% of the DAC range:
+	    if(dac > dachalf) evt->pixels.push_back(pixel(*roc,i,j,90));
+	  }
+	  data.push_back(evt);
+	}
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  // uint8_t dacreg = parameter.at(0);
-  // uint8_t dacmin = parameter.at(1);
-  // uint8_t dacmax = parameter.at(2);
-  // int32_t flags = parameter.at(3);
-  // uint16_t nTriggers = parameter.at(4);
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers << " events.";
   std::vector<Event*> data;
-  return data;
 
+  uint8_t dachalf = (dacmax-dacmin)/2;
+
+  for(size_t dac = 0; dac < (dacmax-dacmin+1); dac++) {
+    for(size_t k = 0; k < nTriggers; k++) {
+      Event* evt = new Event();
+      for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
+	// Mimic some edge adt 50% of the DAC range:
+	if(dac > dachalf) evt->pixels.push_back(pixel(*roc,column,row,90));
+      }
+      data.push_back(evt);
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  // uint8_t dacreg = parameter.at(0);
-  // uint8_t dacmin = parameter.at(1);
-  // uint8_t dacmax = parameter.at(2);
-  // int32_t flags = parameter.at(3);
-  // uint16_t nTriggers = parameter.at(4);
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
-
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-  return data;
 
+  uint8_t dachalf = (dacmax-dacmin)/2;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac = 0; dac < (dacmax-dacmin+1); dac++) {
+	for(size_t k = 0; k < nTriggers; k++) {
+	  Event* evt = new Event();
+	  // Mimic some edge adt 50% of the DAC range:
+	  if(dac > dachalf) evt->pixels.push_back(pixel(rocid,i,j,90));
+	  data.push_back(evt);
+	}
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  // uint8_t dacreg = parameter.at(0);
-  // uint8_t dacmin = parameter.at(1);
-  // uint8_t dacmax = parameter.at(2);
-  // int32_t flags = parameter.at(3);
-  // uint16_t nTriggers = parameter.at(4);
+  uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
+  uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
 
-
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers << " events.";
   std::vector<Event*> data;
-  return data;
 
+  uint8_t dachalf = (dacmax-dacmin)/2;
+
+  for(size_t dac = 0; dac < (dacmax-dacmin+1); dac++) {
+    for(size_t k = 0; k < nTriggers; k++) {
+      Event* evt = new Event();
+      // Mimic some edge adt 50% of the DAC range:
+      if(dac > dachalf) evt->pixels.push_back(pixel(rocid,column,row,90));
+      data.push_back(evt);
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
