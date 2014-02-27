@@ -13,6 +13,14 @@ hal::hal(std::string name) :
   nTBMs(0),
   deser160phase(4)
 {
+  // Print the useful SW/FW versioning info:
+  PrintInfo();
+
+  // Check if all RPC calls are matched:
+  if(CheckCompatibility()) {
+    // Set compatibility flag
+    _compatible = true;
+  }
 }
 
 hal::~hal() {
@@ -38,6 +46,7 @@ uint32_t hal::GetHashForStringVector(const std::vector<std::string> & v)
 }
 
 void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
+  
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;
 }
@@ -46,7 +55,7 @@ void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_set
 }
 
 bool hal::flashTestboard(std::ifstream& flashFile) {
-  LOG(logCRITICAL) << "ERROR UPGRADE: Could not upgrade this DTB version!";
+  LOG(logCRITICAL) << "ERROR UPGRADE: Could not upgrade this DTB version! It's a dummy after all!";
   return false;
 }
 
@@ -154,39 +163,88 @@ void hal::RocClearCalibrate(uint8_t rocid) {
 std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
   // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  // uint16_t nTriggers = parameter.at(1);
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	Event* evt = new Event();
+	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
+	  evt->pixels.push_back(pixel(*roc,i,j,90));
+	}
+	data.push_back(evt);
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
   return data;
 }
 
 std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  // uint16_t nTriggers = parameter.at(1);
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   std::vector<Event*> data;
+
+  for(size_t k = 0; k < nTriggers; k++) {
+    Event* evt = new Event();
+    for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
+      evt->pixels.push_back(pixel(*roc,column,row,90));
+    }
+    data.push_back(evt);
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
   return data;
 }
 
 std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter) {
 
   // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
-  // uint16_t nTriggers = parameter.at(1);
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-  return data;
 
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	Event* evt = new Event();
+	evt->pixels.push_back(pixel(rocid,i,j,90));
+	data.push_back(evt);
+      }
+    }
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
   // int32_t flags = parameter.at(0);
-  // uint16_t nTriggers = parameter.at(1);
+  uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   std::vector<Event*> data;
-  return data;
 
+  for(size_t k = 0; k < nTriggers; k++) {
+    Event* evt = new Event();
+    evt->pixels.push_back(pixel(rocid,column,row,90));
+    data.push_back(evt);
+  }
+
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+
+  return data;
 }
 
 
