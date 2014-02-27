@@ -28,6 +28,10 @@ namespace pxar {
      */
   pixel(int32_t address, int32_t data) : value(data) { decode(address); }
 
+    /** Constructor for pixel objects with address and value initialization.
+     */
+  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, int32_t _value) : roc_id(_roc_id), column(_column), row(_row), value(_value) {}
+
     /** Constructor for pixel objects with rawdata pixel address & value initialization.
      */
   pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
