@@ -31,6 +31,8 @@ public:
   virtual ~PixTest();
   void init();
   void bookHist(std::string name);
+  virtual void dummyAnalysis(); 
+
   virtual void setToolTips();
   virtual std::string getSummaryTip() {return fSummaryTip;}
   virtual std::string getTestTip() {return fTestTip;}
@@ -64,6 +66,7 @@ public:
   virtual void doTest(); 
   virtual void runCommand(std::string command); 
   virtual void doAnalysis();
+  virtual void output4moreweb();
   
   
   std::string getName() {return fName; }

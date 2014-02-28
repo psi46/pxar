@@ -20,6 +20,7 @@
 #include "PixTestDaq.hh"
 #include "PixTestGainCalibration.hh"
 #include "PixTestPh.hh"
+#include "PixTestFullTest.hh"
 
 using namespace std;
 using namespace pxar;
@@ -58,6 +59,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("phdacscan")) return new PixTestPhDacScan(a, "PhDacScan"); 
   if (!name.compare("gaincalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
+  if (!name.compare("alive")) return new PixTestAlive(a, "PixelAlive"); // synonym
   if (!name.compare("pretest")) return new PixTestPretest(a, "Pretest"); 
   if (!name.compare("scurves")) return new PixTestScurves(a, "Scurves"); 
   if (!name.compare("setup")) return new PixTestSetup(a, "Setup"); 
@@ -65,5 +67,6 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
+  if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");
   return 0; 
 }

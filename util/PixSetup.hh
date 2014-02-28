@@ -27,9 +27,14 @@ public:
   bool               useRootLogon() {return fUseRootLogon;} 
   void               setUseRootLogon(bool x) {fUseRootLogon = x;} 
   void               killApi(); 
-
+  void               setDummy(bool x) {fIsDummy = x;}
+  bool               isDummy() {return fIsDummy;}
+  void               setMoreWebCloning(bool x) {fMoreWebCloning = x;}
+  bool               doMoreWebCloning() {return fMoreWebCloning;}
 private: 
   bool              fDebug; 
+  bool              fIsDummy; 
+  bool              fMoreWebCloning;
   bool              fDoAnalysisOnly; 
   bool              fUseRootLogon;
 

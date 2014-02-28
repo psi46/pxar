@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include <TH1.h>
+#include <TRandom.h>
 
 #include "PixTestTrim.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 
@@ -113,19 +115,28 @@ void PixTestTrim::bookHist(string name) {
 //----------------------------------------------------------
 PixTestTrim::~PixTestTrim() {
   LOG(logDEBUG) << "PixTestTrim dtor";
+  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestTrim::doTest() {
+  if (fPixSetup->isDummy()) {
+    dummyAnalysis(); 
+    return;
+  }
+
+
   fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestTrim::doTest() ntrig = " << fParNtrig << " vcal = " << fParVcal;
 
   fPIX.clear(); 
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-  sparseRoc(10); 
+  //   fApi->_dut->testAllPixels(false);
+  //   fApi->_dut->maskAllPixels(true);
+  //  sparseRoc(50); 
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
   fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("Vcal", fParVcal);
 
@@ -244,7 +255,22 @@ void PixTestTrim::doTest() {
   correction = 1; 
   vector<TH1*> thr5  = thrMaps("vcal", "TrimThr5", fParNtrig); 
   vector<TH1*> thr5a = trimStep(correction, thr5);
-  
+
+  // -- create trimMap
+  for (unsigned int i = 0; i < thr0.size(); ++i) {
+    h = bookTH2D(Form("TrimMap_C%d", i), 
+		 Form("TrimMap_C%d", i), 
+		 52, 0., 52., 80, 0., 80.);
+    for (int ix = 0; ix < 52; ++ix) {
+      for (int iy = 0; iy < 52; ++iy) {
+	h->SetBinContent(ix+1, iy+1, fTrimBits[i][ix][iy]); 
+      }
+    }
+    
+    fHistList.push_back(h); 
+    fHistOptions.insert(make_pair(h, "colz"));
+  }
+    
   PixTest::update(); 
 }
 
@@ -383,4 +409,156 @@ void PixTestTrim::setTrimBits() {
       fApi->_dut->updateTrimBits(pix[ipix].column, pix[ipix].row, fTrimBits[rocIds[iroc]][pix[ipix].column][pix[ipix].row], rocIds[iroc]);
     }
   }
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestTrim::dummyAnalysis() {
+  vector<string> names;
+  names.push_back("TrimBit7"); 
+  names.push_back("TrimBit11"); 
+  names.push_back("TrimBit13"); 
+  names.push_back("TrimBit15"); 
+  TH1D *h1(0); 
+  TH2D *h2(0); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    for (unsigned int in = 0; in < names.size(); ++in) {
+      fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
+      h1 = bookTH1D(Form("%s_C%d", names[in].c_str(), iroc), Form("%s_C%d", names[in].c_str(), rocIds[iroc]), 256, 0., 256.); 
+      h1->SetMinimum(0.); 
+      h1->SetDirectory(fDirectory); 
+      setTitles(h1, "delta(Thr)", "pixels"); 
+      
+      for (int ix = 0; ix < 52; ++ix) {
+	for (int iy = 0; iy < 80; ++iy) {
+	  h1->Fill(gRandom->Gaus(60., 2.)); 
+	}
+      }
+      
+      fHistList.push_back(h1); 
+    }
+  }
+
+  string name("TrimMap");
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
+    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.); 
+    h2->SetDirectory(fDirectory); 
+    setTitles(h2, "col", "row"); 
+    fHistOptions.insert(make_pair(h2, "colz"));
+
+    double x; 
+    for (int ix = 0; ix < 52; ++ix) {
+      for (int iy = 0; iy < 80; ++iy) {
+	x = gRandom->Gaus(7., 3.);
+	if (x < 0) x = 0.;
+	if (x > 15) x = 15.;
+	h2->SetBinContent(ix+1, iy+1, static_cast<int>(x)); 
+      }
+    }
+    
+    fHistList.push_back(h2); 
+  }
+
+
+  name = "TrimThr5";
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
+    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.); 
+    h2->SetDirectory(fDirectory); 
+    setTitles(h2, "col", "row"); 
+    fHistOptions.insert(make_pair(h2, "colz"));
+
+    for (int ix = 0; ix < 52; ++ix) {
+      for (int iy = 0; iy < 80; ++iy) {
+	h2->SetBinContent(ix+1, iy+1, static_cast<int>(gRandom->Gaus(40., 2.))); 
+      }
+    }
+    h1 =  distribution(h2, 256, 0., 256.);
+    
+    fHistList.push_back(h2); 
+    fHistList.push_back(h1); 
+  }
+
+
+
+  TH2D *h = (TH2D*)(*fHistList.begin());
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+  LOG(logINFO) << "PixTestTrim::dummyAnalysis() done";
+
+
+
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestTrim::output4moreweb() {
+  list<TH1*>::iterator begin = fHistList.begin();
+  list<TH1*>::iterator end = fHistList.end();
+  
+  TDirectory *pDir = gDirectory; 
+  gFile->cd(); 
+  for (list<TH1*>::iterator il = begin; il != end; ++il) {
+    string name = (*il)->GetName(); 
+    if (string::npos != name.find("TrimBit7")) {
+      PixUtil::replaceAll(name, "_V0", ""); 
+      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
+
+    if (string::npos != name.find("TrimBit11")) {
+      PixUtil::replaceAll(name, "_V0", ""); 
+      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
+
+    if (string::npos != name.find("TrimBit13")) {
+      PixUtil::replaceAll(name, "_V0", ""); 
+      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
+
+    if (string::npos != name.find("TrimBit15")) {
+      PixUtil::replaceAll(name, "_V0", ""); 
+      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
+
+    if (string::npos != name.find("TrimMap")) {
+      PixUtil::replaceAll(name, "_V0", ""); 
+      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
+
+    if (string::npos != name.find("dist_TrimThr5")) {
+      PixUtil::replaceAll(name, "dist_", ""); 
+      PixUtil::replaceAll(name, "TrimThr5", "VcalThresholdMap"); 
+      PixUtil::replaceAll(name, "_V0", "Distribution"); 
+      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    } else if (string::npos != name.find("TrimThr5")) {
+      PixUtil::replaceAll(name, "TrimThr5", "VcalThresholdMap"); 
+      PixUtil::replaceAll(name, "_V0", ""); 
+      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
+
+
+
+
+  }
+  pDir->cd(); 
 }
