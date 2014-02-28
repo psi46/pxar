@@ -733,3 +733,9 @@ int PixTest::getIdFromIdx(int idx) {
   }
   return -1; 
 }
+
+
+// ----------------------------------------------------------------------
+void PixTest::dummyAnalysis() {
+
+}
