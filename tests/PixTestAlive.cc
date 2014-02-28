@@ -137,7 +137,7 @@ void PixTestAlive::dummyAnalysis() {
     
     for (int ix = 0; ix < 52; ++ix) {
       for (int iy = 0; iy < 80; ++iy) {
-	h2->Fill(ix, iy, fParNtrig); 
+	h2->SetBinContent(ix+1, iy+1, fParNtrig); 
       }
     }
 
