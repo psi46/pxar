@@ -17,7 +17,6 @@ void fullTest(string testname = "fulltest", string rootfilename = "fulltest.root
   ap->setDummy(true);
   ap->setMoreWebCloning(true);
 
-
   cout << "pxar: dumping results into " << rootfile << endl;
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   
@@ -28,7 +27,6 @@ void fullTest(string testname = "fulltest", string rootfilename = "fulltest.root
   pt->doTest();
 
   delete pt; 
-  rfile->Write();
   rfile->Close();
 
   ap->killApi();
