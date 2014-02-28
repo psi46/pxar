@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include <TH1.h>
+#include <TRandom.h>
 
 #include "PixTestScurves.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 
@@ -105,6 +107,11 @@ PixTestScurves::~PixTestScurves() {
 
 // ----------------------------------------------------------------------
 void PixTestScurves::doTest() {
+  if (fPixSetup->isDummy()) {
+    dummyAnalysis(); 
+    return;
+  }
+
   fDirectory->cd();
   PixTest::update(); 
   LOG(logINFO) << "PixTestScurves::doTest() ntrig = " << fParNtrig 
@@ -122,3 +129,53 @@ void PixTestScurves::doTest() {
   PixTest::update(); 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTestScurves::dummyAnalysis() {
+  string name("scurveVcal"); 
+  TH2D *h2(0); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
+    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.); 
+    h2->SetDirectory(fDirectory); 
+    setTitles(h2, "col", "row"); 
+    fHistOptions.insert(make_pair(h2, "colz"));
+    
+    for (int ix = 0; ix < 52; ++ix) {
+      for (int iy = 0; iy < 80; ++iy) {
+	h2->SetBinContent(ix+1, iy+1, gRandom->Gaus(50., 8.)); 
+      }
+    }
+
+    fHistList.push_back(h2); 
+  }
+
+  TH2D *h = (TH2D*)(*fHistList.begin());
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+  LOG(logINFO) << "PixTestScurves::dummyAnalysis() done";
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::output4moreweb() {
+  list<TH1*>::iterator begin = fHistList.begin();
+  list<TH1*>::iterator end = fHistList.end();
+  
+  TDirectory *pDir = gDirectory; 
+  gFile->cd(); 
+  for (list<TH1*>::iterator il = begin; il != end; ++il) {
+    string name = (*il)->GetName(); 
+    PixUtil::replaceAll(name, "scurveVcal", "VcalThreshold"); 
+    PixUtil::replaceAll(name, "_V0", "Map"); 
+    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
+    h->SetDirectory(gDirectory); 
+    h->Write(); 
+
+  }
+  pDir->cd(); 
+}
