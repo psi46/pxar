@@ -27,9 +27,11 @@ public:
   bool               useRootLogon() {return fUseRootLogon;} 
   void               setUseRootLogon(bool x) {fUseRootLogon = x;} 
   void               killApi(); 
-
+  void               setDummy(bool x) {fIsDummy = x;}
+  bool               isDummy() {return fIsDummy;}
 private: 
   bool              fDebug; 
+  bool              fIsDummy; 
   bool              fDoAnalysisOnly; 
   bool              fUseRootLogon;
 
