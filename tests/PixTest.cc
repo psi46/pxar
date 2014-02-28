@@ -226,11 +226,10 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   vector<TH2D*> maps;
   TH2D *h2(0); 
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
+    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -240,7 +239,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   
   int idx(-1); 
   for (unsigned int i = 0; i < results.size(); ++i) {
-    idx = id2idx[results[i].roc_id];
+    idx = fId2Idx[results[i].roc_id];
     h2 = maps[idx];
     if (h2) {
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
@@ -737,5 +736,11 @@ int PixTest::getIdFromIdx(int idx) {
 
 // ----------------------------------------------------------------------
 void PixTest::dummyAnalysis() {
+  
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::output4moreweb() {
 
 }
