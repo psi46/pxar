@@ -14,6 +14,7 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp) {
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
   fIsDummy           = false; 
+  fMoreWebCloning    = false; 
   init(); 
 }
 
@@ -24,6 +25,7 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
   fIsDummy           = false; 
+  fMoreWebCloning    = false; 
   init(); 
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs(); 
@@ -51,6 +53,7 @@ PixSetup::PixSetup() {
   fConfigParameters  = 0; 
   fDoAnalysisOnly    = false; 
   fIsDummy           = false; 
+  fMoreWebCloning    = false; 
   init(); 
   LOG(logDEBUG) << "PixSetup ctor()";
 }

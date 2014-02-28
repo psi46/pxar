@@ -84,6 +84,7 @@ void PixTestAlive::bookHist(string name) {
 //----------------------------------------------------------
 PixTestAlive::~PixTestAlive() {
   LOG(logDEBUG) << "PixTestAlive dtor";
+  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -149,7 +150,6 @@ void PixTestAlive::dummyAnalysis() {
   PixTest::update(); 
   LOG(logINFO) << "PixTestAlive::dummyAnalysis() done";
 
-  output4moreweb();
 }
 
 
@@ -165,6 +165,13 @@ void PixTestAlive::output4moreweb() {
     PixUtil::replaceAll(name, "PixelAlive", "PixelMap"); 
     PixUtil::replaceAll(name, "_V0", ""); 
     TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
+    h->SetDirectory(gDirectory); 
+    h->Write(); 
+
+    name = (*il)->GetName(); 
+    PixUtil::replaceAll(name, "PixelAlive", "AddressDecoding"); 
+    PixUtil::replaceAll(name, "_V0", ""); 
+    h = (TH2D*)((*il)->Clone(name.c_str()));
     h->SetDirectory(gDirectory); 
     h->Write(); 
   }

@@ -123,9 +123,11 @@ void PixTestTrim::doTest() {
   LOG(logINFO) << "PixTestTrim::doTest() ntrig = " << fParNtrig << " vcal = " << fParVcal;
 
   fPIX.clear(); 
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-  sparseRoc(10); 
+  //   fApi->_dut->testAllPixels(false);
+  //   fApi->_dut->maskAllPixels(true);
+  //  sparseRoc(50); 
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
   fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("Vcal", fParVcal);
 

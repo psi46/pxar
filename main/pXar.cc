@@ -43,6 +43,7 @@ int main(int argc, char *argv[]){
     doUpdateFlash(false),
     doAnalysisOnly(false),
     doDummyTest(false),
+    doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
   for (int i = 0; i < argc; i++){
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]){
       cout << "-c filename           read in commands from filename" << endl;
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
+      cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-n                    no DUT/API initialization" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
@@ -64,6 +66,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
+    if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
@@ -142,6 +145,7 @@ int main(int argc, char *argv[]){
   PixSetup a(api, ptp, configParameters);  
   a.setDummy(doDummyTest);
   a.setUseRootLogon(doUseRootLogon); 
+  a.setMoreWebCloning(doMoreWebCloning); 
 
   LOG(logINFO)<< "pxar: dumping results into " << rootfile;
   TFile *rfile(0); 
