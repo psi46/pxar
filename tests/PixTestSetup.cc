@@ -126,7 +126,7 @@ void PixTestSetup::doTest() {
   }
 
   unsigned int npix(0);
-  for (int iroc = 0; iroc < fApi->_dut->getNEnabledRocs(); ++iroc) {
+  for (unsigned int iroc = 0; iroc < fApi->_dut->getNEnabledRocs(); ++iroc) {
     npix += fApi->_dut->getNEnabledPixels(iroc); 
   }
 
