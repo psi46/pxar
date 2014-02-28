@@ -87,7 +87,8 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
   vector<string> suite;
   suite.push_back("alive"); 
-  suite.push_back("ph"); 
+  suite.push_back("trim"); 
+  suite.push_back("scurves");
   PixTest *t(0); 
   
   PixTestFactory *factory = PixTestFactory::instance(); 
