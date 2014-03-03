@@ -20,6 +20,7 @@
 #include "PixTestDaq.hh"
 #include "PixTestGainCalibration.hh"
 #include "PixTestPh.hh"
+#include "PixTestBBMap.hh"
 #include "PixTestFullTest.hh"
 
 using namespace std;
@@ -67,6 +68,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
+  if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
   if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");
   return 0; 
 }
