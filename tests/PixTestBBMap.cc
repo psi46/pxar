@@ -112,18 +112,18 @@ void PixTestBBMap::doTest()
   int vlo=0;
   int vhi=255;
   while(vlo < vhi-1){
-        int vcal = (vlo+vhi)/2;
-        fApi->setDAC("vcal", vcal);
-        results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-        cout << vcal << " " << results[vcal].size() << endl;
-        
-        if ( results[vcal].size()>0 ){
-            vhi=vcal;
-        }else{
-            vlo=vcal;
-        }
-        cout << "vlo " << vhi << " (" << results[vlo].size() << ")  " ;
-        cout << "vhi " << vlo << " (" << results[vhi].size() << ")"  << endl;
+    int vcal = (vlo+vhi)/2;
+    fApi->setDAC("vcal", vcal);
+    results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
+    LOG(logDEBUG) << vcal << " " << results[vcal].size();
+    
+    if ( results[vcal].size()>0 ){
+      vhi=vcal;
+    }else{
+      vlo=vcal;
+    }
+    LOG(logDEBUG) << "vlo " << vhi << " (" << results[vlo].size() << ")  " 
+		  << "vhi " << vlo << " (" << results[vhi].size() << ")";
   }    
   int vmin = vlo;
   
@@ -131,48 +131,50 @@ void PixTestBBMap::doTest()
   vlo=0;
   vhi=255;
   while(vlo < vhi-1){
-        int vcal = (vlo+vhi)/2;
-        fApi->setDAC("vcal", vcal);
-        if (results.find( vcal ) == results.end()){
-            results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-        }
-        cout << vcal << " " << results[vcal].size() << endl;
-        
-        if ( results[vcal].size()==nmax ){
-            vhi=vcal;
-        }else{
-            vlo=vcal;
-        }
-        cout << "vlo " << vhi << " (" << results[vlo].size() << ")  " ;
-        cout << "vhi " << vlo << " (" << results[vhi].size() << ")"  << endl;
+    int vcal = (vlo+vhi)/2;
+    fApi->setDAC("vcal", vcal);
+    if (results.find( vcal ) == results.end()){
+      results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
+    }
+    LOG(logDEBUG) << vcal << " " << results[vcal].size();
+    
+    if ( results[vcal].size()==nmax ){
+      vhi=vcal;
+    }else{
+      vlo=vcal;
+    }
+    LOG(logDEBUG) << "vlo " << vhi << " (" << results[vlo].size() << ")  " 
+		  << "vhi " << vlo << " (" << results[vhi].size() << ")";
   }    
   int vmax = vhi;
-    
-        
-  cout << "scan " << vmin << " ... " << vmax << endl;
   
-  TH1* h=new TH2D("BB","BB",52,0,52,80,0,80);
-  for(int vcal=vmin; vcal<vmax; vcal++){
-     fApi->setDAC("vcal", vcal);
-    if (results.find( vcal ) == results.end()){
-        results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-    }
-    cout << "vcal=" << vcal << "  " << results[vcal].size() << endl;
+  
+  LOG(logDEBUG) << "scan " << vmin << " ... " << vmax;
+  
+  TH1 *h = bookTH2D("BB","BB",52,0,52,80,0,80);
+  fHistOptions.insert(make_pair(h, "colz"));
 
+  for(int vcal=vmin; vcal<vmax; vcal++){
+    fApi->setDAC("vcal", vcal);
+    if (results.find( vcal ) == results.end()){
+      results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
+    }
+    LOG(logDEBUG) << "vcal=" << vcal << "  " << results[vcal].size();
+    
     for(vector<pixel>::iterator pix_it=results[vcal].begin();
-                      pix_it != results[vcal].end(); pix_it++){
-        pixel & pix = *pix_it;
-        if (( pix.value>5 ) && (h->GetBinContent( pix.column, pix.row ) ==0)){
-            h->SetBinContent( pix.column, pix.row, vcal);
-        }
+	pix_it != results[vcal].end(); pix_it++){
+      pixel & pix = *pix_it;
+      if (( pix.value>5 ) && (h->GetBinContent( pix.column+1, pix.row+1 ) ==0)){
+	h->SetBinContent( pix.column+1, pix.row+1, vcal);
+      }
     }
   } 
-
-   //map_it = results.begin();
-   //for ( ; map_it !=results.end(); map_it++){
-   //    cout << (*map_it).first << endl;
+  
+  //map_it = results.begin();
+  //for ( ; map_it !=results.end(); map_it++){
+  //    cout << (*map_it).first << endl;
   // }
-        
+  
   
   //vector<TH1*> maps = thrMaps("vcal", "BB", fParNtrig); 
   //vector<TH1> maps;
