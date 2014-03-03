@@ -145,7 +145,7 @@ void PixTestShowIana::doTest()
     for(;n<10; n++){
         //usleep(10);// not for windoze
         ia = fApi->getTBia()*1e3;
-        if ( abs(ia-ia1) < 1 ) break;
+        if ( TMath::Abs(ia-ia1) < 1 ) break;
         ia1=ia;
     }
 
