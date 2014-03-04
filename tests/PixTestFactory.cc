@@ -20,6 +20,7 @@
 #include "PixTestDaq.hh"
 #include "PixTestGainCalibration.hh"
 #include "PixTestPh.hh"
+#include "PixTestThreshMap.hh"
 #include "PixTestBBMap.hh"
 #include "PixTestFullTest.hh"
 
@@ -69,6 +70,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
   if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
+  if (!name.compare("threshmap")) return new PixTestThreshMap(a, "ThreshMap");
   if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");
   return 0; 
 }
