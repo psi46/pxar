@@ -63,6 +63,12 @@ Vcal 200
 Ntrig 10
 Vcal 200
 
+-- ThreshMap
+Ntrig      10
+VcalLo     25
+VcalHi     100
+BumpBond   checkbox
+
 -- Trim
 TrimBits button
 Ntrig       10
