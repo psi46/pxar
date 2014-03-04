@@ -14,7 +14,8 @@ hal::hal(std::string name) :
   _compatible(false),
   nTBMs(0),
   deser160phase(4),
-  rocType(0)
+  rocType(0),
+  hubId(31)
 {
 
   // Get a new CTestboard class instance:
@@ -41,6 +42,9 @@ hal::hal(std::string name) :
 
 	// Finally, initialize the testboard:
 	_testboard->Init();
+
+        SignalProbeA1(3);
+	SignalProbeA2(1);
       }
     }
     catch(CRpcError &e) {
@@ -231,10 +235,12 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   nTBMs++;
 
   // FIXME Beat: 31 is default hub address for the new modules:
-  _testboard->mod_Addr(31);
+  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
+
+  _testboard->mod_Addr(hubId);
   _testboard->Flush();
 
-  // Programm all registers according to the configuration data:
+  // Program all registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting register vector for TBM " << static_cast<int>(tbmId) << ".";
   tbmSetRegs(tbmId,regVector);
 }
@@ -478,19 +484,19 @@ bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t /*tbmId*/, uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
   // FIXME currently only one TBM supported...
 
   // Make sure we are writing to the correct TBM by setting its sddress:
   // FIXME Magic from Beat, need to understand this and be able to program also the second TBM:
-  _testboard->mod_Addr(31);
+  _testboard->mod_Addr(0);
 
   LOG(logDEBUGHAL) << "Set Reg" << std::hex << static_cast<int>(regId) << std::dec << " to " << std::hex << static_cast<int>(regValue) << std::dec << " for both TBM cores.";
   // Set this register for both TBM cores:
   uint8_t regCore1 = 0xE0 | regId;
   uint8_t regCore2 = 0xF0 | regId;
-  LOG(logDEBUGHAL) << "Core 1: register " << std::hex << static_cast<int>(regCore1) << " = " << static_cast<int>(regValue) << std::dec;
-  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << static_cast<int>(regCore2) << " = " << static_cast<int>(regValue) << std::dec;
+  LOG(logDEBUGHAL) << "Core " << tbmId << " : register " << std::hex << static_cast<int>(regCore1) << " = " << static_cast<int>(regValue) << std::dec;
+//  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << static_cast<int>(regCore2) << " = " << static_cast<int>(regValue) << std::dec;
 
   _testboard->tbm_Set(regCore1,regValue);
   _testboard->tbm_Set(regCore2,regValue);
@@ -729,7 +735,8 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
   // We are expecting one Event per DAC setting per trigger per pixel:
-  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+ // int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS - data.size();
+  int missing = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS - data.size();
   if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.

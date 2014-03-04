@@ -307,6 +307,7 @@ namespace pxar {
     uint8_t nTBMs;
     uint8_t deser160phase;
     uint8_t rocType;
+    uint8_t hubId;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
