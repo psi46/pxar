@@ -24,6 +24,19 @@ typedef char int8_t;
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
 
+///
+/// PixTest
+/// =======
+/// 
+/// Base class for all tests. 
+/// 
+/// 
+/// Provides common utilities 
+/// - mapping between roc index and roc ID
+/// - keeps a list of the histograms (and another list with their display options)
+/// - booking of histgrams that are versioned between different test invocations
+/// - retrieve histograms instead readout decoding
+/// 
 class PixTest: public TQObject {
 public:
   PixTest(PixSetup *a, std::string name);
