@@ -1425,7 +1425,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > >* api::repackDacScanData (
   for(size_t dac = dacMin; dac <= dacMax; dac++) { result->push_back(std::make_pair(dac,std::vector<pixel>())); }
 
   size_t currentDAC = dacMin;
-  // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
+  // Loop over the packed data and separate into DAC ranges, potentially several rounds:
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     if(currentDAC > dacMax) { currentDAC = dacMin; }
     result->at(currentDAC-dacMin).second.insert(result->at(currentDAC-dacMin).second.end(),
@@ -1476,8 +1476,8 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
 	uint8_t delta_new = abs(pixit->value - threshold);
 	bool positive_slope = (pixit->value-oldvalue[*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
-	if(!positive_slope) { break; }
-	if(!(delta_new < delta_old)) { break; }
+	if(!positive_slope) continue; 
+	if(!(delta_new < delta_old)) continue; 
 
 	// Update the DAC threshold value for the pixel:
 	px->value = it->first;
@@ -1558,8 +1558,8 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
 	uint8_t delta_new = abs(pixit->value - threshold);
 	bool positive_slope = (pixit->value - oldvalue[dac->first][*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
-	if(!positive_slope) { break; }
-	if(!(delta_new < delta_old)) { break; }
+	if(!positive_slope) continue;
+	if(!(delta_new < delta_old)) continue;
 
 	LOG(logDEBUGAPI) << "Updating pixel " << (*pixit) << " for DAC value " << (int)it->second.first << " to threshold " << (int)it->first;
 	// Update the DAC threshold value for the pixel:
