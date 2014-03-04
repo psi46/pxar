@@ -135,9 +135,10 @@ void PixTestDaq::doTest() {
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     LOG(logDEBUG) << (*it) << std::endl;
 
-   
-    hits[id2idx[it->roc_id]]->SetBinContent(it->column,it->row,it->value);
- 
+    for(std::vector<pxar::pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; it++)
+	{   
+	    hits[id2idx[pixit->roc_id]]->SetBinContent(pixit->column,pixit->row,pixit->value);
+ 	}
   }
   // We should store the data, probably...
 
@@ -146,7 +147,7 @@ void PixTestDaq::doTest() {
     fHistOptions.insert(make_pair(hits[i], "colz"));
   }
 
-  copy(hitss.begin(), hits.end(), back_inserter(fHistList));
+  copy(hits.begin(), hits.end(), back_inserter(fHistList));
 
 
   TH2D *h = (TH2D*)(*fHistList.begin());
