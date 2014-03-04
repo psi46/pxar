@@ -194,7 +194,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  fParTab = new PixParTab(this, fConfigParameters, "h/w"); 
+  if(fApi) fParTab = new PixParTab(this, fConfigParameters, "h/w"); 
 
   fcmbTests->AddEntry("Ignore this ...", 0);
   vector<string> tests = fTestParameters->getTests();
@@ -202,8 +202,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fcmbTests->AddEntry(tests[i].c_str(), i+1);
     createTab(tests[i].c_str()); 
   }
+
   fcmbTests->Select(0);
-  fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
+  if(fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , fBorderN, fBorderN, fBorderN, fBorderN));
@@ -211,7 +212,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
   AddFrame(fH2, new TGLayoutHints(kLHintsBottom | kLHintsExpandY | kLHintsExpandX));
- 
+
   MapSubwindows();
   Resize(GetDefaultSize());
   MapWindow();
@@ -259,6 +260,7 @@ void PixGui::CloseWindow() {
   gApplication->Terminate(0);
 
 }
+
 // ----------------------------------------------------------------------
 void PixGui::handleButtons(Int_t id) {
   if (id == -1) {
