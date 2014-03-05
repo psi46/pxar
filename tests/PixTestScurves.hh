@@ -15,6 +15,8 @@ public:
   void bookHist(std::string); 
 
   void doTest(); 
+  void dummyAnalysis(); 
+  void output4moreweb();
 
 private:
 

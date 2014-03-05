@@ -21,6 +21,8 @@ public:
   std::vector<TH1*> trimStep(int corrections, std::vector<TH1*> calMapOld); 
   void setTrimBits(); 
   void doTest(); 
+  void dummyAnalysis(); 
+  void output4moreweb();
 
 private:
 

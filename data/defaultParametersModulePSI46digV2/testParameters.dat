@@ -4,6 +4,9 @@ DAC Vana
 -- DAQ
 Ntrig 100
 
+-- BumpBonding
+Ntrig 100
+
 -- DacScan
 Ntrig 10
 DAC   caldel
@@ -59,6 +62,12 @@ Vcal 200
 -- Tbm
 Ntrig 10
 Vcal 200
+
+-- ThreshMap
+Ntrig      10
+VcalLo     25
+VcalHi     100
+BumpBond   checkbox
 
 -- Trim
 TrimBits button

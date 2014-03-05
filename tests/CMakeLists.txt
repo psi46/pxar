@@ -19,6 +19,9 @@ PixTestPretest.cc
 PixTestFactory.cc
 PixTestGainCalibration.cc
 PixTestPh.cc
+PixTestThreshMap.cc
+PixTestBBMap.cc	
+PixTestFullTest.cc
 )
 
 # fill list of header files 
@@ -38,6 +41,9 @@ PixTestPretest.hh
 PixTestGainCalibration.hh
 PixTestFactory.hh
 PixTestPh.hh
+PixTestThreshMap.hh
+PixTestBBMap.hh
+PixTestFullTest.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/util ${ROOT_INCLUDE_DIR} )

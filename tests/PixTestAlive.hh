@@ -13,6 +13,8 @@ public:
   void init(); 
   void setToolTips();
   void bookHist(std::string); 
+  void dummyAnalysis(); 
+  void output4moreweb();
 
   void doTest(); 
 

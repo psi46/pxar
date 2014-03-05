@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>     /* atof, atoi */
 
 #include <TKey.h>
@@ -146,6 +147,10 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   fPIF->fHi = dacmax; 
 
   TH1* h2(0), *h3(0); 
+  string fname("SCurveData");
+  ofstream OUT;
+  string line; 
+  string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
     rmaps.clear();
     rmaps = maps[iroc];
@@ -157,9 +162,12 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
 
+    OUT.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+    OUT << "Mode 1" << endl;
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
 	delete rmaps[i];
+	OUT << empty << endl;
 	continue;
       }
       bool ok = threshold(rmaps[i]); 
@@ -174,6 +182,16 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       h3->SetBinContent(ic+1, ir+1, fSigma); 
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
 
+      // -- write file
+      int NSAMPLES(32); 
+      int ibin = rmaps[i]->FindBin(fThreshold); 
+      int bmin = ibin - 15;
+      line = Form("%2d %3d", NSAMPLES, bmin); 
+      for (int ix = bmin; ix < bmin + 33; ++ix) {
+	line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
+      }
+      OUT << line << endl;
+
       if (result & 0x4) {
 	cout << "add " << rmaps[i]->GetName() << endl;
 	fHistList.push_back(rmaps[i]);
@@ -185,6 +203,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	delete rmaps[i];
       }
     }
+    OUT.close();
 
     if (result & 0x1) {
       resultMaps.push_back(h2); 
@@ -226,11 +245,10 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   vector<TH2D*> maps;
   TH2D *h2(0); 
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
+    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -240,7 +258,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   
   int idx(-1); 
   for (unsigned int i = 0; i < results.size(); ++i) {
-    idx = id2idx[results[i].roc_id];
+    idx = fId2Idx[results[i].roc_id];
     h2 = maps[idx];
     if (h2) {
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
@@ -732,4 +750,16 @@ int PixTest::getIdFromIdx(int idx) {
     if (il->second == idx) return il->first;
   }
   return -1; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::dummyAnalysis() {
+  
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::output4moreweb() {
+
 }

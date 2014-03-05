@@ -35,15 +35,6 @@ int main(int argc, char *argv[]){
   
   LOG(logINFO) << "*** Welcome to pxar ***";
 
-  if (0) {
-    uint16_t x = 0; 
-    int32_t y = 1; 
-    y |= x; 
-    cout << "y = " << y << " int(y) = " << int(y) << endl;
-    return 0; 
-  }
-
-
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
   bool doRunGui(false), 
@@ -51,25 +42,31 @@ int main(int argc, char *argv[]){
     noAPI(false), 
     doUpdateFlash(false),
     doAnalysisOnly(false),
+    doDummyTest(false),
+    doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
       cout << "-a                    do not do tests, do not recreate rootfile, but read in existing rootfile" << endl;
+      cout << "-b                    do dummyTest only" << endl;
       cout << "-c filename           read in commands from filename" << endl;
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
+      cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-n                    no DUT/API initialization" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
     if (!strcmp(argv[i],"-a"))                                {doAnalysisOnly = true;} 
+    if (!strcmp(argv[i],"-b"))                                {doDummyTest = true;} 
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
     if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
+    if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
@@ -146,7 +143,9 @@ int main(int argc, char *argv[]){
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
   PixSetup a(api, ptp, configParameters);  
+  a.setDummy(doDummyTest);
   a.setUseRootLogon(doUseRootLogon); 
+  a.setMoreWebCloning(doMoreWebCloning); 
 
   LOG(logINFO)<< "pxar: dumping results into " << rootfile;
   TFile *rfile(0); 
@@ -155,6 +154,7 @@ int main(int argc, char *argv[]){
   } else {
     rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   }
+
 
   if (doRunGui) {
     runGui(a, argc, argv); 
@@ -186,7 +186,7 @@ void runTest(PixTest *b) {
 
 // ----------------------------------------------------------------------
 void runGui(PixSetup &a, int argc, char *argv[]) {
-  TApplication theApp("App", &argc, argv);
+  TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);
   theApp.Run();

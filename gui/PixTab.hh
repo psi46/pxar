@@ -30,6 +30,7 @@ public:
 
   virtual void handleButtons(Int_t id = -1); 
   virtual void buttonClicked(); 
+  virtual void boxChecked(); 
   virtual void setParameter(); 
 
   void update();

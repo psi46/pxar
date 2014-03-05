@@ -1,6 +1,9 @@
 -- CurVsDac
 DAC Vana
 
+-- BumpBonding
+Ntrig 100
+
 
 -- DAQ
 Ntrig 100
