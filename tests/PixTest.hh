@@ -100,7 +100,7 @@ public:
   void restore(std::string dacname); 
 
   /// combine all available ROC maps into a module map
-  TH2D* moduleMap(std::string histname); 
+  virtual TH1* moduleMap(std::string histname); 
 
   /// delete histogams from HistList
   void clearHistList(); 

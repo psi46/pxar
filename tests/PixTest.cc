@@ -541,7 +541,8 @@ void PixTest::restore(string dacname) {
 
 
 // ----------------------------------------------------------------------
-TH2D* PixTest::moduleMap(string histname) {
+TH1* PixTest::moduleMap(string histname) {
+  // FIXME? Loop over fHistList instead of using Directory->Get()?
   LOG(logDEBUG) << "moduleMap histname: " << histname; 
   TH1* h0 = (*fDisplayedHist);
   if (!h0->InheritsFrom(TH2::Class())) {
