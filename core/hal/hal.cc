@@ -43,8 +43,6 @@ hal::hal(std::string name) :
 	// Finally, initialize the testboard:
 	_testboard->Init();
 
-        SignalProbeA1(3);
-	SignalProbeA2(1);
       }
     }
     catch(CRpcError &e) {
