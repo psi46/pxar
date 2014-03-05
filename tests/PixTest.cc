@@ -550,7 +550,7 @@ TH1* PixTest::moduleMap(string histname) {
   }
   TH2D *h1 = (TH2D*)h0; 
   string h1name = h1->GetName();
-  string::size_type s1 = h1name.find("_C"); 
+  string::size_type s1 = h1name.rfind("_C"); 
   string barename = h1name.substr(0, s1);
   string h2name = barename + string("_mod"); 
   LOG(logDEBUG) << "h1->GetName() = " << h1name << " -> " << h2name; 
