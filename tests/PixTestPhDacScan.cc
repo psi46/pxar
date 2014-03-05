@@ -125,7 +125,6 @@ void PixTestPhDacScan::doTest() {
   TH1D *h1(0);
   int cycle(-1); 
 
-  size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int i = 0; i < fPIX.size(); ++i) {
