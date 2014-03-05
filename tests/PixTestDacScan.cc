@@ -137,22 +137,6 @@ void PixTestDacScan::setToolTips() {
 // ----------------------------------------------------------------------
 void PixTestDacScan::bookHist(string name) {
   fDirectory->cd(); 
-
-  TH1D *h1(0);
-  fHistList.clear();
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-      h1 = new TH1D(Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    Form("NhitsVs%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, i), 
-		    256, 0., 256.); 
-      h1->SetMinimum(0.); 
-      setTitles(h1, Form("%s [DAC]", name.c_str()), "readouts");
-      if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
-      fHistList.push_back(h1); 
-    }
-   
-  }
-
 }
 
 
@@ -165,10 +149,29 @@ PixTestDacScan::~PixTestDacScan() {
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
   fDirectory->cd();
+
+  TH1D *h1(0);
+  vector<TH1D*> vhist;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  int cycle(-1); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
+      h1 = bookTH1D(Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
+		    Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
+		    256, 0., 256.); 
+      h1->SetMinimum(0.); 
+      cycle = -1 + histCycle(Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]));
+      setTitles(h1, Form("%s [DAC]", fParDAC.c_str()), "readouts");
+      if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
+      fHistList.push_back(h1); 
+    }
+   
+  }
+
+
   PixTest::update(); 
   LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
-  //FIXME  clearHist();
-  // -- FIXME: Should/could separate better test from display?
+
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
@@ -177,26 +180,26 @@ void PixTestDacScan::doTest() {
       fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
     }
   }
-  bookHist(fParDAC);
-
-  // -- FIXME This code is crap. Replace as in PixelAlive
 
   vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
   LOG(logDEBUG) << " dacscandata.size(): " << results.size();
   TH1D *h(0); 
-  for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, vector<pixel> > v = results[i];
       int idac = v.first; 
-
+      
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-	if (vpix[ipix].roc_id == ichip) {
-	  h = (TH1D*)fDirectory->Get(Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip));
+	if (vpix[ipix].roc_id == rocIds[iroc]) {
+	  h = (TH1D*)fDirectory->Get(Form("NhitsVs%s_c%d_r%d_C%d_V%d", 
+					  fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, rocIds[iroc], cycle));
 	  if (h) {
 	    h->Fill(idac, vpix[ipix].value); 
 	  } else {
-	    LOG(logDEBUG) << "XX did not find " << Form("NhitsVs%s_c%d_r%d_C%d", fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, ichip);
+	    LOG(logDEBUG) << "XX did not find " 
+			  << Form("NhitsVs%s_c%d_r%d_C%d_V%d", 
+				  fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, rocIds[iroc], cycle);
 	  }
 	}
 	
@@ -212,4 +215,54 @@ void PixTestDacScan::doTest() {
   }
   PixTest::update(); 
 
+}
+
+// ----------------------------------------------------------------------
+TH1* PixTestDacScan::moduleMap(string histname) {
+  LOG(logDEBUG) << "PixTestDacScan::moduleMap histname: " << histname; 
+  TH1* h0 = (*fDisplayedHist);
+  if (!h0->InheritsFrom(TH1::Class())) {
+    return 0; 
+  }
+
+  TH1D *h1 = (TH1D*)h0; 
+  string h1name = h1->GetName();
+  string::size_type s1 = h1name.find("_c"); 
+  string barename = h1name.substr(0, s1);
+  LOG(logDEBUG) << "h1->GetName() = " << h1name << " -> " << barename; 
+
+  TH1 *h(0);
+  string hname;
+  int cycle(-1), ic(-1), ir(-1); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+
+    h1  = bookTH1D(Form("%s_C%d", barename.c_str(), rocIds[iroc]), Form("%s_C%d", barename.c_str(), rocIds[iroc]), 
+		   h0->GetNbinsX(), h0->GetBinLowEdge(1), h0->GetBinLowEdge(h0->GetNbinsX()+1)); 
+    if (0 == iroc) cycle = -1 + histCycle(Form("%s_C%d", barename.c_str(), rocIds[iroc])); 
+
+    list<TH1*>::iterator hbeg = fHistList.begin();
+    list<TH1*>::iterator hend = fHistList.end();
+    cout << "Search for: " << Form("%s", barename.c_str()) << endl;
+    for (list<TH1*>::iterator il = hbeg; il != hend; ++il) {
+      h = (*il);
+      hname = h->GetName();
+      if (string::npos != hname.find(Form("%s", barename.c_str()))) {
+	if (string::npos != hname.find(Form("_C%d", rocIds[iroc]))) {
+	  if (string::npos != hname.find(Form("_V%d", cycle))) {
+	    for (int i = 1; i < h->GetNbinsX(); ++i) {
+	      h1->Fill(h->GetBinCenter(i), h->GetBinContent(i)); 
+	    }
+	  }
+	}
+      }
+    }
+    fHistList.push_back(h1); 
+  }
+
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+
+  if (h1) h1->Draw();
+  update(); 
+  return h1; 
 }
