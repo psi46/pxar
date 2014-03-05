@@ -558,7 +558,7 @@ namespace pxar {
     /** Minimal Pattern Generator Loop period, calculated from the sum of
      *  all PG commands
      */
-    bool _daq_minimum_period;
+    uint32_t _daq_minimum_period;
 
   }; // class api
 
