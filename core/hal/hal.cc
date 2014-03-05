@@ -489,7 +489,7 @@ bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
 
   // Make sure we are writing to the correct TBM by setting its sddress:
   // FIXME Magic from Beat, need to understand this and be able to program also the second TBM:
-  _testboard->mod_Addr(0);
+  _testboard->mod_Addr(hubId);
 
   LOG(logDEBUGHAL) << "Set Reg" << std::hex << static_cast<int>(regId) << std::dec << " to " << std::hex << static_cast<int>(regValue) << std::dec << " for both TBM cores.";
   // Set this register for both TBM cores:
