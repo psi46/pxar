@@ -55,6 +55,18 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 	fParHiDAC = atoi(sval.c_str()); 
 	setToolTips();
       }
+      if (!parName.compare("PIX")) {
+	s1 = sval.find(","); 
+	if (string::npos != s1) {
+	  str1 = sval.substr(0, s1); 
+	  pixc = atoi(str1.c_str()); 
+	  str2 = sval.substr(s1+1); 
+	  pixr = atoi(str2.c_str()); 
+	  fPIX.push_back(make_pair(pixc, pixr)); 
+	} else {
+	  fPIX.push_back(make_pair(-1, -1)); 
+	}
+      }
       if (!parName.compare("PIX1")) {
 	s1 = sval.find(","); 
 	if (string::npos != s1) {
@@ -149,7 +161,6 @@ PixTestDacScan::~PixTestDacScan() {
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
   fDirectory->cd();
-
   TH1D *h1(0);
   vector<TH1D*> vhist;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -174,14 +185,18 @@ void PixTestDacScan::doTest() {
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
+  vector<pair<uint8_t, vector<pixel> > > rresults, results;
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
     if (fPIX[i].first > -1)  {
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
       fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+      rresults = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
+      copy(rresults.begin(), rresults.end(), back_inserter(results)); 
+      fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
+      fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
     }
   }
 
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
   LOG(logDEBUG) << " dacscandata.size(): " << results.size();
   TH1D *h(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
@@ -227,7 +242,7 @@ TH1* PixTestDacScan::moduleMap(string histname) {
 
   TH1D *h1 = (TH1D*)h0; 
   string h1name = h1->GetName();
-  string::size_type s1 = h1name.find("_c"); 
+  string::size_type s1 = h1name.rfind("_c"); 
   string barename = h1name.substr(0, s1);
   LOG(logDEBUG) << "h1->GetName() = " << h1name << " -> " << barename; 
 
@@ -243,7 +258,6 @@ TH1* PixTestDacScan::moduleMap(string histname) {
 
     list<TH1*>::iterator hbeg = fHistList.begin();
     list<TH1*>::iterator hend = fHistList.end();
-    cout << "Search for: " << Form("%s", barename.c_str()) << endl;
     for (list<TH1*>::iterator il = hbeg; il != hend; ++il) {
       h = (*il);
       hname = h->GetName();
