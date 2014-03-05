@@ -64,7 +64,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
   TGTextBuffer *tb(0); 
-  TGTextButton *tset(0); 
+  TGTextButton *tset(0);
+  TGCheckButton *tcheck(0); 
 
   TGHorizontalFrame *hFrame(0); 
 
@@ -80,6 +81,16 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
       continue;
+    }
+
+    if (amap[i].second == "checkbox") {
+
+    	hFrame = new TGHorizontalFrame(fV2, 50, 30, kLHintsExpandX);
+	tcheck = new TGCheckButton(fV2,amap[i].first.c_str() ,1);
+	tcheck->SetState(kButtonUp);
+        tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
+	continue;
+
     }
 
 
@@ -275,6 +286,24 @@ void PixTab::buttonClicked() {
   fTest->runCommand(btn->GetTitle()); 
 
 } 
+
+// ----------------------------------------------------------------------
+void PixTab::boxChecked() {
+	
+  if (!fGui->getTabs()) return;
+
+  TGCheckButton *btn = (TGCheckButton*) gTQSender;
+  string sTitle = btn->GetTitle();
+
+  LOG(logINFO) << "xxxPressed():  " << btn->GetTitle();
+  
+  fTest->setParameter(sTitle,string(btn->IsDown()?"1":"0")) ;
+
+}
+
+// ----------------------------------------------------------------------
+
+
 
 // ----------------------------------------------------------------------
 void PixTab::setParameter() {
