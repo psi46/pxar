@@ -325,6 +325,15 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
   return fRocPixelConfigs;
 }
 
+// ----------------------------------------------------------------------
+vector<pxar::pixelConfig> ConfigParameters::getRocPixelConfig(int i) {
+  if (!fReadRocPixelConfig) {
+    readRocPixelConfig(); 
+  }
+  return fRocPixelConfigs[i];
+
+
+}
 
 // ----------------------------------------------------------------------
 void ConfigParameters::readRocPixelConfig() {
