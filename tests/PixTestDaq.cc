@@ -135,23 +135,27 @@ void PixTestDaq::doTest() {
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     LOG(logDEBUG) << (*it) << std::endl;
 
-    for(std::vector<pxar::pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; it++)
+    for(std::vector<pxar::pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++)
 	{   
 	    hits[id2idx[pixit->roc_id]]->SetBinContent(pixit->column,pixit->row,pixit->value);
  	}
   }
+
+  LOG(logDEBUG) << "Filled histograms..." ;
   // We should store the data, probably...
 
 
   for (unsigned int i = 0; i < hits.size(); ++i) {
     fHistOptions.insert(make_pair(hits[i], "colz"));
   }
-
+  LOG(logDEBUG) << "Filled draw options ";
   copy(hits.begin(), hits.end(), back_inserter(fHistList));
 
 
+  LOG(logDEBUG) << "Copy ";
   TH2D *h = (TH2D*)(*fHistList.begin());
 
+  LOG(logDEBUG) << "begin ";
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
 
