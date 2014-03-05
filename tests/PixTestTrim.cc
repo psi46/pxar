@@ -279,6 +279,9 @@ void PixTestTrim::doTest() {
 void PixTestTrim::trimBitTest() {
 
   LOG(logINFO) << "trimBitTest start "; 
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
   
   vector<int>vtrim; 
   vtrim.push_back(250);
@@ -305,6 +308,8 @@ void PixTestTrim::trimBitTest() {
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
   vector<TH1*> thr0 = thrMaps("Vcal", "TrimBitsThr0", fParNtrig); 
 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+
   // -- now loop over all trim bits
   vector<TH1*> thr;
   for (unsigned int iv = 0; iv < vtrim.size(); ++iv) {
@@ -316,11 +321,10 @@ void PixTestTrim::trimBitTest() {
     }
 
     LOG(logDEBUG) << "trimBitTest initDUT with trim bits = " << btrim[iv]; 
-    // FIXME: getRocPixelConfig SHOULD NOT RE-READ trim bit files and mask files...
-    fApi->initDUT(cp->getTbmType(), cp->getTbmDacs(), 
-		  cp->getRocType(), cp->getRocDacs(), 
-		  cp->getRocPixelConfig());
-    
+    for (int iroc = 0; iroc < rocIds.size(); ++iroc) {
+      fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
+    }
+
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
     thr = thrMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig); 
