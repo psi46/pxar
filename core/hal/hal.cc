@@ -9,13 +9,15 @@
 
 using namespace pxar;
 
-hal::hal(std::string name) :
+
+
+hal::hal(std::string name, uint8_t _hubId) :
   _initialized(false),
   _compatible(false),
   nTBMs(0),
   deser160phase(4),
   rocType(0),
-  hubId(31)
+  hubId(_hubId)
 {
 
   // Get a new CTestboard class instance:
@@ -1077,6 +1079,16 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->uDelay(100);
   _testboard->Flush();
 }
+
+
+
+void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
+
+  _testboard->SetClockStretch(src, delay, width);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
 
 bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 

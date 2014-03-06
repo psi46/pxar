@@ -15,7 +15,7 @@
 
 using namespace pxar;
 
-api::api(std::string usbId, std::string logLevel) : 
+api::api(std::string usbId, std::string logLevel, int8_t hubId) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
   _daq_minimum_period(0)
@@ -28,7 +28,7 @@ api::api(std::string usbId, std::string logLevel) :
   LOG(logINFO) << "Log level: " << logLevel;
 
   // Get a new HAL instance with the DTB USB ID passed to the API constructor:
-  _hal = new hal(usbId);
+  _hal = new hal(usbId, hubId);
 
   // Get the DUT up and running:
   _dut = new dut();
@@ -1745,4 +1745,11 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
 
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
+}
+
+void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
+{
+  LOG(logDEBUGAPI) << "Set Clock Stretch " << src << " " << width << " " << delay; 
+  _hal->SetClockStretch(src,width,delay);
+  
 }

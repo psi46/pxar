@@ -23,6 +23,9 @@ namespace pxar {
      */
     ~hal();
 
+    hal(std::string name = "*", uint8_t _hubId = 31);
+    
+
     /** Function to check the status of the HAL
      */
     bool status();
@@ -91,6 +94,16 @@ namespace pxar {
     /** Function to set and update the pattern generator command list on the DTB
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup);
+
+    /** Set the clock stretch 
+     width = 0 -> disable stretch
+     #define STRETCH_AFTER_TRG 0
+     #define STRETCH_AFTER_CAL 1
+     #define STRETCH_AFTER_RES 2
+     #define STRETCH_AFTER_SYNC 3
+    */
+    void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);
+
 
     // TESTBOARD GET COMMANDS
     /** Read the testboard analog current

@@ -111,7 +111,7 @@ namespace pxar {
      *  wildcard. If only one DTB is connected the algorithm will automatically
      *  connect to this board, if several are connected it will throw a warning.
      */
-    api(std::string usbId = "*", std::string logLevel = "WARNING");
+    api(std::string usbId = "*", std::string logLevel = "WARNING", int8_t hubId = 31);
 
     /** Default destructor for libpxar API
      *
@@ -384,6 +384,7 @@ namespace pxar {
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
+    void setClockStretch( uint8_t src, uint16_t delay, uint16_t width);
 
     // DAQ functions
 
