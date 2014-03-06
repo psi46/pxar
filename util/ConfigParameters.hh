@@ -100,6 +100,8 @@ public:
   double getVd() {return vd;}
   bool   getHvOn() {return fHvOn;}
 
+  uint8_t getHubId() {return fHubId;}
+
 private:
 
   bool fReadTbParameters, fReadTbmParameters, fReadDacParameters, fReadRocPixelConfig;
