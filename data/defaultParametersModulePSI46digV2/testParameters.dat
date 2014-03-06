@@ -3,6 +3,9 @@ DAC Vana
 
 -- DAQ
 Ntrig 100
+ClockStretch 100
+Iterations  1
+CountHits  checkbox
 
 -- BumpBonding
 Ntrig 100
