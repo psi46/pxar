@@ -22,6 +22,9 @@ public:
 private:
 
   int     fParNtrig; 
+  int     fParStretch; 
+  bool    fParCount;
+  int 	  fParIter;
 
   map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
