@@ -15,6 +15,7 @@ public:
   void bookHist(std::string); 
 
   void doTest(); 
+  TH1* moduleMap(std::string histname);
 
 private:
 

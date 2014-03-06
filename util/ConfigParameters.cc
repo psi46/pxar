@@ -304,7 +304,7 @@ vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
   if (fnTbms < 1) {
     a.push_back(make_pair(0x0800,25));    // PG_RESR b001000 
-    a.push_back(make_pair(0x0400,100+5)); // PG_CAL  b000100
+    a.push_back(make_pair(0x0400,100+6)); // PG_CAL  b000100
     a.push_back(make_pair(0x0200,16));    // PG_TRG  b000010
     a.push_back(make_pair(0x0100,0));     // PG_TOK  b000001
   } else {
@@ -325,6 +325,15 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
   return fRocPixelConfigs;
 }
 
+// ----------------------------------------------------------------------
+vector<pxar::pixelConfig> ConfigParameters::getRocPixelConfig(int i) {
+  if (!fReadRocPixelConfig) {
+    readRocPixelConfig(); 
+  }
+  return fRocPixelConfigs[i];
+
+
+}
 
 // ----------------------------------------------------------------------
 void ConfigParameters::readRocPixelConfig() {

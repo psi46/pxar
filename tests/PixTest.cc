@@ -246,9 +246,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   TH2D *h2(0); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -543,7 +541,8 @@ void PixTest::restore(string dacname) {
 
 
 // ----------------------------------------------------------------------
-TH2D* PixTest::moduleMap(string histname) {
+TH1* PixTest::moduleMap(string histname) {
+  // FIXME? Loop over fHistList instead of using Directory->Get()?
   LOG(logDEBUG) << "moduleMap histname: " << histname; 
   TH1* h0 = (*fDisplayedHist);
   if (!h0->InheritsFrom(TH2::Class())) {
@@ -551,21 +550,24 @@ TH2D* PixTest::moduleMap(string histname) {
   }
   TH2D *h1 = (TH2D*)h0; 
   string h1name = h1->GetName();
-  string::size_type s1 = h1name.find("_C"); 
+  string::size_type s1 = h1name.rfind("_C"); 
   string barename = h1name.substr(0, s1);
   string h2name = barename + string("_mod"); 
   LOG(logDEBUG) << "h1->GetName() = " << h1name << " -> " << h2name; 
-  TH2D *h2 = new TH2D(h2name.c_str(), h2name.c_str(), 
-		      2*80, 0., 2*80., 8*52, 0., 8*52); 
-  for (unsigned int ichip = 0; ichip < fPixSetup->getConfigParameters()->getNrocs(); ++ichip) {
-    TH2D *hroc = (TH2D*)fDirectory->Get(Form("%s_C%d", barename.c_str(), ichip)); 
-    if (hroc) fillMap(h2, hroc, ichip); 
+  TH2D *h2 = bookTH2D(h2name.c_str(), h2name.c_str(), 2*80, 0., 2*80., 8*52, 0., 8*52); 
+  fHistOptions.insert(make_pair(h2, "colz"));
+  int cycle(-1); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    if (0 == iroc) cycle = -1 + histCycle(Form("%s_C%d", barename.c_str(), rocIds[iroc])); 
+    TH2D *hroc = (TH2D*)fDirectory->Get(Form("%s_C%d_V%d", barename.c_str(), rocIds[iroc], cycle)); 
+    if (hroc) fillMap(h2, hroc, rocIds[iroc]); 
   }
 
   fHistList.push_back(h2); 
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
 
-  if (h2) h2->Draw();
+  if (h2) h2->Draw(getHistOption(h2).c_str());
   update(); 
   return h2; 
 }
@@ -659,7 +661,7 @@ TH1D* PixTest::bookTH1D(std::string sname, std::string title, int nbins, double 
 TH2D* PixTest::bookTH2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, 
 			int nbinsy, double ymin, double ymax) {
   int cnt = histCycle(sname); 
-  LOG(logDEBUG) << "bookTH2D " << Form("%sV%d", sname.c_str(), cnt);
+  LOG(logDEBUG) << "bookTH2D " << Form("%s_V%d", sname.c_str(), cnt);
   return new TH2D(Form("%s_V%d", sname.c_str(), cnt), Form("%s (V%d)", title.c_str(), cnt), nbinsx, xmin, xmax, nbinsy, ymin, ymax); 
 }
 

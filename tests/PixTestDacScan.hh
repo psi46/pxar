@@ -13,6 +13,7 @@ public:
   void init(); 
   void setToolTips();
   void bookHist(std::string); 
+  TH1* moduleMap(std::string histname);
   
   void doTest(); 
 

@@ -28,7 +28,7 @@ typedef char int8_t;
 /// PixTest
 /// =======
 /// 
-/// Base class for all tests. 
+/// Base class for all tests. If you write a test for pxar, it should inherit from this class.
 /// 
 /// 
 /// Provides common utilities 
@@ -100,7 +100,7 @@ public:
   void restore(std::string dacname); 
 
   /// combine all available ROC maps into a module map
-  TH2D* moduleMap(std::string histname); 
+  virtual TH1* moduleMap(std::string histname); 
 
   /// delete histogams from HistList
   void clearHistList(); 
@@ -148,30 +148,30 @@ public:
 
 protected: 
 
-  int histCycle(std::string hname);
-  void fillMap(TH2D *hmod, TH2D *hroc, int iroc); 
+  int histCycle(std::string hname);   ///< determine histogram cycle
+  void fillMap(TH2D *hmod, TH2D *hroc, int iroc);  ///< provides the coordinate transformation to module map
 
-  pxar::api            *fApi;
-  PixSetup             *fPixSetup; 
-  PixTestParameters    *fTestParameters; 
-  PixInitFunc          *fPIF;   
+  pxar::api            *fApi;  ///< pointer to the API
+  PixSetup             *fPixSetup;  ///< all necessary stuff in one place
+  PixTestParameters    *fTestParameters;  ///< the repository of all test parameters
+  PixInitFunc          *fPIF;    ///< function instantiation and automatic initialization
 
-  double               fThreshold, fThresholdE, fSigma, fSigmaE; 
+  double               fThreshold, fThresholdE, fSigma, fSigmaE;  ///< variables for passing back s-curve results
 
-  std::string           fName, fTestTip, fSummaryTip; 
+  std::string           fName, fTestTip, fSummaryTip; ///< information for this test
 
-  std::vector<std::pair<std::string, std::string> > fParameters;
+  std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
-  std::vector<uint8_t>  fCacheVal; 
-  std::string           fCacheDac;
+  std::vector<uint8_t>  fCacheVal; ///< vector for all ROCs 
+  std::string           fCacheDac; ///< name of the DAC to be cached
 
-  TDirectory            *fDirectory; 
-  std::list<TH1*>       fHistList;
-  std::map<TH1*, std::string> fHistOptions;
-  std::list<TH1*>::iterator fDisplayedHist;  
+  TDirectory            *fDirectory; ///< where the root histograms will end up
+  std::list<TH1*>       fHistList; ///< list of histograms available in PixTab::next and PixTab::previous
+  std::map<TH1*, std::string> fHistOptions; ///< options can be stored with each histogram
+  std::list<TH1*>::iterator fDisplayedHist;  ///< pointer to the histogram currently displayed
 
-  std::vector<std::pair<int, int> > fPIX; // range of enabled pixels for time-consuming tests
-  std::map<int, int>    fId2Idx; // map the ROC ID onto the (results vector) index of the ROC
+  std::vector<std::pair<int, int> > fPIX; ///< range of enabled pixels for time-consuming tests
+  std::map<int, int>    fId2Idx; ///< map the ROC ID onto the (results vector) index of the ROC
 
   ClassDef(PixTest, 1); // testing PixTest
 
