@@ -126,7 +126,7 @@ int main(int argc, char *argv[]){
 
   if (!noAPI) {
     try {
-      api = new pxar::api("*", verbosity);
+      api = new pxar::api("*", verbosity, configParameters->getHubId());
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
       api->initDUT(configParameters->getTbmType(), tbmDACs, 
