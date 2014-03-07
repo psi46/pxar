@@ -2,7 +2,6 @@
 #ifndef PIXTESTSETPH_H
 #define PIXTESTSETPH_H
 
-#include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestSetPh: public PixTest {

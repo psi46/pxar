@@ -6,6 +6,7 @@
 
 #include "PixTestSetPh.hh"
 #include "log.h"
+#include "constants.h"
 
 using namespace std;
 using namespace pxar;

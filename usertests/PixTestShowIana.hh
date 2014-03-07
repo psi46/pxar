@@ -2,7 +2,6 @@
 #ifndef PIXTESTSHOWIANA_H
 #define PIXTESTSHOWIANA_H
 
-#include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestShowIana: public PixTest {
