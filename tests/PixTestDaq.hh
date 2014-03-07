@@ -3,8 +3,6 @@
 
 #include "PixTest.hh"
 
-using namespace pxar;
-
 class DLLEXPORT PixTestDaq: public PixTest {
 public:
   PixTestDaq(PixSetup *, std::string);

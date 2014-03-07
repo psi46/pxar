@@ -6,8 +6,6 @@
 #define ROCNUMROWS 80
 #define ROCNUMCOLS 52
 
-using namespace pxar;
-
 class DLLEXPORT PixTestThreshMap: public PixTest {
 public:
   PixTestThreshMap(PixSetup *, std::string);
