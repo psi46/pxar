@@ -1,10 +1,13 @@
 #ifndef PIXTESTPARAMETERS
 #define PIXTESTPARAMETERS
 
+#include "pxardllexport.h"
+
 #include <map>
 #include <vector>
 
-class PixTestParameters {
+class DLLEXPORT PixTestParameters {
+
 public:
 
   PixTestParameters(std::string file, bool verbose = false); 
