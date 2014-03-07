@@ -653,7 +653,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,false);
@@ -704,7 +704,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,true);
@@ -775,10 +775,11 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags&FLAG_RISING_EDGE);
+  bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,useRisingEdge);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -844,7 +845,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,false);
@@ -912,7 +913,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
@@ -947,7 +948,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
@@ -972,7 +973,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
@@ -1013,11 +1014,12 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags&FLAG_RISING_EDGE);
+  bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
+  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, useRisingEdge);
 
   return *result;
 }
