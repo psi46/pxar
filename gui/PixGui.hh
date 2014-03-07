@@ -40,7 +40,7 @@ class PixSetup;
 class PixTest; 
 class PixTestParameters;
 
-class PixGui: public TGMainFrame {
+class DLLEXPORT PixGui: public TGMainFrame {
 public:
   PixGui(const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup);
   ~PixGui();
