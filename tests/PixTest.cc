@@ -148,7 +148,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   TH1* h2(0), *h3(0); 
   string fname("SCurveData");
-  ofstream OUT;
+  ofstream OutputFile;
   string line; 
   string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
@@ -162,12 +162,12 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
 
-    OUT.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-    OUT << "Mode 1" << endl;
+    OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+    OutputFile << "Mode 1" << endl;
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
 	delete rmaps[i];
-	OUT << empty << endl;
+	OutputFile << empty << endl;
 	continue;
       }
       bool ok = threshold(rmaps[i]); 
@@ -190,7 +190,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       for (int ix = bmin; ix < bmin + 33; ++ix) {
 	line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
       }
-      OUT << line << endl;
+      OutputFile << line << endl;
 
       if (result & 0x4) {
 	cout << "add " << rmaps[i]->GetName() << endl;
@@ -203,7 +203,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	delete rmaps[i];
       }
     }
-    OUT.close();
+    OutputFile.close();
 
     if (result & 0x1) {
       resultMaps.push_back(h2); 
