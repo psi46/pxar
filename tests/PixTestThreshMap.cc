@@ -47,7 +47,7 @@ bool PixTestThreshMap::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("BumpBond")) {
-	bBumpBond = static_cast<bool>(atoi(sval.c_str())); 
+	bBumpBond = atoi(sval.c_str()) != 0;
 	setToolTips();
       }
       break;
