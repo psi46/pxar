@@ -5,7 +5,7 @@
 #include "PixTest.hh"
 
 
-class PixTestPh: public PixTest {
+class DLLEXPORT PixTestPh: public PixTest {
 public:
   PixTestPh(PixSetup *, std::string);
   PixTestPh();

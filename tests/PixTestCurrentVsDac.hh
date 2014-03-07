@@ -3,7 +3,7 @@
 
 #include "PixTest.hh"
 
-class PixTestCurrentVsDac: public PixTest {
+class DLLEXPORT PixTestCurrentVsDac: public PixTest {
 public:
   PixTestCurrentVsDac(PixSetup *, std::string);
   PixTestCurrentVsDac();

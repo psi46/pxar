@@ -4,7 +4,7 @@
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestScurves: public PixTest {
+class DLLEXPORT PixTestScurves: public PixTest {
 public:
   PixTestScurves(PixSetup *, std::string);
   PixTestScurves();

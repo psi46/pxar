@@ -5,7 +5,7 @@
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestBBMap: public PixTest {
+class DLLEXPORT PixTestBBMap: public PixTest {
 public:
   PixTestBBMap(PixSetup *, std::string);
   PixTestBBMap();

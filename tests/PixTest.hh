@@ -1,5 +1,10 @@
 #ifndef PIXTEST_H
 #define PIXTEST_H
+ 
+/** Declare all classes that need to be included in shared libraries on Windows
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
 
 #ifdef __CINT__
 #undef __GNUC__
@@ -38,7 +43,7 @@ typedef char int8_t;
 /// - retrieve histograms instead readout decoding (e.g. efficiencyMap)
 /// - list of selected pixels (fPIX)
 ///
-class PixTest: public TQObject {
+class DLLEXPORT PixTest: public TQObject {
 public:
   /// constructor requires PixSet to get test parameters and config parameters
   PixTest(PixSetup *a, std::string name);

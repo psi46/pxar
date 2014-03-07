@@ -7,7 +7,7 @@
 using namespace std;
 using namespace pxar;
 
-class PixTestDaq: public PixTest {
+class DLLEXPORT PixTestDaq: public PixTest {
 public:
   PixTestDaq(PixSetup *, std::string);
   PixTestDaq();

@@ -10,7 +10,7 @@
 using namespace std;
 using namespace pxar;
 
-class PixTestThreshMap: public PixTest {
+class DLLEXPORT PixTestThreshMap: public PixTest {
 public:
   PixTestThreshMap(PixSetup *, std::string);
   PixTestThreshMap();

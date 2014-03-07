@@ -4,7 +4,7 @@
 #include "api.h"
 #include "PixTest.hh"
 
-class PixTestTbm: public PixTest {
+class DLLEXPORT PixTestTbm: public PixTest {
 public:
   PixTestTbm(PixSetup *, std::string);
   PixTestTbm();
