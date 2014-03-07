@@ -1,7 +1,6 @@
 #ifndef PIXTESTGAINCALIBRATION_H
 #define PIXTESTGAINCALIBRATION_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestGainCalibration: public PixTest {

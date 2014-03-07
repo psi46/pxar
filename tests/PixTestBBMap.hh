@@ -2,7 +2,6 @@
 #ifndef PIXTESTBBMAP_H
 #define PIXTESTBBMAP_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestBBMap: public PixTest {
@@ -21,7 +20,7 @@ private:
 
   int     fParNtrig; 
 
-  ClassDef(PixTestBBMap, 1);
+  ClassDef(PixTestBBMap, 1)
 
 };
 #endif

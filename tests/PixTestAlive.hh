@@ -1,7 +1,6 @@
 #ifndef PIXTESTALIVE_H
 #define PIXTESTALIVE_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestAlive: public PixTest {
@@ -23,7 +22,7 @@ private:
   uint16_t fParNtrig; 
   int      fParVcal; 
 
-  ClassDef(PixTestAlive, 1);
+  ClassDef(PixTestAlive, 1)
 
 };
 #endif

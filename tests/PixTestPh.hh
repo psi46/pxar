@@ -1,7 +1,6 @@
 #ifndef PixTestPh_H
 #define PixTestPh_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 
@@ -25,7 +24,7 @@ private:
   int     fParDAC2Hi, fParDAC2Lo, fParDAC2Step;
   std::vector<std::pair<int, int> > fPIX; 
 
-  ClassDef(PixTestPh, 1);
+  ClassDef(PixTestPh, 1)
 
 };
 #endif

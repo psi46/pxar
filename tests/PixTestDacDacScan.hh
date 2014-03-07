@@ -1,7 +1,6 @@
 #ifndef PIXTESTDACDACSCAN_H
 #define PIXTESTDACDACSCAN_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestDacDacScan: public PixTest {
@@ -25,7 +24,7 @@ private:
   int     fParLoDAC2, fParHiDAC2;
   std::vector<std::pair<int, int> > fPIX; 
 
-  ClassDef(PixTestDacDacScan, 1);
+  ClassDef(PixTestDacDacScan, 1)
 
 };
 #endif

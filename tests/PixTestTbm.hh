@@ -1,7 +1,6 @@
 #ifndef PIXTESTTBM_H
 #define PIXTESTTBM_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestTbm: public PixTest {
@@ -22,7 +21,7 @@ private:
   int     fParNtrig; 
   int     fParVcal; 
 
-  ClassDef(PixTestTbm, 1);
+  ClassDef(PixTestTbm, 1)
 
 };
 #endif

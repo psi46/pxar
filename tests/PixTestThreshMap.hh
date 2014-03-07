@@ -1,7 +1,6 @@
 #ifndef PIXTESTTHRESH_H
 #define PIXTESTTHRESH_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 #define ROCNUMROWS 80
@@ -31,7 +30,7 @@ private:
 
   map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
-  ClassDef(PixTestThreshMap, 1);
+  ClassDef(PixTestThreshMap, 1)
 
 };
 #endif

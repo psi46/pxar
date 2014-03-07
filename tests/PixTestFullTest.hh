@@ -1,7 +1,6 @@
 #ifndef PIXTESTFULLTEST_H
 #define PIXTESTFULLTEST_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestFullTest: public PixTest {
@@ -19,7 +18,7 @@ public:
 private:
   
   
-  ClassDef(PixTestFullTest, 1);
+  ClassDef(PixTestFullTest, 1)
 
 };
 #endif
