@@ -6,6 +6,8 @@
 
 #include <TH2.h>
 
+using namespace std;
+using namespace pxar;
 
 ClassImp(PixTestThreshMap)
 
