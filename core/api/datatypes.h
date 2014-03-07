@@ -1,7 +1,16 @@
 #ifndef PXAR_TYPES_H
 #define PXAR_TYPES_H
 
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
 #include <stdint.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <map>

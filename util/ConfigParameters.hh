@@ -3,13 +3,20 @@
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 #ifdef __CINT__
 #undef __GNUC__
 typedef char __signed; 
 typedef char int8_t; 
 #endif
 
-#include <stdint.h>
 #include <string>
 #include <vector>
 
