@@ -13,8 +13,10 @@
 #include <TGButton.h>
 #include <TGLabel.h>
 #include <TGNumberEntry.h>
-#include <unistd.h>
 #include <TSystem.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 class PixGui; 
 
