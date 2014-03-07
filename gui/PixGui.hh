@@ -3,7 +3,6 @@
 
 #ifdef __CINT__ 
 #undef __GNUC__ 
-typedef char __signed; 
 typedef char int8_t; 
 #endif 
 
