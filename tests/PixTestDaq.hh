@@ -3,7 +3,6 @@
 
 #include "PixTest.hh"
 
-using namespace std;
 using namespace pxar;
 
 class DLLEXPORT PixTestDaq: public PixTest {
@@ -25,7 +24,7 @@ private:
   bool    fParCount;
   int 	  fParIter;
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
   ClassDef(PixTestDaq, 1)
 

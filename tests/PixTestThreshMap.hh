@@ -6,7 +6,6 @@
 #define ROCNUMROWS 80
 #define ROCNUMCOLS 52
 
-using namespace std;
 using namespace pxar;
 
 class DLLEXPORT PixTestThreshMap: public PixTest {
@@ -28,7 +27,7 @@ private:
   int 	   fParHiDAC; 
   bool 	   bBumpBond;
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
   ClassDef(PixTestThreshMap, 1)
 
