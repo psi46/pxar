@@ -13,7 +13,7 @@
 #include "PixTest.hh"
 #include "PixSetup.hh"
 
-class PixUserTestFactory {
+class DLLEXPORT PixUserTestFactory {
 public:
 
   static PixUserTestFactory*  instance(); 

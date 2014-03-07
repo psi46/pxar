@@ -2,11 +2,10 @@
 #ifndef PIXTESTMAPPH_H
 #define PIXTESTMAPPH_H
 
-#include "api.h"
 #include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
-class PixTestMapPh: public PixTest {
+class DLLEXPORT PixTestMapPh: public PixTest {
 public:
   PixTestMapPh(PixSetup *, std::string);
   PixTestMapPh();
@@ -23,7 +22,7 @@ private:
   int     fParNtrig; 
   int     fParCals;
 
-  ClassDef(PixTestMapPh, 1);
+  ClassDef(PixTestMapPh, 1)
 
 };
 #endif
