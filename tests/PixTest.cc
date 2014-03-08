@@ -342,7 +342,7 @@ bool PixTest::getParameter(std::string parName, float &fval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
-      fval = atof(fParameters[i].first.c_str()); 
+      fval = static_cast<float>(atof(fParameters[i].first.c_str())); 
       break;
     }
   }
@@ -464,7 +464,7 @@ void PixTest::clearHistList() {
 
 // ----------------------------------------------------------------------
 int PixTest::simpleThreshold(TH1 *h) {
-  return h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum()));
+  return static_cast<int>(h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum())));
 }
 
 
@@ -484,7 +484,7 @@ bool PixTest::threshold(TH1 *h) {
 
     int ibin = h->FindFirstBinAbove(0.); 
     int jbin = h->FindFirstBinAbove(0.9*h->GetMaximum());
-    fThreshold = h->GetBinCenter(0.5*(ibin+jbin)); 
+    fThreshold = h->GetBinCenter((ibin+jbin)/2); 
     fThresholdE = 1+(TMath::Abs(ibin-jbin)); 
 
     fSigma = fThresholdE; 
@@ -607,11 +607,11 @@ void PixTest::sparseRoc(int npix) {
     return;
   } else if (npix < 101) {
     for (int i = 0; i < 50; ++i) {
-      fApi->_dut->testPixel(i, 5 + 0.5*i, true);  
-      fApi->_dut->maskPixel(i, 5 + 0.5*i, false);  
+      fApi->_dut->testPixel(i, 5 + i/2, true);  
+      fApi->_dut->maskPixel(i, 5 + i/2, false);  
       ++cnt;
-      fApi->_dut->testPixel(i, 15 + 0.5*i, true);  
-      fApi->_dut->maskPixel(i, 15 + 0.5*i, false);  
+      fApi->_dut->testPixel(i, 15 + i/2, true);  
+      fApi->_dut->maskPixel(i, 15 + i/2, false);  
       ++cnt;
       if (cnt == npix) return;
     }

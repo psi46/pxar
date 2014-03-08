@@ -142,7 +142,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       if (_istring.fail() || !_name.length()) continue;
 
       int _ivalue = atoi(_value.c_str());
-      float dvalue = atof(_value.c_str());
+      double dvalue = atof(_value.c_str());
       
       if (0 == _name.compare("testboardName")) { fTBName = _value; }
       else if (0 == _name.compare("directory")) { fDirectory =  _value; }
@@ -164,18 +164,18 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADCDual")) { fEmptyReadoutLengthADCDual = _ivalue; }
-      else if (0 == _name.compare("hvOn")) { fHvOn                      = _ivalue; }
-      else if (0 == _name.compare("keithleyRemote")) { fKeithleyRemote            = _ivalue; }
-      else if (0 == _name.compare("tbmEnable")) { fTbmEnable                 = _ivalue; }
-      else if (0 == _name.compare("tbmEmulator")) { fTbmEmulator             = _ivalue; }
+      else if (0 == _name.compare("hvOn")) { fHvOn                      = (_ivalue>0); }
+      else if (0 == _name.compare("keithleyRemote")) { fKeithleyRemote            = (_ivalue>0); }
+      else if (0 == _name.compare("tbmEnable")) { fTbmEnable                 = (_ivalue>0); }
+      else if (0 == _name.compare("tbmEmulator")) { fTbmEmulator             = (_ivalue>0); }
       else if (0 == _name.compare("tbmChannel")) { fTbmChannel                = _ivalue; }
 
-      else if (0 == _name.compare("ia")) { ia = (dvalue > 1000.?.001:1.) * dvalue; }
-      else if (0 == _name.compare("id")) { id = (dvalue > 1000.?.001:1.) * dvalue; }
-      else if (0 == _name.compare("va")) { va = (dvalue > 1000.?.001:1.) * dvalue; }
-      else if (0 == _name.compare("vd")) { vd = (dvalue > 1000.?.001:1.) * dvalue; }
+      else if (0 == _name.compare("ia")) { ia = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
+      else if (0 == _name.compare("id")) { id = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
+      else if (0 == _name.compare("va")) { va = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
+      else if (0 == _name.compare("vd")) { vd = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
 
-      else if (0 == _name.compare("rocZeroAnalogCurrent")) { rocZeroAnalogCurrent = .001 * _ivalue; }
+      else if (0 == _name.compare("rocZeroAnalogCurrent")) { rocZeroAnalogCurrent = static_cast<float>(.001 * static_cast<float>(_ivalue)); }
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }

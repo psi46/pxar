@@ -186,8 +186,8 @@ void PixTestTrim::doTest() {
 		   << " below maximum allowed " << maxVthrComp[i] << ", resetting";
       minThr = maxVthrComp[i];
     }
-    VthrComp.push_back(minThr); 
-    fApi->setDAC("VthrComp", minThr, iroc); 
+    VthrComp.push_back(static_cast<int>(minThr)); 
+    fApi->setDAC("VthrComp", static_cast<uint8_t>(minThr), iroc); 
   }
 
   // FIXME do the ROCs in parallel!
@@ -213,8 +213,8 @@ void PixTestTrim::doTest() {
       }
     }
     LOG(logINFO) << " XX roc " << i << " with ID = " << iroc << "  has maximal Vcal " << maxVcal << " for pixel " << ix << "/" << iy;
-    Vcal.push_back(maxVcal); 
-    fApi->setDAC("Vcal", maxVcal, iroc); 
+    Vcal.push_back(static_cast<int>(maxVcal)); 
+    fApi->setDAC("Vcal", static_cast<uint8_t>(maxVcal), iroc); 
 
     int itrim(0);
     fApi->_dut->updateTrimBits(ix, iy, 0, iroc);
@@ -321,7 +321,7 @@ void PixTestTrim::trimBitTest() {
     }
 
     LOG(logDEBUG) << "trimBitTest initDUT with trim bits = " << btrim[iv]; 
-    for (int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    for (vector<uint8_t>::size_type iroc = 0; iroc < rocIds.size(); ++iroc) {
       fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
     }
 
