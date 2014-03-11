@@ -384,7 +384,11 @@ namespace pxar {
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
-    void setClockStretch( uint8_t src, uint16_t delay, uint16_t width);
+    /** Set the clock stretch.
+	FIXME missing documentation
+	A width of 0 disables the clock stretch
+     */
+    void setClockStretch(uint8_t src, uint16_t delay, uint16_t width);
 
     // DAQ functions
 

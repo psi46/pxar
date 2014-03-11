@@ -96,11 +96,6 @@ namespace pxar {
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup);
 
     /** Set the clock stretch 
-     width = 0 -> disable stretch
-     #define STRETCH_AFTER_TRG 0
-     #define STRETCH_AFTER_CAL 1
-     #define STRETCH_AFTER_RES 2
-     #define STRETCH_AFTER_SYNC 3
     */
     void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);
 

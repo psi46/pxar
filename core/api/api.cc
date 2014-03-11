@@ -1749,7 +1749,7 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
 
 void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
 {
-  LOG(logDEBUGAPI) << "Set Clock Stretch " << src << " " << width << " " << delay; 
+  LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 
   _hal->SetClockStretch(src,width,delay);
   
 }
