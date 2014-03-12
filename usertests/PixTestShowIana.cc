@@ -4,6 +4,7 @@
 #include <algorithm>  // std::find
 #include "PixTestShowIana.hh"
 #include "log.h"
+#include "constants.h"
 
 using namespace std;
 using namespace pxar;

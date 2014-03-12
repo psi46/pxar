@@ -1,16 +1,12 @@
 #ifndef PIXTESTTHRESH_H
 #define PIXTESTTHRESH_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 #define ROCNUMROWS 80
 #define ROCNUMCOLS 52
 
-using namespace std;
-using namespace pxar;
-
-class PixTestThreshMap: public PixTest {
+class DLLEXPORT PixTestThreshMap: public PixTest {
 public:
   PixTestThreshMap(PixSetup *, std::string);
   PixTestThreshMap();
@@ -29,9 +25,9 @@ private:
   int 	   fParHiDAC; 
   bool 	   bBumpBond;
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
-  ClassDef(PixTestThreshMap, 1);
+  ClassDef(PixTestThreshMap, 1)
 
 };
 #endif

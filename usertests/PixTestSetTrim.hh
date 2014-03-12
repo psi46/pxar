@@ -2,10 +2,9 @@
 #ifndef PIXTESTSETTRIM_H
 #define PIXTESTSETTRIM_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestSetTrim: public PixTest {
+class DLLEXPORT PixTestSetTrim: public PixTest {
 public:
   PixTestSetTrim(PixSetup *, std::string);
   PixTestSetTrim();
@@ -32,7 +31,7 @@ private:
   uint8_t rocthr[52][80];
   uint8_t roctrm[52][80];
 
-  ClassDef(PixTestSetTrim, 1);
+  ClassDef(PixTestSetTrim, 1)
 
 };
 #endif

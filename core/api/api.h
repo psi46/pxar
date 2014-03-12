@@ -6,17 +6,24 @@
 #ifndef PXAR_API_H
 #define PXAR_API_H
 
-/** Export classes from the DLL under WIN32 */
-#ifdef WIN32
-#define DLLEXPORT __declspec( dllexport )
+/** Declare all classes that need to be included in shared libraries on Windows 
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
 #else
-#define DLLEXPORT
+#include <stdint.h>
 #endif
 
 #include <string>
 #include <vector>
 #include <map>
-#include <stdint.h>
 #include "datatypes.h"
 
 // PXAR Flags

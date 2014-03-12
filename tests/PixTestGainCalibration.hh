@@ -1,10 +1,9 @@
 #ifndef PIXTESTGAINCALIBRATION_H
 #define PIXTESTGAINCALIBRATION_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestGainCalibration: public PixTest {
+class DLLEXPORT PixTestGainCalibration: public PixTest {
 public:
   PixTestGainCalibration(PixSetup *a, std::string name);
   PixTestGainCalibration();

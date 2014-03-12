@@ -2,11 +2,9 @@
 #ifndef PIXTESTSHOWIANA_H
 #define PIXTESTSHOWIANA_H
 
-#include "api.h"
-#include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
-class PixTestShowIana: public PixTest {
+class DLLEXPORT PixTestShowIana: public PixTest {
 public:
   PixTestShowIana(PixSetup *, std::string);
   PixTestShowIana();
@@ -22,7 +20,7 @@ public:
 private:
 
 
-  ClassDef(PixTestShowIana, 1);
+  ClassDef(PixTestShowIana, 1)
 
 };
 #endif

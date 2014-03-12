@@ -1,9 +1,11 @@
 #ifndef PIXUTIL_H
 #define PIXUTIL_H
 
+#include "pxardllexport.h"
+
 #include <string>
 
-class PixUtil {
+class DLLEXPORT PixUtil {
 
 public: 
   static bool bothAreSpaces(char lhs, char rhs);

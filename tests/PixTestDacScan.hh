@@ -1,10 +1,9 @@
 #ifndef PIXTESTDACSCAN_H
 #define PIXTESTDACSCAN_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestDacScan: public PixTest {
+class DLLEXPORT PixTestDacScan: public PixTest {
 public:
   PixTestDacScan(PixSetup *, std::string);
   PixTestDacScan();
@@ -23,7 +22,7 @@ private:
   std::string fParDAC; 
   int     fParLoDAC, fParHiDAC;
 
-  ClassDef(PixTestDacScan, 1);
+  ClassDef(PixTestDacScan, 1)
 
 };
 #endif

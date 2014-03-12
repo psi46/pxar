@@ -2,10 +2,9 @@
 #ifndef PIXTESTMAP_H
 #define PIXTESTMAP_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestMap: public PixTest {
+class DLLEXPORT PixTestMap: public PixTest {
 public:
   PixTestMap(PixSetup *, std::string);
   PixTestMap();
@@ -22,7 +21,7 @@ private:
   int     fParNtrig; 
   int     fParVcal; 
 
-  ClassDef(PixTestMap, 1);
+  ClassDef(PixTestMap, 1)
 
 };
 #endif

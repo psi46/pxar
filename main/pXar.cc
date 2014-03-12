@@ -2,8 +2,11 @@
 #define PIX_H
 
 #include <iostream>
-#include <unistd.h>
 #include <sys/stat.h>
+
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 #include <TApplication.h> 
 #include <TFile.h> 

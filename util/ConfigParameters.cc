@@ -142,7 +142,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       if (_istring.fail() || !_name.length()) continue;
 
       int _ivalue = atoi(_value.c_str());
-      float dvalue = atof(_value.c_str());
+      double dvalue = atof(_value.c_str());
       
       if (0 == _name.compare("testboardName")) { fTBName = _value; }
       else if (0 == _name.compare("directory")) { fDirectory =  _value; }
@@ -164,18 +164,18 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADCDual")) { fEmptyReadoutLengthADCDual = _ivalue; }
-      else if (0 == _name.compare("hvOn")) { fHvOn                      = _ivalue; }
-      else if (0 == _name.compare("keithleyRemote")) { fKeithleyRemote            = _ivalue; }
-      else if (0 == _name.compare("tbmEnable")) { fTbmEnable                 = _ivalue; }
-      else if (0 == _name.compare("tbmEmulator")) { fTbmEmulator             = _ivalue; }
+      else if (0 == _name.compare("hvOn")) { fHvOn                      = (_ivalue>0); }
+      else if (0 == _name.compare("keithleyRemote")) { fKeithleyRemote            = (_ivalue>0); }
+      else if (0 == _name.compare("tbmEnable")) { fTbmEnable                 = (_ivalue>0); }
+      else if (0 == _name.compare("tbmEmulator")) { fTbmEmulator             = (_ivalue>0); }
       else if (0 == _name.compare("tbmChannel")) { fTbmChannel                = _ivalue; }
 
-      else if (0 == _name.compare("ia")) { ia = (dvalue > 1000.?.001:1.) * dvalue; }
-      else if (0 == _name.compare("id")) { id = (dvalue > 1000.?.001:1.) * dvalue; }
-      else if (0 == _name.compare("va")) { va = (dvalue > 1000.?.001:1.) * dvalue; }
-      else if (0 == _name.compare("vd")) { vd = (dvalue > 1000.?.001:1.) * dvalue; }
+      else if (0 == _name.compare("ia")) { ia = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
+      else if (0 == _name.compare("id")) { id = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
+      else if (0 == _name.compare("va")) { va = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
+      else if (0 == _name.compare("vd")) { vd = static_cast<float>((dvalue > 1000.?.001:1.) * dvalue); }
 
-      else if (0 == _name.compare("rocZeroAnalogCurrent")) { rocZeroAnalogCurrent = .001 * _ivalue; }
+      else if (0 == _name.compare("rocZeroAnalogCurrent")) { rocZeroAnalogCurrent = static_cast<float>(.001 * static_cast<float>(_ivalue)); }
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
@@ -732,18 +732,18 @@ bool ConfigParameters::writeConfigParameterFile() {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   string fname = fDirectory + "/" + getTrimParameterFileName();
-  ofstream OUT;
+  ofstream OutputFile;
 
-  OUT.open(Form("%s_C%d.dat", fname.c_str(), iroc));
-  if (!OUT.is_open()) {
+  OutputFile.open(Form("%s_C%d.dat", fname.c_str(), iroc));
+  if (!OutputFile.is_open()) {
     return false; 
   } 
     
   for (unsigned int ipix = 0; ipix < v.size(); ++ipix) {
-    OUT << Form("%2d   Pix %2d %2d", v[ipix].trim, v[ipix].column, v[ipix].row) << endl;
+    OutputFile << Form("%2d   Pix %2d %2d", v[ipix].trim, v[ipix].column, v[ipix].row) << endl;
   }
   
-  OUT.close();
+  OutputFile.close();
   return true;
 }
 
@@ -751,22 +751,22 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8_t> > v) {
   string fname = fDirectory + "/" + getDACParameterFileName();
-  ofstream OUT;
+  ofstream OutputFile;
   int val; 
   string regName; 
 
-  OUT.open(Form("%s_C%d.dat", fname.c_str(), iroc));
-  if (!OUT.is_open()) {
+  OutputFile.open(Form("%s_C%d.dat", fname.c_str(), iroc));
+  if (!OutputFile.is_open()) {
     return false; 
   } 
   
   for (unsigned int idac = 0; idac < v.size(); ++idac) {
     regName = v.at(idac).first;
     val = v.at(idac).second;
-    OUT << Form("0 %10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
+    OutputFile << Form("0 %10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
   }
   
-  OUT.close();
+  OutputFile.close();
   return true;
 }
 
@@ -774,24 +774,24 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > v) {
   string fname = fDirectory + "/" + getTbmParameterFileName();
-  ofstream OUT;
+  ofstream OutputFile;
   int val; 
   string regName; 
 
   LOG(logDEBUG) << "nothing done for the time being with " << itbm << ", working with one TBM at the moment";
-  //    OUT.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
-  OUT.open(fname.c_str());
-  if (!OUT.is_open()) {
+  //    OutputFile.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
+  OutputFile.open(fname.c_str());
+  if (!OutputFile.is_open()) {
     return false; 
   } 
   
   for (unsigned int idac = 0; idac < v.size(); ++idac) {
     regName = v.at(idac).first;
     val = v.at(idac).second;
-    OUT << Form("0 %11s   0x%02X", regName.c_str(), static_cast<int>(val)) << endl;
+    OutputFile << Form("0 %11s   0x%02X", regName.c_str(), static_cast<int>(val)) << endl;
   }
   
-  OUT.close();
+  OutputFile.close();
   return true;
 }
 
@@ -799,21 +799,21 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbParameterFile() {
   string fname = fDirectory + "/" + getTBParameterFileName();
-  ofstream OUT;
+  ofstream OutputFile;
   string data; 
 
-  OUT.open(Form("%s", fname.c_str()));
-  if (!OUT.is_open()) {
+  OutputFile.open(Form("%s", fname.c_str()));
+  if (!OutputFile.is_open()) {
     return false; 
   } 
   
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-    OUT << Form("0 %15s  %3d", fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+    OutputFile << Form("0 %15s  %3d", fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
   }
   
-  OUT.close();
+  OutputFile.close();
 
   return true;
 }

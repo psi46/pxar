@@ -2,10 +2,9 @@
 #ifndef PIXTESTDACSCANTHR_H
 #define PIXTESTDACSCANTHR_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestDacScanThr: public PixTest {
+class DLLEXPORT PixTestDacScanThr: public PixTest {
 public:
   PixTestDacScanThr(PixSetup *, std::string);
   PixTestDacScanThr();
@@ -25,7 +24,7 @@ private:
   int     fParCals;
   std::vector<std::pair<int, int> > fPIX;
 
-  ClassDef(PixTestDacScanThr, 1);
+  ClassDef(PixTestDacScanThr, 1)
 
 };
 #endif
