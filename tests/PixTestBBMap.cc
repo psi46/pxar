@@ -269,7 +269,7 @@ void PixTestBBMap::adjustPHDacsDigv21()
   for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
       uint8_t rocId = rocIds[iroc];
       phOffset[ rocId ] = 200;
-      phScale[ rocId ] =100;
+      phScale[ rocId ] =50;
   }  
   
   // target regions, FIXME make adjustable
@@ -408,17 +408,22 @@ map< uint8_t, TH1* > PixTestBBMap::doPulseheightMap(
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   
-  fApi->setDAC("CtrlReg", 0); // acts on all ROCs  
   if (fPartest == 0){
+    fApi->setDAC("CtrlReg", 4); 
     fApi->setDAC("Vcal", fParVcalS);
   }else{
+    fApi->setDAC("CtrlReg", 0); 
     fApi->setDAC("Vcal", fPartest);
     flag = 0;
   }
   
   vector <pixel> result = fApi->getPulseheightMap(flag, fParNtrig); 
-  map< uint8_t, TH1* > hraw = fillRocHistograms( result, "BB %02d "+label);
+  map< uint8_t, TH1* > hraw = fillRocHistograms( result, "BB raw %02d "+label);
 
+  for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
+      fHistList.push_back( hraw[ rocIds[iroc] ] );
+  }
+  
   if(false){
       // raw
       return hraw;
@@ -438,31 +443,37 @@ map< uint8_t, TH1* > PixTestBBMap::doPulseheightMap(
   vector<pixel> empty;
   map<uint8_t, TH1*> phcal = fillRocHistograms( empty , "calibrated %2d "+label );
   
-  for(int vcal=0; vcal<255-step; vcal+=step){
-    for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
-      uint8_t rocid= rocIds[iroc];
-      for(int col=0; col<ROC_NUMCOLS; col++){
-        for(int row=0; row<ROC_NUMROWS; row++){
-          double ph0 = ph[vcal     ][rocid]->GetBinContent( col+1, row+1);
-          double ph1 = ph[vcal+step][rocid]->GetBinContent( col+1, row+1);
-          double phraw = hraw[rocid]->GetBinContent( col+1, row+1);
-          double phv  = phcal[rocid]->GetBinContent( col+1, row+1);
-          if ((phraw > ph0) && (phraw <= ph1)){
-              phv =  vcal+step*(phraw-ph0)/(ph1-ph0);
+  for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
+    uint8_t rocid= rocIds[iroc];
+    for(int col=0; col<ROC_NUMCOLS; col++){
+      for(int row=0; row<ROC_NUMROWS; row++){
+          
+        double phraw = hraw[rocid]->GetBinContent( col+1, row+1);
+        if (phraw==0){
+            phcal[rocid]->SetBinContent( col+1, row+1, 0);
+        }else{
+          for(int vcal=0; vcal<255-step; vcal+=step){
+            double ph0 = ph[vcal     ][rocid]->GetBinContent( col+1, row+1);
+            double ph1 = ph[vcal+step][rocid]->GetBinContent( col+1, row+1);
+            if ((phraw > ph0) && (phraw <= ph1)){
+              float phv =  vcal+step*(phraw-ph0)/(ph1-ph0);
               phcal[rocid]->SetBinContent( col+1, row+1, phv);
-          }else if( ( phv == 0) && (ph0  > phraw) ){
-            phcal[rocid]->SetBinContent( col+1, row+1, ph0);
-            /*
-            cout <<  "col " << col << "  row "  << row << "  raw=" << phraw
-            << "    vcal=" << vcal << ":" << ph0
-            << "    vcal=" << vcal+step << ":" << ph1 
-            <<endl;
-             */
+              break;
+            }
+            if( (ph0  >= phraw) ){
+              phcal[rocid]->SetBinContent( col+1, row+1, ph0);
+              break;
+            }
           }
+          if ( phcal[rocid]->GetBinContent( col+1, row+1) == 0 ){
+              phcal[rocid]->SetBinContent( col+1, row+1, 256);
+          }
+        }
+          
        }
-    }  
+     }  
    }
-  }
+  
   return phcal;
 }
 
@@ -481,7 +492,7 @@ void PixTestBBMap::doTest()
 
   
   int flag= FLAG_CALS;
-  if (fPartest>1){ flag = 0;} // tests  
+  if (fPartest>0){ flag = 0;} // tests  
   bool subtractXtalk = false;
   
   map< uint8_t, TH1* > maps;  
@@ -503,6 +514,7 @@ void PixTestBBMap::doTest()
 
 
  
+  vector< pxar::pixel > fail;
   for(map< uint8_t, TH1*>::iterator mit=maps.begin(); mit !=maps.end(); mit++){
       
       fHistList.push_back( mit->second );
@@ -518,12 +530,18 @@ void PixTestBBMap::doTest()
       
       // fill distribution from map
       TH1D* hdist = new TH1D( 
-        Form("BB-distrbution-%0d",mit->first), 
-        Form("BB distrbution %2d",mit->first), 
-        256, 0., 256.);
+        Form("BB-distribution-%0d",mit->first), 
+        Form("BB distribution %2d",mit->first), 
+        257, 0., 257.);
+
       for(int col=0; col<ROC_NUMCOLS; col++){
           for(int row=0; row<ROC_NUMROWS; row++){
               hdist->Fill( rocmap->GetBinContent( col+1, row+1 ) );
+              if ( rocmap->GetBinContent( col+1, row+1 ) <20){
+                  pixel p =  pixel( mit->first, col, row, rocmap->GetBinContent( col+1, row+1 ));
+                  fail.push_back( p );
+                  cout << "BB test fail " <<  p  << endl;
+              }
           }
       }
       fHistList.push_back( hdist );
