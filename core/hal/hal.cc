@@ -1294,6 +1294,34 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
   return raw;
 }
 
+std::vector<uint16_t> hal::daqBuffer() {
+
+  std::vector<uint16_t> raw;
+
+  dataSink<uint16_t> rawpump0, rawpump1, rawpump2, rawpump3;
+  src0 >> rawpump0;
+
+  if(src1.isConnected()) { src1 >> rawpump1; }
+  if(src2.isConnected()) { src2 >> rawpump2; }
+  if(src3.isConnected()) { src3 >> rawpump3; }
+
+  // FIXME check carefully: in principle we expect the same number of triggers
+  // (==Events) on each pipe. Throw a critical if difference is found?
+  try {
+    while(1) {
+      // Read the next Event from each of the pipes:
+      raw.push_back(rawpump0.Get());
+      if(src1.isConnected()) { raw.push_back(rawpump1.Get()); }
+      if(src2.isConnected()) { raw.push_back(rawpump2.Get()); }
+      if(src3.isConnected()) { raw.push_back(rawpump3.Get()); }
+    }
+  }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return raw;
+}
+
 void hal::daqTrigger(uint32_t nTrig) {
 
   LOG(logDEBUGHAL) << "Triggering " << nTrig << "x";
