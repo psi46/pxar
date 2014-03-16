@@ -1111,7 +1111,18 @@ void api::daqTriggerLoop(uint16_t period) {
   }
 }
 
-std::vector<rawEvent> api::daqGetRawBuffer() {
+std::vector<uint16_t> api::daqGetBuffer() {
+
+  // Reading out all data from the DTB and returning the raw blob.
+  std::vector<uint16_t> buffer = _hal->daqBuffer();
+
+  // We read out everything, reset the buffer:
+  // Reset all active channels:
+  _hal->daqClear();
+  return buffer;
+}
+
+std::vector<rawEvent> api::daqGetRawEventBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs

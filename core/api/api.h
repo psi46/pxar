@@ -453,7 +453,14 @@ namespace pxar {
      *  function returns the raw data blob from either of the deserializer
      *  modules.
      */
-    std::vector<rawEvent> daqGetRawBuffer();
+    std::vector<rawEvent> daqGetRawEventBuffer();
+
+    /** Function to return the full raw data buffer from the testboard RAM after
+     *  the data acquisition has been stopped. Neither decoding nor splitting is
+     *  performed, this function returns the raw data blob from either of the 
+     *  deserializer modules.
+     */
+    std::vector<uint16_t> daqGetBuffer();
 
     /** Function to return the full Event buffer from the testboard RAM after
      *  the data acquisition has been stopped. All data is decoded and the 
