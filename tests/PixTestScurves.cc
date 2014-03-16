@@ -150,7 +150,7 @@ void PixTestScurves::dummyAnalysis() {
   int aflSize = afl.size();
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  ofstream OUT;
+  ofstream OutputFile;
   string fname("SCurveData");
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
@@ -163,17 +163,17 @@ void PixTestScurves::dummyAnalysis() {
     
     double x(0.); 
     int iline(0); 
-    OUT.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-    OUT << "Mode 1" << endl;
+    OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+    OutputFile << "Mode 1" << endl;
     for (int ix = 0; ix < 52; ++ix) {
       for (int iy = 0; iy < 80; ++iy) {
 	x = gRandom->Gaus(50., 8.);
 	h2->SetBinContent(ix+1, iy+1, x); 
 	iline = static_cast<int>(aflSize*gRandom->Rndm());
-	OUT << afl[iline] << endl;
+	OutputFile << afl[iline] << endl;
       }
     }
-    OUT.close(); 
+    OutputFile.close(); 
     fHistList.push_back(h2); 
   }
 

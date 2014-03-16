@@ -572,7 +572,8 @@ void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, uint16_t
   _testboard->roc_I2cAddr(rocid);
 
   // Set the calibrate bit and the CALS setting:
-  _testboard->roc_Pix_Cal(column,row,flags&FLAG_CALS);
+  bool useSensorPadForCalibration  = (flags & FLAG_CALS) != 0;
+  _testboard->roc_Pix_Cal(column,row,useSensorPadForCalibration);
 }
 
 void hal::RocClearCalibrate(uint8_t rocid) {

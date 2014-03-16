@@ -16,14 +16,12 @@ namespace pxar {
      *  a testboard USB ID name as parameter and tries to connect to
      *  the board. Exception is thrown if connection fails.
      */
-    hal(std::string name = "*");
+    hal(std::string name = "*", uint8_t _hubId = 31);
 
     /** Default destructor for HAL objects. Testboard USB connection is
      *  closed and RPC object destroyed.
      */
     ~hal();
-
-    hal(std::string name = "*", uint8_t _hubId = 31);
     
 
     /** Function to check the status of the HAL

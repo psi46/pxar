@@ -6,6 +6,8 @@
 
 #include <TH2.h>
 
+using namespace std;
+using namespace pxar;
 
 ClassImp(PixTestThreshMap)
 
@@ -45,7 +47,7 @@ bool PixTestThreshMap::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("BumpBond")) {
-	bBumpBond = static_cast<bool>(atoi(sval.c_str())); 
+	bBumpBond = atoi(sval.c_str()) != 0;
 	setToolTips();
       }
       break;
@@ -135,7 +137,7 @@ void PixTestThreshMap::doTest() {
    
   LOG(logINFO) << "results: " << results.size();
 
-  for(int idx = 0; idx < results.size() ; idx++) {
+  for(std::vector<pixel>::size_type idx = 0; idx < results.size() ; idx++) {
     
     maps[id2idx[results[idx].roc_id]]->SetBinContent(results[idx].column,results[idx].row,results[idx].value);
 
@@ -171,7 +173,7 @@ void PixTestThreshMap::doTest() {
 	    for( unsigned int idx = 0 ; idx < rocIds.size(); ++idx) {
 
 */
-	   for(int num = 0 ; num < results.size() ; num++) {	
+	   for(std::vector<pixel>::size_type num = 0 ; num < results.size() ; num++) {	
 		if(results[num].column != results2[num].column )
 		{
 		 LOG(logDEBUG) << "Data not aligned.";

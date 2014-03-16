@@ -78,3 +78,9 @@ DACHI 200
 PIX1  11,20
 DAC2  PHOffset
 DAC2Range 0,256,16
+
+-- BumpBonding
+Ntrig 10
+VcalS 255
+Method ph
+test   0

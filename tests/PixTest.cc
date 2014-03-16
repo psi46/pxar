@@ -148,7 +148,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   TH1* h2(0), *h3(0); 
   string fname("SCurveData");
-  ofstream OUT;
+  ofstream OutputFile;
   string line; 
   string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
@@ -162,12 +162,12 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
 
-    OUT.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-    OUT << "Mode 1" << endl;
+    OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+    OutputFile << "Mode 1" << endl;
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
 	delete rmaps[i];
-	OUT << empty << endl;
+	OutputFile << empty << endl;
 	continue;
       }
       bool ok = threshold(rmaps[i]); 
@@ -190,7 +190,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       for (int ix = bmin; ix < bmin + 33; ++ix) {
 	line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
       }
-      OUT << line << endl;
+      OutputFile << line << endl;
 
       if (result & 0x4) {
 	cout << "add " << rmaps[i]->GetName() << endl;
@@ -203,7 +203,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	delete rmaps[i];
       }
     }
-    OUT.close();
+    OutputFile.close();
 
     if (result & 0x1) {
       resultMaps.push_back(h2); 
@@ -342,7 +342,7 @@ bool PixTest::getParameter(std::string parName, float &fval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (0 == fParameters[i].first.compare(parName)) {
       found = true; 
-      fval = atof(fParameters[i].first.c_str()); 
+      fval = static_cast<float>(atof(fParameters[i].first.c_str())); 
       break;
     }
   }
@@ -464,7 +464,7 @@ void PixTest::clearHistList() {
 
 // ----------------------------------------------------------------------
 int PixTest::simpleThreshold(TH1 *h) {
-  return h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum()));
+  return static_cast<int>(h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum())));
 }
 
 
@@ -484,7 +484,7 @@ bool PixTest::threshold(TH1 *h) {
 
     int ibin = h->FindFirstBinAbove(0.); 
     int jbin = h->FindFirstBinAbove(0.9*h->GetMaximum());
-    fThreshold = h->GetBinCenter(0.5*(ibin+jbin)); 
+    fThreshold = h->GetBinCenter((ibin+jbin)/2); 
     fThresholdE = 1+(TMath::Abs(ibin-jbin)); 
 
     fSigma = fThresholdE; 
@@ -607,11 +607,11 @@ void PixTest::sparseRoc(int npix) {
     return;
   } else if (npix < 101) {
     for (int i = 0; i < 50; ++i) {
-      fApi->_dut->testPixel(i, 5 + 0.5*i, true);  
-      fApi->_dut->maskPixel(i, 5 + 0.5*i, false);  
+      fApi->_dut->testPixel(i, 5 + i/2, true);  
+      fApi->_dut->maskPixel(i, 5 + i/2, false);  
       ++cnt;
-      fApi->_dut->testPixel(i, 15 + 0.5*i, true);  
-      fApi->_dut->maskPixel(i, 15 + 0.5*i, false);  
+      fApi->_dut->testPixel(i, 15 + i/2, true);  
+      fApi->_dut->maskPixel(i, 15 + i/2, false);  
       ++cnt;
       if (cnt == npix) return;
     }

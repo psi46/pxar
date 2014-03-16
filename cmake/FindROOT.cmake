@@ -47,7 +47,7 @@ IF (WIN32)
     set(ROOT_INCLUDE_DIR ${ROOTSYS}/include)
     set(ROOT_LIBRARY_DIR ${ROOTSYS}/lib)
     SET(ROOT_BINARY_DIR ${ROOTSYS}/bin)
-    set(ROOT_LIBRARIES -LIBPATH:${ROOT_LIBRARY_DIR} libGpad.lib libHist.lib libGraf.lib libGraf3d.lib libTree.lib libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libMathCore.lib libRIO.lib libNet.lib libThread.lib libCore.lib libCint.lib)
+    set(ROOT_LIBRARIES -LIBPATH:${ROOT_LIBRARY_DIR} libGpad.lib libHist.lib libGraf.lib libGraf3d.lib libTree.lib libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libMathCore.lib libRIO.lib libNet.lib libThread.lib libCore.lib libCint.lib libMinuit.lib libGui.lib)
     FIND_PROGRAM(ROOT_CINT_EXECUTABLE
       NAMES rootcint
       PATHS ${ROOT_BINARY_DIR}

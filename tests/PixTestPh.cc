@@ -148,9 +148,11 @@ void PixTestPh::doTest()
     // activate one pixel per ROC:
 
     fApi->_dut->testAllPixels(false);
+    fApi-> _dut->maskAllPixels(true);
 
     if( fPIX[0].first > -1 )
         fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true );
+        fApi->_dut->maskPixel(fPIX[0].first, fPIX[0].second, false);
 
     // book histos:
 
@@ -185,8 +187,8 @@ void PixTestPh::doTest()
 
         // measure:
 
-        vector<pair<uint8_t, vector<pixel> > > // dac and pix
-        result = fApi->getPulseheightVsDAC( fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig );
+        vector< pair< uint8_t, vector<pixel> > > // dac and pix
+          result = fApi->getPulseheightVsDAC( fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig );
 
         LOG(logINFO) << "dacscandata.size(): " << result.size();
         
@@ -210,6 +212,7 @@ void PixTestPh::doTest()
                 if( vpix[ipx].column == fPIX[0].first &&
                     vpix[ipx].row == fPIX[0].second )
                     h1->Fill( idac, vpix[ipx].value ); // already averaged
+                //cout << idac << " c="<< vpix[ipx].column  << "  r=" << vpix[ipx].row << " v=" << vpix[ipx].value << endl;
 
             } // pix
 

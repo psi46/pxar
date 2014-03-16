@@ -1,10 +1,9 @@
 #ifndef PIXTESTSETUP_H
 #define PIXTESTSETUP_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestSetup: public PixTest {
+class DLLEXPORT PixTestSetup: public PixTest {
 public:
   PixTestSetup(PixSetup *, std::string);
   PixTestSetup();
@@ -22,7 +21,7 @@ private:
   int     fParNtests;
   int     fParVcal; 
 
-  ClassDef(PixTestSetup, 1);
+  ClassDef(PixTestSetup, 1)
 
 };
 #endif

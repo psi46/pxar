@@ -1,17 +1,24 @@
 #ifndef PXAR_TYPES_H
 #define PXAR_TYPES_H
 
+/** Declare all classes that need to be included in shared libraries on Windows
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
 #include <stdint.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <map>
-
-/** Export classes from the DLL under WIN32 */
-#ifdef WIN32
-#define DLLEXPORT __declspec( dllexport )
-#else
-#define DLLEXPORT
-#endif
 
 namespace pxar {
 
@@ -116,7 +123,7 @@ namespace pxar {
    *  Event status as well as a vector of uint16_t data records containing the actual
    *  Event data in undecoded raw format.
    */
-  class rawEvent {
+  class DLLEXPORT rawEvent {
   public:
   rawEvent() : data(), flags(0) {}
     void SetStartError() { flags |= 1; }
