@@ -150,6 +150,7 @@ int main(int argc, char* argv[]) {
   std::cout << argc << " arguments provided." << std::endl;
 
   bool module = false;
+  uint8_t hubid = 31;
 
   // Prepare some vectors for all the configurations we use:
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
@@ -312,7 +313,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     // Initialize the DUT (power it up and stuff):
-    if (!_api->initDUT("tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
+    if (!_api->initDUT(hubid,"tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
       std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
       return -2;
     }

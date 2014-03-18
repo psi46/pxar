@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
   bool testpulses = false;
   bool spills = false;
 
+  uint8_t hubid = 31;
+
   // Quick and hacky cli arguments reading:
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i],"-h")) {
@@ -155,7 +157,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the DUT (power it up and stuff):
-    if (!_api->initDUT("tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
+    if (!_api->initDUT(hubid,"tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
       std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
       delete _api;
       return -2;

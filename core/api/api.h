@@ -118,7 +118,7 @@ namespace pxar {
      *  wildcard. If only one DTB is connected the algorithm will automatically
      *  connect to this board, if several are connected it will throw a warning.
      */
-    api(std::string usbId = "*", std::string logLevel = "WARNING", int8_t hubId = 31);
+    api(std::string usbId = "*", std::string logLevel = "WARNING");
 
     /** Default destructor for libpxar API
      *
@@ -167,7 +167,8 @@ namespace pxar {
      *  internally. Strings are checked case-insensitive, old and new DAC names
      *  are both supported.
      */
-    bool initDUT(std::string tbmtype, 
+    bool initDUT(uint8_t hubId,
+		 std::string tbmtype, 
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
@@ -753,6 +754,10 @@ namespace pxar {
      *  for a specific ROC:
      */
     std::vector< bool > getEnabledColumns(size_t rocid);
+
+    /** DUT hub ID
+     */
+    uint8_t hubId;
 
     /** DUT member to hold all ROC configurations
      */
