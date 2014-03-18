@@ -129,10 +129,11 @@ int main(int argc, char *argv[]){
 
   if (!noAPI) {
     try {
-      api = new pxar::api("*", verbosity, configParameters->getHubId());
+      api = new pxar::api("*", verbosity);
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
-      api->initDUT(configParameters->getTbmType(), tbmDACs, 
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
 		   configParameters->getRocType(), rocDACs, 
 		   rocPixels);
       LOG(logINFO) << "DUT info: ";

@@ -11,13 +11,12 @@ using namespace pxar;
 
 
 
-hal::hal(std::string name, uint8_t _hubId) :
+hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
   nTBMs(0),
   deser160phase(4),
-  rocType(0),
-  hubId(_hubId)
+  rocType(0)
 {
 
   // Get a new CTestboard class instance:
