@@ -15,7 +15,7 @@
 
 using namespace pxar;
 
-api::api(std::string usbId, std::string logLevel, int8_t hubId) : 
+api::api(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
   _daq_minimum_period(0)
@@ -28,7 +28,7 @@ api::api(std::string usbId, std::string logLevel, int8_t hubId) :
   LOG(logINFO) << "Log level: " << logLevel;
 
   // Get a new HAL instance with the DTB USB ID passed to the API constructor:
-  _hal = new hal(usbId, hubId);
+  _hal = new hal(usbId);
 
   // Get the DUT up and running:
   _dut = new dut();
@@ -119,7 +119,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   return true;
 }
   
-bool api::initDUT(std::string tbmtype, 
+bool api::initDUT(uint8_t hubid,
+		  std::string tbmtype, 
 		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		  std::string roctype,
 		  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
@@ -128,7 +129,7 @@ bool api::initDUT(std::string tbmtype,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-    // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
+  // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
 
   // Verification/sanitry checks of supplied DUT configuration values
   // Check size of rocDACs and rocPixels against each other
@@ -174,6 +175,9 @@ bool api::initDUT(std::string tbmtype,
   LOG(logDEBUGAPI) << "We have " << rocDACs.size() << " DAC configs and " << rocPixels.size() << " pixel configs, with " << rocDACs.at(0).size() << " and " << rocPixels.at(0).size() << " entries for the first ROC, respectively.";
 
   // First initialized the API's DUT instance with the information supplied.
+
+  // Store the hubId:
+  _dut->hubId = hubid;
 
   // Initialize TBMs:
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){

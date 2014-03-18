@@ -37,7 +37,8 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
 
   fApi = new pxar::api("*", verbosity);
   fApi->initTestboard(sig_delays, power_settings, pg_setup);
-  fApi->initDUT(fConfigParameters->getTbmType(), tbmDACs, 
+  fApi->initDUT(fConfigParameters->getHubId(),
+		fConfigParameters->getTbmType(), tbmDACs, 
 		fConfigParameters->getRocType(), rocDACs, 
 		rocPixels);
   LOG(logINFO) << "DUT info: ";
