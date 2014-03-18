@@ -13,6 +13,7 @@ namespace pxar {
      */
     timer() { start = GetTime(); }
 
+    uint64_t get() { return static_cast<uint64_t>(GetTime() - start); }
   private:
     /** Private member function to store start time of the timer object
      */
