@@ -22,6 +22,7 @@ typedef char int8_t;
 #endif
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "api.h"
@@ -49,9 +50,14 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
-  void dumpParameters(std::vector<std::pair<std::string, uint8_t> >); 
-  void dumpParameters(std::vector<std::pair<std::string, double> >); 
-  void dumpParameters(std::vector<std::pair<uint16_t, uint8_t> >); 
+  template <typename T1, typename T2>
+    std::string dumpParameters(std::vector<std::pair<T1, T2> > v) {
+    std::stringstream line;
+    for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
+      line << " " << it->first << ": " << static_cast<int>(it->second); 
+    }
+    return line.str();
+  }
 
   static ConfigParameters* Singleton();
 

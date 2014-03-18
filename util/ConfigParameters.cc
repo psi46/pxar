@@ -261,7 +261,7 @@ void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
-    dumpParameters(fTbParameters);
+    LOG(logDEBUG) << dumpParameters(fTbParameters);
     fReadTbParameters = true; 
   }
 }
@@ -825,32 +825,4 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
   return true;
 }
 
-
-// ----------------------------------------------------------------------
-void ConfigParameters::dumpParameters(vector<pair<string, uint8_t> > v) {
-  string line; 
-  for (unsigned i = 0; i < v.size(); ++i) {
-    line += string(Form(" %s: %3d", v[i].first.c_str(), static_cast<int>(v[i].second))); 
-  }
-  LOG(logDEBUG) << line; 
-}
-
-// ----------------------------------------------------------------------
-void ConfigParameters::dumpParameters(vector<pair<string, double> > v) {
-  string line; 
-  for (unsigned i = 0; i < v.size(); ++i) {
-    line += string(Form(" %s: %3f", v[i].first.c_str(), v[i].second)); 
-  }
-  LOG(logDEBUG) << line; 
-}
-
-// ----------------------------------------------------------------------
-void ConfigParameters::dumpParameters(vector<pair<uint16_t, uint8_t> > v) {
-  string line; 
-  for (unsigned i = 0; i < v.size(); ++i) {
-    std::bitset<8> bits(v[i].second);
-    line += string(Form(" %x: %s", v[i].first, bits.to_string().c_str()));  
-  }
-  LOG(logDEBUG) << line; 
-}
 
