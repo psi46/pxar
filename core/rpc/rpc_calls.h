@@ -174,9 +174,10 @@ public:
 	RPC_EXPORT void Daq_Start(uint8_t channel);
 	RPC_EXPORT void Daq_Stop(uint8_t channel);
 	RPC_EXPORT uint32_t Daq_GetSize(uint8_t channel);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize = 16384, uint8_t channel = 0);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize, uint32_t &availsize, uint8_t channel);
+	RPC_EXPORT uint8_t Daq_Read(HWvectorR<uint16_t> &data, uint32_t blocksize = 65536, uint8_t channel = 0);
+	RPC_EXPORT uint8_t Daq_Read(HWvectorR<uint16_t> &data, uint32_t blocksize, uint32_t &availsize, uint8_t channel = 0);
 	
+
 	RPC_EXPORT void Daq_Select_ADC(uint16_t blocksize, uint8_t source, uint8_t start, uint8_t stop = 0);
 	RPC_EXPORT void Daq_Select_Deser160(uint8_t shift);
 	RPC_EXPORT void Daq_Select_Deser400();
@@ -232,6 +233,7 @@ public:
 	RPC_EXPORT void Ethernet_Send(string &message);
 	RPC_EXPORT uint32_t Ethernet_RecvPackets();
 
+	RPC_EXPORT void VectorTest(vector<uint16_t> &in, vectorR<uint16_t> &out);
 	
 	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers);
 	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers, int32_t chipId);

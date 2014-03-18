@@ -7,7 +7,7 @@
 
 const char CTestboard::rpc_timestamp[] = "";
 
-const unsigned int CTestboard::rpc_cmdListSize = 117;
+const unsigned int CTestboard::rpc_cmdListSize = 118;
 
 const char *CTestboard::rpc_cmdName[] =
 {
@@ -75,8 +75,8 @@ const char *CTestboard::rpc_cmdName[] =
 	/*    61 */ "Daq_Start$vC",
 	/*    62 */ "Daq_Stop$vC",
 	/*    63 */ "Daq_GetSize$IC",
-	/*    64 */ "Daq_Read$C2SSC",
-	/*    65 */ "Daq_Read$C2SS0IC",
+	/*    64 */ "Daq_Read$C5SIC",
+	/*    65 */ "Daq_Read$C5SI0IC",
 	/*    66 */ "Daq_Select_ADC$vSCCC",
 	/*    67 */ "Daq_Select_Deser160$vC",
 	/*    68 */ "Daq_Select_Deser400$v",
@@ -127,7 +127,8 @@ const char *CTestboard::rpc_cmdName[] =
 	/*   113 */ "LoopMultiRocAllPixelsDacDacScan$v1CSSCCCCCC",
 	/*   114 */ "LoopMultiRocOnePixelDacDacScan$v1CCCSSCCCCCC",
 	/*   115 */ "LoopSingleRocAllPixelsDacDacScan$vCSSCCCCCC",
-	/*   116 */ "LoopSingleRocOnePixelDacDacScan$vCCCSSCCCCCC"
+	/*   116 */ "LoopSingleRocOnePixelDacDacScan$vCCCSSCCCCCC",
+	/*   117 */ "VectorTest$v1S2S"
 };
 
 uint16_t CTestboard::GetRpcVersion()
@@ -1078,7 +1079,7 @@ uint32_t CTestboard::Daq_GetSize(uint8_t rpc_par1)
 	return rpc_par0;
 }
 
-uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uint8_t rpc_par3)
+uint8_t CTestboard::Daq_Read(HWvectorR<uint16_t> &rpc_par1, uint32_t rpc_par2, uint8_t rpc_par3)
 { RPC_PROFILING
 	uint8_t rpc_par0;
 	try {
@@ -1086,7 +1087,7 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT16(rpc_par2);
+	msg.Put_UINT32(rpc_par2);
 	msg.Put_UINT8(rpc_par3);
 	msg.Send(*rpc_io);
 	rpc_io->Flush();
@@ -1099,7 +1100,7 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 	return rpc_par0;
 }
 
-uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uint32_t &rpc_par3, uint8_t rpc_par4)
+uint8_t CTestboard::Daq_Read(HWvectorR<uint16_t> &rpc_par1, uint32_t rpc_par2, uint32_t &rpc_par3, uint8_t rpc_par4)
 { RPC_PROFILING
 	uint8_t rpc_par0;
 	try {
@@ -1107,7 +1108,7 @@ uint8_t CTestboard::Daq_Read(vectorR<uint16_t> &rpc_par1, uint16_t rpc_par2, uin
 	RPC_THREAD_LOCK
 	rpcMessage msg;
 	msg.Create(rpc_clientCallId);
-	msg.Put_UINT16(rpc_par2);
+	msg.Put_UINT32(rpc_par2);
 	msg.Put_UINT32(rpc_par3);
 	msg.Put_UINT8(rpc_par4);
 	msg.Send(*rpc_io);
@@ -2020,5 +2021,22 @@ void CTestboard::LoopSingleRocOnePixelDacDacScan(uint8_t rpc_par1, uint8_t rpc_p
 	msg.Send(*rpc_io);
 	RPC_THREAD_UNLOCK
 	} catch (CRpcError &e) { e.SetFunction(116); throw; };
+}
+
+void CTestboard::VectorTest(vector<uint16_t> &rpc_par1, vectorR<uint16_t> &rpc_par2)
+{ RPC_PROFILING
+	try {
+	uint16_t rpc_clientCallId = rpc_GetCallId(117);
+	RPC_THREAD_LOCK
+	rpcMessage msg;
+	msg.Create(rpc_clientCallId);
+	msg.Send(*rpc_io);
+	rpc_Send(*rpc_io, rpc_par1);
+	rpc_io->Flush();
+	msg.Receive(*rpc_io);
+	msg.Check(rpc_clientCallId,0);
+	rpc_Receive(*rpc_io, rpc_par2);
+	RPC_THREAD_UNLOCK
+	} catch (CRpcError &e) { e.SetFunction(117); throw; };
 }
 
