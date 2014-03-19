@@ -4,7 +4,6 @@
 #include <Windows.h>
 #endif
 
-
 #include "pxar.h"
 #include "timer.h"
 #include <iomanip>
@@ -21,7 +20,28 @@ bool daq_loop = true;
 
 void sighandler(int sig) {
   std::cout << "Signal " << sig << " caught..." << std::endl;
+  std::cout << "Finishing and shutting down." << std::endl;
   daq_loop = false;
+}
+
+void wait(int sec) {
+#ifdef WIN32
+   Sleep(sec*1000);
+#else
+   sleep(sec);
+#endif
+}
+
+int getspill() {
+   // Open spill number file:
+   std::ifstream myfile;
+   int spillnumber = 0;
+   myfile.open ("/home/pixel_dev/.currentSpill");
+   myfile >> spillnumber;
+  
+   // Close spill file:
+   myfile.close();
+   return spillnumber;       
 }
 
 int main(int argc, char* argv[]) {
@@ -93,9 +113,9 @@ int main(int argc, char* argv[]) {
      pattern_delay = 1000;
   }
   else {
-     pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
+     pg_setup.push_back(std::make_pair(0x0200,46));    // PG_TRG
      pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
-     pattern_delay = 200;
+     pattern_delay = 100;
   }
 
   // Prepare some empty TBM vector:
@@ -108,7 +128,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
   std::vector<std::pair<std::string,uint8_t> > dacs;
 
-  dacs.push_back(std::make_pair("Vdig",6));
+  dacs.push_back(std::make_pair("Vdig",8));
   dacs.push_back(std::make_pair("Vana",78));
   dacs.push_back(std::make_pair("Vsf",80));
   dacs.push_back(std::make_pair("Vcomp",12));
@@ -129,7 +149,7 @@ int main(int argc, char* argv[]) {
   dacs.push_back(std::make_pair("Vcal",199));
   dacs.push_back(std::make_pair("CalDel",140));
   dacs.push_back(std::make_pair("CtrlReg",0));
-  dacs.push_back(std::make_pair("WBC",99));
+  dacs.push_back(std::make_pair("WBC",200));
   dacs.push_back(std::make_pair("rbreg",12));
 
   // Get some pixelConfigs up and running:
@@ -188,102 +208,92 @@ int main(int argc, char* argv[]) {
     // Read DUT info, should print above filled information:
     _api->_dut->info();
 
-
     // Setup signal handlers to allow interruption:
     signal(SIGABRT, &sighandler);
     signal(SIGTERM, &sighandler);
     signal(SIGINT, &sighandler);
 
-    // Open spill number file:
-    std::ifstream myfile;
-    myfile.open ("/home/pixel_dev/.currentSpill");
-    int spillnumber, oldspillnumber = 0;
-    pxar::timer * spillruntime;
+    int oldspillnumber = 0;
+    pxar::timer * spillruntime = new pxar::timer();
 
+    // Wait for next spill until we start the DAQ:
     if(spills) {
-       myfile >> spillnumber;
-       oldspillnumber = spillnumber;
-       std::cout << "Starting DAQ at spill " << spillnumber << std::endl;
-       myfile.seekg(0,myfile.beg);
+      oldspillnumber = getspill();
+      std::cout << "Waiting for spill " << getspill() << " to finish..." << std::endl;
+      while(daq_loop && getspill() == oldspillnumber) {
+	std::cout << "." << std::flush;
+	wait(1);
+      }
+      std::cout << std::endl << "Starting DAQ at spill " << getspill() << std::endl;
     }
 
-    // Very sorry for using goto marker:
-    nextspill:
+    //Start the main DAQ loop:
+    while(daq_loop) {
 
-    // Start the DAQ:
-    _api->daqStart(pg_setup);
+      if(spills) {
+	oldspillnumber = getspill();
+	spillruntime = new pxar::timer();
 
-    // Send the triggers:
-    if(triggers != 0) {
-      _api->daqTrigger(triggers);
-    }
-    else {
-       _api->daqTriggerLoop(pattern_delay);
-       while(_api->daqStatus() && daq_loop) {
+	std::cout << "Waiting for beam section of the spill..." << std::endl;
+	while(spillruntime->get() < 47000 && getspill() == oldspillnumber && daq_loop) {
+          wait(1);
+          std::cout << "Spill " << getspill() << " runs since " << (spillruntime->get()/1000) << "sec...\r" << std::flush;
+	}
+	std::cout << std::endl << "Data acquisition for spill " << getspill() << " started." << std::endl;
+      }
+
+      // Start the DAQ:
+      _api->daqStart(pg_setup);
+
+      // Send the triggers:
+      if(triggers != 0) {
+	_api->daqTrigger(triggers);
+	daq_loop = false;
+      }
+      // Enter the trigger loop:
+      else {
+	_api->daqTriggerLoop(pattern_delay);
+	while(_api->daqStatus() && daq_loop) {
           if(spills) {
-             myfile >> spillnumber;
-             std::cout << "Spill " << spillnumber << std::endl;
-             myfile.seekg(0,myfile.beg);
-             if(spillnumber != oldspillnumber) { 
-                oldspillnumber = spillnumber;
-                spillruntime = new pxar::timer();
-                break; 
-             }
+	    std::cout << "." << std::flush;
+	    if(getspill() != oldspillnumber) { 
+	      std::cout << std::endl << "New spill: " << getspill() << std::endl;
+	      oldspillnumber = getspill();
+	      spillruntime = new pxar::timer();
+	      break; 
+	    }
           }
-#ifdef WIN32
-          Sleep(1000);
-#else
-          sleep(1);
-#endif
-       }
-    }
+          wait(1);
+	}
+      }
     
-    // Stop the DAQ:
-    _api->daqStop();
+      // Stop the DAQ:
+      _api->daqStop();
 
-     // And read out the full buffer:
-    std::cout << "Start reading data from DTB RAM." << std::endl;
-    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
-    std::cout << "Read " << daqdat.size() << " words of data: ";
-    if(daqdat.size() > 550000) std::cout << (daqdat.size()/524288) << "MB." << std::endl;
-    else std::cout << (daqdat.size()/512) << "kB." << std::endl;
+      // And read out the full buffer:
+      std::cout << "Start reading data from DTB RAM." << std::endl;
+      std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+      std::cout << "Read " << daqdat.size() << " words of data: ";
+      if(daqdat.size() > 550000) std::cout << (daqdat.size()/524288) << "MB." << std::endl;
+      else std::cout << (daqdat.size()/512) << "kB." << std::endl;
 
-    // If we are running on spills just take that number as filename:
-    if(spills) {
-       std::stringstream sstr;
-       sstr << spillnumber;
-       filename = "tbdata/spill_" + sstr.str() + ".dat";
-    }
+      // If we are running on spills just take that number as filename:
+      if(spills) {
+	std::stringstream sstr;
+	sstr << (getspill()-1);
+	filename = "tbdata/spill_" + sstr.str() + ".dat";
+      }
 
-    // Write all the data to the file:
-    if(filename == "") { filename = "defaultdata.dat"; }
-    std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
-    fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
-    fout.close();
-    std::cout << "Wrote data to file " << filename << std::endl;
+      // Write all the data to the file:
+      if(filename == "") { filename = "defaultdata.dat"; }
+      std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
+      fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
+      fout.close();
+      std::cout << "Wrote data to file " << filename << std::endl;
 
-    // ##########################################################
+    } // End of DAQ loop
 
-    // I'm very sorry for this, but it's testbeam time:
-    if(spills && daq_loop) {
-       std::cout << "Sleeping a bit..." << std::endl;
-       while(spillruntime->get() < 47000) {
-#ifdef WIN32
-          Sleep(1000);
-#else
-          sleep(1);
-#endif
-          std::cout << "Spill runs since " << (spillruntime->get()/1000) << "sec...\r" << std::flush;
-          if(!daq_loop) { break; }
-       }
-       std::cout << "Ready for the next spill!" << std::endl;
-       delete spillruntime;
-       goto nextspill; 
-    }
-
-    // Close spill file:
-    myfile.close();
-
+    delete spillruntime;
     _api->HVoff();
 
     // And end that whole thing correcly:
