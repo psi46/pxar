@@ -1,13 +1,9 @@
 #ifndef PIXTESTDAQ_H
 #define PIXTESTDAQ_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-using namespace std;
-using namespace pxar;
-
-class PixTestDaq: public PixTest {
+class DLLEXPORT PixTestDaq: public PixTest {
 public:
   PixTestDaq(PixSetup *, std::string);
   PixTestDaq();
@@ -22,10 +18,13 @@ public:
 private:
 
   int     fParNtrig; 
+  int     fParStretch; 
+  bool    fParCount;
+  int 	  fParIter;
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
-  ClassDef(PixTestDaq, 1);
+  ClassDef(PixTestDaq, 1)
 
 };
 #endif

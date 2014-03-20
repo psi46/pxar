@@ -22,6 +22,7 @@ namespace pxar {
      *  closed and RPC object destroyed.
      */
     ~hal();
+    
 
     /** Function to check the status of the HAL
      */
@@ -91,6 +92,11 @@ namespace pxar {
     /** Function to set and update the pattern generator command list on the DTB
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup);
+
+    /** Set the clock stretch 
+    */
+    void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);
+
 
     // TESTBOARD GET COMMANDS
     /** Read the testboard analog current
@@ -242,6 +248,10 @@ namespace pxar {
     /**
      */
     uint32_t daqBufferStatus();
+
+    /** Reading just the DTB buffer and returning
+     */
+    std::vector<uint16_t> daqBuffer();
 
     /** Reading out the full undecoded DAQ buffer
      */

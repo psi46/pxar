@@ -1,10 +1,9 @@
 #ifndef PIXTESTSCURVES_H
 #define PIXTESTSCURVES_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestScurves: public PixTest {
+class DLLEXPORT PixTestScurves: public PixTest {
 public:
   PixTestScurves(PixSetup *, std::string);
   PixTestScurves();
@@ -23,7 +22,7 @@ private:
   std::string fParDac;
   int         fParNtrig, fParNpix, fParDacLo, fParDacHi;
 
-  ClassDef(PixTestScurves, 1);
+  ClassDef(PixTestScurves, 1)
 
 };
 #endif

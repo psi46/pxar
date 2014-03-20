@@ -267,7 +267,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	fRocTextMap.insert(make_pair(idac, amap[idac].first));
       }
       
-      for (idac = 0.5*amap.size()+1; idac < amap.size(); ++idac) {
+      for (idac = amap.size()/2+1; idac < amap.size(); ++idac) {
 	if (static_cast<unsigned int>(iroc) == firstroc) {
 	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX); 
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
@@ -459,7 +459,7 @@ void PixParTab::setTbmParameter() {
   string sval = fTbmTextEntries[sdac]->GetText(); 
   //  uint8_t udac = atoi(sval.c_str()); 
   bitset<8> bits(sval); 
-  uint8_t udac = bits.to_ulong();
+  uint8_t udac = static_cast<uint8_t>(bits.to_ulong());
 
   int itbm(-1); 
   for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {

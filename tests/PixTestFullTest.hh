@@ -1,10 +1,9 @@
 #ifndef PIXTESTFULLTEST_H
 #define PIXTESTFULLTEST_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestFullTest: public PixTest {
+class DLLEXPORT PixTestFullTest: public PixTest {
 public:
   PixTestFullTest(PixSetup *, std::string);
   PixTestFullTest();
@@ -19,7 +18,7 @@ public:
 private:
   
   
-  ClassDef(PixTestFullTest, 1);
+  ClassDef(PixTestFullTest, 1)
 
 };
 #endif

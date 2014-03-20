@@ -225,6 +225,7 @@ namespace pxar {
       _devices["psi46digv2_b"]  = ROC_PSI46DIGV2_B;
       _devices["psi46digv2"]    = ROC_PSI46DIGV2;
       _devices["psi46digv2.1"]  = ROC_PSI46DIGV21;
+      _devices["psi46digv21"]  = ROC_PSI46DIGV21;
       // This name is not correct, but kept for legacy reasons:
       _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 

@@ -1,6 +1,8 @@
 #ifndef PIXINITFUNC_H
 #define PIXINITFUNC_H
 
+#include "pxardllexport.h"
+
 #include "TString.h"
 #include "TObject.h"
 #include "TH1.h"
@@ -9,7 +11,7 @@
 #include <iostream>
 
 
-class PixInitFunc: public TObject {
+class DLLEXPORT PixInitFunc: public TObject {
 
 public:
 

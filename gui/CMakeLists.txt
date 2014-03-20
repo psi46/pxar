@@ -18,7 +18,7 @@ PixParTab.hh
 PixMonitor.hh
 )
 
-SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/gui ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${ROOT_INCLUDE_DIR} )
+SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/gui ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${ROOT_INCLUDE_DIR} )
 
 # set everything needed for the root dictonary and create the
 # dictionary

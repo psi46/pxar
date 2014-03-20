@@ -8,6 +8,7 @@
 #include "pxar.h"
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -26,9 +27,12 @@ int main(int argc, char* argv[]) {
   std::cout << argc << " arguments provided." << std::endl;
   std::string verbosity, filename;
   uint32_t triggers = 0;
+  bool testpulses = false;
+
+  uint8_t hubid = 31;
 
   // Quick and hacky cli arguments reading:
-  for (int i = 0; i < argc; i++) {
+  for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i],"-h")) {
       std::cout << "Help:" << std::endl;
       std::cout << "-f filename    file to store DAQ data in" << std::endl;
@@ -38,13 +42,21 @@ int main(int argc, char* argv[]) {
     }
     if (!strcmp(argv[i],"-f")) {
       filename = std::string(argv[++i]);
+      std::cout << "Writing to file " << filename << std::endl;
     }
     if (!strcmp(argv[i],"-n")) {
       triggers = atoi(argv[++i]);
+      std::cout << "Sending " << triggers << " triggers" << std::endl;
     }
     if (!strcmp(argv[i],"-v")) {
       verbosity = std::string(argv[++i]);
     }               
+    if (!strcmp(argv[i],"-tp")) {
+      testpulses = true;
+    }
+    else {
+      std::cout << "Unrecognized command line option " << argv[i] << std::endl;
+    }
   }
 
   // Prepare some vectors for all the configurations we use:
@@ -129,7 +141,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the DUT (power it up and stuff):
-    if (!_api->initDUT("tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
+    if (!_api->initDUT(hubid,"tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
       std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
       delete _api;
       return -2;
@@ -152,9 +164,11 @@ int main(int argc, char* argv[]) {
     _api->_dut->maskAllPixels(false);
 
     // Set some pixels up for getting calibrate signals:
-    for(int i = 0; i < 3; i++) {
-      _api->_dut->testPixel(i,5,true);
-      _api->_dut->testPixel(i,6,true);
+    if(testpulses) {
+      for(int i = 0; i < 3; i++) {
+	_api->_dut->testPixel(i,5,true);
+	_api->_dut->testPixel(i,6,true);
+      }
     }
 
     // Setup signal handlers to allow interruption:
@@ -185,15 +199,15 @@ int main(int argc, char* argv[]) {
     _api->daqStop();
 
     // And read out the full buffer:
-    std::vector<pxar::rawEvent> daqdat = _api->daqGetRawBuffer();
+    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
 
-    std::cout << "Found " << daqdat.size() << " triggers in data, expected " << triggers << std::endl;
+    std::cout << "Read " << daqdat.size() << " words of data." << std::endl;
 
     // Write all the data to the file:
-    FILE * pFile;
-    pFile = fopen(filename != "" ? filename.c_str() : "defaultdata.dat","w");
-    //    fwrite (&daqdat[0], sizeof(uint16_t), daqdat.size(), pFile); 
-    fclose(pFile);
+    if(filename == "") { filename = "defaultdata.dat"; }
+    std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
+    fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
+    fout.close();
 
     // ##########################################################
 

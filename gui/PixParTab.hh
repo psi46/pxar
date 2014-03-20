@@ -20,7 +20,7 @@
 #include "PixGui.hh"
 #include "ConfigParameters.hh"
 
-class PixParTab: public TQObject {
+class DLLEXPORT PixParTab: public TQObject {
 public:
   PixParTab(PixGui *p, ConfigParameters *c, std::string tabname);
   PixParTab();

@@ -11,7 +11,7 @@
 #include "PixTestParameters.hh"
 #include "ConfigParameters.hh"
 
-class PixSetup: public TObject {
+class DLLEXPORT PixSetup: public TObject {
 public:
   PixSetup(pxar::api *, PixTestParameters *, ConfigParameters *);
   PixSetup(std::string verbosity, PixTestParameters *, ConfigParameters *);

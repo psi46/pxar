@@ -9,13 +9,14 @@
 
 using namespace pxar;
 
+
+
 hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
   nTBMs(0),
   deser160phase(4),
-  rocType(0),
-  hubId(31)
+  rocType(0)
 {
 
   // Get a new CTestboard class instance:
@@ -570,7 +571,8 @@ void hal::PixelSetCalibrate(uint8_t rocid, uint8_t column, uint8_t row, uint16_t
   _testboard->roc_I2cAddr(rocid);
 
   // Set the calibrate bit and the CALS setting:
-  _testboard->roc_Pix_Cal(column,row,flags&FLAG_CALS);
+  bool useSensorPadForCalibration  = (flags & FLAG_CALS) != 0;
+  _testboard->roc_Pix_Cal(column,row,useSensorPadForCalibration);
 }
 
 void hal::RocClearCalibrate(uint8_t rocid) {
@@ -1078,6 +1080,16 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
+
+
+void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
+
+  _testboard->SetClockStretch(src, delay, width);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
+
 bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
@@ -1273,6 +1285,34 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
       raw.push_back(current_Event);
+    }
+  }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+
+  return raw;
+}
+
+std::vector<uint16_t> hal::daqBuffer() {
+
+  std::vector<uint16_t> raw;
+
+  dataSink<uint16_t> rawpump0, rawpump1, rawpump2, rawpump3;
+  src0 >> rawpump0;
+
+  if(src1.isConnected()) { src1 >> rawpump1; }
+  if(src2.isConnected()) { src2 >> rawpump2; }
+  if(src3.isConnected()) { src3 >> rawpump3; }
+
+  // FIXME check carefully: in principle we expect the same number of triggers
+  // (==Events) on each pipe. Throw a critical if difference is found?
+  try {
+    while(1) {
+      // Read the next Event from each of the pipes:
+      raw.push_back(rawpump0.Get());
+      if(src1.isConnected()) { raw.push_back(rawpump1.Get()); }
+      if(src2.isConnected()) { raw.push_back(rawpump2.Get()); }
+      if(src3.isConnected()) { raw.push_back(rawpump3.Get()); }
     }
   }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }

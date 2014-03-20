@@ -4,7 +4,7 @@
 
 #include "PixTest.hh"
 
-class PixTestDacScanCurrent: public PixTest {
+class DLLEXPORT PixTestDacScanCurrent: public PixTest {
 public:
   PixTestDacScanCurrent(PixSetup *, std::string);
   PixTestDacScanCurrent();
@@ -20,7 +20,7 @@ private:
 
   std::string fParDAC; 
 
-  ClassDef(PixTestDacScanCurrent, 1);
+  ClassDef(PixTestDacScanCurrent, 1)
 
 };
 #endif

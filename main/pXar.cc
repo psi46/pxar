@@ -2,8 +2,11 @@
 #define PIX_H
 
 #include <iostream>
-#include <unistd.h>
 #include <sys/stat.h>
+
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 #include <TApplication.h> 
 #include <TFile.h> 
@@ -129,7 +132,8 @@ int main(int argc, char *argv[]){
       api = new pxar::api("*", verbosity);
 
       api->initTestboard(sig_delays, power_settings, pg_setup);
-      api->initDUT(configParameters->getTbmType(), tbmDACs, 
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
 		   configParameters->getRocType(), rocDACs, 
 		   rocPixels);
       LOG(logINFO) << "DUT info: ";

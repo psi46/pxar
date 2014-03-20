@@ -119,7 +119,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   return true;
 }
   
-bool api::initDUT(std::string tbmtype, 
+bool api::initDUT(uint8_t hubid,
+		  std::string tbmtype, 
 		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		  std::string roctype,
 		  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
@@ -128,7 +129,7 @@ bool api::initDUT(std::string tbmtype,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-    // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
+  // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
 
   // Verification/sanitry checks of supplied DUT configuration values
   // Check size of rocDACs and rocPixels against each other
@@ -174,6 +175,9 @@ bool api::initDUT(std::string tbmtype,
   LOG(logDEBUGAPI) << "We have " << rocDACs.size() << " DAC configs and " << rocPixels.size() << " pixel configs, with " << rocDACs.at(0).size() << " and " << rocPixels.at(0).size() << " entries for the first ROC, respectively.";
 
   // First initialized the API's DUT instance with the information supplied.
+
+  // Store the hubId:
+  _dut->hubId = hubid;
 
   // Initialize TBMs:
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){
@@ -653,7 +657,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,false);
@@ -704,7 +708,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,true);
@@ -775,10 +779,11 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags&FLAG_RISING_EDGE);
+  bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
+  std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,useRisingEdge);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -844,7 +849,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,false);
@@ -912,7 +917,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
@@ -947,7 +952,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
@@ -972,7 +977,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
@@ -1013,11 +1018,12 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = flags & FLAG_FORCE_SERIAL;
+  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags&FLAG_RISING_EDGE);
+  bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
+  std::vector<pixel>* result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, useRisingEdge);
 
   return *result;
 }
@@ -1109,7 +1115,18 @@ void api::daqTriggerLoop(uint16_t period) {
   }
 }
 
-std::vector<rawEvent> api::daqGetRawBuffer() {
+std::vector<uint16_t> api::daqGetBuffer() {
+
+  // Reading out all data from the DTB and returning the raw blob.
+  std::vector<uint16_t> buffer = _hal->daqBuffer();
+
+  // We read out everything, reset the buffer:
+  // Reset all active channels:
+  _hal->daqClear();
+  return buffer;
+}
+
+std::vector<rawEvent> api::daqGetRawEventBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs
@@ -1745,4 +1762,11 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
 
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
+}
+
+void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
+{
+  LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 
+  _hal->SetClockStretch(src,width,delay);
+  
 }

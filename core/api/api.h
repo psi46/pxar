@@ -6,17 +6,24 @@
 #ifndef PXAR_API_H
 #define PXAR_API_H
 
-/** Export classes from the DLL under WIN32 */
-#ifdef WIN32
-#define DLLEXPORT __declspec( dllexport )
+/** Declare all classes that need to be included in shared libraries on Windows 
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
 #else
-#define DLLEXPORT
+#include <stdint.h>
 #endif
 
 #include <string>
 #include <vector>
 #include <map>
-#include <stdint.h>
 #include "datatypes.h"
 
 // PXAR Flags
@@ -160,7 +167,8 @@ namespace pxar {
      *  internally. Strings are checked case-insensitive, old and new DAC names
      *  are both supported.
      */
-    bool initDUT(std::string tbmtype, 
+    bool initDUT(uint8_t hubId,
+		 std::string tbmtype, 
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
@@ -384,6 +392,11 @@ namespace pxar {
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
+    /** Set the clock stretch.
+	FIXME missing documentation
+	A width of 0 disables the clock stretch
+     */
+    void setClockStretch(uint8_t src, uint16_t delay, uint16_t width);
 
     // DAQ functions
 
@@ -441,7 +454,14 @@ namespace pxar {
      *  function returns the raw data blob from either of the deserializer
      *  modules.
      */
-    std::vector<rawEvent> daqGetRawBuffer();
+    std::vector<rawEvent> daqGetRawEventBuffer();
+
+    /** Function to return the full raw data buffer from the testboard RAM after
+     *  the data acquisition has been stopped. Neither decoding nor splitting is
+     *  performed, this function returns the raw data blob from either of the 
+     *  deserializer modules.
+     */
+    std::vector<uint16_t> daqGetBuffer();
 
     /** Function to return the full Event buffer from the testboard RAM after
      *  the data acquisition has been stopped. All data is decoded and the 
@@ -734,6 +754,10 @@ namespace pxar {
      *  for a specific ROC:
      */
     std::vector< bool > getEnabledColumns(size_t rocid);
+
+    /** DUT hub ID
+     */
+    uint8_t hubId;
 
     /** DUT member to hold all ROC configurations
      */

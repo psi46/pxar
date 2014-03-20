@@ -3,19 +3,30 @@
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
+/** Declare all classes that need to be included in shared libraries on Windows
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 #ifdef __CINT__
 #undef __GNUC__
-typedef char __signed; 
 typedef char int8_t; 
 #endif
 
-#include <stdint.h>
 #include <string>
 #include <vector>
 
 #include "api.h"
 
-class ConfigParameters {
+class DLLEXPORT ConfigParameters {
 public:
   ConfigParameters();
   ConfigParameters(std::string filename);
@@ -100,6 +111,8 @@ public:
   double getVa() {return va;}
   double getVd() {return vd;}
   bool   getHvOn() {return fHvOn;}
+
+  uint8_t getHubId() {return fHubId;}
 
 private:
 
