@@ -42,7 +42,6 @@ int main(int argc, char *argv[]){
   string dir("."), cmdFile("nada"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
   bool doRunGui(false), 
     doRunScript(false), 
-    noAPI(false), 
     doUpdateFlash(false),
     doAnalysisOnly(false),
     doDummyTest(false),
@@ -58,7 +57,6 @@ int main(int argc, char *argv[]){
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
       cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
-      cout << "-n                    no DUT/API initialization" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
@@ -70,7 +68,6 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
-    if (!strcmp(argv[i],"-n"))                                {noAPI   = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
@@ -127,22 +124,20 @@ int main(int argc, char *argv[]){
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
   vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
-  if (!noAPI) {
-    try {
-      api = new pxar::api("*", verbosity);
-
-      api->initTestboard(sig_delays, power_settings, pg_setup);
-      api->initDUT(configParameters->getHubId(),
-		   configParameters->getTbmType(), tbmDACs, 
-		   configParameters->getRocType(), rocDACs, 
-		   rocPixels);
-      LOG(logINFO) << "DUT info: ";
-      api->_dut->info(); 
-      
-    } catch (...) {
-      LOG(logINFO)<< "pxar caught an exception from the board. Exiting.";
-      return -1;
-    }
+  try {
+    api = new pxar::api("*", verbosity);
+    
+    api->initTestboard(sig_delays, power_settings, pg_setup);
+    api->initDUT(configParameters->getHubId(),
+		 configParameters->getTbmType(), tbmDACs, 
+		 configParameters->getRocType(), rocDACs, 
+		 rocPixels);
+    LOG(logINFO) << "DUT info: ";
+    api->_dut->info(); 
+    
+  } catch (...) {
+    LOG(logINFO)<< "pxar caught an exception from the board. Exiting.";
+    return -1;
   }
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
@@ -172,9 +167,7 @@ int main(int argc, char *argv[]){
   
   //  delete configParameters;
   //  delete controlNetwork;
-  if (!noAPI) {
-    delete api;
-  }
+  if (api) delete api;
 
   LOG(logINFO) << "pXar: this is the end, my friend";
 
