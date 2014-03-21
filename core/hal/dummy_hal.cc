@@ -534,6 +534,9 @@ void hal::SignalProbeA1(uint8_t /*signal*/) {
 void hal::SignalProbeA2(uint8_t /*signal*/) {
 }
 
+void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {
+}
+
 bool hal::daqStart(uint8_t /*deser160phase*/, uint8_t /*nTBMs*/, uint32_t /*buffersize*/) {
   return true;
 }
@@ -560,6 +563,12 @@ rawEvent* hal::daqRawEvent() {
 std::vector<rawEvent*> hal::daqAllRawEvents() {
 
   std::vector<rawEvent*> raw;
+  return raw;
+}
+
+std::vector<uint16_t> hal::daqBuffer() {
+  
+  std::vector<uint16_t> raw;
   return raw;
 }
 
