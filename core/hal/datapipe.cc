@@ -7,7 +7,7 @@ namespace pxar {
   uint16_t dtbSource::FillBuffer() {
     pos = 0;
     do {
-      dtbState = tb->Daq_Read(buffer, 8192, dtbRemainingSize, channel);
+      dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
       /*
 	if (dtbRemainingSize < 100000) {
 	if      (dtbRemainingSize > 1000) tb->mDelay(  1);

@@ -10,7 +10,7 @@
 namespace pxar {
 
 // --- Data Transmission settings ----------------------------------------------
-#define DTB_SOURCE_BLOCK_SIZE  0x800000
+#define DTB_SOURCE_BLOCK_SIZE  8192
 #define DTB_SOURCE_BUFFER_SIZE 50000000
 
 
