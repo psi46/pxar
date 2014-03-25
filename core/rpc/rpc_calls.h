@@ -183,7 +183,8 @@ public:
 	RPC_EXPORT void Daq_Select_Deser400();
 	RPC_EXPORT void Daq_Deser400_Reset(uint8_t reset);
 	RPC_EXPORT void Daq_DeselectAll();
-
+	
+	RPC_EXPORT void Daq_Select_Datagenerator(uint16_t startvalue);
 	RPC_EXPORT void SetClockSource(uint8_t source);
 
 
