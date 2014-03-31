@@ -47,6 +47,11 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_RISING_EDGE   0x0008
 
+/** Flag to fore all pixels to masked state during tests. By this only the one pixel with
+ *  calibrate pulse is enabled and trimmed.
+ */
+#define FLAG_FORCE_MASKED   0x0010
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
