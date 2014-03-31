@@ -1340,7 +1340,7 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   MaskAndTrim(false);
 
   // Print timer value:
-  LOG(logDEBUGAPI) << "Test took " << t << "ms.";
+  LOG(logINFO) << "Test took " << t << "ms.";
 
   return data;
 } // expandLoop()
