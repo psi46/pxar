@@ -336,10 +336,6 @@ namespace pxar {
      */
     bool FindDTB(std::string &usbId);
 
-    /** Delay helper function
-     *  Uses usleep() to wait the given time in milliseconds
-     */
-    void mDelay(uint32_t ms);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit

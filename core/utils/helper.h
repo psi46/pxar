@@ -5,7 +5,11 @@
 #define PXAR_HELPER_H
 
 namespace pxar {
-  /* =========================================================================== */
+
+  /** Delay helper function
+   *  Uses usleep() to wait the given time in milliseconds
+   */
+  void mDelay(uint32_t ms);
 
   /** Helper class to search vectors of pixelConfig, rocConfig and tbmConfig for 'enable' bit
    */

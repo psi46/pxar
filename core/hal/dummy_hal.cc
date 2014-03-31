@@ -72,15 +72,6 @@ void hal::PrintInfo() {
 	       << "------------------------------------------------------";
 }
 
-void hal::mDelay(uint32_t ms) {
-  // Wait for the given time in milliseconds:
-#ifdef WIN32
-  Sleep(ms);
-#else
-  usleep(ms*1000);
-#endif
-}
-
 bool hal::CheckCompatibility(){
   // We are though all checks, testboard is successfully connected:
   return true;
