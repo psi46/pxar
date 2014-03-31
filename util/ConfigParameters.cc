@@ -227,11 +227,14 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     s1 = lines[i].find(" "); 
     s2 = lines[i].rfind(" "); 
     if (s1 != s2) {
+      // -- with register number 
       str1 = lines[i].substr(0, s1); 
       str2 = lines[i].substr(s1+1, s2-s1-1); 
       str3 = lines[i].substr(s2+1); 
     } else {
-      LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
+      // -- without register number 
+      str2 = lines[i].substr(0, s1); 
+      str3 = lines[i].substr(s1+1); 
     }
     
     if (string::npos != str3.find("0x")) {
@@ -763,7 +766,7 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
   for (unsigned int idac = 0; idac < v.size(); ++idac) {
     regName = v.at(idac).first;
     val = v.at(idac).second;
-    OutputFile << Form("0 %10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
+    OutputFile << Form("%-10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
   }
   
   OutputFile.close();
