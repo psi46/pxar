@@ -24,7 +24,7 @@ namespace pxar {
     } while (buffer.size() == 0);
 
     LOG(logDEBUGPIPES) << "----------------";
-    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
+    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << (tbm_present ? " DESER400 " : " DESER160 ");
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
     LOG(logDEBUGPIPES) << "----------------";
     LOG(logDEBUGPIPES) << listVector(buffer,true);
