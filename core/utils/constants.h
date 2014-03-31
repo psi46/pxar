@@ -9,9 +9,12 @@
 
 namespace pxar {
 
-// --- Data Transmission settings ----------------------------------------------
+// --- Data Transmission settings & flags --------------------------------------
 #define DTB_SOURCE_BLOCK_SIZE  8192
 #define DTB_SOURCE_BUFFER_SIZE 50000000
+#define DTB_DAQ_FIFO_OVFL 4 // bit 2 = DAQ fast HW FIFO overflow
+#define DTB_DAQ_MEM_OVFL  2 // bit 1 = DAQ RAM FIFO overflow
+#define DTB_DAQ_STOPPED   1 // bit 0 = DAQ stopped (because of overflow)
 
 
 // --- TBM Types ---------------------------------------------------------------
