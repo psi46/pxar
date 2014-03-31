@@ -16,6 +16,9 @@ public:
   void doTest(); 
   void dummyAnalysis(); 
   void output4moreweb();
+  
+  void runCommand(std::string command); 
+  void thrMap(); 
 
 private:
 
