@@ -16,9 +16,9 @@ namespace pxar {
 
 // --- TBM Types ---------------------------------------------------------------
 // FIXME just an example...
-#define TBM_07             0x01
-#define TBM_07A            0x02
-#define TBM_08             0x03
+#define TBM_08             0x01
+#define TBM_08A            0x02
+#define TBM_09             0x03
 
 
 // --- TBM Register -----------------------------------------------------------
