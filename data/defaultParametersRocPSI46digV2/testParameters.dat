@@ -50,11 +50,11 @@ setCalDel     button
 SaveDacs      button
 
 -- Scurves
-Ntrig 50
-Npix  10
-DAC   Vcal 
-DacLo 0
-DacHi 100
+Ntrig 10     
+DAC   Vcal   
+DacLo 0	     
+DacHi 100    
+thrMap button
 
 -- Setup
 Ntrig 10
