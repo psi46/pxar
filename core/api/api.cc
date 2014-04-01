@@ -1593,6 +1593,9 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
     }
   }
 
+  // Sort the output map by DAC values and ROC->col->row - just because we are so nice:
+  std::sort(result->begin(),result->end());
+
   LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdDacScan data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
