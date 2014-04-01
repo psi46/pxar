@@ -10,9 +10,9 @@ namespace pxar {
       dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
       /*
 	if (dtbRemainingSize < 100000) {
-	if      (dtbRemainingSize > 1000) tb->mDelay(  1);
-	else if (dtbRemainingSize >    0) tb->mDelay( 10);
-	else                              tb->mDelay(100);
+	if      (dtbRemainingSize > 1000) mDelay(  1);
+	else if (dtbRemainingSize >    0) mDelay( 10);
+	else                              mDelay(100);
 	}
 	LOG(logDEBUGPIPES) << "Buffer size: " << buffer.size();
       */
@@ -24,7 +24,7 @@ namespace pxar {
     } while (buffer.size() == 0);
 
     LOG(logDEBUGPIPES) << "----------------";
-    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << " DESER400: " << (int)tbm_present;
+    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << (tbm_present ? " DESER400 " : " DESER160 ");
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
     LOG(logDEBUGPIPES) << "----------------";
     LOG(logDEBUGPIPES) << listVector(buffer,true);

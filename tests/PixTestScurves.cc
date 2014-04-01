@@ -120,17 +120,48 @@ void PixTestScurves::doTest() {
 	       << " scanning DAC " << fParDac 
 	       << " from " << fParDacLo << " .. " << fParDacHi;
 
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-  sparseRoc(fParNpix); 
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  //  sparseRoc(fParNpix); 
 
   int RFLAG(7); 
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG); 
+  //  vector<TH1*> thr1 = thrMaps(fParDac, "thr"+fParDac, fParNtrig); 
+  //  vector<TH1*> thr1 = thrMaps(fParDac, "thr"+fParDac, 0, 200, fParNtrig); 
 
   LOG(logINFO) << "PixTestScurves::doTest() done ";
   PixTest::update(); 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTestScurves::runCommand(string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "running command: " << command;
+  if (!command.compare("thrmap")) {
+    thrMap(); 
+    return;
+  }
+  return;
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::thrMap() {
+  PixTest::update(); 
+  fDirectory->cd();
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  LOG(logINFO) << "PixTestScurves::thrMap() start: " 
+	       << fParDac << ": " << fParDacLo << " .. " << fParDacHi
+	       << " ntrig = " << fParNtrig;
+  vector<TH1*> thr1 = thrMaps(fParDac, "thr"+fParDac, fParDacLo, fParDacHi, fParNtrig); 
+
+  LOG(logINFO) << "PixTestScurves::thrMap() done ";
+  PixTest::update(); 
+
+}
 
 // ----------------------------------------------------------------------
 void PixTestScurves::dummyAnalysis() {

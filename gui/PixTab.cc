@@ -405,8 +405,9 @@ void PixTab::update() {
 
 // ----------------------------------------------------------------------
 void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected) {
-  const char *text0, *text2;
-  text0 = selected->GetName();
+  //  char text0[200], text2[200];
+  string text2; 
+  const char* text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
 
   if (event == kKeyPress) {
@@ -418,7 +419,7 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   if (selected->InheritsFrom(TH1::Class())) {
     string trafo = selected->GetObjectInfo(px,py);
     string::size_type s1 = trafo.find("binx"); 
-    string trafo1 = trafo.substr(s1).c_str(); 
+    string trafo1 = trafo.substr(s1); 
     float x, y, val; 
     if (selected->InheritsFrom(TH2::Class())) {
       sscanf(trafo1.c_str(), "binx=%f, biny=%f, binc=%f", &x, &y, &val);
@@ -427,7 +428,8 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
       } else if (160 == ((TH2D*)selected)->GetNbinsX() && 416 == ((TH2D*)selected)->GetNbinsY()) {
 	text2 = Form("x=%.0f, y=%.0f, value=%4.3f", x-1, y-1, val); 
       } else {
-	text2 = trafo1.c_str(); 
+	text2 = trafo1;
+	//	cout << "text2: " << text2 << " trafo1: " << trafo1 << endl;
       }
     } else {
       sscanf(trafo1.c_str(), "binx=%f, binc=%f", &x, &val);
@@ -436,7 +438,7 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   } else {
     text2 = selected->GetObjectInfo(px,py);
   }
-  fStatusBar->SetText(text2, 1);
+  fStatusBar->SetText(text2.c_str(), 1);
 }
 
 

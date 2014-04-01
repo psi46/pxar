@@ -225,11 +225,14 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     s1 = lines[i].find(" "); 
     s2 = lines[i].rfind(" "); 
     if (s1 != s2) {
+      // -- with register number 
       str1 = lines[i].substr(0, s1); 
       str2 = lines[i].substr(s1+1, s2-s1-1); 
       str3 = lines[i].substr(s2+1); 
     } else {
-      LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
+      // -- without register number 
+      str2 = lines[i].substr(0, s1); 
+      str3 = lines[i].substr(s1+1); 
     }
     
     if (string::npos != str3.find("0x")) {
@@ -730,10 +733,7 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
-
-  std::stringstream fname;
-  fname << fDirectory << "/" << getTrimParameterFileName() << "_C" << iroc << ".dat";
-
+  string fname = fDirectory + "/" + getTrimParameterFileName();
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) { return false; } 
@@ -760,7 +760,7 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
   } 
   
   for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    OutputFile << "0 " << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
+    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
   }
 
   OutputFile.close();

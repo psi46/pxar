@@ -1340,7 +1340,7 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   MaskAndTrim(false);
 
   // Print timer value:
-  LOG(logDEBUGAPI) << "Test took " << t << "ms.";
+  LOG(logINFO) << "Test took " << t << "ms.";
 
   return data;
 } // expandLoop()
@@ -1477,7 +1477,7 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it_end;
   int increase_op;
   if(rising_edge) { it_start = packed_dac->begin(); it_end = packed_dac->end(); increase_op = 1; }
-  else { it_start = packed_dac->end(); it_end = packed_dac->begin(); increase_op = -1;  }
+  else { it_start = packed_dac->end()-1; it_end = packed_dac->begin()-1; increase_op = -1;  }
 
   for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
     // For every DAC value, loop over all pixels:
@@ -1543,7 +1543,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
   std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it_end;
   int increase_op;
   if(rising_edge) { it_start = packed_dacdac->begin(); it_end = packed_dacdac->end(); increase_op = 1; }
-  else { it_start = packed_dacdac->end(); it_end = packed_dacdac->begin(); increase_op = -1;  }
+  else { it_start = packed_dacdac->end()-1; it_end = packed_dacdac->begin()-1; increase_op = -1;  }
 
   for(std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it = it_start; it != it_end; it += increase_op) {
 
@@ -1556,7 +1556,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
 
       // Didn't find the DAC2 value:
       if(dac == result->end()) {
-	LOG(logDEBUGAPI) << "New DAC value: " << (int)it->second.first;
 	result->push_back(std::make_pair(it->second.first,std::vector<pixel>()));
 	dac = result->end() - 1;
 	// Also add an entry for bookkeeping:
@@ -1578,7 +1577,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
 	if(!positive_slope) continue;
 	if(!(delta_new < delta_old)) continue;
 
-	LOG(logDEBUGAPI) << "Updating pixel " << (*pixit) << " for DAC value " << (int)it->second.first << " to threshold " << (int)it->first;
 	// Update the DAC threshold value for the pixel:
 	px->value = it->first;
 	// Update the oldvalue map:
@@ -1586,7 +1584,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
       }
       // Pixel is new, just adding it:
       else {
-	LOG(logDEBUGAPI) << "New pixel " << (*pixit) << " for DAC value " << (int)it->second.first << ", threshold " << (int)it->first;
 	// Store the pixel with original efficiency
 	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value));
 	// Push pixel to result vector with current DAC as value field:
@@ -1595,6 +1592,9 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
       }
     }
   }
+
+  // Sort the output map by DAC values and ROC->col->row - just because we are so nice:
+  std::sort(result->begin(),result->end());
 
   LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdDacScan data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";

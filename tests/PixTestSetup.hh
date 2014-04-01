@@ -20,6 +20,8 @@ private:
   int     fParNtrig; 
   int     fParNtests;
   int     fParVcal; 
+  int     fParDeser160Lo, fParDeser160Hi;
+  int     fParClkLo, fParClkHi; 
 
   ClassDef(PixTestSetup, 1)
 

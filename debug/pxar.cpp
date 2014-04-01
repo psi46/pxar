@@ -11,6 +11,8 @@
 
 void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
 
+  if(data.empty()) return;
+
   uint8_t dac1lower = data.front().first;
   uint8_t dac2lower = data.front().second.first;
 
@@ -75,10 +77,12 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
 
 void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
 
+  if(data.empty()) return;
+
   std::cout << std::endl;
   for(int trig = nTrig; trig >= 0; trig--) {
-    if(trig%5 == 0) std::cout << std::setw(2) << trig << " |";
-    else std::cout << std::setw(2) << " " << " |";
+    if(trig%5 == 0) std::cout << std::setw(3) << trig << " |";
+    else std::cout << std::setw(3) << " " << " |";
 
     for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 
@@ -99,9 +103,9 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
     std::cout << std::endl;
   }
   
-  std::cout << "   |";
+  std::cout << "    |";
   for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
-  std::cout << std::endl << "    ";
+  std::cout << std::endl << "     ";
   uint8_t daclower = data.front().first;
   uint8_t dachigher= data.back().first;
 
@@ -125,6 +129,8 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
 }
 
 void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
+
+  if(data.empty()) return;
 
   for(int column = 0; column < 52; column++) {
     for(int row = 0; row < 80; row++) {

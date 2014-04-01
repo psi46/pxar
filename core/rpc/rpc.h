@@ -14,11 +14,13 @@
 #include "rpc_error.h"
 #include "log.h"
 
-#ifndef RPC_PROFILING
+#ifdef ENABLE_RPC_PROFILING
+#define RPC_PROFILING PROFILING LOG(pxar::logDEBUGRPC) << "called.";
+#else
 #define RPC_PROFILING LOG(pxar::logDEBUGRPC) << "called.";
 #endif
 
-#ifdef RPC_MULTITHREADING
+#ifdef ENABLE_MULTITHREADING
 #include <boost/thread.hpp>
 #define RPC_THREAD boost::mutex m_sync;
 #define RPC_THREAD_LOCK boost::lock_guard<boost::mutex> lock(m_sync);
@@ -31,9 +33,15 @@
 
 using namespace std;
 
-#define RPC_TYPE_ATB      0x8F
-#define RPC_TYPE_DTB      0xC0
-#define RPC_TYPE_DTB_DATA 0xC1
+#define RPC_DTB_VERSION 0x0200
+
+#define RPC_TYPE_ATB          0x8F
+#define RPC_TYPE_DTB          0xC0
+#define RPC_TYPE_DTB_DATA     0xC2
+#define RPC_TYPE_DTB_DATA_OLD 0xC1
+
+#define RPC_EXPORT
+
 
 extern const char rpc_timestamp[];
 
@@ -43,7 +51,7 @@ extern const char rpc_timestamp[];
 	static const unsigned int rpc_cmdListSize; \
 	static const char *rpc_cmdName[]; \
 	int *rpc_cmdId; \
-	void rpc_Clear() { rpc_cmdId[0] = 0; rpc_cmdId[1] = 1; for ( unsigned int i=2; i<rpc_cmdListSize; i++) rpc_cmdId[i] = -1; } \
+	void rpc_Clear() { for ( unsigned int i=2; i<rpc_cmdListSize; i++) rpc_cmdId[i] = -1; rpc_cmdId[0] = 0; rpc_cmdId[1] = 1; } \
 	void rpc_Connect(CRpcIo &port) { rpc_io = &port; rpc_Clear(); } \
 	uint16_t rpc_GetCallId(uint16_t x) \
 	{ \
@@ -105,10 +113,10 @@ public:
 
 	void Send(CRpcIo &rpc_io);
 	void Receive(CRpcIo &rpc_io);
-	void Check(uint16_t cmd, uint8_t /*size*/)
+	void Check(uint16_t cmd, uint8_t size)
 	{
 		if (m_cmd != cmd) throw CRpcError(CRpcError::UNKNOWN_CMD);
-		if (m_size != m_size) throw CRpcError(CRpcError::CMD_PAR_SIZE);
+		if (m_size != size) throw CRpcError(CRpcError::CMD_PAR_SIZE);
 		return;
 	}
 	void CheckSize(uint8_t size) { if (m_size != size) throw CRpcError(CRpcError::CMD_PAR_SIZE); }
@@ -116,18 +124,19 @@ public:
 	int8_t Get_INT8() { return int8_t(m_par[m_pos++]); }
 	uint8_t Get_UINT8() { return uint8_t(m_par[m_pos++]); }
 	bool Get_BOOL() { return Get_UINT8() != 0; }
-	int16_t Get_INT16() { int16_t x = Get_UINT8(); x += static_cast<uint16_t>(Get_UINT8()) << 8; return x; }
-	uint16_t Get_UINT16() { uint16_t x = Get_UINT8(); x += static_cast<uint16_t>(Get_UINT8()) << 8; return x; }
-	int32_t Get_INT32() { int32_t x = Get_UINT16(); x += static_cast<uint32_t>(Get_UINT16()) << 16; return x; }
-	uint32_t Get_UINT32() { uint32_t x = Get_UINT16(); x += static_cast<uint32_t>(Get_UINT16()) << 16; return x; }
-	int64_t Get_INT64() { int64_t x = Get_UINT32(); x += static_cast<uint64_t>(Get_UINT32()) << 32; return x; }
-	uint64_t Get_UINT64() { uint64_t x = Get_UINT32(); x = static_cast<uint64_t>(Get_UINT32()) << 32; return x; }
+	int16_t Get_INT16() { int16_t x = Get_UINT8(); x += (uint16_t)Get_UINT8() << 8; return x; }
+	uint16_t Get_UINT16() { uint16_t x = Get_UINT8(); x += (uint16_t)Get_UINT8() << 8; return x; }
+	int32_t Get_INT32() { int32_t x = Get_UINT16(); x += (uint32_t)Get_UINT16() << 16; return x; }
+	uint32_t Get_UINT32() { uint32_t x = Get_UINT16(); x += (uint32_t)Get_UINT16() << 16; return x; }
+ 	int64_t Get_INT64() { int64_t x = Get_UINT32(); x += (uint64_t)Get_UINT32() << 32; return x; }
+	uint64_t Get_UINT64() { uint64_t x = Get_UINT32(); x = (uint64_t)Get_UINT32() << 32; return x; }
 };
 
 
 // === data =================================================================
 
 #define vectorR vector
+#define HWvectorR vector
 #define stringR string
 
 
@@ -135,23 +144,22 @@ class CDataHeader
 {
 public:
 	uint8_t m_type;
-	uint8_t m_chn;
-	uint16_t m_size;
+	uint32_t m_size;
 
 	void RecvHeader(CRpcIo &rpc_io);
 	void RecvRaw(CRpcIo &rpc_io, void *x)
 	{ if (m_size) rpc_io.Read(x, m_size); }
 };
 
-void rpc_SendRaw(CRpcIo &rpc_io, uint8_t channel, const void *x, uint16_t size);
+void rpc_SendRaw(CRpcIo &rpc_io, const void *x, uint32_t size);
 
-void rpc_DataSink(CRpcIo &rpc_io, uint16_t size);
+void rpc_DataSink(CRpcIo &rpc_io, uint32_t size);
 
 
 template <class T>
 inline void rpc_Send(CRpcIo &rpc_io, const vector<T> &x)
 {
-	rpc_SendRaw(rpc_io, 0, &(x[0]), sizeof(T)*x.size());
+	rpc_SendRaw(rpc_io, &(x[0]), sizeof(T)*x.size());
 }
 
 
@@ -172,7 +180,7 @@ void rpc_Receive(CRpcIo &rpc_io, vector<T> &x)
 
 inline void rpc_Send(CRpcIo &rpc_io, const string &x)
 {
-	rpc_SendRaw(rpc_io, 0, x.c_str(), x.length());
+	rpc_SendRaw(rpc_io, x.c_str(), x.length());
 }
 
 

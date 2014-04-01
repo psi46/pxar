@@ -1,3 +1,6 @@
+#ifndef PXAR_TIMER_H
+#define PXAR_TIMER_H
+
 #ifdef WIN32
 #include <Windows.h>
 #else
@@ -72,3 +75,4 @@ namespace pxar {
   };
 
 }
+#endif

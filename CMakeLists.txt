@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "0.5.1")
-SET(PXAR_FW_VERSION "1.26")
+SET(PXAR_VERSION "0.8.1")
+SET(PXAR_FW_VERSION "2.5")
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -25,7 +25,7 @@ ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
 # Set package version
 IF(NOT SOURCE_PACKAGE)
-  # Get the version from last git tag plus numer of additional commits:
+  # Get the version from last git tag plus number of additional commits:
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
     EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE PXAR_LIB_VERSION)

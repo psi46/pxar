@@ -308,6 +308,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB)); 
   }
 
+
   fTabFrame->Layout();
   fTabFrame->MapSubwindows();
   fTabFrame->Resize(fTabFrame->GetDefaultSize());
@@ -568,6 +569,22 @@ void PixParTab::setRocParameter() {
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
     }
+  }
+
+} 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::setLemo() {
+  if (!fGui->getTabs()) return;
+  LOG(logDEBUG)  << "PixParTab::setLemo: ";
+
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
   }
 
 } 

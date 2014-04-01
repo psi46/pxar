@@ -275,6 +275,13 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
 // ----------------------------------------------------------------------
 vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
+  return thrMaps(dac, name, 1, 0, ntrig); 
+}
+
+
+
+// ----------------------------------------------------------------------
+vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, int ntrig) {
 
   vector<TH2D*>  maps; 
   vector<TH1*>   resultMaps; 
@@ -294,7 +301,12 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
   int ic, ir, iroc, val; 
   LOG(logDEBUG) << "start threshold map for dac = " << dac; 
 
-  std::vector<pixel> results = fApi->getThresholdMap(dac, FLAG_RISING_EDGE, ntrig);
+  std::vector<pixel> results;
+  if (daclo < dachi) {
+    results = fApi->getThresholdMap(dac, daclo, dachi, FLAG_RISING_EDGE, ntrig);
+  } else {
+    results = fApi->getThresholdMap(dac, FLAG_RISING_EDGE, ntrig);
+  }
   LOG(logDEBUG) << "finished threshold map for dac = " << dac << " results size = " << results.size(); 
   for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
     ic =   results[ipix].column; 

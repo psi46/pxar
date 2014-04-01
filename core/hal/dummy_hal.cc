@@ -72,15 +72,6 @@ void hal::PrintInfo() {
 	       << "------------------------------------------------------";
 }
 
-void hal::mDelay(uint32_t ms) {
-  // Wait for the given time in milliseconds:
-#ifdef WIN32
-  Sleep(ms);
-#else
-  usleep(ms*1000);
-#endif
-}
-
 bool hal::CheckCompatibility(){
   // We are though all checks, testboard is successfully connected:
   return true;
@@ -534,6 +525,9 @@ void hal::SignalProbeA1(uint8_t /*signal*/) {
 void hal::SignalProbeA2(uint8_t /*signal*/) {
 }
 
+void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {
+}
+
 bool hal::daqStart(uint8_t /*deser160phase*/, uint8_t /*nTBMs*/, uint32_t /*buffersize*/) {
   return true;
 }
@@ -560,6 +554,12 @@ rawEvent* hal::daqRawEvent() {
 std::vector<rawEvent*> hal::daqAllRawEvents() {
 
   std::vector<rawEvent*> raw;
+  return raw;
+}
+
+std::vector<uint16_t> hal::daqBuffer() {
+  
+  std::vector<uint16_t> raw;
   return raw;
 }
 

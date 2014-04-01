@@ -231,9 +231,9 @@ namespace pxar {
 
       // TBM flavors:
       // FIXME this is just an example.
-      _devices["tbm07"]         = TBM_07;
-      _devices["tbm07a"]        = TBM_07A;
       _devices["tbm08"]         = TBM_08;
+      _devices["tbm08a"]        = TBM_08A;
+      _devices["tbm09"]         = TBM_09;
     }
 
     std::map<std::string, uint8_t> _devices;

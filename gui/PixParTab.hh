@@ -40,6 +40,7 @@ public:
   virtual void setPgSettings();
   virtual void setTbmParameter(); 
   virtual void setRocParameter(); 
+  virtual void setLemo(); 
   virtual void initTestboard(); 
 
   virtual void saveTbParameters();
@@ -91,7 +92,8 @@ protected:
 
   static const int TABNUMBER = 0;
   enum CommandIdentifiers {
-    B_SELECTALL = 120,  B_DESELECTALL = 121
+    B_SELECTALL = 120,  B_DESELECTALL = 121,
+    B_LEMOD1 = 1000
   };
 
   int                   fBorderR, fBorderL, fBorderT, fBorderB;
