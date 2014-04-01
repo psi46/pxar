@@ -1556,7 +1556,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
 
       // Didn't find the DAC2 value:
       if(dac == result->end()) {
-	LOG(logDEBUGAPI) << "New DAC value: " << (int)it->second.first;
 	result->push_back(std::make_pair(it->second.first,std::vector<pixel>()));
 	dac = result->end() - 1;
 	// Also add an entry for bookkeeping:
@@ -1578,7 +1577,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
 	if(!positive_slope) continue;
 	if(!(delta_new < delta_old)) continue;
 
-	LOG(logDEBUGAPI) << "Updating pixel " << (*pixit) << " for DAC value " << (int)it->second.first << " to threshold " << (int)it->first;
 	// Update the DAC threshold value for the pixel:
 	px->value = it->first;
 	// Update the oldvalue map:
@@ -1586,7 +1584,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
       }
       // Pixel is new, just adding it:
       else {
-	LOG(logDEBUGAPI) << "New pixel " << (*pixit) << " for DAC value " << (int)it->second.first << ", threshold " << (int)it->first;
 	// Store the pixel with original efficiency
 	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value));
 	// Push pixel to result vector with current DAC as value field:
