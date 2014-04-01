@@ -47,10 +47,16 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_RISING_EDGE   0x0008
 
-/** Flag to fore all pixels to masked state during tests. By this only the one pixel with
+/** Flag to force all pixels to masked state during tests. By this only the one pixel with
  *  calibrate pulse is enabled and trimmed.
  */
 #define FLAG_FORCE_MASKED   0x0010
+
+/** Flag to desable the standard procedure of flipping DAC values before programming. This
+ *  is done by default to flatten the response, taking into account the chip layout. This
+ *  is implemented as NIOS lookup table.
+ */
+#define FLAG_DISABLE_DACCAL 0x0020
 
 
 /** Define a macro for calls to member functions through pointers 
