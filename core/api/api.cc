@@ -1477,7 +1477,7 @@ std::vector<pixel>* api::repackThresholdMapData (std::vector<Event*> data, uint8
   std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it_end;
   int increase_op;
   if(rising_edge) { it_start = packed_dac->begin(); it_end = packed_dac->end(); increase_op = 1; }
-  else { it_start = packed_dac->end(); it_end = packed_dac->begin(); increase_op = -1;  }
+  else { it_start = packed_dac->end()-1; it_end = packed_dac->begin()-1; increase_op = -1;  }
 
   for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
     // For every DAC value, loop over all pixels:
@@ -1543,7 +1543,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > >* api::repackThresholdDacSca
   std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it_end;
   int increase_op;
   if(rising_edge) { it_start = packed_dacdac->begin(); it_end = packed_dacdac->end(); increase_op = 1; }
-  else { it_start = packed_dacdac->end(); it_end = packed_dacdac->begin(); increase_op = -1;  }
+  else { it_start = packed_dacdac->end()-1; it_end = packed_dacdac->begin()-1; increase_op = -1;  }
 
   for(std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it = it_start; it != it_end; it += increase_op) {
 
