@@ -733,10 +733,14 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
-  string fname = fDirectory + "/" + getTrimParameterFileName();
+  std::stringstream fname;
+  fname << fDirectory << "/" << getTrimParameterFileName();
+
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
-  if (!OutputFile.is_open()) { return false; } 
+  if (!OutputFile.is_open()) { 
+    return false;
+  }
     
   for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
     OutputFile << std::setw(2) << ipix->trim << "   Pix " << std::setw(2) << ipix->column << " " << std::setw(2) << ipix->row << std::endl;
