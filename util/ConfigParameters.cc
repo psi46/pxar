@@ -8,8 +8,6 @@
 #include <cstdlib>
 #include <stdio.h>
 
-#include <TString.h>
-
 #include "log.h"
 
 #include "ConfigParameters.hh"
@@ -264,7 +262,7 @@ void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
-    dumpParameters(fTbParameters);
+    LOG(logDEBUG) << dumpParameters(fTbParameters);
     fReadTbParameters = true; 
   }
 }
@@ -381,8 +379,9 @@ void ConfigParameters::readRocPixelConfig() {
 	v.push_back(a); 
       }
     }
-    filename = Form("%s/%s_C%d.dat", fDirectory.c_str(), fTrimParametersFileName.c_str(), i); 
-    readTrimFile(filename, v); 
+    std::stringstream fname;
+    fname << fDirectory << "/" << fTrimParametersFileName << "_C" << i << ".dat"; 
+    readTrimFile(fname.str(), v); 
     fRocPixelConfigs.push_back(v); 
   }
   
@@ -566,10 +565,10 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
 // ----------------------------------------------------------------------
 void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
-    string filename; 
     for (unsigned int i = 0; i < fnRocs; ++i) {
-      filename = Form("%s/%s_C%d.dat", fDirectory.c_str(), fDACParametersFileName.c_str(), i); 
-      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
+      std::stringstream filename;
+      filename << fDirectory << "/" << fDACParametersFileName << "_C" << i << ".dat"; 
+      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
       fDacParameters.push_back(rocDacs); 
     }
     fReadDacParameters = true; 
@@ -734,16 +733,17 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
-  string fname = fDirectory + "/" + getTrimParameterFileName();
-  ofstream OutputFile;
+  std::stringstream fname;
+  fname << fDirectory << "/" << getTrimParameterFileName();
 
-  OutputFile.open(Form("%s_C%d.dat", fname.c_str(), iroc));
-  if (!OutputFile.is_open()) {
-    return false; 
-  } 
+  ofstream OutputFile;
+  OutputFile.open((fname.str()).c_str());
+  if (!OutputFile.is_open()) { 
+    return false;
+  }
     
-  for (unsigned int ipix = 0; ipix < v.size(); ++ipix) {
-    OutputFile << Form("%2d   Pix %2d %2d", v[ipix].trim, v[ipix].column, v[ipix].row) << endl;
+  for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
+    OutputFile << std::setw(2) << ipix->trim << "   Pix " << std::setw(2) << ipix->column << " " << std::setw(2) << ipix->row << std::endl;
   }
   
   OutputFile.close();
@@ -753,22 +753,20 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8_t> > v) {
-  string fname = fDirectory + "/" + getDACParameterFileName();
-  ofstream OutputFile;
-  int val; 
-  string regName; 
 
-  OutputFile.open(Form("%s_C%d.dat", fname.c_str(), iroc));
+  std::stringstream fname;
+  fname << fDirectory << "/" << getDACParameterFileName() << "_C" << iroc << ".dat";
+
+  ofstream OutputFile;
+  OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) {
     return false; 
   } 
   
-  for (unsigned int idac = 0; idac < v.size(); ++idac) {
-    regName = v.at(idac).first;
-    val = v.at(idac).second;
-    OutputFile << Form("%-10s %3d", regName.c_str(), static_cast<int>(val)) << endl;
+  for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
   }
-  
+
   OutputFile.close();
   return true;
 }
@@ -776,22 +774,21 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > v) {
-  string fname = fDirectory + "/" + getTbmParameterFileName();
-  ofstream OutputFile;
-  int val; 
-  string regName; 
+
+  std::stringstream fname;
+  fname << fDirectory << "/" << getTbmParameterFileName();
 
   LOG(logDEBUG) << "nothing done for the time being with " << itbm << ", working with one TBM at the moment";
-  //    OutputFile.open(Form("%s_C%d.dat", fname.c_str(), rtbms[itbm]));
-  OutputFile.open(fname.c_str());
+  //fname << "_C" << itbm << ".dat";
+
+  ofstream OutputFile;
+  OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) {
     return false; 
   } 
   
-  for (unsigned int idac = 0; idac < v.size(); ++idac) {
-    regName = v.at(idac).first;
-    val = v.at(idac).second;
-    OutputFile << Form("0 %11s   0x%02X", regName.c_str(), static_cast<int>(val)) << endl;
+  for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+    OutputFile << "0 " << std::setw(11) << idac->first << "   0x" << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(idac->second) << endl;
   }
   
   OutputFile.close();
@@ -805,7 +802,7 @@ bool ConfigParameters::writeTbParameterFile() {
   ofstream OutputFile;
   string data; 
 
-  OutputFile.open(Form("%s", fname.c_str()));
+  OutputFile.open(fname.c_str());
   if (!OutputFile.is_open()) {
     return false; 
   } 
@@ -813,7 +810,7 @@ bool ConfigParameters::writeTbParameterFile() {
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-    OutputFile << Form("0 %15s  %3d", fTbParameters[idac].first.c_str(), int(fTbParameters[idac].second)) << endl;
+    OutputFile << "0 " << std::setw(15) << fTbParameters[idac].first << "  " << std::setw(3) << static_cast<int>(fTbParameters[idac].second) << endl;
   }
   
   OutputFile.close();
@@ -828,32 +825,4 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
   return true;
 }
 
-
-// ----------------------------------------------------------------------
-void ConfigParameters::dumpParameters(vector<pair<string, uint8_t> > v) {
-  string line; 
-  for (unsigned i = 0; i < v.size(); ++i) {
-    line += string(Form(" %s: %3d", v[i].first.c_str(), static_cast<int>(v[i].second))); 
-  }
-  LOG(logDEBUG) << line; 
-}
-
-// ----------------------------------------------------------------------
-void ConfigParameters::dumpParameters(vector<pair<string, double> > v) {
-  string line; 
-  for (unsigned i = 0; i < v.size(); ++i) {
-    line += string(Form(" %s: %3f", v[i].first.c_str(), v[i].second)); 
-  }
-  LOG(logDEBUG) << line; 
-}
-
-// ----------------------------------------------------------------------
-void ConfigParameters::dumpParameters(vector<pair<uint16_t, uint8_t> > v) {
-  string line; 
-  for (unsigned i = 0; i < v.size(); ++i) {
-    std::bitset<8> bits(v[i].second);
-    line += string(Form(" %x: %s", v[i].first, bits.to_string().c_str()));  
-  }
-  LOG(logDEBUG) << line; 
-}
 

@@ -4,11 +4,12 @@
 #include <Windows.h>
 #endif
 
-
 #include "pxar.h"
+#include "timer.h"
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -19,7 +20,28 @@ bool daq_loop = true;
 
 void sighandler(int sig) {
   std::cout << "Signal " << sig << " caught..." << std::endl;
+  std::cout << "Finishing and shutting down." << std::endl;
   daq_loop = false;
+}
+
+void wait(int sec) {
+#ifdef WIN32
+   Sleep(sec*1000);
+#else
+   sleep(sec);
+#endif
+}
+
+int getspill() {
+   // Open spill number file:
+   std::ifstream myfile;
+   int spillnumber = 0;
+   myfile.open ("/home/pixel_dev/.currentSpill");
+   myfile >> spillnumber;
+  
+   // Close spill file:
+   myfile.close();
+   return spillnumber;       
 }
 
 int main(int argc, char* argv[]) {
@@ -28,6 +50,7 @@ int main(int argc, char* argv[]) {
   std::string verbosity, filename;
   uint32_t triggers = 0;
   bool testpulses = false;
+  bool spills = false;
 
   uint8_t hubid = 31;
 
@@ -40,19 +63,22 @@ int main(int argc, char* argv[]) {
       std::cout << "-v verbosity   verbosity level, default INFO" << std::endl;
       return 0;
     }
-    if (!strcmp(argv[i],"-f")) {
+    else if (!strcmp(argv[i],"-f")) {
       filename = std::string(argv[++i]);
       std::cout << "Writing to file " << filename << std::endl;
     }
-    if (!strcmp(argv[i],"-n")) {
+    else if (!strcmp(argv[i],"-n")) {
       triggers = atoi(argv[++i]);
       std::cout << "Sending " << triggers << " triggers" << std::endl;
     }
-    if (!strcmp(argv[i],"-v")) {
+    else if (!strcmp(argv[i],"-v")) {
       verbosity = std::string(argv[++i]);
     }               
-    if (!strcmp(argv[i],"-tp")) {
+    else if (!strcmp(argv[i],"-tp")) {
       testpulses = true;
+    }
+    else if (!strcmp(argv[i],"-sp")) {
+      spills = true;
     }
     else {
       std::cout << "Unrecognized command line option " << argv[i] << std::endl;
@@ -78,43 +104,53 @@ int main(int argc, char* argv[]) {
   power_settings.push_back(std::make_pair("id",1.10));
 
   // Pattern Generator:
-  pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
-  pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
-  pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
-  pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+  int pattern_delay = 0;
+  if(testpulses) {
+     pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
+     pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
+     pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
+     pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+     pattern_delay = 1000;
+  }
+  else {
+     pg_setup.push_back(std::make_pair(0x0200,46));    // PG_TRG
+     pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+     pattern_delay = 100;
+  }
 
   // Prepare some empty TBM vector:
   std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
 
   // Set the type of the ROC correctly:
-  std::string roctype = "psi46digv2";
+  std::string roctype = "psi46digv21";
 
   // Create some hardcoded DUT/DAC parameters since we can't read configs yet:
   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
   std::vector<std::pair<std::string,uint8_t> > dacs;
 
   dacs.push_back(std::make_pair("Vdig",8));
-  dacs.push_back(std::make_pair("Vana",120));
-  dacs.push_back(std::make_pair("Vsf",40));
+  dacs.push_back(std::make_pair("Vana",78));
+  dacs.push_back(std::make_pair("Vsf",80));
   dacs.push_back(std::make_pair("Vcomp",12));
-  dacs.push_back(std::make_pair("VwllPr",30));
-  dacs.push_back(std::make_pair("VwllSh",30));
+  dacs.push_back(std::make_pair("VwllPr",150));
+  dacs.push_back(std::make_pair("VwllSh",150));
   dacs.push_back(std::make_pair("VhldDel",117));
-  dacs.push_back(std::make_pair("Vtrim",1));
-  dacs.push_back(std::make_pair("VthrComp",40));
+  dacs.push_back(std::make_pair("Vtrim",152));
+  dacs.push_back(std::make_pair("VthrComp",89));
   dacs.push_back(std::make_pair("VIBias_Bus",30));
   dacs.push_back(std::make_pair("Vbias_sf",6));
   dacs.push_back(std::make_pair("VoffsetOp",60));
-  dacs.push_back(std::make_pair("VOffsetRO",150));
+  dacs.push_back(std::make_pair("VOffsetRO",225));
   dacs.push_back(std::make_pair("VIon",45));
-  dacs.push_back(std::make_pair("Vcomp_ADC",50));
+  dacs.push_back(std::make_pair("Vcomp_ADC",10));
   dacs.push_back(std::make_pair("VIref_ADC",70));
   dacs.push_back(std::make_pair("VIbias_roc",150));
   dacs.push_back(std::make_pair("VIColOr",99));
-  dacs.push_back(std::make_pair("Vcal",220));
-  dacs.push_back(std::make_pair("CalDel",122));
-  dacs.push_back(std::make_pair("CtrlReg",4));
-  dacs.push_back(std::make_pair("WBC",100));
+  dacs.push_back(std::make_pair("Vcal",199));
+  dacs.push_back(std::make_pair("CalDel",140));
+  dacs.push_back(std::make_pair("CtrlReg",0));
+  dacs.push_back(std::make_pair("WBC",200));
+  dacs.push_back(std::make_pair("rbreg",12));
 
   // Get some pixelConfigs up and running:
   std::vector<std::vector<pxar::pixelConfig> > rocPixels;
@@ -147,9 +183,6 @@ int main(int argc, char* argv[]) {
       return -2;
     }
     
-    // Read DUT info, should print above filled information:
-    _api->_dut->info();
-
     // Read current:
     std::cout << "Analog current: " << _api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
@@ -165,52 +198,102 @@ int main(int argc, char* argv[]) {
 
     // Set some pixels up for getting calibrate signals:
     if(testpulses) {
+       std::cout << "Setting up pixels for calibrate pulses..." << std::endl;
       for(int i = 0; i < 3; i++) {
-	_api->_dut->testPixel(i,5,true);
-	_api->_dut->testPixel(i,6,true);
+         _api->_dut->testPixel(i,5,true);
+         _api->_dut->testPixel(i,6,true);
       }
     }
+
+    // Read DUT info, should print above filled information:
+    _api->_dut->info();
 
     // Setup signal handlers to allow interruption:
     signal(SIGABRT, &sighandler);
     signal(SIGTERM, &sighandler);
     signal(SIGINT, &sighandler);
 
-    
-    // Start the DAQ:
-    _api->daqStart(pg_setup);
-    
-    // Send the triggers:
-    if(triggers != 0) {
-      _api->daqTrigger(triggers);
-    }
-    else {
-      _api->daqTriggerLoop(1000);
-      while(_api->daqStatus() && daq_loop) {
-#ifdef WIN32
-	Sleep(1000);
-#else
-	sleep(1);
-#endif
+    int oldspillnumber = 0;
+    pxar::timer * spillruntime = new pxar::timer();
+
+    // Wait for next spill until we start the DAQ:
+    if(spills) {
+      oldspillnumber = getspill();
+      std::cout << "Waiting for spill " << getspill() << " to finish..." << std::endl;
+      while(daq_loop && getspill() == oldspillnumber) {
+	std::cout << "." << std::flush;
+	wait(1);
       }
+      std::cout << std::endl << "Starting DAQ at spill " << getspill() << std::endl;
     }
+
+    //Start the main DAQ loop:
+    while(daq_loop) {
+
+      if(spills) {
+	oldspillnumber = getspill();
+	spillruntime = new pxar::timer();
+
+	std::cout << "Waiting for beam section of the spill..." << std::endl;
+	while(spillruntime->get() < 47000 && getspill() == oldspillnumber && daq_loop) {
+          wait(1);
+          std::cout << "Spill " << getspill() << " runs since " << (spillruntime->get()/1000) << "sec...\r" << std::flush;
+	}
+	std::cout << std::endl << "Data acquisition for spill " << getspill() << " started." << std::endl;
+      }
+
+      // Start the DAQ:
+      _api->daqStart(pg_setup);
+
+      // Send the triggers:
+      if(triggers != 0) {
+	_api->daqTrigger(triggers);
+	daq_loop = false;
+      }
+      // Enter the trigger loop:
+      else {
+	_api->daqTriggerLoop(pattern_delay);
+	while(_api->daqStatus() && daq_loop) {
+          if(spills) {
+	    std::cout << "." << std::flush;
+	    if(getspill() != oldspillnumber) { 
+	      std::cout << std::endl << "New spill: " << getspill() << std::endl;
+	      oldspillnumber = getspill();
+	      spillruntime = new pxar::timer();
+	      break; 
+	    }
+          }
+          wait(1);
+	}
+      }
     
-    // Stop the DAQ:
-    _api->daqStop();
+      // Stop the DAQ:
+      _api->daqStop();
 
-    // And read out the full buffer:
-    std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+      // And read out the full buffer:
+      std::cout << "Start reading data from DTB RAM." << std::endl;
+      std::vector<uint16_t> daqdat = _api->daqGetBuffer();
+      std::cout << "Read " << daqdat.size() << " words of data: ";
+      if(daqdat.size() > 550000) std::cout << (daqdat.size()/524288) << "MB." << std::endl;
+      else std::cout << (daqdat.size()/512) << "kB." << std::endl;
 
-    std::cout << "Read " << daqdat.size() << " words of data." << std::endl;
+      // If we are running on spills just take that number as filename:
+      if(spills) {
+	std::stringstream sstr;
+	sstr << (getspill()-1);
+	filename = "tbdata/spill_" + sstr.str() + ".dat";
+      }
 
-    // Write all the data to the file:
-    if(filename == "") { filename = "defaultdata.dat"; }
-    std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
-    fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
-    fout.close();
+      // Write all the data to the file:
+      if(filename == "") { filename = "defaultdata.dat"; }
+      std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
+      fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
+      fout.close();
+      std::cout << "Wrote data to file " << filename << std::endl;
 
-    // ##########################################################
+    } // End of DAQ loop
 
+    delete spillruntime;
     _api->HVoff();
 
     // And end that whole thing correcly:

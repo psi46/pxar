@@ -213,7 +213,7 @@ void PixTestSetup::doTest() {
 	fPixSetup->getConfigParameters()->setTbParameter("deser160phase", ideser); 
 	
 	vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
-	fPixSetup->getConfigParameters()->dumpParameters(sig_delays); 
+	LOG(logDEBUG) << fPixSetup->getConfigParameters()->dumpParameters(sig_delays); 
 	
 	fApi->initTestboard(sig_delays, power_settings, pg_setup);
 	
