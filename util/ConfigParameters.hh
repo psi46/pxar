@@ -1,5 +1,3 @@
-// Configuration parameters
-
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
