@@ -71,6 +71,10 @@ namespace pxar {
      */
     void Poff();
 
+    /** Set HubID
+     */
+    void setHubId(uint8_t hubid) {hubId = hubid;}
+
     /** Set a DAC on a specific ROC rocId
      */
     bool rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue);

@@ -273,9 +273,9 @@ bool api::programDUT() {
   _hal->Pon();
 
   // Start programming the devices here!
+  _hal->setHubId(_dut->hubId); 
 
   // FIXME Device types not transmitted yet!
-
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
