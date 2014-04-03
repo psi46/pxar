@@ -166,7 +166,7 @@ bool api::initDUT(uint8_t hubid,
     }
 
     // check for pixels out of range
-    if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0){
+    if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0) {
       LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
       return false;
     }
@@ -285,7 +285,7 @@ bool api::programDUT() {
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   if(!enabledRocs.empty()) {LOG(logDEBUGAPI) << "Programming ROCs...";}
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    _hal->initROC(static_cast<uint8_t>(rocit - enabledRocs.begin()),(*rocit).type, (*rocit).dacs);
+    _hal->initROC(rocit->i2c_address,(*rocit).type, (*rocit).dacs);
   }
 
   // As last step, mask all pixels in the device:
@@ -509,7 +509,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
       LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
     }
 
-    _hal->rocSetDAC(static_cast<uint8_t>(rocid),dacRegister,dacValue);
+    _hal->rocSetDAC(_dut->roc.at(rocid).i2c_address,dacRegister,dacValue);
   }
   else {
     LOG(logERROR) << "ROC " << rocid << " does not exist in the DUT!";
