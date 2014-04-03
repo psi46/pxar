@@ -1665,62 +1665,66 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
   return result;
 }
 
-// Mask/Unmask and trim the ROCs:
+// Mask/Unmask and trim all ROCs:
 void api::MaskAndTrim(bool trim) {
-
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    MaskAndTrim(trim,rocit);
+  }
+}
 
-    // Check if we can run on full ROCs:
-    uint16_t masked = _dut->getNMaskedPixels(static_cast<uint8_t>(rocit-_dut->roc.begin()));
-    LOG(logDEBUGAPI) << "ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
+// Mask/Unmask and trim one ROC:
+void api::MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit) {
+  // Check if we can run on full ROCs:
+  uint16_t masked = std::count_if(rocit->pixels.begin(),rocit->pixels.end(),configMaskSet(true));
 
-    // This ROC is completely unmasked, let's trim it:
-    if(masked == 0 && trim) {
-      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " in one go.";
-      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),false,rocit->pixels);
-      continue;
-    }
-    else if(masked == ROC_NUMROWS*ROC_NUMCOLS || !trim) {
-      LOG(logDEBUGAPI) << "Masking ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " in one go.";
-      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),true);
-      continue;
-    }
-    // Choose the version with less calls (less than half the pixels to change):
-    else if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
-      // We have more unmasked than masked pixels:
-      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " before masking single pixels.";
-      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),false,rocit->pixels);
-
-      // Disable all unneeded columns:
-      std::vector<bool> enabledColumns = _dut->getEnabledColumns(static_cast<size_t>(rocit-_dut->roc.begin()));
-      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-	if(!(*it)) _hal->ColumnSetEnable(static_cast<uint8_t>(rocit - _dut->roc.begin()),static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
-      }
-
-      // And then mask the required pixels:
-      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->mask == true) {_hal->PixelSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
-      }
-    }
-    else {
-      // Some are unmasked, but not too many. First mask that ROC:
-      LOG(logDEBUGAPI) << "Masking ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
-      _hal->RocSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),true);
-
-      // Enable all needed columns:
-      std::vector<bool> enabledColumns = _dut->getEnabledColumns(static_cast<size_t>(rocit-_dut->roc.begin()));
-      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-	if((*it)) _hal->ColumnSetEnable(static_cast<uint8_t>(rocit - _dut->roc.begin()),static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
-      }
-
-      // And then unmask the required pixels with their trim values:
-      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->mask == false) {_hal->PixelSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
-      }
-    }
+  // This ROC is completely unmasked, let's trim it:
+  if(masked == 0 && trim) {
+    LOG(logDEBUGAPI) << "Unmasking and trimming ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
+    _hal->RocSetMask(rocit->i2c_address,false,rocit->pixels);
+    return;
+  }
+  else if(masked == ROC_NUMROWS*ROC_NUMCOLS || !trim) {
+    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
+    _hal->RocSetMask(rocit->i2c_address,true); //FIXME
+    return;
   }
 
+  LOG(logDEBUGAPI) << "ROC@I2C " << static_cast<int>(rocit->i2c_address) << " features " << masked << " masked pixels.";
+
+  // Choose the version with less calls (less than half the pixels to change):
+  if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
+    // We have more unmasked than masked pixels:
+    LOG(logDEBUGAPI) << "Unmasking and trimming ROC@I2C " << static_cast<int>(rocit->i2c_address) << " before masking single pixels.";
+    _hal->RocSetMask(rocit->i2c_address,false,rocit->pixels);//FIXME
+
+    // Disable all unneeded columns:
+    std::vector<bool> enabledColumns = _dut->getEnabledColumns(rocit->i2c_address);
+    for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+      if(!(*it)) _hal->ColumnSetEnable(rocit->i2c_address,static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
+    }
+
+    // And then mask the required pixels:
+    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+      if(pxit->mask == true) {_hal->PixelSetMask(rocit->i2c_address,pxit->column,pxit->row,true);}
+    }
+  }
+  else {
+    // Some are unmasked, but not too many. First mask that ROC:
+    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " before unmasking single pixels.";
+    _hal->RocSetMask(rocit->i2c_address,true);
+
+    // Enable all needed columns:
+    std::vector<bool> enabledColumns = _dut->getEnabledColumns(rocit->i2c_address);
+    for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+      if((*it)) _hal->ColumnSetEnable(rocit->i2c_address,static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
+    }
+
+    // And then unmask the required pixels with their trim values:
+    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+      if(pxit->mask == false) {_hal->PixelSetMask(rocit->i2c_address,pxit->column,pxit->row,false,pxit->trim);}
+    }
+  }
 }
 
 // Program the calibrate bits in ROC PUCs:
@@ -1729,20 +1733,17 @@ void api::SetCalibrateBits(bool enable) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
-    LOG(logDEBUGAPI) << "Configuring calibrate bits in all enabled PUCs of ROC " << static_cast<int>(rocit-_dut->roc.begin());
+    LOG(logDEBUGAPI) << "Configuring calibrate bits in all enabled PUCs of ROC@I2C " << static_cast<int>(rocit->i2c_address);
     // Check if the signal has to be turned on or off:
     if(enable) {
       // Loop over all pixels in this ROC and set the Cal bit:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-      
-	if(pxit->enable == true) {
-	  _hal->PixelSetCalibrate(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
-	}
+	if(pxit->enable == true) { _hal->PixelSetCalibrate(rocit->i2c_address,pxit->column,pxit->row,0); }
       }
 
     }
     // Clear the signal for the full ROC:
-    else {_hal->RocClearCalibrate(static_cast<uint8_t>(rocit-_dut->roc.begin()));}
+    else {_hal->RocClearCalibrate(rocit->i2c_address);}
   }
 }
 

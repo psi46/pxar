@@ -558,6 +558,17 @@ namespace pxar {
      */
     void MaskAndTrim(bool trim);
 
+    /** Routine to select one ROCs with all pixels and figure out the most efficient
+     *  way to (un)mask and trim them for the upcoming test according to the 
+     *  information stored in the DUT struct.
+     *
+     *  This function programs all attached devices with the needed trimming and
+     *  masking bits for the Pixel Unit Cells (PUC). It sets both the needed PUC
+     *  mask&trim bits and the DCOL enable bits. If the bool parameter "trim" is
+     *  set to "false" it will just mask all ROCs.
+     */
+    void MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit);
+
     /** Helper function to setup the attached devices for operation using
      *  calibrate pulses.
      *
