@@ -762,9 +762,9 @@ namespace pxar {
     bool _programmed;
 
     /** Function returning for every column if it includes an enabled pixel
-     *  for a specific ROC:
+     *  for a specific ROC selected by its I2C address:
      */
-    std::vector< bool > getEnabledColumns(size_t rocid);
+    std::vector< bool > getEnabledColumns(size_t roci2c);
 
     /** DUT hub ID
      */

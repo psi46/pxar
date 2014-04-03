@@ -94,16 +94,20 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   return result;
 }
 
-std::vector< bool > dut::getEnabledColumns(size_t rocid) {
+std::vector< bool > dut::getEnabledColumns(size_t roci2c) {
 
   std::vector< bool > result(52,false);
 
   // Check if DUT is allright and the roc we are looking at exists:
-  if (!status() || !(rocid < roc.size())) return result;
+  if (!status()) return result;
 
-  // Search for pixels that have enable set
-  for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
-    if (it->enable) result.at((*it).column) = true;
+  for(std::vector<rocConfig>::iterator rocit = roc.begin(); rocit != roc.end(); ++rocit){
+    if(rocit->i2c_address == roci2c) {
+      // Search for pixels that have enable set
+      for(std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it){
+	if (it->enable) result.at((*it).column) = true;
+      }
+    }
   }
   return result;
 }
