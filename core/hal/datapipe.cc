@@ -140,8 +140,7 @@ namespace pxar {
       case  5: raw = (raw<<4) + d; break;
       case  6: raw = (raw<<4) + d;
 	{
-	  pixel pix(raw,invertedAddress);
-	  pix.roc_id = static_cast<uint8_t>(roc_n);
+	  pixel pix(raw,static_cast<uint8_t>(roc_n),invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	  break;
 	}
