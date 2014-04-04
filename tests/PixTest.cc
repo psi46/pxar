@@ -82,9 +82,10 @@ void PixTest::resetDirectory() {
 
 // ----------------------------------------------------------------------
 int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   TH1D *h = new TH1D("h1", "h1", 256, 0., 256.); 
 
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig);
+  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
   int val(0); 
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dacval = results[idac].first; 
@@ -104,6 +105,8 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // result & 0x2 == 2 -> return distributions (projections) of maps
 // result & 0x4 == 4 -> write to file: all pixel histograms with outlayer threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  
   vector<TH1*>          rmaps; 
   vector<vector<TH1*> > maps; 
   vector<TH1*>          resultMaps; 
@@ -131,7 +134,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   
 
   int ic, ir, iroc, val; 
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, 0, ntrig); 
+  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dac = results[idac].first; 
     for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
@@ -237,8 +240,10 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
-  vector<pixel> results; 
-  if (fApi) results = fApi->getEfficiencyMap(0, ntrig);
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
+
+  vector<pixel> results = fApi->getEfficiencyMap(FLAGS, ntrig);
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
   fDirectory->cd(); 
@@ -256,15 +261,17 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   
   int idx(-1); 
   for (unsigned int i = 0; i < results.size(); ++i) {
-    idx = fId2Idx[results[i].roc_id];
-    h2 = maps[idx];
-    if (h2) {
+    idx = getIdxFromId(results[i].roc_id);
+    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
+      h2 = maps[idx];
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
 	LOG(logINFO) << "ROC/row/col = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row) 
-		      << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
-		      << " now adding " << static_cast<float>(results[i].value);
+		     << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
+		     << " now adding " << static_cast<float>(results[i].value);
       }
       h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+    } else {
+      LOG(logDEBUG) << "histogram for ROC " << results[i].roc_id << " not found"; 
     }
   }
 
@@ -283,44 +290,137 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 // ----------------------------------------------------------------------
 vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, int ntrig) {
 
-  vector<TH2D*>  maps; 
   vector<TH1*>   resultMaps; 
 
-  TH1* h1(0); 
-  fDirectory->cd();
+  if (1) {
+    // -- this takes about one hour for a full module
+    uint16_t FLAGS = FLAG_FORCE_MASKED;
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    h1 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
-		  52, 0., 52., 80, 0., 80.);
-    resultMaps.push_back(h1); 
-    fHistOptions.insert(make_pair(h1, "colz"));
-  }
-  
-  int ic, ir, iroc, val; 
-  LOG(logDEBUG) << "start threshold map for dac = " << dac; 
+    TH1D *h1(0); 
+    TH2D *h2(0); 
 
-  std::vector<pixel> results;
-  if (daclo < dachi) {
-    results = fApi->getThresholdMap(dac, daclo, dachi, FLAG_RISING_EDGE, ntrig);
-  } else {
-    results = fApi->getThresholdMap(dac, FLAG_RISING_EDGE, ntrig);
+    vector<TH1D*>  hists; 
+
+    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      h2 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+		    Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+		    52, 0., 52., 80, 0., 80.);
+      resultMaps.push_back(h2); 
+      fHistOptions.insert(make_pair(h2, "colz"));
+
+      for (unsigned int i = 0; i < 52; ++i) {
+	h1 = new TH1D(Form("h1_c%d_roc%d", i, rocIds[iroc]), Form("h1_c%d_roc%d", i, rocIds[iroc]), 256, 0., 256.); 
+	hists.push_back(h1); 
+      }
+    }      
+      
+    fApi->_dut->testAllPixels(false);
+    fApi->_dut->maskAllPixels(true);
+
+    vector<pair<uint8_t, vector<pixel> > > results;
+    int thr(-1); 
+    for (unsigned int iy = 0; iy < 8; ++iy) {
+      LOG(logDEBUG) << "row " << iy; 
+
+      for (unsigned int ix = 0; ix < 52; ++ix) {
+	fApi->_dut->testPixel(ix, iy, true);
+	fApi->_dut->maskPixel(ix, iy, false);
+      }
+
+      results.clear();
+      results = fApi->getEfficiencyVsDAC(dac, daclo, dachi, FLAGS, ntrig);
+      
+      for (unsigned int ix = 0; ix < 52; ++ix) {
+	fApi->_dut->testPixel(ix, iy, false);
+	fApi->_dut->maskPixel(ix, iy, true);
+      }
+
+      for (unsigned i = 0; i < hists.size(); ++i) hists[i]->Reset();
+      
+      int val(-1), roc(-1); 
+      for (unsigned int idac = 0; idac < results.size(); ++idac) {
+	int dacval = results[idac].first; 
+	for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+	  roc = getIdxFromId(results[idac].second[ipix].roc_id);
+	  val = results[idac].second[ipix].value;
+	  hists[52*roc+results[idac].second[ipix].column]->Fill(dacval, val);
+	}
+      }
+      
+      roc = -1; 
+      for (unsigned i = 0; i < hists.size(); ++i) {
+ 	hists[i]->Draw(); 
+ 	PixTest::update(); 
+ 	thr = simpleThreshold(hists[i]); 
+	int ic = i%52; 
+	if (0 == ic) ++roc;
+	int ir = iy;
+ 	((TH2D*)resultMaps[roc])->Fill(ic, ir, thr); 
+      }
+    }
+
+    copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+    if (h1) h1->Draw(getHistOption(h1).c_str());
+    PixTest::update(); 
+
   }
-  LOG(logDEBUG) << "finished threshold map for dac = " << dac << " results size = " << results.size(); 
-  for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
-    ic =   results[ipix].column; 
-    ir =   results[ipix].row; 
-    iroc = fId2Idx[results[ipix].roc_id]; 
-    val =  results[ipix].value;
-    ((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
+
+
+  // -- wait with this until core sw works
+  if (0) {
+    uint16_t FLAGS = FLAG_RISING_EDGE | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+    
+    TH1* h1(0); 
+    fDirectory->cd();
+    
+    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      h1 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+		    Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+		    52, 0., 52., 80, 0., 80.);
+      resultMaps.push_back(h1); 
+      fHistOptions.insert(make_pair(h1, "colz"));
+    }
+
+    int ic, ir, iroc, val; 
+    LOG(logDEBUG) << "start threshold map for dac = " << dac; 
+    
+    std::vector<pixel> results;
+
+    if (rocIds.size() > 1 && ntrig > 2) {
+      LOG(logWARNING) << "too many triggers requested, resetting ntrig = " << 2; 
+      ntrig = 2; 
+    }
+
+    
+    if (daclo < dachi) {
+      results = fApi->getThresholdMap(dac, daclo, dachi, FLAGS, ntrig);
+    } else {
+      results = fApi->getThresholdMap(dac, FLAGS, ntrig);
+    }
+    LOG(logDEBUG) << "finished threshold map for dac = " << dac << " results size = " << results.size(); 
+    for (unsigned int ipix = 0; ipix < results.size(); ++ipix) {
+      ic =   results[ipix].column; 
+      ir =   results[ipix].row; 
+      iroc = getIdxFromId(results[ipix].roc_id); 
+      val =  results[ipix].value;
+      if (rocIds.end() != find(rocIds.begin(), rocIds.end(), iroc)) {
+	((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
+      } else {
+	LOG(logDEBUG) << "histogram for ROC " << static_cast<int>(results[ipix].roc_id) << " not found"; 
+      }
+    }
+    copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+    if (h1) h1->Draw(getHistOption(h1).c_str());
+    PixTest::update(); 
   }
-  copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  if (h1) h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-  
+
+
   return resultMaps; 
+
 }
 
 
@@ -476,7 +576,16 @@ void PixTest::clearHistList() {
 
 // ----------------------------------------------------------------------
 int PixTest::simpleThreshold(TH1 *h) {
-  return static_cast<int>(h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum())));
+  
+  double plaVal = h->GetMaximum();
+  double thrVal = 0.5*plaVal;
+  for (int ibin = 1; ibin < h->GetNbinsX(); ++ibin) {
+    if (h->GetBinContent(ibin) >= thrVal) {
+      if (h->GetBinContent(ibin+1) < thrVal) continue;
+      return static_cast<int>(h->GetBinCenter(ibin)); 
+    }
+  }
+  return -1;
 }
 
 
@@ -529,8 +638,9 @@ void PixTest::cache(string dacname) {
   }
   
   LOG(logDEBUG) << "Cache " << dacname;
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    fCacheVal.push_back(fApi->_dut->getDAC(i, dacname)); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fCacheVal.push_back(fApi->_dut->getDAC(rocIds[iroc], dacname)); 
   }
 }
 
@@ -543,8 +653,9 @@ void PixTest::restore(string dacname) {
   }
 
   LOG(logDEBUG) << "Restore " << dacname;
-  for (unsigned int i = 0; i < fPixSetup->getConfigParameters()->getNrocs(); ++i){
-    fApi->setDAC(dacname, fCacheVal[i], i); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fApi->setDAC(dacname, fCacheVal[getIdxFromId(rocIds[iroc])], rocIds[iroc]); 
   }
   
   fCacheVal.clear(); 
@@ -704,7 +815,8 @@ string PixTest::getHistOption(TH1* h) {
 // ----------------------------------------------------------------------
 vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 
-  vector<pair<uint8_t, vector<pixel> > > scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, 0, ntrig);
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  vector<pair<uint8_t, vector<pixel> > > scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
   LOG(logDEBUG) << " getMaximumVthrComp.size(): " << scans.size();
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -724,8 +836,12 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
     
     vector<pixel> vpix = v.second;
     for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-      idx = fId2Idx[vpix[ipix].roc_id]; 
-      scanHists[idx]->Fill(idac, vpix[ipix].value); 
+      idx = getIdFromIdx(vpix[ipix].roc_id); 
+      if (scanHists[idx]) {
+	scanHists[idx]->Fill(idac, vpix[ipix].value); 
+      } else {
+	LOG(logDEBUG) << "histogram for ROC " << vpix[ipix].roc_id << " nout found" << endl;
+      }
     }
   }
 
@@ -764,6 +880,15 @@ int PixTest::getIdFromIdx(int idx) {
     if (il->second == idx) return il->first;
   }
   return -1; 
+}
+
+
+// ----------------------------------------------------------------------
+int PixTest::getIdxFromId(int id) {
+  if (fId2Idx.count(id) > 0) {
+    return fId2Idx[id]; 
+  }
+  return -1;
 }
 
 

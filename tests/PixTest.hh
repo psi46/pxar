@@ -135,6 +135,8 @@ public:
   void setId2Idx(std::map<int, int> a);
   /// provide the mapping between ROC ID and index
   int getIdFromIdx(int idx); 
+  /// provide the mapping between ROC index and ID
+  int getIdxFromId(int id); 
   /// is ROC ID selected?
   bool selectedRoc(int id);
 
