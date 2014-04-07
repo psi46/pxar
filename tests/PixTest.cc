@@ -288,13 +288,13 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
 
 
 // ----------------------------------------------------------------------
-vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, int ntrig) {
+vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, int ntrig, uint16_t flag) {
 
   vector<TH1*>   resultMaps; 
 
   if (1) {
     // -- this takes about one hour for a full module
-    uint16_t FLAGS = FLAG_FORCE_MASKED;
+    uint16_t FLAGS = flag | FLAG_FORCE_MASKED;
 
     TH1D *h1(0); 
     TH2D *h2(0); 
@@ -370,7 +370,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 
   // -- wait with this until core sw works
   if (0) {
-    uint16_t FLAGS = FLAG_RISING_EDGE | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+    uint16_t FLAGS = flag | FLAG_RISING_EDGE | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
     
     TH1* h1(0); 
     fDirectory->cd();
