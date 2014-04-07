@@ -1,4 +1,8 @@
-void singleTest(string testname = "PixelAlive", string rootfilename = "PixelAlive.root", string cfgdirectory = "../data/defaultParametersRocPSI46digV2") {
+// -- Invocation:
+// --------------
+//    ../bin/pXar -d ../data/defaultParametersRocPSI46digV2 -c '../scripts/singleTest.C("PixelAlive", "pixelalive.root")'
+
+void singleTest(string testname = "PixelAlive", string rootfilename = "pixelalive.root", string cfgdirectory = "../data/defaultParametersRocPSI46digV2") {
   ConfigParameters *configParameters = ConfigParameters::Singleton();
 
   configParameters->setDirectory(cfgdirectory);

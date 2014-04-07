@@ -1,6 +1,8 @@
 #ifndef PIXMONITOR_H
 #define PIXMONITOR_H
 
+#include "pxardllexport.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -11,12 +13,14 @@
 #include <TGButton.h>
 #include <TGLabel.h>
 #include <TGNumberEntry.h>
-#include <unistd.h>
 #include <TSystem.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 class PixGui; 
 
-class PixMonitor: public TQObject {
+class DLLEXPORT PixMonitor: public TQObject {
 public:
   PixMonitor(TGGroupFrame *f, PixGui *p);
   virtual ~PixMonitor();

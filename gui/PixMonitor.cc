@@ -88,8 +88,8 @@ void PixMonitor::handleButtons(Int_t id) {
 void PixMonitor::Update() {
   static float ia(0.), id(0.); 
   if (fGui->getApi()) {
-    ia = fGui->getApi()->getTBia();
-    id = fGui->getApi()->getTBid();
+    ia = static_cast<float>(fGui->getApi()->getTBia());
+    id = static_cast<float>(fGui->getApi()->getTBid());
   } else {
     ia += 1.0; 
     id += 1.0; 

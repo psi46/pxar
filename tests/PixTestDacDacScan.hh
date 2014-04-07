@@ -1,10 +1,9 @@
 #ifndef PIXTESTDACDACSCAN_H
 #define PIXTESTDACDACSCAN_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestDacDacScan: public PixTest {
+class DLLEXPORT PixTestDacDacScan: public PixTest {
 public:
   PixTestDacDacScan(PixSetup *, std::string);
   PixTestDacDacScan();
@@ -15,6 +14,7 @@ public:
   void bookHist(std::string); 
 
   void doTest(); 
+  TH1* moduleMap(std::string histname);
 
 private:
 
@@ -24,7 +24,7 @@ private:
   int     fParLoDAC2, fParHiDAC2;
   std::vector<std::pair<int, int> > fPIX; 
 
-  ClassDef(PixTestDacDacScan, 1);
+  ClassDef(PixTestDacDacScan, 1)
 
 };
 #endif

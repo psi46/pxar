@@ -22,11 +22,16 @@ SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/main ${PROJECT_SOURCE_DIR}/core
 #ADD_LIBRARY( pxarui SHARED ${pXar_SOURCES} )
 #target_link_libraries(pxarui pxartests ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
+IF(WIN32)
+  SET(PXAR_EXECUTABLE pXarW32)
+ELSE(WIN32)
+  SET(PXAR_EXECUTABLE pXar)
+ENDIF(WIN32)
 
-add_executable(pXar pXar.cc )
-target_link_libraries(pXar ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} pxartests pxargui pxarutil)
+add_executable(${PXAR_EXECUTABLE} pXar.cc )
+target_link_libraries(${PXAR_EXECUTABLE} ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} pxartests pxargui pxarutil)
 
-INSTALL(TARGETS pXar
+INSTALL(TARGETS ${PXAR_EXECUTABLE}
   RUNTIME DESTINATION bin
 # LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

@@ -1,4 +1,4 @@
-
+// -- author: Daniel Pitzl
 // set good CalDel for each ROC
 
 #include <stdlib.h>  // atof, atoi

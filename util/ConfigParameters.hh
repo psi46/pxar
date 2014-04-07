@@ -3,19 +3,31 @@
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
+/** Declare all classes that need to be included in shared libraries on Windows
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 #ifdef __CINT__
 #undef __GNUC__
-typedef char __signed; 
 typedef char int8_t; 
 #endif
 
-#include <stdint.h>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "api.h"
 
-class ConfigParameters {
+class DLLEXPORT ConfigParameters {
 public:
   ConfigParameters();
   ConfigParameters(std::string filename);
@@ -38,7 +50,14 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
-  void dumpParameters(std::vector<std::pair<std::string, uint8_t> >); 
+  template <typename T1, typename T2>
+    std::string dumpParameters(std::vector<std::pair<T1, T2> > v) {
+    std::stringstream line;
+    for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
+      line << " " << it->first << ": " << static_cast<int>(it->second); 
+    }
+    return line.str();
+  }
 
   static ConfigParameters* Singleton();
 
@@ -65,6 +84,7 @@ public:
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
+  std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
 
   bool setTbParameter(std::string, uint8_t);
   bool setTbPowerSettings(std::string, double);
@@ -97,6 +117,8 @@ public:
   double getVa() {return va;}
   double getVd() {return vd;}
   bool   getHvOn() {return fHvOn;}
+
+  uint8_t getHubId() {return fHubId;}
 
 private:
 

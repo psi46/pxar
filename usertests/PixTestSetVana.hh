@@ -1,9 +1,10 @@
+// -- author: Daniel Pitzl
 #ifndef PIXTESTSETVANA_H
 #define PIXTESTSETVANA_H
 
 #include "PixTest.hh"
 
-class PixTestSetVana: public PixTest
+class DLLEXPORT PixTestSetVana: public PixTest
 {
 public:
   PixTestSetVana(PixSetup *, std::string);
@@ -19,7 +20,7 @@ private:
 
   int fTargetIa; // [mA/ROC]
 
-  ClassDef(PixTestSetVana, 1);
+  ClassDef(PixTestSetVana, 1)
 
 };
 #endif

@@ -1,6 +1,10 @@
 -- CurVsDac
 DAC Vana
 
+-- BumpBonding
+Ntrig 100
+
+
 -- DAQ
 Ntrig 100
 
@@ -45,16 +49,22 @@ Ntrig         10
 setCalDel     button
 SaveDacs      button
 
--- Scurves
-Ntrig 50
-Npix  10
-DAC   Vcal 
-DacLo 0
-DacHi 100
+-- Scurves   
+Ntrig 10     
+DAC   Vcal   
+DacLo 0	     
+DacHi 100    
+thrMap button
 
 -- Setup
 Ntrig 10
+Ntests 5
 Vcal 200
+PIX 11,20
+ClkLo 0
+ClkHi 9
+Deser160Lo 3
+Deser160Hi 5
 
 -- Tbm
 Ntrig 10

@@ -47,26 +47,26 @@ public:
 	  if (!usb.Open(&(name[0]))) return false;
 	  if (init) Init();
 	  return true;
-	};
+	}
 
 	void Close() {
 	  usb.Close();
 	  rpc_Clear();
-	};
+	}
 
-	bool EnumFirst(unsigned int &nDevices) { return usb.EnumFirst(nDevices); };
+	bool EnumFirst(unsigned int &nDevices) { return usb.EnumFirst(nDevices); }
 	bool EnumNext(string &name) {
 	  char s[64];
 	  if (!usb.EnumNext(s)) return false;
 	  name = s;
 	  return true;
-	};
+	}
 	bool Enum(unsigned int pos, string &name) {
 	  char s[64];
 	  if (!usb.Enum(s, pos)) return false;
 	  name = s;
 	  return true;
-	};
+	}
 
 	void SetTimeout(unsigned int timeout) { usb.SetTimeout(timeout); }
 
@@ -174,15 +174,17 @@ public:
 	RPC_EXPORT void Daq_Start(uint8_t channel);
 	RPC_EXPORT void Daq_Stop(uint8_t channel);
 	RPC_EXPORT uint32_t Daq_GetSize(uint8_t channel);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize = 16384, uint8_t channel = 0);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize, uint32_t &availsize, uint8_t channel);
+	RPC_EXPORT uint8_t Daq_Read(HWvectorR<uint16_t> &data, uint32_t blocksize = 65536, uint8_t channel = 0);
+	RPC_EXPORT uint8_t Daq_Read(HWvectorR<uint16_t> &data, uint32_t blocksize, uint32_t &availsize, uint8_t channel = 0);
 	
+
 	RPC_EXPORT void Daq_Select_ADC(uint16_t blocksize, uint8_t source, uint8_t start, uint8_t stop = 0);
 	RPC_EXPORT void Daq_Select_Deser160(uint8_t shift);
 	RPC_EXPORT void Daq_Select_Deser400();
 	RPC_EXPORT void Daq_Deser400_Reset(uint8_t reset);
 	RPC_EXPORT void Daq_DeselectAll();
-
+	
+	RPC_EXPORT void Daq_Select_Datagenerator(uint16_t startvalue);
 	RPC_EXPORT void SetClockSource(uint8_t source);
 
 
@@ -232,6 +234,7 @@ public:
 	RPC_EXPORT void Ethernet_Send(string &message);
 	RPC_EXPORT uint32_t Ethernet_RecvPackets();
 
+	RPC_EXPORT void VectorTest(vector<uint16_t> &in, vectorR<uint16_t> &out);
 	
 	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers);
 	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers, int32_t chipId);

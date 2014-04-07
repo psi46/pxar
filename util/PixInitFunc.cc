@@ -70,7 +70,7 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   int ibin = h->FindFirstBinAbove(0.); 
   int jbin = h->FindFirstBinAbove(0.9*h->GetMaximum());
   
-  f->SetParameter(0, h->GetBinCenter(0.5*(ibin+jbin))); 
+  f->SetParameter(0, h->GetBinCenter((ibin+jbin)/2)); 
   f->SetParameter(1, 1.); 
   if (jbin == ibin) {
     cout << "XXXXXXXXXXX PixInitFunc: STEP FUNCTION " << endl;

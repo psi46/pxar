@@ -6,7 +6,7 @@
 #include "PixTest.hh"
 #include "PixSetup.hh"
 
-class PixTestFactory {
+class DLLEXPORT PixTestFactory {
 public:
 
   static PixTestFactory*  instance(); 

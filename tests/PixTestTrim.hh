@@ -1,10 +1,9 @@
 #ifndef PIXTESTTRIM_H
 #define PIXTESTTRIM_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestTrim: public PixTest {
+class DLLEXPORT PixTestTrim: public PixTest {
 public:
   PixTestTrim(PixSetup *, std::string);
   PixTestTrim();
@@ -21,6 +20,8 @@ public:
   std::vector<TH1*> trimStep(int corrections, std::vector<TH1*> calMapOld); 
   void setTrimBits(); 
   void doTest(); 
+  void dummyAnalysis(); 
+  void output4moreweb();
 
 private:
 
@@ -28,7 +29,7 @@ private:
   std::vector<std::pair<int, int> > fPIX; 
   int     fTrimBits[16][52][80]; 
   
-  ClassDef(PixTestTrim, 1);
+  ClassDef(PixTestTrim, 1)
 
 };
 #endif

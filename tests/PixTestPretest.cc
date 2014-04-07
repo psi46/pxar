@@ -793,9 +793,9 @@ void PixTestPretest::setPhRange() {
   for (int roc = 0; roc < nRocs; ++roc ) {
 
     for( int i = 0; i < 256; ++i ) {
-      int ph0 = hmin[roc]->GetBinContent(i+1);
+      int ph0 = static_cast<int>(hmin[roc]->GetBinContent(i+1));
       if( ph0 <= 0 ) continue;
-      int ph4 = hmax[roc]->GetBinContent(i+1);
+      int ph4 = static_cast<int>(hmax[roc]->GetBinContent(i+1));
       if( ph4 <= 0 ) continue;
       if( roc == 0 ) {
 	LOG(logINFO) << "VOffsetRO " << setw(3) << i
@@ -901,7 +901,7 @@ void PixTestPretest::setPhRange() {
 
   for (int roc = 0; roc < nRocs; ++roc ) {
     for( int i = 0; i < 256; ++i ) {
-      int ph = href[roc]->GetBinContent(i+1);
+      int ph = static_cast<int>(href[roc]->GetBinContent(i+1));
       if( ph <= 0 ) continue;
       if( ph < 210 ) {
 	viref_adc_opt[roc] = i;
@@ -1179,8 +1179,8 @@ void PixTestPretest::setPhRange() {
       << " at " << setw(2) << max_col
       << "," << setw(2) << max_row;
 
-    int range = max_ph - min_ph;
-    int mid = (max_ph + min_ph)/2;
+    int range = static_cast<int>(max_ph - min_ph);
+    int mid = static_cast<int>(max_ph + min_ph)/2;
     int iter = 0;
 
     // iterate:
@@ -1242,8 +1242,8 @@ void PixTestPretest::setPhRange() {
       fApi->_dut->testPixel( max_col, max_row, false, roc );
       fApi->_dut->maskPixel( max_col, max_row, true, roc );
 
-      range = max_ph - min_ph;
-      mid = (max_ph + min_ph)/2;
+      range = static_cast<int>(max_ph - min_ph);
+      mid = static_cast<int>(max_ph + min_ph)/2;
 
     } // while
 

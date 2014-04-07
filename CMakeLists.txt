@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "0.6.1")
-SET(PXAR_FW_VERSION "1.29")
+SET(PXAR_VERSION "0.8.5")
+SET(PXAR_FW_VERSION "2.6")
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -25,10 +25,12 @@ ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
 # Set package version
 IF(NOT SOURCE_PACKAGE)
-  # Get the version from last git tag plus numer of additional commits:
+  # Get the version from last git tag plus number of additional commits:
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
-    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD | "sed 's,^release-,,;s,-,+,;s,-,~,;'" OUTPUT_VARIABLE PXAR_LIB_VERSION) 
+    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE PXAR_LIB_VERSION)
+    STRING(REGEX REPLACE "^release-" "" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
+    STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
     MESSAGE("-- Determined API version ${PXAR_LIB_VERSION}.")
   ELSE(GIT_FOUND)
     SET(PXAR_LIB_VERSION PXAR_VERSION)
@@ -176,6 +178,9 @@ IF(BUILD_pxarui)
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
 
+  # Build the usertests and usertest library
+  ADD_SUBDIRECTORY(usertests)
+
   # Build the pXar GUI
   ADD_SUBDIRECTORY(gui)
 
@@ -218,7 +223,16 @@ FIND_PACKAGE(LATEX)
 IF(LATEX_COMPILER)
   MESSAGE(STATUS "Found LaTeX compiler.")
   INCLUDE(cmake/UseLATEX.cmake)
-  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
+  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex 
+    INPUTS 
+    doc/usermanual/symbols.tex 
+    doc/usermanual/introduction.tex
+    doc/usermanual/hwOverview.tex 
+    doc/usermanual/swOverview.tex
+    doc/usermanual/tutorial.tex
+    doc/usermanual/tests.tex
+    doc/usermanual/usertests.tex
+    doc/usermanual/references.tex
     NO_DEFAULT
     )
 ELSE(LATEX_COMPILER)

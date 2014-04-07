@@ -1,3 +1,6 @@
+#ifndef PXAR_TIMER_H
+#define PXAR_TIMER_H
+
 #ifdef WIN32
 #include <Windows.h>
 #else
@@ -11,8 +14,9 @@ namespace pxar {
   public:
     /** Default timer constructor, storing the start time
      */
-    timer() { start = GetTime(); };
+    timer() { start = GetTime(); }
 
+    uint64_t get() { return static_cast<uint64_t>(GetTime() - start); }
   private:
     /** Private member function to store start time of the timer object
      */
@@ -21,8 +25,7 @@ namespace pxar {
     /** Returns the amount of milliseconds elapsed since the UNIX epoch.
 	Works on both windows and linux.
       */
-    uint64_t GetTime()
-    {
+    uint64_t GetTime() {
 #ifdef WIN32
       // Windows
       FILETIME ft;
@@ -56,19 +59,20 @@ namespace pxar {
 
       return ret;
 #endif
-    };
+    }
 
     /** Overloaded ostream operator to give the current elapsed time.
      */
     friend std::ostream & operator<<(std::ostream &out, timer &t) {
       return out << static_cast<uint64_t>(t.GetTime() - t.start);
-    };
+    }
 
     /** Overloaded ostream operator to give the current elapsed time.
      */
     friend std::ostream & operator<<(std::ostream &out, timer * t) {
       return out << static_cast<uint64_t>(t->GetTime() - t->start);
-    };
+    }
   };
 
 }
+#endif
