@@ -286,7 +286,7 @@ bool hal::CheckCompatibility(){
     // Get hash for the DTB RPC command list:
     LOG(logDEBUGHAL) << "Fetching DTB RPC command hash.";
     dtbCmdHash = _testboard->GetRpcCallHash();
-    LOG(logDEBUGHAL) << "Host Hash: " << dtbCmdHash;
+    LOG(logDEBUGHAL) << "DTB Hash: " << dtbCmdHash;
   }
 
   // If they don't match check RPC calls one by one and print offenders:
