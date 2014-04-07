@@ -43,6 +43,10 @@ namespace pxar {
      */
   pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
 
+    /** Constructor for pixel objects with rawdata pixel address & value and ROC id initialization.
+     */
+  pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
+
     /** Function to fill the pixel with linear encoded data from RPC transfer.
      *  The address transmitted from the NIOS soft core is encoded in the following
      *  way:

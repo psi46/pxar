@@ -78,8 +78,8 @@ public:
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
-  /// returns TH2D's for the threshold
-  std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig);
+  /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
+  std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag=0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig);
 
   /// book a TH1D, adding version information to the name and title 
@@ -135,6 +135,8 @@ public:
   void setId2Idx(std::map<int, int> a);
   /// provide the mapping between ROC ID and index
   int getIdFromIdx(int idx); 
+  /// provide the mapping between ROC index and ID
+  int getIdxFromId(int id); 
   /// is ROC ID selected?
   bool selectedRoc(int id);
 

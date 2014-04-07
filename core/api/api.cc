@@ -166,7 +166,7 @@ bool api::initDUT(uint8_t hubid,
     }
 
     // check for pixels out of range
-    if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0){
+    if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0) {
       LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
       return false;
     }
@@ -273,12 +273,9 @@ bool api::programDUT() {
   _hal->Pon();
 
   // Start programming the devices here!
-
-  // Write all configured DUT I2C addresses to the NIOS storage:
-  _hal->initNIOS(_dut->getRocI2Caddr());
+  _hal->setHubId(_dut->hubId); 
 
   // FIXME Device types not transmitted yet!
-
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
@@ -288,7 +285,7 @@ bool api::programDUT() {
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
   if(!enabledRocs.empty()) {LOG(logDEBUGAPI) << "Programming ROCs...";}
   for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-    _hal->initROC(static_cast<uint8_t>(rocit - enabledRocs.begin()),(*rocit).type, (*rocit).dacs);
+    _hal->initROC(rocit->i2c_address,(*rocit).type, (*rocit).dacs);
   }
 
   // As last step, mask all pixels in the device:
@@ -512,7 +509,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
       LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
     }
 
-    _hal->rocSetDAC(static_cast<uint8_t>(rocid),dacRegister,dacValue);
+    _hal->rocSetDAC(_dut->roc.at(rocid).i2c_address,dacRegister,dacValue);
   }
   else {
     LOG(logERROR) << "ROC " << rocid << " does not exist in the DUT!";
@@ -661,7 +658,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,false);
 
@@ -712,7 +710,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackDacScanData(data,dacMin,dacMax,nTriggers,true);
 
@@ -783,7 +782,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
   // repack data into the expected return format
   bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
   std::vector< std::pair<uint8_t, std::vector<pixel> > >* result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,useRisingEdge);
@@ -853,7 +853,8 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,false);
 
@@ -921,7 +922,8 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
 
@@ -956,7 +958,8 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data, nTriggers, false);
@@ -981,7 +984,8 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data, nTriggers, true);
@@ -1022,7 +1026,8 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial);
+  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
 
   // Repacking of all data segments into one long map vector:
   bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
@@ -1207,7 +1212,7 @@ bool api::daqStop() {
 }
 
 
-std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param,  bool forceSerial) {
+std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param,  bool forceSerial, bool forceMasked) {
   
   // pointer to vector to hold our data
   std::vector<Event*> data = std::vector<Event*>();
@@ -1216,8 +1221,8 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   timer t;
 
   // Do the masking/unmasking&trimming for all ROCs first
-  // FIXME masking all:
-  MaskAndTrim(false);
+  if(forceMasked || forceSerial) { MaskAndTrim(false); }
+  else { MaskAndTrim(true); }
 
   // check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
@@ -1281,6 +1286,10 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " calls to \'rocfn\'";
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
+
+	// If we have serial execution make sure to trim the ROC unless we requested forceMasked:
+	if(forceSerial && !forceMasked) { MaskAndTrim(true,rocit); }
+
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
@@ -1656,68 +1665,66 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
   return result;
 }
 
-// Mask/Unmask and trim the ROCs:
+// Mask/Unmask and trim all ROCs:
 void api::MaskAndTrim(bool trim) {
-
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    MaskAndTrim(trim,rocit);
+  }
+}
 
-    // Build vector containing trim and mask for this ROC:
-    _hal->RocSetMask(rocit->i2c_address, rocit->pixels);
+// Mask/Unmask and trim one ROC:
+void api::MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit) {
+  // Check if we can run on full ROCs:
+  uint16_t masked = std::count_if(rocit->pixels.begin(),rocit->pixels.end(),configMaskSet(true));
 
-    /*
-    // Check if we can run on full ROCs:
-    uint16_t masked = _dut->getNMaskedPixels(static_cast<uint8_t>(rocit-_dut->roc.begin()));
-    LOG(logDEBUGAPI) << "ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " features " << masked << " masked pixels.";
-
-    // This ROC is completely unmasked, let's trim it:
-    if(masked == 0 && trim) {
-      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " in one go.";
-      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),false,rocit->pixels);
-      continue;
-    }
-    else if(masked == ROC_NUMROWS*ROC_NUMCOLS || !trim) {
-      LOG(logDEBUGAPI) << "Masking ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " in one go.";
-      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),true);
-      continue;
-    }
-    // Choose the version with less calls (less than half the pixels to change):
-    else if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
-      // We have more unmasked than masked pixels:
-      LOG(logDEBUGAPI) << "Unmasking and trimming ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " before masking single pixels.";
-      _hal->RocSetMask(static_cast<int>(rocit-_dut->roc.begin()),false,rocit->pixels);
-
-      // Disable all unneeded columns:
-      std::vector<bool> enabledColumns = _dut->getEnabledColumns(static_cast<size_t>(rocit-_dut->roc.begin()));
-      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-	if(!(*it)) _hal->ColumnSetEnable(static_cast<uint8_t>(rocit - _dut->roc.begin()),static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
-      }
-
-      // And then mask the required pixels:
-      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->mask == true) {_hal->PixelSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,true);}
-      }
-    }
-    else {
-      // Some are unmasked, but not too many. First mask that ROC:
-      LOG(logDEBUGAPI) << "Masking ROC " << static_cast<int>(rocit-_dut->roc.begin()) << " before unmasking single pixels.";
-      _hal->RocSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),true);
-
-      // Enable all needed columns:
-      std::vector<bool> enabledColumns = _dut->getEnabledColumns(static_cast<size_t>(rocit-_dut->roc.begin()));
-      for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-	if((*it)) _hal->ColumnSetEnable(static_cast<uint8_t>(rocit - _dut->roc.begin()),static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
-      }
-
-      // And then unmask the required pixels with their trim values:
-      for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->mask == false) {_hal->PixelSetMask(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,false,pxit->trim);}
-      }
-    }
-*/
-
+  // This ROC is completely unmasked, let's trim it:
+  if(masked == 0 && trim) {
+    LOG(logDEBUGAPI) << "Unmasking and trimming ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
+    _hal->RocSetMask(rocit->i2c_address,false,rocit->pixels);
+    return;
+  }
+  else if(masked == ROC_NUMROWS*ROC_NUMCOLS || !trim) {
+    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
+    _hal->RocSetMask(rocit->i2c_address,true); //FIXME
+    return;
   }
 
+  LOG(logDEBUGAPI) << "ROC@I2C " << static_cast<int>(rocit->i2c_address) << " features " << masked << " masked pixels.";
+
+  // Choose the version with less calls (less than half the pixels to change):
+  if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
+    // We have more unmasked than masked pixels:
+    LOG(logDEBUGAPI) << "Unmasking and trimming ROC@I2C " << static_cast<int>(rocit->i2c_address) << " before masking single pixels.";
+    _hal->RocSetMask(rocit->i2c_address,false,rocit->pixels);//FIXME
+
+    // Disable all unneeded columns:
+    std::vector<bool> enabledColumns = _dut->getEnabledColumns(rocit->i2c_address);
+    for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+      if(!(*it)) _hal->ColumnSetEnable(rocit->i2c_address,static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
+    }
+
+    // And then mask the required pixels:
+    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+      if(pxit->mask == true) {_hal->PixelSetMask(rocit->i2c_address,pxit->column,pxit->row,true);}
+    }
+  }
+  else {
+    // Some are unmasked, but not too many. First mask that ROC:
+    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " before unmasking single pixels.";
+    _hal->RocSetMask(rocit->i2c_address,true);
+
+    // Enable all needed columns:
+    std::vector<bool> enabledColumns = _dut->getEnabledColumns(rocit->i2c_address);
+    for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
+      if((*it)) _hal->ColumnSetEnable(rocit->i2c_address,static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
+    }
+
+    // And then unmask the required pixels with their trim values:
+    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
+      if(pxit->mask == false) {_hal->PixelSetMask(rocit->i2c_address,pxit->column,pxit->row,false,pxit->trim);}
+    }
+  }
 }
 
 // Program the calibrate bits in ROC PUCs:
@@ -1726,20 +1733,17 @@ void api::SetCalibrateBits(bool enable) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
-    LOG(logDEBUGAPI) << "Configuring calibrate bits in all enabled PUCs of ROC " << static_cast<int>(rocit-_dut->roc.begin());
+    LOG(logDEBUGAPI) << "Configuring calibrate bits in all enabled PUCs of ROC@I2C " << static_cast<int>(rocit->i2c_address);
     // Check if the signal has to be turned on or off:
     if(enable) {
       // Loop over all pixels in this ROC and set the Cal bit:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-      
-	if(pxit->enable == true) {
-	  _hal->PixelSetCalibrate(static_cast<uint8_t>(rocit-_dut->roc.begin()),pxit->column,pxit->row,0);
-	}
+	if(pxit->enable == true) { _hal->PixelSetCalibrate(rocit->i2c_address,pxit->column,pxit->row,0); }
       }
 
     }
     // Clear the signal for the full ROC:
-    else {_hal->RocClearCalibrate(static_cast<uint8_t>(rocit-_dut->roc.begin()));}
+    else {_hal->RocClearCalibrate(rocit->i2c_address);}
   }
 }
 

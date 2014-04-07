@@ -505,7 +505,7 @@ namespace pxar {
      *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
      *  function, all depending on the configuration of the DUT.
      */
-    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false);
+    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false, bool forceMasked = false);
 
     /** Merges all consecutive triggers into one Event
      */
@@ -557,6 +557,17 @@ namespace pxar {
      *  set to "false" it will just mask all ROCs.
      */
     void MaskAndTrim(bool trim);
+
+    /** Routine to select one ROCs with all pixels and figure out the most efficient
+     *  way to (un)mask and trim them for the upcoming test according to the 
+     *  information stored in the DUT struct.
+     *
+     *  This function programs all attached devices with the needed trimming and
+     *  masking bits for the Pixel Unit Cells (PUC). It sets both the needed PUC
+     *  mask&trim bits and the DCOL enable bits. If the bool parameter "trim" is
+     *  set to "false" it will just mask all ROCs.
+     */
+    void MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit);
 
     /** Helper function to setup the attached devices for operation using
      *  calibrate pulses.
@@ -766,9 +777,9 @@ namespace pxar {
     bool _programmed;
 
     /** Function returning for every column if it includes an enabled pixel
-     *  for a specific ROC:
+     *  for a specific ROC selected by its I2C address:
      */
-    std::vector< bool > getEnabledColumns(size_t rocid);
+    std::vector< bool > getEnabledColumns(size_t roci2c);
 
     /** DUT hub ID
      */
