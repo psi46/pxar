@@ -1665,6 +1665,18 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
   return result;
 }
 
+// Update mask and trim bits for the full DUT in NIOS structs:
+void api::MaskAndTrimNIOS() {
+
+  // First transmit all configured I2C addresses:
+  _hal->SetupI2CValues(_dut->getRocI2Caddr());
+  
+  // Now run over all existing ROCs and transmit the pixel trim/mask data:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->SetupTrimValues(rocit->i2c_address,rocit->pixels);
+  }
+}
+
 // Mask/Unmask and trim all ROCs:
 void api::MaskAndTrim(bool trim) {
   // Run over all existing ROCs:
