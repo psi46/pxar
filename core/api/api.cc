@@ -1220,11 +1220,18 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   // Start test timer:
   timer t;
 
-  // Do the masking/unmasking&trimming for all ROCs first
-  if(forceMasked || forceSerial) { MaskAndTrim(false); }
+  // Do the masking/unmasking&trimming for all ROCs first.
+  // If we run in FLAG_FORCE_MASKED mode, transmit the new trim values to the NIOS core and mask the whole DUT:
+  if(forceMasked) {
+    MaskAndTrimNIOS();
+    MaskAndTrim(false);
+  }
+  // If we run in FLAG_FORCE_SERIAL mode, mask the whole DUT:
+  else if(forceSerial) { MaskAndTrim(false); }
+  // Else just trim all the pixels:
   else { MaskAndTrim(true); }
 
-  // check if we might use parallel routine on whole module: more than one ROC
+  // Check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
   if ((_dut->getNEnabledRocs() > 1) && !forceSerial) {
 
