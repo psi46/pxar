@@ -547,6 +547,13 @@ namespace pxar {
      */
     uint8_t stringToDeviceCode(std::string name);
 
+    /** Routine to loop over all ROCs/pixels and update the NIOS cache of trim
+     *  and mask bits with the current test configuration. This cache is used
+     *  for the trimming done on the test trigger loops when FLAG_FORCE_MASKED
+     *  is activated.
+     */
+    void MaskAndTrimNIOS();
+
     /** Routine to loop over all ROCs/pixels and figure out the most efficient
      *  way to (un)mask and trim them for the upcoming test according to the 
      *  information stored in the DUT struct.
@@ -664,6 +671,10 @@ namespace pxar {
     /** Function returning the I2C addresses of all enabled ROCs in a uint8_t vector:
      */
     std::vector< uint8_t > getEnabledRocI2Caddr();
+
+    /** Function returning the I2C addresses of all ROCs in a uint8_t vector:
+     */
+    std::vector< uint8_t > getRocI2Caddr();
 
     /** Function returning the enabled TBM configs
      */
