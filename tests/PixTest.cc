@@ -9,6 +9,7 @@
 #include <TStyle.h>
 
 #include "PixTest.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 using namespace std;
@@ -106,7 +107,14 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // result & 0x4 == 4 -> write to file: all pixel histograms with outlayer threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  
+  //  uint16_t FLAGS = FLAG_FORCE_MASKED;
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  if (rocIds.size() > 1 && ntrig > 2) {
+    LOG(logWARNING) << "too many triggers requested, resetting ntrig = " << 2; 
+    ntrig = 2; 
+  }
+
   vector<TH1*>          rmaps; 
   vector<vector<TH1*> > maps; 
   vector<TH1*>          resultMaps; 
@@ -115,15 +123,15 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   fDirectory->cd();
 
   map<int, int> id2idx; // map the ROC ID onto the index of the ROC
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     id2idx.insert(make_pair(rocIds[iroc], iroc)); 
     rmaps.clear();
     for (unsigned int ic = 0; ic < 52; ++ic) {
       for (unsigned int ir = 0; ir < 80; ++ir) {
-	h1 = new TH1D(Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, rocIds[iroc]), 
+	h1 = bookTH1D(Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, rocIds[iroc]), 
 		      Form("%s_%s_c%d_r%d_C%d", name.c_str(), dac.c_str(), ic, ir, rocIds[iroc]), 
 		      256, 0., 256.);
+	h1->Sumw2();
 	rmaps.push_back(h1); 
       }
     }
@@ -133,49 +141,96 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   cache(dac); 
   
 
-  int ic, ir, iroc, val; 
-  vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
+  int ic, ir, iroc; 
+  double val;
+  vector<pair<uint8_t, vector<pixel> > > results;
+  do {
+    LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
+    fApi->setDAC(dac, dacmin); 
+    sleep(1); 
+    results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
+  } while (fApi->daqProblem());
+
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dac = results[idac].first; 
+    //    cout << "dac = " << dac << endl;
     for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
       ic =   results[idac].second[ipix].column; 
       ir =   results[idac].second[ipix].row; 
       iroc = results[idac].second[ipix].roc_id; 
+      if (ic > 51 || ir > 79) {
+	// LOG(logDEBUG) << "skipping unphysical pixel at roc/col/row = " << iroc << "/" << ic << "/" << ir; 
+	continue;
+      }
       val =  results[idac].second[ipix].value;
       maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
     }
   }
 
-  fPIF->fLo = dacmin; 
-  fPIF->fHi = dacmax; 
+  results.clear();
+  do {
+    LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
+    fApi->setDAC(dac, dacmax/2+1); 
+    sleep(1); 
+    results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
+  } while (fApi->daqProblem()); 
+
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
+    int dac = results[idac].first; 
+    //    cout << "dac = " << dac << endl;
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+      ic =   results[idac].second[ipix].column; 
+      ir =   results[idac].second[ipix].row; 
+      iroc = results[idac].second[ipix].roc_id; 
+      val =  results[idac].second[ipix].value;
+      if (ic > 51 || ir > 79) {
+	// LOG(logDEBUG) << "skipping unphysical pixel at roc/col/row = " << iroc << "/" << ic << "/" << ir; 
+	continue;
+      }
+      maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
+    }
+  }
 
   TH1* h2(0), *h3(0); 
   string fname("SCurveData");
   ofstream OutputFile;
   string line; 
   string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
+  bool dumpFile(false); 
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
     rmaps.clear();
     rmaps = maps[iroc];
-    h2 = new TH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+    h2 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h2, "colz")); 
 
-    h3 = new TH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+    h3 = bookTH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h3, "colz")); 
 
-    OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-    OutputFile << "Mode 1" << endl;
+    if (!dac.compare("Vcal")) {
+      dumpFile = true; 
+      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+      OutputFile << "Mode 1" << endl;
+    }
+
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
 	delete rmaps[i];
-	OutputFile << empty << endl;
+	if (dumpFile) OutputFile << empty << endl;
 	continue;
       }
+      
+      // -- calculated "proper" errors
+      for (int ib = 1; ib <= rmaps[i]->GetNbinsX(); ++ib) {
+	rmaps[i]->SetBinError(ib, ntrig*PixUtil::dBinomial(static_cast<int>(rmaps[i]->GetBinContent(ib)), ntrig)); 
+      }
+
       bool ok = threshold(rmaps[i]); 
       if (!ok) {
-	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
+	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
       }
       ic = i/80; 
       ir = i%80; 
@@ -186,17 +241,19 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
 
       // -- write file
-      int NSAMPLES(32); 
-      int ibin = rmaps[i]->FindBin(fThreshold); 
-      int bmin = ibin - 15;
-      line = Form("%2d %3d", NSAMPLES, bmin); 
-      for (int ix = bmin; ix < bmin + 33; ++ix) {
-	line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
+      if (dumpFile) {
+	int NSAMPLES(32); 
+	int ibin = rmaps[i]->FindBin(fThreshold); 
+	int bmin = ibin - 15;
+	line = Form("%2d %3d", NSAMPLES, bmin); 
+	for (int ix = bmin; ix < bmin + 33; ++ix) {
+	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
+	}
+	OutputFile << line << endl;
       }
-      OutputFile << line << endl;
 
       if (result & 0x4) {
-	cout << "add " << rmaps[i]->GetName() << endl;
+	//	cout << "add " << rmaps[i]->GetName() << endl;
 	fHistList.push_back(rmaps[i]);
       }
       // -- write all hists to file if requested
@@ -206,7 +263,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	delete rmaps[i];
       }
     }
-    OutputFile.close();
+    if (dumpFile) OutputFile.close();
 
     if (result & 0x1) {
       resultMaps.push_back(h2); 
@@ -292,7 +349,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 
   vector<TH1*>   resultMaps; 
 
-  if (1) {
+  if (0) {
     // -- this takes about one hour for a full module
     uint16_t FLAGS = FLAG_FORCE_MASKED;
 
@@ -369,9 +426,10 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 
 
   // -- wait with this until core sw works
-  if (0) {
-    uint16_t FLAGS = FLAG_RISING_EDGE | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-    
+  if (1) {
+    //    uint16_t FLAGS = FLAG_RISING_EDGE | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+    uint16_t FLAGS = FLAG_RISING_EDGE;    
+
     TH1* h1(0); 
     fDirectory->cd();
     
@@ -591,25 +649,25 @@ int PixTest::simpleThreshold(TH1 *h) {
 
 // ----------------------------------------------------------------------
 bool PixTest::threshold(TH1 *h) {
+
   TF1 *f = fPIF->errScurve(h); 
-  h->Fit(f, "qr", "", fPIF->fLo, fPIF->fHi); 
 
-  fThreshold  = f->GetParameter(0); 
-  fThresholdE = f->GetParError(0); 
-  fSigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
-  fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
+  double lo, hi; 
+  f->GetRange(lo, hi); 
 
-  if (fThreshold < 0 || strcmp(gMinuit->fCstatu.Data(), "CONVERGED ")) {
-
-    LOG(logINFO) << "s-curve fit did not converge for histogram " << h->GetTitle(); 
-
-    int ibin = h->FindFirstBinAbove(0.); 
-    int jbin = h->FindFirstBinAbove(0.9*h->GetMaximum());
-    fThreshold = h->GetBinCenter((ibin+jbin)/2); 
-    fThresholdE = 1+(TMath::Abs(ibin-jbin)); 
-
-    fSigma = fThresholdE; 
-    fSigmaE = fThresholdE; 
+  if (fPIF->doNotFit()) {
+    fThreshold  = f->GetParameter(0); 
+    //    cout << " nofit fThreshold = " << fThreshold << endl;
+    fThresholdE = 1.;
+    fSigma      = 0.5;
+    fSigmaE     = 0.5;
+  } else {
+    h->Fit(f, "qr", "", lo, hi); 
+    fThreshold  = f->GetParameter(0); 
+    //    cout << " w/fit fThreshold = " << fThreshold << endl;
+    fThresholdE = f->GetParError(0); 
+    fSigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
+    fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
   }
 
   return true;
