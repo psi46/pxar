@@ -669,6 +669,23 @@ bool PixTest::threshold(TH1 *h) {
     fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
   }
 
+
+  if (fThreshold < h->GetBinLowEdge(1)) {
+    fThreshold  = 0.; 
+    fThresholdE = 0.; 
+    fSigma  = 0.; 
+    fSigmaE = 0.; 
+    return false;
+  }
+
+  if (fThreshold > h->GetBinLowEdge(h->GetNbinsX())) {
+    fThreshold  = h->GetBinLowEdge(h->GetNbinsX()); 
+    fThresholdE = 0.; 
+    fSigma  = 0.; 
+    fSigmaE = 0.; 
+    return false;
+  }
+
   return true;
 }
 
