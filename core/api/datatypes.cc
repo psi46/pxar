@@ -22,7 +22,12 @@ namespace pxar {
     column = 2*c + (r&1);
     
     if (row >= ROC_NUMROWS || column >= ROC_NUMCOLS){
-      LOG(logCRITICAL) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      static int badc(-1), badr(-1); 
+      if (row != badr && column != badc) {
+	LOG(logCRITICAL) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      }
+      badc = column;
+      badr = row; 
     }
   }
 
