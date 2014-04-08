@@ -277,6 +277,22 @@ namespace pxar {
      */
     bool daqClear();
 
+    /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
+     */
+    bool daqProblem() {return fDaqProblem;}
+
+
+
+    // Functions to access NIOS storage of trim values:
+
+    /** Set the available I2C device addresses
+     */
+    void SetupI2CValues(std::vector<uint8_t> roci2cs);
+
+    /** Set all trim bits for the ROC with specified I2C address
+     */
+    void SetupTrimValues(uint8_t roci2c, std::vector<pixelConfig> pixels);
+
 
     // Functions to set bits somewhere on the ROC:
 
@@ -385,6 +401,8 @@ namespace pxar {
     dtbEventDecoder decoder1;
     dtbEventDecoder decoder2;
     dtbEventDecoder decoder3;
+
+    bool fDaqProblem;
 
   };
 }

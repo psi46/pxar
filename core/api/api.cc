@@ -15,6 +15,8 @@
 
 using namespace pxar;
 
+bool api::daqProblem(){return _hal->daqProblem();}
+
 api::api(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
@@ -1220,11 +1222,18 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   // Start test timer:
   timer t;
 
-  // Do the masking/unmasking&trimming for all ROCs first
-  if(forceMasked || forceSerial) { MaskAndTrim(false); }
+  // Do the masking/unmasking&trimming for all ROCs first.
+  // If we run in FLAG_FORCE_MASKED mode, transmit the new trim values to the NIOS core and mask the whole DUT:
+  if(forceMasked) {
+    MaskAndTrimNIOS();
+    MaskAndTrim(false);
+  }
+  // If we run in FLAG_FORCE_SERIAL mode, mask the whole DUT:
+  else if(forceSerial) { MaskAndTrim(false); }
+  // Else just trim all the pixels:
   else { MaskAndTrim(true); }
 
-  // check if we might use parallel routine on whole module: more than one ROC
+  // Check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
   if ((_dut->getNEnabledRocs() > 1) && !forceSerial) {
 
@@ -1255,6 +1264,12 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column, px->row, param);
 
 	// merge pixel data into roc data storage vector
+	//         ofstream OUTFILE("api-expandLoop.txt", ios::app);
+	//         OUTFILE << "= px it = " << px - enabledPixels.begin() << " ===============" << std::endl;
+	//         for (unsigned i = 0; i < rocdata.size(); ++i) {
+	//           OUTFILE << *rocdata[i] << std::endl;
+	//         }
+	//         OUTFILE.close();
 	if (rocdata.empty()){
 	  rocdata = buffer; // for first time call
 	} else {
@@ -1293,6 +1308,14 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
+
+	//         ofstream OUTFILE("api-expandLoop-single.txt", ios::app);
+	//         OUTFILE << "= roc it = " << rocit - enabledRocs.begin() << " ===============" << std::endl;
+	//         for (unsigned i = 0; i < rocdata.size(); ++i) {
+	//           OUTFILE << *rocdata[i] << std::endl;
+	//         }
+	//         OUTFILE.close();
+
         if (data.empty()) data = rocdata;
 	else {
 	  data.reserve(data.size() + rocdata.size());
@@ -1663,6 +1686,18 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* api
   LOG(logDEBUGAPI) << "Correctly repacked DacDacScan data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
+}
+
+// Update mask and trim bits for the full DUT in NIOS structs:
+void api::MaskAndTrimNIOS() {
+
+  // First transmit all configured I2C addresses:
+  _hal->SetupI2CValues(_dut->getRocI2Caddr());
+  
+  // Now run over all existing ROCs and transmit the pixel trim/mask data:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->SetupTrimValues(rocit->i2c_address,rocit->pixels);
+  }
 }
 
 // Mask/Unmask and trim all ROCs:
