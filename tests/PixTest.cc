@@ -338,8 +338,8 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
 
 // ----------------------------------------------------------------------
-vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig) {
-  return thrMaps(dac, name, 1, 0, ntrig); 
+vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig, uint16_t flag) {
+  return thrMaps(dac, name, 1, 0, ntrig, flag); 
 }
 
 
@@ -428,7 +428,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
   // -- wait with this until core sw works
   if (1) {
     //    uint16_t FLAGS = FLAG_RISING_EDGE | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-    uint16_t FLAGS = FLAG_RISING_EDGE;    
+    uint16_t FLAGS = flag | FLAG_RISING_EDGE;    
     TH1* h1(0); 
     fDirectory->cd();
     

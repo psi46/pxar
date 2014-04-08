@@ -79,8 +79,8 @@ public:
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
-  std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag=0);
-  std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig);
+  std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
+  std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
 
   /// book a TH1D, adding version information to the name and title 
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
