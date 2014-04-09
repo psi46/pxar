@@ -17,18 +17,21 @@ public:
 
   void saveDAC( std::string dac);
   void restoreDACs();
-
+  int pidx(pxar::pixel & pix){  return getIdxFromId(pix.roc_id)*4160+pix.column*80+pix.row;  }
 
   void doTest(); 
 
 private:
-  std::vector<uint8_t> rocIds;  // convenience
   int          fParNtrig; 
   int          fParVcalS;   // vcal dac value of the cals probe signal
   int          fPartest;    // direct vcal value for test runs, active if >0
+  bool         fParSubtractXtalk;
+  
   
   std::map< std::string, std::vector< uint8_t> > fSavedDACs;
-
+  std::vector< bool > fAlive;
+  size_t fNpixalive;
+  
   ClassDef(PixTestBBMap, 1); 
 
 };

@@ -42,6 +42,7 @@ bool PixTestBBMap::setParameter( string parName, string sval )
 
       if( !parName.compare( "Ntrig" ) ) { s >> fParNtrig; return true;}
       if( !parName.compare( "VcalS" ) ) { s >> fParVcalS; return true;}
+      if( !parName.compare( "SubtractXtalk") ){ s >> fParSubtractXtalk; return true;}
       if( !parName.compare( "test" ) )  { s >> fPartest;  return true;}
     }
   }
@@ -83,6 +84,7 @@ PixTestBBMap::~PixTestBBMap()
 
 
 // ----------------------------------------------------------------------
+// eventually to be replaced by PixTest::thrMaps
 vector<TH1*> PixTestBBMap::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, unsigned int ntrigrequest, uint16_t flag) {
   vector<TH1*>   resultMaps; 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -99,32 +101,52 @@ vector<TH1*> PixTestBBMap::thrMaps(string dac, string name, uint8_t daclo, uint8
   unsigned int dvt = 10;
   size_t npfnd = 0;
   // rough scan from high threshold until someone responds, all pixels enabled
+  // hits seem to appear earlier in this mode
   std::vector< std::pair<uint8_t, std::vector<pixel> > > a;
-  while(( npfnd == 0) && (vthr < dachi) ){
+  while(( npfnd < 10) && (vthr < dachi) ){
     a = fApi->getEfficiencyVsDAC("VthrComp", vthr, vthr+dvt-1, flag, 1);
     for(unsigned int i=0; i<dvt; i++){
         npfnd = a.at(i).second.size();
-        if ( npfnd>0 )break;
+        if ( npfnd>=10 )break;
         vthr++;
     }
   }
   
   LOG(logDEBUG) << "fMaps: vthr=" << (int)vthr << "  npx= " << npfnd;
+
   
-  
-  // from now only enable one pixel at a time  ( flag=FLAG_FORCE_MASKED )
   size_t npix = rocIds.size()*ROC_NUMROWS*ROC_NUMCOLS;
   unsigned int maxNtrig =  DTB_SOURCE_BUFFER_SIZE / (npix*6);
   uint16_t ntrig = ntrigrequest < maxNtrig ? ntrigrequest : maxNtrig;
 
+  /*
+  // assuming we have a reasonable threshold now, get a pixel alive 
+  // map to spot dead pixels (to not waste time on them during threshold scans)
+  fApi->setDAC("vcal", 255);
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  vector<pixel> pxalive = fApi->getEfficiencyMap(FLAG_FORCE_MASKED, ntrig);
+  vector< bool > alive(npix, false);
+  size_t npixalive=0;
+  for(vector<pixel>::iterator pix_it=pxalive.begin();
+      pix_it != pxalive.end(); pix_it++){
+      alive[ pidx(*pix_it) ] = (pix_it->value > 0);
+      if ( alive[ pidx(*pix_it) ] )npixalive++;
+  }  
+  LOG(logDEBUG) << "fMaps:  alive " << npixalive;
+  if (npixelalive==0){
+      LOG(logINFO) << "DUT appears dead ??";
+  }
+
+  fApi->setDAC("vcal", fParVcalS);    
+*/
  
+  // now scan the VthrComp and find thresholds
   vector< int > x1( npix, 0 ), n1( npix, 0);
   vector< float > vt(npix, -1);
-
-
   dvt = 1;
   npfnd=0;
-  while( (npfnd<npix) && (vthr<dachi) ){
+  while( (npfnd<fNpixalive) && (vthr<dachi) ){
       
     fApi->setDAC("VthrComp", vthr);
     vector<pixel> result = fApi->getEfficiencyMap(flag | FLAG_FORCE_MASKED, ntrig);
@@ -132,28 +154,26 @@ vector<TH1*> PixTestBBMap::thrMaps(string dac, string name, uint8_t daclo, uint8
     for(vector<pixel>::iterator pix_it=result.begin();
       pix_it != result.end(); pix_it++){
       pixel & pix = *pix_it;
-      if ( pix.value >0) {
-        int pidx = getIdxFromId(pix.roc_id)*4160+pix.column*80+pix.row;
-        if (vt[pidx]<0) {
+      int i = pidx( pix );
+      if ( ( pix.value >0) && fAlive[i] && (vt[i]<0) ) {
           if (pix.value <ntrig/2) {
-            n1[pidx]=pix.value;
-            x1[pidx]=vthr;
+            n1[i]=pix.value;
+            x1[i]=vthr;
           } else if (pix.value>=ntrig/2){
-            if (n1[pidx]==0){
-                vt[pidx]=vthr;
+            if (n1[i]==0){
+                vt[i]=vthr;
             }else{
               int n2 = pix.value;
               int x2 = vthr;
-              vt[pidx] = float(n2*x1[pidx]-n1[pidx]*x2+0.5*ntrig*(x2-x1[pidx]))/(n2-n1[pidx]);
+              vt[i] = float(n2*x1[i]-n1[i]*x2+0.5*ntrig*(x2-x1[i]))/(n2-n1[i]);
            }
             npfnd+=1;
           } // above threshold
-        } // not done yet
       } // has hits
     }//pixel
     
 
-    LOG(logDEBUG) << "vthr=" << (int) vthr << "  found " << npfnd << " / " << npix;
+    LOG(logDEBUG) << "vthr=" << (int) vthr << "  found " << npfnd << " / " << fNpixalive;
 
     //if ((npfnd> npix/2) && (result.size()==0)) break; // probably above the noise level
     vthr += dvt;
@@ -174,9 +194,9 @@ vector<TH1*> PixTestBBMap::thrMaps(string dac, string name, uint8_t daclo, uint8
       
       for(int icol=0; icol<52; icol++){
         for(int irow=0; irow<80; irow++){
-          int pidx = iroc*4160 + icol*80 + irow; 
-          if (vt[pidx]>0)  {
-            h1->SetBinContent( icol+1, irow+1, vt[pidx]);
+          int i = iroc*4160 + icol*80 + irow; 
+          if (vt[i]>0)  {
+            h1->SetBinContent( icol+1, irow+1, vt[i]);
           }else{
             h1->SetBinContent( icol+1, irow+1, 256.);
           }
@@ -218,7 +238,8 @@ vector<TH1*> PixTestBBMap::thrMaps(string dac, string name, uint8_t daclo, uint8
 void PixTestBBMap::doTest()
 {
   LOG(logINFO) << "PixTestBBMap::doTest() Ntrig = " << fParNtrig
-               << " VcalS = " << fParVcalS << endl;
+               << " VcalS = " << fParVcalS
+               << " Xtalk = " << fParSubtractXtalk << endl;
 
    // save dacs
    fSavedDACs.clear();
@@ -230,52 +251,98 @@ void PixTestBBMap::doTest()
   fHistList.clear();
   PixTest::update();
 
+  // make a pixel alive test and ignore dead pixels
+  fApi->setDAC("vcal", 255);
+  fApi->setDAC("ctrlreg", 4);
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  size_t npix = rocIds.size()*ROC_NUMROWS*ROC_NUMCOLS; 
+  vector<pixel> pxalive = fApi->getEfficiencyMap(FLAG_FORCE_MASKED, fParNtrig);
+  fAlive.reserve(npix);
+  fAlive.assign(npix, false);
+  fNpixalive=0;
+  for(vector<pixel>::iterator pix_it=pxalive.begin();
+      pix_it != pxalive.end(); pix_it++){
+      fAlive[ pidx(*pix_it) ] = (pix_it->value > 0);
+      if ( fAlive[ pidx(*pix_it) ] )fNpixalive++;
+  }  
+  LOG(logDEBUG) << "fMaps:  alive " << fNpixalive;
+  if (fNpixalive==0){
+      LOG(logINFO) << "DUT appears dead ??";
+  }
+
 
   int flag= FLAG_CALS;
-  fApi->setDAC("ctrlreg", 4);     
+  fApi->setDAC("ctrlreg", 4);     // high range
   fApi->setDAC("vcal", fParVcalS);    
 
   if (fPartest>0){ 
     flag = 0;
     fApi->setDAC("ctrlreg", 0);      // low range
     fApi->setDAC("vcal", fPartest);
-  } // tests 
+  } 
    
-  bool subtractXtalk = false;
   
-  if (subtractXtalk){ cout << "just to avoid compiler warnings" << endl;}
+  vector<TH1*>  thrmapsXtalk;    
+  if (fParSubtractXtalk){
+      LOG(logDEBUG) << "taking Xtalk maps";
+      thrmapsXtalk = thrMaps("VthrComp", "calSMapXtalk", 0, 150, fParNtrig, flag | FLAG_XTALK); 
+      LOG(logDEBUG) << "Xtalk maps done";
+  }
   
-  vector<TH1*>  thrmaps = thrMaps("VthrComp", "VcalSMap", 0, 150, fParNtrig, flag); 
+  LOG(logDEBUG) << "taking CalS threshold maps";
+  vector<TH1*>  thrmapsCals = thrMaps("VthrComp", "calSMap", 0, 150, fParNtrig, flag);
 
-    
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  //vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
       
       unsigned int rocId = getIdFromIdx( idx );
-      TH2D* rocmap = (TH2D*) thrmaps[idx];
+      TH2D* rocmapRaw = (TH2D*) thrmapsCals[idx];
+      TH2D* rocmapBB  = (TH2D*) rocmapRaw->Clone(Form("BB-%2d",rocId));
+      rocmapBB->SetTitle(Form("bump bonding %2d",rocId));
+      TH2D* rocmapXtalk = 0;
       
-      /*      
-      if (subtractXtalk) {
-        fHistList.push_back( rocmap0 );
-        rocmap = (TH2D*) (mit->second)->Clone(Form("BB %2d diff",rocId));
-        rocmap->Add( rocmap0, -1. );
-        fHistOptions.insert(make_pair( rocmap, "colz" ));
-        fHistList.push_back( rocmap );
+      if (fParSubtractXtalk) {
+        rocmapXtalk = (TH2D*) thrmapsXtalk[idx];  
+        fHistList.push_back( rocmapRaw );
+        fHistList.push_back( rocmapXtalk );
+        rocmapBB->Add( rocmapXtalk, -1. );
       }
-      */
+      fHistOptions.insert(make_pair( rocmapBB, "colz" ));
+      fHistList.push_back( rocmapBB );
+
+
       // fill distribution from map
-      TH1D* hdist = bookTH1D( //new TH1D( 
+      TH1D* hdist = bookTH1D( 
         Form("CalS-threshold-distribution-%0d",rocId), 
         Form("CalS-threshold distribution %2d",rocId), 
         257, 0., 257.);
+      TH1D* hdistXtalk = bookTH1D( 
+        Form("CalS-Xtalk-distribution-%0d",rocId), 
+        Form("CalS-Xtalk distribution %2d",rocId), 
+        257, 0., 257.);
+      TH1D* hdistBB = bookTH1D( 
+        Form("CalS-Xtalksubtracted-distribution-%0d",rocId), 
+        Form("CalS-Xtalksubtracted distribution %2d",rocId), 
+        514, -257., 257.);
       
       for(int col=0; col<ROC_NUMCOLS; col++){
           for(int row=0; row<ROC_NUMROWS; row++){
-              hdist->Fill( rocmap->GetBinContent( col+1, row+1 ) );
+              hdist->Fill( rocmapRaw->GetBinContent( col+1, row+1 ) );
+              if (fParSubtractXtalk) {
+                hdistXtalk->Fill( rocmapXtalk->GetBinContent( col+1, row+1 ) );
+                hdistBB->Fill( rocmapBB->GetBinContent( col+1, row+1 ) );
+              }
           }
       }
-      fHistList.push_back( hdist );
+
+      fHistList.push_back( hdist);
+      if (fParSubtractXtalk) {
+          fHistList.push_back(hdistXtalk);
+          fHistList.push_back(hdistBB);
+      }
   }
   
   TH2D * module =  (TH2D*) moduleMap("BB module map");
