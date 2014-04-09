@@ -39,7 +39,7 @@ namespace pxar {
 // --- ROC Size ---------------------------------------------------------------
 #define ROC_NUMROWS 80
 #define ROC_NUMCOLS 52
-
+#define MOD_NUMROCS 16
 
 // --- ROC Types ---------------------------------------------------------------
 #define ROC_PSI46V2        0x01

@@ -5,6 +5,7 @@
 
 #include <TH1.h>
 #include <TRandom.h>
+#include <TMath.h>
 
 #include "PixTestScurves.hh"
 #include "PixUtil.hh"
@@ -142,6 +143,10 @@ void PixTestScurves::runCommand(string command) {
     thrMap(); 
     return;
   }
+  if (!command.compare("fits")) {
+    fitS(); 
+    return;
+  }
   return;
 }
 
@@ -160,6 +165,79 @@ void PixTestScurves::thrMap() {
 
   LOG(logINFO) << "PixTestScurves::thrMap() done ";
   PixTest::update(); 
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::fitS() {
+  PixTest::update(); 
+  fDirectory->cd();
+
+
+  if (!fParDac.compare("Vcal")) {
+    TH1D *h = (TH1D*)fDirectory->Get("scurveVcal_Vcal_c51_r62_C0");
+    
+    fPIF->fLo = fParDacLo+1;
+    fPIF->fHi = fParDacHi; 
+    TF1  *f = fPIF->errScurve(h); 
+    f->SetLineColor(kBlue); 
+    
+    for (int iroc = 0; iroc < 1; ++iroc) {
+      for (int ic = 0; ic < 2; ++ic) {
+	for (int ir = 0; ir < 10; ++ir) {
+	  
+	  h = (TH1D*)fDirectory->Get(Form("scurveVcal_Vcal_c%d_r%d_C%d", ic, ir, iroc)); 
+	  if (0 == h) continue;
+	  
+	  cout << h->GetTitle() << endl;
+	  h->Fit(f, "qr", "", fPIF->fLo, fPIF->fHi); 
+	  
+	  double Threshold  = f->GetParameter(0); 
+	  double ThresholdE = f->GetParError(0); 
+	  double Sigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
+	  double SigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
+	  cout << Threshold << " +/- " << ThresholdE << endl;
+	  PixTest::update();      
+	}
+      }
+    }
+  } 
+
+  if (!fParDac.compare("VthrComp")) {
+    TH1D *h = (TH1D*)fDirectory->Get("scurveVthrComp_VthrComp_c51_r62_C0");
+    
+    fPIF->fLo = fParDacLo+1;
+    fPIF->fHi = h->FindLastBinAbove(0.5*h->GetMaximum());  
+
+    for (int iroc = 0; iroc < 1; ++iroc) {
+      for (int ic = 0; ic < 10; ++ic) {
+	for (int ir = 0; ir < 20; ++ir) {
+	  h = (TH1D*)fDirectory->Get(Form("scurveVthrComp_VthrComp_c%d_r%d_C%d", ic, ir, iroc)); 
+	  if (0 == h) continue;
+	  
+	  cout << h->GetTitle() << endl;
+	  TF1  *f = fPIF->errScurve(h); 
+	  f->SetLineColor(kBlue); 
+	  if (fPIF->doNotFit()) {
+	  } else {
+	    h->Fit(f, "qr", "", fPIF->fLo, fPIF->fHi); 
+	  }
+	  double Threshold  = f->GetParameter(0); 
+	  double ThresholdE = f->GetParError(0); 
+	  double Sigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
+	  double SigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
+	  cout << Threshold << " +/- " << ThresholdE << endl;
+	  PixTest::update();      
+	  fHistList.push_back(h); 
+	}
+      }
+    }
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  } 
+
+
+
 
 }
 
