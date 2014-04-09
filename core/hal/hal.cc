@@ -214,9 +214,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
     LOG(logINFO) << "DTB download complete.";
     mDelay(200);
     LOG(logINFO) << "FLASH write start (LED 1..4 on)";
-    LOG(logINFO) << "DO NOT INTERUPT DTB POWER !";
-    LOG(logINFO) << "Wait till LEDs goes off.";
-    LOG(logINFO) << "Power-cycle the DTB.";
+    LOG(logWARNING) << "DO NOT INTERUPT DTB POWER! - Wait till LEDs goes off and connection is closed.";
     _testboard->UpgradeExec(recordCount);
     _testboard->Flush();
     return true;
@@ -275,7 +273,7 @@ bool hal::CheckCompatibility(){
   // This is a legacy check for boards with an old firmware not featuring the hash function:
   _testboard->GetRpcCallName(5,dtb_hashcmd);
   if(dtb_hashcmd.compare("GetRpcCallHash$I") != 0) {
-    LOG(logCRITICAL) << "Your DTB flash file is outdated, it does not proved a RPC hash value for compatibility checks.";
+    LOG(logCRITICAL) << "Your DTB flash file is outdated, it does not provide a RPC hash value for compatibility checks.";
   }
   else {
     // Get hash for the Host RPC command list:
