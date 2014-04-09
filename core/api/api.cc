@@ -348,7 +348,7 @@ uint8_t api::stringToDeviceCode(std::string name) {
   uint8_t _code = _devices->getDevCode(name);
   LOG(logDEBUGAPI) << "Device type return: " << static_cast<int>(_code);
 
-  if(_code == 0x0) {LOG(logCRITICAL) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
+  if(_code == 0x0) {LOG(logERROR) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
   return _code;
 }
 
@@ -1039,6 +1039,8 @@ int32_t api::getReadbackValue(std::string /*parameterName*/) {
 
   if(!status()) {return -1;}
   LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
+  // do NOT throw an exception here: this is not a runtime problem
+  // and has to be fixed in the code -> cannot be handled by exceptions
   return -1;
 }
 
@@ -1351,8 +1353,9 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       } // roc loop
     }// single pixel fnc
     else {
-      // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
       LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?!";
+      // do NOT throw an exception here: this is not a runtime problem
+      // but can only be a bug in the code -> this could not be handled by unwinding the stack
       return data;
     }
   } // single roc fnc

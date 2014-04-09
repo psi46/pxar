@@ -128,7 +128,12 @@ namespace pxar {
      *  Fetches a new HAL instance and opens the connection to the testboard
      *  specified in the "usbId" parameter. An asterisk as "usbId" acts as
      *  wildcard. If only one DTB is connected the algorithm will automatically
-     *  connect to this board, if several are connected it will throw a warning.
+     *  connect to this board, if several are connected it will give a warning.
+     *
+     *  On issues with the USB connection, a pxar::UsbConnectionError is thrown.
+     *  If the firmware on the DTB does not match the expected version for pxar,
+     *  a pxar::FirmwareVersionMismatch exception is thrown.
+     *
      */
     api(std::string usbId = "*", std::string logLevel = "WARNING");
 
@@ -162,6 +167,10 @@ namespace pxar {
      *  All user inputs are checked for sanity. This includes range checks on
      *  the current limits set, a sanity check for the pattern generator command
      *  list (including a check for delay = 0 at the end of the list).
+     *  If the settings are found to be out-of-range, a pxar::InvalidConfig
+     *  exception is thrown.
+     *
+     *  In case of USB communication problems, pxar::UsbConnectionError is thrown.
      */
     bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
@@ -169,15 +178,20 @@ namespace pxar {
   
     /** Initializer method for the DUT (attached devices)
      *
-     *  This function requires the types and DAC settings for all TBMs and ROCs
-     *  contained in the setup. All values will be checked for validity (DAC
-     *  ranges, position and number of pixels, etc.)
+     *  This function requires the types and DAC settings for all TBMs
+     *  and ROCs contained in the setup. All values will be checked
+     *  for validity (DAC ranges, position and number of pixels, etc.)
+     *  and an pxar::InvalidConfig exception is thrown if any errors are
+     *  encountered.
      *
      *  All parameters are supplied via vectors, the size of the vector
      *  represents the number of devices. DAC names and device types should be
      *  provided as strings. The respective register addresses will be looked up
      *  internally. Strings are checked case-insensitive, old and new DAC names
      *  are both supported.
+     *
+     *  In case of USB communication problems, pxar::UsbConnectionError is thrown.
+     *
      */
     bool initDUT(uint8_t hubId,
 		 std::string tbmtype, 
@@ -196,6 +210,7 @@ namespace pxar {
      *
      *  A DUT flag is set which prEvents test functions to be executed if 
      *  not programmed.
+     *
      */
     bool programDUT(); 
   
@@ -309,6 +324,9 @@ namespace pxar {
      *  Returns a vector of pairs containing set dac value and a pixel vector,
      *  with the value of the pixel struct being the averaged pulse height
      *  over "nTriggers" triggers
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 									       uint16_t flags = 0, uint16_t nTriggers = 16);
@@ -318,6 +336,9 @@ namespace pxar {
      *  Returns a vector of pairs containing set dac value and pixels,
      *  with the value of the pixel struct being the number of hits in that
      *  pixel. Efficiency == 1 for nhits == nTriggers
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
 					  uint16_t flags = 0, uint16_t nTriggers=16);
@@ -329,6 +350,9 @@ namespace pxar {
      *  pixel.
      *
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint16_t nTriggers=16);
 
@@ -342,6 +366,9 @@ namespace pxar {
      *  this can be used to speed up the procedure by limiting the range.
      *
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
@@ -351,6 +378,9 @@ namespace pxar {
      *  Returns a vector containing pairs of DAC1 values and pais of DAC2
      *  values with a pixel vector. The value of the pixel struct is the
      *  averaged pulse height over "nTriggers" triggers.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
@@ -361,6 +391,9 @@ namespace pxar {
      *  Returns a vector containing pairs of DAC1 values and pais of DAC2
      *  values with a pixel vector. The value of the pixel struct is the
      *  number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
 					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
@@ -370,6 +403,9 @@ namespace pxar {
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
      *  the averaged pulse height over "nTriggers" triggers
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector<pixel> getPulseheightMap(uint16_t flags = 0, uint16_t nTriggers=16);
 
@@ -377,6 +413,9 @@ namespace pxar {
      *
      *  Returns a vector of pixels, with the value of the pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector<pixel> getEfficiencyMap(uint16_t flags = 0, uint16_t nTriggers=16);
 
@@ -389,6 +428,9 @@ namespace pxar {
      *  this can be used to speed up the procedure by limiting the range.
      *
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector<pixel> getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers);
 
@@ -398,6 +440,9 @@ namespace pxar {
      *  the threshold value of that pixel.
      *
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
      */
     std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags = 0, uint16_t nTriggers=16);
 
