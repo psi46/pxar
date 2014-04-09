@@ -7,6 +7,7 @@
 #include <TMinuit.h>
 #include <TMath.h>
 #include <TStyle.h>
+#include <TGMsgBox.h>
 
 #include "PixTest.hh"
 #include "log.h"
@@ -243,7 +244,22 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
-  vector<pixel> results = fApi->getEfficiencyMap(FLAGS, ntrig);
+  vector<pixel> results;
+
+  Int_t userChoice = kMBRetry;
+  bool done = false;
+  while(userChoice==kMBRetry && !done){
+    try{
+      results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      done = true; // got our data successfully
+    }
+    catch(pxar::DataMissingEvent &e){
+      // readout of data failed
+      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
+      message+=". Try test again?";
+      new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
+    }
+  }
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
   fDirectory->cd(); 
