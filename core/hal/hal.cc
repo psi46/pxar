@@ -23,7 +23,7 @@ hal::hal(std::string name) :
   _testboard = new CTestboard();
 
   // Check if any boards are connected:
-  if(!FindDTB(name)) throw CRpcError(CRpcError::READ_ERROR);
+  FindDTB(name);
 
   // Open the testboard connection:
   if(_testboard->Open(name)) {
@@ -52,6 +52,7 @@ hal::hal(std::string name) :
       LOG(logCRITICAL) << "DTB software version could not be identified, please update!";
       _testboard->Close();
       LOG(logCRITICAL) << "Connection to board " << name << " has been cancelled.";
+      throw FirmwareVersionMismatch("DTB software version could not be identified, please update!");
     }
   }
   else {
@@ -60,6 +61,7 @@ hal::hal(std::string name) :
     LOG(logCRITICAL) << "DTB: could not open port to device.";
     LOG(logCRITICAL) << "Make sure you have permission to access USB devices.";
     LOG(logCRITICAL) << "(see documentation for UDEV configuration examples)";
+    throw UsbConnectionError("USB connection problem to DTB: could not open port to device.");
   }
 }
 
@@ -276,6 +278,7 @@ bool hal::CheckCompatibility(){
   _testboard->GetRpcCallName(5,dtb_hashcmd);
   if(dtb_hashcmd.compare("GetRpcCallHash$I") != 0) {
     LOG(logCRITICAL) << "Your DTB flash file is outdated, it does not proved a RPC hash value for compatibility checks.";
+    throw FirmwareVersionMismatch("Your DTB flash file is outdated, it does not proved a RPC hash value for compatibility checks.");
   }
   else {
     // Get hash for the Host RPC command list:
@@ -314,7 +317,7 @@ bool hal::CheckCompatibility(){
     // For now, just print a message and don't to anything else:
     LOG(logCRITICAL) << "Please update your DTB with the correct flash file.";
     LOG(logCRITICAL) << "Get Firmware " << PACKAGE_FIRMWARE << " from " << PACKAGE_FIRMWARE_URL;
-    return false;
+    throw FirmwareVersionMismatch("RPC Call hashes of DTB and Host do not match!");
   }
   else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
 
@@ -340,14 +343,19 @@ bool hal::FindDTB(std::string &usbId) {
   }
   catch (int e) {
     switch (e) {
-    case 1: LOG(logCRITICAL) << "Cannot access the USB driver\n"; return false;
-    default: return false;
+    case 1: 
+      LOG(logCRITICAL) << "Cannot access the USB driver"; 
+      throw UsbConnectionError("Cannot access the USB driver");
+      break;
+    default: 
+      throw UsbConnectionError("Coudn't open connection, received error number " + e);
+      break;
     }
   }
 
   if (devList.size() == 0) {
-    LOG(logCRITICAL) << "No DTB connected.\n";
-    return false;
+    LOG(logCRITICAL) << "No DTB connected.";
+    throw UsbConnectionError("No DTB connected.");
   }
 
   if (devList.size() == 1) {
@@ -378,8 +386,8 @@ bool hal::FindDTB(std::string &usbId) {
   sscanf (choice, "%ud", &nr);
   if (nr >= devList.size()) {
     nr = 0;
-    LOG(logCRITICAL) << "No DTB opened\n";
-    return false;
+    LOG(logCRITICAL) << "No DTB opened";
+    throw UsbConnectionError("No DTB opened.");
   }
 
   // Return the selected DTB's USB id as reference string:
