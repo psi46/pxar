@@ -25,6 +25,7 @@ typedef unsigned char uint8_t;
 #include <vector>
 #include <map>
 #include "datatypes.h"
+#include "exceptions.h"
 
 // PXAR Flags
 
@@ -481,6 +482,11 @@ namespace pxar {
      */
     std::vector<Event> daqGetEventBuffer();
 
+    /** Function that returns the number of pixel decoding errors found in the
+     *  last (non-raw) DAQ readout.
+     */
+    uint32_t daqGetNDecoderErrors();
+
     /** DUT object for book keeping of settings
      */
     dut * _dut;
@@ -596,6 +602,11 @@ namespace pxar {
 
     uint32_t getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
+    /** Helper function to update the internaly cached number of decoder errors
+     *  with the number found in the data sample passed to the function
+     */
+    void getDecoderErrorCount(std::vector<Event*> &data);
+
     /** Status of the DAQ
      */
     bool _daq_running;
@@ -608,6 +619,9 @@ namespace pxar {
      *  all PG commands
      */
     uint32_t _daq_minimum_period;
+
+    /** Number of pixel decoding errors in last DAQ readout */
+    uint32_t _ndecode_errors_lastdaq;
 
   }; // class api
 

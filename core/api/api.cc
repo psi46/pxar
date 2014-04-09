@@ -18,7 +18,8 @@ using namespace pxar;
 api::api(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _daq_minimum_period(0)
+  _daq_minimum_period(0),
+  _ndecode_errors_lastdaq(0)
 {
 
   LOG(logQUIET) << "Instanciating API for " << PACKAGE_STRING;
@@ -1156,6 +1157,9 @@ std::vector<Event> api::daqGetEventBuffer() {
   std::vector<Event> data = std::vector<Event>();
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
+  // check the data for decoder errors and update our internal counter
+  getDecoderErrorCount(buffer);
+
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
@@ -1184,6 +1188,11 @@ rawEvent api::daqGetRawEvent() {
   // Return the next raw data record from the FIFO buffer:
   return (*_hal->daqRawEvent());
 }
+
+uint32_t api::daqGetNDecoderErrors(){
+  return _ndecode_errors_lastdaq;
+}
+
 
 bool api::daqStop() {
 
@@ -1353,6 +1362,9 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
     LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
     return data;
   }
+  
+  // update the internal decoder error count for this data sample
+  getDecoderErrorCount(data);
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
@@ -1793,6 +1805,17 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
 
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
+}
+
+void api::getDecoderErrorCount(std::vector<Event*> &data){
+  // check the data for any decoding errors (stored in the events as counters)
+  _ndecode_errors_lastdaq = 0; // reset counter
+  for (std::vector<Event*>::iterator evtit = data.begin(); evtit != data.end(); ++evtit){
+    _ndecode_errors_lastdaq += (*evtit)->numDecoderErrors;
+  }
+  if (_ndecode_errors_lastdaq){
+    LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
+  }
 }
 
 void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
