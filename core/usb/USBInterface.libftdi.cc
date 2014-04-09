@@ -505,18 +505,9 @@ bool CUSB::Show()
   return true;
 }
 
-//----------------------------------------------------------------------
-int32_t CUSB::GetQueue()
+void CUSB::SetTimeout(unsigned int timeout)
 {
-  cout << " USBInterface: GetQueue() called but this function is not implemted for libftdi " << endl;
-  return 0;
-}
-
-bool CUSB::WaitForFilledQueue(int32_t /*pSize*/,int32_t /*pMaxWait*/)
-{
-  // this function has no purpose when using libftdi: we implement our own read buffer and poll 
-  if( !isUSB_open ) return false;
-  return true;
+  m_timeout = timeout;
 }
 
 //----------------------------------------------------------------------

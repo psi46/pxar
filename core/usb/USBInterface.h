@@ -4,9 +4,6 @@
 // and then passed through the makefiles to the compiler.
 // Please implement and test your modifications for both versions.
 
-// TODO:
-// - Move WaitForQueue() into read method in ftd2xx implementation
-
 
 #ifndef USB_H
 #define USB_H
@@ -87,9 +84,7 @@ public:
   void Clear();
 
   bool Show();
-  int GetQueue();
-  bool WaitForFilledQueue(int pSize,int pMaxWait=10000);
-  void SetTimeout(unsigned int timeout){m_timeout = timeout;}
+  void SetTimeout(unsigned int timeout);
 
 
   // read methods

@@ -335,60 +335,13 @@ bool CUSB::Show()
   return true;
 }
 
-//----------------------------------------------------------------------
-int CUSB::GetQueue()
+
+void CUSB::SetTimeout(unsigned int timeout)
 {
-  if( !isUSB_open ) return -1;
-
-  DWORD bytesAvailable;
-  ftdiStatus = FT_GetQueueStatus( ftHandle, &bytesAvailable );
-  if( ftdiStatus != FT_OK ) {
-    std::cout << " CUSB::GetQeue(): USB connection not OK\n";
-    return -1;
-  }
-  return bytesAvailable;
+  m_timeout = timeout;
+  if( !isUSB_open ) return;
+  FT_SetTimeouts(ftHandle,m_timeout,m_timeout);
 }
-
-//----------------------------------------------------------------------
-// Waits in 10ms steps until queue is filled with pSize bytes;
-// pSize should be calculated dependent of the data type to be read:
-// e.g. if you want to read 100 shorts using Read_SHORTS() then pSize = 100*sizeof(short).
-// Maximum time to wait set by pMaxWait (in ms); if exceeded, the method returns false,
-// otherwise it returns true (=ready to read queue)
-// If pMaxWait is negative the routine will wait forever until buffer is filled.
-// Experience so far (using ATB):
-// - The routine works well in all tested cases and can replace extended MDelay calls
-// - After a usb_write, a short delay (~ 10ms ?) is needed before calling this routine; 
-//     in case of memreadout the first buffer seems to be truncated otherwise 
-
-bool CUSB::WaitForFilledQueue( int32_t pSize, int32_t pMaxWait )
-{
-  if( !isUSB_open ) return false;
-
-  int32_t waitCounter = 0;
-  int32_t bytesWaiting = GetQueue();
-  while( ( ( waitCounter*10 < pMaxWait) || pMaxWait < 0 ) && bytesWaiting < pSize ) {
-    if( (waitCounter+1) % 100 == 0 ) std::cout << "USB waiting for " << pSize << " data, t = " << waitCounter*10 << " ms, bytes to fetch so far = " << bytesWaiting << std::endl;
-#ifdef WIN32
-    Sleep(10);
-#else
-    usleep(10000); // wait 10 ms
-#endif // WIN32
-    waitCounter++;
-    bytesWaiting = GetQueue();
-  }
-  // check if the timeout has been reached:
-  if( waitCounter*10 >= pMaxWait ) {
-    std::cout << "USB ... timeout reached! ";
-    // check if we have data
-    if( bytesWaiting > 0 ) std::cout << "USB buffer filled with " << bytesWaiting << " bytes, check if given expectation of " << pSize << " is correct! " << endl;
-    else std::cout << "USB NO DATA in buffer! " << endl;
-    return false;
-  }
-  //std::cout << "USB ready to read data after = " << waitCounter*10 << " ms, bytes to fetch = " << bytesWaiting << std::endl;
-  return true;
-}
-
 
 void CUSB::Read_String(char *s, uint16_t maxlength)
 {
