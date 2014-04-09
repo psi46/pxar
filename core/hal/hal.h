@@ -295,10 +295,6 @@ namespace pxar {
      */
     void RocSetMask(uint8_t roci2c, bool mask, std::vector<pixelConfig> pixels = std::vector<pixelConfig>());
 
-    /** Mask the specified pixel on ROC I2C address
-     */
-    void PixelSetMask(uint8_t roci2c, uint8_t column, uint8_t row, bool mask, uint8_t trim = 15);
-
     /** Set the Calibrate bit and CALS setting of a pixel
      */
     void PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t flags);
@@ -307,9 +303,9 @@ namespace pxar {
      */
     void RocClearCalibrate(uint8_t roci2c);
 
-    /** Set the Column Enable bit
+    /** Set the Column Enable bit for all columns
      */
-    void ColumnSetEnable(uint8_t roci2c, uint8_t column, bool enable);
+    void AllColumnsSetEnable(uint8_t roci2c, bool enable);
 
   private:
 

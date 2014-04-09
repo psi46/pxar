@@ -514,60 +514,45 @@ void hal::RocSetMask(uint8_t roci2c, bool mask, std::vector<pixelConfig> pixels)
   // Check if we want to mask or unmask&trim:
   if(mask) {
     // This is quite easy:
-    LOG(logDEBUGHAL) << "Masking ROC@I2C " << static_cast<int>(roci2c);
+    LOG(logDEBUGHAL) << "Masking full ROC@I2C " << static_cast<int>(roci2c);
 
     // Mask the PUC and detach all DC from their readout (both done on NIOS):
     _testboard->roc_Chip_Mask();
   }
   else {
-    // We really want to enable that full thing:
-    LOG(logDEBUGHAL) << "Updating mask bits & trim values of ROC@I2C " << static_cast<int>(roci2c);
-
     // Prepare configuration of the pixels, linearize vector:
     std::vector<int16_t> trim;
-    // Set default trim value to 15:
-    for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(15); }
+
+    // Set the default to "masked":
+    for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(-1); }
+    
+    // Write the information from the pixel configs:
     for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-      size_t position = (*pxIt).column*ROC_NUMROWS + (*pxIt).row;
-      trim[position] = (*pxIt).trim;
+      size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
+      if(pxIt->mask) trim[position] = -1;
+      else trim[position] = pxIt->trim;
     }
 
-    // FIXME we can do that in the TrimChip function on NIOS!
-    // Detach all Double Columns from their readout:
-    for(uint8_t col = 0; col < ROC_NUMCOLS; col++) {
-      _testboard->roc_Col_Enable(col,true);
-    }
-    
+    // We really want to program that full thing with correct mask/trim bits:
+    LOG(logDEBUGHAL) << "Updating mask bits & trim values of ROC@I2C " << static_cast<int>(roci2c);
+
     // Trim the whole ROC:
     _testboard->TrimChip(trim);
   }
 }
 
-void hal::PixelSetMask(uint8_t roci2c, uint8_t column, uint8_t row, bool mask, uint8_t trim) {
-
-  _testboard->roc_I2cAddr(roci2c);
-
-  // Check if we want to mask or unmask&trim:
-  if(mask) {
-    LOG(logDEBUGHAL) << "Masking pixel " << static_cast<int>(column) << "," << static_cast<int>(row)
-		     << " on ROC@I2C " << static_cast<int>(roci2c);
-    _testboard->roc_Pix_Mask(column, row);
-  }
-  else {
-    LOG(logDEBUGHAL) << "Trimming pixel " << static_cast<int>(column) << "," << static_cast<int>(row)
-		     << " (" << static_cast<int>(trim) << ")";
-    _testboard->roc_Pix_Trim(column,row,trim);
-  }
-}
-
-void hal::ColumnSetEnable(uint8_t roci2c, uint8_t column, bool enable) {
+void hal::AllColumnsSetEnable(uint8_t roci2c, bool enable) {
 
   // Set the correct ROC I2C address:
   _testboard->roc_I2cAddr(roci2c);
 
-  // Set the Col Enable bit:
-  LOG(logDEBUGHAL) << "Setting Column " << static_cast<int>(column) << " enable bit to " << static_cast<int>(enable);
-  _testboard->roc_Col_Enable(column,enable);
+  // Attach/detach all columns:
+  LOG(logDEBUGAPI) << (enable ? "Attaching" : "Detaching")
+		   << " all columns from readout for ROC@I2C " << static_cast<int>(roci2c);
+
+  for(size_t column = 0; column < ROC_NUMCOLS; column++ ) {
+    _testboard->roc_Col_Enable(static_cast<uint8_t>(column),enable);
+  }
 }
 
 void hal::PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t flags) {
@@ -588,6 +573,17 @@ void hal::RocClearCalibrate(uint8_t roci2c) {
   LOG(logDEBUGHAL) << "Clearing calibrate signal for ROC " << static_cast<int>(roci2c);
  _testboard->roc_ClrCal();
 }
+
+
+/*
+void hal::getExpectedSamples(uint32_t events, uint32_t samples, uint8_t nrocs, uint16_t npixels, uint32_t iterations) {
+ 
+  // Length ROC header: 1 sample
+  // Length pixel:      2 samples
+  samples = 2*pixels + ;
+  events  = pixels*iterations;
+}
+*/
 
 
 // ---------------- TEST FUNCTIONS ----------------------
