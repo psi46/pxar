@@ -277,11 +277,6 @@ namespace pxar {
      */
     bool daqClear();
 
-    /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
-     */
-    bool daqProblem() {return fDaqProblem;}
-
-
 
     // Functions to access NIOS storage of trim values:
 
@@ -397,8 +392,6 @@ namespace pxar {
     dtbEventDecoder decoder1;
     dtbEventDecoder decoder2;
     dtbEventDecoder decoder3;
-
-    bool fDaqProblem;
 
   };
 }
