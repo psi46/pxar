@@ -135,8 +135,20 @@ int main(int argc, char *argv[]){
     LOG(logINFO) << "DUT info: ";
     api->_dut->info(); 
     
-  } catch (...) {
-    LOG(logINFO)<< "pxar caught an exception from the board. Exiting.";
+  } 
+  catch (pxar::InvalidConfig &e){
+    std::cout << "pxar caught an exception due to invalid configuration settings: " << e.what() << std::endl;
+    delete api;
+    return -1;    
+  }
+  catch (pxar::pxarException &e){
+    std::cout << "pxar caught an internal exception: " << e.what() << std::endl;
+    delete api;
+    return -1;    
+  }
+  catch (...) {
+    std::cout << "pxar caught an unknown exception. Exiting." << std::endl;
+    delete api;
     return -1;
   }
 
