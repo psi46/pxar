@@ -84,8 +84,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   }
 
   if(va < 0.01 || vd < 0.01 || ia < 0.01 || id < 0.01) {
-    LOG(logCRITICAL) << "Power settings are not suffient. Please check and re-configure!";
-    return false;
+    LOG(logCRITICAL) << "Power settings are not sufficient. Please check and re-configure!";
+    throw InvalidConfig("Power settings are not sufficient. Please check and re-configure.");
   }
 
 
@@ -129,19 +129,17 @@ bool api::initDUT(uint8_t hubid,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
-
   // Verification/sanitry checks of supplied DUT configuration values
   // Check size of rocDACs and rocPixels against each other
   if(rocDACs.size() != rocPixels.size()) {
     LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
     LOG(logCRITICAL) << "This cannot end well...";
-    return false;
+    throw InvalidConfig("Mismatch between number of DAC and pixel configurations");
   }
   // check for presence of DAC/pixel configurations
   if (rocDACs.size() == 0 || rocPixels.size() == 0){
     LOG(logCRITICAL) << "No DAC/pixel configurations for any ROC supplied!";
-    return false;
+    throw InvalidConfig("No DAC/pixel configurations for any ROC supplied");
   }
   // check individual pixel configs
   for(std::vector<std::vector<pixelConfig> >::iterator rocit = rocPixels.begin();rocit != rocPixels.end(); rocit++){
@@ -151,7 +149,7 @@ bool api::initDUT(uint8_t hubid,
     }
     if ((*rocit).size() > 4160){
       LOG(logCRITICAL) << "Too many pixels (N_pixel="<< (*rocit).size() <<" > 4160) configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
-      return false;
+      throw InvalidConfig("Too many pixels (>4160) configured");
     }
     // check individual pixel configurations
     int nduplicates = 0;
@@ -162,13 +160,13 @@ bool api::initDUT(uint8_t hubid,
       }
     }
     if (nduplicates>0){
-      return false;
+      throw InvalidConfig("Duplicate pixel configurations present");
     }
 
     // check for pixels out of range
     if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0) {
       LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
-      return false;
+      throw InvalidConfig("Found pixels with values for column and row outside of valid address range");
     }
   }
 
