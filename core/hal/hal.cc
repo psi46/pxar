@@ -289,30 +289,15 @@ bool hal::CheckCompatibility(){
 
   // If they don't match check RPC calls one by one and print offenders:
   if(dtb_hashcmd.compare("GetRpcCallHash$I") != 0 || dtbCmdHash != hostCmdHash) {
-    LOG(logCRITICAL) << "RPC Call hashes of DTB and Host do not match!";
+    LOG(logWARNING) << "RPC Call hashes of DTB and Host do not match!";
 
-    // Get the number of RPC calls available on both ends:
-    int32_t dtb_callcount = _testboard->GetRpcCallCount();
-    int32_t host_callcount = _testboard->GetHostRpcCallCount();
-
-    for(int id = 0; id < std::max(dtb_callcount,host_callcount); id++) {
-      std::string dtb_callname;
-      std::string host_callname;
-
-      if(id < dtb_callcount) {_testboard->GetRpcCallName(id,dtb_callname);}
-      if(id < host_callcount) {_testboard->GetHostRpcCallName(id,host_callname);}
-
-      if(dtb_callname.compare(host_callname) != 0) {
-	LOG(logDEBUGHAL) << "ID " << id 
-			 << ": (DTB) \"" << dtb_callname 
-			 << "\" != (Host) \"" << host_callname << "\"";
-      }
+    if(!_testboard->RpcLink()) {
+      // For now, just print a message and don't to anything else:
+      LOG(logCRITICAL) << "Please update your DTB with the correct flash file.";
+      LOG(logCRITICAL) << "Get Firmware " << PACKAGE_FIRMWARE << " from " << PACKAGE_FIRMWARE_URL;
+      return false;
     }
-
-    // For now, just print a message and don't to anything else:
-    LOG(logCRITICAL) << "Please update your DTB with the correct flash file.";
-    LOG(logCRITICAL) << "Get Firmware " << PACKAGE_FIRMWARE << " from " << PACKAGE_FIRMWARE_URL;
-    return false;
+    else { return true; }
   }
   else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
 

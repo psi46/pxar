@@ -40,6 +40,25 @@ public:
 	RPC_EXPORT bool    GetRpcCallName(int32_t id, stringR &callName);
 	RPC_EXPORT uint32_t GetRpcCallHash();
 
+	bool RpcLink() {
+
+	  bool error = false;
+	  for (unsigned short i = 2; i < rpc_cmdListSize; i++) {
+	    try { rpc_GetCallId(i); }
+	    catch (CRpcError &e) {
+	      e.SetFunction(0);
+	      if (!error) { LOG(pxar::logERROR) << "Missing DTB functions:"; }
+	      std::string fname(rpc_cmdName[i]);
+	      std::string fname_pretty;
+	      rpc_TranslateCallName(fname, fname_pretty);
+	      LOG(pxar::logERROR) << fname_pretty.c_str();
+	      error = true;
+	    }
+	  }
+	  return !error;
+	}
+
+
 	// === DTB connection ====================================================
 
 	inline bool Open(string &name, bool init=true) {
