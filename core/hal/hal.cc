@@ -640,12 +640,23 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for missing events
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -671,13 +682,23 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  // We expect one Event per trigger, all ROCs are triggered in parallel:
-  int missing = nTriggers - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // We expect one Event per trigger, all ROCs are triggered in parallel:
+  int missing = nTriggers - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; 
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -702,12 +723,23 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for missing events
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -731,13 +763,23 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  // We are expecting one Event per trigger:
-  int missing = nTriggers - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // We are expecting one Event per trigger:
+  int missing = nTriggers - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -771,12 +813,23 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -811,12 +864,23 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -847,12 +911,23 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -883,12 +958,23 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -927,12 +1013,23 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -974,12 +1071,23 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -1017,12 +1125,23 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
@@ -1060,12 +1179,23 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 
   std::vector<Event*> data = daqAllEvents();
   LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events, loop+readout took " << t << "ms.";
-  int missing = expected - data.size();
-  if(missing != 0) { LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; }
 
   // Clear & reset the DAQ buffer on the testboard.
   daqStop();
   daqClear();
+
+  // check for errors in readout (i.e. missing events)
+  int missing = expected - data.size();
+  if(missing != 0) { 
+    LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
+    // serious runtime issue as data is invalid and cannot be recovered at this point:
+    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
+      // clean up (now garbage) events
+      delete *evtit;
+    }
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+  }
+
   return data;
 }
 
