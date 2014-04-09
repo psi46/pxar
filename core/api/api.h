@@ -303,6 +303,8 @@ namespace pxar {
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
+    bool daqProblem();
+
     /** Method to scan a DAC range and measure the pulse height
      *
      *  Returns a vector of pairs containing set dac value and a pixel vector,

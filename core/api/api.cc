@@ -15,6 +15,8 @@
 
 using namespace pxar;
 
+bool api::daqProblem(){return _hal->daqProblem();}
+
 api::api(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
@@ -1272,6 +1274,12 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column, px->row, param);
 
 	// merge pixel data into roc data storage vector
+	//         ofstream OUTFILE("api-expandLoop.txt", ios::app);
+	//         OUTFILE << "= px it = " << px - enabledPixels.begin() << " ===============" << std::endl;
+	//         for (unsigned i = 0; i < rocdata.size(); ++i) {
+	//           OUTFILE << *rocdata[i] << std::endl;
+	//         }
+	//         OUTFILE.close();
 	if (rocdata.empty()){
 	  rocdata = buffer; // for first time call
 	} else {
@@ -1310,6 +1318,14 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
+
+	//         ofstream OUTFILE("api-expandLoop-single.txt", ios::app);
+	//         OUTFILE << "= roc it = " << rocit - enabledRocs.begin() << " ===============" << std::endl;
+	//         for (unsigned i = 0; i < rocdata.size(); ++i) {
+	//           OUTFILE << *rocdata[i] << std::endl;
+	//         }
+	//         OUTFILE.close();
+
         if (data.empty()) data = rocdata;
 	else {
 	  data.reserve(data.size() + rocdata.size());

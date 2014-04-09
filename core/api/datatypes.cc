@@ -7,6 +7,9 @@ namespace pxar {
 
   void pixel::decodeRaw(uint32_t raw, bool invert) {
     value = (raw & 0x0f) + ((raw >> 1) & 0xf0);
+    if( (raw & 0x10) >0){
+       LOG(logCRITICAL) << "invalid pulse-height stuff bit from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+    }
     int c =    (raw >> 21) & 7;
     c = c*6 + ((raw >> 18) & 7);
     
@@ -22,7 +25,12 @@ namespace pxar {
     column = 2*c + (r&1);
     
     if (row >= ROC_NUMROWS || column >= ROC_NUMCOLS){
-      LOG(logCRITICAL) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      static int badc(-1), badr(-1); 
+      if (row != badr && column != badc) {
+	LOG(logCRITICAL) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      }
+      badc = column;
+      badr = row; 
     }
   }
 

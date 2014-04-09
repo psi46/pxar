@@ -20,10 +20,11 @@ public:
 
   void resetLimits(); 
   void limitPar(int ipar, double lo, double hi); 
+  bool doNotFit() {return fDoNotFit;}
 
   TF1* errScurve(TH1 *h); 
 
-
+  bool fDoNotFit;
   double fLo, fHi;
   bool fLimit[20];
   double fLimitLo[20], fLimitHi[20]; 
