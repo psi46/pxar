@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <time.h> // needed for usleep function
 
+#include "log.h"
+#include "exceptions.h"
+
 #include "USBInterface.h"
 
 // needed for threaded readout of FTDI
@@ -32,6 +35,7 @@ const int32_t productID_OLD = 0x6001; //  single channel devices (R Chips) used 
 const int32_t vendorID = 0x0403; // Future Technology Devices International, Ltd
 
 using namespace std;
+using namespace pxar;
 
 static void add_to_buf (unsigned char c) {
     int32_t nh;
@@ -63,7 +67,8 @@ static void *reader (void *arg) {
       br = ftdi_read_data (handle, buf, sizeof(buf));
       pthread_testcancel();
       if (br< 0){
-	std::cout << " ERROR during USB read polling: error code from libusb_bulk_transfer(): " << br << std::endl;
+	LOG(logCRITICAL)<< "ERROR during USB read polling: error code from libusb_bulk_transfer(): " << br;
+	throw UsbConnectionError("ERROR during USB read polling");
       }
       if (br > 0){
 	for (i=0; i<br; i++){
@@ -137,8 +142,8 @@ CUSB::CUSB(){
       ftdiStatus = ftdi_init(&ftdic);
       if ( ftdiStatus < 0)
 	{
-	  cout <<  "USBInterface constructor: ftdi_init failed" << endl;
-	  exit(1);
+	  LOG(logCRITICAL) <<  "USBInterface constructor: ftdi_init failed";
+	  throw UsbConnectionError("USBInterface constructor: ftdi_init failed");
 	}
 }
 
@@ -153,11 +158,9 @@ CUSB::~CUSB(){
     // check status and break if usbdevice is closed
     pthread_mutex_lock(&cleanup_mutex); 
     if (usbdeinit_done) {
-      // cout << " DEBUG: successfully free'd usb handle connection " << endl;
       done = true;    }
     pthread_mutex_unlock(&cleanup_mutex);
     if (done) break;  }
-  //if (!done) cout << " WARNING: freeing the USB handle timed out! " << endl;
 }
 
 const char* CUSB::GetErrorMsg()
@@ -186,8 +189,8 @@ bool CUSB::EnumFirst(uint32_t &nDevices)
 bool CUSB::EnumNext(char name[])
 {
   if( isUSB_open) { 
-    std::cout << " Warning: Trying to call USBInterface::EnumNext() while other USB device still open" << std::endl;
-    return false; 
+    LOG(logWARNING) << " Warning: Trying to call USBInterface::EnumNext() while other USB device is still open";
+    return false;
   }
   struct ftdi_device_list *  	devlist;
   ftdiStatus =  FindAllUSB(&devlist);
@@ -205,7 +208,8 @@ bool CUSB::EnumNext(char name[])
 
   if ((ftdiStatus = ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 128, description, 128, serial, 128)) < 0)
     {
-      std::cout << " USBInterface::EnumNext(): Error polling USB device number " << enumPos << std::endl;
+      LOG(logCRITICAL) << " USBInterface::EnumNext(): Error polling USB device number " << enumPos;
+      throw UsbConnectionError(" USBInterface::EnumNext(): Error polling USB device");
       return EXIT_FAILURE;
     }
   strcpy(name,serial); // return device string information for a single device
@@ -218,8 +222,8 @@ bool CUSB::EnumNext(char name[])
 bool CUSB::Enum(char name[], uint32_t pos)
 {
   if( isUSB_open) { 
-    std::cout << " Warning: Trying to call USBInterface::Enum() while other USB device still open" << std::endl;
-    return false; 
+    LOG(logWARNING) << " Warning: Trying to call USBInterface::Enum() while other USB device still open";
+    return false;
   }
 
   struct ftdi_device_list *  	devlist;
@@ -237,7 +241,8 @@ bool CUSB::Enum(char name[], uint32_t pos)
   char manufacturer[128], description[128], serial[128];
   if ((ftdiStatus = ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 128, description, 128, serial, 128)) < 0)
     {
-      std::cout << " USBInterface::EnumNext(): Error polling USB device number " << pos << std::endl;
+      LOG(logCRITICAL) << " USBInterface::EnumNext(): Error polling USB device number " << pos;
+      throw UsbConnectionError(" USBInterface::EnumNext(): Error polling USB device");
       return EXIT_FAILURE;
     }
   strcpy(name,serial); // return device string information for a single device
@@ -251,11 +256,11 @@ bool CUSB::Enum(char name[], uint32_t pos)
 bool CUSB::Open(char serialNumber[])
 {
   if( isUSB_open) { 
-    std::cout << " Warning: Trying to open new USB device while other device still open" << std::endl;
+    LOG(logWARNING) << " Warning: Trying to open new USB device while other device still open";
     return false; 
   }
   
-  std::cout << " USBInterface::Open(): searching for device with serial number: '" << serialNumber << "'" << std::endl;
+  LOG(logDEBUGUSB) << " USBInterface::Open(): searching for device with serial number: '" << serialNumber << "'";
 
   // reset buffer index positions
   m_posR = m_sizeR = m_posW = 0;
@@ -265,7 +270,8 @@ bool CUSB::Open(char serialNumber[])
   ftdiStatus =  FindAllUSB(&devlist);
   
   if( ftdiStatus <= 0) {
-    std::cout << " USBInterface::Open(): Error searching attached USB devices! ftdiStatus: " << ftdiStatus << std::endl;
+    LOG(logCRITICAL) << " USBInterface::Open(): Error searching attached USB devices! ftdiStatus: " << ftdiStatus;
+    throw UsbConnectionError(" USBInterface::Open(): Error searching attached USB devices!");
     return EXIT_FAILURE;
   }
 
@@ -276,72 +282,74 @@ bool CUSB::Open(char serialNumber[])
     if ((ftdiStatus = 
 	 ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 
 			      128, description, 128, serial, 128)) < 0){
-      std::cout << " USBInterface::Open(): Error polling USB device number " << i << std::endl;
+      LOG(logDEBUGUSB) << " USBInterface::Open(): Error polling USB device number " << i;
       devlist = devlist->next;
       continue;
     }    
     if (strcmp(serialNumber,serial)!=0 && strcmp(serialNumber,"*")!=0){
       // not found, next device
-      std::cout << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'" << std::endl;
+      LOG(logDEBUGUSB) << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'";
 
       devlist = devlist->next;
     } else {
       // found the device
-      std::cout << " USBInterface::Open(): found device with serial " << serial << std::endl;
+      LOG(logDEBUGUSB) << " USBInterface::Open(): found device with serial " << serial;
       // now open it
       ftdiStatus = ftdi_usb_open_dev(&ftdic, devlist->dev);
       if( ftdiStatus < 0) {
 	/* maybe the ftdi_sio and usbserial kernel modules are attached to the device */
 	/* try to detach them using the libusb library directly */
-	std::cout << " Warning: FTDI returned status code " << ftdiStatus << ", will try to detach ftdi_sio and usbserial kernel modules " << std::endl;
+	LOG(logWARNING) << " Warning: FTDI returned status code " << ftdiStatus << ", will try to detach ftdi_sio and usbserial kernel modules ";
 	libusb_device_handle *handle;
 	/* open the device */
 	int32_t ok = libusb_open((libusb_device*)devlist->dev, &handle);
 	if( ok != 0){
-	  std::cout << " Warning: libusb returned status code " << ok << ", could not get USB device handle " << std::endl;
+	  LOG(logCRITICAL) << "libusb returned status code " << ok << ", could not get USB device handle ";
 	  ftdi_list_free(&devlist);
+	  throw UsbConnectionError("Could not get USB device handle, libusb returned error.");
 	  return EXIT_FAILURE;
 	}
 	
 	/* Detach the kernel module from the device */
         ok = libusb_detach_kernel_driver(handle, 0);
         if( ok == 0){
-	  std::cout << " Detached kernel driver from selected testboard. " << std::endl;
+	  LOG(logDEBUGUSB) << " Detached kernel driver from selected testboard. ";
         } else {
-          std::cout << "Unable to detach kernel driver from selected testboard." << std::endl;
+          LOG(logDEBUGUSB) << "Unable to detach kernel driver from selected testboard.";
 	}
 	libusb_close(handle);
 
 	// now open it again
 	ftdiStatus = ftdi_usb_open_dev(&ftdic, devlist->dev);
 	if( ftdiStatus < 0) {
-	  std::cout << " Warning: FTDI returned status code " << ftdiStatus << ", will try to detach ftdi_sio and usbserial kernel modules " << std::endl;
+	  LOG(logCRITICAL) << "FTDI returned status code " << ftdiStatus << " after attempt to detach kernel drivers ";
 	  ftdi_list_free(&devlist);
+	  throw UsbConnectionError("Could not open device, FTDI returned error.");
 	  return EXIT_FAILURE;
 	}
       }
       isUSB_open = true;
-      std::cout << " FTDI successfully opened connection to device " << std::endl;
+      LOG(logDEBUGUSB) << " FTDI successfully opened connection to device ";
 
     } // strcmp serial
   } // device loop
   
   ftdi_list_free(&devlist);
   if (!isUSB_open){
-    std::cout << " Device with serial '" << serialNumber <<  "' not found! :-( " << std::endl;
+    LOG(logWARNING) << "DTB with serial '" << serialNumber <<  "' not found! :-( ";
     return EXIT_FAILURE;
   }
 
-  //std::cout << " resetting mode for FTDI chip " << std::endl;
+  // resetting mode for FTDI chip
   int32_t status =  ftdi_set_bitmode(&ftdic, 0xFF, 0x40);
   if (status < 0){
-    std::cout << " ERROR issuing reset: return code " << status << std::endl;
+    LOG(logCRITICAL) << " ERROR issuing reset: return code " << status;
   }
   usleep(10000); // wait 10 ms
-  //std::cout << " setting bit mode for FTDI chip " << std::endl;
+  //setting bit mode for FTDI chip
   status =  ftdi_set_bitmode(&ftdic, 0xFF, 0x40);
   if (status < 0){
-    std::cout << " ERROR setting bit mode: return code " << status << std::endl;
+    LOG(logCRITICAL) << " ERROR setting bit mode: return code " << status;
   }
 
   // init threads for client-side data buffering
@@ -372,11 +380,11 @@ void CUSB::Close(){
     // check status and break if usbdevice is closed
     pthread_mutex_lock(&cleanup_mutex);  // lock mutex
     if (usbclose_done) {
-      //cout << " DEBUG: successfully closed usb connection " << endl;
+      //successfully closed usb connection
       done = true; }
     pthread_mutex_unlock(&cleanup_mutex); // unlock mutex
     if (done) break;}
-  //if (!done) cout << " WARNING: closing the USB connection timed out! " << endl;
+  //WARNING: closing the USB connection timed out!
   isUSB_open = 0;
 }
 
@@ -388,7 +396,7 @@ void CUSB::WriteCommand(unsigned char x){
 
 void CUSB::Write(uint32_t bytesToWrite, const void *buffer)
 { 
-    if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
+  if (!isUSB_open) throw UsbConnectionError("Attempt to write to USB without open connection.");
   uint32_t k=0;
   for( k=0; k < bytesToWrite; k++ ) {
     if( m_posW >= USBWRITEBUFFERSIZE) {Flush();}
@@ -403,29 +411,29 @@ void CUSB::Flush()
   int32_t bytesToWrite = m_posW;
   m_posW = 0;
 
-  if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
+  if (!isUSB_open) throw UsbConnectionError("Attempt to write to USB without open connection.");
 
   if( !bytesToWrite) return;
 
   ftdiStatus = ftdi_write_data(&ftdic, m_bufferW, bytesToWrite);
 
-  if( ftdiStatus < 0)  throw CRpcError(CRpcError::WRITE_ERROR);
+  if( ftdiStatus < 0)  throw UsbConnectionError("USB write failed");
   if( ftdiStatus != bytesToWrite) { 
-    std::cout<< " Warning: USBInterface: mismatch of bytes sent to USB chip and bytes written! " << std::endl;
-    throw CRpcError(CRpcError::WRITE_ERROR);
+    LOG(logCRITICAL) << " Mismatch of bytes sent to USB chip and bytes written! ";
+    throw UsbConnectionError("USBInterface: mismatch of bytes sent to USB chip and bytes written!");
   }
 }
 
 bool CUSB::FillBuffer(uint32_t /*minBytesToRead*/)
 {
-  cout << " USBInterface: FillBuffer() called but this function is not implemted anymore for libftdi " << endl;
+  LOG(logWARNING) << " USBInterface: FillBuffer() called but this function is not implemented for libftdi ";
   return true;
 }
 
 
 void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 {
-   if (!isUSB_open) throw CRpcError(CRpcError::READ_ERROR);
+  if (!isUSB_open) throw UsbConnectionError("Attempt to read from USB without open connection.");
  
    // Copy over data from the circular buffer
     uint32_t i;
@@ -436,16 +444,12 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 	if (tail == head) bufferready = false;
 	if (!bufferready){
 	  while (!bufferready && timewasted<m_timeout){
-	    if (timewasted==(m_timeout/10)) cout<< "USBInterface: Read(): data not ready after " << timewasted << "ms yet! Will wait for up to " << m_timeout << "ms"<< flush;
-	    if (timewasted>m_timeout && timewasted%100==0 ) cout << "." << flush;
+	    if (timewasted==(m_timeout/5)) {
+	      LOG(logWARNING) << "USBInterface: Read(): data not ready after " << timewasted << "ms yet! Will wait for up to " << m_timeout << "ms";
+	    }
 	    usleep(1000); //wait 1 ms
 	    timewasted++;
 	    if (tail != head) bufferready = true;	    
-	  }
-	  // if timeout message was printed before show the conclusion now
-	  if (timewasted >= (m_timeout/10)){
-	    if (bufferready) cout << "..done!" << endl;
-	    else cout << "..failed! :(    .. maybe adjust timeout setting (method SetTimeout(int)) for this call?" <<endl;
 	  }
 	}
 	if (bufferready){
@@ -458,7 +462,8 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 	else // buffer was not ready and reading it timed out so we stop attempting it now
 	  {
 	    bytesRead = i;
-	    throw CRpcError(CRpcError::READ_TIMEOUT);
+	    LOG(logCRITICAL) << " Timeout reading from USB buffer after " << m_timeout << " ms ";
+	    throw UsbConnectionTimeout("Timeout reading from USB");
 	    break;
 	  }
       }
@@ -486,19 +491,17 @@ void CUSB::Clear()
 //----------------------------------------------------------------------
 bool CUSB::Show()
 {
-  cout << " USB status: " << endl;
+  LOG(logINFO) << " USB status: ";
   if( !isUSB_open) {
-    cout << "  - USB connection not open " << endl;
+    LOG(logINFO) << "  - USB connection not open ";
     return false;
   }
-  cout << "  - max timeout for read calls set to " << m_timeout << "ms" << endl;
+  LOG(logINFO) << "  - max timeout for read calls set to " << m_timeout << "ms";
 
   unsigned char latency;
-  if (ftdi_get_latency_timer(&ftdic,&latency)==0)  cout << "  - FTDI latency timer set to " << (int) latency << endl;
-  cout << "  - data waiting in local read buffer: " << !(tail == head) << endl;
-  
-
-  
+  if (ftdi_get_latency_timer(&ftdic,&latency)==0){ LOG(logINFO) << "  - FTDI latency timer set to " << (int) latency;}
+  LOG(logINFO) << "  - data waiting in local read buffer: " << !(tail == head);
+ 
   return true;
 }
 

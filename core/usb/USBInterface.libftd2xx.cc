@@ -10,9 +10,13 @@
 #include <stdio.h>
 #include <iostream>
 
+#include "log.h"
+#include "exceptions.h"
+
 #include "USBInterface.h"
 
 using namespace std;
+using namespace pxar;
 
 
 CUSB::CUSB(){
@@ -202,7 +206,7 @@ void CUSB::Close()
 
 void CUSB::Write(uint32_t bytesToWrite, const void *buffer)
 {
-	if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
+  if (!isUSB_open) throw UsbConnectionError("Attempt to write to USB without open connection.");
 	uint32_t k=0;
 	for (k=0; k < bytesToWrite; k++)
 	{
@@ -224,14 +228,14 @@ void CUSB::Flush()
 	DWORD bytesToWrite = m_posW;
 	m_posW = 0;
 
-	if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
+	if (!isUSB_open) throw UsbConnectionError("Attempt to write to USB without open connection.");
 
 	if (!bytesToWrite) return;
 
 	ftdiStatus = FT_Write(ftHandle, m_bufferW, bytesToWrite, &bytesWritten);
 
-	if (ftdiStatus != FT_OK) throw CRpcError(CRpcError::WRITE_ERROR);
-	if (bytesWritten != bytesToWrite) { ftdiStatus = FT_IO_ERROR; throw CRpcError(CRpcError::WRITE_ERROR); }
+	if (ftdiStatus != FT_OK) throw UsbConnectionError("Failure writing to USB");
+	if (bytesWritten != bytesToWrite) { ftdiStatus = FT_IO_ERROR; throw UsbConnectionError("Incomplete write to USB."); }
 }
 
 
@@ -263,7 +267,7 @@ bool CUSB::FillBuffer(uint32_t minBytesToRead)
 void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 {
 
-	if (!isUSB_open) throw CRpcError(CRpcError::READ_ERROR);
+	if (!isUSB_open) throw UsbConnectionError("Attempt to read from USB without open connection.");
 
 	bool timeout = false;
 	bytesRead = 0;
@@ -280,7 +284,7 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 			uint32_t n = bytesToRead-i;
 			if (n>USBREADBUFFERSIZE) n = USBREADBUFFERSIZE;
 
-			if (!FillBuffer(n)) throw CRpcError(CRpcError::READ_ERROR);
+			if (!FillBuffer(n)) throw UsbConnectionError("Error writing to USB");
 			if (m_sizeR < n) timeout = true;
 
 			if (m_posR<m_sizeR)
@@ -288,14 +292,14 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 			else
 			{   // timeout (bytesRead < bytesToRead)
 				bytesRead = i;
-				throw CRpcError(CRpcError::READ_TIMEOUT);
+				throw UsbConnectionTimeout("Read from USB timed out.");
 			}
 		}
 
 		else
 		{
 			bytesRead = i;
-			throw CRpcError(CRpcError::READ_TIMEOUT);
+			throw UsbConnectionTimeout("Read from USB timed out.");
 		}
 	}
 
