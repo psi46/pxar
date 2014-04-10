@@ -59,7 +59,8 @@ namespace pxar {
    */
   class DataMissingEvent : public pxarException {
   public:
-    DataMissingEvent(const std::string& what_arg) : pxarException(what_arg) {}
+    uint32_t numberMissing;
+    DataMissingEvent(const std::string& what_arg, uint32_t nmiss) : pxarException(what_arg), numberMissing(nmiss) {}
   };
 
   /**  This exception class is used when out-of-range pixel addresses
