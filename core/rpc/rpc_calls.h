@@ -281,6 +281,8 @@ public:
 	// Exported RPC-Calls for the Trimbit storage setup:
 	RPC_EXPORT bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
 	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<int8_t> &trimvalues);
+	
+	RPC_EXPORT void SetLoopTriggerDelay(uint16_t delay);
 
 	// Exported RPC-Calls for Maps
 	RPC_EXPORT void LoopMultiRocAllPixelsCalibrate(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags);
