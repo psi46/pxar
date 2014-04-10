@@ -148,7 +148,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   do {
     LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
     fApi->setDAC(dac, dacmin); 
-    sleep(1); 
+#ifdef WIN32
+    Sleep(1000);
+#else
+    sleep(1);
+#endif
     results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
   } while (fApi->daqProblem());
 
@@ -172,7 +176,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   do {
     LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
     fApi->setDAC(dac, dacmax/2+1); 
-    sleep(1); 
+#ifdef WIN32
+    Sleep(1000);
+#else
+    sleep(1);
+#endif
     results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
   } while (fApi->daqProblem()); 
 
