@@ -162,8 +162,10 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     }
     catch(pxar::DataMissingEvent &e){
       // readout of data failed
-      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
-      message+=". Try test again?";
+      std::string message = "There was an error reading out the DTB: '" + std::string(e.what());
+      message+="'. Number of missing events: ";
+      message+=static_cast<ostringstream*>( &(ostringstream() << e.numberMissing) )->str(); 
+      message+=". Should we try the test again?";
       new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
     }
   }
@@ -201,7 +203,9 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     catch(pxar::DataMissingEvent &e){
       // readout of data failed
       std::string message = "There was an error reading out the DTB: " + std::string(e.what());
-      message+=". Try test again?";
+      message+="'. Number of missing events: ";
+      message+=static_cast<ostringstream*>( &(ostringstream() << e.numberMissing) )->str(); 
+      message+=". Should we try the test again?";
       new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
     }
   }
@@ -343,7 +347,9 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
     catch(pxar::DataMissingEvent &e){
       // readout of data failed
       std::string message = "There was an error reading out the DTB: " + std::string(e.what());
-      message+=". Try test again?";
+      message+="'. Number of missing events: ";
+      message+=static_cast<ostringstream*>( &(ostringstream() << e.numberMissing) )->str(); 
+      message+=". Should we try the test again?";
       new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
     }
   }
