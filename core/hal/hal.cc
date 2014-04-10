@@ -639,7 +639,7 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -681,7 +681,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -722,7 +722,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -762,7 +762,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -812,7 +812,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -863,7 +863,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -910,7 +910,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -957,7 +957,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -1012,7 +1012,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -1070,7 +1070,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -1124,7 +1124,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
@@ -1178,7 +1178,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
       // clean up (now garbage) events
       delete *evtit;
     }
-    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__));
+    throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
