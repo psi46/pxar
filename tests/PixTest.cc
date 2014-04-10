@@ -145,16 +145,28 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   int ic, ir, iroc; 
   double val;
   vector<pair<uint8_t, vector<pixel> > > results;
-  do {
-    LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
-    fApi->setDAC(dac, dacmin); 
+
+  Int_t userChoice = kMBRetry;
+  bool done = false;
+  while(userChoice==kMBRetry && !done){
+    try{
+      LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
+      fApi->setDAC(dac, dacmin); 
 #ifdef WIN32
-    Sleep(1000);
+      Sleep(1000);
 #else
-    sleep(1);
+      sleep(1);
 #endif
-    results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
-  } while (fApi->daqProblem());
+      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
+      done = true; // got our data successfully
+    }
+    catch(pxar::DataMissingEvent &e){
+      // readout of data failed
+      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
+      message+=". Try test again?";
+      new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
+    }
+  }
 
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dac = results[idac].first; 
@@ -173,16 +185,26 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   }
 
   results.clear();
-  do {
-    LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
-    fApi->setDAC(dac, dacmax/2+1); 
+  done = false;
+  while(userChoice==kMBRetry && !done){
+    try{
+      LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
+      fApi->setDAC(dac, dacmax/2+1); 
 #ifdef WIN32
-    Sleep(1000);
+      Sleep(1000);
 #else
-    sleep(1);
+      sleep(1);
 #endif
-    results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
-  } while (fApi->daqProblem()); 
+      results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
+      done = true; // got our data successfully
+    }
+    catch(pxar::DataMissingEvent &e){
+      // readout of data failed
+      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
+      message+=". Try test again?";
+      new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
+    }
+  }
 
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dac = results[idac].first; 
