@@ -123,6 +123,10 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
       // FIXME
       deser160phase = sigIt->second;
     }
+    else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
+      LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second) << "usec";
+      _testboard->SetLoopTriggerDelay(sigIt->second);
+    }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
