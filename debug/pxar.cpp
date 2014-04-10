@@ -155,7 +155,6 @@ int main(int argc, char* argv[]) {
 
   std::cout << argc << " arguments provided." << std::endl;
 
-  bool module = false;
   uint8_t hubid = 31;
 
   // Prepare some vectors for all the configurations we use:
@@ -241,6 +240,7 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("CalDel",122));
     dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
+
   }
 
   // Get some pixelConfigs up and running:
@@ -257,7 +257,6 @@ int main(int argc, char* argv[]) {
   // Prepare for running a module setup
   if(argc > 2 && strcmp(argv[2],"-mod") == 0) {
     std::cout << "Module setup." << std::endl;
-    module = true;
 
     // Pattern Generator:
     pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
@@ -340,7 +339,7 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl;
     std::vector<uint8_t> roci2c = _api->_dut->getEnabledRocI2Caddr();
-    std::cout << roci2c.size() << " ROCs are enabled, their I2C addresses aree:" << std::endl;
+    std::cout << roci2c.size() << " ROCs are enabled, their I2C addresses are:" << std::endl;
     for(std::vector<uint8_t>::iterator it = roci2c.begin(); it != roci2c.end(); ++it) {
       std::cout << "I2C " << (int)(*it) << ", ";
     }
@@ -607,8 +606,18 @@ int main(int argc, char* argv[]) {
     std::cout << "Done." << std::endl;
     delete _api;
   }
+  catch (pxar::InvalidConfig &e){
+    std::cout << "pxar caught an exception due to invalid configuration settings: " << e.what() << std::endl;
+    delete _api;
+    return -1;    
+  }
+  catch (pxar::pxarException &e){
+    std::cout << "pxar caught an internal exception: " << e.what() << std::endl;
+    delete _api;
+    return -1;    
+  }
   catch (...) {
-    std::cout << "pxar cauhgt an exception from the board. Exiting." << std::endl;
+    std::cout << "pxar caught an unknown exception. Exiting." << std::endl;
     delete _api;
     return -1;
   }

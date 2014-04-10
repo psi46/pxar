@@ -1,5 +1,6 @@
 #include "datatypes.h"
 #include "log.h"
+#include "exceptions.h"
 #include "constants.h"
 
 namespace pxar {
@@ -25,12 +26,8 @@ namespace pxar {
     column = 2*c + (r&1);
     
     if (row >= ROC_NUMROWS || column >= ROC_NUMCOLS){
-      static int badc(-1), badr(-1); 
-      if (row != badr && column != badc) {
-	LOG(logCRITICAL) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
-      }
-      badc = column;
-      badr = row; 
+      LOG(logDEBUGAPI) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      throw DataDecoderError("Error decoding pixel raw value");
     }
   }
 

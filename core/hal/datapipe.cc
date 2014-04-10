@@ -1,6 +1,7 @@
 #include "datapipe.h"
 #include "helper.h"
 #include "constants.h"
+#include "exceptions.h"
 
 namespace pxar {
 
@@ -140,8 +141,14 @@ namespace pxar {
       case  5: raw = (raw<<4) + d; break;
       case  6: raw = (raw<<4) + d;
 	{
-	  pixel pix(raw,static_cast<uint8_t>(roc_n),invertedAddress);
-	  roc_Event.pixels.push_back(pix);
+	  try{
+	    pixel pix(raw,static_cast<uint8_t>(roc_n),invertedAddress);
+	    roc_Event.pixels.push_back(pix);
+	  }
+	  catch(DataDecoderError &e){
+	    // decoding of raw address lead to invalid address
+	    roc_Event.numDecoderErrors++; // keep track of number of such errors
+	  }
 	  break;
 	}
       case  7: roc_n++; break;
@@ -183,8 +190,14 @@ namespace pxar {
       while (pos < n-1) {
 	uint32_t raw = (*sample)[pos++] << 12;
 	raw += (*sample)[pos++];
-	pixel pix(raw,invertedAddress);
-	roc_Event.pixels.push_back(pix);
+	try{
+	  pixel pix(raw,invertedAddress);
+	  roc_Event.pixels.push_back(pix);
+	}
+	catch(DataDecoderError &e){
+	  // decoding of raw address lead to invalid address
+	  roc_Event.numDecoderErrors++; // keep track of number of such errors
+	}
       }
     }
 
