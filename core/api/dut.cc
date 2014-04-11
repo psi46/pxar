@@ -236,8 +236,8 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {
     uint8_t _register = _dict->getRegister(dacName, ROC_REG);
     return roc[rocId].dacs[_register];
   }
-  // FIXME throw error
-  else return 0x0;
+  throw InvalidConfig("Could not identify DAC " + dacName);
+  return 0x0;
 }
 
 std::vector< std::pair<std::string,uint8_t> > dut::getDACs(size_t rocId) {

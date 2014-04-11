@@ -40,6 +40,25 @@ public:
 	RPC_EXPORT bool    GetRpcCallName(int32_t id, stringR &callName);
 	RPC_EXPORT uint32_t GetRpcCallHash();
 
+	bool RpcLink() {
+
+	  bool error = false;
+	  for (unsigned short i = 2; i < rpc_cmdListSize; i++) {
+	    try { rpc_GetCallId(i); }
+	    catch (CRpcError &e) {
+	      e.SetFunction(0);
+	      if (!error) { LOG(pxar::logERROR) << "Missing DTB functions:"; }
+	      std::string fname(rpc_cmdName[i]);
+	      std::string fname_pretty;
+	      rpc_TranslateCallName(fname, fname_pretty);
+	      LOG(pxar::logERROR) << fname_pretty.c_str();
+	      error = true;
+	    }
+	  }
+	  return !error;
+	}
+
+
 	// === DTB connection ====================================================
 
 	inline bool Open(string &name, bool init=true) {
@@ -262,6 +281,8 @@ public:
 	// Exported RPC-Calls for the Trimbit storage setup:
 	RPC_EXPORT bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
 	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<int8_t> &trimvalues);
+	
+	RPC_EXPORT void SetLoopTriggerDelay(uint16_t delay);
 
 	// Exported RPC-Calls for Maps
 	RPC_EXPORT void LoopMultiRocAllPixelsCalibrate(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags);

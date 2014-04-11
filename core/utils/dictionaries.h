@@ -93,6 +93,7 @@ namespace pxar {
       _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
       _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
       _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
+      _registers["triggerdelay"] = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
 

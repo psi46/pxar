@@ -10,9 +10,13 @@
 #include <stdio.h>
 #include <iostream>
 
+#include "log.h"
+#include "exceptions.h"
+
 #include "USBInterface.h"
 
 using namespace std;
+using namespace pxar;
 
 
 CUSB::CUSB(){
@@ -202,7 +206,7 @@ void CUSB::Close()
 
 void CUSB::Write(uint32_t bytesToWrite, const void *buffer)
 {
-	if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
+  if (!isUSB_open) throw UsbConnectionError("Attempt to write to USB without open connection.");
 	uint32_t k=0;
 	for (k=0; k < bytesToWrite; k++)
 	{
@@ -224,14 +228,14 @@ void CUSB::Flush()
 	DWORD bytesToWrite = m_posW;
 	m_posW = 0;
 
-	if (!isUSB_open) throw CRpcError(CRpcError::WRITE_ERROR);
+	if (!isUSB_open) throw UsbConnectionError("Attempt to write to USB without open connection.");
 
 	if (!bytesToWrite) return;
 
 	ftdiStatus = FT_Write(ftHandle, m_bufferW, bytesToWrite, &bytesWritten);
 
-	if (ftdiStatus != FT_OK) throw CRpcError(CRpcError::WRITE_ERROR);
-	if (bytesWritten != bytesToWrite) { ftdiStatus = FT_IO_ERROR; throw CRpcError(CRpcError::WRITE_ERROR); }
+	if (ftdiStatus != FT_OK) throw UsbConnectionError("Failure writing to USB");
+	if (bytesWritten != bytesToWrite) { ftdiStatus = FT_IO_ERROR; throw UsbConnectionError("Incomplete write to USB."); }
 }
 
 
@@ -263,7 +267,7 @@ bool CUSB::FillBuffer(uint32_t minBytesToRead)
 void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 {
 
-	if (!isUSB_open) throw CRpcError(CRpcError::READ_ERROR);
+	if (!isUSB_open) throw UsbConnectionError("Attempt to read from USB without open connection.");
 
 	bool timeout = false;
 	bytesRead = 0;
@@ -280,7 +284,7 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 			uint32_t n = bytesToRead-i;
 			if (n>USBREADBUFFERSIZE) n = USBREADBUFFERSIZE;
 
-			if (!FillBuffer(n)) throw CRpcError(CRpcError::READ_ERROR);
+			if (!FillBuffer(n)) throw UsbConnectionError("Error writing to USB");
 			if (m_sizeR < n) timeout = true;
 
 			if (m_posR<m_sizeR)
@@ -288,14 +292,14 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 			else
 			{   // timeout (bytesRead < bytesToRead)
 				bytesRead = i;
-				throw CRpcError(CRpcError::READ_TIMEOUT);
+				throw UsbConnectionTimeout("Read from USB timed out.");
 			}
 		}
 
 		else
 		{
 			bytesRead = i;
-			throw CRpcError(CRpcError::READ_TIMEOUT);
+			throw UsbConnectionTimeout("Read from USB timed out.");
 		}
 	}
 
@@ -331,60 +335,13 @@ bool CUSB::Show()
   return true;
 }
 
-//----------------------------------------------------------------------
-int CUSB::GetQueue()
+
+void CUSB::SetTimeout(unsigned int timeout)
 {
-  if( !isUSB_open ) return -1;
-
-  DWORD bytesAvailable;
-  ftdiStatus = FT_GetQueueStatus( ftHandle, &bytesAvailable );
-  if( ftdiStatus != FT_OK ) {
-    std::cout << " CUSB::GetQeue(): USB connection not OK\n";
-    return -1;
-  }
-  return bytesAvailable;
+  m_timeout = timeout;
+  if( !isUSB_open ) return;
+  FT_SetTimeouts(ftHandle,m_timeout,m_timeout);
 }
-
-//----------------------------------------------------------------------
-// Waits in 10ms steps until queue is filled with pSize bytes;
-// pSize should be calculated dependent of the data type to be read:
-// e.g. if you want to read 100 shorts using Read_SHORTS() then pSize = 100*sizeof(short).
-// Maximum time to wait set by pMaxWait (in ms); if exceeded, the method returns false,
-// otherwise it returns true (=ready to read queue)
-// If pMaxWait is negative the routine will wait forever until buffer is filled.
-// Experience so far (using ATB):
-// - The routine works well in all tested cases and can replace extended MDelay calls
-// - After a usb_write, a short delay (~ 10ms ?) is needed before calling this routine; 
-//     in case of memreadout the first buffer seems to be truncated otherwise 
-
-bool CUSB::WaitForFilledQueue( int32_t pSize, int32_t pMaxWait )
-{
-  if( !isUSB_open ) return false;
-
-  int32_t waitCounter = 0;
-  int32_t bytesWaiting = GetQueue();
-  while( ( ( waitCounter*10 < pMaxWait) || pMaxWait < 0 ) && bytesWaiting < pSize ) {
-    if( (waitCounter+1) % 100 == 0 ) std::cout << "USB waiting for " << pSize << " data, t = " << waitCounter*10 << " ms, bytes to fetch so far = " << bytesWaiting << std::endl;
-#ifdef WIN32
-    Sleep(10);
-#else
-    usleep(10000); // wait 10 ms
-#endif // WIN32
-    waitCounter++;
-    bytesWaiting = GetQueue();
-  }
-  // check if the timeout has been reached:
-  if( waitCounter*10 >= pMaxWait ) {
-    std::cout << "USB ... timeout reached! ";
-    // check if we have data
-    if( bytesWaiting > 0 ) std::cout << "USB buffer filled with " << bytesWaiting << " bytes, check if given expectation of " << pSize << " is correct! " << endl;
-    else std::cout << "USB NO DATA in buffer! " << endl;
-    return false;
-  }
-  //std::cout << "USB ready to read data after = " << waitCounter*10 << " ms, bytes to fetch = " << bytesWaiting << std::endl;
-  return true;
-}
-
 
 void CUSB::Read_String(char *s, uint16_t maxlength)
 {

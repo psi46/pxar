@@ -8,6 +8,11 @@
 #include "PixTestPretest.hh"
 #include "log.h"
 
+#ifndef WIN32
+#include <unistd.h>
+#else
+#include <Windows.h>
+#endif
 
 using namespace std;
 using namespace pxar;
@@ -415,8 +420,13 @@ void PixTestPretest::setVthrCompCalDel() {
 
       TH1D *h0 = h2->ProjectionX("_px", fParDeltaVthrComp+1, fParDeltaVthrComp+2); 
       h0->Draw(); 
-      PixTest::update(); 
-      sleep(1); 
+      PixTest::update();
+
+#ifdef WIN32
+      Sleep(1000);
+#else
+      sleep(1);
+#endif
 
       double calDelE = h0->GetRMS();
       double calDel = h0->GetMean()+0.25*calDelE;
@@ -427,7 +437,11 @@ void PixTestPretest::setVthrCompCalDel() {
       hy->Draw(); 
       PixTest::update(); 
       cout << "top bin: " << top << endl;
-      sleep(1); 
+#ifdef WIN32
+      Sleep(1000);
+#else
+      sleep(1);
+#endif
 
       int itop(top); 
       for (itop = top; itop > 0; --itop) {

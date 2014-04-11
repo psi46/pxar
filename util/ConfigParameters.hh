@@ -11,12 +11,13 @@
 typedef unsigned short int uint16_t;
 typedef unsigned char uint8_t;
 #else
-#include <stdint.h>
-#endif
 
 #ifdef __CINT__
 #undef __GNUC__
 typedef char int8_t; 
+#endif
+
+#include <stdint.h>
 #endif
 
 #include <string>

@@ -136,10 +136,7 @@ bool hal::tbmSetReg(uint8_t /*tbmId*/, uint8_t /*regId*/, uint8_t /*regValue*/) 
 void hal::RocSetMask(uint8_t /*rocid*/, bool /*mask*/, std::vector<pixelConfig> /*pixels*/) {
 }
 
-void hal::PixelSetMask(uint8_t /*rocid*/, uint8_t /*column*/, uint8_t /*row*/, bool /*mask*/, uint8_t /*trim*/) {
-}
-
-void hal::ColumnSetEnable(uint8_t /*rocid*/, uint8_t /*column*/, bool /*enable*/) {
+void hal::AllColumnsSetEnable(uint8_t /*rocid*/, bool /*enable*/) {
 }
 
 void hal::PixelSetCalibrate(uint8_t /*rocid*/, uint8_t /*column*/, uint8_t /*row*/, uint16_t /*flags*/) {
@@ -148,6 +145,11 @@ void hal::PixelSetCalibrate(uint8_t /*rocid*/, uint8_t /*column*/, uint8_t /*row
 void hal::RocClearCalibrate(uint8_t /*rocid*/) {
 }
 
+void hal::SetupTrimValues(unsigned char, std::vector<pxar::pixelConfig, std::allocator<pxar::pixelConfig> >) {
+}
+
+void hal::SetupI2CValues(std::vector<unsigned char, std::allocator<unsigned char> >) {
+}
 
 // ---------------- TEST FUNCTIONS ----------------------
 

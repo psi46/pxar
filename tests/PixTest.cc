@@ -7,6 +7,7 @@
 #include <TMinuit.h>
 #include <TMath.h>
 #include <TStyle.h>
+#include <TGMsgBox.h>
 
 #include "PixTest.hh"
 #include "PixUtil.hh"
@@ -149,12 +150,23 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   int ic, ir, iroc; 
   double val;
   vector<pair<uint8_t, vector<pixel> > > results;
-  do {
-    LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmin + halfrange; 
+
+  Int_t userChoice = kMBRetry;
+  bool done = false;
+  int cnt(0); 
+  LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
+  while (!done){
     fApi->setDAC(dac, dacmin); 
-    sleep(1); 
-    results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmin+halfrange, FLAGS, ntrig); 
-  } while (fApi->daqProblem());
+    try{
+      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
+      done = true; // got our data successfully
+    } catch(DataMissingEvent &e){
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    }
+    done = (cnt>5) || done;
+  }
 
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dac = results[idac].first; 
@@ -171,12 +183,21 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   }
 
   results.clear();
-  do {
-    LOG(logDEBUG) << "scanning part 2: " << dacmin+halfrange+1 << " .. " << dacmax; 
-    fApi->setDAC(dac, dacmin+halfrange+1); 
-    sleep(1); 
-    results = fApi->getEfficiencyVsDAC(dac, dacmin+halfrange+1, dacmax, FLAGS, ntrig); 
-  } while (fApi->daqProblem()); 
+  done = false;
+  LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
+  while(!done){
+    fApi->setDAC(dac, dacmax/2+1); 
+    try{
+      results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
+      done = true; // got our data successfully
+    }
+    catch(pxar::DataMissingEvent &e){
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    }
+    done = (cnt>5) || done;
+  }
 
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dac = results[idac].first; 
@@ -311,7 +332,24 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
-  vector<pixel> results = fApi->getEfficiencyMap(FLAGS, ntrig);
+  vector<pixel> results;
+
+  Int_t userChoice = kMBRetry;
+  bool done = false;
+  while(userChoice==kMBRetry && !done){
+    try{
+      results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      done = true; // got our data successfully
+    }
+    catch(pxar::DataMissingEvent &e){
+      // readout of data failed
+      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
+      message+="'. Number of missing events: ";
+      message+=static_cast<ostringstream*>( &(ostringstream() << e.numberMissing) )->str(); 
+      message+=". Should we try the test again?";
+      new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
+    }
+  }
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
   fDirectory->cd(); 

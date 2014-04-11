@@ -106,11 +106,12 @@ namespace pxar {
    */
   class DLLEXPORT Event {
   public:
-  Event() : header(0), trailer(0), pixels() {}
-    void Clear() { header = 0; trailer = 0; pixels.clear(); }
+    Event() : header(0), trailer(0), pixels(), numDecoderErrors(0) {}
+    void Clear() { header = 0; trailer = 0; pixels.clear(); numDecoderErrors=0;}
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
+    uint16_t numDecoderErrors;
   private:
     /** Overloaded ostream operator for simple printing of Event data
      */

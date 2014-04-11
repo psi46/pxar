@@ -1,5 +1,5 @@
 // -- author: Wolfram Erdmann
-// Bump Bonding tests
+// Bump Bonding tests, really just a threshold map using cals
 
 #include <sstream>   // parsing
 #include <algorithm>  // std::find
@@ -15,7 +15,7 @@ ClassImp(PixTestBBMap)
 
 //------------------------------------------------------------------------------
 PixTestBBMap::PixTestBBMap( PixSetup *a, std::string name )
-: PixTest(a, name), fParNtrig(-1), fParMethod("ph"), fParVcalS(255),fPartest(0)
+: PixTest(a, name), fParNtrig(-1), fParVcalS(200),fPartest(0)
 {
   PixTest::init();
   init();
@@ -40,12 +40,10 @@ bool PixTestBBMap::setParameter( string parName, string sval )
 
       stringstream s(sval);
 
-      if( !parName.compare( "Ntrig" ) ) s >> fParNtrig;
-      if( !parName.compare( "Method" ) ) s >> fParMethod;
-      if( !parName.compare( "VcalS" ) ) s >> fParVcalS;
-      if( !parName.compare( "test" ) ) s >> fPartest;
-
-      return true;
+      if( !parName.compare( "Ntrig" ) ) { s >> fParNtrig; return true;}
+      if( !parName.compare( "VcalS" ) ) { s >> fParVcalS; return true;}
+      if( !parName.compare( "SubtractXtalk") ){ s >> fParSubtractXtalk; return true;}
+      if( !parName.compare( "test" ) )  { s >> fPartest;  return true;}
     }
   }
   return false;
@@ -66,15 +64,10 @@ void PixTestBBMap::init()
 // ----------------------------------------------------------------------
 void PixTestBBMap::setToolTips()
 {
-  fTestTip = string( "Bump Bonding Test");
-  fSummaryTip = string("summary plot to be implemented");
+  fTestTip = string( "Bump Bonding Test = threshold map for CalS");
+  fSummaryTip = string("module summary");
 }
 
-//------------------------------------------------------------------------------
-void PixTestBBMap::bookHist(string name)
-{
-  LOG(logDEBUG) << "nothing done with " << name;
-}
 
 //------------------------------------------------------------------------------
 PixTestBBMap::~PixTestBBMap()
@@ -90,462 +83,270 @@ PixTestBBMap::~PixTestBBMap()
 }
 
 
-
-//------------------------------------------------------------------------------
-int PixTestBBMap::search(map< int, vector<pixel> > & results, size_t nmax, int flag)
-{
-  // TODO : do this on a per ROC basis
-  int vlo=0;
-  int vhi=255;
-  while(vlo < vhi-1){
-    int vcal = (vlo+vhi)/2;
-    fApi->setDAC("vcal", vcal);
-    results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-    LOG(logDEBUG) << vcal << " " << results[vcal].size();
-    if (results.find( vcal ) == results.end()){
-      results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-    }
-        
-    if ( results[vcal].size() >= nmax ){
-      vhi=vcal;
-    }else{
-      vlo=vcal;
-    }
-
-    LOG(logDEBUG) << "vlo " << vhi << " (" << results[vlo].size() << ")  " 
-		  << "vhi " << vlo << " (" << results[vhi].size() << ")";
-  }  
-   
-  if (nmax==0) {
-    return vlo; // lower bound
-  }else{
-    return vhi; // upper bound
-  }
-}
-
-
-//------------------------------------------------------------------------------
-map< uint8_t, TH1* > PixTestBBMap::doThresholdMap(
-    string label,
-    int vmin, int vmax, int step,
-    int flag)
-{
-  // get vcal threshold maps for the rocs
+// ----------------------------------------------------------------------
+// eventually to be replaced by PixTest::thrMaps
+vector<TH1*> PixTestBBMap::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, unsigned int ntrigrequest, uint16_t flag) {
+  vector<TH1*>   resultMaps; 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  
-  // cache results
-  map< int, vector<pixel> > results;
-  map< int, vector<pixel> >::iterator map_it;
-  
-  // number of pixels that respond at all
-  fApi->setDAC("ctrlreg", 4);      // high range
-  fApi->setDAC("vcal", 255);
-  results[ 256 ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-  size_t  nmax = results[256].size();
-  
-  // measure the threshold (low range)
-  fApi->setDAC("ctrlreg", 0);      // low range
-  // find the range of values we need to scan
-  if(vmax ==0 ){
-    vmin = search( results,    0, flag);
-    vmax = search( results, nmax, flag);
+
+  if (rocIds.size()==0){
+      return resultMaps;
   }
   
-  // create the histograms holding the result
-  map< uint8_t, TH1* > h;
-  for( size_t i=0; i<rocIds.size(); i++){
-    uint8_t rocId = rocIds[i];
-    h[rocId] = bookTH2D(Form(("BB-%02d-"+label).c_str(),rocId),
-                      Form(("BB %02d "+label).c_str(),rocId),
-                      52,0,52,80,0,80);
-    fHistOptions.insert(make_pair(h[rocId], "colz"));
-  }
-
-
-  // scan vcal and fill the histograms with the threshold value
-  if (vmin>=vmax){
-      LOG(logINFO) << "vmin= "<< vmin << "   vmax = " << vmax << "!  Please debug!";
-  }
-  int dv= (vmax-vmin)>(2*step) ? step : 1;
-
-  
-  for(int vcal=vmin; vcal<vmax; vcal+=dv){
-      
-    // get the efficiency map for this vcal unless it is already available
-    if (results.find( vcal ) == results.end()){
-      fApi->setDAC("vcal", vcal);
-      results[ vcal ] =  fApi->getEfficiencyMap(flag, fParNtrig);
-    }
-  
-    // find pixels that crossed the threshold
-    for(vector<pixel>::iterator pix_it=results[vcal].begin(); 
-    pix_it != results[vcal].end(); pix_it++){
-      pixel & pix = *pix_it;
-      try{
-        if (( pix.value>=fParNtrig/2 ) && (h[pix.roc_id]->GetBinContent( pix.column+1, pix.row+1 ) ==0))
-        {
-            h.at(pix.roc_id)->SetBinContent( pix.column+1, pix.row+1, vcal);
-        }
-      }catch (const std::out_of_range & e) {
-          LOG(logDEBUG) << "this should not have happened";
-      }
-    }
-  } 
-
-  return h;
-}
-
-
-
-//------------------------------------------------------------------------------
-void PixTestBBMap::phScan( 
-  vector< uint8_t >   & rocIds, 
-  map< uint8_t, int> & vmin, 
-  map< uint8_t, int> & phmin, 
-  map< uint8_t, int> & phmax,
-  map< uint8_t, float > & phslope)
-{
-  for( size_t iroc=0; iroc<rocIds.size(); iroc++ ){
-    uint8_t rocId = rocIds[iroc];
-    fApi->_dut->testPixel(20, 20, true, rocId); // fixme, allow other choices
-    fApi->_dut->maskPixel(20, 20, false);
-  }
-  
-  vector< pair< uint8_t, vector<pixel> > > 
-          result = fApi->getPulseheightVsDAC( "Vcal", 0, 255, 0, fParNtrig );
-                    
-  vmin.clear();
-  phmin.clear();
-  phmax.clear();
-  phslope.clear();
-  map< uint8_t, int> vlo, phlo, vhi, phhi; // temp. for slope finding
-  map<uint8_t, int> v2, v1; 
-  
-  for( unsigned int i = 0; i < result.size(); ++i ) {
-    int dac = result[i].first;
-    vector<pixel> vpix = result[i].second;
-    
-    for( unsigned int ipx = 0; ipx < vpix.size(); ++ipx ) {
-        // threshold (not used )
-        uint8_t roc = vpix[ipx].roc_id;
-        setmin(vmin, roc, dac);
-        // max range
-        int ph = vpix[ipx].value;
-        setmin(phmin, roc, ph);
-        setmax(phmax, roc, ph);
-        // slope
-        if ( (ph>8) && (vlo[roc]==0) ){
-            vlo[roc]=dac;
-            phlo[roc]=ph;
-        }
-        if ( (ph < 256-8) && (ph>phhi[roc]) ){
-            vhi[roc] = dac;
-            phhi[roc] = ph;
-        }
-            
-    } // pix
-
-  } // vcal dac values
-
-  for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
-      uint8_t rocId = rocIds[iroc];
-      if (vhi[iroc]>vlo[iroc]){
-        phslope[rocId] = ( phhi[iroc]-phlo[iroc] )/float(vhi[iroc]-vlo[iroc]);
-      }else{
-        phslope[rocId]=0;
-      }
-  }
-
-} 
-
-
-//------------------------------------------------------------------------------
-// adjust the two PH dacs of a psi46digv21 ROC for good range for small pulse-heights
-void PixTestBBMap::adjustPHDacsDigv21()
-{    
-  map<uint8_t, int> vmin, phmin, phmax, phOffset, phScale;
-  map<uint8_t, float> phslope;
-  
-  for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
-      uint8_t rocId = rocIds[iroc];
-      phOffset[ rocId ] = 200;
-      phScale[ rocId ] =50;
-  }  
-  
-  // target regions, FIXME make adjustable
-  int phmin1=16, phmin2=32;
-  int phmax1=224, phmax2=240;
-  float smin=0.8, smax=1.0;
-
-  int nit=0;
-  while( ++ nit < 100){
-      
-    for( size_t iroc=0; iroc<rocIds.size(); iroc++ ){
-       uint8_t rocId = rocIds[iroc];
-       fApi->setDAC("CtrlReg",   0, rocId);
-       fApi->setDAC("PHoffset", phOffset[rocId], rocId);
-       fApi->setDAC("PHscale",   phScale[rocId], rocId);
-    }
-      
-    phScan( rocIds, vmin, phmin, phmax, phslope);
-     
-    bool done = true;
-    for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
-      uint8_t rocId = rocIds[iroc];
-        
-      // skip this roc when we're happy  
-      if (   ( phmin[rocId]>phmin1 ) && (phmin[rocId] < phmin2 )
-          && ( phmax[rocId]>phmax1 ) && (phmax[rocId] < phmax2 ) ) continue;
-          
-      // otherwise adjust slope ...
-      
-      if ( (phslope[rocId]>0) && ( phslope[rocId]< smin ) ){
-         // increase slope (decrease phScale)
-         int ds  = min(16, int( 1+ 0.05*phScale[rocId] / phslope[rocId]) ); 
-         if (phScale[rocId]>8+ds){
-             phScale[rocId]-=ds;
-             done=false;
-         }
-     }
-     
-     else if ( (phslope[rocId]> smax ) ){
-         // decrease slope (increase phScale)
-         int ds  = min(16, int( 1+ 0.05*phScale[rocId] / phslope[rocId]) ); 
-         if (phScale[rocId] > 255-ds){
-             phScale[rocId]+=ds;
-             done=false;
-         }
-     }
-
-     // ... and offset
-     
-     if (  ( phmin[rocId]< phmin1 ) & (phmax[rocId]< phmax2) ){
-         // increase offset
-         if (phOffset[rocId]<255-8){ 
-             phOffset[rocId]+=8; 
-             done=false;
-         };
-     }
-     
-     else if( (phmin[rocId]>phmin2) & (phmax[rocId]>phmax1) ){
-         //decrease offset
-         if (phOffset[rocId] > 8){ 
-             phOffset[rocId]-=8; 
-             done=false;
-         }
-     } 
-
-    }// iroc
-    if (done) break;
-  }  // while 
-
-}
-
-map< uint8_t, TH1*> PixTestBBMap::fillRocHistograms( 
-    vector<pixel> & result, 
-    string title )
-{
-  map<uint8_t, TH1*> h;
-  h.clear();
-  
-  string hid(title);
-  hid.replace(hid.begin(), hid.end(), ' ', '-');
-  // make histograms
-  for( size_t i=0; i<rocIds.size(); i++){
-    uint8_t rocId = rocIds[i];
-    h[rocId] = bookTH2D( Form( hid.c_str()  ,rocId ),
-                         Form( title.c_str(),rocId ),
-                      52,0,52,80,0,80 );
-    fHistOptions.insert(make_pair(h[rocId], "colz"));
-  }
-  
-  // fill
-  for( unsigned int ipx = 0; ipx < result.size(); ++ipx ) {
-      pixel & pix = result[ipx];
-      try{
-            h.at(pix.roc_id)->SetBinContent( pix.column+1, pix.row+1, pix.value);
-      }catch (const std::out_of_range & e) {
-          LOG(logDEBUG) << "this should not have happened";
-      }  
-  }
-  
-  return h;
-}
-
-
-//------------------------------------------------------------------------------
-map< uint8_t, TH1* > PixTestBBMap::doPulseheightMap(
-    string label,
-    bool adjustPH,
-    int flag)
-{
-  // get pulse-height maps for the rocs
-  // returns a map  rocid -> histogram
-  map<uint8_t, TH1*> h;  
-  
-  rocIds = fApi->_dut->getEnabledRocIDs();
-  size_t nroc = rocIds.size();
-  if (nroc==0){
-      LOG(logCRITICAL) << "nothing to test";
-      return h;
-  }
-  
-  // uint8_t roctype = fApi->_dut->?????
-  uint8_t roctype = ROC_PSI46DIGV21;
-
-  
-  if (adjustPH) {
-    // arm test pixels and sweep vcal, low range
-    fApi->_dut->testAllPixels(false);
-    fApi->_dut->maskAllPixels(true);
-  
-    if ( roctype == ROC_PSI46DIGV21 ) {
-      adjustPHDacsDigv21(); // assuming all rocs are of the same type of course
-    }
-  }
-  
-  // ph dacs adjusted, now get pulse-height maps
-  fApi->_dut->testAllPixels(true);
+  fApi->_dut->testAllPixels(true); // all pix, all rocs
   fApi->_dut->maskAllPixels(false);
   
-  if (fPartest == 0){
-    fApi->setDAC("CtrlReg", 4); 
-    fApi->setDAC("Vcal", fParVcalS);
-  }else{
-    fApi->setDAC("CtrlReg", 0); 
-    fApi->setDAC("Vcal", fPartest);
-    flag = 0;
+  map< int, vector<pixel> > results;
+  uint8_t vthr = daclo;
+  unsigned int dvt = 10;
+  size_t npfnd = 0;
+  // rough scan from high threshold until someone responds, all pixels enabled
+  // hits seem to appear earlier in this mode
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > a;
+  while(( npfnd < 10) && (vthr < dachi) ){
+    a = fApi->getEfficiencyVsDAC("VthrComp", vthr, vthr+dvt-1, flag, 1);
+    for(unsigned int i=0; i<dvt; i++){
+        npfnd = a.at(i).second.size();
+        if ( npfnd>=10 )break;
+        vthr++;
+    }
   }
   
-  vector <pixel> result = fApi->getPulseheightMap(flag, fParNtrig); 
-  map< uint8_t, TH1* > hraw = fillRocHistograms( result, "BB raw %02d "+label);
+  LOG(logDEBUG) << "fMaps: vthr=" << (int)vthr << "  npx= " << npfnd;
 
-  for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
-      fHistList.push_back( hraw[ rocIds[iroc] ] );
+  
+  size_t npix = rocIds.size()*ROC_NUMROWS*ROC_NUMCOLS;
+  unsigned int maxNtrig =  DTB_SOURCE_BUFFER_SIZE / (npix*6);
+  uint16_t ntrig = ntrigrequest < maxNtrig ? ntrigrequest : maxNtrig;
+
+  /*
+  // assuming we have a reasonable threshold now, get a pixel alive 
+  // map to spot dead pixels (to not waste time on them during threshold scans)
+  fApi->setDAC("vcal", 255);
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  vector<pixel> pxalive = fApi->getEfficiencyMap(FLAG_FORCE_MASKED, ntrig);
+  vector< bool > alive(npix, false);
+  size_t npixalive=0;
+  for(vector<pixel>::iterator pix_it=pxalive.begin();
+      pix_it != pxalive.end(); pix_it++){
+      alive[ pidx(*pix_it) ] = (pix_it->value > 0);
+      if ( alive[ pidx(*pix_it) ] )npixalive++;
+  }  
+  LOG(logDEBUG) << "fMaps:  alive " << npixalive;
+  if (npixelalive==0){
+      LOG(logINFO) << "DUT appears dead ??";
+  }
+
+  fApi->setDAC("vcal", fParVcalS);    
+*/
+ 
+  // now scan the VthrComp and find thresholds
+  vector< int > x1( npix, 0 ), n1( npix, 0);
+  vector< float > vt(npix, -1);
+  dvt = 1;
+  npfnd=0;
+  while( (npfnd<fNpixalive) && (vthr<dachi) ){
+      
+    fApi->setDAC("VthrComp", vthr);
+    vector<pixel> result = fApi->getEfficiencyMap(flag | FLAG_FORCE_MASKED, ntrig);
+    
+    for(vector<pixel>::iterator pix_it=result.begin();
+      pix_it != result.end(); pix_it++){
+      pixel & pix = *pix_it;
+      int i = pidx( pix );
+      if ( ( pix.value >0) && fAlive[i] && (vt[i]<0) ) {
+          if (pix.value <ntrig/2) {
+            n1[i]=pix.value;
+            x1[i]=vthr;
+          } else if (pix.value>=ntrig/2){
+            if (n1[i]==0){
+                vt[i]=vthr;
+            }else{
+              int n2 = pix.value;
+              int x2 = vthr;
+              vt[i] = float(n2*x1[i]-n1[i]*x2+0.5*ntrig*(x2-x1[i]))/(n2-n1[i]);
+           }
+            npfnd+=1;
+          } // above threshold
+      } // has hits
+    }//pixel
+    
+
+    LOG(logDEBUG) << "vthr=" << (int) vthr << "  found " << npfnd << " / " << fNpixalive;
+
+    //if ((npfnd> npix/2) && (result.size()==0)) break; // probably above the noise level
+    vthr += dvt;
+    
+    
   }
   
-  if(false){
-      // raw
-      return hraw;
-  }
   
-  
-  // simple pulse-height calibration correction
-  int step=16;
-  map<int, map< uint8_t, TH1* > > ph;
-  for(int vcal=0; vcal<255; vcal+=step){
-    fApi->setDAC("Vcal", vcal);
-    vector <pixel> result = fApi->getPulseheightMap(flag, fParNtrig);
-    string title( Form("phmap vcal %3d ",vcal) );
-    ph[vcal] = fillRocHistograms( result, title+" %2d "+label);
-  }
-  
-  vector<pixel> empty;
-  map<uint8_t, TH1*> phcal = fillRocHistograms( empty , "calibrated %2d "+label );
-  
-  for(uint8_t iroc=0; iroc<rocIds.size(); iroc++){
-    uint8_t rocid= rocIds[iroc];
-    for(int col=0; col<ROC_NUMCOLS; col++){
-      for(int row=0; row<ROC_NUMROWS; row++){
-          
-        double phraw = hraw[rocid]->GetBinContent( col+1, row+1);
-        if (phraw==0){
-            phcal[rocid]->SetBinContent( col+1, row+1, 0);
-        }else{
-          for(int vcal=0; vcal<255-step; vcal+=step){
-            double ph0 = ph[vcal     ][rocid]->GetBinContent( col+1, row+1);
-            double ph1 = ph[vcal+step][rocid]->GetBinContent( col+1, row+1);
-            if ((phraw > ph0) && (phraw <= ph1)){
-              float phv =  vcal+step*(phraw-ph0)/(ph1-ph0);
-              phcal[rocid]->SetBinContent( col+1, row+1, phv);
-              break;
-            }
-            if( (ph0  >= phraw) ){
-              phcal[rocid]->SetBinContent( col+1, row+1, ph0);
-              break;
-            }
-          }
-          if ( phcal[rocid]->GetBinContent( col+1, row+1) == 0 ){
-              phcal[rocid]->SetBinContent( col+1, row+1, 256);
+  // create and fill histograms 
+  TH2D*  h1 = 0;
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      int roc_id = getIdFromIdx( iroc );
+      h1 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), roc_id), 
+		    Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), iroc), 
+		    52, 0., 52., 80, 0., 80.);
+      resultMaps.push_back(h1); 
+      fHistOptions.insert(make_pair(h1, "colz"));
+      
+      for(int icol=0; icol<52; icol++){
+        for(int irow=0; irow<80; irow++){
+          int i = iroc*4160 + icol*80 + irow; 
+          if (vt[i]>0)  {
+            h1->SetBinContent( icol+1, irow+1, vt[i]);
+          }else{
+            h1->SetBinContent( icol+1, irow+1, 256.);
           }
         }
-          
-       }
-     }  
-   }
+      }  
+  }
+
+  // copy ( ? )
+  copy(resultMaps.begin(), resultMaps.end(), back_inserter(fHistList));
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  if (h1) h1->Draw(getHistOption(h1).c_str());
+  PixTest::update();   
   
-  return phcal;
+  return resultMaps;
 }
+
+
+
+  void PixTestBBMap::saveDAC( std::string dac){
+    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+    vector< uint8_t> values( 0 );
+    for(size_t i=0; i<rocIds.size(); i++){
+        values.push_back( fApi->_dut->getDAC( rocIds[i], dac ) );
+    }
+    fSavedDACs[ dac ] = values;
+  }
+  
+  void PixTestBBMap::restoreDACs(){
+    vector< uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
+    for( std::map< std::string, vector< uint8_t> >::iterator 
+        it = fSavedDACs.begin(); it != fSavedDACs.end(); it++){
+        for(size_t i=0; i<rocIds.size(); i++){
+            fApi->setDAC(it->first, it->second[i], rocIds[i]);
+        }
+    }
+  }
 
 //------------------------------------------------------------------------------
 void PixTestBBMap::doTest()
 {
-  LOG(logINFO) << "PixTestBBMap::doTest() ntrig = " << fParNtrig;
+  LOG(logINFO) << "PixTestBBMap::doTest() Ntrig = " << fParNtrig
+               << " VcalS = " << fParVcalS
+               << " Xtalk = " << fParSubtractXtalk << endl;
 
+   // save dacs
+   fSavedDACs.clear();
+   saveDAC("vthrcomp");
+   saveDAC("ctrlreg");
+   saveDAC("vcal");
+   
   fDirectory->cd();
   fHistList.clear();
   PixTest::update();
 
-  fApi->setDAC("ctrlreg", 0);      // low range
-  fApi->_dut->testAllPixels(true); // all pix, all rocs
+  // make a pixel alive test and ignore dead pixels
+  fApi->setDAC("vcal", 255);
+  fApi->setDAC("ctrlreg", 4);
+  fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-
-  
-  int flag= FLAG_CALS;
-  if (fPartest>0){ flag = 0;} // tests  
-  bool subtractXtalk = false;
-  
-  map< uint8_t, TH1* > maps;  
-  map< uint8_t, TH1* > maps0;
-
-  if (fParMethod == "thr"){
-      
-    // threshold Method
-    maps  = doThresholdMap( "cal",  0, 0 , 4, flag );
-    if (subtractXtalk) maps0 = doThresholdMap( "xtalk",0, 0 , 4, flag | FLAG_XTALK );
-    
-  }else if ( fParMethod == "ph" ){
-      
-    // pulse-height method 
-    maps  = doPulseheightMap("cal", true, flag);
-    if (subtractXtalk) maps0 = doPulseheightMap("xtalk", false, flag | FLAG_XTALK );
-
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  size_t npix = rocIds.size()*ROC_NUMROWS*ROC_NUMCOLS; 
+  vector<pixel> pxalive = fApi->getEfficiencyMap(FLAG_FORCE_MASKED, fParNtrig);
+  fAlive.reserve(npix);
+  fAlive.assign(npix, false);
+  fNpixalive=0;
+  for(vector<pixel>::iterator pix_it=pxalive.begin();
+      pix_it != pxalive.end(); pix_it++){
+      fAlive[ pidx(*pix_it) ] = (pix_it->value > 0);
+      if ( fAlive[ pidx(*pix_it) ] )fNpixalive++;
+  }  
+  LOG(logDEBUG) << "fMaps:  alive " << fNpixalive;
+  if (fNpixalive==0){
+      LOG(logINFO) << "DUT appears dead ??";
   }
 
 
- 
-  vector< pxar::pixel > fail;
-  for(map< uint8_t, TH1*>::iterator mit=maps.begin(); mit !=maps.end(); mit++){
-      
-      fHistList.push_back( mit->second );
-      TH2D* rocmap= (TH2D*) mit->second;
-      
-      if (subtractXtalk) {
-        fHistList.push_back( maps0[ mit->first] );
-        rocmap = (TH2D*) (mit->second)->Clone(Form("BB %2d diff",mit->first));
-        rocmap->Add( maps0[mit->first], -1. );
-        fHistOptions.insert(make_pair( rocmap, "colz" ));
-        fHistList.push_back( rocmap );
-      }
-      
-      // fill distribution from map
-      TH1D* hdist = new TH1D( 
-        Form("BB-distribution-%0d",mit->first), 
-        Form("BB distribution %2d",mit->first), 
-        257, 0., 257.);
+  int flag= FLAG_CALS;
+  fApi->setDAC("ctrlreg", 4);     // high range
+  fApi->setDAC("vcal", fParVcalS);    
 
+  if (fPartest>0){ 
+    flag = 0;
+    fApi->setDAC("ctrlreg", 0);      // low range
+    fApi->setDAC("vcal", fPartest);
+  } 
+   
+  
+  vector<TH1*>  thrmapsXtalk;    
+  if (fParSubtractXtalk){
+      LOG(logDEBUG) << "taking Xtalk maps";
+      thrmapsXtalk = thrMaps("VthrComp", "calSMapXtalk", 0, 150, fParNtrig, flag | FLAG_XTALK); 
+      LOG(logDEBUG) << "Xtalk maps done";
+  }
+  
+  LOG(logDEBUG) << "taking CalS threshold maps";
+  vector<TH1*>  thrmapsCals = thrMaps("VthrComp", "calSMap", 0, 150, fParNtrig, flag);
+
+
+  //vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
+      
+      unsigned int rocId = getIdFromIdx( idx );
+      TH2D* rocmapRaw = (TH2D*) thrmapsCals[idx];
+      TH2D* rocmapBB  = (TH2D*) rocmapRaw->Clone(Form("BB-%2d",rocId));
+      rocmapBB->SetTitle(Form("bump bonding %2d",rocId));
+      TH2D* rocmapXtalk = 0;
+      
+      if (fParSubtractXtalk) {
+        rocmapXtalk = (TH2D*) thrmapsXtalk[idx];  
+        fHistList.push_back( rocmapRaw );
+        fHistList.push_back( rocmapXtalk );
+        rocmapBB->Add( rocmapXtalk, -1. );
+      }
+      fHistOptions.insert(make_pair( rocmapBB, "colz" ));
+      fHistList.push_back( rocmapBB );
+
+
+      // fill distribution from map
+      TH1D* hdist = bookTH1D( 
+        Form("CalS-threshold-distribution-%0d",rocId), 
+        Form("CalS-threshold distribution %2d",rocId), 
+        257, 0., 257.);
+      TH1D* hdistXtalk = bookTH1D( 
+        Form("CalS-Xtalk-distribution-%0d",rocId), 
+        Form("CalS-Xtalk distribution %2d",rocId), 
+        257, 0., 257.);
+      TH1D* hdistBB = bookTH1D( 
+        Form("CalS-Xtalksubtracted-distribution-%0d",rocId), 
+        Form("CalS-Xtalksubtracted distribution %2d",rocId), 
+        514, -257., 257.);
+      
       for(int col=0; col<ROC_NUMCOLS; col++){
           for(int row=0; row<ROC_NUMROWS; row++){
-              hdist->Fill( rocmap->GetBinContent( col+1, row+1 ) );
-              if ( rocmap->GetBinContent( col+1, row+1 ) <20){
-                  pixel p =  pixel( mit->first, col, row, rocmap->GetBinContent( col+1, row+1 ));
-                  fail.push_back( p );
-                  cout << "BB test fail " <<  p  << endl;
+              hdist->Fill( rocmapRaw->GetBinContent( col+1, row+1 ) );
+              if (fParSubtractXtalk) {
+                hdistXtalk->Fill( rocmapXtalk->GetBinContent( col+1, row+1 ) );
+                hdistBB->Fill( rocmapBB->GetBinContent( col+1, row+1 ) );
               }
           }
       }
-      fHistList.push_back( hdist );
+
+      fHistList.push_back( hdist);
+      if (fParSubtractXtalk) {
+          fHistList.push_back(hdistXtalk);
+          fHistList.push_back(hdistBB);
+      }
   }
+  
+  TH2D * module =  (TH2D*) moduleMap("BB module map");
+  fHistList.push_back( module);
   
   if (fHistList.size()>0){
     TH2D *h = (TH2D*)(*fHistList.begin());
@@ -555,4 +356,7 @@ void PixTestBBMap::doTest()
   }else{
     LOG(logDEBUG) << "no histogram produced, this is probably a bug";
   }
+  
+  restoreDACs();
+
 }

@@ -15,12 +15,11 @@
 
 using namespace pxar;
 
-bool api::daqProblem(){return _hal->daqProblem();}
-
 api::api(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _daq_minimum_period(0)
+  _daq_minimum_period(0),
+  _ndecode_errors_lastdaq(0)
 {
 
   LOG(logQUIET) << "Instanciating API for " << PACKAGE_STRING;
@@ -86,8 +85,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   }
 
   if(va < 0.01 || vd < 0.01 || ia < 0.01 || id < 0.01) {
-    LOG(logCRITICAL) << "Power settings are not suffient. Please check and re-configure!";
-    return false;
+    LOG(logCRITICAL) << "Power settings are not sufficient. Please check and re-configure!";
+    throw InvalidConfig("Power settings are not sufficient. Please check and re-configure.");
   }
 
 
@@ -131,19 +130,17 @@ bool api::initDUT(uint8_t hubid,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // FIXME: THESE CHECKS BELOW SHOULD THROW A CUSTOM EXCEPTION
-
   // Verification/sanitry checks of supplied DUT configuration values
   // Check size of rocDACs and rocPixels against each other
   if(rocDACs.size() != rocPixels.size()) {
     LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
     LOG(logCRITICAL) << "This cannot end well...";
-    return false;
+    throw InvalidConfig("Mismatch between number of DAC and pixel configurations");
   }
   // check for presence of DAC/pixel configurations
   if (rocDACs.size() == 0 || rocPixels.size() == 0){
     LOG(logCRITICAL) << "No DAC/pixel configurations for any ROC supplied!";
-    return false;
+    throw InvalidConfig("No DAC/pixel configurations for any ROC supplied");
   }
   // check individual pixel configs
   for(std::vector<std::vector<pixelConfig> >::iterator rocit = rocPixels.begin();rocit != rocPixels.end(); rocit++){
@@ -153,7 +150,7 @@ bool api::initDUT(uint8_t hubid,
     }
     if ((*rocit).size() > 4160){
       LOG(logCRITICAL) << "Too many pixels (N_pixel="<< (*rocit).size() <<" > 4160) configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
-      return false;
+      throw InvalidConfig("Too many pixels (>4160) configured");
     }
     // check individual pixel configurations
     int nduplicates = 0;
@@ -164,13 +161,13 @@ bool api::initDUT(uint8_t hubid,
       }
     }
     if (nduplicates>0){
-      return false;
+      throw InvalidConfig("Duplicate pixel configurations present");
     }
 
     // check for pixels out of range
     if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0) {
       LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
-      return false;
+      throw InvalidConfig("Found pixels with values for column and row outside of valid address range");
     }
   }
 
@@ -351,7 +348,7 @@ uint8_t api::stringToDeviceCode(std::string name) {
   uint8_t _code = _devices->getDevCode(name);
   LOG(logDEBUGAPI) << "Device type return: " << static_cast<int>(_code);
 
-  if(_code == 0x0) {LOG(logCRITICAL) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
+  if(_code == 0x0) {LOG(logERROR) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
   return _code;
 }
 
@@ -1042,6 +1039,8 @@ int32_t api::getReadbackValue(std::string /*parameterName*/) {
 
   if(!status()) {return -1;}
   LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
+  // do NOT throw an exception here: this is not a runtime problem
+  // and has to be fixed in the code -> cannot be handled by exceptions
   return -1;
 }
 
@@ -1072,6 +1071,11 @@ bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
 
   // Set Calibrate bits in the PUCs (we use the testrange for that):
   SetCalibrateBits(true);
+
+  // Attaching all columns to the readout:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+  }
 
   // Check the DUT if we have TBMs enabled or not and choose the right
   // deserializer:
@@ -1160,6 +1164,9 @@ std::vector<Event> api::daqGetEventBuffer() {
   std::vector<Event> data = std::vector<Event>();
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
+  // check the data for decoder errors and update our internal counter
+  getDecoderErrorCount(buffer);
+
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
@@ -1189,6 +1196,11 @@ rawEvent api::daqGetRawEvent() {
   return (*_hal->daqRawEvent());
 }
 
+uint32_t api::daqGetNDecoderErrors(){
+  return _ndecode_errors_lastdaq;
+}
+
+
 bool api::daqStop() {
 
   if(!status()) {return false;}
@@ -1204,6 +1216,11 @@ bool api::daqStop() {
 
   // Reset all the Calibrate bits and signals:
   SetCalibrateBits(false);
+
+  // Detaching all columns to the readout:
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->AllColumnsSetEnable(rocit->i2c_address,false);
+  }
 
   // Re-program the old Pattern Generator setup which is stored in the DUT.
   // Since these patterns are verified already, just write them:
@@ -1264,12 +1281,6 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column, px->row, param);
 
 	// merge pixel data into roc data storage vector
-	//         ofstream OUTFILE("api-expandLoop.txt", ios::app);
-	//         OUTFILE << "= px it = " << px - enabledPixels.begin() << " ===============" << std::endl;
-	//         for (unsigned i = 0; i < rocdata.size(); ++i) {
-	//           OUTFILE << *rocdata[i] << std::endl;
-	//         }
-	//         OUTFILE.close();
 	if (rocdata.empty()){
 	  rocdata = buffer; // for first time call
 	} else {
@@ -1308,14 +1319,6 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
 	// append rocdata to main data storage vector
-
-	//         ofstream OUTFILE("api-expandLoop-single.txt", ios::app);
-	//         OUTFILE << "= roc it = " << rocit - enabledRocs.begin() << " ===============" << std::endl;
-	//         for (unsigned i = 0; i < rocdata.size(); ++i) {
-	//           OUTFILE << *rocdata[i] << std::endl;
-	//         }
-	//         OUTFILE.close();
-
         if (data.empty()) data = rocdata;
 	else {
 	  data.reserve(data.size() + rocdata.size());
@@ -1360,8 +1363,9 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       } // roc loop
     }// single pixel fnc
     else {
-      // FIXME: THIS SHOULD THROW A CUSTOM EXCEPTION
       LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?!";
+      // do NOT throw an exception here: this is not a runtime problem
+      // but can only be a bug in the code -> this could not be handled by unwinding the stack
       return data;
     }
   } // single roc fnc
@@ -1371,6 +1375,9 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
     LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
     return data;
   }
+  
+  // update the internal decoder error count for this data sample
+  getDecoderErrorCount(data);
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
@@ -1710,55 +1717,20 @@ void api::MaskAndTrim(bool trim) {
 
 // Mask/Unmask and trim one ROC:
 void api::MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit) {
-  // Check if we can run on full ROCs:
-  uint16_t masked = std::count_if(rocit->pixels.begin(),rocit->pixels.end(),configMaskSet(true));
 
-  // This ROC is completely unmasked, let's trim it:
-  if(masked == 0 && trim) {
+  // This ROC is supposed to be trimmed as configured, so let's trim it:
+  if(trim) {
+    LOG(logDEBUGAPI) << "ROC@I2C " << static_cast<int>(rocit->i2c_address) << " features "
+		     << static_cast<int>(std::count_if(rocit->pixels.begin(),rocit->pixels.end(),configMaskSet(true)))
+		     << " masked pixels.";
     LOG(logDEBUGAPI) << "Unmasking and trimming ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
     _hal->RocSetMask(rocit->i2c_address,false,rocit->pixels);
     return;
   }
-  else if(masked == ROC_NUMROWS*ROC_NUMCOLS || !trim) {
-    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
-    _hal->RocSetMask(rocit->i2c_address,true); //FIXME
-    return;
-  }
-
-  LOG(logDEBUGAPI) << "ROC@I2C " << static_cast<int>(rocit->i2c_address) << " features " << masked << " masked pixels.";
-
-  // Choose the version with less calls (less than half the pixels to change):
-  if(masked <= ROC_NUMROWS*ROC_NUMCOLS/2) {
-    // We have more unmasked than masked pixels:
-    LOG(logDEBUGAPI) << "Unmasking and trimming ROC@I2C " << static_cast<int>(rocit->i2c_address) << " before masking single pixels.";
-    _hal->RocSetMask(rocit->i2c_address,false,rocit->pixels);//FIXME
-
-    // Disable all unneeded columns:
-    std::vector<bool> enabledColumns = _dut->getEnabledColumns(rocit->i2c_address);
-    for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-      if(!(*it)) _hal->ColumnSetEnable(rocit->i2c_address,static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
-    }
-
-    // And then mask the required pixels:
-    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-      if(pxit->mask == true) {_hal->PixelSetMask(rocit->i2c_address,pxit->column,pxit->row,true);}
-    }
-  }
   else {
-    // Some are unmasked, but not too many. First mask that ROC:
-    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " before unmasking single pixels.";
+    LOG(logDEBUGAPI) << "Masking ROC@I2C " << static_cast<int>(rocit->i2c_address) << " in one go.";
     _hal->RocSetMask(rocit->i2c_address,true);
-
-    // Enable all needed columns:
-    std::vector<bool> enabledColumns = _dut->getEnabledColumns(rocit->i2c_address);
-    for(std::vector<bool>::iterator it = enabledColumns.begin(); it != enabledColumns.end(); ++it) {
-      if((*it)) _hal->ColumnSetEnable(rocit->i2c_address,static_cast<uint8_t>(it - enabledColumns.begin()),(*it));
-    }
-
-    // And then unmask the required pixels with their trim values:
-    for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-      if(pxit->mask == false) {_hal->PixelSetMask(rocit->i2c_address,pxit->column,pxit->row,false,pxit->trim);}
-    }
+    return;
   }
 }
 
@@ -1811,6 +1783,17 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
 
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
+}
+
+void api::getDecoderErrorCount(std::vector<Event*> &data){
+  // check the data for any decoding errors (stored in the events as counters)
+  _ndecode_errors_lastdaq = 0; // reset counter
+  for (std::vector<Event*>::iterator evtit = data.begin(); evtit != data.end(); ++evtit){
+    _ndecode_errors_lastdaq += (*evtit)->numDecoderErrors;
+  }
+  if (_ndecode_errors_lastdaq){
+    LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
+  }
 }
 
 void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
