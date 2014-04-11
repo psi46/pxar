@@ -17,8 +17,8 @@ public:
   void trimBitTest();
 
   int adjustVtrim(); 
-  std::vector<TH1*> trimStep(int corrections, std::vector<TH1*> calMapOld); 
-  void setTrimBits(); 
+  std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax); 
+  void setTrimBits(int itrim = -1); 
   void doTest(); 
   void dummyAnalysis(); 
   void output4moreweb();
@@ -27,7 +27,7 @@ private:
 
   int     fParVcal, fParNtrig, fParVthrCompLo, fParVthrCompHi, fParVcalLo, fParVcalHi; 
   std::vector<std::pair<int, int> > fPIX; 
-  int     fTrimBits[16][52][80]; 
+  int fTrimBits[16][52][80]; 
   
   ClassDef(PixTestTrim, 1)
 
