@@ -23,6 +23,7 @@ typedef char int8_t;
 #include <TSystem.h>
 
 #include "api.h"
+#include "log.h"
 
 #include "PixInitFunc.hh"
 #include "PixSetup.hh"
@@ -77,7 +78,7 @@ public:
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 3); 
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 1); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -86,6 +87,9 @@ public:
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
   /// book a TH2D, adding version information to the name and title 
   TH2D* bookTH2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, int nbinsy, double ymin, double max); 
+  /// fill the results of a api::getEfficiencyVsDAC into a TH1D; if icol/irow/iroc are > -1, then fill only 'correct' pixels
+  void fillDacHist(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > &results, TH1D *h, 
+		   int icol = -1, int irow = -1, int iroc = -1); 
 
   /// select some pattern of pixels if not enabling the complete ROC. Enables the complete ROC if npix > 999
   virtual void sparseRoc(int npix = 8);
@@ -96,8 +100,20 @@ public:
   bool threshold(TH1 *); 
   /// find first bin above 50% level. Fills fThreshold, fThresholdE, fSigma, fSigmaE
   int simpleThreshold(TH1 *); 
-  /// maximum allowable VthrComp: "reserve" DAC units below the last 4 consecutive DAC values above "frac"
+  /// maximum allowable VthrComp
   std::vector<int> getMaximumVthrComp(int ntrig, double frac = 0.8, int reserve = 10);
+  /// minimum allowable VthrComp; reserve indicate the separation from the minimum VthrComp where noise sets in
+  std::vector<int> getMinimumVthrComp(std::vector<TH1*>, int reserve = 10, double nsigma = 3.);
+  /// return minimum threshold in a set of maps
+  double getMinimumThreshold(std::vector<TH1*>);
+  /// return maximum threshold in a set of maps
+  double getMaximumThreshold(std::vector<TH1*>);
+  /// return a list of TH1* that have 'name' as part to their histogram name
+  std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
+
+  /// produce eye-catching printouts
+  void banner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
+  void bigBanner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
   
   /// cache a DAC value
   void cache(std::string dacname); 
@@ -164,6 +180,7 @@ protected:
   PixInitFunc          *fPIF;    ///< function instantiation and automatic initialization
 
   double               fThreshold, fThresholdE, fSigma, fSigmaE;  ///< variables for passing back s-curve results
+  double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
 
   std::string           fName, fTestTip, fSummaryTip; ///< information for this test
 

@@ -195,8 +195,6 @@ void PixTestScurves::fitS() {
 	  
 	  double Threshold  = f->GetParameter(0); 
 	  double ThresholdE = f->GetParError(0); 
-	  double Sigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
-	  double SigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
 	  cout << Threshold << " +/- " << ThresholdE << endl;
 	  PixTest::update();      
 	}
@@ -225,8 +223,6 @@ void PixTestScurves::fitS() {
 	  }
 	  double Threshold  = f->GetParameter(0); 
 	  double ThresholdE = f->GetParError(0); 
-	  double Sigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
-	  double SigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
 	  cout << Threshold << " +/- " << ThresholdE << endl;
 	  PixTest::update();      
 	  fHistList.push_back(h); 
