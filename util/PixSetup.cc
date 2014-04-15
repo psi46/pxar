@@ -5,8 +5,6 @@
 using namespace std;
 using namespace pxar;
 
-ClassImp(PixSetup)
-
 // ----------------------------------------------------------------------
 PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp) {
   fApi               = a; 

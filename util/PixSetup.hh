@@ -4,14 +4,12 @@
 #include <string>
 #include <map>
 
-#include <TObject.h> 
-
 #include "api.h"
 
 #include "PixTestParameters.hh"
 #include "ConfigParameters.hh"
 
-class DLLEXPORT PixSetup: public TObject {
+class DLLEXPORT PixSetup {
 public:
   PixSetup(pxar::api *, PixTestParameters *, ConfigParameters *);
   PixSetup(std::string verbosity, PixTestParameters *, ConfigParameters *);
@@ -42,7 +40,6 @@ private:
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
 
-  ClassDef(PixSetup, 1); 
 };
 
 #endif
