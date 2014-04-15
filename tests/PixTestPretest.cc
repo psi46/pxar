@@ -9,12 +9,6 @@
 #include "log.h"
 #include "helper.h"
 
-#ifndef WIN32
-#include <unistd.h>
-#else
-#include <Windows.h>
-#endif
-
 using namespace std;
 using namespace pxar;
 

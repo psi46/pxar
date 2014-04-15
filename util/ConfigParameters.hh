@@ -1,9 +1,6 @@
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
-/** Declare all classes that need to be included in shared libraries on Windows
- *  as class DLLEXPORT className
- */
 #include "pxardllexport.h"
 
 /** Cannot use stdint.h when running rootcint on WIN32 */
