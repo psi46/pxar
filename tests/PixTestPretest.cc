@@ -7,6 +7,7 @@
 
 #include "PixTestPretest.hh"
 #include "log.h"
+#include "helper.h"
 
 #ifndef WIN32
 #include <unistd.h>
@@ -422,11 +423,7 @@ void PixTestPretest::setVthrCompCalDel() {
       h0->Draw(); 
       PixTest::update();
 
-#ifdef WIN32
-      Sleep(1000);
-#else
-      sleep(1);
-#endif
+      pxar::mDelay(1000); 
 
       double calDelE = h0->GetRMS();
       double calDel = h0->GetMean()+0.25*calDelE;
@@ -437,11 +434,8 @@ void PixTestPretest::setVthrCompCalDel() {
       hy->Draw(); 
       PixTest::update(); 
       cout << "top bin: " << top << endl;
-#ifdef WIN32
-      Sleep(1000);
-#else
-      sleep(1);
-#endif
+
+      pxar::mDelay(1000); 
 
       int itop(top); 
       for (itop = top; itop > 0; --itop) {

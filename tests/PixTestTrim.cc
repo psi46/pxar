@@ -8,6 +8,7 @@
 #include "PixTestTrim.hh"
 #include "PixUtil.hh"
 #include "log.h"
+#include "helper.h"
 
 
 using namespace std;
@@ -140,11 +141,11 @@ void PixTestTrim::doTest() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
   fApi->setDAC("Vtrim", 0);
-  sleep(1);
+  pxar::mDelay(1000);
   fApi->setDAC("ctrlreg", 0);
-  sleep(1);
+  pxar::mDelay(1000);
   fApi->setDAC("Vcal", fParVcal);
-  sleep(1);
+  pxar::mDelay(1000);
 
   setTrimBits(15);  
   
