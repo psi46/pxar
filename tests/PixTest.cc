@@ -31,7 +31,15 @@ PixTest::PixTest(PixSetup *a, string name) {
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
-  //  init(a, name); 
+
+  // -- provide default map when all ROCs are selected
+  map<int, int> id2idx; 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned i = 0; i < rocIds.size(); ++i) {
+    id2idx.insert(make_pair(rocIds[i], i)); 
+  }
+  setId2Idx(id2idx);
+
 }
 
 // ----------------------------------------------------------------------
@@ -358,6 +366,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), iroc); 
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -377,7 +386,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
       }
       h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
     } else {
-      LOG(logDEBUG) << "histogram for ROC " << results[i].roc_id << " not found"; 
+      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
     }
   }
 
