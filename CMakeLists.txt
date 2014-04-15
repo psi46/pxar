@@ -172,7 +172,10 @@ IF(BUILD_pxarui)
   FIND_PACKAGE(ROOT REQUIRED)
   INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
 
-  # Build the tests and test library
+  # Build the analysis  library
+  ADD_SUBDIRECTORY(ana)
+
+  # Build the util library
   ADD_SUBDIRECTORY(util)
 
   # Build the tests and test library

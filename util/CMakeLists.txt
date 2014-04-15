@@ -5,7 +5,6 @@ INCLUDE_DIRECTORIES(.)
 SET (UTILLIB_SOURCES
 ConfigParameters.cc
 PixUtil.cc
-PixInitFunc.cc
 PixSetup.cc
 PixTestParameters.cc
 )
@@ -14,7 +13,6 @@ PixTestParameters.cc
 set(UTILLIB_HEADERS
 ConfigParameters.hh
 PixUtil.hh
-PixInitFunc.hh
 PixSetup.hh
 PixTestParameters.hh
 )

@@ -65,14 +65,14 @@ FILE(APPEND ${FACTORYSOURCE}
 # ----------------------------------------------------------------------
 
 # for now, we also need includes from the "util" folder
-INCLUDE_DIRECTORIES( . ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests)
+INCLUDE_DIRECTORIES( . ${PROJECT_SOURCE_DIR}/ana ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests)
 FILE(GLOB USERTESTLIB_SOURCES "*.cc")
 
 # fill list of header files 
 FILE(GLOB USERTESTLIB_HEADERS "*.hh" )
 LIST(REMOVE_ITEM USERTESTLIB_HEADERS "PixUserTestFactory.hh")
 
-SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${PROJECT_SOURCE_DIR}/util ${ROOT_INCLUDE_DIR} )
+SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/ana ${ROOT_INCLUDE_DIR} )
 
 # set everything needed for the root dictonary and create the
 # dictionary
@@ -83,7 +83,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${USERTESTLIB_HEADERS}" "${USERTESTLIB_DICTIONARY}
 # create a shared library
 ADD_LIBRARY( pxarusertests SHARED ${USERTESTLIB_SOURCES} ${USERTESTLIB_DICTIONARY} )
 # link against our core library, the util lib, the root stuff, and the USB libs
-target_link_libraries(pxarusertests pxartests pxarutil ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
+target_link_libraries(pxarusertests pxartests pxarutil pxarana ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
 # install the lib in the appropriate directory
 INSTALL(TARGETS pxarusertests
