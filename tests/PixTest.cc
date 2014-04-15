@@ -579,7 +579,7 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 
 // ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
-  LOG(logINFO) << "Parameters for test" << getName();
+  LOG(logINFO) << "Parameters for test " << getName() << ", number of parameters = " << fParameters.size();
   //  FIXME This is likely not the intended behavior
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     LOG(logINFO) << fParameters[i].first << ": " << fParameters[i].second;
