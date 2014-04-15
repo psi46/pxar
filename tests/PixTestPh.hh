@@ -19,9 +19,7 @@ private:
 
   int     fParNtrig; 
   std::string fParDAC; 
-  int     fParLoDAC, fParHiDAC;
-  std::string fParDAC2;
-  int     fParDAC2Hi, fParDAC2Lo, fParDAC2Step;
+  int     fParDacVal;
   std::vector<std::pair<int, int> > fPIX; 
 
   ClassDef(PixTestPh, 1)
