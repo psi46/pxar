@@ -1,257 +1,252 @@
-#include <stdlib.h>     /* atof, atoi */
-#include <algorithm>    // std::find
-#include <iostream>
+// -- author: Martino Dall'Osso
+// to set clk and deser160phase for single roc test
+
+#include <stdlib.h>   // atof, atoi
+#include <algorithm>  // std::find
+
 #include "PixTestSetup.hh"
 #include "log.h"
+#include "constants.h"
 
-#include <TH2.h>
 
 using namespace std;
 using namespace pxar;
 
 ClassImp(PixTestSetup)
 
-// ----------------------------------------------------------------------
-PixTestSetup::PixTestSetup(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParVcal(-1) {
-  PixTest::init();
-  init(); 
-  LOG(logDEBUG) << "PixTestSetup ctor(PixSetup &a, string, TGTab *)";
+//------------------------------------------------------------------------------
+PixTestSetup::PixTestSetup(PixSetup *a, std::string name) : PixTest(a, name)
+{
+	PixTest::init();
+	init();
+	LOG(logDEBUG) << "PixTestSetup ctor(PixSetup &a, string, TGTab *)";
 }
 
-
-//----------------------------------------------------------
-PixTestSetup::PixTestSetup() : PixTest() {
-  LOG(logDEBUG) << "PixTestSetup ctor()";
+//------------------------------------------------------------------------------
+PixTestSetup::PixTestSetup() : PixTest()
+{
+	LOG(logDEBUG) << "PixTestSetup ctor()";
 }
 
-// ----------------------------------------------------------------------
-bool PixTestSetup::setParameter(string parName, string sval) {
+//------------------------------------------------------------------------------
+bool PixTestSetup::setParameter(string parName, string sval)
+{
   bool found(false);
-  string::size_type s1;
-  string str1, str2;
-  int pixc, pixr;
-  for (unsigned int i = 0; i < fParameters.size(); ++i) {
-    if (fParameters[i].first == parName) {
-      found = true; 
+  string stripParName; 
+  ParOutOfRange = false;
+  for (unsigned int i = 0; i < fParameters.size(); ++i) 
+  {
+    if (fParameters[i].first == parName) 
+    {
+    	found = true; 
 
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) {
-	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  ==> setting fParNtrig to " << fParNtrig; 
-	setToolTips();
-      }
-
-      if (!parName.compare("Deser160Lo")) {
-	fParDeser160Lo = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fParDeser160Lo  ->" << fParDeser160Lo
-		     << "<- from sval = " << sval;
-      }
-      if (!parName.compare("Deser160Hi")) {
-	fParDeser160Hi = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fParDeser160Hi  ->" << fParDeser160Hi
-		     << "<- from sval = " << sval;
-      }
-
-      if (!parName.compare("ClkLo")) {
-	fParClkLo = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fParClkLo  ->" << fParClkLo
-		     << "<- from sval = " << sval;
-      }
-      if (!parName.compare("ClkHi")) {
-	fParClkHi = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fParClkHi  ->" << fParClkHi
-		     << "<- from sval = " << sval;
-      }
-
-      if (!parName.compare("Ntests")) {
-	fParNtests = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  ==> setting fParNtests to " << fParNtests; 
-	setToolTips();
-      }
-      if (!parName.compare("Vcal")) {
-	fParVcal = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  ==> setting fParVcal to " << fParVcal; 
-	setToolTips();
-      }
-      if (!parName.compare("PIX")) {
-	s1 = sval.find( "," );
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1);
-	  pixc = atoi(str1.c_str());
-	  str2 = sval.substr(s1+1);
-	  pixr = atoi(str2.c_str());
-	  fPIX.push_back(make_pair(pixc, pixr));
+ 	LOG(logDEBUG) << "  ==> parName: " << parName;
+	LOG(logDEBUG) << "  ==> sval:    " << sval;
+	if (!parName.compare("ClkMax")) 
+	{
+		fClkMax = atoi(sval.c_str()); 
+		if(fClkMax < 0 || fClkMax > 25)	
+		{ 
+		 	LOG(logINFO) << "PixTestSetup::setParameter() ClkMax out of range (0-25)";
+			found=false; ParOutOfRange = true;
+		}
+		//setToolTips();
+        }
+  	if (!parName.compare("DeserMax")) 
+	{
+		fDeserMax = atoi(sval.c_str()); 
+		if(fDeserMax < 0 || fDeserMax > 7)	
+		{ 
+		 	LOG(logINFO) << "PixTestSetup::setParameter() DeserMax out of range (0-7)";
+			found=false; ParOutOfRange = true;
+		}
+		//setToolTips();
 	}
-	else {
-	  fPIX.push_back( make_pair(-1, -1));
-	}
-      }
-      break;
+      	break;
     }
   }
   return found; 
 }
 
+//------------------------------------------------------------------------------
+void PixTestSetup::init()
+{
+	LOG(logINFO) << "PixTestSetup::init()";
+
+	fDirectory = gFile->GetDirectory(fName.c_str());
+	if (!fDirectory)
+		fDirectory = gFile->mkdir(fName.c_str());
+	fDirectory->cd();
+}
 
 // ----------------------------------------------------------------------
-void PixTestSetup::init() {
-  LOG(logDEBUG) << "PixTestSetup::init()";
-
-  setToolTips();
-  fDirectory = gFile->GetDirectory(fName.c_str()); 
-  if (!fDirectory) {
-    fDirectory = gFile->mkdir(fName.c_str()); 
-  } 
+void PixTestSetup::setToolTips()
+{
+	fTestTip = string(Form("scan testboard parameter settings and check for valid readout\n")
+		+ string("TO BE IMPLEMENTED!!"))  //FIXME
+		;
+	fSummaryTip = string("summary plot to be implemented")  //FIXME
+		;
 
 }
 
-
-// ----------------------------------------------------------------------
-void PixTestSetup::setToolTips() {
-  fTestTip    = string(Form("scan testboard parameter settings and check for valid readout\n")
-		       + string("TO BE IMPLEMENTED!!"))
-    ;
-  fSummaryTip = string("summary plot to be implemented")
-    ;
+//------------------------------------------------------------------------------
+void PixTestSetup::bookHist(string name)
+{
+	fDirectory->cd();
+	LOG(logDEBUG) << "nothing done with " << name;
 }
 
-
-// ----------------------------------------------------------------------
-void PixTestSetup::bookHist(string name) {
-
-  fDirectory->cd(); 
-  LOG(logDEBUG) << "nothing done with " << name;
-
-}
-
-
-//----------------------------------------------------------
-PixTestSetup::~PixTestSetup() {
-  LOG(logDEBUG) << "PixTestSetup dtor";
-  std::list<TH1*>::iterator il; 
-  fDirectory->cd(); 
-  for (il = fHistList.begin(); il != fHistList.end(); ++il) {
-    LOG(logDEBUG) << "Write out " << (*il)->GetName();
-    (*il)->SetDirectory(fDirectory); 
-    (*il)->Write(); 
-  }
-}
-
-
-// ----------------------------------------------------------------------
-void PixTestSetup::doTest() {
-  fDirectory->cd();
-  LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << fParNtrig << " and ntests = " << fParNtests;
-  //FIXME clearHist(); 
-
-  bookHist("bla");
- 
-  vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
-  vector<pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();;
-
-
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-
-  vector<uint8_t> vthrcomp, ctrlreg, vcal; 
-
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    vthrcomp.push_back(fApi->_dut->getDAC(iroc, "vthrcomp")); 
-    ctrlreg.push_back(fApi->_dut->getDAC(iroc, "ctrlreg")); 
-    vcal.push_back(fApi->_dut->getDAC(iroc, "vcal")); 
-
-    fApi->setDAC("vthrcomp", 20, iroc); 
-    fApi->setDAC("ctrlreg", 4, iroc); 
-    fApi->setDAC("vcal", 250, iroc); 
-
-    for (unsigned int i = 0; i < fPIX.size(); ++i) {
-      if (fPIX[i].first > -1)  {
-	fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
-	fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
-      } 
-    }
-  }
-
-
-  int offset[] = {-1, 0, 1};
-  int NCLK(fParClkHi-fParClkLo+1), 
-    NOFF(3), 
-    NDESER(fParDeser160Hi-fParDeser160Lo+1);
-  
-  vector<TH2D *> h3; 
-  TH2D *h2(0); 
-  for (int ideser = fParDeser160Lo; ideser < fParDeser160Lo+NDESER; ++ideser) {
-    cout << "creating TH2D " << Form("setupEff_deser%d", ideser) << endl;
-    h2 = new TH2D(Form("setupEff_deser%d", ideser), Form("setupEff_deser%d", ideser), NOFF, -1., 2., NCLK, fParClkLo, fParClkHi);
-    h3.push_back(h2); 
-    setTitles(h2, "offset wrt fixed conventions", "CLK"); 
-
-    fHistList.push_back(h3[ideser-fParDeser160Lo]); 
-    fHistOptions.insert(make_pair(h3[ideser-fParDeser160Lo], "colz")); 
-    
-  }
-
-  unsigned int npix(0);
-  for (unsigned int iroc = 0; iroc < fApi->_dut->getNEnabledRocs(); ++iroc) {
-    npix += fApi->_dut->getNEnabledPixels(iroc); 
-  }
-
-  LOG(logINFO) << " total enabled ROCs: " << fApi->_dut->getNEnabledRocs() 
-	       << " with total enabled pixels: " << npix;
-
-  vector<pixel> results;
-  for (int ideser = fParDeser160Lo; ideser < fParDeser160Lo+NDESER; ++ideser) {
-    for (int iclk = fParClkLo; iclk < fParClkLo+NCLK; ++iclk) {
-      for (int ioffset = 0; ioffset < NOFF; ++ioffset) {
-	cout << "xxx> starting loop point: " << " deser160phase = " << ideser << " iclk = " << iclk << " offset = " << offset[ioffset] << endl;
-	fPixSetup->getConfigParameters()->setTbParameter("clk", iclk); 
-	fPixSetup->getConfigParameters()->setTbParameter("ctr", iclk); 
-	fPixSetup->getConfigParameters()->setTbParameter("sda", iclk+15+offset[ioffset]); 
-	fPixSetup->getConfigParameters()->setTbParameter("tin", iclk+5+offset[ioffset]); 
-	fPixSetup->getConfigParameters()->setTbParameter("deser160phase", ideser); 
-	
-	vector<pair<string, uint8_t> > sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
-	LOG(logDEBUG) << fPixSetup->getConfigParameters()->dumpParameters(sig_delays); 
-	
-	fApi->initTestboard(sig_delays, power_settings, pg_setup);
-	
-	for (int i = 0; i < fParNtests; ++i) {
-	  results.clear();
-	  results = fApi->getEfficiencyMap(0, fParNtrig);
-	  cout << " test " << i << " results.size() = " << results.size() << endl;
-	  if (npix == results.size()) h3[ideser-fParDeser160Lo]->Fill(offset[ioffset], iclk); 
-	  if (0 == results.size()) break; // bail out for failures
+//------------------------------------------------------------------------------
+PixTestSetup::~PixTestSetup()
+{
+	LOG(logDEBUG) << "PixTestSetup dtor";
+	std::list<TH1*>::iterator il;
+	fDirectory->cd();
+	for (il = fHistList.begin(); il != fHistList.end(); ++il) 
+	{
+		LOG(logINFO) << "Write out " << (*il)->GetName();
+		(*il)->SetDirectory(fDirectory);
+		(*il)->Write();
 	}
-      }
-    }
-  }
+}
 
-  h3[0]->Draw("colz");
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h3[0]);
-  PixTest::update(); 
+//------------------------------------------------------------------------------
+void PixTestSetup::doTest()
+{
+	if (ParOutOfRange) return;
+	fDirectory->cd();
+	fHistList.clear();
+	PixTest::update();
+	
+	//fixed number of trigger (unstable with only 1 trigger)
+	int Ntrig = 2;
+	
+	LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << Ntrig;
 
-  for (int ideser = 0; ideser < NDESER; ++ideser) {
-    for (int ix = 0; ix < h3[ideser]->GetNbinsX(); ++ix) {
-      for (int iy = 0; iy < h3[ideser]->GetNbinsY(); ++iy) {
-	if (fParNtests == h3[ideser]->GetBinContent(ix+1, iy+1)) {
-	  LOG(logINFO) << " Found 100% PixelAlive success rate for deser160phase = " << fParDeser160Lo+ideser 
-		       << " CLK = " << h3[ideser]->GetYaxis()->GetBinCenter(iy+1) 
-		       << " OFFSET = " << h3[ideser]->GetXaxis()->GetBinCenter(ix+1);
+	bookHist("bla"); //FIXME
+
+	vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
+	vector<pair<uint16_t, uint8_t> > pg_setup;     
+	vector<pair<string, uint8_t> > sig_delays;
+
+	//set pattern with only res and token:
+	pg_setup.push_back(make_pair(0x0800, 25));    // PG_RESR b001000
+	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  b000001
+
+
+	TH2D *histo = new TH2D(Form("DeserphaseClkScan"), Form("DeserphaseClkScan"), fDeserMax, 0., (fDeserMax+1), fClkMax, 0., (fClkMax+1));
+	histo->GetXaxis()->SetTitle("deser160phase");
+	histo->GetYaxis()->SetTitle("clk");
+	fHistList.push_back(histo);
+
+	rawEvent daqRawEv;
+	size_t daqRawEvsize;
+	int ideser, iclk;
+	bool goodvaluefound = false;
+	int goodclk, goodeser = -1;
+
+	printf("        0        1        2        3        4        5        6        7\n");
+	for (iclk = 0; iclk <= fClkMax; iclk++)
+	{
+		printf("%2i:", iclk);
+		for (ideser = 0; ideser <= fDeserMax; ideser++)
+		{
+			//delays initialization:
+			setTbParameters(iclk, ideser);	
+			sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+
+			fApi->initTestboard(sig_delays, power_settings, pg_setup);  //FIXME to be divided
+
+			// Start the DAQ:
+			fApi->daqStart(pg_setup);
+			// Send the triggers:
+			fApi->daqTrigger(Ntrig);
+			// Read the raw event:
+			daqRawEv = fApi->daqGetRawEvent();
+			daqRawEvsize = daqRawEv.GetSize();
+
+			//from deser160 test structure. To find the Header (2040):
+			if (daqRawEvsize)
+			{
+				int h = int(daqRawEv.data[0] & 0xffc);
+				if (h == 0x7f8)
+				 {
+					printf(" <%03X>", int(daqRawEv.data[0] & 0xffc));
+					histo->Fill(ideser, iclk);	
+					goodvaluefound = true;
+					goodclk = iclk; goodeser = ideser;					
+				 }
+				else
+					printf("  %03X ", int(daqRawEv.data[0] & 0xffc));
+
+				if (daqRawEvsize < 10)
+					printf("[%u]", (unsigned int)(daqRawEvsize));
+				else
+					printf("[*]");
+			}
+
+			else cout << "  ......";
+
+			// Stop the DAQ:
+			fApi->daqStop();
+
+		}
+			cout << endl;
 	}
-      }
-    }
-  }
 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "resetting vthrcomp = " << static_cast<int>(vthrcomp[iroc]) << " for ROC " << iroc; 
-    fApi->setDAC("vthrcomp", vthrcomp[iroc], iroc); 
-    LOG(logDEBUG) << "resetting ctrlreg = " << static_cast<int>(ctrlreg[iroc]) << " for ROC " << iroc; 
-    fApi->setDAC("ctrlreg", ctrlreg[iroc], iroc); 
-    LOG(logDEBUG) << "resetting vcal = " << static_cast<int>(vcal[iroc]) << " for ROC " << iroc; 
-    fApi->setDAC("vcal", vcal[iroc], iroc); 
-  }
+	histo->Draw("colz");
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), histo);
+	PixTest::update(); //needed?
+      
+	if (goodvaluefound)
+	{
+	//algorithm to choose the best values - TO BE IMPLEMENTED FIXME
+	//now initialized to the last one (not good for long cable):
+	int finalclk = goodclk-1;
+	int finaldeser = goodeser;
+	LOG(logINFO) << "PixTestSetup::doTest() good delays are:" << endl << "clk = "<<  finalclk << " -  deser160 = " << finaldeser << endl;
+	setTbParameters(finalclk, finaldeser);
+	}
 
-  LOG(logINFO) << "PixTestSetup::doTest() done";
+	else
+	{
+	//back to default values
+	LOG(logINFO) << "PixTestSetup::doTest() none good delays found. Back to default values (clk 4 - deser 4)"<< endl;
+	setTbParameters(4, 4);
+	}
+
+  	vector<pair<string, uint8_t> > sig_delays2 = fPixSetup->getConfigParameters()->getTbSigDelays();
+	LOG(logDEBUG) << fPixSetup->getConfigParameters()->dumpParameters(sig_delays2);
+        pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+
+	fApi->initTestboard(sig_delays2, power_settings, pg_setup);
+
+	LOG(logINFO) << "PixTestSetup::doTest() done for " ;
+}
+
+// ----------------------------------------------------------------------
+void PixTestSetup::setTbParameters(int clk, int deser160) {
+	fPixSetup->getConfigParameters()->setTbParameter("clk", clk);
+	fPixSetup->getConfigParameters()->setTbParameter("ctr", clk);
+	fPixSetup->getConfigParameters()->setTbParameter("sda", clk + 15);
+	fPixSetup->getConfigParameters()->setTbParameter("tin", clk + 5);
+	fPixSetup->getConfigParameters()->setTbParameter("deser160phase", deser160);
+}
+
+// ----------------------------------------------------------------------
+void PixTestSetup::saveTbParameters() {
+  LOG(logINFO) << "Write Tb parameters to file"; 
+  fPixSetup->getConfigParameters()->writeTbParameterFile();
+}
+
+// ----------------------------------------------------------------------
+void PixTestSetup::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "running command: " << command;
+  if (!command.compare("savetbparameters")) {
+    saveTbParameters(); 
+    return;
+  }
+  LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
