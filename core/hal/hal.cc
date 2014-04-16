@@ -592,18 +592,6 @@ void hal::RocClearCalibrate(uint8_t roci2c) {
  _testboard->roc_ClrCal();
 }
 
-
-/*
-void hal::getExpectedSamples(uint32_t events, uint32_t samples, uint8_t nrocs, uint16_t npixels, uint32_t iterations) {
- 
-  // Length ROC header: 1 sample
-  // Length pixel:      2 samples
-  samples = 2*pixels + ;
-  events  = pixels*iterations;
-}
-*/
-
-
 // ---------------- TEST FUNCTIONS ----------------------
 
 std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter) {
