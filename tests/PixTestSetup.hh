@@ -1,29 +1,32 @@
-#ifndef PIXTESTSETUP_H
-#define PIXTESTSETUP_H
+// -- author: Martino Dall'Osso
+#ifndef PixTestSetup_H
+#define PixTestSetup_H
 
 #include "PixTest.hh"
 
-class DLLEXPORT PixTestSetup: public PixTest {
+class DLLEXPORT PixTestSetup : public PixTest {
 public:
-  PixTestSetup(PixSetup *, std::string);
-  PixTestSetup();
-  virtual ~PixTestSetup();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
-  void setToolTips();
-  void bookHist(std::string); 
+	PixTestSetup(PixSetup *, std::string);
+	PixTestSetup();
+	virtual ~PixTestSetup();
+	virtual bool setParameter(std::string parName, std::string sval);
+	void init();
+	void setToolTips();
+	void bookHist(std::string);
+	void runCommand(std::string);
 
-  void doTest(); 
+	void doTest();
+	void saveTbParameters();
+	void setTbParameters(int , int);
 
 private:
 
-  int     fParNtrig; 
-  int     fParNtests;
-  int     fParVcal; 
-  int     fParDeser160Lo, fParDeser160Hi;
-  int     fParClkLo, fParClkHi; 
+	int     fClkMax;
+	int     fDeserMax;
+	int     fParCals;
+        bool    ParOutOfRange;
 
-  ClassDef(PixTestSetup, 1)
+	ClassDef(PixTestSetup, 1)
 
 };
 #endif
