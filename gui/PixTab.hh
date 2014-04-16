@@ -32,6 +32,7 @@ public:
   virtual void buttonClicked(); 
   virtual void boxChecked(); 
   virtual void setParameter(); 
+  virtual void yellow(); 
 
   void update();
   void updateToolTips();

@@ -109,6 +109,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
+    te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
 
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
@@ -302,7 +303,22 @@ void PixTab::boxChecked() {
 }
 
 // ----------------------------------------------------------------------
-
+void PixTab::yellow() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+  
+  string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  if (fTest->getParameter(fParIds[id]).compare(svalue)) {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fYellow);
+  } else {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fWhite);
+  }
+}
 
 
 // ----------------------------------------------------------------------
@@ -319,6 +335,7 @@ void PixTab::setParameter() {
   }
 
   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fWhite);
   
   LOG(logDEBUG) << "xxxPressed():  ID = " << id 
 		<< " -> " << fParIds[id]

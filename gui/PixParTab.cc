@@ -74,6 +74,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
     te->SetText(Form("%d", int(amap[i].second)));
     te->Connect("ReturnPressed()", "PixParTab", this, "setTbParameter()");
+    te->Connect("TextChanged(const char *)", "PixParTab", this, "tbYellow()");
 
     tset = new TGTextButton(hFrame, "Set", i);
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
@@ -98,6 +99,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
     te->SetText(Form("%5.3f", float(dmap[i].second)));
     te->Connect("ReturnPressed()", "PixParTab", this, "setPowerSettings()");
+    te->Connect("TextChanged(const char *)", "PixParTab", this, "powerYellow()");
 
     tset = new TGTextButton(hFrame, "Set", i);
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
@@ -162,8 +164,9 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  te->SetToolTipText("note that the numbers are in binary format (in case this is not obvious)");
 	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB)); 
 	  std::bitset<8> bits(amap[i].second);
-	    te->SetText(Form("%s", bits.to_string().c_str()));
+	  te->SetText(Form("%s", bits.to_string().c_str()));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
+	  te->Connect("TextChanged(const char *)", "PixParTab", this, "tbmYellow()");
 	  
 	  tset = new TGTextButton(hFrame, "Set", i);
 	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
@@ -255,6 +258,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB)); 
 	  te->SetText(Form("%d", int(amap[idac].second)));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
+	  te->Connect("TextChanged(const char *)", "PixParTab", this, "rocYellow()");
 	  tset = new TGTextButton(hFrame, "Set", idac);
 	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
 	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
@@ -280,6 +284,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB)); 
 	  te->SetText(Form("%d", int(amap[idac].second)));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
+	  te->Connect("TextChanged(const char *)", "PixParTab", this, "rocYellow()");
 	  
 	  tset = new TGTextButton(hFrame, "Set", idac);
 	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
@@ -385,10 +390,28 @@ void PixParTab::setTbParameter() {
 
   LOG(logDEBUG)  << "PixParTab::setTbParameter: " << fTbParIds[id] << ": " << int(udac);
   fConfigParameters->setTbParameter(fTbParIds[id], udac); 
+  ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fWhite); 
 
   initTestboard(); 
 
 } 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::tbYellow() {
+  if (!fGui->getTabs()) return;
+
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fYellow);
+}
+
 
 // ----------------------------------------------------------------------
 void PixParTab::setPgSettings() {
@@ -425,9 +448,24 @@ void PixParTab::setPowerSettings() {
   
   LOG(logDEBUG)  << "PixParTab::setPowerSettings: " << fPowerParIds[id] << ": " << udac; 
   fConfigParameters->setTbPowerSettings(fPowerParIds[id], udac); 
+  ((TGTextEntry*)(fPowerTextEntries[fPowerParIds[id]]))->SetBackgroundColor(fGui->fWhite);
   initTestboard(); 
 
 } 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::powerYellow() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  ((TGTextEntry*)(fPowerTextEntries[fPowerParIds[id]]))->SetBackgroundColor(fGui->fYellow);
+}
 
 
 // ----------------------------------------------------------------------
@@ -470,10 +508,26 @@ void PixParTab::setTbmParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
       fGui->getApi()->setTbmReg(sdac, udac, itbm);
+      fTbmTextEntries[sdac]->SetBackgroundColor(fGui->fWhite);
     }
   }
 
 } 
+
+
+// ----------------------------------------------------------------------
+void PixParTab::tbmYellow() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  string sdac = fTbmTextMap[id]; 
+  ((TGTextEntry*)(fTbmTextEntries[sdac]))->SetBackgroundColor(fGui->fYellow);
+}
 
 
 // ----------------------------------------------------------------------
@@ -568,11 +622,25 @@ void PixParTab::setRocParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " roc = " << iroc 
 		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
+      fRocTextEntries[sdac]->SetBackgroundColor(fGui->fWhite);
     }
   }
 
 } 
 
+// ----------------------------------------------------------------------
+void PixParTab::rocYellow() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  string sdac = fRocTextMap[id]; 
+  ((TGTextEntry*)(fRocTextEntries[sdac]))->SetBackgroundColor(fGui->fYellow);
+}
 
 // ----------------------------------------------------------------------
 void PixParTab::setLemo() {

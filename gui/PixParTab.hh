@@ -55,6 +55,12 @@ public:
   TGCompositeFrame* getCompositeFrame() {return fTabFrame;}
   TGCompositeFrame* getHorizontalFrame() {return fhFrame;}
 
+  void rocYellow();
+  void tbmYellow();
+  void tbYellow();
+  void powerYellow();
+
+
 protected: 
   
   // -- frames and widgets
