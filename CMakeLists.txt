@@ -9,7 +9,7 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "0.9.1")
+SET(PXAR_VERSION "0.9.2")
 SET(PXAR_FW_VERSION "2.10")
 
 # some macros are redefined to keep compatability with CMake 2.6
