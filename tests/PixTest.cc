@@ -548,6 +548,16 @@ bool PixTest::setParameter(string parName, string value) {
 
 
 // ----------------------------------------------------------------------
+string PixTest::getParameter(std::string parName) {
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (0 == fParameters[i].first.compare(parName)) {
+      return fParameters[i].second; 
+    }
+  }
+  return string(Form("parameter %s not found", parName.c_str())); 
+}
+
+// ----------------------------------------------------------------------
 bool PixTest::getParameter(std::string parName, int &ival) {
   bool found(false);
   //  FIXME This is likely not the intended behavior
@@ -611,7 +621,7 @@ void PixTest::clearSelectedPixels() {
 
 // ----------------------------------------------------------------------
 bool PixTest::setTestParameter(string parname, string value) {
-
+  
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (!fParameters[i].first.compare(parname)) {
       fParameters[i].second = value; 

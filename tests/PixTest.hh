@@ -139,6 +139,8 @@ public:
   bool getParameter(std::string parName, int &); 
   /// return by reference the FLOAT value of a parameter
   bool getParameter(std::string parName, float &); 
+  /// return the string value of a parameter
+  std::string getParameter(std::string parName);
   /// set the string value of a parameter
   virtual bool setParameter(std::string parName, std::string sval); 
   /// print all parameters and values
