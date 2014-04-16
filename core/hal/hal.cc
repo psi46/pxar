@@ -271,7 +271,7 @@ void hal::PrintInfo() {
 	       << "------------------------------------------------------";
 }
 
-bool hal::CheckCompatibility(){
+bool hal::CheckCompatibility() {
 
   std::string dtb_hashcmd;
   uint32_t hostCmdHash = 0, dtbCmdHash = 0;
@@ -280,7 +280,9 @@ bool hal::CheckCompatibility(){
   _testboard->GetRpcCallName(5,dtb_hashcmd);
   if(dtb_hashcmd.compare("GetRpcCallHash$I") != 0) {
     LOG(logCRITICAL) << "Your DTB flash file is outdated, it does not provide a RPC hash value for compatibility checks.";
-    throw FirmwareVersionMismatch("Your DTB flash file is outdated, it does not provide a RPC hash value for compatibility checks.");
+    return false;
+    // FIXME rework upgrade/flashing mechanism - does not work with exceptions yet!
+    //throw FirmwareVersionMismatch("Your DTB flash file is outdated, it does not provide a RPC hash value for compatibility checks.");
   }
   else {
     // Get hash for the Host RPC command list:
@@ -301,7 +303,9 @@ bool hal::CheckCompatibility(){
     if(!_testboard->RpcLink()) {
       LOG(logCRITICAL) << "Please update your DTB with the correct flash file.";
       LOG(logCRITICAL) << "Get Firmware " << PACKAGE_FIRMWARE << " from " << PACKAGE_FIRMWARE_URL;
-      throw FirmwareVersionMismatch("RPC Call hashes of DTB and Host do not match!");
+      // FIXME rework upgrade/flashing mechanism - does not work with exceptions yet!
+      //throw FirmwareVersionMismatch("RPC Call hashes of DTB and Host do not match!");
+      return false;
     }
     else { 
       // hashes do not match but all functions we need for pxar are present
