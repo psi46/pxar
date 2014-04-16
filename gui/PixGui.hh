@@ -67,6 +67,9 @@ public:
   PixSetup* getPixSetup() {return fPixSetup;}
 
   void updateSelectedRocs(std::map<int, int> a); 
+
+  ULong_t   fRed, fGreen, fYellow, fWhite; 
+
   
 private: 
 
@@ -105,8 +108,6 @@ private:
 
   int                    fWidth, fHeight; 
   std::string            fOldDirectory;
-
-  ULong_t                fRed, fGreen, fYellow; 
 
   int                    fBorderN, fBorderT, fBorderL;  // normal, tiny, large
 

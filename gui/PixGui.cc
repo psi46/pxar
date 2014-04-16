@@ -38,6 +38,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   gClient->GetColorByName("red", fRed);
   gClient->GetColorByName("green", fGreen);
   gClient->GetColorByName("yellow", fYellow);
+  gClient->GetColorByName("white", fWhite);
   
   fPixSetup = setup;
   fApi = fPixSetup->getApi();
