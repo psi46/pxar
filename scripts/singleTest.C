@@ -33,15 +33,17 @@ void singleTest(string testname = "PixelAlive", string rootfilename = "pixelaliv
   if (!pt->getName().compare("Ph")) {
     pt->setParameter("Ntrig", "2"); 
     pt->setParameter("DAC", "Vcal"); 
-    pt->setParameter("DacVal", "150"); 
+    pt->setParameter("DacVal", "200"); 
     pt->dumpParameters(); 
     pt->doTest();
     
-    pt->setParameter("Ntrig", "2"); 
-    pt->setParameter("DAC", "Vcal"); 
+    pt->setParameter("PIX", "reset"); 
+    pt->setParameter("Ntrig", "4"); 
     pt->setParameter("DacVal", "250"); 
+    pt->setParameter("PIX", "45,45"); 
     pt->dumpParameters(); 
     pt->doTest();
+
   }
 
 
