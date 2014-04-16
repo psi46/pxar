@@ -578,6 +578,53 @@ bool PixTest::getParameter(std::string parName, float &fval) {
 
 
 // ----------------------------------------------------------------------
+void PixTest::addSelectedPixels(string sval) {
+  bool reset(false), alreadyIn(false);
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (!fParameters[i].first.compare("PIX") && !fParameters[i].second.compare("reset")) {
+      fParameters[i].second = sval; 
+      reset = true; 
+      break;
+    }
+    if (!fParameters[i].first.compare("PIX") && !fParameters[i].second.compare(sval)) {
+      alreadyIn = true; 
+      break;
+    }
+  }
+  if (!reset && !alreadyIn) fParameters.push_back(make_pair("PIX", sval)); 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::clearSelectedPixels() {
+  fPIX.clear(); 
+  std::vector<std::pair<std::string, std::string> > pnew;   
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first.compare("PIX")) pnew.push_back(make_pair(fParameters[i].first, fParameters[i].second));
+  }
+  
+  pnew.push_back(make_pair("PIX", "reset")); 
+  fParameters.clear();
+  fParameters = pnew; 
+}
+
+
+// ----------------------------------------------------------------------
+bool PixTest::setTestParameter(string parname, string value) {
+
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (!fParameters[i].first.compare(parname)) {
+      fParameters[i].second = value; 
+      LOG(logDEBUG) << " setting  " << fParameters[i].first << " to new value " << fParameters[i].second;
+    }
+    return true;
+  }
+  
+  return false; 
+}
+
+
+// ----------------------------------------------------------------------
 void PixTest::dumpParameters() {
   LOG(logINFO) << "Parameters for test " << getName() << ", number of parameters = " << fParameters.size();
   //  FIXME This is likely not the intended behavior

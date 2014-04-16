@@ -112,18 +112,62 @@ void PixTestParameters::dump() {
 }
 
 
-// // ----------------------------------------------------------------------
-// bool PixTestParameters::setTestParameter(std::string testname, std::string parname, std::string value) {
+// ----------------------------------------------------------------------
+bool PixTestParameters::setTestParameter(string testname, string parname, string value) {
 
-//   for (map<string, map<string, string> >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
-//     LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
-//     map<string, string> pars = imap->second; 
-//     for (map<string, string>::iterator imap2 = pars.begin(); imap2 != pars.end(); ++imap2) {  
-//       LOG(logDEBUG) << "  " << imap2->first << ": " << imap2->second;
-//     }
-//   }
-  
-//   return true; 
-// }
+  for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+    if (imap->first.compare(testname)) continue;
+    LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
+    vector<pair<string, string> > pars = imap->second; 
+    for (unsigned int i = 0; i < pars.size(); ++i) {
+      if (!pars[i].first.compare(parname)) {
+	pars[i].second = value; 
+	LOG(logDEBUG) << " setting  " << pars[i].first << " to new value " << pars[i].second;
+      }
+    }
+    return true;
+  }
+
+  return false; 
+}
 
 
+// ----------------------------------------------------------------------
+bool PixTestParameters::addTestParameter(string testname, string parname, string value) {
+
+  for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+    if (imap->first.compare(testname)) continue;
+    LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<- adding parameter " << parname;
+    vector<pair<string, string> > pars = imap->second; 
+    // -- avoid adding a second identical parameter value (e.g. for PIX)
+    bool alreadyIn(false); 
+    for (unsigned int i = 0; i < pars.size(); ++i) {
+      if (!pars[i].first.compare(parname)) {
+	if (!pars[i].second.compare(value)) alreadyIn = true; 
+	break;
+      }
+    }
+    if (!alreadyIn) {
+      pars.push_back(make_pair(parname, value)); 
+      LOG(logDEBUG) << " adding  " << parname << " with value " << value;
+    }
+
+    return true;
+  }
+
+  return false; 
+}
+
+
+// ----------------------------------------------------------------------
+bool PixTestParameters::setTestParameters(string testname, vector<std::pair<std::string, std::string> > v) {
+
+  for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+    if (imap->first.compare(testname)) continue;
+    LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
+    imap->second = v;
+    return true;
+  }
+
+  return false;
+}

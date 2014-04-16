@@ -155,6 +155,12 @@ public:
   int getIdxFromId(int id); 
   /// is ROC ID selected?
   bool selectedRoc(int id);
+  /// clear selected pixel list
+  void clearSelectedPixels();
+  /// add a selected pixel to the internal parameter list
+  void addSelectedPixels(std::string sval);
+  /// change the local parameter
+  bool setTestParameter(std::string parname, std::string value);
 
   /// decrepit, do not use
   static std::string stripPos(std::string); 
