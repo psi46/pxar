@@ -436,14 +436,13 @@ bool api::SignalProbe(std::string probe, std::string name) {
   // Digital signal probes:
   if(probe.compare(0,1,"d") == 0) {
     
-    LOG(logDEBUGAPI) << "Looking up digital probe signal for: \"" << name << "\"";
-  
     // Get singleton Probe dictionary object:
     ProbeDictionary * _dict = ProbeDictionary::getInstance();
   
     // And get the register value from the dictionary object:
     uint8_t signal = _dict->getSignal(name);
-    LOG(logDEBUGAPI) << "Probe signal return: " << static_cast<int>(signal);
+    LOG(logDEBUGAPI) << "Digital probe signal lookup for \"" << name 
+		     << "\" returned signal: " << static_cast<int>(signal);
 
     // Select the correct probe for the output:
     if(probe.compare("d1") == 0) {
@@ -458,14 +457,13 @@ bool api::SignalProbe(std::string probe, std::string name) {
   // Analog signal probes:
   else if(probe.compare(0,1,"a") == 0) {
 
-    LOG(logDEBUGAPI) << "Looking up analog probe signal for: \"" << name << "\"";
-
     // Get singleton Probe dictionary object:
     ProbeADictionary * _dict = ProbeADictionary::getInstance();
   
     // And get the register value from the dictionary object:
     uint8_t signal = _dict->getSignal(name);
-    LOG(logDEBUGAPI) << "Probe signal return: " << static_cast<int>(signal);
+    LOG(logDEBUGAPI) << "Analog probe signal lookup for \"" << name 
+		     << "\" returned signal: " << static_cast<int>(signal);
 
     // Select the correct probe for the output:
     if(probe.compare("a1") == 0) {
