@@ -20,7 +20,6 @@ private:
   int     fParNtrig; 
   std::string fParDAC; 
   int     fParDacVal;
-  std::vector<std::pair<int, int> > fPIX; 
 
   ClassDef(PixTestPh, 1)
 

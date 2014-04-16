@@ -29,41 +29,46 @@ bool PixTestPh::setParameter(string parName, string sval) {
   string str1, str2;
   string::size_type s1;
   int pixc, pixr;
-  for (unsigned int i = 0; i < fParameters.size(); ++i) {
-    if (fParameters[i].first == parName) {
+  int imax(fParameters.size()); 
+  for (unsigned int i = 0; i < imax; ++i) {
+    if (!fParameters[i].first.compare(parName)) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("Ntrig")) {
+	setTestParameter("Ntrig", sval); 
 	fParNtrig = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
       if (!parName.compare("DAC")) {
+	setTestParameter("DAC", sval); 
 	fParDAC = sval;
 	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC
 		      << "<- from sval = " << sval;
       }
 
       if (!parName.compare("DacVal")) {
+	setTestParameter("DacVal", sval); 
 	fParDacVal = atoi(sval.c_str());
 	LOG(logDEBUG) << "  setting fParDacVal  ->" << fParDacVal
 		      << "<- from sval = " << sval;
       }
       
       if (!parName.compare("PIX")) {
-        s1 = sval.find( "," );
-        if( string::npos != s1 ) {
+        s1 = sval.find(",");
+        if (string::npos != s1) {
 	  str1 = sval.substr(0, s1);
-	  pixc = atoi( str1.c_str() );
+	  pixc = atoi(str1.c_str());
 	  str2 = sval.substr(s1+1);
-	  pixr = atoi( str2.c_str() );
-	  fPIX.push_back( make_pair( pixc, pixr ) );
-	}
-	else {
-	  fPIX.push_back( make_pair( -1, -1 ) );
+	  pixr = atoi(str2.c_str());
+	  fPIX.push_back(make_pair(pixc, pixr));
+	  addSelectedPixels(sval); 
+	  LOG(logDEBUG) << "  adding to FPIX ->" << pixc << "/" << pixr << " fPIX.size() = " << fPIX.size() ;
+	} else {
+	  clearSelectedPixels();
+	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
 	}
       }
-      // FIXME: remove/update from fPIX if the user removes via the GUI!
       break;
     }
   }
