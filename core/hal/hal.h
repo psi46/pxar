@@ -347,6 +347,11 @@ namespace pxar {
      */
     bool FindDTB(std::string &usbId);
 
+    /** Internal helper function to calculate an estimate of the data volume to be
+     *  expected for the upcoming test. This function only supplies debug output
+     *  and has no further effect on the data transmission or similar.
+     */
+    void estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t nTBMs);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit
