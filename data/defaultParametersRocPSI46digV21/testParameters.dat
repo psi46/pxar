@@ -57,16 +57,10 @@ DacLo 0
 DacHi 100
 thrMap button
 
-
 -- Setup
-Ntrig 10
-Ntests 5
-Vcal 200
-PIX 11,20
-ClkLo 0
-ClkHi 9
-Deser160Lo 3
-Deser160Hi 5
+DeserMax 7
+ClkMax   19
+saveTbParameters   button
 
 -- Trim
 TrimBits button
