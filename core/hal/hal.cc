@@ -632,7 +632,7 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopMultiRocAllPixelsCalibrate(roci2cs, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -684,7 +684,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopMultiRocOnePixelCalibrate(roci2cs, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -735,7 +735,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopSingleRocAllPixelsCalibrate(roci2c, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -785,7 +785,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopSingleRocOnePixelCalibrate(roci2c, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -845,7 +845,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -906,7 +906,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -963,7 +963,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -1020,7 +1020,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -1085,7 +1085,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -1153,7 +1153,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -1217,7 +1217,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
@@ -1281,7 +1281,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
   std::vector<Event*> tmpdata = std::vector<Event*>();
   while(!done) {
     // Delete previously read events:
-    for(std::vector<Event*>::iterator evtit = tmpdata.begin();evtit != tmpdata.end(); evtit++){ delete *evtit; }
+    tmpdata.clear();
 
     done = _testboard->LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
