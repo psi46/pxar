@@ -234,7 +234,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    bool daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -247,7 +247,7 @@ namespace pxar {
     /** Stopping the current DAQ session. This is not resetting the data buffers.
      *  All DAQ channels are stopped.
      */
-    bool daqStop();
+    void daqStop();
 
     /**
      */
@@ -275,7 +275,7 @@ namespace pxar {
 
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
-    bool daqClear();
+    void daqClear();
 
 
     // Functions to access NIOS storage of trim values:

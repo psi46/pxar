@@ -1382,7 +1382,7 @@ void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
 }
 
 
-bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
+void hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
@@ -1435,8 +1435,6 @@ bool hal::daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize) {
   _testboard->Daq_Start(0);
   _testboard->uDelay(100);
   _testboard->Flush();
-
-  return true;
 }
 
 Event* hal::daqEvent() {
@@ -1641,9 +1639,7 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
-bool hal::daqStop() {
-
-  LOG(logDEBUGHAL) << "Stopped DAQ session.";
+void hal::daqStop() {
 
   // Stop the Pattern Generator, just in case (also stops Pg_Loop())
   _testboard->Pg_Stop();
@@ -1655,20 +1651,17 @@ bool hal::daqStop() {
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Stop(channel); }
   _testboard->uDelay(100);
 
-  return true;
+  LOG(logDEBUGHAL) << "Stopped DAQ session.";
 }
 
-bool hal::daqClear() {
+void hal::daqClear() {
 
   // Disconnect the data pipe from the DTB:
   src0 = dtbSource();
   src1 = dtbSource();
   src2 = dtbSource();
   src3 = dtbSource();
-
   // FIXME provide daq_clear_all NIOS funktion?
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
-
-  return true;
 }
