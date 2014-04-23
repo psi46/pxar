@@ -732,7 +732,7 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
+bool ConfigParameters::writeTrimFile(int /*iroc*/, vector<pixelConfig> v) {
   std::stringstream fname;
   fname << fDirectory << "/" << getTrimParameterFileName();
 
