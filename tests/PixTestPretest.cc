@@ -631,7 +631,7 @@ void PixTestPretest::setCalDel() {
   string DacName = "caldel";
 
   // measure:
-  vector<pair<uint8_t, vector<pixel> > > results =  fApi->getEfficiencyVsDAC(DacName, 0, 250, 0, fParNtrig);
+  vector<pair<uint8_t, vector<pixel> > > results =  fApi->getEfficiencyVsDAC(DacName, 0, 250, FLAG_FORCE_MASKED, fParNtrig);
 
   // histos:
   vector<TH1D*> hsts;
