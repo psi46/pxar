@@ -198,13 +198,13 @@ IF(BUILD_pxarui)
 
 ENDIF(BUILD_pxarui)
 
-option(BUILD_pxardebug  "Compile pXar debug executable?" ON)
-IF(BUILD_pxardebug)
+option(BUILD_tools  "Compile pxar tools?" ON)
+IF(BUILD_tools)
 
-  # Build the pXar debug executable
-  ADD_SUBDIRECTORY(debug)
+  # Build pxar tools
+  ADD_SUBDIRECTORY(tools)
 
-ENDIF(BUILD_pxardebug)
+ENDIF(BUILD_tools)
 
 
 #############################################
