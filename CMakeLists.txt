@@ -159,24 +159,29 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 # Preparing the build of the shared pXar library #
 ##################################################
 
+# some optional components
+option(BUILD_utils  "Compile utilities for pxar?" OFF)
+option(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
+
 # Include directories
 INCLUDE_DIRECTORIES( core/api core/utils)
 
-# Build main pXar API library
+# Always build main pXar API library;
 ADD_SUBDIRECTORY(core)
 
-option(BUILD_pxarui  "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
-IF(BUILD_pxarui)
+# utility library and useful tools
+IF(BUILD_utils OR BUILD_pxarui)
+  ADD_SUBDIRECTORY(util)
+ENDIF(BUILD_utils OR BUILD_pxarui)
 
+# full UI and test suite (requires ROOT)
+IF(BUILD_pxarui)
   # this UI and its libraries depend on ROOT:
   FIND_PACKAGE(ROOT REQUIRED)
   INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
 
   # Build the analysis  library
   ADD_SUBDIRECTORY(ana)
-
-  # Build the util library
-  ADD_SUBDIRECTORY(util)
 
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)

@@ -7,6 +7,8 @@
 #if ((defined WIN32) && (defined __CINT__))
 typedef unsigned short int uint16_t;
 typedef unsigned char uint8_t;
+#undef __GNUC__
+typedef char int8_t; 
 #else
 
 #ifdef __CINT__
