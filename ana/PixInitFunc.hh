@@ -24,6 +24,9 @@ public:
 
   TF1* errScurve(TH1 *h); 
 
+  void initPol1(double &p0, double &p1, TH1 *h);
+  void initExpo(double &p0, double &p1, TH1 *h);
+
   bool fDoNotFit;
   double fLo, fHi;
   bool fLimit[20];
