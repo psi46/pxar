@@ -342,10 +342,10 @@ void PixTestTrim::trimBitTest() {
   fApi->_dut->maskAllPixels(false);
   
   vector<int>vtrim; 
-  vtrim.push_back(250);
-  vtrim.push_back(200);
-  vtrim.push_back(180);
-  vtrim.push_back(140);
+  vtrim.push_back(255);
+  vtrim.push_back(240);
+  vtrim.push_back(150);
+  vtrim.push_back(100);
 
   vector<int>btrim; 
   btrim.push_back(14);
@@ -362,14 +362,16 @@ void PixTestTrim::trimBitTest() {
     LOG(logWARNING) << "could not set trim bits to " << 15; 
     return;
   }
+  fApi->setDAC("CtrlReg", 0); 
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
-  vector<TH1*> thr0 = scurveMaps("Vcal", "TrimBitsThr0", 0, 200, fParNtrig, 1); 
-  
+  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 200, 1), "thr");
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   
   // -- now loop over all trim bits
   vector<TH1*> thr;
+  double maxThr = getMaximumThreshold(thr0); 
+  if (maxThr > 245.) maxThr = 245.; 
   for (unsigned int iv = 0; iv < vtrim.size(); ++iv) {
     thr.clear();
     ok = cp->setTrimBits(btrim[iv]);
@@ -385,9 +387,33 @@ void PixTestTrim::trimBitTest() {
 
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
-    thr = scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), 0, 200, fParNtrig, 1); 
+    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, maxThr+10, (iv<3?1:5)), "thr");
+    maxThr = getMaximumThreshold(thr); 
+    if (maxThr > 245.) maxThr = 245.; 
     steps.push_back(thr); 
   }
+  
+  // -- and now determine threshild difference
+  TH1 *h1(0); 
+  double dthr(0.);
+  for (unsigned int i = 0; i < steps.size(); ++i) {
+    thr = steps[i];
+    for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
+      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], iroc), Form("TrimBit%d_C%d", btrim[i], iroc), 256, 0., 256); 
+      for (int ix = 0; ix < 52; ++ix) {
+	for (int iy = 0; iy < 80; ++iy) {
+	  dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
+	  h1->Fill(dthr); 
+	}
+      }
+      fHistList.push_back(h1); 
+    }
+  }
+
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+
+  if (h1) h1->Draw();
+  PixTest::update(); 
 
   LOG(logINFO) << "trimBitTest done "; 
   

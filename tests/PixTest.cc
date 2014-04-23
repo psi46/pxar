@@ -253,8 +253,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
-	delete rmaps[i];
-	if (dumpFile) OutputFile << empty << endl;
 	continue;
       }
       
@@ -330,6 +328,19 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   if (h2) h2->Draw("colz");
   PixTest::update(); 
+
+  if (!(result & 0x4)) {
+    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+      rmaps.clear();
+      rmaps = maps[iroc];
+      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
+      while (!rmaps.empty()){
+	h1 = rmaps.back(); 
+	rmaps.pop_back(); 
+	if (h1) delete h1;
+      }
+    }
+  }
 
   return resultMaps; 
 }
