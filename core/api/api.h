@@ -176,6 +176,12 @@ namespace pxar {
                        std::vector<std::pair<std::string,double> > power_settings,
                        std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
   
+    void setTestboardPower(std::vector<std::pair<std::string,double> > power_settings);
+
+    void setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays);
+
+    bool setPatternGenerator(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+
     /** Initializer method for the DUT (attached devices)
      *
      *  This function requires the types and DAC settings for all TBMs

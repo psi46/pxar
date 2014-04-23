@@ -51,6 +51,54 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 
   // Collect and check the testboard configuration settings
 
+  // Power settings:
+  setTestboardPower(power_settings);
+
+  // Signal Delays:
+  setTestboardDelays(sig_delays);
+  
+  // Prepare Pattern Generator:
+  if(!verifyPatternGenerator(pg_setup)) return false;
+  // Store the Pattern Generator commands in the DUT:
+  _dut->pg_setup = pg_setup;
+
+  // Call the HAL to do the job:
+  _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id);
+  return true;
+}
+
+void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
+
+  if(!_hal->compatible()) return;
+
+  // Take care of the signal delay settings:
+  std::map<uint8_t,uint8_t> delays;
+  for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
+
+    // Fill the signal timing pairs with the register from the dictionary:
+    uint8_t sigRegister, sigValue = sigIt->second;
+    if(!verifyRegister(sigIt->first,sigRegister,sigValue,DTB_REG)) continue;
+
+    std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+    ret = delays.insert( std::make_pair(sigRegister,sigValue) );
+    if(ret.second == false) {
+      LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
+		      << "\" value " << static_cast<int>(ret.first->second)
+		      << " with " << static_cast<int>(sigValue);
+      delays[sigRegister] = sigValue;
+    }
+  }
+  // Store these validated parameters in the DUT
+  _dut->sig_delays = delays;
+
+  // If the HAL is ready, just update the stuff there:
+  if(_hal->status()) { _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id); }
+}
+
+void api::setTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
+
+  if(!_hal->compatible()) return;
+
   // Read the power settings and make sure we got all, these here are the allowed limits:
   double va = 2.5, vd = 3.0, ia = 3.0, id = 3.0;
   for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
@@ -89,35 +137,8 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
     throw InvalidConfig("Power settings are not sufficient. Please check and re-configure.");
   }
 
-
-  // Take care of the signal delay settings:
-  std::map<uint8_t,uint8_t> delays;
-  for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
-
-    // Fill the signal timing pairs with the register from the dictionary:
-    uint8_t sigRegister, sigValue = sigIt->second;
-    if(!verifyRegister(sigIt->first,sigRegister,sigValue,DTB_REG)) continue;
-
-    std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-    ret = delays.insert( std::make_pair(sigRegister,sigValue) );
-    if(ret.second == false) {
-      LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
-		      << "\" value " << static_cast<int>(ret.first->second)
-		      << " with " << static_cast<int>(sigValue);
-      delays[sigRegister] = sigValue;
-    }
-  }
-  // Store these validated parameters in the DUT
-  _dut->sig_delays = delays;
-  
-  // Prepare Pattern Generator:
-  if(!verifyPatternGenerator(pg_setup)) return false;
-  // Store the Pattern Generator commands in the DUT:
-  _dut->pg_setup = pg_setup;
-
-  // Call the HAL to do the job:
-  _hal->initTestboard(delays,pg_setup,va,vd,ia,id);
-  return true;
+  // If the HAL is ready, just update the stuff there:
+  if(_hal->status()) { _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id); }
 }
   
 bool api::initDUT(uint8_t hubid,
