@@ -25,8 +25,8 @@ typedef uint32_t DWORD;
 
 #include <stdint.h>
 
-#define USBWRITEBUFFERSIZE  150000
-#define USBREADBUFFERSIZE   150000
+#define USBWRITEBUFFERSIZE  4096
+#define USBREADBUFFERSIZE   4096
 
 
 #define ESC_EXTENDED 0x8f
