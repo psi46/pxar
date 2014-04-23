@@ -3,8 +3,6 @@
 #include <string>
 #include <algorithm> /* for 'remove()' */
 
-#include <TH1.h> // fake include to pull in Form
-
 #include "PixTestParameters.hh"
 #include "log.h"
 
