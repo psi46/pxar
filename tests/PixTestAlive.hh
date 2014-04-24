@@ -12,6 +12,11 @@ public:
   void init(); 
   void setToolTips();
   void bookHist(std::string); 
+
+  void runCommand(std::string); 
+  void maskTest();
+  void addressDecodingTest();
+
   void dummyAnalysis(); 
   void output4moreweb();
 
