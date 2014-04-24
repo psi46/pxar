@@ -241,7 +241,7 @@ void PixTestAlive::addressDecodingTest() {
 // 	cout << "   events.size() = " << events.size() << endl;
 // 	//	cout << event << endl;
 // 	return;
-	  
+	
 	done = true;
       }
       catch(pxar::DataMissingEvent &e){
@@ -270,7 +270,7 @@ void PixTestAlive::addressDecodingTest() {
 	int col = results[i].column; 
 	int val = /* 100*row + */ col;
 	if (icol == col) {
-	  h2->Fill(icol, irow, val); 
+	  h2->Fill(col, row, val); 
 	} else {
 	}
 	cout << val << " "; 
@@ -281,9 +281,9 @@ void PixTestAlive::addressDecodingTest() {
     }
     cout << endl;
     
-  }
+    //  }
 
-  copy(maps.begin(), maps.end(), back_inserter(fHistList));
+    copy(maps.begin(), maps.end(), back_inserter(fHistList));
   
   TH2D *h = (TH2D*)(*fHistList.begin());
 
