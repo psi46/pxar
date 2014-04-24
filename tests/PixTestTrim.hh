@@ -11,9 +11,9 @@ public:
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
-  void runCommand(std::string); 
   void bookHist(std::string); 
 
+  void runCommand(std::string); 
   void trimBitTest();
 
   int adjustVtrim(); 

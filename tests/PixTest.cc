@@ -353,21 +353,19 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
   vector<pixel> results;
 
-  Int_t userChoice = kMBRetry;
+  int cnt(0); 
   bool done = false;
-  while(userChoice==kMBRetry && !done){
-    try{
+  while (!done){
+    try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       done = true; // got our data successfully
     }
     catch(pxar::DataMissingEvent &e){
-      // readout of data failed
-      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
-      message+="'. Number of missing events: ";
-      message+=static_cast<ostringstream*>( &(ostringstream() << e.numberMissing) )->str(); 
-      message+=". Should we try the test again?";
-      new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
     }
+    done = (cnt>5) || done;
   }
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
@@ -1234,3 +1232,4 @@ void PixTest::banner(string what, TLogLevel log) {
   LOG(log) << "   " << what; 
   LOG(log) << "   ----------------------------------------------------------------------";
 }
+
