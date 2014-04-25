@@ -190,7 +190,7 @@ void runTest(PixTest *b) {
 }
 
 // ----------------------------------------------------------------------
-void runGui(PixSetup &a, int argc, char *argv[]) {
+void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);
