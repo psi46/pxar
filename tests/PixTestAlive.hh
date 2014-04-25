@@ -14,6 +14,7 @@ public:
   void bookHist(std::string); 
 
   void runCommand(std::string); 
+  void aliveTest();
   void maskTest();
   void addressDecodingTest();
 

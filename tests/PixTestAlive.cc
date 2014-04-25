@@ -60,6 +60,11 @@ void PixTestAlive::runCommand(std::string command) {
     return;
   }
 
+  if (!command.compare("alivetest")) {
+    aliveTest(); 
+    return;
+  }
+
   if (!command.compare("addressdecodingtest")) {
     addressDecodingTest(); 
     return;
@@ -113,9 +118,18 @@ void PixTestAlive::doTest() {
     return;
   }
 
+  aliveTest();
+  maskTest();
+  addressDecodingTest();
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestAlive::aliveTest() {
   PixTest::update(); 
   fDirectory->cd();
-  LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << int(fParNtrig);
+  LOG(logINFO) << "PixTestAlive::aliveTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
 
   fApi->setDAC("ctrlreg", 4);
@@ -136,7 +150,7 @@ void PixTestAlive::doTest() {
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
-  LOG(logINFO) << "PixTestAlive::doTest() done";
+  LOG(logINFO) << "PixTestAlive::aliveTest() done";
 }
 
 
@@ -198,14 +212,15 @@ void PixTestAlive::addressDecodingTest() {
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     LOG(logDEBUG) << "Create hist " << Form("addressDecoding_C%d", iroc); 
     h2 = bookTH2D(Form("addressDecoding_C%d", iroc), Form("addressDecoding_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
+    h2->SetMinimum(-1.); 
+    h2->SetMaximum(+1.); 
     fHistOptions.insert(make_pair(h2, "colz"));
     h2->SetDirectory(fDirectory); 
     setTitles(h2, "col", "row"); 
     maps.push_back(h2); 
   }
 
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
   vector<pixel> results;
@@ -226,71 +241,73 @@ void PixTestAlive::addressDecodingTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-    int cnt(0); 
-    bool done = false;
-    results.clear();
-    while (!done){
-      try {
-	LOG(logDEBUG) << "getEfficiencyMap() "; 
-	results = fApi->getEfficiencyMap(FLAGS, 1);
-// 	fApi->daqStart(pg_setup);
-// 	fApi->daqTrigger(10);
-// 	vector<Event> events = fApi->daqGetEventBuffer();
-// 	cout << "daq status: " << fApi->daqStatus() << endl;
-// 	fApi->daqStop();
-// 	cout << "   events.size() = " << events.size() << endl;
-// 	//	cout << event << endl;
-// 	return;
-	
-	done = true;
-      }
-      catch(pxar::DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-	++cnt;
-	if (e.numberMissing > 10) done = true; 
-      }
-      done = (cnt>5) || done;
+  int cnt(0); 
+  bool done = false;
+  results.clear();
+  while (!done){
+    try {
+      LOG(logDEBUG) << "getEfficiencyMap() "; 
+      results = fApi->getEfficiencyMap(FLAGS, 1);
+      done = true;
     }
+    catch(pxar::DataMissingEvent &e){
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    }
+    done = (cnt>5) || done;
+  }
+  
+  vector<Event*> events = fApi->getEventBuffer();
+  cout << "events.size() = " << events.size() << endl;
+  int idx(-1), oldIdx(-2); 
+  int iRocEvt(0), icol(0), irow(0);
+  Event *pE(0); 
+  pixel pix; 
+  for (unsigned int ievt = 0; ievt < events.size(); ++ievt) {
+    pE = events[ievt];
+    if (pE->pixels.size() > 0) {
+      if (pE->pixels.size() > 1) {
+	LOG(logDEBUG) << " too many pixels in event " << ievt; 
+      }
 
-    int idx(-1), oldIdx(-2); 
-    int icol(0); 
-
-    cout << "results.size() = " << results.size() << endl;
-    for (unsigned int i = 0; i < results.size(); ++i) {
-      idx = getIdxFromId(results[i].roc_id);
-      // -- a new ROC is appearing in the readout, reset icol
+      pix = pE->pixels[0];
+      idx = getIdxFromId(pix.roc_id);
+      // -- a new ROC is appearing in the readout, reset iRocEvt
       if (idx != oldIdx) {
 	oldIdx = idx;
-	icol = 0; 
-	cout << endl;
+	iRocEvt = 0; 
       }
+      
       if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
 	h2 = maps[idx];
-	int row = results[i].row; 
-	int col = results[i].column; 
-	int val = /* 100*row + */ col;
-	if (icol == col) {
-	  h2->Fill(col, row, val); 
+	int row = pix.row; 
+	int col = pix.column; 
+	if (iRocEvt/80 == col && iRocEvt%80 == row) {
+	  h2->SetBinContent(col+1, row+1, 1.); 
 	} else {
+	  h2->SetBinContent(col+1, row+1, -1.); 
+	  LOG(logDEBUG) << pix << " col/row = " << col << "/" << row 
+			<< " r/o position = " << iRocEvt/80 << "/" << iRocEvt%80
+			<< " address decoding error" << " (event " << ievt << ")";
 	}
-	cout << val << " "; 
-      } else {
-	LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
       }
-      ++icol;
+      
+    } else {
+      LOG(logDEBUG) << " missing pixel (event " << ievt << ")"; 
     }
-    cout << endl;
-    
-    //  }
 
-    copy(maps.begin(), maps.end(), back_inserter(fHistList));
+    ++iRocEvt;
+  }
+
+  copy(maps.begin(), maps.end(), back_inserter(fHistList));
   
   TH2D *h = (TH2D*)(*fHistList.begin());
 
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
-  LOG(logINFO) << "PixTestAlive::addDecodingTest() done";
+  LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
 }
 
 
