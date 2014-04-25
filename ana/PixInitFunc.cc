@@ -82,7 +82,6 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   }
 
   double lo = h->GetBinLowEdge(1); 
-  int zcnt(0); 
   // require 3 consecutive bins at zero
   for (int i = 3; i < h->GetNbinsX(); ++i) {
     if (h->GetBinContent(i-2) < 1 && h->GetBinContent(i-1) < 1 && h->GetBinContent(i) < 1) {

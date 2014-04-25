@@ -120,7 +120,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, (int)FLAGS)); 
 
   int range = dacmax - dacmin + 1; 
-  int halfrange = (dacmax - dacmin + 1)/2; 
   int rawevts = 4160*range/2; 
   int trgevts = 1000000/rawevts; 
   if (trgevts < 1) trgevts = 1; 

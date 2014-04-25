@@ -270,7 +270,7 @@ TH1* PixTestDacDacScan::moduleMap(string histname) {
 
   TH2D *h(0);
   string hname;
-  int cycle(-1), ic(-1), ir(-1); 
+  int cycle(-1); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
 

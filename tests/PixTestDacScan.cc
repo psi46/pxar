@@ -147,7 +147,7 @@ void PixTestDacScan::setToolTips() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDacScan::bookHist(string name) {
+void PixTestDacScan::bookHist(string /*name*/) {
   fDirectory->cd(); 
 }
 
@@ -248,7 +248,7 @@ TH1* PixTestDacScan::moduleMap(string histname) {
 
   TH1 *h(0);
   string hname;
-  int cycle(-1), ic(-1), ir(-1); 
+  int cycle(-1); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
 

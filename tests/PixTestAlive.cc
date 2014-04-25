@@ -264,7 +264,7 @@ void PixTestAlive::addressDecodingTest() {
   vector<Event> events = fApi->getEventBuffer();
   cout << "events.size() = " << events.size() << endl;
   int idx(-1), oldIdx(-2); 
-  int iRocEvt(0), icol(0), irow(0);
+  int iRocEvt(0);
   pixel pix; 
   for (unsigned int ievt = 0; ievt < events.size(); ++ievt) {
     if (events[ievt].pixels.size() > 0) {
