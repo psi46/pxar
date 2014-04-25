@@ -532,6 +532,11 @@ namespace pxar {
      */
     uint32_t daqGetNDecoderErrors();
 
+    /** Function to return the full Event buffer from the testboard RAM after
+     *  a call
+     */
+    std::vector<Event> getEventBuffer() {return fEvents;}
+
     /** DUT object for book keeping of settings
      */
     dut * _dut;
@@ -668,6 +673,8 @@ namespace pxar {
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
 
+    std::vector<Event> fEvents;
+    
   }; // class api
 
 

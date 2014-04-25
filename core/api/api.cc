@@ -986,6 +986,13 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
 
+  // hack
+  fEvents.clear();
+  for (unsigned int i = 0; i < data.size(); ++i) {
+    Event a = *data[i];
+    fEvents.push_back(a);
+  }
+
   // Repacking of all data segments into one long map vector:
   std::vector<pixel>* result = repackMapData(data, nTriggers, true);
 
