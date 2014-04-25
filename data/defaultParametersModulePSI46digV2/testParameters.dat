@@ -1,3 +1,5 @@
+-- FullTest
+
 -- CurVsDac
 DAC Vana
 
@@ -58,8 +60,9 @@ Ntrig 2
 DAC   VthrComp
 DacLo 0
 DacHi 200
-fits   button
-thrMap button
+scurves button
+fits    button
+thrMap  button
 
 -- Setup
 Ntrig 10
