@@ -15,6 +15,7 @@ public:
 
   void runCommand(std::string); 
   void trimBitTest();
+  void trimTest();
 
   int adjustVtrim(); 
   std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax); 

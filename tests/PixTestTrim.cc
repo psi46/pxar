@@ -92,6 +92,10 @@ void PixTestTrim::runCommand(std::string command) {
     trimBitTest(); 
     return;
   }
+  if (!command.compare("trim")) {
+    trimTest(); 
+    return;
+  }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
@@ -122,16 +126,38 @@ PixTestTrim::~PixTestTrim() {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::doTest() {
+
+  fDirectory->cd();
+  PixTest::update(); 
+  bigBanner(Form("PixTestTrim::doTest()"));
+
+  trimTest(); 
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  trimBitTest();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+}
+
+// ----------------------------------------------------------------------
+void PixTestTrim::trimTest() {
+
   if (fPixSetup->isDummy()) {
     dummyAnalysis(); 
     return;
   }
 
-  double NSIGMA(2); 
-
+  cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  bigBanner(Form("PixTestTrim::doTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+  banner(Form("PixTestTrim::trimTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+
+  double NSIGMA(2); 
+
 
   fPIX.clear(); 
 
@@ -329,18 +355,19 @@ void PixTestTrim::doTest() {
 
   vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", 5, fParVcal-20, fParVcal+20, 3); 
     
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestTrim::trimTest() done ";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestTrim::trimBitTest() {
 
-  LOG(logINFO) << "trimBitTest start "; 
+  cacheDacs();
 
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
-  
   vector<int>vtrim; 
   vtrim.push_back(255);
   vtrim.push_back(240);
@@ -352,6 +379,14 @@ void PixTestTrim::trimBitTest() {
   btrim.push_back(13);
   btrim.push_back(11);
   btrim.push_back(7);
+
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestTrim::trimBitTest() ntrig = %d, vtrims = %d %d %d %d", 
+	      fParNtrig, vtrim[0], vtrim[1], vtrim[2], vtrim[3]));
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
 
   vector<vector<TH1*> > steps; 
 
@@ -387,7 +422,7 @@ void PixTestTrim::trimBitTest() {
 
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
-    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, maxThr+10, (iv<3?1:5)), "thr");
+    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, maxThr+10, 1), "thr");
     maxThr = getMaximumThreshold(thr); 
     if (maxThr > 245.) maxThr = 245.; 
     steps.push_back(thr); 
@@ -414,7 +449,7 @@ void PixTestTrim::trimBitTest() {
 
   if (h1) h1->Draw();
   PixTest::update(); 
-
+  restoreDacs();
   LOG(logINFO) << "trimBitTest done "; 
   
 }
