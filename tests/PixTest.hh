@@ -116,10 +116,10 @@ public:
   void banner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
   void bigBanner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
   
-  /// cache a DAC value
-  void cache(std::string dacname); 
-  /// restore a DAC value after caching it
-  void restore(std::string dacname); 
+  /// cache DACs
+  void cacheDacs(bool verbose = false); 
+  /// restore DACs
+  void restoreDacs(bool verbose = false); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 
@@ -195,8 +195,7 @@ protected:
 
   std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
-  std::vector<uint8_t>  fCacheVal; ///< vector for all ROCs 
-  std::string           fCacheDac; ///< name of the DAC to be cached
+  std::vector<std::vector<std::pair<std::string,uint8_t> > >  fDacCache; ///< vector for all ROCs 
 
   TDirectory            *fDirectory; ///< where the root histograms will end up
   std::list<TH1*>       fHistList; ///< list of histograms available in PixTab::next and PixTab::previous

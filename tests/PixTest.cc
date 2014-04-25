@@ -25,8 +25,6 @@ PixTest::PixTest(PixSetup *a, string name) {
   fPixSetup       = a;
   fApi            = a->getApi(); 
   fTestParameters = a->getPixTestParameters(); 
-  fCacheDac = "nada"; 
-  fCacheVal.clear();    
 
   fName = name;
   setToolTips();
@@ -836,36 +834,28 @@ TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax, bool 
 
 
 // ----------------------------------------------------------------------
-void PixTest::cache(string dacname) {
-  if (!fCacheDac.compare("nada")) {
-    fCacheDac = dacname; 
-  } else {
-    LOG(logWARNING) << "Error: cached " << fCacheDac << ", not yet restored";
-  }
-  
-  LOG(logDEBUG) << "Cache " << dacname;
+void PixTest::cacheDacs(bool verbose) {
+  fDacCache.clear();
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fCacheVal.push_back(fApi->_dut->getDAC(rocIds[iroc], dacname)); 
+  for (unsigned i = 0; i < rocIds.size(); ++i) {
+    fDacCache.push_back(fApi->_dut->getDACs(rocIds[i]));
+    if (verbose) fApi->_dut->printDACs(i);
   }
 }
 
 
 // ----------------------------------------------------------------------
-void PixTest::restore(string dacname) {
-  if (dacname.compare(fCacheDac)) {
-    LOG(logWARNING) << "Error: restoring " << dacname << ", but cached " << fCacheDac;
-    return;
-  }
+void PixTest::restoreDacs(bool verbose) {
 
-  LOG(logDEBUG) << "Restore " << dacname;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fApi->setDAC(dacname, fCacheVal[getIdxFromId(rocIds[iroc])], rocIds[iroc]); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    vector<pair<string, uint8_t> >  rocDacs = fDacCache[iroc];
+    for (unsigned int idac = 0; idac < rocDacs.size(); ++idac) {
+      fApi->setDAC(rocDacs[idac].first, rocDacs[idac].second, rocIds[iroc]);
+    }
+    if (verbose) fApi->_dut->printDACs(rocIds[iroc]);
   }
-  
-  fCacheVal.clear(); 
-  fCacheDac = "nada"; 
+  fDacCache.clear();
 }
 
 
