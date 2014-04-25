@@ -116,9 +116,10 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // result & 0x4 == 4 -> write to file: all pixel histograms with outlier threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  //  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  //dbx  uint16_t FLAGS = FLAG_FORCE_MASKED;
   
-  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d",  dac.c_str(), name.c_str(), ntrig, dacmin, dacmax)); 
+  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d FLAGS = %d",  
+	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, (int)FLAGS)); 
 
   int range = dacmax - dacmin + 1; 
   int halfrange = (dacmax - dacmin + 1)/2; 
@@ -159,7 +160,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   double val;
   vector<pair<uint8_t, vector<pixel> > > results;
 
-  Int_t userChoice = kMBRetry;
   bool done = false;
   int cnt(0); 
   LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
@@ -167,6 +167,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     fApi->setDAC(dac, dacmin); 
     try{
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
+      //dbx      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
       done = true; // got our data successfully
     } catch(DataMissingEvent &e){
       LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
@@ -190,34 +191,37 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     }
   }
 
-  results.clear();
-  done = false;
-  LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
-  while(!done){
-    fApi->setDAC(dac, dacmax/2+1); 
-    try{
-      results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
-      done = true; // got our data successfully
-    }
-    catch(pxar::DataMissingEvent &e){
-      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    }
-    done = (cnt>5) || done;
-  }
 
-  for (unsigned int idac = 0; idac < results.size(); ++idac) {
-    int dac = results[idac].first; 
-    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
-      ic =   results[idac].second[ipix].column; 
-      ir =   results[idac].second[ipix].row; 
-      iroc = results[idac].second[ipix].roc_id; 
-      val =  results[idac].second[ipix].value;
-      if (ic > 51 || ir > 79) {
-	continue;
+  if (1) {
+    results.clear();
+    done = false;
+    LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
+    while(!done){
+      fApi->setDAC(dac, dacmax/2+1); 
+      try{
+	results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
+	done = true; // got our data successfully
       }
-      maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
+      catch(pxar::DataMissingEvent &e){
+	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	++cnt;
+	if (e.numberMissing > 10) done = true; 
+      }
+      done = (cnt>5) || done;
+    }
+    
+    for (unsigned int idac = 0; idac < results.size(); ++idac) {
+      int dac = results[idac].first; 
+      for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+	ic =   results[idac].second[ipix].column; 
+	ir =   results[idac].second[ipix].row; 
+	iroc = results[idac].second[ipix].roc_id; 
+	val =  results[idac].second[ipix].value;
+	if (ic > 51 || ir > 79) {
+	  continue;
+	}
+	maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
+      }
     }
   }
 
@@ -348,7 +352,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
   vector<pixel> results;
