@@ -27,8 +27,9 @@ PIX    11,20
 -- PixelAlive 
 Ntrig 10
 Vcal 200
-addressDecodingTest button
+aliveTest           button
 maskTest            button
+addressDecodingTest button
 
 -- PhDacScan
 Ntrig 10
