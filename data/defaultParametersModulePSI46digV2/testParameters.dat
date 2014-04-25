@@ -79,6 +79,7 @@ Ntrig 10
 Vcal 200
 
 -- Trim
+trim     button
 TrimBits button
 Ntrig       2
 Vcal        50
