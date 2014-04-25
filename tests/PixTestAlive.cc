@@ -113,24 +113,42 @@ PixTestAlive::~PixTestAlive() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
+  cacheDacs();
   if (fPixSetup->isDummy()) {
     dummyAnalysis(); 
     return;
   }
 
+  fDirectory->cd();
+  PixTest::update(); 
+  bigBanner(Form("PixTestAlive::doTest()"));
+
   aliveTest();
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
   maskTest();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
   addressDecodingTest();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  restoreDacs();
+  LOG(logINFO) << "PixTestScurves::doTest() done ";
 
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestAlive::aliveTest() {
-  PixTest::update(); 
   fDirectory->cd();
-  LOG(logINFO) << "PixTestAlive::aliveTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
+  banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
 
   fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
@@ -161,10 +179,9 @@ void PixTestAlive::maskTest() {
     return;
   }
 
-  PixTest::update(); 
   fDirectory->cd();
-  LOG(logINFO) << "PixTestAlive::maskTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
+  banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d", static_cast<int>(fParNtrig), fParVcal));
 
   fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
@@ -195,10 +212,9 @@ void PixTestAlive::addressDecodingTest() {
     return;
   }
 
-  PixTest::update(); 
   fDirectory->cd();
-  LOG(logINFO) << "PixTestAlive::addressDecodingTest() ntrig = " << 1;
   PixTest::update(); 
+  banner(Form("PixTestAlive::addressDecodingTest() vcal = %d", static_cast<int>(fParVcal)));
 
   fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
@@ -211,7 +227,7 @@ void PixTestAlive::addressDecodingTest() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     LOG(logDEBUG) << "Create hist " << Form("addressDecoding_C%d", iroc); 
-    h2 = bookTH2D(Form("addressDecoding_C%d", iroc), Form("addressDecoding_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2 = bookTH2D(Form("AddressDecoding_C%d", iroc), Form("AddressDecoding_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
     h2->SetMinimum(-1.); 
     h2->SetMaximum(+1.); 
     fHistOptions.insert(make_pair(h2, "colz"));
@@ -224,19 +240,6 @@ void PixTestAlive::addressDecodingTest() {
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
   vector<pixel> results;
-  
-//   std::vector<std::pair<uint16_t, uint8_t> > pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-//   fApi->initTestboard(fPixSetup->getConfigParameters()->getTbSigDelays(), 
-// 		      fPixSetup->getConfigParameters()->getTbPowerSettings(), pg_setup);  //FIXME to be divided
-
-//   for (int irow = 0; irow < 5; ++irow) {
-//     LOG(logDEBUG) << "addressDecoding test, row " << irow; 
-//     fApi->_dut->testAllPixels(false);
-//     fApi->_dut->maskAllPixels(true);
-//     for (int icol = 0; icol < 52; ++icol) {
-//       fApi->_dut->testPixel(icol, irow, true); 
-//       fApi->_dut->maskPixel(icol, irow, false); 
-//     }
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
@@ -258,20 +261,18 @@ void PixTestAlive::addressDecodingTest() {
     done = (cnt>5) || done;
   }
   
-  vector<Event*> events = fApi->getEventBuffer();
+  vector<Event> events = fApi->getEventBuffer();
   cout << "events.size() = " << events.size() << endl;
   int idx(-1), oldIdx(-2); 
   int iRocEvt(0), icol(0), irow(0);
-  Event *pE(0); 
   pixel pix; 
   for (unsigned int ievt = 0; ievt < events.size(); ++ievt) {
-    pE = events[ievt];
-    if (pE->pixels.size() > 0) {
-      if (pE->pixels.size() > 1) {
+    if (events[ievt].pixels.size() > 0) {
+      if (events[ievt].pixels.size() > 1) {
 	LOG(logDEBUG) << " too many pixels in event " << ievt; 
       }
 
-      pix = pE->pixels[0];
+      pix = events[ievt].pixels[0];
       idx = getIdxFromId(pix.roc_id);
       // -- a new ROC is appearing in the readout, reset iRocEvt
       if (idx != oldIdx) {

@@ -117,25 +117,26 @@ PixTestPretest::~PixTestPretest() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::doTest() {
+
   fDirectory->cd();
-  fHistList.clear();
-  PixTest::update();
+  PixTest::update(); 
+  bigBanner(Form("PixTestTrim::doTest()"));
 
-  LOG(logINFO) << "PixTestPretest::doTest() ntrig = " << fParNtrig;
-
-  LOG(logINFO) << "PixTestPretest::setVana()";
   setVana();
-  //  saveDacs();
-  LOG(logINFO) << "PixTestPretest::setVthrCompId()";
-  setVthrCompId(); // the order is important, VthrComp changes timing
-  //  saveDacs();
-  LOG(logINFO) << "PixTestPretest::setCalDel()";
-  setCalDel();
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
 
-  LOG(logINFO) << "PixTestPretest::setPhRange()";
+  setVthrCompCalDel();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
   setPhRange();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
 
-  LOG(logINFO) << "PixTestPretest::saveDacs()";
   saveDacs();
 }
 
@@ -183,10 +184,10 @@ void PixTestPretest::saveDacs() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVana() {
-  PixTest::update(); 
+  cacheDacs();
   fDirectory->cd();
-
-  LOG(logINFO) << "PixTestPretest::setVana() start, target Ia " << fTargetIa << " mA/ROC";
+  PixTest::update(); 
+  banner(Form("PixTestPretest::setVana() target Ia = %d mA/ROC", fTargetIa)); 
 
   fApi->_dut->testAllPixels(false);
 
@@ -305,6 +306,8 @@ void PixTestPretest::setVana() {
   hcurr->SetMaximum(30.0);
   fHistList.push_back(hcurr);
 
+
+  restoreDacs();
   for (int roc = 0; roc < nRocs; ++roc) {
     // -- reset all ROCs to optimum or cached value
     fApi->setDAC( "vana", vanaStart[roc], roc );
@@ -329,6 +332,7 @@ void PixTestPretest::setVana() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
   PixTest::update();
 
+
   LOG(logINFO) << "PixTestPretest::setVana() done, Module Ia " << ia16 << " mA = " << ia16/nRocs << " mA/ROC";
 
 }
@@ -338,16 +342,12 @@ void PixTestPretest::setVana() {
 void PixTestPretest::setVthrCompCalDel() {
   uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
 
-  PixTest::update(); 
+  cacheDacs();
   fDirectory->cd();
-  LOG(logINFO) << "PixTestPretest::setVthrCompCalDel() start, fPIX.size() = " << fPIX.size()
-	       << " fParNtrig = " << fParNtrig;
+  PixTest::update(); 
+  banner(Form("PixTestPretest::setVthrCompCalDel()")); 
 
   string name("pretestVthrCompCalDel");
-
-  // FIXME: cache should fill a map with vectors!
-//   cache("CtrlReg"); 
-//   cache("Vcal"); 
 
   fApi->setDAC("CtrlReg", 0); 
   fApi->setDAC("Vcal", 250); 
@@ -365,6 +365,10 @@ void PixTestPretest::setVthrCompCalDel() {
   setTitles(h1, "ROC", "CalDel DAC"); 
 
   TH2D *h2(0); 
+
+  vector<int> calDel(rocIds.size(), -1.); 
+  vector<int> vthrComp(rocIds.size(), -1.); 
+  vector<int> calDelE(rocIds.size(), -1.);
   
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     
@@ -426,16 +430,14 @@ void PixTestPretest::setVthrCompCalDel() {
     
     pxar::mDelay(1000); 
     
-    double calDelE = h0->GetRMS();
-    double calDel = h0->GetMean()+0.25*calDelE;
+    calDelE[iroc] = static_cast<int>(h0->GetRMS());
+    calDel[iroc] = static_cast<int>(h0->GetMean()+0.25*calDelE[iroc]);
     delete h0;
     
     TH1D *hy = h2->ProjectionY("_py", 5, h2->GetNbinsX()); 
     int top = hy->FindLastBinAbove(1.); 
     hy->Draw(); 
     PixTest::update(); 
-    cout << "top bin: " << top << endl;
-    
     pxar::mDelay(1000); 
     
     int itop(top); 
@@ -444,44 +446,36 @@ void PixTestPretest::setVthrCompCalDel() {
       int cnt(0); 
       for (int i = 0; i < h0->GetNbinsX(); ++i) {
 	if (fParNtrig == h0->GetBinContent(i)) cnt++; 
-	//	  if (cnt > 10 && 0 == h0->GetBinContent(i)) 
       }
       if (cnt > 40) break;
     }
     
-    cout << "top bin with >40 full efficiency bins: " << itop << endl;
+    vthrComp[iroc] = (fParDeltaVthrComp>0?fParDeltaVthrComp:itop+fParDeltaVthrComp);
     
-    int vthrcomp = (fParDeltaVthrComp>0?fParDeltaVthrComp:itop+fParDeltaVthrComp);
-    cout << " -> vthrcomp = " << vthrcomp << endl;
-    
-    h1->SetBinContent(rocIds[iroc]+1, calDel); 
-    h1->SetBinError(rocIds[iroc]+1, calDelE); 
-    LOG(logDEBUG) << "CalDel: " << calDel << " +/- " << calDelE;
+    h1->SetBinContent(rocIds[iroc]+1, calDel[iroc]); 
+    h1->SetBinError(rocIds[iroc]+1, calDelE[iroc]); 
+    LOG(logDEBUG) << "CalDel: " << calDel[iroc] << " +/- " << calDelE[iroc];
     
     h2->Draw(getHistOption(h2).c_str());
     TMarker *tm = new TMarker(); 
     tm->SetMarkerSize(1);
     tm->SetMarkerStyle(21);
-    tm->DrawMarker(calDel, vthrcomp); 
+    tm->DrawMarker(calDel[iroc], vthrComp[iroc]); 
     PixTest::update(); 
-    
-    fApi->setDAC("CalDel", calDel, rocIds[iroc]);
-    fApi->setDAC("VthrComp", vthrcomp, rocIds[iroc]);
-    
     
     fHistList.push_back(h2); 
   }
 
   fHistList.push_back(h1); 
 
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  gStyle->SetOptStat(0);
-  if (h1) h1->Draw(getHistOption(h1).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
   PixTest::update(); 
 
-  
-//   restore("CtrlReg"); 
-//   restore("Vcal"); 
+  restoreDacs();
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fApi->setDAC("CalDel", calDel[iroc], rocIds[iroc]);
+    fApi->setDAC("VthrComp", vthrComp[iroc], rocIds[iroc]);
+  }
 
   LOG(logINFO) << "PixTestPretest::setVthrCompCalDel() done";
 
@@ -490,9 +484,11 @@ void PixTestPretest::setVthrCompCalDel() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompId() {
-  PixTest::update(); 
+
+  cacheDacs();
   fDirectory->cd();
-  LOG(logINFO) << "PixTestPretest::setVthrCompId() start";
+  PixTest::update(); 
+  banner(Form("PixTestPretest::setVthrCompId()")); 
 
   vector<TH1D*> hsts;
   TH1D *h1(0);
@@ -513,11 +509,7 @@ void PixTestPretest::setVthrCompId() {
 
   fApi->_dut->testAllPixels(true); // enable all pix: more noise
 
-  vector<int> rocVsf, rocVthrComp; 
   for (int roc = 0; roc < nRocs; ++roc) {
-    rocVsf.push_back(fApi->_dut->getDAC(roc, "Vsf" )); 
-    rocVthrComp.push_back(fApi->_dut->getDAC(roc, "VthrComp")); 
-
     fApi->setDAC("Vsf", 33, roc); // small
     fApi->setDAC("VthrComp", 0, roc); // off
   }
@@ -539,7 +531,8 @@ void PixTestPretest::setVthrCompId() {
   TH1D *hid(0);
 
   // loope over ROCs:
-
+  
+  vector<int> rocVthrComp(nRocs, -1); 
   for (int roc = 0; roc < nRocs; ++roc) {
     if (!selectedRoc(roc)) continue;
 
@@ -590,9 +583,10 @@ void PixTestPretest::setVthrCompId() {
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
+
+  restoreDacs();
   for (int roc = 0; roc < nRocs; ++roc) {
     // -- (re)set all
-    fApi->setDAC("Vsf", rocVsf[roc], roc);
     fApi->setDAC("VthrComp", rocVthrComp[roc], roc);
     // -- report on/histogram only selected ROCs
     LOG(logINFO) << "ROC " << setw(2) << roc

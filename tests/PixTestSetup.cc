@@ -114,6 +114,7 @@ PixTestSetup::~PixTestSetup()
 //------------------------------------------------------------------------------
 void PixTestSetup::doTest()
 {
+    cacheDacs();
 	if (ParOutOfRange) return;
 	fDirectory->cd();
 	fHistList.clear();
@@ -222,6 +223,7 @@ void PixTestSetup::doTest()
 
 	fApi->initTestboard(sig_delays2, power_settings, pg_setup);
 
+	restoreDacs();
 	LOG(logINFO) << "PixTestSetup::doTest() done for " ;
 }
 
