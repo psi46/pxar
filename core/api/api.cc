@@ -663,9 +663,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacMin,dacMax,nTriggers,false);
 
@@ -715,9 +713,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacMin,dacMax,nTriggers,true);
 
@@ -787,9 +783,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
   bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,useRisingEdge);
@@ -858,9 +852,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,false);
 
@@ -927,9 +919,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
 
@@ -963,9 +953,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel> result = repackMapData(data, nTriggers, false);
@@ -989,9 +977,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel> result = repackMapData(data, nTriggers, true);
@@ -1031,9 +1017,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
   bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
@@ -1238,7 +1222,7 @@ bool api::daqStop() {
 }
 
 
-std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param,  bool forceSerial, bool forceMasked) {
+std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags) {
   
   // pointer to vector to hold our data
   std::vector<Event*> data = std::vector<Event*>();
@@ -1248,18 +1232,18 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 
   // Do the masking/unmasking&trimming for all ROCs first.
   // If we run in FLAG_FORCE_MASKED mode, transmit the new trim values to the NIOS core and mask the whole DUT:
-  if(forceMasked) {
+  if((flags & FLAG_FORCE_MASKED) != 0) {
     MaskAndTrimNIOS();
     MaskAndTrim(false);
   }
   // If we run in FLAG_FORCE_SERIAL mode, mask the whole DUT:
-  else if(forceSerial) { MaskAndTrim(false); }
+  else if((flags & FLAG_FORCE_SERIAL) != 0) { MaskAndTrim(false); }
   // Else just trim all the pixels:
   else { MaskAndTrim(true); }
 
   // Check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
-  if ((_dut->getNEnabledRocs() > 1) && !forceSerial) {
+  if ((_dut->getNEnabledRocs() > 1) && ((flags & FLAG_FORCE_SERIAL) == 0)) {
 
     // Get the I2C addresses for all enabled ROCs from the config:
     std::vector<uint8_t> rocs_i2c = _dut->getEnabledRocI2Caddr();
@@ -1321,7 +1305,7 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 
 	// If we have serial execution make sure to trim the ROC unless we requested forceMasked:
-	if(forceSerial && !forceMasked) { MaskAndTrim(true,rocit); }
+	if(((flags & FLAG_FORCE_SERIAL) != 0) && ((flags & FLAG_FORCE_MASKED) == 0)) { MaskAndTrim(true,rocit); }
 
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);

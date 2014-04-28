@@ -556,7 +556,7 @@ namespace pxar {
      *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
      *  function, all depending on the configuration of the DUT.
      */
-    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false, bool forceMasked = false);
+    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags = 0);
 
     /** Merges all consecutive triggers into one Event. This function deletes the original event data after
      *  merging! 
