@@ -839,12 +839,3 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
   return true;
 }
 
-// ----------------------------------------------------------------------
-template <typename T1, typename T2> string ConfigParameters::dumpParameters(vector<pair<T1, T2> > v) {
-  stringstream line;
-  for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
-    line << " " << it->first << ": " << static_cast<int>(it->second); 
-  }
-  return line.str();
-}
-
