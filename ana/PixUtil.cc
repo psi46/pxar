@@ -32,6 +32,6 @@ double PixUtil::dBinomial(int in, int iN) {
   double N = (double)iN;
   double w = n/N;
   if (n == N) return 0.05;
-  if (n == 0) return 0.3/sqrt(N);
+  if (n == 0) return 0.3/TMath::Sqrt(N);
   return TMath::Sqrt(std::abs(w*(1-w)/N));
 }
