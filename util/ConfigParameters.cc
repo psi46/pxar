@@ -563,6 +563,20 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
 
 
 // ----------------------------------------------------------------------
+vector<string> ConfigParameters::getDacs() {
+  if (!fReadDacParameters) {
+    readRocDacs();
+  }
+  vector<string> names; 
+  vector<std::pair<std::string, uint8_t> > dacs = fDacParameters[0];
+  for (unsigned int i = 0; i < dacs.size(); ++i) {
+    names.push_back(dacs[i].first);
+  }
+  return names;
+}
+
+
+// ----------------------------------------------------------------------
 void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
     for (unsigned int i = 0; i < fnRocs; ++i) {
@@ -825,4 +839,12 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
   return true;
 }
 
+// ----------------------------------------------------------------------
+template <typename T1, typename T2> string ConfigParameters::dumpParameters(vector<pair<T1, T2> > v) {
+  stringstream line;
+  for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
+    line << " " << it->first << ": " << static_cast<int>(it->second); 
+  }
+  return line.str();
+}
 
