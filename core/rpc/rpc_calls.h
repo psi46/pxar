@@ -122,6 +122,7 @@ public:
 	RPC_EXPORT void Init();
 	RPC_EXPORT void Welcome();
 	RPC_EXPORT void SetLed(uint8_t x);
+	RPC_EXPORT void ToggleLed(int8_t x);
 
 
 	// --- Clock, Timing ----------------------------------------------------
