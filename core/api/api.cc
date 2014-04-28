@@ -179,9 +179,14 @@ bool api::initDUT(uint8_t hubid,
   _dut->hubId = hubid;
 
   // Initialize TBMs:
-  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){
+  LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
+
+  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
+
+    LOG(logDEBUGAPI) << "Processing TBM Core " << (int)(tbmIt - tbmDACs.begin());
     // Prepare a new TBM configuration
     tbmConfig newtbm;
+
     // Set the TBM type (get value from dictionary)
     newtbm.type = stringToDeviceCode(tbmtype);
     if(newtbm.type == 0x0) return false;
@@ -189,23 +194,44 @@ bool api::initDUT(uint8_t hubid,
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
 
-      // Fill the DAC pairs with the register from the dictionary:
-      uint8_t dacRegister, dacValue = dacIt->second;
-      if(!verifyRegister(dacIt->first, dacRegister, dacValue, TBM_REG)) continue;
+      // Fill the register pairs with the register id from the dictionary:
+      uint8_t tbmregister, value = dacIt->second;
+      if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
 
+      // Check if this is fore core alpha or beta:
+      if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
+      else { tbmregister = 0xF0 | tbmregister; } // beta core
+      
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-      ret = newtbm.dacs.insert( std::make_pair(dacRegister,dacValue) );
+      ret = newtbm.dacs.insert( std::make_pair(tbmregister,value) );
       if(ret.second == false) {
 	LOG(logWARNING) << "Overwriting existing DAC \"" << dacIt->first 
 			<< "\" value " << static_cast<int>(ret.first->second)
-			<< " with " << static_cast<int>(dacValue);
-	newtbm.dacs[dacRegister] = dacValue;
+			<< " with " << static_cast<int>(value);
+	newtbm.dacs[tbmregister] = value;
       }
     }
 
     // Done. Enable bit is already set by tbmConfig constructor.
     _dut->tbm.push_back(newtbm);
   }
+
+  // Check number of configured TBM cores. If we only got one register vector, we re-use it for the second TBM core:
+  if(_dut->tbm.size() == 1) {
+    LOG(logDEBUGAPI) << "Only register settings for one TBM core supplied. Duplicating to second core.";
+    // Prepare a new TBM configuration and copy over all settings:
+    tbmConfig newtbm;
+    newtbm.type = _dut->tbm.at(0).type;
+    
+    for(std::map<uint8_t,uint8_t>::iterator reg = _dut->tbm.at(0).dacs.begin(); reg != _dut->tbm.at(0).dacs.end(); ++reg) {
+      uint8_t tbmregister = reg->first;
+      // Flip the last bit of the TBM core identifier:
+      tbmregister ^= (1u << 4);
+      newtbm.dacs.insert(std::make_pair(tbmregister,reg->second));
+    }
+    _dut->tbm.push_back(newtbm);
+  }
+
 
   // Initialize ROCs:
   size_t nROCs = 0;
@@ -278,7 +304,7 @@ bool api::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBM(static_cast<uint8_t>(tbmit - enabledTbms.begin()),(*tbmit).dacs);
+    _hal->initTBMCore((*tbmit).dacs);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -569,18 +595,21 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
   if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
-
+    
+    // Get the core (alpha/beta) from one of the registers:
+    _register |= _dut->tbm.at(tbmid).dacs.begin()->first&0xF0;
+    
     // Update the DUT register Value:
-    ret = _dut->tbm.at(tbmid).dacs.insert( std::make_pair(_register,regValue) );
+    ret = _dut->tbm.at(tbmid).dacs.insert(std::make_pair(_register,regValue));
     if(ret.second == true) {
-      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
+      LOG(logWARNING) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") was not initialized. Created with value " << static_cast<int>(regValue);
     }
     else {
       _dut->tbm.at(tbmid).dacs[_register] = regValue;
-      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
+      LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
     }
-
-    _hal->tbmSetReg(static_cast<uint8_t>(tbmid),_register,regValue);
+    
+    _hal->tbmSetReg(_register,regValue);
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
@@ -591,28 +620,8 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
 bool api::setTbmReg(std::string regName, uint8_t regValue) {
 
-  if(!status()) {return 0;}
-  
-  // Get the register number and check the range from dictionary:
-  uint8_t _register;
-  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
-
-  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-  // Set the register for all active TBMs:
-  std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
-
-    // Update the DUT register Value:
-    ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
-    if(ret.second == true) {
-      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
-    }
-    else {
-      _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
-      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
-    }
-
-    _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
+  for(size_t tbms = 0; tbms < _dut->tbm.size(); ++tbms) {
+    if(!setTbmReg(regName, regValue, tbms)) return false;
   }
   return true;
 }
