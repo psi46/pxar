@@ -169,16 +169,14 @@ INCLUDE_DIRECTORIES( core/api core/utils)
 # Always build main pXar API library;
 ADD_SUBDIRECTORY(core)
 
-# utility library and useful tools
-IF(BUILD_utils OR BUILD_pxarui)
-  ADD_SUBDIRECTORY(util)
-ENDIF(BUILD_utils OR BUILD_pxarui)
-
 # full UI and test suite (requires ROOT)
 IF(BUILD_pxarui)
   # this UI and its libraries depend on ROOT:
   FIND_PACKAGE(ROOT REQUIRED)
   INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
+
+  # Build the util library
+  ADD_SUBDIRECTORY(util)
 
   # Build the analysis  library
   ADD_SUBDIRECTORY(ana)
@@ -196,6 +194,12 @@ IF(BUILD_pxarui)
   ADD_SUBDIRECTORY(main)
 
 ENDIF(BUILD_pxarui)
+
+# utility library and useful tools
+IF(BUILD_utils)
+  ADD_SUBDIRECTORY(util)
+ENDIF(BUILD_utils)
+
 
 option(BUILD_pxardebug  "Compile pXar debug executable?" ON)
 IF(BUILD_pxardebug)
