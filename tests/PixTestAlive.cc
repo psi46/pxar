@@ -236,7 +236,8 @@ void PixTestAlive::addressDecodingTest() {
     maps.push_back(h2); 
   }
 
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL | FLAG_NOSORT;
+  std::cout << "Requested unsorted data stream for address decoding check." << std::endl;
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
   vector<pixel> results;
@@ -261,19 +262,12 @@ void PixTestAlive::addressDecodingTest() {
     done = (cnt>5) || done;
   }
   
-  vector<Event> events = fApi->getEventBuffer();
-  cout << "events.size() = " << events.size() << endl;
   int idx(-1), oldIdx(-2); 
   int iRocEvt(0);
   pixel pix; 
-  for (unsigned int ievt = 0; ievt < events.size(); ++ievt) {
-    if (events[ievt].pixels.size() > 0) {
-      if (events[ievt].pixels.size() > 1) {
-	LOG(logDEBUG) << " too many pixels in event " << ievt; 
-      }
+for (std::vector<pxar::pixel>::iterator ipx = results.begin(); ipx != results.end(); ++ipx) {
 
-      pix = events[ievt].pixels[0];
-      idx = getIdxFromId(pix.roc_id);
+      idx = getIdxFromId(ipx->roc_id);
       // -- a new ROC is appearing in the readout, reset iRocEvt
       if (idx != oldIdx) {
 	oldIdx = idx;
@@ -282,22 +276,18 @@ void PixTestAlive::addressDecodingTest() {
       
       if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
 	h2 = maps[idx];
-	int row = pix.row; 
-	int col = pix.column; 
+	int row = ipx->row; 
+	int col = ipx->column; 
 	if (iRocEvt/80 == col && iRocEvt%80 == row) {
 	  h2->SetBinContent(col+1, row+1, 1.); 
 	} else {
 	  h2->SetBinContent(col+1, row+1, -1.); 
 	  LOG(logDEBUG) << pix << " col/row = " << col << "/" << row 
 			<< " r/o position = " << iRocEvt/80 << "/" << iRocEvt%80
-			<< " address decoding error" << " (event " << ievt << ")";
+			<< " address decoding error";
 	}
       }
       
-    } else {
-      LOG(logDEBUG) << " missing pixel (event " << ievt << ")"; 
-    }
-
     ++iRocEvt;
   }
 
