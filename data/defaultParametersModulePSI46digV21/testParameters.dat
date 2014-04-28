@@ -10,6 +10,7 @@ Ntrig 100
 Ntrig 100
 
 -- DacScan
+PHmap checkbox
 Ntrig 10
 DAC   caldel
 DACLO 0
@@ -17,6 +18,7 @@ DACHI 250
 PIX   11,20 
 
 -- DacDacScan
+PHmap checkbox
 Ntrig 10
 DAC1   caldel
 DAC1LO 0
@@ -32,14 +34,6 @@ Vcal 200
 aliveTest           button
 maskTest            button
 addressDecodingTest button
-
-
--- PhDacScan
-Ntrig 10
-DAC   Vcal
-DACLO 0
-DACHI 200
-PIX   11,20
 
 -- Pretest
 targetIa          24

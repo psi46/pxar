@@ -18,7 +18,7 @@ public:
 
 private:
 
-  int     fParNtrig; 
+  int     fParPHmap, fParNtrig; 
   std::string fParDAC; 
   int     fParLoDAC, fParHiDAC;
 
