@@ -3,11 +3,13 @@
 INCLUDE_DIRECTORIES(.)
 
 SET (ANALIB_SOURCES
+PixUtil.cc
 PixInitFunc.cc
 )
 
 # fill list of header files 
 set(ANALIB_HEADERS
+PixUtil.hh
 PixInitFunc.hh
 )
 

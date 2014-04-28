@@ -116,23 +116,35 @@ void PixTestScurves::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
-  LOG(logINFO) << "PixTestScurves::doTest() ntrig = " << fParNtrig 
-	       << " using npix = " << fParNpix
-	       << " scanning DAC " << fParDac 
-	       << " from " << fParDacLo << " .. " << fParDacHi;
+  bigBanner(Form("PixTestScurves::doTest() ntrig = %d", fParNtrig));
 
+  fParDac = "VthrComp"; 
+  fParDacLo = 0; 
+  fParDacHi = 250;
+  scurves();
+
+  fParDac = "Vcal"; 
+  fParDacLo = 0; 
+  fParDacHi = 250;
+  scurves();
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::scurves() {
+  cacheDacs();
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  //  sparseRoc(fParNpix); 
 
   int RFLAG(7); 
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG); 
-  //  vector<TH1*> thr1 = thrMaps(fParDac, "thr"+fParDac, fParNtrig); 
-  //  vector<TH1*> thr1 = thrMaps(fParDac, "thr"+fParDac, 0, 200, fParNtrig); 
-
-  LOG(logINFO) << "PixTestScurves::doTest() done ";
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestScurves::scurves() done ";
 }
+
 
 
 // ----------------------------------------------------------------------
@@ -147,12 +159,17 @@ void PixTestScurves::runCommand(string command) {
     fitS(); 
     return;
   }
+  if (!command.compare("scurves")) {
+    scurves(); 
+    return;
+  }
   return;
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestScurves::thrMap() {
+  cacheDacs();
   PixTest::update(); 
   fDirectory->cd();
 
@@ -163,8 +180,9 @@ void PixTestScurves::thrMap() {
 	       << " ntrig = " << fParNtrig;
   vector<TH1*> thr1 = thrMaps(fParDac, "thr"+fParDac, fParDacLo, fParDacHi, fParNtrig); 
 
-  LOG(logINFO) << "PixTestScurves::thrMap() done ";
   PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestScurves::thrMap() done ";
 
 }
 
@@ -173,7 +191,6 @@ void PixTestScurves::thrMap() {
 void PixTestScurves::fitS() {
   PixTest::update(); 
   fDirectory->cd();
-
 
   if (!fParDac.compare("Vcal")) {
     TH1D *h = (TH1D*)fDirectory->Get("scurveVcal_Vcal_c51_r62_C0");

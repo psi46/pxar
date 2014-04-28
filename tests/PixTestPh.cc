@@ -29,7 +29,7 @@ bool PixTestPh::setParameter(string parName, string sval) {
   string str1, str2;
   string::size_type s1;
   int pixc, pixr;
-  int imax(fParameters.size()); 
+  unsigned int imax(fParameters.size()); 
   for (unsigned int i = 0; i < imax; ++i) {
     if (!fParameters[i].first.compare(parName)) {
       found = true;
@@ -135,7 +135,6 @@ void PixTestPh::doTest() {
   }
 
   for (unsigned int i = 0; i < result.size(); ++i) {
-    int idac = result[i].first;
     vector<pixel> vpix = result[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
       int roc = vpix[ipx].roc_id;

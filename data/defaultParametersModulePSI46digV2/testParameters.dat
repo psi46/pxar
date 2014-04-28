@@ -1,62 +1,63 @@
+-- FullTest
+
 -- CurVsDac
 DAC Vana
 
 -- DAQ
 Ntrig 100
-ClockStretch 100
-Iterations  1
-CountHits  checkbox
 
 -- BumpBonding
 Ntrig 100
 
 -- DacScan
+PHmap checkbox
 Ntrig 10
 DAC   caldel
 DACLO 0
 DACHI 250
-PIX1  11,20 
-PIX2  20,30 
-PIX3  40,50 
+PIX   11,20 
 
 -- DacDacScan
+PHmap checkbox
 Ntrig 10
 DAC1   caldel
 DAC1LO 0
-DAC1HI 120
+DAC1HI 250
 DAC2   vthrcomp
 DAC2LO 0
-DAC2HI 120
-PIX1   11,20 
+DAC2HI 250
+PIX    11,20 
 
 -- PixelAlive 
 Ntrig 10
 Vcal 200
-
--- PhDacScan
-Ntrig 10
-DAC   Vcal
-DACLO 0
-DACHI 200
-PIX1  11,20
+aliveTest           button
+maskTest            button
+addressDecodingTest button
 
 -- Pretest
-targetIa      24
-setVana       button
-noiseWidth    22
-noiseMargin   15
-setVthrCompId button
-PIX           11,20 
-Ntrig         10
-setCalDel     button
-SaveDacs      button
+targetIa          24
+setVana           button
+PIX               11,20
+Vcal              250
+DeltaVthrComp     50
+setVthrCompCalDel button
+noiseWidth        22
+noiseMargin       15
+setVthrCompId     button
+Ntrig             5
+setCalDel         button
+setPhRange        button
+SaveDacs          button
 
--- Scurves   
-Ntrig 10     
-DAC   Vcal   
-DacLo 0	     
-DacHi 100    
-thrMap button
+-- Scurves
+Ntrig 2
+DAC   VthrComp
+DacLo 0
+DacHi 200
+scurves button
+fits    button
+thrMap  button
 
 -- Setup
 Ntrig 10
@@ -64,24 +65,19 @@ Ntests 5
 Vcal 200
 PIX 11,20
 ClkLo 0
-ClkHi 9
+ClkHi 19
 Deser160Lo 3
-Deser160Hi 5
+Deser160Hi 3
 
 -- Tbm
 Ntrig 10
 Vcal 200
 
--- ThreshMap
-Ntrig      10
-VcalLo     25
-VcalHi     100
-BumpBond   checkbox
-
 -- Trim
+trim     button
 TrimBits button
-Ntrig       10
-Vcal        40
+Ntrig       2
+Vcal        50
 VcalLo      25 
 VcalHi      75 
 VthrCompLo  0 

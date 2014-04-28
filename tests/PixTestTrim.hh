@@ -11,10 +11,11 @@ public:
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
-  void runCommand(std::string); 
   void bookHist(std::string); 
 
+  void runCommand(std::string); 
   void trimBitTest();
+  void trimTest();
 
   int adjustVtrim(); 
   std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax); 

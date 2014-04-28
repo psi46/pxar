@@ -25,8 +25,6 @@ PixTest::PixTest(PixSetup *a, string name) {
   fPixSetup       = a;
   fApi            = a->getApi(); 
   fTestParameters = a->getPixTestParameters(); 
-  fCacheDac = "nada"; 
-  fCacheVal.clear();    
 
   fName = name;
   setToolTips();
@@ -116,12 +114,12 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // result & 0x4 == 4 -> write to file: all pixel histograms with outlier threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  //  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  //dbx  uint16_t FLAGS = FLAG_FORCE_MASKED;
   
-  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d",  dac.c_str(), name.c_str(), ntrig, dacmin, dacmax)); 
+  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d FLAGS = %d",  
+	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, (int)FLAGS)); 
 
   int range = dacmax - dacmin + 1; 
-  int halfrange = (dacmax - dacmin + 1)/2; 
   int rawevts = 4160*range/2; 
   int trgevts = 1000000/rawevts; 
   if (trgevts < 1) trgevts = 1; 
@@ -159,7 +157,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   double val;
   vector<pair<uint8_t, vector<pixel> > > results;
 
-  Int_t userChoice = kMBRetry;
   bool done = false;
   int cnt(0); 
   LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
@@ -167,6 +164,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     fApi->setDAC(dac, dacmin); 
     try{
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
+      //dbx      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
       done = true; // got our data successfully
     } catch(DataMissingEvent &e){
       LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
@@ -190,34 +188,37 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     }
   }
 
-  results.clear();
-  done = false;
-  LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
-  while(!done){
-    fApi->setDAC(dac, dacmax/2+1); 
-    try{
-      results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
-      done = true; // got our data successfully
-    }
-    catch(pxar::DataMissingEvent &e){
-      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    }
-    done = (cnt>5) || done;
-  }
 
-  for (unsigned int idac = 0; idac < results.size(); ++idac) {
-    int dac = results[idac].first; 
-    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
-      ic =   results[idac].second[ipix].column; 
-      ir =   results[idac].second[ipix].row; 
-      iroc = results[idac].second[ipix].roc_id; 
-      val =  results[idac].second[ipix].value;
-      if (ic > 51 || ir > 79) {
-	continue;
+  if (1) {
+    results.clear();
+    done = false;
+    LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
+    while(!done){
+      fApi->setDAC(dac, dacmax/2+1); 
+      try{
+	results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
+	done = true; // got our data successfully
       }
-      maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
+      catch(pxar::DataMissingEvent &e){
+	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	++cnt;
+	if (e.numberMissing > 10) done = true; 
+      }
+      done = (cnt>5) || done;
+    }
+    
+    for (unsigned int idac = 0; idac < results.size(); ++idac) {
+      int dac = results[idac].first; 
+      for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+	ic =   results[idac].second[ipix].column; 
+	ir =   results[idac].second[ipix].row; 
+	iroc = results[idac].second[ipix].roc_id; 
+	val =  results[idac].second[ipix].value;
+	if (ic > 51 || ir > 79) {
+	  continue;
+	}
+	maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
+      }
     }
   }
 
@@ -253,8 +254,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
-	delete rmaps[i];
-	if (dumpFile) OutputFile << empty << endl;
 	continue;
       }
       
@@ -331,32 +330,44 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   if (h2) h2->Draw("colz");
   PixTest::update(); 
 
+  if (!(result & 0x4)) {
+    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+      rmaps.clear();
+      rmaps = maps[iroc];
+      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
+      while (!rmaps.empty()){
+	h1 = rmaps.back(); 
+	rmaps.pop_back(); 
+	if (h1) delete h1;
+      }
+    }
+  }
+
   return resultMaps; 
 }
 
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
 
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
   vector<pixel> results;
 
-  Int_t userChoice = kMBRetry;
+  int cnt(0); 
   bool done = false;
-  while(userChoice==kMBRetry && !done){
-    try{
+  while (!done){
+    try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       done = true; // got our data successfully
     }
     catch(pxar::DataMissingEvent &e){
-      // readout of data failed
-      std::string message = "There was an error reading out the DTB: " + std::string(e.what());
-      message+="'. Number of missing events: ";
-      message+=static_cast<ostringstream*>( &(ostringstream() << e.numberMissing) )->str(); 
-      message+=". Should we try the test again?";
-      new TGMsgBox(gClient->GetRoot(),NULL , "ERROR reading data", message.c_str(), NULL, kMBCancel|kMBRetry, &userChoice, kVerticalFrame, kTextCenterX|kTextCenterY);
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
     }
+    done = (cnt>5) || done;
   }
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
@@ -822,36 +833,28 @@ TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax, bool 
 
 
 // ----------------------------------------------------------------------
-void PixTest::cache(string dacname) {
-  if (!fCacheDac.compare("nada")) {
-    fCacheDac = dacname; 
-  } else {
-    LOG(logWARNING) << "Error: cached " << fCacheDac << ", not yet restored";
-  }
-  
-  LOG(logDEBUG) << "Cache " << dacname;
+void PixTest::cacheDacs(bool verbose) {
+  fDacCache.clear();
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fCacheVal.push_back(fApi->_dut->getDAC(rocIds[iroc], dacname)); 
+  for (unsigned i = 0; i < rocIds.size(); ++i) {
+    fDacCache.push_back(fApi->_dut->getDACs(rocIds[i]));
+    if (verbose) fApi->_dut->printDACs(i);
   }
 }
 
 
 // ----------------------------------------------------------------------
-void PixTest::restore(string dacname) {
-  if (dacname.compare(fCacheDac)) {
-    LOG(logWARNING) << "Error: restoring " << dacname << ", but cached " << fCacheDac;
-    return;
-  }
+void PixTest::restoreDacs(bool verbose) {
 
-  LOG(logDEBUG) << "Restore " << dacname;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fApi->setDAC(dacname, fCacheVal[getIdxFromId(rocIds[iroc])], rocIds[iroc]); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    vector<pair<string, uint8_t> >  rocDacs = fDacCache[iroc];
+    for (unsigned int idac = 0; idac < rocDacs.size(); ++idac) {
+      fApi->setDAC(rocDacs[idac].first, rocDacs[idac].second, rocIds[iroc]);
+    }
+    if (verbose) fApi->_dut->printDACs(rocIds[iroc]);
   }
-  
-  fCacheVal.clear(); 
-  fCacheDac = "nada"; 
+  fDacCache.clear();
 }
 
 
@@ -1223,3 +1226,4 @@ void PixTest::banner(string what, TLogLevel log) {
   LOG(log) << "   " << what; 
   LOG(log) << "   ----------------------------------------------------------------------";
 }
+

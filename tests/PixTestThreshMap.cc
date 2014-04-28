@@ -105,7 +105,6 @@ void PixTestThreshMap::doTest() {
   vector<TH2D*> maps;
   vector<TH1D*> hResults;
   TH2D *h2(0);
-  TH1D *h3(0);
   string name("Thresh");
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();

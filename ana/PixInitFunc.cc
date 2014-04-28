@@ -42,7 +42,11 @@ PixInitFunc::~PixInitFunc() {
 
 // ----------------------------------------------------------------------
 void PixInitFunc::resetLimits() {
-
+  for (int i = 0; i < 20; ++i) {
+    fLimit[i] = false; 
+    fLimitLo[i] = 0.; 
+    fLimitHi[i] = 0.; 
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -78,7 +82,6 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   }
 
   double lo = h->GetBinLowEdge(1); 
-  int zcnt(0); 
   // require 3 consecutive bins at zero
   for (int i = 3; i < h->GetNbinsX(); ++i) {
     if (h->GetBinContent(i-2) < 1 && h->GetBinContent(i-1) < 1 && h->GetBinContent(i) < 1) {
@@ -118,4 +121,56 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
 
 
 
+
+// ----------------------------------------------------------------------
+void PixInitFunc::initExpo(double &p0, double &p1, TH1 *h) {
+
+  int EDG(4), NB(EDG+1); 
+  int lbin(1), hbin(h->GetNbinsX()+1); 
+  if (fLo < fHi) {
+    lbin = h->FindBin(fLo); 
+    hbin = h->FindBin(fHi); 
+  }
+  
+  double dx = h->GetBinLowEdge(hbin) - h->GetBinLowEdge(lbin);
+  double ylo = h->Integral(lbin, lbin+EDG)/NB; 
+  double yhi = h->Integral(hbin-EDG, hbin)/NB;
+
+  if (ylo > 0 && yhi > 0) {
+    p1 = (TMath::Log(yhi) - TMath::Log(ylo))/dx; 
+    p0 = ylo/TMath::Exp(p1*fLo); 
+  } else {
+    if (yhi > ylo) {
+      p1 = 1.;
+    } else {
+      p1 = -1.;
+    }
+    p0 = 50.;
+  }
+
+  cout << "fLo: " << fLo << " fHi: " << fHi << endl;
+  cout << "ylo: " << ylo << " yhi: " << yhi << endl;
+  cout << "p0:  " << p0 <<  " p1:  " << p1 << endl;
+
+}
+
+// ----------------------------------------------------------------------
+void PixInitFunc::initPol1(double &p0, double &p1, TH1 *h) {
+
+  int EDG(4), NB(EDG+1); 
+  int lbin(1), hbin(h->GetNbinsX()+1); 
+  if (fLo < fHi) {
+    lbin = h->FindBin(fLo); 
+    hbin = h->FindBin(fHi); 
+  }
+  
+  double dx = h->GetBinLowEdge(hbin) - h->GetBinLowEdge(lbin);
+  double ylo = h->Integral(lbin, lbin+EDG)/NB; 
+  double yhi = h->Integral(hbin-EDG, hbin)/NB;
+
+  //  cout << "ylo: " << ylo << " yhi: " << yhi << endl;
+
+  p1  = (yhi-ylo)/dx;
+  p0  = ylo - p1*fLo;
+}
 
