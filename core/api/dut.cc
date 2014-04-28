@@ -17,14 +17,14 @@ void dut::info() {
   if (status()) {
     LOG(logINFO) << "The DUT currently contains the following objects:";
 
-    LOG(logINFO) << std::setw(2) << tbm.size() << " TBMs (" << getNEnabledTbms() 
+    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores (" << getNEnabledTbms() 
 		 << " ON)";
 
-    size_t nTBMs = 0;
     for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
-      LOG(logINFO) << "\tTBM " << nTBMs << ": " 
-		   << (*tbmIt).dacs.size() << " DACs set";
-      nTBMs++;
+      LOG(logINFO) << "\tTBM Core " 
+		   << ((tbmIt-tbm.begin())%2 == 0 ? "alpha" : "beta " )
+		   << " (" << static_cast<int>(tbmIt - tbm.begin()) << "): " 
+		   << (*tbmIt).dacs.size() << " registers set";
     }
 
     // We currently hide the possibility to enable pixels on some ROCs only,
