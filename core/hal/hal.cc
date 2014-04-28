@@ -230,7 +230,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
+void hal::initTBMCore(std::map< uint8_t,uint8_t > regVector) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
@@ -244,8 +244,9 @@ void hal::initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector) {
   _testboard->Flush();
 
   // Program all registers according to the configuration data:
-  LOG(logDEBUGHAL) << "Setting register vector for TBM " << static_cast<int>(tbmId) << ".";
-  tbmSetRegs(tbmId,regVector);
+  LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
+		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
+  tbmSetRegs(regVector);
 }
 
 void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacVector) {
