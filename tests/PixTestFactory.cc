@@ -12,7 +12,6 @@
 #include "PixTestTbm.hh"
 #include "PixTestDacScan.hh"
 #include "PixTestDacDacScan.hh"
-#include "PixTestPhDacScan.hh"
 #include "PixTestTrim.hh"
 #include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
@@ -58,7 +57,6 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if( !name.compare("curvsdac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
   if (!name.compare("dacscan")) return new PixTestDacScan(a, "DacScan"); 
   if (!name.compare("dacdacscan")) return new PixTestDacDacScan(a, "DacDacScan"); 
-  if (!name.compare("phdacscan")) return new PixTestPhDacScan(a, "PhDacScan"); 
   if (!name.compare("gaincalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("alive")) return new PixTestAlive(a, "PixelAlive"); // synonym
