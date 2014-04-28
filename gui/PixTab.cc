@@ -70,7 +70,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   TGHorizontalFrame *hFrame(0); 
 
   int cnt(0); 
-  //  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
   for (unsigned int i = 0; i < amap.size(); ++i) {
     if (amap[i].second == "button") {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
@@ -84,13 +83,14 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     }
 
     if (amap[i].second == "checkbox") {
-
-    	hFrame = new TGHorizontalFrame(fV2, 50, 30, kLHintsExpandX);
-	tcheck = new TGCheckButton(fV2,amap[i].first.c_str() ,1);
-	tcheck->SetState(kButtonUp);
-        tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
-	continue;
-
+      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
+      tcheck = new TGCheckButton(fV2, amap[i].first.c_str(), 1);
+      hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN)); 
+      fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+      tcheck->SetState(kButtonUp);
+      tcheck->SetToolTipText("display (average) pulseheight map instead of hit map");
+      tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
+      continue;
     }
 
 
@@ -279,9 +279,6 @@ void PixTab::handleButtons(Int_t id) {
 
 // ----------------------------------------------------------------------
 void PixTab::buttonClicked() {
-
-  if (!fGui->getTabs()) return;
-
   TGButton *btn = (TGButton*)gTQSender;
   LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
   fTest->runCommand(btn->GetTitle()); 
@@ -290,14 +287,9 @@ void PixTab::buttonClicked() {
 
 // ----------------------------------------------------------------------
 void PixTab::boxChecked() {
-	
-  if (!fGui->getTabs()) return;
-
   TGCheckButton *btn = (TGCheckButton*) gTQSender;
   string sTitle = btn->GetTitle();
-
-  LOG(logINFO) << "xxxPressed():  " << btn->GetTitle();
-  
+  LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
   fTest->setParameter(sTitle,string(btn->IsDown()?"1":"0")) ;
 
 }
