@@ -461,12 +461,12 @@ bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
   return true;
 }
 
-bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
+bool hal::tbmSetRegs(std::map< uint8_t, uint8_t > regPairs) {
 
   // Iterate over all register id/value pairs and set them
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
-    if(!tbmSetReg(tbmId, it->first, it->second)) return false;
+    if(!tbmSetReg(it->first, it->second)) return false;
   }
 
   // Send all queued commands to the testboard:
@@ -475,22 +475,18 @@ bool hal::tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs) {
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue) {
-  // FIXME currently only one TBM supported...
+bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
 
-  // Make sure we are writing to the correct TBM by setting its sddress:
-  // FIXME Magic from Beat, need to understand this and be able to program also the second TBM:
+  // Make sure we are writing to the correct TBM by setting the module's hub id:
   _testboard->mod_Addr(hubId);
 
-  LOG(logDEBUGHAL) << "Set Reg" << std::hex << static_cast<int>(regId) << std::dec << " to " << std::hex << static_cast<int>(regValue) << std::dec << " for both TBM cores.";
-  // Set this register for both TBM cores:
-  uint8_t regCore1 = 0xE0 | regId;
-  uint8_t regCore2 = 0xF0 | regId;
-  LOG(logDEBUGHAL) << "Core " << tbmId << " : register " << std::hex << static_cast<int>(regCore1) << " = " << static_cast<int>(regValue) << std::dec;
-//  LOG(logDEBUGHAL) << "Core 2: register " << std::hex << static_cast<int>(regCore2) << " = " << static_cast<int>(regValue) << std::dec;
+  LOG(logDEBUGHAL) << "TBM Core "
+		   << ((regId&0xF0) == 0xE0 ? "alpha" : "beta")
+		   << ": set register \"" << std::hex << static_cast<int>(regId) 
+		   << "\" to " << static_cast<int>(regValue) << std::dec;
 
-  _testboard->tbm_Set(regCore1,regValue);
-  _testboard->tbm_Set(regCore2,regValue);
+  // Set this register on the correct TBM core:
+  _testboard->tbm_Set(regId,regValue);
   return true;
 }
 
