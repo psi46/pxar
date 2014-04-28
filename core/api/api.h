@@ -59,6 +59,11 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_DISABLE_DACCAL 0x0020
 
+/** Flag to disable sorting of the API output data. This flag should only be used in specific
+ *  cases requiring the original order of the data read out from the DUT.
+ */
+#define FLAG_NOSORT 0x0040
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).

@@ -1450,7 +1450,7 @@ std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTrigg
   } // loop over Events
 
   // Sort the output map by ROC->col->row - just because we are so nice:
-  std::sort(result.begin(),result.end());
+  if((flags&FLAG_NOSORT) == 0) { std::sort(result.begin(),result.end()); }
 
   // Cleanup temporary data:
   for(std::vector<Event*>::iterator it = packed.begin(); it != packed.end(); ++it) { delete *it; }
@@ -1558,7 +1558,7 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   }
 
   // Sort the output map by ROC->col->row - just because we are so nice:
-  std::sort(result.begin(),result.end());
+  if((flags&FLAG_NOSORT) == 0) { std::sort(result.begin(),result.end()); }
 
   LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdMap data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
