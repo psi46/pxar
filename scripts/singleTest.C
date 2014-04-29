@@ -2,6 +2,9 @@
 // --------------
 //    ../bin/pXar -d ../data/defaultParametersRocPSI46digV2 -c '../scripts/singleTest.C("PixelAlive", "pixelalive.root", "../data/defaultParametersRocPSI46digV2")'
 
+// ----------------------------------------------------------------------
+/// simple macro to illustrate how to call a test in a macro environment
+/// test parameters are changed from the macro
 void singleTest(string testname = "PixelAlive", string rootfilename = "pixelalive.root", string cfgdirectory = "../data/defaultParametersRocPSI46digV2") {
   ConfigParameters *configParameters = ConfigParameters::Singleton();
 

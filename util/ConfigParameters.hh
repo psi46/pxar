@@ -49,15 +49,7 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
-  template <typename T1, typename T2>
-    std::string dumpParameters(std::vector<std::pair<T1, T2> > v) {
-    std::stringstream line;
-    for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
-      line << " " << it->first << ": " << static_cast<int>(it->second); 
-    }
-    return line.str();
-  }
-
+  template <typename T1, typename T2> std::string dumpParameters(std::vector<std::pair<T1, T2> > v);
   static ConfigParameters* Singleton();
 
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
@@ -79,6 +71,7 @@ public:
   std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
+  std::vector<std::string> getDacs();
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
@@ -152,5 +145,15 @@ private:
   static ConfigParameters* fInstance;
 
 };
+
+// ----------------------------------------------------------------------
+template <typename T1, typename T2> std::string ConfigParameters::dumpParameters(std::vector<std::pair<T1, T2> > v) {
+  std::stringstream line;
+  for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
+    line << " " << it->first << ": " << static_cast<int>(it->second); 
+  }
+  return line.str();
+}
+
 
 #endif

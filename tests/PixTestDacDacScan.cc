@@ -157,11 +157,13 @@ void PixTestDacDacScan::doTest() {
   map<string, TH2D*> maps;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string name(fParPHmap?"ph":"nhits"); 
+  int nx = fApi->getDACRange(dac1)+1;
+  int ny = fApi->getDACRange(dac2)+1;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
       h2 = bookTH2D(Form("%s_%s_%s_c%d_r%d_C%d", name.c_str(), dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
 		    Form("%s_%s_%s_c%d_r%d_C%d", name.c_str(), dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
-		    256, 0., 256., 256, 0., 256.); 
+		    nx, 0., static_cast<double>(nx), ny, 0., static_cast<double>(ny)); 
       if (0 == fParPHmap) h2->SetMinimum(0.); 
       setTitles(h2, dac1.c_str(), dac2.c_str()); 
       fHistList.push_back(h2);

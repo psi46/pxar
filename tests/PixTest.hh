@@ -144,6 +144,10 @@ public:
   std::string getParameter(std::string parName);
   /// set the string value of a parameter
   virtual bool setParameter(std::string parName, std::string sval); 
+  /// allow setting DACs in scripts for entire DUT
+  virtual void setDAC(std::string parName, uint8_t val) {fApi->setDAC(parName, val);}
+  /// allow setting DACs in scripts for spcific ROCs
+  virtual void setDAC(std::string parName, uint8_t val, uint8_t rocid) {fApi->setDAC(parName, val, rocid);}
   /// print all parameters and values
   void dumpParameters(); 
   /// utility to set histogram titles
