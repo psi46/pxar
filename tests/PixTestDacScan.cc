@@ -139,7 +139,7 @@ void PixTestDacScan::doTest() {
       hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]);
       h1 = bookTH1D(hname.c_str(), hname.c_str(), 256, 0., 256.); 
       h1->SetMinimum(0.); 
-      setTitles(h1, Form("%s [DAC]", fParDAC.c_str()), "readouts");
+      setTitles(h1, Form("%s [DAC]", fParDAC.c_str()), (fParPHmap?"average PH":"readouts"));
       if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
       hmap[hname] = h1;
       fHistList.push_back(h1); 
