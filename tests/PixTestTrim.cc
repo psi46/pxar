@@ -244,6 +244,7 @@ void PixTestTrim::trimTest() {
 
   TH1D *h = new TH1D("trimh", "trimh", 256, 0., 256.); 
   vector<int> rocDone;
+  map<int, int> rocTrim;
   int itrim(0), vcalHi(200); 
   do {
     if (rocDone.size() == rocIds.size()) break;
@@ -265,6 +266,7 @@ void PixTestTrim::trimTest() {
       if (fThreshold < fParVcal) {
 	fApi->setDAC("vtrim", itrim, rocIds[iroc]);
 	rocDone.push_back(rocIds[iroc]); 
+	rocTrim.insert(make_pair(rocIds[iroc], itrim)); 
 	LOG(logDEBUG) << "---------> " << fThreshold << " < " << fParVcal << " for itrim = " << itrim << " ... break";
       }
     }
@@ -359,6 +361,10 @@ void PixTestTrim::trimTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fApi->setDAC("vtrim", rocTrim[rocIds[iroc]], rocIds[iroc]);
+  }
+
   LOG(logINFO) << "PixTestTrim::trimTest() done ";
 }
 
