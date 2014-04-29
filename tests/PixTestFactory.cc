@@ -16,6 +16,7 @@
 #include "PixTestScurves.hh"
 #include "PixTestSetup.hh"
 #include "PixTestPretest.hh"
+#include "PixTestPattern.hh"
 #include "PixTestDaq.hh"
 #include "PixTestGainCalibration.hh"
 #include "PixTestPh.hh"
@@ -61,6 +62,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("alive")) return new PixTestAlive(a, "PixelAlive"); // synonym
   if (!name.compare("pretest")) return new PixTestPretest(a, "Pretest"); 
+  if (!name.compare("pattern")) return new PixTestPattern(a, "Pattern"); 
   if (!name.compare("scurves")) return new PixTestScurves(a, "Scurves"); 
   if (!name.compare("setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
