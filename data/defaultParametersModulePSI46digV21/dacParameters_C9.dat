@@ -11,9 +11,9 @@
  17   PHOffset 170
  19  Vcomp_ADC  50
  20    PHScale 130
- 22    VIColOr  20
+ 22    VIColOr 100
  25       Vcal 200
  26     CalDel 110
 253    CtrlReg   0
-254        WBC  98
+254        WBC 100
 255   Readback   0
