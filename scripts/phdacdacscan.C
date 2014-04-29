@@ -3,15 +3,15 @@
 //    ../bin/pXar -c '../scripts/phdacdacscan.C("vcal", "phdacdacscan.root", "testROC")'
 
 // ----------------------------------------------------------------------
-/// scan all other DACs against "dac1" and display the average pulseheight as a 2D plot
-/// the API is programmed from the macro using PixTest::setDAC which forwards this to the api 
-/// (w/o dict direct api interaction is not yet possible)
+// scan all other DACs against "dac1" and display the average pulseheight as a 2D plot
+// the API is programmed from the macro using PixTest::setDAC which forwards this to the api 
+// (w/o dict direct api interaction is not yet possible)
 void phdacdacscan(string dac1 = "vcal", string rootfile = "phdacdacscan.root", string cfgdirectory = "testROC") {
-  gSystem->Load("../lib/libpxar.dylib");
-  gSystem->Load("../lib/libpxargui.dylib");
-  gSystem->Load("../lib/libpxartests.dylib");
-  gSystem->Load("../lib/libpxarutil.dylib");
-  gSystem->Load("../lib/libpxarana.dylib");
+//   gSystem->Load("../lib/libpxar.dylib");
+//   gSystem->Load("../lib/libpxargui.dylib");
+//   gSystem->Load("../lib/libpxartests.dylib");
+//   gSystem->Load("../lib/libpxarutil.dylib");
+//   gSystem->Load("../lib/libpxarana.dylib");
 
   ConfigParameters *configParameters = ConfigParameters::Singleton();
   
