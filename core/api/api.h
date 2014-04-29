@@ -105,14 +105,15 @@ namespace pxar {
    *
    *  All input from user space is checked before programming it to the 
    *  devices. Register addresses have an internal lookup mechanism so the
-   *  user only hast to provide e.g. the DAC name to be programmed as a string.
+   *  user only hast to provide e.g. the DAC name to be programmed as a std::string.
    *
    *  Unless otherwise specified (some DAQ functions allow this) all data
    *  returned from API functions is fully decoded and stored in C++ structures
-   *  using std::vectors and std::pairs to ease its handling.
+   *  using std::vectors and std::pairs to ease its handling. Most functions will
+   *  return a std::vector containing pxar::pixel elements storing the readout data.
    *
    *  Another concept implemented is the Device Under Test (DUT) which is a
-   *  class representing the attached hardware to be tested. In order to change
+   *  class (pxar::dut) representing the attached hardware to be tested. In order to change
    *  its configuration the user space code interacts with the _dut object and
    *  alters its settings. This is programmed into the devices automatically
    *  before the next test is executed. This approach allows both the efficient
@@ -130,7 +131,7 @@ namespace pxar {
 
     /** Default constructor for the libpxar API
      *
-     *  Fetches a new HAL instance and opens the connection to the testboard
+     *  Fetches a new pxar::hal instance and opens the connection to the testboard
      *  specified in the "usbId" parameter. An asterisk as "usbId" acts as
      *  wildcard. If only one DTB is connected the algorithm will automatically
      *  connect to this board, if several are connected it will give a warning.
@@ -145,7 +146,7 @@ namespace pxar {
     /** Default destructor for libpxar API
      *
      *  Will power down the DTB, disconnect properly from the testboard,
-     *  and destroy the HAL object.
+     *  and destroy the pxar::hal object.
      */
     ~api();
 
@@ -166,7 +167,6 @@ namespace pxar {
      *  Initializes the tesboard with signal delay settings, and voltage/current
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
-     *
      *  The name lookup is performed via the central API dictionaries.
      *
      *  All user inputs are checked for sanity. This includes range checks on
@@ -196,7 +196,6 @@ namespace pxar {
      *  are both supported.
      *
      *  In case of USB communication problems, pxar::UsbConnectionError is thrown.
-     *
      */
     bool initDUT(uint8_t hubId,
 		 std::string tbmtype, 
@@ -213,9 +212,8 @@ namespace pxar {
      *  programmed. This function needs to be called after power cycling the 
      *  testboard output (using Poff, Pon).
      *
-     *  A DUT flag is set which prEvents test functions to be executed if 
+     *  A DUT flag is set which prevents test functions to be executed if 
      *  not programmed.
-     *
      */
     bool programDUT(); 
   
@@ -227,26 +225,22 @@ namespace pxar {
     bool flashTB(std::string filename);
 
     /** Function to read out analog DUT supply current on the testboard
-     *
-     *  The current will be returned in units of Ampere
+     *  The current will be returned in SI units of Ampere
      */
     double getTBia();
 
     /** Function to read out analog DUT supply voltage on the testboard
-     *
-     *  The voltage will be returned in units of Volts
+     *  The voltage will be returned in SI units of Volts
      */
     double getTBva();
 
     /** Function to read out digital DUT supply current on the testboard
-     *
-     *  The current will be returned in units of Ampere
+     *  The current will be returned in SI units of Ampere
      */
     double getTBid();
 
     /** Function to read out digital DUT supply voltage on the testboard
-     *
-     *  The voltage will be returned in units of Volts
+     *  The voltage will be returned in SI units of Volts
      */
     double getTBvd();
 
@@ -267,18 +261,13 @@ namespace pxar {
     void Poff();
 
      /** Selects "signal" as output for the DTB probe channel "probe"
-      *  (digital or analog)
+      *  (digital or analog). Valid probe values are the names written
+      *  on the case of the DTB, next to the respective outputs.
       *
       *  The signal identifier is checked against a dictionary to be valid.
       *  In case of an invalid signal identifier the output is turned off.
       */
     bool SignalProbe(std::string probe, std::string name);
-
-
-    /** Function to read values from the integrated digital scope on the DTB
-     */
-    //getScopeData();
-
 
 
     // TEST functions
@@ -287,14 +276,14 @@ namespace pxar {
      *
      *  The "rocid" parameter can be used to select a specific ROC to program.
      *
-     *  This function will both update the bookkeeping value in the DUT
+     *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      */
     bool setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid);
 
     /** Set a DAC value on the DUT for all enabled ROC
      *
-     *  This function will both update the bookkeeping value in the DUT
+     *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      */
     bool setDAC(std::string dacName, uint8_t dacValue);
@@ -306,7 +295,7 @@ namespace pxar {
     /** Set a register value on a specific TBM of the DUT
      *
      *  The "tbmid" parameter can be used to select a specific TBM to program.
-     *  This function will both update the bookkeeping value in the DUT
+     *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      *
      *  This function will set the respective register always in both cores of
@@ -316,7 +305,7 @@ namespace pxar {
 
     /** Set a register value on all TBMs of the DUT
      *
-     *  This function will both update the bookkeeping value in the DUT
+     *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      *
      *  This function will set the respective register always in both cores of
@@ -326,8 +315,8 @@ namespace pxar {
 
     /** Method to scan a DAC range and measure the pulse height
      *
-     *  Returns a vector of pairs containing set dac value and a pixel vector,
-     *  with the value of the pixel struct being the averaged pulse height
+     *  Returns a vector of pairs containing set dac value and a pxar::pixel vector,
+     *  with the value of the pxar::pixel struct being the averaged pulse height
      *  over "nTriggers" triggers
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
@@ -339,7 +328,7 @@ namespace pxar {
     /** Method to scan a DAC range and measure the efficiency
      *
      *  Returns a vector of pairs containing set dac value and pixels,
-     *  with the value of the pixel struct being the number of hits in that
+     *  with the value of the pxar::pixel struct being the number of hits in that
      *  pixel. Efficiency == 1 for nhits == nTriggers
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
@@ -351,7 +340,7 @@ namespace pxar {
     /** Method to scan a DAC range and measure the pixel threshold
      *
      *  Returns a vector of pairs containing set dac value and pixels,
-     *  with the value of the pixel struct being the threshold value of that
+     *  with the value of the pxar::pixel struct being the threshold value of that
      *  pixel.
      *
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
@@ -364,7 +353,7 @@ namespace pxar {
     /** Method to scan a DAC range and measure the pixel threshold
      *
      *  Returns a vector of pairs containing set dac value and pixels,
-     *  with the value of the pixel struct being the threshold value of that
+     *  with the value of the pxar::pixel struct being the threshold value of that
      *  pixel.
      *
      *  This function allows to specify a range for the threshold DAC to be searched,
@@ -381,7 +370,7 @@ namespace pxar {
      *  pulse height
      *
      *  Returns a vector containing pairs of DAC1 values and pais of DAC2
-     *  values with a pixel vector. The value of the pixel struct is the
+     *  values with a pxar::pixel vector. The value of the pxar::pixel struct is the
      *  averaged pulse height over "nTriggers" triggers.
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
@@ -394,7 +383,7 @@ namespace pxar {
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the efficiency
      *
      *  Returns a vector containing pairs of DAC1 values and pais of DAC2
-     *  values with a pixel vector. The value of the pixel struct is the
+     *  values with a pxar::pixel vector. The value of the pxar::pixel struct is the
      *  number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
@@ -406,7 +395,7 @@ namespace pxar {
 
     /** Method to get a map of the pulse height
      *
-     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  Returns a vector of pixels, with the value of the pxar::pixel struct being
      *  the averaged pulse height over "nTriggers" triggers
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
@@ -416,7 +405,7 @@ namespace pxar {
 
     /** Method to get a map of the efficiency
      *
-     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  Returns a vector of pixels, with the value of the pxar::pixel struct being
      *  the number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
@@ -426,7 +415,7 @@ namespace pxar {
 
     /** Method to get a map of the pixel threshold
      *
-     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  Returns a vector of pixels, with the value of the pxar::pixel struct being
      *  the threshold value of that pixel.
      *
      *  This function allows to specify a range for the threshold DAC to be searched,
@@ -441,7 +430,7 @@ namespace pxar {
 
     /** Method to get a map of the pixel threshold
      *
-     *  Returns a vector of pixels, with the value of the pixel struct being
+     *  Returns a vector of pixels, with the value of the pxar::pixel struct being
      *  the threshold value of that pixel.
      *
      *  The threshold is calculated as the 0.5 value of the s-curve of the pixel.
@@ -480,7 +469,7 @@ namespace pxar {
      */
     bool daqStatus();
     
-    /** Function to read out the earliest Event in buffer from the current
+    /** Function to read out the earliest pxar::Event in buffer from the current
      *  data acquisition session. If no Event is buffered, the function will 
      *  wait for the next Event to arrive and then return it.
      */
@@ -511,7 +500,7 @@ namespace pxar {
      */
     bool daqStop();
 
-    /** Function to return the full Event buffer from the testboard RAM after
+    /** Function to return the full event buffer from the testboard RAM after
      *  the data acquisition has been stopped. No decoding is performed, this 
      *  function returns the raw data blob from either of the deserializer
      *  modules.
@@ -525,9 +514,9 @@ namespace pxar {
      */
     std::vector<uint16_t> daqGetBuffer();
 
-    /** Function to return the full Event buffer from the testboard RAM after
+    /** Function to return the full pxar::Event buffer from the testboard RAM after
      *  the data acquisition has been stopped. All data is decoded and the 
-     *  function returns decoded pixels separated in Events with additional
+     *  function returns decoded pixels separated in pxar::Events with additional
      *  header information available.
      */
     std::vector<Event> daqGetEventBuffer();
@@ -563,7 +552,7 @@ namespace pxar {
      */
     std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags = 0);
 
-    /** Merges all consecutive triggers into one Event. This function deletes the original event data after
+    /** Merges all consecutive triggers into one pxar::Event. This function deletes the original event data after
      *  merging! 
      */
     std::vector<Event*> condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency);
@@ -578,11 +567,11 @@ namespace pxar {
      */
     std::vector<pixel> repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags);
 
-    /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
+    /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors.
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency);
 
-    /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors and return the threshold value.
+    /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors and return the threshold value.
      */
     std::vector<std::pair<uint8_t,std::vector<pixel> > > repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags);
 
