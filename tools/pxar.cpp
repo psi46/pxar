@@ -128,6 +128,54 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
   std::cout << std::endl << std::endl;
 }
 
+void asciiprofile(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, uint8_t roc = 0) {
+
+  if(data.empty()) return;
+
+  size_t max = 0;
+  for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) { if(mapit->second.size() > max) max = mapit->second.size(); }
+
+
+  std::cout << std::endl;
+  for(int cnt = max; cnt >= 0; cnt--) {
+    if(cnt%5 == 0) std::cout << std::setw(3) << cnt << " |";
+    else std::cout << std::setw(3) << " " << " |";
+    
+    for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
+
+      bool found = false;
+      if(mapit->second.size() == cnt) { std::cout << "o"; found = true; }
+      else if(mapit->second.size() > cnt) { std::cout << "."; found = true; }
+      else std::cout << " ";
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "    |";
+  for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
+  std::cout << std::endl << "     ";
+  uint8_t daclower = data.front().first;
+  uint8_t dachigher= data.back().first;
+
+  // Axis ticks
+  for(size_t dac = daclower; dac <= dachigher; dac++) { 
+    if(dac%10 == 0) { std::cout << "'"; }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << "    ";
+
+  // Axis labels
+  for(size_t dac = daclower; dac <= dachigher; dac++) { 
+    if(dac%10 == 0) {
+      std::cout << dac;
+      if(dac > 10) dac++;
+      if(dac > 100) dac++;
+    }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << std::endl;
+}
+
 void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
 
   if(data.empty()) return;

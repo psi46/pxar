@@ -46,7 +46,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBM(uint8_t tbmId, std::map< uint8_t,uint8_t > regVector);
+    void initTBMCore(std::map< uint8_t,uint8_t > regVector);
 
     /** Initialize attached ROCs with their settings and configuration
      *  This is the startup-routine for single ROCs. It first powers up the
@@ -86,12 +86,12 @@ namespace pxar {
 
     /** Set a register on a specific TBM tbmId
      */
-    bool tbmSetReg(uint8_t tbmId, uint8_t regId, uint8_t regValue);
+    bool tbmSetReg(uint8_t regId, uint8_t regValue);
 
     /** Set all registers on a specific TBM tbmId
      *  registers are provided as map of uint8_t,uint8_t pairs with Reg Id and value.
      */
-    bool tbmSetRegs(uint8_t tbmId, std::map< uint8_t, uint8_t > regPairs);
+    bool tbmSetRegs(std::map< uint8_t, uint8_t > regPairs);
 
     /** Function to set and update the pattern generator command list on the DTB
      */
@@ -234,7 +234,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    bool daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -247,7 +247,7 @@ namespace pxar {
     /** Stopping the current DAQ session. This is not resetting the data buffers.
      *  All DAQ channels are stopped.
      */
-    bool daqStop();
+    void daqStop();
 
     /**
      */
@@ -275,7 +275,7 @@ namespace pxar {
 
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
-    bool daqClear();
+    void daqClear();
 
 
     // Functions to access NIOS storage of trim values:
@@ -347,6 +347,11 @@ namespace pxar {
      */
     bool FindDTB(std::string &usbId);
 
+    /** Internal helper function to calculate an estimate of the data volume to be
+     *  expected for the upcoming test. This function only supplies debug output
+     *  and has no further effect on the data transmission or similar.
+     */
+    void estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t nTBMs);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit

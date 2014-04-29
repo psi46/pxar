@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "0.9.1")
-SET(PXAR_FW_VERSION "2.7")
+SET(PXAR_VERSION "0.9.5")
+SET(PXAR_FW_VERSION "2.14")
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -32,6 +32,12 @@ IF(NOT SOURCE_PACKAGE)
     STRING(REGEX REPLACE "^release-" "" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
     STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
     MESSAGE("-- Determined API version ${PXAR_LIB_VERSION}.")
+    EXEC_PROGRAM(git ARGS status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}/core OUTPUT_VARIABLE PXAR_CORE_STATUS)
+    IF(PXAR_CORE_STATUS STREQUAL "")
+      MESSAGE("-- corelib directory is clean.")
+    ELSE(PXAR_CORE_STATUS STREQUAL "")
+      MESSAGE("-- corelib directory is dirty:\n ${PXAR_CORE_STATUS}.")
+    ENDIF(PXAR_CORE_STATUS STREQUAL "")
   ELSE(GIT_FOUND)
     SET(PXAR_LIB_VERSION PXAR_VERSION)
   ENDIF(GIT_FOUND)
@@ -200,14 +206,13 @@ IF(BUILD_utils)
   ADD_SUBDIRECTORY(util)
 ENDIF(BUILD_utils)
 
+option(BUILD_tools  "Compile pxar tools?" ON)
+IF(BUILD_tools)
 
-option(BUILD_pxardebug  "Compile pXar debug executable?" ON)
-IF(BUILD_pxardebug)
+  # Build pxar tools
+  ADD_SUBDIRECTORY(tools)
 
-  # Build the pXar debug executable
-  ADD_SUBDIRECTORY(debug)
-
-ENDIF(BUILD_pxardebug)
+ENDIF(BUILD_tools)
 
 
 #############################################

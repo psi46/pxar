@@ -59,6 +59,11 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_DISABLE_DACCAL 0x0020
 
+/** Flag to disable sorting of the API output data. This flag should only be used in specific
+ *  cases requiring the original order of the data read out from the DUT.
+ */
+#define FLAG_NOSORT 0x0040
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
@@ -532,11 +537,6 @@ namespace pxar {
      */
     uint32_t daqGetNDecoderErrors();
 
-    /** Function to return the full Event buffer from the testboard RAM after
-     *  a call
-     */
-    std::vector<Event> getEventBuffer() {return fEvents;}
-
     /** DUT object for book keeping of settings
      */
     dut * _dut;
@@ -561,34 +561,35 @@ namespace pxar {
      *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
      *  function, all depending on the configuration of the DUT.
      */
-    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool forceSerial = false, bool forceMasked = false);
+    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags = 0);
 
-    /** Merges all consecutive triggers into one Event
+    /** Merges all consecutive triggers into one Event. This function deletes the original event data after
+     *  merging! 
      */
     std::vector<Event*> condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency);
     
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels.
      */
-    std::vector<pixel>* repackMapData (std::vector<Event*> data, uint16_t nTriggers, bool efficiency);
+    std::vector<pixel> repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency);
 
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels and returns the threshold value.
      */
-    std::vector<pixel>* repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool rising_edge);
+    std::vector<pixel> repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > >* repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool efficiency);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pixel vectors and return the threshold value.
      */
-    std::vector<std::pair<uint8_t,std::vector<pixel> > >* repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool rising_edge);
+    std::vector<std::pair<uint8_t,std::vector<pixel> > > repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags);
 
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >* repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool efficiency);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags, bool efficiency);
 
     /** Helper function for conversion from string to register value
      *
@@ -673,8 +674,6 @@ namespace pxar {
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
 
-    std::vector<Event> fEvents;
-    
   }; // class api
 
 
