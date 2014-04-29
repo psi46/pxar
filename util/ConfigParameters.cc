@@ -286,6 +286,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   sigdelays.push_back("ctr");
   sigdelays.push_back("sda");
   sigdelays.push_back("tin");
+  sigdelays.push_back("triggerdelay");
   sigdelays.push_back("deser160phase");
 
   if (!fReadTbParameters) readTbParameters();
