@@ -22,7 +22,7 @@ void phOpt(string rootfile = "phOpt.root", string cfgdirectory = "testROC") {
   PixTestFactory *factory = PixTestFactory::instance(); 
   
   PixTest *pt = factory->createTest("DacScan", ap); 
-  pt->setDAC("ctrlreg", 0); 
+  pt->setDAC("ctrlreg", 4); 
   pt->setParameter("PHmap", "1"); 
   pt->setParameter("DAC", "Vcal"); 
   pt->setParameter("DACLO", "0"); 
@@ -63,22 +63,30 @@ void ana(string rootfile = "phOpt.root") {
   double x(0.); 
   TIter next(gDirectory->GetListOfKeys(););
   TObject *obj;
-  double maxPh(0.), minVcal(999.); 
+  double maxPh(0.), minVcal(60); 
   TH1D *hmax(0), *hmin(0); 
   TCanvas *c0 = new TCanvas("C0"); 
+  c0->Clear(); 
   while ((obj = (TObject*)next())) {
-    cout << obj->GetName() << endl;
+    //    cout << obj->GetName() << endl;
     h = (TH1D*)gDirectory->Get(obj->GetName()); 
 
-    if (h->Integral() < 10.) continue;
+    if (!h) {
+      cout << "problem with " << obj->GetName() << endl;
+      continue;
+    }
+
+    double integral = h->Integral();
+    if (integral < 100.) continue;
     
     double plateau = h->GetMaximum();
-    if (plateau > maxPh) {
+    double vcal = h->FindFirstBinAbove(1.); 
+
+    if (plateau > maxPh && vcal < minVcal+10) {
       maxPh = plateau;
       hmax = h; 
     }
 
-    double vcal = h->FindFirstBinAbove(1.); 
     if (vcal > 10 && vcal < minVcal) {
       minVcal = vcal;
       hmin = h; 
