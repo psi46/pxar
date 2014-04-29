@@ -60,14 +60,9 @@ fits    button
 thrMap  button
 
 -- Setup
-Ntrig 10
-Ntests 5
-Vcal 200
-PIX 11,20
-ClkLo 0
-ClkHi 19
-Deser160Lo 3
-Deser160Hi 3
+DeserMax 7
+ClkMax   19
+saveTbParameters   button
 
 -- Tbm
 Ntrig 10
