@@ -76,10 +76,16 @@ public:
 
   /// work-around to cope with suboptimal pxar/core
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
+  /// kind of another work-around (splitting the range, adjusting ntrig, etc)
+  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit);
+  /// do the scurve analysis
+  void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  /// do the gain/pedestal analysis
+  void gainPedestalAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 1); 
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 1, int ihit = 1); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -194,6 +200,7 @@ protected:
 
   double               fThreshold, fThresholdE, fSigma, fSigmaE;  ///< variables for passing back s-curve results
   double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
+  int                  fNtrig; 
 
   std::string           fName, fTestTip, fSummaryTip; ///< information for this test
 

@@ -112,27 +112,12 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // result & 0x1 == 1 -> return thr+sig+thn maps 
 // result & 0x2 == 2 -> return thr+sig+thn+dist (projections) of maps
 // result & 0x4 == 4 -> write to file: all pixel histograms with outlier threshold/sigma
-vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result) {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  //dbx  uint16_t FLAGS = FLAG_FORCE_MASKED;
-  
-  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d FLAGS = %d",  
-	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, (int)FLAGS)); 
+vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result, int ihit) {
 
-  int range = dacmax - dacmin + 1; 
-  int daclo1 = dacmin; 
-  int dachi1 = dacmin + range/2; 
-  int daclo2 = dachi1 + 1; 
-  int dachi2 = dacmax; 
-  int rawevts = 4160*range/2; 
-  int trgevts = 1000000/rawevts; 
-  if (trgevts < 1) trgevts = 1; 
-
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  if (rocIds.size() > 1 && ntrig > trgevts) {
-    LOG(logWARNING) << "   too many triggers requested, resetting ntrig = " << trgevts; 
-    ntrig = trgevts; 
-  }
+  string type("hits"); 
+  if (2 == ihit) type = string("pulseheight"); 
+  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d %s",  
+	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, type.c_str())); 
 
   vector<TH1*>          rmaps; 
   vector<vector<TH1*> > maps; 
@@ -141,9 +126,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   TH1* h1(0); 
   fDirectory->cd();
 
-  map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-    id2idx.insert(make_pair(rocIds[iroc], iroc)); 
     rmaps.clear();
     for (unsigned int ic = 0; ic < 52; ++ic) {
       for (unsigned int ir = 0; ir < 80; ++ir) {
@@ -157,191 +141,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     maps.push_back(rmaps); 
   }
   
-  int ic, ir, iroc; 
-  double val;
-  vector<pair<uint8_t, vector<pixel> > > results;
-
-  bool done = false;
-  int cnt(0); 
-  LOG(logDEBUG) << "scanning part 1: " << daclo1 << " .. " << dachi1; 
-  while (!done){
-    try{
-      results = fApi->getEfficiencyVsDAC(dac, daclo1, dachi1, FLAGS, ntrig); 
-      done = true; // got our data successfully
-    } catch(DataMissingEvent &e){
-      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    }
-    done = (cnt>5) || done;
-  }
-
-  for (unsigned int idac = 0; idac < results.size(); ++idac) {
-    int dac = results[idac].first; 
-    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
-      ic =   results[idac].second[ipix].column; 
-      ir =   results[idac].second[ipix].row; 
-      iroc = results[idac].second[ipix].roc_id; 
-      if (ic > 51 || ir > 79) {
-	continue;
-      }
-      val =  results[idac].second[ipix].value;
-      maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
-    }
-  }
-
-
-  if (1) {
-    results.clear();
-    done = false;
-    LOG(logDEBUG) << "scanning part 2: " << daclo2 << " .. " << dachi2; 
-    while(!done){
-      try{
-	results = fApi->getEfficiencyVsDAC(dac, daclo2, dachi2, FLAGS, ntrig); 
-	done = true; // got our data successfully
-      }
-      catch(pxar::DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-	++cnt;
-	if (e.numberMissing > 10) done = true; 
-      }
-      done = (cnt>5) || done;
-    }
-    
-    for (unsigned int idac = 0; idac < results.size(); ++idac) {
-      int dac = results[idac].first; 
-      for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
-	ic =   results[idac].second[ipix].column; 
-	ir =   results[idac].second[ipix].row; 
-	iroc = results[idac].second[ipix].roc_id; 
-	val =  results[idac].second[ipix].value;
-	if (ic > 51 || ir > 79) {
-	  continue;
-	}
-	maps[id2idx[iroc]][ic*80+ir]->Fill(dac, val);
-      }
-    }
-  }
-
-  TH1* h2(0), *h3(0), *h4(0); 
-  string fname("SCurveData");
-  ofstream OutputFile;
-  string line; 
-  string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
-  bool dumpFile(false); 
-  for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
-    rmaps.clear();
-    rmaps = maps[iroc];
-    h2 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h2, "colz")); 
-
-    h3 = bookTH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h3, "colz")); 
-
-    h4 = bookTH2D(Form("thn_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("thn_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h4, "colz")); 
-
-    if (!dac.compare("Vcal")) {
-      dumpFile = true; 
-      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-      OutputFile << "Mode 1" << endl;
-    }
-
-    for (unsigned int i = 0; i < rmaps.size(); ++i) {
-      if (rmaps[i]->GetSumOfWeights() < 1) {
-	continue;
-      }
-      
-      // -- calculated "proper" errors
-      for (int ib = 1; ib <= rmaps[i]->GetNbinsX(); ++ib) {
-	rmaps[i]->SetBinError(ib, ntrig*PixUtil::dBinomial(static_cast<int>(rmaps[i]->GetBinContent(ib)), ntrig)); 
-      }
-
-      bool ok = threshold(rmaps[i]); 
-      if (!ok) {
-	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
-      }
-      ic = i/80; 
-      ir = i%80; 
-      h2->SetBinContent(ic+1, ir+1, fThreshold); 
-      h2->SetBinError(ic+1, ir+1, fThresholdE); 
-
-      h3->SetBinContent(ic+1, ir+1, fSigma); 
-      h3->SetBinError(ic+1, ir+1, fSigmaE); 
-
-      h4->SetBinContent(ic+1, ir+1, fThresholdN); 
-
-      // -- write file
-      if (dumpFile) {
-	int NSAMPLES(32); 
-	int ibin = rmaps[i]->FindBin(fThreshold); 
-	int bmin = ibin - 15;
-	line = Form("%2d %3d", NSAMPLES, bmin); 
-	for (int ix = bmin; ix < bmin + 33; ++ix) {
-	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
-	}
-	OutputFile << line << endl;
-      }
-
-      if (result & 0x4) {
-	//	cout << "add " << rmaps[i]->GetName() << endl;
-	fHistList.push_back(rmaps[i]);
-      }
-      // -- write all hists to file if requested
-      if (0 && result & 0x4) {
-	rmaps[i]->SetDirectory(fDirectory); 
-	rmaps[i]->Write();
-	delete rmaps[i];
-      }
-    }
-    if (dumpFile) OutputFile.close();
-
-    if (result & 0x1) {
-      resultMaps.push_back(h2); 
-      fHistList.push_back(h2); 
-      resultMaps.push_back(h3); 
-      fHistList.push_back(h3); 
-      resultMaps.push_back(h4); 
-      fHistList.push_back(h4); 
-    }
-
-    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
-    if (result & 0x2) {
-      TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
-      resultMaps.push_back(d1); 
-      fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
-      resultMaps.push_back(d2); 
-      fHistList.push_back(d2); 
-      TH1* d3 = distribution((TH2D*)h4, 256, 0., 256., zeroSuppressed); 
-      resultMaps.push_back(d3); 
-      fHistList.push_back(d3); 
-    }
-
-  }
-  
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
-
-  if (h2) h2->Draw("colz");
-  PixTest::update(); 
-
-  if (!(result & 0x4)) {
-    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
-      rmaps.clear();
-      rmaps = maps[iroc];
-      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
-      while (!rmaps.empty()){
-	h1 = rmaps.back(); 
-	rmaps.pop_back(); 
-	if (h1) delete h1;
-      }
-    }
+  dacScan(dac, ntrig, dacmin, dacmax, maps, ihit); 
+  if (1 == ihit) {
+    scurveAna(dac, name, maps, resultMaps, result); 
+  } else if (2 == ihit) {
+    gainPedestalAna(dac, name, maps, resultMaps, result); 
   }
 
   return resultMaps; 
@@ -1228,3 +1032,319 @@ void PixTest::banner(string what, TLogLevel log) {
   LOG(log) << "   ----------------------------------------------------------------------";
 }
 
+
+// ----------------------------------------------------------------------
+void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit) {
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+
+  LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
+
+  int range = dacmax - dacmin + 1; 
+  int daclo1 = dacmin; 
+  int dachi1 = dacmin + range/2; 
+  int daclo2 = dachi1 + 1; 
+  int dachi2 = dacmax; 
+  int rawevts = 4160*range/2; 
+  int trgevts = 1000000/rawevts; 
+  if (trgevts < 1) trgevts = 1; 
+  fNtrig = ntrig; 
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  if (rocIds.size() > 1 && ntrig > trgevts) {
+    LOG(logWARNING) << "   too many triggers requested, resetting ntrig = " << trgevts; 
+    fNtrig = trgevts; 
+  }
+
+
+  int ic, ir, iroc; 
+  double val;
+  bool done = false;
+  int cnt(0); 
+  vector<pair<uint8_t, vector<pixel> > > results;
+  LOG(logDEBUG) << "scanning part 1: " << daclo1 << " .. " << dachi1; 
+  while (!done){
+    try{
+      if (1 == ihit) {
+	results = fApi->getEfficiencyVsDAC(dac, daclo1, dachi1, FLAGS, fNtrig); 
+      } else {
+	results = fApi->getPulseheightVsDAC(dac, daclo1, dachi1, FLAGS, fNtrig); 
+      }
+      done = true; // got our data successfully
+    } catch(DataMissingEvent &e){
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    }
+    done = (cnt>5) || done;
+  }
+
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
+    int dac = results[idac].first; 
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+      ic =   results[idac].second[ipix].column; 
+      ir =   results[idac].second[ipix].row; 
+      iroc = results[idac].second[ipix].roc_id; 
+      if (ic > 51 || ir > 79) {
+	continue;
+      }
+      val =  results[idac].second[ipix].value;
+      maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
+    }
+  }
+
+
+  results.clear();
+  done = false;
+  LOG(logDEBUG) << "scanning part 2: " << daclo2 << " .. " << dachi2; 
+  while(!done){
+    try{
+      if (1 == ihit) {
+	results = fApi->getEfficiencyVsDAC(dac, daclo2, dachi2, FLAGS, fNtrig); 
+      } else {
+	results = fApi->getPulseheightVsDAC(dac, daclo2, dachi2, FLAGS, fNtrig); 
+      }
+
+      done = true; // got our data successfully
+    }
+    catch(pxar::DataMissingEvent &e){
+      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    }
+    done = (cnt>5) || done;
+  }
+  
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
+    int dac = results[idac].first; 
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+      ic =   results[idac].second[ipix].column; 
+      ir =   results[idac].second[ipix].row; 
+      iroc = results[idac].second[ipix].roc_id; 
+      val =  results[idac].second[ipix].value;
+      if (ic > 51 || ir > 79) {
+	continue;
+      }
+      maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
+    }
+  }
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vector<TH1*> &resultMaps, int result) {
+  vector<TH1*> rmaps; 
+  TH1* h2(0), *h3(0), *h4(0); 
+  string fname("SCurveData");
+  ofstream OutputFile;
+  string line; 
+  string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
+  bool dumpFile(false); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  int ic(0), ir(0); 
+  for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+    rmaps.clear();
+    rmaps = maps[iroc];
+    h2 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h2, "colz")); 
+
+    h3 = bookTH2D(Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("sig_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h3, "colz")); 
+
+    h4 = bookTH2D(Form("thn_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("thn_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h4, "colz")); 
+
+    if (!dac.compare("Vcal")) {
+      dumpFile = true; 
+      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+      OutputFile << "Mode 1" << endl;
+    }
+
+    for (unsigned int i = 0; i < rmaps.size(); ++i) {
+      if (rmaps[i]->GetSumOfWeights() < 1) {
+	continue;
+      }
+      
+      // -- calculated "proper" errors
+      for (int ib = 1; ib <= rmaps[i]->GetNbinsX(); ++ib) {
+	rmaps[i]->SetBinError(ib, fNtrig*PixUtil::dBinomial(static_cast<int>(rmaps[i]->GetBinContent(ib)), fNtrig)); 
+      }
+
+      bool ok = threshold(rmaps[i]); 
+      if (!ok) {
+	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
+      }
+      ic = i/80; 
+      ir = i%80; 
+      h2->SetBinContent(ic+1, ir+1, fThreshold); 
+      h2->SetBinError(ic+1, ir+1, fThresholdE); 
+
+      h3->SetBinContent(ic+1, ir+1, fSigma); 
+      h3->SetBinError(ic+1, ir+1, fSigmaE); 
+
+      h4->SetBinContent(ic+1, ir+1, fThresholdN); 
+
+      // -- write file
+      if (dumpFile) {
+	int NSAMPLES(32); 
+	int ibin = rmaps[i]->FindBin(fThreshold); 
+	int bmin = ibin - 15;
+	line = Form("%2d %3d", NSAMPLES, bmin); 
+	for (int ix = bmin; ix < bmin + 33; ++ix) {
+	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
+	}
+	OutputFile << line << endl;
+      }
+
+      if (result & 0x4) {
+	//	cout << "add " << rmaps[i]->GetName() << endl;
+	fHistList.push_back(rmaps[i]);
+      }
+      // -- write all hists to file if requested
+      if (0 && result & 0x4) {
+	rmaps[i]->SetDirectory(fDirectory); 
+	rmaps[i]->Write();
+	delete rmaps[i];
+      }
+    }
+    if (dumpFile) OutputFile.close();
+
+    if (result & 0x1) {
+      resultMaps.push_back(h2); 
+      fHistList.push_back(h2); 
+      resultMaps.push_back(h3); 
+      fHistList.push_back(h3); 
+      resultMaps.push_back(h4); 
+      fHistList.push_back(h4); 
+    }
+
+    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
+    if (result & 0x2) {
+      TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
+      resultMaps.push_back(d1); 
+      fHistList.push_back(d1); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      resultMaps.push_back(d2); 
+      fHistList.push_back(d2); 
+      TH1* d3 = distribution((TH2D*)h4, 256, 0., 256., zeroSuppressed); 
+      resultMaps.push_back(d3); 
+      fHistList.push_back(d3); 
+    }
+
+  }
+
+
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+
+  if (h2) h2->Draw("colz");
+  PixTest::update(); 
+  
+  TH1 *h1(0); 
+  if (!(result & 0x4)) {
+    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+      rmaps.clear();
+      rmaps = maps[iroc];
+      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
+      while (!rmaps.empty()){
+	h1 = rmaps.back(); 
+	rmaps.pop_back(); 
+	if (h1) delete h1;
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > maps, vector<TH1*> &resultMaps, int result) {
+
+  vector<TH1*> rmaps; 
+  TH1* h2(0), *h3(0); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  int ic(0), ir(0); 
+  for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+    rmaps.clear();
+    rmaps = maps[iroc];
+    h2 = bookTH2D(Form("gain_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("gain_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h2, "colz")); 
+
+    h3 = bookTH2D(Form("ped_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  Form("ped_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h3, "colz")); 
+
+    for (unsigned int i = 0; i < rmaps.size(); ++i) {
+      if (rmaps[i]->GetSumOfWeights() < 1) {
+	continue;
+      }
+      
+      bool ok = threshold(rmaps[i]); 
+      if (!ok) {
+	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
+      }
+      ic = i/80; 
+      ir = i%80; 
+      h2->SetBinContent(ic+1, ir+1, fThreshold); 
+      h2->SetBinError(ic+1, ir+1, fThresholdE); 
+
+      h3->SetBinContent(ic+1, ir+1, fSigma); 
+      h3->SetBinError(ic+1, ir+1, fSigmaE); 
+
+      if (result & 0x4) {
+	//	cout << "add " << rmaps[i]->GetName() << endl;
+	fHistList.push_back(rmaps[i]);
+      }
+      // -- write all hists to file if requested
+      if (0 && result & 0x4) {
+	rmaps[i]->SetDirectory(fDirectory); 
+	rmaps[i]->Write();
+	delete rmaps[i];
+      }
+    }
+
+    if (result & 0x1) {
+      resultMaps.push_back(h2); 
+      fHistList.push_back(h2); 
+      resultMaps.push_back(h3); 
+      fHistList.push_back(h3); 
+    }
+
+    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
+    if (result & 0x2) {
+      TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
+      resultMaps.push_back(d1); 
+      fHistList.push_back(d1); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      resultMaps.push_back(d2); 
+      fHistList.push_back(d2); 
+    }
+
+  }
+
+
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+
+  if (h2) h2->Draw("colz");
+  PixTest::update(); 
+  
+  TH1 *h1(0); 
+  if (!(result & 0x4)) {
+    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+      rmaps.clear();
+      rmaps = maps[iroc];
+      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
+      while (!rmaps.empty()){
+	h1 = rmaps.back(); 
+	rmaps.pop_back(); 
+	if (h1) delete h1;
+      }
+    }
+  }
+
+}
