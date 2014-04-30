@@ -165,10 +165,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   int cnt(0); 
   LOG(logDEBUG) << "scanning part 1: " << daclo1 << " .. " << dachi1; 
   while (!done){
-    fApi->setDAC(dac, dacmin); 
     try{
       results = fApi->getEfficiencyVsDAC(dac, daclo1, dachi1, FLAGS, ntrig); 
-      //dbx      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
       done = true; // got our data successfully
     } catch(DataMissingEvent &e){
       LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
@@ -198,7 +196,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     done = false;
     LOG(logDEBUG) << "scanning part 2: " << daclo2 << " .. " << dachi2; 
     while(!done){
-      fApi->setDAC(dac, dacmax/2+1); 
       try{
 	results = fApi->getEfficiencyVsDAC(dac, daclo2, dachi2, FLAGS, ntrig); 
 	done = true; // got our data successfully
