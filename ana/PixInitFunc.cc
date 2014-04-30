@@ -98,6 +98,7 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   if (0 == f) {
     f = new TF1("PIF_err", PIF_err, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 4);
     f->SetParNames("step", "slope", "floor", "plateau");                       
+    f->SetRange(lo, hi); 
   } else {
     f->ReleaseParameter(0);     
     f->ReleaseParameter(1);     

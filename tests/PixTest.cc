@@ -120,6 +120,10 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, (int)FLAGS)); 
 
   int range = dacmax - dacmin + 1; 
+  int daclo1 = dacmin; 
+  int dachi1 = dacmin + range/2; 
+  int daclo2 = dachi1 + 1; 
+  int dachi2 = dacmax; 
   int rawevts = 4160*range/2; 
   int trgevts = 1000000/rawevts; 
   if (trgevts < 1) trgevts = 1; 
@@ -159,11 +163,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   bool done = false;
   int cnt(0); 
-  LOG(logDEBUG) << "scanning part 1: " << dacmin << " .. " << dacmax/2; 
+  LOG(logDEBUG) << "scanning part 1: " << daclo1 << " .. " << dachi1; 
   while (!done){
     fApi->setDAC(dac, dacmin); 
     try{
-      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax/2, FLAGS, ntrig); 
+      results = fApi->getEfficiencyVsDAC(dac, daclo1, dachi1, FLAGS, ntrig); 
       //dbx      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
       done = true; // got our data successfully
     } catch(DataMissingEvent &e){
@@ -192,11 +196,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   if (1) {
     results.clear();
     done = false;
-    LOG(logDEBUG) << "scanning part 2: " << dacmax/2+1 << " .. " << dacmax; 
+    LOG(logDEBUG) << "scanning part 2: " << daclo2 << " .. " << dachi2; 
     while(!done){
       fApi->setDAC(dac, dacmax/2+1); 
       try{
-	results = fApi->getEfficiencyVsDAC(dac, dacmax/2+1, dacmax, FLAGS, ntrig); 
+	results = fApi->getEfficiencyVsDAC(dac, daclo2, dachi2, FLAGS, ntrig); 
 	done = true; // got our data successfully
       }
       catch(pxar::DataMissingEvent &e){
