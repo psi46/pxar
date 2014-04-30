@@ -176,6 +176,7 @@ void PixTestTrim::trimTest() {
   setTrimBits(15);  
   
   // -- determine minimal VthrComp 
+  map<int, int> rocVthrComp;
   banner("VthrComp thr map (minimal VthrComp)"); 
   vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", fParNtrig, 0, 200, 1); 
   vector<int> minVthrComp = getMinimumVthrComp(thr0, 10, 2.); 
@@ -183,12 +184,11 @@ void PixTestTrim::trimTest() {
   LOG(logDEBUG) << bla; 
   for (unsigned int i = 0; i < minVthrComp.size(); ++i) LOG(logDEBUG) << "  " << minVthrComp[i]; 
   
-  vector<int> VthrComp; 
   TH2D* h2(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-    VthrComp.push_back(static_cast<int>(minVthrComp[iroc])); 
     LOG(logDEBUG) << " ROC " << (int)rocIds[iroc] << " setting VthrComp = " << (int)(minVthrComp[iroc]);
     fApi->setDAC("VthrComp", static_cast<uint8_t>(minVthrComp[iroc]), rocIds[iroc]); 
+    rocVthrComp.insert(make_pair(rocIds[iroc], minVthrComp[iroc])); 
   }
 
   // -- determine pixel with largest VCAL threshold
@@ -363,6 +363,7 @@ void PixTestTrim::trimTest() {
   restoreDacs();
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     fApi->setDAC("vtrim", rocTrim[rocIds[iroc]], rocIds[iroc]);
+    fApi->setDAC("vthrcomp", rocVthrComp[rocIds[iroc]], rocIds[iroc]);
   }
 
   LOG(logINFO) << "PixTestTrim::trimTest() done ";
