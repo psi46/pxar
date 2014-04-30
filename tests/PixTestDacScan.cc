@@ -127,6 +127,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   TH1D *h1(0);
   vector<TH1D*> vhist;
@@ -158,11 +159,26 @@ void PixTestDacScan::doTest() {
     if (fPIX[i].first > -1)  {
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
       fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
-      if (0 == fParPHmap) {
-	rresults = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
-      } else {
-	rresults = fApi->getPulseheightVsDAC(fParDAC, fParLoDAC, fParHiDAC, 0, fParNtrig);
+
+      bool done = false;
+      while (!done) {
+	int cnt(0); 
+	try{
+	  if (0 == fParPHmap) {
+	    rresults = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, FLAGS, fParNtrig);
+	    done = true;
+	  } else {
+	    rresults = fApi->getPulseheightVsDAC(fParDAC, fParLoDAC, fParHiDAC, FLAGS, fParNtrig);
+	    done = true;
+	  }
+	} catch(DataMissingEvent &e){
+	  LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	  ++cnt;
+	  if (e.numberMissing > 10) done = true; 
+	}
+	done = (cnt>5) || done;
       }
+
       copy(rresults.begin(), rresults.end(), back_inserter(results)); 
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
       fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
