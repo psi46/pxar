@@ -18,7 +18,6 @@
 #include "PixTestPretest.hh"
 #include "PixTestPattern.hh"
 #include "PixTestDaq.hh"
-#include "PixTestGainCalibration.hh"
 #include "PixTestPh.hh"
 #include "PixTestThreshMap.hh"
 #include "PixTestBBMap.hh"
@@ -58,7 +57,6 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if( !name.compare("curvsdac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
   if (!name.compare("dacscan")) return new PixTestDacScan(a, "DacScan"); 
   if (!name.compare("dacdacscan")) return new PixTestDacDacScan(a, "DacDacScan"); 
-  if (!name.compare("gaincalibration")) return new PixTestGainCalibration(a, "GainCalibration"); 
   if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
   if (!name.compare("alive")) return new PixTestAlive(a, "PixelAlive"); // synonym
   if (!name.compare("pretest")) return new PixTestPretest(a, "Pretest"); 

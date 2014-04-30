@@ -17,7 +17,6 @@ PixTestSetup.cc
 PixTestPattern.cc
 PixTestPretest.cc
 PixTestFactory.cc
-PixTestGainCalibration.cc
 PixTestPh.cc
 PixTestThreshMap.cc
 PixTestBBMap.cc	
@@ -38,7 +37,6 @@ PixTestTrim.hh
 PixTestSetup.hh
 PixTestPattern.hh
 PixTestPretest.hh
-PixTestGainCalibration.hh
 PixTestFactory.hh
 PixTestPh.hh
 PixTestThreshMap.hh
