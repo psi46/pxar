@@ -374,6 +374,9 @@ void PixTestPretest::setVthrCompCalDel() {
     
     int ip = 0; 
 
+    fApi->_dut->testPixel(fPIX[ip].first, fPIX[ip].second, true, rocIds[iroc]);
+    fApi->_dut->maskPixel(fPIX[ip].first, fPIX[ip].second, false, rocIds[iroc]);
+
     h2 = bookTH2D(Form("%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
 		  Form("%s_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
 		  255, 0., 255., 255, 0., 255.); 
@@ -384,9 +387,6 @@ void PixTestPretest::setVthrCompCalDel() {
     
     bool done = false;
     while (!done) {
-      fApi->_dut->testPixel(fPIX[ip].first, fPIX[ip].second, true, rocIds[iroc]);
-      fApi->_dut->maskPixel(fPIX[ip].first, fPIX[ip].second, false, rocIds[iroc]);
-      
       rresults.clear(); 
       
       LOG(logDEBUG) << " looking at roc = " << static_cast<unsigned int>(rocIds[iroc]) 
@@ -606,10 +606,11 @@ void PixTestPretest::setVthrCompId() {
 // ----------------------------------------------------------------------
 void PixTestPretest::setCalDel() {
   uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
-  PixTest::update(); 
+
+  cacheDacs();
   fDirectory->cd();
- 
-  LOG(logINFO) << "PixTestPretest::setCalDel() start";
+  PixTest::update(); 
+  banner(Form("PixTestPretest::setCalDel()")); 
 
   fApi->_dut->testAllPixels(false);
 
@@ -622,9 +623,6 @@ void PixTestPretest::setCalDel() {
   }
 
   // set maximum pulse (minimal time walk):
-
-  uint8_t cal = fApi->_dut->getDAC( 0, "Vcal" );
-  uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
 
   fApi->setDAC("Vcal", 250);
   fApi->setDAC("CtrlReg", 4);
@@ -709,13 +707,14 @@ void PixTestPretest::setCalDel() {
   }
 
   // set CalDel:
+  restoreDacs();
   for (int roc = 0; roc < nRocs; ++roc) {
     if (i9[fId2Idx[roc]] > 0 ) {
 
       int i2 = i0[fId2Idx[roc]] + (i9[fId2Idx[roc]]-i0[fId2Idx[roc]])/4;
-      fApi->setDAC(DacName, i2, roc);
+      fApi->setDAC(DacName, i2, getIdFromIdx(roc));
       
-      LOG(logINFO) << "ROC " << setw(2) << roc
+      LOG(logINFO) << "ROC " << setw(2) << getIdFromIdx(roc)
 		   << ": eff plateau from " << setw(3) << i0[fId2Idx[roc]]
 		   << " to " << setw(3) << i9[fId2Idx[roc]]
 		   << ": set CalDel to " << i2;
@@ -723,9 +722,6 @@ void PixTestPretest::setCalDel() {
       hsum->Fill(roc, i2);
     }
   } // rocs
-
-  fApi->setDAC( "Vcal", cal ); // restore
-  fApi->setDAC( "CtrlReg", ctl ); // restore
 
   hsum->Draw();
   PixTest::update();
@@ -735,10 +731,10 @@ void PixTestPretest::setCalDel() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setPhRange() {
-  PixTest::update();
+  cacheDacs();
   fDirectory->cd();
-
-  LOG(logINFO) << "PixTestPretest::setPhRange() ntrig = " << fParNtrig;
+  PixTest::update(); 
+  banner(Form("PixTestPretest::setPhRange()")); 
 
   if( fPIX.size() < 1 ) {
     LOG(logWARNING) << "PixTestSetCalDel: no pixel defined, return";
@@ -752,11 +748,7 @@ void PixTestPretest::setPhRange() {
 
   uint16_t flags = 0;
 
-  uint8_t cal = fApi->_dut->getDAC( 0, "Vcal" );
-  uint8_t ctl = fApi->_dut->getDAC( 0, "CtrlReg" );
-
-  fApi->setDAC( "CtrlReg", 0 ); // all ROCs large Vcal
-  LOG(logINFO) << "CtrlReg 4 (large Vcal)";
+  fApi->setDAC("CtrlReg", 4); // all ROCs large Vcal
 
   // Minimize ADC gain for finding the midpoint
   // This avoids PH clipping
@@ -1441,10 +1433,6 @@ void PixTestPretest::setPhRange() {
 		 << setw(3) << (int) fApi->_dut->getDAC( roc, "VIref_ADC" );
 
   } // rocs
-
-  fApi->setDAC( "Vcal", cal ); // restore
-  fApi->setDAC( "CtrlReg", ctl ); // restore
-  LOG(logINFO) << "back to CtrlReg " << int(ctl);
 
   LOG(logINFO) << "PixTestSetPh::doTest() done for " << nRocs << " ROCs";
 }
