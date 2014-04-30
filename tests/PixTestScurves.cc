@@ -131,23 +131,6 @@ void PixTestScurves::doTest() {
 
 
 // ----------------------------------------------------------------------
-void PixTestScurves::scurves() {
-  cacheDacs();
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
-
-  int RFLAG(7); 
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG); 
-  TH1 *h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-  restoreDacs();
-  LOG(logINFO) << "PixTestScurves::scurves() done ";
-}
-
-
-
-// ----------------------------------------------------------------------
 void PixTestScurves::runCommand(string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
@@ -163,8 +146,48 @@ void PixTestScurves::runCommand(string command) {
     scurves(); 
     return;
   }
+  if (!command.compare("gainpedestal")) {
+    gainPedestal(); 
+    return;
+  }
   return;
 }
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::scurves() {
+  cacheDacs();
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
+  int RFLAG(7); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG, 1); 
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestScurves::scurves() done ";
+}
+
+
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::gainPedestal() {
+  cacheDacs();
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
+  int RFLAG(7); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "gain"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG, 2); 
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestScurves::gainPedestal() done ";
+}
+
+
 
 
 // ----------------------------------------------------------------------
