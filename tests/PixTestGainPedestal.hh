@@ -19,11 +19,13 @@ public:
   
   void measure();
   void fit(); 
+  void saveGainPedestalParameters(); 
 
 private:
 
-  std::string fParDac;
-  int         fParNtrig, fParNpointsLo, fParNpointsHi;
+  int         fParShowFits, fParNtrig, fParNpointsLo, fParNpointsHi;
+
+  std::map<std::string, TH1D*> fHists; 
 
   ClassDef(PixTestGainPedestal, 1)
 
