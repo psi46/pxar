@@ -21,7 +21,6 @@ public:
   void thrMap(); 
   void fitS(); 
   void scurves(); 
-  void gainPedestal(); 
 
 private:
 

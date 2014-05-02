@@ -146,10 +146,6 @@ void PixTestScurves::runCommand(string command) {
     scurves(); 
     return;
   }
-  if (!command.compare("gainpedestal")) {
-    gainPedestal(); 
-    return;
-  }
   return;
 }
 
@@ -168,26 +164,6 @@ void PixTestScurves::scurves() {
   restoreDacs();
   LOG(logINFO) << "PixTestScurves::scurves() done ";
 }
-
-
-
-
-// ----------------------------------------------------------------------
-void PixTestScurves::gainPedestal() {
-  cacheDacs();
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
-
-  int RFLAG(7); 
-  vector<TH1*> thr0 = scurveMaps(fParDac, "gain"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG, 2); 
-  TH1 *h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-  restoreDacs();
-  LOG(logINFO) << "PixTestScurves::gainPedestal() done ";
-}
-
-
 
 
 // ----------------------------------------------------------------------
