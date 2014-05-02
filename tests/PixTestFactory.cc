@@ -14,6 +14,7 @@
 #include "PixTestDacDacScan.hh"
 #include "PixTestTrim.hh"
 #include "PixTestScurves.hh"
+#include "PixTestGainPedestal.hh"
 #include "PixTestSetup.hh"
 #include "PixTestPretest.hh"
 #include "PixTestPattern.hh"
@@ -62,6 +63,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("pretest")) return new PixTestPretest(a, "Pretest"); 
   if (!name.compare("pattern")) return new PixTestPattern(a, "Pattern"); 
   if (!name.compare("scurves")) return new PixTestScurves(a, "Scurves"); 
+  if (!name.compare("gainpedestal")) return new PixTestGainPedestal(a, "GainPedestal"); 
   if (!name.compare("setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
