@@ -51,13 +51,22 @@ setPhRange        button
 SaveDacs          button
 
 -- Scurves
-Ntrig 2
+Ntrig 4
 DAC   VthrComp
 DacLo 0
 DacHi 200
-scurves button
-fits    button
-thrMap  button
+scurves      button
+fits         button
+thrMap       button
+
+-- GainPedestal
+showFits     checkbox
+Ntrig 10
+NpointsLo 10
+NpointsHi 5
+measure      button
+fit          button
+save         button
 
 -- Setup
 DeserMax 7
