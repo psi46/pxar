@@ -95,8 +95,13 @@ PixTestPh::~PixTestPh() {
 
 //------------------------------------------------------------------------------
 void PixTestPh::doTest() {
+
+  cacheDacs();
   fDirectory->cd();
   PixTest::update();
+
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -108,7 +113,7 @@ void PixTestPh::doTest() {
 	name = Form("PH_c%d_r%d_C%d", fPIX[i].first, fPIX[i].second, rocIds[iroc]); 
 	h1 = bookTH1D(name, name, 256, 0., 256.);
 	h1->SetMinimum(0);
-	setTitles(h1, "PH [ADC]", "Entries/bin"); 
+	setTitles(h1, Form("PH [ADC] for %s = %d", fParDAC.c_str(), fParDacVal), "Entries/bin"); 
 	hists.insert(make_pair(name, h1)); 
 	fHistList.push_back(h1);
       }
@@ -119,14 +124,13 @@ void PixTestPh::doTest() {
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
-  vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults, results;
   vector<pair<uint8_t, vector<pixel> > > rresult, result; 
   for (int ievt = 0; ievt < fParNtrig; ++ievt) {
     for (unsigned int i = 0; i < fPIX.size(); ++i) {
       if (fPIX[i].first > -1)  {
 	fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
 	fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
-	rresult = fApi->getPulseheightVsDAC(fParDAC, fParDacVal, fParDacVal, 0, 1);
+	rresult = fApi->getPulseheightVsDAC(fParDAC, fParDacVal, fParDacVal, FLAGS, 1);
 	copy(rresult.begin(), rresult.end(), back_inserter(result)); 
 	fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
 	fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
@@ -155,5 +159,6 @@ void PixTestPh::doTest() {
     PixTest::update();
   }
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  
+
+  restoreDacs(); 
 }
