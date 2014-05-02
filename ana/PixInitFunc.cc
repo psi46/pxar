@@ -26,6 +26,12 @@ namespace {
     return par[3]*(TMath::Erf((x[0]-par[0])/par[1])+par[2]); 
   } 
 
+  double PIF_weibullCdf(double *x, double *par) {
+    if (par[1] < 0) return 0.;
+    if (par[2] < 0) return 0.;
+    return par[0]*(1 - TMath::Exp(-TMath::Power(x[0]/par[1], par[2]))); 
+  } 
+
 
 }
 
@@ -54,6 +60,42 @@ void PixInitFunc::limitPar(int ipar, double lo, double hi) {
   fLimit[ipar] = true; 
   fLimitLo[ipar] = lo; 
   fLimitHi[ipar] = hi; 
+}
+
+
+// ----------------------------------------------------------------------
+TF1* PixInitFunc::weibullCdf(TH1 *h) {
+  fDoNotFit = false;
+
+  double hi = h->FindLastBinAbove(0.9*h->GetMaximum());
+  double lo = h->GetBinLowEdge(1); 
+  // require 3 consecutive bins at zero
+  for (int i = 3; i < h->GetNbinsX(); ++i) {
+    if (h->GetBinContent(i-2) < 1 && h->GetBinContent(i-1) < 1 && h->GetBinContent(i) < 1) {
+      lo = h->GetBinLowEdge(i-2);
+      break;
+    }
+  }
+
+  // -- setup function
+  TF1* f = (TF1*)gROOT->FindObject("PIF_weibullCdf");
+  if (0 == f) {
+    f = new TF1("PIF_weibullCdf", PIF_weibullCdf, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 3);
+    f->SetParNames("norm", "scale", "shape");                       
+    f->SetRange(lo, hi); 
+  } else {
+    f->ReleaseParameter(0);     
+    f->ReleaseParameter(1);     
+    f->ReleaseParameter(2);     
+    f->ReleaseParameter(3); 
+    f->SetRange(lo, hi); 
+  }
+  
+  f->SetParameter(0, h->GetMaximum()); 
+  f->SetParameter(1, h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum()))); 
+  f->SetParameter(2, 1.5); 
+  
+  return f; 
 }
 
 
