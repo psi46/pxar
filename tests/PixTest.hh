@@ -82,6 +82,8 @@ public:
   void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
   /// do the gain/pedestal analysis
   void gainPedestalAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  /// determine PH error interpolation
+  void getPhError(std::string dac, int dacmin, int dacmax, int flags, int ntrig, int FLAGS);
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
@@ -201,6 +203,7 @@ protected:
   double               fThreshold, fThresholdE, fSigma, fSigmaE;  ///< variables for passing back s-curve results
   double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
   int                  fNtrig; 
+  std::vector<double>  fPhErrP0, fPhErrP1; 
 
   std::string           fName, fTestTip, fSummaryTip; ///< information for this test
 

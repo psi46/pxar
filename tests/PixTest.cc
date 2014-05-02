@@ -12,6 +12,7 @@
 #include "PixTest.hh"
 #include "PixUtil.hh"
 #include "log.h"
+#include "helper.h"
 
 using namespace std;
 using namespace pxar;
@@ -1061,6 +1062,13 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
   bool done = false;
   int cnt(0); 
   vector<pair<uint8_t, vector<pixel> > > results;
+
+  if (2 == ihit) {
+    LOG(logDEBUG) << "determine PH error: " << daclo1 << " .. " << dachi1; 
+    getPhError(dac, daclo1, dachi1, FLAGS, fNtrig, FLAGS); 
+    //     cout << "pol1 " << fPhErrP0[0] << " .. " << fPhErrP1[0] << endl;
+  }
+
   LOG(logDEBUG) << "scanning part 1: " << daclo1 << " .. " << dachi1; 
   while (!done){
     try{
@@ -1088,7 +1096,12 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 	continue;
       }
       val =  results[idac].second[ipix].value;
-      maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
+      if (1 == ihit) {
+	maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
+      } else if (2 == ihit) {
+	maps[getIdxFromId(iroc)][ic*80+ir]->SetBinContent(dac, val);
+	maps[getIdxFromId(iroc)][ic*80+ir]->SetBinError(dac, (fPhErrP0[getIdxFromId(iroc)] + fPhErrP1[getIdxFromId(iroc)]*dac)*val);
+      }
     }
   }
 
@@ -1124,7 +1137,12 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       if (ic > 51 || ir > 79) {
 	continue;
       }
-      maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
+      if (1 == ihit) {
+	maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
+      } else if (2 == ihit) {
+	maps[getIdxFromId(iroc)][ic*80+ir]->SetBinContent(dac, val);
+	maps[getIdxFromId(iroc)][ic*80+ir]->SetBinError(dac, (fPhErrP0[getIdxFromId(iroc)] + fPhErrP1[getIdxFromId(iroc)]*dac)*val);
+      }
     }
   }
 }
@@ -1284,6 +1302,7 @@ void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > map
 	continue;
       }
       
+      /*
       bool ok = threshold(rmaps[i]); 
       if (!ok) {
 	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
@@ -1295,6 +1314,7 @@ void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > map
 
       h3->SetBinContent(ic+1, ir+1, fSigma); 
       h3->SetBinError(ic+1, ir+1, fSigmaE); 
+      */
 
       if (result & 0x4) {
 	//	cout << "add " << rmaps[i]->GetName() << endl;
@@ -1346,5 +1366,88 @@ void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > map
       }
     }
   }
+
+}
+
+// ----------------------------------------------------------------------
+void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int flags, int ntrig, int FLAGS) {
+
+  pair<int, int> PIX(make_pair(11, 20)); 
+  int range = dacmax - dacmin; 
+  int step  = range/4; 
+
+  // -- initialize to 5% constant error
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+
+  TH1D *h0(0), *h1(0); 
+  vector<TH1D*> maps; 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fPhErrP0.push_back(0.05);
+    fPhErrP1.push_back(0.0);
+    //    h0 = new TH1D(Form("phErr_C%d", rocIds[iroc]), Form("phErr_C%d", rocIds[iroc]), 256, 0., 256.); 
+    //    maps.push_back(h0); 
+  }
+
+  return; 
+  
+  h1 = new TH1D("phTmp", "phTmp", 256, 0., 256.); 
+  
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  
+  fApi->_dut->testPixel(PIX.first, PIX.second, true);
+  fApi->_dut->maskPixel(PIX.first, PIX.second, false);
+  vector<pair<uint8_t, vector<pixel> > >  rresult, result;
+
+  for (int idac = 1; idac < 4; ++idac) {
+    int dacval = dacmin + idac*step;
+    result.clear(); 
+    cout << "dacval = " << dacval << endl;
+    for (int ievt = 0; ievt < ntrig; ++ievt) {
+      rresult = fApi->getPulseheightVsDAC(dac, dacval, dacval, FLAGS, 1);
+      copy(rresult.begin(), rresult.end(), back_inserter(result)); 
+    }
+    
+
+    for (int iroc = 0; iroc < rocIds.size(); ++iroc) {
+      h1->SetTitle(Form("dacval = %d", dacval)); 
+      h1->Reset();
+      for (unsigned int i = 0; i < result.size(); ++i) {
+	vector<pixel> vpix = result[i].second;
+	for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
+	  int roc = vpix[ipx].roc_id;
+	  int ic = vpix[ipx].column;
+	  int ir = vpix[ipx].row;
+	  if (roc == rocIds[iroc]) h1->Fill(vpix[ipx].value);
+	}
+      } 
+      double mean = h1->GetMean(); 
+      double meanE = h1->GetMeanError(); 
+      if (meanE < 1.e-4) meanE = h1->GetBinWidth(1)/TMath::Sqrt(12); 
+      if (mean > 0 && mean < 255) {
+	maps[iroc]->SetBinContent(dacval, meanE); 
+	maps[iroc]->SetBinError(dacval, 0.05*meanE); 
+      }
+      cout << "ROC " << iroc << " mean = " << mean << " +/- " << meanE << endl;
+      h1->Draw(); 
+      PixTest::update(); 
+      pxar::mDelay(2000); 
+    }
+  }
+
+  for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
+    if (maps[iroc]->GetEntries() > 1) {
+      maps[iroc]->Fit("pol1");
+      PixTest::update(); 
+      pxar::mDelay(1000); 
+      fPhErrP0[iroc] = maps[iroc]->GetFunction("pol1")->GetParameter(0); 
+      fPhErrP1[iroc] = maps[iroc]->GetFunction("pol1")->GetParameter(1); 
+    } else {
+      fPhErrP0[iroc] = 0.05; 
+      fPhErrP1[iroc] = 0.; 
+    }
+  }
+  fHistList.push_back(h1);
+  copy(maps.begin(), maps.end(), back_inserter(fHistList));
 
 }
