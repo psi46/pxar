@@ -26,6 +26,11 @@ typedef char int8_t;
 
 #include "api.h"
 
+struct gainPedestalParameters {
+  double p0, p1, p2, p3; 
+};
+
+
 class DLLEXPORT ConfigParameters {
 public:
   ConfigParameters();
@@ -57,6 +62,7 @@ public:
   std::string getTbmParameterFileName()   {return fTbmParametersFileName;}
   std::string getTrimParameterFileName()  {return fTrimParametersFileName;}
   std::string getTestParameterFileName()  {return fTestParametersFileName;}
+  std::string getGainPedestalParameterFileName()  {return fGainPedestalParameterFileName;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}
@@ -104,6 +110,11 @@ public:
   void setSelectedRocs(std::vector<int> v) {fSelectedRocs = v;}
   void setSelectedTbms(std::vector<int> v) {fSelectedTbms = v;}
 
+  void readGainPedestalParameters(); 
+  void writeGainPedestalParameters(); 
+  void setGainPedestalParameters(std::vector<std::vector<gainPedestalParameters> >); 
+  std::vector<std::vector<gainPedestalParameters> > getGainPedestalParameters(); 
+
   double getIa() {return ia;}
   double getId() {return id;}
   double getVa() {return va;}
@@ -121,6 +132,8 @@ private:
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
   std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
   std::vector<int> fSelectedRocs, fSelectedTbms;
+
+  std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fCustomModule, fHalfModule;
@@ -141,6 +154,7 @@ private:
   std::string fLogFileName;
   std::string fMaskFileName;
   std::string fDebugFileName;
+  std::string fGainPedestalParameterFileName; 
 
   static ConfigParameters* fInstance;
 
