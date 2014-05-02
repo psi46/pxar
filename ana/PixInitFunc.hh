@@ -25,6 +25,7 @@ public:
   TF1* errScurve(TH1 *h); 
   TF1* weibullCdf(TH1 *h); 
   TF1* gpTanPol(TH1 *h); 
+  TF1* gpTanH(TH1 *h);
   
   void initPol1(double &p0, double &p1, TH1 *h);
   void initExpo(double &p0, double &p1, TH1 *h);

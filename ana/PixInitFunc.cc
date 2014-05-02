@@ -135,6 +135,35 @@ TF1* PixInitFunc::gpTanPol(TH1 *h) {
 
 
 // ----------------------------------------------------------------------
+TF1* PixInitFunc::gpTanH(TH1 *h) {
+
+  double lo = h->GetBinLowEdge(1); 
+  double hi = h->FindLastBinAbove(0.9*h->GetMaximum());
+  hi = h->GetBinLowEdge(h->GetNbinsX()+1); 
+  // -- setup function
+  TF1* f = (TF1*)gROOT->FindObject("PIF_gpTanH");
+  if (0 == f) {
+    f = new TF1("PIF_gpTanH", PIF_gpTanH, lo, hi, 4);
+    f->SetNpx(1000);
+    f->SetRange(lo, hi); 
+  } else {
+    f->ReleaseParameter(0);     
+    f->ReleaseParameter(1);     
+    f->ReleaseParameter(2);     
+    f->ReleaseParameter(3); 
+    f->SetRange(lo, hi); 
+  }
+
+  f->SetParameter(0,0.00382);
+  f->SetParameter(1,0.886);
+  f->SetParameter(2,112.7);
+  f->SetParameter(3,113.0);
+
+  return f;
+}
+
+
+// ----------------------------------------------------------------------
 TF1* PixInitFunc::weibullCdf(TH1 *h) {
   fDoNotFit = false;
 
