@@ -154,10 +154,10 @@ TF1* PixInitFunc::gpTanH(TH1 *h) {
     f->SetRange(lo, hi); 
   }
 
-  f->SetParameter(0,0.00382);
-  f->SetParameter(1,0.886);
-  f->SetParameter(2,112.7);
-  f->SetParameter(3,113.0);
+  f->SetParameter(0, 0.002);
+  f->SetParameter(1, 0.8);
+  f->SetParameter(2, 0.6*h->GetMaximum());
+  f->SetParameter(3, 0.3*h->GetMaximum());
 
   return f;
 }
