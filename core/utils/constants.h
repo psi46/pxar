@@ -116,19 +116,29 @@ namespace pxar {
 
 
 // --- Testboard digital signal probe -----------------------------------------
-#define PROBE_OFF     0
-#define PROBE_CLK     1
-#define PROBE_SDA     2
-#define PROBE_PGTOK   3
-#define PROBE_PGTRG   4
-#define PROBE_PGCAL   5
-#define PROBE_PGRESR  6
-#define PROBE_PGREST  7
-#define PROBE_PGSYNC  8
-#define PROBE_CTR     9
-#define PROBE_CLKP   10
-#define PROBE_CLKG   11
-#define PROBE_CRC    12
+#define PROBE_OFF 0
+#define PROBE_CLK 1
+#define PROBE_SDA 2
+#define PROBE_SDA_SEND 3
+#define PROBE_PG_TOK 4
+#define PROBE_PG_TRG 5
+#define PROBE_PG_CAL 6
+#define PROBE_PG_RES_ROC 7
+#define PROBE_PG_RES_TBM 8
+#define PROBE_PG_SYNC 9
+#define PROBE_CTR 10
+#define PROBE_TIN 11
+#define PROBE_TOUT 12
+#define PROBE_CLK_PRESEN 13
+#define PROBE_CLK_GOOD 14
+#define PROBE_DAQ0_WR 15
+#define PROBE_CRC 16
+#define PROBE_ADC_RUNNING 19
+#define PROBE_ADC_RUN 20
+#define PROBE_ADC_PGATE 21
+#define PROBE_ADC_START 22
+#define PROBE_ADC_SGATE 23
+#define PROBE_ADC_S 24
 
 
 // --- Testboard analog signal probe ------------------------------------------
