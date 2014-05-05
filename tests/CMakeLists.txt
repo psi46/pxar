@@ -6,6 +6,7 @@ INCLUDE_DIRECTORIES( . ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/ana)
 SET (TESTLIB_SOURCES
 PixTest.cc
 PixTestDaq.cc
+PixTestXray.cc
 PixTestCurrentVsDac.cc
 PixTestAlive.cc
 PixTestTbm.cc
@@ -28,6 +29,7 @@ PixTestFullTest.cc
 set(TESTLIB_HEADERS
 PixTest.hh
 PixTestDaq.hh
+PixTestXray.hh
 PixTestCurrentVsDac.hh
 PixTestAlive.hh
 PixTestTbm.hh

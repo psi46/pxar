@@ -19,6 +19,7 @@
 #include "PixTestPretest.hh"
 #include "PixTestPattern.hh"
 #include "PixTestDaq.hh"
+#include "PixTestXray.hh"
 #include "PixTestPh.hh"
 #include "PixTestThreshMap.hh"
 #include "PixTestBBMap.hh"
@@ -68,6 +69,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
+  if (!name.compare("xray")) return new PixTestXray(a, "Xray"); 
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
   if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
   if (!name.compare("threshmap")) return new PixTestThreshMap(a, "ThreshMap");
