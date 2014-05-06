@@ -19,7 +19,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fTestAllPixels(false), fMaskAllPixels(false), fPatternFromFile(false), fPixelsFromFile(true)
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fTestAllPixels(0), fMaskAllPixels(0), fPatternFromFile(0), fPixelsFromFile(1)
 {
 	init();
 	PixTest::init();
@@ -29,7 +29,7 @@ PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name)
 //------------------------------------------------------------------------------
 PixTestPattern::PixTestPattern() : PixTest()
 {
-	//LOG(logDEBUG) << "PixTestPattern ctor()";
+	LOG(logDEBUG) << "PixTestPattern ctor()";
 }
 
 //------------------------------------------------------------------------------
@@ -67,20 +67,20 @@ bool PixTestPattern::setParameter(string parName, string sval)
 			if (!parName.compare("PixelsFromFile")){
 				fPixelsFromFile = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fPixelsFromFile -> " << fPixelsFromFile;
+				if (!fPixelsFromFile)
+				{
+					//to set PIXs from testParameters.dat:
+					string PIXn;
+					char pix[5];
+					int I = i - 4;
+					sprintf(pix, "PIX%i", I);
+					if (I < 10) PIXn.assign(pix, 4); //FIXME to improve
+					 else       PIXn.assign(pix, 5);
+					if (!parName.compare(PIXn)) choosePIX(sval);
+				}
+
 			}
 
-			if (!fPixelsFromFile && !fTestAllPixels)
-			{
-				//to set PIXs from testParameters.dat:
-				string PIXn;
-				char pix[5];
-				int I = i - 4;
-				sprintf(pix, "PIX%i", I);
-				if (I < 10) PIXn.assign(pix, 4); //FIXME to improve
-				 else       PIXn.assign(pix, 5);
-				if (!parName.compare(PIXn)) choosePIX(sval);
-			}
-	
 			break;
 		}
 	}
@@ -172,12 +172,14 @@ bool PixTestPattern::setPattern(string fname) {
 
 	while (is.good())
 	{
+
 		getline(is, line);
 
 		// -- find Pattern section
 		if (string::npos != line.find("-- Pattern"))
 		{
 			patternFound = true;
+
 			continue;
 		}
 
@@ -185,8 +187,8 @@ bool PixTestPattern::setPattern(string fname) {
 
 		if (patternFound)
 		{
-			uint16_t val1(0);
-			uint8_t val2(0);
+			int val1(-1);
+			int val2(-1);
 
 			// -- remove tabs, adjacent spaces, leading and trailing spaces
 			PixUtil::replaceAll(line, "\t", " ");
@@ -201,9 +203,9 @@ bool PixTestPattern::setPattern(string fname) {
 				str1 = line.substr(0, s1);
 				str2 = line.substr(s1 + 1);
 				val1 = atoi(str1.c_str());
-				val2 = atoi(str2.c_str());
+				val2 = atoi(str2.c_str());		
 				pg_setup.push_back(make_pair(val1, val2));
-				LOG(logINFO) << "  pg set to -> " << val1 << " " << (int)val2; //DEBUG
+				LOG(logINFO) << "  pg set to -> " << val1 << " " << val2; //DEBUG
 			}
 
 			else
@@ -289,37 +291,24 @@ bool PixTestPattern::setPixels(string fname) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestPattern::PrintOnShell(vector<pxar::Event> & daqEvBuffer, pxar::rawEvent daqRawEv, pxar::Event daqEv) {
+void PixTestPattern::PrintEvents() {
 
-	size_t daqRawEvsize = daqRawEv.GetSize();
-	if (daqRawEvsize)
+	vector<pxar::Event> daqEvBuffer = fApi->daqGetEventBuffer();
+
+	size_t daqBuffsiz = daqEvBuffer.size();
+
+	if (daqBuffsiz)
 	{
 		cout << endl << "data from buffer" << endl;
-		for (unsigned int i = 0; i < daqEvBuffer.size(); i++)
+		for (unsigned int i = 0; i < daqBuffsiz; i++)
 		{
 			cout << i << " : " << daqEvBuffer[i] << endl;
 		}
 		cout << endl;
-
-		cout << "get raw events (last Trig) <header + row&col>" << endl;
-		for (unsigned int i = 0; i < daqRawEvsize; i++)
-		{
-			cout << i << " : " << daqRawEv.data[i] << endl;
-		}
-		cout << endl;
-
-		cout << "get events (last Trig)" << endl;
-		for (unsigned int i = 0; i < daqEv.pixels.size(); i++)
-		{
-			cout << i << " : " << daqEv.pixels[i] << endl;
-		}
-		cout << endl;
-
 	}
 
-	cout << "Number of events read from buffer (nTrig-2): " << daqEvBuffer.size() << endl;
-	cout << "Number of 'raw words' read: " << daqRawEvsize << endl;
-	cout << "Number of events read: " << daqEv.pixels.size() << endl;
+	cout << "Number of events read from buffer: " << daqEvBuffer.size() << endl << endl;
+
 }
 
 //------------------------------------------------------------------------------
@@ -327,7 +316,10 @@ void PixTestPattern::doTest()
 {
 	fDirectory->cd();
 	fHistList.clear();
+	pg_setup.clear();  
 	PixTest::update();
+	fApi->SignalProbe("D1","pgsync"); //to send PG_Sync signal through D1 probe
+	fApi->SignalProbe("D2", "pgsync"); 
 
 	LOG(logINFO) << "PixTestPattern::doTest() ntrig = " << fParNtrig;
 
@@ -340,10 +332,8 @@ void PixTestPattern::doTest()
 	fname = f_Directory + "/testPatterns.dat";
 			
 	//select the pattern:
-	vector<pair<uint16_t, uint8_t> > pg_setup;
 	if (fPatternFromFile) 
 	{
-		pg_setup.clear();
 		LOG(logINFO) << "Pattern from file: " << fname;  //DEBUG
 		if(!setPattern(fname)) return;  //READ FROM FILE	
 	}
@@ -355,29 +345,29 @@ void PixTestPattern::doTest()
 		pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  
 	}
 		
-/*	// DEBUG - print pattern
-	LOG(logINFO) << "  pattern selected: " <<endl;
-	for (vector<pair<uint16_t, uint8_t> >::const_iterator pos = pg_setup.begin(); pos != pg_setup.end(); ++pos)
-		cout << pos->first << " " << (int)pos->second << endl;
-	// --------------------------
-*/
-		
 	if (!fTestAllPixels)
 	{
 		//select the pixels:
 		if (fPixelsFromFile)
 		{
-			fPIX.clear();
-			LOG(logINFO) << "Pixels from file: " << fname;  //DEBUG
+			LOG(logINFO) << "Set Pixels from file: " << fname;  //DEBUG
 			if (!setPixels(fname)) return;  //READ FROM FILE	
 		}
 
 		// to unmask selected pixels:
 		fApi->_dut->testAllPixels(false);
+
 		fApi->_dut->maskAllPixels(true);
 		for (unsigned int i = 0; i < fPIX.size(); ++i) {
-			if (fPIX[i].first > -1)  {
-				fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+			if (fPIX[i].first > -1)  
+			{
+           			fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+				if (fMaskAllPixels) fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
+				else fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+			}
+			else
+			{
+
 				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
 			}
 		}
@@ -398,20 +388,15 @@ void PixTestPattern::doTest()
 	fApi->daqStart(pg_setup);
 	// Send the triggers (it does Ntrig times the pg_Sinlgle() == Ntrig times pattern sequence):
 	fApi->daqTrigger(fParNtrig);
-
-	// Read the events:
-	rawEvent daqRawEv = fApi->daqGetRawEvent();  //before other 'get'
-	Event daqEv = fApi->daqGetEvent();
-	vector<pxar::Event> daqEvBuffer = fApi->daqGetEventBuffer();
-
-	// Print results on shell:
-	PrintOnShell(daqEvBuffer, daqRawEv, daqEv);
+		
+	// Get events and Print results on shell:
+	PrintEvents();
 
 	fApi->daqStop();
 
 	fPIX.clear();
 	pg_setup.clear();
 
-	LOG(logINFO) << endl << "PixTestPattern::doTest() done for ";
+	LOG(logINFO) << "PixTestPattern::doTest() done for ";
 
 }
