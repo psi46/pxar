@@ -257,7 +257,7 @@ void riseLengthMap(string rootfile = "phOpt.root") {
   set_plot_style();
   gPad->SetTickx();
   gPad->SetTicky();
-  hmap->Draw("colz")  ;
+  hmap->Draw("colz");
     
 }
 
