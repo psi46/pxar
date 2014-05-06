@@ -113,7 +113,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 // result & 0x1 == 1 -> return thr+sig+thn maps 
 // result & 0x2 == 2 -> return thr+sig+thn+dist (projections) of maps
 // result & 0x4 == 4 -> write to file: all pixel histograms with outlier threshold/sigma
-vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result, int ihit) {
+vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result, int ihit, int flag) {
 
   string type("hits"); 
   if (2 == ihit) type = string("pulseheight"); 
@@ -142,7 +142,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     maps.push_back(rmaps); 
   }
   
-  dacScan(dac, ntrig, dacmin, dacmax, maps, ihit); 
+  dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
   if (1 == ihit) {
     scurveAna(dac, name, maps, resultMaps, result); 
   } else if (2 == ihit) {
@@ -1035,8 +1035,8 @@ void PixTest::banner(string what, TLogLevel log) {
 
 
 // ----------------------------------------------------------------------
-void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit) {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag) {
+  uint16_t FLAGS = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
 
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
