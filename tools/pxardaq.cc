@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
   uint32_t triggers = 0;
   bool testpulses = false;
   bool spills = false;
+  bool oos = false;
 
   uint8_t hubid = 31;
 
@@ -61,24 +62,36 @@ int main(int argc, char* argv[]) {
       std::cout << "-f filename    file to store DAQ data in" << std::endl;
       std::cout << "-n triggers    number of triggers to be sent" << std::endl;
       std::cout << "-v verbosity   verbosity level, default INFO" << std::endl;
+      std::cout << "-sp            lock on accelerator spills" << std::endl;
+      std::cout << "-tp            activate test pulses" << std::endl;
+      std::cout << "-oos           test OutOfSync problem w/ 100 triggers & 1 token" << std::endl;
       return 0;
     }
     else if (!strcmp(argv[i],"-f")) {
       filename = std::string(argv[++i]);
       std::cout << "Writing to file " << filename << std::endl;
+      continue;
     }
     else if (!strcmp(argv[i],"-n")) {
       triggers = atoi(argv[++i]);
       std::cout << "Sending " << triggers << " triggers" << std::endl;
+      continue;
     }
     else if (!strcmp(argv[i],"-v")) {
       verbosity = std::string(argv[++i]);
+      continue;
     }               
     else if (!strcmp(argv[i],"-tp")) {
       testpulses = true;
+      continue;
     }
     else if (!strcmp(argv[i],"-sp")) {
       spills = true;
+      continue;
+    }
+    else if (!strcmp(argv[i],"-oos")) {
+      oos = true;
+      continue;
     }
     else {
       std::cout << "Unrecognized command line option " << argv[i] << std::endl;
@@ -105,7 +118,23 @@ int main(int argc, char* argv[]) {
 
   // Pattern Generator:
   int pattern_delay = 0;
-  if(testpulses) {
+  if(oos) {
+    std::cout << "Pattern generator preparation for OOS tests." << std::endl;
+    // No ROC reset
+    // 99x no CAL, only TRG and TOK for Xray background
+    for(int i = 0; i < 99; i++) {
+      pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
+      pg_setup.push_back(std::make_pair(0x0100,1000));     // PG_TOK    
+    }
+    // One additional cycle w/ CAL TRG TOK
+    pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
+    pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
+    pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+    // And done.
+    pattern_delay = 1000000;
+  }
+  else if(testpulses) {
+    std::cout << "Pattern generator preparation for testpulse patterns." << std::endl;
      pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
      pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
      pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
@@ -113,6 +142,7 @@ int main(int argc, char* argv[]) {
      pattern_delay = 1000;
   }
   else {
+    std::cout << "Pattern generator preparation for normal random trigger." << std::endl;
      pg_setup.push_back(std::make_pair(0x0200,46));    // PG_TRG
      pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
      pattern_delay = 100;
@@ -197,7 +227,7 @@ int main(int argc, char* argv[]) {
     _api->_dut->maskAllPixels(false);
 
     // Set some pixels up for getting calibrate signals:
-    if(testpulses) {
+    if(testpulses || oos) {
        std::cout << "Setting up pixels for calibrate pulses..." << std::endl;
       for(int i = 0; i < 3; i++) {
          _api->_dut->testPixel(i,5,true);
@@ -247,6 +277,7 @@ int main(int argc, char* argv[]) {
 
       // Send the triggers:
       if(triggers != 0) {
+	std::cout << "Start sending " << triggers << " triggers..." << std::endl;
 	_api->daqTrigger(triggers);
 	daq_loop = false;
       }
