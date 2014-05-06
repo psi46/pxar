@@ -563,7 +563,9 @@ void hal::AllColumnsSetEnable(uint8_t roci2c, bool enable) {
 
   // Attach/detach all columns:
   LOG(logDEBUGAPI) << (enable ? "Attaching" : "Detaching")
-		   << " all columns from readout for ROC@I2C " << static_cast<int>(roci2c);
+		   << " all columns "
+		   << (enable ? "to" : "from")
+		   << " periphery for ROC@I2C " << static_cast<int>(roci2c);
 
   for(size_t column = 0; column < ROC_NUMCOLS; column++ ) {
     _testboard->roc_Col_Enable(static_cast<uint8_t>(column),enable);
