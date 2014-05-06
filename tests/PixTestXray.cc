@@ -12,7 +12,7 @@ using namespace pxar;
 ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
-PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1000), fParStretch(1), fParCount(1), fParIter(2) {
+PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1000), fParStretch(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestXray ctor(PixSetup &a, string, TGTab *)";
@@ -38,14 +38,8 @@ bool PixTestXray::setParameter(string parName, string sval) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("Iterations")) {
-	fParIter = atoi(sval.c_str()); 
-	setToolTips();
-      }
       if (!parName.compare("ClockStretch"))
  	fParStretch = atoi(sval.c_str());	
-      if (!parName.compare("CountHits"))
-	fParCount = !(atoi(sval.c_str())==0);
       break;
     }
   }
@@ -92,12 +86,12 @@ PixTestXray::~PixTestXray() {
 void PixTestXray::doTest() {
   
   LOG(logINFO) << "PixTestXray::doTest() start with fParNtrig = " << fParNtrig;
-  
+
+  cacheDacs(); 
   PixTest::update(); 
   fDirectory->cd();
-  vector<TH2D*> hits;
   
-  // -- Set the ClockStretch
+  // -- Set the ClockStretch ?????????????????????
   // fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
   
   
@@ -105,72 +99,87 @@ void PixTestXray::doTest() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
   
-  string name("Hits");
+  string name("xray-hits");
+  TH1D *h1(0);
+  vector<TH1D*> hits;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  TH2D *h2(0);
-  
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
-    h2->SetMinimum(0.);
-    h2->SetDirectory(fDirectory);
-    setTitles(h2, "col", "row");
-    hits.push_back(h2);
+    h1 = bookTH1D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 256, 0., 256.);
+    h1->SetMinimum(0.);
+    h1->SetDirectory(fDirectory);
+    setTitles(h1, "VthrComp", "Hits");
+    hits.push_back(h1);
   }
   
-  for (int iter = 0; iter < fParIter; ++iter) {
-    
-    // Start the DAQ:
+
+  // -- set 
+  fApi->setDAC("vthrcomp", 60); // ???????????
+
+  // -- check for noisy pixels
+//   fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+//   fApi->daqTrigger(100);
+//   fApi->daqStop();
+//   vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+//   LOG(logDEBUG) << "Number of events read from board: " << daqdat.size();
+  map<string, int> hitMap; 
+  string pname; 
+  for (int ithr = 0; ithr < 150; ++ithr) {
+    fApi->setDAC("vthrcomp", ithr); 
     fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+    fApi->daqTrigger(100);
+    fApi->daqStop();
+    vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+    LOG(logDEBUG) << "VthrComp = " << ithr << " with daqdat.size() = " << daqdat.size(); 
+    for (vector<Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+      if ((*it).pixels.size() > 0) LOG(logDEBUG) << (*it);
+      //     for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++) {   
+      //       pname = Form("c%d_r%d_C%d", pixit->column, pixit->row, pixit->roc_id); 
+      //       hitMap[pname]++;
+      //     }
+    }
+  }
+
+  LOG(logDEBUG) << "Pixels readout: " << hitMap.size(); 
+  for (map<string, int>::iterator it = hitMap.begin(); it != hitMap.end(); ++it) {
+    cout << it->first << ": nhits = " << it->second << endl;
+  }
+  return;
+
+  // -- mask the noisy pixels
+  // FIXME
+
+  // -- scan VthrComp
+  map<int, bool> rocDone;
+  for (int ithr = 0; ithr < 150; ++ithr) {
     
-    // Send the triggers:
+    LOG(logDEBUG) << "VthrComp = " << ithr; 
+    fApi->setDAC("vthrcomp", ithr); 
+    fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
     fApi->daqTrigger(fParNtrig);
-    
-    // Stop the DAQ:
     fApi->daqStop();
     
-    
-    
-    // And read out the full buffer:
-    // Either fetching undecoded raw data events or decoded events, check API documentation!
     vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
     
-    cout << "Number of events read from board: " << daqdat.size() << endl;
-    
-    for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+    cout << "  number of events read from board: " << daqdat.size() << endl;
+    for (vector<Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       LOG(logDEBUG) << (*it) << std::endl;
       
-      for(std::vector<pxar::pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++) {   
-	if(fParCount)
-	  hits[getIdxFromId(pixit->roc_id)]->Fill(pixit->column, pixit->row);
-	else
-	  hits[getIdxFromId(pixit->roc_id)]->SetBinContent(pixit->column, pixit->row, pixit->value);
+      for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++) {   
+	hits[getIdxFromId(pixit->roc_id)]->Fill(ithr);
       }
     }
-    
+  
+
+
+  
   }
-  fApi->setClockStretch(0, 0, 0); // No Stretch after trigger, 0 delay
-  
-  
-  LOG(logDEBUG) << "Filled histograms..." ;
-  // We should store the data, probably...
   
 
-  for (unsigned int i = 0; i < hits.size(); ++i) {
-    fHistOptions.insert(make_pair(hits[i], "colz"));
-  }
-  LOG(logDEBUG) << "Filled draw options ";
-  copy(hits.begin(), hits.end(), back_inserter(fHistList));
-
-
-  LOG(logDEBUG) << "Copy ";
-  TH2D *h = (TH2D*)(*fHistList.begin());
   
-  LOG(logDEBUG) << "begin ";
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+
 
   PixTest::update();
- 
+  restoreDacs(); 
 
   LOG(logINFO) << "PixTestXray::doTest() done";
 }

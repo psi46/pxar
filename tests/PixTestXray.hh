@@ -3,6 +3,7 @@
 
 #include "PixTest.hh"
 
+
 class DLLEXPORT PixTestXray: public PixTest {
 public:
   PixTestXray(PixSetup *, std::string);
@@ -20,7 +21,6 @@ private:
   int     fParNtrig; 
   int     fParStretch; 
   bool    fParCount;
-  int 	  fParIter;
 
   ClassDef(PixTestXray, 1)
 
