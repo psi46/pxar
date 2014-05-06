@@ -1764,6 +1764,13 @@ bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
   
   uint32_t delay_sum = 0;
 
+  if(pg_setup.size() > 256) {
+    LOG(logCRITICAL) << "Pattern too long (" << pg_setup.size() << " entries) for pattern generator. "
+		     << "Only 256 entries allowed!";
+    return false;
+  }
+  else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
+
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     if((*it).second == 0 && it != pg_setup.end() -1 ) {
       LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
