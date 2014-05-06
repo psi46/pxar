@@ -300,11 +300,10 @@ bool api::programDUT() {
   // Start programming the devices here!
   _hal->setHubId(_dut->hubId); 
 
-  // FIXME Device types not transmitted yet!
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).dacs);
+    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -1764,6 +1763,13 @@ void api::SetCalibrateBits(bool enable) {
 bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
   
   uint32_t delay_sum = 0;
+
+  if(pg_setup.size() > 256) {
+    LOG(logCRITICAL) << "Pattern too long (" << pg_setup.size() << " entries) for pattern generator. "
+		     << "Only 256 entries allowed!";
+    return false;
+  }
+  else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
 
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     if((*it).second == 0 && it != pg_setup.end() -1 ) {

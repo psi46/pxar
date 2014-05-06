@@ -860,7 +860,7 @@ void ConfigParameters::writeGainPedestalParameters() {
     ofstream OutputFile;
     OutputFile.open((fname.str()).c_str());
     if (!OutputFile.is_open()) {
-      LOG(logERROR) << "Could not open " << fname; 
+      LOG(logERROR) << "Could not open " << fname.str(); 
       return;
     } 
     

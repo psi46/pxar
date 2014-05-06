@@ -46,7 +46,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBMCore(std::map< uint8_t,uint8_t > regVector);
+    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector);
 
     /** Initialize attached ROCs with their settings and configuration
      *  This is the startup-routine for single ROCs. It first powers up the
@@ -234,7 +234,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    void daqStart(uint8_t deser160phase, uint8_t nTBMs, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -325,7 +325,7 @@ namespace pxar {
     bool _compatible;
 
     // FIXME can't we find a smarter solution to this?!
-    uint8_t nTBMs;
+    uint8_t tbmtype;
     uint8_t deser160phase;
     uint8_t rocType;
     uint8_t hubId;

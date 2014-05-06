@@ -20,7 +20,7 @@ public:
 	void choosePIX(std::string);
 	bool setPattern(std::string);
 	bool setPixels(std::string);
-	void PrintOnShell(std::vector<pxar::Event> &, pxar::rawEvent, pxar::Event);
+	void PrintEvents();
 	void doTest();
 
 private:
