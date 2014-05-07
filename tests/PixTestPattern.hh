@@ -19,7 +19,7 @@ public:
 	void runCommand(std::string );	
 	void choosePIX(std::string);
 	bool setPattern(std::string);
-	bool setPixels(std::string);
+	bool setPixels(std::string, std::string);
 	void PrintEvents();
 	void doTest();
 
@@ -33,6 +33,7 @@ private:
 	std::string str1, str2;
 	std::string::size_type s0, s1;
 	std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
+	std::vector<std::pair<int, int> > fPIXm;
 
 	ClassDef(PixTestPattern, 1)
 
