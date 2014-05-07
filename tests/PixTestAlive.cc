@@ -242,54 +242,42 @@ void PixTestAlive::addressDecodingTest() {
 
   vector<pixel> results;
 
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  vector<Event> daqBuffer;
+  int idx(-1); 
+  for (int iy = 0; iy < 80; ++iy) {
+    LOG(logDEBUG) << " row " << iy; 
+    for (int ix = 0; ix < 52; ++ix) {
+      fApi->_dut->testPixel(ix, iy, true);
+      fApi->_dut->maskPixel(ix, iy, false);
+      fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+      fApi->daqTrigger(1);
 
-  int cnt(0); 
-  bool done = false;
-  results.clear();
-  while (!done){
-    try {
-      LOG(logDEBUG) << "getEfficiencyMap() "; 
-      results = fApi->getEfficiencyMap(FLAGS, 1);
-      done = true;
-    }
-    catch(pxar::DataMissingEvent &e){
-      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    }
-    done = (cnt>5) || done;
-  }
-  
-  int idx(-1), oldIdx(-2); 
-  int iRocEvt(0);
-  pixel pix; 
-for (std::vector<pxar::pixel>::iterator ipx = results.begin(); ipx != results.end(); ++ipx) {
-
-      idx = getIdxFromId(ipx->roc_id);
-      // -- a new ROC is appearing in the readout, reset iRocEvt
-      if (idx != oldIdx) {
-	oldIdx = idx;
-	iRocEvt = 0; 
-      }
-      
-      if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
-	h2 = maps[idx];
-	int row = ipx->row; 
-	int col = ipx->column; 
-	if (iRocEvt/80 == col && iRocEvt%80 == row) {
-	  h2->SetBinContent(col+1, row+1, 1.); 
-	} else {
-	  h2->SetBinContent(col+1, row+1, -1.); 
-	  LOG(logDEBUG) << pix << " col/row = " << col << "/" << row 
-			<< " r/o position = " << iRocEvt/80 << "/" << iRocEvt%80
-			<< " address decoding error";
+      daqBuffer = fApi->daqGetEventBuffer();
+      for (unsigned int i = 0; i < daqBuffer.size(); i++) {
+	for (unsigned int ipix = 0; ipix < daqBuffer[i].pixels.size(); ++ipix) {
+	  idx = getIdxFromId(daqBuffer[i].pixels[ipix].roc_id);
+	  h2 = maps[idx];
+	  int row = daqBuffer[i].pixels[ipix].row; 
+	  int col = daqBuffer[i].pixels[ipix].column; 
+	  if (ix == col && iy == row) {
+	    h2->SetBinContent(col+1, row+1, 1.); 
+	  } else {
+	    h2->SetBinContent(col+1, row+1, -1.); 
+	    LOG(logDEBUG) << " read col/row = " << col << "/" << row 
+			  << " programmed col/row = " << ix << "/" << iy
+			  << " address decoding error";
+	  }
 	}
       }
-      
-    ++iRocEvt;
-  }
+
+      fApi->daqStop();
+      fApi->_dut->testPixel(ix, iy, false);
+      fApi->_dut->maskPixel(ix, iy, true);
+    }
+    
+  }  
 
   copy(maps.begin(), maps.end(), back_inserter(fHistList));
   
