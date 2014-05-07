@@ -86,3 +86,14 @@ VcalLo      25
 VcalHi      75 
 VthrCompLo  0 
 VthrCompHi  50 
+
+-- Pattern
+ntrig         10
+testallpixels 0
+maskallpixels 0
+patternfromfile 1
+pixelsfromfile  0
+pix1            11,20
+pix2            25,23
+pix3            43,68
+resettodefault  button
