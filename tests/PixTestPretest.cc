@@ -367,9 +367,9 @@ void PixTestPretest::setVthrCompCalDel() {
 
   TH2D *h2(0); 
 
-  vector<int> calDel(rocIds.size(), -1.); 
-  vector<int> vthrComp(rocIds.size(), -1.); 
-  vector<int> calDelE(rocIds.size(), -1.);
+  vector<int> calDel(rocIds.size(), -1); 
+  vector<int> vthrComp(rocIds.size(), -1); 
+  vector<int> calDelE(rocIds.size(), -1);
   
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     
