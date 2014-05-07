@@ -155,7 +155,7 @@ void PixTestXray::doTest() {
       }
     }
     pCount = pixCount + badCount;
-    LOG(logDEBUG) << Form("VthrComp = %3d with daqdat.size() = %d #pixels = %d (good: %d bad: %d)", 
+    LOG(logDEBUG) << Form("VthrComp = %3d with daqdat.size() = %6ld #pixels = %d (good: %d bad: %d)", 
 			  ithr, daqdat.size(), pCount, pixCount, badCount); 
     for (map<string, int>::iterator it = hitMap.begin(); it != hitMap.end(); ++it) {
       cout << "hitmap name = " << (*it).first << " entries: " << (*it).second  << endl;

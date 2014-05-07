@@ -165,7 +165,7 @@ void PixTestDaq::doTest() {
       }
     }
     
-    cout << Form("Run %4d", iter) << Form(" # events read: %4d, pixels seen in all events: %3d, hist entries: %4d", 
+    cout << Form("Run %4d", iter) << Form(" # events read: %6ld, pixels seen in all events: %3d, hist entries: %4d", 
 					  daqdat.size(), pixCnt, 
 					  static_cast<int>(hits[0]->GetEntries())) 
 	 << endl;

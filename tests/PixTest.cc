@@ -1378,7 +1378,7 @@ void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int
   // -- initialize to 5% constant error
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
-  TH1D *h0(0), *h1(0); 
+  TH1D *h1(0); 
   vector<TH1D*> maps; 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     fPhErrP0.push_back(0.05);

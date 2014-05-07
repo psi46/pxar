@@ -27,7 +27,7 @@ PixTestFullTest::PixTestFullTest() : PixTest() {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestFullTest::setParameter(string parName, string sval) {
+bool PixTestFullTest::setParameter(string parName, string /*sval*/) {
   bool found(false);
   string stripParName; 
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
