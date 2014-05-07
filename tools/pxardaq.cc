@@ -238,7 +238,7 @@ int main(int argc, char* argv[]) {
     // Set some pixels up for getting calibrate signals:
     if(testpulses || oos) {
        std::cout << "Setting up pixels for calibrate pulses..." << std::endl;
-      for(int i = 0; i < 3; i++) {
+      for(int i = 0; i < 1; i++) {
          _api->_dut->testPixel(i,5,true);
          _api->_dut->testPixel(i,6,true);
       }
