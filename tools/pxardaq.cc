@@ -102,6 +102,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
   std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+  std::vector<std::pair<uint16_t,uint8_t> > pg_setup2;
 
   // DTB delays
   sig_delays.push_back(std::make_pair("clk",2));
@@ -130,6 +131,13 @@ int main(int argc, char* argv[]) {
     pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
     pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
     pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+
+    // Second PG for the first reset and one trigger:
+    pg_setup2.push_back(std::make_pair(0x0800,25));    // PG_RESR
+    pg_setup2.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
+    pg_setup2.push_back(std::make_pair(0x0200,16));    // PG_TRG
+    pg_setup2.push_back(std::make_pair(0x0100,0));     // PG_TOK
+    
     // And done.
     pattern_delay = 1000000;
   }
@@ -255,6 +263,14 @@ int main(int argc, char* argv[]) {
 	wait(1);
       }
       std::cout << std::endl << "Starting DAQ at spill " << getspill() << std::endl;
+    }
+
+    // Sent one PG cycle with a reset:
+    if(oos) {
+      _api->daqStart(pg_setup2);
+      _api->daqTrigger(1);
+      _api->daqStop();
+      std::vector<uint16_t> garbage = _api->daqGetBuffer();
     }
 
     //Start the main DAQ loop:
