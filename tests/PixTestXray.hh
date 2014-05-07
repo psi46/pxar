@@ -18,9 +18,9 @@ public:
 
 private:
 
-  int     fParNtrig; 
+  int     fParNtrig, fParIter; 
   int     fParStretch; 
-  bool    fParCount;
+  int     fParVthrCompMin, fParVthrCompMax; 
 
   ClassDef(PixTestXray, 1)
 

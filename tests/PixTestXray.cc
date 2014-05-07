@@ -5,6 +5,7 @@
 #include "log.h"
 
 #include <TH2.h>
+#include <TMath.h>
 
 using namespace std;
 using namespace pxar;
@@ -12,7 +13,7 @@ using namespace pxar;
 ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
-PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1000), fParStretch(0) {
+PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1000), fParIter(10), fParStretch(0), fParVthrCompMin(0), fParVthrCompMax(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestXray ctor(PixSetup &a, string, TGTab *)";
@@ -33,6 +34,18 @@ bool PixTestXray::setParameter(string parName, string sval) {
       found = true; 
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("vthrcompmin")) {
+	fParVthrCompMin = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("vthrcompmax")) {
+	fParVthrCompMax = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("iterations")) {
+	fParIter = atoi(sval.c_str()); 
 	setToolTips();
       }
       if (!parName.compare("clockstretch"))
@@ -106,75 +119,89 @@ void PixTestXray::doTest() {
     setTitles(h1, "VthrComp", "Hits");
     hits.push_back(h1);
   }
+  copy(hits.begin(), hits.end(), back_inserter(fHistList));
   
 
   // -- set 
   fApi->setDAC("vthrcomp", 60); // ???????????
 
   // -- check for noisy pixels
-  //   fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-  //   fApi->daqTrigger(100);
-  //   fApi->daqStop();
-  //   vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
-  //   LOG(logDEBUG) << "Number of events read from board: " << daqdat.size();
-  map<string, int> hitMap; 
-  string pname; 
-  for (int ithr = 0; ithr < 150; ++ithr) {
-    fApi->setDAC("vthrcomp", ithr); 
-    fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-    fApi->daqTrigger(100);
-    vector<Event> daqdat = fApi->daqGetEventBuffer();
-    LOG(logDEBUG) << "VthrComp = " << ithr << " with daqdat.size() = " << daqdat.size(); 
-    for (vector<Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-      if ((*it).pixels.size() > 0) LOG(logDEBUG) << (*it);
-      //     for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++) {   
-      //       pname = Form("c%d_r%d_C%d", pixit->column, pixit->row, pixit->roc_id); 
-      //       hitMap[pname]++;
-      //     }
-    }
-    fApi->daqStop();
-  }
-
-  LOG(logDEBUG) << "Pixels readout: " << hitMap.size(); 
-  for (map<string, int>::iterator it = hitMap.begin(); it != hitMap.end(); ++it) {
-    cout << it->first << ": nhits = " << it->second << endl;
-  }
-  return;
-
-  // -- mask the noisy pixels
-  // FIXME
+  // FIXME DO SOMETHING
 
   // -- scan VthrComp
-  map<int, bool> rocDone;
-  for (int ithr = 0; ithr < 150; ++ithr) {
-    
-    LOG(logDEBUG) << "VthrComp = " << ithr; 
+  map<string, int> hitMap; 
+  string pname; 
+  vector<Event> daqdat, idat;
+  for (int ithr = fParVthrCompMin; ithr < fParVthrCompMax; ++ithr) {
+    int badCount(0), pixCount(0), pCount(0); 
+    hitMap.clear();
+    daqdat.clear();
     fApi->setDAC("vthrcomp", ithr); 
-    fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-    fApi->daqTrigger(fParNtrig);
-    fApi->daqStop();
-    
-    vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
-    
-    cout << "  number of events read from board: " << daqdat.size() << endl;
+    for (int iter = 0; iter < fParIter; ++iter) {
+      idat.clear();
+      fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+      fApi->daqTrigger(fParNtrig);
+      idat = fApi->daqGetEventBuffer();
+      badCount += fApi->daqGetNDecoderErrors(); 
+      fApi->daqStop();
+      copy(idat.begin(), idat.end(), back_inserter(daqdat));
+    }
+
     for (vector<Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-      LOG(logDEBUG) << (*it) << std::endl;
-      
       for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++) {   
-	hits[getIdxFromId(pixit->roc_id)]->Fill(ithr);
+	pname = Form("C%d", pixit->roc_id); 
+	hitMap[pname]++;
+	++pixCount;
       }
     }
-  
-
-
-  
+    pCount = pixCount + badCount;
+    LOG(logDEBUG) << Form("VthrComp = %3d with daqdat.size() = %d #pixels = %d (good: %d bad: %d)", 
+			  ithr, daqdat.size(), pCount, pixCount, badCount); 
+    for (map<string, int>::iterator it = hitMap.begin(); it != hitMap.end(); ++it) {
+      cout << "hitmap name = " << (*it).first << " entries: " << (*it).second  << endl;
+    }
+    int maxRoc(-1), maxCnt(-1); 
+    
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      pname = Form("C%d", rocIds[iroc]); 
+      h1 = hits[getIdxFromId(iroc)];
+      if (h1) {
+	h1->SetBinContent(ithr+1, hitMap[pname]);
+	h1->SetBinError(ithr+1, TMath::Sqrt(hitMap[pname]));
+	if (h1->GetEntries() > maxCnt) {
+	  maxCnt = h1->GetEntries();
+	  maxRoc = iroc; 
+	}
+      }
+    }
+    hits[getIdxFromId(maxRoc)]->Draw("hist");
+    PixTest::update(); 
   }
-  
 
-  
+  // -- fit hit distribution
 
 
-  PixTest::update();
+  // -- determine equivalent Vcal threshold
+  // FIXME DO SOMETHING
+  if (0) {
+    fApi->setDAC("vthrcomp", 80); // ???????????
+    fApi->_dut->testAllPixels(true);
+    fApi->_dut->maskAllPixels(false);
+    vector<TH1*> thr0 = scurveMaps("vcal", "xrayVcal", 4, 0, 250, 3, 1, 0); 
+    for (unsigned int i = 0; i < thr0.size(); ++i) {
+      LOG(logDEBUG) << Form(" ROC %2d, VCAL thr = %4.3f", getIdFromIdx(i), thr0[i]->GetMean()); 
+    }
+  }
+
+  if (fHistList.size() > 0) {
+    TH1 *h = (TH1*)(*fHistList.begin());
+    h->Draw(getHistOption(h).c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  } else {
+    LOG(logDEBUG) << "no histogram produced, this is probably a bug";
+  }
+
   restoreDacs(); 
 
   LOG(logINFO) << "PixTestXray::doTest() done";
