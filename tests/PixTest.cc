@@ -1065,7 +1065,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 
   if (2 == ihit) {
     LOG(logDEBUG) << "determine PH error: " << daclo1 << " .. " << dachi1; 
-    getPhError(dac, daclo1, dachi1, FLAGS, fNtrig, FLAGS); 
+    getPhError(dac, daclo1, dachi1, FLAGS, fNtrig); 
     //     cout << "pol1 " << fPhErrP0[0] << " .. " << fPhErrP1[0] << endl;
   }
 
@@ -1283,7 +1283,6 @@ void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > map
   vector<TH1*> rmaps; 
   TH1* h2(0), *h3(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  int ic(0), ir(0); 
   for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
     rmaps.clear();
     rmaps = maps[iroc];
@@ -1370,7 +1369,7 @@ void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > map
 }
 
 // ----------------------------------------------------------------------
-void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int flags, int ntrig, int FLAGS) {
+void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig) {
 
   pair<int, int> PIX(make_pair(11, 20)); 
   int range = dacmax - dacmin; 
@@ -1409,15 +1408,13 @@ void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int flags, int
     }
     
 
-    for (int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
       h1->SetTitle(Form("dacval = %d", dacval)); 
       h1->Reset();
       for (unsigned int i = 0; i < result.size(); ++i) {
 	vector<pixel> vpix = result[i].second;
 	for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
 	  int roc = vpix[ipx].roc_id;
-	  int ic = vpix[ipx].column;
-	  int ir = vpix[ipx].row;
 	  if (roc == rocIds[iroc]) h1->Fill(vpix[ipx].value);
 	}
       } 

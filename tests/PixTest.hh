@@ -83,7 +83,7 @@ public:
   /// do the gain/pedestal analysis
   void gainPedestalAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
-  void getPhError(std::string dac, int dacmin, int dacmax, int flags, int ntrig, int FLAGS);
+  void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
