@@ -8,12 +8,16 @@
 #ifndef USB_H
 #define USB_H
 
-#ifdef WIN32
+#if ((defined WIN32) && (defined __CINT__))
+#include <Windows4Root.h>
+#else
+#if (defined WIN32)
 #include <Windows.h>
 #else
 typedef uint32_t* LPDWORD;
 typedef uint32_t DWORD;
-#endif
+#endif //WIN32
+#endif //WIN32 && CINT
 
 #ifdef HAVE_LIBFTDI
 #include <ftdi.h>

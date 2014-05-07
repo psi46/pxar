@@ -1,12 +1,16 @@
 #ifndef PXAR_TIMER_H
 #define PXAR_TIMER_H
 
-#ifdef WIN32
+#if ((defined WIN32) && (defined __CINT__))
+#include <Windows4Root.h>
+#else
+#if (defined WIN32)
 #include <Windows.h>
 #else
 #include <sys/time.h>
 #include <ctime>
-#endif
+#endif //WIN32
+#endif //WIN32 && CINT
 
 namespace pxar {
 

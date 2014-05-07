@@ -4,6 +4,10 @@
 #include <iostream>
 #include <sys/stat.h>
 
+#if (defined WIN32)
+#include <Windows4Root.h>
+#endif
+
 #include <TApplication.h> 
 #include <TFile.h> 
 #include <TROOT.h> 
