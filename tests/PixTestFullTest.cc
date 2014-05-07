@@ -33,9 +33,6 @@ bool PixTestFullTest::setParameter(string parName, string sval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
       if (!parName.compare("deadface")) {
 	//	fDeadFace = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();

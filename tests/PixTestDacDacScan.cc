@@ -32,43 +32,44 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("PHmap")) {
+      if (!parName.compare("phmap")) {
 	fParPHmap = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC1")) {
+      if (!parName.compare("dac1")) {
 	fParDAC1 = sval; 
 	setToolTips();
       }
-      if (!parName.compare("DAC2")) {
+      if (!parName.compare("dac2")) {
 	fParDAC2 = sval; 
 	setToolTips();
       }
-      if (!parName.compare("DAC1LO")) {
+      if (!parName.compare("dac1lo")) {
 	fParLoDAC1 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC1HI")) {
+      if (!parName.compare("dac1hi")) {
 	fParHiDAC1 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC2LO")) {
+      if (!parName.compare("dac2lo")) {
 	fParLoDAC2 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC2HI")) {
+      if (!parName.compare("dac2hi")) {
 	fParHiDAC2 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("PIX")) {
+      if (!parName.compare("pix")) {
 	s1 = sval.find(","); 
 	if (string::npos != s1) {
 	  str1 = sval.substr(0, s1); 
@@ -80,16 +81,16 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 	  fPIX.push_back(make_pair(-1, -1)); 
 	}
       }
-      if (!parName.compare("PIX1")) {
+      if (!parName.compare("pix1")) {
 	LOG(logWARNING) << "please change parameter name from PIX1 to PIX (can appear multiple times)"; 
       }
-      if (!parName.compare("PIX2")) {
+      if (!parName.compare("pix2")) {
 	LOG(logWARNING) << "please change parameter name from PIX2 to PIX (can appear multiple times)"; 
       }
-      if (!parName.compare("PIX3")) {
+      if (!parName.compare("pix3")) {
 	LOG(logWARNING) << "please change parameter name from PIX3 to PIX (can appear multiple times)"; 
       }
-      if (!parName.compare("PIX4")) {
+      if (!parName.compare("pix4")) {
 	LOG(logWARNING) << "please change parameter name from PIX4 to PIX (can appear multiple times)"; 
       }
 
@@ -127,9 +128,9 @@ void PixTestDacDacScan::setToolTips() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDacDacScan::bookHist(string name) {
+void PixTestDacDacScan::bookHist(string /*name*/) {
   fDirectory->cd(); 
-  LOG(logDEBUG) << "nothing done with " << name;
+  //  LOG(logDEBUG) << "nothing done with " << name;
 
 }
 

@@ -29,32 +29,32 @@ bool PixTestPh::setParameter(string parName, string sval) {
   string str1, str2;
   string::size_type s1;
   int pixc, pixr;
-  unsigned int imax(fParameters.size()); 
-  for (unsigned int i = 0; i < imax; ++i) {
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (!fParameters[i].first.compare(parName)) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("Ntrig")) {
-	setTestParameter("Ntrig", sval); 
+      if (!parName.compare("ntrig")) {
+	setTestParameter("ntrig", sval); 
 	fParNtrig = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
-      if (!parName.compare("DAC")) {
-	setTestParameter("DAC", sval); 
+      if (!parName.compare("dac")) {
+	setTestParameter("dac", sval); 
 	fParDAC = sval;
 	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC
 		      << "<- from sval = " << sval;
       }
 
-      if (!parName.compare("DacVal")) {
-	setTestParameter("DacVal", sval); 
+      if (!parName.compare("dacval")) {
+	setTestParameter("dacval", sval); 
 	fParDacVal = atoi(sval.c_str());
 	LOG(logDEBUG) << "  setting fParDacVal  ->" << fParDacVal
 		      << "<- from sval = " << sval;
       }
       
-      if (!parName.compare("PIX")) {
+      if (!parName.compare("pix")) {
         s1 = sval.find(",");
         if (string::npos != s1) {
 	  str1 = sval.substr(0, s1);

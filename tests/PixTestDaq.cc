@@ -27,24 +27,21 @@ PixTestDaq::PixTestDaq() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestDaq::setParameter(string parName, string sval) {
   bool found(false);
-  string stripParName; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-      
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("Iterations")) {
+      if (!parName.compare("iterations")) {
 	fParIter = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("ClockStretch"))
+      if (!parName.compare("clockstretch"))
  	fParStretch = atoi(sval.c_str());	
-      if (!parName.compare("CountHits"))
+      if (!parName.compare("counthits"))
 	fParCount = !(atoi(sval.c_str())==0);
       break;
     }

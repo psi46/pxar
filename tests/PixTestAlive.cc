@@ -28,18 +28,15 @@ PixTestAlive::PixTestAlive() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestAlive::setParameter(string parName, string sval) {
   bool found(false);
-  string stripParName; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
-      if (!parName.compare("Vcal")) {
+      if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	setToolTips();
       }
@@ -212,6 +209,7 @@ void PixTestAlive::addressDecodingTest() {
     return;
   }
 
+  cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
   banner(Form("PixTestAlive::addressDecodingTest() vcal = %d", static_cast<int>(fParVcal)));
@@ -235,10 +233,6 @@ void PixTestAlive::addressDecodingTest() {
     setTitles(h2, "col", "row"); 
     maps.push_back(h2); 
   }
-
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL | FLAG_NOSORT;
-  std::cout << "Requested unsorted data stream for address decoding check." << std::endl;
-  cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
 
   vector<pixel> results;
 
@@ -286,6 +280,7 @@ void PixTestAlive::addressDecodingTest() {
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
+  restoreDacs();
   LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
 }
 

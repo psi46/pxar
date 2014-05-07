@@ -37,6 +37,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 {
 	bool found(false);	
 	
+	std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
 	for (uint32_t i = 0; i < fParameters.size(); ++i) 
 	{
 
@@ -44,27 +45,27 @@ bool PixTestPattern::setParameter(string parName, string sval)
 		{
 			found = true;
 
-			if (!parName.compare("Ntrig")){
+			if (!parName.compare("ntrig")){
 				fParNtrig = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting Ntrig -> " << fParNtrig;
 			}
 						
-			if (!parName.compare("TestAllPixels")){
+			if (!parName.compare("testallpixels")){
 				fTestAllPixels = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fTestAllPixels -> " << fTestAllPixels;
 			}
 
-			if (!parName.compare("MaskAllPixels")){
+			if (!parName.compare("maskallpixels")){
 				fMaskAllPixels = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fMaskAllPixels -> " << fMaskAllPixels;
 			}
 
-			if (!parName.compare("PatternFromFile")){
+			if (!parName.compare("patternfromfile")){
 				fPatternFromFile = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fPatternFromFile -> " << fPatternFromFile;
 			}
 
-			if (!parName.compare("PixelsFromFile")){
+			if (!parName.compare("pixelsfromfile")){
 				fPixelsFromFile = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fPixelsFromFile -> " << fPixelsFromFile;
 				if (!fPixelsFromFile)
@@ -73,7 +74,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 					string PIXn;
 					char pix[5];
 					int I = i - 4;
-					sprintf(pix, "PIX%i", I);
+					sprintf(pix, "pix%i", I);
 					if (I < 10) PIXn.assign(pix, 4); //FIXME to improve
 					 else       PIXn.assign(pix, 5);
 					if (!parName.compare(PIXn)) choosePIX(sval);

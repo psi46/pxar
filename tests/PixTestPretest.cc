@@ -32,42 +32,43 @@ bool PixTestPretest::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
 
-      if (!parName.compare("targetIa")) {
+      if (!parName.compare("targetia")) {
 	fTargetIa = atoi(sval.c_str());  // [mA/ROC]
 	LOG(logDEBUG) << "setting fTargetIa    = " << fTargetIa << " mA/ROC";
       }
 
-      if (!parName.compare("noiseWidth")) {
+      if (!parName.compare("noisewidth")) {
 	fNoiseWidth = atoi(sval.c_str());  
 	LOG(logDEBUG) << "setting fNoiseWidth  = " << fNoiseWidth << " DAC units";
       }
 
-      if (!parName.compare("noiseMargin")) {
+      if (!parName.compare("noisemargin")) {
 	fNoiseMargin = atoi(sval.c_str());  // safety margin below noise
 	LOG(logDEBUG) << "setting fNoiseMargin = " << fNoiseMargin << " DAC units";
       }
 
-      if (!parName.compare("Ntrig") ) {
+      if (!parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
 	LOG(logDEBUG) << "setting fParNtrig    = " << fParNtrig; 
       }
 
-      if (!parName.compare("Vcal") ) {
+      if (!parName.compare("vcal") ) {
 	fParVcal = atoi(sval.c_str() );
 	LOG(logDEBUG) << "setting fParVcal    = " << fParVcal; 
       }
 
-      if (!parName.compare("DeltaVthrComp") ) {
+      if (!parName.compare("deltavthrcomp") ) {
 	fParDeltaVthrComp = atoi(sval.c_str() );
 	LOG(logDEBUG) << "setting fParDeltaVthrComp    = " << fParDeltaVthrComp; 
       }
 
-      if (!parName.compare("PIX") || !parName.compare("PIX1") ) {
+      if (!parName.compare("pix") || !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if (string::npos != s1) {
 	  str1 = sval.substr(0, s1);

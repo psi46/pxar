@@ -27,18 +27,15 @@ PixTestXray::PixTestXray() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestXray::setParameter(string parName, string sval) {
   bool found(false);
-  string stripParName; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-      
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("ClockStretch"))
+      if (!parName.compare("clockstretch"))
  	fParStretch = atoi(sval.c_str());	
       break;
     }
@@ -70,9 +67,8 @@ void PixTestXray::setToolTips() {
 
 
 // ----------------------------------------------------------------------
-void PixTestXray::bookHist(string name) {
+void PixTestXray::bookHist(string /*name*/) {
   fDirectory->cd(); 
-  LOG(logDEBUG) << "nothing done with " << name; 
 }
 
 
@@ -116,19 +112,18 @@ void PixTestXray::doTest() {
   fApi->setDAC("vthrcomp", 60); // ???????????
 
   // -- check for noisy pixels
-//   fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-//   fApi->daqTrigger(100);
-//   fApi->daqStop();
-//   vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
-//   LOG(logDEBUG) << "Number of events read from board: " << daqdat.size();
+  //   fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+  //   fApi->daqTrigger(100);
+  //   fApi->daqStop();
+  //   vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  //   LOG(logDEBUG) << "Number of events read from board: " << daqdat.size();
   map<string, int> hitMap; 
   string pname; 
   for (int ithr = 0; ithr < 150; ++ithr) {
     fApi->setDAC("vthrcomp", ithr); 
     fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
     fApi->daqTrigger(100);
-    fApi->daqStop();
-    vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+    vector<Event> daqdat = fApi->daqGetEventBuffer();
     LOG(logDEBUG) << "VthrComp = " << ithr << " with daqdat.size() = " << daqdat.size(); 
     for (vector<Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       if ((*it).pixels.size() > 0) LOG(logDEBUG) << (*it);
@@ -137,6 +132,7 @@ void PixTestXray::doTest() {
       //       hitMap[pname]++;
       //     }
     }
+    fApi->daqStop();
   }
 
   LOG(logDEBUG) << "Pixels readout: " << hitMap.size(); 

@@ -34,11 +34,12 @@ bool PixTestCurrentVsDac::setParameter( string parName, string sval )
 {
   bool found(false);
 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if( !parName.compare( "DAC" ) ) {
+      if( !parName.compare( "dac" ) ) {
 	fParDAC = sval;
 	setToolTips();
       }

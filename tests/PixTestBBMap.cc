@@ -31,11 +31,12 @@ PixTestBBMap::PixTestBBMap(): PixTest() {
 //------------------------------------------------------------------------------
 bool PixTestBBMap::setParameter(string parName, string sval) {
 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (uint32_t i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       stringstream s(sval);
-      if (!parName.compare( "Ntrig")) { s >> fParNtrig; return true;}
-      if (!parName.compare( "VcalS")) { s >> fParVcalS; return true;}
+      if (!parName.compare( "ntrig")) { s >> fParNtrig; return true;}
+      if (!parName.compare( "vcals")) { s >> fParVcalS; return true;}
       if (!parName.compare( "xtalk"))  { s >> fParXtalk;  return true;}
     }
   }

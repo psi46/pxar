@@ -35,31 +35,32 @@ PixTestTrim::PixTestTrim() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestTrim::setParameter(string parName, string sval) {
   bool found(false);
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
-      if (!parName.compare("Vcal")) {
+      if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
-      if (!parName.compare("VcalLo")) {
+      if (!parName.compare("vcallo")) {
 	fParVcalLo = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcalLo  ->" << fParVcalLo << "<- from sval = " << sval;
       }
-      if (!parName.compare("VcalHi")) {
+      if (!parName.compare("vcalhi")) {
 	fParVcalHi = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
       }
-      if (!parName.compare("VthrCompLo")) {
+      if (!parName.compare("vthrcomplo")) {
 	fParVthrCompLo = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVthrCompLo  ->" << fParVthrCompLo << "<- from sval = " << sval;
       }
-      if (!parName.compare("VthrCompHi")) {
+      if (!parName.compare("vthrcomphi")) {
 	fParVthrCompHi = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVthrCompHi  ->" << fParVthrCompHi << "<- from sval = " << sval;
       }
