@@ -92,7 +92,6 @@ void PixTestDaq::doTest() {
 
   PixTest::update(); 
   fDirectory->cd();
-  vector<TH2D*> hits;
 
   //Set the ClockStretch
 
@@ -102,81 +101,88 @@ void PixTestDaq::doTest() {
   // All on!
   fApi->_dut->testAllPixels(false);
   //fApi->_dut->maskAllPixels(true);
-/*
+  /*
   // Set some pixels up for getting calibrate signals:
   for (int i = 0; i < 3; ++i) {
-    fApi->_dut->testPixel(i, 5, true);
-    fApi->_dut->maskPixel(i, 5, false);
-    fApi->_dut->testPixel(i, 6, true);
-    fApi->_dut->maskPixel(i, 6, false);
+  fApi->_dut->testPixel(i, 5, true);
+  fApi->_dut->maskPixel(i, 5, false);
+  fApi->_dut->testPixel(i, 6, true);
+  fApi->_dut->maskPixel(i, 6, false);
   }
-*/
-    
- string name("Hits");
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  TH2D *h2(0);
+  */
+  
+  vector<TH2D*> hits;
+  vector<TH2D*> phmap;
+  vector<TH1D*> ph;
+  TH1D *h1(0); 
+  TH2D *h2(0); 
 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    id2idx.insert(make_pair(rocIds[iroc], iroc));
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+    h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
     hits.push_back(h2);
+
+    h2 = bookTH2D(Form("phMap_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.);
+    h2->SetDirectory(fDirectory);
+    setTitles(h2, "col", "row");
+    phmap.push_back(h2);
+
+    h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
+    h1->SetMinimum(0.);
+    h1->SetDirectory(fDirectory);
+    setTitles(h1, "ADC", "Entries/bin");
+    ph.push_back(h1);
   }
 
-  for(int iter =0 ; iter < fParIter ; iter++) {
+  copy(hits.begin(), hits.end(), back_inserter(fHistList));
+  copy(phmap.begin(), phmap.end(), back_inserter(fHistList));
+  copy(ph.begin(), ph.end(), back_inserter(fHistList));
 
+  for (int iter = 0; iter < fParIter; iter++) {
+    int pixCnt(0); 
     // Start the DAQ:
     fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-  
+    
     // Send the triggers:
     fApi->daqTrigger(fParNtrig);
-   
+    
     // Stop the DAQ:
     fApi->daqStop();
-
-
-
-  // And read out the full buffer:
-  // Either fetching undecoded raw data events or decoded events, check API documentation!
-  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
-
-    cout << "Number of events read from board: " << daqdat.size() << endl;
-
+    
+    vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+    
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-      LOG(logDEBUG) << (*it) << std::endl;
-
-      for(std::vector<pxar::pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++)
-	{   
-	    if(fParCount)
-		hits[id2idx[pixit->roc_id]]->Fill(pixit->column,pixit->row);
-	    else
-	        hits[id2idx[pixit->roc_id]]->SetBinContent(pixit->column,pixit->row,pixit->value);
- 	}
+      pixCnt += it->pixels.size(); 
+      //      LOG(logDEBUG) << (*it);
+      for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end(); pixit++) {   
+	hits[getIdxFromId(pixit->roc_id)]->Fill(pixit->column,pixit->row);
+	phmap[getIdxFromId(pixit->roc_id)]->SetBinContent(pixit->column,pixit->row,pixit->value);
+	ph[getIdxFromId(pixit->roc_id)]->Fill(pixit->value);
+      }
     }
-
- }
-  fApi->setClockStretch(0, 0, 0); // No Stretch after trigger, 0 delay
-
-
-    LOG(logDEBUG) << "Filled histograms..." ;
-  // We should store the data, probably...
-
-
-  for (unsigned int i = 0; i < hits.size(); ++i) {
-    fHistOptions.insert(make_pair(hits[i], "colz"));
+    
+    cout << Form("Run %4d", iter) << Form(" # events read: %4d, pixels seen in all events: %3d, hist entries: %4d", 
+					  daqdat.size(), pixCnt, 
+					  static_cast<int>(hits[0]->GetEntries())) 
+	 << endl;
+    
+    hits[0]->Draw("colz");
+    PixTest::update();
+  
   }
-  LOG(logDEBUG) << "Filled draw options ";
-  copy(hits.begin(), hits.end(), back_inserter(fHistList));
+  fApi->setClockStretch(0, 0, 0); // No Stretch after trigger, 0 delay
+  
+  
+  LOG(logDEBUG) << "Filled histograms..." ;
 
+  h2 = (TH2D*)(*fHistList.begin());
 
-  LOG(logDEBUG) << "Copy ";
-  TH2D *h = (TH2D*)(*fHistList.begin());
-
-  LOG(logDEBUG) << "begin ";
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  h2->Draw("colz");
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
 
   PixTest::update();
  
