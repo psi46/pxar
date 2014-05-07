@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #endif //WIN32
 
+
 #ifdef WIN32
 #define __func__ __FUNCTION__
 #endif // WIN32
@@ -19,8 +20,15 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdio>
-#include <stdint.h>
 #include <string.h>
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned int uint32_t;
+typedef unsigned int DWORD;
+#else
+#include <stdint.h>
+#endif
 
 
 namespace pxar {
