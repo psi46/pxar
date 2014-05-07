@@ -15,10 +15,14 @@ typedef unsigned char uint8_t;
 #endif
 
 #ifdef WIN32
+#ifdef __CINT__
+#include <Windows4Root.h>
+#else
 #include <Windows.h>
+#endif // __CINT__
 #else
 #include <unistd.h>
-#endif
+#endif // WIN32
 
 #include <string>
 #include <vector>
