@@ -37,7 +37,6 @@ bool PixTestPattern::setParameter(string parName, string sval)
 {
 	bool found(false);	
 	
-	std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
 	for (uint32_t i = 0; i < fParameters.size(); ++i) 
 	{
 
@@ -68,19 +67,15 @@ bool PixTestPattern::setParameter(string parName, string sval)
 			if (!parName.compare("pixelsfromfile")){
 				fPixelsFromFile = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fPixelsFromFile -> " << fPixelsFromFile;
-				if (!fPixelsFromFile)
-				{
-					//to set PIXs from testParameters.dat:
-					string PIXn;
-					char pix[5];
-					int I = i - 4;
-					sprintf(pix, "pix%i", I);
-					if (I < 10) PIXn.assign(pix, 4); //FIXME to improve
-					 else       PIXn.assign(pix, 5);
-					if (!parName.compare(PIXn)) choosePIX(sval);
-				}
-
 			}
+			
+			//to set PIXs from testParameters.dat:
+			int I = i - 4;
+			stringstream stre;
+			stre << "pix" << I;
+			string pixN = stre.str();
+			if (!parName.compare(pixN)) choosePIX(sval);
+			pixN.clear();
 
 			break;
 		}
@@ -102,11 +97,6 @@ void PixTestPattern::init()
 // ----------------------------------------------------------------------
 void PixTestPattern::setToolTips()
 {
-	fTestTip = string(Form("scan testboard parameter settings and check for valid readout\n")
-		+ string("TO BE IMPLEMENTED!!"))  //...FIXME
-		;
-	fSummaryTip = string("summary plot to be implemented")  //...FIXME
-		;
 
 }
 
@@ -129,8 +119,6 @@ void PixTestPattern::runCommand(std::string command) {
 	LOG(logDEBUG) << "running command: " << command;
 	
 	if (!command.compare("resettodefault")) {
-//		PixTest::init();
-//		init();  
 		LOG(logINFO) << "PixTestPattern:: reset parameters from testParameters.dat";
 		for (unsigned int i = 0; i < fParameters.size(); ++i)
    			setParameter(fParameters[i].first, fParameters[i].second);
@@ -184,7 +172,7 @@ bool PixTestPattern::setPattern(string fname) {
 			continue;
 		}
 
-		if (string::npos != line.find("-- Pixels")) break;
+		if (string::npos != line.find("-- Test Pixels")) break;
 
 		if (patternFound)
 		{
@@ -229,7 +217,7 @@ bool PixTestPattern::setPattern(string fname) {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestPattern::setPixels(string fname) {
+bool PixTestPattern::setPixels(string fname, string flag) {
 
 	ifstream is(fname.c_str());
 	if (!is.is_open()) {
@@ -244,11 +232,25 @@ bool PixTestPattern::setPixels(string fname) {
 	{
 		getline(is, line);
 
-		// -- find Pattern section
-		if (string::npos != line.find("-- Pixels"))
+		if (flag == "Test")
 		{
-			pixelFound = true;
-			continue;
+			// -- find Test Pixels section
+			if (string::npos != line.find("-- Test Pixels"))
+			{
+				pixelFound = true;
+				continue;
+			}
+
+			if (string::npos != line.find("-- Unmask Pixels")) break;
+		}
+		else
+		{
+			// -- find Unmask Pixels section
+			if (string::npos != line.find("-- Unmask Pixels"))
+			{
+				pixelFound = true;
+				continue;
+			}
 		}
 
 		if (pixelFound)
@@ -269,27 +271,42 @@ bool PixTestPattern::setPixels(string fname) {
 				pixc = atoi(str1.c_str());
 				str2 = line.substr(s1 + 1);
 				pixr = atoi(str2.c_str());
-				fPIX.push_back(make_pair(pixc, pixr));
-				LOG(logINFO) << "  pixel selected -> " << pixc << " " << pixr; //DEBUG
+				if (flag == "Test"){
+					fPIX.push_back(make_pair(pixc, pixr));
+					LOG(logINFO) << "  selected pixel -> " << pixc << " " << pixr; //DEBUG
+				}
+				else {
+					fPIXm.push_back(make_pair(pixc, pixr));
+					LOG(logINFO) << "  unmasked pixel -> " << pixc << " " << pixr; //DEBUG
+				}
 			}
 			else
 			{
 				fPIX.push_back(make_pair(-1, -1));
-				LOG(logINFO) << "  pixel selected -> none"; //DEBUG
+				fPIXm.push_back(make_pair(-1, -1));
+				LOG(logINFO) << "  selected pixel -> none"; //DEBUG
+				LOG(logINFO) << "  unmasked pixel -> none"; //DEBUG
 			}
 		}
 	}
 
 	if (!pixelFound)
 	{
-		LOG(logINFO) << "PixTestPattern::setPixels()  '-- Pixels' not found"; //DEBUG
-		fPIX.push_back(make_pair(-1, -1));
+		if (flag == "Test")	{
+			LOG(logINFO) << "PixTestPattern::setPixels()  '-- Test Pixels' not found"; //DEBUG
+			fPIX.push_back(make_pair(-1, -1));
+		}
+		else {
+			LOG(logINFO) << "PixTestPattern::setPixels()  '-- Unmask Pixels' not found"; //DEBUG
+			fPIXm.push_back(make_pair(-1, -1));
+		}
 		return false;
 	}
 
 	return true;
 
 }
+
 
 // ----------------------------------------------------------------------
 void PixTestPattern::PrintEvents() {
@@ -319,8 +336,8 @@ void PixTestPattern::doTest()
 	fHistList.clear();
 	pg_setup.clear();  
 	PixTest::update();
-	fApi->SignalProbe("D1","pgsync"); //to send PG_Sync signal through D1 probe
-	fApi->SignalProbe("D2", "pgsync"); 
+	fApi->SignalProbe("D1","pgsync");   //to send PG_Sync signal on the ROC via lemo
+	fApi->SignalProbe("D2", "pgsync"); //to see PG_Sync with oscilloscope
 
 	LOG(logINFO) << "PixTestPattern::doTest() ntrig = " << fParNtrig;
 
@@ -351,9 +368,13 @@ void PixTestPattern::doTest()
 		//select the pixels:
 		if (fPixelsFromFile)
 		{
+			fPIX.clear();  //to clear Pixels set from gui
 			LOG(logINFO) << "Set Pixels from file: " << fname;  //DEBUG
-			if (!setPixels(fname)) return;  //READ FROM FILE	
+			if (!setPixels(fname, "Test")) return;    //READ FROM FILE	
 		}
+
+		LOG(logINFO) << "Set Unmasked Pixels from file: " << fname;  //DEBUG
+		if (!setPixels(fname, "Unmask")) return;    //READ FROM FILE	
 
 		// to unmask selected pixels:
 		fApi->_dut->testAllPixels(false);
@@ -362,14 +383,18 @@ void PixTestPattern::doTest()
 		for (unsigned int i = 0; i < fPIX.size(); ++i) {
 			if (fPIX[i].first > -1)  
 			{
-           			fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
-				if (fMaskAllPixels) fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
-				else fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+           		fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
+				if (!fMaskAllPixels) fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
 			}
-			else
-			{
+			else {
+				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false); //??
+			}
+		}
 
-				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+		if (!fMaskAllPixels){
+			for (unsigned int i = 0; i < fPIXm.size(); ++i)			{
+				if (fPIXm[i].first > -1)  fApi->_dut->maskPixel(fPIXm[i].first, fPIXm[i].second, false);
+				//else  //... ??				}
 			}
 		}
 	}
@@ -396,6 +421,7 @@ void PixTestPattern::doTest()
 	fApi->daqStop();
 
 	fPIX.clear();
+	fPIXm.clear();
 	pg_setup.clear();
 
 	LOG(logINFO) << "PixTestPattern::doTest() done for ";
