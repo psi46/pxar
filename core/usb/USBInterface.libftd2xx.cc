@@ -254,6 +254,11 @@ bool CUSB::FillBuffer(uint32_t minBytesToRead)
 	if (bytesToRead>USBREADBUFFERSIZE) bytesToRead = USBREADBUFFERSIZE;
 
 	ftdiStatus = FT_Read(ftHandle, m_bufferR, bytesToRead, &m_sizeR);
+        if (m_sizeR < bytesToRead) {
+          LOG(logCRITICAL) << "Requested to read " << bytesToRead 
+			   << "b, but read " << m_sizeR 
+			   << "b - " << (bytesToRead-m_sizeR) << "b missing!";
+        }
 	m_posR = 0;
 	if (ftdiStatus != FT_OK)
 	{

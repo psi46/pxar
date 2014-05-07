@@ -463,6 +463,11 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 	  {
 	    bytesRead = i;
 	    LOG(logCRITICAL) << " Timeout reading from USB buffer after " << m_timeout << " ms ";
+	    if (bytesRead < bytesToRead) {
+	      LOG(logCRITICAL) << "Requested to read " << bytesToRead 
+			       << "b, actually read  " << bytesRead 
+			       << "b - " << (bytesToRead-bytesRead) << "b missing!";
+	    }
 	    throw UsbConnectionTimeout("Timeout reading from USB");
 	    break;
 	  }

@@ -1,13 +1,31 @@
 -- Pattern
-2048 , 25		// PG_RESR b001000  0x0800
-1024 , 106		// PG_CAL  b000100  0x0400
-512  , 16		// PG_TRG  b000010  0x0200
-256  , 0		// PG_TOK  	    0x0100
 
--- Pixels (col,row)
-PIX  10 , 10
-PIX  10 , 50
-PIX  10 , 5
-PIX  10 , 25
-PIX  10 , 40
-PIX  50 , 25
+2048 , 25		 // PG_RESR
+
+1024 , 106	// PG_CAL
+512  , 16		// PG_TRG
+256  , 20		// PG_TOK
+
+1024 , 106 	// PG_CAL
+
+512  , 20		// PG_TRG
+
+1024 , 106 	// PG_CAL
+
+512  , 20		// PG_TRG
+
+256  , 50		// PG_TOK
+
+256  , 100	// PG_TOK
+
+1024 , 106	// PG_CAL
+512  , 16		// PG_TRG
+256  , 0		// PG_TOK
+
+
+-- Test Pixels (col,row)
+pix  0 , 40
+pix  10 , 40
+pix  25 , 40
+
+-- Unmask Pixels (col,row)

@@ -10,9 +10,15 @@
 #ifndef PXAR_DICTIONARIES_H
 #define PXAR_DICTIONARIES_H
 
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 #include <string>
 #include <map>
-#include <stdint.h>
 #include "constants.h"
 #include "api.h"
 #include <iostream>
