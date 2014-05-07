@@ -125,7 +125,8 @@ int main(int argc, char* argv[]) {
     // 99x no CAL, only TRG and TOK for Xray background
     for(int i = 0; i < 99; i++) {
       pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
-      pg_setup.push_back(std::make_pair(0x0100,1000));     // PG_TOK    
+      // Delay adjusted fro trigger rate of 90kHz
+      pg_setup.push_back(std::make_pair(0x0100,426));     // PG_TOK    
     }
     // One additional cycle w/ CAL TRG TOK
     pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
