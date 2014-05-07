@@ -110,7 +110,6 @@ PixTestAlive::~PixTestAlive() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
-  cacheDacs();
   if (fPixSetup->isDummy()) {
     dummyAnalysis(); 
     return;
@@ -130,12 +129,13 @@ void PixTestAlive::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
+  if (0) {
   addressDecodingTest();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
+  }
 
-  restoreDacs();
   LOG(logINFO) << "PixTestScurves::doTest() done ";
 
 }
@@ -143,6 +143,7 @@ void PixTestAlive::doTest() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::aliveTest() {
+  cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
   banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
@@ -165,6 +166,7 @@ void PixTestAlive::aliveTest() {
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
+  restoreDacs();
   LOG(logINFO) << "PixTestAlive::aliveTest() done";
 }
 
@@ -176,6 +178,7 @@ void PixTestAlive::maskTest() {
     return;
   }
 
+  cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
   banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d", static_cast<int>(fParNtrig), fParVcal));
@@ -197,6 +200,7 @@ void PixTestAlive::maskTest() {
 
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  restoreDacs();
   PixTest::update(); 
   LOG(logINFO) << "PixTestAlive::maskTest() done";
 }
