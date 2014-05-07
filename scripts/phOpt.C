@@ -20,12 +20,8 @@ void phOpt(string rootfile = "phOpt.root", string cfgdirectory = "testROC") {
   TFile *rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
   
   PixTestFactory *factory = PixTestFactory::instance(); 
-
-  //PixTest *preparation = factory->createTest("trim", ap);
-  //preparation->doTest();
   
   PixTest *pt = factory->createTest("DacScan", ap); 
-  //ap->getApi()->setDAC("ctrlreg", 4); 
   pt->setDAC("ctrlreg", 4); 
   pt->setParameter("PHmap", "1"); 
   pt->setParameter("DAC", "Vcal"); 
@@ -72,7 +68,6 @@ void ana(string rootfile = "phOpt.root") {
   TCanvas *c0 = new TCanvas("C0"); 
   c0->Clear(); 
   while ((obj = (TObject*)next())) {
-    //    cout << obj->GetName() << endl;
     h = (TH1D*)gDirectory->Get(obj->GetName()); 
 
     if (!h) {
@@ -116,7 +111,6 @@ void ana(string rootfile = "phOpt.root") {
 void Opt_fit(string rootfile = "phOpt.root") {
   TFile *f = TFile::Open(rootfile.c_str()); 
 
-  //  f->cd("DacScan"); 
   TH1D *h;
   double x(0.); 
   int OptDistance(255);
@@ -148,7 +142,6 @@ void Opt_fit(string rootfile = "phOpt.root") {
     dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
     if(dist < bestDist){
       is_opt = is;
-      //break;
       bestDist=dist;
     }
   }
@@ -210,13 +203,11 @@ void Opt_fit(string rootfile = "phOpt.root") {
     cout<<"PH optimization failed (stretching)"<<endl;
     return;
   }
-  
-  //io_opt=20;
-  //is_opt=7;
+
+
   hopt = (TH1D*)gDirectory->Get(Form("DacScan/ph_Vcal_c11_r20_C0_V%d", 52*io_opt+is_opt));
-  //  hopt->SetStats(0);
   cout << "h = " << hopt << " name: " << h->GetName() <<  endl;
-  cout << "optimal PH parameters:" << endl << "PH scale = " << is_opt << endl   << "PH offset = " << io_opt << endl << "Best Distance" << bestDist << endl  ;
+  cout << "optimal PH parameters:" << endl << "PH scale = " << is_opt << endl   << "PH offset = " << io_opt << endl << "Best Distance " << bestDist << endl  ;
   hopt->Draw("");
   
 }
