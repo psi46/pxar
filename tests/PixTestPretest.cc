@@ -614,6 +614,7 @@ void PixTestPretest::setCalDel() {
   banner(Form("PixTestPretest::setCalDel()")); 
 
   fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
   if (fPIX[0].first > -1)  {
     fApi->_dut->testPixel(fPIX[0].first, fPIX[0].second, true);
@@ -732,138 +733,201 @@ void PixTestPretest::setCalDel() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setPhRange() {
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
   banner(Form("PixTestPretest::setPhRange()")); 
 
-  vector<TH1*>          rmaps; 
-  vector<vector<TH1*> > maps; 
-
-  TH1* h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   fApi->setDAC("ctrlReg", 4); 
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
+  fApi->_dut->testPixel(fPIX[0].first, fPIX[0].second, true); 
+  fApi->_dut->maskPixel(fPIX[0].first, fPIX[0].second, false); 
+
+  TH1D* h1(0); 
+  map<string, TH1D*> hmap; 
   int cycle(0); 
+  string hname;
   for (unsigned int io = 0; io < 26; ++io) {
     for (unsigned int is = 0; is < 52; ++is) {
+      LOG(logDEBUG) << Form("pulseheight for phoffset = %3d, phscale = %3d", io*10, is*5); 
       for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-	rmaps.clear();
-	h1 = bookTH1D(Form("ph_Vcal_c%d_r%d_C%d", fPIX[0].first, fPIX[0].second, rocIds[iroc]), 
-		      Form("ph_Vcal_c%d_r%d_C%d", fPIX[0].first, fPIX[0].second, rocIds[iroc]), 
-		      256, 0., 256.);
+	hname = Form("ph_Vcal_c%d_r%d_C%d", fPIX[0].first, fPIX[0].second, rocIds[iroc]);
+	h1 = bookTH1D(hname.c_str(), hname.c_str(), 256, 0., 256.);
 	h1->Sumw2();
 	h1->SetTitle(Form("ph_Vcal_c%d_r%d_C%d_V%d phscale=%d phoffset=%d", 
 			  fPIX[0].first, fPIX[0].second, rocIds[iroc], cycle, is*5, io*10));
-	rmaps.push_back(h1); 
-	maps.push_back(rmaps); 
+	hmap[hname] = h1; 
 	++cycle;
       }
+
+      bool done = false;
+      vector<pair<uint8_t, vector<pixel> > > results;
+      fApi->setDAC("phscale", is*5); 
+      fApi->setDAC("phoffset", io*10); 
+      while (!done) {
+	int cnt(0); 
+	try{
+	  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAGS, fParNtrig);
+	  done = true;
+	} catch(DataMissingEvent &e){
+	  LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	  ++cnt;
+	  if (e.numberMissing > 10) done = true; 
+	}
+	done = (cnt>5) || done;
+      }
+
+      for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+	for (unsigned int i = 0; i < results.size(); ++i) {
+	  pair<uint8_t, vector<pixel> > v = results[i];
+	  int idac = v.first; 
+	  
+	  vector<pixel> vpix = v.second;
+	  for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
+	    if (vpix[ipix].roc_id == rocIds[iroc]) {
+	      hname = Form("ph_Vcal_c%d_r%d_C%d", vpix[ipix].column, vpix[ipix].row, rocIds[iroc]);
+	      h1 = hmap[hname];
+	      if (h1) {
+		h1->SetBinContent(idac+1, vpix[ipix].value); 
+		h1->SetBinError(idac+1, 0.05*vpix[ipix].value); 
+	      } else {
+		LOG(logDEBUG) << "XX did not find "  << hname; 
+	      }
+	    }
+	    
+	  }
+	}
+      }
+    }
+  }
+
+
+  // -- analysis
+  vector<int> phscale, phoffset; 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    LOG(logDEBUG) << "analysis for ROC " << static_cast<int>(rocIds[iroc]); 
+    TH1D *h;
+    TH1D *hopt(0); 
+    
+    unsigned int io, is, is_opt=999;
+    int safety_margin=0;
+    int bin_min;
+    double bestDist=255;
+    double dist =255;
+    double upEd_dist=255, lowEd_dist=255;
+    unsigned int io_opt=999;
+    
+    //set midrange value for offset and scan scale, until PH curve is well inside the range
+    io=20;
+    io_opt=io;
+    safety_margin=50;
+    for (is=0; is<52; is++){
+      h = (TH1D*)fDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io+is));
+      cout<<h->GetTitle()<<endl;
+      h->Draw();
+      //erasing first garbage bin
+      h->SetBinContent(1,0.);
+      bin_min = h->FindFirstBinAbove(1.);
+      upEd_dist = TMath::Abs(h->GetBinContent(h->FindFixBin(255)) - (255 - safety_margin));
+      lowEd_dist = TMath::Abs(h->GetBinContent(bin_min) - safety_margin);
+      dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+      if(dist < bestDist){
+	is_opt = is;
+	bestDist=dist;
+      }
+    }
+    
+    if(is_opt==999){
+      cout<<"PH optimization failed"<<endl;
+      return;
+    }
+    
+    cout<<"PH Scale value chosen: " << is_opt << "with distance " << bestDist << endl;
+    
+    //centring PH curve adjusting ph offset
+    bestDist=255;
+    io_opt=999;
+    for(io=0; io<26; io++){
+      h = (TH1D*)gDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io+is_opt));
+      cout<<h->GetTitle()<<endl;
+      //erasing first garbage bin
+      h->SetBinContent(1,0.);
+      double plateau = h->GetMaximum();
+      bin_min = h->FindFirstBinAbove(1.);
+      double minPH = h->GetBinContent(bin_min);
       
-      dacScan("vcal", fParNtrig, 0, 255, maps, 2, 0);
+      dist = TMath::Abs(minPH - (255 - plateau));
+      
+      cout<<"offset = " << io << ", plateau = " << plateau << ", minPH = " << minPH << ", distance = " << dist << endl;
+      
+      if (dist < bestDist){
+	io_opt = io;
+	bestDist = dist;
+      }
     }
-  }
-	
-
-
-  // -- ana
-  TH1D *h;
-  TH1D *hopt(0); 
-
-  unsigned int io, is, is_opt=999;
-  int safety_margin=0;
-  int bin_min;
-  double bestDist=255;
-  double dist =255;
-  double upEd_dist=255, lowEd_dist=255;
-  unsigned int io_opt=999;
-
-  //set midrange value for offset and scan scale, until PH curve is well inside the range
-  io=20;
-  io_opt=io;
-  safety_margin=50;
-  for (is=0; is<52; is++){
-    h = (TH1D*)fDirectory->Get(Form("ph_Vcal_c11_r20_C0_V%d", 52*io+is));
-    cout<<h->GetTitle()<<endl;
-    h->Draw();
-    //erasing first garbage bin
-    h->SetBinContent(1,0.);
-    bin_min = h->FindFirstBinAbove(1.);
-    upEd_dist = TMath::Abs(h->GetBinContent(h->FindFixBin(255)) - (255 - safety_margin));
-    lowEd_dist = TMath::Abs(h->GetBinContent(bin_min) - safety_margin);
-    dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
-    if(dist < bestDist){
-      is_opt = is;
-      bestDist=dist;
-    }
-  }
-
-  if(is_opt==999){
-    cout<<"PH optimization failed"<<endl;
-    return;
-  }
-
-  cout<<"PH Scale value chosen: " << is_opt << "with distance " << bestDist << endl;
-  
-  //centring PH curve adjusting ph offset
-  bestDist=255;
-  io_opt=999;
-  for(io=0; io<26; io++){
-    h = (TH1D*)gDirectory->Get(Form("ph_Vcal_c11_r20_C0_V%d", 52*io+is_opt));
-    cout<<h->GetTitle()<<endl;
-    //erasing first garbage bin
-    h->SetBinContent(1,0.);
-    double plateau = h->GetMaximum();
-    bin_min = h->FindFirstBinAbove(1.);
-    double minPH = h->GetBinContent(bin_min);
     
-    dist = TMath::Abs(minPH - (255 - plateau));
-    
-    cout<<"offset = " << io << ", plateau = " << plateau << ", minPH = " << minPH << ", distance = " << dist << endl;
-    
-    if (dist < bestDist){
-      io_opt = io;
-      bestDist = dist;
+    //stretching curve to maximally exploit range
+    is_opt=999;
+    safety_margin=15;
+    bestDist=255;
+    dist =0;
+    upEd_dist=255;
+    lowEd_dist=255;
+    for(is=0; is<52; is++){
+      h = (TH1D*)gDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io_opt+is));
+      cout<<h->GetTitle()<<endl;
+      h->Draw();
+      //erasing first garbage bin
+      h->SetBinContent(1,0.);
+      bin_min = h->FindFirstBinAbove(1.);
+      upEd_dist = TMath::Abs(h->GetBinContent(h->FindFixBin(255)) - (255 - safety_margin));
+      lowEd_dist = TMath::Abs(h->GetBinContent(bin_min) - safety_margin);
+      dist = (upEd_dist < lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+      if(dist<bestDist){
+	is_opt = is;
+	bestDist=dist;
+	//break;
+      }
     }
-  }
-  
-  //stretching curve to maximally exploit range
-  is_opt=999;
-  safety_margin=15;
-  bestDist=255;
-  dist =0;
-  upEd_dist=255;
-  lowEd_dist=255;
-  for(is=0; is<52; is++){
-    h = (TH1D*)gDirectory->Get(Form("ph_Vcal_c11_r20_C0_V%d", 52*io_opt+is));
-    cout<<h->GetTitle()<<endl;
-    h->Draw();
-    //erasing first garbage bin
-    h->SetBinContent(1,0.);
-    bin_min = h->FindFirstBinAbove(1.);
-    upEd_dist = TMath::Abs(h->GetBinContent(h->FindFixBin(255)) - (255 - safety_margin));
-    lowEd_dist = TMath::Abs(h->GetBinContent(bin_min) - safety_margin);
-    dist = (upEd_dist < lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
-    if(dist<bestDist){
-      is_opt = is;
-      bestDist=dist;
-      //break;
+    
+    if(is_opt==999){
+      cout<<"PH optimization failed (stretching)"<<endl;
+      return;
     }
+    
+    
+    hopt = (TH1D*)gDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io_opt+is_opt));
+    LOG(logDEBUG) << "hopt: " << h->GetName()
+		  << Form(" optimal PH parameters: PH scale = %d (%d) PH offset = %d (%d)", 
+			  is_opt, is_opt*5, io_opt, io_opt*10); 
+
+    fHistList.push_back(hopt); 
+
+    phscale.push_back(is_opt*5); 
+    phoffset.push_back(io_opt*10); 
   }
 
-  if(is_opt==999){
-    cout<<"PH optimization failed (stretching)"<<endl;
-    return;
+
+
+  restoreDacs();
+
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fApi->setDAC("phscale", phscale[iroc], rocIds[iroc]); 
+    fApi->setDAC("phoffset", phoffset[iroc], rocIds[iroc]); 
   }
 
-
-  hopt = (TH1D*)gDirectory->Get(Form("ph_Vcal_c11_r20_C0_V%d", 52*io_opt+is_opt));
-  cout << "h = " << hopt << " name: " << h->GetName() <<  endl;
-  cout << "optimal PH parameters:" << endl << "PH scale = " << is_opt << endl   << "PH offset = " << io_opt << endl << "Best Distance " << bestDist << endl  ;
-  hopt->Draw("");
+  fDisplayedHist = fHistList.begin();
+  for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+    (*il)->Draw((getHistOption(*il)).c_str()); 
+  }
+  PixTest::update(); 
 
 }
-
 
 
 
