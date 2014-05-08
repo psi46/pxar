@@ -30,6 +30,7 @@ PixTest::PixTest(PixSetup *a, string name) {
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
+  fTree = 0; 
 
   // -- provide default map when all ROCs are selected
   map<int, int> id2idx; 
@@ -44,6 +45,7 @@ PixTest::PixTest(PixSetup *a, string name) {
 // ----------------------------------------------------------------------
 PixTest::PixTest() {
   //  LOG(logINFO) << "PixTest ctor()";
+  fTree = 0; 
   
 }
 
@@ -73,6 +75,29 @@ void PixTest::setToolTips() {
 // ----------------------------------------------------------------------
 void PixTest::bookHist(string name) {
   LOG(logDEBUG) << "Nothing done with " << name; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::bookTree() {
+  for (int ipix = 0; ipix < 2000; ++ipix) {
+    fTreeEvent.proc[ipix] = 0; 
+    fTreeEvent.pcol[ipix] = 0; 
+    fTreeEvent.prow[ipix] = 0; 
+    fTreeEvent.pval[ipix] = 0; 
+  }
+
+  if (0 == fTree) {
+    fTree = new TTree("events", "events"); 
+    fTree->SetDirectory(fDirectory);
+    fTree->Branch("header", &fTreeEvent.header, "header/s"); 
+    fTree->Branch("trailer", &fTreeEvent.trailer, "trailer/s"); 
+    fTree->Branch("npix", &fTreeEvent.npix, "npix/s"); 
+    fTree->Branch("proc", fTreeEvent.proc, "proc[npix]/b");
+    fTree->Branch("pcol", fTreeEvent.pcol, "pcol[npix]/b");
+    fTree->Branch("prow", fTreeEvent.prow, "prow[npix]/b");
+    fTree->Branch("pval", fTreeEvent.pval, "pval[npix]/b");
+  }
 }
 
 
