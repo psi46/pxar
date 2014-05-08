@@ -19,6 +19,7 @@ typedef char int8_t;
 #include <TQObject.h> 
 #include <TH1.h> 
 #include <TH2.h> 
+#include <TTree.h> 
 #include <TDirectory.h> 
 #include <TFile.h>
 #include <TSystem.h>
@@ -29,6 +30,19 @@ typedef char int8_t;
 #include "PixInitFunc.hh"
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
+
+typedef struct { 
+  uint16_t dac;
+  uint16_t header; 
+  uint16_t trailer; 
+  uint16_t numDecoderErrors;
+  uint8_t npix;
+  uint8_t proc[2000];
+  uint8_t pcol[2000];
+  uint8_t prow[2000];
+  uint8_t pval[2000];
+} TreeEvent;
+
 
 ///
 /// PixTest
@@ -54,6 +68,8 @@ public:
   void init();
   /// use if you want, or define the histograms in the specific member functions
   void bookHist(std::string name);
+  /// book a minimal tree with pixel events
+  void bookTree();
   /// to create the histograms even without working pxar/core
   virtual void dummyAnalysis(); 
   /// to be filled per test
@@ -222,6 +238,9 @@ protected:
 
   std::vector<std::pair<int, int> > fPIX; ///< range of enabled pixels for time-consuming tests
   std::map<int, int>    fId2Idx; ///< map the ROC ID onto the (results vector) index of the ROC
+  TTree                *fTree; 
+  TreeEvent             fTreeEvent;
+
 
   ClassDef(PixTest, 1); // testing PixTest
 

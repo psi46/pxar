@@ -4,10 +4,15 @@
 DAC Vana
 
 -- DAQ
-Ntrig 100
+FillTree   checkbox
+Ntrig      50000
+iterations 100
+counthits  1
 
 -- BumpBonding
 Ntrig 100
+vcals 250
+xtalk checkbox
 
 -- DacScan
 PHmap checkbox

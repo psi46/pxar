@@ -32,6 +32,10 @@ bool PixTestXray::setParameter(string parName, string sval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
+      if (!parName.compare("filltree")) {
+	fParFillTree = !(atoi(sval.c_str())==0);
+	setToolTips();
+      }
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
@@ -88,6 +92,8 @@ void PixTestXray::bookHist(string /*name*/) {
 //----------------------------------------------------------
 PixTestXray::~PixTestXray() {
   LOG(logDEBUG) << "PixTestXray dtor";
+  fDirectory->cd();
+  if (fTree && fParFillTree) fTree->Write(); 
 }
 
 
@@ -99,6 +105,8 @@ void PixTestXray::doTest() {
   cacheDacs(); 
   PixTest::update(); 
   fDirectory->cd();
+
+  if (fParFillTree) bookTree(); 
   
   // -- Set the ClockStretch ?????????????????????
   // fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
@@ -148,11 +156,29 @@ void PixTestXray::doTest() {
     }
 
     for (vector<Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-      for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end() ; pixit++) {   
-	pname = Form("C%d", pixit->roc_id); 
+      
+      if (fParFillTree) {
+	fTreeEvent.dac              = ithr;
+	fTreeEvent.header           = it->header; 
+	fTreeEvent.trailer          = it->trailer; 
+	fTreeEvent.numDecoderErrors = it->numDecoderErrors;
+	fTreeEvent.npix = it->pixels.size();
+      }
+
+      for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+	pname = Form("C%d", it->pixels[ipix].roc_id); 
 	hitMap[pname]++;
 	++pixCount;
+
+	if (fParFillTree) {
+	  fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
+	  fTreeEvent.pcol[ipix] = it->pixels[ipix].column; 
+	  fTreeEvent.prow[ipix] = it->pixels[ipix].row; 
+	  fTreeEvent.pval[ipix] = it->pixels[ipix].value; 
+	}
       }
+
+      if (fParFillTree) fTree->Fill();
     }
     pCount = pixCount + badCount;
     LOG(logDEBUG) << Form("VthrComp = %3d with daqdat.size() = %6ld #pixels = %d (good: %d bad: %d)", 
