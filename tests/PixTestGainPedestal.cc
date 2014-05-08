@@ -177,7 +177,7 @@ void PixTestGainPedestal::measure() {
   vector<pair<uint8_t, vector<pixel> > > rresult, lresult, hresult; 
   int step = 256/fParNpointsLo;
   for (int i = 0; i < fParNpointsLo; ++i) {
-    cout << "scanning vcal = " << i*step << endl;
+    LOG(logDEBUG) << "scanning vcal = " << i*step;
     rresult = fApi->getPulseheightVsDAC("vcal", i*step, i*step, FLAGS, fParNtrig);
     copy(rresult.begin(), rresult.end(), back_inserter(lresult)); 
   }
@@ -186,7 +186,7 @@ void PixTestGainPedestal::measure() {
   fApi->setDAC("ctrlreg", 4);
   step = 256/fParNpointsHi;
   for (int i = 0; i < fParNpointsHi; ++i) {
-    cout << "scanning vcal = " << 10 + i*step << endl;
+    LOG(logDEBUG) << "scanning vcal = " << 10 + i*step;
     rresult = fApi->getPulseheightVsDAC("vcal", 10 + i*step, 10 + i*step, FLAGS, fParNtrig);
     copy(rresult.begin(), rresult.end(), back_inserter(hresult)); 
   }
