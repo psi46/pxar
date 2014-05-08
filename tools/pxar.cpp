@@ -128,7 +128,7 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
   std::cout << std::endl << std::endl;
 }
 
-void asciiprofile(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, uint8_t roc = 0) {
+void asciiprofile(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, uint8_t /*roc = 0*/) {
 
   if(data.empty()) return;
 
@@ -143,9 +143,8 @@ void asciiprofile(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > da
     
     for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 
-      bool found = false;
-      if(mapit->second.size() == cnt) { std::cout << "o"; found = true; }
-      else if(mapit->second.size() > cnt) { std::cout << "."; found = true; }
+      if(mapit->second.size() == static_cast<size_t>(cnt)) { std::cout << "o"; }
+      else if(mapit->second.size() > static_cast<size_t>(cnt)) { std::cout << "."; }
       else std::cout << " ";
     }
     std::cout << std::endl;

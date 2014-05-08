@@ -68,15 +68,12 @@ PixTestBBMap::~PixTestBBMap() {
 
 //------------------------------------------------------------------------------
 void PixTestBBMap::doTest() {
-  LOG(logINFO) << "PixTestBBMap::doTest() Ntrig = " << fParNtrig
-               << " VcalS = " << fParVcalS
-               << " xtalk = " << fParXtalk;
 
   cacheDacs();
+  PixTest::update();
+  bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d, xtalk = %d", fParNtrig, fParVcalS, fParXtalk));
  
   fDirectory->cd();
-  fHistList.clear();
-  PixTest::update();
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
@@ -135,5 +132,6 @@ void PixTestBBMap::doTest() {
   }
   
   restoreDacs();
+  banner(Form("PixTestBBMap::doTest() done")); 
 
 }

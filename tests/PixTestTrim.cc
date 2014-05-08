@@ -142,6 +142,7 @@ void PixTestTrim::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
+  LOG(logINFO) << "PixTestTrim::doTest() done ";
 }
 
 // ----------------------------------------------------------------------
@@ -458,7 +459,7 @@ void PixTestTrim::trimBitTest() {
   if (h1) h1->Draw();
   PixTest::update(); 
   restoreDacs();
-  LOG(logINFO) << "trimBitTest done "; 
+  LOG(logINFO) << "PixTestTrim::trimBitTest() done "; 
   
 }
 
