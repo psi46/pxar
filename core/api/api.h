@@ -64,6 +64,14 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_NOSORT 0x0040
 
+/** Flag to check the order in which the pixels appear in the raw event readout. Pixels appearing
+ *  in a wrong position (e.g. expecting pixel 13,8 but receiving pixel 13,9) are flagged with a
+ *  negative pulse height. This flag can be used e.g. for pixel address test to make sure all of them
+ *  are answering with their correct address.
+ */
+
+#define FLAG_CHECK_ORDER 0x0080
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).

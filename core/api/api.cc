@@ -1431,6 +1431,9 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 
 std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
 
+  // Keep track of the pixel to be expected:
+  uint8_t expected_column = 0, expected_row = 0;
+
   std::vector<pixel> result;
   LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, returning " << (efficiency ? "efficiency" : "averaged pulse height") << ".";
 
@@ -1444,8 +1447,18 @@ std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTrigg
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     // For every Event, loop over all contained pixels:
     for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
+      if(((flags&FLAG_CHECK_ORDER) != 0) && (pixit->column != expected_column || pixit->row != expected_row)) {
+	LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << (int)expected_column << "," << (int)expected_row << ",x]";
+	pixit->value = -1;
+      }
       result.push_back(*pixit);
     } // loop over pixels
+
+    if((flags&FLAG_CHECK_ORDER) != 0) {
+      expected_row++;
+      if(expected_row >= ROC_NUMROWS) { expected_row = 0; expected_column++; }
+      if(expected_column >= ROC_NUMCOLS) { expected_row = 0; expected_column = 0; }
+    }
   } // loop over Events
 
   // Sort the output map by ROC->col->row - just because we are so nice:
