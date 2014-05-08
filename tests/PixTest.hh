@@ -125,8 +125,8 @@ public:
   std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
 
   /// produce eye-catching printouts
-  void banner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
-  void bigBanner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
+  void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
+  void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   
   /// cache DACs
   void cacheDacs(bool verbose = false); 

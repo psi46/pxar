@@ -178,7 +178,7 @@ int main(int argc, char *argv[]){
     t->doTest();
     delete t; 
     delete api; 
-    exit(0);
+    return 0;
   }
 
   LOG(logINFO) << "closing down 1";

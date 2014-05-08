@@ -133,11 +133,13 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
+  // -- take out until it performs a bit faster
+  if (0){
   setPhRange();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
-
+  }
   saveDacs();
 }
 
