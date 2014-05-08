@@ -921,7 +921,7 @@ vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double ns
       result = minThr; 
       LOG(logDEBUG) << "minThr = " << minThr << " minThrLimit = " << minThrLimit << " -> result = " << result;
     }
-    results.push_back(result); 
+    results.push_back(static_cast<int>(result)); 
   }
   return results; 
 }

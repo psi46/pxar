@@ -169,7 +169,7 @@ void PixTestXray::doTest() {
 	h1->SetBinContent(ithr+1, hitMap[pname]);
 	h1->SetBinError(ithr+1, TMath::Sqrt(hitMap[pname]));
 	if (h1->GetEntries() > maxCnt) {
-	  maxCnt = h1->GetEntries();
+	  maxCnt = static_cast<int>(h1->GetEntries());
 	  maxRoc = iroc; 
 	}
       }

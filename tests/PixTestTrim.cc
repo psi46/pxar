@@ -309,7 +309,7 @@ void PixTestTrim::trimTest() {
 
 
   correction = 2; 
-  vector<TH1*> thr3  = scurveMaps("vcal", "TrimThr3", NTRIG, minthr, maxthr, 1); 
+  vector<TH1*> thr3  = scurveMaps("vcal", "TrimThr3", NTRIG, static_cast<int>(minthr), static_cast<int>(maxthr), 1); 
   thro.clear(); 
   thro = mapsWithString(thr3, "thr_");
   maxthr = getMaximumThreshold(thro);
@@ -320,7 +320,7 @@ void PixTestTrim::trimTest() {
   vector<TH1*> thr3a = trimStep("trimStepCorr2", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
   
   correction = 1; 
-  vector<TH1*> thr4  = scurveMaps("vcal", "TrimThr4", NTRIG, minthr, maxthr, 1); 
+  vector<TH1*> thr4  = scurveMaps("vcal", "TrimThr4", NTRIG, static_cast<int>(minthr), static_cast<int>(maxthr), 1); 
   thro.clear(); 
   thro = mapsWithString(thr4, "thr_");
   maxthr = getMaximumThreshold(thro);
@@ -331,7 +331,7 @@ void PixTestTrim::trimTest() {
   vector<TH1*> thr4a = trimStep("trimStepCorr1a", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
   
   correction = 1; 
-  vector<TH1*> thr5  = scurveMaps("vcal", "TrimThr5", NTRIG, minthr, maxthr, 1); 
+  vector<TH1*> thr5  = scurveMaps("vcal", "TrimThr5", NTRIG, static_cast<int>(minthr), static_cast<int>(maxthr), 1); 
   thro.clear(); 
   thro = mapsWithString(thr5, "thr_");
   maxthr = getMaximumThreshold(thro);
