@@ -145,7 +145,7 @@ namespace pxar {
 	    pixel pix(raw,static_cast<uint8_t>(roc_n),invertedAddress);
 	    roc_Event.pixels.push_back(pix);
 	  }
-	  catch(DataDecoderError &e){
+	  catch(DataDecoderError /*&e*/){
 	    // decoding of raw address lead to invalid address
 	    roc_Event.numDecoderErrors++; // keep track of number of such errors
 	  }
