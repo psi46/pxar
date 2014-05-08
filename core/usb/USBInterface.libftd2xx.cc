@@ -187,8 +187,16 @@ bool CUSB::Open(char serialNumber[])
   }
 #endif
 	
+  // set synchronous bit bang mode (see: http://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232H.pdf page 34ff)
   ftdiStatus = FT_SetBitMode(ftHandle, 0xFF, 0x40);
-  if (ftdiStatus != FT_OK) return false;
+  if (ftdiStatus != FT_OK) UsbConnectionError("Error setting FTDI synchronous bit-bang mode.");
+  // set the baud rate
+  ftdiStatus = FT_SetBaudRate(ftHandle, 9600);
+  if (ftdiStatus != FT_OK) UsbConnectionError("Error setting FTDI baud rate.");
+  // set usb transfer size parameters (see: http://www.ftdichip.com/Support/Knowledgebase/ft_setusbparameters.htm)
+  ftdiStatus = FT_SetUSBParameters(ftHandle, 8192, 8192); // default: 4096, must be multiple of 64
+  if (ftdiStatus != FT_OK) UsbConnectionError("Error setting USB transfer size parameters.");
+
 
   FT_SetTimeouts(ftHandle,m_timeout,m_timeout);
   isUSB_open = true;
@@ -262,8 +270,9 @@ bool CUSB::FillBuffer(uint32_t minBytesToRead)
 	m_posR = 0;
 	if (ftdiStatus != FT_OK)
 	{
-		m_sizeR = 0;
-		return false;
+	  LOG(logCRITICAL) << "FTD2XX error occured: " << GetErrorMsg(ftdiStatus);
+	  m_sizeR = 0;
+	  return false;
 	}
 	return true;
 }
