@@ -10,7 +10,7 @@ using namespace pxar;
 hal::hal(std::string /*name*/) :
   _initialized(false),
   _compatible(false),
-  nTBMs(0),
+  tbmtype(0),
   deser160phase(4)
 {
   // Print the useful SW/FW versioning info:
@@ -59,7 +59,7 @@ bool hal::flashTestboard(std::ifstream& /*flashFile*/) {
   return false;
 }
 
-void hal::initTBM(uint8_t /*tbmId*/, std::map< uint8_t,uint8_t > /*regVector*/) {
+void hal::initTBMCore(uint8_t /*tbmId*/, std::map< uint8_t,uint8_t > /*regVector*/) {
 }
 
 void hal::initROC(uint8_t /*rocId*/, uint8_t /*roctype*/, std::map< uint8_t,uint8_t > /*dacVector*/) {
@@ -124,12 +124,12 @@ bool hal::rocSetDAC(uint8_t /*rocId*/, uint8_t /*dacId*/, uint8_t /*dacValue*/) 
   return true;
 }
 
-bool hal::tbmSetRegs(uint8_t /*tbmId*/, std::map< uint8_t, uint8_t > /*regPairs*/) {
+bool hal::tbmSetRegs(std::map< uint8_t, uint8_t > /*regPairs*/) {
   // Everything went all right:
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t /*tbmId*/, uint8_t /*regId*/, uint8_t /*regValue*/) {
+bool hal::tbmSetReg(uint8_t /*regId*/, uint8_t /*regValue*/) {
   return true;
 }
 
@@ -530,9 +530,7 @@ void hal::SignalProbeA2(uint8_t /*signal*/) {
 void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {
 }
 
-bool hal::daqStart(uint8_t /*deser160phase*/, uint8_t /*nTBMs*/, uint32_t /*buffersize*/) {
-  return true;
-}
+void hal::daqStart(uint8_t /*deser160phase*/, uint8_t /*nTBMs*/, uint32_t /*buffersize*/) {}
 
 Event* hal::daqEvent() {
 
@@ -571,6 +569,6 @@ void hal::daqTriggerLoop(uint16_t /*period*/) {}
 
 uint32_t hal::daqBufferStatus() { return 0; }
 
-bool hal::daqStop() { return true; }
+void hal::daqStop() {}
 
-bool hal::daqClear() { return true; }
+void hal::daqClear() {}
