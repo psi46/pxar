@@ -155,7 +155,7 @@ void hal::SetupI2CValues(std::vector<unsigned char, std::allocator<unsigned char
 
 std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
@@ -166,7 +166,10 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
       for(size_t k = 0; k < nTriggers; k++) {
 	Event* evt = new Event();
 	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
-	  evt->pixels.push_back(pixel(*roc,i,j,90));
+	  // Introduce some address encoding issues:
+	  if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(*roc,i,j+1,90)); } // PX 0,1 answers as PX 0,2
+	  else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
+	  else { evt->pixels.push_back(pixel(*roc,i,j,90)); }
 	}
 	data.push_back(evt);
       }
@@ -200,7 +203,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, 
 
 std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
@@ -210,7 +213,10 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
 	Event* evt = new Event();
-	evt->pixels.push_back(pixel(rocid,i,j,90));
+	// Introduce some address encoding issues:
+	if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(rocid,i,j+1,90));} // PX 0,1 answers as PX 0,2
+	else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
+	else { evt->pixels.push_back(pixel(rocid,i,j,90)); }
 	data.push_back(evt);
       }
     }
