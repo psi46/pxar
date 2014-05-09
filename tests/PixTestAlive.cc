@@ -129,12 +129,10 @@ void PixTestAlive::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  if (0) {
   addressDecodingTest();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
-  }
 
   LOG(logINFO) << "PixTestScurves::doTest() done ";
 
