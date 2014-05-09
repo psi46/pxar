@@ -16,12 +16,14 @@ PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNt
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
+  fTree = 0; 
 }
 
 
 //----------------------------------------------------------
 PixTestDaq::PixTestDaq() : PixTest() {
   LOG(logDEBUG) << "PixTestDaq ctor()";
+  fTree = 0; 
 }
 
 // ----------------------------------------------------------------------
@@ -39,10 +41,14 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 	fParIter = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("clockstretch"))
+      if (!parName.compare("clockstretch")) {
  	fParStretch = atoi(sval.c_str());	
-      if (!parName.compare("counthits"))
-	fParCount = !(atoi(sval.c_str())==0);
+	setToolTips();
+      }
+      if (!parName.compare("filltree")) {
+	fParFillTree = !(atoi(sval.c_str())==0);
+	setToolTips();
+      }
       break;
     }
   }
@@ -81,7 +87,9 @@ void PixTestDaq::bookHist(string name) {
 
 //----------------------------------------------------------
 PixTestDaq::~PixTestDaq() {
-  LOG(logDEBUG) << "PixTestDaq dtor";
+  LOG(logDEBUG) << "PixTestDaq dtor, saving tree ... ";
+  fDirectory->cd();
+  if (fTree && fParFillTree) fTree->Write(); 
 }
 
 
@@ -94,8 +102,7 @@ void PixTestDaq::doTest() {
   fDirectory->cd();
 
   //Set the ClockStretch
-
-  fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
+  //  fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
    
 
   // All on!
@@ -116,6 +123,8 @@ void PixTestDaq::doTest() {
   vector<TH1D*> ph;
   TH1D *h1(0); 
   TH2D *h2(0); 
+
+  if (fParFillTree) bookTree(); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
@@ -158,11 +167,30 @@ void PixTestDaq::doTest() {
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       pixCnt += it->pixels.size(); 
       //      LOG(logDEBUG) << (*it);
-      for(vector<pixel>::iterator pixit = it->pixels.begin(); pixit != it->pixels.end(); pixit++) {   
-	hits[getIdxFromId(pixit->roc_id)]->Fill(pixit->column,pixit->row);
-	phmap[getIdxFromId(pixit->roc_id)]->SetBinContent(pixit->column,pixit->row,pixit->value);
-	ph[getIdxFromId(pixit->roc_id)]->Fill(pixit->value);
+
+      if (fParFillTree) {
+	fTreeEvent.header           = it->header; 
+	fTreeEvent.dac              = 0;
+	fTreeEvent.trailer          = it->trailer; 
+	fTreeEvent.numDecoderErrors = it->numDecoderErrors;
+	fTreeEvent.npix = it->pixels.size();
       }
+
+      for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
+	hits[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+	phmap[getIdxFromId(it->pixels[ipix].roc_id)]->SetBinContent(it->pixels[ipix].column, 
+								    it->pixels[ipix].row, 
+								    it->pixels[ipix].value);
+	ph[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].value);
+
+	if (fParFillTree) {
+	  fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
+	  fTreeEvent.pcol[ipix] = it->pixels[ipix].column; 
+	  fTreeEvent.prow[ipix] = it->pixels[ipix].row; 
+	  fTreeEvent.pval[ipix] = it->pixels[ipix].value; 
+	}
+      }
+      if (fParFillTree) fTree->Fill();
     }
     
     cout << Form("Run %4d", iter) << Form(" # events read: %6ld, pixels seen in all events: %3d, hist entries: %4d", 

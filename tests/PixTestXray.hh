@@ -21,6 +21,7 @@ private:
   int     fParNtrig, fParIter; 
   int     fParStretch; 
   int     fParVthrCompMin, fParVthrCompMax; 
+  bool    fParFillTree;
 
   ClassDef(PixTestXray, 1)
 
