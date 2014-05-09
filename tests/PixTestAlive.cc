@@ -221,8 +221,7 @@ void PixTestAlive::addressDecodingTest() {
   fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
 
-
-  fDirectory->cd(); 
+  fDirectory->cd();
   vector<TH2D*> maps;
   TH2D *h2(0); 
 
@@ -238,44 +237,22 @@ void PixTestAlive::addressDecodingTest() {
     maps.push_back(h2); 
   }
 
-  vector<pixel> results;
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
 
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-  vector<Event> daqBuffer;
-  int idx(-1); 
-  for (int iy = 0; iy < 80; ++iy) {
-    LOG(logDEBUG) << " row " << iy; 
-    for (int ix = 0; ix < 52; ++ix) {
-      fApi->_dut->testPixel(ix, iy, true);
-      fApi->_dut->maskPixel(ix, iy, false);
-      fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
-      fApi->daqTrigger(1);
+  int idx(-1);
+  std::vector<pxar::pixel> test = fApi->getEfficiencyMap(FLAG_CHECK_ORDER,1);
+  for(std::vector<pxar::pixel>::iterator pix = test.begin(); pix != test.end(); ++pix) {
+    idx = getIdxFromId(pix->roc_id);
+    h2 = maps[idx];
+    if(pix->value < 0) {
+      h2->SetBinContent(pix->column+1, pix->row+1, -1);
+      LOG(logDEBUG) << " read col/row = " << pix->column << "/" << pix->row 
+		    << " address decoding error";
 
-      daqBuffer = fApi->daqGetEventBuffer();
-      for (unsigned int i = 0; i < daqBuffer.size(); i++) {
-	for (unsigned int ipix = 0; ipix < daqBuffer[i].pixels.size(); ++ipix) {
-	  idx = getIdxFromId(daqBuffer[i].pixels[ipix].roc_id);
-	  h2 = maps[idx];
-	  int row = daqBuffer[i].pixels[ipix].row; 
-	  int col = daqBuffer[i].pixels[ipix].column; 
-	  if (ix == col && iy == row) {
-	    h2->SetBinContent(col+1, row+1, 1.); 
-	  } else {
-	    h2->SetBinContent(col+1, row+1, -1.); 
-	    LOG(logDEBUG) << " read col/row = " << col << "/" << row 
-			  << " programmed col/row = " << ix << "/" << iy
-			  << " address decoding error";
-	  }
-	}
-      }
-
-      fApi->daqStop();
-      fApi->_dut->testPixel(ix, iy, false);
-      fApi->_dut->maskPixel(ix, iy, true);
     }
-    
-  }  
+    else { h2->SetBinContent(pix->column+1, pix->row+1, 1.); }
+  }
 
   copy(maps.begin(), maps.end(), back_inserter(fHistList));
   
@@ -287,6 +264,8 @@ void PixTestAlive::addressDecodingTest() {
   restoreDacs();
   LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
 }
+
+
 
 
 // ----------------------------------------------------------------------
