@@ -241,7 +241,7 @@ void PixTestAlive::addressDecodingTest() {
   fApi->_dut->maskAllPixels(false);
 
   int idx(-1);
-  std::vector<pxar::pixel> test = fApi->getEfficiencyMap(FLAG_CHECK_ORDER,1);
+  std::vector<pxar::pixel> test = fApi->getEfficiencyMap(FLAG_CHECK_ORDER | FLAG_FORCE_MASKED,1);
   for(std::vector<pxar::pixel>::iterator pix = test.begin(); pix != test.end(); ++pix) {
     idx = getIdxFromId(pix->roc_id);
     h2 = maps[idx];

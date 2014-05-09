@@ -68,6 +68,8 @@ typedef unsigned char uint8_t;
  *  in a wrong position (e.g. expecting pixel 13,8 but receiving pixel 13,9) are flagged with a
  *  negative pulse height. This flag can be used e.g. for pixel address test to make sure all of them
  *  are answering with their correct address.
+ *  This flag basically requires FLAG_FORCE_MASKED to work in a predictable way, otherwise noise pixels
+ *  might end up being flagged as out-of-order.
  */
 
 #define FLAG_CHECK_ORDER 0x0080
