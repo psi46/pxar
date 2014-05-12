@@ -12,6 +12,20 @@ PROJECT( pxar )
 SET(PXAR_VERSION "0.9.7")
 SET(PXAR_FW_VERSION "2.15")
 
+
+#########################################
+# pxar build options and their defaults #
+#########################################
+
+OPTION(BUILD_tools  "Compile pxar tools? (flash, testpxar...)" ON)
+OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
+OPTION(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
+
+
+########################################
+# Setup the build environment for pxar #
+########################################
+
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
@@ -60,9 +74,6 @@ SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to insta
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
 include( cmake/Platform.cmake)
-
-# Build options and their defaults:
-OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
 
 
 #######################################
@@ -165,17 +176,13 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
 ##################################################
-# Preparing the build of the shared pXar library #
+# Preparing the build of the shared pxar library #
 ##################################################
 
-# some optional components
-option(BUILD_utils  "Compile utilities for pxar?" OFF)
-option(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
-
 # Include directories
-INCLUDE_DIRECTORIES( core/api core/utils)
+INCLUDE_DIRECTORIES(core/api core/utils)
 
-# Always build main pXar API library;
+# Always build main pxar API library;
 ADD_SUBDIRECTORY(core)
 
 # full UI and test suite (requires ROOT)
@@ -204,17 +211,9 @@ IF(BUILD_pxarui)
 
 ENDIF(BUILD_pxarui)
 
-# utility library and useful tools
-IF(BUILD_utils)
-  ADD_SUBDIRECTORY(util)
-ENDIF(BUILD_utils)
-
-option(BUILD_tools  "Compile pxar tools?" ON)
 IF(BUILD_tools)
-
   # Build pxar tools
   ADD_SUBDIRECTORY(tools)
-
 ENDIF(BUILD_tools)
 
 
