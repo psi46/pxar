@@ -122,7 +122,7 @@ const char *CTestboard::rpc_cmdName[] =
 	/*   108 */ "LoopInterruptReset$v",
 	/*   109 */ "SetLoopTriggerDelay$vS",
 	/*   110 */ "SetI2CAddresses$b1C",
-	/*   111 */ "SetTrimValues$bC1c",
+	/*   111 */ "SetTrimValues$bC1C",
 	/*   112 */ "LoopMultiRocAllPixelsCalibrate$b1CSS",
 	/*   113 */ "LoopMultiRocOnePixelCalibrate$b1CCCSS",
 	/*   114 */ "LoopSingleRocAllPixelsCalibrate$bCSS",
@@ -1897,7 +1897,7 @@ bool CTestboard::SetI2CAddresses(vector<uint8_t> &rpc_par1)
 	return rpc_par0;
 }
 
-bool CTestboard::SetTrimValues(uint8_t rpc_par1, vector<int8_t> &rpc_par2)
+bool CTestboard::SetTrimValues(uint8_t rpc_par1, vector<uint8_t> &rpc_par2)
 { RPC_PROFILING
 	bool rpc_par0;
 	try {

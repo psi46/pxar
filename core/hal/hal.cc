@@ -505,15 +505,16 @@ void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
 void hal::SetupTrimValues(uint8_t roci2c, std::vector<pixelConfig> pixels) {
 
   // Prepare the trim vector containing both mask bit and trim bits:
-  std::vector<int8_t> trim;
+  std::vector<uint8_t> trim;
 
-  // Set the default to "masked":
-  for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(-1); }
+  // Set the default to "masked" (everything >15 is interpreted as such):
+  for(size_t i = 0; i < ROC_NUMCOLS*ROC_NUMROWS; i++) { trim.push_back(20); }
 
   // Write the information from the pixel configs:
   for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
     size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
-    if(pxIt->mask) trim[position] = -1;
+    // trim values larger than 15 are interpreted as masked:
+    if(pxIt->mask) trim[position] = 20;
     else trim[position] = pxIt->trim;
   }
 

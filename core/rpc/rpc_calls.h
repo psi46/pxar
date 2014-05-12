@@ -282,7 +282,7 @@ public:
 	// == Trigger Loop functions for Host-side DAQ ROC/Module testing ==============
 	// Exported RPC-Calls for the Trimbit storage setup:
 	RPC_EXPORT bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
-	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<int8_t> &trimvalues);
+	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<uint8_t> &trimvalues);
 	
 	RPC_EXPORT void SetLoopTriggerDelay(uint16_t delay);
 	RPC_EXPORT void LoopInterruptReset();
