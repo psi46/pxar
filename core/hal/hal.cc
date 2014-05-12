@@ -336,13 +336,15 @@ bool hal::FindDTB(std::string &usbId) {
     }
   }
   catch (int e) {
+    std::stringstream estr;
+    estr << e;
     switch (e) {
     case 1: 
       LOG(logCRITICAL) << "Cannot access the USB driver"; 
       throw UsbConnectionError("Cannot access the USB driver");
       break;
-    default: 
-      throw UsbConnectionError("Coudn't open connection, received error number " + e);
+    default:
+      throw UsbConnectionError("Couldn't open connection, received error number " + estr.str());
       break;
     }
   }
