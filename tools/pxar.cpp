@@ -531,6 +531,37 @@ int main(int argc, char* argv[]) {
     }
 
     // ##########################################################
+
+    // ##########################################################
+    // Call the second real test (a DAC scan for some pixels):
+
+    // disable pixel(s)
+    _api->_dut->testAllPixels(false);
+    //    _api->_dut->testPixel(34,12,true);
+    //    _api->_dut->testPixel(33,12,true);
+    _api->_dut->testPixel(34,11,true);
+    _api->_dut->testPixel(14,12,true);
+    _api->_dut->maskPixel(14,12,false);
+
+    _api->_dut->info();
+    
+
+    // Call the test:
+    int nTrig22 = 100;
+    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
+      effscandata22 = _api->getEfficiencyVsDAC("vcal", 0, 90, 0, nTrig22);
+    
+    // Check out the data we received:
+    std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata22.size() << std::endl;
+    
+    enabledrocs = _api->_dut->getEnabledRocIDs();
+    for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
+      std::cout << "VCal scan for ROC " << (int)(*it) << std::endl;
+      asciihisto(effscandata22,nTrig22,14,12,0);
+      std::cout << std::endl;
+    }
+
+    // ##########################################################
     
     // ##########################################################
     // Call the third real test (a DACDAC scan for some pixels):
