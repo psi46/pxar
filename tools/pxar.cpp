@@ -175,7 +175,7 @@ void asciiprofile(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > da
   std::cout << std::endl << std::endl;
 }
 
-void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
+void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc, uint8_t width) {
 
   if(data.empty()) return;
 
@@ -184,10 +184,10 @@ void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
       bool found = false;
       for (std::vector< pxar::pixel >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 	if(mapit->row == row && mapit->column == column && mapit->roc_id == roc) {
-	  if((int)mapit->value == nTrig) std::cout << "X";
-	  else if((int)mapit->value == 0) std::cout << "-";
-	  else if((int)mapit->value > nTrig) std::cout << "#";
-	  else std::cout << (int)mapit->value;
+	  if((int)mapit->value == nTrig) std::cout << std::setw(width) << "X";
+	  else if((int)mapit->value == 0) std::cout << std::setw(width) << "-";
+	  else if((int)mapit->value > nTrig) std::cout << std::setw(width) << "#";
+	  else std::cout << std::setw(width) << (int)mapit->value;
 	  found = true;
 	  break;
 	}
@@ -196,6 +196,10 @@ void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
     }
     std::cout << std::endl;
   }
+}
+
+void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
+  asciimap(data, nTrig, roc, 1);
 }
 
 int main(int argc, char* argv[]) {
