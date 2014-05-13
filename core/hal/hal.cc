@@ -148,15 +148,18 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
 void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
   // Write the (sorted!) PG patterns into adjacent register addresses:
-  uint8_t addr = 0;
+  std::vector<uint16_t> cmd;
+
+  LOG(logDEBUGHAL) << "Setting Pattern Generator:";
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
-    uint16_t cmd = (*it).first | (*it).second;
-    LOG(logDEBUGHAL) << "Setting PG cmd " << std::hex << cmd << std::dec 
-		     << " (addr " << static_cast<int>(addr) << " pat " << std::hex << static_cast<int>((*it).first) << std::dec
+    cmd.push_back((*it).first | (*it).second);
+    LOG(logDEBUGHAL) << " cmd " << std::hex << cmd.back() << std::dec
+		     << " (addr " << static_cast<int>(cmd.size()-1)
+		     << " pat " << std::hex << static_cast<int>((*it).first) << std::dec
 		     << " del " << static_cast<int>((*it).second) << ")";
-    _testboard->Pg_SetCmd(addr, cmd);
-    addr++;
   }
+
+  _testboard->Pg_SetCmdAll(cmd);
 
   // Since the last delay is known to be zero we don't have to overwrite the rest of the address range - 
   // the Pattern generator will stop automatically at that point.
