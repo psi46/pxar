@@ -491,14 +491,8 @@ namespace pxar {
     // DAQ functions
 
     /** Function to set up and initialize a new data acquisition session (DAQ)
-     *
-     *  This function takes a new Pattern Generator setup as argument, if left 
-     *  empty the one which is currently programmed via the api::initTestboard 
-     *  function is used. The given pattern generator only lives for the time 
-     *  of the data acquisition and is replaced by the previous one after 
-     *  stopping the DAQ.
      */
-    bool daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+    bool daqStart();
 
     /** Function to get back the DAQ status
      *

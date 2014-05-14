@@ -1010,24 +1010,14 @@ int32_t api::getReadbackValue(std::string /*parameterName*/) {
 
 // DAQ functions
 
-bool api::daqStart(std::vector<std::pair<uint16_t, uint8_t> > pg_setup) {
+bool api::daqStart() {
 
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
 
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
-  if(!pg_setup.empty()) {
-    // Prepare new Pattern Generator:
-    if(!verifyPatternGenerator(pg_setup)) return false;
-    _hal->SetupPatternGenerator(pg_setup);
-
-    // Calculate minimum PG period:
-    _daq_minimum_period = getPatternGeneratorDelaySum(pg_setup);
-  }
-  else {
-    // Calculate minimum PG period from stored Pattern Generator:
-    _daq_minimum_period = getPatternGeneratorDelaySum(_dut->pg_setup);
-  }
+  // Calculate minimum PG period from stored Pattern Generator:
+  _daq_minimum_period = getPatternGeneratorDelaySum(_dut->pg_setup);
   
   // Setup the configured mask and trim state of the DUT:
   MaskAndTrim(true);
