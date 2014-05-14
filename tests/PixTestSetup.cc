@@ -155,7 +155,7 @@ void PixTestSetup::doTest()
 			setTbParameters(iclk, ideser);	
 			sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
 
-			fApi->initTestboard(sig_delays, power_settings, pg_setup);  //FIXME to be divided
+			fApi->setTestboardDelays(sig_delays);
 
 			// Start the DAQ:
 			fApi->daqStart();
