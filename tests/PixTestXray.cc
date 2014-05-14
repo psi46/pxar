@@ -147,7 +147,7 @@ void PixTestXray::doTest() {
     fApi->setDAC("vthrcomp", ithr); 
     for (int iter = 0; iter < fParIter; ++iter) {
       idat.clear();
-      fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+      fApi->daqStart();
       fApi->daqTrigger(fParNtrig);
       idat = fApi->daqGetEventBuffer();
       badCount += fApi->daqGetNDecoderErrors(); 

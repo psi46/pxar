@@ -158,7 +158,7 @@ void PixTestSetup::doTest()
 			fApi->initTestboard(sig_delays, power_settings, pg_setup);  //FIXME to be divided
 
 			// Start the DAQ:
-			fApi->daqStart(pg_setup);
+			fApi->daqStart();
 			// Send the triggers:
 			fApi->daqTrigger(Ntrig);
 			// Read the raw event:

@@ -409,9 +409,12 @@ void PixTestPattern::doTest()
 		}
 		else                fApi->_dut->maskAllPixels(false);
 	}
-		
+
+	// Set up the pattern generator:
+	fApi->setPatternGenerator(pg_setup);
+
 	// Start the DAQ:
-	fApi->daqStart(pg_setup);
+	fApi->daqStart();
 	// Send the triggers (it does Ntrig times the pg_Sinlgle() == Ntrig times pattern sequence):
 	fApi->daqTrigger(fParNtrig);
 		

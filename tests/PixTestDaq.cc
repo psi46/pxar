@@ -154,7 +154,7 @@ void PixTestDaq::doTest() {
   for (int iter = 0; iter < fParIter; iter++) {
     int pixCnt(0); 
     // Start the DAQ:
-    fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+    fApi->daqStart();
     
     // Send the triggers:
     fApi->daqTrigger(fParNtrig);

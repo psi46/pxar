@@ -75,7 +75,7 @@ uint8_t PixTestShowIana::readRocADC(uint8_t adc)
     fApi->setDAC("readback", adc);
 
     //read 32 events
-    fApi->daqStart(fPixSetup->getConfigParameters()->getTbPgSettings());
+    fApi->daqStart();
     fApi->daqTrigger(32);
     fApi->daqStop();
     vector<pxar::Event> events = fApi->daqGetEventBuffer();
