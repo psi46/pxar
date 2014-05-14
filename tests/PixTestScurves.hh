@@ -20,6 +20,7 @@ public:
   void runCommand(std::string command); 
   void thrMap(); 
   void fitS(); 
+  void scurves(); 
 
 private:
 

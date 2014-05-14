@@ -14,8 +14,6 @@ SET(LIB_SOURCE_FILES
   "api/dut.cc"
   # HAL (w/o hal.cc, see below)
   "hal/datapipe.cc"
-  # Utils
-  "utils/helper.cc"
   )
 
 # option to replace HAL implementation with "dummy" HAL (for testing of UI code w/o DTB)

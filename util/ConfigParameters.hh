@@ -26,6 +26,11 @@ typedef char int8_t;
 
 #include "api.h"
 
+struct gainPedestalParameters {
+  double p0, p1, p2, p3; 
+};
+
+
 class DLLEXPORT ConfigParameters {
 public:
   ConfigParameters();
@@ -49,15 +54,7 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
-  template <typename T1, typename T2>
-    std::string dumpParameters(std::vector<std::pair<T1, T2> > v) {
-    std::stringstream line;
-    for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
-      line << " " << it->first << ": " << static_cast<int>(it->second); 
-    }
-    return line.str();
-  }
-
+  template <typename T1, typename T2> std::string dumpParameters(std::vector<std::pair<T1, T2> > v);
   static ConfigParameters* Singleton();
 
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
@@ -65,6 +62,7 @@ public:
   std::string getTbmParameterFileName()   {return fTbmParametersFileName;}
   std::string getTrimParameterFileName()  {return fTrimParametersFileName;}
   std::string getTestParameterFileName()  {return fTestParametersFileName;}
+  std::string getGainPedestalParameterFileName()  {return fGainPedestalParameterFileName;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}
@@ -79,6 +77,7 @@ public:
   std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
+  std::vector<std::string> getDacs();
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
@@ -111,6 +110,11 @@ public:
   void setSelectedRocs(std::vector<int> v) {fSelectedRocs = v;}
   void setSelectedTbms(std::vector<int> v) {fSelectedTbms = v;}
 
+  void readGainPedestalParameters(); 
+  void writeGainPedestalParameters(); 
+  void setGainPedestalParameters(std::vector<std::vector<gainPedestalParameters> >); 
+  std::vector<std::vector<gainPedestalParameters> > getGainPedestalParameters(); 
+
   double getIa() {return ia;}
   double getId() {return id;}
   double getVa() {return va;}
@@ -128,6 +132,8 @@ private:
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
   std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
   std::vector<int> fSelectedRocs, fSelectedTbms;
+
+  std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fCustomModule, fHalfModule;
@@ -148,9 +154,20 @@ private:
   std::string fLogFileName;
   std::string fMaskFileName;
   std::string fDebugFileName;
+  std::string fGainPedestalParameterFileName; 
 
   static ConfigParameters* fInstance;
 
 };
+
+// ----------------------------------------------------------------------
+template <typename T1, typename T2> std::string ConfigParameters::dumpParameters(std::vector<std::pair<T1, T2> > v) {
+  std::stringstream line;
+  for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
+    line << " " << it->first << ": " << static_cast<int>(it->second); 
+  }
+  return line.str();
+}
+
 
 #endif

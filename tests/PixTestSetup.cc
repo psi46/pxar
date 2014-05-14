@@ -32,17 +32,15 @@ PixTestSetup::PixTestSetup() : PixTest()
 bool PixTestSetup::setParameter(string parName, string sval)
 {
   bool found(false);
-  string stripParName; 
   ParOutOfRange = false;
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) 
   {
     if (fParameters[i].first == parName) 
     {
     	found = true; 
 
- 	LOG(logDEBUG) << "  ==> parName: " << parName;
-	LOG(logDEBUG) << "  ==> sval:    " << sval;
-	if (!parName.compare("ClkMax")) 
+	if (!parName.compare("clkmax")) 
 	{
 		fClkMax = atoi(sval.c_str()); 
 		if(fClkMax < 0 || fClkMax > 25)	
@@ -52,7 +50,7 @@ bool PixTestSetup::setParameter(string parName, string sval)
 		}
 		//setToolTips();
         }
-  	if (!parName.compare("DeserMax")) 
+  	if (!parName.compare("desermax")) 
 	{
 		fDeserMax = atoi(sval.c_str()); 
 		if(fDeserMax < 0 || fDeserMax > 7)	
@@ -114,6 +112,7 @@ PixTestSetup::~PixTestSetup()
 //------------------------------------------------------------------------------
 void PixTestSetup::doTest()
 {
+    cacheDacs();
 	if (ParOutOfRange) return;
 	fDirectory->cd();
 	fHistList.clear();
@@ -222,6 +221,7 @@ void PixTestSetup::doTest()
 
 	fApi->initTestboard(sig_delays2, power_settings, pg_setup);
 
+	restoreDacs();
 	LOG(logINFO) << "PixTestSetup::doTest() done for " ;
 }
 

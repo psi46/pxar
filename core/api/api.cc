@@ -200,9 +200,14 @@ bool api::initDUT(uint8_t hubid,
   _dut->hubId = hubid;
 
   // Initialize TBMs:
-  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt){
+  LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
+
+  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
+
+    LOG(logDEBUGAPI) << "Processing TBM Core " << (int)(tbmIt - tbmDACs.begin());
     // Prepare a new TBM configuration
     tbmConfig newtbm;
+
     // Set the TBM type (get value from dictionary)
     newtbm.type = stringToDeviceCode(tbmtype);
     if(newtbm.type == 0x0) return false;
@@ -210,23 +215,44 @@ bool api::initDUT(uint8_t hubid,
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
 
-      // Fill the DAC pairs with the register from the dictionary:
-      uint8_t dacRegister, dacValue = dacIt->second;
-      if(!verifyRegister(dacIt->first, dacRegister, dacValue, TBM_REG)) continue;
+      // Fill the register pairs with the register id from the dictionary:
+      uint8_t tbmregister, value = dacIt->second;
+      if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
 
+      // Check if this is fore core alpha or beta:
+      if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
+      else { tbmregister = 0xF0 | tbmregister; } // beta core
+      
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-      ret = newtbm.dacs.insert( std::make_pair(dacRegister,dacValue) );
+      ret = newtbm.dacs.insert( std::make_pair(tbmregister,value) );
       if(ret.second == false) {
 	LOG(logWARNING) << "Overwriting existing DAC \"" << dacIt->first 
 			<< "\" value " << static_cast<int>(ret.first->second)
-			<< " with " << static_cast<int>(dacValue);
-	newtbm.dacs[dacRegister] = dacValue;
+			<< " with " << static_cast<int>(value);
+	newtbm.dacs[tbmregister] = value;
       }
     }
 
     // Done. Enable bit is already set by tbmConfig constructor.
     _dut->tbm.push_back(newtbm);
   }
+
+  // Check number of configured TBM cores. If we only got one register vector, we re-use it for the second TBM core:
+  if(_dut->tbm.size() == 1) {
+    LOG(logDEBUGAPI) << "Only register settings for one TBM core supplied. Duplicating to second core.";
+    // Prepare a new TBM configuration and copy over all settings:
+    tbmConfig newtbm;
+    newtbm.type = _dut->tbm.at(0).type;
+    
+    for(std::map<uint8_t,uint8_t>::iterator reg = _dut->tbm.at(0).dacs.begin(); reg != _dut->tbm.at(0).dacs.end(); ++reg) {
+      uint8_t tbmregister = reg->first;
+      // Flip the last bit of the TBM core identifier:
+      tbmregister ^= (1u << 4);
+      newtbm.dacs.insert(std::make_pair(tbmregister,reg->second));
+    }
+    _dut->tbm.push_back(newtbm);
+  }
+
 
   // Initialize ROCs:
   size_t nROCs = 0;
@@ -295,11 +321,10 @@ bool api::programDUT() {
   // Start programming the devices here!
   _hal->setHubId(_dut->hubId); 
 
-  // FIXME Device types not transmitted yet!
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBM(static_cast<uint8_t>(tbmit - enabledTbms.begin()),(*tbmit).dacs);
+    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -590,18 +615,21 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
   if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
-
+    
+    // Get the core (alpha/beta) from one of the registers:
+    _register |= _dut->tbm.at(tbmid).dacs.begin()->first&0xF0;
+    
     // Update the DUT register Value:
-    ret = _dut->tbm.at(tbmid).dacs.insert( std::make_pair(_register,regValue) );
+    ret = _dut->tbm.at(tbmid).dacs.insert(std::make_pair(_register,regValue));
     if(ret.second == true) {
-      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
+      LOG(logWARNING) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") was not initialized. Created with value " << static_cast<int>(regValue);
     }
     else {
       _dut->tbm.at(tbmid).dacs[_register] = regValue;
-      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
+      LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
     }
-
-    _hal->tbmSetReg(static_cast<uint8_t>(tbmid),_register,regValue);
+    
+    _hal->tbmSetReg(_register,regValue);
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
@@ -612,28 +640,8 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
 bool api::setTbmReg(std::string regName, uint8_t regValue) {
 
-  if(!status()) {return 0;}
-  
-  // Get the register number and check the range from dictionary:
-  uint8_t _register;
-  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
-
-  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-  // Set the register for all active TBMs:
-  std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit) {
-
-    // Update the DUT register Value:
-    ret = _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs.insert( std::make_pair(_register,regValue) );
-    if(ret.second == true) {
-      LOG(logWARNING) << "Register \"" << regName << "\" was not initialized. Created with value " << static_cast<int>(regValue);
-    }
-    else {
-      _dut->tbm.at(static_cast<uint8_t>(tbmit - enabledTbms.begin())).dacs[_register] = regValue;
-      LOG(logDEBUGAPI) << "Register \"" << regName << "\" updated with value " << static_cast<int>(regValue);
-    }
-
-    _hal->tbmSetReg(static_cast<uint8_t>(tbmit - enabledTbms.begin()),_register,regValue);
+  for(size_t tbms = 0; tbms < _dut->tbm.size(); ++tbms) {
+    if(!setTbmReg(regName, regValue, tbms)) return false;
   }
   return true;
 }
@@ -675,11 +683,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacMin,dacMax,nTriggers,false);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags,false);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -727,11 +733,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacMin,dacMax,nTriggers,true);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacMin,dacMax,nTriggers,flags,true);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -799,12 +803,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,useRisingEdge);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -870,11 +871,9 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,false);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags,false);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -939,11 +938,9 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags,true);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -975,12 +972,10 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel> result = repackMapData(data, nTriggers, false);
+  std::vector<pixel> result = repackMapData(data, nTriggers, flags,false);
 
   return result;
 }
@@ -1001,12 +996,10 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel> result = repackMapData(data, nTriggers, true);
+  std::vector<pixel> result = repackMapData(data, nTriggers, flags, true);
 
   return result;
 }
@@ -1043,13 +1036,10 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  bool forceSerial = (flags & FLAG_FORCE_SERIAL) != 0;
-  bool forceMasked = (flags & FLAG_FORCE_MASKED) != 0;
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, forceSerial, forceMasked);
+  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
-  bool useRisingEdge = (flags & FLAG_RISING_EDGE) != 0;
-  std::vector<pixel> result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, useRisingEdge);
+  std::vector<pixel> result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags);
 
   return result;
 }
@@ -1250,7 +1240,7 @@ bool api::daqStop() {
 }
 
 
-std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param,  bool forceSerial, bool forceMasked) {
+std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags) {
   
   // pointer to vector to hold our data
   std::vector<Event*> data = std::vector<Event*>();
@@ -1260,18 +1250,18 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 
   // Do the masking/unmasking&trimming for all ROCs first.
   // If we run in FLAG_FORCE_MASKED mode, transmit the new trim values to the NIOS core and mask the whole DUT:
-  if(forceMasked) {
+  if((flags & FLAG_FORCE_MASKED) != 0) {
     MaskAndTrimNIOS();
     MaskAndTrim(false);
   }
   // If we run in FLAG_FORCE_SERIAL mode, mask the whole DUT:
-  else if(forceSerial) { MaskAndTrim(false); }
+  else if((flags & FLAG_FORCE_SERIAL) != 0) { MaskAndTrim(false); }
   // Else just trim all the pixels:
   else { MaskAndTrim(true); }
 
   // Check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
-  if ((_dut->getNEnabledRocs() > 1) && !forceSerial) {
+  if ((_dut->getNEnabledRocs() > 1) && ((flags & FLAG_FORCE_SERIAL) == 0)) {
 
     // Get the I2C addresses for all enabled ROCs from the config:
     std::vector<uint8_t> rocs_i2c = _dut->getEnabledRocI2Caddr();
@@ -1333,7 +1323,7 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 
 	// If we have serial execution make sure to trim the ROC unless we requested forceMasked:
-	if(forceSerial && !forceMasked) { MaskAndTrim(true,rocit); }
+	if(((flags & FLAG_FORCE_SERIAL) != 0) && ((flags & FLAG_FORCE_MASKED) == 0)) { MaskAndTrim(true,rocit); }
 
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
@@ -1460,7 +1450,10 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
   return packed;
 }
 
-std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, bool efficiency) {
+std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
+
+  // Keep track of the pixel to be expected:
+  uint8_t expected_column = 0, expected_row = 0;
 
   std::vector<pixel> result;
   LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, returning " << (efficiency ? "efficiency" : "averaged pulse height") << ".";
@@ -1475,12 +1468,22 @@ std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTrigg
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     // For every Event, loop over all contained pixels:
     for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
+      if(((flags&FLAG_CHECK_ORDER) != 0) && (pixit->column != expected_column || pixit->row != expected_row)) {
+	LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << (int)expected_column << "," << (int)expected_row << ",x]";
+	pixit->value = -1;
+      }
       result.push_back(*pixit);
     } // loop over pixels
+
+    if((flags&FLAG_CHECK_ORDER) != 0) {
+      expected_row++;
+      if(expected_row >= ROC_NUMROWS) { expected_row = 0; expected_column++; }
+      if(expected_column >= ROC_NUMCOLS) { expected_row = 0; expected_column = 0; }
+    }
   } // loop over Events
 
   // Sort the output map by ROC->col->row - just because we are so nice:
-  std::sort(result.begin(),result.end());
+  if((flags&FLAG_NOSORT) == 0) { std::sort(result.begin(),result.end()); }
 
   // Cleanup temporary data:
   for(std::vector<Event*>::iterator it = packed.begin(); it != packed.end(); ++it) { delete *it; }
@@ -1490,7 +1493,7 @@ std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTrigg
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool efficiency){
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency){
 
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result;
 
@@ -1528,19 +1531,20 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
   return result;
 }
 
-std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, bool rising_edge) {
+std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
 
   // Threshold is the 50% efficiency level:
   uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
-  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " << (rising_edge ? "rising":"falling") << " edge";
+  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " 
+		   << ((flags&FLAG_RISING_EDGE) == 0 ? "falling":"rising") << " edge";
 
   // Measure time:
   timer t;
 
   // First, pack the data as it would be a regular Dac Scan:
-  std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacMin, dacMax, nTriggers, true);
+  std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacMin, dacMax, nTriggers, flags, true);
 
   // Efficiency map:
   std::map<pixel,uint8_t> oldvalue;  
@@ -1550,7 +1554,7 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it_start;
   std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it_end;
   int increase_op;
-  if(rising_edge) { it_start = packed_dac.begin(); it_end = packed_dac.end(); increase_op = 1; }
+  if((flags&FLAG_RISING_EDGE) != 0) { it_start = packed_dac.begin(); it_end = packed_dac.end(); increase_op = 1; }
   else { it_start = packed_dac.end()-1; it_end = packed_dac.begin()-1; increase_op = -1;  }
 
   for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
@@ -1587,26 +1591,27 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   }
 
   // Sort the output map by ROC->col->row - just because we are so nice:
-  std::sort(result.begin(),result.end());
+  if((flags&FLAG_NOSORT) == 0) { std::sort(result.begin(),result.end()); }
 
   LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdMap data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool rising_edge) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
 
   // Threshold is the 50% efficiency level:
   uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
-  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " << (rising_edge ? "rising":"falling") << " edge";
+  LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " 
+		   << ((flags&FLAG_RISING_EDGE) == 0 ? "falling":"rising") << " edge";
 
   // Measure time:
   timer t;
 
   // First, pack the data as it would be a regular DacDac Scan:
-  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,true);
+  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags,true);
 
   // Efficiency map:
   std::map<uint8_t,std::map<pixel,uint8_t> > oldvalue;  
@@ -1616,7 +1621,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScan
   std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it_start;
   std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it_end;
   int increase_op;
-  if(rising_edge) { it_start = packed_dacdac.begin(); it_end = packed_dacdac.end(); increase_op = 1; }
+  if((flags&FLAG_RISING_EDGE) != 0) { it_start = packed_dacdac.begin(); it_end = packed_dacdac.end(); increase_op = 1; }
   else { it_start = packed_dacdac.end()-1; it_end = packed_dacdac.begin()-1; increase_op = -1;  }
 
   for(std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > >::iterator it = it_start; it != it_end; it += increase_op) {
@@ -1668,14 +1673,14 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScan
   }
 
   // Sort the output map by DAC values and ROC->col->row - just because we are so nice:
-  std::sort(result.begin(),result.end());
+  if((flags&FLAG_NOSORT) == 0) { std::sort(result.begin(),result.end()); }
 
   LOG(logDEBUGAPI) << "Correctly repacked&analyzed ThresholdDacScan data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, bool efficiency) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result;
 
   // Measure time:
@@ -1792,6 +1797,13 @@ void api::SetCalibrateBits(bool enable) {
 bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
   
   uint32_t delay_sum = 0;
+
+  if(pg_setup.size() > 256) {
+    LOG(logCRITICAL) << "Pattern too long (" << pg_setup.size() << " entries) for pattern generator. "
+		     << "Only 256 entries allowed!";
+    return false;
+  }
+  else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
 
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
     if((*it).second == 0 && it != pg_setup.end() -1 ) {

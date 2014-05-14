@@ -3,8 +3,6 @@
 #include <string>
 #include <algorithm> /* for 'remove()' */
 
-#include <TH1.h> // fake include to pull in Form
-
 #include "PixTestParameters.hh"
 #include "log.h"
 
@@ -74,6 +72,7 @@ bool PixTestParameters::readTestParameterFile(string file, bool verbose) {
 	string::size_type m1 = line.find(" "); 
 	if (m1 < line.size()) {
 	  parName = line.substr(0, m1); 
+	  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
 	  parValString = line.substr(m1+1); 
 	  testparameters.push_back(make_pair(parName, parValString)); 
 	  ++testCnt;

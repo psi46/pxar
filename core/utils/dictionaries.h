@@ -10,9 +10,15 @@
 #ifndef PXAR_DICTIONARIES_H
 #define PXAR_DICTIONARIES_H
 
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 #include <string>
 #include <map>
-#include <stdint.h>
 #include "constants.h"
 #include "api.h"
 #include <iostream>
@@ -266,19 +272,39 @@ namespace pxar {
       // Probe name and values
 
       // Digital signals:
-      _signals["off"]    = PROBE_OFF;
-      _signals["clk"]    = PROBE_CLK;
-      _signals["sda"]    = PROBE_SDA;
-      _signals["pgtok"]  = PROBE_PGTOK;
-      _signals["pgtrg"]  = PROBE_PGTRG;
-      _signals["pgcal"]  = PROBE_PGCAL;
-      _signals["pgresr"] = PROBE_PGRESR;
-      _signals["pgrest"] = PROBE_PGREST;
-      _signals["pgsync"] = PROBE_PGSYNC;
-      _signals["ctr"]    = PROBE_CTR;
-      _signals["clkp"]   = PROBE_CLKP;
-      _signals["clkg"]   = PROBE_CLKG;
-      _signals["crc"]    = PROBE_CRC;
+      _signals["off"]        = PROBE_OFF;
+      _signals["clk"]        = PROBE_CLK;
+      _signals["sda"]        = PROBE_SDA;
+      _signals["sdasend"]        = PROBE_SDA_SEND;
+      _signals["pgtok"]      = PROBE_PG_TOK;
+      _signals["pgtrg"]      = PROBE_PG_TRG;
+      _signals["pgcal"]      = PROBE_PG_CAL;
+
+      _signals["pgresr"]     = PROBE_PG_RES_ROC;
+      _signals["pgresroc"]   = PROBE_PG_RES_ROC;
+
+      _signals["pgrest"]     = PROBE_PG_RES_TBM;
+      _signals["pgrestbm"]   = PROBE_PG_RES_TBM;
+
+      _signals["pgsync"]     = PROBE_PG_SYNC;
+      _signals["ctr"]        = PROBE_CTR;
+      _signals["tin"]        = PROBE_TIN;
+      _signals["tout"]       = PROBE_TOUT;
+
+      _signals["clkp"]       = PROBE_CLK_PRESEN;
+      _signals["clkpresent"] = PROBE_CLK_PRESEN;
+
+      _signals["clkg"]       = PROBE_CLK_GOOD;
+      _signals["clkgood"]    = PROBE_CLK_GOOD;
+
+      _signals["daq0wr"]     = PROBE_DAQ0_WR;
+      _signals["crc"]        = PROBE_CRC;
+      _signals["adcrunning"] = PROBE_ADC_RUNNING;
+      _signals["adcrun"]     = PROBE_ADC_RUN;
+      _signals["adcpgate"]   = PROBE_ADC_PGATE;
+      _signals["adcstart"]   = PROBE_ADC_START;
+      _signals["adcsgate"]   = PROBE_ADC_SGATE;
+      _signals["adcs"]       = PROBE_ADC_S;
 
     }
 

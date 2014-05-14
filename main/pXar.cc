@@ -4,6 +4,10 @@
 #include <iostream>
 #include <sys/stat.h>
 
+#if (defined WIN32)
+#include <Windows4Root.h>
+#endif
+
 #include <TApplication.h> 
 #include <TFile.h> 
 #include <TROOT.h> 
@@ -25,8 +29,6 @@ using namespace std;
 using namespace pxar; 
 
 void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
-void runTest(PixTest *b);
-
  
 
 // ----------------------------------------------------------------------
@@ -35,9 +37,10 @@ int main(int argc, char *argv[]){
   LOG(logINFO) << "*** Welcome to pxar ***";
 
   // -- command line arguments
-  string dir("."), cmdFile("nada"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"); 
+  string dir("."), cmdFile("nada"), rootfile("nada.root"), verbosity("INFO"), flashFile("nada"), runtest("fulltest"); 
   bool doRunGui(false), 
     doRunScript(false), 
+    doRunSingleTest(false), 
     doUpdateFlash(false),
     doAnalysisOnly(false),
     doDummyTest(false),
@@ -54,6 +57,7 @@ int main(int argc, char *argv[]){
       cout << "-g                    start with GUI" << endl;
       cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-r rootfilename       set rootfile name" << endl;
+      cout << "-t test               run test" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
@@ -65,6 +69,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
@@ -167,6 +172,15 @@ int main(int argc, char *argv[]){
     runGui(a, argc, argv); 
   } 
 
+  if (doRunSingleTest) {
+    PixTestFactory *factory = PixTestFactory::instance(); 
+    PixTest *t = factory->createTest(runtest, &a);
+    t->doTest();
+    delete t; 
+    delete api; 
+    return 0;
+  }
+
   LOG(logINFO) << "closing down 1";
   
   // -- clean exit (however, you should not get here)
@@ -184,13 +198,7 @@ int main(int argc, char *argv[]){
 
 
 // ----------------------------------------------------------------------
-void runTest(PixTest *b) {
-  if (b) b->doTest();
-  else LOG(logINFO) << "test not known";
-}
-
-// ----------------------------------------------------------------------
-void runGui(PixSetup &a, int argc, char *argv[]) {
+void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);

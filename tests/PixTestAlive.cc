@@ -28,18 +28,15 @@ PixTestAlive::PixTestAlive() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestAlive::setParameter(string parName, string sval) {
   bool found(false);
-  string stripParName; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
-      if (!parName.compare("Vcal")) {
+      if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	setToolTips();
       }
@@ -47,6 +44,29 @@ bool PixTestAlive::setParameter(string parName, string sval) {
     }
   }
   return found; 
+}
+
+
+
+// ----------------------------------------------------------------------
+void PixTestAlive::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "running command: " << command;
+  if (!command.compare("masktest")) {
+    maskTest(); 
+    return;
+  }
+
+  if (!command.compare("alivetest")) {
+    aliveTest(); 
+    return;
+  }
+
+  if (!command.compare("addressdecodingtest")) {
+    addressDecodingTest(); 
+    return;
+  }
+  LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
 
@@ -95,10 +115,36 @@ void PixTestAlive::doTest() {
     return;
   }
 
-  PixTest::update(); 
   fDirectory->cd();
-  LOG(logINFO) << "PixTestAlive::doTest() ntrig = " << int(fParNtrig);
   PixTest::update(); 
+  bigBanner(Form("PixTestAlive::doTest()"));
+
+  aliveTest();
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  maskTest();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  addressDecodingTest();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  LOG(logINFO) << "PixTestScurves::doTest() done ";
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestAlive::aliveTest() {
+  cacheDacs();
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
 
   fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
@@ -118,8 +164,106 @@ void PixTestAlive::doTest() {
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
-  LOG(logINFO) << "PixTestAlive::doTest() done";
+  restoreDacs();
+  LOG(logINFO) << "PixTestAlive::aliveTest() done";
 }
+
+
+// ----------------------------------------------------------------------
+void PixTestAlive::maskTest() {
+  if (fPixSetup->isDummy()) {
+    dummyAnalysis(); 
+    return;
+  }
+
+  cacheDacs();
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d", static_cast<int>(fParNtrig), fParVcal));
+
+  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("vcal", fParVcal);
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(true);
+
+  vector<TH2D*> test2 = efficiencyMaps("MaskTest", fParNtrig); 
+  for (unsigned int i = 0; i < test2.size(); ++i) {
+    fHistOptions.insert(make_pair(test2[i], "colz"));
+  }
+
+  copy(test2.begin(), test2.end(), back_inserter(fHistList));
+  
+  TH2D *h = (TH2D*)(*fHistList.begin());
+
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  restoreDacs();
+  PixTest::update(); 
+  LOG(logINFO) << "PixTestAlive::maskTest() done";
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestAlive::addressDecodingTest() {
+  if (fPixSetup->isDummy()) {
+    dummyAnalysis(); 
+    return;
+  }
+
+  cacheDacs();
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestAlive::addressDecodingTest() vcal = %d", static_cast<int>(fParVcal)));
+
+  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("vcal", fParVcal);
+
+  fDirectory->cd();
+  vector<TH2D*> maps;
+  TH2D *h2(0); 
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    LOG(logDEBUG) << "Create hist " << Form("addressDecoding_C%d", iroc); 
+    h2 = bookTH2D(Form("AddressDecoding_C%d", iroc), Form("AddressDecoding_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(-1.); 
+    h2->SetMaximum(+1.); 
+    fHistOptions.insert(make_pair(h2, "colz"));
+    h2->SetDirectory(fDirectory); 
+    setTitles(h2, "col", "row"); 
+    maps.push_back(h2); 
+  }
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
+  int idx(-1);
+  std::vector<pxar::pixel> test = fApi->getEfficiencyMap(FLAG_CHECK_ORDER | FLAG_FORCE_MASKED,1);
+  for(std::vector<pxar::pixel>::iterator pix = test.begin(); pix != test.end(); ++pix) {
+    idx = getIdxFromId(pix->roc_id);
+    h2 = maps[idx];
+    if(pix->value < 0) {
+      h2->SetBinContent(pix->column+1, pix->row+1, -1);
+      LOG(logDEBUG) << " read col/row = " << pix->column << "/" << pix->row 
+		    << " address decoding error";
+
+    }
+    else { h2->SetBinContent(pix->column+1, pix->row+1, 1.); }
+  }
+
+  copy(maps.begin(), maps.end(), back_inserter(fHistList));
+  
+  TH2D *h = (TH2D*)(*fHistList.begin());
+
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
+}
+
+
 
 
 // ----------------------------------------------------------------------

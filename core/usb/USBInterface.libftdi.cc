@@ -340,17 +340,31 @@ bool CUSB::Open(char serialNumber[])
     return EXIT_FAILURE;
   }
 
-  // resetting mode for FTDI chip
-  int32_t status =  ftdi_set_bitmode(&ftdic, 0xFF, 0x40);
-  if (status < 0){
-    LOG(logCRITICAL) << " ERROR issuing reset: return code " << status;
-  }
-  usleep(10000); // wait 10 ms
-  //setting bit mode for FTDI chip
-  status =  ftdi_set_bitmode(&ftdic, 0xFF, 0x40);
-  if (status < 0){
-    LOG(logCRITICAL) << " ERROR setting bit mode: return code " << status;
-  }
+  int32_t ftdiStatus = 0;
+
+// set synchronous bit bang mode (see: http://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232H.pdf page 34ff)
+//   int ftdi_set_bitmode 	( 	struct ftdi_context *  	ftdi,
+// 		unsigned char  	bitmask,
+// 		unsigned char  	mode 
+// 	) 		
+
+// Enable/disable bitbang modes.
+
+// Parameters:
+//     ftdi	pointer to ftdi_context
+//     bitmask	Bitmask to configure lines. HIGH/ON value configures a line as output.
+//     mode	Bitbang mode: use the values defined in ftdi_mpsse_mode
+  ftdiStatus = ftdi_set_bitmode(&ftdic, 0xFF, BITMODE_SYNCFF); //BITMODE_SYNCFF = 0x40, BITMODE_SYNCBB = 0x04
+  if (ftdiStatus < 0) UsbConnectionError("Error setting FTDI synchronous bit-bang mode.");
+  // set the baud rate
+  ftdiStatus = ftdi_set_baudrate(&ftdic, 9600);
+  if (ftdiStatus < 0) UsbConnectionError("Error setting FTDI baud rate.");
+  // set usb transfer size parameters (see: http://www.ftdichip.com/Support/Knowledgebase/ft_setusbparameters.htm)
+  ftdiStatus = ftdi_read_data_set_chunksize(&ftdic, 4096); // default: 4096, must be multiple of 64
+  if (ftdiStatus < 0) UsbConnectionError("Error setting USB read size parameters.");
+  ftdiStatus = ftdi_write_data_set_chunksize(&ftdic, 4096); // default: 4096, must be multiple of 64
+  if (ftdiStatus < 0) UsbConnectionError("Error setting USB write size parameters.");
+
 
   // init threads for client-side data buffering
   sem_init (&buf_data, 0, 0);
@@ -436,16 +450,16 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
   if (!isUSB_open) throw UsbConnectionError("Attempt to read from USB without open connection.");
  
    // Copy over data from the circular buffer
-    uint32_t i;
     uint32_t timewasted = 0; // time in ms wasted in this routine
 
-      for (i=0; i<bytesToRead; i++) {
+    uint32_t bytesReadSoFar = 0;
+      for (uint32_t i=0; i<bytesToRead; i++) {
 	bool bufferready = true;
 	if (tail == head) bufferready = false;
 	if (!bufferready){
 	  while (!bufferready && timewasted<m_timeout){
-	    if (timewasted==(m_timeout/5)) {
-	      LOG(logWARNING) << "USBInterface: Read(): data not ready after " << timewasted << "ms yet! Will wait for up to " << m_timeout << "ms";
+	    if (timewasted==(m_timeout/10)) {
+	      LOG(logWARNING) << "USBInterface: Read(): data not ready (got " << bytesReadSoFar << "b of "<< bytesToRead <<"b) after " << timewasted << "ms yet! Will wait for up to " << m_timeout << "ms";
 	    }
 	    usleep(1000); //wait 1 ms
 	    timewasted++;
@@ -458,16 +472,22 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 	  if (tail == (BUFSIZE -1)) tail = 0;
 	  else                      tail++;
 	  sem_post (&buf_space);
+	  bytesReadSoFar++;
 	} 
 	else // buffer was not ready and reading it timed out so we stop attempting it now
 	  {
 	    bytesRead = i;
 	    LOG(logCRITICAL) << " Timeout reading from USB buffer after " << m_timeout << " ms ";
+	    if (bytesRead < bytesToRead) {
+	      LOG(logCRITICAL) << "Requested to read " << bytesToRead 
+			       << "b, actually read  " << bytesRead 
+			       << "b - " << (bytesToRead-bytesRead) << "b missing!";
+	    }
 	    throw UsbConnectionTimeout("Timeout reading from USB");
 	    break;
 	  }
       }
-      bytesRead = i;
+      bytesRead = bytesReadSoFar;
 }
 
 //----------------------------------------------------------------------

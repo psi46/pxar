@@ -56,15 +56,16 @@ void ConfigParameters::initialize() {
   fEmptyReadoutLengthADC = 64;
   fEmptyReadoutLengthADCDual = 40;
 
-  fDACParametersFileName  = "defaultDACParameters.dat";
-  fTbmParametersFileName  = "defaultTBMParameters.dat";
-  fTBParametersFileName   = "defaultTBParameters.dat";
-  fTrimParametersFileName = "defaultTrimParameters.dat";
-  fTestParametersFileName = "defaultTestParameters.dat";
-  fMaskFileName           = "defaultMaskFile.dat";
-  fLogFileName            = "log.txt";
-  fDebugFileName          = "debug.log";
-  fRootFileName           = "expert.root";
+  fDACParametersFileName         = "defaultDACParameters";
+  fTbmParametersFileName         = "defaultTBMParameters.dat";
+  fTBParametersFileName          = "defaultTBParameters.dat";
+  fTrimParametersFileName        = "defaultTrimParameters";
+  fTestParametersFileName        = "defaultTestParameters.dat";
+  fMaskFileName                  = "defaultMaskFile.dat";
+  fLogFileName                   = "log.txt";
+  fDebugFileName                 = "debug.log";
+  fRootFileName                  = "expert.root";
+  fGainPedestalParameterFileName = "phCalibrationFitTanH";
 
   ia = -1.; 
   id = -1.;
@@ -286,6 +287,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   sigdelays.push_back("ctr");
   sigdelays.push_back("sda");
   sigdelays.push_back("tin");
+  sigdelays.push_back("triggerdelay");
   sigdelays.push_back("deser160phase");
 
   if (!fReadTbParameters) readTbParameters();
@@ -563,6 +565,20 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
 
 
 // ----------------------------------------------------------------------
+vector<string> ConfigParameters::getDacs() {
+  if (!fReadDacParameters) {
+    readRocDacs();
+  }
+  vector<string> names; 
+  vector<std::pair<std::string, uint8_t> > dacs = fDacParameters[0];
+  for (unsigned int i = 0; i < dacs.size(); ++i) {
+    names.push_back(dacs[i].first);
+  }
+  return names;
+}
+
+
+// ----------------------------------------------------------------------
 void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
     for (unsigned int i = 0; i < fnRocs; ++i) {
@@ -734,8 +750,8 @@ bool ConfigParameters::writeConfigParameterFile() {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   std::stringstream fname;
-  fname << fDirectory << "/" << getTrimParameterFileName();
-
+  fname << fDirectory << "/" << fTrimParametersFileName << "_C" << iroc << ".dat"; 
+  
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) { 
@@ -743,7 +759,10 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   }
     
   for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
-    OutputFile << std::setw(2) << ipix->trim << "   Pix " << std::setw(2) << ipix->column << " " << std::setw(2) << ipix->row << std::endl;
+    OutputFile << setw(2) << static_cast<int>(ipix->trim) 
+	       << "   Pix " << setw(2) 
+	       << static_cast<int>(ipix->column) << " " << setw(2) << static_cast<int>(ipix->row) 
+	       << endl;
   }
   
   OutputFile.close();
@@ -826,3 +845,54 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
 }
 
 
+// ----------------------------------------------------------------------
+void ConfigParameters::readGainPedestalParameters() {
+
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::writeGainPedestalParameters() {
+
+  stringstream fname;
+  
+  for (unsigned int iroc = 0; iroc < fGainPedestalParameters.size(); ++iroc) {
+    fname << fDirectory << "/" << getGainPedestalParameterFileName() << "_C" << iroc << ".dat";
+    ofstream OutputFile;
+    OutputFile.open((fname.str()).c_str());
+    if (!OutputFile.is_open()) {
+      LOG(logERROR) << "Could not open " << fname.str(); 
+      return;
+    } 
+    
+    OutputFile << "Parameters of the vcal vs. pulse height fits" << endl;
+    OutputFile << "par[3] + par[2] * TMath::TanH(par[0]*x[0] - par[1])" << endl << endl;
+    
+    vector<gainPedestalParameters> pars = fGainPedestalParameters[iroc]; 
+    for (unsigned ipix = 0; ipix < pars.size(); ++ipix) {	
+      OutputFile << scientific 
+		 << pars[ipix].p0 << " " 
+		 << pars[ipix].p1 << " " 
+		 << pars[ipix].p2 << " " 
+		 << pars[ipix].p3;
+      OutputFile.unsetf(ios::fixed | ios::scientific);
+      OutputFile << "     Pix "
+		 << setw(2) << ipix/80 << " " << setw(2) << ipix%80
+		 << endl;
+    }
+    OutputFile.close();
+  }    
+  
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::setGainPedestalParameters(vector<vector<gainPedestalParameters> >v) {
+  fGainPedestalParameters.clear(); 
+  for (unsigned int i = 0; i < v.size(); ++i) {
+    fGainPedestalParameters.push_back(v[i]);
+  }
+}
+
+// ----------------------------------------------------------------------
+std::vector<std::vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParameters() {
+  return fGainPedestalParameters; 
+}

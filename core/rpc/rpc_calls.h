@@ -182,6 +182,7 @@ public:
 
 	// --- pulse pattern generator ------------------------------------------
 	RPC_EXPORT void Pg_SetCmd(uint16_t addr, uint16_t cmd);
+	RPC_EXPORT void Pg_SetCmdAll(vector<uint16_t> &cmd);
 	RPC_EXPORT void Pg_Stop();
 	RPC_EXPORT void Pg_Single();
 	RPC_EXPORT void Pg_Trigger();
@@ -249,7 +250,7 @@ public:
 	RPC_EXPORT bool tbm_GetRaw(uint8_t reg, uint32_t &value);
 
 	// --- Wafer test functions
-	RPC_EXPORT bool testColPixel(uint8_t col, uint8_t trimbit, vectorR<uint8_t> &res);
+	RPC_EXPORT bool TestColPixel(uint8_t col, uint8_t trimbit, bool sensor_cal, vectorR<uint8_t> &res);
 
 	// Ethernet test functions
 	RPC_EXPORT void Ethernet_Send(string &message);
@@ -282,7 +283,7 @@ public:
 	// == Trigger Loop functions for Host-side DAQ ROC/Module testing ==============
 	// Exported RPC-Calls for the Trimbit storage setup:
 	RPC_EXPORT bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
-	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<int8_t> &trimvalues);
+	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<uint8_t> &trimvalues);
 	
 	RPC_EXPORT void SetLoopTriggerDelay(uint16_t delay);
 	RPC_EXPORT void LoopInterruptReset();

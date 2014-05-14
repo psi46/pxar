@@ -3,6 +3,8 @@
 
 #include "PixTest.hh"
 
+#include <TTree.h>
+
 class DLLEXPORT PixTestDaq: public PixTest {
 public:
   PixTestDaq(PixSetup *, std::string);
@@ -19,7 +21,7 @@ private:
 
   int     fParNtrig; 
   int     fParStretch; 
-  bool    fParCount;
+  bool    fParFillTree;
   int 	  fParIter;
 
   std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC

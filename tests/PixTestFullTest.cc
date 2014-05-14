@@ -27,15 +27,12 @@ PixTestFullTest::PixTestFullTest() : PixTest() {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestFullTest::setParameter(string parName, string sval) {
+bool PixTestFullTest::setParameter(string parName, string /*sval*/) {
   bool found(false);
   string stripParName; 
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-
-      LOG(logDEBUG) << "  ==> parName: " << parName;
-      LOG(logDEBUG) << "  ==> sval:    " << sval;
       if (!parName.compare("deadface")) {
 	//	fDeadFace = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
@@ -85,16 +82,23 @@ PixTestFullTest::~PixTestFullTest() {
 
 // ----------------------------------------------------------------------
 void PixTestFullTest::doTest() {
+
+  bigBanner(Form("PixTestFullTest::doTest()"));
+
   vector<string> suite;
+  suite.push_back("pretest"); 
   suite.push_back("alive"); 
-  suite.push_back("trim"); 
   suite.push_back("scurves");
+  suite.push_back("bumpbonding"); 
+  suite.push_back("trim"); 
+  suite.push_back("gainpedestal"); 
   PixTest *t(0); 
   
   PixTestFactory *factory = PixTestFactory::instance(); 
   for (unsigned int i = 0; i < suite.size(); ++i) {
     t =  factory->createTest(suite[i], fPixSetup);
     t->doTest(); 
+    PixTest::update(); 
     delete t; 
   }
 

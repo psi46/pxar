@@ -13,7 +13,8 @@ ClassImp(PixTestDacDacScan)
 
 // ----------------------------------------------------------------------
 PixTestDacDacScan::PixTestDacDacScan(PixSetup *a, std::string name) : 
-PixTest(a, name), fParNtrig(-1), fParDAC1("nada"), fParDAC2("nada"), fParLoDAC1(-1), fParHiDAC1(-1), fParLoDAC2(-1), fParHiDAC2(-1) {
+PixTest(a, name), fParNtrig(-1), fParPHmap(0), fParDAC1("nada"), fParDAC2("nada"), 
+  fParLoDAC1(-1), fParHiDAC1(-1), fParLoDAC2(-1), fParHiDAC2(-1) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDacDacScan ctor(PixSetup &a, string, TGTab *)";
@@ -31,39 +32,44 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
   string str1, str2; 
   string::size_type s1;
   int pixc, pixr; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC1")) {
+      if (!parName.compare("phmap")) {
+	fParPHmap = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("dac1")) {
 	fParDAC1 = sval; 
 	setToolTips();
       }
-      if (!parName.compare("DAC2")) {
+      if (!parName.compare("dac2")) {
 	fParDAC2 = sval; 
 	setToolTips();
       }
-      if (!parName.compare("DAC1LO")) {
+      if (!parName.compare("dac1lo")) {
 	fParLoDAC1 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC1HI")) {
+      if (!parName.compare("dac1hi")) {
 	fParHiDAC1 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC2LO")) {
+      if (!parName.compare("dac2lo")) {
 	fParLoDAC2 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("DAC2HI")) {
+      if (!parName.compare("dac2hi")) {
 	fParHiDAC2 = atoi(sval.c_str()); 
 	setToolTips();
       }
-      if (!parName.compare("PIX")) {
+      if (!parName.compare("pix")) {
 	s1 = sval.find(","); 
 	if (string::npos != s1) {
 	  str1 = sval.substr(0, s1); 
@@ -75,56 +81,18 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 	  fPIX.push_back(make_pair(-1, -1)); 
 	}
       }
-      if (!parName.compare("PIX1")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
+      if (!parName.compare("pix1")) {
+	LOG(logWARNING) << "please change parameter name from PIX1 to PIX (can appear multiple times)"; 
       }
-      if (!parName.compare("PIX2")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
+      if (!parName.compare("pix2")) {
+	LOG(logWARNING) << "please change parameter name from PIX2 to PIX (can appear multiple times)"; 
       }
-      if (!parName.compare("PIX3")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
+      if (!parName.compare("pix3")) {
+	LOG(logWARNING) << "please change parameter name from PIX3 to PIX (can appear multiple times)"; 
       }
-      if (!parName.compare("PIX4")) {
-	s1 = sval.find(","); 
-	if (string::npos != s1) {
-	  str1 = sval.substr(0, s1); 
-	  pixc = atoi(str1.c_str()); 
-	  str2 = sval.substr(s1+1); 
-	  pixr = atoi(str2.c_str()); 
-	  fPIX.push_back(make_pair(pixc, pixr)); 
-	} else {
-	  fPIX.push_back(make_pair(-1, -1)); 
-	}
+      if (!parName.compare("pix4")) {
+	LOG(logWARNING) << "please change parameter name from PIX4 to PIX (can appear multiple times)"; 
       }
-
-      // FIXME: remove/update from fPIX if the user removes via the GUI!
 
       break;
     }
@@ -160,9 +128,9 @@ void PixTestDacDacScan::setToolTips() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDacDacScan::bookHist(string name) {
+void PixTestDacDacScan::bookHist(string /*name*/) {
   fDirectory->cd(); 
-  LOG(logDEBUG) << "nothing done with " << name;
+  //  LOG(logDEBUG) << "nothing done with " << name;
 
 }
 
@@ -175,31 +143,35 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::doTest() {
+  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   PixTest::update(); 
   LOG(logDEBUG) << "dac scan " << fParDAC1 << " vs. " << fParDAC2 << " ntrig = " << fParNtrig << " for npixels = " << fPIX.size(); 
 
-  string name = fParDAC1 + string(":") + fParDAC2; 
-  bookHist(name);
-  string::size_type s1 = name.find(":"); 
-  string dac1 = name.substr(0, s1); 
-  string dac2 = name.substr(s1+1); 
+  string zname = fParDAC1 + string(":") + fParDAC2; 
+  bookHist(zname);
+  string::size_type s1 = zname.find(":"); 
+  string dac1 = zname.substr(0, s1); 
+  string dac2 = zname.substr(s1+1); 
   LOG(logDEBUG) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-";
   
   TH2D *h2(0);
   map<string, TH2D*> maps;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  string name(fParPHmap?"ph":"nhits"); 
+  int nx = fApi->getDACRange(dac1)+1;
+  int ny = fApi->getDACRange(dac2)+1;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-      h2 = bookTH2D(Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
-		    Form("nhits_%s_%s_c%d_r%d_C%d", dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
-		    256, 0., 256., 256, 0., 256.); 
-      h2->SetMinimum(0.); 
+      h2 = bookTH2D(Form("%s_%s_%s_c%d_r%d_C%d", name.c_str(), dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
+		    Form("%s_%s_%s_c%d_r%d_C%d", name.c_str(), dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
+		    nx, 0., static_cast<double>(nx), ny, 0., static_cast<double>(ny)); 
+      if (0 == fParPHmap) h2->SetMinimum(0.); 
       setTitles(h2, dac1.c_str(), dac2.c_str()); 
       fHistList.push_back(h2);
       fHistOptions.insert(make_pair(h2, "colz")); 
-      maps.insert(make_pair(Form("nhits_%s_%s_c%d_r%d_C%d", 
-				 dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), h2)); 
+      maps.insert(make_pair(Form("%s_%s_%s_c%d_r%d_C%d", 
+				 name.c_str(), dac1.c_str(), dac2.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), h2)); 
     }
     
   }
@@ -211,8 +183,27 @@ void PixTestDacDacScan::doTest() {
     if (fPIX[i].first > -1)  {
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
       fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
-      rresults = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
-					     fParDAC2, fParLoDAC2, fParHiDAC2, 0, fParNtrig);
+      bool done = false;
+      while (!done) {
+	int cnt(0); 
+	try{
+	  if (0 == fParPHmap) {
+	    rresults = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
+						   fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
+	    done = true;
+	  } else {
+	    rresults = fApi->getPulseheightVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
+						    fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
+	    done = true;
+	  }
+	} catch(DataMissingEvent &e){
+	  LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	  ++cnt;
+	  if (e.numberMissing > 10) done = true; 
+	}
+	done = (cnt>5) || done;
+      }
+
       copy(rresults.begin(), rresults.end(), back_inserter(results)); 
 
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
@@ -231,14 +222,14 @@ void PixTestDacDacScan::doTest() {
 
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
 	if (wpix[ipix].roc_id == rocIds[iroc]) {
-	  h = maps[Form("nhits_%s_%s_c%d_r%d_C%d", 
-			fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc])];
+	  h = maps[Form("%s_%s_%s_c%d_r%d_C%d", 
+			name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc])];
 	  if (h) {
 	    h->Fill(idac1, idac2, wpix[ipix].value); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find " 
-			  << Form("nhits_%s_%s_c%d_r%d_C%d", 
-				  fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc]);
+			  << Form("%s_%s_%s_c%d_r%d_C%d", 
+				  name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc]);
 	  }
 
 	}
@@ -270,7 +261,7 @@ TH1* PixTestDacDacScan::moduleMap(string histname) {
 
   TH2D *h(0);
   string hname;
-  int cycle(-1), ic(-1), ir(-1); 
+  int cycle(-1); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
 

@@ -28,25 +28,26 @@ PixTestThreshMap::PixTestThreshMap() : PixTest() {
 bool PixTestThreshMap::setParameter(string parName, string sval) {
   bool found(false);
   string stripParName; 
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
 
       LOG(logDEBUG) << "  ==> parName: " << parName;
       LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
-      if (!parName.compare("VcalLo")) {
+      if (!parName.compare("vcallo")) {
 	fParLoDAC = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
-      if (!parName.compare("VcalHi")) {
+      if (!parName.compare("vcalhi")) {
 	fParHiDAC = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
-      if (!parName.compare("BumpBond")) {
+      if (!parName.compare("bumpbond")) {
 	bBumpBond = atoi(sval.c_str()) != 0;
 	setToolTips();
       }
@@ -105,7 +106,6 @@ void PixTestThreshMap::doTest() {
   vector<TH2D*> maps;
   vector<TH1D*> hResults;
   TH2D *h2(0);
-  TH1D *h3(0);
   string name("Thresh");
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();

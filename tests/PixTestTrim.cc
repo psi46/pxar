@@ -35,31 +35,32 @@ PixTestTrim::PixTestTrim() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestTrim::setParameter(string parName, string sval) {
   bool found(false);
+  std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("Ntrig")) {
+      if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
-      if (!parName.compare("Vcal")) {
+      if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
-      if (!parName.compare("VcalLo")) {
+      if (!parName.compare("vcallo")) {
 	fParVcalLo = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcalLo  ->" << fParVcalLo << "<- from sval = " << sval;
       }
-      if (!parName.compare("VcalHi")) {
+      if (!parName.compare("vcalhi")) {
 	fParVcalHi = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
       }
-      if (!parName.compare("VthrCompLo")) {
+      if (!parName.compare("vthrcomplo")) {
 	fParVthrCompLo = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVthrCompLo  ->" << fParVthrCompLo << "<- from sval = " << sval;
       }
-      if (!parName.compare("VthrCompHi")) {
+      if (!parName.compare("vthrcomphi")) {
 	fParVthrCompHi = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVthrCompHi  ->" << fParVthrCompHi << "<- from sval = " << sval;
       }
@@ -92,6 +93,10 @@ void PixTestTrim::runCommand(std::string command) {
     trimBitTest(); 
     return;
   }
+  if (!command.compare("trim")) {
+    trimTest(); 
+    return;
+  }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
@@ -122,16 +127,39 @@ PixTestTrim::~PixTestTrim() {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::doTest() {
+
+  fDirectory->cd();
+  PixTest::update(); 
+  bigBanner(Form("PixTestTrim::doTest()"));
+
+  trimTest(); 
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  trimBitTest();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  LOG(logINFO) << "PixTestTrim::doTest() done ";
+}
+
+// ----------------------------------------------------------------------
+void PixTestTrim::trimTest() {
+
   if (fPixSetup->isDummy()) {
     dummyAnalysis(); 
     return;
   }
 
-  double NSIGMA(2); 
-
+  cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  bigBanner(Form("PixTestTrim::doTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+  banner(Form("PixTestTrim::trimTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+
+  double NSIGMA(2); 
+
 
   fPIX.clear(); 
 
@@ -150,6 +178,7 @@ void PixTestTrim::doTest() {
   setTrimBits(15);  
   
   // -- determine minimal VthrComp 
+  map<int, int> rocVthrComp;
   banner("VthrComp thr map (minimal VthrComp)"); 
   vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", fParNtrig, 0, 200, 1); 
   vector<int> minVthrComp = getMinimumVthrComp(thr0, 10, 2.); 
@@ -157,12 +186,11 @@ void PixTestTrim::doTest() {
   LOG(logDEBUG) << bla; 
   for (unsigned int i = 0; i < minVthrComp.size(); ++i) LOG(logDEBUG) << "  " << minVthrComp[i]; 
   
-  vector<int> VthrComp; 
   TH2D* h2(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-    VthrComp.push_back(static_cast<int>(minVthrComp[iroc])); 
     LOG(logDEBUG) << " ROC " << (int)rocIds[iroc] << " setting VthrComp = " << (int)(minVthrComp[iroc]);
     fApi->setDAC("VthrComp", static_cast<uint8_t>(minVthrComp[iroc]), rocIds[iroc]); 
+    rocVthrComp.insert(make_pair(rocIds[iroc], minVthrComp[iroc])); 
   }
 
   // -- determine pixel with largest VCAL threshold
@@ -218,6 +246,7 @@ void PixTestTrim::doTest() {
 
   TH1D *h = new TH1D("trimh", "trimh", 256, 0., 256.); 
   vector<int> rocDone;
+  map<int, int> rocTrim;
   int itrim(0), vcalHi(200); 
   do {
     if (rocDone.size() == rocIds.size()) break;
@@ -239,6 +268,7 @@ void PixTestTrim::doTest() {
       if (fThreshold < fParVcal) {
 	fApi->setDAC("vtrim", itrim, rocIds[iroc]);
 	rocDone.push_back(rocIds[iroc]); 
+	rocTrim.insert(make_pair(rocIds[iroc], itrim)); 
 	LOG(logDEBUG) << "---------> " << fThreshold << " < " << fParVcal << " for itrim = " << itrim << " ... break";
       }
     }
@@ -249,7 +279,7 @@ void PixTestTrim::doTest() {
       itrim += 10;
     }
 
-    vcalHi = maxThr + 40; 
+    vcalHi = static_cast<int>(maxThr) + 40; 
 
   } while(itrim < 256);
   delete h; 
@@ -276,11 +306,11 @@ void PixTestTrim::doTest() {
   banner(Form("TrimThr2 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
-  vector<TH1*> thr2a = trimStep("trimStepCorr4", correction, thro, minthr, maxthr);
+  vector<TH1*> thr2a = trimStep("trimStepCorr4", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
 
 
   correction = 2; 
-  vector<TH1*> thr3  = scurveMaps("vcal", "TrimThr3", NTRIG, minthr, maxthr, 1); 
+  vector<TH1*> thr3  = scurveMaps("vcal", "TrimThr3", NTRIG, static_cast<int>(minthr), static_cast<int>(maxthr), 1); 
   thro.clear(); 
   thro = mapsWithString(thr3, "thr_");
   maxthr = getMaximumThreshold(thro);
@@ -288,10 +318,10 @@ void PixTestTrim::doTest() {
   banner(Form("TrimThr3 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
-  vector<TH1*> thr3a = trimStep("trimStepCorr2", correction, thro, minthr, maxthr);
+  vector<TH1*> thr3a = trimStep("trimStepCorr2", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
   
   correction = 1; 
-  vector<TH1*> thr4  = scurveMaps("vcal", "TrimThr4", NTRIG, minthr, maxthr, 1); 
+  vector<TH1*> thr4  = scurveMaps("vcal", "TrimThr4", NTRIG, static_cast<int>(minthr), static_cast<int>(maxthr), 1); 
   thro.clear(); 
   thro = mapsWithString(thr4, "thr_");
   maxthr = getMaximumThreshold(thro);
@@ -299,10 +329,10 @@ void PixTestTrim::doTest() {
   banner(Form("TrimThr4 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
-  vector<TH1*> thr4a = trimStep("trimStepCorr1a", correction, thro, minthr, maxthr);
+  vector<TH1*> thr4a = trimStep("trimStepCorr1a", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
   
   correction = 1; 
-  vector<TH1*> thr5  = scurveMaps("vcal", "TrimThr5", NTRIG, minthr, maxthr, 1); 
+  vector<TH1*> thr5  = scurveMaps("vcal", "TrimThr5", NTRIG, static_cast<int>(minthr), static_cast<int>(maxthr), 1); 
   thro.clear(); 
   thro = mapsWithString(thr5, "thr_");
   maxthr = getMaximumThreshold(thro);
@@ -310,7 +340,7 @@ void PixTestTrim::doTest() {
   banner(Form("TrimThr5 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
-  vector<TH1*> thr5a = trimStep("trimStepCorr1b", correction, thro, minthr, maxthr);
+  vector<TH1*> thr5a = trimStep("trimStepCorr1b", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
 
   // -- create trimMap
   for (unsigned int i = 0; i < thro.size(); ++i) {
@@ -329,29 +359,43 @@ void PixTestTrim::doTest() {
 
   vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", 5, fParVcal-20, fParVcal+20, 3); 
     
+  TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
+  restoreDacs();
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fApi->setDAC("vtrim", rocTrim[rocIds[iroc]], rocIds[iroc]);
+    fApi->setDAC("vthrcomp", rocVthrComp[rocIds[iroc]], rocIds[iroc]);
+  }
+
+  LOG(logINFO) << "PixTestTrim::trimTest() done ";
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestTrim::trimBitTest() {
 
-  LOG(logINFO) << "trimBitTest start "; 
+  cacheDacs();
 
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
-  
   vector<int>vtrim; 
-  vtrim.push_back(250);
-  vtrim.push_back(200);
-  vtrim.push_back(180);
-  vtrim.push_back(140);
+  vtrim.push_back(255);
+  vtrim.push_back(240);
+  vtrim.push_back(150);
+  vtrim.push_back(100);
 
   vector<int>btrim; 
   btrim.push_back(14);
   btrim.push_back(13);
   btrim.push_back(11);
   btrim.push_back(7);
+
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestTrim::trimBitTest() ntrig = %d, vtrims = %d %d %d %d", 
+	      fParNtrig, vtrim[0], vtrim[1], vtrim[2], vtrim[3]));
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
 
   vector<vector<TH1*> > steps; 
 
@@ -362,14 +406,16 @@ void PixTestTrim::trimBitTest() {
     LOG(logWARNING) << "could not set trim bits to " << 15; 
     return;
   }
+  fApi->setDAC("CtrlReg", 0); 
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
-  vector<TH1*> thr0 = scurveMaps("Vcal", "TrimBitsThr0", 0, 200, fParNtrig, 1); 
-  
+  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 200, 1), "thr");
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   
   // -- now loop over all trim bits
   vector<TH1*> thr;
+  double maxThr = getMaximumThreshold(thr0); 
+  if (maxThr > 245.) maxThr = 245.; 
   for (unsigned int iv = 0; iv < vtrim.size(); ++iv) {
     thr.clear();
     ok = cp->setTrimBits(btrim[iv]);
@@ -385,11 +431,35 @@ void PixTestTrim::trimBitTest() {
 
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
-    thr = scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), 0, 200, fParNtrig, 1); 
+    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, static_cast<int>(maxThr)+10, 1), "thr");
+    maxThr = getMaximumThreshold(thr); 
+    if (maxThr > 245.) maxThr = 245.; 
     steps.push_back(thr); 
   }
+  
+  // -- and now determine threshild difference
+  TH1 *h1(0); 
+  double dthr(0.);
+  for (unsigned int i = 0; i < steps.size(); ++i) {
+    thr = steps[i];
+    for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
+      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], iroc), Form("TrimBit%d_C%d", btrim[i], iroc), 256, 0., 256); 
+      for (int ix = 0; ix < 52; ++ix) {
+	for (int iy = 0; iy < 80; ++iy) {
+	  dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
+	  h1->Fill(dthr); 
+	}
+      }
+      fHistList.push_back(h1); 
+    }
+  }
 
-  LOG(logINFO) << "trimBitTest done "; 
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+
+  if (h1) h1->Draw();
+  PixTest::update(); 
+  restoreDacs();
+  LOG(logINFO) << "PixTestTrim::trimBitTest() done "; 
   
 }
 

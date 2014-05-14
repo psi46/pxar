@@ -19,6 +19,7 @@ typedef char int8_t;
 #include <TQObject.h> 
 #include <TH1.h> 
 #include <TH2.h> 
+#include <TTree.h> 
 #include <TDirectory.h> 
 #include <TFile.h>
 #include <TSystem.h>
@@ -29,6 +30,19 @@ typedef char int8_t;
 #include "PixInitFunc.hh"
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
+
+typedef struct { 
+  uint16_t dac;
+  uint16_t header; 
+  uint16_t trailer; 
+  uint16_t numDecoderErrors;
+  uint8_t npix;
+  uint8_t proc[2000];
+  uint8_t pcol[2000];
+  uint8_t prow[2000];
+  uint8_t pval[2000];
+} TreeEvent;
+
 
 ///
 /// PixTest
@@ -54,6 +68,8 @@ public:
   void init();
   /// use if you want, or define the histograms in the specific member functions
   void bookHist(std::string name);
+  /// book a minimal tree with pixel events
+  void bookTree();
   /// to create the histograms even without working pxar/core
   virtual void dummyAnalysis(); 
   /// to be filled per test
@@ -76,10 +92,22 @@ public:
 
   /// work-around to cope with suboptimal pxar/core
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
+  /// kind of another work-around (splitting the range, adjusting ntrig, etc)
+  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag = 0);
+  /// do the scurve analysis
+  void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  /// do the gain/pedestal analysis
+  void gainPedestalAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  /// determine PH error interpolation
+  void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int result = 1); 
+  /// result controls the amount of information (histograms) returned
+  /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
+  /// flag allows to pass in other flags
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
+			       int result = 1, int ihit = 1, int flag = 0); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -113,13 +141,13 @@ public:
   std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
 
   /// produce eye-catching printouts
-  void banner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
-  void bigBanner(std::string, pxar::TLogLevel log = pxar::logDEBUG); 
+  void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
+  void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   
-  /// cache a DAC value
-  void cache(std::string dacname); 
-  /// restore a DAC value after caching it
-  void restore(std::string dacname); 
+  /// cache DACs
+  void cacheDacs(bool verbose = false); 
+  /// restore DACs
+  void restoreDacs(bool verbose = false); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 
@@ -144,6 +172,10 @@ public:
   std::string getParameter(std::string parName);
   /// set the string value of a parameter
   virtual bool setParameter(std::string parName, std::string sval); 
+  /// allow setting DACs in scripts for entire DUT
+  virtual void setDAC(std::string parName, uint8_t val) {fApi->setDAC(parName, val);}
+  /// allow setting DACs in scripts for spcific ROCs
+  virtual void setDAC(std::string parName, uint8_t val, uint8_t rocid) {fApi->setDAC(parName, val, rocid);}
   /// print all parameters and values
   void dumpParameters(); 
   /// utility to set histogram titles
@@ -190,13 +222,14 @@ protected:
 
   double               fThreshold, fThresholdE, fSigma, fSigmaE;  ///< variables for passing back s-curve results
   double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
+  int                  fNtrig; 
+  std::vector<double>  fPhErrP0, fPhErrP1; 
 
   std::string           fName, fTestTip, fSummaryTip; ///< information for this test
 
   std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
-  std::vector<uint8_t>  fCacheVal; ///< vector for all ROCs 
-  std::string           fCacheDac; ///< name of the DAC to be cached
+  std::vector<std::vector<std::pair<std::string,uint8_t> > >  fDacCache; ///< vector for all ROCs 
 
   TDirectory            *fDirectory; ///< where the root histograms will end up
   std::list<TH1*>       fHistList; ///< list of histograms available in PixTab::next and PixTab::previous
@@ -205,6 +238,9 @@ protected:
 
   std::vector<std::pair<int, int> > fPIX; ///< range of enabled pixels for time-consuming tests
   std::map<int, int>    fId2Idx; ///< map the ROC ID onto the (results vector) index of the ROC
+  TTree                *fTree; 
+  TreeEvent             fTreeEvent;
+
 
   ClassDef(PixTest, 1); // testing PixTest
 
