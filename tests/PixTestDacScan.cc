@@ -128,7 +128,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
-  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  uint16_t FLAGS = FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   TH1D *h1(0);
   vector<TH1D*> vhist;
