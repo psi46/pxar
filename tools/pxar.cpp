@@ -609,13 +609,14 @@ int main(int argc, char* argv[]) {
 
     // Call the test:
     int nTrig5 = 10;
-    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,20,FLAG_RISING_EDGE,nTrig5);
+    _api->setDAC("ctrlreg",0);
+    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,140,FLAG_FORCE_MASKED | FLAG_RISING_EDGE,nTrig5);
     std::cout << "Data size returned: " << thrmap.size() << std::endl;
 
     // Threshold map:
     enabledrocs = _api->_dut->getEnabledRocIDs();
     for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
-      asciimap(thrmap,255,(*it));
+      asciimap(thrmap,255,(*it),3);
       std::cout << std::endl << std::endl;
     }
     // ##########################################################
