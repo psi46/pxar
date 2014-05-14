@@ -662,7 +662,7 @@ int main(int argc, char* argv[]) {
       //_api->_dut->testPixel(i,12,true);
     }
 
-    _api->daqStart(pg_setup);
+    _api->daqStart();
     uint32_t daq_triggers = 5;
 
     _api->daqTrigger(daq_triggers);

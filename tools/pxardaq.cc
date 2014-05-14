@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
       }
 
       // Start the DAQ:
-      _api->daqStart(pg_setup);
+      _api->daqStart();
 
       // Send the triggers:
       if(triggers != 0) {
