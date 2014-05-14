@@ -81,7 +81,7 @@ void api::setPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup
     return;
   }
   verifyPatternGenerator(pg_setup);
-  _hal->setTestboardPower(_dut->va,_dut->vd,_dut->ia,_dut->id);
+  _hal->SetupPatternGenerator(_dut->pg_setup);
   LOG(logDEBUGAPI) << "Pattern generator verified and updated.";
 }
 
