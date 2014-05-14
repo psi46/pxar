@@ -39,6 +39,14 @@ namespace pxar {
      */
     void initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t, uint8_t> > pg_setup, double va, double vd, double ia, double id);
 
+    /** Set/change the testboard voltages and current limits:
+     */
+    void setTestboardPower(double va, double vd, double ia, double id);
+
+    /** Set/change the testboard signal delay settings:
+     */
+    void setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays);
+
     /** Flashes the given firmware file to the testboard FPGA
      *  Powers down the DUT first.
      */

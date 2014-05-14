@@ -105,14 +105,30 @@ uint32_t hal::GetHashForStringVector(const std::vector<std::string> & v)
 
 void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
 
+  // Set the power limits:
+  setTestboardPower(va,vd,ia,id);
+
+  // Set the delays:
+  setTestboardDelays(sig_delays);
+
+  // Set up Pattern Generator:
+  SetupPatternGenerator(pg_setup);
+
+  // We are ready for operations now, mark the HAL as initialized:
+  _initialized = true;
+}
+
+void hal::setTestboardPower(double va, double vd, double ia, double id) {
+
   // Set voltages and current limits:
   setTBva(va);
   setTBvd(vd);
   setTBia(ia);
   setTBid(id);
   _testboard->Flush();
-  LOG(logDEBUGHAL) << "Voltages/current limits set.";
+}
 
+void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
 
   // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
@@ -135,14 +151,6 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
     }
   }
   _testboard->Flush();
-  LOG(logDEBUGHAL) << "Testboard delays set.";
-
-
-  // Set up Pattern Generator:
-  SetupPatternGenerator(pg_setup);
-
-  // We are ready for operations now, mark the HAL as initialized:
-  _initialized = true;
 }
 
 void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
