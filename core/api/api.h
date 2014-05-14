@@ -701,11 +701,6 @@ namespace pxar {
      */
     uint32_t _daq_buffersize;
 
-    /** Minimal Pattern Generator Loop period, calculated from the sum of
-     *  all PG commands
-     */
-    uint32_t _daq_minimum_period;
-
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
 
@@ -724,7 +719,7 @@ namespace pxar {
     /** Default DUT constructor
      */
     dut() : _initialized(false), _programmed(false), roc(), tbm(), sig_delays(),
-      va(0), vd(0), ia(0), id(0), pg_setup() {}
+      va(0), vd(0), ia(0), id(0), pg_setup(), pg_sum(0) {}
 
     // GET functions to read information
 
@@ -911,6 +906,11 @@ namespace pxar {
     /** DUT member to store the current Pattern Generator command list
      */
     std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+
+    /** DUT member to store the delay sum of the full Pattern Generator
+     *  command list
+     */
+    uint32_t pg_sum;
 
   }; //class DUT
 

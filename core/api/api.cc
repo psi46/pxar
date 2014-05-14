@@ -18,7 +18,6 @@ using namespace pxar;
 api::api(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _daq_minimum_period(0),
   _ndecode_errors_lastdaq(0)
 {
 
@@ -1016,8 +1015,6 @@ bool api::daqStart() {
   if(daqStatus()) {return false;}
 
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
-  // Calculate minimum PG period from stored Pattern Generator:
-  _daq_minimum_period = getPatternGeneratorDelaySum(_dut->pg_setup);
   
   // Setup the configured mask and trim state of the DUT:
   MaskAndTrim(true);
@@ -1072,8 +1069,8 @@ void api::daqTriggerLoop(uint16_t period) {
   if(daqStatus()) {
     // Pattern Generator loop doesn't work for delay periods smaller than
     // the pattern generator duration, so limit it to that:
-    if(period < _daq_minimum_period) {
-      period = _daq_minimum_period;
+    if(period < _dut->pg_sum) {
+      period = _dut->pg_sum;
       LOG(logWARNING) << "Loop period setting too small for configured "
 		      << "Pattern generator. "
 		      << "Setting loop delay to " << period << " clk";
@@ -1828,14 +1825,14 @@ void api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
 
   // Store the Pattern Generator commands in the DUT:
   _dut->pg_setup = pg_setup;
+  // Calculate the sum of all delays and store it:
+  _dut->pg_sum = getPatternGeneratorDelaySum(_dut->pg_setup);
 }
 
 uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
 
   uint32_t delay_sum = 0;
-
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) { delay_sum += (*it).second; }
-
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
 }
