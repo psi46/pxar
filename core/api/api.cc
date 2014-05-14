@@ -1793,15 +1793,78 @@ void api::SetCalibrateBits(bool enable) {
   }
 }
 
+void api::checkTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
 
-bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+  // Take care of the signal delay settings:
+  std::map<uint8_t,uint8_t> delays;
+  for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
+
+    // Fill the signal timing pairs with the register from the dictionary:
+    uint8_t sigRegister, sigValue = sigIt->second;
+    if(!verifyRegister(sigIt->first,sigRegister,sigValue,DTB_REG)) continue;
+
+    std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+    ret = delays.insert( std::make_pair(sigRegister,sigValue) );
+    if(ret.second == false) {
+      LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
+		      << "\" value " << static_cast<int>(ret.first->second)
+		      << " with " << static_cast<int>(sigValue);
+      delays[sigRegister] = sigValue;
+    }
+  }
+  // Store these validated parameters in the DUT
+  _dut->sig_delays = delays;
+}
+
+void api::checkTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
+
+  // Read the power settings and make sure we got all, these here are the allowed limits:
+  double va = 2.5, vd = 3.0, ia = 3.0, id = 3.0;
+  for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
+    std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
+
+    if((*it).second < 0) {
+      LOG(logERROR) << "Negative value for power setting \"" << (*it).first << "\". Using default limit.";
+      continue;
+    }
+
+    if((*it).first.compare("va") == 0) { 
+      if((*it).second > va) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << va; }
+      else { va = (*it).second; }
+      _dut->va = va;
+    }
+    else if((*it).first.compare("vd") == 0) {
+      if((*it).second > vd) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << vd; }
+      else {vd = (*it).second; }
+      _dut->vd = vd;
+    }
+    else if((*it).first.compare("ia") == 0) {
+      if((*it).second > ia) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << ia; }
+      else { ia = (*it).second; }
+      _dut->ia = ia;
+    }
+    else if((*it).first.compare("id") == 0) {
+      if((*it).second > id) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << id; }
+      else { id = (*it).second; }
+      _dut->id = id;
+    }
+    else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
+  }
+
+  if(va < 0.01 || vd < 0.01 || ia < 0.01 || id < 0.01) {
+    LOG(logCRITICAL) << "Power settings are not sufficient. Please check and re-configure!";
+    throw InvalidConfig("Power settings are not sufficient. Please check and re-configure.");
+  }
+}
+
+void api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
   
   uint32_t delay_sum = 0;
 
   if(pg_setup.size() > 256) {
     LOG(logCRITICAL) << "Pattern too long (" << pg_setup.size() << " entries) for pattern generator. "
 		     << "Only 256 entries allowed!";
-    return false;
+    throw InvalidConfig("Pattern too long for pattern generator. Please check and re-configure.");
   }
   else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
 
@@ -1809,7 +1872,7 @@ bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
     if((*it).second == 0 && it != pg_setup.end() -1 ) {
       LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
 		       << static_cast<int>(it - pg_setup.begin())  << ".";
-      return false;
+      throw InvalidConfig("Found delay = 0 on early entry! This stops the pattern generator");
     }
     // Check last entry for PG stop signal (delay = 0):
     if(it == pg_setup.end() - 1 && (*it).second != 0) {
@@ -1818,7 +1881,9 @@ bool api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
     }
     delay_sum += (*it).second;
   }
-  return true;
+
+  // Store the Pattern Generator commands in the DUT:
+  _dut->pg_setup = pg_setup;
 }
 
 uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {

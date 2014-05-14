@@ -650,12 +650,25 @@ namespace pxar {
     /** Helper function to check validity of the pattern generator settings
      *  coming from the user space.
      *
-     *  Right now this only checks for wrong or 
-     *  dangerous delay settings either stopping the PG too early or not at
-     *  all (missing delay = 0 at the end of the pattern command list)
+     *  Right now this only checks for wrong or dangerous delay settings either
+     *  stopping the PG too early or not at all (missing delay = 0 at the end 
+     *  of the pattern command list)
+     *  For non-correctable problems a InvalidConfig exception is thrown.
      */
-    bool verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
+    void verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
+    /** Helper function to check validity of testboard power settings (voltages and
+     *  current limits) coming from the user space.
+     */
+    void checkTestboardPower(std::vector<std::pair<std::string,double> > power_settings);
+
+    /** Helper function to check validity of testboard dsignal delay settings (register name
+     *  lookup, range validation) coming from the user space.
+     */
+    void checkTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays);
+
+    /** Helper function to return the sum of all pattern generator delays
+     */
     uint32_t getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
     /** Helper function to update the internaly cached number of decoder errors
