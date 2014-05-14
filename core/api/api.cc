@@ -43,7 +43,7 @@ api::~api() {
 std::string api::getVersion() { return PACKAGE_STRING; }
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
-                       std::vector<std::pair<std::string,double> > power_settings,
+			std::vector<std::pair<std::string,double> > power_settings,
 			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
   // Check the HAL status before doing anything else:
@@ -52,15 +52,13 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   // Collect and check the testboard configuration settings
 
   // Power settings:
-  setTestboardPower(power_settings);
+  checkTestboardPower(power_settings);
 
   // Signal Delays:
-  setTestboardDelays(sig_delays);
+  checkTestboardDelays(sig_delays);
   
   // Prepare Pattern Generator:
-  if(!verifyPatternGenerator(pg_setup)) return false;
-  // Store the Pattern Generator commands in the DUT:
-  _dut->pg_setup = pg_setup;
+  verifyPatternGenerator(pg_setup);
 
   // Call the HAL to do the job:
   _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id);
@@ -68,79 +66,35 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 }
 
 void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
-
-  if(!_hal->compatible()) return;
-
-  // Take care of the signal delay settings:
-  std::map<uint8_t,uint8_t> delays;
-  for(std::vector<std::pair<std::string,uint8_t> >::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
-
-    // Fill the signal timing pairs with the register from the dictionary:
-    uint8_t sigRegister, sigValue = sigIt->second;
-    if(!verifyRegister(sigIt->first,sigRegister,sigValue,DTB_REG)) continue;
-
-    std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-    ret = delays.insert( std::make_pair(sigRegister,sigValue) );
-    if(ret.second == false) {
-      LOG(logWARNING) << "Overwriting existing DTB delay setting \"" << sigIt->first 
-		      << "\" value " << static_cast<int>(ret.first->second)
-		      << " with " << static_cast<int>(sigValue);
-      delays[sigRegister] = sigValue;
-    }
+  if(!_hal->status()) {
+    LOG(logERROR) << "Signal delays not updated!";
+    return;
   }
-  // Store these validated parameters in the DUT
-  _dut->sig_delays = delays;
+  checkTestboardDelays(sig_delays);
+  _hal->setTestboardDelays(_dut->sig_delays);
+  LOG(logDEBUGAPI) << "Testboard signal delays updated.";
+}
 
-  // If the HAL is ready, just update the stuff there:
-  if(_hal->status()) { _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id); }
+void api::setPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+  if(!_hal->status()) {
+    LOG(logERROR) << "Pattern generator not updated!";
+    return;
+  }
+  verifyPatternGenerator(pg_setup);
+  _hal->setTestboardPower(_dut->va,_dut->vd,_dut->ia,_dut->id);
+  LOG(logDEBUGAPI) << "Pattern generator verified and updated.";
 }
 
 void api::setTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
-
-  if(!_hal->compatible()) return;
-
-  // Read the power settings and make sure we got all, these here are the allowed limits:
-  double va = 2.5, vd = 3.0, ia = 3.0, id = 3.0;
-  for(std::vector<std::pair<std::string,double> >::iterator it = power_settings.begin(); it != power_settings.end(); ++it) {
-    std::transform((*it).first.begin(), (*it).first.end(), (*it).first.begin(), ::tolower);
-
-    if((*it).second < 0) {
-      LOG(logERROR) << "Negative value for power setting \"" << (*it).first << "\". Using default limit.";
-      continue;
-    }
-
-    if((*it).first.compare("va") == 0) { 
-      if((*it).second > va) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << va; }
-      else { va = (*it).second; }
-      _dut->va = va;
-    }
-    else if((*it).first.compare("vd") == 0) {
-      if((*it).second > vd) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << vd; }
-      else {vd = (*it).second; }
-      _dut->vd = vd;
-    }
-    else if((*it).first.compare("ia") == 0) {
-      if((*it).second > ia) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << ia; }
-      else { ia = (*it).second; }
-      _dut->ia = ia;
-    }
-    else if((*it).first.compare("id") == 0) {
-      if((*it).second > id) { LOG(logWARNING) << "Limiting \"" << (*it).first << "\" to " << id; }
-      else { id = (*it).second; }
-      _dut->id = id;
-    }
-    else { LOG(logERROR) << "Unknown power setting " << (*it).first << "! Skipping.";}
+  if(!_hal->status()) {
+    LOG(logERROR) << "Voltages/current limits not upated!";
+    return;
   }
-
-  if(va < 0.01 || vd < 0.01 || ia < 0.01 || id < 0.01) {
-    LOG(logCRITICAL) << "Power settings are not sufficient. Please check and re-configure!";
-    throw InvalidConfig("Power settings are not sufficient. Please check and re-configure.");
-  }
-
-  // If the HAL is ready, just update the stuff there:
-  if(_hal->status()) { _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id); }
+  checkTestboardPower(power_settings);
+  _hal->setTestboardPower(_dut->va,_dut->vd,_dut->ia,_dut->id);
+  LOG(logDEBUGAPI) << "Voltages/current limits updated.";
 }
-  
+
 bool api::initDUT(uint8_t hubid,
 		  std::string tbmtype, 
 		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,

@@ -191,11 +191,34 @@ namespace pxar {
                        std::vector<std::pair<std::string,double> > power_settings,
                        std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
   
+    /** Update method for testboard voltages and current limits. This method requires
+     *  the testboard to be initialized once using pxar::initTestboard
+     *  All user inputs are checked for sanity. This includes range checks on
+     *  the current limits set. If the settings are found to be out-of-range, 
+     *  a pxar::InvalidConfig exception is thrown.
+     *  The new settings are stored in the pxar::dut object for later reference.
+     */
     void setTestboardPower(std::vector<std::pair<std::string,double> > power_settings);
 
+    /** Update method for testboard signal delay settings. This method requires
+     *  the testboard to be initialized once using pxar::initTestboard
+     *  All user inputs are checked for sanity. This includes a register name lookup
+     *  and range checks on the register values. If the settings are found to be 
+     *  out-of-range, a pxar::InvalidConfig exception is thrown.
+     *  The new settings are stored in the pxar::dut object for later reference.
+     */
     void setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays);
 
-    bool setPatternGenerator(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+    /** Update method for testboard pattern generator. This method requires
+     *  the testboard to be initialized once using pxar::initTestboard
+     *  All user inputs are checked for sanity. This includes a full sanity check
+     *  for the pattern generator command list, including a check for the total
+     *  pattern length supplied as well as the delay = 0 at the end of the list.
+     *  If the settings are found to be out-of-range, a pxar::InvalidConfig exception
+     *  is thrown. The new settings are stored in the pxar::dut object for 
+     *  later reference.
+     */
+    void setPatternGenerator(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
 
     /** Initializer method for the DUT (attached devices)
      *
