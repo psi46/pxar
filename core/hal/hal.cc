@@ -1644,6 +1644,8 @@ void hal::daqTriggerLoop(uint16_t period) {
   LOG(logDEBUGHAL) << "Trigger loop every " << period << " clock cycles started.";
   _testboard->Pg_Loop(period);
   _testboard->uDelay(20);
+  // Push to testboard:
+  _testboard->Flush();
 }
 
 uint32_t hal::daqBufferStatus() {
