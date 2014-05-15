@@ -50,8 +50,10 @@ typedef unsigned char uint8_t;
 
 /** Flag to force all pixels to masked state during tests. By this only the one pixel with
  *  calibrate pulse is enabled and trimmed.
+ *  This flag is obsolete (since this is now the default behavior) and stays only for legacy
+ *  reasons.
  */
-#define FLAG_FORCE_MASKED   0x0010
+#define FLAG_FORCE_MASKED   0x0000
 
 /** Flag to desable the standard procedure of flipping DAC values before programming. This
  *  is done by default to flatten the response, taking into account the chip layout. This
@@ -68,11 +70,16 @@ typedef unsigned char uint8_t;
  *  in a wrong position (e.g. expecting pixel 13,8 but receiving pixel 13,9) are flagged with a
  *  negative pulse height. This flag can be used e.g. for pixel address test to make sure all of them
  *  are answering with their correct address.
- *  This flag basically requires FLAG_FORCE_MASKED to work in a predictable way, otherwise noise pixels
+ *  This flag might not work correctly with FLAG_FORCE_UNMASKED, since noise pixel hits
  *  might end up being flagged as out-of-order.
  */
 
 #define FLAG_CHECK_ORDER 0x0080
+
+/** Flag to unmask and trim all pixels before the test starts. This might be a tad faster but one
+ *  risks to get flooded with noise hits - which also might distrub the readout.
+ */
+#define FLAG_FORCE_UNMASKED   0x0100
 
 
 /** Define a macro for calls to member functions through pointers 
@@ -628,7 +635,7 @@ namespace pxar {
 
     /** Routine to loop over all ROCs/pixels and update the NIOS cache of trim
      *  and mask bits with the current test configuration. This cache is used
-     *  for the trimming done on the test trigger loops when FLAG_FORCE_MASKED
+     *  for the trimming done on the test trigger loops unless FLAG_FORCE_UNMASKED
      *  is activated.
      */
     void MaskAndTrimNIOS();

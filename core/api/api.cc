@@ -1190,8 +1190,8 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
   timer t;
 
   // Do the masking/unmasking&trimming for all ROCs first.
-  // If we run in FLAG_FORCE_MASKED mode, transmit the new trim values to the NIOS core and mask the whole DUT:
-  if((flags & FLAG_FORCE_MASKED) != 0) {
+  // Unless we are running in FLAG_FORCE_UNMASKED mode, we need to transmit the new trim values to the NIOS core and mask the whole DUT:
+  if((flags & FLAG_FORCE_UNMASKED) == 0) {
     MaskAndTrimNIOS();
     MaskAndTrim(false);
   }
@@ -1263,8 +1263,8 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
 
-	// If we have serial execution make sure to trim the ROC unless we requested forceMasked:
-	if(((flags & FLAG_FORCE_SERIAL) != 0) && ((flags & FLAG_FORCE_MASKED) == 0)) { MaskAndTrim(true,rocit); }
+	// If we have serial execution make sure to trim the ROC if we requested forceUnmasked:
+	if(((flags & FLAG_FORCE_SERIAL) != 0) && ((flags & FLAG_FORCE_UNMASKED) != 0)) { MaskAndTrim(true,rocit); }
 
 	// execute call to HAL layer routine and save returned data in buffer
 	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
