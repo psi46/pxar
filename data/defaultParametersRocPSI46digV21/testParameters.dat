@@ -93,12 +93,14 @@ VthrCompLo  0
 VthrCompHi  50 
 
 -- Pattern
-ntrig         10
+ntrig         0
+trigloop      1
+period        -1
+seconds       1
+patternfromfile     1
+resultsonfile       1
+binaryoutput        0
+outfilename      defaultdata.dat
 testallpixels 0
 maskallpixels 0
-patternfromfile 1
-pixelsfromfile  0
-pix1            11,20
-pix2            25,23
-pix3            43,68
 resettodefault  button
