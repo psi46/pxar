@@ -60,7 +60,7 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   verifyPatternGenerator(pg_setup);
 
   // Call the HAL to do the job:
-  _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->va,_dut->vd,_dut->ia,_dut->id);
+  _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->pg_sum,_dut->va,_dut->vd,_dut->ia,_dut->id);
   return true;
 }
 
@@ -80,7 +80,7 @@ void api::setPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup
     return;
   }
   verifyPatternGenerator(pg_setup);
-  _hal->SetupPatternGenerator(_dut->pg_setup);
+  _hal->SetupPatternGenerator(_dut->pg_setup,_dut->pg_sum);
   LOG(logDEBUGAPI) << "Pattern generator verified and updated.";
 }
 
