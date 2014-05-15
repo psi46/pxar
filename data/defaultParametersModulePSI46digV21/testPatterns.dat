@@ -1,13 +1,67 @@
--- Pattern
-2048 , 25		// PG_RESR b001000  0x0800
-1024 , 106		// PG_CAL  b000100  0x0400
-512  , 16		// PG_TRG  b000010  0x0200
-256  , 0		// PG_TOK  	    0x0100
 
--- Pixels (col,row)
-PIX  10 , 10
-PIX  10 , 50
-PIX  10 , 5
-PIX  10 , 25
-PIX  10 , 40
-PIX  50 , 25
+-- Pattern
+
+0    , 255		// DELAY
+0    , 219		// DELAY
+1024 , 106		// PG_CAL
+
+512  , 20		// PG_TRG
+256  , 219		// PG_TOK
+0    , 255		// DELAY
+1024 , 106		// PG_CAL
+
+512  , 20		// PG_TRG
+256  , 219		// PG_TOK
+0    , 255		// DELAY
+1024 , 106		// PG_CAL
+
+512  , 20		// PG_TRG
+256  , 219		// PG_TOK
+0    , 255		// DELAY
+1024 , 106		// PG_CAL
+
+512  , 20		// PG_TRG
+256  , 70		// PG_TOK
+0    , 255		// DELAY
+0    , 255		// DELAY
+
+512  , 20		// PG_TRG
+256  , 0		// PG_TOK
+
+
+-- Test Pixels (col,row)
+pix  5 , 40
+pix  25 , 40
+pix  50 , 40
+
+-- Unmask Pixels (col,row)
+pix  1 , 46
+pix  3 , 21
+pix  4 , 46
+pix  5 , 21
+pix  8 , 46
+pix  10 , 21
+pix  11 , 46
+pix  12 , 21
+pix  15 , 46
+pix  16 , 21
+pix  18 , 46
+pix  20 , 21
+pix  21 , 46
+pix  25 , 21
+pix  28 , 46
+pix  29 , 21
+pix  32 , 46
+pix  34 , 21
+pix  36 , 46
+pix  38 , 21
+pix  40 , 46
+pix  42 , 21
+pix  44 , 46
+pix  45 , 21
+pix  46 , 46
+pix  48 , 21
+pix  49 , 46
+pix  20 , 21
+pix  51 , 46
+pix  51 , 21
