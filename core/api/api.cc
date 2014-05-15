@@ -1172,11 +1172,6 @@ bool api::daqStop() {
     _hal->AllColumnsSetEnable(rocit->i2c_address,false);
   }
 
-  // Re-program the old Pattern Generator setup which is stored in the DUT.
-  // Since these patterns are verified already, just write them:
-  LOG(logDEBUGAPI) << "Resetting Pattern Generator to previous state.";
-  _hal->SetupPatternGenerator(_dut->pg_setup);
-  
   return false;
 }
 
