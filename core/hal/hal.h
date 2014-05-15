@@ -37,7 +37,7 @@ namespace pxar {
 
     /** Initialize the testboard with the signal delay settings:
      */
-    void initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t, uint8_t> > pg_setup, double va, double vd, double ia, double id);
+    void initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t, uint8_t> > pg_setup, uint16_t delaysum,  double va, double vd, double ia, double id);
 
     /** Set/change the testboard voltages and current limits:
      */
@@ -103,7 +103,7 @@ namespace pxar {
 
     /** Function to set and update the pattern generator command list on the DTB
      */
-    void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup);
+    void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);
 
     /** Set the clock stretch 
     */

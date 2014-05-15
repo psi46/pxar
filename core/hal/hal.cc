@@ -103,7 +103,7 @@ uint32_t hal::GetHashForStringVector(const std::vector<std::string> & v)
   return ret;
 }
 
-void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, double va, double vd, double ia, double id) {
+void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum, double va, double vd, double ia, double id) {
 
   // Set the power limits:
   setTestboardPower(va,vd,ia,id);
@@ -112,7 +112,7 @@ void hal::initTestboard(std::map<uint8_t,uint8_t> sig_delays, std::vector<std::p
   setTestboardDelays(sig_delays);
 
   // Set up Pattern Generator:
-  SetupPatternGenerator(pg_setup);
+  SetupPatternGenerator(pg_setup,delaysum);
 
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;
@@ -140,8 +140,8 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       deser160phase = sigIt->second;
     }
     else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
-      LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second) << "usec";
-      _testboard->SetLoopTriggerDelay(sigIt->second);
+      LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second) << " clk";
+      _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
@@ -153,7 +153,7 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
   _testboard->Flush();
 }
 
-void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum) {
 
   // Write the (sorted!) PG patterns into adjacent register addresses:
   std::vector<uint16_t> cmd;
@@ -168,6 +168,7 @@ void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_set
   }
 
   _testboard->Pg_SetCmdAll(cmd);
+  _testboard->Pg_SetSum(delaysum);
 
   // Since the last delay is known to be zero we don't have to overwrite the rest of the address range - 
   // the Pattern generator will stop automatically at that point.
