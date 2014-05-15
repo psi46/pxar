@@ -53,7 +53,7 @@ typedef unsigned char uint8_t;
  *  This flag is obsolete (since this is now the default behavior) and stays only for legacy
  *  reasons.
  */
-#define FLAG_FORCE_MASKED   0x0000
+#define FLAG_FORCE_MASKED   0x0010
 
 /** Flag to desable the standard procedure of flipping DAC values before programming. This
  *  is done by default to flatten the response, taking into account the chip layout. This
