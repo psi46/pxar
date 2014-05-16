@@ -524,7 +524,7 @@ namespace pxar {
     /** Function to fire the previously defined pattern command list "nTrig"
      *  times, the function parameter defaults to 1.
      */
-    void daqTrigger(uint32_t nTrig = 1);
+    void daqTrigger(uint32_t nTrig = 1, uint16_t perdiod = 0);
 
     /** Function to fire the previously defined pattern command list
      *  continuously every "period" clock cycles (default: 1000)

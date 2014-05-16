@@ -246,7 +246,7 @@ namespace pxar {
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
-    void daqTrigger(uint32_t nTrig);
+    void daqTrigger(uint32_t nTrig, uint16_t period);
 
     /** Firing the pattern generator continuously every "period" clock cycles
      */
