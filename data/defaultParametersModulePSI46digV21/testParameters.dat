@@ -91,3 +91,16 @@ VcalLo      25
 VcalHi      75 
 VthrCompLo  0 
 VthrCompHi  50 
+
+-- Pattern
+ntrig         0
+trigloop      1
+period        -1
+seconds       1
+patternfromfile     1
+resultsonfile       1
+binaryoutput        0
+outfilename      defaultdata.dat
+testallpixels 0
+maskallpixels 0
+resettodefault  button
