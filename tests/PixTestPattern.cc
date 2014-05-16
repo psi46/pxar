@@ -354,7 +354,7 @@ void PixTestPattern::PrintEvents() {
 		daqEvBuffer = fApi->daqGetEventBuffer();
 		daqEvBuffsiz = daqEvBuffer.size();
 	
-		if (daqEvBuffsiz <= 1001)
+			if (daqEvBuffsiz <= 201)
 		{
 			cout << endl << "data from buffer" << endl;
 			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	{
@@ -379,7 +379,6 @@ void PixTestPattern::PrintEvents() {
 	else 
 	{
 		cout << endl << "Start reading data from DTB RAM." << endl;
-		std::ofstream fout(fFileName.c_str(), std::ios::out);
 
 		if (fBinOut)
 		{			
@@ -387,8 +386,10 @@ void PixTestPattern::PrintEvents() {
 			std::cout << "Read " << daqdat.size() << " words of data: ";
 			if (daqdat.size() > 550000) std::cout << (daqdat.size() / 524288) << "MB." << std::endl;
 			else std::cout << (daqdat.size() / 512) << "kB." << std::endl;
+			std::ofstream fout(fFileName.c_str(), std::ios::out | std::ios::binary);
 			fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
 			std::cout << "Writing binary" << endl;
+			fout.close();
 		}
 
 		else
@@ -396,10 +397,11 @@ void PixTestPattern::PrintEvents() {
 			daqEvBuffer = fApi->daqGetEventBuffer();
 			daqEvBuffsiz = daqEvBuffer.size();
 			cout << "Read " << daqEvBuffsiz << " events." << endl;
+			std::ofstream fout(fFileName.c_str(), std::ios::out);
 			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	fout << i << " : " << daqEvBuffer[i] << endl;
+			fout.close();
 		}
 
-		fout.close();
 		std::cout << "Wrote data to file " << fFileName.c_str() << std::endl;
 	}
 
