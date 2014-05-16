@@ -354,7 +354,7 @@ void PixTestPattern::PrintEvents() {
 		daqEvBuffer = fApi->daqGetEventBuffer();
 		daqEvBuffsiz = daqEvBuffer.size();
 	
-		if (daqEvBuffsiz <= 1001)
+		if (daqEvBuffsiz <= 201)
 		{
 			cout << endl << "data from buffer" << endl;
 			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	{
