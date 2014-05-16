@@ -11,7 +11,9 @@
 #include "PixTestPattern.hh"
 
 #include "log.h"
+#include "api.h"
 #include "constants.h"
+#include "helper.h"
 
 using namespace std;
 using namespace pxar;
@@ -19,7 +21,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fTestAllPixels(0), fMaskAllPixels(0), fPatternFromFile(0), fPixelsFromFile(1)
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null.dat"), fPixelsFromFile(1), fTestAllPixels(0), fMaskAllPixels(0)
 {
 	init();
 	PixTest::init();
@@ -48,7 +50,42 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				fParNtrig = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting Ntrig -> " << fParNtrig;
 			}
+
+			if (!parName.compare("trigloop")){
+				fParTrigLoop = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting TrigLoop -> " << fParTrigLoop;
+			}
 						
+			if (!parName.compare("period")){
+				fParPeriod = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting Period -> " << fParPeriod;
+			}
+
+			if (!parName.compare("seconds")){
+				fParSeconds = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting Seconds -> " << fParSeconds;
+			}
+
+			if (!parName.compare("patternfromfile")){
+				fPatternFromFile = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting fPatternFromFile -> " << fPatternFromFile;
+			}
+			   
+			if (!parName.compare("resultsonfile")){
+				fResultsOnFile = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting fResultsOnFile -> " << fResultsOnFile;
+			}
+
+			if (!parName.compare("binaryoutput")){
+				fBinOut = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting fBinOut -> " << fBinOut;
+			}
+
+			if (!parName.compare("outfilename")){
+				fFileName = sval.c_str();
+				LOG(logDEBUG) << "  setting fFileName -> " << fFileName;
+			}
+
 			if (!parName.compare("testallpixels")){
 				fTestAllPixels = atoi(sval.c_str());
 				LOG(logDEBUG) << "  setting fTestAllPixels -> " << fTestAllPixels;
@@ -59,23 +96,19 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fMaskAllPixels -> " << fMaskAllPixels;
 			}
 
-			if (!parName.compare("patternfromfile")){
-				fPatternFromFile = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fPatternFromFile -> " << fPatternFromFile;
-			}
+			/*			if (!parName.compare("pixelsfromfile")){
+			fPixelsFromFile = atoi(sval.c_str());
+			LOG(logDEBUG) << "  setting fPixelsFromFile -> " << fPixelsFromFile;
+			} */
 
-			if (!parName.compare("pixelsfromfile")){
-				fPixelsFromFile = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fPixelsFromFile -> " << fPixelsFromFile;
-			}
-			
-			//to set PIXs from testParameters.dat:
-			int I = i - 4;
+	/*		//to set PIXs from testParameters.dat:
+			int I = i - 9;
 			stringstream stre;
 			stre << "pix" << I;
 			string pixN = stre.str();
 			if (!parName.compare(pixN)) choosePIX(sval);
 			pixN.clear();
+			*/
 
 			break;
 		}
@@ -194,7 +227,7 @@ bool PixTestPattern::setPattern(string fname) {
 				val1 = atoi(str1.c_str());
 				val2 = atoi(str2.c_str());		
 				pg_setup.push_back(make_pair(val1, val2));
-				LOG(logINFO) << "  pg set to -> " << val1 << " " << val2; //DEBUG
+				LOG(logDEBUG) << "  pg set to -> " << val1 << " " << val2;
 			}
 
 			else
@@ -228,6 +261,8 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 	bool pixelFound(false);
 	string line;
 
+	if (flag == "Unmask")	{LOG(logINFO) << "  unmasked pixel -> ";}
+		
 	while (is.good())
 	{
 		getline(is, line);
@@ -273,11 +308,11 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 				pixr = atoi(str2.c_str());
 				if (flag == "Test"){
 					fPIX.push_back(make_pair(pixc, pixr));
-					LOG(logINFO) << "  selected pixel -> " << pixc << " " << pixr; //DEBUG
+					LOG(logINFO) << "  selected pixel -> " << pixc << " " << pixr;
 				}
 				else {
 					fPIXm.push_back(make_pair(pixc, pixr));
-					LOG(logINFO) << "  unmasked pixel -> " << pixc << " " << pixr; //DEBUG
+					cout << " (" << pixc << "," << pixr << ")";
 				}
 			}
 			else
@@ -302,7 +337,7 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 		}
 		return false;
 	}
-
+	cout << endl;
 	return true;
 
 }
@@ -311,21 +346,62 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 // ----------------------------------------------------------------------
 void PixTestPattern::PrintEvents() {
 
-	vector<pxar::Event> daqEvBuffer = fApi->daqGetEventBuffer();
+	vector<pxar::Event> daqEvBuffer;
+	size_t daqEvBuffsiz;
 
-	size_t daqBuffsiz = daqEvBuffer.size();
-
-	if (daqBuffsiz)
+	if(!fResultsOnFile)
 	{
-		cout << endl << "data from buffer" << endl;
-		for (unsigned int i = 0; i < daqBuffsiz; i++)
+		daqEvBuffer = fApi->daqGetEventBuffer();
+		daqEvBuffsiz = daqEvBuffer.size();
+	
+		if (daqEvBuffsiz <= 1001)
 		{
-			cout << i << " : " << daqEvBuffer[i] << endl;
+			cout << endl << "data from buffer" << endl;
+			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	{
+				cout << i << " : " << daqEvBuffer[i] << endl;
+			}
+			cout << endl;
+		} 
+		else 
+		{
+			cout << endl << "data from buffer" << endl;
+			for (unsigned int i = 0; i <= 100; i++)	{
+				cout << i << " : " << daqEvBuffer[i] << endl;
+			}
+			cout << endl << "...................skip events...................." << endl <<endl;
+			for (unsigned int i = (daqEvBuffsiz-100); i < daqEvBuffsiz; i++)	{
+				cout << i << " : " << daqEvBuffer[i] << endl;
+			}	
+			cout << endl;
 		}
-		cout << endl;
+		cout << "Number of events read from buffer: " << daqEvBuffsiz << endl << endl;
 	}
+	else 
+	{
+		cout << endl << "Start reading data from DTB RAM." << endl;
+		std::ofstream fout(fFileName.c_str(), std::ios::out);
 
-	cout << "Number of events read from buffer: " << daqEvBuffer.size() << endl << endl;
+		if (fBinOut)
+		{			
+			std::vector<uint16_t> daqdat = fApi->daqGetBuffer();
+			std::cout << "Read " << daqdat.size() << " words of data: ";
+			if (daqdat.size() > 550000) std::cout << (daqdat.size() / 524288) << "MB." << std::endl;
+			else std::cout << (daqdat.size() / 512) << "kB." << std::endl;
+			fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
+			std::cout << "Writing binary" << endl;
+		}
+
+		else
+		{
+			daqEvBuffer = fApi->daqGetEventBuffer();
+			daqEvBuffsiz = daqEvBuffer.size();
+			cout << "Read " << daqEvBuffsiz << " events." << endl;
+			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	fout << i << " : " << daqEvBuffer[i] << endl;
+		}
+
+		fout.close();
+		std::cout << "Wrote data to file " << fFileName.c_str() << std::endl;
+	}
 
 }
 
@@ -336,8 +412,14 @@ void PixTestPattern::doTest()
 	fHistList.clear();
 	pg_setup.clear();  
 	PixTest::update();
-	fApi->SignalProbe("D1","pgsync");   //to send PG_Sync signal on the ROC via lemo
-	fApi->SignalProbe("D2", "pgsync"); //to see PG_Sync with oscilloscope
+
+//-- new DEBUG!!
+	fApi->SignalProbe("D1", "clk");
+	fApi->SignalProbe("D2", "tout");
+
+//old...
+//	fApi->SignalProbe("D1","pgsync");   //to send PG_Sync signal on the ROC via lemo
+//	fApi->SignalProbe("D2", "pgsync"); //to see PG_Sync with oscilloscope
 
 	LOG(logINFO) << "PixTestPattern::doTest() ntrig = " << fParNtrig;
 
@@ -347,22 +429,9 @@ void PixTestPattern::doTest()
 	string fname;
 	ConfigParameters* config = ConfigParameters::Singleton();
 	std::string f_Directory = config->getDirectory();
-	fname = f_Directory + "/testPatterns.dat";
+	fname = f_Directory + "/testPatterns.dat";  //to read it from -f ?
 			
-	//select the pattern:
-	if (fPatternFromFile) 
-	{
-		LOG(logINFO) << "Pattern from file: " << fname;  //DEBUG
-		if(!setPattern(fname)) return;  //READ FROM FILE	
-	}
-	else			 //standard pattern
-	{
-		pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
-		pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
-		pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
-		pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  
-	}
-		
+			
 	if (!fTestAllPixels)
 	{
 		//select the pixels:
@@ -394,7 +463,7 @@ void PixTestPattern::doTest()
 		if (!fMaskAllPixels){
 			for (unsigned int i = 0; i < fPIXm.size(); ++i)			{
 				if (fPIXm[i].first > -1)  fApi->_dut->maskPixel(fPIXm[i].first, fPIXm[i].second, false);
-				//else  //... ??				}
+				//else  //... ??	debug			}
 			}
 		}
 	}
@@ -409,19 +478,72 @@ void PixTestPattern::doTest()
 		}
 		else                fApi->_dut->maskAllPixels(false);
 	}
+		
+	
+	// Start the DAQ:
 
-	// Set up the pattern generator:
+	//first send only a RES:
+	pg_setup.push_back(make_pair(0x0800, 25));     // PG_RESR b001000 
+	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  
+
+	// Set the pattern generator:
 	fApi->setPatternGenerator(pg_setup);
 
-	// Start the DAQ:
 	fApi->daqStart();
-	// Send the triggers (it does Ntrig times the pg_Sinlgle() == Ntrig times pattern sequence):
-	fApi->daqTrigger(fParNtrig);
+
+	//send only one trigger to reset:
+	fApi->daqTrigger(1);
+	LOG(logINFO) << "PixTestPattern::RES|TOK sent once ";
+
+	pg_setup.clear();
+	LOG(logINFO) << "PixTestPattern::PG_Setup clean";
+
+	//select the pattern:
+	if (fPatternFromFile)
+	{
+		LOG(logINFO) << "Pattern from file: " << fname;
+		if (!setPattern(fname)) return;		//READ FROM FILE	
+	}
+	else			 //standard pattern
+	{
+		pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
+		pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
+		pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
+		pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  
+	}
+
+	//set pattern generator (new api function):
+	fApi->setPatternGenerator(pg_setup);
+
+	//send Triggers (loop or single) wrt parameters selection:
+	if (!fParTrigLoop){
+		//Ntrig times the pg_Sinlgle() == Ntrig times pattern sequence):
+		fApi->daqTrigger(fParNtrig);
+		LOG(logINFO) << "PixTestPattern:: " << fParNtrig << " pg_Single() sent";
+	}
+	else
+	{
+		fApi->daqTriggerLoop(fParPeriod);  //if '-1' automatically set to minimum.  MESSAGE NEEDED.
+		LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << fParPeriod << " and duration " << fParSeconds << " seconds";
 		
-	// Get events and Print results on shell:
-	PrintEvents();
+		mDelay(fParSeconds*1000);  //wait in milliseconds
+
+	}
 
 	fApi->daqStop();
+
+	// Get events and Print results on shell/file:
+	PrintEvents();
+
+	// Reset the pg_setup to default value.
+	pg_setup.clear();
+	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
+	pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
+	pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
+	pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
+	pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  		
+	fApi->setPatternGenerator(pg_setup);
+	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
 
 	fPIX.clear();
 	fPIXm.clear();
