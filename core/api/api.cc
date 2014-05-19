@@ -1837,6 +1837,8 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
   uint32_t delay_sum = 0;
   // Total cycle time is sum of delays plus once clock cycle for the actual command:
   for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) { delay_sum += (*it).second + 1; }
+  // Add one more clock cycle:
+  delay_sum++;
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
 }
