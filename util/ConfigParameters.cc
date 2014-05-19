@@ -856,6 +856,7 @@ void ConfigParameters::writeGainPedestalParameters() {
   stringstream fname;
   
   for (unsigned int iroc = 0; iroc < fGainPedestalParameters.size(); ++iroc) {
+    fname.str(std::string());
     fname << fDirectory << "/" << getGainPedestalParameterFileName() << "_C" << iroc << ".dat";
     ofstream OutputFile;
     OutputFile.open((fname.str()).c_str());
