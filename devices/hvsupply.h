@@ -6,6 +6,21 @@
 #ifndef PXAR_HVSUPPLY_H
 #define PXAR_HVSUPPLY_H
 
+/** Declare all classes that need to be included in shared libraries on Windows 
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 namespace pxar {
 
   /** pxar interface class for HV Power Supply devices
@@ -40,10 +55,6 @@ namespace pxar {
      */
     bool setVoltage(uint32_t volts);
     
-    /** Reads back the configured voltage
-     */
-    uint32_t getVoltage();
-
     /** Reads back the configured voltage
      */
     uint32_t getVoltage();
