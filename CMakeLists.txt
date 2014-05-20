@@ -185,6 +185,9 @@ INCLUDE_DIRECTORIES(core/api core/utils)
 # Always build main pxar API library;
 ADD_SUBDIRECTORY(core)
 
+# Add external devices directory (HV Power supplies)
+ADD_SUBDIRECTORY(devices)
+
 # full UI and test suite (requires ROOT)
 IF(BUILD_pxarui)
   # this UI and its libraries depend on ROOT:
