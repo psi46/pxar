@@ -17,9 +17,9 @@ SET(PXAR_FW_VERSION "2.20")
 # pxar build options and their defaults #
 #########################################
 
-OPTION(BUILD_tools  "Compile pxar tools? (flash, testpxar...)" ON)
+OPTION(BUILD_tools  "Compile pxar tools? (flash, testpxar...)" OFF)
 OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
-OPTION(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
+OPTION(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" ON)
 
 
 ########################################
