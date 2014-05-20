@@ -30,7 +30,7 @@ private:
 	int     fParPeriod;
 	int		fParSeconds;
 	bool	fTestAllPixels;
-	bool	fMaskAllPixels;	
+	bool	fUnMaskAllPixels;
 	bool	fPatternFromFile;
 	bool	fPixelsFromFile;
 	bool	fResultsOnFile;
