@@ -21,7 +21,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null.dat"), fPixelsFromFile(1), fTestAllPixels(0), fMaskAllPixels(0)
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null.dat"), fPixelsFromFile(1), fTestAllPixels(0), fUnMaskAllPixels(0)
 {
 	init();
 	PixTest::init();
@@ -91,9 +91,9 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fTestAllPixels -> " << fTestAllPixels;
 			}
 
-			if (!parName.compare("maskallpixels")){
-				fMaskAllPixels = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fMaskAllPixels -> " << fMaskAllPixels;
+			if (!parName.compare("unmaskallpixels")){
+				fUnMaskAllPixels = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting fUnMaskAllPixels -> " << fUnMaskAllPixels;
 			}
 
 			/*			if (!parName.compare("pixelsfromfile")){
@@ -448,22 +448,25 @@ void PixTestPattern::doTest()
 		LOG(logINFO) << "Set Unmasked Pixels from file: " << fname;  //DEBUG
 		if (!setPixels(fname, "Unmask")) return;    //READ FROM FILE	
 
-		// to unmask selected pixels:
+		// to arm only selected pixels:
 		fApi->_dut->testAllPixels(false);
 
-		fApi->_dut->maskAllPixels(true);
+		// to unmask all or only selected pixels:
+		if (fUnMaskAllPixels)  fApi->_dut->maskAllPixels(false);
+		else fApi->_dut->maskAllPixels(true);
+
 		for (unsigned int i = 0; i < fPIX.size(); ++i) {
 			if (fPIX[i].first > -1)  
 			{
            		fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
-				if (!fMaskAllPixels) fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
+				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
 			}
 			else {
 				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false); //??
 			}
 		}
 
-		if (!fMaskAllPixels){
+		if (!fUnMaskAllPixels){
 			for (unsigned int i = 0; i < fPIXm.size(); ++i)			{
 				if (fPIXm[i].first > -1)  fApi->_dut->maskPixel(fPIXm[i].first, fPIXm[i].second, false);
 				//else  //... ??	debug			}
@@ -472,9 +475,10 @@ void PixTestPattern::doTest()
 	}
 	else
 	{
+		// to arm all pixels:
 		fApi->_dut->testAllPixels(true);
 		LOG(logINFO) << "  testAllPixels -> true"; //DEBUG
-		if (fMaskAllPixels)
+		if (!fUnMaskAllPixels)
 		{
 			fApi->_dut->maskAllPixels(true);
 			LOG(logINFO) << "  all Pixels masked"; //DEBUG
@@ -510,7 +514,7 @@ void PixTestPattern::doTest()
 	else			 //standard pattern
 	{
 		pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
-		pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
+		pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100 //DEBUG!!!!
 		pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
 		pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  
 	}
