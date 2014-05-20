@@ -2,4 +2,8 @@
   1             ctr    4
   2             sda   19
   3             tin    9
+  4		a1     clk
+  5		a2     ctr
+  6		d1     sda
+  7		d2     clk
 254   deser160phase    4

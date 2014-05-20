@@ -218,8 +218,9 @@ void PixTestSetup::doTest()
   	vector<pair<string, uint8_t> > sig_delays2 = fPixSetup->getConfigParameters()->getTbSigDelays();
 	LOG(logDEBUG) << fPixSetup->getConfigParameters()->dumpParameters(sig_delays2);
         pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-
-	fApi->initTestboard(sig_delays2, power_settings, pg_setup);
+        vector<pair<string, uint8_t> > probes = fPixSetup->getConfigParameters()->getTbProbes();
+	
+	fApi->initTestboard(sig_delays, power_settings, pg_setup, probes);
 
 	restoreDacs();
 	LOG(logINFO) << "PixTestSetup::doTest() done for " ;

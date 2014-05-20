@@ -212,6 +212,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
   std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+  std::vector<std::pair<std::string, uint8_t> > probes;
 
   // DTB delays
 
@@ -359,7 +360,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the testboard:
-    if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {
+    if(!_api->initTestboard(sig_delays, power_settings, pg_setup, probes)) {
       std::cout << "Something is fishy. We probably need to flash the DTB..." << std::endl;
       std::cout << "Would you be so kind and provide the path to the flash file?" << std::endl;
       std::string flashfile;

@@ -196,7 +196,8 @@ namespace pxar {
      */
     bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
-                       std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+                       std::vector<std::pair<uint16_t, uint8_t> > pg_setup,
+			std::vector<std::pair<std::string,uint8_t> > probes);
   
     /** Update method for testboard voltages and current limits. This method requires
      *  the testboard to be initialized once using pxar::initTestboard
@@ -690,6 +691,10 @@ namespace pxar {
      *  lookup, range validation) coming from the user space.
      */
     void checkTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays);
+
+	 /** Helper function to set Testboard probes.
+	  */
+	 void setTestboardProbes(std::vector<std::pair<std::string, uint8_t> > probes  );
 
     /** Helper function to return the sum of all pattern generator delays
      */
