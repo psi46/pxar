@@ -1632,11 +1632,7 @@ std::vector<uint16_t> hal::daqBuffer() {
 void hal::daqTrigger(uint32_t nTrig, uint16_t period) {
 
   LOG(logDEBUGHAL) << "Triggering " << nTrig << "x";
-
-  for (uint32_t k = 0; k < nTrig; k++) {
-    _testboard->Pg_Single();
-    _testboard->cDelay(period);
-  }
+  _testboard->Pg_Triggers(nTrig, period);
   // Push to testboard:
   _testboard->Flush();
 }
