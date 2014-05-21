@@ -45,13 +45,19 @@ uint32_t hal::GetHashForStringVector(const std::vector<std::string> & v)
   return ret;
 }
 
-void hal::initTestboard(std::map<uint8_t,uint8_t> /*sig_delays*/, std::vector<std::pair<uint16_t,uint8_t> > /*pg_setup*/, double /*va*/, double /*vd*/, double /*ia*/, double /*id*/) {
+void hal::initTestboard(std::map<uint8_t,uint8_t> /*sig_delays*/, std::vector<std::pair<uint16_t,uint8_t> > /*pg_setup*/, uint16_t /*delaysum*/, double /*va*/, double /*vd*/, double /*ia*/, double /*id*/) {
   
   // We are ready for operations now, mark the HAL as initialized:
   _initialized = true;
 }
 
-void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > /*pg_setup*/) {
+void hal::SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > /*pg_setup*/, uint16_t /*delaysum*/) {
+}
+
+void hal::setTestboardDelays(std::map<unsigned char, unsigned char, std::less<unsigned char>, std::allocator<std::pair<unsigned char const, unsigned char> > >) {
+}
+
+void hal::setTestboardPower(double, double, double, double) {
 }
 
 bool hal::flashTestboard(std::ifstream& /*flashFile*/) {
@@ -569,7 +575,7 @@ std::vector<uint16_t> hal::daqBuffer() {
   return raw;
 }
 
-void hal::daqTrigger(uint32_t /*nTrig*/) {}
+void hal::daqTrigger(uint32_t /*nTrig*/, uint16_t /*period*/) {}
 
 void hal::daqTriggerLoop(uint16_t /*period*/) {}
 
