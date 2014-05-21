@@ -124,12 +124,11 @@ int main(int argc, char *argv[]){
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
   vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
-  vector<pair<string,uint8_t> >                probes = configParameters->getTbProbes(); 
 
   try {
     api = new pxar::api("*", verbosity);
     
-    api->initTestboard(sig_delays, power_settings, pg_setup, probes);
+    api->initTestboard(sig_delays, power_settings, pg_setup);
     api->initDUT(configParameters->getHubId(),
 		 configParameters->getTbmType(), tbmDACs, 
 		 configParameters->getRocType(), rocDACs, 

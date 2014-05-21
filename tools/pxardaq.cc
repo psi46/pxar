@@ -89,8 +89,6 @@ int main(int argc, char* argv[]) {
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
   std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
-  std::vector<std::pair<std::string, uint8_t> > probes;
-   
 
   // DTB delays
   sig_delays.push_back(std::make_pair("clk",2));
@@ -173,7 +171,7 @@ int main(int argc, char* argv[]) {
     _api = new pxar::api("*",verbosity != "" ? verbosity : "INFO");
   
     // Initialize the testboard:
-    if(!_api->initTestboard(sig_delays, power_settings, pg_setup, probes)) {
+    if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {
       delete _api;
       return -1;
     }

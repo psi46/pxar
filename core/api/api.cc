@@ -42,10 +42,8 @@ api::~api() {
 std::string api::getVersion() { return PACKAGE_STRING; }
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
-          std::vector<std::pair<std::string,double> > power_settings,
-			std::vector<std::pair<uint16_t,uint8_t> > pg_setup,
-			std::vector<std::pair<std::string, uint8_t> > probes) 
-{
+			std::vector<std::pair<std::string,double> > power_settings,
+			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
 
   // Check the HAL status before doing anything else:
   if(!_hal->compatible()) return false;
@@ -61,9 +59,6 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   // Prepare Pattern Generator:
   verifyPatternGenerator(pg_setup);
 
-  // Set the Testboard Analog/Digital Probes
-  setTestboardProbes( probes );
-
   // Call the HAL to do the job:
   _hal->initTestboard(_dut->sig_delays,_dut->pg_setup,_dut->pg_sum,_dut->va,_dut->vd,_dut->ia,_dut->id);
   return true;
@@ -77,25 +72,6 @@ void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_de
   checkTestboardDelays(sig_delays);
   _hal->setTestboardDelays(_dut->sig_delays);
   LOG(logDEBUGAPI) << "Testboard signal delays updated.";
-}
-
-void api::setTestboardProbes(std::vector<std::pair<std::string,uint8_t> > probes )
-{
-   //Set the probes
-
-    for(std::vector<std::pair<std::string,uint8_t> >::iterator prbIt = probes.begin(); prbIt != probes.end(); ++prbIt) {
-    // Select the correct probe for the output:
-    if(prbIt->first.compare("d1") == 0) 
-      _hal->SignalProbeD1(prbIt->second);
-    else if(prbIt->first.compare("d2") == 0) 
-      _hal->SignalProbeD2(prbIt->second);
-    else if(prbIt->first.compare("a1") == 0) 
-      _hal->SignalProbeA1(prbIt->second);
-    else if(prbIt->first.compare("a2") == 0) 
-      _hal->SignalProbeA2(prbIt->second);     
-    }
-	LOG(logDEBUGAPI) << "Testboard probes set.";
-
 }
 
 void api::setPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
