@@ -74,7 +74,6 @@ public:
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
   std::vector<std::pair<std::string,uint8_t> >  getTbSigDelays();
-  std::vector<std::pair<std::string,uint8_t> >  getTbProbes();
   std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
@@ -142,7 +141,6 @@ private:
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;
   std::string fRocType, fTbmType;
-  std::string fA1,fA2,fD1,fD2;
   std::string fDirectory;
   std::string fTBName;
   bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;

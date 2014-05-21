@@ -299,27 +299,6 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
 
   return a;
 }
-// ---------------------------------------------------------------------
-vector<pair<string, uint8_t> > ConfigParameters::getTbProbes() {
-
-  vector<pair<string, uint8_t> > a;
-
-  vector<string> probes;
-  probes.push_back("a1");
-  probes.push_back("a2");
-  probes.push_back("d1");
-  probes.push_back("d2");
-
-  if (!fReadTbParameters) readTbParameters();
-  for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
-    for (unsigned int j = 0; j < probes.size(); ++j) {
-      if (0 == fTbParameters[i].first.compare(probes[j])) a.push_back(make_pair(probes[j], fTbParameters[i].second));
-    }
-  }
-
-   return a;
-}
-   
 
 // ----------------------------------------------------------------------
 vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
