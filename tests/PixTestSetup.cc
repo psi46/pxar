@@ -126,6 +126,7 @@ void PixTestSetup::doTest()
 	bookHist("bla"); //FIXME
 
 	//set pattern with only res and token:
+	pg_setup.clear();
 	pg_setup.push_back(make_pair(0x0800, 25));    // PG_RESR b001000
 	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  b000001
 
