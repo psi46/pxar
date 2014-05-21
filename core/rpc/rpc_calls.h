@@ -187,6 +187,7 @@ public:
 	RPC_EXPORT void Pg_Stop();
 	RPC_EXPORT void Pg_Single();
 	RPC_EXPORT void Pg_Trigger();
+	RPC_EXPORT void Pg_Triggers(uint32_t triggers, uint16_t period);
 	RPC_EXPORT void Pg_Loop(uint16_t period);
 
 	// --- data aquisition --------------------------------------------------
