@@ -64,7 +64,7 @@ bool pxarCore::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_de
   return true;
 }
 
-void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
+void pxarCore::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
   if(!_hal->status()) {
     LOG(logERROR) << "Signal delays not updated!";
     return;
@@ -1624,7 +1624,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result;
 
   // Measure time:
@@ -1691,7 +1691,7 @@ void pxarCore::MaskAndTrimNIOS() {
 }
 
 // Mask/Unmask and trim all ROCs:
-void api::MaskAndTrim(bool trim) {
+void pxarCore::MaskAndTrim(bool trim) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     MaskAndTrim(trim,rocit);
