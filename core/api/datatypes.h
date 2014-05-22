@@ -29,7 +29,7 @@ namespace pxar {
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
      */
-  pixel() : roc_id(0), column(0), row(0), value(0) {}
+  pixel() : roc_id(0), column(0), row(0), value(0), variance(0) {}
 
     /** Constructor for pixel objects with address and value initialization.
      */
@@ -69,7 +69,8 @@ namespace pxar {
     uint8_t roc_id;
     uint8_t column;
     uint8_t row;
-    int32_t value;
+    int16_t value;
+    uint16_t variance;
 
     /** Overloaded comparison operator
      */
