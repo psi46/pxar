@@ -125,14 +125,14 @@ void PixTestSetup::doTest()
 
 	bookHist("bla"); //FIXME
 
-	vector<pair<string, double> > power_settings = fPixSetup->getConfigParameters()->getTbPowerSettings();
-	vector<pair<uint16_t, uint8_t> > pg_setup;     
-	vector<pair<string, uint8_t> > sig_delays;
-
 	//set pattern with only res and token:
+	pg_setup.clear();
 	pg_setup.push_back(make_pair(0x0800, 25));    // PG_RESR b001000
 	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  b000001
 
+	// Set the pattern generator:
+	fApi->setPatternGenerator(pg_setup);
+	LOG(logINFO) << "PixTestSetup:: pg set to RES|TOK";
 
 	TH2D *histo = new TH2D(Form("DeserphaseClkScan"), Form("DeserphaseClkScan"), fDeserMax, 0., (fDeserMax+1), fClkMax, 0., (fClkMax+1));
 	histo->GetXaxis()->SetTitle("deser160phase");
@@ -197,31 +197,37 @@ void PixTestSetup::doTest()
 	histo->Draw("colz");
 	fDisplayedHist = find(fHistList.begin(), fHistList.end(), histo);
 	PixTest::update(); //needed?
-      
+    
+	int finalclk, finaldeser;
+
 	if (goodvaluefound)
 	{
 	//algorithm to choose the best values - TO BE IMPLEMENTED FIXME
-	//now initialized to the last one (not good for long cable):
-	int finalclk = goodclk-1;
-	int finaldeser = goodeser;
-	LOG(logINFO) << "PixTestSetup::doTest() good delays are:" << endl << "clk = "<<  finalclk << " -  deser160 = " << finaldeser << endl;
+	//now initialized to the second to last (not good for long cable):
+	finalclk = goodclk-1;
+	finaldeser = goodeser;
+//	LOG(logINFO) << "PixTestSetup:: good delays are:" << endl << "clk = "<<  finalclk << " -  deser160 = " << finaldeser << endl;
 	setTbParameters(finalclk, finaldeser);
 	}
 
 	else
 	{
 	//back to default values
+	finalclk = finaldeser = 4;
 	LOG(logINFO) << "PixTestSetup::doTest() none good delays found. Back to default values (clk 4 - deser 4)"<< endl;
-	setTbParameters(4, 4);
+	setTbParameters(finalclk, finaldeser);
 	}
 
-  	vector<pair<string, uint8_t> > sig_delays2 = fPixSetup->getConfigParameters()->getTbSigDelays();
-	LOG(logDEBUG) << fPixSetup->getConfigParameters()->dumpParameters(sig_delays2);
-        pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+	//set final clk and deser160:
+	sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+	fApi->setTestboardDelays(sig_delays);
+	LOG(logINFO) << "PixTestSetup:: tb Delays set to:" << endl << "clk = " << finalclk << " -  deser160 = " << finaldeser << endl;
 
-	fApi->initTestboard(sig_delays2, power_settings, pg_setup);
+	//set pg_setup to default:
+	pgToDefault(pg_setup);
 
-	restoreDacs();
+	fHistList.clear();
+	restoreDacs();   //needed?
 	LOG(logINFO) << "PixTestSetup::doTest() done for " ;
 }
 
@@ -249,4 +255,18 @@ void PixTestSetup::runCommand(std::string command) {
     return;
   }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
+}
+
+// ----------------------------------------------------------------------
+void PixTestSetup::pgToDefault(vector<pair<uint16_t, uint8_t> > pg_setup) {
+	pg_setup.clear();
+	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
+
+	pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
+	pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
+	pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
+	pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  		
+
+	fApi->setPatternGenerator(pg_setup);
+	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
 }
