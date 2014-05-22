@@ -104,3 +104,6 @@ outfilename      defaultdata.dat
 testallpixels 0
 maskallpixels 0
 resettodefault  button
+
+-- PhOptimization
+ntrig 10
