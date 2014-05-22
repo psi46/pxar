@@ -100,7 +100,7 @@ cdef class RocConfig:
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
-    def __cinit__(self, usbId = "*", logLevel = "WARNING"):
+    def __cinit__(self, usbId = "*", logLevel = "INFO"):
         self.thisptr = new pxarCore(usbId, logLevel)
         self.dut = None
     def __dealloc__(self):
