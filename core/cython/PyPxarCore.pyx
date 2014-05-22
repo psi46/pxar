@@ -124,9 +124,10 @@ cdef class PyPxarCore:
         for key, value in pg_setup.items():
             pgs.push_back(pair[uint16_t, uint8_t ](key,value))
         return self.thisptr.initTestboard(sd, ps, pgs)
-    def initDUT(self, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
+    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
         """ Initializer method for the DUT (attached devices)
         Parameters:
+	hubId (int)
         tbmtype (string)
         tbmDACs (list of dictionaries (string,int), one for each TBM)
         roctype (string)
@@ -149,7 +150,7 @@ cdef class PyPxarCore:
             rpcs.push_back(vector[pixelConfig]())
             for pc in rocPixel:
                 rpcs.at(idx).push_back(<pixelConfig> pc.thisptr[0])
-        return self.thisptr.initDUT(tbmtype, td, roctype,rd,rpcs)
+        return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
     def getVersion(self):
         return self.thisptr.getVersion()
     def testAllPixels(self, bool enable, rocid = None):

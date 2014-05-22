@@ -121,7 +121,8 @@ cdef extern from "api.h" namespace "pxar":
         bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, 
                            vector[pair[string, double] ] power_settings, 
                            vector[pair[uint16_t, uint8_t]] pg_setup) except +
-        bool initDUT(string tbmtype,
+        bool initDUT(uint8_t hubId,
+	             string tbmtype,
                      vector[vector[pair[string,uint8_t]]] tbmDACs,
                      string roctype,
                      vector[vector[pair[string,uint8_t]]] rocDACs,
