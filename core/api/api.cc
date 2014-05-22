@@ -1355,6 +1355,8 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 
     Event * evt = new Event();
     std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
+    std::map<pixel,double> pxmean = std::map<pixel,double>();
+    std::map<pixel,double> pxm2 = std::map<pixel,double>();
 
     for(std::vector<Event*>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
 
@@ -1368,7 +1370,15 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 	// Pixel is known:
 	if(px != evt->pixels.end()) {
 	  if(efficiency) { px->value += 1; }
-	  else { px->value += pixit->value; pxcount[*px]++; }
+	  else { 
+	    px->value += pixit->value;
+	    // Calculate the variance incrementally:
+	    double delta = pixit->value - pxmean[*px];
+	    pxmean[*px] += delta/pxcount[*px];
+	    pxm2[*px] += delta*(pixit->value - pxmean[*px]);
+	    //LOG(logDEBUGAPI) << "(" << pxcount[*px] << ") "<< *px << " mean " << pxmean[*px];
+	    pxcount[*px]++;
+	  }
 	}
 	// Pixel is new:
 	else {
@@ -1386,6 +1396,8 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
     if(!efficiency) {
       for(std::vector<pixel>::iterator px = evt->pixels.begin(); px != evt->pixels.end(); ++px) {
 	px->value/=pxcount[*px];
+	double variance = pxm2[*px]/(pxcount[*px] - 1);
+	//LOG(logDEBUGAPI) << *px << " mean " << pxmean[*px] << " var " << variance;
       }
     }
     packed.push_back(evt);
