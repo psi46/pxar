@@ -17,14 +17,14 @@ void dut::info() {
   if (status()) {
     LOG(logINFO) << "The DUT currently contains the following objects:";
 
-    LOG(logINFO) << std::setw(2) << tbm.size() << " TBMs (" << getNEnabledTbms() 
+    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores (" << getNEnabledTbms() 
 		 << " ON)";
 
-    size_t nTBMs = 0;
     for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
-      LOG(logINFO) << "\tTBM " << nTBMs << ": " 
-		   << (*tbmIt).dacs.size() << " DACs set";
-      nTBMs++;
+      LOG(logINFO) << "\tTBM Core " 
+		   << ((tbmIt-tbm.begin())%2 == 0 ? "alpha" : "beta " )
+		   << " (" << static_cast<int>(tbmIt - tbm.begin()) << "): " 
+		   << (*tbmIt).dacs.size() << " registers set";
     }
 
     // We currently hide the possibility to enable pixels on some ROCs only,
@@ -94,16 +94,20 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   return result;
 }
 
-std::vector< bool > dut::getEnabledColumns(size_t rocid) {
+std::vector< bool > dut::getEnabledColumns(size_t roci2c) {
 
   std::vector< bool > result(52,false);
 
   // Check if DUT is allright and the roc we are looking at exists:
-  if (!status() || !(rocid < roc.size())) return result;
+  if (!status()) return result;
 
-  // Search for pixels that have enable set
-  for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
-    if (it->enable) result.at((*it).column) = true;
+  for(std::vector<rocConfig>::iterator rocit = roc.begin(); rocit != roc.end(); ++rocit){
+    if(rocit->i2c_address == roci2c) {
+      // Search for pixels that have enable set
+      for(std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it){
+	if (it->enable) result.at((*it).column) = true;
+      }
+    }
   }
   return result;
 }
@@ -140,6 +144,19 @@ std::vector< uint8_t > dut::getEnabledRocI2Caddr() {
   // search for rocs that have enable set
   for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
     if (it->enable) result.push_back(it->i2c_address);
+  }
+  return result;
+}
+
+std::vector< uint8_t > dut::getRocI2Caddr() {
+
+  std::vector< uint8_t > result = std::vector<uint8_t>();
+
+  if (!_initialized) return result;
+
+  // search for rocs that have enable set
+  for (std::vector<rocConfig>::iterator it = roc.begin(); it != roc.end(); ++it){
+    result.push_back(it->i2c_address);
   }
   return result;
 }
@@ -219,8 +236,8 @@ uint8_t dut::getDAC(size_t rocId, std::string dacName) {
     uint8_t _register = _dict->getRegister(dacName, ROC_REG);
     return roc[rocId].dacs[_register];
   }
-  // FIXME throw error
-  else return 0x0;
+  throw InvalidConfig("Could not identify DAC " + dacName);
+  return 0x0;
 }
 
 std::vector< std::pair<std::string,uint8_t> > dut::getDACs(size_t rocId) {

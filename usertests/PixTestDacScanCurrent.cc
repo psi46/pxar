@@ -152,7 +152,7 @@ void PixTestDacScanCurrent::doTest()
       sw.Start(kTRUE); // reset stopwatch
       do {
 	sw.Start(kFALSE); // continue
-	fApi->getTBia()*1E3; // [mA]
+	fApi->getTBia();
       }
       while( sw.RealTime() < 0.1 ); // [s]
 

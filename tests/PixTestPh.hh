@@ -1,11 +1,10 @@
 #ifndef PixTestPh_H
 #define PixTestPh_H
 
-#include "api.h"
 #include "PixTest.hh"
 
 
-class PixTestPh: public PixTest {
+class DLLEXPORT PixTestPh: public PixTest {
 public:
   PixTestPh(PixSetup *, std::string);
   PixTestPh();
@@ -20,12 +19,9 @@ private:
 
   int     fParNtrig; 
   std::string fParDAC; 
-  int     fParLoDAC, fParHiDAC;
-  std::string fParDAC2;
-  int     fParDAC2Hi, fParDAC2Lo, fParDAC2Step;
-  std::vector<std::pair<int, int> > fPIX; 
+  int     fParDacVal;
 
-  ClassDef(PixTestPh, 1);
+  ClassDef(PixTestPh, 1)
 
 };
 #endif

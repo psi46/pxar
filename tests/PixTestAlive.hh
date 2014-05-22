@@ -1,10 +1,9 @@
 #ifndef PIXTESTALIVE_H
 #define PIXTESTALIVE_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestAlive: public PixTest {
+class DLLEXPORT PixTestAlive: public PixTest {
 public:
   PixTestAlive(PixSetup *, std::string);
   PixTestAlive();
@@ -14,6 +13,14 @@ public:
   void setToolTips();
   void bookHist(std::string); 
 
+  void runCommand(std::string); 
+  void aliveTest();
+  void maskTest();
+  void addressDecodingTest();
+
+  void dummyAnalysis(); 
+  void output4moreweb();
+
   void doTest(); 
 
 private:
@@ -21,7 +28,7 @@ private:
   uint16_t fParNtrig; 
   int      fParVcal; 
 
-  ClassDef(PixTestAlive, 1);
+  ClassDef(PixTestAlive, 1)
 
 };
 #endif

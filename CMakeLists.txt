@@ -9,8 +9,22 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "0.5.0")
-SET(PXAR_FW_VERSION "1.26")
+SET(PXAR_VERSION "0.9.11")
+SET(PXAR_FW_VERSION "2.21")
+
+
+#########################################
+# pxar build options and their defaults #
+#########################################
+
+OPTION(BUILD_tools  "Compile pxar tools? (flash, testpxar...)" OFF)
+OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
+OPTION(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" ON)
+
+
+########################################
+# Setup the build environment for pxar #
+########################################
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -25,20 +39,29 @@ ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
 # Set package version
 IF(NOT SOURCE_PACKAGE)
-  # Get the version from last git tag plus numer of additional commits:
-  FIND_PACKAGE(Git)
+  # Get the version from last git tag plus number of additional commits:
+  FIND_PACKAGE(Git QUIET)
   IF(GIT_FOUND)
     EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE PXAR_LIB_VERSION)
     STRING(REGEX REPLACE "^release-" "" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
     STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" PXAR_LIB_VERSION ${PXAR_LIB_VERSION})
-    MESSAGE("-- Determined API version ${PXAR_LIB_VERSION}.")
+    EXEC_PROGRAM(git ARGS status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}/core OUTPUT_VARIABLE PXAR_CORE_STATUS)
+    IF(PXAR_CORE_STATUS STREQUAL "")
+      MESSAGE("-- Git: corelib directory is clean.")
+    ELSE(PXAR_CORE_STATUS STREQUAL "")
+      MESSAGE("-- Git: corelib directory is dirty:\n ${PXAR_CORE_STATUS}.")
+    ENDIF(PXAR_CORE_STATUS STREQUAL "")
   ELSE(GIT_FOUND)
-    SET(PXAR_LIB_VERSION PXAR_VERSION)
+    SET(PXAR_LIB_VERSION ${PXAR_VERSION})
+    MESSAGE("-- Git repository present, but could not find git executable.")
   ENDIF(GIT_FOUND)
 ELSE(NOT SOURCE_PACKAGE)
   # If we don't have git we take the hard-set version.
-  SET(PXAR_LIB_VERSION PXAR_VERSION)
+  SET(PXAR_LIB_VERSION ${PXAR_VERSION})
+  MESSAGE("-- Source tarball build - no repository present.")
 ENDIF(NOT SOURCE_PACKAGE)
+MESSAGE("-- Determined pxar corelib API version ${PXAR_LIB_VERSION}.")
+
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -51,9 +74,6 @@ SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to insta
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
 include( cmake/Platform.cmake)
-
-# Build options and their defaults:
-OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
 
 
 #######################################
@@ -156,24 +176,29 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
 ##################################################
-# Preparing the build of the shared pXar library #
+# Preparing the build of the shared pxar library #
 ##################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( core/api core/utils)
+INCLUDE_DIRECTORIES(core/api core/utils)
 
-# Build main pXar API library
+# Always build main pxar API library;
 ADD_SUBDIRECTORY(core)
 
-option(BUILD_pxarui  "Compile pXar UI, tests and executables (requires ROOT)?" OFF)
-IF(BUILD_pxarui)
+# Add external devices directory (HV Power supplies)
+ADD_SUBDIRECTORY(devices)
 
+# full UI and test suite (requires ROOT)
+IF(BUILD_pxarui)
   # this UI and its libraries depend on ROOT:
   FIND_PACKAGE(ROOT REQUIRED)
   INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIR})
 
-  # Build the tests and test library
+  # Build the util library
   ADD_SUBDIRECTORY(util)
+
+  # Build the analysis  library
+  ADD_SUBDIRECTORY(ana)
 
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
@@ -186,13 +211,10 @@ IF(BUILD_pxarui)
 
 ENDIF(BUILD_pxarui)
 
-option(BUILD_pxardebug  "Compile pXar debug executable?" ON)
-IF(BUILD_pxardebug)
-
-  # Build the pXar debug executable
-  ADD_SUBDIRECTORY(debug)
-
-ENDIF(BUILD_pxardebug)
+IF(BUILD_tools)
+  # Build pxar tools
+  ADD_SUBDIRECTORY(tools)
+ENDIF(BUILD_tools)
 
 
 #############################################
@@ -220,7 +242,16 @@ FIND_PACKAGE(LATEX)
 IF(LATEX_COMPILER)
   MESSAGE(STATUS "Found LaTeX compiler.")
   INCLUDE(cmake/UseLATEX.cmake)
-  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex
+  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex 
+    INPUTS 
+    doc/usermanual/symbols.tex 
+    doc/usermanual/introduction.tex
+    doc/usermanual/hwOverview.tex 
+    doc/usermanual/swOverview.tex
+    doc/usermanual/tutorial.tex
+    doc/usermanual/tests.tex
+    doc/usermanual/usertests.tex
+    doc/usermanual/references.tex
     NO_DEFAULT
     )
 ELSE(LATEX_COMPILER)

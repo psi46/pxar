@@ -10,9 +10,15 @@
 #ifndef PXAR_DICTIONARIES_H
 #define PXAR_DICTIONARIES_H
 
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned char uint8_t;
+#else
+#include <stdint.h>
+#endif
+
 #include <string>
 #include <map>
-#include <stdint.h>
 #include "constants.h"
 #include "api.h"
 #include <iostream>
@@ -93,6 +99,7 @@ namespace pxar {
       _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
       _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
       _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
+      _registers["triggerdelay"] = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
 
@@ -225,14 +232,15 @@ namespace pxar {
       _devices["psi46digv2_b"]  = ROC_PSI46DIGV2_B;
       _devices["psi46digv2"]    = ROC_PSI46DIGV2;
       _devices["psi46digv2.1"]  = ROC_PSI46DIGV21;
+      _devices["psi46digv21"]  = ROC_PSI46DIGV21;
       // This name is not correct, but kept for legacy reasons:
       _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 
       // TBM flavors:
       // FIXME this is just an example.
-      _devices["tbm07"]         = TBM_07;
-      _devices["tbm07a"]        = TBM_07A;
       _devices["tbm08"]         = TBM_08;
+      _devices["tbm08a"]        = TBM_08A;
+      _devices["tbm09"]         = TBM_09;
     }
 
     std::map<std::string, uint8_t> _devices;
@@ -264,19 +272,39 @@ namespace pxar {
       // Probe name and values
 
       // Digital signals:
-      _signals["off"]    = PROBE_OFF;
-      _signals["clk"]    = PROBE_CLK;
-      _signals["sda"]    = PROBE_SDA;
-      _signals["pgtok"]  = PROBE_PGTOK;
-      _signals["pgtrg"]  = PROBE_PGTRG;
-      _signals["pgcal"]  = PROBE_PGCAL;
-      _signals["pgresr"] = PROBE_PGRESR;
-      _signals["pgrest"] = PROBE_PGREST;
-      _signals["pgsync"] = PROBE_PGSYNC;
-      _signals["ctr"]    = PROBE_CTR;
-      _signals["clkp"]   = PROBE_CLKP;
-      _signals["clkg"]   = PROBE_CLKG;
-      _signals["crc"]    = PROBE_CRC;
+      _signals["off"]        = PROBE_OFF;
+      _signals["clk"]        = PROBE_CLK;
+      _signals["sda"]        = PROBE_SDA;
+      _signals["sdasend"]        = PROBE_SDA_SEND;
+      _signals["pgtok"]      = PROBE_PG_TOK;
+      _signals["pgtrg"]      = PROBE_PG_TRG;
+      _signals["pgcal"]      = PROBE_PG_CAL;
+
+      _signals["pgresr"]     = PROBE_PG_RES_ROC;
+      _signals["pgresroc"]   = PROBE_PG_RES_ROC;
+
+      _signals["pgrest"]     = PROBE_PG_RES_TBM;
+      _signals["pgrestbm"]   = PROBE_PG_RES_TBM;
+
+      _signals["pgsync"]     = PROBE_PG_SYNC;
+      _signals["ctr"]        = PROBE_CTR;
+      _signals["tin"]        = PROBE_TIN;
+      _signals["tout"]       = PROBE_TOUT;
+
+      _signals["clkp"]       = PROBE_CLK_PRESEN;
+      _signals["clkpresent"] = PROBE_CLK_PRESEN;
+
+      _signals["clkg"]       = PROBE_CLK_GOOD;
+      _signals["clkgood"]    = PROBE_CLK_GOOD;
+
+      _signals["daq0wr"]     = PROBE_DAQ0_WR;
+      _signals["crc"]        = PROBE_CRC;
+      _signals["adcrunning"] = PROBE_ADC_RUNNING;
+      _signals["adcrun"]     = PROBE_ADC_RUN;
+      _signals["adcpgate"]   = PROBE_ADC_PGATE;
+      _signals["adcstart"]   = PROBE_ADC_START;
+      _signals["adcsgate"]   = PROBE_ADC_SGATE;
+      _signals["adcs"]       = PROBE_ADC_S;
 
     }
 

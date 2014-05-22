@@ -1,9 +1,16 @@
-#ifdef WIN32
+#ifndef PXAR_TIMER_H
+#define PXAR_TIMER_H
+
+#if ((defined WIN32) && (defined __CINT__))
+#include <Windows4Root.h>
+#else
+#if (defined WIN32)
 #include <Windows.h>
 #else
 #include <sys/time.h>
 #include <ctime>
-#endif
+#endif //WIN32
+#endif //WIN32 && CINT
 
 namespace pxar {
 
@@ -13,6 +20,7 @@ namespace pxar {
      */
     timer() { start = GetTime(); }
 
+    uint64_t get() { return static_cast<uint64_t>(GetTime() - start); }
   private:
     /** Private member function to store start time of the timer object
      */
@@ -71,3 +79,4 @@ namespace pxar {
   };
 
 }
+#endif

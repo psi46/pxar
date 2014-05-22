@@ -1,17 +1,24 @@
 #ifndef PXAR_TYPES_H
 #define PXAR_TYPES_H
 
+/** Declare all classes that need to be included in shared libraries on Windows
+ *  as class DLLEXPORT className
+ */
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#else
 #include <stdint.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <map>
-
-/** Export classes from the DLL under WIN32 */
-#ifdef WIN32
-#define DLLEXPORT __declspec( dllexport )
-#else
-#define DLLEXPORT
-#endif
 
 namespace pxar {
 
@@ -28,9 +35,17 @@ namespace pxar {
      */
   pixel(int32_t address, int32_t data) : value(data) { decode(address); }
 
+    /** Constructor for pixel objects with address and value initialization.
+     */
+  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, int32_t _value) : roc_id(_roc_id), column(_column), row(_row), value(_value) {}
+
     /** Constructor for pixel objects with rawdata pixel address & value initialization.
      */
   pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
+
+    /** Constructor for pixel objects with rawdata pixel address & value and ROC id initialization.
+     */
+  pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
 
     /** Function to fill the pixel with linear encoded data from RPC transfer.
      *  The address transmitted from the NIOS soft core is encoded in the following
@@ -91,11 +106,12 @@ namespace pxar {
    */
   class DLLEXPORT Event {
   public:
-  Event() : header(0), trailer(0), pixels() {}
-    void Clear() { header = 0; trailer = 0; pixels.clear(); }
+    Event() : header(0), trailer(0), pixels(), numDecoderErrors(0) {}
+    void Clear() { header = 0; trailer = 0; pixels.clear(); numDecoderErrors=0;}
     uint16_t header;
     uint16_t trailer;
     std::vector<pixel> pixels;
+    uint16_t numDecoderErrors;
   private:
     /** Overloaded ostream operator for simple printing of Event data
      */
@@ -112,7 +128,7 @@ namespace pxar {
    *  Event status as well as a vector of uint16_t data records containing the actual
    *  Event data in undecoded raw format.
    */
-  class rawEvent {
+  class DLLEXPORT rawEvent {
   public:
   rawEvent() : data(), flags(0) {}
     void SetStartError() { flags |= 1; }

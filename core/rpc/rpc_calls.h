@@ -40,6 +40,25 @@ public:
 	RPC_EXPORT bool    GetRpcCallName(int32_t id, stringR &callName);
 	RPC_EXPORT uint32_t GetRpcCallHash();
 
+	bool RpcLink() {
+
+	  bool error = false;
+	  for (unsigned short i = 2; i < rpc_cmdListSize; i++) {
+	    try { rpc_GetCallId(i); }
+	    catch (CRpcError &e) {
+	      e.SetFunction(0);
+	      if (!error) { LOG(pxar::logERROR) << "Missing DTB functions:"; }
+	      std::string fname(rpc_cmdName[i]);
+	      std::string fname_pretty;
+	      rpc_TranslateCallName(fname, fname_pretty);
+	      LOG(pxar::logERROR) << fname_pretty.c_str();
+	      error = true;
+	    }
+	  }
+	  return !error;
+	}
+
+
 	// === DTB connection ====================================================
 
 	inline bool Open(string &name, bool init=true) {
@@ -163,9 +182,12 @@ public:
 
 	// --- pulse pattern generator ------------------------------------------
 	RPC_EXPORT void Pg_SetCmd(uint16_t addr, uint16_t cmd);
+	RPC_EXPORT void Pg_SetCmdAll(vector<uint16_t> &cmd);
+	RPC_EXPORT void Pg_SetSum(uint16_t delays);
 	RPC_EXPORT void Pg_Stop();
 	RPC_EXPORT void Pg_Single();
 	RPC_EXPORT void Pg_Trigger();
+	RPC_EXPORT void Pg_Triggers(uint32_t triggers, uint16_t period);
 	RPC_EXPORT void Pg_Loop(uint16_t period);
 
 	// --- data aquisition --------------------------------------------------
@@ -174,15 +196,19 @@ public:
 	RPC_EXPORT void Daq_Start(uint8_t channel);
 	RPC_EXPORT void Daq_Stop(uint8_t channel);
 	RPC_EXPORT uint32_t Daq_GetSize(uint8_t channel);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize = 16384, uint8_t channel = 0);
-	RPC_EXPORT uint8_t Daq_Read(vectorR<uint16_t> &data, uint16_t blocksize, uint32_t &availsize, uint8_t channel);
+	RPC_EXPORT uint8_t Daq_FillLevel(uint8_t channel);
+	RPC_EXPORT uint8_t Daq_FillLevel();
+	RPC_EXPORT uint8_t Daq_Read(HWvectorR<uint16_t> &data, uint32_t blocksize = 65536, uint8_t channel = 0);
+	RPC_EXPORT uint8_t Daq_Read(HWvectorR<uint16_t> &data, uint32_t blocksize, uint32_t &availsize, uint8_t channel = 0);
 	
+
 	RPC_EXPORT void Daq_Select_ADC(uint16_t blocksize, uint8_t source, uint8_t start, uint8_t stop = 0);
 	RPC_EXPORT void Daq_Select_Deser160(uint8_t shift);
 	RPC_EXPORT void Daq_Select_Deser400();
 	RPC_EXPORT void Daq_Deser400_Reset(uint8_t reset);
 	RPC_EXPORT void Daq_DeselectAll();
-
+	
+	RPC_EXPORT void Daq_Select_Datagenerator(uint16_t startvalue);
 	RPC_EXPORT void SetClockSource(uint8_t source);
 
 
@@ -226,12 +252,13 @@ public:
 	RPC_EXPORT bool tbm_GetRaw(uint8_t reg, uint32_t &value);
 
 	// --- Wafer test functions
-	RPC_EXPORT bool testColPixel(uint8_t col, uint8_t trimbit, vectorR<uint8_t> &res);
+	RPC_EXPORT bool TestColPixel(uint8_t col, uint8_t trimbit, bool sensor_cal, vectorR<uint8_t> &res);
 
 	// Ethernet test functions
 	RPC_EXPORT void Ethernet_Send(string &message);
 	RPC_EXPORT uint32_t Ethernet_RecvPackets();
 
+	RPC_EXPORT void VectorTest(vector<uint16_t> &in, vectorR<uint16_t> &out);
 	
 	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers);
 	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers, int32_t chipId);
@@ -256,22 +283,32 @@ public:
 
 
 	// == Trigger Loop functions for Host-side DAQ ROC/Module testing ==============
+	// Exported RPC-Calls for the Trimbit storage setup:
+	RPC_EXPORT bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
+	RPC_EXPORT bool SetTrimValues(uint8_t roc_i2c, std::vector<uint8_t> &trimvalues);
+	
+	RPC_EXPORT void SetLoopTriggerDelay(uint16_t delay);
+	RPC_EXPORT void LoopInterruptReset();
+
 	// Exported RPC-Calls for Maps
-	RPC_EXPORT void LoopMultiRocAllPixelsCalibrate(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags);
-	RPC_EXPORT void LoopMultiRocOnePixelCalibrate(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags);
-	RPC_EXPORT void LoopSingleRocAllPixelsCalibrate(uint8_t roc_i2c, uint16_t nTriggers, uint16_t flags);
-	RPC_EXPORT void LoopSingleRocOnePixelCalibrate(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags);
+	RPC_EXPORT bool LoopMultiRocAllPixelsCalibrate(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags);
+	RPC_EXPORT bool LoopMultiRocOnePixelCalibrate(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags);
+	RPC_EXPORT bool LoopSingleRocAllPixelsCalibrate(uint8_t roc_i2c, uint16_t nTriggers, uint16_t flags);
+	RPC_EXPORT bool LoopSingleRocOnePixelCalibrate(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags);
 	  
 	// Exported RPC-Calls for 1D DacScans
-	RPC_EXPORT void LoopMultiRocAllPixelsDacScan(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
-	RPC_EXPORT void LoopMultiRocOnePixelDacScan(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
-	RPC_EXPORT void LoopSingleRocAllPixelsDacScan(uint8_t roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
-	RPC_EXPORT void LoopSingleRocOnePixelDacScan(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
+	RPC_EXPORT bool LoopMultiRocAllPixelsDacScan(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
+	RPC_EXPORT bool LoopMultiRocOnePixelDacScan(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
+	RPC_EXPORT bool LoopSingleRocAllPixelsDacScan(uint8_t roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
+	RPC_EXPORT bool LoopSingleRocOnePixelDacScan(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high);
 
 	// Exported RPC-Calls for 2D DacDacScans
-	RPC_EXPORT void LoopMultiRocAllPixelsDacDacScan(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
-	RPC_EXPORT void LoopMultiRocOnePixelDacDacScan(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
-	RPC_EXPORT void LoopSingleRocAllPixelsDacDacScan(uint8_t roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
-	RPC_EXPORT void LoopSingleRocOnePixelDacDacScan(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
+	RPC_EXPORT bool LoopMultiRocAllPixelsDacDacScan(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
+	RPC_EXPORT bool LoopMultiRocOnePixelDacDacScan(vector<uint8_t> &roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
+	RPC_EXPORT bool LoopSingleRocAllPixelsDacDacScan(uint8_t roc_i2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
+	RPC_EXPORT bool LoopSingleRocOnePixelDacDacScan(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
+
+	// Debug-RPC-Calls returnung a Checker Board Pattern
+	RPC_EXPORT void LoopCheckerBoard(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
 
 };

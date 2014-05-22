@@ -5,11 +5,21 @@
 #ifndef PXAR_LOG_H
 #define PXAR_LOG_H
 
-#ifdef WIN32
-#include <windows.h>
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned int uint32_t;
+typedef unsigned int DWORD;
+#include <Windows4Root.h>
+#else
+#if (defined WIN32)
+#define NOMINMAX
+typedef unsigned int uint32_t;
+#include <Windows.h>
 #else
 #include <sys/time.h>
+#include <stdint.h>
 #endif //WIN32
+#endif //WIN32 && CINT
 
 #ifdef WIN32
 #define __func__ __FUNCTION__
@@ -18,7 +28,6 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdio>
-#include <stdint.h>
 #include <string.h>
 
 

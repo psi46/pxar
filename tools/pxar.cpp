@@ -11,6 +11,8 @@
 
 void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
 
+  if(data.empty()) return;
+
   uint8_t dac1lower = data.front().first;
   uint8_t dac2lower = data.front().second.first;
 
@@ -75,10 +77,12 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
 
 void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, int nTrig, uint8_t column, uint8_t row, uint8_t roc = 0) {
 
+  if(data.empty()) return;
+
   std::cout << std::endl;
   for(int trig = nTrig; trig >= 0; trig--) {
-    if(trig%5 == 0) std::cout << std::setw(2) << trig << " |";
-    else std::cout << std::setw(2) << " " << " |";
+    if(trig%5 == 0) std::cout << std::setw(3) << trig << " |";
+    else std::cout << std::setw(3) << " " << " |";
 
     for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 
@@ -99,9 +103,9 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
     std::cout << std::endl;
   }
   
-  std::cout << "   |";
+  std::cout << "    |";
   for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
-  std::cout << std::endl << "    ";
+  std::cout << std::endl << "     ";
   uint8_t daclower = data.front().first;
   uint8_t dachigher= data.back().first;
 
@@ -124,17 +128,66 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
   std::cout << std::endl << std::endl;
 }
 
-void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
+void asciiprofile(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data, uint8_t /*roc = 0*/) {
+
+  if(data.empty()) return;
+
+  size_t max = 0;
+  for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) { if(mapit->second.size() > max) max = mapit->second.size(); }
+
+
+  std::cout << std::endl;
+  for(int cnt = max; cnt >= 0; cnt--) {
+    if(cnt%5 == 0) std::cout << std::setw(3) << cnt << " |";
+    else std::cout << std::setw(3) << " " << " |";
+    
+    for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
+
+      if(mapit->second.size() == static_cast<size_t>(cnt)) { std::cout << "o"; }
+      else if(mapit->second.size() > static_cast<size_t>(cnt)) { std::cout << "."; }
+      else std::cout << " ";
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "    |";
+  for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
+  std::cout << std::endl << "     ";
+  uint8_t daclower = data.front().first;
+  uint8_t dachigher= data.back().first;
+
+  // Axis ticks
+  for(size_t dac = daclower; dac <= dachigher; dac++) { 
+    if(dac%10 == 0) { std::cout << "'"; }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << "    ";
+
+  // Axis labels
+  for(size_t dac = daclower; dac <= dachigher; dac++) { 
+    if(dac%10 == 0) {
+      std::cout << dac;
+      if(dac > 10) dac++;
+      if(dac > 100) dac++;
+    }
+    else std::cout << " ";
+  }
+  std::cout << std::endl << std::endl;
+}
+
+void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc, uint8_t width) {
+
+  if(data.empty()) return;
 
   for(int column = 0; column < 52; column++) {
     for(int row = 0; row < 80; row++) {
       bool found = false;
       for (std::vector< pxar::pixel >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 	if(mapit->row == row && mapit->column == column && mapit->roc_id == roc) {
-	  if((int)mapit->value == nTrig) std::cout << "X";
-	  else if((int)mapit->value == 0) std::cout << "-";
-	  else if((int)mapit->value > nTrig) std::cout << "#";
-	  else std::cout << (int)mapit->value;
+	  if((int)mapit->value == nTrig) std::cout << std::setw(width) << "X";
+	  else if((int)mapit->value == 0) std::cout << std::setw(width) << "-";
+	  else if((int)mapit->value > nTrig) std::cout << std::setw(width) << "#";
+	  else std::cout << std::setw(width) << (int)mapit->value;
 	  found = true;
 	  break;
 	}
@@ -145,11 +198,15 @@ void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
   }
 }
 
+void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
+  asciimap(data, nTrig, roc, 1);
+}
+
 int main(int argc, char* argv[]) {
 
   std::cout << argc << " arguments provided." << std::endl;
 
-  bool module = false;
+  uint8_t hubid = 31;
 
   // Prepare some vectors for all the configurations we use:
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
@@ -234,6 +291,7 @@ int main(int argc, char* argv[]) {
     dacs.push_back(std::make_pair("CalDel",122));
     dacs.push_back(std::make_pair("CtrlReg",4));
     dacs.push_back(std::make_pair("WBC",100));
+
   }
 
   // Get some pixelConfigs up and running:
@@ -250,7 +308,6 @@ int main(int argc, char* argv[]) {
   // Prepare for running a module setup
   if(argc > 2 && strcmp(argv[2],"-mod") == 0) {
     std::cout << "Module setup." << std::endl;
-    module = true;
 
     // Pattern Generator:
     pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
@@ -312,7 +369,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     // Initialize the DUT (power it up and stuff):
-    if (!_api->initDUT("tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
+    if (!_api->initDUT(hubid,"tbm08",tbmDACs,roctype,rocDACs,rocPixels)){
       std::cout << " initDUT failed -> invalid configuration?! " << std::endl;
       return -2;
     }
@@ -333,7 +390,7 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl;
     std::vector<uint8_t> roci2c = _api->_dut->getEnabledRocI2Caddr();
-    std::cout << roci2c.size() << " ROCs are enabled, their I2C addresses aree:" << std::endl;
+    std::cout << roci2c.size() << " ROCs are enabled, their I2C addresses are:" << std::endl;
     for(std::vector<uint8_t>::iterator it = roci2c.begin(); it != roci2c.end(); ++it) {
       std::cout << "I2C " << (int)(*it) << ", ";
     }
@@ -474,6 +531,37 @@ int main(int argc, char* argv[]) {
     }
 
     // ##########################################################
+
+    // ##########################################################
+    // Call the second real test (a DAC scan for some pixels):
+
+    // disable pixel(s)
+    _api->_dut->testAllPixels(false);
+    //    _api->_dut->testPixel(34,12,true);
+    //    _api->_dut->testPixel(33,12,true);
+    _api->_dut->testPixel(34,11,true);
+    _api->_dut->testPixel(14,12,true);
+    _api->_dut->maskPixel(14,12,false);
+
+    _api->_dut->info();
+    
+
+    // Call the test:
+    int nTrig22 = 100;
+    std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
+      effscandata22 = _api->getEfficiencyVsDAC("vcal", 0, 90, 0, nTrig22);
+    
+    // Check out the data we received:
+    std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata22.size() << std::endl;
+    
+    enabledrocs = _api->_dut->getEnabledRocIDs();
+    for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
+      std::cout << "VCal scan for ROC " << (int)(*it) << std::endl;
+      asciihisto(effscandata22,nTrig22,14,12,0);
+      std::cout << std::endl;
+    }
+
+    // ##########################################################
     
     // ##########################################################
     // Call the third real test (a DACDAC scan for some pixels):
@@ -521,13 +609,14 @@ int main(int argc, char* argv[]) {
 
     // Call the test:
     int nTrig5 = 10;
-    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,20,FLAG_RISING_EDGE,nTrig5);
+    _api->setDAC("ctrlreg",0);
+    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,140,FLAG_FORCE_MASKED | FLAG_RISING_EDGE,nTrig5);
     std::cout << "Data size returned: " << thrmap.size() << std::endl;
 
     // Threshold map:
     enabledrocs = _api->_dut->getEnabledRocIDs();
     for(std::vector<uint8_t>::iterator it = enabledrocs.begin(); it != enabledrocs.end(); ++it) {
-      asciimap(thrmap,255,(*it));
+      asciimap(thrmap,255,(*it),3);
       std::cout << std::endl << std::endl;
     }
     // ##########################################################
@@ -573,7 +662,7 @@ int main(int argc, char* argv[]) {
       //_api->_dut->testPixel(i,12,true);
     }
 
-    _api->daqStart(pg_setup);
+    _api->daqStart();
     uint32_t daq_triggers = 5;
 
     _api->daqTrigger(daq_triggers);
@@ -600,8 +689,18 @@ int main(int argc, char* argv[]) {
     std::cout << "Done." << std::endl;
     delete _api;
   }
+  catch (pxar::InvalidConfig &e){
+    std::cout << "pxar caught an exception due to invalid configuration settings: " << e.what() << std::endl;
+    delete _api;
+    return -1;    
+  }
+  catch (pxar::pxarException &e){
+    std::cout << "pxar caught an internal exception: " << e.what() << std::endl;
+    delete _api;
+    return -1;    
+  }
   catch (...) {
-    std::cout << "pxar cauhgt an exception from the board. Exiting." << std::endl;
+    std::cout << "pxar caught an unknown exception. Exiting." << std::endl;
     delete _api;
     return -1;
   }

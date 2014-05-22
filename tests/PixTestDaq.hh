@@ -1,10 +1,11 @@
 #ifndef PIXTESTDAQ_H
 #define PIXTESTDAQ_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestDaq: public PixTest {
+#include <TTree.h>
+
+class DLLEXPORT PixTestDaq: public PixTest {
 public:
   PixTestDaq(PixSetup *, std::string);
   PixTestDaq();
@@ -19,8 +20,13 @@ public:
 private:
 
   int     fParNtrig; 
+  int     fParStretch; 
+  bool    fParFillTree;
+  int 	  fParIter;
 
-  ClassDef(PixTestDaq, 1);
+  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+
+  ClassDef(PixTestDaq, 1)
 
 };
 #endif

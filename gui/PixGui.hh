@@ -3,7 +3,7 @@
 
 #ifdef __CINT__ 
 #undef __GNUC__ 
-typedef char __signed; 
+typedef char __signed;
 typedef char int8_t; 
 #endif 
 
@@ -40,7 +40,7 @@ class PixSetup;
 class PixTest; 
 class PixTestParameters;
 
-class PixGui: public TGMainFrame {
+class DLLEXPORT PixGui: public TGMainFrame {
 public:
   PixGui(const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup);
   ~PixGui();
@@ -68,6 +68,9 @@ public:
   PixSetup* getPixSetup() {return fPixSetup;}
 
   void updateSelectedRocs(std::map<int, int> a); 
+
+  ULong_t   fRed, fGreen, fYellow, fWhite; 
+
   
 private: 
 
@@ -106,8 +109,6 @@ private:
 
   int                    fWidth, fHeight; 
   std::string            fOldDirectory;
-
-  ULong_t                fRed, fGreen, fYellow; 
 
   int                    fBorderN, fBorderT, fBorderL;  // normal, tiny, large
 

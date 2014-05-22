@@ -1,10 +1,9 @@
 #ifndef PIXTESTPRETEST_H
 #define PIXTESTPRETEST_H
 
-#include "api.h"
 #include "PixTest.hh"
 
-class PixTestPretest: public PixTest {
+class DLLEXPORT PixTestPretest: public PixTest {
 public:
   PixTestPretest(PixSetup *, std::string);
   PixTestPretest();
@@ -17,6 +16,7 @@ public:
 
   void doTest();
   void setVana();
+  void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
   void setPhRange();
@@ -28,8 +28,9 @@ private:
   int     fNoiseWidth;
   int     fNoiseMargin;
   int     fParNtrig;
+  int     fParVcal, fParDeltaVthrComp;
 
-  ClassDef(PixTestPretest, 1);
+  ClassDef(PixTestPretest, 1)
 
 };
 #endif

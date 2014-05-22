@@ -1,13 +1,16 @@
 # Build pXar test exe:
+ADD_EXECUTABLE(flash "flash.cc")
+TARGET_LINK_LIBRARIES(flash ${PROJECT_NAME} ${FTDI_LINK_LIBRARY} )
+
 ADD_EXECUTABLE(testpxar "pxar.cpp" "pxar.h" )
 TARGET_LINK_LIBRARIES(testpxar ${PROJECT_NAME} ${FTDI_LINK_LIBRARY} )
 
-ADD_EXECUTABLE(takedata "takedata.cpp" "pxar.h" )
-TARGET_LINK_LIBRARIES(takedata ${PROJECT_NAME} ${FTDI_LINK_LIBRARY} )
+ADD_EXECUTABLE(pxardaq "pxardaq.cc" "pxar.h" )
+TARGET_LINK_LIBRARIES(pxardaq ${PROJECT_NAME} ${FTDI_LINK_LIBRARY} )
 
 INCLUDE_DIRECTORIES( . )
 
-INSTALL(TARGETS testpxar takedata
+INSTALL(TARGETS testpxar pxardaq flash
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

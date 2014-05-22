@@ -1,21 +1,37 @@
-// Configuration parameters
-
 #ifndef CONFIGPARAMETERS
 #define CONFIGPARAMETERS
 
+#include "pxardllexport.h"
+
+/** Cannot use stdint.h when running rootcint on WIN32 */
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned short int uint16_t;
+typedef unsigned char uint8_t;
+#undef __GNUC__
+typedef char int8_t; 
+#else
+
 #ifdef __CINT__
 #undef __GNUC__
-typedef char __signed; 
+typedef char __signed;
 typedef char int8_t; 
 #endif
 
 #include <stdint.h>
+#endif
+
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "api.h"
 
-class ConfigParameters {
+struct gainPedestalParameters {
+  double p0, p1, p2, p3; 
+};
+
+
+class DLLEXPORT ConfigParameters {
 public:
   ConfigParameters();
   ConfigParameters(std::string filename);
@@ -38,8 +54,7 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
-  void dumpParameters(std::vector<std::pair<std::string, uint8_t> >); 
-
+  template <typename T1, typename T2> std::string dumpParameters(std::vector<std::pair<T1, T2> > v);
   static ConfigParameters* Singleton();
 
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
@@ -47,6 +62,7 @@ public:
   std::string getTbmParameterFileName()   {return fTbmParametersFileName;}
   std::string getTrimParameterFileName()  {return fTrimParametersFileName;}
   std::string getTestParameterFileName()  {return fTestParametersFileName;}
+  std::string getGainPedestalParameterFileName()  {return fGainPedestalParameterFileName;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}
@@ -61,10 +77,12 @@ public:
   std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
+  std::vector<std::string> getDacs();
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
+  std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
 
   bool setTbParameter(std::string, uint8_t);
   bool setTbPowerSettings(std::string, double);
@@ -92,11 +110,18 @@ public:
   void setSelectedRocs(std::vector<int> v) {fSelectedRocs = v;}
   void setSelectedTbms(std::vector<int> v) {fSelectedTbms = v;}
 
+  void readGainPedestalParameters(); 
+  void writeGainPedestalParameters(); 
+  void setGainPedestalParameters(std::vector<std::vector<gainPedestalParameters> >); 
+  std::vector<std::vector<gainPedestalParameters> > getGainPedestalParameters(); 
+
   double getIa() {return ia;}
   double getId() {return id;}
   double getVa() {return va;}
   double getVd() {return vd;}
   bool   getHvOn() {return fHvOn;}
+
+  uint8_t getHubId() {return fHubId;}
 
 private:
 
@@ -107,6 +132,8 @@ private:
   std::vector<std::vector<std::pair<std::string, uint8_t> > > fTbmParameters, fDacParameters; 
   std::vector<std::vector<pxar::pixelConfig> > fRocPixelConfigs; 
   std::vector<int> fSelectedRocs, fSelectedTbms;
+
+  std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fCustomModule, fHalfModule;
@@ -127,9 +154,20 @@ private:
   std::string fLogFileName;
   std::string fMaskFileName;
   std::string fDebugFileName;
+  std::string fGainPedestalParameterFileName; 
 
   static ConfigParameters* fInstance;
 
 };
+
+// ----------------------------------------------------------------------
+template <typename T1, typename T2> std::string ConfigParameters::dumpParameters(std::vector<std::pair<T1, T2> > v) {
+  std::stringstream line;
+  for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
+    line << " " << it->first << ": " << static_cast<int>(it->second); 
+  }
+  return line.str();
+}
+
 
 #endif

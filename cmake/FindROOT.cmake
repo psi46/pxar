@@ -47,7 +47,7 @@ IF (WIN32)
     set(ROOT_INCLUDE_DIR ${ROOTSYS}/include)
     set(ROOT_LIBRARY_DIR ${ROOTSYS}/lib)
     SET(ROOT_BINARY_DIR ${ROOTSYS}/bin)
-    set(ROOT_LIBRARIES -LIBPATH:${ROOT_LIBRARY_DIR} libGpad.lib libHist.lib libGraf.lib libGraf3d.lib libTree.lib libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libMathCore.lib libRIO.lib libNet.lib libThread.lib libCore.lib libCint.lib)
+    set(ROOT_LIBRARIES -LIBPATH:${ROOT_LIBRARY_DIR} libGpad.lib libHist.lib libGraf.lib libGraf3d.lib libTree.lib libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libMathCore.lib libRIO.lib libNet.lib libThread.lib libCore.lib libCint.lib libMinuit.lib libGui.lib)
     FIND_PROGRAM(ROOT_CINT_EXECUTABLE
       NAMES rootcint
       PATHS ${ROOT_BINARY_DIR}
@@ -211,7 +211,9 @@ MACRO (ROOT_GENERATE_DICTIONARY_OLD )
 
    ADD_CUSTOM_COMMAND(OUTPUT ${OUTFILES}
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f ${OUTFILE} -c -p -DHAVE_CONFIG_H ${INCLUDE_DIRS} ${INFILES} ${LINKDEF_FILE} )
+      ARGS -f ${OUTFILE} -c -p -DHAVE_CONFIG_H ${INCLUDE_DIRS} ${INFILES} ${LINKDEF_FILE} 
+      DEPENDS ${INFILES}
+      )
 
 #   MESSAGE("ROOT_CINT_EXECUTABLE has created the dictionary ${OUTFILE}")
 

@@ -64,12 +64,12 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
   TGTextBuffer *tb(0); 
-  TGTextButton *tset(0); 
+  TGTextButton *tset(0);
+  TGCheckButton *tcheck(0); 
 
   TGHorizontalFrame *hFrame(0); 
 
   int cnt(0); 
-  //  for (map<string, string>::iterator imap = amap.begin(); imap != amap.end(); ++imap) {  
   for (unsigned int i = 0; i < amap.size(); ++i) {
     if (amap[i].second == "button") {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
@@ -79,6 +79,17 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+      continue;
+    }
+
+    if (amap[i].second == "checkbox") {
+      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
+      tcheck = new TGCheckButton(fV2, amap[i].first.c_str(), 1);
+      hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN)); 
+      fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+      tcheck->SetState(kButtonUp);
+      tcheck->SetToolTipText("display (average) pulseheight map instead of hit map");
+      tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
       continue;
     }
 
@@ -98,6 +109,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
+    te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
 
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
@@ -267,14 +279,39 @@ void PixTab::handleButtons(Int_t id) {
 
 // ----------------------------------------------------------------------
 void PixTab::buttonClicked() {
-
-  if (!fGui->getTabs()) return;
-
   TGButton *btn = (TGButton*)gTQSender;
   LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
   fTest->runCommand(btn->GetTitle()); 
 
 } 
+
+// ----------------------------------------------------------------------
+void PixTab::boxChecked() {
+  TGCheckButton *btn = (TGCheckButton*) gTQSender;
+  string sTitle = btn->GetTitle();
+  LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
+  fTest->setParameter(sTitle,string(btn->IsDown()?"1":"0")) ;
+
+}
+
+// ----------------------------------------------------------------------
+void PixTab::yellow() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+  
+  string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  if (fTest->getParameter(fParIds[id]).compare(svalue)) {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fYellow);
+  } else {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fWhite);
+  }
+}
+
 
 // ----------------------------------------------------------------------
 void PixTab::setParameter() {
@@ -290,6 +327,7 @@ void PixTab::setParameter() {
   }
 
   string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fWhite);
   
   LOG(logDEBUG) << "xxxPressed():  ID = " << id 
 		<< " -> " << fParIds[id]
@@ -376,8 +414,9 @@ void PixTab::update() {
 
 // ----------------------------------------------------------------------
 void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected) {
-  const char *text0, *text2;
-  text0 = selected->GetName();
+  //  char text0[200], text2[200];
+  string text2; 
+  const char* text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
 
   if (event == kKeyPress) {
@@ -389,7 +428,7 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   if (selected->InheritsFrom(TH1::Class())) {
     string trafo = selected->GetObjectInfo(px,py);
     string::size_type s1 = trafo.find("binx"); 
-    string trafo1 = trafo.substr(s1).c_str(); 
+    string trafo1 = trafo.substr(s1); 
     float x, y, val; 
     if (selected->InheritsFrom(TH2::Class())) {
       sscanf(trafo1.c_str(), "binx=%f, biny=%f, binc=%f", &x, &y, &val);
@@ -398,7 +437,8 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
       } else if (160 == ((TH2D*)selected)->GetNbinsX() && 416 == ((TH2D*)selected)->GetNbinsY()) {
 	text2 = Form("x=%.0f, y=%.0f, value=%4.3f", x-1, y-1, val); 
       } else {
-	text2 = trafo1.c_str(); 
+	text2 = trafo1;
+	//	cout << "text2: " << text2 << " trafo1: " << trafo1 << endl;
       }
     } else {
       sscanf(trafo1.c_str(), "binx=%f, binc=%f", &x, &val);
@@ -407,7 +447,7 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
   } else {
     text2 = selected->GetObjectInfo(px,py);
   }
-  fStatusBar->SetText(text2, 1);
+  fStatusBar->SetText(text2.c_str(), 1);
 }
 
 

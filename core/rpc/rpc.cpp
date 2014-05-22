@@ -26,9 +26,16 @@ void rpcMessage::Receive(CRpcIo &rpc_io)
 {
 	m_pos = 0;
 	rpc_io.Read(&m_type, 1);
-	if ((m_type & 0xfe) != RPC_TYPE_DTB) throw CRpcError(CRpcError::WRONG_MSG_TYPE);
-	if (m_type & 0x01)
+	if (m_type == RPC_TYPE_DTB) {}
+	else if (m_type == RPC_TYPE_DTB_DATA)
 	{ // remove unexpected data message from queue
+		uint16_t size = 0;
+		rpc_io.Read(&size, 3);
+		rpc_DataSink(rpc_io, size);
+		throw CRpcError(CRpcError::NO_CMD_MSG);
+	}
+	else if (m_type == RPC_TYPE_DTB_DATA_OLD)
+	{ // remove unexpected old data message from queue
 		uint8_t  chn;
 		uint16_t size;
 		rpc_io.Read(&chn, 1);
@@ -36,6 +43,8 @@ void rpcMessage::Receive(CRpcIo &rpc_io)
 		rpc_DataSink(rpc_io, size);
 		throw CRpcError(CRpcError::NO_CMD_MSG);
 	}
+	else throw CRpcError(CRpcError::WRONG_MSG_TYPE);
+
 	rpc_io.Read(&m_cmd, 2);
 	rpc_io.Read(&m_size, 1);
 	if (m_size) rpc_io.Read(m_par, m_size);
@@ -47,8 +56,8 @@ void rpcMessage::Receive(CRpcIo &rpc_io)
 void CDataHeader::RecvHeader(CRpcIo &rpc_io)
 {
 	rpc_io.Read(&m_type, 1);
-	if ((m_type & 0xfe) != RPC_TYPE_DTB) throw CRpcError(CRpcError::WRONG_MSG_TYPE);
-	if ((m_type & 0x01) == 0)
+	if (m_type == RPC_TYPE_DTB_DATA) {}
+	else if (m_type == RPC_TYPE_DTB)
 	{ // remove unexpected command message from queue
 		uint16_t cmd;
 		uint8_t size;
@@ -57,24 +66,34 @@ void CDataHeader::RecvHeader(CRpcIo &rpc_io)
 		rpc_DataSink(rpc_io, size);
 		throw CRpcError(CRpcError::NO_DATA_MSG);
 	}
-	rpc_io.Read(&m_chn, 1);
-	rpc_io.Read(&m_size, 2);
+	else if (m_type == RPC_TYPE_DTB_DATA_OLD)
+	{ // remove unexpected old data message from queue
+		uint8_t  chn;
+		uint16_t size;
+		rpc_io.Read(&chn, 1);
+		rpc_io.Read(&size, 2);
+		rpc_DataSink(rpc_io, size);
+		throw CRpcError(CRpcError::NO_CMD_MSG);
+	}
+	else throw CRpcError(CRpcError::WRONG_MSG_TYPE);
+
+	m_size = 0;
+	rpc_io.Read(&m_size, 3);
 }
 
 
 
-void rpc_SendRaw(CRpcIo &rpc_io, uint8_t channel, const void *x, uint16_t size)
+void rpc_SendRaw(CRpcIo &rpc_io, const void *x, uint32_t size)
 {
 	uint8_t value = RPC_TYPE_DTB_DATA;
 	rpc_io.Write(&value, 1);
-	rpc_io.Write(&channel, 1);
-	rpc_io.Write(&size, 2);
+	rpc_io.Write(&size, 3);
 	if (size) rpc_io.Write(x, size);
 //	printf("Send Data [%i]\n", int(size));
 }
 
 
-void rpc_DataSink(CRpcIo &rpc_io, uint16_t size)
+void rpc_DataSink(CRpcIo &rpc_io, uint32_t size)
 {
 	if (size == 0) return;
 	CBuffer buffer(size);
@@ -89,7 +108,7 @@ void rpc_Receive(CRpcIo &rpc_io, string &x)
 	x.clear();
 	x.reserve(msg.m_size);
 	char ch;
-	for (uint16_t i=0; i<msg.m_size; i++)
+	for (uint32_t i=0; i<msg.m_size; i++)
 	{
 		rpc_io.Read(&ch, 1);
 		x.push_back(ch);
@@ -107,13 +126,13 @@ void rpc_TranslateCallName(const string &in, string &out)
 	unsigned int pos = size;
 	try
 	{
-	  if (pos >= in.size()) throw int(1);
+		if (pos == string::npos) throw int(1);
 		pos++;
 		int i = 0;
 		while (pos < in.size())
 		{
 			int comp = -1;
-			if (in[pos] >= '0' && in[pos] <= '4')
+			if (in[pos] >= '0' && in[pos] <= '5')
 			{
 				comp = in[pos] - '0';
 				pos++; if (pos >= in.size()) throw int(2);
@@ -139,11 +158,12 @@ void rpc_TranslateCallName(const string &in, string &out)
 
 			switch (comp)
 			{
-				case  0: out += type + '&'; break;
-				case  1: out += "vector<"; out += type; out += "> &"; break;
-				case  2: out += "vectorR<"; out += type; out += "> &"; break;
-				case  3: out += "string &"; break;
-				case  4: out += "stringR &"; break;
+				case  0: out += type; out += "&"; break;
+				case  1: out += "vector<"; out += type; out += ">&"; break;
+				case  2: out += "vectorR<"; out += type; out += ">&"; break;
+				case  3: out += "string&"; break;
+				case  4: out += "stringR&"; break;
+				case  5: out += "HWvectorR&"; break;
 				default: out += type;
 			}
 

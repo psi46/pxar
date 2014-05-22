@@ -2,11 +2,9 @@
 #ifndef PIXTESTSETPH_H
 #define PIXTESTSETPH_H
 
-#include "api.h"
-#include "constants.h" // FLAG_USE_CALS
 #include "PixTest.hh"
 
-class PixTestSetPh: public PixTest {
+class DLLEXPORT PixTestSetPh: public PixTest {
 public:
   PixTestSetPh(PixSetup *, std::string);
   PixTestSetPh();
@@ -23,7 +21,7 @@ private:
   int     fParNtrig; 
   int     fParCals;
 
-  ClassDef(PixTestSetPh, 1);
+  ClassDef(PixTestSetPh, 1)
 
 };
 #endif

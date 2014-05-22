@@ -4,14 +4,12 @@
 #include <string>
 #include <map>
 
-#include <TObject.h> 
-
 #include "api.h"
 
 #include "PixTestParameters.hh"
 #include "ConfigParameters.hh"
 
-class PixSetup: public TObject {
+class DLLEXPORT PixSetup {
 public:
   PixSetup(pxar::pxarCore *, PixTestParameters *, ConfigParameters *);
   PixSetup(std::string verbosity, PixTestParameters *, ConfigParameters *);
@@ -27,9 +25,14 @@ public:
   bool               useRootLogon() {return fUseRootLogon;} 
   void               setUseRootLogon(bool x) {fUseRootLogon = x;} 
   void               killApi(); 
-
+  void               setDummy(bool x) {fIsDummy = x;}
+  bool               isDummy() {return fIsDummy;}
+  void               setMoreWebCloning(bool x) {fMoreWebCloning = x;}
+  bool               doMoreWebCloning() {return fMoreWebCloning;}
 private: 
   bool              fDebug; 
+  bool              fIsDummy; 
+  bool              fMoreWebCloning;
   bool              fDoAnalysisOnly; 
   bool              fUseRootLogon;
 
@@ -37,7 +40,6 @@ private:
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
 
-  ClassDef(PixSetup, 1); 
 };
 
 #endif

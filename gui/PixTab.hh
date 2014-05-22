@@ -19,7 +19,7 @@
 #include "PixGui.hh"
 #include "PixTest.hh"
 
-class PixTab: public TQObject {
+class DLLEXPORT PixTab: public TQObject {
 public:
   PixTab(PixGui *p, PixTest *test, std::string tabname);
   PixTab();
@@ -30,7 +30,9 @@ public:
 
   virtual void handleButtons(Int_t id = -1); 
   virtual void buttonClicked(); 
+  virtual void boxChecked(); 
   virtual void setParameter(); 
+  virtual void yellow(); 
 
   void update();
   void updateToolTips();

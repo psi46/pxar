@@ -4,19 +4,20 @@
 // and then passed through the makefiles to the compiler.
 // Please implement and test your modifications for both versions.
 
-// TODO:
-// - Move WaitForQueue() into read method in ftd2xx implementation
-
 
 #ifndef USB_H
 #define USB_H
 
-#ifdef WIN32
+#if ((defined WIN32) && (defined __CINT__))
+#include <Windows4Root.h>
+#else
+#if (defined WIN32)
 #include <Windows.h>
 #else
 typedef uint32_t* LPDWORD;
 typedef uint32_t DWORD;
-#endif
+#endif //WIN32
+#endif //WIN32 && CINT
 
 #ifdef HAVE_LIBFTDI
 #include <ftdi.h>
@@ -28,8 +29,8 @@ typedef uint32_t DWORD;
 
 #include <stdint.h>
 
-#define USBWRITEBUFFERSIZE  150000
-#define USBREADBUFFERSIZE   150000
+#define USBWRITEBUFFERSIZE  4096
+#define USBREADBUFFERSIZE   4096
 
 
 #define ESC_EXTENDED 0x8f
@@ -87,9 +88,7 @@ public:
   void Clear();
 
   bool Show();
-  int GetQueue();
-  bool WaitForFilledQueue(int pSize,int pMaxWait=10000);
-  void SetTimeout(unsigned int timeout){m_timeout = timeout;}
+  void SetTimeout(unsigned int timeout);
 
 
   // read methods
