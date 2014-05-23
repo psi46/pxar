@@ -107,13 +107,41 @@ void PixTestPhOptimization::doTest() {
 
 //  fApi->setDAC(fParDAC, fParDacVal);
 
+
+
+  //pixelalive test to discard not fully efficient pixels
+  int aliveTrig=10;
+  vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig);
+  LOG(logDEBUG)<<"size of testEff vector "<<testEff.size();
+  LOG(logDEBUG)<<"size of pixelalive map "<<testEff[0]->GetNbinsX()<<" X "<<testEff[0]->GetNbinsY();
+  std::vector<std::pair<int, int> > badPixels;
+  std::pair<int, int> badPix;
+  int eff=0;
+  for (unsigned int i = 0; i < testEff.size(); ++i) {
+    for(int r=0; r<80; r++){
+      for(int c=0; c<52; c++){
+	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
+	LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<aliveTrig;
+	if(eff<aliveTrig){
+	  badPix.first = c;
+	  badPix.second = r;
+	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
+	  badPixels.push_back(badPix);
+	}
+      }
+    }
+
+  }
+
+
+
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   int ntriggers = 10;
-
+  bool isPixGood=true;
   fApi->setDAC("vcal",255);
   fApi->setDAC("ctrlreg",4);
-  fApi->setDAC("phoffset",150);  
+  fApi->setDAC("phoffset",200);  
   int maxph = 255;
   int init_phScale =30;
   pxar::pixel maxpixel;
@@ -129,16 +157,25 @@ void PixTestPhOptimization::doTest() {
     LOG(logDEBUG) << "result size "<<result.size()<<endl;
 
     for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+      isPixGood=true;
       LOG(logDEBUG) << " pixel col "<<(int)px->column <<", row "<<(int)px->row<<", PH "<<px->value<<endl;
       if(px->value > maxpixel.value){
-	maxpixel = *px;
-	maxph = px->value;
+	for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	  if(bad_it->first == px->column && bad_it->second == px->row){
+	    isPixGood=false;
+	  }
+	}
+	if(isPixGood){
+	  maxpixel = *px;
+	  maxph = px->value;
+	}
       }
     }
     
     LOG(logDEBUG) << "maxPh " << maxph <<" "<<maxpixel << endl ;
 
     //should have flag for v2 or v2.1
+    //should check we don't get stuck in this while (some flag < 52)
     init_phScale-=5;
   }
 
@@ -152,33 +189,45 @@ void PixTestPhOptimization::doTest() {
 
 
 
-
  // Find min. pixel:
+  isPixGood=true;
   pxar::pixel minpixel;
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  fApi->setDAC("ctrlreg",0);
+  fApi->setDAC("ctrlreg",4);
 
-  std::vector<pxar::pixel> thrmap = fApi->getThresholdMap("vcal", 0, 100, FLAG_RISING_EDGE, 10);
+  std::vector<pxar::pixel> thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
   int minthr=0;
   LOG(logDEBUG) << "thr map size "<<thrmap.size()<<endl;
 
+
+
   for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
+      isPixGood=true;
     LOG(logDEBUG)<<"threshold map "<<*thrit<<endl;
     if(thrit->value > minthr) {
-      minpixel = *thrit;
-      minthr = minpixel.value;
+      for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	if(bad_it->first == thrit->column && bad_it->second == thrit->row){
+	  isPixGood=false;
+	}
+      }
+      if(isPixGood){
+	minpixel = *thrit;
+	minthr = minpixel.value;
+      }
     }
   }
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
 
-  LOG(logDEBUG) << "min vcal thr " << minthr << endl ;
+  LOG(logDEBUG) << "min vcal thr " << minthr << "found for pixel "<<minpixel<<endl ;
 
   fApi->_dut->testPixel(minpixel.column,minpixel.row,true);
   fApi->_dut->maskPixel(minpixel.column,minpixel.row,false);
-  fApi->setDAC("vcal",minthr+10);
+  //  fApi->setDAC("vcal",40);
+  minthr = (minthr==255) ? (minthr) : (minthr + 10); 
+  fApi->setDAC("vcal",minthr);
 
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
 
@@ -198,10 +247,16 @@ void PixTestPhOptimization::doTest() {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
   //or two for cycles??
+  LOG(logDEBUG) << "dacdac at max vcal has size "<<dacdac_max.size()<<endl;
+  LOG(logDEBUG) << "dacdac at min vcal has size "<<dacdac_min.size()<<endl;
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    if(dacit_max->first == po && dacit_min->first == po) {
-      maxPh=dacit_max->second.second.at(0).value;
-      minPh=dacit_min->second.second.at(0).value;
+    LOG(logDEBUG) << "max Ph for scale "<<(int)dacit_max->second.first<<" and offset "<<(int)dacit_max->first<<" is "<<dacit_max->second.second[0].value<<", size "<<dacit_max->second.second.size();
+    LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first<<", size "<<dacit_min->second.second.size();
+    //    LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first˚<<" is "<<dacit_min->second.second[0].value;
+    if(dacit_max->first == po && dacit_min->first == po && dacit_min->second.second.size() && dacit_max->second.second.size()) {
+      //      LOG(logDEBUG)<<"entered the IF condition";
+      maxPh=dacit_max->second.second[0].value;
+      minPh=dacit_min->second.second[0].value;
       lowEd = (minPh > safetyMargin);
       upEd = (maxPh < 255 - safetyMargin);
       upEd_dist = abs(maxPh - (255 - safetyMargin));
@@ -216,7 +271,7 @@ void PixTestPhOptimization::doTest() {
     dacit_min++;
   }
 
-
+  LOG(logDEBUG)<<"opt step 1: po fixed to"<<po<<" and scale adjusted to "<<ps_opt<<", with distance "<<bestDist;
 
 //  for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = dacdac_max.begin(); dacit != dacdac_max.end();dacit++ ){
 //    if(dacit->first == po) {
@@ -240,7 +295,7 @@ void PixTestPhOptimization::doTest() {
   bestDist=255;
   //or two for cycles??
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    if(dacit_max->second.first == ps_opt && dacit_min->second.first == ps_opt) {
+    if(dacit_max->second.first == ps_opt && dacit_min->second.first == ps_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
       maxPh=dacit_max->second.second.at(0).value;
       minPh=dacit_min->second.second.at(0).value;
       dist = abs(minPh - (255 - maxPh));
@@ -253,6 +308,8 @@ void PixTestPhOptimization::doTest() {
     dacit_max++;
     dacit_min++;
   }
+
+  LOG(logDEBUG)<<"opt centring step: po "<<po_opt<<" and scale "<<ps_opt<<", with distance "<<bestDist;
  
   io_opt=999;
   safetyMargin=10;
@@ -265,7 +322,7 @@ void PixTestPhOptimization::doTest() {
   dacit_max = dacdac_max.begin();
   dacit_min = dacdac_min.begin();
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    if(dacit_max->first == po_opt && dacit_min->first == po_opt) {
+    if(dacit_max->first == po_opt && dacit_min->first == po_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
       maxPh=dacit_max->second.second.at(0).value;
       minPh=dacit_min->second.second.at(0).value;
 
@@ -273,15 +330,18 @@ void PixTestPhOptimization::doTest() {
       upEd = (maxPh < 255 - safetyMargin);
       upEd_dist = abs(maxPh - (255 - safetyMargin));
       lowEd_dist = abs(minPh - safetyMargin);
-      dist = (upEd_dist < lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+      dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
       //      cout<<"scale = " << is <<", maxPh "<<maxPh<<", minPh"<<minPh<< ", distance = " << dist << endl;
       if(dist<bestDist && lowEd && upEd){
 	ps_opt = dacit_max->second.first;
 	bestDist=dist;
       }
     }
+    dacit_max++;
+    dacit_min++;
   }
 
+  LOG(logDEBUG)<<"opt final step: po fixed to"<<po_opt<<" and scale adjusted to "<<ps_opt<<", with distance "<<bestDist;
 
   //draw PH curve for min and max pixel
   string title;
