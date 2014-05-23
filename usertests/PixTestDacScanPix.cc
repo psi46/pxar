@@ -66,7 +66,7 @@ bool PixTestDacScanPix::setParameter( string parName, string sval )
       string::size_type s1;
       string str1, str2;
       int pixc, pixr;
-      if( !parName.compare("PIX1") ) {
+      if( !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if( string::npos != s1) {
 	  str1 = sval.substr(0, s1);
