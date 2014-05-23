@@ -214,15 +214,13 @@ cdef class PyPxarCore:
         #TODO understand why this returns empty data
         r = self.thisptr.getPulseheightVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
         hits = []
-        #TODO not hardcode col, row, understand if indices are ok
+        #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
         s = (52, 80, dacMax-dacMin+1)
         for i in range(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
-            print d
             for pix in range(r[d].second.size()):
-                print r[d].second[pix].value
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
         return numpy.array(hits)
 
@@ -231,15 +229,13 @@ cdef class PyPxarCore:
         #TODO understand why this returns empty data
         r = self.thisptr.getEfficiencyVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
         hits = []
-        #TODO not hardcode col, row, understand if indices are ok
+        #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
         s = (52, 80, dacMax-dacMin+1)
         for i in range(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
-            print d
             for pix in range(r[d].second.size()):
-                print r[d].second[pix].value
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
         return numpy.array(hits)
 
