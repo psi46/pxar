@@ -216,7 +216,7 @@ cdef class PyPxarCore:
         hits = []
         #TODO not hardcode col, row, understand if indices are ok
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dacMax-dacMin)
+        s = (52, 80, dacMax-dacMin+1)
         for i in range(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
@@ -233,7 +233,7 @@ cdef class PyPxarCore:
         hits = []
         #TODO not hardcode col, row, understand if indices are ok
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dacMax-dacMin)
+        s = (52, 80, dacMax-dacMin+1)
         for i in range(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
@@ -252,7 +252,7 @@ cdef class PyPxarCore:
         hits = []
         #TODO not hardcode col, row, check if indices make sense, currently not running!
         #PYXAR expects a matrix for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dac1max-dac1min, dac2max-dac2min)
+        s = (52, 80, dac1max-dac1min+1, dac2max-dac2min+1)
         for i in range(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
