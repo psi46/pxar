@@ -225,6 +225,24 @@ cdef class PyPxarCore:
                 print r[d].second[pix].value
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
         return numpy.array(hits)
+
+    def getEfficiencyVsDAC(self, string dacName, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
+        cdef vector[pair[uint8_t, vector[pixel]]] r
+        #TODO understand why this returns empty data
+        r = self.thisptr.getEfficiencyVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
+        hits = []
+        #TODO not hardcode col, row, understand if indices are ok
+        #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
+        s = (52, 80, dacMax-dacMin)
+        for i in range(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
+            print d
+            for pix in range(r[d].second.size()):
+                print r[d].second[pix].value
+                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
+        return numpy.array(hits)
+
 #    def vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
