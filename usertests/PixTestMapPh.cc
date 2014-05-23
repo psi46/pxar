@@ -39,10 +39,10 @@ bool PixTestMapPh::setParameter( string parName, string sval )
 
       found = true;
 
-      if( !parName.compare( "Ntrig" ) )
+      if( !parName.compare( "ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
 
-      if( !parName.compare( "CALS" ) )
+      if( !parName.compare( "cals" ) )
 	fParCals = atoi( sval.c_str() );
 
       break;

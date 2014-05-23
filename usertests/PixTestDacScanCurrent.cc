@@ -40,7 +40,7 @@ bool PixTestDacScanCurrent::setParameter( string parName, string sval )
 
       sval.erase( remove( sval.begin(), sval.end(), ' ' ), sval.end() );
 
-      if( !parName.compare( "DAC" ) ) {
+      if( !parName.compare( "dac" ) ) {
 	fParDAC = sval;
 	LOG(logDEBUG) << "PixTestDacScanCurrent setting fParDAC  ->" << fParDAC
 		     << "<- from sval = " << sval;

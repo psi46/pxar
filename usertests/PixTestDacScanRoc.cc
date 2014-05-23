@@ -41,25 +41,25 @@ bool PixTestDacScanRoc::setParameter( string parName, string sval )
 
       sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
 
-      if( !parName.compare("Ntrig") ) {
+      if( !parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
 
-      if( !parName.compare("DAC") ) {
+      if( !parName.compare("dac") ) {
 	fParDAC = sval;
 	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC
 		      << "<- from sval = " << sval;
       }
 
-      if( !parName.compare("DACLO") ) {
+      if( !parName.compare("daclo") ) {
 	fParLoDAC = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC
 		      << "<- from sval = " << sval;
       }
 
-      if( !parName.compare("DACHI") ) {
+      if( !parName.compare("dachi") ) {
 	fParHiDAC = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC
 		      << "<- from sval = " << sval;

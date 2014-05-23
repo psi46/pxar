@@ -39,25 +39,25 @@ bool PixTestDacScanPix::setParameter( string parName, string sval )
 
       sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
 
-      if( !parName.compare("Ntrig") ) {
+      if( !parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
 
-      if( !parName.compare("DAC") ) {
+      if( !parName.compare("dac") ) {
 	fParDAC = sval;
 	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC
 		      << "<- from sval = " << sval;
       }
 
-      if( !parName.compare("DACLO") ) {
+      if( !parName.compare("daclo") ) {
 	fParLoDAC = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC
 		      << "<- from sval = " << sval;
       }
 
-      if( !parName.compare("DACHI") ) {
+      if( !parName.compare("dachi") ) {
 	fParHiDAC = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC
 		      << "<- from sval = " << sval;
@@ -66,7 +66,7 @@ bool PixTestDacScanPix::setParameter( string parName, string sval )
       string::size_type s1;
       string str1, str2;
       int pixc, pixr;
-      if( !parName.compare("PIX1") ) {
+      if( !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if( string::npos != s1) {
 	  str1 = sval.substr(0, s1);
