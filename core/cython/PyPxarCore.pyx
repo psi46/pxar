@@ -243,7 +243,6 @@ cdef class PyPxarCore:
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
         return numpy.array(hits)
 
-#    def vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
     def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
