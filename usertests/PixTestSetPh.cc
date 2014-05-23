@@ -37,10 +37,10 @@ bool PixTestSetPh::setParameter( string parName, string sval )
 
       found = true;
 
-      if( !parName.compare( "Ntrig" ) )
+      if( !parName.compare( "ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
 
-      if( !parName.compare( "PIX1" ) ) {
+      if( !parName.compare( "pix1" ) ) {
 	string::size_type s1 = sval.find( "," );
 	if( string::npos != s1 ) {
 	  string str1 = sval.substr(0, s1);

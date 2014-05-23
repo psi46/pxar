@@ -41,10 +41,10 @@ bool PixTestSetTrim::setParameter( string parName, string sval )
 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
 
-      if( !parName.compare( "TargetVcal" ) )
+      if( !parName.compare( "targetvcal" ) )
 	fParVcal = atoi( sval.c_str() );
 
-      if( !parName.compare( "Ntrig" ) )
+      if( !parName.compare( "ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
 
       setToolTips();

@@ -41,7 +41,7 @@ bool PixTestSetVana::setParameter( string parName, string sval ) {
 
       LOG(logDEBUG) << "  ==> parName: " << parName;
       LOG(logDEBUG) << "  ==> sval:    " << sval;
-      if (!parName.compare("targetIa")) {
+      if (!parName.compare("targetia")) {
 	fTargetIa = atoi(sval.c_str()); 
 	setToolTips();
       }

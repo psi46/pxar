@@ -41,35 +41,35 @@ bool PixTestDacScanPh::setParameter( string parName, string sval )
 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end() );
 
-      if( !parName.compare( "Ntrig" ) ) {
+      if( !parName.compare( "ntrig" ) ) {
 	fParNtrig = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		     << "<- from sval = " << sval;
       }
 
-      if( !parName.compare( "DAC" ) ) {
+      if( !parName.compare( "dac" ) ) {
 	fParDAC = sval;
 	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC
 		     << "<- from sval = " << sval;
       }
 
-      if( !parName.compare( "DACLO" ) ) {
+      if( !parName.compare( "daclo" ) ) {
 	fParLoDAC = atoi(sval.c_str() );
 	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC
 		     << "<- from sval = " << sval;
       }
-      if( !parName.compare( "DACHI" ) ) {
+      if( !parName.compare( "dachi" ) ) {
 	fParHiDAC = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC
 		     << "<- from sval = " << sval;
       }
-      if( !parName.compare( "CALS" ) ) {
+      if( !parName.compare( "cals" ) ) {
 	fParCals = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParCals  ->" << fParCals
 		     << "<- from sval = " << sval;
       }
 
-      if( !parName.compare( "PIX1" ) ) {
+      if( !parName.compare( "pix1" ) ) {
 	string::size_type s1 = sval.find( "," );
 	if( string::npos != s1 ) {
 	  string str1 = sval.substr(0, s1);
@@ -77,6 +77,9 @@ bool PixTestDacScanPh::setParameter( string parName, string sval )
 	  string str2 = sval.substr(s1+1);
 	  int pixr = atoi( str2.c_str() );
 	  fPIX.push_back( make_pair( pixc, pixr ) );
+	  LOG(logDEBUG) << "new coordinates: (" << fPIX[fPIX.size()-1].first 
+		<< " | " << fPIX[fPIX.size()-1].second << ") with currently "
+		<< fPIX.size() << " entries in the Vector" << endl;
 	}
 	else {
 	  fPIX.push_back( make_pair( -1, -1 ) );
@@ -150,8 +153,12 @@ void PixTestDacScanPh::doTest()
 
   fApi->_dut->testAllPixels(false);
 
-  if( fPIX[0].first > -1 )
-    fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true );
+  //coordinates of the last pair = presetly set pixel
+  int32_t col = fPIX[fPIX.size()-1].first;		
+  int32_t row = fPIX[fPIX.size()-1].second;
+
+  if( col > -1 )
+    fApi->_dut->testPixel( col, row, true );
 
   // measure:
 
@@ -178,8 +185,6 @@ void PixTestDacScanPh::doTest()
   TH1D *h1(0);
 
   uint32_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
-  uint32_t col = fPIX[0].first;
-  uint32_t row = fPIX[0].second;
 
   for( uint32_t roc = 0; roc < nRocs; ++roc ) {
 
@@ -209,8 +214,8 @@ void PixTestDacScanPh::doTest()
       uint8_t roc = vpix[ipx].roc_id;
 
       if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+	  vpix[ipx].column == col &&
+	  vpix[ipx].row == row ) {
 	h1 = hsts.at(roc);
 	h1->Fill( idac, vpix[ipx].value ); // already averaged
       } // valid
@@ -236,7 +241,7 @@ void PixTestDacScanPh::doTest()
       << " " << setw(2) << (int) vpix9[ipx].row
       << " thr " << setw(3) << vpix9[ipx].value;
 
-  if( fPIX[0].first > -1 )
-    fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, false );
+  if( col > -1 )
+    fApi->_dut->testPixel( col, row, false );
 
 }
