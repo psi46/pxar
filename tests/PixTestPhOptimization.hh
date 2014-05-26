@@ -18,6 +18,7 @@ public:
   void GetMinPixel(pxar::pixel &minpixel, std::vector<pxar::pixel> &thrmap, std::vector<std::pair<int, int> > &badPixels);
   int InsideRangePH(int po_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
   int CentrePhRange(int po_opt, int ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
+  int StretchPH(int po_opt, int ps_opt_in,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
   void doTest(); 
 
 private:

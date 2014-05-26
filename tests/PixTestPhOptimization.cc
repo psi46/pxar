@@ -229,36 +229,8 @@ void PixTestPhOptimization::doTest() {
   po_opt = CentrePhRange(po_opt, ps_opt, dacdac_max, dacdac_min);
   LOG(logDEBUG)<<"opt centring step: po "<<po_opt<<" and scale "<<ps_opt<<", with distance "<<bestDist;
  
-  io_opt=999;
-  safetyMargin=10;
-  bestDist=255;
-  dist =255;
-  upEd_dist=255;
-  lowEd_dist=255;
-  lowEd=false;
-  upEd=false;
-  dacit_max = dacdac_max.begin();
-  dacit_min = dacdac_min.begin();
-  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    if(dacit_max->first == po_opt && dacit_min->first == po_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
-      maxPh=dacit_max->second.second.at(0).value;
-      minPh=dacit_min->second.second.at(0).value;
 
-      lowEd = (minPh > safetyMargin);
-      upEd = (maxPh < 255 - safetyMargin);
-      upEd_dist = abs(maxPh - (255 - safetyMargin));
-      lowEd_dist = abs(minPh - safetyMargin);
-      dist = (upEd_dist < lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
-      //      cout<<"scale = " << is <<", maxPh "<<maxPh<<", minPh"<<minPh<< ", distance = " << dist << endl;
-      if(dist<bestDist && lowEd && upEd){
-	ps_opt = dacit_max->second.first;
-	bestDist=dist;
-      }
-    }
-    dacit_max++;
-    dacit_min++;
-  }
-
+  ps_opt = StretchPH(po_opt, ps_opt, dacdac_max, dacdac_min);
   LOG(logDEBUG)<<"opt final step: po fixed to"<<po_opt<<" and scale adjusted to "<<ps_opt<<", with distance "<<bestDist;
 
   //draw PH curve for min and max pixel
@@ -495,4 +467,51 @@ int PixTestPhOptimization::CentrePhRange(int po_opt_in, int ps_opt,  std::vector
 
   LOG(logDEBUG)<<"opt centring step: po "<<po_opt_out<<" and scale "<<ps_opt<<", with distance "<<bestDist;
   return po_opt_out;
+}
+
+
+
+int PixTestPhOptimization::StretchPH(int po_opt, int ps_opt_in,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
+  //centring PH curve adjusting ph offset             
+  int ps_opt_out = ps_opt_in;
+  int maxPh(0.);
+  int minPh(0.);
+  bool lowEd=false, upEd=false;
+  double upEd_dist=255, lowEd_dist=255;
+  int safetyMargin = 50;
+  int dist = 255;
+  int bestDist = 255;
+  safetyMargin=10;
+  bestDist=255;
+  dist =255;
+  upEd_dist=255;
+  lowEd_dist=255;
+  lowEd=false;
+  upEd=false;
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
+  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
+    if(dacit_max->first == po_opt && dacit_min->first == po_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
+      maxPh=dacit_max->second.second.at(0).value;
+      minPh=dacit_min->second.second.at(0).value;
+
+      lowEd = (minPh > safetyMargin);
+      upEd = (maxPh < 255 - safetyMargin);
+      upEd_dist = abs(maxPh - (255 - safetyMargin));
+      lowEd_dist = abs(minPh - safetyMargin);
+      dist = (upEd_dist < lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+      //      cout<<"scale = " << is <<", maxPh "<<maxPh<<", minPh"<<minPh<< ", distance = " << dist << endl;
+      if(dist<bestDist && lowEd && upEd){
+	ps_opt_out = dacit_max->second.first;
+	bestDist=dist;
+      }
+    }
+    dacit_max++;
+    dacit_min++;
+  }
+
+  LOG(logDEBUG)<<"opt final step: po fixed to"<<po_opt<<" and scale adjusted to "<<ps_opt_out<<", with distance "<<bestDist;
+
+  return ps_opt_out;
+
 }
