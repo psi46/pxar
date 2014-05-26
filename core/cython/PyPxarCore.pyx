@@ -339,12 +339,19 @@ cdef class PyPxarCore:
         for d in xrange(r.size()):
             hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
         return numpy.array(hits)
+
 #    def int32_t getReadbackValue(self, string parameterName):
-#    def bool daqStart(self, vector[pair[uint16_t, uint8_t]] pg_setup):
-#    def bool daqStatus(self):
+
+    def daqStart(self):
+        return self.thisptr.daqStart()
+
+    def daqStatus(self):
+        return self.thisptr.daqStatus()
+
 #    def void daqTrigger(self, uint32_t nTrig):
 #    def void daqTriggerLoop(self, uint16_t period):
 #    def vector[uint16_t] daqGetBuffer(self):
 #    def vector[pixel] daqGetEvent(self):
-#    def bool daqStop(self):
+    def daqStop(self):
+        return self.thisptr.daqStop()
 
