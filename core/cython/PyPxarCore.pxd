@@ -160,13 +160,15 @@ cdef extern from "api.h" namespace "pxar":
         vector[pixel] getThresholdMap(string dacName, uint16_t flags, uint16_t nTriggers) except +
         vector[pixel] getThresholdMap(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) except +
         int32_t getReadbackValue(string parameterName) except +
-        bool daqStart(vector[pair[uint16_t, uint8_t]] pg_setup) except +
+        bool daqStart() except +
         bool daqStatus() except +
-        void daqTrigger(uint32_t nTrig) except +
+        void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +
         Event daqGetEvent() except +
         rawEvent daqGetRawEvent() except +
         vector[rawEvent] daqGetRawBuffer() except +
         vector[Event] daqGetEventBuffer() except +
+        vector[uint16_t] daqGetBuffer() except +
+        uint32_t daqGetNDecoderErrors()
         bool daqStop() except +
 
