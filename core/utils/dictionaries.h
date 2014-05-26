@@ -148,6 +148,7 @@ namespace pxar {
       _registers["vibias_bus"] = dacConfig(ROC_DAC_VIBias_Bus,255,ROC_REG);
 
       _registers["voffsetro"]  = dacConfig(ROC_DAC_VoffsetRO,255,ROC_REG,false);
+      _registers["voffsetr0"]  = dacConfig(ROC_DAC_VoffsetRO,255,ROC_REG,false);
       _registers["phoffset"]   = dacConfig(ROC_DAC_VoffsetRO,255,ROC_REG);
 
       _registers["vcomp_adc"]  = dacConfig(ROC_DAC_VIbias_PH,255,ROC_REG);
