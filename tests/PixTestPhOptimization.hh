@@ -13,6 +13,7 @@ public:
   void init(); 
   void bookHist(std::string); 
   void BlacklistPixels(std::vector<std::pair<int, int> > &badPixels, int aliveTrig);  
+  pxar::pixel* RandomPixel(std::vector<std::pair<int, int> > &badPixels);
   void doTest(); 
 
 private:

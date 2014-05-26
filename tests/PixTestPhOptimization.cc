@@ -135,28 +135,17 @@ void PixTestPhOptimization::doTest() {
 
   if(fFlagSinglePix){
     LOG(logDEBUG)<<"**********Ph range will be optimised on a single random pixel***********";
-    srand(time(NULL));
-    int random_col=-1, random_row=-1;
-    do{
-      random_col = rand() % 52;
-      random_row = rand() % 80;
-      LOG(logDEBUG)<<"random pixel: ["<<random_col<<", "<<random_row<<"]";
-      isPixGood=true;
-      for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	if(bad_it->first == random_col && bad_it->second == random_row){
-	  isPixGood=false;
-	}
-      }
-      LOG(logDEBUG)<<"is the random pixel good? "<<isPixGood;
-    }while(isPixGood);
-    maxpixel.column = random_col;
-    maxpixel.row    = random_row;
-    minpixel.column = random_col;
-    minpixel.row    = random_row;
+    pxar::pixel randomPix;
+    randomPix= *(RandomPixel(badPixels));
+    LOG(logDEBUG)<<"In doTest(), randomCol "<<randomPix.column<<", randomRow "<<randomPix.row<<", pixel "<<randomPix;
+    maxpixel.column = randomPix.column;
+    maxpixel.row    = randomPix.row;
+    minpixel.column = randomPix.column;
+    minpixel.row    = randomPix.row;
     LOG(logDEBUG)<<"random pixel: "<<maxpixel<<", "<<minpixel<<"is not on the blacklist";
 
     for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
-      if(thrit->column == random_col && thrit->row == random_row){
+      if(thrit->column == randomPix.column && thrit->row == randomPix.row){
 	minthr=thrit->value;
       }
     }
@@ -427,5 +416,34 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
     }
 
   }
+
+}
+
+
+pxar::pixel* PixTestPhOptimization::RandomPixel(std::vector<std::pair<int, int> > &badPixels){
+  //Returns a random pixel, taking care it is not on the blacklist
+
+  bool isPixGood=true;
+  pxar::pixel randPixel;
+  srand(time(NULL));
+  int random_col=-1, random_row=-1;
+  do{
+    random_col = rand() % 52;
+    random_row = rand() % 80;
+    LOG(logDEBUG)<<"random pixel: ["<<random_col<<", "<<random_row<<"]";
+    isPixGood=true;
+    for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+      if(bad_it->first == random_col && bad_it->second == random_row){
+	isPixGood=false;
+      }
+    }
+    LOG(logDEBUG)<<"is the random pixel good? "<<isPixGood;
+  }while(!isPixGood);
+  
+  randPixel.column = random_col;
+  randPixel.row    = random_row;
+  LOG(logDEBUG)<<"In RandomPixel(), randomCol "<<randPixel.column<<", randomRow "<<randPixel.row<<", pixel "<<randPixel;
+  return &randPixel;
+  
 
 }
