@@ -830,7 +830,6 @@ void PixTestPretest::setPhRange() {
     safety_margin=50;
     for (is=0; is<52; is++){
       h = (TH1D*)fDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io+is));
-      cout<<h->GetTitle()<<endl;
       h->Draw();
       //erasing first garbage bin
       h->SetBinContent(1,0.);
@@ -844,19 +843,17 @@ void PixTestPretest::setPhRange() {
       }
     }
     
-    if(is_opt==999){
-      cout<<"PH optimization failed"<<endl;
+    if (is_opt==999){
+      LOG(logDEBUG) << "PH optimization failed";
       return;
     }
     
-    cout<<"PH Scale value chosen: " << is_opt << "with distance " << bestDist << endl;
     
     //centring PH curve adjusting ph offset
     bestDist=255;
     io_opt=999;
     for(io=0; io<26; io++){
       h = (TH1D*)gDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io+is_opt));
-      cout<<h->GetTitle()<<endl;
       //erasing first garbage bin
       h->SetBinContent(1,0.);
       double plateau = h->GetMaximum();
@@ -864,8 +861,6 @@ void PixTestPretest::setPhRange() {
       double minPH = h->GetBinContent(bin_min);
       
       dist = TMath::Abs(minPH - (255 - plateau));
-      
-      cout<<"offset = " << io << ", plateau = " << plateau << ", minPH = " << minPH << ", distance = " << dist << endl;
       
       if (dist < bestDist){
 	io_opt = io;
@@ -882,7 +877,6 @@ void PixTestPretest::setPhRange() {
     lowEd_dist=255;
     for(is=0; is<52; is++){
       h = (TH1D*)gDirectory->Get(Form("ph_Vcal_c%d_r%d_C%d_V%d", fPIX[0].first, fPIX[0].second, rocIds[iroc], 52*io_opt+is));
-      cout<<h->GetTitle()<<endl;
       h->Draw();
       //erasing first garbage bin
       h->SetBinContent(1,0.);
@@ -898,7 +892,7 @@ void PixTestPretest::setPhRange() {
     }
     
     if(is_opt==999){
-      cout<<"PH optimization failed (stretching)"<<endl;
+      LOG(logDEBUG) <<"PH optimization failed (stretching)";
       return;
     }
     
@@ -918,16 +912,24 @@ void PixTestPretest::setPhRange() {
 
   restoreDacs();
 
+  string phscaleString, phoffsetString; 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     fApi->setDAC("phscale", phscale[iroc], rocIds[iroc]); 
+    phscaleString += Form("%3d ", phscale[iroc]); 
     fApi->setDAC("phoffset", phoffset[iroc], rocIds[iroc]); 
+    phoffsetString += Form("%3d ", phoffset[iroc]); 
   }
 
-  fDisplayedHist = fHistList.begin();
-  for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-    (*il)->Draw((getHistOption(*il)).c_str()); 
-  }
+  TH2D *h = (TH2D*)(fHistList.back());
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
+
+  
+  // -- summary printout
+  LOG(logINFO) << "PixTestAlive::setPhRange() done";
+  LOG(logINFO) << "phscale:  " << phscaleString; 
+  LOG(logINFO) << "phoffset: " << phoffsetString; 
 
 }
 
