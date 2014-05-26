@@ -159,7 +159,7 @@ void PixTestAlive::aliveTest() {
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   
-  TH2D *h = (TH2D*)(*fHistList.begin());
+  TH2D *h = (TH2D*)(fHistList.back());
 
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
@@ -194,7 +194,7 @@ void PixTestAlive::maskTest() {
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   
-  TH2D *h = (TH2D*)(*fHistList.begin());
+  TH2D *h = (TH2D*)(fHistList.back());
 
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
@@ -254,7 +254,7 @@ void PixTestAlive::addressDecodingTest() {
 
   copy(maps.begin(), maps.end(), back_inserter(fHistList));
   
-  TH2D *h = (TH2D*)(*fHistList.begin());
+  TH2D *h = (TH2D*)(fHistList.back());
 
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
