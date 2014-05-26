@@ -474,6 +474,7 @@ bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
   LOG(logDEBUGHAL) << "ROC@I2C " << static_cast<size_t>(roci2c) 
 		   << ": Set DAC" << static_cast<int>(dacId) << " to " << static_cast<int>(dacValue);
   _testboard->roc_SetDAC(dacId,dacValue);
+  _testboard->Flush();
   return true;
 }
 
