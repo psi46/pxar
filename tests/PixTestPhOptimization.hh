@@ -14,6 +14,8 @@ public:
   void bookHist(std::string); 
   void BlacklistPixels(std::vector<std::pair<int, int> > &badPixels, int aliveTrig);  
   pxar::pixel* RandomPixel(std::vector<std::pair<int, int> > &badPixels);
+  void GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std::pair<int, int> > &badPixels);
+  void GetMinPixel(pxar::pixel &minpixel, std::vector<pxar::pixel> &thrmap, std::vector<std::pair<int, int> > &badPixels);
   void doTest(); 
 
 private:
