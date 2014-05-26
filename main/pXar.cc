@@ -153,7 +153,9 @@ int main(int argc, char *argv[]){
     return -1;
   }
 
-  PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" + configParameters->getTestParameterFileName()); 
+  PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" 
+						 + configParameters->getTestParameterFileName()
+						 ); 
   PixSetup a(api, ptp, configParameters);  
   a.setDummy(doDummyTest);
   a.setUseRootLogon(doUseRootLogon); 
@@ -170,15 +172,35 @@ int main(int argc, char *argv[]){
 
   if (doRunGui) {
     runGui(a, argc, argv); 
-  } 
-
-  if (doRunSingleTest) {
+  } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
     PixTest *t = factory->createTest(runtest, &a);
     t->doTest();
     delete t; 
     delete api; 
     return 0;
+  } else {
+    string input; 
+    bool stop(false);
+    PixTestFactory *factory = PixTestFactory::instance(); 
+    LOG(logINFO) << "enter restricted command line mode";
+    do {
+      LOG(logINFO) << "enter test to run";
+      cin >> input; 
+      LOG(logINFO) << "  running: " << input; 
+
+      if (!input.compare("exit")) stop = true; 
+      if (!input.compare("quit")) stop = true; 
+      if (!input.compare("q")) stop = true; 
+
+      PixTest *t = factory->createTest(input, &a);
+      if (t) {
+	t->doTest();
+	delete t;
+      }
+    } while (!stop);
+    
+
   }
 
   LOG(logINFO) << "closing down 1";
