@@ -239,8 +239,21 @@ cdef class PyPxarCore:
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
         return numpy.array(hits)
 
-#    def vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(self, string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags = 0, uint32_t nTriggers=16):
-#    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+    def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Min, uint8_t dac2Max, uint16_t flags = 0, uint32_t nTriggers=16):
+        cdef vector[pair[uint8_t, vector[pixel]]] r
+        #TODO understand why this returns empty data
+        r = self.thisptr.getThresholdVsDAC(dac1Name, dac1Min, dac1Max, dac2Name, dac2Min, dac2Max, flags, nTriggers)
+        hits = []
+        #TODO not hardcode col, row
+        #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
+        s = (52, 80, dac2Max-dac2Min+1)
+        for i in range(self.dut.n_rocs):
+            hits.append(numpy.zeros(s))
+        for d in xrange(r.size()):
+            for pix in range(r[d].second.size()):
+                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
+        return numpy.array(hits)
+
     def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
         r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers)
@@ -256,6 +269,7 @@ cdef class PyPxarCore:
                 print r[d].second.second[pix].value
                 hits[r[d].second.second[pix].roc_id][r[d].second.second[pix].column][r[d].second.second[pix].row][d][d] = r[d].second.second[pix].value
         return numpy.array(hits)
+#    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
 #    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getThresholdVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
