@@ -86,7 +86,8 @@ void PixTestAlive::init() {
 // ----------------------------------------------------------------------
 void PixTestAlive::setToolTips() {
   fTestTip    = string("send Ntrig \"calibrates\" and count how many hits were measured\n")
-    + string("the result is a hitmap, not an efficiency map")
+    + string("the result is a hitmap, not an efficiency map\n")
+    + string("NOTE: VCAL is given in high range!")
     ;
   fSummaryTip = string("all ROCs are displayed side-by-side. Note the orientation:\n")
     + string("the canvas bottom corresponds to the narrow module side with the cable")
@@ -152,9 +153,22 @@ void PixTestAlive::aliveTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig); 
+  vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig, FLAG_FORCE_MASKED); 
+  vector<int> deadPixel(test2.size(), 0); 
+  vector<int> probPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
+    // -- count dead pixels
+    for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
+	if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
+	  ++probPixel[i];
+	  if (test2[i]->GetBinContent(ix+1, iy+1) < 1) {
+	    ++deadPixel[i];
+	  }
+	}
+      }
+    }
   }
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
@@ -165,7 +179,17 @@ void PixTestAlive::aliveTest() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
   restoreDacs();
+
+  // -- summary printout
+  string deadPixelString, probPixelString; 
+  for (unsigned int i = 0; i < probPixel.size(); ++i) {
+    probPixelString += Form(" %4d", probPixel[i]); 
+    deadPixelString += Form(" %4d", deadPixel[i]); 
+  }
   LOG(logINFO) << "PixTestAlive::aliveTest() done";
+  LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
+  LOG(logINFO) << "number of red-efficiency pixels: " << probPixelString;
+  
 }
 
 
@@ -187,9 +211,23 @@ void PixTestAlive::maskTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(true);
 
-  vector<TH2D*> test2 = efficiencyMaps("MaskTest", fParNtrig); 
+  vector<TH2D*> test2 = efficiencyMaps("MaskTest", fParNtrig, FLAG_FORCE_MASKED); 
+  vector<int> maskPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
+    // -- go for binary displays
+    for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
+	if (test2[i]->GetBinContent(ix+1, iy+1) > 0) {
+	  ++maskPixel[i];
+	}
+	if (test2[i]->GetBinContent(ix+1, iy+1) == 0) {
+	  test2[i]->SetBinContent(ix+1, iy+1, 1);
+	} else {
+	  test2[i]->SetBinContent(ix+1, iy+1, 0);
+	}	  
+      }
+    }
   }
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
@@ -200,7 +238,14 @@ void PixTestAlive::maskTest() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   restoreDacs();
   PixTest::update(); 
+
+  // -- summary printout
+  string maskPixelString; 
+  for (unsigned int i = 0; i < maskPixel.size(); ++i) {
+    maskPixelString += Form(" %4d", maskPixel[i]); 
+  }
   LOG(logINFO) << "PixTestAlive::maskTest() done";
+  LOG(logINFO) << "number of mask-defect pixels (per ROC): " << maskPixelString;
 }
 
 
@@ -238,29 +283,43 @@ void PixTestAlive::addressDecodingTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int idx(-1);
-  std::vector<pxar::pixel> test = fApi->getEfficiencyMap(FLAG_CHECK_ORDER | FLAG_FORCE_MASKED,1);
-  for(std::vector<pxar::pixel>::iterator pix = test.begin(); pix != test.end(); ++pix) {
-    idx = getIdxFromId(pix->roc_id);
-    h2 = maps[idx];
-    if(pix->value < 0) {
-      h2->SetBinContent(pix->column+1, pix->row+1, -1);
-      LOG(logDEBUG) << " read col/row = " << pix->column << "/" << pix->row 
-		    << " address decoding error";
-
+  vector<TH2D*> test2 = efficiencyMaps("AddressDecodingTest", fParNtrig, FLAG_CHECK_ORDER|FLAG_FORCE_MASKED); 
+  vector<int> addrPixel(test2.size(), 0); 
+  for (unsigned int i = 0; i < test2.size(); ++i) {
+    fHistOptions.insert(make_pair(test2[i], "colz"));
+    // -- go for binary displays
+    for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
+	if (test2[i]->GetBinContent(ix+1, iy+1) < 0) {
+	  LOG(logDEBUG) << " read col/row = " << ix+1 << "/" << iy+1
+			<< " address decoding error";
+	  ++addrPixel[i];
+	}
+	if (test2[i]->GetBinContent(ix+1, iy+1) < 0) {
+	  test2[i]->SetBinContent(ix+1, iy+1, 0);
+	} else {
+	  test2[i]->SetBinContent(ix+1, iy+1, 1);
+	}	  
+      }
     }
-    else { h2->SetBinContent(pix->column+1, pix->row+1, 1.); }
   }
 
-  copy(maps.begin(), maps.end(), back_inserter(fHistList));
-  
+  copy(test2.begin(), test2.end(), back_inserter(fHistList));
+
   TH2D *h = (TH2D*)(fHistList.back());
 
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
   restoreDacs();
+
+  // -- summary printout
+  string addrPixelString; 
+  for (unsigned int i = 0; i < addrPixel.size(); ++i) {
+    addrPixelString += Form(" %4d", addrPixel[i]); 
+  }
   LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
+  LOG(logINFO) << "number of address-decoding pixels (per ROC): " << addrPixelString;
 }
 
 
