@@ -141,8 +141,12 @@ void PixTestDacScanPix::doTest()
 
   fApi->_dut->testAllPixels(false);
 
-  if( fPIX[0].first > -1)
-    fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true ); // all ROCs
+  //coordinates of the last pair = presetly set pixel
+  int32_t col = fPIX[fPIX.size()-1].first;		
+  int32_t row = fPIX[fPIX.size()-1].second;
+
+  if( col > -1)
+    fApi->_dut->testPixel( col, row, true ); // all ROCs
 
   // measure:
 
@@ -156,8 +160,6 @@ void PixTestDacScanPix::doTest()
   TH1D *h1(0);
 
   uint32_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
-  uint32_t col = fPIX[0].first;
-  uint32_t row = fPIX[0].second;
 
   for( uint32_t roc = 0; roc < nRocs; ++roc ) {
 
@@ -187,8 +189,8 @@ void PixTestDacScanPix::doTest()
       uint8_t roc = vpix[ipx].roc_id;
 
       if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+	  vpix[ipx].column == col &&
+	  vpix[ipx].row == row ) {
 	h1 = hsts.at(roc);
 	h1->Fill( idac, vpix[ipx].value ); // already averaged
       } // valid
