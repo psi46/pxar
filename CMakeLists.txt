@@ -203,6 +203,9 @@ IF(BUILD_pxarui)
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
 
+  # Build the usertests library
+  ADD_SUBDIRECTORY(usertests)
+
   # Build the pXar executable
   ADD_SUBDIRECTORY(main)
 
