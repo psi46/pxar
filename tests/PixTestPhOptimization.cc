@@ -226,28 +226,7 @@ void PixTestPhOptimization::doTest() {
   
 
   //centring PH curve adjusting ph offset                                                                                                                                                                          
-  bestDist=255;
-  po_opt=999;
-  dacit_max = dacdac_max.begin();
-  dacit_min = dacdac_min.begin();
-  dist=255;
-  bestDist=255;
-  //or two for cycles??
-  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    if(dacit_max->second.first == ps_opt && dacit_min->second.first == ps_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
-      maxPh=dacit_max->second.second.at(0).value;
-      minPh=dacit_min->second.second.at(0).value;
-      dist = abs(minPh - (255 - maxPh));
-      //cout<<"offset = " << io << ", plateau = " << maxPh << ", minPh = " << minPh << ", distance = " << dist << endl;
-      if (dist < bestDist){
-	po_opt = dacit_max->first;
-	bestDist = dist;
-      } 
-    }
-    dacit_max++;
-    dacit_min++;
-  }
-
+  po_opt = CentrePhRange(po_opt, ps_opt, dacdac_max, dacdac_min);
   LOG(logDEBUG)<<"opt centring step: po "<<po_opt<<" and scale "<<ps_opt<<", with distance "<<bestDist;
  
   io_opt=999;
@@ -480,4 +459,40 @@ int PixTestPhOptimization::InsideRangePH(int po_opt,  std::vector< std::pair<uin
 
   LOG(logDEBUG)<<"opt step 1: po fixed to"<<po_opt<<" and scale adjusted to "<<ps_opt<<", with distance "<<bestDist;
   return ps_opt;
+}
+
+
+
+int PixTestPhOptimization::CentrePhRange(int po_opt_in, int ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
+  //centring PH curve adjusting ph offset             
+  int po_opt_out = po_opt_in;
+  int maxPh(0.);
+  int minPh(0.);
+  bool lowEd=false, upEd=false;
+  double upEd_dist=255, lowEd_dist=255;
+  unsigned int io_opt=999;
+  int safetyMargin = 50;
+  int dist = 255;
+  int bestDist = 255;
+  // Do some magic here...
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
+  //or two for cycles??
+  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
+    if(dacit_max->second.first == ps_opt && dacit_min->second.first == ps_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
+      maxPh=dacit_max->second.second.at(0).value;
+      minPh=dacit_min->second.second.at(0).value;
+      dist = abs(minPh - (255 - maxPh));
+      //cout<<"offset = " << io << ", plateau = " << maxPh << ", minPh = " << minPh << ", distance = " << dist << endl;
+      if (dist < bestDist){
+	po_opt_out = dacit_max->first;
+	bestDist = dist;
+      } 
+    }
+    dacit_max++;
+    dacit_min++;
+  }
+
+  LOG(logDEBUG)<<"opt centring step: po "<<po_opt_out<<" and scale "<<ps_opt<<", with distance "<<bestDist;
+  return po_opt_out;
 }
