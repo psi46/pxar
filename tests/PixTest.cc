@@ -178,11 +178,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 }
 
 // ----------------------------------------------------------------------
-vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
-
-  //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
-  cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
+vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
 
   vector<pixel> results;
 
