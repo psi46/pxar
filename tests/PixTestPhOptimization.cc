@@ -174,6 +174,7 @@ void PixTestPhOptimization::doTest() {
   fApi->setDAC("vcal",255);
   fApi->setDAC("ctrlreg",4);
 
+  //scanning through offset and scale for max pixel (or randpixel)
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_max = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
 
 
@@ -192,11 +193,11 @@ void PixTestPhOptimization::doTest() {
   fApi->setDAC("ctrlreg",4);
   fApi->setDAC("vcal",minthr);
 
+  //scanning through offset and scale for min pixel (or same randpixel)
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
 
-
-
-  int po=200;
+  //search for optimal dac values in 3 steps
+  //1. shrinking the PH to be completely inside the ADC range
   int ps_opt = 999, po_opt = 999;
   int maxPh(0.);
   int minPh(0.);
@@ -209,33 +210,8 @@ void PixTestPhOptimization::doTest() {
   // Do some magic here...
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
-  //or two for cycles??
-  LOG(logDEBUG) << "dacdac at max vcal has size "<<dacdac_max.size()<<endl;
-  LOG(logDEBUG) << "dacdac at min vcal has size "<<dacdac_min.size()<<endl;
-  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    //LOG(logDEBUG) << "max Ph for scale "<<(int)dacit_max->second.first<<" and offset "<<(int)dacit_max->first<<" is "<<dacit_max->second.second[0].value<<", size "<<dacit_max->second.second.size();
-    //LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first<<", size "<<dacit_min->second.second.size();
-    //    LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first˚<<" is "<<dacit_min->second.second[0].value;
-    if(dacit_max->first == po && dacit_min->first == po && dacit_min->second.second.size() && dacit_max->second.second.size()) {
-      //      LOG(logDEBUG)<<"entered the IF condition";
-      maxPh=dacit_max->second.second[0].value;
-      minPh=dacit_min->second.second[0].value;
-      lowEd = (minPh > safetyMargin);
-      upEd = (maxPh < 255 - safetyMargin);
-      upEd_dist = abs(maxPh - (255 - safetyMargin));
-      lowEd_dist = abs(minPh - safetyMargin);
-      dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
-      if(dist < bestDist && upEd && lowEd){
-	ps_opt = dacit_max->second.first;
-	bestDist=dist;
-      }
-    }
-    dacit_max++;
-    dacit_min++;
-  }
-
-  LOG(logDEBUG)<<"opt step 1: po fixed to"<<po<<" and scale adjusted to "<<ps_opt<<", with distance "<<bestDist;
-
+  po_opt=200;
+  ps_opt = InsideRangePH(po_opt, dacdac_max, dacdac_min);
 //  for(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit = dacdac_max.begin(); dacit != dacdac_max.end();dacit++ ){
 //    if(dacit->first == po) {
 //      dacit->second.first ;
@@ -462,3 +438,46 @@ void PixTestPhOptimization::GetMinPixel(pxar::pixel &minpixel, std::vector<pxar:
   LOG(logDEBUG) << "min vcal thr " << minthr << "found for pixel "<<minpixel<<endl ;
 }
 
+
+int PixTestPhOptimization::InsideRangePH(int po_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
+ 
+  int ps_opt = 999;
+  int maxPh(0.);
+  int minPh(0.);
+  bool lowEd=false, upEd=false;
+  double upEd_dist=255, lowEd_dist=255;
+  unsigned int io_opt=999;
+  int safetyMargin = 50;
+  int dist = 255;
+  int bestDist = 255;
+  // Do some magic here...
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
+  //or two for cycles??
+  LOG(logDEBUG) << "dacdac at max vcal has size "<<dacdac_max.size()<<endl;
+  LOG(logDEBUG) << "dacdac at min vcal has size "<<dacdac_min.size()<<endl;
+  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
+    //LOG(logDEBUG) << "max Ph for scale "<<(int)dacit_max->second.first<<" and offset "<<(int)dacit_max->first<<" is "<<dacit_max->second.second[0].value<<", size "<<dacit_max->second.second.size();
+    //LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first<<", size "<<dacit_min->second.second.size();
+    //    LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first˚<<" is "<<dacit_min->second.second[0].value;
+    if(dacit_max->first == po_opt && dacit_min->first == po_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
+      //      LOG(logDEBUG)<<"entered the IF condition";
+      maxPh=dacit_max->second.second[0].value;
+      minPh=dacit_min->second.second[0].value;
+      lowEd = (minPh > safetyMargin);
+      upEd = (maxPh < 255 - safetyMargin);
+      upEd_dist = abs(maxPh - (255 - safetyMargin));
+      lowEd_dist = abs(minPh - safetyMargin);
+      dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+      if(dist < bestDist && upEd && lowEd){
+	ps_opt = dacit_max->second.first;
+	bestDist=dist;
+      }
+    }
+    dacit_max++;
+    dacit_min++;
+  }
+
+  LOG(logDEBUG)<<"opt step 1: po fixed to"<<po_opt<<" and scale adjusted to "<<ps_opt<<", with distance "<<bestDist;
+  return ps_opt;
+}

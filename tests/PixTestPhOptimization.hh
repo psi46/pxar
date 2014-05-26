@@ -16,6 +16,7 @@ public:
   pxar::pixel* RandomPixel(std::vector<std::pair<int, int> > &badPixels);
   void GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std::pair<int, int> > &badPixels);
   void GetMinPixel(pxar::pixel &minpixel, std::vector<pxar::pixel> &thrmap, std::vector<std::pair<int, int> > &badPixels);
+  int InsideRangePH(int po_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
   void doTest(); 
 
 private:
