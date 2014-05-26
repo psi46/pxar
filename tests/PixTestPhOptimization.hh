@@ -12,7 +12,7 @@ public:
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void bookHist(std::string); 
-  
+  void BlacklistPixels(std::vector<std::pair<int, int> > &badPixels, int aliveTrig);  
   void doTest(); 
 
 private:
@@ -20,6 +20,7 @@ private:
   int     fParNtrig; 
   std::string fParDAC; 
   int     fParDacVal;
+  bool fFlagSinglePix;
 
   ClassDef(PixTestPhOptimization, 1)
 

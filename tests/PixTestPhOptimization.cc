@@ -35,6 +35,12 @@ bool PixTestPhOptimization::setParameter(string parName, string sval) {
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
+      if (!parName.compare("singlePix")) {
+	setTestParameter("singlePix", sval); 
+	fFlagSinglePix = atoi( sval.c_str() );
+	LOG(logDEBUG) << "  setting fFlagSinglePix  ->" << fFlagSinglePix
+		      << "<- from sval = " << sval;
+      }
       if (!parName.compare("dac")) {
 	setTestParameter("dac", sval); 
 	fParDAC = sval;
@@ -110,123 +116,146 @@ void PixTestPhOptimization::doTest() {
 
 
   //pixelalive test to discard not fully efficient pixels
-  int aliveTrig=10;
-  vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig);
-  LOG(logDEBUG)<<"size of testEff vector "<<testEff.size();
-  LOG(logDEBUG)<<"size of pixelalive map "<<testEff[0]->GetNbinsX()<<" X "<<testEff[0]->GetNbinsY();
   std::vector<std::pair<int, int> > badPixels;
-  std::pair<int, int> badPix;
-  int eff=0;
-  for (unsigned int i = 0; i < testEff.size(); ++i) {
-    for(int r=0; r<80; r++){
-      for(int c=0; c<52; c++){
-	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
-	LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<aliveTrig;
-	if(eff<aliveTrig){
-	  badPix.first = c;
-	  badPix.second = r;
-	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
-	  badPixels.push_back(badPix);
-	}
-      }
-    }
-
-  }
-
+  BlacklistPixels(badPixels, 10);
 
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  int ntriggers = 10;
-  bool isPixGood=true;
-  fApi->setDAC("vcal",255);
-  fApi->setDAC("ctrlreg",4);
-  fApi->setDAC("phoffset",200);  
-  int maxph = 255;
-  int init_phScale =30;
-  pxar::pixel maxpixel;
-  maxpixel.value = 0;
-  while(maxph>254){
-    fApi->setDAC("phscale", init_phScale);
-    
-    std::vector<pxar::pixel> result = fApi->getPulseheightMap(0, 10);
-    
-   
-    // Look for pixel with max. pulse height:
-    
-    LOG(logDEBUG) << "result size "<<result.size()<<endl;
+  std::vector<pxar::pixel> thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
+  int minthr=0;
+  LOG(logDEBUG) << "thr map size "<<thrmap.size()<<endl;
 
-    for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+  fFlagSinglePix=true;
+
+
+  bool isPixGood=true;
+  pxar::pixel maxpixel;
+  pxar::pixel minpixel;
+
+  if(fFlagSinglePix){
+    LOG(logDEBUG)<<"**********Ph range will be optimised on a single random pixel***********";
+    srand(time(NULL));
+    int random_col=-1, random_row=-1;
+    do{
+      random_col = rand() % 52;
+      random_row = rand() % 80;
+      LOG(logDEBUG)<<"random pixel: ["<<random_col<<", "<<random_row<<"]";
       isPixGood=true;
-      LOG(logDEBUG) << " pixel col "<<(int)px->column <<", row "<<(int)px->row<<", PH "<<px->value<<endl;
-      if(px->value > maxpixel.value){
+      for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	if(bad_it->first == random_col && bad_it->second == random_row){
+	  isPixGood=false;
+	}
+      }
+      LOG(logDEBUG)<<"is the random pixel good? "<<isPixGood;
+    }while(isPixGood);
+    maxpixel.column = random_col;
+    maxpixel.row    = random_row;
+    minpixel.column = random_col;
+    minpixel.row    = random_row;
+    LOG(logDEBUG)<<"random pixel: "<<maxpixel<<", "<<minpixel<<"is not on the blacklist";
+
+    for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
+      if(thrit->column == random_col && thrit->row == random_row){
+	minthr=thrit->value;
+      }
+    }
+  }
+  
+
+  //phopt performed on all pixels simultaneously (looking for extreme cases)
+  else{
+    LOG(logDEBUG)<<"**********Ph range will be optimised on the whole ROC***********";
+    fApi->_dut->testAllPixels(true);
+    fApi->_dut->maskAllPixels(false);
+    int ntriggers = 10;
+    isPixGood=true;
+    int maxph = 255;
+    int init_phScale =255;
+    int flag_maxPh=0;
+    maxpixel.value = 0;
+    while(maxph>254 && flag_maxPh<52){
+      fApi->setDAC("phscale", init_phScale);
+      fApi->setDAC("vcal",255);
+      fApi->setDAC("ctrlreg",4);
+      fApi->setDAC("phoffset",200);  
+      std::vector<pxar::pixel> result = fApi->getPulseheightMap(0, 10);
+      // Look for pixel with max. pulse height:
+      LOG(logDEBUG) << "result size "<<result.size()<<endl;
+      for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+	isPixGood=true;
+	//      LOG(logDEBUG) << " pixel col "<<(int)px->column <<", row "<<(int)px->row<<", PH "<<px->value<<endl;
+	if(px->value > maxpixel.value){
+	  for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	    if(bad_it->first == px->column && bad_it->second == px->row){
+	      isPixGood=false;
+	    }
+	  }
+	  if(isPixGood){
+	    maxpixel = *px;
+	    maxph = px->value;
+	  }
+	}
+      }
+      LOG(logDEBUG) << "maxPh " << maxph <<" "<<maxpixel << endl ;      
+      //should have flag for v2 or v2.1
+      init_phScale-=5;
+      flag_maxPh++;
+    }
+
+    // Find min. pixel:
+    isPixGood=true;
+    fApi->_dut->testAllPixels(true);
+    fApi->_dut->maskAllPixels(false);
+    fApi->setDAC("ctrlreg",4);
+  
+
+    for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
+      isPixGood=true;
+      // LOG(logDEBUG)<<"threshold map "<<*thrit<<endl;
+      if(thrit->value > minthr) {
 	for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	  if(bad_it->first == px->column && bad_it->second == px->row){
+	  if(bad_it->first == thrit->column && bad_it->second == thrit->row){
 	    isPixGood=false;
 	  }
 	}
 	if(isPixGood){
-	  maxpixel = *px;
-	  maxph = px->value;
+	  minpixel = *thrit;
+	  minthr = minpixel.value;
 	}
       }
     }
-    
-    LOG(logDEBUG) << "maxPh " << maxph <<" "<<maxpixel << endl ;
-
-    //should have flag for v2 or v2.1
-    //should check we don't get stuck in this while (some flag < 52)
-    init_phScale-=5;
+    LOG(logDEBUG) << "min vcal thr " << minthr << "found for pixel "<<minpixel<<endl ;
   }
 
+
+  //  maxpixel.column = 11;
+  // maxpixel.row = 20;
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
 
   fApi->_dut->testPixel(maxpixel.column,maxpixel.row,true);
   fApi->_dut->maskPixel(maxpixel.column,maxpixel.row,false);
 
+  fApi->setDAC("vcal",255);
+  fApi->setDAC("ctrlreg",4);
+
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_max = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
 
 
 
- // Find min. pixel:
-  isPixGood=true;
-  pxar::pixel minpixel;
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
-  fApi->setDAC("ctrlreg",4);
-
-  std::vector<pxar::pixel> thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
-  int minthr=0;
-  LOG(logDEBUG) << "thr map size "<<thrmap.size()<<endl;
-
-
-
-  for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
-      isPixGood=true;
-    LOG(logDEBUG)<<"threshold map "<<*thrit<<endl;
-    if(thrit->value > minthr) {
-      for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	if(bad_it->first == thrit->column && bad_it->second == thrit->row){
-	  isPixGood=false;
-	}
-      }
-      if(isPixGood){
-	minpixel = *thrit;
-	minthr = minpixel.value;
-      }
-    }
-  }
-
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
 
-  LOG(logDEBUG) << "min vcal thr " << minthr << "found for pixel "<<minpixel<<endl ;
 
+  //minpixel.column = 11;
+  //minpixel.row = 20;
   fApi->_dut->testPixel(minpixel.column,minpixel.row,true);
   fApi->_dut->maskPixel(minpixel.column,minpixel.row,false);
   //  fApi->setDAC("vcal",40);
   minthr = (minthr==255) ? (minthr) : (minthr + 10); 
+  //minthr = 50;
+  fApi->setDAC("ctrlreg",4);
   fApi->setDAC("vcal",minthr);
 
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
@@ -240,7 +269,7 @@ void PixTestPhOptimization::doTest() {
   bool lowEd=false, upEd=false;
   double upEd_dist=255, lowEd_dist=255;
   unsigned int io_opt=999;
-  int safetyMargin = 40;
+  int safetyMargin = 50;
   int dist = 255;
   int bestDist = 255;
   // Do some magic here...
@@ -250,8 +279,8 @@ void PixTestPhOptimization::doTest() {
   LOG(logDEBUG) << "dacdac at max vcal has size "<<dacdac_max.size()<<endl;
   LOG(logDEBUG) << "dacdac at min vcal has size "<<dacdac_min.size()<<endl;
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
-    LOG(logDEBUG) << "max Ph for scale "<<(int)dacit_max->second.first<<" and offset "<<(int)dacit_max->first<<" is "<<dacit_max->second.second[0].value<<", size "<<dacit_max->second.second.size();
-    LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first<<", size "<<dacit_min->second.second.size();
+    //LOG(logDEBUG) << "max Ph for scale "<<(int)dacit_max->second.first<<" and offset "<<(int)dacit_max->first<<" is "<<dacit_max->second.second[0].value<<", size "<<dacit_max->second.second.size();
+    //LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first<<", size "<<dacit_min->second.second.size();
     //    LOG(logDEBUG) << "min Ph for scale "<<(int)dacit_min->second.first<<" and offset "<<(int)dacit_min->first˚<<" is "<<dacit_min->second.second[0].value;
     if(dacit_max->first == po && dacit_min->first == po && dacit_min->second.second.size() && dacit_max->second.second.size()) {
       //      LOG(logDEBUG)<<"entered the IF condition";
@@ -330,7 +359,7 @@ void PixTestPhOptimization::doTest() {
       upEd = (maxPh < 255 - safetyMargin);
       upEd_dist = abs(maxPh - (255 - safetyMargin));
       lowEd_dist = abs(minPh - safetyMargin);
-      dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+      dist = (upEd_dist < lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
       //      cout<<"scale = " << is <<", maxPh "<<maxPh<<", minPh"<<minPh<< ", distance = " << dist << endl;
       if(dist<bestDist && lowEd && upEd){
 	ps_opt = dacit_max->second.first;
@@ -370,4 +399,33 @@ void PixTestPhOptimization::doTest() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
 
   restoreDacs(); 
+}
+
+void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &badPixels, int aliveTrig){
+
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig);
+  LOG(logDEBUG)<<"size of testEff vector "<<testEff.size();
+  LOG(logDEBUG)<<"size of pixelalive map "<<testEff[0]->GetNbinsX()<<" X "<<testEff[0]->GetNbinsY();
+  //  std::vector<std::pair<int, int> > badPixels;
+  std::pair<int, int> badPix;
+  int eff=0;
+  for (unsigned int i = 0; i < testEff.size(); ++i) {
+    for(int r=0; r<80; r++){
+      for(int c=0; c<52; c++){
+	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
+	if(eff<aliveTrig){
+	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<aliveTrig;
+	  badPix.first = c;
+	  badPix.second = r;
+	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
+	  (badPixels).push_back(badPix);
+	}
+      }
+    }
+
+  }
+
 }
