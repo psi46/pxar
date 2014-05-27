@@ -185,8 +185,15 @@ INCLUDE_DIRECTORIES(core/api core/utils)
 # Always build main pxar API library;
 ADD_SUBDIRECTORY(core)
 
+# init the variable that will later hold the devices library name we might link against
+SET(DEVICES_LINK_LIBRARY "")
 # Add external devices directory (HV Power supplies)
 ADD_SUBDIRECTORY(devices)
+IF(DEVICES)
+  ADD_DEFINITIONS(-DBUILD_HV)
+  SET(DEVICES_LINK_LIBRARY devices)
+  INCLUDE_DIRECTORIES(devices)
+ENDIF(DEVICES)
 
 # full UI and test suite (requires ROOT)
 IF(BUILD_pxarui)
