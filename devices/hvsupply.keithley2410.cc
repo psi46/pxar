@@ -23,12 +23,17 @@ bool hvsupply::hvOff() {
 }
     
 // Sets the desired voltage
-bool hvsupply::setVoltage(uint32_t /*volts*/) {
+bool hvsupply::setVoltage(double /*volts*/) {
   return false;
 }
     
 // Reads back the configured voltage
-uint32_t hvsupply::getVoltage() {
+double hvsupply::getVoltage() {
+  return 0;
+}
+
+// Reads back the current drawn
+double hvsupply::getCurrent() {
   return 0;
 }
 
@@ -38,6 +43,6 @@ bool hvsupply::setCurrentLimit(uint32_t /*microampere*/) {
 }
 
 // Reads back the set current limit in compliance mode. Value is given in uA (micro Ampere)
-uint32_t hvsupply::getCurrentLimit() {
+double hvsupply::getCurrentLimit() {
   return 0;
 }

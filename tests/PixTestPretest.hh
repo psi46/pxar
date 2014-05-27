@@ -16,11 +16,11 @@ public:
 
   void doTest();
   void setVana();
+  void programROC();
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
   void setPhRange();
-  void saveDacs();
 
 private:
 
@@ -29,6 +29,7 @@ private:
   int     fNoiseMargin;
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
+  bool    fProblem; 
 
   ClassDef(PixTestPretest, 1)
 
