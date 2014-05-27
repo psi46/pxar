@@ -135,6 +135,7 @@ int main(int argc, char *argv[]){
     rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
     lfile = fopen(logfile.c_str(), "a");
     SetLogOutput::Stream() = lfile;
+    SetLogOutput::Duplicate() = true;
   }
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
@@ -198,8 +199,10 @@ int main(int argc, char *argv[]){
       LOG(logINFO) << "enter test to run";
       cout << "pxar> "; 
       cin >> input; 
+      std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       LOG(logINFO) << "  running: " << input; 
-
+      
+      if (!input.compare("gui"))  runGui(a, argc, argv); 
       if (!input.compare("exit")) stop = true; 
       if (!input.compare("quit")) stop = true; 
       if (!input.compare("q")) stop = true; 
