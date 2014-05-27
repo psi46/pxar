@@ -1469,3 +1469,14 @@ void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int
   copy(maps.begin(), maps.end(), back_inserter(fHistList));
 
 }
+
+// ----------------------------------------------------------------------
+void PixTest::saveDacs() {
+  LOG(logINFO) << "Write DAC parameters to file";
+
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
+  }
+
+}

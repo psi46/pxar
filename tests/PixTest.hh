@@ -80,6 +80,8 @@ public:
   virtual void runCommand(std::string command); 
   /// create output suitable for moreweb
   virtual void output4moreweb();
+  /// save DACs to file
+  void saveDacs(); 
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
