@@ -221,14 +221,9 @@ void PixTestPretest::setVana() {
     i016 = fApi->getTBia()*1E3;
   } while (sw.RealTime() < 0.1);
 
-  LOG(logINFO) << "delay " << sw.RealTime() << " s"
-	       << ", Stopwatch counter " << sw.Counter();
-
   // subtract one ROC to get the offset from the other Rocs (on average):
   double i015 = (nRocs-1) * i016 / nRocs; // = 0 for single chip tests
-
-  LOG(logINFO) << "offset current from other " << nRocs-1 << " ROCs is "
-	       << i015 << " mA";
+  LOG(logDEBUG) << "offset current from other " << nRocs-1 << " ROCs is " << i015 << " mA";
 
   // tune per ROC:
 
@@ -251,13 +246,10 @@ void PixTestPretest::setVana() {
       ia = fApi->getTBia()*1E3; // [mA]
     } while (sw.RealTime() < 0.1);
 
-    LOG(logINFO) << "delay " << sw.RealTime() << " s"
-		 << ", Stopwatch counter " << sw.Counter();
-
     double diff = fTargetIa + extra - (ia - i015);
 
     int iter = 0;
-    LOG(logINFO) << "ROC " << roc << " iter " << iter
+    LOG(logDEBUG) << "ROC " << roc << " iter " << iter
 		 << " Vana " << vana
 		 << " Ia " << ia-i015 << " mA";
 
@@ -289,7 +281,7 @@ void PixTestPretest::setVana() {
 
       diff = fTargetIa + extra - (ia - i015);
 
-      LOG(logINFO) << "ROC " << setw(2) << roc
+      LOG(logDEBUG) << "ROC " << setw(2) << roc
 		   << " iter " << setw(2) << iter
 		   << " Vana " << setw(3) << vana
 		   << " Ia " << ia-i015 << " mA";
@@ -320,7 +312,7 @@ void PixTestPretest::setVana() {
   for (int roc = 0; roc < nRocs; ++roc) {
     // -- reset all ROCs to optimum or cached value
     fApi->setDAC( "vana", vanaStart[roc], roc );
-    LOG(logINFO) << "ROC " << setw(2) << roc << " Vana " << setw(3) << int(vanaStart[roc]);
+    LOG(logDEBUG) << "ROC " << setw(2) << roc << " Vana " << setw(3) << int(vanaStart[roc]);
     // -- histogramming only for those ROCs that were selected
     if (!selectedRoc(roc)) continue;
     hsum->Fill(roc, vanaStart[roc] );
@@ -340,7 +332,6 @@ void PixTestPretest::setVana() {
   hsum->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
   PixTest::update();
-
 
   LOG(logINFO) << "PixTestPretest::setVana() done, Module Ia " << ia16 << " mA = " << ia16/nRocs << " mA/ROC";
 
@@ -481,12 +472,18 @@ void PixTestPretest::setVthrCompCalDel() {
   PixTest::update(); 
 
   restoreDacs();
+  string caldelString(""), vthrcompString(""); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     fApi->setDAC("CalDel", calDel[iroc], rocIds[iroc]);
+    caldelString += Form(" %4d", calDel[iroc]); 
     fApi->setDAC("VthrComp", vthrComp[iroc], rocIds[iroc]);
+    vthrcompString += Form(" %4d", vthrComp[iroc]); 
   }
 
+  // -- summary printout
   LOG(logINFO) << "PixTestPretest::setVthrCompCalDel() done";
+  LOG(logINFO) << "CalDel:   " << caldelString;
+  LOG(logINFO) << "VthrComp: " << vthrcompString;
 
 }
 
