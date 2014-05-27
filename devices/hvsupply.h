@@ -53,11 +53,15 @@ namespace pxar {
     
     /** Sets the desired voltage
      */
-    bool setVoltage(uint32_t volts);
+    bool setVoltage(double volts);
     
-    /** Reads back the configured voltage
+    /** Reads back the configured voltage. Value is given in v (Volts)
      */
-    uint32_t getVoltage();
+    double getVoltage();
+
+    /** Reads back the current drawn. Value is given in A (Amperes)
+     */
+    double getCurrent();
 
     /** Enables Compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)
@@ -67,7 +71,7 @@ namespace pxar {
     /** Reads back the set current limit in compliance mode. Value is given
      *  in uA (micro Ampere)
      */
-    uint32_t getCurrentLimit();
+    double getCurrentLimit();
 
   }; // class hvsupply
 
