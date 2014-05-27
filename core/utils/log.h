@@ -168,8 +168,15 @@ namespace pxar {
   {
   public:
     static FILE*& Stream();
+    static bool& Duplicate();
     static void Output(const std::string& msg);
   };
+
+  inline bool& SetLogOutput::Duplicate()
+  {
+    static bool duplic = false;
+    return duplic;
+  }
 
   inline FILE*& SetLogOutput::Stream()
   {
@@ -182,6 +189,9 @@ namespace pxar {
     FILE* pStream = Stream();
     if (!pStream)
       return;
+    // Check if duplication to stderr is needed:
+    if (Duplicate() && pStream != stderr)
+      fprintf(stderr, "%s", msg.c_str());
     fprintf(pStream, "%s", msg.c_str());
     fflush(pStream);
   }
