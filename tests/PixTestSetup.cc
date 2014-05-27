@@ -229,6 +229,8 @@ void PixTestSetup::doTest()
 
 	fHistList.clear();
 	restoreDacs();   //needed?
+	
+	saveTbParameters();
 	LOG(logINFO) << "PixTestSetup::doTest() done for " ;
 }
 
