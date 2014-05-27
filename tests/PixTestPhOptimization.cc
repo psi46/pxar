@@ -97,7 +97,7 @@ void PixTestPhOptimization::doTest() {
   TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   map<string, TH1D*> hists; 
-  string name;
+  string name, title;
 
   //looking for inefficient pixels, so that they can be avoided
   std::vector<std::pair<int, int> > badPixels;
@@ -153,7 +153,7 @@ void PixTestPhOptimization::doTest() {
   fApi->_dut->maskAllPixels(true);
   fApi->_dut->testPixel(minpixel.column,minpixel.row,true);
   fApi->_dut->maskPixel(minpixel.column,minpixel.row,false);
-  minthr = (minthr==255) ? (minthr) : (minthr + 10); 
+  minthr = (minthr==255) ? (minthr) : (minthr + 5); 
   //minthr = 50;
   fApi->setDAC("ctrlreg",4);
   fApi->setDAC("vcal",minthr);
@@ -174,22 +174,61 @@ void PixTestPhOptimization::doTest() {
   //3. stretching curve adjusting phscale
   ps_opt = StretchPH(po_opt, ps_opt, dacdac_max, dacdac_min);
 
-  //draw PH curve for min and max pixel
-  string title;
-  name  = Form("PH_c%d_r%d_C%d", minpixel.column, minpixel.row, 0);
-  //WARNING: roc number is hardcoded
-  title = Form("PH_c%d_r%d_C%d, phscale = %d, phoffset = % d, worst minPh", minpixel.column, minpixel.row, 0, ps_opt, po_opt);
+
+  fApi->setDAC("ctrlreg",4);
+  fApi->setDAC("phscale",ps_opt);
+  fApi->setDAC("phoffset",po_opt);
+  //draw PH curve for max and min pixel
+  name  = Form("PH_c%d_r%d_C%d", maxpixel.column, maxpixel.row, 0);
+  title = Form("PH_c%d_r%d_C%d, phscale = %d, phoffset = %d, maxpixel", maxpixel.column, maxpixel.row, 0, ps_opt, po_opt);
   h1 = bookTH1D(name, name, 256, 0., 256.);
+  vector<pair<uint8_t, vector<pixel> > > results;
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  fApi->_dut->testPixel(maxpixel.column, maxpixel.row, true);
+  fApi->_dut->maskPixel(maxpixel.column, maxpixel.row, false);
+  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    for (unsigned int i = 0; i < results.size(); ++i) {
+      pair<uint8_t, vector<pixel> > v = results[i];
+      int idac = v.first; 
+      vector<pixel> vpix = v.second;
+      for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
+	if (vpix[ipix].roc_id == rocIds[iroc]) {
+	  h1->Fill(idac, vpix[ipix].value);
+	}
+      }
+    }
+  }
   h1->SetMinimum(0);
-  setTitles(h1, title.c_str(), "Entries/bin");
+  setTitles(h1, title.c_str(), "average PH");
   hists.insert(make_pair(name, h1));
   fHistList.push_back(h1);  
 
-  name  = Form("PH_c%d_r%d_C%d", maxpixel.column, maxpixel.row, 0);
-  title = Form("PH_c%d_r%d_C%d, phscale = %d, phoffset = % d, worst maxPh", maxpixel.column, maxpixel.row, 0, ps_opt, po_opt);
+  results.clear();
+
+  name  = Form("PH_c%d_r%d_C%d", minpixel.column, minpixel.row, 0);
+  title = Form("PH_c%d_r%d_C%d, phscale = %d, phoffset = %d, minpixel", minpixel.column, minpixel.row, 0, ps_opt, po_opt);
   h1 = bookTH1D(name, name, 256, 0., 256.);
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  fApi->_dut->testPixel(minpixel.column, minpixel.row, true);
+  fApi->_dut->maskPixel(minpixel.column, minpixel.row, false);
+  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    for (unsigned int i = 0; i < results.size(); ++i) {
+      pair<uint8_t, vector<pixel> > v = results[i];
+      int idac = v.first; 
+      vector<pixel> vpix = v.second;
+      for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
+	if (vpix[ipix].roc_id == rocIds[iroc]) {
+	  h1->Fill(idac, vpix[ipix].value);
+	}
+      }
+    }
+  }
   h1->SetMinimum(0);
-  setTitles(h1, title.c_str(), "Entries/bin");
+  setTitles(h1, title.c_str(), "average PH");
   hists.insert(make_pair(name, h1));
   fHistList.push_back(h1);  
 
