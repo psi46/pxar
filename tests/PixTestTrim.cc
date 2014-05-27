@@ -368,6 +368,8 @@ void PixTestTrim::trimTest() {
     fApi->setDAC("vthrcomp", rocVthrComp[rocIds[iroc]], rocIds[iroc]);
   }
 
+  saveDacs();
+
   LOG(logINFO) << "PixTestTrim::trimTest() done ";
 }
 
@@ -496,7 +498,6 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
   int trim(1); 
   int trimBitsOld[16][52][80];
   for (unsigned int i = 0; i < calOld.size(); ++i) {
-    cout << " ---> " << calOld[i]->GetName() << endl;
     for (int ix = 0; ix < 52; ++ix) {
       for (int iy = 0; iy < 80; ++iy) {
 	trimBitsOld[i][ix][iy] = fTrimBits[i][ix][iy];
@@ -527,8 +528,6 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
 	  trim = fTrimBits[i][ix][iy]; 
 	}
 	fTrimBits[i][ix][iy] = trim; 
-	//	if (calNew[i]->GetBinContent(ix+1, iy+1) > 0) 
-	//	  cout << "roc/col/row: " << i << "/" << ix << "/" << iy << " vcalThr = " << calNew[i]->GetBinContent(ix+1, iy+1) << endl;
       }
     }
   } 	
