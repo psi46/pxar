@@ -29,6 +29,7 @@ private:
   int     fNoiseMargin;
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
+  bool    fProblem; 
 
   ClassDef(PixTestPretest, 1)
 

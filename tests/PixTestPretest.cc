@@ -15,7 +15,7 @@ using namespace pxar;
 ClassImp(PixTestPretest)
 
 // ----------------------------------------------------------------------
-PixTestPretest::PixTestPretest( PixSetup *a, std::string name) : PixTest(a, name), fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), fParNtrig(-1) {
+PixTestPretest::PixTestPretest( PixSetup *a, std::string name) : PixTest(a, name), fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), fParNtrig(-1), fProblem(false) {
   PixTest::init();
   init(); 
 }
@@ -127,6 +127,11 @@ void PixTestPretest::doTest() {
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
+
+  if (fProblem) {
+    bigBanner("ERROR: some ROCs are not programmable; stop"); 
+    return;
+  }
 
   setVana();
   h1 = (*fDisplayedHist); 
@@ -980,6 +985,7 @@ void PixTestPretest::programROC() {
 
   if (problem) {
     result += " cannot be programmed! Error!";
+    fProblem = true; 
   } else {
     result += " are all programmable";
   }
