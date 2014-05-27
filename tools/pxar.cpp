@@ -3,6 +3,9 @@
 #endif
 
 #include "pxar.h"
+#ifdef BUILD_HV
+#include "hvsupply.h"
+#endif
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -205,6 +208,24 @@ void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc = 0) {
 int main(int argc, char* argv[]) {
 
   std::cout << argc << " arguments provided." << std::endl;
+
+#ifdef BUILD_HV
+  // Let's do some HV tricks:
+  std::cout << "Doing HV supply test:" << std::endl;
+  pxar::hvsupply * myHvSupply = new pxar::hvsupply();
+  myHvSupply->setVoltage(90);
+  myHvSupply->hvOn();
+  sleep(15);
+  myHvSupply->setVoltage(30);
+  sleep(15);
+  myHvSupply->hvOff();
+  sleep(15);
+  myHvSupply->setVoltage(100);
+  sleep(5);
+  delete myHvSupply;
+#else
+  std::cout << "Not build with HV supply support." << std::endl;
+#endif
 
   uint8_t hubid = 31;
 
