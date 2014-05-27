@@ -12,8 +12,7 @@ ClassImp(PixTestPhOptimization)
 
 PixTestPhOptimization::PixTestPhOptimization() {}
 
-PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name),
-  fParNtrig(-1), fParDAC("nada"), fParDacVal(100) {
+PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParDacVal(100),   fFlagSinglePix(true) {
   PixTest::init();
   init();
 }
@@ -35,8 +34,7 @@ bool PixTestPhOptimization::setParameter(string parName, string sval) {
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
-      if (!parName.compare("singlePix")) {
-	setTestParameter("singlePix", sval); 
+      if (!parName.compare("singlepix")) {
 	fFlagSinglePix = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fFlagSinglePix  ->" << fFlagSinglePix
 		      << "<- from sval = " << sval;
@@ -112,8 +110,6 @@ void PixTestPhOptimization::doTest() {
   LOG(logDEBUG) << "thr map size "<<thrmap.size()<<endl;
 
   //flag allows to choose between PhOpt on single pixel (1) or on the whole roc (0)
-  fFlagSinglePix=true;
-
   pxar::pixel maxpixel;
   pxar::pixel minpixel;
 
@@ -166,7 +162,7 @@ void PixTestPhOptimization::doTest() {
   ps_opt = InsideRangePH(po_opt, dacdac_max, dacdac_min);
   //check for opt failing
   if(ps_opt==999){
-    cout<<"PH optimization failed"<<endl;
+    LOG(logDEBUG)<<"PH optimization failed"<<endl<<"Please run PreTest or try PhOptimization on a random pixel";
     return;
   }
   //2. centring PH curve adjusting phoffset
@@ -267,7 +263,7 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
 
 pxar::pixel* PixTestPhOptimization::RandomPixel(std::vector<std::pair<int, int> > &badPixels){
   //Returns a random pixel, taking care it is not on the blacklist
-
+  fApi->setDAC("ctrlreg",4);
   bool isPixGood=true;
   pxar::pixel *randPixel= new pixel();
   srand(time(NULL));
