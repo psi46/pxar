@@ -33,8 +33,10 @@
 
 /* For more info and how to use this library, visit: http://www.teuniz.net/RS-232/ */
 
-
 #include "rs232.h"
+#include "log.h"
+
+using namespace pxar;
 
 int Cport[30],
   error;
@@ -57,7 +59,7 @@ int RS232_OpenComport(int comport_number, int baudrate)
 
   if((comport_number>29)||(comport_number<0))
     {
-      printf("illegal comport number\n");
+      LOG(logCRITICAL) << "Illegal comport number " << comport_number << "!";
       return(1);
     }
 
@@ -109,7 +111,8 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     case 1000000 : baudr = B1000000;
       break;
-    default      : printf("invalid baudrate\n");
+    default      : LOG(logCRITICAL) << "Invalid baud rate " << baudrate << "!";
+
       return(1);
       break;
     }
@@ -339,7 +342,7 @@ int openComPort(const int comPortNumber,const int baud)
     
   if(RS232_OpenComport(comport_number, baud))
     {
-      printf("Can not open comport\n");
+      LOG(logCRITICAL) << "Cannot open COM port!";
       return 0;
     }
   return 1;
@@ -395,7 +398,7 @@ int writeCommand(const char *command)
 //---------------------------------------------------------------------------
 int writeCommandAndReadAnswer(const char *command, char *answer)
 {
-  printf("command: %s\n",command);
+  LOG(logDEBUGRPC) << "RS232 Command: " << command;
         
   int  bytesRead;
   char inbuf[256];
@@ -428,12 +431,11 @@ int writeCommandAndReadAnswer(const char *command, char *answer)
   } while ( (strstr(answer, "\r\n") == 0) && (++to < 80) ); // wait for CR+LF or timeout
 
   //         // clear trailing CR + LF
-  if ( p  = strstr(answer, "\r\n") ) {
+  if ( (p  = strstr(answer, "\r\n")) ) {
     *p = 0;
   }
 
   usleep(100000);  
-  printf(" answer: %s\n\n", answer);
-        
+  LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
   return 1;
 }
