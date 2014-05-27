@@ -39,10 +39,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderL, fBorderR, fBorderT, fBorderB));
 
-  Pixel_t colDarkSeaGreen;    
-  gClient->GetColorByName("DarkSeaGreen", colDarkSeaGreen);
   TGTabElement *tabel = fGui->getTabs()->GetTabTab(fTabName.c_str());
-  tabel->ChangeBackground(colDarkSeaGreen);
+  tabel->ChangeBackground(fGui->fDarkSeaGreen);
 
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
