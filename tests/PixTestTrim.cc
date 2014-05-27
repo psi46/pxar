@@ -17,7 +17,7 @@ using namespace pxar;
 ClassImp(PixTestTrim)
 
 // ----------------------------------------------------------------------
-PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), fParVcal(-1), fParNtrig(-1), fParVthrCompLo(-1), fParVthrCompHi(-1), fParVcalLo(-1), fParVcalHi(-1) {
+PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), fParVcal(-1), fParNtrig(-1) {
   PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
@@ -47,22 +47,6 @@ bool PixTestTrim::setParameter(string parName, string sval) {
       if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
-      }
-      if (!parName.compare("vcallo")) {
-	fParVcalLo = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParVcalLo  ->" << fParVcalLo << "<- from sval = " << sval;
-      }
-      if (!parName.compare("vcalhi")) {
-	fParVcalHi = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParVcalHi  ->" << fParVcalHi << "<- from sval = " << sval;
-      }
-      if (!parName.compare("vthrcomplo")) {
-	fParVthrCompLo = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParVthrCompLo  ->" << fParVthrCompLo << "<- from sval = " << sval;
-      }
-      if (!parName.compare("vthrcomphi")) {
-	fParVthrCompHi = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParVthrCompHi  ->" << fParVthrCompHi << "<- from sval = " << sval;
       }
 
       break;
@@ -153,7 +137,8 @@ void PixTestTrim::trimTest() {
     return;
   }
 
-  cacheDacs();
+  bool verbose(false);
+  cacheDacs(verbose);
   fDirectory->cd();
   PixTest::update(); 
   banner(Form("PixTestTrim::trimTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
@@ -169,17 +154,14 @@ void PixTestTrim::trimTest() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
   fApi->setDAC("Vtrim", 0);
-  pxar::mDelay(1000);
   fApi->setDAC("ctrlreg", 0);
-  pxar::mDelay(1000);
   fApi->setDAC("Vcal", fParVcal);
-  pxar::mDelay(1000);
 
   setTrimBits(15);  
   
   // -- determine minimal VthrComp 
   map<int, int> rocVthrComp;
-  banner("VthrComp thr map (minimal VthrComp)"); 
+  print("VthrComp thr map (minimal VthrComp)"); 
   vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", fParNtrig, 0, 200, 1); 
   vector<int> minVthrComp = getMinimumVthrComp(thr0, 10, 2.); 
   string bla("TRIM determined minimal VthrComp: ");
@@ -194,7 +176,7 @@ void PixTestTrim::trimTest() {
   }
 
   // -- determine pixel with largest VCAL threshold
-  banner("Vcal thr map (pixel with maximum Vcal thr)"); 
+  print("Vcal thr map (pixel with maximum Vcal thr)"); 
   vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", fParNtrig, 0, 200, 1); 
 
   vector<int> Vcal; 
@@ -303,7 +285,7 @@ void PixTestTrim::trimTest() {
   vector<TH1*> thro = mapsWithString(thr2, "thr_");
   double maxthr = getMaximumThreshold(thro);
   double minthr = getMinimumThreshold(thro);
-  banner(Form("TrimThr2 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimThr2 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr2a = trimStep("trimStepCorr4", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -315,7 +297,7 @@ void PixTestTrim::trimTest() {
   thro = mapsWithString(thr3, "thr_");
   maxthr = getMaximumThreshold(thro);
   minthr = getMinimumThreshold(thro);
-  banner(Form("TrimThr3 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimThr3 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr3a = trimStep("trimStepCorr2", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -326,7 +308,7 @@ void PixTestTrim::trimTest() {
   thro = mapsWithString(thr4, "thr_");
   maxthr = getMaximumThreshold(thro);
   minthr = getMinimumThreshold(thro);
-  banner(Form("TrimThr4 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimThr4 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr4a = trimStep("trimStepCorr1a", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -337,7 +319,7 @@ void PixTestTrim::trimTest() {
   thro = mapsWithString(thr5, "thr_");
   maxthr = getMaximumThreshold(thro);
   minthr = getMinimumThreshold(thro);
-  banner(Form("TrimThr5 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimThr5 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr5a = trimStep("trimStepCorr1b", correction, thro, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -358,19 +340,36 @@ void PixTestTrim::trimTest() {
   }
 
   vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", 5, fParVcal-20, fParVcal+20, 3); 
-    
+  string trimMeanString, trimRmsString; 
+  for (unsigned int i = 0; i < thrF.size(); ++i) {
+    hname = thrF[i]->GetName();
+    // -- skip sig_ and thn_ histograms
+    if (string::npos == hname.find("dist_thr_")) continue;
+    trimMeanString += Form("%6.2f ", thrF[i]->GetMean()); 
+    trimRmsString += Form("%6.2f ", thrF[i]->GetRMS()); 
+  }
+
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
+  string vtrimString, vthrcompString; 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     fApi->setDAC("vtrim", rocTrim[rocIds[iroc]], rocIds[iroc]);
+    vtrimString += Form("%3d ", rocTrim[rocIds[iroc]]); 
     fApi->setDAC("vthrcomp", rocVthrComp[rocIds[iroc]], rocIds[iroc]);
+    vthrcompString += Form("%3d ", rocVthrComp[rocIds[iroc]]); 
   }
 
   saveDacs();
+  saveTrimBits();
 
-  LOG(logINFO) << "PixTestTrim::trimTest() done ";
+  // -- summary printout
+  LOG(logINFO) << "PixTestAlive::trimTest() done";
+  LOG(logINFO) << "vtrim:     " << vtrimString; 
+  LOG(logINFO) << "vthrcomp:  " << vthrcompString; 
+  LOG(logINFO) << "vcal mean: " << trimMeanString; 
+  LOG(logINFO) << "vcal RMS:  " << trimRmsString; 
 }
 
 
