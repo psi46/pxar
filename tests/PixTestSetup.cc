@@ -129,6 +129,7 @@ void PixTestSetup::doTest()
 	pg_setup.clear();
 	pg_setup.push_back(make_pair(0x0800, 25));    // PG_RESR b001000
 	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  b000001
+	uint16_t period = 28;
 
 	// Set the pattern generator:
 	fApi->setPatternGenerator(pg_setup);
@@ -160,7 +161,7 @@ void PixTestSetup::doTest()
 			// Start the DAQ:
 			fApi->daqStart();
 			// Send the triggers:
-			fApi->daqTrigger(Ntrig);
+			fApi->daqTrigger(Ntrig,period);
 			// Read the raw event:
 			daqRawEv = fApi->daqGetRawEvent();
 			daqRawEvsize = daqRawEv.GetSize();
