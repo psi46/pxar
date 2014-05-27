@@ -83,31 +83,30 @@ void PixTestBBMap::doTest() {
   fApi->setDAC("vcal", fParVcalS);    
 
   int result(7);
-  vector<TH1*>  thrmapsXtalk;    
-  if (fParXtalk) {
-    LOG(logDEBUG) << "taking Xtalk maps";
-    thrmapsXtalk = scurveMaps("VthrComp", "calSMapXtalk", fParNtrig, 0, 170, result, 1, flag | FLAG_XTALK); 
-  }
 
   LOG(logDEBUG) << "taking CalS threshold maps";
   vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 170, result, 1, flag);
+  copy(thrmapsCals.begin(), thrmapsCals.end(), back_inserter(fHistList));
 
-  LOG(logDEBUG) << "map analysis";
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
-    unsigned int rocId = getIdFromIdx(idx);
-    TH2D* rocmapRaw = (TH2D*)thrmapsCals[idx];
-    TH2D* rocmapBB(0); 
-    TH2D* rocmapXtalk(0);
-    
-    if (fParXtalk) {
+  if (fParXtalk) {
+    LOG(logDEBUG) << "taking Xtalk maps";
+    vector<TH1*> thrmapsXtalk = scurveMaps("VthrComp", "calSMapXtalk", fParNtrig, 0, 170, result, 1, flag | FLAG_XTALK); 
+
+    LOG(logDEBUG) << "map analysis";
+    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+    for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
+      unsigned int rocId = getIdFromIdx(idx);
+      TH2D* rocmapRaw = (TH2D*)thrmapsCals[idx];
+      TH2D* rocmapBB(0); 
+      TH2D* rocmapXtalk(0);
+      
       rocmapBB  = (TH2D*)rocmapRaw->Clone(Form("BB-%2d",rocId));
       rocmapBB->SetTitle(Form("CalS - Xtalk %2d",rocId));
       rocmapXtalk = (TH2D*)thrmapsXtalk[idx];  
       rocmapBB->Add(rocmapXtalk, -1.);
       fHistOptions.insert(make_pair(rocmapBB, "colz"));
       fHistList.push_back(rocmapBB);
-
+      
       TH1D* hdistBB = bookTH1D(Form("dist_CalS-Xtalksubtracted_C%d", rocId), 
 			       Form("CalS-Xtalksubtracted C%d", rocId), 
 			       514, -257., 257.);
@@ -122,16 +121,26 @@ void PixTestBBMap::doTest() {
 
   }
   
-  if (fHistList.size() > 0) {
-    TH2D *h = (TH2D*)(*fHistList.begin());
-    h->Draw(getHistOption(h).c_str());
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    PixTest::update(); 
-  } else {
-    LOG(logDEBUG) << "no histogram produced, this is probably a bug";
-  }
+  TH1D *h(0);
   
   restoreDacs();
-  banner(Form("PixTestBBMap::doTest() done")); 
+
+  // -- summary printout
+  string bbString(""), hname(""); 
+  int bbprob(0); 
+  for (unsigned int i = 0; i < thrmapsCals.size(); ++i) {
+    hname = thrmapsCals[i]->GetName();
+    if (string::npos == hname.find("dist_thr_")) continue;
+    h = (TH1D*)thrmapsCals[i];
+    bbprob = h->Integral(1, 10); 
+    bbString += Form(" %4d", bbprob); 
+  }
+
+  h->Draw();
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+  
+  LOG(logINFO) << "PixTestBBMap::doTest() done";
+  LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
 
 }
