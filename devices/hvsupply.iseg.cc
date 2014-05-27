@@ -35,6 +35,22 @@ double outToDouble(char * word) {
   return (sign*value*pow(10,orderSign*order));
 }
 
+void handleAnswers(char* answer) {
+  
+  if(strcmp(answer,"S1=ON") == 0) { 
+    LOG(logDEBUG) << "Device is ON."; }
+  else if(strcmp(answer,"S1=OFF") == 0) { 
+    LOG(logDEBUG) << "Device is OFF."; }
+  else if(strcmp(answer,"S1=TRP") == 0) { 
+    LOG(logCRITICAL) << "Power supply tripped!"; }
+  else if(strcmp(answer,"S1=L2H") == 0) {
+    LOG(logDEBUG) << "Voltage is rising."; }
+  else if(strcmp(answer,"S1=H2L") == 0) {
+    LOG(logDEBUG) << "Voltage is falling."; }
+  else {
+    LOG(logDEBUG) << "Unknown device reyurn value."; }
+}
+
 // Set Voltage
 float voltage_set;
 bool hv_status;
@@ -57,6 +73,11 @@ hvsupply::hvsupply() {
   char answer[256] = { 0 };
   writeCommandAndReadAnswer("S1", answer);
   if(strcmp(answer,"S1=ON") != 0) {
+    // Try once more:
+    writeCommandAndReadAnswer("S1", answer);
+  }
+  handleAnswers(answer);
+  if(strcmp(answer,"S1=ON") != 0) {
     LOG(logCRITICAL) << "Devide did not return proper status code!";
     throw UsbConnectionError("Devide did not return proper status code!");
   }
@@ -75,13 +96,15 @@ hvsupply::~hvsupply() {
 
 // Turn on the HV output
 bool hvsupply::hvOn() {
+  LOG(logDEBUG) << "Turning HV ON (" << voltage_set << " V)";
+
   char command[256] = {0};
   char answer[256] = {0};
   sprintf(&command[0],"D1=%.f",voltage_set);
   writeCommandAndReadAnswer(command, answer);
   writeCommandAndReadAnswer("G1", answer);
+  handleAnswers(answer);
 
-  LOG(logDEBUG) << "Turned HV ON (" << voltage_set << " V)";
   // State machine: HV is on
   hv_status = true;
   return false;
@@ -89,12 +112,13 @@ bool hvsupply::hvOn() {
     
 // Turn off the HV output
 bool hvsupply::hvOff() {
+  LOG(logDEBUG) << "Turning HV OFF";
+
   char answer[256] = {0};
   writeCommandAndReadAnswer("D1=0", answer);
   writeCommandAndReadAnswer("G1", answer);
-  // FIXME not checking for return codes yet!
+  handleAnswers(answer);
 
-  LOG(logDEBUG) << "Turned HV OFF";
   // State machine: HV is off
   hv_status = false;
   return true;
@@ -105,13 +129,14 @@ bool hvsupply::setVoltage(double volts) {
   // Internally store voltage:
   voltage_set = static_cast<float>(volts);
   // Only write to device if state machine indicates HV on:
-  if(hv_status) {  
+  if(hv_status) {
+    LOG(logDEBUG) << "Setting HV to " << voltage_set << " V.";
     char command[256] = {0};
     char answer[256] = {0};
     sprintf(&command[0],"D1=%.f",voltage_set);
     writeCommandAndReadAnswer(command, answer);
     writeCommandAndReadAnswer("G1", answer);
-    LOG(logDEBUG) << "Set HV to " << voltage_set << " V.";
+    handleAnswers(answer);
   }
   else {
     LOG(logDEBUG) << "Set HV to " << voltage_set << " V, not activated.";
@@ -135,13 +160,30 @@ double hvsupply::getCurrent() {
 }
 
 // Enables Compliance mode and sets the current limit (to be given in uA, micro Ampere)
-bool hvsupply::setCurrentLimit(uint32_t /*microampere*/) {
-  return false;
+bool hvsupply::setCurrentLimit(uint32_t microampere) {
+  if(microampere > 99) {
+    LOG(logERROR) << "Current limit " << microampere << " uA too high."
+		  << " Device only delivers 50 uA.";
+    return false;
+  }
+
+  LOG(logDEBUG) << "Setting current limit to " << microampere << " uA.";
+
+  char command[256] = {0};
+  char answer[256] = {0};
+  // Factor 100 is required since this value is the sensitive region,
+  // not milliamps!
+  sprintf(&command[0],"LS1=%i",microampere*1000);
+  writeCommandAndReadAnswer(command, answer);
+  writeCommandAndReadAnswer("G1", answer);
+  handleAnswers(answer);
+  return true;
 }
 
 // Reads back the set current limit in compliance mode. Value is given in uA (micro Ampere)
 double hvsupply::getCurrentLimit() {
   char answer[256] = {0};
-  writeCommandAndReadAnswer("N1", answer);
-  return outToDouble(answer);
+  writeCommandAndReadAnswer("LS1", answer);
+  // Return value is in Ampere, give in uA:
+  return outToDouble(answer)*1000000;
 }
