@@ -16,6 +16,7 @@ public:
 
   void doTest();
   void setVana();
+  void programROC();
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();

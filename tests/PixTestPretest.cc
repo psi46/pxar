@@ -123,8 +123,13 @@ void PixTestPretest::doTest() {
   PixTest::update(); 
   bigBanner(Form("PixTestPretest::doTest()"));
 
-  setVana();
+  programROC();
   TH1 *h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
+  setVana();
+  h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
@@ -149,6 +154,10 @@ void PixTestPretest::doTest() {
 void PixTestPretest::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
+  if (!command.compare("programroc")) {
+    programROC(); 
+    return;
+  }
   if (!command.compare("setcaldel")) {
     setCalDel(); 
     return;
@@ -725,6 +734,8 @@ void PixTestPretest::setCalDel() {
 }
 
 
+
+
 // ----------------------------------------------------------------------
 void PixTestPretest::setPhRange() {
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
@@ -927,3 +938,65 @@ void PixTestPretest::setPhRange() {
 
 
 
+
+
+// ----------------------------------------------------------------------
+void PixTestPretest::programROC() {
+  cacheDacs();
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestPretest::programROC() ")); 
+  
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  unsigned int nRocs = rocIds.size();
+  TH1D *h1 = bookTH1D("programROC", "#Delta(Iana) vs ROC", nRocs, 0., nRocs); 
+  fHistList.push_back(h1); 
+
+  vector<int> vanaStart; 
+  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+    vanaStart.push_back(fApi->_dut->getDAC(rocIds[iroc], "vana"));
+    fApi->setDAC("vana", 0, rocIds[iroc]);
+  }
+
+  pxar::mDelay(2000); 
+  double iA0 = fApi->getTBia()*1E3;
+  //  cout << "iA0 = " << iA0 << endl;
+
+  double iA, dA;
+  string result("ROCs"); 
+  bool problem(false); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fApi->setDAC("vana", vanaStart[iroc], rocIds[iroc]);
+    pxar::mDelay(1000); 
+    iA = fApi->getTBia()*1E3;
+    dA = iA - iA0;
+    if (dA < 5) {
+      result += Form(" %d", rocIds[iroc]); 
+      problem = true; 
+    }
+    h1->SetBinContent(iroc+1, dA); 
+    fApi->setDAC("vana", 0, rocIds[iroc]);
+  }
+
+  if (problem) {
+    result += " cannot be programmed! Error!";
+  } else {
+    result += " are all programmable";
+  }
+
+  // -- summary printout
+  string dIaString(""); 
+  for (unsigned int i = 0; i < nRocs; ++i) {
+    dIaString += Form(" %3.1f", h1->GetBinContent(i+1)); 
+  }
+  
+  LOG(logINFO) << "PixTestPretest::programROC() done: " << result;
+  LOG(logINFO) << "IA differences per ROC: " << dIaString; 
+
+  h1 = (TH1D*)(fHistList.back());
+  h1->Draw(getHistOption(h1).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  PixTest::update(); 
+
+  restoreDacs();
+}
