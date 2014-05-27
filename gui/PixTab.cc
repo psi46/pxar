@@ -82,13 +82,18 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       continue;
     }
 
-    if (amap[i].second == "checkbox") {
+    if (string::npos != amap[i].second.find("checkbox")) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
       tcheck = new TGCheckButton(fV2, amap[i].first.c_str(), 1);
       hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN)); 
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-      tcheck->SetState(kButtonUp);
-      tcheck->SetToolTipText("display (average) pulseheight map instead of hit map");
+      if (string::npos != amap[i].second.find("(1)")) {
+	tcheck->SetState(kButtonDown);
+      } else if (string::npos != amap[i].second.find("(0)")) {
+	tcheck->SetState(kButtonUp);
+      } else {
+	tcheck->SetState(kButtonUp);
+      }
       tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
       continue;
     }
