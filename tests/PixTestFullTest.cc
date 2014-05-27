@@ -86,7 +86,7 @@ void PixTestFullTest::doTest() {
   bigBanner(Form("PixTestFullTest::doTest()"));
 
   vector<string> suite;
-  suite.push_back("pretest"); 
+  //  suite.push_back("pretest"); 
   suite.push_back("alive"); 
   suite.push_back("scurves");
   suite.push_back("bumpbonding"); 
