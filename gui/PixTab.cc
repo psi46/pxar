@@ -78,6 +78,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       tset->SetToolTipText("run this subtest");
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
+      tset->SetBackgroundColor(fGui->fDarkSalmon);
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
       continue;
     }
@@ -155,6 +156,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fbDoTest->ChangeOptions(fbDoTest->GetOptions() | kFixedWidth);
   hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
+  fbDoTest->SetBackgroundColor(fGui->fDarkSalmon);
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);

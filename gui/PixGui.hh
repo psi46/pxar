@@ -69,7 +69,7 @@ public:
 
   void updateSelectedRocs(std::map<int, int> a); 
 
-  ULong_t   fRed, fGreen, fYellow, fWhite; 
+  ULong_t   fRed, fGreen, fYellow, fWhite, fDarkSeaGreen, fDarkOrange, fLavender, fDarkGray, fDarkSalmon; 
 
   
 private: 
