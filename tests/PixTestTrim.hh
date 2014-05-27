@@ -26,7 +26,7 @@ public:
 
 private:
 
-  int     fParVcal, fParNtrig, fParVthrCompLo, fParVthrCompHi, fParVcalLo, fParVcalHi; 
+  int     fParVcal, fParNtrig; 
   std::vector<std::pair<int, int> > fPIX; 
   int fTrimBits[16][52][80]; 
   

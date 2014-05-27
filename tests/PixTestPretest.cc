@@ -121,7 +121,7 @@ void PixTestPretest::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
-  bigBanner(Form("PixTestTrim::doTest()"));
+  bigBanner(Form("PixTestPretest::doTest()"));
 
   setVana();
   TH1 *h1 = (*fDisplayedHist); 
@@ -140,6 +140,8 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   }
+
+  // -- save DACs!
   saveDacs();
 }
 
@@ -174,16 +176,6 @@ void PixTestPretest::runCommand(std::string command) {
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
-// ----------------------------------------------------------------------
-void PixTestPretest::saveDacs() {
-  LOG(logINFO) << "Write DAC parameters to file";
-
-  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
-  }
-
-}
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVana() {

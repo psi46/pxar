@@ -38,6 +38,7 @@ void createBackup(string a, string b);
 int main(int argc, char *argv[]){
   
   LOG(logINFO) << "*** Welcome to pxar ***";
+  gSystem->Exec("git status");
 
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
@@ -135,6 +136,7 @@ int main(int argc, char *argv[]){
     rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
     lfile = fopen(logfile.c_str(), "a");
     SetLogOutput::Stream() = lfile;
+    SetLogOutput::Duplicate() = true;
   }
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
@@ -184,6 +186,7 @@ int main(int argc, char *argv[]){
     runGui(a, argc, argv); 
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
+    if (configParameters->getHvOn()) api->HVon(); 
     PixTest *t = factory->createTest(runtest, &a);
     t->doTest();
     delete t; 
@@ -193,30 +196,35 @@ int main(int argc, char *argv[]){
     string input; 
     bool stop(false);
     PixTestFactory *factory = PixTestFactory::instance(); 
-    LOG(logINFO) << "enter restricted command line mode";
+    if (configParameters->getHvOn()) api->HVon(); 
+    LOG(logINFO) << "enter 'restricted' command line mode";
     do {
       LOG(logINFO) << "enter test to run";
       cout << "pxar> "; 
       cin >> input; 
-      LOG(logINFO) << "  running: " << input; 
-
+      std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+      
+      if (!input.compare("gui"))  runGui(a, argc, argv); 
       if (!input.compare("exit")) stop = true; 
       if (!input.compare("quit")) stop = true; 
       if (!input.compare("q")) stop = true; 
 
+      if (stop) break;
+      LOG(logINFO) << "  running: " << input; 
       PixTest *t = factory->createTest(input, &a);
       if (t) {
 	t->doTest();
 	delete t;
+      } else {
+	LOG(logINFO) << "command ->" << input << "<- not known, ignored";
       }
     } while (!stop);
     
 
   }
-
-  LOG(logINFO) << "closing down 1";
   
   // -- clean exit (however, you should not get here)
+  LOG(logINFO) << "closing down 1";
   rfile->Write(); 
   rfile->Close(); 
   

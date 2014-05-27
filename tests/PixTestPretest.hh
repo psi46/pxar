@@ -20,7 +20,6 @@ public:
   void setVthrCompId();
   void setCalDel();
   void setPhRange();
-  void saveDacs();
 
 private:
 
