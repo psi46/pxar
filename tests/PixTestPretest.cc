@@ -121,7 +121,7 @@ void PixTestPretest::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
-  bigBanner(Form("PixTestTrim::doTest()"));
+  bigBanner(Form("PixTestPretest::doTest()"));
 
   setVana();
   TH1 *h1 = (*fDisplayedHist); 
