@@ -8,6 +8,7 @@
 #include "log.h"
 
 #include "PixTestCurrentVsDac.hh"
+#include "PixTestIV.hh"
 #include "PixTestAlive.hh"
 #include "PixTestTbm.hh"
 #include "PixTestDacScan.hh"
@@ -57,6 +58,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   ::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
   if( !name.compare("curvsdac" ) ) return new PixTestCurrentVsDac(a, "CurVsDac" ); 
+  if( !name.compare("iv" ) ) return new PixTestIV(a, "IV" ); 
   if (!name.compare("dacscan")) return new PixTestDacScan(a, "DacScan"); 
   if (!name.compare("dacdacscan")) return new PixTestDacDacScan(a, "DacDacScan"); 
   if (!name.compare("pixelalive")) return new PixTestAlive(a, "PixelAlive"); 
