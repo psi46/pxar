@@ -157,13 +157,26 @@ void PixTestScurves::scurves() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int RFLAG(7); 
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG, 1); 
+  int results(7); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1); 
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
+
+  string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
+  for (unsigned int i = 0; i < thr0.size(); ++i) {
+    hname = thr0[i]->GetName();
+    // -- skip sig_ and thn_ histograms
+    if (string::npos == hname.find("dist_thr_")) continue;
+    scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean()); 
+    scurvesRmsString += Form("%6.2f ", thr0[i]->GetRMS()); 
+  }
+
   LOG(logINFO) << "PixTestScurves::scurves() done ";
+  LOG(logINFO) << Form("%s mean: ", fParDac.c_str()) << scurvesMeanString; 
+  LOG(logINFO) << Form("%s RMS:  ", fParDac.c_str()) << scurvesRmsString; 
+
 }
 
 
