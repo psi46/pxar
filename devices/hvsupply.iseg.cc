@@ -6,8 +6,10 @@
 #include "rs232.h"
 #include "exceptions.h"
 #include "helper.h"
+#include "log.h"
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
 
 using namespace pxar;
 
@@ -40,17 +42,26 @@ bool hv_status;
 // Constructor: Connects to the device, initializes communication
 hvsupply::hvsupply() {
 
-   hv_status = false;
-  const int comPortNumber = 16; /* /dev/ttyUSB0 */
-  if(!openComPort(comPortNumber,9600)) throw UsbConnectionError("Error connecting via RS232 port!");
-
   // "S1": Read status
-  char answer[256] = { 0 };
-  writeCommandAndReadAnswer("S1", answer);
-  writeCommandAndReadAnswer("S1", answer);
-  
   // "D1": New set-voltage
   // "G1": Apply new set-voltage
+
+  hv_status = false;
+  const int comPortNumber = 16; /* /dev/ttyUSB0 */
+  if(!openComPort(comPortNumber,9600)) {
+    LOG(logCRITICAL) << "Error connecting via RS232 port!";
+    throw UsbConnectionError("Error connecting via RS232 port!");
+  }
+  LOG(logDEBUG) << "Opened COM port to Iseg device.";
+
+  char answer[256] = { 0 };
+  writeCommandAndReadAnswer("S1", answer);
+  if(strcmp(answer,"S1=ON") != 0) {
+    LOG(logCRITICAL) << "Devide did not return proper status code!";
+    throw UsbConnectionError("Devide did not return proper status code!");
+  }
+  LOG(logDEBUG) << "Communication initialized.";
+
   hvOff();
   mDelay(2000);
 }
@@ -69,7 +80,8 @@ bool hvsupply::hvOn() {
   sprintf(&command[0],"D1=%.f",voltage_set);
   writeCommandAndReadAnswer(command, answer);
   writeCommandAndReadAnswer("G1", answer);
- 
+
+  LOG(logDEBUG) << "Turned HV ON (" << voltage_set << " V)";
   // State machine: HV is on
   hv_status = true;
   return false;
@@ -82,6 +94,7 @@ bool hvsupply::hvOff() {
   writeCommandAndReadAnswer("G1", answer);
   // FIXME not checking for return codes yet!
 
+  LOG(logDEBUG) << "Turned HV OFF";
   // State machine: HV is off
   hv_status = false;
   return true;
@@ -98,6 +111,10 @@ bool hvsupply::setVoltage(double volts) {
     sprintf(&command[0],"D1=%.f",voltage_set);
     writeCommandAndReadAnswer(command, answer);
     writeCommandAndReadAnswer("G1", answer);
+    LOG(logDEBUG) << "Set HV to " << voltage_set << " V.";
+  }
+  else {
+    LOG(logDEBUG) << "Set HV to " << voltage_set << " V, not activated.";
   }
   // FIXME not checking for return codes yet!
   return true;
