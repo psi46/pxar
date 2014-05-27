@@ -177,18 +177,44 @@ void PixTestGainPedestal::measure() {
   vector<pair<uint8_t, vector<pixel> > > rresult, lresult, hresult; 
   int step = 256/fParNpointsLo;
   for (int i = 0; i < fParNpointsLo; ++i) {
-    LOG(logDEBUG) << "scanning vcal = " << i*step;
-    rresult = fApi->getPulseheightVsDAC("vcal", i*step, i*step, FLAGS, fParNtrig);
-    copy(rresult.begin(), rresult.end(), back_inserter(lresult)); 
+    LOG(logINFO) << "scanning low vcal = " << i*step;
+    int cnt(0); 
+    bool done = false;
+    while (!done){
+      try {
+	rresult = fApi->getPulseheightVsDAC("vcal", i*step, i*step, FLAGS, fParNtrig);
+	copy(rresult.begin(), rresult.end(), back_inserter(lresult)); 
+	done = true; // got our data successfully
+      }
+      catch(pxar::DataMissingEvent &e){
+	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	++cnt;
+	if (e.numberMissing > 10) done = true; 
+      }
+      done = (cnt>5) || done;
+    }
   }
 
   // -- and high range
   fApi->setDAC("ctrlreg", 4);
-  step = 256/fParNpointsHi;
+  step = 250/fParNpointsHi;
   for (int i = 0; i < fParNpointsHi; ++i) {
-    LOG(logDEBUG) << "scanning vcal = " << 10 + i*step;
-    rresult = fApi->getPulseheightVsDAC("vcal", 10 + i*step, 10 + i*step, FLAGS, fParNtrig);
-    copy(rresult.begin(), rresult.end(), back_inserter(hresult)); 
+    LOG(logINFO) << "scanning high vcal = " << 10 + i*step << " (= " << 7*(10 + i*step) << " in low range)";
+    int cnt(0); 
+    bool done = false;
+    while (!done){
+      try {
+	rresult = fApi->getPulseheightVsDAC("vcal", 10 + i*step, 10 + i*step, FLAGS, fParNtrig);
+	copy(rresult.begin(), rresult.end(), back_inserter(hresult)); 
+	done = true; // got our data successfully
+      }
+      catch(pxar::DataMissingEvent &e){
+	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	++cnt;
+	if (e.numberMissing > 10) done = true; 
+      }
+      done = (cnt>5) || done;
+    }
   }
 
   for (unsigned int i = 0; i < lresult.size(); ++i) {
@@ -233,13 +259,9 @@ void PixTestGainPedestal::measure() {
   h1->Draw(); 
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
 
-//   int RFLAG(7); 
-//   vector<TH1*> thr0 = scurveMaps("vcal", "gainpedestal", fParNtrig, 0, 255, RFLAG, 2); 
-//   TH1 *h1 = (*fDisplayedHist); 
-//   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
-  LOG(logINFO) << "PixTestGainPedestal::gainPedestal() done ";
+  LOG(logINFO) << "PixTestGainPedestal::measure() done ";
 }
 
 
@@ -257,7 +279,13 @@ void PixTestGainPedestal::fit() {
   vector<vector<gainPedestalParameters> > v;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   gainPedestalParameters a; a.p0 = a.p1 = a.p2 = a.p3 = 0.;
+  TH1D* h(0);
+  vector<TH1D*> p1list; 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    LOG(logDEBUG) << "Create hist " << Form("gainPedestalP1_C%d", rocIds[i]); 
+    h = bookTH1D(Form("gainPedestalP1_C%d", i), Form("gainPedestalP1_C%d", rocIds[i]), 100, 0., 2.); 
+    setTitles(h, "p1", "Entries / Bin"); 
+    p1list.push_back(h); 
     vector<gainPedestalParameters> vroc;
     for (unsigned j = 0; j < 4160; ++j) {
       vroc.push_back(a); 
@@ -285,10 +313,27 @@ void PixTestGainPedestal::fit() {
     v[iroc][idx].p2 = f->GetParameter(2); 
     v[iroc][idx].p3 = f->GetParameter(3); 
 
+    p1list[getIdxFromId(iroc)]->Fill(f->GetParameter(1)); 
   }
 
   fPixSetup->getConfigParameters()->setGainPedestalParameters(v);
-  LOG(logDEBUG) << "done with fitting"; 
+
+  copy(p1list.begin(), p1list.end(), back_inserter(fHistList));
+  h = (TH1D*)(fHistList.back());
+  h->Draw();
+
+  string p1MeanString(""), p1RmsString(""); 
+  for (unsigned int i = 0; i < p1list.size(); ++i) {
+    p1MeanString += Form(" %5.3f", p1list[i]->GetMean()); 
+    p1RmsString += Form(" %5.3f", p1list[i]->GetRMS()); 
+  }
+
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+
+  LOG(logINFO) << "PixTestGainPedestal::fit() done"; 
+  LOG(logINFO) << "p1 mean: " << p1MeanString; 
+  LOG(logINFO) << "p1 RMS:  " << p1RmsString; 
 }
 
 
