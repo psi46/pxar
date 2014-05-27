@@ -39,16 +39,22 @@ void handleAnswers(char* answer) {
   
   if(strcmp(answer,"S1=ON") == 0) { 
     LOG(logDEBUG) << "Device is ON."; }
-  else if(strcmp(answer,"S1=OFF") == 0) { 
-    LOG(logDEBUG) << "Device is OFF."; }
+  else if(strcmp(answer,"S1=OFF") == 0) {
+    LOG(logCRITICAL) << "HV Power Supply set to OFF!";
+    throw InvalidConfig("HV Power Supply set to OFF!");
+  }
   else if(strcmp(answer,"S1=TRP") == 0) { 
     LOG(logCRITICAL) << "Power supply tripped!"; }
+  else if(strcmp(answer,"S1=MAN") == 0) { 
+    LOG(logCRITICAL) << "HV Power Supply set to MANUAL mode!";
+    throw InvalidConfig("HV Power Supply set to MANUAL mode!");
+  }
   else if(strcmp(answer,"S1=L2H") == 0) {
     LOG(logDEBUG) << "Voltage is rising."; }
   else if(strcmp(answer,"S1=H2L") == 0) {
     LOG(logDEBUG) << "Voltage is falling."; }
   else {
-    LOG(logDEBUG) << "Unknown device reyurn value."; }
+    LOG(logDEBUG) << "Unknown device return value."; }
 }
 
 // Set Voltage
