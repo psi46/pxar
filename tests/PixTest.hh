@@ -82,6 +82,10 @@ public:
   virtual void output4moreweb();
   /// save DACs to file
   void saveDacs(); 
+  /// save trim bits to file
+  void saveTrimBits(); 
+  /// save TB parameters to file
+  void saveTbParameters(); 
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
@@ -109,7 +113,7 @@ public:
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
   /// flag allows to pass in other flags
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
-			       int result = 1, int ihit = 1, int flag = 0); 
+			       int result = 1, int ihit = 1, int flag = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -143,6 +147,7 @@ public:
   std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
 
   /// produce eye-catching printouts
+  void print(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   
