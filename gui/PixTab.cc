@@ -116,6 +116,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
     te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
+    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); // FIXME does not work?
+    te->Connect("TabPressed()", "PixTab", this, "moveDown()"); 
 
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
@@ -319,6 +321,40 @@ void PixTab::yellow() {
   }
 }
 
+
+// ----------------------------------------------------------------------
+void PixTab::moveUp() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+  
+  if (id > 0) {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id-1]]))->SetFocus();
+  } else {
+    ((TGTextEntry*)(fParTextEntries[fParIds[fParIds.size()-1]]))->SetFocus();
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixTab::moveDown() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  if (id < static_cast<int>(fParIds.size()) - 1) {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id+1]]))->SetFocus();
+  } else {
+    ((TGTextEntry*)(fParTextEntries[fParIds[0]]))->SetFocus();
+  }
+}
 
 // ----------------------------------------------------------------------
 void PixTab::setParameter() {
