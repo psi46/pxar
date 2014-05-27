@@ -209,24 +209,6 @@ int main(int argc, char* argv[]) {
 
   std::cout << argc << " arguments provided." << std::endl;
 
-#ifdef BUILD_HV
-  // Let's do some HV tricks:
-  std::cout << "Doing HV supply test:" << std::endl;
-  pxar::hvsupply * myHvSupply = new pxar::hvsupply();
-  myHvSupply->setVoltage(90);
-  myHvSupply->hvOn();
-  sleep(15);
-  myHvSupply->setVoltage(30);
-  sleep(15);
-  myHvSupply->hvOff();
-  sleep(15);
-  myHvSupply->setVoltage(100);
-  sleep(5);
-  delete myHvSupply;
-#else
-  std::cout << "Not build with HV supply support." << std::endl;
-#endif
-
   uint8_t hubid = 31;
 
   // Prepare some vectors for all the configurations we use:
@@ -402,6 +384,26 @@ int main(int argc, char* argv[]) {
     std::cout << "Digital current: " << _api->getTBid()*1000 << "mA" << std::endl;
 
     _api->HVon();
+
+#ifdef BUILD_HV
+    // Let's do some HV tricks:
+    std::cout << "Doing HV supply test:" << std::endl;
+    pxar::hvsupply * myHvSupply = new pxar::hvsupply();
+    myHvSupply->setVoltage(100);
+    myHvSupply->setCurrentLimit(50);
+    myHvSupply->hvOn();
+    sleep(5);
+    std::cout << "Current limit: " << myHvSupply->getCurrentLimit() << std::endl;
+    std::cout << "Current: " 
+	      << myHvSupply->getCurrent() << std::endl;
+    sleep(5);
+    myHvSupply->setCurrentLimit(30);
+    myHvSupply->hvOff();
+    myHvSupply->setVoltage(100);
+    delete myHvSupply;
+#else
+    std::cout << "Not build with HV supply support." << std::endl;
+#endif
 
     // Testing new DUT functions:
     std::vector<uint8_t> enabledrocs = _api->_dut->getEnabledRocIDs();
