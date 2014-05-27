@@ -2,6 +2,7 @@
 #define PIX_H
 
 #include <iostream>
+#include <algorithm>
 #include <sys/stat.h>
 
 #if (defined WIN32)
