@@ -19,7 +19,7 @@ using namespace pxar;
 ClassImp(PixTestIV)
 
 PixTestIV::PixTestIV( PixSetup *a, std::string name )
-  : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5)
+  : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(3)
 {
   PixTest::init();
   init();
@@ -41,6 +41,10 @@ bool PixTestIV::setParameter(std::string parName, std::string sval) {
       }
       if(!parName.compare("voltagestep")) {
 	fParVoltageStep = atoi(sval.c_str());
+	setToolTips();
+      }
+      if(!parName.compare("delay")) {
+	fParDelay = atoi(sval.c_str());
 	setToolTips();
       }
       break;
@@ -74,7 +78,7 @@ void PixTestIV::doTest() {
   fDirectory->cd();
 
   TH1D *h1(0);
-  h1 = bookTH1D("IVcurve","IV curve",fParVoltageMax, 0, fParVoltageMax);
+  h1 = bookTH1D("IVcurve","IV curve",fParVoltageMax/fParVoltageStep+1, 0, fParVoltageMax);
   h1->SetMinimum(0.);
   h1->SetStats(0.);
   setTitles(h1, "U [V]", "I [uA]");
@@ -86,14 +90,17 @@ void PixTestIV::doTest() {
 #else
   LOG(logINFO) << "Starting IV curve measurement...";
   pxar::hvsupply * myHvSupply = new pxar::hvsupply();
+  myHvSupply->hvOn();
   myHvSupply->setCurrentLimit(50);
   
   // Loop over Voltage:
   for(unsigned int voltage = 0; voltage <= fParVoltageMax; voltage += fParVoltageStep) {
     myHvSupply->setVoltage(voltage);
-    mDelay(2000); // Delay 2sec
-    h1->SetBinContent(voltage+1, myHvSupply->getCurrent()*10E6);
+    mDelay(fParDelay*1000); // Delay 2sec
+    h1->Fill(voltage, myHvSupply->getCurrent()*1E6);
   }
+
+  delete myHvSupply;
 #endif
 
   fHistList.push_back(h1);
