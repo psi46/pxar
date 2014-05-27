@@ -9,7 +9,7 @@ ELSEIF(BUILD_HVSUPPLY MATCHES "Keithley2410")
   SET(SOURCE_FILES "hvsupply.keithley2410.cc")
 ELSEIF(BUILD_HVSUPPLY MATCHES "Iseg")
   MESSAGE("-- HV Supply Support: building Iseg support.")
-  SET(SOURCE_FILES "hvsupply.iseg.cc" "rs232.c")
+  SET(SOURCE_FILES "hvsupply.iseg.cc" "rs232.cc")
 ENDIF()
 
 IF(SOURCE_FILES)
