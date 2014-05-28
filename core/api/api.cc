@@ -10,6 +10,7 @@
 #include "dictionaries.h"
 #include <algorithm>
 #include <fstream>
+#include <cmath>
 #include "constants.h"
 #include "config.h"
 
@@ -709,6 +710,12 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+  // No threshold level provided - set threshold to 50%:
+  uint8_t threshold = 50;
+  return api::getThresholdVsDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, threshold, flags, nTriggers);
+}
+
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -737,6 +744,12 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
     return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
   }
 
+  // Check the threshold percentage level provided:
+  if(threshold == 0 || threshold > 100) {
+    LOG(logCRITICAL) << "Threshold level of " << static_cast<int>(threshold) << "% is not possible!";
+    return std::vector< std::pair<uint8_t, std::vector<pixel> > >();
+  }
+
   // Setup the correct _hal calls for this test
   HalMemFnPixelSerial   pixelfn      = &hal::SingleRocOnePixelDacDacScan;
   HalMemFnPixelParallel multipixelfn = &hal::MultiRocOnePixelDacDacScan;
@@ -758,7 +771,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,threshold,nTriggers,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -965,12 +978,24 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
 }
 
 std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+  // No threshold level provided - set threshold to 50%:
+  uint8_t threshold = 50;
+  return getThresholdMap(dacName, dacMin, dacMax, threshold, flags, nTriggers);
+}
+
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
   // Scan the maximum DAC range for threshold:
   uint8_t dacRegister;
   if(!verifyRegister(dacName, dacRegister, dacMax, ROC_REG)) {
+    return std::vector<pixel>();
+  }
+
+  // Check the threshold percentage level provided:
+  if(threshold == 0 || threshold > 100) {
+    LOG(logCRITICAL) << "Threshold level of " << static_cast<int>(threshold) << "% is not possible!";
     return std::vector<pixel>();
   }
 
@@ -992,7 +1017,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel> result = repackThresholdMapData(data, dacMin, dacMax, nTriggers, flags);
+  std::vector<pixel> result = repackThresholdMapData(data, dacMin, dacMax, threshold, nTriggers, flags);
 
   return result;
 }
@@ -1475,12 +1500,13 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
   return result;
 }
 
-std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags) {
+std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
 
-  // Threshold is the 50% efficiency level:
-  uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
+  // Threshold is the the given efficiency level "thresholdlevel"
+  // Using ceiling function to take higher threshold when in doubt.
+  uint16_t threshold = static_cast<uint16_t>(ceil(static_cast<float>(nTriggers)*thresholdlevel/100));
   LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " 
 		   << ((flags&FLAG_RISING_EDGE) == 0 ? "falling":"rising") << " edge";
 
@@ -1542,12 +1568,13 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
 
-  // Threshold is the 50% efficiency level:
-  uint16_t threshold = static_cast<uint16_t>(nTriggers/2);
+  // Threshold is the the given efficiency level "thresholdlevel":
+  // Using ceiling function to take higher threshold when in doubt.
+  uint16_t threshold = static_cast<uint16_t>(ceil(static_cast<float>(nTriggers)*thresholdlevel/100));
   LOG(logDEBUGAPI) << "Scanning for threshold level " << threshold << ", " 
 		   << ((flags&FLAG_RISING_EDGE) == 0 ? "falling":"rising") << " edge";
 
