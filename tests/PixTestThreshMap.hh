@@ -20,10 +20,13 @@ public:
 
 private:
 
+  std::string fParDac;
+  uint8_t fParThresholdLevel;
   uint16_t fParNtrig;
   int 	   fParLoDAC; 
   int 	   fParHiDAC; 
-  bool 	   bBumpBond;
+  bool     fParRisingEdge;
+  bool     fParCalS;
 
   std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
 
