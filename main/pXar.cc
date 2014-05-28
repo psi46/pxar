@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
-    if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
@@ -220,11 +220,8 @@ int main(int argc, char *argv[]){
 
   }
   
-  // -- clean exit (however, you should not get here)
-  LOG(logINFO) << "closing down 1";
-  rfile->Write(); 
-  rfile->Close(); 
-  
+  // -- clean exit (however, you should not get here when running with the GUI)
+  rfile->Close();
   if (api) delete api;
 
   LOG(logINFO) << "pXar: this is the end, my friend";

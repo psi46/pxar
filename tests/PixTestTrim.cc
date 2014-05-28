@@ -548,6 +548,7 @@ void PixTestTrim::setTrimBits(int itrim) {
 
 // ----------------------------------------------------------------------
 void PixTestTrim::output4moreweb() {
+  print("PixTestTrim::output4moreweb()"); 
   list<TH1*>::iterator begin = fHistList.begin();
   list<TH1*>::iterator end = fHistList.end();
   

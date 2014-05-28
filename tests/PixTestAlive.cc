@@ -253,20 +253,8 @@ void PixTestAlive::addressDecodingTest() {
   fApi->setDAC("vcal", fParVcal);
 
   fDirectory->cd();
-  vector<TH2D*> maps;
-  TH2D *h2(0); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("addressDecoding_C%d", iroc); 
-    h2 = bookTH2D(Form("AddressDecoding_C%d", iroc), Form("AddressDecoding_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(-1.); 
-    h2->SetMaximum(+1.); 
-    fHistOptions.insert(make_pair(h2, "colz"));
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    maps.push_back(h2); 
-  }
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
@@ -275,7 +263,7 @@ void PixTestAlive::addressDecodingTest() {
   vector<int> addrPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
-    // -- go for binary displays
+    // -- binary displays
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
 	if (test2[i]->GetBinContent(ix+1, iy+1) < 0) {
@@ -283,7 +271,7 @@ void PixTestAlive::addressDecodingTest() {
 			<< " address decoding error";
 	  ++addrPixel[i];
 	}
-	if (test2[i]->GetBinContent(ix+1, iy+1) < 0) {
+	if (test2[i]->GetBinContent(ix+1, iy+1) <= 0) {
 	  test2[i]->SetBinContent(ix+1, iy+1, 0);
 	} else {
 	  test2[i]->SetBinContent(ix+1, iy+1, 1);
@@ -312,23 +300,43 @@ void PixTestAlive::addressDecodingTest() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::output4moreweb() {
+  print("PixTestAlive::output4moreweb()"); 
+
   list<TH1*>::iterator begin = fHistList.begin();
   list<TH1*>::iterator end = fHistList.end();
-  
+
+  // -- merge mask test into pixelalive map
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    TH2D *h0(0), *h1(0); 
+    for (list<TH1*>::iterator il = begin; il != end; ++il) {
+      string name = (*il)->GetName(); 
+      if (string::npos != name.find(Form("MaskTest_C%d", rocIds[i]))) h0 = (TH2D*)(*il); 
+      if (string::npos != name.find(Form("PixelAlive_C%d", rocIds[i]))) h1 = (TH2D*)(*il); 
+      if (h0 && h1) break;
+    }
+    LOG(logDEBUG) << "merge " << h0->GetName() << " into " << h1->GetName(); 
+    for (int ix = 0; ix < h0->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < h0->GetNbinsY(); ++iy) {
+	if (0 == h0->GetBinContent(ix+1, iy+1)) h1->SetBinContent(ix+1, iy+1, -1.*h1->GetBinContent(ix+1, iy+1));
+      }
+    }
+  }
+
   TDirectory *pDir = gDirectory; 
   gFile->cd(); 
   for (list<TH1*>::iterator il = begin; il != end; ++il) {
     string name = (*il)->GetName(); 
-    PixUtil::replaceAll(name, "PixelAlive", "PixelMap"); 
+    if (string::npos == name.find("_V0"))  continue;
+    if (string::npos != name.find("MaskTest"))  continue;
+    if (string::npos != name.find("AddressDecodingTest")) {
+      PixUtil::replaceAll(name, "AddressDecodingTest", "AddressDecoding"); 
+    }
+    if (string::npos != name.find("PixelAlive")) {
+      PixUtil::replaceAll(name, "PixelAlive", "PixelMap"); 
+    }
     PixUtil::replaceAll(name, "_V0", ""); 
     TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-
-    name = (*il)->GetName(); 
-    PixUtil::replaceAll(name, "PixelAlive", "AddressDecoding"); 
-    PixUtil::replaceAll(name, "_V0", ""); 
-    h = (TH2D*)((*il)->Clone(name.c_str()));
     h->SetDirectory(gDirectory); 
     h->Write(); 
   }
