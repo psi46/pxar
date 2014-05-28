@@ -18,10 +18,8 @@ public:
   void maskTest();
   void addressDecodingTest();
 
-  void dummyAnalysis(); 
-  void output4moreweb();
-
   void doTest(); 
+  void output4moreweb();
 
 private:
 

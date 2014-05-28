@@ -132,11 +132,6 @@ void PixTestTrim::doTest() {
 // ----------------------------------------------------------------------
 void PixTestTrim::trimTest() {
 
-  if (fPixSetup->isDummy()) {
-    dummyAnalysis(); 
-    return;
-  }
-
   bool verbose(false);
   cacheDacs(verbose);
   fDirectory->cd();
@@ -548,91 +543,6 @@ void PixTestTrim::setTrimBits(int itrim) {
       fApi->_dut->updateTrimBits(pix[ipix].column, pix[ipix].row, fTrimBits[ir][pix[ipix].column][pix[ipix].row], rocIds[ir]);
     }
   }
-}
-
-
-// ----------------------------------------------------------------------
-void PixTestTrim::dummyAnalysis() {
-  vector<string> names;
-  names.push_back("TrimBit7"); 
-  names.push_back("TrimBit11"); 
-  names.push_back("TrimBit13"); 
-  names.push_back("TrimBit15"); 
-  TH1D *h1(0); 
-  TH2D *h2(0); 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    for (unsigned int in = 0; in < names.size(); ++in) {
-      fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
-      h1 = bookTH1D(Form("%s_C%d", names[in].c_str(), iroc), Form("%s_C%d", names[in].c_str(), rocIds[iroc]), 256, 0., 256.); 
-      h1->SetMinimum(0.); 
-      h1->SetDirectory(fDirectory); 
-      setTitles(h1, "delta(Thr)", "pixels"); 
-      
-      for (int ix = 0; ix < 52; ++ix) {
-	for (int iy = 0; iy < 80; ++iy) {
-	  h1->Fill(gRandom->Gaus(60., 2.)); 
-	}
-      }
-      
-      fHistList.push_back(h1); 
-    }
-  }
-
-  string name("TrimMap");
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    fHistOptions.insert(make_pair(h2, "colz"));
-
-    double x; 
-    for (int ix = 0; ix < 52; ++ix) {
-      for (int iy = 0; iy < 80; ++iy) {
-	x = gRandom->Gaus(7., 3.);
-	if (x < 0) x = 0.;
-	if (x > 15) x = 15.;
-	h2->SetBinContent(ix+1, iy+1, static_cast<int>(x)); 
-      }
-    }
-    
-    fHistList.push_back(h2); 
-  }
-
-
-  name = "TrimThr5";
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    fHistOptions.insert(make_pair(h2, "colz"));
-
-    for (int ix = 0; ix < 52; ++ix) {
-      for (int iy = 0; iy < 80; ++iy) {
-	h2->SetBinContent(ix+1, iy+1, static_cast<int>(gRandom->Gaus(40., 2.))); 
-      }
-    }
-    h1 =  distribution(h2, 256, 0., 256.);
-    
-    fHistList.push_back(h2); 
-    fHistList.push_back(h1); 
-  }
-
-
-
-  TH2D *h = (TH2D*)(*fHistList.begin());
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
-  LOG(logINFO) << "PixTestTrim::dummyAnalysis() done";
-
-
-
-
 }
 
 

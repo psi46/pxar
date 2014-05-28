@@ -39,10 +39,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderL, fBorderR, fBorderT, fBorderB));
 
-  Pixel_t colDarkSeaGreen;    
-  gClient->GetColorByName("DarkSeaGreen", colDarkSeaGreen);
   TGTabElement *tabel = fGui->getTabs()->GetTabTab(fTabName.c_str());
-  tabel->ChangeBackground(colDarkSeaGreen);
+  tabel->ChangeBackground(fGui->fDarkSeaGreen);
 
   TGTextEntry *te(0); 
   TGLabel *tl(0); 
@@ -739,3 +737,39 @@ void PixParTab::updateSelection() {
   }
 
 }
+
+
+// // ----------------------------------------------------------------------
+// void PixParTab::rocUp() {
+//   TGButton *btn = (TGButton *) gTQSender;
+//   int id(-1); 
+//   id = btn->WidgetId();
+//   if (-1 == id) {
+//     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+//     return; 
+//   }
+  
+//   if (id > 0) {
+//     ((TGTextEntry*)(fParTextEntries[fParIds[id-1]]))->SetFocus();
+//   } else {
+//     ((TGTextEntry*)(fParTextEntries[fParIds[fParIds.size()-1]]))->SetFocus();
+//   }
+// }
+
+// // ----------------------------------------------------------------------
+// void PixParTab::rocDown() {
+//   TGButton *btn = (TGButton *) gTQSender;
+//   int id(-1); 
+//   id = btn->WidgetId();
+//   if (-1 == id) {
+//     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+//     return; 
+//   }
+
+//   string sdac = fRocTextMap[id]; 
+//   if (id < static_cast<int>(fParIds.size()) - 1) {
+//     ((TGTextEntry*)(fRocTextEntries[sdac]))->SetFocus();
+//   } else {
+//     ((TGTextEntry*)(fParTextEntries[fParIds[0]]))->SetFocus();
+//   }
+// }

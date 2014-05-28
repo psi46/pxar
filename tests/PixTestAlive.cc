@@ -111,10 +111,6 @@ PixTestAlive::~PixTestAlive() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
-  if (fPixSetup->isDummy()) {
-    dummyAnalysis(); 
-    return;
-  }
 
   fDirectory->cd();
   PixTest::update(); 
@@ -195,10 +191,6 @@ void PixTestAlive::aliveTest() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::maskTest() {
-  if (fPixSetup->isDummy()) {
-    dummyAnalysis(); 
-    return;
-  }
 
   cacheDacs();
   fDirectory->cd();
@@ -251,10 +243,6 @@ void PixTestAlive::maskTest() {
 
 // ----------------------------------------------------------------------
 void PixTestAlive::addressDecodingTest() {
-  if (fPixSetup->isDummy()) {
-    dummyAnalysis(); 
-    return;
-  }
 
   cacheDacs();
   fDirectory->cd();
@@ -321,40 +309,6 @@ void PixTestAlive::addressDecodingTest() {
   LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
   LOG(logINFO) << "number of address-decoding pixels (per ROC): " << addrPixelString;
 }
-
-
-
-
-// ----------------------------------------------------------------------
-void PixTestAlive::dummyAnalysis() {
-  string name("PixelAlive"); 
-  TH2D *h2(0); 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    fHistOptions.insert(make_pair(h2, "colz"));
-    
-    for (int ix = 0; ix < 52; ++ix) {
-      for (int iy = 0; iy < 80; ++iy) {
-	h2->SetBinContent(ix+1, iy+1, fParNtrig); 
-      }
-    }
-
-    fHistList.push_back(h2); 
-  }
-
-  TH2D *h = (TH2D*)(*fHistList.begin());
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
-  LOG(logINFO) << "PixTestAlive::dummyAnalysis() done";
-
-}
-
 
 // ----------------------------------------------------------------------
 void PixTestAlive::output4moreweb() {

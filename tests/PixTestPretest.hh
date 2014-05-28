@@ -20,7 +20,6 @@ public:
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
-  void setPhRange();
 
 private:
 

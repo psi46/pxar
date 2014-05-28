@@ -13,14 +13,13 @@ public:
   void setToolTips();
   void bookHist(std::string); 
 
-  void doTest(); 
-  void dummyAnalysis(); 
-  void output4moreweb();
-  
   void runCommand(std::string command); 
   void thrMap(); 
   void fitS(); 
   void scurves(); 
+
+  void doTest(); 
+  void output4moreweb();
 
 private:
 

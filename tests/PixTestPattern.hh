@@ -28,7 +28,7 @@ private:
 	int     fParNtrig;
 	bool	fParTrigLoop;
 	int     fParPeriod;
-	int		fParSeconds;
+	int	fParSeconds;
 	bool	fTestAllPixels;
 	bool	fUnMaskAllPixels;
 	bool	fPatternFromFile;
