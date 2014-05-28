@@ -72,3 +72,20 @@ measure             button
 fit                 button
 save                button
 
+-- Pattern
+ntrig         0
+trigloop      1
+period        -1
+seconds       1
+patternfromfile     1
+resultsonfile       1
+binaryoutput        0
+outfilename      defaultdata.dat
+testallpixels 0
+maskallpixels 0
+resettodefault  button
+
+-- PhOptimization
+ntrig 10
+singlePix 1
+
