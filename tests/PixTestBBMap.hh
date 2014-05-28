@@ -12,7 +12,9 @@ public:
   virtual bool setParameter(std::string parName, std::string sval); 
   void init(); 
   void setToolTips();
+
   void doTest(); 
+  void output4moreweb();
 
 private:
   int          fParNtrig; 

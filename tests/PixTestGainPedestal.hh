@@ -14,12 +14,13 @@ public:
   void bookHist(std::string); 
 
   void runCommand(std::string command); 
-  void doTest(); 
-  void output4moreweb();
   
   void measure();
   void fit(); 
   void saveGainPedestalParameters(); 
+
+  void doTest(); 
+  void output4moreweb();
 
 private:
 

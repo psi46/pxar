@@ -103,10 +103,6 @@ PixTestGainPedestal::~PixTestGainPedestal() {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::doTest() {
-  if (fPixSetup->isDummy()) {
-    dummyAnalysis(); 
-    return;
-  }
 
   fDirectory->cd();
   PixTest::update(); 

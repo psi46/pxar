@@ -144,3 +144,9 @@ void PixTestBBMap::doTest() {
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
 
 }
+
+
+// ----------------------------------------------------------------------
+void PixTestBBMap::output4moreweb() {
+
+}

@@ -70,8 +70,6 @@ public:
   void bookHist(std::string name);
   /// book a minimal tree with pixel events
   void bookTree();
-  /// to create the histograms even without working pxar/core
-  virtual void dummyAnalysis(); 
   /// to be filled per test
   virtual void doAnalysis();
   /// function connected to "DoTest" button of PixTab
