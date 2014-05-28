@@ -59,10 +59,11 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       }
 
       if (!parName.compare("adjustvcal")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
 	fAdjustVcal = atoi(sval.c_str()); 
 	setToolTips();
       }
-      ;
 
       setToolTips();
       break;
@@ -161,8 +162,8 @@ void PixTestScurves::scurves() {
 
   string command(fParDac);
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
-  if (fAdjustVcal && !command.compare("vthrcomp")) {
-    cout << "adjustVcal()" << endl;
+  if (!command.compare("vthrcomp") && fAdjustVcal) {
+    LOG(logINFO) << "adjusting VCAL to have VthrComp average threshold at default VthrComp";
     adjustVcal(); 
   }
   
@@ -327,7 +328,6 @@ void PixTestScurves::adjustVcal() {
       PixTest::update();      
       
       int vcthr = fApi->_dut->getDAC(rocIds[iroc], "vthrcomp");
-      cout << "vcthr = " << vcthr << endl;
       TH1D *h0 = hv[iroc]->ProjectionY("h0_px", vcthr, vcthr+1); 
       int vcalthr = h0->FindFirstBinAbove(0.5*ntrig); 
       delete h0; 
