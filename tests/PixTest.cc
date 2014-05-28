@@ -1497,3 +1497,34 @@ void PixTest::saveTbParameters() {
   LOG(logDEBUG) << "save Tb parameters"; 
   fPixSetup->getConfigParameters()->writeTbParameterFile();
 }
+
+// ----------------------------------------------------------------------
+vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
+  vector<vector<pair<int, int> > > deadPixels;
+  vector<pair<int, int> > deadPixelsRoc;
+  
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  vector<TH2D*> testEff = efficiencyMaps("deadPixels", ntrig);
+  std::pair<int, int> badPix;
+  int eff(0);
+  
+  for (unsigned int i = 0; i < testEff.size(); ++i) {
+    deadPixelsRoc.clear();
+    for(int r=0; r<80; r++){
+      for(int c=0; c<52; c++){
+	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
+	if (eff<ntrig){
+	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig;
+	  badPix.first = c;
+	  badPix.second = r;
+	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
+	  deadPixelsRoc.push_back(badPix);
+	}
+      }
+    }
+    deadPixels.push_back(deadPixelsRoc);
+  }
+  
+  return deadPixels;
+}

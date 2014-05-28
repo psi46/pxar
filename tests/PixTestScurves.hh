@@ -17,6 +17,7 @@ public:
   void thrMap(); 
   void fitS(); 
   void scurves(); 
+  void adjustVcal();
 
   void doTest(); 
   void output4moreweb();
@@ -24,7 +25,7 @@ public:
 private:
 
   std::string fParDac;
-  int         fParNtrig, fParNpix, fParDacLo, fParDacHi;
+  int         fParNtrig, fParNpix, fParDacLo, fParDacHi, fAdjustVcal;
 
   ClassDef(PixTestScurves, 1)
 

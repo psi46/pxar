@@ -95,6 +95,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       } else {
 	tcheck->SetState(kButtonUp);
       }
+      string sTitle = tcheck->GetTitle();
+      fTest->setParameter(sTitle,string(tcheck->IsDown()?"1":"0")) ;
       tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
       continue;
     }
