@@ -292,18 +292,27 @@ cdef class PyPxarCore:
         r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row, check if indices make sense, currently not running!
-        #PYXAR expects a matrix for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dac1max-dac1min+1, dac2max-dac2min+1)
-        for i in range(self.dut.n_rocs):
-            hits.append(numpy.zeros(s))
+        #This currently only returns one single pixel! The rest is lost...
         for d in xrange(r.size()):
-            print d
-            for pix in xrange(r[d].second.second.size()):
-                print r[d].second.second[pix].value
-                hits[r[d].second.second[pix].roc_id][r[d].second.second[pix].column][r[d].second.second[pix].row][d][d] = r[d].second.second[pix].value
+            if r[d].second.second.size() > 0:
+                hits.append(r[d].second.second[0].value)
+            else:
+                hits.append(0)
         return numpy.array(hits)
-#    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
-#    def vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getThresholdVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+
+    def getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+        cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
+        r = self.thisptr.getPulseheightVsDACDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers)
+        hits = []
+        #TODO not hardcode col, row, check if indices make sense, currently not running!
+        #This currently only returns one single pixel! The rest is lost...
+        for d in xrange(r.size()):
+            if r[d].second.second.size() > 0:
+                hits.append(r[d].second.second[0].value)
+            else:
+                hits.append(0)
+        return numpy.array(hits)
+
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getPulseheightMap(flags, nTriggers)
