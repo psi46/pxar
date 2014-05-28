@@ -84,6 +84,9 @@ public:
   void saveTrimBits(); 
   /// save TB parameters to file
   void saveTbParameters(); 
+  /// create vector (per ROC) of vector of dead pixels
+  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
+  
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
