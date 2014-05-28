@@ -80,12 +80,13 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       tset->SetBackgroundColor(fGui->fDarkSalmon);
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+      ++cnt;
       continue;
     }
 
     if (string::npos != amap[i].second.find("checkbox")) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
-      tcheck = new TGCheckButton(fV2, amap[i].first.c_str(), 1);
+      tcheck = new TGCheckButton(hFrame, amap[i].first.c_str(), cnt);
       hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN)); 
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
       if (string::npos != amap[i].second.find("(1)")) {
@@ -98,6 +99,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       string sTitle = tcheck->GetTitle();
       fTest->setParameter(sTitle,string(tcheck->IsDown()?"1":"0")) ;
       tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
+      ++cnt;
       continue;
     }
 
