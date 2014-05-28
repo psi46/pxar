@@ -275,7 +275,7 @@ void PixTestTrim::trimTest() {
 
   // -- set trim bits
   int correction = 4;
-  int NTRIG(5); 
+  int NTRIG(fParNtrig); 
   vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 200, 1); 
   vector<TH1*> thro = mapsWithString(thr2, "thr_");
   double maxthr = getMaximumThreshold(thro);
@@ -334,7 +334,7 @@ void PixTestTrim::trimTest() {
     fHistOptions.insert(make_pair(h2, "colz"));
   }
 
-  vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", 5, fParVcal-20, fParVcal+20, 3); 
+  vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", fParNtrig, fParVcal-20, fParVcal+20, 3); 
   string trimMeanString, trimRmsString; 
   for (unsigned int i = 0; i < thrF.size(); ++i) {
     hname = thrF[i]->GetName();
@@ -556,6 +556,7 @@ void PixTestTrim::output4moreweb() {
   gFile->cd(); 
   for (list<TH1*>::iterator il = begin; il != end; ++il) {
     string name = (*il)->GetName(); 
+
     if (string::npos != name.find("TrimBit7")) {
       PixUtil::replaceAll(name, "_V0", ""); 
       TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
@@ -591,23 +592,23 @@ void PixTestTrim::output4moreweb() {
       h->Write(); 
     }
 
-    if (string::npos != name.find("dist_TrimThr5")) {
-      PixUtil::replaceAll(name, "dist_", ""); 
-      PixUtil::replaceAll(name, "TrimThr5", "VcalThresholdMap"); 
-      PixUtil::replaceAll(name, "_V0", "Distribution"); 
-      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-    } else if (string::npos != name.find("TrimThr5")) {
-      PixUtil::replaceAll(name, "TrimThr5", "VcalThresholdMap"); 
+    if (string::npos != name.find("thr_TrimThrFinal_vcal")) {
+      PixUtil::replaceAll(name, "thr_TrimThrFinal_vcal", "VcalThresholdTrimmedMap"); 
       PixUtil::replaceAll(name, "_V0", ""); 
       TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
       h->SetDirectory(gDirectory); 
       h->Write(); 
     }
 
+    if (string::npos != name.find("dist_thr_TrimThrFinal_vcal")) {
+      PixUtil::replaceAll(name, "_V0", "Distribution"); 
+      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
+      h->SetDirectory(gDirectory); 
+      h->Write(); 
+    }
 
 
+    // VcalThresholdMap_C{ChipNo}Distribution
 
   }
   pDir->cd(); 
