@@ -60,6 +60,13 @@ public:
   void tbYellow();
   void powerYellow();
 
+//   void rocDown(); 
+//   void rocUp(); 
+//   void tbmDown(); 
+//   void tbmUp(); 
+//   void tbDown(); 
+//   void tbUp(); 
+
 
 protected: 
   
