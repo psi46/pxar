@@ -126,8 +126,8 @@ void PixTestCurrentVsDac::doTest() {
       uint8_t dacval = fApi->_dut->getDAC( roc, fParDAC );
       
       // loop over DAC
-      
-      for( int idac = 0; idac < 256; ++idac ) {
+      int dacmax = fApi->getDACRange(fParDAC);
+      for( int idac = 0; idac <= dacmax; ++idac ) {
 	
 	fApi->setDAC( fParDAC, idac, roc );
 	// delay

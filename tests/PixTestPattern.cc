@@ -21,7 +21,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null.dat"), fPixelsFromFile(1), fTestAllPixels(0), fUnMaskAllPixels(0)
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParTrigLoop(false), fParPeriod(0), fParSeconds(0), fTestAllPixels(false), fUnMaskAllPixels(false), fPatternFromFile(false), fPixelsFromFile(true), fResultsOnFile(true), fBinOut(false), fFileName("null.dat") 
 {
 	init();
 	PixTest::init();

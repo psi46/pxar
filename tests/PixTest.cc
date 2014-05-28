@@ -142,8 +142,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   string type("hits"); 
   if (2 == ihit) type = string("pulseheight"); 
-  banner(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d %s",  
-	      dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, type.c_str())); 
+  print(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d %s flags = %d (plus default)",  
+	     dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, type.c_str(), flag)); 
 
   vector<TH1*>          rmaps; 
   vector<vector<TH1*> > maps; 
@@ -178,11 +178,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 }
 
 // ----------------------------------------------------------------------
-vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig) {
-
-  //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
-  cout << "FLAGS = " << static_cast<unsigned int>(FLAGS) << endl;
+vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
 
   vector<pixel> results;
 
@@ -1002,12 +998,6 @@ int PixTest::getIdxFromId(int id) {
 
 
 // ----------------------------------------------------------------------
-void PixTest::dummyAnalysis() {
-  
-}
-
-
-// ----------------------------------------------------------------------
 void PixTest::output4moreweb() {
 
 }
@@ -1058,12 +1048,15 @@ void PixTest::banner(string what, TLogLevel log) {
   LOG(log) << "   ----------------------------------------------------------------------";
 }
 
+// ----------------------------------------------------------------------
+void PixTest::print(string what, TLogLevel log) {
+  LOG(log) << "---> " << what; 
+}
+
 
 // ----------------------------------------------------------------------
 void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag) {
   uint16_t FLAGS = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-
-  LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   int range = dacmax - dacmin + 1; 
   int daclo1 = dacmin; 
@@ -1076,7 +1069,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
   fNtrig = ntrig; 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  if (rocIds.size() > 1 && ntrig > trgevts) {
+  if (0 && rocIds.size() > 1 && ntrig > trgevts) {
     LOG(logWARNING) << "   too many triggers requested, resetting ntrig = " << trgevts; 
     fNtrig = trgevts; 
   }
@@ -1094,7 +1087,9 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
     //     cout << "pol1 " << fPhErrP0[0] << " .. " << fPhErrP1[0] << endl;
   }
 
-  LOG(logDEBUG) << "scanning part 1: " << daclo1 << " .. " << dachi1; 
+  daclo1 = dacmin; 
+  dachi1 = dacmax; 
+  
   while (!done){
     try{
       if (1 == ihit) {
@@ -1131,6 +1126,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
   }
 
 
+  if (0) {
   results.clear();
   done = false;
   LOG(logDEBUG) << "scanning part 2: " << daclo2 << " .. " << dachi2; 
@@ -1169,6 +1165,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 	maps[getIdxFromId(iroc)][ic*80+ir]->SetBinError(dac, (fPhErrP0[getIdxFromId(iroc)] + fPhErrP1[getIdxFromId(iroc)]*dac)*val);
       }
     }
+  }
   }
 }
 
@@ -1472,4 +1469,62 @@ void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int
   fHistList.push_back(h1);
   copy(maps.begin(), maps.end(), back_inserter(fHistList));
 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::saveDacs() {
+  LOG(logINFO) << "Write DAC parameters to file";
+
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
+  }
+
+}
+
+// ----------------------------------------------------------------------
+void PixTest::saveTrimBits() {
+  LOG(logDEBUG) << "save Trim parameters"; 
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fPixSetup->getConfigParameters()->writeTrimFile(rocs[iroc], fApi->_dut->getEnabledPixels(rocs[iroc])); 
+  }
+  
+}
+
+// ----------------------------------------------------------------------
+void PixTest::saveTbParameters() {
+  LOG(logDEBUG) << "save Tb parameters"; 
+  fPixSetup->getConfigParameters()->writeTbParameterFile();
+}
+
+// ----------------------------------------------------------------------
+vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
+  vector<vector<pair<int, int> > > deadPixels;
+  vector<pair<int, int> > deadPixelsRoc;
+  
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  vector<TH2D*> testEff = efficiencyMaps("deadPixels", ntrig);
+  std::pair<int, int> badPix;
+  int eff(0);
+  
+  for (unsigned int i = 0; i < testEff.size(); ++i) {
+    deadPixelsRoc.clear();
+    for(int r=0; r<80; r++){
+      for(int c=0; c<52; c++){
+	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
+	if (eff<ntrig){
+	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig;
+	  badPix.first = c;
+	  badPix.second = r;
+	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
+	  deadPixelsRoc.push_back(badPix);
+	}
+      }
+    }
+    deadPixels.push_back(deadPixelsRoc);
+  }
+  
+  return deadPixels;
 }

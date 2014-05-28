@@ -13,19 +13,19 @@ public:
   void setToolTips();
   void bookHist(std::string); 
 
-  void doTest(); 
-  void dummyAnalysis(); 
-  void output4moreweb();
-  
   void runCommand(std::string command); 
   void thrMap(); 
   void fitS(); 
   void scurves(); 
+  void adjustVcal();
+
+  void doTest(); 
+  void output4moreweb();
 
 private:
 
   std::string fParDac;
-  int         fParNtrig, fParNpix, fParDacLo, fParDacHi;
+  int         fParNtrig, fParNpix, fParDacLo, fParDacHi, fAdjustVcal;
 
   ClassDef(PixTestScurves, 1)
 

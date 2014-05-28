@@ -9,7 +9,7 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "0.9.11")
+SET(PXAR_VERSION "0.9.12")
 SET(PXAR_FW_VERSION "2.21")
 
 
@@ -185,8 +185,15 @@ INCLUDE_DIRECTORIES(core/api core/utils)
 # Always build main pxar API library;
 ADD_SUBDIRECTORY(core)
 
+# init the variable that will later hold the devices library name we might link against
+SET(DEVICES_LINK_LIBRARY "")
 # Add external devices directory (HV Power supplies)
 ADD_SUBDIRECTORY(devices)
+IF(DEVICES)
+  ADD_DEFINITIONS(-DBUILD_HV)
+  SET(DEVICES_LINK_LIBRARY devices)
+  INCLUDE_DIRECTORIES(devices)
+ENDIF(DEVICES)
 
 # full UI and test suite (requires ROOT)
 IF(BUILD_pxarui)

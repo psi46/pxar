@@ -47,33 +47,33 @@ bool PixTestDacScanThr::setParameter( string parName, string sval )
 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
 
-      if( !parName.compare( "Ntrig" ) ) {
+      if( !parName.compare( "ntrig" ) ) {
 	fParNtrig = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
 		     << "<- from sval = " << sval;
       }
-      if( !parName.compare( "DAC" ) ) {
+      if( !parName.compare( "dac" ) ) {
 	fParDAC = sval;
 	LOG(logDEBUG) << "  setting fParDAC  ->" << fParDAC
 		     << "<- from sval = " << sval;
       }
-      if( !parName.compare( "DACLO" ) ) {
+      if( !parName.compare( "daclo" ) ) {
 	fParLoDAC = atoi(sval.c_str());
 	LOG(logDEBUG) << "  setting fParLoDAC  ->" << fParLoDAC
 		     << "<- from sval = " << sval;
       }
-      if( !parName.compare( "DACHI" ) ) {
+      if( !parName.compare( "dachi" ) ) {
 	fParHiDAC = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParHiDAC  ->" << fParHiDAC
 		     << "<- from sval = " << sval;
       }
-      if( !parName.compare( "CALS" ) ) {
+      if( !parName.compare( "cals" ) ) {
 	fParCals = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fParCals  ->" << fParCals
 		     << "<- from sval = " << sval;
       }
 
-      if( !parName.compare( "PIX1" ) ) {
+      if( !parName.compare( "pix1" ) ) {
 	s1 = sval.find( "," );
 	if( string::npos != s1 ) {
 	  string str1 = sval.substr(0, s1);
@@ -158,8 +158,11 @@ void PixTestDacScanThr::doTest()
 
   fApi->_dut->testAllPixels(false);
 
-  if( fPIX[0].first > -1 )
-    fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true );
+  //coordinates of the last pair selected
+  int32_t col = fPIX[fPIX.size()-1].first;		
+  int32_t row = fPIX[fPIX.size()-1].second;
+  if( col > -1 )
+    fApi->_dut->testPixel( col, row, true );
 
   // DACs:
 
@@ -214,9 +217,9 @@ void PixTestDacScanThr::doTest()
   for( size_t roc = 0; roc < nRocs; ++roc ) {
 
     h1 = new TH1D( Form( "PH_vs_%s_c%02d_r%02d_C%02d",
-			 fParDAC.c_str(), fPIX[0].first, fPIX[0].second, int(roc) ),
+			 fParDAC.c_str(), col, row, int(roc) ),
 		   Form( "PH vs %s c%02d r%02d C%02d",
-			 fParDAC.c_str(), fPIX[0].first, fPIX[0].second, int(roc) ),
+			 fParDAC.c_str(), col, row, int(roc) ),
 		   256, -0.5, 255.5 );
     h1->SetStats(0);
     h1->SetMinimum(0);
@@ -243,8 +246,8 @@ void PixTestDacScanThr::doTest()
       uint8_t roc = vpix[ipx].roc_id;
 
       if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+	  vpix[ipx].column == col &&
+	  vpix[ipx].row == row ) {
 	h1 = hsts.at(roc);
 	h1->Fill( idac, thr );
       } // valid

@@ -46,12 +46,12 @@ bool PixTestSetCalDel::setParameter(string parName, string sval) {
     if (fParameters[i].first == parName) {
       found = true;
       sval.erase( remove( sval.begin(), sval.end(), ' '), sval.end() );
-      if( !parName.compare("Ntrig") ) {
+      if( !parName.compare("ntrig") ) {
 	fParNtrig = atoi( sval.c_str() );
 	LOG(logDEBUG) << " PixTestSetCalDel setting fParNtrig  ->" << fParNtrig
 		      << "<- from sval = " << sval;
       }
-      if( !parName.compare("PIX1") ) {
+      if( !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if( string::npos != s1) {
 	  str1 = sval.substr(0, s1);

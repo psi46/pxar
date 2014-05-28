@@ -20,13 +20,13 @@ public:
   int adjustVtrim(); 
   std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax); 
   void setTrimBits(int itrim = -1); 
+
   void doTest(); 
-  void dummyAnalysis(); 
   void output4moreweb();
 
 private:
 
-  int     fParVcal, fParNtrig, fParVthrCompLo, fParVthrCompHi, fParVcalLo, fParVcalHi; 
+  int     fParVcal, fParNtrig; 
   std::vector<std::pair<int, int> > fPIX; 
   int fTrimBits[16][52][80]; 
   

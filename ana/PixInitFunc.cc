@@ -155,9 +155,11 @@ TF1* PixInitFunc::gpTanH(TH1 *h) {
   }
 
   f->SetParameter(0, 0.002);
-  f->SetParameter(1, 0.8);
-  f->SetParameter(2, 0.6*h->GetMaximum());
-  f->SetParameter(3, 0.3*h->GetMaximum());
+  f->SetParameter(1, 1.0);
+  double middle = h->GetMaximum() - h->GetMinimum();
+  double step = h->GetMaximum() - middle; 
+  f->SetParameter(2, middle);
+  f->SetParameter(3, step);
 
   return f;
 }

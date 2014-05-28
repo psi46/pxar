@@ -70,8 +70,6 @@ public:
   void bookHist(std::string name);
   /// book a minimal tree with pixel events
   void bookTree();
-  /// to create the histograms even without working pxar/core
-  virtual void dummyAnalysis(); 
   /// to be filled per test
   virtual void doAnalysis();
   /// function connected to "DoTest" button of PixTab
@@ -80,6 +78,15 @@ public:
   virtual void runCommand(std::string command); 
   /// create output suitable for moreweb
   virtual void output4moreweb();
+  /// save DACs to file
+  void saveDacs(); 
+  /// save trim bits to file
+  void saveTrimBits(); 
+  /// save TB parameters to file
+  void saveTbParameters(); 
+  /// create vector (per ROC) of vector of dead pixels
+  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
+  
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
@@ -101,13 +108,13 @@ public:
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with hit maps
-  std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10); 
+  std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
   /// result controls the amount of information (histograms) returned
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
   /// flag allows to pass in other flags
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
-			       int result = 1, int ihit = 1, int flag = 0); 
+			       int result = 1, int ihit = 1, int flag = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -141,6 +148,7 @@ public:
   std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
 
   /// produce eye-catching printouts
+  void print(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   

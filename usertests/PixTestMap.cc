@@ -38,12 +38,12 @@ bool PixTestMap::setParameter( string parName, string sval )
 
       found = true;
 
-      if( !parName.compare("Ntrig") ) {
+      if( !parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
 	setToolTips();
       }
 
-      if( !parName.compare("Vcal") ) {
+      if( !parName.compare("vcal") ) {
 	fParVcal = atoi(sval.c_str() );
 	setToolTips();
       }

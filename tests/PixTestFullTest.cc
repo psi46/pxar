@@ -76,7 +76,6 @@ void PixTestFullTest::bookHist(string name) {
 //----------------------------------------------------------
 PixTestFullTest::~PixTestFullTest() {
   LOG(logDEBUG) << "PixTestFullTest dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -84,21 +83,22 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
+  fPixSetup->setMoreWebCloning(true);
 
   vector<string> suite;
-  suite.push_back("pretest"); 
   suite.push_back("alive"); 
-  suite.push_back("scurves");
+  suite.push_back("phoptimization"); 
   suite.push_back("bumpbonding"); 
+  suite.push_back("scurves");
   suite.push_back("trim"); 
   suite.push_back("gainpedestal"); 
+
   PixTest *t(0); 
   
   PixTestFactory *factory = PixTestFactory::instance(); 
   for (unsigned int i = 0; i < suite.size(); ++i) {
     t =  factory->createTest(suite[i], fPixSetup);
     t->doTest(); 
-    PixTest::update(); 
     delete t; 
   }
 

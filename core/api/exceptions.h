@@ -6,6 +6,7 @@
 #define PXAR_EXCEPTIONS_H
 
 #include <exception>
+#include <string>
 
 namespace pxar {
 

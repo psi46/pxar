@@ -37,10 +37,10 @@ bool PixTestSetPh::setParameter( string parName, string sval )
 
       found = true;
 
-      if( !parName.compare( "Ntrig" ) )
+      if( !parName.compare( "ntrig" ) )
 	fParNtrig = atoi( sval.c_str() );
 
-      if( !parName.compare( "PIX1" ) ) {
+      if( !parName.compare( "pix1" ) ) {
 	string::size_type s1 = sval.find( "," );
 	if( string::npos != s1 ) {
 	  string str1 = sval.substr(0, s1);
@@ -110,7 +110,7 @@ void PixTestSetPh::doTest()
     return;
   }
 
-  if( fPIX[0].first < 0 ) {
+  if( fPIX[fPIX.size()-1].first < 0 ) {
     LOG(logWARNING) << "PixTestSetCalDel: no valid pixel defined, return";
     return;
   }
@@ -135,7 +135,12 @@ void PixTestSetPh::doTest()
 
   fApi->_dut->testAllPixels(false);
 
-  fApi->_dut->testPixel( fPIX[0].first, fPIX[0].second, true );
+  //coordinates of the last pair = presently set pixel
+  int32_t col = fPIX[fPIX.size()-1].first;		
+  int32_t row = fPIX[fPIX.size()-1].second;
+
+  if( col > -1)
+    fApi->_dut->testPixel( col, row, true );
 
   size_t nRocs = fPixSetup->getConfigParameters()->getNrocs();
 
@@ -192,7 +197,7 @@ void PixTestSetPh::doTest()
   if( too_much ) {
     LOG(logINFO)
       << "[SetPh] Cannot find working Vcal for pixel "
-      << fPIX[0].first << "," << fPIX[0].second
+      << fPIX[fPIX.size()-1].first << "," << fPIX[fPIX.size()-1].second
       << ". Please use other pixel or re-trim to lower threshold";
     return;
   }
@@ -224,10 +229,10 @@ void PixTestSetPh::doTest()
 
     h1 = new TH1D( Form( "PH_vs_%s_at_Vcal_%2d_c%02d_r%02d_C%02d",
 			 dacName.c_str(), min_vcal[roc],
-			 fPIX[0].first, fPIX[0].second, int(roc) ),
+			 col, row, int(roc) ),
 		   Form( "PH vs %s at Vcal %2d c%02d r%02d C%02d",
 			 dacName.c_str(), min_vcal[roc],
-			 fPIX[0].first, fPIX[0].second, int(roc) ),
+			 col, row, int(roc) ),
 		   256, -0.5, 255.5 );
     h1->SetMinimum(0);
     h1->SetMaximum(256);
@@ -251,8 +256,8 @@ void PixTestSetPh::doTest()
       uint8_t roc = vpix[ipx].roc_id;
 
       if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+	  vpix[ipx].column == col &&
+	  vpix[ipx].row == row ) {
 	h1 = hmin.at(roc);
 	h1->Fill( idac, vpix[ipx].value ); // already averaged
       } // valid
@@ -282,10 +287,10 @@ void PixTestSetPh::doTest()
 
     h1 = new TH1D( Form( "PH_vs_%s_at_Vcal_%2d_c%02d_r%02d_C%02d",
 			 dacName.c_str(), max_vcal,
-			 fPIX[0].first, fPIX[0].second, int(roc) ),
+			 col, row, int(roc) ),
 		   Form( "PH vs %s at Vcal %2d c%02d r%02d C%02d",
 			 dacName.c_str(), max_vcal,
-			 fPIX[0].first, fPIX[0].second, int(roc) ),
+			 col, row, int(roc) ),
 		   256, -0.5, 255.5 );
     h1->SetMinimum(0);
     h1->SetMaximum(256);
@@ -309,8 +314,8 @@ void PixTestSetPh::doTest()
       uint8_t roc = vpix[ipx].roc_id;
 
       if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+	  vpix[ipx].column == col &&
+	  vpix[ipx].row == row ) {
 	h1 = hmax.at(roc);
 	h1->Fill( idac, vpix[ipx].value ); // already averaged
       } // valid
@@ -393,10 +398,10 @@ void PixTestSetPh::doTest()
 
     h1 = new TH1D( Form( "PH_vs_%s_at_Vcal_%2d_c%02d_r%02d_C%02d",
 			 dacName.c_str(), max_vcal,
-			 fPIX[0].first, fPIX[0].second, int(roc) ),
+			 col, row, int(roc) ),
 		   Form( "PH vs %s at Vcal %2d c%02d r%02d C%02d",
 			 dacName.c_str(), max_vcal,
-			 fPIX[0].first, fPIX[0].second, int(roc) ),
+			 col, row, int(roc) ),
 		   256, -0.5, 255.5 );
     h1->SetMinimum(0);
     h1->SetMaximum(256);
@@ -420,8 +425,8 @@ void PixTestSetPh::doTest()
       uint8_t roc = vpix[ipx].roc_id;
 
       if( roc < nRocs &&
-	  vpix[ipx].column == fPIX[0].first &&
-	  vpix[ipx].row == fPIX[0].second ) {
+	  vpix[ipx].column == col &&
+	  vpix[ipx].row == row ) {
 	h1 = href.at(roc);
 	h1->Fill( idac, vpix[ipx].value ); // already averaged
       } // valid

@@ -18,7 +18,7 @@ using namespace pxar;
 ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
-PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1) {
+PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fAdjustVcal(1) {
   PixTest::init();
   init(); 
 }
@@ -57,6 +57,12 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 	fParDacHi = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParDacHi  ->" << fParDacHi << "<- from sval = " << sval;
       }
+
+      if (!parName.compare("adjustvcal")) {
+	fAdjustVcal = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      ;
 
       setToolTips();
       break;
@@ -97,7 +103,6 @@ void PixTestScurves::bookHist(string name) {
   fDirectory->cd(); 
 
   LOG(logDEBUG) << "nothing done with " << name;
-  //  fHistList.clear();
 
 }
 
@@ -105,15 +110,12 @@ void PixTestScurves::bookHist(string name) {
 //----------------------------------------------------------
 PixTestScurves::~PixTestScurves() {
   LOG(logDEBUG) << "PixTestScurves dtor";
+  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestScurves::doTest() {
-  if (fPixSetup->isDummy()) {
-    dummyAnalysis(); 
-    return;
-  }
 
   fDirectory->cd();
   PixTest::update(); 
@@ -128,6 +130,8 @@ void PixTestScurves::doTest() {
   fParDacLo = 0; 
   fParDacHi = 250;
   scurves();
+
+
 }
 
 
@@ -154,16 +158,38 @@ void PixTestScurves::runCommand(string command) {
 // ----------------------------------------------------------------------
 void PixTestScurves::scurves() {
   cacheDacs();
+
+  string command(fParDac);
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  if (fAdjustVcal && !command.compare("vthrcomp")) {
+    cout << "adjustVcal()" << endl;
+    adjustVcal(); 
+  }
+  
+
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int RFLAG(7); 
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, RFLAG, 1); 
+  int results(7); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1); 
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
+
+  string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
+  for (unsigned int i = 0; i < thr0.size(); ++i) {
+    hname = thr0[i]->GetName();
+    // -- skip sig_ and thn_ histograms
+    if (string::npos == hname.find("dist_thr_")) continue;
+    scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean()); 
+    scurvesRmsString += Form("%6.2f ", thr0[i]->GetRMS()); 
+  }
+
   LOG(logINFO) << "PixTestScurves::scurves() done ";
+  LOG(logINFO) << Form("%s mean: ", fParDac.c_str()) << scurvesMeanString; 
+  LOG(logINFO) << Form("%s RMS:  ", fParDac.c_str()) << scurvesRmsString; 
+
 }
 
 
@@ -249,66 +275,113 @@ void PixTestScurves::fitS() {
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   } 
 
-
-
-
 }
 
 // ----------------------------------------------------------------------
-void PixTestScurves::dummyAnalysis() {
-  string name("scurveVcal"); 
-  TH2D *h2(0); 
+void PixTestScurves::adjustVcal() {
 
-  vector<string> afl; // aFewLines
-  afl.push_back("32  93   0   0   0   0   0   0   0   0   0   1   0   3   3  11  12  13  22  25  35  37  48  49  50  50  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32  95   0   0   0   0   0   0   0   3   1   0   5   4   6  18  18  20  32  43  48  45  50  50  50  50  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32 101   0   0   0   0   0   0   0   0   0   0   1   2   7   9  17  21  22  36  39  35  45  43  48  49  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32  86   0   0   0   0   0   0   0   0   0   0   0   3   3   5  11   7  16  20  24  31  35  42  46  45  50  48  50  50  50  50  50  50 ");
-  afl.push_back("32  99   0   0   0   0   0   0   0   0   0   2   1   2   6  14  19  24  31  37  41  45  46  46  48  50  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32  92   0   0   0   0   0   0   0   1   2   2   5   8   7  13  19  20  27  38  43  44  49  48  50  50  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32  98   0   0   0   0   0   0   0   0   0   0   2   0   3   7  21  27  35  39  39  46  49  48  50  50  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32  95   0   0   0   0   0   0   0   0   3   4   2   7  10  15  25  22  34  48  47  48  50  50  50  50  50  50  50  50  50  50  50  50 ");
-  afl.push_back("32  93   0   0   0   0   1   0   0   0   1   3   2   3  11  13  14  26  35  34  40  46  40  50  50  50  50  50  50  50  50  50  50  50 ");
-  int aflSize = afl.size();
+  vector<int> vcal; 
+  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  ofstream OutputFile;
-  string fname("SCurveData");
+  unsigned nrocs = rocIds.size();
+  
+  vector<vector<pair<int, int> > > dead = deadPixels(5); 
+  // FIXME: do something with 'dead'!!!
 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fId2Idx.insert(make_pair(rocIds[iroc], iroc)); 
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.); 
-    h2->SetDirectory(fDirectory); 
-    setTitles(h2, "col", "row"); 
-    fHistOptions.insert(make_pair(h2, "colz"));
-    
-    double x(0.); 
-    int iline(0); 
-    OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-    OutputFile << "Mode 1" << endl;
-    for (int ix = 0; ix < 52; ++ix) {
-      for (int iy = 0; iy < 80; ++iy) {
-	x = gRandom->Gaus(50., 8.);
-	h2->SetBinContent(ix+1, iy+1, x); 
-	iline = static_cast<int>(aflSize*gRandom->Rndm());
-	OutputFile << afl[iline] << endl;
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
+  fApi->_dut->testPixel(11, 20, true);
+  fApi->_dut->maskPixel(11, 20, false);
+  
+  try{
+    vector<TH2D *> hv; 
+    TH2D *h(0); 
+    for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+      h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
+      hv.push_back(h); 
+    }
+
+    int ntrig(5); 
+    vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  results = 
+      fApi->getEfficiencyVsDACDAC("vthrcomp", 0, 255, "vcal", 0, 255, FLAGS, ntrig);
+
+    int idx(-1);
+    for (unsigned int i = 0; i < results.size(); ++i) {
+      pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];
+      int idac1 = v.first; 
+      pair<uint8_t, vector<pixel> > w = v.second;      
+      int idac2 = w.first;
+      vector<pixel> wpix = w.second;
+
+      for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
+	idx = getIdxFromId(wpix[ipix].roc_id);
+	hv[idx]->Fill(idac1, idac2, wpix[ipix].value); 
       }
     }
-    OutputFile.close(); 
-    fHistList.push_back(h2); 
+    
+    for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+      hv[iroc]->Draw("colz");
+      fHistList.push_back(hv[iroc]); 
+      PixTest::update();      
+      
+      int vcthr = fApi->_dut->getDAC(rocIds[iroc], "vthrcomp");
+      cout << "vcthr = " << vcthr << endl;
+      TH1D *h0 = hv[iroc]->ProjectionY("h0_px", vcthr, vcthr+1); 
+      int vcalthr = h0->FindFirstBinAbove(0.5*ntrig); 
+      delete h0; 
+
+      LOG(logDEBUG) << "ROC " << rocIds[iroc] << " vthrcomp = " << vcthr << " -> vcal = " << vcalthr;
+      vcal.push_back(vcalthr); 
+    }
+    
+  } catch(DataMissingEvent &e){
+    LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+    for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+      vcal.push_back(100); 
+    }
   }
-
-  TH2D *h = (TH2D*)(*fHistList.begin());
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
-  LOG(logINFO) << "PixTestScurves::dummyAnalysis() done";
-
+  
+  for (unsigned int i = 0; i < nrocs; ++i) {
+    fApi->setDAC("vcal", vcal[i], rocIds[i]);
+  }
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  
 }
+
 
 
 // ----------------------------------------------------------------------
 void PixTestScurves::output4moreweb() {
-  // -- nothing required here
+  print("PixTestScurves::output4moreweb()"); 
+
+  list<TH1*>::iterator begin = fHistList.begin();
+  list<TH1*>::iterator end = fHistList.end();
+
+  TDirectory *pDir = gDirectory; 
+  gFile->cd(); 
+  for (list<TH1*>::iterator il = begin; il != end; ++il) {
+    string name = (*il)->GetName(); 
+    if (string::npos == name.find("_V0"))  continue;
+    if (string::npos != name.find("dist_"))  continue;
+    if (string::npos == name.find("thr_scurve"))  continue;
+    cout << "output4moreweb: " << name << endl;
+    if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
+      PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
+    }
+    if (string::npos != name.find("thr_scurveVcal_Vcal")) {
+      PixUtil::replaceAll(name, "thr_scurveVcal_Vcal", "VcalThresholdMap"); 
+    }
+    PixUtil::replaceAll(name, "_V0", ""); 
+    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
+    h->SetDirectory(gDirectory); 
+    h->Write(); 
+  }
+  pDir->cd(); 
+
+
 }
+
+
