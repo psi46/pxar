@@ -11,7 +11,6 @@ PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
-  fIsDummy           = false; 
   fMoreWebCloning    = false; 
   init(); 
 }
@@ -22,7 +21,6 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
-  fIsDummy           = false; 
   fMoreWebCloning    = false; 
   init(); 
 
@@ -51,7 +49,6 @@ PixSetup::PixSetup() {
   fPixTestParameters = 0; 
   fConfigParameters  = 0; 
   fDoAnalysisOnly    = false; 
-  fIsDummy           = false; 
   fMoreWebCloning    = false; 
   init(); 
   LOG(logDEBUG) << "PixSetup ctor()";

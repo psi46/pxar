@@ -33,6 +33,8 @@ public:
   virtual void boxChecked(); 
   virtual void setParameter(); 
   virtual void yellow(); 
+  virtual void moveDown(); 
+  virtual void moveUp(); 
 
   void update();
   void updateToolTips();

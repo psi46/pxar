@@ -20,6 +20,7 @@ PixTestPattern.cc
 PixTestPretest.cc
 PixTestFactory.cc
 PixTestPh.cc
+PixTestPhOptimization.cc
 PixTestThreshMap.cc
 PixTestBBMap.cc	
 PixTestFullTest.cc
@@ -43,6 +44,7 @@ PixTestPattern.hh
 PixTestPretest.hh
 PixTestFactory.hh
 PixTestPh.hh
+PixTestPhOptimization.hh
 PixTestThreshMap.hh
 PixTestBBMap.hh
 PixTestFullTest.hh

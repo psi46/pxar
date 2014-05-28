@@ -1,6 +1,3 @@
-
-// switchyard for gui tests
-
 #include <iostream>
 #include <algorithm>
 
@@ -21,6 +18,7 @@
 #include "PixTestDaq.hh"
 #include "PixTestXray.hh"
 #include "PixTestPh.hh"
+#include "PixTestPhOptimization.hh"
 #include "PixTestThreshMap.hh"
 #include "PixTestBBMap.hh"
 #include "PixTestFullTest.hh"
@@ -71,6 +69,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
   if (!name.compare("xray")) return new PixTestXray(a, "Xray"); 
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
+  if (!name.compare("phoptimization")) return new PixTestPhOptimization(a, "PhOptimization");
   if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
   if (!name.compare("threshmap")) return new PixTestThreshMap(a, "ThreshMap");
   if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");

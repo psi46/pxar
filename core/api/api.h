@@ -412,6 +412,23 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
+    /** Method to scan a DAC range and measure the pixel threshold
+     *
+     *  Returns a vector of pairs containing set dac value and pixels,
+     *  with the value of the pxar::pixel struct being the threshold value of that
+     *  pixel.
+     *
+     *  This function allows to specify a range for the threshold DAC to be searched,
+     *  this can be used to speed up the procedure by limiting the range.
+     *
+     *  The threshold can be adjusted to a percentage of efficienciy (i.e. threshold = 50 is the 50% efficiency
+     *  niveau of the pixel).
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint8_t threshold, uint16_t flags, uint16_t nTriggers);
+
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the
      *  pulse height
      *
@@ -473,6 +490,22 @@ namespace pxar {
      *
      */
     std::vector<pixel> getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers);
+
+    /** Method to get a map of the pixel threshold
+     *
+     *  Returns a vector of pixels, with the value of the pxar::pixel struct being
+     *  the threshold value of that pixel.
+     *
+     *  This function allows to specify a range for the threshold DAC to be searched,
+     *  this can be used to speed up the procedure by limiting the range.
+     *
+     *  The threshold can be adjusted to a percentage of efficienciy (i.e. threshold = 50 is the 50% efficiency
+     *  niveau of the pixel).
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
+     */
+    std::vector<pixel> getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers);
 
     /** Method to get a map of the pixel threshold
      *
@@ -605,7 +638,7 @@ namespace pxar {
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels and returns the threshold value.
      */
-    std::vector<pixel> repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags);
+    std::vector<pixel> repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors.
      */
@@ -613,7 +646,7 @@ namespace pxar {
 
     /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors and return the threshold value.
      */
-    std::vector<std::pair<uint8_t,std::vector<pixel> > > repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags);
+    std::vector<std::pair<uint8_t,std::vector<pixel> > > repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags);
 
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.

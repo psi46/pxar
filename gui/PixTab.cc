@@ -78,17 +78,23 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       tset->SetToolTipText("run this subtest");
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
+      tset->SetBackgroundColor(fGui->fDarkSalmon);
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
       continue;
     }
 
-    if (amap[i].second == "checkbox") {
+    if (string::npos != amap[i].second.find("checkbox")) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
       tcheck = new TGCheckButton(fV2, amap[i].first.c_str(), 1);
       hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN)); 
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-      tcheck->SetState(kButtonUp);
-      tcheck->SetToolTipText("display (average) pulseheight map instead of hit map");
+      if (string::npos != amap[i].second.find("(1)")) {
+	tcheck->SetState(kButtonDown);
+      } else if (string::npos != amap[i].second.find("(0)")) {
+	tcheck->SetState(kButtonUp);
+      } else {
+	tcheck->SetState(kButtonUp);
+      }
       tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
       continue;
     }
@@ -110,6 +116,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
     te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
+    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); // FIXME does not work?
+    te->Connect("TabPressed()", "PixTab", this, "moveDown()"); 
 
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
@@ -150,6 +158,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fbDoTest->ChangeOptions(fbDoTest->GetOptions() | kFixedWidth);
   hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
+  fbDoTest->SetBackgroundColor(fGui->fDarkSalmon);
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
@@ -312,6 +321,40 @@ void PixTab::yellow() {
   }
 }
 
+
+// ----------------------------------------------------------------------
+void PixTab::moveUp() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+  
+  if (id > 0) {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id-1]]))->SetFocus();
+  } else {
+    ((TGTextEntry*)(fParTextEntries[fParIds[fParIds.size()-1]]))->SetFocus();
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixTab::moveDown() {
+  TGButton *btn = (TGButton *) gTQSender;
+  int id(-1); 
+  id = btn->WidgetId();
+  if (-1 == id) {
+    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
+    return; 
+  }
+
+  if (id < static_cast<int>(fParIds.size()) - 1) {
+    ((TGTextEntry*)(fParTextEntries[fParIds[id+1]]))->SetFocus();
+  } else {
+    ((TGTextEntry*)(fParTextEntries[fParIds[0]]))->SetFocus();
+  }
+}
 
 // ----------------------------------------------------------------------
 void PixTab::setParameter() {

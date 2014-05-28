@@ -49,7 +49,6 @@ int main(int argc, char *argv[]){
     doRunSingleTest(false), 
     doUpdateFlash(false),
     doAnalysisOnly(false),
-    doDummyTest(false),
     doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
@@ -57,7 +56,6 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-h")) {
       cout << "List of arguments:" << endl;
       cout << "-a                    do not do tests, do not recreate rootfile, but read in existing rootfile" << endl;
-      cout << "-b                    do dummyTest only" << endl;
       cout << "-c filename           read in commands from filename" << endl;
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
@@ -68,7 +66,6 @@ int main(int argc, char *argv[]){
       return 0;
     }
     if (!strcmp(argv[i],"-a"))                                {doAnalysisOnly = true;} 
-    if (!strcmp(argv[i],"-b"))                                {doDummyTest = true;} 
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
     if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
@@ -179,7 +176,6 @@ int main(int argc, char *argv[]){
 						 + configParameters->getTestParameterFileName()
 						 ); 
   PixSetup a(api, ptp, configParameters);  
-  a.setDummy(doDummyTest);
   a.setUseRootLogon(doUseRootLogon); 
   a.setMoreWebCloning(doMoreWebCloning); 
 
