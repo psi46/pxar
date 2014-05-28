@@ -87,6 +87,7 @@ void PixTestFullTest::doTest() {
 
   vector<string> suite;
   suite.push_back("alive"); 
+  suite.push_back("phoptimization"); 
   suite.push_back("scurves");
   suite.push_back("bumpbonding"); 
   suite.push_back("trim"); 
