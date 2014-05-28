@@ -1,6 +1,3 @@
-
-// switchyard for gui tests
-
 #include <iostream>
 #include <algorithm>
 

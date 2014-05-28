@@ -82,13 +82,14 @@ void PixTestPhOptimization::init() {
   fDirectory->cd();
 }
 
-void PixTestPhOptimization::bookHist(string name) {}
+void PixTestPhOptimization::bookHist(string /*name*/) {}
 
 PixTestPhOptimization::~PixTestPhOptimization() {}
 
 void PixTestPhOptimization::doTest() {
 
   cacheDacs();
+  bigBanner(Form("PixTestPhOptimization::doTest() Ntrig = %d, singlePix = %d", fParNtrig, (fFlagSinglePix?1:0)));
   fDirectory->cd();
   PixTest::update();
 
@@ -235,6 +236,22 @@ void PixTestPhOptimization::doTest() {
   }
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   restoreDacs(); 
+
+  // -- FIXME: should be ROC specific! Must come after restoreDacs()!
+  fApi->setDAC("phscale",ps_opt);
+  fApi->setDAC("phoffset",po_opt);
+  saveDacs();
+
+  // -- print summary information
+  string psString(""), poString(""); 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    psString += Form(" %3d", fApi->_dut->getDAC(rocIds[i], "phscale"));
+    poString += Form(" %3d", fApi->_dut->getDAC(rocIds[i], "phoffset"));
+  }
+  LOG(logINFO) << "PixTestPhOptimization::doTest() done";
+  LOG(logINFO) << "PH scale (per ROC):  " << psString;
+  LOG(logINFO) << "PH offset (per ROC): " << poString;
+
 }
 
 void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &badPixels, int aliveTrig){
@@ -291,7 +308,6 @@ void PixTestPhOptimization::GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std
   //looks for the pixel with the highest Ph at vcal = 255, taking care the pixels are not already saturating (ph=255)
     fApi->_dut->testAllPixels(true);
     fApi->_dut->maskAllPixels(false);
-    int ntriggers = 10;
     bool isPixGood=true;
     int maxph = 255;
     int init_phScale =255;
