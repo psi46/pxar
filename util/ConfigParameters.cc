@@ -179,6 +179,12 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
 
+      else if (0 == _name.compare("probeA1")) { fProbeA1 = _value; }
+      else if (0 == _name.compare("probeA2")) { fProbeA2 = _value; }
+      else if (0 == _name.compare("probeD1")) { fProbeD1 = _value; }
+      else if (0 == _name.compare("probeD2")) { fProbeD2 = _value; }
+     
+
       else { LOG(logINFO) << "Did not understand '" << _name << "'."; }
     }
 
@@ -742,6 +748,11 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "va %i\n"  , static_cast<int>(va * 1000));
   fprintf(file, "vd %i\n\n", static_cast<int>(vd * 1000));
 
+  fprintf(file, "probeA1 %s\n", fProbeA1.c_str());
+  fprintf(file, "probeA2 %s\n", fProbeA2.c_str());
+  fprintf(file, "probeD1 %s\n", fProbeD1.c_str());
+  fprintf(file, "probeD2 %s\n", fProbeD2.c_str());
+
   fclose(file);
   return true;
 }
@@ -897,3 +908,30 @@ void ConfigParameters::setGainPedestalParameters(vector<vector<gainPedestalParam
 std::vector<std::vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParameters() {
   return fGainPedestalParameters; 
 }
+
+
+void ConfigParameters::setProbe(std::string probe, std::string value) {
+
+   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+
+   if (probe == "a1") fProbeA1 = value;	
+   else if (probe == "a2") fProbeA2 = value;	
+   else if (probe == "d1") fProbeD1 = value;	
+   else if (probe == "d2") fProbeD2 = value;	
+}
+
+std::string ConfigParameters::getProbe(std::string probe) {
+   
+   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+
+   if (probe == "a1") return fProbeA1;	
+   else if (probe == "a2") return fProbeA2;	
+   else if (probe == "d1") return fProbeD1;	
+   else if (probe == "d2") return fProbeD2;	
+
+}
+
+
+
+
+

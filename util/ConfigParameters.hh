@@ -90,6 +90,9 @@ public:
   bool setRocDac(std::string var, uint8_t val, int iroc = -1);
   bool setTrimBits(int trim); 
 
+  void setProbe(std::string probe, std::string value);
+  std::string getProbe(std::string probe);
+
   void setTBParameterFileName(std::string filename) {fTBParametersFileName = filename;}
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
   void setTbmParameterFileName(std::string filename) {fTbmParametersFileName = filename;}
@@ -144,6 +147,7 @@ private:
   std::string fDirectory;
   std::string fTBName;
   bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;
+  std::string fProbeA1,fProbeA2, fProbeD1, fProbeD2;
 
   std::string fTBParametersFileName;
   std::string fDACParametersFileName;
