@@ -267,6 +267,11 @@ namespace pxar {
       try { return _signals[name]; }
       catch(...) { return PROBE_OFF; }
     }
+    // Return the register id for the name in question:
+    inline std::string getName(uint8_t signal) {
+      try { return _names[signal]; }
+      catch(...) { return "off"; }
+    }
 
   private:
     ProbeDictionary() {
@@ -307,9 +312,34 @@ namespace pxar {
       _signals["adcsgate"]   = PROBE_ADC_SGATE;
       _signals["adcs"]       = PROBE_ADC_S;
 
+      _names[PROBE_OFF] = "off";
+      _names[PROBE_CLK] = "clk";
+      _names[PROBE_SDA] = "sda";
+      _names[PROBE_SDA_SEND] = "sdasend";
+      _names[PROBE_PG_TOK] = "pgtok";
+      _names[PROBE_PG_TRG] = "pgtrg";
+      _names[PROBE_PG_CAL] = "pgcal";
+      _names[PROBE_PG_RES_ROC] = "pgresr";
+      _names[PROBE_PG_RES_TBM] = "pgrest";
+      _names[PROBE_PG_SYNC] = "pgsync";
+      _names[PROBE_CTR] = "ctr";
+      _names[PROBE_TIN] = "tin";
+      _names[PROBE_TOUT] = "tout";
+      _names[PROBE_CLK_PRESEN] = "clkp";
+      _names[PROBE_CLK_GOOD] = "clkgood";
+      _names[PROBE_DAQ0_WR] = "daq0wr";
+      _names[PROBE_CRC] = "crc";
+      _names[PROBE_ADC_RUNNING] = "adcrunning";
+      _names[PROBE_ADC_RUN] = "adcrun";
+      _names[PROBE_ADC_PGATE] = "adcpgate";
+      _names[PROBE_ADC_START] = "adcstart";
+      _names[PROBE_ADC_SGATE] = "adcsgate";
+      _names[PROBE_ADC_S] = "adcs";
+
     }
 
     std::map<std::string, uint8_t> _signals;
+    std::map<uint8_t, std::string> _names;
     ProbeDictionary(ProbeDictionary const&); // Don't Implement
     void operator=(ProbeDictionary const&); // Don't implement
   };
@@ -333,6 +363,12 @@ namespace pxar {
       catch(...) { return PROBEA_OFF; }
     }
 
+    // Return the register name for the id in question:
+    inline std::string getName(uint8_t signal) {
+      try { return _names[signal]; }
+      catch(...) { return "off"; }
+    }
+
   private:
     ProbeADictionary() {
       // Probe name and values
@@ -347,9 +383,21 @@ namespace pxar {
       _signals["tout"]   = PROBEA_TOUT;
       _signals["off"]    = PROBEA_OFF;
 
+      _names[PROBEA_TIN] = "tin";
+      _names[PROBEA_SDATA1] = "sdata1";
+      _names[PROBEA_SDATA2] = "sdata2";
+      _names[PROBEA_CTR] = "ctr";
+      _names[PROBEA_CLK] = "clk";
+      _names[PROBEA_SDA] = "sda";
+      _names[PROBEA_TOUT] = "tout";
+      _names[PROBEA_OFF] = "off";
+
     }
 
     std::map<std::string, uint8_t> _signals;
+    std::map<uint8_t,std::string> _names;
+
+
     ProbeADictionary(ProbeADictionary const&); // Don't Implement
     void operator=(ProbeADictionary const&); // Don't implement
   };

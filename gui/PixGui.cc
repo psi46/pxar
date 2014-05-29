@@ -16,7 +16,7 @@
 #include "PixSetup.hh"
 #include "PixMonitor.hh"
 
-
+#include "dictionaries.h"
 
 using namespace std;
 using namespace pxar;
@@ -188,8 +188,80 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   h1v3->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
+  TGHorizontalFrame *sigFrameA = new TGHorizontalFrame(h1v3,0,0);
+  TGHorizontalFrame *sigFrameD = new TGHorizontalFrame(h1v3,0,0);
+
+  TGComboBox *signalBoxA[2];
+  TGComboBox *signalBoxD[2];
+
+  signalBoxA[0] = new TGComboBox(sigFrameA);
+  signalBoxA[0]->SetName("a1");
+
+  sigFrameA->AddFrame(new TGLabel(sigFrameA, "A1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrameA->AddFrame(signalBoxA[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+   
+  signalBoxA[1] = new TGComboBox(sigFrameA);
+  signalBoxA[1]->SetName("a2");
+
+  sigFrameA->AddFrame(new TGLabel(sigFrameA, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrameA->AddFrame(signalBoxA[1], new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  signalBoxD[0] = new TGComboBox(sigFrameD);
+  signalBoxD[0]->SetName("d1");
+
+  sigFrameD->AddFrame(new TGLabel(sigFrameD, "D1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrameD->AddFrame(signalBoxD[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  signalBoxD[1] = new TGComboBox(sigFrameD);
+  signalBoxD[1]->SetName("d2");
+
+  sigFrameD->AddFrame(new TGLabel(sigFrameD, "D2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrameD->AddFrame(signalBoxD[1], new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+
+ 
+  signalBoxA[0]->SetWidth(75);
+  signalBoxA[0]->SetHeight(20);
+  signalBoxA[1]->SetWidth(75);
+  signalBoxA[1]->SetHeight(20);
+  signalBoxD[0]->SetWidth(75);
+  signalBoxD[0]->SetHeight(20);
+  signalBoxD[1]->SetWidth(75);
+  signalBoxD[1]->SetHeight(20);
+
+  // Get singleton Probe dictionary object:
+  ProbeDictionary * _dict = ProbeDictionary::getInstance();
+  ProbeADictionary * _Adict = ProbeADictionary::getInstance();
+
+  for(int i = 0 ; i <= 7 ; i++) {  
+    signalBoxA[0]->AddEntry(_Adict->getName(i).c_str(),i);
+    signalBoxA[1]->AddEntry(_Adict->getName(i).c_str(),i);
+   
+  }
+  for(int i = 0 ; i <= 24 ; i++) {
+    signalBoxD[0]->AddEntry(_dict->getName(i).c_str(),i);
+    signalBoxD[1]->AddEntry(_dict->getName(i).c_str(),i);
+  }
+
+   for(int i = 0 ; i <= 1 ; i++) {
+	signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+	signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+   }
+
+   
+  h1v3->AddFrame(sigFrameA, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  h1v3->AddFrame(sigFrameD, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+
+
+  //Load saved values
+
+  signalBoxA[0]->Select(_Adict->getSignal(fConfigParameters->getProbe("a1")),false);
+  signalBoxA[1]->Select(_Adict->getSignal(fConfigParameters->getProbe("a2")),false);
+  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1")),false);
+  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2")),false);
+
 
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
+
 
 
   // -- tab widget
@@ -263,6 +335,19 @@ void PixGui::CloseWindow() {
   
   //  DestroyWindow();
   gApplication->Terminate(0);
+
+}
+void PixGui::selectProbes(Int_t id)
+{
+   TGComboBox *box = (TGComboBox *) gTQSender;
+   
+   fApi->SignalProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
+
+   // Write the selected probe to the configParameters.
+
+   fConfigParameters->setProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
+
+   fConfigParameters->writeConfigParameterFile();
 
 }
 
