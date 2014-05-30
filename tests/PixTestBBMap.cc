@@ -177,7 +177,6 @@ void PixTestBBMap::output4moreweb() {
     if (string::npos == name.find("_V0"))  continue;
     if (string::npos != name.find("dist_"))  continue;
     if (string::npos == name.find("thr_calSMap_VthrComp")) continue;
-    cout << "output4moreweb: " << name << endl;
     if (string::npos != name.find("calSMap")) {
       PixUtil::replaceAll(name, "thr_calSMap_VthrComp", "BumpBondMap"); 
     }
