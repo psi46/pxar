@@ -262,10 +262,18 @@ namespace pxar {
       return &instance;
     }
 
-    // Return the register id for the name in question:
+    // Return the signal id for the probe signal in question:
     inline uint8_t getSignal(std::string name) {
       try { return _signals[name]; }
       catch(...) { return PROBE_OFF; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint8_t signal) {
+      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
     }
 
   private:
@@ -331,6 +339,14 @@ namespace pxar {
     inline uint8_t getSignal(std::string name) {
       try { return _signals[name]; }
       catch(...) { return PROBEA_OFF; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint8_t signal) {
+      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
     }
 
   private:

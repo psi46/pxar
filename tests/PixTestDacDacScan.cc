@@ -2,6 +2,7 @@
 #include <algorithm>    // std::find
 #include <iostream>
 #include "PixTestDacDacScan.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 #include <TH2.h>
@@ -42,6 +43,8 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("phmap")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
 	fParPHmap = atoi(sval.c_str()); 
 	setToolTips();
       }

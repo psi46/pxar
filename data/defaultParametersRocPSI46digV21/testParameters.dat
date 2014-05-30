@@ -4,6 +4,7 @@ ClkMax              19
 saveTbParameters    button
 
 -- Pretest
+programroc          button
 targetIa            24
 setVana             button
 PIX                 11,20
@@ -22,7 +23,7 @@ maskTest            button
 addressDecodingTest button
 
 -- DacScan
-PHmap               checkbox
+PHmap               checkbox(1)
 Ntrig               10
 DAC                 caldel
 DACLO               0
@@ -40,12 +41,26 @@ DAC2LO              0
 DAC2HI              250
 PIX                 11,20 
 
+-- Pattern
+ntrig               0
+trigloop            1
+period              -1
+seconds             1
+patternfromfile     1
+resultsonfile       1
+binaryoutput        0
+outfilename         defaultdata.dat
+testallpixels       0
+maskallpixels       0
+resettodefault      button
+
 -- BumpBonding
 Ntrig               5
 vcals               250
 xtalk               checkbox
 
 -- Scurves
+adjustvcal          checkbox(1)
 Ntrig               5
 DAC                 VthrComp
 DacLo               0
@@ -56,8 +71,8 @@ fits                button
 -- Trim
 trim                button
 TrimBits            button
-Ntrig               2
-Vcal                50
+Ntrig               10
+Vcal                40
 VcalLo              25 
 VcalHi              75 
 VthrCompLo          0 
@@ -72,20 +87,6 @@ measure             button
 fit                 button
 save                button
 
--- Pattern
-ntrig         0
-trigloop      1
-period        -1
-seconds       1
-patternfromfile     1
-resultsonfile       1
-binaryoutput        0
-outfilename      defaultdata.dat
-testallpixels 0
-maskallpixels 0
-resettodefault  button
-
 -- PhOptimization
-ntrig 10
-singlePix 1
-
+ntrig               10
+singlePix           1

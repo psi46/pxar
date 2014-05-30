@@ -258,6 +258,10 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
   //makes a list of inefficient pixels, to be avoided during optimization
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+
+  vector<uint8_t> vVcal = getDacs("vcal"); 
+  vector<uint8_t> vCreg = getDacs("ctrlreg"); 
+
   vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig);
   std::pair<int, int> badPix;
   int eff=0;
@@ -275,6 +279,8 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
       }
     }
   }
+  setDacs("vcal", vVcal); 
+  setDacs("ctrlreg", vCreg); 
 }
 
 

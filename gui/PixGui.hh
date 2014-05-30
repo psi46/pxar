@@ -52,6 +52,7 @@ public:
   void createTab(const char*);
   //  void createParTab();
   void selectedTab(int); 
+  void selectProbes(int);
   void changeRootFile();
   bool isHvOn() {return fHV;}
   void hvOn();
