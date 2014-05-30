@@ -1197,7 +1197,8 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 		  52, 0., 52., 80, 0., 80.); 
     fHistOptions.insert(make_pair(h4, "colz")); 
 
-    if (!dac.compare("Vcal")) {
+    std::transform(dac.begin(), dac.end(), dac.begin(), ::tolower);
+    if (!dac.compare("vthrcomp")) {
       dumpFile = true; 
       OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
       OutputFile << "Mode 1" << endl;
@@ -1233,8 +1234,8 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 	int ibin = rmaps[i]->FindBin(fThreshold); 
 	int bmin = ibin - 15;
 	line = Form("%2d %3d", NSAMPLES, bmin); 
-	for (int ix = bmin; ix < bmin + 33; ++ix) {
-	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
+	for (int ix = bmin; ix < bmin + NSAMPLES; ++ix) {
+	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix+1)))); 
 	}
 	OutputFile << line << endl;
       }
