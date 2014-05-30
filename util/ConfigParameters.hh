@@ -63,6 +63,7 @@ public:
   std::string getTrimParameterFileName()  {return fTrimParametersFileName;}
   std::string getTestParameterFileName()  {return fTestParametersFileName;}
   std::string getGainPedestalParameterFileName()  {return fGainPedestalParameterFileName;}
+  std::string getGainPedestalFileName()   {return fGainPedestalFileName;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}
@@ -158,7 +159,7 @@ private:
   std::string fLogFileName;
   std::string fMaskFileName;
   std::string fDebugFileName;
-  std::string fGainPedestalParameterFileName; 
+  std::string fGainPedestalFileName, fGainPedestalParameterFileName; 
 
   static ConfigParameters* fInstance;
 

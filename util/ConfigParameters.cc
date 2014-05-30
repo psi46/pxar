@@ -66,6 +66,7 @@ void ConfigParameters::initialize() {
   fDebugFileName                 = "debug.log";
   fRootFileName                  = "expert.root";
   fGainPedestalParameterFileName = "phCalibrationFitTanH";
+  fGainPedestalFileName          = "phCalibration";
 
   ia = -1.; 
   id = -1.;
