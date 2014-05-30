@@ -101,6 +101,9 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     case  230400 : baudr = B230400;
       break;
+#ifndef APPLE
+      // Apparently termios.h on OS X does not know about Baud rates
+      // larger than B230400, so masking them out:
     case  460800 : baudr = B460800;
       break;
     case  500000 : baudr = B500000;
@@ -111,6 +114,7 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     case 1000000 : baudr = B1000000;
       break;
+#endif
     default      : LOG(logCRITICAL) << "Invalid baud rate " << baudrate << "!";
       return(1);
       break;
