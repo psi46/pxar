@@ -234,7 +234,6 @@ void PixTestScurves::fitS() {
 	  h = (TH1D*)fDirectory->Get(Form("scurveVcal_Vcal_c%d_r%d_C%d", ic, ir, iroc)); 
 	  if (0 == h) continue;
 	  
-	  cout << h->GetTitle() << endl;
 	  h->Fit(f, "qr", "", fPIF->fLo, fPIF->fHi); 
 	  
 	  double Threshold  = f->GetParameter(0); 
