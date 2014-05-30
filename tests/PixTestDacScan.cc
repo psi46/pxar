@@ -5,6 +5,7 @@
 #include <TH1.h>
 
 #include "PixTestDacScan.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 
@@ -41,6 +42,8 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("phmap")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
 	fParPHmap = atoi(sval.c_str()); 
 	setToolTips();
       }

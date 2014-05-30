@@ -35,10 +35,26 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (uint32_t i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
+      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
+
       stringstream s(sval);
-      if (!parName.compare( "ntrig")) { s >> fParNtrig; return true;}
-      if (!parName.compare( "vcals")) { s >> fParVcalS; return true;}
-      if (!parName.compare( "xtalk"))  { s >> fParXtalk;  return true;}
+      if (!parName.compare( "ntrig")) { 
+	s >> fParNtrig; 
+	setToolTips();
+	return true;
+      }
+      if (!parName.compare( "vcals")) { 
+	s >> fParVcalS; 
+	setToolTips();
+	return true;
+      }
+      if (!parName.compare( "xtalk"))  { 
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fParXtalk = atoi(sval.c_str()); 
+	setToolTips();
+	return true;
+      }
     }
   }
   return false;
@@ -150,8 +166,6 @@ void PixTestBBMap::doTest() {
 // ----------------------------------------------------------------------
 void PixTestBBMap::output4moreweb() {
   print("PixTestBBMap::output4moreweb()"); 
-
-  //  BumpBondMap_C
 
   list<TH1*>::iterator begin = fHistList.begin();
   list<TH1*>::iterator end = fHistList.end();
