@@ -1543,7 +1543,6 @@ vector<uint8_t> PixTest::getDacs(string dacName) {
   vector<uint8_t> result; 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
-    cout << "getting " << dacName << ": " << (int)(fApi->_dut->getDAC(rocIds[i], dacName)) << " from ROC " << i << endl;
     result.push_back(fApi->_dut->getDAC(rocIds[i], dacName)); 
   }
   return result;
@@ -1554,7 +1553,6 @@ void PixTest::setDacs(string dacName, vector<uint8_t> v) {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
     fApi->setDAC(dacName, v[i], i); 
-    cout << "setting " << dacName << ": " << (int)(v[i]) << " on ROC " << i << endl;
   }
 }
 
