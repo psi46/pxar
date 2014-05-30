@@ -232,14 +232,20 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
   ProbeADictionary * _Adict = ProbeADictionary::getInstance();
 
-  for(int i = 0 ; i <= 7 ; i++) {  
-    signalBoxA[0]->AddEntry(_Adict->getName(i).c_str(),i);
-    signalBoxA[1]->AddEntry(_Adict->getName(i).c_str(),i);
-   
+  for(int i = 0 ; i <= 7 ; i++) {
+    std::string entryname = _Adict->getName(i).c_str();
+    if(entryname != "") {
+      signalBoxA[0]->AddEntry(entryname.c_str(),i);
+      signalBoxA[1]->AddEntry(entryname.c_str(),i);
+    }
   }
+
   for(int i = 0 ; i <= 24 ; i++) {
-    signalBoxD[0]->AddEntry(_dict->getName(i).c_str(),i);
-    signalBoxD[1]->AddEntry(_dict->getName(i).c_str(),i);
+    std::string entryname = _dict->getName(i).c_str();
+    if(entryname != "") {
+      signalBoxD[0]->AddEntry(entryname.c_str(),i);
+      signalBoxD[1]->AddEntry(entryname.c_str(),i);
+    }
   }
 
    for(int i = 0 ; i <= 1 ; i++) {
