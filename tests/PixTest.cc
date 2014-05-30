@@ -1420,7 +1420,7 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
   fApi->_dut->maskAllPixels(false);
   vector<TH2D*> testEff = efficiencyMaps("deadPixels", ntrig);
   std::pair<int, int> badPix;
-  int eff(0);
+  Double_t eff(0.);
   
   for (unsigned int i = 0; i < testEff.size(); ++i) {
     deadPixelsRoc.clear();
