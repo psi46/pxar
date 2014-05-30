@@ -152,10 +152,15 @@ public:
   void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   
-  /// cache DACs
+  /// cache all DACs 
   void cacheDacs(bool verbose = false); 
-  /// restore DACs
+  /// restore all DACs
   void restoreDacs(bool verbose = false); 
+
+  /// return from all ROCs the DAC dacName
+  std::vector<uint8_t> getDacs(std::string dacName); 
+  /// set on all ROCs the DAC dacName
+  void setDacs(std::string dacName, std::vector<uint8_t> dacVector); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 

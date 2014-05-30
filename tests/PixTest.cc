@@ -1503,6 +1503,12 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
   vector<vector<pair<int, int> > > deadPixels;
   vector<pair<int, int> > deadPixelsRoc;
   
+  vector<uint8_t> vVcal = getDacs("vcal"); 
+  vector<uint8_t> vCreg = getDacs("ctrlreg"); 
+
+  fApi->setDAC("vcal", 200); 
+  fApi->setDAC("ctrlreg", 4); 
+  
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   vector<TH2D*> testEff = efficiencyMaps("deadPixels", ntrig);
@@ -1515,16 +1521,41 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
       for(int c=0; c<52; c++){
 	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
 	if (eff<ntrig){
-	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig;
+	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig << ";  blacklisting";
 	  badPix.first = c;
 	  badPix.second = r;
-	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
 	  deadPixelsRoc.push_back(badPix);
 	}
       }
     }
     deadPixels.push_back(deadPixelsRoc);
   }
+
+  setDacs("vcal", vVcal); 
+  setDacs("ctrlreg", vCreg); 
   
   return deadPixels;
 }
+
+
+// ----------------------------------------------------------------------
+vector<uint8_t> PixTest::getDacs(string dacName) {
+  vector<uint8_t> result; 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    cout << "getting " << dacName << ": " << (int)(fApi->_dut->getDAC(rocIds[i], dacName)) << " from ROC " << i << endl;
+    result.push_back(fApi->_dut->getDAC(rocIds[i], dacName)); 
+  }
+  return result;
+}
+
+// ----------------------------------------------------------------------
+void PixTest::setDacs(string dacName, vector<uint8_t> v) {
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    fApi->setDAC(dacName, v[i], i); 
+    cout << "setting " << dacName << ": " << (int)(v[i]) << " on ROC " << i << endl;
+  }
+}
+
+
