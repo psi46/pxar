@@ -264,7 +264,7 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
 
   vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig);
   std::pair<int, int> badPix;
-  int eff=0;
+  Double_t eff=0.;
   for (unsigned int i = 0; i < testEff.size(); ++i) {
     for(int r=0; r<80; r++){
       for(int c=0; c<52; c++){
@@ -289,7 +289,7 @@ pxar::pixel* PixTestPhOptimization::RandomPixel(std::vector<std::pair<int, int> 
   fApi->setDAC("ctrlreg",4);
   bool isPixGood=true;
   pxar::pixel *randPixel= new pixel();
-  srand(time(NULL));
+  srand(int(time(NULL)));
   int random_col=-1, random_row=-1;
   do{
     random_col = rand() % 52;
@@ -378,10 +378,10 @@ void PixTestPhOptimization::GetMinPixel(pxar::pixel &minpixel, std::vector<pxar:
 int PixTestPhOptimization::InsideRangePH(int po_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
   //adjusting phscale so that the PH curve is fully inside the ADC range
   int ps_opt = 999;
-  int maxPh(0.);
-  int minPh(0.);
+  int maxPh(0);
+  int minPh(0);
   bool lowEd=false, upEd=false;
-  double upEd_dist=255, lowEd_dist=255;
+  int upEd_dist=255, lowEd_dist=255;
   int safetyMargin = 50;
   int dist = 255;
   int bestDist = 255;
@@ -416,8 +416,8 @@ int PixTestPhOptimization::InsideRangePH(int po_opt,  std::vector< std::pair<uin
 int PixTestPhOptimization::CentrePhRange(int po_opt_in, int ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
   //centring PH curve adjusting phoffset   
   int po_opt_out = po_opt_in;
-  int maxPh(0.);
-  int minPh(0.);
+  int maxPh(0);
+  int minPh(0);
   int dist = 255;
   int bestDist = 255;
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
@@ -445,10 +445,10 @@ int PixTestPhOptimization::CentrePhRange(int po_opt_in, int ps_opt,  std::vector
 int PixTestPhOptimization::StretchPH(int po_opt, int ps_opt_in,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
   //stretching PH curve to exploit the full ADC range, adjusting phscale             
   int ps_opt_out = ps_opt_in;
-  int maxPh(0.);
-  int minPh(0.);
+  int maxPh(0);
+  int minPh(0);
   bool lowEd=false, upEd=false;
-  double upEd_dist=255, lowEd_dist=255;
+  int upEd_dist=255, lowEd_dist=255;
   int safetyMargin = 10;
   int dist = 255;
   int bestDist = 255;

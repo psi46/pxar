@@ -144,7 +144,7 @@ void PixTestBBMap::doTest() {
 
   // -- summary printout
   string bbString(""), hname(""); 
-  int bbprob(0); 
+  Double_t bbprob(0.); 
   for (unsigned int i = 0; i < thrmapsCals.size(); ++i) {
     hname = thrmapsCals[i]->GetName();
     if (string::npos == hname.find("dist_thr_")) continue;
@@ -177,7 +177,6 @@ void PixTestBBMap::output4moreweb() {
     if (string::npos == name.find("_V0"))  continue;
     if (string::npos != name.find("dist_"))  continue;
     if (string::npos == name.find("thr_calSMap_VthrComp")) continue;
-    cout << "output4moreweb: " << name << endl;
     if (string::npos != name.find("calSMap")) {
       PixUtil::replaceAll(name, "thr_calSMap_VthrComp", "BumpBondMap"); 
     }
