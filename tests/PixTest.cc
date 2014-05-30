@@ -170,9 +170,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
   if (1 == ihit) {
     scurveAna(dac, name, maps, resultMaps, result); 
-  } else if (2 == ihit) {
-    gainPedestalAna(dac, name, maps, resultMaps, result); 
-  }
+  } 
 
   return resultMaps; 
 }
@@ -1297,97 +1295,6 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
       }
     }
   }
-}
-
-// ----------------------------------------------------------------------
-void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > maps, vector<TH1*> &resultMaps, int result) {
-
-  vector<TH1*> rmaps; 
-  TH1* h2(0), *h3(0); 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
-    rmaps.clear();
-    rmaps = maps[iroc];
-    h2 = bookTH2D(Form("gain_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("gain_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h2, "colz")); 
-
-    h3 = bookTH2D(Form("ped_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("ped_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h3, "colz")); 
-
-    for (unsigned int i = 0; i < rmaps.size(); ++i) {
-      if (rmaps[i]->GetSumOfWeights() < 1) {
-	continue;
-      }
-      
-      /*
-      bool ok = threshold(rmaps[i]); 
-      if (!ok) {
-	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
-      }
-      ic = i/80; 
-      ir = i%80; 
-      h2->SetBinContent(ic+1, ir+1, fThreshold); 
-      h2->SetBinError(ic+1, ir+1, fThresholdE); 
-
-      h3->SetBinContent(ic+1, ir+1, fSigma); 
-      h3->SetBinError(ic+1, ir+1, fSigmaE); 
-      */
-
-      if (result & 0x4) {
-	//	cout << "add " << rmaps[i]->GetName() << endl;
-	fHistList.push_back(rmaps[i]);
-      }
-      // -- write all hists to file if requested
-      if (0 && result & 0x4) {
-	rmaps[i]->SetDirectory(fDirectory); 
-	rmaps[i]->Write();
-	delete rmaps[i];
-      }
-    }
-
-    if (result & 0x1) {
-      resultMaps.push_back(h2); 
-      fHistList.push_back(h2); 
-      resultMaps.push_back(h3); 
-      fHistList.push_back(h3); 
-    }
-
-    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
-    if (result & 0x2) {
-      TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
-      resultMaps.push_back(d1); 
-      fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
-      resultMaps.push_back(d2); 
-      fHistList.push_back(d2); 
-    }
-
-  }
-
-
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
-
-  if (h2) h2->Draw("colz");
-  PixTest::update(); 
-  
-  TH1 *h1(0); 
-  if (!(result & 0x4)) {
-    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
-      rmaps.clear();
-      rmaps = maps[iroc];
-      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
-      while (!rmaps.empty()){
-	h1 = rmaps.back(); 
-	rmaps.pop_back(); 
-	if (h1) delete h1;
-      }
-    }
-  }
-
 }
 
 // ----------------------------------------------------------------------
