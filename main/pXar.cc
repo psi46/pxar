@@ -152,6 +152,13 @@ int main(int argc, char *argv[]){
 		 configParameters->getTbmType(), tbmDACs, 
 		 configParameters->getRocType(), rocDACs, 
 		 rocPixels);
+
+    // Set up the four signal probe outputs:
+    api->SignalProbe("a1",configParameters->getProbe("a1"));
+    api->SignalProbe("a2",configParameters->getProbe("a2"));
+    api->SignalProbe("d1",configParameters->getProbe("d1"));
+    api->SignalProbe("d2",configParameters->getProbe("d2"));
+
     LOG(logINFO) << "DUT info: ";
     api->_dut->info(); 
     
