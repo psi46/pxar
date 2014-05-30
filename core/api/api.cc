@@ -1395,20 +1395,24 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 	// Pixel is known:
 	if(px != evt->pixels.end()) {
 	  if(efficiency) { px->value += 1; }
-	  else { 
+	  else {
 	    px->value += pixit->value;
 	    // Calculate the variance incrementally:
 	    double delta = pixit->value - pxmean[*px];
 	    pxmean[*px] += delta/pxcount[*px];
 	    pxm2[*px] += delta*(pixit->value - pxmean[*px]);
-	    //LOG(logDEBUGAPI) << "(" << pxcount[*px] << ") "<< *px << " mean " << pxmean[*px];
 	    pxcount[*px]++;
 	  }
 	}
 	// Pixel is new:
 	else {
 	  if(efficiency) { pixit->value = 1; }
-	  else { pxcount.insert(std::make_pair(*pixit,1)); }
+	  else { 
+	    // Initialize counters and temporary variables:
+	    pxcount.insert(std::make_pair(*pixit,1));
+	    pxmean.insert(std::make_pair(*pixit,0));
+	    pxm2.insert(std::make_pair(*pixit,0));
+	  }
 	  evt->pixels.push_back(*pixit);
 	}
       }
@@ -1420,9 +1424,9 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
     // Divide the pulseheight by the number of triggers received:
     if(!efficiency) {
       for(std::vector<pixel>::iterator px = evt->pixels.begin(); px != evt->pixels.end(); ++px) {
-	px->value/=pxcount[*px];
-	double variance = pxm2[*px]/(pxcount[*px] - 1);
-	//LOG(logDEBUGAPI) << *px << " mean " << pxmean[*px] << " var " << variance;
+	// Adding 0.5 in order to get proper rounding - the compiler always just truncates the value:
+	px->value = static_cast<int16_t>(pxmean[*px] > 0 ? pxmean[*px] + 0.5 : pxmean[*px] - 0.5);
+	px->variance = static_cast<uint16_t>(pxm2[*px]/(pxcount[*px] - 1) + 0.5);
       }
     }
     packed.push_back(evt);
