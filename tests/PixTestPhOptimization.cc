@@ -99,14 +99,13 @@ void PixTestPhOptimization::doTest() {
   string name, title;
 
   //looking for inefficient pixels, so that they can be avoided
-  fApi->setDAC("ctrlreg",4);
-  fApi->setDAC("vcal",200);
   std::vector<std::pair<int, int> > badPixels;
   BlacklistPixels(badPixels, 10);
 
   //vcal threshold map in order to choose the low-vcal value the PH will be sampled at
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  fApi->setDAC("ctrlreg",4);
   std::vector<pxar::pixel> thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
   int minthr=0;
   LOG(logDEBUG) << "thr map size "<<thrmap.size()<<endl;
@@ -259,7 +258,11 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
   //makes a list of inefficient pixels, to be avoided during optimization
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig, FLAG_FORCE_MASKED);
+
+  vector<uint8_t> vVcal = getDacs("vcal"); 
+  vector<uint8_t> vCreg = getDacs("ctrlreg"); 
+
+  vector<TH2D*> testEff = efficiencyMaps("PixelAlive", aliveTrig);
   std::pair<int, int> badPix;
   int eff=0;
   for (unsigned int i = 0; i < testEff.size(); ++i) {
@@ -276,6 +279,8 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<int, int> > &b
       }
     }
   }
+  setDacs("vcal", vVcal); 
+  setDacs("ctrlreg", vCreg); 
 }
 
 
