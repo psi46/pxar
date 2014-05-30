@@ -222,7 +222,6 @@ void PixTestSetup::doTest()
 	//set final clk and deser160:
 	sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
 	fApi->setTestboardDelays(sig_delays);
-	LOG(logINFO) << "PixTestSetup:: tb Delays set to:" << endl << "clk = " << finalclk << " -  deser160 = " << finaldeser << endl;
 
 	//set pg_setup to default:
 	pgToDefault(pg_setup);
@@ -231,7 +230,8 @@ void PixTestSetup::doTest()
 	restoreDacs();   //needed?
 	
 	saveTbParameters();
-	LOG(logINFO) << "PixTestSetup::doTest() done for " ;
+	LOG(logINFO) << "PixTestSetup::doTest() done" ;
+	LOG(logINFO) << "clk = " << finalclk << ", deser160 = " << finaldeser;
 }
 
 // ----------------------------------------------------------------------
