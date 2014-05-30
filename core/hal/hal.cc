@@ -1647,6 +1647,14 @@ void hal::daqTriggerLoop(uint16_t period) {
   _testboard->Flush();
 }
 
+void hal::daqTriggerLoopHalt() {
+  
+  LOG(logDEBUGHAL) << "Trigger loop halted.";
+  _testboard->Pg_Stop();
+  // Push to testboard:
+  _testboard->Flush();
+}
+
 uint32_t hal::daqBufferStatus() {
 
   uint32_t buffered_data = 0;
@@ -1668,6 +1676,7 @@ void hal::daqStop() {
   // FIXME provide daq_stop_all NIOS funktion?
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Stop(channel); }
   _testboard->uDelay(100);
+  _testboard->Flush();
 
   LOG(logDEBUGHAL) << "Stopped DAQ session.";
 }

@@ -564,6 +564,11 @@ namespace pxar {
      */
     void daqTriggerLoop(uint16_t period = 1000);
 
+    /** Function to halt the pattern generator loop which has been started
+     *  using daqTriggerLoop(). This stops triggering the devices.
+     */
+    void daqTriggerLoopHalt();
+
     /** Function to stop the running data acquisition
      *
      *  This triggers also a reprogramming of the old (test-) Pattern Generator

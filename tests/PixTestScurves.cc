@@ -234,7 +234,6 @@ void PixTestScurves::fitS() {
 	  h = (TH1D*)fDirectory->Get(Form("scurveVcal_Vcal_c%d_r%d_C%d", ic, ir, iroc)); 
 	  if (0 == h) continue;
 	  
-	  cout << h->GetTitle() << endl;
 	  h->Fit(f, "qr", "", fPIF->fLo, fPIF->fHi); 
 	  
 	  double Threshold  = f->GetParameter(0); 
@@ -246,19 +245,19 @@ void PixTestScurves::fitS() {
     }
   } 
 
-  if (!fParDac.compare("VthrComp")) {
+  string dacname(fParDac);
+  std::transform(dacname.begin(), dacname.end(), dacname.begin(), ::tolower);
+  if (!dacname.compare("vthrcomp")) {
     TH1D *h = (TH1D*)fDirectory->Get("scurveVthrComp_VthrComp_c51_r62_C0");
     
-    fPIF->fLo = fParDacLo+1;
-    fPIF->fHi = h->FindLastBinAbove(0.5*h->GetMaximum());  
 
     for (int iroc = 0; iroc < 1; ++iroc) {
       for (int ic = 0; ic < 10; ++ic) {
 	for (int ir = 0; ir < 20; ++ir) {
 	  h = (TH1D*)fDirectory->Get(Form("scurveVthrComp_VthrComp_c%d_r%d_C%d", ic, ir, iroc)); 
 	  if (0 == h) continue;
-	  
-	  cout << h->GetTitle() << endl;
+	  fPIF->fLo = fParDacLo+1;
+	  fPIF->fHi = h->FindLastBinAbove(0.5*h->GetMaximum());  
 	  TF1  *f = fPIF->errScurve(h); 
 	  f->SetLineColor(kBlue); 
 	  if (fPIF->doNotFit()) {
@@ -367,7 +366,6 @@ void PixTestScurves::output4moreweb() {
     if (string::npos == name.find("_V0"))  continue;
     if (string::npos != name.find("dist_"))  continue;
     if (string::npos == name.find("thr_scurve"))  continue;
-    cout << "output4moreweb: " << name << endl;
     if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
       PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
     }

@@ -252,6 +252,10 @@ namespace pxar {
      */
     void daqTriggerLoop(uint16_t period);
 
+    /** Halt the pattern generator loop - no more triggers
+     */
+    void daqTriggerLoopHalt();
+
     /** Stopping the current DAQ session. This is not resetting the data buffers.
      *  All DAQ channels are stopped.
      */

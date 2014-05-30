@@ -581,7 +581,7 @@ void PixTestTrim::output4moreweb() {
       continue;
     }
 
-    if (string::npos != name.find("TrimBit15")) {
+    if (string::npos != name.find("TrimBit14")) {
       PixUtil::replaceAll(name, "_V0", ""); 
       TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
       h->SetDirectory(gDirectory); 
