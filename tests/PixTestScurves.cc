@@ -366,7 +366,6 @@ void PixTestScurves::output4moreweb() {
     if (string::npos == name.find("_V0"))  continue;
     if (string::npos != name.find("dist_"))  continue;
     if (string::npos == name.find("thr_scurve"))  continue;
-    cout << "output4moreweb: " << name << endl;
     if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
       PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
     }
