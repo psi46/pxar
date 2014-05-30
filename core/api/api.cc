@@ -1112,6 +1112,12 @@ void api::daqTriggerLoop(uint16_t period) {
   }
 }
 
+void api::daqTriggerLoopHalt() {
+
+  // Just halt the pattern generator loop:
+  _hal->daqTriggerLoopHalt();
+}
+
 std::vector<uint16_t> api::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
