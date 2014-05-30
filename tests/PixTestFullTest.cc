@@ -94,14 +94,26 @@ void PixTestFullTest::doTest() {
   suite.push_back("gainpedestal"); 
 
   PixTest *t(0); 
-  
+
+  string trimvcal(""); 
   PixTestFactory *factory = PixTestFactory::instance(); 
   for (unsigned int i = 0; i < suite.size(); ++i) {
     t =  factory->createTest(suite[i], fPixSetup);
+    if (!suite[i].compare("trim")) trimvcal = t->getParameter("vcal"); 
     t->doTest(); 
     delete t; 
   }
 
+  // -- create new version of DAC and trim parameter files with VCAL trim value part of name
+  string name = fPixSetup->getConfigParameters()->getDACParameterFileName();
+  name += Form("%s", trimvcal.c_str()); 
+  fPixSetup->getConfigParameters()->setDACParameterFileName(name); 
+
+  name = fPixSetup->getConfigParameters()->getTrimParameterFileName();
+  name += Form("%s", trimvcal.c_str()); 
+  fPixSetup->getConfigParameters()->setTrimParameterFileName(name); 
+  saveDacs();
+  saveTrimBits();
 }
 
 
