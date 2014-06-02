@@ -1176,7 +1176,9 @@ rawEvent api::daqGetRawEvent() {
   return (*_hal->daqRawEvent());
 }
 
-uint32_t api::daqGetNDecoderErrors(){
+uint32_t api::daqGetNDecoderErrors() {
+
+  // Return the accumulated number of decoding errors:
   return _ndecode_errors_lastdaq;
 }
 
