@@ -352,8 +352,6 @@ namespace pxar {
   private:
     ProbeADictionary() {
       // Probe name and values
-
-      // Digital signals:
       _signals["tin"]    = PROBEA_TIN;
       _signals["sdata1"] = PROBEA_SDATA1;
       _signals["sdata2"] = PROBEA_SDATA2;
@@ -370,6 +368,68 @@ namespace pxar {
     void operator=(ProbeADictionary const&); // Don't implement
   };
 
+  /** Map for pattern generator signal name lookup
+   *  All signal names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class PatternGeneratorDictionary {
+  public:
+    static PatternGeneratorDictionary * getInstance() {
+      static PatternGeneratorDictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint16_t getSignal(std::string name) {
+      try { return _signals[name]; }
+      catch(...) { return PG_NONE; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint16_t signal) {
+      for(std::map<std::string, uint16_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
+    }
+
+  private:
+    PatternGeneratorDictionary() {
+      // Token:
+      _signals["pg_tok"]    = PG_TOK;
+      _signals["tok"]       = PG_TOK;
+      _signals["token"]     = PG_TOK;
+
+      // Trigger:
+      _signals["pg_trg"]    = PG_TRG;
+      _signals["trg"]       = PG_TRG;
+      _signals["trigger"]   = PG_TRG;
+
+      // Calibrate signal
+      _signals["pg_cal"]    = PG_CAL;
+      _signals["cal"]       = PG_CAL;
+      _signals["calibrate"] = PG_CAL;
+
+      // ROC Reset Signal
+      _signals["pg_resr"]   = PG_RESR;
+      _signals["resr"]      = PG_RESR;
+      _signals["resetroc"]  = PG_RESR;
+
+      // TBM Reset Signal
+      _signals["pg_rest"]   = PG_REST;
+      _signals["rest"]      = PG_REST;
+      _signals["resettbm"]  = PG_REST;
+
+      // PG Sync Signal
+      _signals["pg_sync"]   = PG_SYNC;
+      _signals["sync"]      = PG_SYNC;
+    }
+
+    std::map<std::string, uint16_t> _signals;
+    PatternGeneratorDictionary(PatternGeneratorDictionary const&); // Don't Implement
+    void operator=(PatternGeneratorDictionary const&); // Don't implement
+  };
 
 } //namespace pxar
 
