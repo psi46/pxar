@@ -1204,7 +1204,7 @@ bool api::daqStop() {
     _hal->AllColumnsSetEnable(rocit->i2c_address,false);
   }
 
-  return false;
+  return true;
 }
 
 
