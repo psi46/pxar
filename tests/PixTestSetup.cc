@@ -125,8 +125,8 @@ void PixTestSetup::doTest()
 
 	//set pattern with only res and token:
 	pg_setup.clear();
-	pg_setup.push_back(make_pair(0x0800, 25));    // PG_RESR b001000
-	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  b000001
+	pg_setup.push_back(make_pair("resetroc", 25));    // PG_RESR b001000
+	pg_setup.push_back(make_pair("token", 0));     // PG_TOK  b000001
 	uint16_t period = 28;
 
 	// Set the pattern generator:
@@ -261,14 +261,11 @@ void PixTestSetup::runCommand(std::string command) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestSetup::pgToDefault(vector<pair<uint16_t, uint8_t> > pg_setup) {
+void PixTestSetup::pgToDefault(vector<pair<std::string, uint8_t> > pg_setup) {
 	pg_setup.clear();
 	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
 
-	pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
-	pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
-	pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
-	pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  		
+	pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
 
 	fApi->setPatternGenerator(pg_setup);
 	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
