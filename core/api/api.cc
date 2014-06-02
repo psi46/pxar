@@ -1388,6 +1388,7 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
     std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
     std::map<pixel,double> pxmean = std::map<pixel,double>();
     std::map<pixel,double> pxm2 = std::map<pixel,double>();
+    std::map<pixel,double> pxrms = std::map<pixel,double>();
 
     for(std::vector<Event*>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
 
@@ -1407,6 +1408,7 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 	    double delta = pixit->value - pxmean[*px];
 	    pxmean[*px] += delta/pxcount[*px];
 	    pxm2[*px] += delta*(pixit->value - pxmean[*px]);
+	    pxrms[*px] += pixit->value*pixit->value;
 	    pxcount[*px]++;
 	  }
 	}
@@ -1418,6 +1420,7 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 	    pxcount.insert(std::make_pair(*pixit,1));
 	    pxmean.insert(std::make_pair(*pixit,0));
 	    pxm2.insert(std::make_pair(*pixit,0));
+	    pxrms.insert(std::make_pair(*pixit,pixit->value*pixit->value));
 	  }
 	  evt->pixels.push_back(*pixit);
 	}
@@ -1433,6 +1436,7 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
 	// Adding 0.5 in order to get proper rounding - the compiler always just truncates the value:
 	px->value = static_cast<int16_t>(pxmean[*px] > 0 ? pxmean[*px] + 0.5 : pxmean[*px] - 0.5);
 	px->variance = static_cast<uint16_t>(pxm2[*px]/(pxcount[*px] - 1) + 0.5);
+	LOG(logDEBUGAPI) << *px << " mean " << px->value << " var " << pxm2[*px]/(pxcount[*px] - 1) << " rms " << std::sqrt(pxrms[*px]/pxcount[*px]);
       }
     }
     packed.push_back(evt);
