@@ -928,8 +928,8 @@ std::string ConfigParameters::getProbe(std::string probe) {
    if (probe == "a1") return fProbeA1;	
    else if (probe == "a2") return fProbeA2;	
    else if (probe == "d1") return fProbeD1;	
-   else if (probe == "d2") return fProbeD2;	
-
+   else if (probe == "d2") return fProbeD2;
+   else return "";
 }
 
 
