@@ -75,7 +75,7 @@ public:
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
   std::vector<std::pair<std::string,uint8_t> >  getTbSigDelays();
-  std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
+  std::vector<std::pair<std::string,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
   std::vector<std::string> getDacs();

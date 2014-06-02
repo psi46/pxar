@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
-  vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
+  vector<pair<std::string, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
   try {
     api = new pxar::api("*", verbosity);
