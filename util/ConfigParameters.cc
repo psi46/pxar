@@ -921,10 +921,9 @@ void ConfigParameters::setProbe(std::string probe, std::string value) {
    else if (probe == "d2") fProbeD2 = value;	
 }
 
+// ----------------------------------------------------------------------
 std::string ConfigParameters::getProbe(std::string probe) {
-   
    std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
-
    if (probe == "a1") return fProbeA1;	
    else if (probe == "a2") return fProbeA2;	
    else if (probe == "d1") return fProbeD1;	

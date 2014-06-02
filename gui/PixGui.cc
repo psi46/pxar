@@ -343,8 +343,7 @@ void PixGui::CloseWindow() {
   gApplication->Terminate(0);
 
 }
-void PixGui::selectProbes(Int_t id)
-{
+void PixGui::selectProbes(Int_t /*id*/) {
    TGComboBox *box = (TGComboBox *) gTQSender;
    
    fApi->SignalProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
