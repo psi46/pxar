@@ -1039,6 +1039,9 @@ bool api::daqStart() {
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
 
+  // Clearing previously initialized DAQ sessions:
+  _hal->daqClear();
+
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
   
   // Setup the configured mask and trim state of the DUT:
@@ -1121,10 +1124,6 @@ std::vector<uint16_t> api::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   std::vector<uint16_t> buffer = _hal->daqBuffer();
-
-  // We read out everything, reset the buffer:
-  // Reset all active channels:
-  _hal->daqClear();
   return buffer;
 }
 
@@ -1138,10 +1137,7 @@ std::vector<rawEvent> api::daqGetRawEventBuffer() {
   // Dereference all vector entries and give data back:
   for(std::vector<rawEvent*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
-  }  
-  // We read out everything, reset the buffer:
-  // Reset all active channels:
-  _hal->daqClear();
+  }
   return data;
 }
 
@@ -1159,10 +1155,6 @@ std::vector<Event> api::daqGetEventBuffer() {
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
   }
-  
-  // We read out everything, reset the buffer:
-  // Reset all active channels:
-  _hal->daqClear();
   return data;
 }
 
