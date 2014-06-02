@@ -11,31 +11,32 @@ public:
 	PixTestPattern(PixSetup *, std::string);
 	PixTestPattern();
 	virtual ~PixTestPattern();
+
 	virtual bool setParameter(std::string parName, std::string sval);
 	void init();
-	void setToolTips();
-	void bookHist(std::string);
+	void doTest();
 
-	void runCommand(std::string );	
-	void choosePIX(std::string);
+	void runCommand(std::string);
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
-	void PrintEvents();
-	void doTest();
+	void PrintEvents(int, int, std::string);
+	void pgToDefault(std::vector<std::pair<std::string, uint8_t> >);
 
 private:
 
-	int     fParNtrig;
-	bool	fParTrigLoop;
+	int     fParPgCycles;
+	int	    fParTrigLoop;
 	int     fParPeriod;
-	int	fParSeconds;
-	bool	fTestAllPixels;
-	bool	fUnMaskAllPixels;
+	int	    fParSeconds;
 	bool	fPatternFromFile;
-	bool	fPixelsFromFile;
 	bool	fResultsOnFile;
 	bool    fBinOut;
 	std::string fFileName;
+	bool	fTestAllPixels;
+	bool	fUnMaskAllPixels;
+
+	bool    ParOutOfRange;
+	std::string f_Directory;
 	std::string str1, str2;
 	std::string::size_type s0, s1;
 	std::vector<std::pair<std::string, uint8_t> > pg_setup;
