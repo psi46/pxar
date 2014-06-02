@@ -41,16 +41,16 @@ DAC2HI              250
 PIX                 11,20 
 
 -- Pattern
-ntrig               0
-trigloop            1
-period              -1
+pgcycles            10
+triggerloop         checkbox(0)
+period              300
 seconds             1
-patternfromfile     1
-resultsonfile       1
-binaryoutput        0
-outfilename         defaultdata.dat
-testallpixels       0
-maskallpixels       0
+patternfromfile     checkbox(0)
+resultsonfile       checkbox(0)
+binaryoutput        checkbox(0)
+filename            defaultPattern
+testallpixels       checkbox(0)
+unmaskallpixels     checkbox(0)
 resettodefault      button
 
 -- BumpBonding
