@@ -196,7 +196,7 @@ namespace pxar {
      */
     bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
-                       std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+                       std::vector<std::pair<std::string, uint8_t> > pg_setup);
   
     /** Update method for testboard voltages and current limits. This method requires
      *  the testboard to be initialized once using pxar::initTestboard
@@ -225,7 +225,7 @@ namespace pxar {
      *  is thrown. The new settings are stored in the pxar::dut object for 
      *  later reference.
      */
-    void setPatternGenerator(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+    void setPatternGenerator(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
     /** Initializer method for the DUT (attached devices)
      *
@@ -717,7 +717,7 @@ namespace pxar {
      *  of the pattern command list)
      *  For non-correctable problems a InvalidConfig exception is thrown.
      */
-    void verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
+    void verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &pg_setup);
 
     /** Helper function to check validity of testboard power settings (voltages and
      *  current limits) coming from the user space.

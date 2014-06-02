@@ -44,7 +44,7 @@ std::string api::getVersion() { return PACKAGE_STRING; }
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 			std::vector<std::pair<std::string,double> > power_settings,
-			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+			std::vector<std::pair<std::string,uint8_t> > pg_setup) {
 
   // Check the HAL status before doing anything else:
   if(!_hal->compatible()) return false;
@@ -75,7 +75,7 @@ void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_de
   LOG(logDEBUGAPI) << "Testboard signal delays updated.";
 }
 
-void api::setPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+void api::setPatternGenerator(std::vector<std::pair<std::string,uint8_t> > pg_setup) {
   if(!_hal->status()) {
     LOG(logERROR) << "Pattern generator not updated!";
     return;
@@ -1827,10 +1827,14 @@ void api::checkTestboardPower(std::vector<std::pair<std::string,double> > power_
   }
 }
 
-void api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+void api::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &pg_setup) {
   
-  uint32_t delay_sum = 0;
+  std::vector<std::pair<uint16_t,uint8_t> > patterns;
 
+  // Get the Pattern Generator dictionary for lookup:
+  PatternGeneratorDictionary * _dict = PatternGeneratorDictionary::getInstance();
+
+  // Check total length of the pattern generator:
   if(pg_setup.size() > 256) {
     LOG(logCRITICAL) << "Pattern too long (" << pg_setup.size() << " entries) for pattern generator. "
 		     << "Only 256 entries allowed!";
@@ -1838,22 +1842,44 @@ void api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
   }
   else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
 
-  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
-    if((*it).second == 0 && it != pg_setup.end() -1 ) {
+  // Loop over all entries provided:
+  for(std::vector<std::pair<std::string,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+
+    // Check for current element if delay is zero:
+    if(it->second == 0 && it != pg_setup.end() -1 ) {
       LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
 		       << static_cast<int>(it - pg_setup.begin())  << ".";
-      throw InvalidConfig("Found delay = 0 on early entry! This stops the pattern generator");
+      throw InvalidConfig("Found delay = 0 on early entry! This stops the pattern generator.");
     }
+
     // Check last entry for PG stop signal (delay = 0):
-    if(it == pg_setup.end() - 1 && (*it).second != 0) {
+    if(it == pg_setup.end() - 1 && it->second != 0) {
       LOG(logWARNING) << "No delay = 0 found on last entry. Setting last delay to 0 to stop the pattern generator.";
-      (*it).second = 0;
+      it->second = 0;
     }
-    delay_sum += (*it).second;
+
+    // Convert the name to lower case for comparison:
+    std::transform(it->first.begin(), it->first.end(), it->first.begin(), ::tolower);
+
+    std::istringstream signals(it->first);
+    std::string s;
+    uint16_t signal = 0;
+    // Tokenize the signal string into single PG signals, separated by ";":
+    while (std::getline(signals, s, ';')) {
+      // Get the signal from the dictionary object:
+      uint16_t sig = _dict->getSignal(s);
+      if(sig != PG_ERR) signal += sig;
+      else {
+	LOG(logCRITICAL) << "Could not find pattern generator signal \"" << s << "\" in the dictionary!";
+	throw InvalidConfig("Wrong pattern generator signal provided.");
+      }
+      LOG(logDEBUGAPI) << "Found PG signal " << s << " (" << std::hex << sig << std::dec << ")";
+    }
+    patterns.push_back(std::make_pair(signal,it->second));
   }
 
   // Store the Pattern Generator commands in the DUT:
-  _dut->pg_setup = pg_setup;
+  _dut->pg_setup = patterns;
   // Calculate the sum of all delays and store it:
   _dut->pg_sum = getPatternGeneratorDelaySum(_dut->pg_setup);
 }
