@@ -185,6 +185,8 @@ namespace pxar {
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
      *  The name lookup is performed via the central API dictionaries.
+     *  Multiple pattern generator signals at once can be sent by separating their
+     *  names with a semicolon.
      *
      *  All user inputs are checked for sanity. This includes range checks on
      *  the current limits set, a sanity check for the pattern generator command
@@ -224,6 +226,8 @@ namespace pxar {
      *  If the settings are found to be out-of-range, a pxar::InvalidConfig exception
      *  is thrown. The new settings are stored in the pxar::dut object for 
      *  later reference.
+     *  Multiple pattern generator signals at once can be sent by separating their
+     *  names with a semicolon, e.g. "token;sync".
      */
     void setPatternGenerator(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
