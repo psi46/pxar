@@ -373,7 +373,6 @@ void PixTestGainPedestal::printHistograms() {
     OutputFile << endl;
     OutputFile << endl;
 
-    map<string, TH1D*>::iterator hend = fHists.end(); 
     TH1D *h1(0); 
     for (int ic = 0; ic < 52; ++ic) {
       for (int ir = 0; ir < 52; ++ir) {
