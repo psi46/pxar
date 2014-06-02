@@ -218,8 +218,8 @@ namespace pxar {
 
     // Return the register id for the name in question:
     inline uint8_t getDevCode(std::string name) {
-      try { return _devices[name]; }
-      catch(...) { return 0x0; }
+      if(_devices.find(name) != _devices.end()) { return _devices[name]; }
+      else { return 0x0; }
     }
 
   private:
@@ -265,8 +265,8 @@ namespace pxar {
 
     // Return the signal id for the probe signal in question:
     inline uint8_t getSignal(std::string name) {
-      try { return _signals[name]; }
-      catch(...) { return PROBE_OFF; }
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PROBE_OFF; }
     }
 
     // Return the signal name for the probe signal in question:
@@ -338,8 +338,8 @@ namespace pxar {
 
     // Return the register id for the name in question:
     inline uint8_t getSignal(std::string name) {
-      try { return _signals[name]; }
-      catch(...) { return PROBEA_OFF; }
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PROBEA_OFF; }
     }
 
     // Return the signal name for the probe signal in question:
@@ -383,8 +383,8 @@ namespace pxar {
 
     // Return the register id for the name in question:
     inline uint16_t getSignal(std::string name) {
-      try { return _signals[name]; }
-      catch(...) { return PG_NONE; }
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PG_ERR; }
     }
 
     // Return the signal name for the probe signal in question:
