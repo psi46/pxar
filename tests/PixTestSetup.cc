@@ -3,6 +3,7 @@
 
 #include <stdlib.h>   // atof, atoi
 #include <algorithm>  // std::find
+#include <TBox.h>
 
 #include "PixTestSetup.hh"
 #include "log.h"
@@ -175,41 +176,55 @@ void PixTestSetup::doTest()
   // Stop the DAQ:
   fApi->daqStop();
 
-  histo->Draw("colz");
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), histo);
-  PixTest::update(); //needed?
-    
+
   int finalclk, finaldeser;
+  histo->Draw("colz");
+  Int_t bin = histo->GetMaximumBin();
+  Int_t binx, biny, binz;
+  histo->GetBinXYZ(bin, binx, biny, binz);
+  Double_t x1 = histo->GetXaxis()->GetBinLowEdge(binx);
+  Double_t x2 = histo->GetXaxis()->GetBinUpEdge(binx);
+  Double_t y1 = histo->GetYaxis()->GetBinLowEdge(biny);
+  Double_t y2 = histo->GetYaxis()->GetBinUpEdge(biny);
+  TBox b(x1, y1, x2, y2);
+  b.SetFillStyle(0);
+  b.SetLineWidth(4);
+  b.SetLineColor(kBlack);
 
+  // If we found some good settings, find the best:
   if (good_clk != -1 && good_deser != -1) {
-    //algorithm to choose the best values - TO BE IMPLEMENTED FIXME
-    //now initialized to the second to last (not good for long cable):
-    finalclk = good_clk-1;
-    finaldeser = good_deser;
-    //	LOG(logINFO) << "PixTestSetup:: good delays are:" << endl << "clk = "<<  finalclk << " -  deser160 = " << finaldeser << endl;
-    //FIXME setTbParameters(finalclk, finaldeser);
-  }
+    
+    // Highlight the maximum
+    b.Draw();
 
+    finalclk = biny - 1;
+    finaldeser = binx - 1;
+    LOG(logINFO) << "DTB Delay Setup found good delays at " << "clk = "<< finalclk << ", deser160 = " << finaldeser;
+  }
   else {
     //back to default values
     finalclk = finaldeser = 4;
-    LOG(logINFO) << "PixTestSetup::doTest() none good delays found. Back to default values (clk 4 - deser 4)"<< endl;
-    //setTbParameters(finalclk, finaldeser);
+    LOG(logINFO) << "DTB Delay Setup could not find any good delays. Falling back to default values.";
   }
 
-  // FIXME Set final clk and deser160:
-  sig_delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  // Update the histogram, also print the added box around selected settings:
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), histo);
+  PixTest::update();
+
+  // Set final clk and deser160:
+  sig_delays = getMagicDelays(finalclk,finaldeser);
+  for(std::vector<std::pair<std::string,uint8_t> >::iterator sig = sig_delays.begin(); sig != sig_delays.end(); ++sig) {
+    fPixSetup->getConfigParameters()->setTbParameter(sig->first, sig->second);
+  }
+
+  // Store them in the file.
+  saveTbParameters();
   fApi->setTestboardDelays(sig_delays);
 
   // Reset the pattern generator to the configured default:
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
-
   
   fHistList.clear();
-	
-  saveTbParameters();
-  LOG(logINFO) << "PixTestSetup::doTest() done" ;
-  LOG(logINFO) << "clk = " << finalclk << ", deser160 = " << finaldeser;
 }
 
 std::vector<std::pair<std::string,uint8_t> > PixTestSetup::getMagicDelays(uint8_t clk, uint8_t deser160) {
