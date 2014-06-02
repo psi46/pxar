@@ -26,6 +26,7 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
+#define PG_ERR  0xFF00
 
 namespace pxar {
 
@@ -396,6 +397,10 @@ namespace pxar {
 
   private:
     PatternGeneratorDictionary() {
+      // None (empty cycle):
+      _signals["none"]      = PG_NONE;
+      _signals["empty"]     = PG_NONE;
+      
       // Token:
       _signals["pg_tok"]    = PG_TOK;
       _signals["tok"]       = PG_TOK;
