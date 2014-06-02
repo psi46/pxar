@@ -24,38 +24,31 @@ PixTestSetup::PixTestSetup(PixSetup *a, std::string name) : PixTest(a, name)
 //------------------------------------------------------------------------------
 PixTestSetup::PixTestSetup() : PixTest() {}
 
-bool PixTestSetup::setParameter(string parName, string sval)
-{
+bool PixTestSetup::setParameter(string parName, string sval) {
   bool found(false);
   ParOutOfRange = false;
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
-  for (unsigned int i = 0; i < fParameters.size(); ++i) 
-    {
-      if (fParameters[i].first == parName) 
-	{
-	  found = true; 
+  for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (fParameters[i].first == parName) {
+      found = true; 
 
-	  if (!parName.compare("clkmax")) 
-	    {
-	      fClkMax = atoi(sval.c_str()); 
-	      if(fClkMax < 0 || fClkMax > 25)	
-		{ 
-		  LOG(logWARNING) << "PixTestSetup::setParameter() ClkMax out of range (0-25)";
-		  found=false; ParOutOfRange = true;
-		}
-	    }
-	  if (!parName.compare("desermax")) 
-	    {
-	      fDeserMax = atoi(sval.c_str()); 
-	      if(fDeserMax < 0 || fDeserMax > 7)	
-		{ 
-		  LOG(logWARNING) << "PixTestSetup::setParameter() DeserMax out of range (0-7)";
-		  found=false; ParOutOfRange = true;
-		}
-	    }
-	  break;
+      if (!parName.compare("clkmax")) {
+	fClkMax = atoi(sval.c_str()); 
+	if(fClkMax < 0 || fClkMax > 25) { 
+	  LOG(logWARNING) << "PixTestSetup::setParameter() ClkMax out of range (0-25)";
+	  found=false; ParOutOfRange = true;
 	}
+      }
+      if (!parName.compare("desermax")) {
+	fDeserMax = atoi(sval.c_str()); 
+	if(fDeserMax < 0 || fDeserMax > 7) { 
+	  LOG(logWARNING) << "PixTestSetup::setParameter() DeserMax out of range (0-7)";
+	  found=false; ParOutOfRange = true;
+	}
+      }
+      break;
     }
+  }
   return found; 
 }
 
@@ -72,11 +65,8 @@ void PixTestSetup::init()
 void PixTestSetup::setToolTips()
 {
   fTestTip = string(Form("scan testboard parameter settings and check for valid readout\n")
-		    + string("TO BE IMPLEMENTED!!"))  //FIXME
-    ;
-  fSummaryTip = string("summary plot to be implemented")  //FIXME
-    ;
-
+		    + string("TO BE IMPLEMENTED!!"));  //FIXME
+  fSummaryTip = string("summary plot to be implemented");  //FIXME
 }
 
 void PixTestSetup::bookHist(string name)
