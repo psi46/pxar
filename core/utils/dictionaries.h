@@ -400,6 +400,7 @@ namespace pxar {
       // None (empty cycle):
       _signals["none"]      = PG_NONE;
       _signals["empty"]     = PG_NONE;
+      _signals["delay"]     = PG_NONE;
       
       // Token:
       _signals["pg_tok"]    = PG_TOK;
