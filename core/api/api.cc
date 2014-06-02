@@ -1083,33 +1083,32 @@ bool api::daqStatus() {
 
 void api::daqTrigger(uint32_t nTrig, uint16_t period) {
 
-  if(daqStatus()) {
-    // Pattern Generator loop doesn't work for delay periods smaller than
-    // the pattern generator duration, so limit it to that:
-    if(period < _dut->pg_sum) {
-      period = _dut->pg_sum;
-      LOG(logWARNING) << "Loop period setting too small for configured "
-		      << "Pattern generator. "
-		      << "Setting loop delay to " << period << " clk";
-    }
-    // Just passing the call to the HAL, not doing anything else here:
-    _hal->daqTrigger(nTrig,period);
+  if(!daqStatus()) { return; }
+  // Pattern Generator loop doesn't work for delay periods smaller than
+  // the pattern generator duration, so limit it to that:
+  if(period < _dut->pg_sum) {
+    period = _dut->pg_sum;
+    LOG(logWARNING) << "Loop period setting too small for configured "
+		    << "Pattern generator. "
+		    << "Setting loop delay to " << period << " clk";
   }
+  // Just passing the call to the HAL, not doing anything else here:
+  _hal->daqTrigger(nTrig,period);
 }
 
 void api::daqTriggerLoop(uint16_t period) {
 
-  if(daqStatus()) {
-    // Pattern Generator loop doesn't work for delay periods smaller than
-    // the pattern generator duration, so limit it to that:
-    if(period < _dut->pg_sum) {
-      period = _dut->pg_sum;
-      LOG(logWARNING) << "Loop period setting too small for configured "
-		      << "Pattern generator. "
-		      << "Setting loop delay to " << period << " clk";
-    }
-    _hal->daqTriggerLoop(period);
+  if(!daqStatus()) { return; }
+
+  // Pattern Generator loop doesn't work for delay periods smaller than
+  // the pattern generator duration, so limit it to that:
+  if(period < _dut->pg_sum) {
+    period = _dut->pg_sum;
+    LOG(logWARNING) << "Loop period setting too small for configured "
+		    << "Pattern generator. "
+		    << "Setting loop delay to " << period << " clk";
   }
+  _hal->daqTriggerLoop(period);
 }
 
 void api::daqTriggerLoopHalt() {
