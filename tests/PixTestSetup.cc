@@ -45,20 +45,18 @@ bool PixTestSetup::setParameter(string parName, string sval)
 		fClkMax = atoi(sval.c_str()); 
 		if(fClkMax < 0 || fClkMax > 25)	
 		{ 
-		 	LOG(logINFO) << "PixTestSetup::setParameter() ClkMax out of range (0-25)";
+		 	LOG(logWARNING) << "PixTestSetup::setParameter() ClkMax out of range (0-25)";
 			found=false; ParOutOfRange = true;
 		}
-		//setToolTips();
         }
   	if (!parName.compare("desermax")) 
 	{
 		fDeserMax = atoi(sval.c_str()); 
 		if(fDeserMax < 0 || fDeserMax > 7)	
 		{ 
-		 	LOG(logINFO) << "PixTestSetup::setParameter() DeserMax out of range (0-7)";
+		 	LOG(logWARNING) << "PixTestSetup::setParameter() DeserMax out of range (0-7)";
 			found=false; ParOutOfRange = true;
 		}
-		//setToolTips();
 	}
       	break;
     }
@@ -146,7 +144,9 @@ void PixTestSetup::doTest()
 	bool goodvaluefound = false;
 	int goodclk, goodeser = -1;
 
-	printf("        0        1        2        3        4        5        6        7\n");
+	for (ideser = 0; ideser <= fDeserMax; ideser++) printf("        %i", ideser);
+	cout << endl;
+
 	for (iclk = 0; iclk <= fClkMax; iclk++)
 	{
 		printf("%2i:", iclk);
