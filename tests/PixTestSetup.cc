@@ -98,7 +98,7 @@ void PixTestSetup::doTest()
   PixTest::update();
 	
   //fixed number of trigger (unstable with only 1 trigger)
-  int Ntrig = 2;
+  int Ntrig = 10;
 	
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << Ntrig;
 
@@ -113,7 +113,7 @@ void PixTestSetup::doTest()
   LOG(logINFO) << "PixTestSetup:: pg set to RES|TOK";
 
 
-  TH2D *histo = new TH2D(Form("DeserphaseClkScan"), Form("DeserphaseClkScan"), fDeserMax, 0., (fDeserMax+1), fClkMax, 0., (fClkMax+1));
+  TH2D *histo = new TH2D(Form("DeserphaseClkScan"), Form("DeserphaseClkScan"), fDeserMax+1, 0., fDeserMax+1, fClkMax+1, 0., fClkMax+1);
   histo->GetXaxis()->SetTitle("deser160phase");
   histo->GetYaxis()->SetTitle("clk");
   fHistList.push_back(histo);
@@ -122,15 +122,18 @@ void PixTestSetup::doTest()
   int ideser, iclk;
   int good_clk = -1, good_deser = -1;
 
-  for (ideser = 0; ideser <= fDeserMax; ideser++) printf("        %i", ideser);
-  cout << endl;
+  std::stringstream tablehead;
+  for (ideser = 0; ideser <= fDeserMax; ideser++) tablehead << std::setw(8) << ideser;
+  LOG(logINFO) << tablehead.str();
 
   // Start the DAQ:
   fApi->daqStart();
 
   // Loop over the Signal Delay range we want to scan:
   for (iclk = 0; iclk <= fClkMax; iclk++) {
-    printf("%2i:", iclk);
+    std::stringstream oneline;
+    oneline << std::setw(2) << iclk << ": ";
+
     for (ideser = 0; ideser <= fDeserMax; ideser++) {
 
       // Set up the delays in the DTB:
@@ -140,27 +143,33 @@ void PixTestSetup::doTest()
       fApi->daqTrigger(Ntrig,period);
       daqRawEv = fApi->daqGetRawEventBuffer();
 
-      // Trying to find the ROC header 0x7f8 in the raw DESER160 data. Using the last
-      // of the sent triggers only:
-      if(!daqRawEv.empty()) {
-	// Get the last vector entry:
-	rawEvent evt = daqRawEv.back();
-	// Get the first word from ROC header:
-	int h = int(evt.data.at(0) & 0xffc);
-	if (h == 0x7f8) {
-	  printf(" <%03X>", h);
-	  histo->Fill(ideser, iclk);
-	  good_clk = iclk; good_deser = ideser;					
-	}
-	else printf("  %03X ", h);
+      unsigned int head_good = 0;
+      unsigned int head_bad = 0;
 
-	// Additionally print the event length:
-	if (evt.data.size() < 10) printf("[%u]", static_cast<unsigned int>(evt.data.size()));
-	else printf("[*]");
+      // Trying to find the ROC header 0x7f8 in the raw DESER160 data:
+      for(std::vector<rawEvent>::iterator evt = daqRawEv.begin(); evt != daqRawEv.end(); ++evt) {
+	// Get the first word from ROC header:
+	int head = static_cast<int>(evt->data.at(0) & 0xffc);
+	if (head == 0x7f8) { head_good++; }
+	else head_bad++;
       }
-      else cout << "  ......";
+
+      // Print the stuff:
+      if(head_good > 0) {
+	oneline << std::hex << "<7f8>" << std::dec;
+	histo->Fill(ideser, iclk, head_good);
+	good_clk = iclk; good_deser = ideser;					
+
+	// Additionally print number of good headers:
+	if (head_good < 10) oneline << "[" << head_good << "]";
+	else oneline << "[*]";
+      }
+      else if(head_bad > 0) {
+	oneline << std::hex << " " << std::setw(3) << std::setfill('0') << (daqRawEv.at(0).data.at(0) & 0xffc) << std::setfill(' ') << "    " << std::dec;
+      }
+      else oneline << "[...]";
     }
-    cout << endl;
+    LOG(logINFO) << oneline.str();
   }
 
   // Stop the DAQ:
