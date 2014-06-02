@@ -1072,7 +1072,7 @@ bool api::daqStatus() {
   // Only filling buffer up to 90% in order not to lose data.
   uint32_t filled_buffer = _hal->daqBufferStatus();
   if(filled_buffer > 0.9*_daq_buffersize) {
-    LOG(logDEBUGAPI) << "DAQ buffer about to overflow!";
+    LOG(logWARNING) << "DAQ buffer about to overflow!";
     return false;
   }
 
