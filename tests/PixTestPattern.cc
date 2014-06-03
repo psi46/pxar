@@ -20,7 +20,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null"), fTestAllPixels(0), fUnMaskAllPixels(0){
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null"), fUnMaskAll(0){
 	PixTest::init();
 	init();
 	LOG(logDEBUG) << "PixTestPattern ctor(PixSetup &a, string, TGTab *)";
@@ -103,18 +103,11 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fFileName -> " << fFileName;
 			}
 
-			if (!parName.compare("testallpixels")){
+			if (!parName.compare("unmaskall")){
 				PixUtil::replaceAll(sval, "checkbox(", "");
 				PixUtil::replaceAll(sval, ")", "");
-				fTestAllPixels = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fTestAllPixels -> " << fTestAllPixels;
-			}
-
-			if (!parName.compare("unmaskallpixels")){
-				PixUtil::replaceAll(sval, "checkbox(", "");
-				PixUtil::replaceAll(sval, ")", "");
-				fUnMaskAllPixels = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fUnMaskAllPixels -> " << fUnMaskAllPixels;
+				fUnMaskAll = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting fUnMaskAll -> " << fUnMaskAll;
 			}
 
 			break;
@@ -179,7 +172,7 @@ bool PixTestPattern::setPattern(string fname) {
 
 		if (patternFound)
 		{
-			uint8_t val2(0); //debug
+			uint8_t val2(0);
 
 			// -- remove tabs, adjacent spaces, leading and trailing spaces
 			PixUtil::replaceAll(line, "\t", " ");
@@ -200,7 +193,7 @@ bool PixTestPattern::setPattern(string fname) {
 
 			else
 			{
-				pg_setup.push_back(make_pair("", -1));
+				pg_setup.push_back(make_pair("", 0));
 				LOG(logWARNING) << "PixTestPattern::setPattern() wrong ... "; //DEBUG
 			}
 		}
@@ -210,7 +203,7 @@ bool PixTestPattern::setPattern(string fname) {
 	if (!patternFound)
 	{
 		LOG(logINFO) << "PixTestPattern::setPattern()  '-- Pattern' not found in testPattern.dat";
-		pg_setup.push_back(make_pair("", -1));
+		pg_setup.push_back(make_pair("", 0));
 		return false;
 	}
 
@@ -351,7 +344,7 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 		cout << endl << "Start reading data from DTB RAM." << endl;
 		std::stringstream sstr;
 		string FileName;
-		if (flag == "trg") sstr << "_" << par1 << "trg";
+		if (flag == "trg") sstr << "_" << par1 << "pgCycles";
 		else sstr << "_" << par1 << "sec" << "_" << par2;
 		if (fBinOut) FileName = f_Directory + "/" + fFileName.c_str() + sstr.str() + ".bin";
 		else FileName = f_Directory + "/" + fFileName.c_str() + sstr.str() + ".dat";
@@ -375,7 +368,7 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 			cout << "Read " << daqEvBuffer.size() << " events." << endl;
 			std::ofstream fout(FileName.c_str(), std::ios::out);
 			std::cout << "Writing decoded events" << endl;
-			fout.write(reinterpret_cast<const char*>(&daqEvBuffer[0]), sizeof(daqEvBuffer[0])*daqEvBuffer.size()); //debug!!! sistemare 
+			fout.write(reinterpret_cast<const char*>(&daqEvBuffer[0]), sizeof(daqEvBuffer[0])*daqEvBuffer.size()); //debug!!! TO BE IMPROVED
 			//for (unsigned int i = 0; i < daqEvBuffsiz; i++)	fout << i << " : " << daqEvBuffer[i] << endl;
 			fout.close();
 		}
@@ -415,30 +408,31 @@ void PixTestPattern::doTest()
 	f_Directory = config->getDirectory();
 	fname = f_Directory + "/testPatterns.dat";
 
+	//PIXELS SELECTION
 
-	if (!fTestAllPixels)
-	{
-		//select the pixels:
-		fPIX.clear();  //to clear Pixels set from gui
-		LOG(logINFO) << "Set Pixels from file: " << fname;
-		if (!setPixels(fname, "Test")) return;    //READ FROM FILE	
-
+	// to unmask all or only selected pixels:
+	if (fUnMaskAll) {
+		fApi->_dut->maskAllPixels(false);
+		LOG(logINFO) << "All Pixels Unmasked";
+	}
+	else {
+		
+		fApi->_dut->maskAllPixels(true);
 		LOG(logINFO) << "Set Unmasked Pixels from file: " << fname;
 		if (!setPixels(fname, "Unmask")) return;    //READ FROM FILE	
-
-		// to unmask all or only selected pixels:
-		if (fUnMaskAllPixels)  fApi->_dut->maskAllPixels(false);
-		else {
-			fApi->_dut->maskAllPixels(true);
-			for (unsigned int i = 0; i < fPIXm.size(); ++i)	{
-				if (fPIXm[i].first > -1)  fApi->_dut->maskPixel(fPIXm[i].first, fPIXm[i].second, false);
-			}
+		for (unsigned int i = 0; i < fPIXm.size(); ++i)	{
+			if (fPIXm[i].first > -1)  fApi->_dut->maskPixel(fPIXm[i].first, fPIXm[i].second, false);
 		}
+	}
+	
+	// to 'arm' only selected pixels:
+	fPIX.clear();
+	LOG(logINFO) << "Set 'Armed' Pixels from file: " << fname;
+	if (!setPixels(fname, "Test")) return;    //READ FROM FILE	
 
-		// to arm only selected pixels:
-		fApi->_dut->testAllPixels(false);
-		for (unsigned int i = 0; i < fPIX.size(); ++i) {
-			if (fPIX[i].first > -1)
+	fApi->_dut->testAllPixels(false);
+	for (unsigned int i = 0; i < fPIX.size(); ++i) {
+	 	if (fPIX[i].first > -1)
 			{
 				fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
 				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
@@ -447,24 +441,7 @@ void PixTestPattern::doTest()
 				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
 			}
 		}
-	}
-	else
-	{
-		// to arm all pixels:
-		fApi->_dut->testAllPixels(true);
-		LOG(logINFO) << "  testAllPixels -> true";
-		if (!fUnMaskAllPixels)
-		{
-			fApi->_dut->maskAllPixels(true);
-			LOG(logINFO) << "  all Pixels masked";
-		}
-		else {
-			fApi->_dut->maskAllPixels(false);
-			LOG(logINFO) << "  unmaskAllPixels -> true";
-		}
-	}
-
-
+	
 	// Start the DAQ:
 
 	//first send only a RES:
@@ -501,9 +478,8 @@ void PixTestPattern::doTest()
 	if (!fParTrigLoop)
 	{
 		//pg_cycles times the pg_Single() == pg_cycles times pattern sequence):
-
-		fApi->daqTrigger(fParPgCycles, fParPeriod);
-		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << fParPeriod; //debug
+		fApi->daqTrigger(fParPgCycles, fParPeriod); //debug - would be useful to return the period after the check.
+		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << fParPeriod; 
 
 		fApi->daqStop();
 
@@ -520,7 +496,7 @@ void PixTestPattern::doTest()
 		while (daq_loop)
 		{
 			LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << fParPeriod << " and duration " << fParSeconds << " seconds";
-			fApi->daqTriggerLoop(fParPeriod);
+			fApi->daqTriggerLoop(fParPeriod); //debug - would be useful to return the period after the check.
 
 			//check every 'checkfreq' seconds if buffer is full less then 90%
 			while (fApi->daqStatus()) {
