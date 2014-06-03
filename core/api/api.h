@@ -563,7 +563,7 @@ namespace pxar {
      *  The function returns the triggering period actually used after cross-check
      *  with the pattern generator cycle length.
      */
-    uint16_t daqTrigger(uint32_t nTrig = 1, uint16_t perdiod = 0);
+    uint16_t daqTrigger(uint32_t nTrig = 1, uint16_t period = 0);
 
     /** Function to fire the previously defined pattern command list
      *  continuously every "period" clock cycles (default: 1000)
@@ -581,24 +581,22 @@ namespace pxar {
      */
     bool daqStop();
 
-    /** Function to return the full event buffer from the testboard RAM after
-     *  the data acquisition has been stopped. No decoding is performed, this 
-     *  function returns the raw data blob from either of the deserializer
-     *  modules.
+    /** Function to return the full currently available raw event buffer from
+     *  the testboard RAM. No decoding is performed, the data stream is just
+     *  split into single pxar::rawEvent objects. This function returns the
+     *  raw events from either of the deserializer modules.
      */
     std::vector<rawEvent> daqGetRawEventBuffer();
 
-    /** Function to return the full raw data buffer from the testboard RAM after
-     *  the data acquisition has been stopped. Neither decoding nor splitting is
-     *  performed, this function returns the raw data blob from either of the 
-     *  deserializer modules.
+    /** Function to return the full currently available raw data buffer from the
+     *  testboard RAM. Neither decoding nor splitting is performed, this function
+     *  returns the raw data blob from either of the deserializer modules.
      */
     std::vector<uint16_t> daqGetBuffer();
 
-    /** Function to return the full pxar::Event buffer from the testboard RAM after
-     *  the data acquisition has been stopped. All data is decoded and the 
-     *  function returns decoded pixels separated in pxar::Events with additional
-     *  header information available.
+    /** Function to return the full currently available pxar::Event buffer from the 
+     *  testboard RAM. All data is decoded and the function returns decoded pixels 
+     *  separated in pxar::Events with additional header information available.
      */
     std::vector<Event> daqGetEventBuffer();
 
