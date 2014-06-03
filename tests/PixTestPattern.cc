@@ -473,13 +473,14 @@ void PixTestPattern::doTest()
 
 	//set pattern generator:
 	fApi->setPatternGenerator(pg_setup);
+	finalPeriod = 0;
 
 	//send Triggers (loop or single) wrt parameters selection:
 	if (!fParTrigLoop)
 	{
 		//pg_cycles times the pg_Single() == pg_cycles times pattern sequence):
-		fApi->daqTrigger(fParPgCycles, fParPeriod); //debug - would be useful to return the period after the check.
-		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << fParPeriod; 
+		finalPeriod = fApi->daqTrigger(fParPgCycles, fParPeriod);
+		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << finalPeriod;
 
 		fApi->daqStop();
 
@@ -495,8 +496,8 @@ void PixTestPattern::doTest()
 
 		while (daq_loop)
 		{
-			LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << fParPeriod << " and duration " << fParSeconds << " seconds";
-			fApi->daqTriggerLoop(fParPeriod); //debug - would be useful to return the period after the check.
+			finalPeriod = fApi->daqTriggerLoop(fParPeriod);
+			LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
 
 			//check every 'checkfreq' seconds if buffer is full less then 90%
 			while (fApi->daqStatus()) {
