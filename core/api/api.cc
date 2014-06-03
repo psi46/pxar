@@ -1084,9 +1084,9 @@ bool api::daqStatus() {
   return true;
 }
 
-void api::daqTrigger(uint32_t nTrig, uint16_t period) {
+uint16_t api::daqTrigger(uint32_t nTrig, uint16_t period) {
 
-  if(!daqStatus()) { return; }
+  if(!daqStatus()) { return 0; }
   // Pattern Generator loop doesn't work for delay periods smaller than
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
@@ -1097,11 +1097,12 @@ void api::daqTrigger(uint32_t nTrig, uint16_t period) {
   }
   // Just passing the call to the HAL, not doing anything else here:
   _hal->daqTrigger(nTrig,period);
+  return period;
 }
 
-void api::daqTriggerLoop(uint16_t period) {
+uint16_t api::daqTriggerLoop(uint16_t period) {
 
-  if(!daqStatus()) { return; }
+  if(!daqStatus()) { return 0; }
 
   // Pattern Generator loop doesn't work for delay periods smaller than
   // the pattern generator duration, so limit it to that:
@@ -1112,6 +1113,7 @@ void api::daqTriggerLoop(uint16_t period) {
 		    << "Setting loop delay to " << period << " clk";
   }
   _hal->daqTriggerLoop(period);
+  return period;
 }
 
 void api::daqTriggerLoopHalt() {

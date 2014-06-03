@@ -560,13 +560,17 @@ namespace pxar {
 
     /** Function to fire the previously defined pattern command list "nTrig"
      *  times, the function parameter defaults to 1.
+     *  The function returns the triggering period actually used after cross-check
+     *  with the pattern generator cycle length.
      */
-    void daqTrigger(uint32_t nTrig = 1, uint16_t perdiod = 0);
+    uint16_t daqTrigger(uint32_t nTrig = 1, uint16_t perdiod = 0);
 
     /** Function to fire the previously defined pattern command list
      *  continuously every "period" clock cycles (default: 1000)
+     *  The function returns the triggering period actually used after cross-check
+     *  with the pattern generator cycle length.
      */
-    void daqTriggerLoop(uint16_t period = 1000);
+    uint16_t daqTriggerLoop(uint16_t period = 1000);
 
     /** Function to halt the pattern generator loop which has been started
      *  using daqTriggerLoop(). This stops triggering the devices.
