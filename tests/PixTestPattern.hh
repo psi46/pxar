@@ -32,8 +32,7 @@ private:
 	bool	fResultsOnFile;
 	bool    fBinOut;
 	std::string fFileName;
-	bool	fTestAllPixels;
-	bool	fUnMaskAllPixels;
+	bool	fUnMaskAll;
 
 	bool    ParOutOfRange;
 	std::string f_Directory;
