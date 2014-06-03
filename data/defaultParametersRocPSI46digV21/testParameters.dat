@@ -49,8 +49,7 @@ patternfromfile     checkbox(0)
 resultsonfile       checkbox(0)
 binaryoutput        checkbox(0)
 filename            defaultPattern
-testallpixels       checkbox(0)
-unmaskallpixels     checkbox(0)
+unmaskall           checkbox(0)
 resettodefault      button
 
 -- BumpBonding
