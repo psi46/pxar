@@ -21,6 +21,7 @@ public:
 	bool setPixels(std::string, std::string);
 	void PrintEvents(int, int, std::string);
 	void pgToDefault(std::vector<std::pair<std::string, uint8_t> >);
+	void FinalCleaning();
 
 private:
 
