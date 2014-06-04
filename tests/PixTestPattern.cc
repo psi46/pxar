@@ -224,15 +224,14 @@ bool PixTestPattern::setPattern(string fname) {
 			{
 				str1 = line.substr(0, s1);
 				str2 = line.substr(s1 + 1);
-				val1 = atoi(str1.c_str());
 				val2 = atoi(str2.c_str());		
-				pg_setup.push_back(make_pair(val1, val2));
-				LOG(logDEBUG) << "  pg set to -> " << val1 << " " << val2;
+				pg_setup.push_back(make_pair(str1, val2));
+				LOG(logDEBUG) << "  pg set to -> \"" << str1 << "\" " << val2;
 			}
 
 			else
 			{
-				pg_setup.push_back(make_pair(-1, -1));
+				pg_setup.push_back(make_pair("", -1));
 				LOG(logINFO) << "PixTestPattern::setPattern() wrong ... "; //DEBUG
 			}
 		}
@@ -242,7 +241,7 @@ bool PixTestPattern::setPattern(string fname) {
 	if (!patternFound)
 	{
 		LOG(logINFO) << "PixTestPattern::setPattern()  '-- Pattern' not found"; //DEBUG
-		pg_setup.push_back(make_pair(-1, -1));
+		pg_setup.push_back(make_pair("", -1));
 		return false;
 	}
 
@@ -490,8 +489,8 @@ void PixTestPattern::doTest()
 	// Start the DAQ:
 
 	//first send only a RES:
-	pg_setup.push_back(make_pair(0x0800, 25));     // PG_RESR b001000 
-	pg_setup.push_back(make_pair(0x0100, 0));     // PG_TOK  
+	pg_setup.push_back(make_pair("resetroc", 25));     // PG_RESR b001000 
+	pg_setup.push_back(make_pair("token", 0));     // PG_TOK  
 
 	// Set the pattern generator:
 	fApi->setPatternGenerator(pg_setup);
@@ -511,12 +510,9 @@ void PixTestPattern::doTest()
 		LOG(logINFO) << "Pattern from file: " << fname;
 		if (!setPattern(fname)) return;		//READ FROM FILE	
 	}
-	else			 //standard pattern
+	else			 //standard pattern from config parameters.
 	{
-		pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
-		pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100 //DEBUG!!!!
-		pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
-		pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  
+	  pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
 	}
 
 	//set pattern generator (new api function):
@@ -545,10 +541,7 @@ void PixTestPattern::doTest()
 	// Reset the pg_setup to default value.
 	pg_setup.clear();
 	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
-	pg_setup.push_back(make_pair(0x0800, 25));               // PG_RESR b001000 
-	pg_setup.push_back(make_pair(0x0400, 100 + 6));			// PG_CAL  b000100
-	pg_setup.push_back(make_pair(0x0200, 16));			   // PG_TRG  b000010
-	pg_setup.push_back(make_pair(0x0100, 0));		      // PG_TOK  		
+	pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
 	fApi->setPatternGenerator(pg_setup);
 	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
 

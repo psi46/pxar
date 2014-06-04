@@ -12,8 +12,8 @@ phoffset   200
 vcomp_adc  50 
 phscale    255
 vicolor    100
-vcal       5  
+vcal       200
 caldel     0  
-ctrlreg    4  
+ctrlreg    0
 wbc        100
 readback   0  

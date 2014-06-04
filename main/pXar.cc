@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
-  vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
+  vector<pair<std::string, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
   try {
     api = new pxar::pxarCore("*", verbosity);
@@ -152,6 +152,13 @@ int main(int argc, char *argv[]){
 		 configParameters->getTbmType(), tbmDACs, 
 		 configParameters->getRocType(), rocDACs, 
 		 rocPixels);
+
+    // Set up the four signal probe outputs:
+    api->SignalProbe("a1",configParameters->getProbe("a1"));
+    api->SignalProbe("a2",configParameters->getProbe("a2"));
+    api->SignalProbe("d1",configParameters->getProbe("d1"));
+    api->SignalProbe("d2",configParameters->getProbe("d2"));
+
     LOG(logINFO) << "DUT info: ";
     api->_dut->info(); 
     

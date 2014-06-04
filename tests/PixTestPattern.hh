@@ -38,7 +38,7 @@ private:
 	std::string fFileName;
 	std::string str1, str2;
 	std::string::size_type s0, s1;
-	std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
+	std::vector<std::pair<std::string, uint8_t> > pg_setup;
 	std::vector<std::pair<int, int> > fPIXm;
 
 	ClassDef(PixTestPattern, 1)

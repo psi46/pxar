@@ -158,6 +158,7 @@ namespace pxar {
 
 
 // --- Testboard pulse pattern generator --------------------------------------
+#define PG_NONE  0x0000
 #define PG_TOK   0x0100
 #define PG_TRG   0x0200
 #define PG_CAL   0x0400

@@ -17,6 +17,14 @@ cdef extern from "api.h" namespace "pxar":
         void decode(int32_t address)
 
 cdef extern from "api.h" namespace "pxar":
+    cdef cppclass Event:
+        uint16_t header
+        uint16_t trailer
+        uint16_t numDecoderErrors
+        vector[pixel] pixels
+        Event()
+
+cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixelConfig:
         uint8_t trim
         uint8_t column
@@ -120,10 +128,10 @@ cdef extern from "api.h" namespace "pxar":
         string getVersion()
         bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, 
                            vector[pair[string, double] ] power_settings, 
-                           vector[pair[uint16_t, uint8_t]] pg_setup) except +
+                           vector[pair[string, uint8_t]] pg_setup) except +
         void setTestboardPower(vector[pair[string, double] ] power_settings) except +
         void setTestboardDelays(vector[pair[string, uint8_t] ] sig_delays) except +
-        void setPatternGenerator(vector[pair[uint16_t, uint8_t] ] pg_setup) except +
+        void setPatternGenerator(vector[pair[string, uint8_t] ] pg_setup) except +
 
         bool initDUT(uint8_t hubId,
 	             string tbmtype,
@@ -164,6 +172,7 @@ cdef extern from "api.h" namespace "pxar":
         bool daqStatus() except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +
+        void daqTriggerLoopHalt() except +
         Event daqGetEvent() except +
         rawEvent daqGetRawEvent() except +
         vector[rawEvent] daqGetRawBuffer() except +

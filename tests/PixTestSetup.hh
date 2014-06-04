@@ -17,16 +17,14 @@ public:
 
 	void doTest();
 	void saveTbParameters();
-	void setTbParameters(int , int);
-	void pgToDefault(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+	std::vector<std::pair<std::string,uint8_t> > getMagicDelays(uint8_t , uint8_t);
 
 private:
 
 	int     fClkMax;
 	int     fDeserMax;
 	int     fParCals;
-    bool    ParOutOfRange;
-	std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
+	bool    ParOutOfRange;
 	std::vector<std::pair<std::string, uint8_t> > sig_delays;
 
 

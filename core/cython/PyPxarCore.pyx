@@ -18,6 +18,9 @@ cdef class Pixel:
             self.thisptr = new pixel()
     def __dealloc__(self):
         del self.thisptr
+    cdef c_clone(self, pixel* p):
+        del self.thisptr
+        thisptr = p
     def decode(self, int address):
         self.thisptr.decode(address)
     property roc_id:
@@ -97,6 +100,35 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.enable
         def __set__(self, enable): self.thisptr.enable = enable
 
+cdef class PxEvent:
+    cdef Event *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+            self.thisptr = new Event()
+    def __dealloc__(self):
+        del self.thisptr
+    property pixels:
+        def __get__(self): 
+            r = list()
+            for p in self.thisptr.pixels:
+                P = Pixel()
+                P.c_clone(&p)
+                r.append(P)
+            return r
+        def __set__(self, value): 
+            cdef vector[pixel] v
+            cdef Pixel px
+            for px in value:
+                v.push_back( <pixel> px.thisptr[0])
+            self.thisptr.pixels = v
+    property header:
+        def __get__(self): return self.thisptr.header
+        def __set__(self, value): self.thisptr.header = value
+    property trailer:
+        def __get__(self): return self.thisptr.trailer
+        def __set__(self, trailer): self.thisptr.trailer = trailer
+    property numDecoderErrors:
+        def __get__(self): return self.thisptr.numDecoderErrors
+        def __set__(self, errors): self.thisptr.numDecoderErrors = errors
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -114,15 +146,15 @@ cdef class PyPxarCore:
         """
         cdef vector[pair[string, uint8_t]] sd
         cdef vector[pair[string, double]] ps
-        cdef vector[pair[uint16_t, uint8_t ]] pgs
+        cdef vector[pair[string, uint8_t ]] pgs
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
         for key, value in sig_delays.items():
             sd.push_back(pair[string,uint8_t](key,value))
         for key, value in power_settings.items():
             ps.push_back((key,value))
-        for key, value in pg_setup.items():
-            pgs.push_back(pair[uint16_t, uint8_t ](key,value))
+        for item in enumerate(pg_setup):
+            pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         return self.thisptr.initTestboard(sd, ps, pgs)
     def setTestboardPower(self, power_settings):
         """ Initializer method for the testboard
@@ -151,11 +183,11 @@ cdef class PyPxarCore:
         Parameters are dictionaries in the form {"name":value}:
         pg_setup = initial pattern generator setup
         """
-        cdef vector[pair[uint16_t, uint8_t ]] pgs
+        cdef vector[pair[string, uint8_t ]] pgs
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
-        for key, value in pg_setup.items():
-            pgs.push_back(pair[uint16_t, uint8_t ](key,value))
+        for item in enumerate(pg_setup):
+            pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         self.thisptr.setPatternGenerator(pgs)
     def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
         """ Initializer method for the DUT (attached devices)
@@ -373,8 +405,19 @@ cdef class PyPxarCore:
     def daqTriggerLoop(self, uint16_t period):
         self.thisptr.daqTriggerLoop(period)
 
-#    def vector[uint16_t] daqGetBuffer(self):
+    def daqTriggerLoopHalt(self):
+        self.thisptr.daqTriggerLoopHalt()
+
 #    def vector[pixel] daqGetEvent(self):
+
+    def daqGetEventBuffer(self):
+        cdef vector[Event] r
+        r = self.thisptr.daqGetEventBuffer()
+        pixelevents = list()
+        for event in xrange(r.size()):
+            p = PxEvent(event)
+            pixelevents.append(p)
+        return pixelevents
 
     def daqGetBuffer(self):
         cdef vector[uint16_t] r
