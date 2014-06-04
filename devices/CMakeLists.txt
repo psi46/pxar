@@ -3,7 +3,7 @@
 # add HV power supply source files (depending on the device used)
 IF(BUILD_HVSUPPLY MATCHES "Keithley237")
   MESSAGE("-- HV Supply Support: building Keithley 237 support.")
-  SET(SOURCE_FILES "hvsupply.keithley237.cc")
+  SET(SOURCE_FILES "hvsupply.keithley237.cc"  "rs232.cc")
 ELSEIF(BUILD_HVSUPPLY MATCHES "Keithley2410")
   MESSAGE("-- HV Supply Support: building Keithley 2410 support.")
   SET(SOURCE_FILES "hvsupply.keithley2410.cc" "rs232.cc")
