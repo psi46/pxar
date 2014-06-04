@@ -104,16 +104,7 @@ void PixTestFullTest::doTest() {
     delete t; 
   }
 
-  // -- create new version of DAC and trim parameter files with VCAL trim value part of name
-  string name = fPixSetup->getConfigParameters()->getDACParameterFileName();
-  name += Form("%s", trimvcal.c_str()); 
-  fPixSetup->getConfigParameters()->setDACParameterFileName(name); 
-
-  name = fPixSetup->getConfigParameters()->getTrimParameterFileName();
-  name += Form("%s", trimvcal.c_str()); 
-  fPixSetup->getConfigParameters()->setTrimParameterFileName(name); 
-  saveDacs();
-  saveTrimBits();
+  fPixSetup->setMoreWebCloning(false);
 }
 
 
