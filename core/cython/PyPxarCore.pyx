@@ -422,7 +422,12 @@ cdef class PyPxarCore:
     def daqTriggerLoopHalt(self):
         self.thisptr.daqTriggerLoopHalt()
 
-#    def vector[pixel] daqGetEvent(self):
+    def daqGetEvent(self):
+        cdef Event r
+        r = self.thisptr.daqGetEvent()
+        p = PxEvent()
+        p.fill(r)
+        return p
 
     def daqGetEventBuffer(self):
         cdef vector[Event] r
