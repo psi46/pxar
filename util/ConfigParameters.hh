@@ -63,6 +63,7 @@ public:
   std::string getTrimParameterFileName()  {return fTrimParametersFileName;}
   std::string getTestParameterFileName()  {return fTestParametersFileName;}
   std::string getGainPedestalParameterFileName()  {return fGainPedestalParameterFileName;}
+  std::string getGainPedestalFileName()   {return fGainPedestalFileName;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}
@@ -74,7 +75,7 @@ public:
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
   std::vector<std::pair<std::string,uint8_t> >  getTbSigDelays();
-  std::vector<std::pair<uint16_t,uint8_t> >  getTbPgSettings();
+  std::vector<std::pair<std::string,uint8_t> >  getTbPgSettings();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getTbmDacs();
   std::vector<std::vector<std::pair<std::string, uint8_t> > > getRocDacs();
   std::vector<std::string> getDacs();
@@ -89,6 +90,9 @@ public:
   bool setTbmDac(std::string var, uint8_t val, int itbm = -1);
   bool setRocDac(std::string var, uint8_t val, int iroc = -1);
   bool setTrimBits(int trim); 
+
+  void setProbe(std::string probe, std::string value);
+  std::string getProbe(std::string probe);
 
   void setTBParameterFileName(std::string filename) {fTBParametersFileName = filename;}
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
@@ -144,6 +148,7 @@ private:
   std::string fDirectory;
   std::string fTBName;
   bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;
+  std::string fProbeA1,fProbeA2, fProbeD1, fProbeD2;
 
   std::string fTBParametersFileName;
   std::string fDACParametersFileName;
@@ -154,7 +159,7 @@ private:
   std::string fLogFileName;
   std::string fMaskFileName;
   std::string fDebugFileName;
-  std::string fGainPedestalParameterFileName; 
+  std::string fGainPedestalFileName, fGainPedestalParameterFileName; 
 
   static ConfigParameters* fInstance;
 

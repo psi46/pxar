@@ -170,9 +170,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
   if (1 == ihit) {
     scurveAna(dac, name, maps, resultMaps, result); 
-  } else if (2 == ihit) {
-    gainPedestalAna(dac, name, maps, resultMaps, result); 
-  }
+  } 
 
   return resultMaps; 
 }
@@ -1199,7 +1197,8 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 		  52, 0., 52., 80, 0., 80.); 
     fHistOptions.insert(make_pair(h4, "colz")); 
 
-    if (!dac.compare("Vcal")) {
+    std::transform(dac.begin(), dac.end(), dac.begin(), ::tolower);
+    if (!dac.compare("vthrcomp")) {
       dumpFile = true; 
       OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
       OutputFile << "Mode 1" << endl;
@@ -1235,8 +1234,8 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 	int ibin = rmaps[i]->FindBin(fThreshold); 
 	int bmin = ibin - 15;
 	line = Form("%2d %3d", NSAMPLES, bmin); 
-	for (int ix = bmin; ix < bmin + 33; ++ix) {
-	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix)))); 
+	for (int ix = bmin; ix < bmin + NSAMPLES; ++ix) {
+	  line += string(Form(" %3d", static_cast<int>(rmaps[i]->GetBinContent(ix+1)))); 
 	}
 	OutputFile << line << endl;
       }
@@ -1297,97 +1296,6 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
       }
     }
   }
-}
-
-// ----------------------------------------------------------------------
-void PixTest::gainPedestalAna(string dac, string name, vector<vector<TH1*> > maps, vector<TH1*> &resultMaps, int result) {
-
-  vector<TH1*> rmaps; 
-  TH1* h2(0), *h3(0); 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
-    rmaps.clear();
-    rmaps = maps[iroc];
-    h2 = bookTH2D(Form("gain_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("gain_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h2, "colz")); 
-
-    h3 = bookTH2D(Form("ped_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  Form("ped_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h3, "colz")); 
-
-    for (unsigned int i = 0; i < rmaps.size(); ++i) {
-      if (rmaps[i]->GetSumOfWeights() < 1) {
-	continue;
-      }
-      
-      /*
-      bool ok = threshold(rmaps[i]); 
-      if (!ok) {
-	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
-      }
-      ic = i/80; 
-      ir = i%80; 
-      h2->SetBinContent(ic+1, ir+1, fThreshold); 
-      h2->SetBinError(ic+1, ir+1, fThresholdE); 
-
-      h3->SetBinContent(ic+1, ir+1, fSigma); 
-      h3->SetBinError(ic+1, ir+1, fSigmaE); 
-      */
-
-      if (result & 0x4) {
-	//	cout << "add " << rmaps[i]->GetName() << endl;
-	fHistList.push_back(rmaps[i]);
-      }
-      // -- write all hists to file if requested
-      if (0 && result & 0x4) {
-	rmaps[i]->SetDirectory(fDirectory); 
-	rmaps[i]->Write();
-	delete rmaps[i];
-      }
-    }
-
-    if (result & 0x1) {
-      resultMaps.push_back(h2); 
-      fHistList.push_back(h2); 
-      resultMaps.push_back(h3); 
-      fHistList.push_back(h3); 
-    }
-
-    bool zeroSuppressed(fApi->_dut->getNEnabledPixels(0) < 4000?true:false);
-    if (result & 0x2) {
-      TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
-      resultMaps.push_back(d1); 
-      fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
-      resultMaps.push_back(d2); 
-      fHistList.push_back(d2); 
-    }
-
-  }
-
-
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
-
-  if (h2) h2->Draw("colz");
-  PixTest::update(); 
-  
-  TH1 *h1(0); 
-  if (!(result & 0x4)) {
-    for (unsigned int iroc = 0; iroc < maps.size(); ++iroc) {
-      rmaps.clear();
-      rmaps = maps[iroc];
-      LOG(logDEBUG) << "deleting rmaps[" << iroc << "] with size = " << rmaps.size(); 
-      while (!rmaps.empty()){
-	h1 = rmaps.back(); 
-	rmaps.pop_back(); 
-	if (h1) delete h1;
-      }
-    }
-  }
-
 }
 
 // ----------------------------------------------------------------------
@@ -1503,11 +1411,17 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
   vector<vector<pair<int, int> > > deadPixels;
   vector<pair<int, int> > deadPixelsRoc;
   
+  vector<uint8_t> vVcal = getDacs("vcal"); 
+  vector<uint8_t> vCreg = getDacs("ctrlreg"); 
+
+  fApi->setDAC("vcal", 200); 
+  fApi->setDAC("ctrlreg", 4); 
+  
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   vector<TH2D*> testEff = efficiencyMaps("deadPixels", ntrig);
   std::pair<int, int> badPix;
-  int eff(0);
+  Double_t eff(0.);
   
   for (unsigned int i = 0; i < testEff.size(); ++i) {
     deadPixelsRoc.clear();
@@ -1515,16 +1429,39 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
       for(int c=0; c<52; c++){
 	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
 	if (eff<ntrig){
-	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig;
+	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig << ";  blacklisting";
 	  badPix.first = c;
 	  badPix.second = r;
-	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: "<<badPix.first<<", "<<badPix.second;
 	  deadPixelsRoc.push_back(badPix);
 	}
       }
     }
     deadPixels.push_back(deadPixelsRoc);
   }
+
+  setDacs("vcal", vVcal); 
+  setDacs("ctrlreg", vCreg); 
   
   return deadPixels;
 }
+
+
+// ----------------------------------------------------------------------
+vector<uint8_t> PixTest::getDacs(string dacName) {
+  vector<uint8_t> result; 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    result.push_back(fApi->_dut->getDAC(rocIds[i], dacName)); 
+  }
+  return result;
+}
+
+// ----------------------------------------------------------------------
+void PixTest::setDacs(string dacName, vector<uint8_t> v) {
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    fApi->setDAC(dacName, v[i], i); 
+  }
+}
+
+

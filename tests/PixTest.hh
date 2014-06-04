@@ -103,12 +103,10 @@ public:
   void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag = 0);
   /// do the scurve analysis
   void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
-  /// do the gain/pedestal analysis
-  void gainPedestalAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with hit maps
-  std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL); 
+  std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
   /// result controls the amount of information (histograms) returned
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
@@ -152,10 +150,15 @@ public:
   void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   
-  /// cache DACs
+  /// cache all DACs 
   void cacheDacs(bool verbose = false); 
-  /// restore DACs
+  /// restore all DACs
   void restoreDacs(bool verbose = false); 
+
+  /// return from all ROCs the DAC dacName
+  std::vector<uint8_t> getDacs(std::string dacName); 
+  /// set on all ROCs the DAC dacName
+  void setDacs(std::string dacName, std::vector<uint8_t> dacVector); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 

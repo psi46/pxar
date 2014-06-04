@@ -39,7 +39,7 @@
 using namespace pxar;
 
 int Cport[30],
-  error;
+  rs_error;
 
 struct termios new_port_settings,
   old_port_settings[30];
@@ -101,22 +101,12 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     case  230400 : baudr = B230400;
       break;
-    case  460800 : baudr = B460800;
-      break;
-    case  500000 : baudr = B500000;
-      break;
-    case  576000 : baudr = B576000;
-      break;
-    case  921600 : baudr = B921600;
-      break;
-    case 1000000 : baudr = B1000000;
-      break;
     default      : LOG(logCRITICAL) << "Invalid baud rate " << baudrate << "!";
-
       return(1);
       break;
     }
 
+  rs_error = 0;
   Cport[comport_number] = open(comports[comport_number], O_RDWR | O_NOCTTY | O_NDELAY);
   if(Cport[comport_number]==-1)
     {
@@ -124,13 +114,14 @@ int RS232_OpenComport(int comport_number, int baudrate)
       return(1);
     }
 
-  error = tcgetattr(Cport[comport_number], old_port_settings + comport_number);
-  if(error==-1)
+  rs_error = tcgetattr(Cport[comport_number], old_port_settings + comport_number);
+  if(rs_error==-1)
     {
       close(Cport[comport_number]);
       perror("unable to read portsettings ");
       return(1);
     }
+
   memset(&new_port_settings, 0, sizeof(new_port_settings));  /* clear the new struct */
 
   new_port_settings.c_cflag = baudr | CS8 | CLOCAL | CREAD;
@@ -139,8 +130,8 @@ int RS232_OpenComport(int comport_number, int baudrate)
   new_port_settings.c_lflag = 0;
   new_port_settings.c_cc[VMIN] = 0;      /* block untill n bytes are received */
   new_port_settings.c_cc[VTIME] = 0;     /* block untill a timer expires (n * 100 mSec.) */
-  error = tcsetattr(Cport[comport_number], TCSANOW, &new_port_settings);
-  if(error==-1)
+  rs_error = tcsetattr(Cport[comport_number], TCSANOW, &new_port_settings);
+  if(rs_error==-1)
     {
       close(Cport[comport_number]);
       perror("unable to adjust portsettings ");

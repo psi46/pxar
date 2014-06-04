@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
   // Prepare some vectors for all the configurations we use:
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
-  std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+  std::vector<std::pair<std::string,uint8_t> > pg_setup;
 
   // DTB delays
   sig_delays.push_back(std::make_pair("clk",2));
@@ -106,15 +106,15 @@ int main(int argc, char* argv[]) {
   // Pattern Generator:
   int pattern_delay = 0;
   if(testpulses) {
-     pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
-     pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
-     pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
-     pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+     pg_setup.push_back(std::make_pair("resetroc",25));    // PG_RESR
+     pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
+     pg_setup.push_back(std::make_pair("triggter",16));    // PG_TRG
+     pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
      pattern_delay = 1000;
   }
   else {
-     pg_setup.push_back(std::make_pair(0x0200,46));    // PG_TRG
-     pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+     pg_setup.push_back(std::make_pair("trigger",46));    // PG_TRG
+     pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
      pattern_delay = 100;
   }
 

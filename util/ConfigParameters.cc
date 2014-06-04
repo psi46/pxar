@@ -66,6 +66,7 @@ void ConfigParameters::initialize() {
   fDebugFileName                 = "debug.log";
   fRootFileName                  = "expert.root";
   fGainPedestalParameterFileName = "phCalibrationFitTanH";
+  fGainPedestalFileName          = "phCalibration";
 
   ia = -1.; 
   id = -1.;
@@ -178,6 +179,12 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
+
+      else if (0 == _name.compare("probeA1")) { fProbeA1 = _value; }
+      else if (0 == _name.compare("probeA2")) { fProbeA2 = _value; }
+      else if (0 == _name.compare("probeD1")) { fProbeD1 = _value; }
+      else if (0 == _name.compare("probeD2")) { fProbeD2 = _value; }
+     
 
       else { LOG(logINFO) << "Did not understand '" << _name << "'."; }
     }
@@ -301,19 +308,19 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
 }
 
 // ----------------------------------------------------------------------
-vector<pair<uint16_t, uint8_t> >  ConfigParameters::getTbPgSettings() {
+vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
-  vector<pair<uint16_t, uint8_t> > a;
+  vector<pair<std::string, uint8_t> > a;
 
   if (fnTbms < 1) {
-    a.push_back(make_pair(0x0800,25));    // PG_RESR b001000 
-    a.push_back(make_pair(0x0400,100+6)); // PG_CAL  b000100
-    a.push_back(make_pair(0x0200,16));    // PG_TRG  b000010
-    a.push_back(make_pair(0x0100,0));     // PG_TOK  b000001
+    a.push_back(make_pair("resetroc",25));    // PG_RESR b001000 
+    a.push_back(make_pair("calibrate",100+6)); // PG_CAL  b000100
+    a.push_back(make_pair("trigger",16));    // PG_TRG  b000010
+    a.push_back(make_pair("token",0));     // PG_TOK  b000001
   } else {
-    a.push_back(std::make_pair(0x1000,15));    // PG_REST
-    a.push_back(std::make_pair(0x0400,100+6)); // PG_CAL
-    a.push_back(std::make_pair(0x2200,0));     // PG_TRG PG_SYNC
+    a.push_back(std::make_pair("resettbm",15));    // PG_REST
+    a.push_back(std::make_pair("calibrate",100+6)); // PG_CAL
+    a.push_back(std::make_pair("trigger;sync",0));     // PG_TRG PG_SYNC
   }
 
   return a;
@@ -742,6 +749,11 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "va %i\n"  , static_cast<int>(va * 1000));
   fprintf(file, "vd %i\n\n", static_cast<int>(vd * 1000));
 
+  fprintf(file, "probeA1 %s\n", fProbeA1.c_str());
+  fprintf(file, "probeA2 %s\n", fProbeA2.c_str());
+  fprintf(file, "probeD1 %s\n", fProbeD1.c_str());
+  fprintf(file, "probeD2 %s\n", fProbeD2.c_str());
+
   fclose(file);
   return true;
 }
@@ -897,3 +909,29 @@ void ConfigParameters::setGainPedestalParameters(vector<vector<gainPedestalParam
 std::vector<std::vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParameters() {
   return fGainPedestalParameters; 
 }
+
+
+void ConfigParameters::setProbe(std::string probe, std::string value) {
+
+   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+
+   if (probe == "a1") fProbeA1 = value;	
+   else if (probe == "a2") fProbeA2 = value;	
+   else if (probe == "d1") fProbeD1 = value;	
+   else if (probe == "d2") fProbeD2 = value;	
+}
+
+// ----------------------------------------------------------------------
+std::string ConfigParameters::getProbe(std::string probe) {
+   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+   if (probe == "a1") return fProbeA1;	
+   else if (probe == "a2") return fProbeA2;	
+   else if (probe == "d1") return fProbeD1;	
+   else if (probe == "d2") return fProbeD2;
+   else return "";
+}
+
+
+
+
+
