@@ -164,6 +164,7 @@ cdef extern from "api.h" namespace "pxar":
         bool daqStatus() except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +
+        void daqTriggerLoopHalt() except +
         Event daqGetEvent() except +
         rawEvent daqGetRawEvent() except +
         vector[rawEvent] daqGetRawBuffer() except +

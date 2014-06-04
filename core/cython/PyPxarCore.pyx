@@ -367,6 +367,9 @@ cdef class PyPxarCore:
     def daqTriggerLoop(self, uint16_t period):
         self.thisptr.daqTriggerLoop(period)
 
+    def daqTriggerLoopHalt(self):
+        self.thisptr.daqTriggerLoopHalt()
+
 #    def vector[uint16_t] daqGetBuffer(self):
 #    def vector[pixel] daqGetEvent(self):
 
