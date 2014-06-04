@@ -114,7 +114,7 @@ cdef class PyPxarCore:
         """
         cdef vector[pair[string, uint8_t]] sd
         cdef vector[pair[string, double]] ps
-        cdef vector[pair[uint16_t, uint8_t ]] pgs
+        cdef vector[pair[string, uint8_t ]] pgs
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
         for key, value in sig_delays.items():
@@ -122,7 +122,7 @@ cdef class PyPxarCore:
         for key, value in power_settings.items():
             ps.push_back((key,value))
         for key, value in pg_setup.items():
-            pgs.push_back(pair[uint16_t, uint8_t ](key,value))
+            pgs.push_back(pair[string, uint8_t ](key,value))
         return self.thisptr.initTestboard(sd, ps, pgs)
     def setTestboardPower(self, power_settings):
         """ Initializer method for the testboard
@@ -151,11 +151,11 @@ cdef class PyPxarCore:
         Parameters are dictionaries in the form {"name":value}:
         pg_setup = initial pattern generator setup
         """
-        cdef vector[pair[uint16_t, uint8_t ]] pgs
+        cdef vector[pair[string, uint8_t ]] pgs
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
         for key, value in pg_setup.items():
-            pgs.push_back(pair[uint16_t, uint8_t ](key,value))
+            pgs.push_back(pair[string, uint8_t ](key,value))
         self.thisptr.setPatternGenerator(pgs)
     def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
         """ Initializer method for the DUT (attached devices)

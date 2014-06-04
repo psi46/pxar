@@ -120,10 +120,10 @@ cdef extern from "api.h" namespace "pxar":
         string getVersion()
         bool initTestboard(vector[pair[string, uint8_t] ] sig_delays, 
                            vector[pair[string, double] ] power_settings, 
-                           vector[pair[uint16_t, uint8_t]] pg_setup) except +
+                           vector[pair[string, uint8_t]] pg_setup) except +
         void setTestboardPower(vector[pair[string, double] ] power_settings) except +
         void setTestboardDelays(vector[pair[string, uint8_t] ] sig_delays) except +
-        void setPatternGenerator(vector[pair[uint16_t, uint8_t] ] pg_setup) except +
+        void setPatternGenerator(vector[pair[string, uint8_t] ] pg_setup) except +
 
         bool initDUT(uint8_t hubId,
 	             string tbmtype,
