@@ -18,6 +18,9 @@ cdef class Pixel:
             self.thisptr = new pixel()
     def __dealloc__(self):
         del self.thisptr
+    cdef c_clone(self, pixel* p):
+        del self.thisptr
+        thisptr = p
     def decode(self, int address):
         self.thisptr.decode(address)
     property roc_id:
