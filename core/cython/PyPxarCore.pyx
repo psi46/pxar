@@ -100,6 +100,35 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.enable
         def __set__(self, enable): self.thisptr.enable = enable
 
+cdef class PxEvent:
+    cdef Event *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+            self.thisptr = new Event()
+    def __dealloc__(self):
+        del self.thisptr
+    property pixels:
+        def __get__(self): 
+            r = list()
+            for p in self.thisptr.pixels:
+                P = Pixel()
+                P.c_clone(&p)
+                r.append(P)
+            return r
+        def __set__(self, value): 
+            cdef vector[pixel] v
+            cdef Pixel px
+            for px in value:
+                v.push_back( <pixel> px.thisptr[0])
+            self.thisptr.pixels = v
+    property header:
+        def __get__(self): return self.thisptr.header
+        def __set__(self, value): self.thisptr.header = value
+    property trailer:
+        def __get__(self): return self.thisptr.trailer
+        def __set__(self, trailer): self.thisptr.trailer = trailer
+    property numDecoderErrors:
+        def __get__(self): return self.thisptr.numDecoderErrors
+        def __set__(self, errors): self.thisptr.numDecoderErrors = errors
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
