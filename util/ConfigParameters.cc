@@ -56,6 +56,7 @@ void ConfigParameters::initialize() {
   fEmptyReadoutLengthADC = 64;
   fEmptyReadoutLengthADCDual = 40;
 
+  fTrimVcalSuffix                = ""; 
   fDACParametersFileName         = "defaultDACParameters";
   fTbmParametersFileName         = "defaultTBMParameters.dat";
   fTBParametersFileName          = "defaultTBParameters.dat";
@@ -389,7 +390,7 @@ void ConfigParameters::readRocPixelConfig() {
       }
     }
     std::stringstream fname;
-    fname << fDirectory << "/" << fTrimParametersFileName << "_C" << i << ".dat"; 
+    fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
     readTrimFile(fname.str(), v); 
     fRocPixelConfigs.push_back(v); 
   }
@@ -762,7 +763,7 @@ bool ConfigParameters::writeConfigParameterFile() {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   std::stringstream fname;
-  fname << fDirectory << "/" << fTrimParametersFileName << "_C" << iroc << ".dat"; 
+  fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
   
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
@@ -786,7 +787,7 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
 bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8_t> > v) {
 
   std::stringstream fname;
-  fname << fDirectory << "/" << getDACParameterFileName() << "_C" << iroc << ".dat";
+  fname << fDirectory << "/" << getDACParameterFileName() << fTrimVcalSuffix << "_C" << iroc << ".dat";
 
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
