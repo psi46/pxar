@@ -79,9 +79,9 @@ public:
   /// create output suitable for moreweb
   virtual void output4moreweb();
   /// save DACs to file
-  void saveDacs(); 
+  void saveDacs(std::string vcal = ""); 
   /// save trim bits to file
-  void saveTrimBits(); 
+  void saveTrimBits(std::string vcal = ""); 
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels

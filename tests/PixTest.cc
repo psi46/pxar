@@ -1380,8 +1380,9 @@ void PixTest::getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int
 }
 
 // ----------------------------------------------------------------------
-void PixTest::saveDacs() {
-  LOG(logINFO) << "Write DAC parameters to file";
+void PixTest::saveDacs(string vcal) {
+  LOG(logINFO) << "Write DAC parameters to file; vcal suffix ->" << vcal << "<-"; 
+  fPixSetup->getConfigParameters()->setTrimVcalSuffix(vcal); 
 
   vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
@@ -1391,8 +1392,10 @@ void PixTest::saveDacs() {
 }
 
 // ----------------------------------------------------------------------
-void PixTest::saveTrimBits() {
-  LOG(logDEBUG) << "save Trim parameters"; 
+void PixTest::saveTrimBits(string vcal) {
+  LOG(logINFO) << "Write trim bits to file; vcal suffix ->" << vcal << "<-"; 
+  fPixSetup->getConfigParameters()->setTrimVcalSuffix(vcal); 
+
   vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
     fPixSetup->getConfigParameters()->writeTrimFile(rocs[iroc], fApi->_dut->getEnabledPixels(rocs[iroc])); 
