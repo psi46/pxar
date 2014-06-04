@@ -64,6 +64,7 @@ public:
   std::string getTestParameterFileName()  {return fTestParametersFileName;}
   std::string getGainPedestalParameterFileName()  {return fGainPedestalParameterFileName;}
   std::string getGainPedestalFileName()   {return fGainPedestalFileName;}
+  std::string getTrimVcalSufix()          {return fTrimVcalSuffix;}
   std::string getRootFileName()           {return fRootFileName;}
   std::string getLogFileName()            {return fLogFileName;}
   std::string getMaskFileName()           {return fMaskFileName;}
@@ -98,6 +99,7 @@ public:
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
   void setTbmParameterFileName(std::string filename) {fTbmParametersFileName = filename;}
   void setTrimParameterFileName(std::string filename) {fTrimParametersFileName = filename;}
+  void setTrimVcalSuffix(std::string name) {fTrimVcalSuffix = name;}
   void setTestParameterFileName(std::string filename) {fTestParametersFileName = filename;}
   void setRootFileName(std::string filename) {fRootFileName = filename;}
   void setLogFileName(std::string filename) {fLogFileName = filename;}
@@ -151,6 +153,7 @@ private:
   std::string fProbeA1,fProbeA2, fProbeD1, fProbeD2;
 
   std::string fTBParametersFileName;
+  std::string fTrimVcalSuffix;
   std::string fDACParametersFileName;
   std::string fTbmParametersFileName;
   std::string fTrimParametersFileName;
