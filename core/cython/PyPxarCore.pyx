@@ -192,9 +192,15 @@ cdef class PyPxarCore:
         else:
             self.thisptr._dut.testAllPixels(enable)
   
-    #def updateTrimBits(self, vector[pixelConfig] trimming, int rocid):
-    #    self.thisptr._dut.updateTrimBits(trimming, rocid)
-  
+ #   def updateTrimBits(self, trimming, int rocid):
+ #       cdef vector[pixelConfig] v
+ #       cdef PixelConfig pc
+ #       for idx, col, row, trim in enumerate(trimming):
+ #           pc = PixelConfig(col, row, trim)
+ #           #pc = PixelConfig(trimming[pix][0],trimming[pix][1],trimming[pix][2])
+ #           v.push_back(pc)
+ #       self.thisptr._dut.updateTrimBits(v, rocid)
+    
     def testPixel(self, int col, int row, bool enable, rocid = None):
         if rocid is not None:
             self.thisptr._dut.testPixel(col, row, enable,rocid)
