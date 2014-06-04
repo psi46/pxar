@@ -17,6 +17,14 @@ cdef extern from "api.h" namespace "pxar":
         void decode(int32_t address)
 
 cdef extern from "api.h" namespace "pxar":
+    cdef cppclass Event:
+        uint16_t header
+        uint16_t trailer
+        uint16_t numDecoderErrors
+        vector[pixel] pixels
+        Event()
+
+cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixelConfig:
         uint8_t trim
         uint8_t column
