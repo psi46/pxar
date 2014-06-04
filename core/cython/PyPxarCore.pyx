@@ -121,8 +121,8 @@ cdef class PyPxarCore:
             sd.push_back(pair[string,uint8_t](key,value))
         for key, value in power_settings.items():
             ps.push_back((key,value))
-        for key, value in pg_setup.items():
-            pgs.push_back(pair[string, uint8_t ](key,value))
+        for item in enumerate(pg_setup):
+            pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         return self.thisptr.initTestboard(sd, ps, pgs)
     def setTestboardPower(self, power_settings):
         """ Initializer method for the testboard
@@ -154,8 +154,8 @@ cdef class PyPxarCore:
         cdef vector[pair[string, uint8_t ]] pgs
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
-        for key, value in pg_setup.items():
-            pgs.push_back(pair[string, uint8_t ](key,value))
+        for item in enumerate(pg_setup):
+            pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         self.thisptr.setPatternGenerator(pgs)
     def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
         """ Initializer method for the DUT (attached devices)
