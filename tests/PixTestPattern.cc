@@ -172,7 +172,7 @@ bool PixTestPattern::setPattern(string fname) {
 
 		if (patternFound)
 		{
-			uint8_t val2(0);
+			int val2(0);
 
 			// -- remove tabs, adjacent spaces, leading and trailing spaces
 			PixUtil::replaceAll(line, "\t", " ");
@@ -187,8 +187,15 @@ bool PixTestPattern::setPattern(string fname) {
 				str1 = line.substr(0, s1-1);
 				str2 = line.substr(s1 + 1);
 				val2 = atoi(str2.c_str());
-				pg_setup.push_back(make_pair(str1, val2));
-				LOG(logDEBUG) << "  pg set to -> \"" << str1 << "\" " << val2;
+
+				//check if delay stays within 8bit
+				if (val2 < 0 || val2 > 255) {
+					LOG(logWARNING) << "PixTestPattern::setPattern() delay out of range [0,255]";
+					return false;
+				}
+				uint8_t del = val2;
+				pg_setup.push_back(make_pair(str1, del));
+				LOG(logDEBUG) << "  pg set to -> \"" << str1 << "\" " << del;
 			}
 
 			else
@@ -212,6 +219,8 @@ bool PixTestPattern::setPattern(string fname) {
 
 // ----------------------------------------------------------------------
 bool PixTestPattern::setPixels(string fname, string flag) {
+
+	int npix = 0;
 
 	ifstream is(fname.c_str());
 	if (!is.is_open()) {
@@ -270,6 +279,7 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 				if (flag == "Test"){
 					fPIX.push_back(make_pair(pixc, pixr));
 					LOG(logINFO) << "  selected pixel -> " << pixc << " " << pixr;
+					npix++;
 				}
 				else {
 					fPIXm.push_back(make_pair(pixc, pixr));
@@ -298,6 +308,8 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 		}
 		return false;
 	}
+	
+	if (flag == "Test")	LOG(logINFO) << "PixTestPattern::setPixels() - Tot Pixels armed = " << npix;
 	cout << endl;
 	return true;
 
@@ -389,6 +401,17 @@ void PixTestPattern::pgToDefault(vector<pair<std::string, uint8_t> > pg_setup) {
 	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
 }
 
+// ----------------------------------------------------------------------
+void PixTestPattern::FinalCleaning() {
+	// Reset the pg_setup to default value.
+	pgToDefault(pg_setup);
+
+	//clean local variables:
+	fPIX.clear();
+	fPIXm.clear();
+	pg_setup.clear();
+}
+
 //------------------------------------------------------------------------------
 void PixTestPattern::doTest()
 {
@@ -419,7 +442,10 @@ void PixTestPattern::doTest()
 		
 		fApi->_dut->maskAllPixels(true);
 		LOG(logINFO) << "Set Unmasked Pixels from file: " << fname;
-		if (!setPixels(fname, "Unmask")) return;    //READ FROM FILE	
+		if (!setPixels(fname, "Unmask")){   //READ FROM FILE	
+			FinalCleaning();
+			return;
+		}
 		for (unsigned int i = 0; i < fPIXm.size(); ++i)	{
 			if (fPIXm[i].first > -1)  fApi->_dut->maskPixel(fPIXm[i].first, fPIXm[i].second, false);
 		}
@@ -428,8 +454,10 @@ void PixTestPattern::doTest()
 	// to 'arm' only selected pixels:
 	fPIX.clear();
 	LOG(logINFO) << "Set 'Armed' Pixels from file: " << fname;
-	if (!setPixels(fname, "Test")) return;    //READ FROM FILE	
-
+	if (!setPixels(fname, "Test")){   //READ FROM FILE	
+		FinalCleaning();
+		return;    
+	}
 	fApi->_dut->testAllPixels(false);
 	for (unsigned int i = 0; i < fPIX.size(); ++i) {
 	 	if (fPIX[i].first > -1)
@@ -464,7 +492,11 @@ void PixTestPattern::doTest()
 	if (fPatternFromFile)
 	{
 		LOG(logINFO) << "Pattern from file: " << fname;
-		if (!setPattern(fname)) return;		//READ FROM FILE	
+		if (!setPattern(fname)){   //READ FROM FILE	
+			fApi->daqStop();
+			FinalCleaning();
+			return;
+		}
 	}
 	else //standard pattern from config parameters.
 	{
@@ -523,14 +555,8 @@ void PixTestPattern::doTest()
 
 	//DAQ - THE END.
 
-	// Reset the pg_setup to default value.
-	pgToDefault(pg_setup);
-
-	//clean local variables:
-	fPIX.clear();
-	fPIXm.clear();
-	pg_setup.clear();
-
+	//set PG to default and clean everything:
+	FinalCleaning();
 	LOG(logINFO) << "PixTestPattern::doTest() done for ";
 
 }
