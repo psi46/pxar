@@ -44,7 +44,7 @@ std::string pxarCore::getVersion() { return PACKAGE_STRING; }
 
 bool pxarCore::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 			std::vector<std::pair<std::string,double> > power_settings,
-			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+			     std::vector<std::pair<std::string,uint8_t> > pg_setup) {
 
   // Check the HAL status before doing anything else:
   if(!_hal->compatible()) return false;
