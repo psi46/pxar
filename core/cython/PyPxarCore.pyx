@@ -18,9 +18,14 @@ cdef class Pixel:
             self.thisptr = new pixel()
     def __dealloc__(self):
         del self.thisptr
+    cdef fill(self, pixel p):
+        self.thisptr.roc_id = p.roc_id
+        self.thisptr.column = p.column
+        self.thisptr.row = p.row
+        self.thisptr.value = p.value
     cdef c_clone(self, pixel* p):
         del self.thisptr
-        thisptr = p
+        self.thisptr = p
     def decode(self, int address):
         self.thisptr.decode(address)
     property roc_id:
@@ -106,12 +111,21 @@ cdef class PxEvent:
             self.thisptr = new Event()
     def __dealloc__(self):
         del self.thisptr
+    cdef c_clone(self, Event* p):
+        del self.thisptr
+        self.thisptr = p
+    cdef fill(self, Event ev):
+        self.thisptr.header = ev.header
+        self.thisptr.trailer = ev.trailer
+        self.thisptr.numDecoderErrors = ev.numDecoderErrors
+        for px in ev.pixels:
+            self.thisptr.pixels.push_back(px)
     property pixels:
         def __get__(self): 
             r = list()
             for p in self.thisptr.pixels:
                 P = Pixel()
-                P.c_clone(&p)
+                P.fill(p)
                 r.append(P)
             return r
         def __set__(self, value): 
@@ -414,8 +428,9 @@ cdef class PyPxarCore:
         cdef vector[Event] r
         r = self.thisptr.daqGetEventBuffer()
         pixelevents = list()
-        for event in xrange(r.size()):
-            p = PxEvent(event)
+        for event in r:
+            p = PxEvent()
+            p.fill(event)
             pixelevents.append(p)
         return pixelevents
 
