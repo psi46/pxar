@@ -130,7 +130,20 @@ void PixTestPh::doTest() {
       if (fPIX[i].first > -1)  {
 	fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
 	fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
-	rresult = fApi->getPulseheightVsDAC(fParDAC, fParDacVal, fParDacVal, FLAGS, 1);
+
+	int cnt(0); 
+	bool done(false);
+	while (!done) {
+	  try {
+	    rresult = fApi->getPulseheightVsDAC(fParDAC, fParDacVal, fParDacVal, FLAGS, 1);
+	    done = true;
+	  } catch(pxarException &e) {
+	    LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	    ++cnt;
+	  }
+	  done = (cnt>5) || done;
+	}
+	
 	copy(rresult.begin(), rresult.end(), back_inserter(result)); 
 	fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
 	fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);

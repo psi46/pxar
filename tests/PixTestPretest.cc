@@ -387,9 +387,12 @@ void PixTestPretest::setVthrCompCalDel() {
 	rresults = fApi->getEfficiencyVsDACDAC("caldel", 0, 255, "vthrcomp", 0, 150, FLAGS, fParNtrig);
 	done = true;
       } catch(DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	++cnt;
 	if (e.numberMissing > 10) done = true; 
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -634,9 +637,12 @@ void PixTestPretest::setCalDel() {
       results =  fApi->getEfficiencyVsDAC(DacName, 0, 250, FLAGS, fParNtrig);
       done = true;
     } catch(DataMissingEvent &e){
-      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
       ++cnt;
       if (e.numberMissing > 10) done = true; 
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
     }
     done = (cnt>5) || done;
   }

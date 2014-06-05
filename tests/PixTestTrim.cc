@@ -228,7 +228,20 @@ void PixTestTrim::trimTest() {
   do {
     if (rocDone.size() == rocIds.size()) break;
     fApi->setDAC("vtrim", itrim);
-    vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+    vector<pair<uint8_t, vector<pixel> > > results;
+    int cnt(0); 
+    bool done(false);
+    while (!done) {
+      try {
+	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+	done = true;
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
+      }
+      done = (cnt>5) || done;
+    }
+
     double minThr(999.), maxThr(-99); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
       if (rocDone.end() != find(rocDone.begin(), rocDone.end(), rocIds[iroc])) continue;
