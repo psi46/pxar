@@ -110,7 +110,7 @@ void PixTestIV::doTest() {
   
   // -- loop over voltage:
   double voltMeasured(-1.), amps(-1.);
-  bool tripped(false); 
+  int tripped(-1); 
   for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     hv->setVoltage(voltSet);
     // -- get within 1V of specified voltage. Try at most 5 times.
@@ -123,7 +123,7 @@ void PixTestIV::doTest() {
     }
     if (hv->tripped()) {
       LOG(logCRITICAL) << "HV supply tripped, aborting IV test"; 
-      tripped = true;
+      tripped = voltSet;
       break;
     }
     mDelay(fParDelay*1000); 
@@ -150,7 +150,8 @@ void PixTestIV::doTest() {
   OutputFile.open(Form("%s/iv.dat", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
   OutputFile << "Voltage [V] Current [A]" << endl << endl;
 
-  for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
+  for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
+    if (tripped > -1 && voltSet > tripped) break;
     OutputFile << Form("%e %e", static_cast<double>(voltSet), 1.e-6*h1->GetBinContent(h1->FindBin(voltSet))) << endl; 
   }
   OutputFile.close();
