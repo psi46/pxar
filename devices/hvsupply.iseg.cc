@@ -193,3 +193,10 @@ double hvsupply::getCurrentLimit() {
   // Return value is in Ampere, give in uA:
   return outToDouble(answer)*1000000;
 }
+
+// ----------------------------------------------------------------------
+bool hvsupply::tripped() {
+  // FIXME do something
+  return false;
+}
+    

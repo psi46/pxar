@@ -55,6 +55,10 @@ namespace pxar {
      */
     bool setVoltage(double volts);
     
+    /** Returns to Local Mode
+     */
+    void goLocal();
+    
     /** Reads back the configured voltage. Value is given in v (Volts)
      */
     double getVoltage();
@@ -63,7 +67,7 @@ namespace pxar {
      */
     double getCurrent();
 
-    /** Enables Compliance mode and sets the current limit (to be given in uA,
+    /** Enables compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)
      */
     bool setCurrentLimit(uint32_t microampere);
@@ -73,6 +77,10 @@ namespace pxar {
      */
     double getCurrentLimit();
 
+    /** Did the HV supply trip?
+     */
+    bool tripped();
+  
   }; // class hvsupply
 
 } //namespace pxar
