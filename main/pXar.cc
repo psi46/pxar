@@ -62,6 +62,7 @@ int main(int argc, char *argv[]){
       cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
+      cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
