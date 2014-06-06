@@ -15,9 +15,10 @@ public:
 
 private:
 
-  uint32_t fParVoltageMax;
-  uint32_t fParVoltageStep;
-  uint32_t fParDelay;
+  int fParVoltageMin;
+  int fParVoltageMax;
+  int fParVoltageStep;
+  int fParDelay;
 
   ClassDef(PixTestIV, 1)
 
