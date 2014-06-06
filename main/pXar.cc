@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
 
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
-    verbosity("INFO"), flashFile("nada"), runtest("fulltest"); 
+    verbosity("INFO"), flashFile("nada"), runtest("fulltest"), trimVcal(""); 
   bool doRunGui(false), 
     doRunScript(false), 
     doRunSingleTest(false), 
@@ -67,12 +67,13 @@ int main(int argc, char *argv[]){
     }
     if (!strcmp(argv[i],"-a"))                                {doAnalysisOnly = true;} 
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
-    if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
+    if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
@@ -121,6 +122,11 @@ int main(int argc, char *argv[]){
     rootfile  = configParameters->getDirectory() + "/" + rootfile;
   }
 
+  if (trimVcal.compare("")) {
+    configParameters->setDACParameterFileName(configParameters->getDACParameterFileName() + trimVcal); 
+    configParameters->setTrimParameterFileName(configParameters->getTrimParameterFileName() + trimVcal); 
+  }
+  
   logfile = rootfile; 
   PixUtil::replaceAll(logfile, ".root", ".log");
   createBackup(rootfile, logfile); 
