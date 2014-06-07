@@ -13,6 +13,11 @@
 
 using namespace pxar;
 
+// Set Voltage
+float voltage_set;
+bool hv_status;
+bool supply_tripped;
+
 double outToDouble(char * word) {
   int sign=1;
   int orderSign=1;
@@ -44,7 +49,9 @@ void handleAnswers(char* answer) {
     throw InvalidConfig("HV Power Supply set to OFF!");
   }
   else if(strcmp(answer,"S1=TRP") == 0) { 
-    LOG(logCRITICAL) << "Power supply tripped!"; }
+    LOG(logCRITICAL) << "Power supply tripped!";
+    supply_tripped = true;
+  }
   else if(strcmp(answer,"S1=MAN") == 0) { 
     LOG(logCRITICAL) << "HV Power Supply set to MANUAL mode!";
     throw InvalidConfig("HV Power Supply set to MANUAL mode!");
@@ -54,12 +61,10 @@ void handleAnswers(char* answer) {
   else if(strcmp(answer,"S1=H2L") == 0) {
     LOG(logDEBUG) << "Voltage is falling."; }
   else {
-    LOG(logDEBUG) << "Unknown device return value."; }
+    LOG(logDEBUG) << "Unknown device return value.";
+    supply_tripped = false;
+  }
 }
-
-// Set Voltage
-float voltage_set;
-bool hv_status;
 
 // Constructor: Connects to the device, initializes communication
 hvsupply::hvsupply() {
@@ -69,6 +74,7 @@ hvsupply::hvsupply() {
   // "G1": Apply new set-voltage
 
   hv_status = false;
+  supply_tripped = false;
   const int comPortNumber = 16; /* /dev/ttyUSB0 */
   if(!openComPort(comPortNumber,9600)) {
     LOG(logCRITICAL) << "Error connecting via RS232 port!";
@@ -196,7 +202,8 @@ double hvsupply::getCurrentLimit() {
 
 // ----------------------------------------------------------------------
 bool hvsupply::tripped() {
-  // FIXME do something
+
+  if(supply_tripped) return true;
   return false;
 }
     
