@@ -56,14 +56,10 @@ hvsupply::~hvsupply() {
   char answer[256] = { 0 };
   writeCommandStringAndReadAnswer(":OUTP:STAT?",answer);
   LOG(logDEBUG) <<"State of Keithley after shut down: " <<  answer;
-  goLocal();
-  closeComPort();
-}
 
-
-// ----------------------------------------------------------------------
-void hvsupply::goLocal() {
+  // Switch back to local mode:
   writeCommandString(":SYST:LOC");
+  closeComPort();
 }
 
 // ----------------------------------------------------------------------
