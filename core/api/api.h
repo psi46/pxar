@@ -544,6 +544,7 @@ namespace pxar {
      *  TRUE. In case of a problem with the DAQ (not started, buffer overflow
      *  or full...) it returns FALSE.
      */
+    bool daqStatus(uint8_t & perFull);
     bool daqStatus();
     
     /** Function to read out the earliest pxar::Event in buffer from the current

@@ -90,6 +90,8 @@ public:
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
+  /// hint to what happens if the user hits the "stop" button
+  virtual std::string getStopTip() {return fStopTip;}
   /// hint to what happens if the user hits the "summary" button
   virtual std::string getSummaryTip() {return fSummaryTip;}
   /// get the string describing the test (called from PixTab::updateToolTips)
@@ -236,7 +238,7 @@ protected:
   int                  fNtrig; 
   std::vector<double>  fPhErrP0, fPhErrP1; 
 
-  std::string           fName, fTestTip, fSummaryTip; ///< information for this test
+  std::string           fName, fTestTip, fSummaryTip, fStopTip; ///< information for this test
 
   std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
