@@ -3,6 +3,8 @@
 #include <iostream>
 #include "PixTestDaq.hh"
 #include "log.h"
+#include "helper.h"
+#include "../core/utils/timer.h"
 
 #include <TH2.h>
 
@@ -26,6 +28,39 @@ PixTestDaq::PixTestDaq() : PixTest() {
   fTree = 0; 
 }
 
+void PixTestDaq::stop()
+{
+  // Interrupt the test 
+  fDaq_loop = false;
+ 
+  LOG(logINFO)<< "Stop pressed. Ending test.";
+
+}
+bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel)
+{
+	uint8_t trgtkdel = TrgTkDel;
+
+	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
+	double fClkDelays = period_ns / 25 - trgtkdel;
+	uint16_t ClkDelays = (uint16_t)fClkDelays;  //debug -- aprox to def
+
+	//add right delay between triggers:
+	uint16_t i = ClkDelays;
+	while (i>255){
+		//cout << i << endl; //debug
+		fPg_setup.push_back(make_pair("delay", 255));
+		i = i - 255;
+	}
+	fPg_setup.push_back(make_pair("delay", i));
+	//cout << i << endl; //debug
+
+	//then send trigger and token:
+	fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG  b000010
+	fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK  		
+
+	return true;
+}
+
 // ----------------------------------------------------------------------
 bool PixTestDaq::setParameter(string parName, string sval) {
   bool found(false);
@@ -45,14 +80,28 @@ bool PixTestDaq::setParameter(string parName, string sval) {
  	fParStretch = atoi(sval.c_str());	
 	setToolTips();
       }
+      if (!parName.compare("delaytbm")) {
+	fParDelayTBM = !(atoi(sval.c_str())==0);
+	setToolTips();
+      }
       if (!parName.compare("filltree")) {
 	fParFillTree = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
-      break;
+      if (!parName.compare("trgfrequency(khz)")){   // trigger frequency in kHz.
+	 fParTriggerFrequency = atoi(sval.c_str());
+	 LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
+      }
+      if (!parName.compare("seconds")){
+		fParSeconds = atoi(sval.c_str());
+		LOG(logDEBUG) << "  setting Seconds -> " << fParSeconds;
+		if (fParSeconds < 0) {
+				  LOG(logWARNING) << "PixTestDaq::setParameter() seconds must be positive";
+		}
+      }
     }
   }
-  return found; 
+  return found;
 }
 
 
@@ -71,10 +120,10 @@ void PixTestDaq::init() {
 
 // ----------------------------------------------------------------------
 void PixTestDaq::setToolTips() {
-  fTestTip    = string("run DAQ")
-    ;
-  fSummaryTip = string("to be implemented")
-    ;
+
+  fTestTip    = string("run DAQ") ;
+  fSummaryTip = string("Show summary plot") ;
+  fStopTip    = string("Stop DAQ");
 }
 
 
@@ -92,6 +141,15 @@ PixTestDaq::~PixTestDaq() {
   if (fTree && fParFillTree) fTree->Write(); 
 }
 
+// ----------------------------------------------------------------------
+void PixTestDaq::pgToDefault(vector<pair<std::string, uint8_t> > /*pg_setup*/) {
+  fPg_setup.clear();
+  LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
+  
+  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+  fApi->setPatternGenerator(fPg_setup);
+  LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
+}
 
 // ----------------------------------------------------------------------
 void PixTestDaq::doTest() {
@@ -101,68 +159,175 @@ void PixTestDaq::doTest() {
   PixTest::update(); 
   fDirectory->cd();
 
+  fPg_setup.clear();
+
   //Set the ClockStretch
   //  fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
    
 
-  // All on!
-  fApi->_dut->testAllPixels(false);
-  //fApi->_dut->maskAllPixels(true);
-  /*
-  // Set some pixels up for getting calibrate signals:
-  for (int i = 0; i < 3; ++i) {
-  fApi->_dut->testPixel(i, 5, true);
-  fApi->_dut->maskPixel(i, 5, false);
-  fApi->_dut->testPixel(i, 6, true);
-  fApi->_dut->maskPixel(i, 6, false);
-  }
-  */
+  // Load pixel mask
   
-  vector<TH2D*> hits;
-  vector<TH2D*> phmap;
-  vector<TH1D*> ph;
-  TH1D *h1(0); 
-  TH2D *h2(0); 
 
   if (fParFillTree) bookTree(); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  TH1D *h1(0); 
+  TH2D *h2(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
-    hits.push_back(h2);
+    fHits.push_back(h2);
 
     h2 = bookTH2D(Form("phMap_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
-    phmap.push_back(h2);
+    fPhmap.push_back(h2);
 
     h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "ADC", "Entries/bin");
-    ph.push_back(h1);
+    fPh.push_back(h1);
   }
 
-  copy(hits.begin(), hits.end(), back_inserter(fHistList));
-  copy(phmap.begin(), phmap.end(), back_inserter(fHistList));
-  copy(ph.begin(), ph.end(), back_inserter(fHistList));
+  copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+  copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
+  copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
 
-  for (int iter = 0; iter < fParIter; iter++) {
-    int pixCnt(0); 
-    // Start the DAQ:
-    fApi->daqStart();
+  //first send only a RES:
+  fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
+  uint16_t period = 28;
+
+  // Set the pattern generator:
+  fApi->setPatternGenerator(fPg_setup);
+
+  fApi->daqStart();
+
+  //send only one trigger to reset:
+  fApi->daqTrigger(1, period);
+  LOG(logINFO) << "PixTestDaq::RES sent once ";
+
+  fApi->daqStop();
+  //fApi->daqClear();
+
+  fPg_setup.clear();
+  LOG(logINFO) << "PixTestDaq::PG_Setup clean";
+
+  if(fParDelayTBM)
+  	fApi->setTbmReg("delays",0x40); //FPix timing
+
+  fDaq_loop = true;
+
+  //If using number of triggers
+  if(fParNtrig > 0) {
+  	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
+  	double fClkDelays = period_ns / 25 - 20;
+	
+	for( int i = 0 ; i < fParIter && fDaq_loop ; i++) {
+        // Start the DAQ:
+        fApi->daqStart();
     
-    // Send the triggers:
-    fApi->daqTrigger(fParNtrig);
+    	// Send the triggers:
+    	fApi->daqTrigger(fParNtrig,fClkDelays);
+   	
+	fApi->daqStop();
+	ProcessData(0);	
+	gSystem->ProcessEvents();
+	
+	}
+
+  } else {  // Use seconds
+
+     //set the pattern wrt the trigger frequency:
+     LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
+     if (!setTrgFrequency(20)){
+	  FinalCleaning();
+	  return;
+     }	
+
+     //set pattern generator:
+     fApi->setPatternGenerator(fPg_setup);
+ 
+
+  //start trigger loop + buffer fill management:
+  fDaq_loop = true;
+
+  fApi->daqStart();
+
+  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
+
+  //to control the buffer filling
+  uint8_t perFull;
+  timer t;
+  while (fApi->daqStatus(perFull) && fDaq_loop)    //check every 2 seconds if buffer is full less then 90%
+  {
+	  LOG(logINFO) << "buffer not full, at " << (int) perFull << "%";
+          gSystem->ProcessEvents();
+	  ProcessData();
+	
+	  // Pause and drain the buffer if almost full.
+	  if(perFull > 90) {
+		LOG(logINFO) << "Buffer almost full, pausing triggers.";
+		fApi->daqTriggerLoopHalt();
+		ProcessData(0);
+		LOG(logINFO) << "Resuming triggers.";
+		fApi->daqTriggerLoop();
+	  }
+	  LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
+	  if (t.get()/1000 >= fParSeconds)	{
+	  	fDaq_loop = false;
+	  	break;
+	  }
+  }
+
+  fApi->daqTriggerLoopHalt();
+
+  fApi->daqStop();
+  ProcessData(0);
+  
+
+  }
+
+
+  fApi->setClockStretch(0, 0, 0); // No Stretch after trigger, 0 delay
+  
+  LOG(logDEBUG) << "Filled histograms..." ;
+
+  h2 = (TH2D*)(*fHistList.begin());
+
+  h2->Draw("colz");
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+
+  PixTest::update();
+
+  LOG(logINFO) << "PixTestDaq::doTest() done";
+}
+
+void PixTestDaq::ProcessData(uint16_t numevents)
+{
+
+    int pixCnt(0);
+
+    LOG(logDEBUG) << "Getting Event Buffer";
+
+    vector<pxar::Event> daqdat;
     
-    // Stop the DAQ:
-    fApi->daqStop();
-    
-    vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+    if( numevents > 0) {
+	for (unsigned int i = 0; i < numevents ; i++) {
+		pxar::Event evt = fApi->daqGetEvent();
+		//Check if event is empty?
+		if(evt.pixels.size() > 0)
+			daqdat.push_back(evt);
+	}
+    }
+    else
+	daqdat = fApi->daqGetEventBuffer();
+
+    LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
     
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       pixCnt += it->pixels.size(); 
@@ -177,11 +342,12 @@ void PixTestDaq::doTest() {
       }
 
       for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
-	hits[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-	phmap[getIdxFromId(it->pixels[ipix].roc_id)]->SetBinContent(it->pixels[ipix].column, 
-								    it->pixels[ipix].row, 
-								    it->pixels[ipix].value);
-	ph[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].value);
+	fHits[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+	fPhmap[getIdxFromId(it->pixels[ipix].roc_id)]->SetBinContent(it->pixels[ipix].column, 
+								     it->pixels[ipix].row, 
+								     it->pixels[ipix].value);
+	
+	fPh[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].value);
 
 	if (fParFillTree) {
 	  fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
@@ -193,27 +359,32 @@ void PixTestDaq::doTest() {
       if (fParFillTree) fTree->Fill();
     }
     
-    cout << Form("Run %4d", iter) << Form(" # events read: %6ld, pixels seen in all events: %3d, hist entries: %4d", 
+    cout << Form("Run ") << Form(" # events read: %6ld, pixels seen in all events: %3d, hist entries: %4d", 
 					  daqdat.size(), pixCnt, 
-					  static_cast<int>(hits[0]->GetEntries())) 
+					  static_cast<int>(fHits[0]->GetEntries())) 
 	 << endl;
     
-    hits[0]->Draw("colz");
+    fHits[0]->Draw("colz");
     PixTest::update();
   
-  }
-  fApi->setClockStretch(0, 0, 0); // No Stretch after trigger, 0 delay
-  
-  
-  LOG(logDEBUG) << "Filled histograms..." ;
 
-  h2 = (TH2D*)(*fHistList.begin());
-
-  h2->Draw("colz");
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
-
-  PixTest::update();
- 
-
-  LOG(logINFO) << "PixTestDaq::doTest() done";
 }
+
+void PixTestDaq::FinalCleaning() {
+	// Reset the pg_setup to default value.
+	pgToDefault(fPg_setup);
+
+	//clean local variables:
+	//fPIX.clear();
+	//fPIXm.clear();
+	fPg_setup.clear();
+}
+void PixTestDaq::runCommand(std::string command) {
+
+	if(command == "stop")
+		stop();
+	else
+	   LOG(logINFO) << "Command " << command << " not implemented.";
+}
+
+

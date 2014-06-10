@@ -16,6 +16,14 @@ aliveTest           button
 maskTest            button
 addressDecodingTest button
 
+-- DAQ
+Ntrig               0
+iterations          10
+seconds             30
+trgfrequency(khz)   100
+DelayTBM            checkbox
+FillTree            checkbox
+
 -- DacScan
 PHmap               checkbox
 Ntrig               10

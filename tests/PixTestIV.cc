@@ -87,7 +87,7 @@ void PixTestIV::doTest() {
 #ifndef BUILD_HV
   LOG(logERROR) << "Not build with HV supply support.";
   return;
-#endif
+#else
 
   fDirectory->cd();
 
@@ -157,4 +157,6 @@ void PixTestIV::doTest() {
     OutputFile << Form("%e %e", static_cast<double>(voltSet), 1.e-6*h1->GetBinContent(h1->FindBin(voltSet))) << endl; 
   }
   OutputFile.close();
+
+#endif
 }

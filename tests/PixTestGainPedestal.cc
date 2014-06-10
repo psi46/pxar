@@ -381,7 +381,7 @@ void PixTestGainPedestal::printHistograms() {
 
     TH1D *h1(0); 
     for (int ic = 0; ic < 52; ++ic) {
-      for (int ir = 0; ir < 52; ++ir) {
+      for (int ir = 0; ir < 80; ++ir) {
 	h1 = fHists[Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)];
 
 	string h1name(h1->GetName()), line(""); 

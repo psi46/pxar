@@ -2,6 +2,8 @@
 #define PIXTESTDAQ_H
 
 #include "PixTest.hh"
+#include <TH1.h>
+#include <TH2.h>
 
 #include <TTree.h>
 
@@ -16,15 +18,30 @@ public:
   void bookHist(std::string); 
 
   void doTest(); 
+  void runCommand(std::string command);
+
+  bool setTrgFrequency(uint8_t TrgTkDel);
+  void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
+  void FinalCleaning();
+  void ProcessData(uint16_t numevents = 1000);
 
 private:
+  void stop();
 
-  int     fParNtrig; 
-  int     fParStretch; 
-  bool    fParFillTree;
-  int 	  fParIter;
+  uint32_t fParNtrig; 
+  uint16_t fParStretch; 
+  bool     fParFillTree;
+  uint16_t fParSeconds;
+  uint16_t  fParTriggerFrequency;
+  uint16_t fParIter;
+  bool	   fParDelayTBM;
 
-  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
+
+  std::vector<TH2D*> fHits;
+  std::vector<TH2D*> fPhmap;
+  std::vector<TH1D*> fPh;
+  bool fDaq_loop;
 
   ClassDef(PixTestDaq, 1)
 

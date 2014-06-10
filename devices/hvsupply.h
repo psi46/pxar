@@ -55,10 +55,6 @@ namespace pxar {
      */
     bool setVoltage(double volts);
     
-    /** Returns to Local Mode
-     */
-    void goLocal();
-    
     /** Reads back the configured voltage. Value is given in v (Volts)
      */
     double getVoltage();
