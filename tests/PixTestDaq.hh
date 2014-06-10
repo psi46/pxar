@@ -32,7 +32,7 @@ private:
   uint16_t fParStretch; 
   bool     fParFillTree;
   uint16_t fParSeconds;
-  uint8_t  fParTriggerFrequency;
+  uint16_t  fParTriggerFrequency;
   uint16_t fParIter;
   bool	   fParDelayTBM;
 
