@@ -46,6 +46,7 @@ bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel)
 
 	//add right delay between triggers:
 	uint16_t i = ClkDelays;
+	
 	while (i>255){
 		//cout << i << endl; //debug
 		fPg_setup.push_back(make_pair("delay", 255));
@@ -223,15 +224,21 @@ void PixTestDaq::doTest() {
 
   //If using number of triggers
   if(fParNtrig > 0) {
-  	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
-  	double fClkDelays = period_ns / 25 - 20;
+	//set the pattern wrt the trigger frequency:
+	LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
+    	if (!setTrgFrequency(20)){
+	  FinalCleaning();
+	  return; 
+	}	
+    	//set pattern generator:
+    	fApi->setPatternGenerator(fPg_setup);
 	
 	for( int i = 0 ; i < fParIter && fDaq_loop ; i++) {
         // Start the DAQ:
         fApi->daqStart();
     
     	// Send the triggers:
-    	fApi->daqTrigger(fParNtrig,fClkDelays);
+    	fApi->daqTrigger(fParNtrig);
    	
 	fApi->daqStop();
 	ProcessData(0);	
