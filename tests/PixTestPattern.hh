@@ -20,7 +20,8 @@ public:
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
 	void PrintEvents(int, int, std::string);
-	void pgToDefault(std::vector<std::pair<std::string, uint8_t> >);
+	void TriggerLoop(int );
+	void pgToDefault();
 	void FinalCleaning();
 
 private:
@@ -35,14 +36,14 @@ private:
 	std::string fFileName;
 	bool	fUnMaskAll;
 
-	bool    ParOutOfRange;
+	bool    fParOutOfRange;
+	bool    fDaq_loop;
 	std::string f_Directory;
-	std::string str1, str2;
-	std::string::size_type s0, s1;
-	std::vector<std::pair<std::string, uint8_t> > pg_setup;
+	std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 	std::vector<std::pair<int, int> > fPIXm;
-	uint16_t finalPeriod;
-
+	uint16_t fPeriod;
+	int		fCheckFreq;
+	
 	ClassDef(PixTestPattern, 1)
 
 };

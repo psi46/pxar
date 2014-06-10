@@ -110,7 +110,7 @@ void PixTestIV::doTest() {
   
   // -- loop over voltage:
   double voltMeasured(-1.), amps(-1.);
-  int tripped(-1); 
+  int tripped(-1);
   for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     hv->setVoltage(voltSet);
     // -- get within 1V of specified voltage. Try at most 5 times.
@@ -121,15 +121,17 @@ void PixTestIV::doTest() {
       if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!
       ++ntry;
     }
-    if (hv->tripped()) {
+    amps = hv->getCurrent()*1E6;
+    voltMeasured = hv->getVoltage();
+ 
+    if (hv->tripped() || ((amps<-99.) && (voltMeasured !=0.)))
+    {
       LOG(logCRITICAL) << "HV supply tripped, aborting IV test"; 
       tripped = voltSet;
       break;
     }
-    mDelay(fParDelay*1000); 
-    amps = hv->getCurrent()*1E6;
-    LOG(logDEBUG) << Form("V = %3d (meas: %+7.2f) I = %4.2e uA (ntry = %d)", 
-			  voltSet, voltMeasured, amps, ntry);
+    mDelay(fParDelay*1000);
+    LOG(logDEBUG) << Form("V = - %3d (meas: %+7.2f) I = %4.2e uA (ntry = %d)", voltSet, voltMeasured, amps, ntry);
     h1->Fill(TMath::Abs(voltSet), TMath::Abs(amps));
   }
 

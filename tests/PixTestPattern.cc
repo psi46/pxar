@@ -34,7 +34,7 @@ PixTestPattern::PixTestPattern() : PixTest(){ //ctor
 bool PixTestPattern::setParameter(string parName, string sval)
 {
 	bool found(false);
-	ParOutOfRange = false;
+	fParOutOfRange = false;
 	std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
 	for (unsigned int i = 0; i < fParameters.size(); ++i)
 	{
@@ -48,7 +48,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting pgcycles -> " << fParPgCycles;
 				if (fParPgCycles < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() pg_cycles must be positive";
-					found = false; ParOutOfRange = true;
+					found = false; fParOutOfRange = true;
 				}
 			}
 
@@ -64,7 +64,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fParPeriod -> " << fParPeriod;
 				if (fParPeriod < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() period must be positive";
-					found = false; ParOutOfRange = true;
+					found = false; fParOutOfRange = true;
 				}
 			}
 
@@ -73,7 +73,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fParSeconds -> " << fParSeconds;
 				if (fParSeconds < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() seconds must be positive";
-					found = false; ParOutOfRange = true;
+					found = false; fParOutOfRange = true;
 				}
 			}
 
@@ -172,7 +172,9 @@ bool PixTestPattern::setPattern(string fname) {
 
 		if (patternFound)
 		{
-			int val2(0);
+			std::string::size_type sep;
+			std::string sig, str;
+			int val(0);
 
 			// -- remove tabs, adjacent spaces, leading and trailing spaces
 			PixUtil::replaceAll(line, "\t", " ");
@@ -180,27 +182,27 @@ bool PixTestPattern::setPattern(string fname) {
 			line.erase(new_end, line.end());
 			if (line.length() < 2) continue;
 
-			s1 = line.find(",");
+			sep = line.find(",");
 
-			if (string::npos != s1)
+			if (string::npos != sep)
 			{
-				str1 = line.substr(0, s1-1);
-				str2 = line.substr(s1 + 1);
-				val2 = atoi(str2.c_str());
+				sig = line.substr(0, sep - 1);
+				str = line.substr(sep + 1);
+				val = atoi(str.c_str());
 
 				//check if delay stays within 8bit
-				if (val2 < 0 || val2 > 255) {
+				if (val < 0 || val > 255) {
 					LOG(logWARNING) << "PixTestPattern::setPattern() delay out of range [0,255]";
 					return false;
 				}
-				uint8_t del = val2;
-				pg_setup.push_back(make_pair(str1, del));
-				LOG(logDEBUG) << "  pg set to -> \"" << str1 << "\" " << del;
+				uint8_t del = val;
+				fPg_setup.push_back(make_pair(sig, del));
+				LOG(logDEBUG) << "  pg set to -> \"" << sig << "\" " << del;
 			}
 
 			else
 			{
-				pg_setup.push_back(make_pair("", 0));
+				fPg_setup.push_back(make_pair("", 0));
 				LOG(logWARNING) << "PixTestPattern::setPattern() wrong ... "; //DEBUG
 			}
 		}
@@ -210,7 +212,7 @@ bool PixTestPattern::setPattern(string fname) {
 	if (!patternFound)
 	{
 		LOG(logINFO) << "PixTestPattern::setPattern()  '-- Pattern' not found in testPattern.dat";
-		pg_setup.push_back(make_pair("", 0));
+		fPg_setup.push_back(make_pair("", 0));
 		return false;
 	}
 
@@ -261,6 +263,8 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 		if (pixelFound)
 		{
 			int pixc, pixr;
+			std::string::size_type s0, s1;
+			std::string str1, str2;
 
 			// -- remove tabs, adjacent spaces, leading and trailing spaces
 			PixUtil::replaceAll(line, "\t", " ");
@@ -392,24 +396,58 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestPattern::pgToDefault(vector<pair<std::string, uint8_t> > pg_setup) {
-	pg_setup.clear();
+void PixTestPattern::TriggerLoop(int checkfreq) {
+
+	int sec = 0;
+	int nloop = 1;
+	fDaq_loop = true;
+
+	while (fDaq_loop)
+	{
+		fPeriod = fApi->daqTriggerLoop(fParPeriod);
+		LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << fPeriod << " and duration " << fParSeconds << " seconds";
+
+		//check every 'checkfreq' seconds if buffer is full less then 90%
+		while (fApi->daqStatus()) {
+			mDelay(checkfreq * 1000);  //wait in milliseconds
+			sec = sec + checkfreq;
+			if (sec >= fParSeconds)	{
+				fDaq_loop = false;
+				break;
+			}
+		}
+
+		if (fDaq_loop) {
+			LOG(logINFO) << "PixTestPattern:: after " << sec << " seconds - save data to file to avoid buffer overflow";
+			fApi->daqTriggerLoopHalt();
+		}
+		else fApi->daqStop();
+
+		// Get events and Print results on shell/file:
+		PrintEvents(fParSeconds, nloop, "loop");
+		nloop++;
+	}
+}
+
+// ----------------------------------------------------------------------
+void PixTestPattern::pgToDefault() {
+	fPg_setup.clear();
 	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
 
-	pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-	fApi->setPatternGenerator(pg_setup);
+	fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+	fApi->setPatternGenerator(fPg_setup);
 	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
 }
 
 // ----------------------------------------------------------------------
 void PixTestPattern::FinalCleaning() {
 	// Reset the pg_setup to default value.
-	pgToDefault(pg_setup);
+	pgToDefault();
 
 	//clean local variables:
 	fPIX.clear();
 	fPIXm.clear();
-	pg_setup.clear();
+	fPg_setup.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -417,11 +455,11 @@ void PixTestPattern::doTest()
 {
 	fDirectory->cd();
 	fHistList.clear();
-	pg_setup.clear();
+	fPg_setup.clear();
 	PixTest::update();
 
 	//setparameters and check if in range	
-	if (ParOutOfRange) return;
+	if (fParOutOfRange) return;
 
 	LOG(logINFO) << "PixTestPattern::doTest() start";	
 
@@ -473,19 +511,19 @@ void PixTestPattern::doTest()
 	// Start the DAQ:
 
 	//first send only a RES:
-	pg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
-	uint16_t period = 28;
+	fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
+	fPeriod = 28;
 
 	// Set the pattern generator:
-	fApi->setPatternGenerator(pg_setup);
+	fApi->setPatternGenerator(fPg_setup);
 
 	fApi->daqStart();
 
 	//send only one trigger to reset:
-	fApi->daqTrigger(1, period);
+	fApi->daqTrigger(1, fPeriod);
 	LOG(logINFO) << "PixTestPattern::RES sent once ";
 
-	pg_setup.clear();
+	fPg_setup.clear();
 	LOG(logINFO) << "PixTestPattern::PG_Setup clean";
 
 	//select the pattern:
@@ -500,58 +538,26 @@ void PixTestPattern::doTest()
 	}
 	else //standard pattern from config parameters.
 	{
-		pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+		fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
 	}
 
 	//set pattern generator:
-	fApi->setPatternGenerator(pg_setup);
-	finalPeriod = 0;
+	fApi->setPatternGenerator(fPg_setup);
+	fPeriod = 0;
 
 	//send Triggers (loop or single) wrt parameters selection:
 	if (!fParTrigLoop)
 	{
 		//pg_cycles times the pg_Single() == pg_cycles times pattern sequence):
-		finalPeriod = fApi->daqTrigger(fParPgCycles, fParPeriod);
-		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << finalPeriod;
+		fPeriod = fApi->daqTrigger(fParPgCycles, fParPeriod);
+		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << fPeriod;
 
 		fApi->daqStop();
 
 		// Get events and Print results on shell/file:
 		PrintEvents(fParPgCycles, 0, "trg");
 	}
-	else
-	{
-		bool daq_loop = true;
-		int sec = 0;
-		int nloop = 1;
-		int checkfreq = 2; //frequency of buffer checks (seconds)
-
-		while (daq_loop)
-		{
-			finalPeriod = fApi->daqTriggerLoop(fParPeriod);
-			LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
-
-			//check every 'checkfreq' seconds if buffer is full less then 90%
-			while (fApi->daqStatus()) {
-				mDelay(checkfreq * 1000);  //wait in milliseconds
-				sec = sec + checkfreq;
-				if (sec >= fParSeconds)	{
-					daq_loop = false;
-					break;
-				}
-			}
-
-			if (daq_loop) {
-				LOG(logINFO) << "PixTestPattern:: after " << sec << " seconds - save data to file to avoid buffer overflow";
-				fApi->daqTriggerLoopHalt();
-			}
-			else fApi->daqStop();
-
-			// Get events and Print results on shell/file:
-			PrintEvents(fParSeconds, nloop, "loop");
-			nloop++;
-		}
-	}
+	else TriggerLoop(2);
 
 	//DAQ - THE END.
 
