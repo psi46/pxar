@@ -31,7 +31,7 @@ PixTestDaq::PixTestDaq() : PixTest() {
 void PixTestDaq::stop()
 {
   // Interrupt the test 
-  daq_loop = false;
+  fDaq_loop = false;
  
   LOG(logINFO)<< "Stop pressed. Ending test.";
 
@@ -48,15 +48,15 @@ bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel)
 	uint16_t i = ClkDelays;
 	while (i>255){
 		//cout << i << endl; //debug
-		pg_setup.push_back(make_pair("delay", 255));
+		fPg_setup.push_back(make_pair("delay", 255));
 		i = i - 255;
 	}
-	pg_setup.push_back(make_pair("delay", i));
+	fPg_setup.push_back(make_pair("delay", i));
 	//cout << i << endl; //debug
 
 	//then send trigger and token:
-	pg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG  b000010
-	pg_setup.push_back(make_pair("tok", 0));	// PG_TOK  		
+	fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG  b000010
+	fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK  		
 
 	return true;
 }
@@ -142,13 +142,13 @@ PixTestDaq::~PixTestDaq() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::pgToDefault(vector<pair<std::string, uint8_t> > pg_setup) {
-	pg_setup.clear();
-	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
-
-	pg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-	fApi->setPatternGenerator(pg_setup);
-	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
+void PixTestDaq::pgToDefault(vector<pair<std::string, uint8_t> > /*pg_setup*/) {
+  fPg_setup.clear();
+  LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
+  
+  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+  fApi->setPatternGenerator(fPg_setup);
+  LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
 }
 
 // ----------------------------------------------------------------------
@@ -159,7 +159,7 @@ void PixTestDaq::doTest() {
   PixTest::update(); 
   fDirectory->cd();
 
-  pg_setup.clear();
+  fPg_setup.clear();
 
   //Set the ClockStretch
   //  fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
@@ -171,36 +171,38 @@ void PixTestDaq::doTest() {
   if (fParFillTree) bookTree(); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  TH1D *h1(0); 
+  TH2D *h2(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
-    hits.push_back(h2);
+    fHits.push_back(h2);
 
     h2 = bookTH2D(Form("phMap_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
-    phmap.push_back(h2);
+    fPhmap.push_back(h2);
 
     h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "ADC", "Entries/bin");
-    ph.push_back(h1);
+    fPh.push_back(h1);
   }
 
-  copy(hits.begin(), hits.end(), back_inserter(fHistList));
-  copy(phmap.begin(), phmap.end(), back_inserter(fHistList));
-  copy(ph.begin(), ph.end(), back_inserter(fHistList));
+  copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+  copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
+  copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
 
   //first send only a RES:
-  pg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
+  fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
   uint16_t period = 28;
 
   // Set the pattern generator:
-  fApi->setPatternGenerator(pg_setup);
+  fApi->setPatternGenerator(fPg_setup);
 
   fApi->daqStart();
 
@@ -211,20 +213,20 @@ void PixTestDaq::doTest() {
   fApi->daqStop();
   //fApi->daqClear();
 
-  pg_setup.clear();
+  fPg_setup.clear();
   LOG(logINFO) << "PixTestDaq::PG_Setup clean";
 
   if(fParDelayTBM)
   	fApi->setTbmReg("delays",0x40); //FPix timing
 
-  daq_loop = true;
+  fDaq_loop = true;
 
   //If using number of triggers
   if(fParNtrig > 0) {
   	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
   	double fClkDelays = period_ns / 25 - 20;
 	
-	for( int i = 0 ; i < fParIter && daq_loop ; i++) {
+	for( int i = 0 ; i < fParIter && fDaq_loop ; i++) {
         // Start the DAQ:
         fApi->daqStart();
     
@@ -247,11 +249,11 @@ void PixTestDaq::doTest() {
      }	
 
      //set pattern generator:
-     fApi->setPatternGenerator(pg_setup);
+     fApi->setPatternGenerator(fPg_setup);
  
 
   //start trigger loop + buffer fill management:
-  daq_loop = true;
+  fDaq_loop = true;
 
   fApi->daqStart();
 
@@ -261,7 +263,7 @@ void PixTestDaq::doTest() {
   //to control the buffer filling
   uint8_t perFull;
   timer t;
-  while (fApi->daqStatus(perFull) && daq_loop)    //check every 2 seconds if buffer is full less then 90%
+  while (fApi->daqStatus(perFull) && fDaq_loop)    //check every 2 seconds if buffer is full less then 90%
   {
 	  LOG(logINFO) << "buffer not full, at " << (int) perFull << "%";
           gSystem->ProcessEvents();
@@ -277,7 +279,7 @@ void PixTestDaq::doTest() {
 	  }
 	  LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
 	  if (t.get()/1000 >= fParSeconds)	{
-	  	daq_loop = false;
+	  	fDaq_loop = false;
 	  	break;
 	  }
   }
@@ -340,12 +342,12 @@ void PixTestDaq::ProcessData(uint16_t numevents)
       }
 
       for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
-	hits[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-	phmap[getIdxFromId(it->pixels[ipix].roc_id)]->SetBinContent(it->pixels[ipix].column, 
-								    it->pixels[ipix].row, 
-								    it->pixels[ipix].value);
-
-	ph[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].value);
+	fHits[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+	fPhmap[getIdxFromId(it->pixels[ipix].roc_id)]->SetBinContent(it->pixels[ipix].column, 
+								     it->pixels[ipix].row, 
+								     it->pixels[ipix].value);
+	
+	fPh[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].value);
 
 	if (fParFillTree) {
 	  fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
@@ -359,10 +361,10 @@ void PixTestDaq::ProcessData(uint16_t numevents)
     
     cout << Form("Run ") << Form(" # events read: %6ld, pixels seen in all events: %3d, hist entries: %4d", 
 					  daqdat.size(), pixCnt, 
-					  static_cast<int>(hits[0]->GetEntries())) 
+					  static_cast<int>(fHits[0]->GetEntries())) 
 	 << endl;
     
-    hits[0]->Draw("colz");
+    fHits[0]->Draw("colz");
     PixTest::update();
   
 
@@ -370,12 +372,12 @@ void PixTestDaq::ProcessData(uint16_t numevents)
 
 void PixTestDaq::FinalCleaning() {
 	// Reset the pg_setup to default value.
-	pgToDefault(pg_setup);
+	pgToDefault(fPg_setup);
 
 	//clean local variables:
 	//fPIX.clear();
 	//fPIXm.clear();
-	pg_setup.clear();
+	fPg_setup.clear();
 }
 void PixTestDaq::runCommand(std::string command) {
 

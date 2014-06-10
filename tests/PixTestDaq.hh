@@ -36,16 +36,12 @@ private:
   uint16_t fParIter;
   bool	   fParDelayTBM;
 
-  std::vector<std::pair<std::string, uint8_t> > pg_setup;
+  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
-  std::vector<TH2D*> hits;
-  std::vector<TH2D*> phmap;
-  std::vector<TH1D*> ph;
-  TH1D *h1; 
-  TH2D *h2; 
-  bool daq_loop;
-
-  std::map<int, int> id2idx; // map the ROC ID onto the index of the ROC
+  std::vector<TH2D*> fHits;
+  std::vector<TH2D*> fPhmap;
+  std::vector<TH1D*> fPh;
+  bool fDaq_loop;
 
   ClassDef(PixTestDaq, 1)
 
