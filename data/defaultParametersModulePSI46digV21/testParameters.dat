@@ -6,6 +6,12 @@ trgfrequency(khz)   100
 DelayTBM            checkbox
 FillTree            checkbox
 
+-- IV
+VoltageMin          50
+VoltageMax          450
+VoltageStep         20
+Delay               1
+
 -- Pretest
 targetIa            24
 setVana             button
@@ -13,7 +19,6 @@ PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
-setPhRange          button
 Ntrig               5
 SaveDacs            button
 

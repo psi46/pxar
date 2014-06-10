@@ -5,9 +5,14 @@ PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
-setPhRange          button
 Ntrig               5
 SaveDacs            button
+
+-- IV
+VoltageMin          50
+VoltageMax          450
+VoltageStep         20
+Delay               1
 
 -- PixelAlive 
 Ntrig               10

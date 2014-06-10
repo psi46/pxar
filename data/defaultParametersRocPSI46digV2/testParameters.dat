@@ -6,6 +6,12 @@ trgfrequency(khz)   100
 DelayTBM            checkbox
 FillTree            checkbox
 
+-- IV
+VoltageMin          50
+VoltageMax          450
+VoltageStep         20
+Delay               1
+
 -- Setup
 DeserMax            7
 ClkMax              19
