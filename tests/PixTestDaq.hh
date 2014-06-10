@@ -35,6 +35,7 @@ private:
   uint16_t  fParTriggerFrequency;
   uint16_t fParIter;
   bool	   fParDelayTBM;
+  bool	   fParResetROC;
 
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
