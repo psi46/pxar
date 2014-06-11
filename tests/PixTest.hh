@@ -19,6 +19,7 @@ typedef char int8_t;
 #include <TQObject.h> 
 #include <TH1.h> 
 #include <TH2.h> 
+#include <TProfile2D.h> 
 #include <TTree.h> 
 #include <TDirectory.h> 
 #include <TFile.h>
@@ -41,6 +42,7 @@ typedef struct {
   uint8_t pcol[2000];
   uint8_t prow[2000];
   uint8_t pval[2000];
+  uint16_t pq[2000];
 } TreeEvent;
 
 
@@ -123,6 +125,10 @@ public:
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
   /// book a TH2D, adding version information to the name and title 
   TH2D* bookTH2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, int nbinsy, double ymin, double max); 
+  /// book a TProfile2D, adding version information to the name and title 
+  TProfile2D* bookTProfile2D(std::string sname, std::string title, 
+			    int nbinsx, double xmin, double xmax, int nbinsy, double ymin, double max,
+			    std::string option = ""); 
   /// fill the results of a api::getEfficiencyVsDAC into a TH1D; if icol/irow/iroc are > -1, then fill only 'correct' pixels
   void fillDacHist(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > &results, TH1D *h, 
 		   int icol = -1, int irow = -1, int iroc = -1); 

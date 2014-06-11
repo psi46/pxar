@@ -769,6 +769,15 @@ TH2D* PixTest::bookTH2D(std::string sname, std::string title, int nbinsx, double
   return new TH2D(Form("%s_V%d", sname.c_str(), cnt), Form("%s (V%d)", title.c_str(), cnt), nbinsx, xmin, xmax, nbinsy, ymin, ymax); 
 }
 
+// ----------------------------------------------------------------------
+TProfile2D* PixTest::bookTProfile2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, 
+				    int nbinsy, double ymin, double ymax, string option) {
+  int cnt = histCycle(sname); 
+  //  LOG(logDEBUG) << "bookTH2D " << Form("%s_V%d", sname.c_str(), cnt);
+  return new TProfile2D(Form("%s_V%d", sname.c_str(), cnt), Form("%s (V%d)", title.c_str(), cnt), 
+			nbinsx, xmin, xmax, nbinsy, ymin, ymax, option.c_str()); 
+}
+
 
 // ----------------------------------------------------------------------
 int PixTest::histCycle(string hname) {
