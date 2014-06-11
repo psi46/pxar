@@ -145,8 +145,7 @@ void PixTestGainPedestal::measure() {
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   cacheDacs();
-
-
+ 
   TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string name; 
