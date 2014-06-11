@@ -1,19 +1,21 @@
 # Build util library
 
-INCLUDE_DIRECTORIES(.)
+INCLUDE_DIRECTORIES(. ${PROJECT_SOURCE_DIR}/util)
 
 SET (ANALIB_SOURCES
 PixUtil.cc
 PixInitFunc.cc
+PHCalibration.cc
 )
 
 # fill list of header files 
 set(ANALIB_HEADERS
 PixUtil.hh
 PixInitFunc.hh
+PHCalibration.hh
 )
 
-SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/ana ${ROOT_INCLUDE_DIR} )
+SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/ana ${PROJECT_SOURCE_DIR}/util ${ROOT_INCLUDE_DIR} )
 
 # set everything needed for the root dictonary and create the
 # dictionary
