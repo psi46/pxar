@@ -1083,7 +1083,7 @@ bool api::daqStatus(uint8_t & perFull) {
   // Check if we still have enough buffer memory left (with some safety margin).
   // Only filling buffer up to 90% in order not to lose data.
   uint32_t filled_buffer = _hal->daqBufferStatus();
-  perFull = (float) filled_buffer/ (float) _daq_buffersize * 100.0 ;
+  perFull = static_cast<uint8_t>(static_cast<float>(filled_buffer)/_daq_buffersize*100.0);
   if(filled_buffer > 0.9*_daq_buffersize) {
     LOG(logWARNING) << "DAQ buffer about to overflow!";
     return false;
