@@ -860,6 +860,39 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
 // ----------------------------------------------------------------------
 void ConfigParameters::readGainPedestalParameters() {
 
+  string bname = getGainPedestalParameterFileName(); 
+  //  fGainPedestalParameters;
+
+  // -- read in file
+  vector<string> lines; 
+  char  buffer[5000];
+  ifstream is;
+  for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
+    vector<gainPedestalParameters> rocPar; 
+    std::stringstream fname;
+    fname.str(std::string());
+    fname << fDirectory << "/" << bname << "_C" << iroc << ".dat"; 
+    LOG(logINFO) << "      reading " << (fname.str());
+    is.open((fname.str()).c_str());
+    while (is.getline(buffer, 200, '\n')) {
+      lines.push_back(string(buffer));
+    }
+    is.close();
+    cout << "read " << lines.size() << " lines " << endl;
+
+    // -- parse lines
+    double p0, p1, p2, p3;  
+    int icol, irow; 
+    string pix; 
+
+    for (unsigned int i = 3; i < lines.size(); ++i) {
+      istringstream istring(lines[i]);
+      istring >> p0 >> p1 >> p2 >> p3 >> pix >> icol >> irow; 
+      gainPedestalParameters a = {p0, p1, p2, p3};
+      rocPar.push_back(a); 
+    }
+    fGainPedestalParameters.push_back(rocPar); 
+  }
 }
 
 // ----------------------------------------------------------------------
