@@ -318,7 +318,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       ir =   results[ipix].row; 
       iroc = getIdxFromId(results[ipix].roc_id); 
       val =  results[ipix].value;
-      if (rocIds.end() != find(rocIds.begin(), rocIds.end(), iroc)) {
+      if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[ipix].roc_id)) {
 	((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
       } else {
 	LOG(logDEBUG) << "histogram for ROC " << static_cast<int>(results[ipix].roc_id) << " not found"; 

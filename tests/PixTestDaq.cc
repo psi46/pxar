@@ -46,6 +46,14 @@ bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel)
 
 	//add right delay between triggers:
 	uint16_t i = ClkDelays;
+
+	if(fParResetROC) {
+	
+	   fPg_setup.push_back(make_pair("resetroc",15));
+	   ClkDelays -= 15;			
+
+	}
+
 	while (i>255){
 		//cout << i << endl; //debug
 		fPg_setup.push_back(make_pair("delay", 255));
@@ -162,7 +170,7 @@ void PixTestDaq::doTest() {
   fPg_setup.clear();
 
   //Set the ClockStretch
-  //  fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
+  fApi->setClockStretch(0, 0, fParStretch); // Stretch after trigger, 0 delay
    
 
   // Load pixel mask
@@ -178,12 +186,14 @@ void PixTestDaq::doTest() {
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
+    fHistOptions.insert(make_pair(h2,"colz"));
     fHits.push_back(h2);
 
     h2 = bookTH2D(Form("phMap_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     setTitles(h2, "col", "row");
+    fHistOptions.insert(make_pair(h2,"colz"));
     fPhmap.push_back(h2);
 
     h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
@@ -223,21 +233,28 @@ void PixTestDaq::doTest() {
 
   //If using number of triggers
   if(fParNtrig > 0) {
-  	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
-  	double fClkDelays = period_ns / 25 - 20;
+	//set the pattern wrt the trigger frequency:
+	LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
+    	if (!setTrgFrequency(20)){
+	  FinalCleaning();
+	  return; 
+	}	
+    	//set pattern generator:
+    	fApi->setPatternGenerator(fPg_setup);
 	
+	
+	// Start the DAQ:
+	fApi->daqStart();
+
 	for( int i = 0 ; i < fParIter && fDaq_loop ; i++) {
-        // Start the DAQ:
-        fApi->daqStart();
-    
-    	// Send the triggers:
-    	fApi->daqTrigger(fParNtrig,fClkDelays);
+  	    		    
+    	      // Send the triggers:
+    	      fApi->daqTrigger(fParNtrig);
    	
-	fApi->daqStop();
-	ProcessData(0);	
-	gSystem->ProcessEvents();
-	
+	      ProcessData(0);	
+	      gSystem->ProcessEvents();	
 	}
+	fApi->daqStop();
 
   } else {  // Use seconds
 
@@ -292,6 +309,7 @@ void PixTestDaq::doTest() {
 
   }
 
+  FinalCleaning();
 
   fApi->setClockStretch(0, 0, 0); // No Stretch after trigger, 0 delay
   

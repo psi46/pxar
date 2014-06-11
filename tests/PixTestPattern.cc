@@ -150,7 +150,7 @@ bool PixTestPattern::setPattern(string fname) {
 
 	ifstream is(fname.c_str());
 	if (!is.is_open()) {
-		LOG(logINFO) << "  cannot read " << fname;
+		LOG(logWARNING) << "PixTestPattern::setPattern() cannot read " << fname;
 		return false;
 	}
 
@@ -162,8 +162,7 @@ bool PixTestPattern::setPattern(string fname) {
 		getline(is, line);
 
 		// -- find Pattern section
-		if (string::npos != line.find("-- Pattern"))
-		{
+		if (string::npos != line.find("-- Pattern")){
 			patternFound = true;
 			continue;
 		}
@@ -209,9 +208,8 @@ bool PixTestPattern::setPattern(string fname) {
 
 	}
 
-	if (!patternFound)
-	{
-		LOG(logINFO) << "PixTestPattern::setPattern()  '-- Pattern' not found in testPattern.dat";
+	if (!patternFound){
+		LOG(logWARNING) << "PixTestPattern::setPattern()  '-- Pattern' not found in testPattern.dat";
 		fPg_setup.push_back(make_pair("", 0));
 		return false;
 	}
@@ -223,17 +221,16 @@ bool PixTestPattern::setPattern(string fname) {
 bool PixTestPattern::setPixels(string fname, string flag) {
 
 	int npix = 0;
+	std::stringstream sstr;
 
 	ifstream is(fname.c_str());
 	if (!is.is_open()) {
-		LOG(logINFO) << "cannot read " << fname;
+		LOG(logWARNING) << "PixTestPattern::setPixels() cannot read " << fname;
 		return false;
 	}
 
 	bool pixelFound(false);
 	string line;
-
-	if (flag == "Unmask")	{ LOG(logINFO) << "  unmasked pixel -> "; }
 
 	while (is.good())
 	{
@@ -242,8 +239,7 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 		if (flag == "Test")
 		{
 			// -- find Test Pixels section
-			if (string::npos != line.find("-- Test Pixels"))
-			{
+			if (string::npos != line.find("-- Test Pixels")) {
 				pixelFound = true;
 				continue;
 			}
@@ -253,8 +249,7 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 		else
 		{
 			// -- find Unmask Pixels section
-			if (string::npos != line.find("-- Unmask Pixels"))
-			{
+			if (string::npos != line.find("-- Unmask Pixels")) {
 				pixelFound = true;
 				continue;
 			}
@@ -280,22 +275,16 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 				pixc = atoi(str1.c_str());
 				str2 = line.substr(s1 + 1);
 				pixr = atoi(str2.c_str());
-				if (flag == "Test"){
-					fPIX.push_back(make_pair(pixc, pixr));
-					LOG(logINFO) << "  selected pixel -> " << pixc << " " << pixr;
-					npix++;
-				}
-				else {
-					fPIXm.push_back(make_pair(pixc, pixr));
-					cout << " (" << pixc << "," << pixr << ")";
-				}
+				if (flag == "Test")	fPIX.push_back(make_pair(pixc, pixr));
+				else				fPIXm.push_back(make_pair(pixc, pixr));
+				sstr << " (" << pixc << "," << pixr << ")";
+				npix++;
 			}
 			else
 			{
 				fPIX.push_back(make_pair(-1, -1));
 				fPIXm.push_back(make_pair(-1, -1));
-				LOG(logINFO) << "  selected pixel -> none";
-				LOG(logINFO) << "  unmasked pixel -> none";
+				cout << "(null)";
 			}
 		}
 	}
@@ -303,20 +292,21 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 	if (!pixelFound)
 	{
 		if (flag == "Test")	{
-			LOG(logINFO) << "PixTestPattern::setPixels()  '-- Test Pixels' not found in testPattern.dat";
+			LOG(logWARNING) << "PixTestPattern::setPixels()  '-- Test Pixels' not found in testPattern.dat";
 			fPIX.push_back(make_pair(-1, -1));
 		}
 		else {
-			LOG(logINFO) << "PixTestPattern::setPixels()  '-- Unmask Pixels' not found in testPattern.dat";
+			LOG(logWARNING) << "PixTestPattern::setPixels()  '-- Unmask Pixels' not found in testPattern.dat";
 			fPIXm.push_back(make_pair(-1, -1));
 		}
 		return false;
 	}
 	
-	if (flag == "Test")	LOG(logINFO) << "PixTestPattern::setPixels() - Tot Pixels armed = " << npix;
-	cout << endl;
-	return true;
+	if (flag == "Test")	LOG(logINFO) << "PixTestPattern:: " << npix << " 'armed'  pixels:" << sstr.str();
+	else				LOG(logINFO) << "PixTestPattern:: " << npix << " unmasked pixels:" << sstr.str();
+	sstr.clear();
 
+	return true;
 }
 
 
@@ -333,7 +323,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 
 		if (daqEvBuffsiz <= 201)
 		{
-			cout << endl << "data from buffer" << endl;
+			LOG(logINFO) <<  "PixTestPattern:: data from buffer:";
+			cout << endl;
 			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	{
 				cout << i << " : " << daqEvBuffer[i] << endl;
 			}
@@ -341,7 +332,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 		}
 		else
 		{
-			cout << endl << "data from buffer" << endl;
+			cout << endl;
+			LOG(logINFO) << "PixTestPattern:: data from buffer:";
 			for (unsigned int i = 0; i <= 100; i++)	{
 				cout << i << " : " << daqEvBuffer[i] << endl;
 			}
@@ -352,13 +344,14 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 			}
 			cout << endl;
 		}
-		cout << "Number of events read from buffer: " << daqEvBuffsiz << endl << endl;
+		LOG(logINFO) << "PixTestPattern:: " << daqEvBuffsiz << " events read from buffer";
+		cout << endl;
 	}
 
 	else
 	{
-		cout << endl << "Start reading data from DTB RAM." << endl;
-		std::stringstream sstr;
+		LOG(logINFO) << "PixTestPattern:: Start reading data from DTB RAM";
+		std::stringstream sstr, sdata;
 		string FileName;
 		if (flag == "trg") sstr << "_" << par1 << "pgCycles";
 		else sstr << "_" << par1 << "sec" << "_" << par2;
@@ -369,11 +362,11 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 		if (fBinOut)
 		{
 			std::vector<uint16_t> daqdat = fApi->daqGetBuffer();
-			std::cout << "Read " << daqdat.size() << " words of data: ";
-			if (daqdat.size() > 550000) std::cout << (daqdat.size() / 524288) << "MB." << std::endl;
-			else std::cout << (daqdat.size() / 512) << "kB." << std::endl;
+			if (daqdat.size() > 550000) sdata << (daqdat.size() / 524288) << "MB";
+			else sdata << (daqdat.size() / 512) << "kB";
+			LOG(logINFO) << "PixTestPattern:: " << daqdat.size() << " words of data read : " << sdata.str();
 			std::ofstream fout(FileName.c_str(), std::ios::out | std::ios::binary);
-			std::cout << "Writing binary" << endl;
+			LOG(logINFO) << "PixTestPattern:: Writing binary";
 			fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
 			fout.close();
 		}
@@ -381,15 +374,16 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 		else
 		{
 			daqEvBuffer = fApi->daqGetEventBuffer();
-			cout << "Read " << daqEvBuffer.size() << " events." << endl;
+			LOG(logINFO) << "PixTestPattern:: " << daqEvBuffer.size() << " events read";
 			std::ofstream fout(FileName.c_str(), std::ios::out);
-			std::cout << "Writing decoded events" << endl;
+			LOG(logINFO) << "PixTestPattern:: Writing decoded events";
 			fout.write(reinterpret_cast<const char*>(&daqEvBuffer[0]), sizeof(daqEvBuffer[0])*daqEvBuffer.size()); //debug!!! TO BE IMPROVED
 			//for (unsigned int i = 0; i < daqEvBuffsiz; i++)	fout << i << " : " << daqEvBuffer[i] << endl;
 			fout.close();
 		}
 
-		std::cout << "Wrote data to: " << FileName.c_str() << std::endl;
+		LOG(logINFO) << "PixTestPattern:: Wrote data to " << FileName.c_str();
+		cout << endl;
 		FileName.clear();
 	}
 
@@ -432,11 +426,9 @@ void PixTestPattern::TriggerLoop(int checkfreq) {
 // ----------------------------------------------------------------------
 void PixTestPattern::pgToDefault() {
 	fPg_setup.clear();
-	LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
-
 	fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
 	fApi->setPatternGenerator(fPg_setup);
-	LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
+	LOG(logINFO) << "PixTestPattern:: pg_setup set to default";
 }
 
 // ----------------------------------------------------------------------
@@ -469,17 +461,14 @@ void PixTestPattern::doTest()
 	f_Directory = config->getDirectory();
 	fname = f_Directory + "/testPatterns.dat";
 
-	//PIXELS SELECTION
-
 	// to unmask all or only selected pixels:
 	if (fUnMaskAll) {
 		fApi->_dut->maskAllPixels(false);
-		LOG(logINFO) << "All Pixels Unmasked";
+		LOG(logINFO) << "PixTestPattern:: all pixels unmasked";
 	}
 	else {
 		
 		fApi->_dut->maskAllPixels(true);
-		LOG(logINFO) << "Set Unmasked Pixels from file: " << fname;
 		if (!setPixels(fname, "Unmask")){   //READ FROM FILE	
 			FinalCleaning();
 			return;
@@ -491,15 +480,13 @@ void PixTestPattern::doTest()
 	
 	// to 'arm' only selected pixels:
 	fPIX.clear();
-	LOG(logINFO) << "Set 'Armed' Pixels from file: " << fname;
 	if (!setPixels(fname, "Test")){   //READ FROM FILE	
 		FinalCleaning();
 		return;    
 	}
 	fApi->_dut->testAllPixels(false);
 	for (unsigned int i = 0; i < fPIX.size(); ++i) {
-	 	if (fPIX[i].first > -1)
-			{
+	 	if (fPIX[i].first > -1)	{
 				fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
 				fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
 			}
@@ -511,7 +498,7 @@ void PixTestPattern::doTest()
 	// Start the DAQ:
 
 	//first send only a RES:
-	fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
+	fPg_setup.push_back(make_pair("resetroc", 0));
 	fPeriod = 28;
 
 	// Set the pattern generator:
@@ -521,23 +508,22 @@ void PixTestPattern::doTest()
 
 	//send only one trigger to reset:
 	fApi->daqTrigger(1, fPeriod);
-	LOG(logINFO) << "PixTestPattern::RES sent once ";
+	LOG(logINFO) << "PixTestPattern:: RES sent once ";
 
 	fPg_setup.clear();
-	LOG(logINFO) << "PixTestPattern::PG_Setup clean";
+	LOG(logINFO) << "PixTestPattern:: pg_setup clean";
 
 	//select the pattern:
 	if (fPatternFromFile)
 	{
-		LOG(logINFO) << "Pattern from file: " << fname;
+		LOG(logINFO) << "PixTestPattern:: Set pattern from file: " << fname;
 		if (!setPattern(fname)){   //READ FROM FILE	
 			fApi->daqStop();
 			FinalCleaning();
 			return;
 		}
 	}
-	else //standard pattern from config parameters.
-	{
+	else {    //standard pattern from config parameters.
 		fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
 	}
 
@@ -557,12 +543,11 @@ void PixTestPattern::doTest()
 		// Get events and Print results on shell/file:
 		PrintEvents(fParPgCycles, 0, "trg");
 	}
-	else TriggerLoop(2);
+	else TriggerLoop(2); //argument == buffer check frequency (seconds)
 
 	//DAQ - THE END.
 
 	//set PG to default and clean everything:
 	FinalCleaning();
-	LOG(logINFO) << "PixTestPattern::doTest() done for ";
-
+	LOG(logINFO) << "PixTestPattern::doTest() done for.";
 }
