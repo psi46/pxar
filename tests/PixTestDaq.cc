@@ -4,7 +4,7 @@
 #include "PixTestDaq.hh"
 #include "log.h"
 #include "helper.h"
-#include "../core/utils/timer.h"
+#include "timer.h"
 
 #include <TH2.h>
 
