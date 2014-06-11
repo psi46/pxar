@@ -861,7 +861,8 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
 void ConfigParameters::readGainPedestalParameters() {
 
   string bname = getGainPedestalParameterFileName(); 
-  //  fGainPedestalParameters;
+
+  fGainPedestalParameters.clear();
 
   // -- read in file
   vector<string> lines; 
@@ -874,11 +875,15 @@ void ConfigParameters::readGainPedestalParameters() {
     fname << fDirectory << "/" << bname << "_C" << iroc << ".dat"; 
     LOG(logINFO) << "      reading " << (fname.str());
     is.open((fname.str()).c_str());
+    if (!is.is_open()) {
+      LOG(logERROR) << "cannot open " << (fname.str()) << " for reading PH calibration constants"; 
+      return;
+    }
+
     while (is.getline(buffer, 200, '\n')) {
       lines.push_back(string(buffer));
     }
     is.close();
-    cout << "read " << lines.size() << " lines " << endl;
 
     // -- parse lines
     double p0, p1, p2, p3;  
@@ -940,6 +945,9 @@ void ConfigParameters::setGainPedestalParameters(vector<vector<gainPedestalParam
 
 // ----------------------------------------------------------------------
 std::vector<std::vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParameters() {
+  if (fGainPedestalParameters.size() == 0) {
+    readGainPedestalParameters();
+  }
   return fGainPedestalParameters; 
 }
 
