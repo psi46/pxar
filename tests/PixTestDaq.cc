@@ -242,18 +242,19 @@ void PixTestDaq::doTest() {
     	//set pattern generator:
     	fApi->setPatternGenerator(fPg_setup);
 	
+	
+	// Start the DAQ:
+	fApi->daqStart();
+
 	for( int i = 0 ; i < fParIter && fDaq_loop ; i++) {
-  	      // Start the DAQ:
-              fApi->daqStart();
-    
+  	    		    
     	      // Send the triggers:
     	      fApi->daqTrigger(fParNtrig);
    	
-	      fApi->daqStop();
 	      ProcessData(0);	
-	      gSystem->ProcessEvents();
-	
+	      gSystem->ProcessEvents();	
 	}
+	fApi->daqStop();
 
   } else {  // Use seconds
 
