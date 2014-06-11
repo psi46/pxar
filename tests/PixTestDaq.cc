@@ -6,7 +6,6 @@
 #include "helper.h"
 #include "timer.h"
 
-#include <TH2.h>
 
 using namespace std;
 using namespace pxar;
@@ -19,6 +18,9 @@ PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNt
   init(); 
   LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
   fTree = 0; 
+
+  fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
+  fPhCalOK = fPhCal.initialized();
 }
 
 
@@ -181,6 +183,7 @@ void PixTestDaq::doTest() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   TH1D *h1(0); 
   TH2D *h2(0); 
+  TProfile2D *p2(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
@@ -189,23 +192,40 @@ void PixTestDaq::doTest() {
     fHistOptions.insert(make_pair(h2,"colz"));
     fHits.push_back(h2);
 
-    h2 = bookTH2D(Form("phMap_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
-    h2->SetMinimum(0.);
-    h2->SetDirectory(fDirectory);
-    setTitles(h2, "col", "row");
-    fHistOptions.insert(make_pair(h2,"colz"));
-    fPhmap.push_back(h2);
+    p2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+    p2->SetMinimum(0.);
+    p2->SetDirectory(fDirectory);
+    setTitles(p2, "col", "row");
+    fHistOptions.insert(make_pair(p2,"colz"));
+    fPhmap.push_back(p2);
 
     h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "ADC", "Entries/bin");
     fPh.push_back(h1);
+
+    p2 = bookTProfile2D(Form("qMap_C%d", rocIds[iroc]), Form("qMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+    p2->SetMinimum(0.);
+    p2->SetDirectory(fDirectory);
+    setTitles(p2, "col", "row");
+    fHistOptions.insert(make_pair(p2,"colz"));
+    fQmap.push_back(p2);
+
+    h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 100, 0., 2000.);
+    h1->SetMinimum(0.);
+    h1->SetDirectory(fDirectory);
+    setTitles(h1, "Q [Vcal]", "Entries/bin");
+    fQ.push_back(h1);
+
+
   }
 
   copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
   copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
   copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
+  copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
+  copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
 
   //first send only a RES:
   fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
@@ -347,6 +367,8 @@ void PixTestDaq::ProcessData(uint16_t numevents)
 
     LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
     
+    int idx(-1); 
+    uint16_t q; 
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       pixCnt += it->pixels.size(); 
       //      LOG(logDEBUG) << (*it);
@@ -360,20 +382,35 @@ void PixTestDaq::ProcessData(uint16_t numevents)
       }
 
       for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
-	fHits[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-	fPhmap[getIdxFromId(it->pixels[ipix].roc_id)]->SetBinContent(it->pixels[ipix].column, 
-								     it->pixels[ipix].row, 
-								     it->pixels[ipix].value);
+	idx = getIdxFromId(it->pixels[ipix].roc_id);
+	fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+	fPhmap[idx]->Fill(it->pixels[ipix].column, 
+			  it->pixels[ipix].row, 
+			  it->pixels[ipix].value);
 	
-	fPh[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].value);
+	fPh[idx]->Fill(it->pixels[ipix].value);
 
+	if (fPhCalOK) {
+	  q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, 
+						it->pixels[ipix].column, 
+						it->pixels[ipix].row, 
+						it->pixels[ipix].value));
+	} else {
+	  q = 0;
+	}
+	fQ[idx]->Fill(q);
+	fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
+	
+	
 	if (fParFillTree) {
 	  fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
 	  fTreeEvent.pcol[ipix] = it->pixels[ipix].column; 
 	  fTreeEvent.prow[ipix] = it->pixels[ipix].row; 
 	  fTreeEvent.pval[ipix] = it->pixels[ipix].value; 
+	  fTreeEvent.pq[ipix]   = q;
 	}
       }
+
       if (fParFillTree) fTree->Fill();
     }
     

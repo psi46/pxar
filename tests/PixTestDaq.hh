@@ -2,8 +2,11 @@
 #define PIXTESTDAQ_H
 
 #include "PixTest.hh"
+#include "PHCalibration.hh"
+
 #include <TH1.h>
 #include <TH2.h>
+#include <TProfile2D.h>
 
 #include <TTree.h>
 
@@ -36,12 +39,17 @@ private:
   uint16_t fParIter;
   bool	   fParDelayTBM;
   bool	   fParResetROC;
-
+  
+  bool          fPhCalOK;
+  PHCalibration fPhCal;
+  
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
   std::vector<TH2D*> fHits;
-  std::vector<TH2D*> fPhmap;
+  std::vector<TProfile2D*> fPhmap;
   std::vector<TH1D*> fPh;
+  std::vector<TH1D*> fQ;
+  std::vector<TProfile2D*> fQmap;
   bool fDaq_loop;
 
   ClassDef(PixTestDaq, 1)
