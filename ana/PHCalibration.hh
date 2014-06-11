@@ -18,6 +18,7 @@ public:
   void setPHParameters(std::vector<std::vector<gainPedestalParameters> > ); 
   void setMode(std::string mode = "tanh") {fMode = mode;}
   std::string getMode() {return fMode; }
+  std::string getParameters(int iroc, int icol, int irow); 
 
  private: 
   std::string fMode; 
