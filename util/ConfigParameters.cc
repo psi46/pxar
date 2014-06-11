@@ -11,7 +11,6 @@
 #include "log.h"
 
 #include "ConfigParameters.hh"
-#include "PixUtil.hh"
 
 using namespace std;
 using namespace pxar;
@@ -225,8 +224,8 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   for (unsigned int i = 0; i < lines.size(); ++i) {
     //    cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    PixUtil::replaceAll(lines[i], "\t", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), PixUtil::bothAreSpaces);
+    replaceAll(lines[i], "\t", " "); 
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (lines[i].length() < 2) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
@@ -420,9 +419,9 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    PixUtil::replaceAll(lines[i], "\t", " "); 
-    PixUtil::replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), PixUtil::bothAreSpaces);
+    replaceAll(lines[i], "\t", " "); 
+    replaceAll(lines[i], "Pix", " "); 
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
@@ -481,9 +480,9 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     //    cout << lines[i] << endl;   
     if (lines[i].substr(0, 1) == string("#")) continue;
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    PixUtil::replaceAll(lines[i], "\t", " "); 
-    PixUtil::replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), PixUtil::bothAreSpaces);
+    replaceAll(lines[i], "\t", " "); 
+    replaceAll(lines[i], "Pix", " "); 
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (0 == lines[i].length()) continue;
@@ -936,3 +935,17 @@ std::string ConfigParameters::getProbe(std::string probe) {
 
 
 
+// ----------------------------------------------------------------------
+bool ConfigParameters::bothAreSpaces(char lhs, char rhs) { 
+  return (lhs == rhs) && (lhs == ' '); 
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::replaceAll(string& str, const string& from, const string& to) {
+  if (from.empty()) return;
+  size_t start_pos = 0;
+  while((start_pos = str.find(from, start_pos)) != string::npos) {
+    str.replace(start_pos, from.length(), to);
+    start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+  }
+}

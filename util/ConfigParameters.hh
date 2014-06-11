@@ -128,6 +128,9 @@ public:
   bool   getHvOn() {return fHvOn;}
 
   uint8_t getHubId() {return fHubId;}
+  
+  static bool bothAreSpaces(char lhs, char rhs);
+  void replaceAll(std::string& str, const std::string& from, const std::string& to);
 
 private:
 
