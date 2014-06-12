@@ -924,7 +924,9 @@ void ConfigParameters::writeGainPedestalParameters() {
     if (!OutputFile.is_open()) {
       LOG(logERROR) << "Could not open " << fname.str(); 
       return;
-    } 
+    } else {
+      LOG(logDEBUG) << "write gain/ped parameters into " << fname.str(); 
+    }
     
     OutputFile << "Parameters of the vcal vs. pulse height fits" << endl;
     OutputFile << "par[3] + par[2] * TMath::TanH(par[0]*x[0] - par[1])" << endl << endl;
