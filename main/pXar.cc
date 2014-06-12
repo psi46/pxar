@@ -124,8 +124,7 @@ int main(int argc, char *argv[]){
   }
 
   if (trimVcal.compare("")) {
-    configParameters->setDACParameterFileName(configParameters->getDACParameterFileName() + trimVcal); 
-    configParameters->setTrimParameterFileName(configParameters->getTrimParameterFileName() + trimVcal); 
+    configParameters->setTrimVcalSuffix(trimVcal); 
   }
   
   logfile = rootfile; 
