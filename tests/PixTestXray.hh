@@ -14,14 +14,28 @@ public:
   void setToolTips();
   void bookHist(std::string); 
 
-  void doTest(); 
+  void doTest();
+
+  bool setTrgFrequency(uint8_t TrgTkDel);
+  void readData();
+  void analyzeData();
+  double meanHit(TH2D*); 
+  double noiseLevel(TH2D*); 
+  int   countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
 
 private:
 
-  int     fParNtrig, fParIter; 
-  int     fParStretch; 
+  int     fParNtrig; 
+  int     fParTriggerFrequency;
+  int     fParSeconds; 
   int     fParVthrCompMin, fParVthrCompMax; 
   bool    fParFillTree;
+  int     fVthrComp;
+  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
+  bool    fDaq_loop;
+
+  std::vector<TH1D*> fHits, fMpix;
+  std::vector<TH2D*> fHitMap;
 
   ClassDef(PixTestXray, 1)
 
