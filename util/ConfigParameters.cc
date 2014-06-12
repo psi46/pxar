@@ -769,6 +769,8 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) { 
     return false;
+  } else {
+    LOG(logDEBUG) << "write trim parameters into " << fname.str(); 
   }
     
   for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
@@ -793,7 +795,9 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) {
     return false; 
-  } 
+  } else {
+    LOG(logDEBUG) << "write dac parameters into " << fname.str(); 
+  }
   
   RegisterDictionary *a = RegisterDictionary::getInstance();
   for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
@@ -821,6 +825,8 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) {
     return false; 
+  } else {
+    LOG(logDEBUG) << "write tbm parameters into " << (fname.str()).c_str(); 
   } 
   
   RegisterDictionary *a = RegisterDictionary::getInstance();
@@ -844,7 +850,9 @@ bool ConfigParameters::writeTbParameterFile() {
   OutputFile.open(fname.c_str());
   if (!OutputFile.is_open()) {
     return false; 
-  } 
+  } else {
+    LOG(logDEBUG) << "write dtb parameters into " << fname.c_str(); 
+  }
   
   RegisterDictionary *a = RegisterDictionary::getInstance();
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
@@ -889,7 +897,7 @@ void ConfigParameters::readGainPedestalParameters() {
     if (!is.is_open()) {
       LOG(logERROR) << "cannot open " << (fname.str()) << " for reading PH calibration constants"; 
       return;
-    }
+    } 
 
     while (is.getline(buffer, 200, '\n')) {
       lines.push_back(string(buffer));
