@@ -212,7 +212,7 @@ void PixTestDaq::doTest() {
     fHistOptions.insert(make_pair(p2,"colz"));
     fQmap.push_back(p2);
 
-    h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 100, 0., 2000.);
+    h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 200, 0., 1000.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "Q [Vcal]", "Entries/bin");
