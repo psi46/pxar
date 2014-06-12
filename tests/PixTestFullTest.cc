@@ -83,7 +83,7 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
-  fPixSetup->setMoreWebCloning(true);
+  //  fPixSetup->setMoreWebCloning(true);
 
   vector<string> suite;
   suite.push_back("alive"); 
@@ -99,12 +99,18 @@ void PixTestFullTest::doTest() {
   PixTestFactory *factory = PixTestFactory::instance(); 
   for (unsigned int i = 0; i < suite.size(); ++i) {
     t =  factory->createTest(suite[i], fPixSetup);
-    if (!suite[i].compare("trim")) trimvcal = t->getParameter("vcal"); 
+
+    if (!suite[i].compare("trim")) {
+      trimvcal = t->getParameter("vcal"); 
+      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal); 
+    }
+
     t->doTest(); 
+
     delete t; 
   }
 
-  fPixSetup->setMoreWebCloning(false);
+  //  fPixSetup->setMoreWebCloning(false);
 }
 
 
