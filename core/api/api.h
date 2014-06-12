@@ -534,7 +534,11 @@ namespace pxar {
 
     // DAQ functions
 
-    /** Function to set up and initialize a new data acquisition session (DAQ)
+    /** Function to set up and initialize a new data acquisition session (DAQ).
+     *  This function also programs all attached devices. Pixel configurations
+     *  which are changed after calling this function will not be written to
+     *  the devices, so make sure to mask/unmask and set test bits for all
+     *  pixels in question before calling pxar::daqStart()!
      */
     bool daqStart();
 
@@ -544,8 +548,13 @@ namespace pxar {
      *  TRUE. In case of a problem with the DAQ (not started, buffer overflow
      *  or full...) it returns FALSE.
      */
-    bool daqStatus(uint8_t & perFull);
     bool daqStatus();
+
+    /** Same Function as pxar::daqStatus() but provides additional parameter
+     *  (pass-by-reference) to inform about the current fill status of the
+     *  DAQ buffer in percent.
+     */
+    bool daqStatus(uint8_t & perFull);
     
     /** Function to read out the earliest pxar::Event in buffer from the current
      *  data acquisition session. If no Event is buffered, the function will 
