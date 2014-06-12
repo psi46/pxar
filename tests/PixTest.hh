@@ -83,7 +83,7 @@ public:
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file
-  void saveTrimBits(std::string vcal = ""); 
+  void saveTrimBits(); 
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
