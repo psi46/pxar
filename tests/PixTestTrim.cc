@@ -345,6 +345,9 @@ void PixTestTrim::trimTest() {
     
     fHistList.push_back(h2); 
     fHistOptions.insert(make_pair(h2, "colz"));
+
+    TH1* d1 = distribution(h2, 16, 0., 16.); 
+    fHistList.push_back(d1); 
   }
 
   vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", fParNtrig, fParVcal-20, fParVcal+20, 3); 
@@ -369,15 +372,10 @@ void PixTestTrim::trimTest() {
     vthrcompString += Form("%3d ", rocVthrComp[rocIds[iroc]]); 
   }
 
-  // -- save into original files
+  // -- save into files
   saveDacs();
   saveTrimBits();
   
-  // -- and now with the suffix changed
-  saveDacs(Form("%d", fParVcal));
-  saveTrimBits(Form("%d", fParVcal));
-
-
   // -- summary printout
   LOG(logINFO) << "PixTestAlive::trimTest() done";
   LOG(logINFO) << "vtrim:     " << vtrimString; 
