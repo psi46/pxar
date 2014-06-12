@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "log.h"
+#include "dictionaries.h"
 
 #include "ConfigParameters.hh"
 
@@ -794,8 +795,12 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
     return false; 
   } 
   
+  RegisterDictionary *a = RegisterDictionary::getInstance();
   for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
+    //    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
+    OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, ROC_REG)) << " " << left
+	       << setw(10) << idac->first << " " << setw(3) << static_cast<int>(idac->second) 
+	       << endl;
   }
 
   OutputFile.close();
@@ -818,8 +823,11 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
     return false; 
   } 
   
+  RegisterDictionary *a = RegisterDictionary::getInstance();
   for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    OutputFile << "0 " << std::setw(11) << idac->first << "   0x" << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(idac->second) << endl;
+    OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
+	       << setw(11) << idac->first  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
+	       << endl;
   }
   
   OutputFile.close();
@@ -838,10 +846,13 @@ bool ConfigParameters::writeTbParameterFile() {
     return false; 
   } 
   
+  RegisterDictionary *a = RegisterDictionary::getInstance();
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     std::transform(data.begin(), data.end(), data.begin(), ::tolower);
-    OutputFile << "0 " << std::setw(15) << fTbParameters[idac].first << "  " << std::setw(3) << static_cast<int>(fTbParameters[idac].second) << endl;
+    OutputFile << right << setw(3) << static_cast<int>(a->getRegister(fTbParameters[idac].first, DTB_REG)) << " " 
+	       << setw(15) << fTbParameters[idac].first << "  " << std::setw(3) << static_cast<int>(fTbParameters[idac].second) 
+	       << endl;
   }
   
   OutputFile.close();
