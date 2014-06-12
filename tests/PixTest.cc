@@ -606,7 +606,7 @@ bool PixTest::threshold(TH1 *h) {
 
 
 // ----------------------------------------------------------------------
-TH1D *PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax, bool zeroSuppressed) {
+TH1D* PixTest::distribution(TH2D* h2, int nbins, double xmin, double xmax, bool zeroSuppressed) {
   TH1D *h1 = new TH1D(Form("dist_%s", h2->GetName()), Form("dist_%s", h2->GetName()), nbins, xmin, xmax); 
   for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
     for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
@@ -1239,9 +1239,7 @@ void PixTest::getPhError(std::string /*dac*/, int /*dacmin*/, int /*dacmax*/, in
 }
 
 // ----------------------------------------------------------------------
-void PixTest::saveDacs(string vcal) {
-  LOG(logINFO) << "Write DAC parameters to file; vcal suffix ->" << vcal << "<-"; 
-  fPixSetup->getConfigParameters()->setTrimVcalSuffix(vcal); 
+void PixTest::saveDacs() {
 
   vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {

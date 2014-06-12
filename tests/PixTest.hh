@@ -81,7 +81,7 @@ public:
   /// create output suitable for moreweb
   virtual void output4moreweb();
   /// save DACs to file
-  void saveDacs(std::string vcal = ""); 
+  void saveDacs(); 
   /// save trim bits to file
   void saveTrimBits(std::string vcal = ""); 
   /// save TB parameters to file
