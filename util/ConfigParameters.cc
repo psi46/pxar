@@ -591,7 +591,7 @@ void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
     for (unsigned int i = 0; i < fnRocs; ++i) {
       std::stringstream filename;
-      filename << fDirectory << "/" << fDACParametersFileName << "_C" << i << ".dat"; 
+      filename << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
       vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
       fDacParameters.push_back(rocDacs); 
     }
