@@ -266,6 +266,58 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   return f; 
 }
 
+// ----------------------------------------------------------------------
+TF1* PixInitFunc::xrayScan(TH1 *h) {
+
+  // -- determine step function and start of function range
+  double lo = h->GetBinCenter(h->FindFirstBinAbove(0.)); 
+  double hi = h->GetBinCenter(h->FindLastBinAbove(0.9*h->GetMaximum()));
+  double hmax = h->GetMaximum(); 
+
+  double pol0(0.); 
+  double threshold(-1.), plateau(-1), width(-1.); 
+  for (int i = h->FindBin(lo); i < h->GetNbinsX(); i += 5) {
+    if (h->GetBinCenter(i) > hi - 10.) break;
+    h->Fit("pol0", "qr", "", h->GetBinCenter(i), hi); 
+    pol0 = h->GetFunction("pol0")->GetParameter(0); 
+    cout << h->GetBinCenter(i) << " pol0 = " << pol0 << endl;
+
+    double a = pol0/hmax;
+    if (a > 0.5 && threshold < 0) {
+      threshold = h->GetBinCenter(i);
+    }
+    plateau = pol0;
+  }
+
+  width = 0.5*(threshold - lo);
+
+  cout << "lo = " << lo << endl;
+  cout << "hi = " << hi << endl;
+  cout << "threshold = " << threshold << endl;
+  cout << "plateau   = " << plateau << endl;
+
+  // -- setup function
+  TF1* f = (TF1*)gROOT->FindObject("PIF_err");
+  if (0 == f) {
+    f = new TF1("PIF_err", PIF_err, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 4);
+    f->SetParNames("step", "slope", "floor", "plateau");                       
+    f->SetNpx(1000);
+    f->SetRange(lo, hi); 
+  } else {
+    f->ReleaseParameter(0);     
+    f->ReleaseParameter(1);     
+    f->ReleaseParameter(2);     
+    f->ReleaseParameter(3); 
+    f->SetRange(lo, hi); 
+  }
+  
+  f->SetParameter(0, threshold); 
+  f->SetParameter(1, width); 
+  f->SetParameter(2, 1.); 
+  f->SetParameter(3, 0.5*plateau);
+  return f; 
+}
+
 
 
 
