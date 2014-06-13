@@ -379,6 +379,7 @@ void PixTestXray::doRateScan() {
   }
   }
 
+  // -- No code police, please. This stays!
   if (0) {
     //    TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
     //    TFile *f = TFile::Open("testROC/pxar_Ag_Vcal_10_70_10s.root");
@@ -404,7 +405,7 @@ void PixTestXray::doRateScan() {
   for (unsigned int i = 0; i < nrocs; ++i) {
     TF1 *f1 = fPIF->xrayScan(fHits[i]);
     f1->GetRange(lo, hi); 
-    fHits[i]->Fit(f1, "lr", "", lo, hi); 
+    fHits[i]->Fit(f1, "lrq", "", lo, hi); 
     double thr = f1->GetParameter(0); 
     if (thr < 0 || thr > 255.) thr = 0.;
     uint8_t ithr = static_cast<uint8_t>(thr); 
