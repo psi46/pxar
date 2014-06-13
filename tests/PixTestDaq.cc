@@ -13,7 +13,7 @@ using namespace pxar;
 ClassImp(PixTestDaq)
 
 // ----------------------------------------------------------------------
-PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1) {
+PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParStretch(0), fParFillTree(0), fParSeconds(0), fParTriggerFrequency(0), fParIter(0), fParDelayTBM(0), fParResetROC(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
