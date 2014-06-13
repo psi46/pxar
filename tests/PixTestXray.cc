@@ -16,7 +16,9 @@ using namespace pxar;
 ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
-PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), fParVthrCompMin(0), fParVthrCompMax(0) {
+PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), 
+  fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
+  fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestXray ctor(PixSetup &a, string, TGTab *)";
@@ -78,8 +80,12 @@ bool PixTestXray::setParameter(string parName, string sval) {
 	LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
 	setToolTips();
       }
-      if (!parName.compare("seconds")) {
-	fParSeconds = atoi(sval.c_str()); 
+      if (!parName.compare("runseconds")) {
+	fParRunSeconds = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("stepseconds")) {
+	fParStepSeconds = atoi(sval.c_str()); 
 	setToolTips();
       }
       if (!parName.compare("delaytbm")) {
@@ -200,7 +206,7 @@ void PixTestXray::doTest() {
 // ----------------------------------------------------------------------
 void PixTestXray::doPhRun() {
 
-  banner(Form("PixTestXray::doPhRun() fParSeconds = %d", fParSeconds));
+  banner(Form("PixTestXray::doPhRun() fParRunSeconds = %d", fParRunSeconds));
 
   PixTest::update(); 
   fDirectory->cd();
@@ -252,7 +258,7 @@ void PixTestXray::doPhRun() {
   fApi->daqStart();
   
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
+  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with period " << finalPeriod << " and duration " << fParRunSeconds << " seconds";
   
   uint8_t perFull;
   timer t;
@@ -270,7 +276,7 @@ void PixTestXray::doPhRun() {
       fApi->daqTriggerLoop();
     }
     LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
-    if (static_cast<int>(t.get())/1000 >= fParSeconds)	{
+    if (static_cast<int>(t.get())/1000 >= fParRunSeconds)	{
       fDaq_loop = false;
       break;
     }
@@ -295,7 +301,7 @@ void PixTestXray::doPhRun() {
 // ----------------------------------------------------------------------
 void PixTestXray::doRateScan() {
   
-  banner(Form("PixTestXray::doRateScan() fParSeconds = %d, vthrcom = %d .. %d", fParSeconds, fParVthrCompMin, fParVthrCompMax));
+  banner(Form("PixTestXray::doRateScan() fParStepSeconds = %d, vthrcom = %d .. %d", fParStepSeconds, fParVthrCompMin, fParVthrCompMax));
   cacheDacs(); 
 
   if (1) {
@@ -338,7 +344,7 @@ void PixTestXray::doRateScan() {
     fApi->daqStart();
 
     int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-    LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
+    LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParStepSeconds << " seconds";
     
     while (fApi->daqStatus(perFull) && fDaq_loop) {
       gSystem->ProcessEvents();
@@ -350,7 +356,7 @@ void PixTestXray::doRateScan() {
 	fApi->daqTriggerLoop();
       }
       
-      if (static_cast<int>(t.get()/1000) >= fParSeconds)	{
+      if (static_cast<int>(t.get()/1000) >= fParStepSeconds)	{
 	LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds.";
 	fDaq_loop = false;
 	break;

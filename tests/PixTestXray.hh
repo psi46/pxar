@@ -36,16 +36,16 @@ public:
 
 private:
 
-  int     fParNtrig; 
   int     fParTriggerFrequency;
-  int     fParSeconds; 
+  int     fParRunSeconds; 
+  int     fParStepSeconds; 
   int     fParVthrCompMin, fParVthrCompMax; 
   bool    fParFillTree;
+  bool	  fParDelayTBM;
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
 
-  bool	  fParDelayTBM;
   bool    fDaq_loop;
   
   int     fVthrComp;
