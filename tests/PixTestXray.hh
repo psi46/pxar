@@ -2,6 +2,9 @@
 #define PIXTESTXRAY_H
 
 #include "PixTest.hh"
+#include "PHCalibration.hh"
+
+#include <TProfile2D.h>
 
 
 class DLLEXPORT PixTestXray: public PixTest {
@@ -14,8 +17,11 @@ public:
   void setToolTips();
   void bookHist(std::string); 
 
+  void runCommand(std::string command); 
+  void doPhRun(); 
+  void doRateScan();
   void doTest();
-
+ 
   bool setTrgFrequency(uint8_t TrgTkDel);
   void finalCleanup();
   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
@@ -26,6 +32,8 @@ public:
   double noiseLevel(TH2D*); 
   int   countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
 
+  void processData(uint16_t numevents = 1000);
+
 private:
 
   int     fParNtrig; 
@@ -33,12 +41,24 @@ private:
   int     fParSeconds; 
   int     fParVthrCompMin, fParVthrCompMax; 
   bool    fParFillTree;
-  int     fVthrComp;
-  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
-  bool    fDaq_loop;
 
+  bool          fPhCalOK;
+  PHCalibration fPhCal;
+
+  bool	  fParDelayTBM;
+  bool    fDaq_loop;
+  
+  int     fVthrComp;
+
+  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
+
+  // -- rateScan
   std::vector<TH1D*> fHits, fMpix;
   std::vector<TH2D*> fHitMap;
+
+  // -- PhRun
+  std::vector<TH1D*> fQ;
+  std::vector<TProfile2D*> fQmap;
 
   ClassDef(PixTestXray, 1)
 
