@@ -67,9 +67,9 @@ scurves             button
 
 -- Trim
 trim                button
+TrimBits            button
 Ntrig               10
 Vcal                40
-TrimBits            button
 
 -- GainPedestal
 showFits            checkbox
@@ -85,14 +85,15 @@ ntrig               10
 singlePix           1
 
 -- Xray
-seconds             5
+phrun               button
+runseconds          100
 trgfrequency(khz)   100
 DelayTBM            checkbox  
 FillTree            checkbox  
-phrun               button
-vthrcompmin         0
-vthrcompmax         100
 ratescan            button
+vthrcompmin         10
+vthrcompmax         80
+stepseconds         5
 
 -- DAQ
 Ntrig               0
