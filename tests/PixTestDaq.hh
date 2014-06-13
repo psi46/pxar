@@ -42,6 +42,7 @@ private:
   
   bool          fPhCalOK;
   PHCalibration fPhCal;
+  bool		fParOutOfRange;
   
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
