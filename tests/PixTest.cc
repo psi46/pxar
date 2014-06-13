@@ -1131,6 +1131,7 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 
     for (unsigned int i = 0; i < rmaps.size(); ++i) {
       if (rmaps[i]->GetSumOfWeights() < 1) {
+	OutputFile << empty << endl;
 	continue;
       }
       
