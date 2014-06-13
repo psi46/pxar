@@ -1,18 +1,5 @@
--- DAQ
-Ntrig               0
-iterations          10
-seconds             30
-trgfrequency(khz)   100
-DelayTBM            checkbox
-FillTree            checkbox
-
--- IV
-VoltageMin          50
-VoltageMax          450
-VoltageStep         20
-Delay               1
-
 -- Pretest
+programroc          button
 targetIa            24
 setVana             button
 PIX                 11,20
@@ -30,11 +17,11 @@ maskTest            button
 addressDecodingTest button
 
 -- DacScan
-PHmap               checkbox
+PHmap               checkbox(1)
 Ntrig               10
-DAC                 caldel
+DAC                 vcal
 DACLO               0
-DACHI               250
+DACHI               255
 PIX                 11,20 
 
 -- DacDacScan
@@ -42,11 +29,23 @@ PHmap               checkbox
 Ntrig               10
 DAC1                caldel
 DAC1LO              0
-DAC1HI              250
+DAC1HI              255
 DAC2                vthrcomp
 DAC2LO              0
-DAC2HI              250
+DAC2HI              255
 PIX                 11,20 
+
+-- Pattern
+pgcycles            10
+triggerloop         checkbox(0)
+period              300
+seconds             1
+patternfromfile     checkbox(0)
+resultsonfile       checkbox(0)
+binaryoutput        checkbox(0)
+filename            defaultPattern
+unmaskall           checkbox(0)
+resettodefault      button
 
 -- BumpBonding
 Ntrig               5
@@ -54,22 +53,18 @@ vcals               250
 xtalk               checkbox
 
 -- Scurves
+adjustvcal          checkbox(1)
 Ntrig               5
 DAC                 VthrComp
 DacLo               0
 DacHi               200
 scurves             button
-fits                button
 
 -- Trim
 trim                button
 TrimBits            button
-Ntrig               2
-Vcal                50
-VcalLo              25 
-VcalHi              75 
-VthrCompLo          0 
-VthrCompHi          50 
+Ntrig               10
+Vcal                40
 
 -- GainPedestal
 showFits            checkbox
@@ -79,4 +74,28 @@ NpointsHi           5
 measure             button
 fit                 button
 save                button
+
+-- PhOptimization
+ntrig               10
+singlePix           1
+
+-- Xray
+seconds             5
+trgfrequency(khz)   100
+vthrcompmin         0
+vthrcompmax         100
+
+-- DAQ
+Ntrig               0
+iterations          10
+seconds             30
+trgfrequency(khz)   100
+DelayTBM            checkbox
+FillTree            checkbox
+
+-- IV
+VoltageMin          50
+VoltageMax          450
+VoltageStep         20
+Delay               1
 
