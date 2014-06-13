@@ -156,7 +156,6 @@ PixTestXray::~PixTestXray() {
 void PixTestXray::doTest() {
   
   LOG(logINFO) << "PixTestXray::doTest() start with fParNtrig = " << fParNtrig;
-
   cacheDacs(); 
 
   fPg_setup.clear();
@@ -221,7 +220,9 @@ void PixTestXray::doTest() {
     
     fApi->daqStop();
     readData();
+    
 
+       
     analyzeData();
 
     fHits[0]->Draw();
@@ -229,8 +230,40 @@ void PixTestXray::doTest() {
     PixTest::update();
 
   }
-
   
+  if (0) {
+    TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
+    TH1D *h1 = ((TH1D*)f->Get("Xray/hits_xrayVthrCompScan_C0_V0"));
+    TH1D *h2 = (TH1D*)h1->Clone("local");
+    h2->SetDirectory(0);
+    f->Close();
+    fHits.push_back(h2);
+    copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+  
+    fHits[0]->Draw();
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
+    PixTest::update();
+  }
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  unsigned nrocs = rocIds.size(); 
+  double lo(-1.), hi(-1.);
+  for (unsigned int i = 0; i < fHits.size(); ++i) {
+    TF1 *f1 = fPIF->xrayScan(fHits[i]);
+    f1->GetRange(lo, hi); 
+    fHits[i]->Fit(f1, "lr", "", lo, hi); 
+    double thr = f1->GetParameter(0); 
+    LOG(logDEBUG) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr; 
+    fApi->setDAC("vthrcomp", thr, rocIds[i]); 
+
+    PixTest::update();
+  }
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
+  scurveMaps("vcal", "xrayScan", 5, 0, 255, 3); 
+
   LOG(logINFO) << "PixTestXray::doTest() done";
 
 }
