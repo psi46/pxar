@@ -155,9 +155,10 @@ PixTestXray::~PixTestXray() {
 // ----------------------------------------------------------------------
 void PixTestXray::doTest() {
   
-  LOG(logINFO) << "PixTestXray::doTest() start with fParNtrig = " << fParNtrig;
+  LOG(logINFO) << "PixTestXray::doTest() start with fParSeconds = " << fParSeconds;
   cacheDacs(); 
 
+  if (1) {
   fPg_setup.clear();
   fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
   fApi->setPatternGenerator(fPg_setup);
@@ -230,9 +231,13 @@ void PixTestXray::doTest() {
     PixTest::update();
 
   }
+  }
 
   if (0) {
-    TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
+    //    TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
+    //    TFile *f = TFile::Open("testROC/pxar_Ag_Vcal_10_70_10s.root");
+    //    TFile *f = TFile::Open("testROC/pxar_Mo_Vcal_30_80_10s.root");
+    
     TH1D *h1 = ((TH1D*)f->Get("Xray/hits_xrayVthrCompScan_C0_V0"));
     TH1D *h2 = (TH1D*)h1->Clone("local");
     h2->SetDirectory(0);
@@ -243,7 +248,9 @@ void PixTestXray::doTest() {
     fHits[0]->Draw();
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
     PixTest::update();
+    return;
   }
+
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   unsigned nrocs = rocIds.size(); 
