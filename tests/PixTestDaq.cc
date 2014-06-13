@@ -74,6 +74,7 @@ bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel)
 // ----------------------------------------------------------------------
 bool PixTestDaq::setParameter(string parName, string sval) {
   bool found(false);
+  fParOutOfRange = false;
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
@@ -81,10 +82,18 @@ bool PixTestDaq::setParameter(string parName, string sval) {
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
 	setToolTips();
+	if (fParNtrig < 0) {
+		LOG(logWARNING) << "PixTestDaq::setParameter() ntrig must be positive";
+		found = false; fParOutOfRange = true;
+		}
       }
       if (!parName.compare("iterations")) {
 	fParIter = atoi(sval.c_str()); 
 	setToolTips();
+	if (fParIter < 0) {
+		LOG(logWARNING) << "PixTestDaq::setParameter() iterations must be positive";
+		found = false; fParOutOfRange = true;
+	}
       }
       if (!parName.compare("clockstretch")) {
  	fParStretch = atoi(sval.c_str());	
@@ -101,6 +110,10 @@ bool PixTestDaq::setParameter(string parName, string sval) {
       if (!parName.compare("trgfrequency(khz)")){   // trigger frequency in kHz.
 	 fParTriggerFrequency = atoi(sval.c_str());
 	 LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
+	 if (fParTriggerFrequency < 0) {
+		 LOG(logWARNING) << "PixTestDaq::setParameter() trgfrequency must be positive";
+		 found = false; fParOutOfRange = true;
+	     }
       }
       if (!parName.compare("seconds")){
 		fParSeconds = atoi(sval.c_str());
@@ -164,7 +177,10 @@ void PixTestDaq::pgToDefault(vector<pair<std::string, uint8_t> > /*pg_setup*/) {
 // ----------------------------------------------------------------------
 void PixTestDaq::doTest() {
 
-  LOG(logINFO) << "PixTestDaq::doTest() start with fParNtrig = " << fParNtrig;
+  //immediately stop if parameters not in range	
+  if (fParOutOfRange) return;
+  
+  LOG(logINFO) << "PixTestDaq::doTest() start.";
 
   PixTest::update(); 
   fDirectory->cd();
