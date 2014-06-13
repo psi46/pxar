@@ -249,24 +249,23 @@ void PixTestDaq::doTest() {
   if(fParDelayTBM)
   	fApi->setTbmReg("delays",0x40); //FPix timing
 
-  fDaq_loop = true;
-
-  //If using number of triggers
-  if(fParNtrig > 0) {
-	//set the pattern wrt the trigger frequency:
-	LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-    	if (!setTrgFrequency(20)){
+//set the pattern wrt the trigger frequency:
+  LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
+  if (!setTrgFrequency(20)){
 	  FinalCleaning();
-	  return; 
-	}	
-    	//set pattern generator:
-    	fApi->setPatternGenerator(fPg_setup);
-	
+	  return;
+  }
+
+  //set pattern generator:
+  fApi->setPatternGenerator(fPg_setup);
+
+   //If using number of triggers
+  if(fParNtrig > 0) {
 	
 	// Start the DAQ:
 	fApi->daqStart();
 
-	for( int i = 0 ; i < fParIter && fDaq_loop ; i++) {
+	for( int i = 0 ; i < fParIter ; i++) {
   	    		    
     	      // Send the triggers:
     	      fApi->daqTrigger(fParNtrig);
@@ -277,17 +276,6 @@ void PixTestDaq::doTest() {
 	fApi->daqStop();
 
   } else {  // Use seconds
-
-     //set the pattern wrt the trigger frequency:
-     LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-     if (!setTrgFrequency(20)){
-	  FinalCleaning();
-	  return;
-     }	
-
-     //set pattern generator:
-     fApi->setPatternGenerator(fPg_setup);
- 
 
   //start trigger loop + buffer fill management:
   fDaq_loop = true;
