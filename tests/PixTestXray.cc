@@ -230,7 +230,7 @@ void PixTestXray::doTest() {
     PixTest::update();
 
   }
-  
+
   if (0) {
     TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
     TH1D *h1 = ((TH1D*)f->Get("Xray/hits_xrayVthrCompScan_C0_V0"));
@@ -248,7 +248,7 @@ void PixTestXray::doTest() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   unsigned nrocs = rocIds.size(); 
   double lo(-1.), hi(-1.);
-  for (unsigned int i = 0; i < fHits.size(); ++i) {
+  for (unsigned int i = 0; i < nrocs; ++i) {
     TF1 *f1 = fPIF->xrayScan(fHits[i]);
     f1->GetRange(lo, hi); 
     fHits[i]->Fit(f1, "lr", "", lo, hi); 
@@ -258,6 +258,8 @@ void PixTestXray::doTest() {
 
     PixTest::update();
   }
+
+  finalCleanup();
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
@@ -378,5 +380,23 @@ int PixTestXray::countHitsAndMaskPixels(TH2D *h2, double noiseLevel, int iroc) {
     }
   }
   return cnt; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestXray::pgToDefault(vector<pair<std::string, uint8_t> > /*pg_setup*/) {
+  fPg_setup.clear();
+  LOG(logDEBUG) << "PixTestXray::PG_Setup clean";
+  
+  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+  fApi->setPatternGenerator(fPg_setup);
+  LOG(logINFO) << "PixTestXray::       pg_setup set to default.";
+}
+
+// ----------------------------------------------------------------------
+void PixTestXray::finalCleanup() {
+  pgToDefault(fPg_setup);
+  
+  fPg_setup.clear();
 }
 
