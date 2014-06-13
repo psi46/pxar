@@ -253,9 +253,8 @@ void PixTestXray::doTest() {
     f1->GetRange(lo, hi); 
     fHits[i]->Fit(f1, "lr", "", lo, hi); 
     double thr = f1->GetParameter(0); 
-    LOG(logDEBUG) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr; 
+    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr; 
     fApi->setDAC("vthrcomp", thr, rocIds[i]); 
-
     PixTest::update();
   }
 
@@ -264,9 +263,24 @@ void PixTestXray::doTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  scurveMaps("vcal", "xrayScan", 5, 0, 255, 3); 
+  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, 3); 
+
+  fHits[0]->Draw();
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
+  PixTest::update();
+
+  string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
+  for (unsigned int i = 0; i < thr0.size(); ++i) {
+    hname = thr0[i]->GetName();
+    // -- skip sig_ and thn_ histograms
+    if (string::npos == hname.find("dist_thr_")) continue;
+    scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean()); 
+    scurvesRmsString += Form("%6.2f ", thr0[i]->GetRMS()); 
+  }
 
   LOG(logINFO) << "PixTestXray::doTest() done";
+  LOG(logINFO) << "vcal mean: " << scurvesMeanString; 
+  LOG(logINFO) << "vcal RMS:  " << scurvesRmsString; 
 
 }
 
