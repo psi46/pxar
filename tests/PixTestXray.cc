@@ -200,7 +200,7 @@ void PixTestXray::doTest() {
 // ----------------------------------------------------------------------
 void PixTestXray::doPhRun() {
 
-  LOG(logINFO) << "PixTestXray::doPhRun() start with fParSeconds = " << fParSeconds;
+  banner(Form("PixTestXray::doPhRun() fParSeconds = %d", fParSeconds));
 
   PixTest::update(); 
   fDirectory->cd();
@@ -212,7 +212,6 @@ void PixTestXray::doPhRun() {
   if (0 == fQ.size()) {
     if (fParFillTree) bookTree(); 
     TH1D *h1(0); 
-    TH2D *h2(0); 
     TProfile2D *p2(0); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       p2 = bookTProfile2D(Form("qMap_C%d", rocIds[iroc]), Form("qMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
@@ -253,6 +252,7 @@ void PixTestXray::doPhRun() {
   fApi->daqStart();
   
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
   
   uint8_t perFull;
   timer t;
@@ -270,7 +270,7 @@ void PixTestXray::doPhRun() {
       fApi->daqTriggerLoop();
     }
     LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
-    if (t.get()/1000 >= fParSeconds)	{
+    if (static_cast<int>(t.get())/1000 >= fParSeconds)	{
       fDaq_loop = false;
       break;
     }
@@ -295,7 +295,7 @@ void PixTestXray::doPhRun() {
 // ----------------------------------------------------------------------
 void PixTestXray::doRateScan() {
   
-  LOG(logINFO) << "PixTestXray::doRateScan() start with fParSeconds = " << fParSeconds;
+  banner(Form("PixTestXray::doRateScan() fParSeconds = %d, vthrcom = %d .. %d", fParSeconds, fParVthrCompMin, fParVthrCompMax));
   cacheDacs(); 
 
   if (1) {
@@ -338,7 +338,7 @@ void PixTestXray::doRateScan() {
     fApi->daqStart();
 
     int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-    LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
+    LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
     
     while (fApi->daqStatus(perFull) && fDaq_loop) {
       gSystem->ProcessEvents();
@@ -400,8 +400,10 @@ void PixTestXray::doRateScan() {
     f1->GetRange(lo, hi); 
     fHits[i]->Fit(f1, "lr", "", lo, hi); 
     double thr = f1->GetParameter(0); 
-    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr; 
-    fApi->setDAC("vthrcomp", thr, rocIds[i]); 
+    if (thr < 0 || thr > 255.) thr = 0.;
+    uint8_t ithr = static_cast<uint8_t>(thr); 
+    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr << " -> " << static_cast<int>(ithr); 
+    fApi->setDAC("vthrcomp", ithr, rocIds[i]); 
     PixTest::update();
   }
 
@@ -428,6 +430,8 @@ void PixTestXray::doRateScan() {
   LOG(logINFO) << "PixTestXray::doTest() done";
   LOG(logINFO) << "vcal mean: " << scurvesMeanString; 
   LOG(logINFO) << "vcal RMS:  " << scurvesRmsString; 
+
+  LOG(logINFO) << "PixTestXray::doRateScan() done";
 
 }
 
@@ -622,9 +626,7 @@ void PixTestXray::processData(uint16_t numevents) {
     if (fParFillTree) fTree->Fill();
   }
   
-  LOG(logDEBUG) << Form("Run ") << Form(" # events read: %6ld, pixels seen in all events: %3d, hist entries: %4d", 
-					daqdat.size(), pixCnt, 
-					static_cast<int>(fHits[0]->GetEntries()));
+  LOG(logDEBUG) << Form(" # events read: %6ld, pixels seen in all events: %3d", daqdat.size(), pixCnt);
   
   fQmap[0]->Draw("colz");
   PixTest::update();
