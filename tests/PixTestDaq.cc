@@ -300,32 +300,36 @@ void PixTestDaq::doTest() {
   //to control the buffer filling
   uint8_t perFull;
   timer t;
-  while (fApi->daqStatus(perFull) && fDaq_loop)    //check every 2 seconds if buffer is full less then 90%
+  while (fDaq_loop)    //check every 2 seconds if buffer is full less then 80%
   {
-	  LOG(logINFO) << "buffer not full, at " << (int) perFull << "%";
-          gSystem->ProcessEvents();
-	  ProcessData();
-	
 	  // Pause and drain the buffer if almost full.
-	  if(perFull > 90) {
-		LOG(logINFO) << "Buffer almost full, pausing triggers.";
-		fApi->daqTriggerLoopHalt();
-		ProcessData(0);
-		LOG(logINFO) << "Resuming triggers.";
-		fApi->daqTriggerLoop();
+	  while (fApi->daqStatus(perFull) && perFull < 80) {
+		  
+		  LOG(logINFO) << "Elapsed time: " << t.get() / 1000 << " seconds.";
+		  if (t.get() / 1000 >= fParSeconds)       {
+			  fDaq_loop = false;
+			  break;
+		  }
+
+		  LOG(logINFO) << "buffer not full, at " << (int)perFull << "%";
+		  gSystem->ProcessEvents();
+		  ProcessData();
 	  }
-	  LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
-	  if (t.get()/1000 >= fParSeconds)	{
-	  	fDaq_loop = false;
-	  	break;
+
+	  if (fDaq_loop){
+		  LOG(logINFO) << "Buffer almost full, pausing triggers.";
+		  fApi->daqTriggerLoopHalt();
+		  ProcessData(0);
+		  LOG(logINFO) << "Resuming triggers.";
+		  fApi->daqTriggerLoop(0);
+	  }
+
+	  else {
+	  LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped.";
+	  fApi->daqStop();
+	  ProcessData(0);
 	  }
   }
-
-  fApi->daqTriggerLoopHalt();
-
-  fApi->daqStop();
-  ProcessData(0);
-  
 
   }
 
