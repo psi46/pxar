@@ -292,17 +292,18 @@ void PixTestDaq::doTest() {
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
   LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
 
-  //to control the buffer filling
+//to control the buffer filling
   uint8_t perFull;
+  uint64_t diff = 0, timepaused = 0, timeff = 0;
   timer t;
   bool TotalTime = false;
   while (fDaq_loop)    //check every 2 seconds if buffer is full less then 80%
   {
 	  // Pause and drain the buffer if almost full.
 	  while (fApi->daqStatus(perFull) && perFull < 80 && fDaq_loop) {
-		  
-		  LOG(logINFO) << "Elapsed time: " << t.get() / 1000 << " seconds.";
-		  if (t.get() / 1000 >= fParSeconds)       {
+		  timeff = t.get() - timepaused;
+		  LOG(logINFO) << "Elapsed time: " << timeff / 1000 << " seconds.";
+		  if (timeff / 1000 >= fParSeconds)       {
 			  fDaq_loop = false;
 			  TotalTime = true;
 			  break;
@@ -316,11 +317,14 @@ void PixTestDaq::doTest() {
 	  if (fDaq_loop){
 		  LOG(logINFO) << "Buffer almost full, pausing triggers.";
 		  fApi->daqTriggerLoopHalt();
+		  diff = t.get();
 		  ProcessData(0);
-		  LOG(logINFO) << "Resuming triggers.";
+		  diff = t.get() - diff;
+		  timepaused += diff;
+		  LOG(logDEBUG) << "Readout time: " << timepaused / 1000 << " seconds."; //debug
+		  LOG(logINFO) << "Resuming triggers for " << fParSeconds - (timeff/1000) << " seconds.";
 		  fApi->daqTriggerLoop(0);
 	  }
-
 	  else {
 		  if (TotalTime) { LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped."; }
 		  fApi->daqStop();
