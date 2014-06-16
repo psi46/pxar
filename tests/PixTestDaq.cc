@@ -264,13 +264,15 @@ void PixTestDaq::doTest() {
   //set pattern generator:
   fApi->setPatternGenerator(fPg_setup);
 
+  fDaq_loop = true;
+
    //If using number of triggers
   if(fParNtrig > 0) {
 	
 	// Start the DAQ:
 	fApi->daqStart();
 
-	for( int i = 0 ; i < fParIter ; i++) {
+	for (int i = 0; i < fParIter && fDaq_loop; i++) {
   	    		    
     	      // Send the triggers:
     	      fApi->daqTrigger(fParNtrig);
@@ -293,14 +295,16 @@ void PixTestDaq::doTest() {
   //to control the buffer filling
   uint8_t perFull;
   timer t;
+  bool TotalTime = false;
   while (fDaq_loop)    //check every 2 seconds if buffer is full less then 80%
   {
 	  // Pause and drain the buffer if almost full.
-	  while (fApi->daqStatus(perFull) && perFull < 80) {
+	  while (fApi->daqStatus(perFull) && perFull < 80 && fDaq_loop) {
 		  
 		  LOG(logINFO) << "Elapsed time: " << t.get() / 1000 << " seconds.";
 		  if (t.get() / 1000 >= fParSeconds)       {
 			  fDaq_loop = false;
+			  TotalTime = true;
 			  break;
 		  }
 
@@ -318,12 +322,12 @@ void PixTestDaq::doTest() {
 	  }
 
 	  else {
-	  LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped.";
-	  fApi->daqStop();
-	  ProcessData(0);
+		  if (TotalTime) { LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped."; }
+		  fApi->daqStop();
+		  ProcessData(0);
 	  }
-  }
 
+  }
   }
 
   FinalCleaning();
