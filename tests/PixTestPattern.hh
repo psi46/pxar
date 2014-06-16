@@ -1,6 +1,3 @@
-// -- author: Martino Dall'Osso
-#ifndef PixTestPattern_H
-#define PixTestPattern_H
 
 #include "PixTest.hh"
 #include "PixUtil.hh"
@@ -14,8 +11,10 @@ public:
 
 	virtual bool setParameter(std::string parName, std::string sval);
 	void init();
+	void setToolTips();
 	void doTest();
 
+	void stop();
 	void runCommand(std::string);
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
