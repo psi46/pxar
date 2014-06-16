@@ -1,3 +1,6 @@
+// -- author: Martino Dall'Osso
+#ifndef PixTestPattern_H
+#define PixTestPattern_H
 
 #include "PixTest.hh"
 #include "PixUtil.hh"
