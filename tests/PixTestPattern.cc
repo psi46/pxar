@@ -45,6 +45,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 
 			if (!parName.compare("pgcycles")){
 				fParPgCycles = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting pgcycles -> " << fParPgCycles;
 				if (fParPgCycles < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() pg_cycles must be positive";
@@ -56,11 +57,13 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, "checkbox(", "");
 				PixUtil::replaceAll(sval, ")", "");
 				fParTrigLoop = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fParTrigLoop -> " << fParTrigLoop;
 			}
 
 			if (!parName.compare("period")){
 				fParPeriod = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fParPeriod -> " << fParPeriod;
 				if (fParPeriod < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() period must be positive";
@@ -70,6 +73,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 
 			if (!parName.compare("seconds")){
 				fParSeconds = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fParSeconds -> " << fParSeconds;
 				if (fParSeconds < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() seconds must be positive";
@@ -81,6 +85,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, "checkbox(", "");
 				PixUtil::replaceAll(sval, ")", "");
 				fPatternFromFile = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fPatternFromFile -> " << fPatternFromFile;
 			}
 
@@ -88,6 +93,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, "checkbox(", "");
 				PixUtil::replaceAll(sval, ")", "");
 				fResultsOnFile = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fResultsOnFile -> " << fResultsOnFile;
 			}
 
@@ -95,11 +101,13 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, "checkbox(", "");
 				PixUtil::replaceAll(sval, ")", "");
 				fBinOut = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fBinOut -> " << fBinOut;
 			}
 
 			if (!parName.compare("filename")){
 				fFileName = sval.c_str();
+				setToolTips();
 				LOG(logDEBUG) << "  setting fFileName -> " << fFileName;
 			}
 
@@ -107,6 +115,7 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, "checkbox(", "");
 				PixUtil::replaceAll(sval, ")", "");
 				fUnMaskAll = atoi(sval.c_str());
+				setToolTips();
 				LOG(logDEBUG) << "  setting fUnMaskAll -> " << fUnMaskAll;
 			}
 
@@ -120,14 +129,31 @@ bool PixTestPattern::setParameter(string parName, string sval)
 void PixTestPattern::init()
 {
 	LOG(logDEBUG) << "PixTestPattern::init()";
+	setToolTips();
 	fDirectory = gFile->GetDirectory(fName.c_str());
 	if (!fDirectory)
 		fDirectory = gFile->mkdir(fName.c_str());
 	fDirectory->cd();
 }
 
+// ----------------------------------------------------------------------
+void PixTestPattern::setToolTips() {
+
+	fTestTip = string("run DAQ");
+	fSummaryTip = string("Show summary plot");
+	fStopTip = string("Stop DAQ");
+}
+
 //------------------------------------------------------------------------------
 PixTestPattern::~PixTestPattern(){ //dctor
+}
+
+// ----------------------------------------------------------------------
+void PixTestPattern::stop()
+{
+	// Interrupt the test 
+	fDaq_loop = false;
+	LOG(logINFO) << "PixTestPattern:: stop pressed. ending test.";
 }
 
 // ----------------------------------------------------------------------
@@ -142,7 +168,11 @@ void PixTestPattern::runCommand(std::string command) {
 		return;
 	}
 
-	LOG(logDEBUG) << "did not find command ->" << command << "<-";
+	else if (!command.compare("stop")){
+		stop();
+	}
+
+	else	LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
 // ----------------------------------------------------------------------
@@ -391,30 +421,34 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 
 // ----------------------------------------------------------------------
 void PixTestPattern::TriggerLoop(int checkfreq) {
-
+	uint8_t perFull;
+	int duration = fParSeconds;
 	int sec = 0;
 	int nloop = 1;
-	fDaq_loop = true;
+	LOG(logINFO) << "PixTestPattern:: starting TriggerLoop with period " << fPeriod << " and duration " << duration << " seconds";
 
 	while (fDaq_loop)
 	{
 		fPeriod = fApi->daqTriggerLoop(fParPeriod);
-		LOG(logINFO) << "PixTestPattern:: start TriggerLoop with period " << fPeriod << " and duration " << fParSeconds << " seconds";
-
+		
 		//check every 'checkfreq' seconds if buffer is full less then 90%
-		while (fApi->daqStatus()) {
-			mDelay(checkfreq * 1000);  //wait in milliseconds
-			sec = sec + checkfreq;
-			if (sec >= fParSeconds)	{
-				fDaq_loop = false;
-				break;
-			}
+		while (fApi->daqStatus(perFull) && fDaq_loop) {
+				LOG(logINFO) << "PixTestPattern:: buffer not full, at " << (int)perFull << "%";
+				mDelay(checkfreq * 1000);  //wait in milliseconds
+				sec = sec + checkfreq;
+				LOG(logINFO) << "PixTestPattern:: elapsed time " << sec << " seconds";
+				if (sec >= fParSeconds)	{
+						fDaq_loop = false;
+						break;
+				}
 		}
 
 		if (fDaq_loop) {
-			LOG(logINFO) << "PixTestPattern:: after " << sec << " seconds - save data to file to avoid buffer overflow";
-			fApi->daqTriggerLoopHalt();
-		}
+				LOG(logINFO) << "PixTestPattern:: after " << sec << " seconds - save data to file to avoid buffer overflow";
+				fApi->daqTriggerLoopHalt();
+				duration = fParSeconds - sec;
+				LOG(logINFO) << "PixTestPattern:: restarting TriggerLoop for " << duration << " seconds";
+				}
 		else fApi->daqStop();
 
 		// Get events and Print results on shell/file:
@@ -532,8 +566,7 @@ void PixTestPattern::doTest()
 	fPeriod = 0;
 
 	//send Triggers (loop or single) wrt parameters selection:
-	if (!fParTrigLoop)
-	{
+	if (!fParTrigLoop) {
 		//pg_cycles times the pg_Single() == pg_cycles times pattern sequence):
 		fPeriod = fApi->daqTrigger(fParPgCycles, fParPeriod);
 		LOG(logINFO) << "PixTestPattern:: " << fParPgCycles << " pg_Single() sent with period " << fPeriod;
@@ -543,7 +576,10 @@ void PixTestPattern::doTest()
 		// Get events and Print results on shell/file:
 		PrintEvents(fParPgCycles, 0, "trg");
 	}
-	else TriggerLoop(2); //argument == buffer check frequency (seconds)
+	else {
+		fDaq_loop = true;
+		TriggerLoop(2); //argument == buffer check frequency (seconds)
+	}
 
 	//DAQ - THE END.
 
