@@ -13,6 +13,7 @@
 #include "log.h"
 #include "constants.h"
 #include "helper.h"
+#include "timer.h"
 
 using namespace std;
 using namespace pxar;
@@ -153,7 +154,7 @@ void PixTestPattern::stop()
 {
 	// Interrupt the test 
 	fDaq_loop = false;
-	LOG(logINFO) << "PixTestPattern:: stop pressed. ending test.";
+	LOG(logINFO) << "PixTestPattern:: STOP PRESSED. Ending test.";
 }
 
 // ----------------------------------------------------------------------
@@ -421,36 +422,49 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 
 // ----------------------------------------------------------------------
 void PixTestPattern::TriggerLoop(int checkfreq) {
+
 	uint8_t perFull;
-	int duration = fParSeconds;
-	int sec = 0;
 	int nloop = 1;
-	LOG(logINFO) << "PixTestPattern:: starting TriggerLoop with period " << fPeriod << " and duration " << duration << " seconds";
+	uint64_t diff = 0, timepaused = 0, timeff = 0;
+	bool TotalTime = false;
+	timer t;
+	LOG(logINFO) << "PixTestPattern:: starting TriggerLoop for " << fParSeconds << " seconds";
 
 	while (fDaq_loop)
 	{
+		if (nloop > 1){
+			diff = t.get() - diff;
+			timepaused += diff;
+			LOG(logDEBUG) << "PixTestPattern:: readout time " << timepaused / 1000 << " seconds";
+			LOG(logINFO) << "PixTestPattern:: restarting TriggerLoop for " << fParSeconds - (timeff / 1000) << " s";
+		}
+		//start triggerloop:
 		fPeriod = fApi->daqTriggerLoop(fParPeriod);
+		if (nloop == 1) LOG(logINFO) << "PixTestPattern:: TriggerLoop period = " << fPeriod << " clks";
 		
-		//check every 'checkfreq' seconds if buffer is full less then 90%
-		while (fApi->daqStatus(perFull) && fDaq_loop) {
-				LOG(logINFO) << "PixTestPattern:: buffer not full, at " << (int)perFull << "%";
-				mDelay(checkfreq * 1000);  //wait in milliseconds
-				sec = sec + checkfreq;
-				LOG(logINFO) << "PixTestPattern:: elapsed time " << sec << " seconds";
-				if (sec >= fParSeconds)	{
-						fDaq_loop = false;
-						break;
-				}
+		//check every checkfreq seconds if buffer is full less then 85%:
+		while (fApi->daqStatus(perFull) && perFull < 85 && fDaq_loop) {
+			mDelay(checkfreq * 1000);
+			timeff = t.get() - timepaused;
+			LOG(logINFO) << "PixTestPattern:: elapsed time " << timeff / 1000 << " seconds";
+			if (timeff / 1000 >= fParSeconds)       {
+				fDaq_loop = false;
+				TotalTime = true;
+				break;
+			}
+			LOG(logINFO) << "PixTestPattern:: buffer not full, at " << (int)perFull << "%";
+			gSystem->ProcessEvents();
 		}
 
 		if (fDaq_loop) {
-				LOG(logINFO) << "PixTestPattern:: after " << sec << " seconds - save data to file to avoid buffer overflow";
-				fApi->daqTriggerLoopHalt();
-				duration = fParSeconds - sec;
-				LOG(logINFO) << "PixTestPattern:: restarting TriggerLoop for " << duration << " seconds";
-				}
-		else fApi->daqStop();
-
+			LOG(logINFO) << "PixTestPattern:: buffer almost full, pausing triggers";
+			fApi->daqTriggerLoopHalt();
+			diff = t.get();
+		}
+		else {
+			if (TotalTime) { LOG(logINFO) << "PixTestPattern:: total time reached - DAQ stopped."; }
+			fApi->daqStop();
+		}
 		// Get events and Print results on shell/file:
 		PrintEvents(fParSeconds, nloop, "loop");
 		nloop++;
