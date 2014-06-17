@@ -340,6 +340,78 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 	return true;
 }
 
+// ----------------------------------------------------------------------
+void PixTestPattern::setHistos(){
+	vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+	TH1D *h1(0);
+	TH2D *h2(0);
+	TProfile2D *p2(0);
+	for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+		h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+		h2->SetMinimum(0.);
+		h2->SetDirectory(fDirectory);
+		setTitles(h2, "col", "row");
+		fHistOptions.insert(make_pair(h2, "colz"));
+		fHits.push_back(h2);
+
+		p2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+		p2->SetMinimum(0.);
+		p2->SetDirectory(fDirectory);
+		setTitles(p2, "col", "row");
+		fHistOptions.insert(make_pair(p2, "colz"));
+		fPhmap.push_back(p2);
+
+		h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
+		h1->SetMinimum(0.);
+		h1->SetDirectory(fDirectory);
+		setTitles(h1, "ADC", "Entries/bin");
+		fPh.push_back(h1);
+	}
+}
+
+// ----------------------------------------------------------------------
+void PixTestPattern::FillHistos(vector<pxar::Event> data) {	
+		vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+		TH1D *h1(0);
+		TH2D *h2(0);
+		TProfile2D *p2(0);
+		int pixCnt(0);
+		int idx(-1);
+		int cnt(-1);
+
+		//not to fill always the first histo:
+		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) cnt = histCycle(Form("hits_C%d", rocIds[iroc])) - 1;
+
+		for (std::vector<pxar::Event>::iterator it = data.begin(); it != data.end(); ++it) {
+			for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+				for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+					idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt;
+					fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+					fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].value);
+					fPh[idx]->Fill(it->pixels[ipix].value);
+				}
+			}
+		}
+
+		copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
+		h1 = (TH1D*)(fHistList.back());
+		h1->Draw(getHistOption(h2).c_str());
+		fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+		PixTest::update();
+
+		copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
+		p2 = (TProfile2D*)(fHistList.back());
+		p2->Draw(getHistOption(p2).c_str());
+		fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
+		PixTest::update();
+
+		copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+		h2 = (TH2D*)(fHistList.back());
+		h2->Draw(getHistOption(h2).c_str());
+		fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+		PixTest::update();
+}
+
 
 // ----------------------------------------------------------------------
 void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
@@ -352,8 +424,9 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 		daqEvBuffer = fApi->daqGetEventBuffer();
 		daqEvBuffsiz = daqEvBuffer.size();
 
-		if (daqEvBuffsiz <= 201)
-		{
+		FillHistos(daqEvBuffer); //fill&print histos on the gui
+
+		if (daqEvBuffsiz <= 201) {
 			LOG(logINFO) <<  "PixTestPattern:: data from buffer:";
 			cout << endl;
 			for (unsigned int i = 0; i < daqEvBuffsiz; i++)	{
@@ -361,14 +434,13 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 			}
 			cout << endl;
 		}
-		else
-		{
+		else {
 			cout << endl;
 			LOG(logINFO) << "PixTestPattern:: data from buffer:";
 			for (unsigned int i = 0; i <= 100; i++)	{
 				cout << i << " : " << daqEvBuffer[i] << endl;
 			}
-			//skip events. If you want all the events printed select 'resultsonfile'.
+			//skip events. If you want all the events printed select 'binaryoutput'.
 			cout << endl << "................... SKIP EVENTS TO NOT SATURATE THE SHELL ...................." << endl << endl;
 			for (unsigned int i = (daqEvBuffsiz - 100); i < daqEvBuffsiz; i++)	{
 				cout << i << " : " << daqEvBuffer[i] << endl;
@@ -405,11 +477,29 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 		else
 		{
 			daqEvBuffer = fApi->daqGetEventBuffer();
-			LOG(logINFO) << "PixTestPattern:: " << daqEvBuffer.size() << " events read";
-			std::ofstream fout(FileName.c_str(), std::ios::out);
-			LOG(logINFO) << "PixTestPattern:: Writing decoded events";
-			fout.write(reinterpret_cast<const char*>(&daqEvBuffer[0]), sizeof(daqEvBuffer[0])*daqEvBuffer.size()); //debug!!! TO BE IMPROVED
-			//for (unsigned int i = 0; i < daqEvBuffsiz; i++)	fout << i << " : " << daqEvBuffer[i] << endl;
+			daqEvBuffsiz = daqEvBuffer.size();
+			LOG(logINFO) << "PixTestPattern:: " << daqEvBuffsiz << " events read";
+
+			FillHistos(daqEvBuffer); //fill&print histos on the gui
+
+			std::ofstream fout(FileName.c_str(), std::ofstream::out);
+			if (daqEvBuffsiz <= 201) {
+				LOG(logINFO) << "PixTestPattern:: Writing decoded events";
+				for (unsigned int i = 0; i < daqEvBuffsiz; ++i)	{
+					fout << i << " : " << daqEvBuffer[i] << endl;
+				}
+			}
+			else {
+				LOG(logINFO) << "PixTestPattern:: Writing decoded events (a fraction of)";
+				for (unsigned int i = 0; i <= 100; i++)	{
+					fout << i << " : " << daqEvBuffer[i] << endl;
+				}
+				//skip events. If you want all the events printed select 'binaryoutput'.
+				fout << endl << "................... SKIP EVENTS TO NOT TAKE TOO LONG ...................." << endl << endl;
+				for (unsigned int i = (daqEvBuffsiz - 100); i < daqEvBuffsiz; i++)	{
+					fout << i << " : " << daqEvBuffer[i] << endl;
+				}
+			}
 			fout.close();
 		}
 
@@ -442,8 +532,8 @@ void PixTestPattern::TriggerLoop(int checkfreq) {
 		fPeriod = fApi->daqTriggerLoop(fParPeriod);
 		if (nloop == 1) LOG(logINFO) << "PixTestPattern:: TriggerLoop period = " << fPeriod << " clks";
 		
-		//check every checkfreq seconds if buffer is full less then 85%:
-		while (fApi->daqStatus(perFull) && perFull < 85 && fDaq_loop) {
+		//check every checkfreq seconds if buffer is full less then 80%:
+		while (fApi->daqStatus(perFull) && perFull < 80 && fDaq_loop) {
 			mDelay(checkfreq * 1000);
 			timeff = t.get() - timepaused;
 			LOG(logINFO) << "PixTestPattern:: elapsed time " << timeff / 1000 << " seconds";
@@ -462,8 +552,9 @@ void PixTestPattern::TriggerLoop(int checkfreq) {
 			diff = t.get();
 		}
 		else {
-			if (TotalTime) { LOG(logINFO) << "PixTestPattern:: total time reached - DAQ stopped."; }
-			fApi->daqStop();
+				if (TotalTime) { LOG(logINFO) << "PixTestPattern:: total time reached - DAQ stopped."; }
+				//fApi->daqTriggerLoopHalt();
+				fApi->daqStop();			
 		}
 		// Get events and Print results on shell/file:
 		PrintEvents(fParSeconds, nloop, "loop");
@@ -543,7 +634,11 @@ void PixTestPattern::doTest()
 			}
 		}
 	
+	//set the histos....
+	setHistos();
+
 	// Start the DAQ:
+	//::::::::::::::::::::::::::::::::
 
 	//first send only a RES:
 	fPg_setup.push_back(make_pair("resetroc", 0));
@@ -595,7 +690,10 @@ void PixTestPattern::doTest()
 		TriggerLoop(2); //argument == buffer check frequency (seconds)
 	}
 
+	//::::::::::::::::::::::::::::::
 	//DAQ - THE END.
+
+	PixTest::update(); //to avoid crash after pushing 'clear' button?
 
 	//set PG to default and clean everything:
 	FinalCleaning();
