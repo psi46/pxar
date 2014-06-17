@@ -21,6 +21,8 @@ public:
 	void runCommand(std::string);
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
+	void setHistos();
+	void FillHistos(std::vector<pxar::Event>);
 	void PrintEvents(int, int, std::string);
 	void TriggerLoop(int );
 	void pgToDefault();
@@ -46,6 +48,10 @@ private:
 	uint16_t fPeriod;
 	int		fCheckFreq;
 	
+	std::vector<TH2D*> fHits;
+	std::vector<TProfile2D*> fPhmap;
+	std::vector<TH1D*> fPh;
+
 	ClassDef(PixTestPattern, 1)
 
 };
