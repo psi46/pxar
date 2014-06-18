@@ -2,6 +2,7 @@
 #include <stdlib.h>     /* atof, atoi,itoa */
 #include <algorithm>    // std::find
 #include <iostream>
+#include <fstream>
 #include "PixTestXray.hh"
 #include "log.h"
 
@@ -478,6 +479,16 @@ void PixTestXray::doXPixelAlive() {
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     currVthrComp[iroc] = fApi->_dut->getDAC(iroc,"vthrcomp");
   }
+
+  ifstream InputFile;
+  InputFile.open(Form("%s/%s", fPixSetup->getConfigParameters()->getDirectory().c_str(), "xraythr-vthrcomp.dat"));
+  unsigned nRocs = rocIds.size(); 
+  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+    InputFile >> currVthrComp[iroc];
+    LOG(logDEBUG) << "ROC " << iroc << currVthrComp[iroc]; 
+  }
+  InputFile.close();
+
   
   
   
