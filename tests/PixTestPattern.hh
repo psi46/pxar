@@ -1,4 +1,3 @@
-// -- author: Martino Dall'Osso
 #ifndef PixTestPattern_H
 #define PixTestPattern_H
 
@@ -51,6 +50,9 @@ private:
 	std::vector<TH2D*> fHits;
 	std::vector<TProfile2D*> fPhmap;
 	std::vector<TH1D*> fPh;
+	TH1D *h1;
+	TH2D *h2;
+	TProfile2D *p2;
 
 	ClassDef(PixTestPattern, 1)
 
