@@ -371,16 +371,16 @@ void PixTestPattern::setHistos(){
 
 // ----------------------------------------------------------------------
 void PixTestPattern::FillHistos(vector<pxar::Event> data) {	
-		vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+		std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 		TH1D *h1(0);
 		TH2D *h2(0);
 		TProfile2D *p2(0);
 		int pixCnt(0);
 		int idx(-1);
-		vector<uint8_t> cnt;
-
+		std::vector<uint8_t> cnt;
 		//not to fill always the first histo:
-		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) cnt[iroc] = histCycle(Form("hits_C%d", rocIds[iroc])) - 1;
+		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) 
+		        cnt.push_back((uint8_t)(histCycle(Form("hits_C%d", iroc)) - 1));
 
 		for (std::vector<pxar::Event>::iterator it = data.begin(); it != data.end(); ++it) {
 			for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
