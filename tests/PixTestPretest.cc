@@ -822,7 +822,7 @@ void PixTestPretest::getVthrCompThr() {
   }
 
   //Leave -1 at end of vthrCompValues[]!!
-  int vthrCompValues[] = {100,97,96,95,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-1};
+  int vthrCompValues[] = {100,97,96,95,94,93,92,91,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-1};
   int len = sizeof(vthrCompValues)/ sizeof(*vthrCompValues);
 
   vector<int> xHits(rocIds.size(),1);
@@ -871,9 +871,10 @@ void PixTestPretest::getVthrCompThr() {
         if (!fFinal){
           LOG(logINFO) << "Failed Third Check";
         }
-        break;
-      }
+        continue;
+      } else{
       LOG(logINFO) << "Failed Second Check";
+      }
     }        
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       //Only lower vthrcomp if individual ROC still has hits
