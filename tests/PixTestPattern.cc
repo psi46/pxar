@@ -1,4 +1,3 @@
-// -- author: Martino Dall'Osso
 // to send different patterns and check the readout
 
 #include <stdlib.h>   // atof, atoi
@@ -343,9 +342,6 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 // ----------------------------------------------------------------------
 void PixTestPattern::setHistos(){
 	vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-	TH1D *h1(0);
-	TH2D *h2(0);
-	TProfile2D *p2(0);
 	for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
 		h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
 		h2->SetMinimum(0.);
@@ -372,9 +368,6 @@ void PixTestPattern::setHistos(){
 // ----------------------------------------------------------------------
 void PixTestPattern::FillHistos(vector<pxar::Event> data) {	
 		std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-		TH1D *h1(0);
-		TH2D *h2(0);
-		TProfile2D *p2(0);
 		int pixCnt(0);
 		int idx(-1);
 		std::vector<uint8_t> cnt;
@@ -393,22 +386,9 @@ void PixTestPattern::FillHistos(vector<pxar::Event> data) {
 			}
 		}
 
-		copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
-		h1 = (TH1D*)(fHistList.back());
-		h1->Draw(getHistOption(h2).c_str());
-		fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-		PixTest::update();
-
-		copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
-		p2 = (TProfile2D*)(fHistList.back());
-		p2->Draw(getHistOption(p2).c_str());
-		fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
-		PixTest::update();
-
-		copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
-		h2 = (TH2D*)(fHistList.back());
+		//to draw the hitsmap as 'online' check.
+		h2 = (TH2D*)(fHits.back());
 		h2->Draw(getHistOption(h2).c_str());
-		fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
 		PixTest::update();
 }
 
@@ -634,7 +614,7 @@ void PixTestPattern::doTest()
 			}
 		}
 	
-	//set the histos....
+	//set the histos
 	setHistos();
 
 	// Start the DAQ:
@@ -693,7 +673,21 @@ void PixTestPattern::doTest()
 	//::::::::::::::::::::::::::::::
 	//DAQ - THE END.
 
-	PixTest::update(); //to avoid crash after pushing 'clear' button?
+	copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
+	h1 = (TH1D*)(fHistList.back());
+	h1->Draw(getHistOption(h1).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+
+	copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
+	p2 = (TProfile2D*)(fHistList.back());
+	p2->Draw(getHistOption(p2).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
+
+	copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+	h2 = (TH2D*)(fHistList.back());
+	h2->Draw(getHistOption(h2).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+	PixTest::update();
 
 	//set PG to default and clean everything:
 	FinalCleaning();
