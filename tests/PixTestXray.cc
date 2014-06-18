@@ -476,9 +476,7 @@ void PixTestXray::doXPixelAlive() {
   
   //Instead of below for loop, want to go through the file made in the pretest function!!!
   //Also want to put the DAC values into currVthrComp[iroc] for nice print out
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    currVthrComp[iroc] = fApi->_dut->getDAC(iroc,"vthrcomp");
-  }
+
 
   ifstream InputFile;
   InputFile.open(Form("%s/%s", fPixSetup->getConfigParameters()->getDirectory().c_str(), "xraythr-vthrcomp.dat"));
@@ -488,7 +486,10 @@ void PixTestXray::doXPixelAlive() {
     LOG(logDEBUG) << "ROC " << iroc << currVthrComp[iroc]; 
   }
   InputFile.close();
-
+  
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    fApi->setDAC("vthrcomp",currVthrComp[iroc] ,iroc);
+  }
   
   
   
