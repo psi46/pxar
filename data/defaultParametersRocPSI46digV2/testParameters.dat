@@ -12,6 +12,7 @@ Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
 Ntrig               5
+getVthrCompThr      button
 SaveDacs            button
 
 -- PixelAlive 
@@ -94,6 +95,9 @@ ratescan            button
 vthrcompmin         10
 vthrcompmax         80
 stepseconds         5
+xPixelAlive         button
+Ntrig               50
+Vcal                200
 
 -- DAQ
 Ntrig               0
