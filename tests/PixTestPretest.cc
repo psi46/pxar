@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include <stdlib.h>  
 #include <algorithm> 
 
@@ -879,9 +881,10 @@ void PixTestPretest::getVthrCompThr() {
         index[iroc]+=1;
         if (vthrCompValues[index[iroc]]==-1){
           //If we get through vthrCompValues list, then exit
-          LOG(logERROR) << "Detected unexpected hits for minimum VthrComp value = " << vthrCompValues[index[iroc]-1] << "for ROC # " << iroc;
+          LOG(logERROR) << "Detected unexpected hits for minimum VthrComp value = " 
+			<< vthrCompValues[index[iroc]-1] << "for ROC # " << iroc;
           LOG(logERROR) << "Now exiting program, consider removing ROC, or modifying vthrCompValues[] in this file";
-          exit(EXIT_FAILURE);
+	  //          exit(EXIT_FAILURE);
         }
         currVthrComp[iroc] = vthrCompValues[index[iroc]]; 
         fApi->setDAC("vthrcomp", currVthrComp[iroc],iroc);          
@@ -891,6 +894,14 @@ void PixTestPretest::getVthrCompThr() {
   LOG(logINFO) << "Finished VthrComp scan for all ROCs";
   LOG(logINFO) << "VthrComp thresholds for ROCs in order: " << currVthrCompString;
   
+  ofstream OutputFile;
+  OutputFile.open(Form("%s/%s", fPixSetup->getConfigParameters()->getDirectory().c_str(), "xraythr-vthrcomp.dat"));
+  unsigned nRocs = rocIds.size(); 
+  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+    OutputFile << static_cast<int>(currVthrComp[iroc]) << endl;
+  }
+  OutputFile.close();
+    
   restoreDacs();
   LOG(logINFO) << "PixTestPretest::getVthrCompThr() done";
     
