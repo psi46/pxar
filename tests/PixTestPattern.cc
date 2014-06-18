@@ -377,15 +377,15 @@ void PixTestPattern::FillHistos(vector<pxar::Event> data) {
 		TProfile2D *p2(0);
 		int pixCnt(0);
 		int idx(-1);
-		int cnt(-1);
+		vector<uint8_t> cnt;
 
 		//not to fill always the first histo:
-		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) cnt = histCycle(Form("hits_C%d", rocIds[iroc])) - 1;
+		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) cnt[iroc] = histCycle(Form("hits_C%d", rocIds[iroc])) - 1;
 
 		for (std::vector<pxar::Event>::iterator it = data.begin(); it != data.end(); ++it) {
 			for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
 				for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-					idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt;
+					idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt[iroc];
 					fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
 					fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].value);
 					fPh[idx]->Fill(it->pixels[ipix].value);
