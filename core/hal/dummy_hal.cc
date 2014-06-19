@@ -579,6 +579,8 @@ void hal::daqTrigger(uint32_t /*nTrig*/, uint16_t /*period*/) {}
 
 void hal::daqTriggerLoop(uint16_t /*period*/) {}
 
+void hal::daqTriggerLoopHalt() {}
+
 uint32_t hal::daqBufferStatus() { return 0; }
 
 void hal::daqStop() {}
