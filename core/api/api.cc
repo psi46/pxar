@@ -1101,9 +1101,10 @@ uint16_t api::daqTrigger(uint32_t nTrig, uint16_t period) {
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting too small for configured "
+    LOG(logWARNING) << "Trigger frequency too high for configured "
 		    << "Pattern generator. "
-		    << "Setting loop delay to " << period << " clk";
+		    << "Forcing loop delay to " << period << " clk";
+    LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
   // Just passing the call to the HAL, not doing anything else here:
   _hal->daqTrigger(nTrig,period);
@@ -1118,9 +1119,10 @@ uint16_t api::daqTriggerLoop(uint16_t period) {
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting too small for configured "
+    LOG(logWARNING) << "Trigger frequency too high for configured "
 		    << "Pattern generator. "
-		    << "Setting loop delay to " << period << " clk";
+		    << "Forcing loop delay to " << period << " clk";
+    LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
   _hal->daqTriggerLoop(period);
   return period;
