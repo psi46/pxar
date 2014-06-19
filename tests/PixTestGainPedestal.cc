@@ -145,8 +145,7 @@ void PixTestGainPedestal::measure() {
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   cacheDacs();
-
-
+ 
   TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string name; 
@@ -188,9 +187,12 @@ void PixTestGainPedestal::measure() {
 	done = true; // got our data successfully
       }
       catch(pxar::DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	++cnt;
 	if (e.numberMissing > 10) done = true; 
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -209,9 +211,12 @@ void PixTestGainPedestal::measure() {
 	done = true; // got our data successfully
       }
       catch(pxar::DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	++cnt;
 	if (e.numberMissing > 10) done = true; 
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -373,10 +378,9 @@ void PixTestGainPedestal::printHistograms() {
     OutputFile << endl;
     OutputFile << endl;
 
-    map<string, TH1D*>::iterator hend = fHists.end(); 
     TH1D *h1(0); 
     for (int ic = 0; ic < 52; ++ic) {
-      for (int ir = 0; ir < 52; ++ir) {
+      for (int ir = 0; ir < 80; ++ir) {
 	h1 = fHists[Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)];
 
 	string h1name(h1->GetName()), line(""); 

@@ -214,7 +214,7 @@ int main(int argc, char* argv[]) {
   // Prepare some vectors for all the configurations we use:
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
-  std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+  std::vector<std::pair<std::string,uint8_t> > pg_setup;
 
   // DTB delays
 
@@ -313,9 +313,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Module setup." << std::endl;
 
     // Pattern Generator:
-    pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
-    pg_setup.push_back(std::make_pair(0x0400,106)); // PG_CAL
-    pg_setup.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
+    pg_setup.push_back(std::make_pair("resettbm",15)); // PG_REST
+    pg_setup.push_back(std::make_pair("calibrate",106)); // PG_CAL
+    pg_setup.push_back(std::make_pair("trigger;sync",0));  // PG_TRG PG_SYNC
 
     // TBM configuration:
     std::vector<std::pair<std::string,uint8_t> > regs;
@@ -340,10 +340,10 @@ int main(int argc, char* argv[]) {
     std::cout << "Single ROC setup." << std::endl;
 
     // Pattern Generator:
-    pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
-    pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
-    pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
-    pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+    pg_setup.push_back(std::make_pair("resetroc",25));    // PG_RESR
+    pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
+    pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
+    pg_setup.push_back(std::make_pair("token;sync",0));     // PG_TOK
 
     // One ROC config:
     rocDACs.push_back(dacs);

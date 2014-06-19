@@ -185,6 +185,8 @@ namespace pxar {
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
      *  The name lookup is performed via the central API dictionaries.
+     *  Multiple pattern generator signals at once can be sent by separating their
+     *  names with a semicolon.
      *
      *  All user inputs are checked for sanity. This includes range checks on
      *  the current limits set, a sanity check for the pattern generator command
@@ -196,7 +198,7 @@ namespace pxar {
      */
     bool initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
                        std::vector<std::pair<std::string,double> > power_settings,
-                       std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+                       std::vector<std::pair<std::string, uint8_t> > pg_setup);
   
     /** Update method for testboard voltages and current limits. This method requires
      *  the testboard to be initialized once using pxar::initTestboard
@@ -224,8 +226,10 @@ namespace pxar {
      *  If the settings are found to be out-of-range, a pxar::InvalidConfig exception
      *  is thrown. The new settings are stored in the pxar::dut object for 
      *  later reference.
+     *  Multiple pattern generator signals at once can be sent by separating their
+     *  names with a semicolon, e.g. "token;sync".
      */
-    void setPatternGenerator(std::vector<std::pair<uint16_t, uint8_t> > pg_setup);
+    void setPatternGenerator(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
     /** Initializer method for the DUT (attached devices)
      *
@@ -530,7 +534,11 @@ namespace pxar {
 
     // DAQ functions
 
-    /** Function to set up and initialize a new data acquisition session (DAQ)
+    /** Function to set up and initialize a new data acquisition session (DAQ).
+     *  This function also programs all attached devices. Pixel configurations
+     *  which are changed after calling this function will not be written to
+     *  the devices, so make sure to mask/unmask and set test bits for all
+     *  pixels in question before calling pxar::daqStart()!
      */
     bool daqStart();
 
@@ -541,6 +549,12 @@ namespace pxar {
      *  or full...) it returns FALSE.
      */
     bool daqStatus();
+
+    /** Same Function as pxar::daqStatus() but provides additional parameter
+     *  (pass-by-reference) to inform about the current fill status of the
+     *  DAQ buffer in percent.
+     */
+    bool daqStatus(uint8_t & perFull);
     
     /** Function to read out the earliest pxar::Event in buffer from the current
      *  data acquisition session. If no Event is buffered, the function will 
@@ -556,13 +570,17 @@ namespace pxar {
 
     /** Function to fire the previously defined pattern command list "nTrig"
      *  times, the function parameter defaults to 1.
+     *  The function returns the triggering period actually used after cross-check
+     *  with the pattern generator cycle length.
      */
-    void daqTrigger(uint32_t nTrig = 1, uint16_t perdiod = 0);
+    uint16_t daqTrigger(uint32_t nTrig = 1, uint16_t period = 0);
 
     /** Function to fire the previously defined pattern command list
      *  continuously every "period" clock cycles (default: 1000)
+     *  The function returns the triggering period actually used after cross-check
+     *  with the pattern generator cycle length.
      */
-    void daqTriggerLoop(uint16_t period = 1000);
+    uint16_t daqTriggerLoop(uint16_t period = 1000);
 
     /** Function to halt the pattern generator loop which has been started
      *  using daqTriggerLoop(). This stops triggering the devices.
@@ -570,32 +588,25 @@ namespace pxar {
     void daqTriggerLoopHalt();
 
     /** Function to stop the running data acquisition
-     *
-     *  This triggers also a reprogramming of the old (test-) Pattern Generator
-     *  setup, so no additional steps are needed before one can do regular 
-     *  tests again. The patterns are taken from the DUT struct in which they 
-     *  are stored by the api::initTestboard function.
      */
     bool daqStop();
 
-    /** Function to return the full event buffer from the testboard RAM after
-     *  the data acquisition has been stopped. No decoding is performed, this 
-     *  function returns the raw data blob from either of the deserializer
-     *  modules.
+    /** Function to return the full currently available raw event buffer from
+     *  the testboard RAM. No decoding is performed, the data stream is just
+     *  split into single pxar::rawEvent objects. This function returns the
+     *  raw events from either of the deserializer modules.
      */
     std::vector<rawEvent> daqGetRawEventBuffer();
 
-    /** Function to return the full raw data buffer from the testboard RAM after
-     *  the data acquisition has been stopped. Neither decoding nor splitting is
-     *  performed, this function returns the raw data blob from either of the 
-     *  deserializer modules.
+    /** Function to return the full currently available raw data buffer from the
+     *  testboard RAM. Neither decoding nor splitting is performed, this function
+     *  returns the raw data blob from either of the deserializer modules.
      */
     std::vector<uint16_t> daqGetBuffer();
 
-    /** Function to return the full pxar::Event buffer from the testboard RAM after
-     *  the data acquisition has been stopped. All data is decoded and the 
-     *  function returns decoded pixels separated in pxar::Events with additional
-     *  header information available.
+    /** Function to return the full currently available pxar::Event buffer from the 
+     *  testboard RAM. All data is decoded and the function returns decoded pixels 
+     *  separated in pxar::Events with additional header information available.
      */
     std::vector<Event> daqGetEventBuffer();
 
@@ -717,7 +728,7 @@ namespace pxar {
      *  of the pattern command list)
      *  For non-correctable problems a InvalidConfig exception is thrown.
      */
-    void verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
+    void verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &pg_setup);
 
     /** Helper function to check validity of testboard power settings (voltages and
      *  current limits) coming from the user space.

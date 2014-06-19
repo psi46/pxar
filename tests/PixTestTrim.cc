@@ -228,7 +228,20 @@ void PixTestTrim::trimTest() {
   do {
     if (rocDone.size() == rocIds.size()) break;
     fApi->setDAC("vtrim", itrim);
-    vector<pair<uint8_t, vector<pixel> > > results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+    vector<pair<uint8_t, vector<pixel> > > results;
+    int cnt(0); 
+    bool done(false);
+    while (!done) {
+      try {
+	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+	done = true;
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
+      }
+      done = (cnt>5) || done;
+    }
+
     double minThr(999.), maxThr(-99); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
       if (rocDone.end() != find(rocDone.begin(), rocDone.end(), rocIds[iroc])) continue;
@@ -332,6 +345,9 @@ void PixTestTrim::trimTest() {
     
     fHistList.push_back(h2); 
     fHistOptions.insert(make_pair(h2, "colz"));
+
+    TH1* d1 = distribution(h2, 16, 0., 16.); 
+    fHistList.push_back(d1); 
   }
 
   vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", fParNtrig, fParVcal-20, fParVcal+20, 3); 
@@ -356,9 +372,10 @@ void PixTestTrim::trimTest() {
     vthrcompString += Form("%3d ", rocVthrComp[rocIds[iroc]]); 
   }
 
+  // -- save into files
   saveDacs();
   saveTrimBits();
-
+  
   // -- summary printout
   LOG(logINFO) << "PixTestAlive::trimTest() done";
   LOG(logINFO) << "vtrim:     " << vtrimString; 
@@ -373,6 +390,20 @@ void PixTestTrim::trimBitTest() {
 
   cacheDacs();
 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  unsigned int nrocs = rocIds.size();
+
+  // -- cache trim bits
+  for (unsigned int i = 0; i < nrocs; ++i) {
+    vector<pixelConfig> pix = fApi->_dut->getEnabledPixels(rocIds[i]);
+    int ix(-1), iy(-1); 
+    for (unsigned int ipix = 0; ipix < pix.size(); ++ipix) {
+      ix = pix[ipix].column;
+      iy = pix[ipix].row;
+      fTrimBits[i][ix][iy] = pix[ipix].trim;
+    }
+  }
+  
   vector<int>vtrim; 
   vtrim.push_back(255);
   vtrim.push_back(240);
@@ -406,7 +437,6 @@ void PixTestTrim::trimBitTest() {
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
   vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 200, 1), "thr");
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   
   // -- now loop over all trim bits
   vector<TH1*> thr;
@@ -455,6 +485,7 @@ void PixTestTrim::trimBitTest() {
   if (h1) h1->Draw();
   PixTest::update(); 
   restoreDacs();
+  setTrimBits(); 
   LOG(logINFO) << "PixTestTrim::trimBitTest() done "; 
   
 }

@@ -96,7 +96,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 	tcheck->SetState(kButtonUp);
       }
       string sTitle = tcheck->GetTitle();
-      fTest->setParameter(sTitle,string(tcheck->IsDown()?"1":"0")) ;
       tcheck->Connect("Clicked()", "PixTab", this, "boxChecked()");
       continue;
     }
@@ -164,7 +163,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
-  bStop->SetToolTipText("not yet implemented (should interrupt the test at a convenient place)");
+  bStop->SetToolTipText(fTest->getStopTip().c_str());
   bStop->ChangeOptions(bStop->GetOptions() | kFixedWidth);
   hFrame->AddFrame(bStop, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bStop->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
@@ -251,7 +250,8 @@ void PixTab::handleButtons(Int_t id) {
     }
 
     case B_DOSTOP: {
-      LOG(logDEBUG) << "and now what???";
+      fTest->runCommand("stop"); 
+      LOG(logDEBUG) << "stopping...and now what???";
       break;
     }
 
@@ -508,5 +508,6 @@ void PixTab::updateToolTips() {
     + string("\n") + fTest->getSummaryTip()
     ;
   fbModMap->SetToolTipText(tooltip.c_str());
+
   
 }

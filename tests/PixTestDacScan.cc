@@ -176,9 +176,12 @@ void PixTestDacScan::doTest() {
 	    done = true;
 	  }
 	} catch(DataMissingEvent &e){
-	  LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	  LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	  ++cnt;
 	  if (e.numberMissing > 10) done = true; 
+	} catch(pxarException &e) {
+	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	  ++cnt;
 	}
 	done = (cnt>5) || done;
       }

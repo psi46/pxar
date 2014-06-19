@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
 
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
-    verbosity("INFO"), flashFile("nada"), runtest("fulltest"); 
+    verbosity("INFO"), flashFile("nada"), runtest("fulltest"), trimVcal(""); 
   bool doRunGui(false), 
     doRunScript(false), 
     doRunSingleTest(false), 
@@ -62,17 +62,19 @@ int main(int argc, char *argv[]){
       cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
+      cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
     if (!strcmp(argv[i],"-a"))                                {doAnalysisOnly = true;} 
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
-    if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
+    if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
@@ -121,6 +123,10 @@ int main(int argc, char *argv[]){
     rootfile  = configParameters->getDirectory() + "/" + rootfile;
   }
 
+  if (trimVcal.compare("")) {
+    configParameters->setTrimVcalSuffix(trimVcal); 
+  }
+  
   logfile = rootfile; 
   PixUtil::replaceAll(logfile, ".root", ".log");
   createBackup(rootfile, logfile); 
@@ -142,7 +148,7 @@ int main(int argc, char *argv[]){
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
-  vector<pair<uint16_t, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
+  vector<pair<std::string, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
   try {
     api = new pxar::api("*", verbosity);

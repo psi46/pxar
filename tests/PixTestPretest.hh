@@ -20,6 +20,8 @@ public:
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
+  void getVthrCompThr();
+  
 
 private:
 
@@ -29,6 +31,12 @@ private:
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
   bool    fProblem; 
+  bool    fFinal;
+  
+  //-- VthrComp for X-rays calibration
+  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, uint16_t FLAGS);
+  std::string getVthrCompString(std::vector<uint8_t>rocIds,std::vector<int> VthrComp);
+  std::vector<int> xPixelAliveSingleSweep();
 
   ClassDef(PixTestPretest, 1)
 

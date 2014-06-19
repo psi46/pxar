@@ -44,7 +44,7 @@ std::string api::getVersion() { return PACKAGE_STRING; }
 
 bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 			std::vector<std::pair<std::string,double> > power_settings,
-			std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+			std::vector<std::pair<std::string,uint8_t> > pg_setup) {
 
   // Check the HAL status before doing anything else:
   if(!_hal->compatible()) return false;
@@ -75,7 +75,7 @@ void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_de
   LOG(logDEBUGAPI) << "Testboard signal delays updated.";
 }
 
-void api::setPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup) {
+void api::setPatternGenerator(std::vector<std::pair<std::string,uint8_t> > pg_setup) {
   if(!_hal->status()) {
     LOG(logERROR) << "Pattern generator not updated!";
     return;
@@ -1039,6 +1039,9 @@ bool api::daqStart() {
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
 
+  // Clearing previously initialized DAQ sessions:
+  _hal->daqClear();
+
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
   
   // Setup the configured mask and trim state of the DUT:
@@ -1060,7 +1063,16 @@ bool api::daqStart() {
   return true;
 }
 
-bool api::daqStatus() {
+bool api::daqStatus()
+{
+
+  uint8_t perFull;
+
+  return daqStatus(perFull);
+
+}
+
+bool api::daqStatus(uint8_t & perFull) {
 
   // Check if a DAQ session is running:
   if(!_daq_running) {
@@ -1071,8 +1083,9 @@ bool api::daqStatus() {
   // Check if we still have enough buffer memory left (with some safety margin).
   // Only filling buffer up to 90% in order not to lose data.
   uint32_t filled_buffer = _hal->daqBufferStatus();
+  perFull = static_cast<uint8_t>(static_cast<float>(filled_buffer)/_daq_buffersize*100.0);
   if(filled_buffer > 0.9*_daq_buffersize) {
-    LOG(logDEBUGAPI) << "DAQ buffer about to overflow!";
+    LOG(logWARNING) << "DAQ buffer about to overflow!";
     return false;
   }
 
@@ -1081,35 +1094,38 @@ bool api::daqStatus() {
   return true;
 }
 
-void api::daqTrigger(uint32_t nTrig, uint16_t period) {
+uint16_t api::daqTrigger(uint32_t nTrig, uint16_t period) {
 
-  if(daqStatus()) {
-    // Pattern Generator loop doesn't work for delay periods smaller than
-    // the pattern generator duration, so limit it to that:
-    if(period < _dut->pg_sum) {
-      period = _dut->pg_sum;
-      LOG(logWARNING) << "Loop period setting too small for configured "
-		      << "Pattern generator. "
-		      << "Setting loop delay to " << period << " clk";
-    }
-    // Just passing the call to the HAL, not doing anything else here:
-    _hal->daqTrigger(nTrig,period);
+  if(!daqStatus()) { return 0; }
+  // Pattern Generator loop doesn't work for delay periods smaller than
+  // the pattern generator duration, so limit it to that:
+  if(period < _dut->pg_sum) {
+    period = _dut->pg_sum;
+    LOG(logWARNING) << "Trigger frequency too high for configured "
+		    << "Pattern generator. "
+		    << "Forcing loop delay to " << period << " clk";
+    LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
+  // Just passing the call to the HAL, not doing anything else here:
+  _hal->daqTrigger(nTrig,period);
+  return period;
 }
 
-void api::daqTriggerLoop(uint16_t period) {
+uint16_t api::daqTriggerLoop(uint16_t period) {
 
-  if(daqStatus()) {
-    // Pattern Generator loop doesn't work for delay periods smaller than
-    // the pattern generator duration, so limit it to that:
-    if(period < _dut->pg_sum) {
-      period = _dut->pg_sum;
-      LOG(logWARNING) << "Loop period setting too small for configured "
-		      << "Pattern generator. "
-		      << "Setting loop delay to " << period << " clk";
-    }
-    _hal->daqTriggerLoop(period);
+  if(!daqStatus()) { return 0; }
+
+  // Pattern Generator loop doesn't work for delay periods smaller than
+  // the pattern generator duration, so limit it to that:
+  if(period < _dut->pg_sum) {
+    period = _dut->pg_sum;
+    LOG(logWARNING) << "Trigger frequency too high for configured "
+		    << "Pattern generator. "
+		    << "Forcing loop delay to " << period << " clk";
+    LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
+  _hal->daqTriggerLoop(period);
+  return period;
 }
 
 void api::daqTriggerLoopHalt() {
@@ -1122,10 +1138,6 @@ std::vector<uint16_t> api::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   std::vector<uint16_t> buffer = _hal->daqBuffer();
-
-  // We read out everything, reset the buffer:
-  // Reset all active channels:
-  _hal->daqClear();
   return buffer;
 }
 
@@ -1139,10 +1151,7 @@ std::vector<rawEvent> api::daqGetRawEventBuffer() {
   // Dereference all vector entries and give data back:
   for(std::vector<rawEvent*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
-  }  
-  // We read out everything, reset the buffer:
-  // Reset all active channels:
-  _hal->daqClear();
+  }
   return data;
 }
 
@@ -1160,10 +1169,6 @@ std::vector<Event> api::daqGetEventBuffer() {
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
   }
-  
-  // We read out everything, reset the buffer:
-  // Reset all active channels:
-  _hal->daqClear();
   return data;
 }
 
@@ -1185,7 +1190,9 @@ rawEvent api::daqGetRawEvent() {
   return (*_hal->daqRawEvent());
 }
 
-uint32_t api::daqGetNDecoderErrors(){
+uint32_t api::daqGetNDecoderErrors() {
+
+  // Return the accumulated number of decoding errors:
   return _ndecode_errors_lastdaq;
 }
 
@@ -1193,7 +1200,10 @@ uint32_t api::daqGetNDecoderErrors(){
 bool api::daqStop() {
 
   if(!status()) {return false;}
-  if(!daqStatus()) {return false;}
+  if(!_daq_running) {
+    LOG(logINFO) << "No DAQ running, not executing daqStop command.";
+    return false;
+  }
 
   _daq_running = false;
   
@@ -1211,7 +1221,7 @@ bool api::daqStop() {
     _hal->AllColumnsSetEnable(rocit->i2c_address,false);
   }
 
-  return false;
+  return true;
 }
 
 
@@ -1854,10 +1864,14 @@ void api::checkTestboardPower(std::vector<std::pair<std::string,double> > power_
   }
 }
 
-void api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+void api::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &pg_setup) {
   
-  uint32_t delay_sum = 0;
+  std::vector<std::pair<uint16_t,uint8_t> > patterns;
 
+  // Get the Pattern Generator dictionary for lookup:
+  PatternGeneratorDictionary * _dict = PatternGeneratorDictionary::getInstance();
+
+  // Check total length of the pattern generator:
   if(pg_setup.size() > 256) {
     LOG(logCRITICAL) << "Pattern too long (" << pg_setup.size() << " entries) for pattern generator. "
 		     << "Only 256 entries allowed!";
@@ -1865,22 +1879,44 @@ void api::verifyPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > &pg_s
   }
   else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
 
-  for(std::vector<std::pair<uint16_t,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
-    if((*it).second == 0 && it != pg_setup.end() -1 ) {
+  // Loop over all entries provided:
+  for(std::vector<std::pair<std::string,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
+
+    // Check for current element if delay is zero:
+    if(it->second == 0 && it != pg_setup.end() -1 ) {
       LOG(logCRITICAL) << "Found delay = 0 on early entry! This stops the pattern generator at position " 
 		       << static_cast<int>(it - pg_setup.begin())  << ".";
-      throw InvalidConfig("Found delay = 0 on early entry! This stops the pattern generator");
+      throw InvalidConfig("Found delay = 0 on early entry! This stops the pattern generator.");
     }
+
     // Check last entry for PG stop signal (delay = 0):
-    if(it == pg_setup.end() - 1 && (*it).second != 0) {
+    if(it == pg_setup.end() - 1 && it->second != 0) {
       LOG(logWARNING) << "No delay = 0 found on last entry. Setting last delay to 0 to stop the pattern generator.";
-      (*it).second = 0;
+      it->second = 0;
     }
-    delay_sum += (*it).second;
+
+    // Convert the name to lower case for comparison:
+    std::transform(it->first.begin(), it->first.end(), it->first.begin(), ::tolower);
+
+    std::istringstream signals(it->first);
+    std::string s;
+    uint16_t signal = 0;
+    // Tokenize the signal string into single PG signals, separated by ";":
+    while (std::getline(signals, s, ';')) {
+      // Get the signal from the dictionary object:
+      uint16_t sig = _dict->getSignal(s);
+      if(sig != PG_ERR) signal += sig;
+      else {
+	LOG(logCRITICAL) << "Could not find pattern generator signal \"" << s << "\" in the dictionary!";
+	throw InvalidConfig("Wrong pattern generator signal provided.");
+      }
+      LOG(logDEBUGAPI) << "Found PG signal " << s << " (" << std::hex << sig << std::dec << ")";
+    }
+    patterns.push_back(std::make_pair(signal,it->second));
   }
 
   // Store the Pattern Generator commands in the DUT:
-  _dut->pg_setup = pg_setup;
+  _dut->pg_setup = patterns;
   // Calculate the sum of all delays and store it:
   _dut->pg_sum = getPatternGeneratorDelaySum(_dut->pg_setup);
 }

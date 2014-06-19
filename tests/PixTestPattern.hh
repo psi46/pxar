@@ -1,4 +1,3 @@
-// -- author: Martino Dall'Osso
 #ifndef PixTestPattern_H
 #define PixTestPattern_H
 
@@ -11,35 +10,49 @@ public:
 	PixTestPattern(PixSetup *, std::string);
 	PixTestPattern();
 	virtual ~PixTestPattern();
+
 	virtual bool setParameter(std::string parName, std::string sval);
 	void init();
 	void setToolTips();
-	void bookHist(std::string);
+	void doTest();
 
-	void runCommand(std::string );	
-	void choosePIX(std::string);
+	void stop();
+	void runCommand(std::string);
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
-	void PrintEvents();
-	void doTest();
+	void setHistos();
+	void FillHistos(std::vector<pxar::Event>);
+	void PrintEvents(int, int, std::string);
+	void TriggerLoop(int );
+	void pgToDefault();
+	void FinalCleaning();
 
 private:
 
-	int     fParNtrig;
-	bool	fParTrigLoop;
+	int     fParPgCycles;
+	int	    fParTrigLoop;
 	int     fParPeriod;
-	int	fParSeconds;
-	bool	fTestAllPixels;
-	bool	fUnMaskAllPixels;
+	int	    fParSeconds;
 	bool	fPatternFromFile;
-	bool	fPixelsFromFile;
 	bool	fResultsOnFile;
 	bool    fBinOut;
 	std::string fFileName;
-	std::string str1, str2;
-	std::string::size_type s0, s1;
-	std::vector<std::pair<uint16_t, uint8_t> > pg_setup;
+	bool	fUnMaskAll;
+
+	bool    fParOutOfRange;
+	bool    fDaq_loop;
+	std::string f_Directory;
+	std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 	std::vector<std::pair<int, int> > fPIXm;
+	uint16_t fPeriod;
+	int		fCheckFreq;
+	
+	std::vector<TH2D*> fHits;
+	std::vector<TProfile2D*> fPhmap;
+	std::vector<TH1D*> fPh;
+	TH1D *h1;
+	TH2D *h2;
+	TProfile2D *p2;
 
 	ClassDef(PixTestPattern, 1)
 

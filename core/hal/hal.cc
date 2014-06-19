@@ -1670,8 +1670,9 @@ void hal::daqStop() {
   // Stop the Pattern Generator, just in case (also stops Pg_Loop())
   _testboard->Pg_Stop();
 
-  // Calling Daq_Stop here - calling Daq_Diable would also trigger
-  // a FIFO reset (deleting the recorded data)
+  // Calling Daq_Stop here - calling Daq_Close would also trigger
+  // a RAM reset (deleting the recorded data)
+
   // Stopping DAQ for all 8 possible channels
   // FIXME provide daq_stop_all NIOS funktion?
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Stop(channel); }
@@ -1688,7 +1689,8 @@ void hal::daqClear() {
   src1 = dtbSource();
   src2 = dtbSource();
   src3 = dtbSource();
-  // FIXME provide daq_clear_all NIOS funktion?
+
+  // Running Daq_Close() to delete all data and free allocated RAM:
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
 }

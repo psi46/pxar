@@ -144,13 +144,13 @@ void PixTestBBMap::doTest() {
 
   // -- summary printout
   string bbString(""), hname(""); 
-  Double_t bbprob(0.); 
+  double bbprob(0.); 
   for (unsigned int i = 0; i < thrmapsCals.size(); ++i) {
     hname = thrmapsCals[i]->GetName();
     if (string::npos == hname.find("dist_thr_")) continue;
     h = (TH1D*)thrmapsCals[i];
     bbprob = h->Integral(1, 10); 
-    bbString += Form(" %4d", bbprob); 
+    bbString += Form(" %6.4f", bbprob); 
   }
 
   h->Draw();

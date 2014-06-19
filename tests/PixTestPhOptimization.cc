@@ -106,7 +106,20 @@ void PixTestPhOptimization::doTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   fApi->setDAC("ctrlreg",4);
-  std::vector<pxar::pixel> thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
+  std::vector<pxar::pixel> thrmap;
+  int cnt(0); 
+  bool done(false);
+  while (!done) {
+    try {
+      thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
   int minthr=0;
   LOG(logDEBUG) << "thr map size "<<thrmap.size()<<endl;
 
@@ -145,7 +158,21 @@ void PixTestPhOptimization::doTest() {
   fApi->setDAC("vcal",255);
   fApi->setDAC("ctrlreg",4);
   //scanning through offset and scale for max pixel (or randpixel)
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_max = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_max;
+
+  cnt = 0; 
+  done = false;
+  while (!done) {
+    try {
+      dacdac_max = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
   fApi->_dut->testPixel(minpixel.column,minpixel.row,true);
@@ -155,7 +182,20 @@ void PixTestPhOptimization::doTest() {
   fApi->setDAC("ctrlreg",4);
   fApi->setDAC("vcal",minthr);
   //scanning through offset and scale for min pixel (or same randpixel)
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min;
+  cnt = 0; 
+  done = false;
+  while (!done) {
+    try {
+      dacdac_min = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
   //search for optimal dac values in 3 steps
   //1. shrinking the PH to be completely inside the ADC range, adjusting phscale
   int ps_opt = 999, po_opt = 999;
@@ -184,7 +224,19 @@ void PixTestPhOptimization::doTest() {
   fApi->_dut->maskAllPixels(true);
   fApi->_dut->testPixel(maxpixel.column, maxpixel.row, true);
   fApi->_dut->maskPixel(maxpixel.column, maxpixel.row, false);
-  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+  cnt = 0; 
+  done = false;
+  while (!done) {
+    try {
+      results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, vector<pixel> > v = results[i];
@@ -211,7 +263,19 @@ void PixTestPhOptimization::doTest() {
   fApi->_dut->maskAllPixels(true);
   fApi->_dut->testPixel(minpixel.column, minpixel.row, true);
   fApi->_dut->maskPixel(minpixel.column, minpixel.row, false);
-  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+  cnt = 0; 
+  done = false;
+  while (!done) {
+    try {
+      results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, vector<pixel> > v = results[i];
@@ -324,7 +388,20 @@ void PixTestPhOptimization::GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std
       fApi->setDAC("vcal",255);
       fApi->setDAC("ctrlreg",4);
       fApi->setDAC("phoffset",200);  
-      std::vector<pxar::pixel> result = fApi->getPulseheightMap(0, 10);
+      std::vector<pxar::pixel> result;
+      int cnt(0); 
+      bool done(false);
+      while (!done) {
+	try {
+	  result = fApi->getPulseheightMap(0, 10);
+	  done = true;
+	} catch(pxarException &e) {
+	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	  ++cnt;
+	}
+	done = (cnt>5) || done;
+      }
+      
       // Look for pixel with max. pulse height:
       LOG(logDEBUG) << "result size "<<result.size()<<endl;
       for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {

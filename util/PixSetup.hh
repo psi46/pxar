@@ -28,7 +28,6 @@ public:
   void               setMoreWebCloning(bool x) {fMoreWebCloning = x;}
   bool               doMoreWebCloning() {return fMoreWebCloning;}
 private: 
-  bool              fDebug; 
   bool              fMoreWebCloning;
   bool              fDoAnalysisOnly; 
   bool              fUseRootLogon;
