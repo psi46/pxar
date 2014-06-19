@@ -1198,7 +1198,10 @@ uint32_t api::daqGetNDecoderErrors() {
 bool api::daqStop() {
 
   if(!status()) {return false;}
-  if(!daqStatus()) {return false;}
+  if(!_daq_running) {
+    LOG(logINFO) << "No DAQ running, not executing daqStop command.";
+    return false;
+  }
 
   _daq_running = false;
   
