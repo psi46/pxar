@@ -1,6 +1,7 @@
 #include <stdlib.h>     /* atof, atoi */
 #include <algorithm>    // std::find
 #include <iostream>
+#include <fstream>
 
 #include <TH1.h>
 #include <TRandom.h>
@@ -48,7 +49,6 @@ bool PixTestTrim::setParameter(string parName, string sval) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
-
       break;
     }
   }
@@ -79,6 +79,10 @@ void PixTestTrim::runCommand(std::string command) {
   }
   if (!command.compare("trim")) {
     trimTest(); 
+    return;
+  }
+  if (!command.compare("getvthrcompthr")) {
+    getVthrCompThr(); 
     return;
   }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
@@ -125,6 +129,8 @@ void PixTestTrim::doTest() {
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
+
+  getVthrCompThr();
 
   LOG(logINFO) << "PixTestTrim::doTest() done ";
 }
@@ -655,4 +661,321 @@ void PixTestTrim::output4moreweb() {
 
   }
   pDir->cd(); 
+}
+
+// ----------------------------------------------------------------------
+void PixTestTrim::getVthrCompThr() {
+
+  /*First determine whether there are hot pixels by starting at low vthrcomp
+  and then raising, and checking for outliers
+  Next, loop through different Vthrcomp values to determine a threshold
+  value for Vthrcomp below which no hits are seen without X-ray source
+  Second bit may not be necessary anymore, but code already exists for this
+  and it probably wont take long, and does not hurt results, but arguable
+  improves them 
+  */
+
+  banner(Form("PixTestPretest::doVthrCompThr() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+  cacheDacs();
+  
+  fDirectory->cd();
+
+  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("vcal", fParVcal);
+  fFinal = 0;
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  
+  //-- Check and mask hot pixels
+  //loop through vthrcomp
+  vector<pair<int,int> > maskedPixels(0);
+  for (int vThrComp = 90; vThrComp < 96; vThrComp += 1) {
+    LOG(logDEBUG) << "setting vthrcomp to " << vThrComp;
+    //set vthrcomp
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      fApi->setDAC("vthrcomp", vThrComp,iroc); 
+    }
+    //pixel alive
+    pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("PixelAlive", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED); 
+    vector<TH2D*> test1 = tests.second;
+    //check for hot pixels
+    for (unsigned int i = 0; i < test1.size(); ++i){
+      vector<pair<int,int> > hotPixels = checkHotPixels(test1[i]);
+      for (unsigned int i=0; i<hotPixels.size();++i) {
+        maskedPixels.push_back(hotPixels[i]);
+      }
+    }
+  }
+
+  //-- Calcualte VthrComp
+
+  restoreDacs();
+  cacheDacs();
+ 
+  vector<int> currVthrComp(rocIds.size(),0);
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    currVthrComp[iroc] = fApi->_dut->getDAC(iroc,"vthrcomp");
+  }
+  
+  //Leave -1 at end of vthrCompValues[]!!
+  int vthrCompValues[] = {100,97,96,95,94,93,92,91,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-1};
+  int len = sizeof(vthrCompValues)/ sizeof(*vthrCompValues);
+  vector<int> index(len,0); // lets each ROC have track where it is in vthrCompValues
+  
+  vector<int> xHits(rocIds.size(),1);
+  string  currVthrCompString = getVthrCompString(rocIds, currVthrComp); 
+  LOG(logINFO) << "VthrComp Loop Running";
+  LOG(logINFO) << "#### VthrComp of ROCs (per ROC): " << currVthrCompString;
+
+  //initially check the default values
+  xHits = xPixelAliveSingleSweep();
+  if(fFinal){
+    LOG(logINFO) << "Conducting Second Check";
+    xHits = xPixelAliveSingleSweep();
+    if(fFinal){
+      LOG(logINFO) << "Conducting Third Check";
+      xHits = xPixelAliveSingleSweep();
+      if (!fFinal){
+        LOG(logINFO) << "Failed Third Check";
+      }
+    }
+    LOG(logINFO) << "Failed Second Check";
+  }
+
+  
+  if(!fFinal){ 
+  // if initial value was accepted, don't need anything more
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){   
+      while(currVthrComp[iroc] < vthrCompValues[index[iroc]]){
+        //set the vthrcomp of each ROC to first in list greater than default
+        index[iroc] += 1;
+      }
+      currVthrComp[iroc] = vthrCompValues[index[iroc]];
+      fApi->setDAC("vthrcomp", currVthrComp[iroc],iroc);  
+    }    
+  }
+
+  
+  //Loop through values in hardcoded list vthrCompValues
+  while(!fFinal){
+    currVthrCompString = getVthrCompString(rocIds, currVthrComp); 
+    LOG(logINFO) << "#### VthrComp of ROCs (per ROC): " << currVthrCompString;
+    xHits = xPixelAliveSingleSweep();
+    if(fFinal){
+      LOG(logINFO) << "Conducting Second Check";
+      xHits = xPixelAliveSingleSweep();
+      if(fFinal){
+        LOG(logINFO) << "Conducting Third Check";
+        xHits = xPixelAliveSingleSweep();
+        if (!fFinal){
+          LOG(logINFO) << "Failed Third Check";
+        }
+        continue;
+      } else{
+      LOG(logINFO) << "Failed Second Check";
+      }
+    }        
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      //Only lower vthrcomp if individual ROC still has hits
+      if (xHits[iroc] != 0){
+        index[iroc]+=1;
+        if (vthrCompValues[index[iroc]]==-1){
+          //If we get through vthrCompValues list, then exit
+          LOG(logERROR) << "Detected unexpected hits for minimum VthrComp value = " 
+			<< vthrCompValues[index[iroc]-1] << "for ROC # " << iroc;
+          LOG(logERROR) << "Now exiting program, consider removing ROC, or modifying vthrCompValues[] in this file";
+	  //          exit(EXIT_FAILURE);
+        }
+        currVthrComp[iroc] = vthrCompValues[index[iroc]]; 
+        fApi->setDAC("vthrcomp", currVthrComp[iroc],iroc);          
+      }
+    }
+  }
+  LOG(logINFO) << "Finished VthrComp scan for all ROCs";
+  LOG(logINFO) << "VthrComp thresholds for ROCs in order: " << currVthrCompString;
+  
+  ofstream OutputFile;
+  OutputFile.open(Form("%s/%s", fPixSetup->getConfigParameters()->getDirectory().c_str(), "xraythr-vthrcomp.dat"));
+  unsigned nRocs = rocIds.size(); 
+  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+    OutputFile << static_cast<int>(currVthrComp[iroc]) << endl;
+  }
+  OutputFile.close();
+  
+  restoreDacs();
+  LOG(logINFO) << "PixTestPretest::getVthrCompThr() done";
+    
+}
+
+// ----------------------------------------------------------------------
+vector<int> PixTestTrim::xPixelAliveSingleSweep() { 
+  
+  pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("PixelAlive", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED); 
+  vector<TH2D*> test2 = tests.first;
+  vector<TH2D*> test3 = tests.second;
+  vector<int> deadPixel(test2.size(), 0); 
+  vector<int> probPixel(test2.size(), 0);
+  vector<int> xHits(test3.size(),0);
+  for (unsigned int i = 0; i < test2.size(); ++i) {
+    fHistOptions.insert(make_pair(test2[i], "colz"));
+    fHistOptions.insert(make_pair(test3[i], "colz"));    
+    for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
+	// -- count dead pixels
+	if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
+	  ++probPixel[i];
+	  if (test2[i]->GetBinContent(ix+1, iy+1) < 1) {
+	    ++deadPixel[i];
+	  }  
+	}
+	// -- Count X-ray hits detected
+	if (test3[i]->GetBinContent(ix+1,iy+1)>0){
+	  xHits[i] += static_cast<int> (test3[i]->GetBinContent(ix+1,iy+1));
+	}
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < xHits.size(); ++i){
+    if (xHits[i] !=0){
+      fFinal=0;
+      break;
+    }
+    //Go into final check mode only if all entries are zero
+    fFinal = 1;
+  }
+  if (fFinal){
+  //Print Pixel Alive for final VthrComp and single pixel run
+    copy(test2.begin(), test2.end(), back_inserter(fHistList));
+  }
+  copy(test3.begin(), test3.end(), back_inserter(fHistList));
+
+  TH2D *h = (TH2D*)(fHistList.back());
+
+  h->Draw(getHistOption(h).c_str());
+  
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+ 
+  // -- summary printout
+  string deadPixelString, probPixelString, xHitsString;
+  int acceptDead(10); //check if there are too many dead pixels, sign of test having run poorly
+  for (unsigned int i = 0; i < probPixel.size(); ++i) {
+    probPixelString += Form(" %4d", probPixel[i]); 
+    deadPixelString += Form(" %4d", deadPixel[i]);
+    xHitsString     += Form(" %4d", xHits[i]);
+    if (probPixel[i] > acceptDead) {
+      LOG(logERROR) << "Likely problem with ROC #" << i << " as there are " << probPixel[i] << " dead pixels";
+    }
+  }
+
+  LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
+  LOG(logINFO) << "number of red-efficiency pixels:    " << probPixelString;
+  LOG(logINFO) << "number of unexpected hits detected: " << xHitsString;
+  return xHits;
+ }
+ 
+// ----------------------------------------------------------------------
+pair<vector<TH2D*>,vector<TH2D*> > PixTestTrim::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
+
+  vector<pixel> results;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
+  int cnt(0); 
+  bool done = false;
+  while (!done){
+    try {
+      results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      done = true; 
+    } catch(DataMissingEvent &e) {
+      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
+  fDirectory->cd(); 
+  vector<TH2D*> maps;
+  vector<TH2D*> xMaps;
+  TH2D *h2(0),*h3(0); 
+  int vthrcomp = fApi -> _dut -> getDAC(0,"vthrcomp");
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    LOG(logDEBUG) << "Create hist " << Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc); 
+    h2 = bookTH2D(Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc), Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h3 = bookTH2D(Form("X-ray_Hit_map_VthrComp_%d_C%d", vthrcomp, iroc), Form("X-ray_Hit_map_VthrComp_%d_C%d", vthrcomp, rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.);
+    h3->SetMinimum(0.);
+    
+    h2->SetDirectory(fDirectory); 
+    h3->SetDirectory(fDirectory);
+    
+    setTitles(h2, "col", "row"); 
+    setTitles(h3, "col", "row"); 
+        
+    maps.push_back(h2); 
+    xMaps.push_back(h3);
+  }
+  int idx(-1);  
+
+  for (unsigned int i = 0; i < results.size(); ++i) {
+    idx = getIdxFromId(results[i].roc_id);
+    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
+      h2 = maps[idx];
+      h3 = xMaps[idx];
+      if (FLAGS | FLAG_CHECK_ORDER) {
+	if (results[i].value > 0) {
+	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+	} 
+	else { 
+	  //add a hit to the X-ray counter if a hit comes in out of order
+	  h3->Fill(results[i].column, results[i].row, 1);
+        }
+      } 
+      else {
+	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+      } 
+    }
+    else {
+      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
+    }
+  }
+  LOG(logDEBUG) << "Size of results from : PixTestXray::xEfficiencyMaps " << results.size();
+  return make_pair(maps,xMaps); 
+}
+
+// ----------------------------------------------------------------------
+string PixTestTrim::getVthrCompString(vector<uint8_t>rocIds,vector<int> VthrComp ) {
+  string vthrCompString = "";
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    vthrCompString += Form(" %4d", VthrComp[iroc]);
+  }
+  return vthrCompString;
+}
+// ----------------------------------------------------------------------
+vector<pair<int,int> > PixTestTrim::checkHotPixels(TH2D* h) {
+  /* Calculate average number of hits per pixel, and if this average is above
+  a certain threshold, then look if there are any pixels which are a margin of
+  safety above the average, and then mask these pixels and add them to the mask
+  list. */
+  vector<pair<int,int> > hotPixels(0);
+  double mean = h->GetMean();
+  double fos = 2.5;
+  LOG(logDEBUG) << "average number of unexpected hits per pixel: " << mean;
+  if (mean > 0.2) {
+    for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	// -- count dead pixels
+	if (h->GetBinContent(ix+1, iy+1) > fos*mean) {
+	  hotPixels.push_back(make_pair(ix,iy));
+	  LOG(logINFO) << "Found a hot pixel and masking Pixel (" << ix << ',' << iy << ')';
+	}
+      }
+    }
+  }
+  return hotPixels;
 }
