@@ -12,7 +12,6 @@ Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
 Ntrig               5
-getVthrCompThr      button
 SaveDacs            button
 
 -- PixelAlive 
@@ -71,6 +70,7 @@ trim                button
 TrimBits            button
 Ntrig               10
 Vcal                40
+getVthrCompThr      button
 
 -- GainPedestal
 showFits            checkbox
