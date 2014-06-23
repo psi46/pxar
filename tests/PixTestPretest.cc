@@ -822,8 +822,9 @@ void PixTestPretest::getVthrCompThr() {
   }
 
   //Leave -1 at end of vthrCompValues[]!!
-  int vthrCompValues[] = {100,97,96,95,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-1};
+  int vthrCompValues[] = {100,97,96,95,94,93,92,91,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-1};
   int len = sizeof(vthrCompValues)/ sizeof(*vthrCompValues);
+  vector<int> index(len,0); // lets each ROC have track where it is in vthrCompValues
 
   vector<int> xHits(rocIds.size(),1);
   string  currVthrCompString = getVthrCompString(rocIds, currVthrComp); 
@@ -846,16 +847,18 @@ void PixTestPretest::getVthrCompThr() {
   }
 
   
-  
-  vector<int> index(len,0); // lets each ROC have track where it is in vthrCompValues
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    while(currVthrComp[iroc] < vthrCompValues[index[iroc]]){
-      //set the vthrcomp of each ROC to first in list greater than default
-      index[iroc] += 1;
-      currVthrComp[iroc] = vthrCompValues[index[iroc]]; 
-      fApi->setDAC("vthrcomp", currVthrComp[iroc],iroc); 
-    }
+  if(!fFinal){ 
+  // if initial value was accepted, don't need anything more
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){   
+      while(currVthrComp[iroc] < vthrCompValues[index[iroc]]){
+        //set the vthrcomp of each ROC to first in list greater than default
+        index[iroc] += 1;
+      }
+      currVthrComp[iroc] = vthrCompValues[index[iroc]];
+      fApi->setDAC("vthrcomp", currVthrComp[iroc],iroc);  
+    }    
   }
+
   
   //Loop through values in hardcoded list vthrCompValues
   while(!fFinal){
@@ -871,9 +874,10 @@ void PixTestPretest::getVthrCompThr() {
         if (!fFinal){
           LOG(logINFO) << "Failed Third Check";
         }
-        break;
-      }
+        continue;
+      } else{
       LOG(logINFO) << "Failed Second Check";
+      }
     }        
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       //Only lower vthrcomp if individual ROC still has hits

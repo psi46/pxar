@@ -1,4 +1,3 @@
-// -- author: Martino Dall'Osso
 // to send different patterns and check the readout
 
 #include <stdlib.h>   // atof, atoi
@@ -21,7 +20,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null"), fUnMaskAll(0){
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null"), fUnMaskAll(0), fParFillTree(0){
 	PixTest::init();
 	init();
 	LOG(logDEBUG) << "PixTestPattern ctor(PixSetup &a, string, TGTab *)";
@@ -120,6 +119,12 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fUnMaskAll -> " << fUnMaskAll;
 			}
 
+			if (!parName.compare("filltree")) {
+				fParFillTree = !(atoi(sval.c_str()) == 0);
+				setToolTips();
+				LOG(logINFO) << "  setting fParFillTree -> " << fParFillTree;
+			}
+
 			break;
 		}
 	}
@@ -135,6 +140,7 @@ void PixTestPattern::init()
 	if (!fDirectory)
 		fDirectory = gFile->mkdir(fName.c_str());
 	fDirectory->cd();
+	fTree = 0;
 }
 
 // ----------------------------------------------------------------------
@@ -147,6 +153,8 @@ void PixTestPattern::setToolTips() {
 
 //------------------------------------------------------------------------------
 PixTestPattern::~PixTestPattern(){ //dctor
+	fDirectory->cd();
+	if (fTree && fParFillTree) fTree->Write();
 }
 
 // ----------------------------------------------------------------------
@@ -342,81 +350,81 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 
 // ----------------------------------------------------------------------
 void PixTestPattern::setHistos(){
-	vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-	TH1D *h1(0);
-	TH2D *h2(0);
-	TProfile2D *p2(0);
+
+	if (fParFillTree) bookTree();
+	std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+
 	for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-		h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
-		h2->SetMinimum(0.);
-		h2->SetDirectory(fDirectory);
-		setTitles(h2, "col", "row");
-		fHistOptions.insert(make_pair(h2, "colz"));
-		fHits.push_back(h2);
+		fH2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+		fH2->SetMinimum(0.);
+		fH2->SetDirectory(fDirectory);
+		setTitles(fH2, "col", "row");
+		fHistOptions.insert(make_pair(fH2, "colz"));
+		fHits.push_back(fH2);
 
-		p2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
-		p2->SetMinimum(0.);
-		p2->SetDirectory(fDirectory);
-		setTitles(p2, "col", "row");
-		fHistOptions.insert(make_pair(p2, "colz"));
-		fPhmap.push_back(p2);
+		fP2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+		fP2 ->SetMinimum(0.);
+		fP2->SetDirectory(fDirectory);
+		setTitles(fP2, "col", "row");
+		fHistOptions.insert(make_pair(fP2, "colz"));
+		fPhmap.push_back(fP2);
 
-		h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
-		h1->SetMinimum(0.);
-		h1->SetDirectory(fDirectory);
-		setTitles(h1, "ADC", "Entries/bin");
-		fPh.push_back(h1);
+		fH1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
+		fH1->SetMinimum(0.);
+		fH1->SetDirectory(fDirectory);
+		setTitles(fH1, "ADC", "Entries/bin");
+		fPh.push_back(fH1);
 	}
 }
 
 // ----------------------------------------------------------------------
-void PixTestPattern::FillHistos(vector<pxar::Event> data) {	
+void PixTestPattern::FillHistos(std::vector<pxar::Event> data) {	
 		std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-		TH1D *h1(0);
-		TH2D *h2(0);
-		TProfile2D *p2(0);
 		int pixCnt(0);
 		int idx(-1);
 		std::vector<uint8_t> cnt;
 		//not to fill always the first histo:
-		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) 
-		        cnt.push_back((uint8_t)(histCycle(Form("hits_C%d", iroc)) - 1));
-
+		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc)
+			cnt.push_back((uint8_t)(histCycle(Form("hits_C%d", iroc)) - 1));
+		
 		for (std::vector<pxar::Event>::iterator it = data.begin(); it != data.end(); ++it) {
+
 			for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+
+				if (fParFillTree) {
+					fTreeEvent.header = it->header;
+					fTreeEvent.dac = 0;
+					fTreeEvent.trailer = it->trailer;
+					fTreeEvent.numDecoderErrors = it->numDecoderErrors;
+					fTreeEvent.npix = it->pixels.size();
+				}
 				for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
 					idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt[iroc];
 					fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
 					fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].value);
 					fPh[idx]->Fill(it->pixels[ipix].value);
-				}
+					if (fParFillTree) {
+						fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
+						fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
+						fTreeEvent.prow[ipix] = it->pixels[ipix].row;
+						fTreeEvent.pval[ipix] = it->pixels[ipix].value;
+						fTreeEvent.pq[ipix] = 0; //no charge..
+					}
+				}				
+				if (fParFillTree) fTree->Fill();
 			}
 		}
 
-		copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
-		h1 = (TH1D*)(fHistList.back());
-		h1->Draw(getHistOption(h2).c_str());
-		fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-		PixTest::update();
-
-		copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
-		p2 = (TProfile2D*)(fHistList.back());
-		p2->Draw(getHistOption(p2).c_str());
-		fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
-		PixTest::update();
-
-		copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
-		h2 = (TH2D*)(fHistList.back());
-		h2->Draw(getHistOption(h2).c_str());
-		fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+		//to draw the hitsmap as 'online' check.
+		fH2 = (TH2D*)(fHits.back());
+		fH2->Draw(getHistOption(fH2).c_str());
 		PixTest::update();
 }
-
 
 // ----------------------------------------------------------------------
 void PixTestPattern::PrintEvents(int par1, int par2, string flag) {
 
-	vector<pxar::Event> daqEvBuffer;
+	std::vector<pxar::Event> daqEvBuffer;
 	size_t daqEvBuffsiz;
 
 	if (!fResultsOnFile)
@@ -578,14 +586,14 @@ void PixTestPattern::FinalCleaning() {
 	//clean local variables:
 	fPIX.clear();
 	fPIXm.clear();
-	fPg_setup.clear();
+	fPg_setup.clear();		
 }
 
 //------------------------------------------------------------------------------
 void PixTestPattern::doTest()
 {
 	fDirectory->cd();
-	fHistList.clear();
+	fHistList.clear(); //needed
 	fPg_setup.clear();
 	PixTest::update();
 
@@ -634,7 +642,7 @@ void PixTestPattern::doTest()
 			}
 		}
 	
-	//set the histos....
+	//set the histos
 	setHistos();
 
 	// Start the DAQ:
@@ -693,7 +701,21 @@ void PixTestPattern::doTest()
 	//::::::::::::::::::::::::::::::
 	//DAQ - THE END.
 
-	PixTest::update(); //to avoid crash after pushing 'clear' button?
+	copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
+	fH1 = (TH1D*)(fHistList.back());
+	fH1->Draw(getHistOption(fH1).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), fH1);
+
+	copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
+	fP2 = (TProfile2D*)(fHistList.back());
+	fP2->Draw(getHistOption(fP2).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), fP2);
+
+	copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+	fH2 = (TH2D*)(fHistList.back());
+	fH2->Draw(getHistOption(fH2).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), fH2);
+	PixTest::update();
 
 	//set PG to default and clean everything:
 	FinalCleaning();
