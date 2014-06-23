@@ -109,8 +109,8 @@ DelayTBM            checkbox
 FillTree            checkbox
 
 -- IV
-VoltageMin          50
-VoltageMax          450
-VoltageStep         20
-Delay               1
+VoltageMin          0
+VoltageMax          600
+VoltageStep         5
+Delay               3
 
