@@ -462,15 +462,11 @@ void PixTestXray::doXPixelAlive() {
 
   banner(Form("PixTestXray::xPixelAlive() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
   cacheDacs();
-<<<<<<< HEAD
 
   //Just for these two noisy pixels when tested at ETH June 19
   //fApi->_dut->maskPixel(0,79,true);
   //fApi->_dut->maskPixel(51,79,true);  
 
-=======
-  
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   fDirectory->cd();
 
   fApi->setDAC("ctrlreg", 4);
@@ -482,13 +478,6 @@ void PixTestXray::doXPixelAlive() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   vector<int> currVthrComp(rocIds.size(),0);
   
-<<<<<<< HEAD
-=======
-  //Instead of below for loop, want to go through the file made in the pretest function!!!
-  //Also want to put the DAC values into currVthrComp[iroc] for nice print out
-
-
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   ifstream InputFile;
   InputFile.open(Form("%s/%s", fPixSetup->getConfigParameters()->getDirectory().c_str(), "xraythr-vthrcomp.dat"));
   unsigned nRocs = rocIds.size(); 
@@ -502,23 +491,12 @@ void PixTestXray::doXPixelAlive() {
     fApi->setDAC("vthrcomp",currVthrComp[iroc] ,iroc);
   }
   
-<<<<<<< HEAD
-=======
-  
-  
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   string currVthrCompString = getVthrCompString(rocIds, currVthrComp);
   LOG(logINFO) << "Single Pixel Alive test running";
   LOG(logINFO) << "#### VthrComp of ROCs (per ROC): " << currVthrCompString;
   xPixelAliveSingleSweep();
 
   restoreDacs();
-<<<<<<< HEAD
-=======
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fApi->setDAC("vthrcomp", currVthrComp[iroc],iroc);
-  }
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   LOG(logINFO) << "PixTestXray::doXPixelAlive() done";
 
 }
@@ -531,23 +509,15 @@ vector<int> PixTestXray::xPixelAliveSingleSweep() {
   vector<int> deadPixel(test2.size(), 0); 
   vector<int> probPixel(test2.size(), 0);
   vector<int> xHits(test3.size(),0);
-<<<<<<< HEAD
   vector<int> vCalHits (test2.size(),0);   
-=======
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
     fHistOptions.insert(make_pair(test3[i], "colz"));    
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
-<<<<<<< HEAD
         vCalHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
 	// -- count dead pixels
         if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
-=======
-	// -- count dead pixels
-	if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
 	  ++probPixel[i];
 	  if (test2[i]->GetBinContent(ix+1, iy+1) < 1) {
 	    ++deadPixel[i];
@@ -571,16 +541,11 @@ vector<int> PixTestXray::xPixelAliveSingleSweep() {
   PixTest::update(); 
  
   // -- summary printout
-<<<<<<< HEAD
   string deadPixelString, probPixelString, xHitsString, numTrigsString, vCalHitsString,xRayHitEfficiencyString,xRayRateString;
-=======
-  string deadPixelString, probPixelString, xHitsString; 
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   for (unsigned int i = 0; i < probPixel.size(); ++i) {
     probPixelString += Form(" %4d", probPixel[i]); 
     deadPixelString += Form(" %4d", deadPixel[i]);
     xHitsString     += Form(" %4d", xHits[i]);
-<<<<<<< HEAD
     vCalHitsString += Form(" %4d",vCalHits[i]); 
     int numTrigs = fParNtrig * 4160;
     numTrigsString += Form(" %4d", numTrigs );
@@ -596,14 +561,6 @@ vector<int> PixTestXray::xPixelAliveSingleSweep() {
   LOG(logINFO) << "number of Vcal hits detected: " << vCalHitsString;
   LOG(logINFO) << "Vcal hit detection efficiency (%): " << xRayHitEfficiencyString;
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
-=======
-  }
-
-
-  LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
-  LOG(logINFO) << "number of red-efficiency pixels:    " << probPixelString;
-  LOG(logINFO) << "number of unexpected hits detected: " << xHitsString;
->>>>>>> b466063fdcd90d7d682558fb8320ed378cb47462
   return xHits;
  }
 // ----------------------------------------------------------------------
