@@ -1,13 +1,11 @@
-
-// Record an IV curve (only available if built with HV Power supply support)
-
-#include <stdlib.h>     /* atof, atoi */
-#include <algorithm>    // std::find
+#include <stdlib.h>    
+#include <algorithm>   
 #include <iostream>
 #include <fstream>
 
 #include <TH1.h>
 #include <TMath.h>
+#include <TTime.h>
 
 #include "PixTestIV.hh"
 #include "log.h"
@@ -99,7 +97,19 @@ void PixTestIV::doTest() {
   h1->SetStats(0.);
   setTitles(h1, "U [V]", "I [uA]");
 
+  map<int, uint32_t> ts; 
+
   PixTest::update();
+
+  //   for (int i = 0; i <= 600; i += 50) {
+  //     h1->SetBinContent(i+1, i);
+  //     fTimeStamp->Set();
+  //     ts.insert(make_pair(i, fTimeStamp->GetTimeSpec().tv_sec));
+  //     cout << fTimeStamp->GetTimeSpec().tv_sec << endl;
+  //     mDelay(1000); 
+  //   }
+
+  int tripped(-1);
 
   LOG(logINFO) << "Starting IV curve measurement...";
   pxar::hvsupply *hv = new pxar::hvsupply();
@@ -110,7 +120,6 @@ void PixTestIV::doTest() {
   
   // -- loop over voltage:
   double voltMeasured(-1.), amps(-1.);
-  int tripped(-1);
   for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     hv->setVoltage(voltSet);
     // -- get within 1V of specified voltage. Try at most 5 times.
@@ -133,6 +142,7 @@ void PixTestIV::doTest() {
     mDelay(fParDelay*1000);
     LOG(logDEBUG) << Form("V = - %3d (meas: %+7.2f) I = %4.2e uA (ntry = %d)", voltSet, voltMeasured, amps, ntry);
     h1->Fill(TMath::Abs(voltSet), TMath::Abs(amps));
+    ts.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), fTimeStamp->GetTimeSpec().tv_sec));
   }
 
   // -- ramp down voltage
@@ -143,18 +153,25 @@ void PixTestIV::doTest() {
   hv->setVoltage(vOld);
   delete hv;
 
+
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   h1->Draw("p");
   PixTest::update();
 
   ofstream OutputFile;
-  OutputFile.open(Form("%s/iv.dat", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
-  OutputFile << "Voltage [V] Current [A]" << endl << endl;
+  OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
+  OutputFile << "#Voltage [V] Current [A]  Timestamp" << endl << endl;
 
   for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     if (tripped > -1 && voltSet > tripped) break;
-    OutputFile << Form("%e %e", static_cast<double>(voltSet), 1.e-6*h1->GetBinContent(h1->FindBin(voltSet))) << endl; 
+    OutputFile << Form("%+7.3f %+e %ld", 
+		       static_cast<double>(voltSet), 
+		       1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
+		       static_cast<unsigned long>(ts[voltSet])
+		       )
+      
+	       << endl; 
   }
   OutputFile.close();
 
