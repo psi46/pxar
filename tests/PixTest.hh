@@ -24,6 +24,7 @@ typedef char int8_t;
 #include <TDirectory.h> 
 #include <TFile.h>
 #include <TSystem.h>
+#include <TTimeStamp.h>
 
 #include "api.h"
 #include "log.h"
@@ -120,6 +121,17 @@ public:
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
+
+
+  /// Calculate average number of hits per pixel, and if this average is above
+  /// a certain threshold, then look if there are any pixels which are a margin of
+  /// safety above the average, and then mask these pixels and add them to the mask
+  /// list.
+  std::vector<std::pair<int,int> > checkHotPixels(TH2D* h);
+
+  /// Return pixelAlive map and additional hit map when running with external source
+  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
+								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
   /// book a TH1D, adding version information to the name and title 
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
@@ -259,6 +271,7 @@ protected:
   std::map<int, int>    fId2Idx; ///< map the ROC ID onto the (results vector) index of the ROC
   TTree                *fTree; 
   TreeEvent             fTreeEvent;
+  TTimeStamp           *fTimeStamp; 
 
 
   ClassDef(PixTest, 1); // testing PixTest
