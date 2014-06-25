@@ -103,7 +103,7 @@ void PixTestIV::doTest() {
   h1->SetMarkerStyle(20);
   h1->SetMarkerSize(1.3);
   h1->SetStats(0.);
-  setTitles(h1, "U [V]", "I [uA]");
+  setTitles(h1, "-U [V]", "-I [uA]");
 
   map<int, uint32_t> ts; 
   map<int, double> vm; 
@@ -149,8 +149,8 @@ void PixTestIV::doTest() {
       break;
     }
     mDelay(fParDelay*1000);
-    LOG(logINFO) << Form("V = - %3d (meas: %+7.2f) I = %4.2e uA (ntry = %d) %ld", 
-			 voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
+    LOG(logINFO) << Form("V = %4d (meas: %+7.2f) I = %4.2e uA (ntry = %d) %ld", 
+			 -voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
     if (TMath::Abs(amps) > 0.) {
       h1->Fill(TMath::Abs(voltSet), TMath::Abs(amps));
     }
@@ -176,11 +176,11 @@ void PixTestIV::doTest() {
 
   ofstream OutputFile;
   OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
-  OutputFile << "#Voltage [V] Current [A]  Timestamp" << endl << endl;
+  OutputFile << "#Voltage[V] Current[A]    Timestamp" << endl << endl;
 
   for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     if (tripped > -1 && voltSet > tripped) break;
-    OutputFile << Form("%+7.3f %+e %ld", 
+    OutputFile << Form("%+8.3f    %+e %ld", 
 		       //		       static_cast<double>(voltSet), 
 		       static_cast<double>(vm[voltSet]), 
 		       1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
@@ -190,6 +190,6 @@ void PixTestIV::doTest() {
 	       << endl; 
   }
   OutputFile.close();
-
 #endif
+  LOG(logINFO) << "PixTestIV::doTest() done ";
 }
