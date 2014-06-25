@@ -17,7 +17,6 @@ public:
   void trimBitTest();
   void trimTest();
   void getVthrCompThr();
-  std::vector<std::pair<int,int> > checkHotPixels(TH2D* h);
 
   int adjustVtrim(); 
   std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax); 
@@ -34,7 +33,6 @@ private:
   
   //-- VthrComp for X-rays calibration
   bool    fFinal;
-  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, uint16_t FLAGS);
   std::string getVthrCompString(std::vector<uint8_t>rocIds,std::vector<int> VthrComp);
   std::vector<int> xPixelAliveSingleSweep();
   
