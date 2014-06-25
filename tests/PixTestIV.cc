@@ -183,7 +183,7 @@ void PixTestIV::doTest() {
   OutputFile << "# Voltage[V] Current[A]    Timestamp" << endl << endl;
 
   for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
-    if (tripped > -1 && voltSet > tripped) break;
+    if (tripped > -1 && voltSet >= tripped) break;
     OutputFile << Form("%+8.3f     %+e %ld", 
 		       //		       static_cast<double>(voltSet), 
 		       static_cast<double>(vm[voltSet]), 
