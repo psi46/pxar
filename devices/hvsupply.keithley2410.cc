@@ -27,7 +27,6 @@ hvsupply::hvsupply() {
   writeCommandString(":SYST:BEEP:STAT OFF\n");
   writeCommandString(":ROUT:TERM REAR\n");
   writeCommandString(":SOUR:VOLT:MODE FIX\n");
-  //writeCommandString(":FORM:ELEM VOLT,CURR\n");
   writeCommandString(":FUNC:CONC ON\n");
   writeCommandString(":SENS:AVER:TCON REP\n");
   writeCommandString(":SENS:AVER:COUNT 2\n");
@@ -36,18 +35,11 @@ hvsupply::hvsupply() {
   writeCommandString(":SENS:CURR:RANG 20E-6\n");
   writeCommandString(":SENS:CURR:NPLC 10\n");
   writeCommandString("SOUR:VOLT:IMM:AMPL -100\n");
-  //writeCommandString(":FORM:ELEM STAT\n");
   writeCommandString(":FORM:ELEM VOLT,CURR\n");
 
 
-  //  writeCommandString(":SENS:FUNC:ON \"CURR\"");
-  //  writeCommandString(":ARM:SOUR TIM");
-  //  writeCommandString(":ARM:TIM 0.001");
-  //  writeCommandString(":ARM:COUN INF");  
-  //  writeCommandString(":SENS:CURR:NPLC 0.01");
-  //  writeCommandString("DISP:DIG 7");
-
 }
+
 
 // Destructor: Will turn off the HV and terminate connection to the HV Power Supply device.
 hvsupply::~hvsupply() {
@@ -124,28 +116,9 @@ double hvsupply::getVoltage() {
   float voltage(0), current(0);
   char answer[1000] = {0};  
 
-  //  std::cout << "Measuring Voltage" << std::endl;
   writeCommandStringAndReadAnswer(":READ?", answer);
-  //  std::cout << "Raw answer: "  << answer << std::endl;
   sscanf(answer, "%e,%e", &voltage, &current);
   return voltage;
-  
-//   std::cout << "Measuring Voltage" << std::endl;
-//   writeCommandString(":ABOR");
-//   sleep(1); 
-
-//   writeCommandString(":ARM:COUN 40");
-//   writeCommandString(":MEAS:CURR?");
-
-//   sleep(1);
-//   writeCommandStringAndReadAnswer(":FETC?",answer);
-//   std::cout << "Raw answer: "  << answer << std::endl;
-//   sscanf(answer, "%e", &voltage);
-
-//   std::cout << "Voltage is: " << voltage  <<  std::endl;
-//   writeCommandString(":TRIG:CLE");
-
-//   return voltage;
 }
 
 // ----------------------------------------------------------------------
@@ -154,23 +127,10 @@ double hvsupply::getCurrent() {
   float current(0), voltage(0);
   char answer[1000] = {0};  
 
-  //  std::cout << "Measuring Current" << std::endl;
   writeCommandStringAndReadAnswer(":READ?", answer);
-  //  std::cout << "Raw answer: "  << answer << std::endl;
   sscanf(answer, "%e,%e", &voltage, &current);
   return current;
 
-//   writeCommandString(":ARM:COUN 40");
-//   writeCommandString(":MEAS:CURR?");
-
-//   sleep(1);
-//   writeCommandStringAndReadAnswer(":FETC?",answer);
-//   std::cout << "Raw answer: "  << answer << std::endl;
-//   sscanf(answer, "%e", &current);
-
-//   std::cout << "Current is: " << current << std::endl;
-//   writeCommandString(":INIT");
-//   return current;
 }
 
 // ----------------------------------------------------------------------
