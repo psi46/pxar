@@ -4,6 +4,7 @@
 #include "helper.h"
 #include "constants.h"
 #include <fstream>
+#include <stdlib.h>
 
 using namespace pxar;
 
@@ -215,14 +216,19 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
 
+  // Initialize rand():
+  srand (time(NULL));
+    
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
 	Event* evt = new Event();
+	// Generate a slightly random pulse height between 90 and 100:
+	uint16_t pulseheight = rand() % 2 + 90;
 	// Introduce some address encoding issues:
-	if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(rocid,i,j+1,90));} // PX 0,1 answers as PX 0,2
+	if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(rocid,i,j+1,pulseheight));} // PX 0,1 answers as PX 0,2
 	else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
-	else { evt->pixels.push_back(pixel(rocid,i,j,90)); }
+	else { evt->pixels.push_back(pixel(rocid,i,j,pulseheight)); }
 	data.push_back(evt);
       }
     }
