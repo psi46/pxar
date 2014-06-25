@@ -120,6 +120,8 @@ void PixTestIV::doTest() {
   double vOld = hv->getVoltage();
   LOG(logDEBUG) << "HV supply has default voltage: " << vOld; 
   hv->setCurrentLimit(50);
+
+  TTimeStamp startTs;
   
   // -- loop over voltage:
   double voltMeasured(-1.), amps(-1.);
@@ -177,11 +179,12 @@ void PixTestIV::doTest() {
 
   ofstream OutputFile;
   OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
-  OutputFile << "#Voltage[V] Current[A]    Timestamp" << endl << endl;
+  OutputFile << "# IV test from "   << startTs.AsString("l") << endl;
+  OutputFile << "# Voltage[V] Current[A]    Timestamp" << endl << endl;
 
   for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     if (tripped > -1 && voltSet > tripped) break;
-    OutputFile << Form("%+8.3f    %+e %ld", 
+    OutputFile << Form("%+8.3f     %+e %ld", 
 		       //		       static_cast<double>(voltSet), 
 		       static_cast<double>(vm[voltSet]), 
 		       1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
