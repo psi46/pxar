@@ -19,6 +19,7 @@ typedef unsigned char uint8_t;
 #include <iostream>
 #include <vector>
 #include <map>
+#include <limits>
 
 namespace pxar {
 
@@ -93,6 +94,20 @@ namespace pxar {
     }
 
   private:
+    /** Helper function to compress double input value into
+     *  a 16bit fixed-width integer for storage
+     */
+    uint16_t compactFloat(double input) {
+      return round(input*numeric_limits<uint16_t>::max());
+    }
+
+    /** Helper function to expand 16bit fixed-width integer value to
+     *  floating point value with precision roughly ~10^-5
+     */
+    double expandFloat(uint16_t input) {
+      return static_cast<double>(input)/numeric_limits<uint16_t>::max();
+    }
+
     /** Overloaded ostream operator for simple printing of pixel data
      */
     friend std::ostream & operator<<(std::ostream &out, pixel& px) {
