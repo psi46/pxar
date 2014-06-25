@@ -7,6 +7,7 @@ SET (TESTLIB_SOURCES
 PixTest.cc
 PixTestDaq.cc
 PixTestXray.cc
+PixTestHighRate.cc
 PixTestCurrentVsDac.cc
 PixTestIV.cc
 PixTestAlive.cc
@@ -31,6 +32,7 @@ set(TESTLIB_HEADERS
 PixTest.hh
 PixTestDaq.hh
 PixTestXray.hh
+PixTestHighRate.hh
 PixTestCurrentVsDac.hh
 PixTestIV.hh
 PixTestAlive.hh
