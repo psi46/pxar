@@ -130,11 +130,6 @@ void PixTestXray::runCommand(std::string command) {
     return;
   }
 
-  if (!command.compare("xpixelalive")) {
-    doXPixelAlive(); 
-    return;
-  }
-
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
@@ -212,7 +207,6 @@ void PixTestXray::doTest() {
   bigBanner(Form("PixTestXray::doTest()"));
   doPhRun();
   doRateScan();
-  doXPixelAlive();
 
   LOG(logINFO) << "PixTestXray::doTest() done ";
 
@@ -243,7 +237,7 @@ void PixTestXray::doPhRun() {
       fHistOptions.insert(make_pair(p2,"colz"));
       fQmap.push_back(p2);
       
-      h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 200, 0., 1000.);
+      h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 1000, 0., 1000.);
       h1->SetMinimum(0.);
       h1->SetDirectory(fDirectory);
       setTitles(h1, "Q [Vcal]", "Entries/bin");
@@ -458,184 +452,6 @@ void PixTestXray::doRateScan() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestXray::doXPixelAlive() {
-
-  banner(Form("PixTestXray::xPixelAlive() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
-  cacheDacs();
-
-  //Just for these two noisy pixels when tested at ETH June 19
-  //fApi->_dut->maskPixel(0,79,true);
-  //fApi->_dut->maskPixel(51,79,true);  
-
-  fDirectory->cd();
-
-  fApi->setDAC("ctrlreg", 4);
-  fApi->setDAC("vcal", fParVcal);
-
-  fApi->_dut->testAllPixels(true);
-  fApi->_dut->maskAllPixels(false);
-  
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  vector<int> currVthrComp(rocIds.size(),0);
-  
-  ifstream InputFile;
-  InputFile.open(Form("%s/%s", fPixSetup->getConfigParameters()->getDirectory().c_str(), "xraythr-vthrcomp.dat"));
-  unsigned nRocs = rocIds.size(); 
-  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
-    InputFile >> currVthrComp[iroc];
-    LOG(logDEBUG) << "ROC " << iroc << currVthrComp[iroc]; 
-  }
-  InputFile.close();
-  
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fApi->setDAC("vthrcomp",currVthrComp[iroc] ,iroc);
-  }
-  
-  string currVthrCompString = getVthrCompString(rocIds, currVthrComp);
-  LOG(logINFO) << "Single Pixel Alive test running";
-  LOG(logINFO) << "#### VthrComp of ROCs (per ROC): " << currVthrCompString;
-  xPixelAliveSingleSweep();
-
-  restoreDacs();
-  LOG(logINFO) << "PixTestXray::doXPixelAlive() done";
-
-}
-// ----------------------------------------------------------------------
-vector<int> PixTestXray::xPixelAliveSingleSweep() { 
-  
-  pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("PixelAlive", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED); 
-  vector<TH2D*> test2 = tests.first;
-  vector<TH2D*> test3 = tests.second;
-  vector<int> deadPixel(test2.size(), 0); 
-  vector<int> probPixel(test2.size(), 0);
-  vector<int> xHits(test3.size(),0);
-  vector<int> vCalHits (test2.size(),0);   
-  for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
-    fHistOptions.insert(make_pair(test3[i], "colz"));    
-    for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
-      for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
-        vCalHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
-	// -- count dead pixels
-        if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
-	  ++probPixel[i];
-	  if (test2[i]->GetBinContent(ix+1, iy+1) < 1) {
-	    ++deadPixel[i];
-	  }  
-	}
-	// -- Count X-ray hits detected
-	if (test3[i]->GetBinContent(ix+1,iy+1)>0){
-	  xHits[i] += static_cast<int> (test3[i]->GetBinContent(ix+1,iy+1));
-	}
-      }
-    }
-  }
-  copy(test2.begin(), test2.end(), back_inserter(fHistList));
-  copy(test3.begin(), test3.end(), back_inserter(fHistList));
-
-  TH2D *h = (TH2D*)(fHistList.back());
-
-  h->Draw(getHistOption(h).c_str());
-  
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
- 
-  // -- summary printout
-  string deadPixelString, probPixelString, xHitsString, numTrigsString, vCalHitsString,xRayHitEfficiencyString,xRayRateString;
-  for (unsigned int i = 0; i < probPixel.size(); ++i) {
-    probPixelString += Form(" %4d", probPixel[i]); 
-    deadPixelString += Form(" %4d", deadPixel[i]);
-    xHitsString     += Form(" %4d", xHits[i]);
-    vCalHitsString += Form(" %4d",vCalHits[i]); 
-    int numTrigs = fParNtrig * 4160;
-    numTrigsString += Form(" %4d", numTrigs );
-    xRayHitEfficiencyString += Form(" %.1f", (vCalHits[i]+fParNtrig*deadPixel[i])/static_cast<double>(numTrigs)*100);
-    xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./0.64*1000.);
-  }
-
-  
-  LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
-  LOG(logINFO) << "number of red-efficiency pixels:    " << probPixelString;
-  LOG(logINFO) << "number of X-ray hits detected: " << xHitsString;
-  LOG(logINFO) << "number of triggers sent (total per ROC): " << numTrigsString;
-  LOG(logINFO) << "number of Vcal hits detected: " << vCalHitsString;
-  LOG(logINFO) << "Vcal hit detection efficiency (%): " << xRayHitEfficiencyString;
-  LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
-  return xHits;
- }
-// ----------------------------------------------------------------------
-pair<vector<TH2D*>,vector<TH2D*> > PixTestXray::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
-
-  vector<pixel> results;
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
-  int cnt(0); 
-  bool done = false;
-  while (!done){
-    try {
-      results = fApi->getEfficiencyMap(FLAGS, ntrig);
-      done = true; 
-    } catch(DataMissingEvent &e) {
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-      ++cnt;
-    }
-    done = (cnt>5) || done;
-  }
-  LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
-
-  fDirectory->cd(); 
-  vector<TH2D*> maps;
-  vector<TH2D*> xMaps;
-  TH2D *h2(0),*h3(0); 
-  int vthrcomp = fApi -> _dut -> getDAC(0,"vthrcomp");
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc); 
-    h2 = bookTH2D(Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc), Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h3 = bookTH2D(Form("X-ray_Hit_map_VthrComp_%d_C%d", vthrcomp, iroc), Form("X-ray_Hit_map_VthrComp_%d_C%d", vthrcomp, rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.);
-    h3->SetMinimum(0.);
-    
-    h2->SetDirectory(fDirectory); 
-    h3->SetDirectory(fDirectory);
-    
-    setTitles(h2, "col", "row"); 
-    setTitles(h3, "col", "row"); 
-        
-    maps.push_back(h2); 
-    xMaps.push_back(h3);
-  }
-  int idx(-1);  
-
-  for (unsigned int i = 0; i < results.size(); ++i) {
-    idx = getIdxFromId(results[i].roc_id);
-    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
-      h2 = maps[idx];
-      h3 = xMaps[idx];
-      if (FLAGS | FLAG_CHECK_ORDER) {
-	if (results[i].value > 0) {
-	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
-	} 
-	else { 
-	  //add a hit to the X-ray counter if a hit comes in out of order
-	  h3->Fill(results[i].column, results[i].row, 1);
-        }
-      } 
-      else {
-	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
-      } 
-    }
-    else {
-      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
-    }
-  }
-  LOG(logDEBUG) << "Size of results from : PixTestXray::xEfficiencyMaps" << results.size();
-  return make_pair(maps,xMaps); 
-}
-
-// ----------------------------------------------------------------------
 void PixTestXray::readData() {
 
   int pixCnt(0);  
@@ -651,15 +467,6 @@ void PixTestXray::readData() {
     }
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
-}
-
-// ----------------------------------------------------------------------
-string PixTestXray::getVthrCompString(vector<uint8_t>rocIds,vector<int> VthrComp ) {
-  string vthrCompString = "";
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    vthrCompString += Form(" %4d", VthrComp[iroc]);
-  }
-  return vthrCompString;
 }
 
 // ----------------------------------------------------------------------
@@ -843,8 +650,6 @@ void PixTestXray::processData(uint16_t numevents) {
   fQmap[0]->Draw("colz");
   PixTest::update();
 }
-
-
 
 
 
