@@ -81,15 +81,23 @@ ntrig               10
 singlePix           1
 
 -- Xray
+source              Ag
 phrun               button
 runseconds          100
 trgfrequency(khz)   100
-DelayTBM            checkbox  
-FillTree            checkbox  
 ratescan            button
 vthrcompmin         10
 vthrcompmax         80
 stepseconds         5
+DelayTBM            checkbox  
+FillTree            checkbox  
+
+-- HighRate
+maskhotpixels       button
+runseconds          2
+trgfrequency(khz)   100
+DelayTBM            checkbox  
+FillTree            checkbox  
 xPixelAlive         button
 Ntrig               50
 Vcal                200
