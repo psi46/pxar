@@ -132,7 +132,7 @@ void PixTestIV::doTest() {
     while (ntry < 5) {
       gSystem->ProcessEvents();
       if (fStop) break;
-      mDelay(fParDelay*1000); 
+      mDelay(fParDelay*500); 
       voltMeasured = hv->getVoltage(); 
       if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!
       ++ntry;
@@ -150,7 +150,6 @@ void PixTestIV::doTest() {
       tripped = voltSet;
       break;
     }
-    mDelay(fParDelay*1000);
     LOG(logINFO) << Form("V = %4d (meas: %+7.2f) I = %4.2e uA (ntry = %d) %ld", 
 			 -voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
     if (TMath::Abs(amps) > 0.) {
