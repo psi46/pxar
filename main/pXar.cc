@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
     doRunScript(false), 
     doRunSingleTest(false), 
     doUpdateFlash(false),
-    doAnalysisOnly(false),
+    doUpdateRootFile(false),
     doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
@@ -66,7 +66,6 @@ int main(int argc, char *argv[]){
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
-    if (!strcmp(argv[i],"-a"))                                {doAnalysisOnly = true;} 
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
     if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
@@ -75,6 +74,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
     if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
+    if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;} 
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
@@ -129,14 +129,17 @@ int main(int argc, char *argv[]){
   
   logfile = rootfile; 
   PixUtil::replaceAll(logfile, ".root", ".log");
-  createBackup(rootfile, logfile); 
   
   LOG(logINFO)<< "pxar: dumping results into " << rootfile << " logfile = " << logfile;
   TFile *rfile(0); 
   FILE* lfile;
-  if (doAnalysisOnly) {
+  if (doUpdateRootFile) {
     rfile = TFile::Open(rootfile.c_str(), "UPDATE"); 
+    lfile = fopen(logfile.c_str(), "a");
+    SetLogOutput::Stream() = lfile;
+    SetLogOutput::Duplicate() = true;
   } else {
+    createBackup(rootfile, logfile); 
     rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
     lfile = fopen(logfile.c_str(), "a");
     SetLogOutput::Stream() = lfile;
