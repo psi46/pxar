@@ -37,14 +37,15 @@ public:
 
 private:
 
-  int      fParTriggerFrequency;
-  int      fParRunSeconds; 
-  int      fParStepSeconds; 
-  int      fParVthrCompMin, fParVthrCompMax; 
-  bool     fParFillTree;
-  bool	   fParDelayTBM;
-  uint16_t fParNtrig; 
-  int      fParVcal; 
+  std::string   fParSource;
+  int           fParTriggerFrequency;
+  int           fParRunSeconds; 
+  int           fParStepSeconds; 
+  int           fParVthrCompMin, fParVthrCompMax; 
+  bool          fParFillTree;
+  bool	        fParDelayTBM;
+  uint16_t      fParNtrig; 
+  int           fParVcal; 
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
@@ -62,6 +63,9 @@ private:
   // -- PhRun
   std::vector<TH1D*> fQ;
   std::vector<TProfile2D*> fQmap;
+
+  std::vector<TH1D*> fPH;
+  std::vector<TProfile2D*> fPHmap;
 
   
   ClassDef(PixTestXray, 1)

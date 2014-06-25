@@ -18,7 +18,7 @@ ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
 PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
+  fParSource("nada"), fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
   fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false) {
   PixTest::init();
   init(); 
@@ -38,36 +38,16 @@ PixTestXray::PixTestXray() : PixTest() {
 
 
 // ----------------------------------------------------------------------
-bool PixTestXray::setTrgFrequency(uint8_t TrgTkDel) {
-  uint8_t trgtkdel = TrgTkDel;
-  
-  double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
-  double fClkDelays = period_ns / 25 - trgtkdel;
-  uint16_t ClkDelays = (uint16_t)fClkDelays; //debug -- aprox to def
-  
-  // -- add right delay between triggers:
-  uint16_t i = ClkDelays;
-  while (i>255){
-    fPg_setup.push_back(make_pair("delay", 255));
-    i = i - 255;
-  }
-  fPg_setup.push_back(make_pair("delay", i));
-  
-  // -- then send trigger and token:
-  fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG b000010
-  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
-  
-  return true;
-}
-
-
-// ----------------------------------------------------------------------
 bool PixTestXray::setParameter(string parName, string sval) {
   bool found(false);
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
+      if (!parName.compare("source")) {
+	fParSource = sval; 
+	setToolTips();
+      }
       if (!parName.compare("vthrcompmin")) {
 	fParVthrCompMin = atoi(sval.c_str()); 
 	setToolTips();
@@ -112,6 +92,30 @@ bool PixTestXray::setParameter(string parName, string sval) {
   return found; 
 }
 
+
+
+// ----------------------------------------------------------------------
+bool PixTestXray::setTrgFrequency(uint8_t TrgTkDel) {
+  uint8_t trgtkdel = TrgTkDel;
+  
+  double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
+  double fClkDelays = period_ns / 25 - trgtkdel;
+  uint16_t ClkDelays = (uint16_t)fClkDelays; //debug -- aprox to def
+  
+  // -- add right delay between triggers:
+  uint16_t i = ClkDelays;
+  while (i>255){
+    fPg_setup.push_back(make_pair("delay", 255));
+    i = i - 255;
+  }
+  fPg_setup.push_back(make_pair("delay", i));
+  
+  // -- then send trigger and token:
+  fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG b000010
+  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
+  
+  return true;
+}
 
 
 
@@ -230,22 +234,45 @@ void PixTestXray::doPhRun() {
     TH1D *h1(0); 
     TProfile2D *p2(0); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-      p2 = bookTProfile2D(Form("qMap_C%d", rocIds[iroc]), Form("qMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+      p2 = bookTProfile2D(Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+			  Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+			  52, 0., 52., 80, 0., 80.);
       p2->SetMinimum(0.);
       p2->SetDirectory(fDirectory);
       setTitles(p2, "col", "row");
       fHistOptions.insert(make_pair(p2,"colz"));
       fQmap.push_back(p2);
+
+      p2 = bookTProfile2D(Form("phMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+			  Form("phMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+			  52, 0., 52., 80, 0., 80.);
+      p2->SetMinimum(0.);
+      p2->SetDirectory(fDirectory);
+      setTitles(p2, "col", "row");
+      fHistOptions.insert(make_pair(p2,"colz"));
+      fPHmap.push_back(p2);
       
-      h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 1000, 0., 1000.);
+      h1 = bookTH1D(Form("q_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    Form("q_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    2000, 0., 2000.);
       h1->SetMinimum(0.);
       h1->SetDirectory(fDirectory);
       setTitles(h1, "Q [Vcal]", "Entries/bin");
       fQ.push_back(h1);
+
+      h1 = bookTH1D(Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    2000, 0., 2000.);
+      h1->SetMinimum(0.);
+      h1->SetDirectory(fDirectory);
+      setTitles(h1, "PH [ADC]", "Entries/bin");
+      fPH.push_back(h1);
     }
 
     copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
     copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
+    copy(fPHmap.begin(), fPHmap.end(), back_inserter(fHistList));
+    copy(fPH.begin(), fPH.end(), back_inserter(fHistList));
   }
 
   fPg_setup.push_back(make_pair("resetroc", 0));
@@ -268,7 +295,8 @@ void PixTestXray::doPhRun() {
   fApi->daqStart();
   
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with period " << finalPeriod << " and duration " << fParRunSeconds << " seconds";
+  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with period "  << finalPeriod 
+	       << " and duration " << fParRunSeconds << " seconds";
   
   uint8_t perFull;
   timer t;
@@ -631,7 +659,9 @@ void PixTestXray::processData(uint16_t numevents) {
       }
       fQ[idx]->Fill(q);
       fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
-	
+
+      fPHmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].value);
+      fPH[idx]->Fill(it->pixels[ipix].value);
 	
       if (fParFillTree) {
 	fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
