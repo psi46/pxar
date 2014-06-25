@@ -161,7 +161,8 @@ void PixTestIV::doTest() {
   }
 
   // -- ramp down voltage
-  for (int voltSet = fParVoltageMax - 2*fParVoltageStep; voltSet > 100; voltSet -= 2*fParVoltageStep) {
+  int vstep(50); 
+  for (int voltSet = fParVoltageMax - vstep; voltSet > 100; voltSet -= vstep) {
     LOG(logDEBUG) << "ramping down voltage, Vset = " << voltSet;
     hv->setVoltage(voltSet);
   }
