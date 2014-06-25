@@ -35,11 +35,7 @@ namespace pxar {
 
     /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(int32_t address, int32_t data) : value(data) { decode(address); }
-
-    /** Constructor for pixel objects with address and value initialization.
-     */
-  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, int32_t _value) : roc_id(_roc_id), column(_column), row(_row), value(_value) {}
+  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, double _value) : roc_id(_roc_id), column(_column), row(_row), _mean(compactFloat(_value)) {}
 
     /** Constructor for pixel objects with rawdata pixel address & value initialization.
      */
@@ -49,24 +45,6 @@ namespace pxar {
      */
   pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
 
-    /** Function to fill the pixel with linear encoded data from RPC transfer.
-     *  The address transmitted from the NIOS soft core is encoded in the following
-     *  way:
-     *
-     *  Split the address and distribute it over ROC, column and row:
-     *   * pixel column: max(51 -> 110011), requires 6 bits (R)
-     *   * pixel row: max(79 -> 1001111), requires 7 bits (C)
-     *   * roc id: max(15 -> 1111), requires 4 bits (I)
-     *
-     *  So everything can be stored in one 32 bits variable:
-     *
-     *   ........ ....IIII ..CCCCCC .RRRRRRR
-     */
-    inline void decode(int32_t address) {
-      roc_id = (address>>16)&15;
-      column = (address>>8)&63;
-      row = (address)&127;
-    }
     void decodeRaw(uint32_t raw, bool invert);
     uint8_t roc_id;
     uint8_t column;
