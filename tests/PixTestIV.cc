@@ -21,7 +21,7 @@ using namespace std;
 ClassImp(PixTestIV)
 
 // ----------------------------------------------------------------------
-  PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false) {
+PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false) {
   PixTest::init();
   init();
 }
