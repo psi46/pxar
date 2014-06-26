@@ -81,10 +81,6 @@ void PixTestTrim::runCommand(std::string command) {
     trimTest(); 
     return;
   }
-  if (!command.compare("getvthrcompthr")) {
-    getVthrCompThr(); 
-    return;
-  }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
