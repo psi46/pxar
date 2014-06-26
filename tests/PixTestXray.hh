@@ -66,6 +66,8 @@ private:
 
   std::vector<TH1D*> fPH;
   std::vector<TProfile2D*> fPHmap;
+  std::vector<TH2D*> fHmap;
+
 
   
   ClassDef(PixTestXray, 1)

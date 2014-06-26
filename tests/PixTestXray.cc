@@ -210,7 +210,7 @@ void PixTestXray::doTest() {
 
   bigBanner(Form("PixTestXray::doTest()"));
   doPhRun();
-  doRateScan();
+  //  doRateScan();
 
   LOG(logINFO) << "PixTestXray::doTest() done ";
 
@@ -232,8 +232,19 @@ void PixTestXray::doPhRun() {
   if (0 == fQ.size()) {
     if (fParFillTree) bookTree(); 
     TH1D *h1(0); 
+    TH2D *h2(0); 
     TProfile2D *p2(0); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      h2 = bookTH2D(Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    52, 0., 52., 80, 0., 80.);
+      h2->SetMinimum(0.);
+      h2->SetDirectory(fDirectory);
+      setTitles(h2, "col", "row");
+      fHistOptions.insert(make_pair(h2,"colz"));
+      fHmap.push_back(h2);
+
+
       p2 = bookTProfile2D(Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
 			  Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
 			  52, 0., 52., 80, 0., 80.);
@@ -262,13 +273,14 @@ void PixTestXray::doPhRun() {
 
       h1 = bookTH1D(Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
 		    Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-		    2000, 0., 2000.);
+		    256, 0., 256.);
       h1->SetMinimum(0.);
       h1->SetDirectory(fDirectory);
       setTitles(h1, "PH [ADC]", "Entries/bin");
       fPH.push_back(h1);
     }
 
+    copy(fHmap.begin(), fHmap.end(), back_inserter(fHistList));
     copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
     copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
     copy(fPHmap.begin(), fPHmap.end(), back_inserter(fHistList));
@@ -657,6 +669,7 @@ void PixTestXray::processData(uint16_t numevents) {
       } else {
 	q = 0;
       }
+      fHmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
       fQ[idx]->Fill(q);
       fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
 
@@ -677,7 +690,7 @@ void PixTestXray::processData(uint16_t numevents) {
   
   LOG(logDEBUG) << Form(" # events read: %6ld, pixels seen in all events: %3d", daqdat.size(), pixCnt);
   
-  fQmap[0]->Draw("colz");
+  fHmap[0]->Draw("colz");
   PixTest::update();
 }
 
