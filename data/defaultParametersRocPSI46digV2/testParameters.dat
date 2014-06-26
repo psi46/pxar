@@ -60,17 +60,16 @@ xtalk               checkbox
 -- Scurves
 adjustvcal          checkbox(1)
 Ntrig               5
-DAC                 VthrComp
+DAC                 Vcal
 DacLo               0
 DacHi               200
 scurves             button
 
 -- Trim
 trim                button
-TrimBits            button
-Ntrig               10
 Vcal                40
-getVthrCompThr      button
+Ntrig               10
+TrimBits            button
 
 -- GainPedestal
 showFits            checkbox
