@@ -162,8 +162,9 @@ public:
   double getMinimumThreshold(std::vector<TH1*>);
   /// return maximum threshold in a set of maps
   double getMaximumThreshold(std::vector<TH1*>);
-  /// return a list of TH1* that have 'name' as part to their histogram name
+  /// return a list of TH* that have 'name' as part to their histogram name
   std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
+  std::vector<TH2D*> mapsWithString(std::vector<TH2D*>, std::string name);
 
   /// produce eye-catching printouts
   void print(std::string, pxar::TLogLevel log = pxar::logINFO); 
