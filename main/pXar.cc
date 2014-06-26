@@ -196,6 +196,7 @@ int main(int argc, char *argv[]){
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
   a.setMoreWebCloning(doMoreWebCloning); 
+  a.setRootFileUpdate(doUpdateRootFile);
 
   if (doRunGui) {
     runGui(a, argc, argv); 
