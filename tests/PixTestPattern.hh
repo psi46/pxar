@@ -21,7 +21,7 @@ public:
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
 	void setHistos();
-	void FillHistos(std::vector<pxar::Event>);
+	void FillHistos(std::vector<pxar::Event> );
 	void PrintEvents(int, int, std::string);
 	void TriggerLoop(int );
 	void pgToDefault();
@@ -38,6 +38,7 @@ private:
 	bool    fBinOut;
 	std::string fFileName;
 	bool	fUnMaskAll;
+	bool	fParFillTree;
 
 	bool    fParOutOfRange;
 	bool    fDaq_loop;
@@ -46,13 +47,13 @@ private:
 	std::vector<std::pair<int, int> > fPIXm;
 	uint16_t fPeriod;
 	int		fCheckFreq;
-	
+
 	std::vector<TH2D*> fHits;
 	std::vector<TProfile2D*> fPhmap;
 	std::vector<TH1D*> fPh;
-	TH1D *h1;
-	TH2D *h2;
-	TProfile2D *p2;
+	TH2D* fH2;
+	TProfile2D* fP2;
+	TH1D* fH1;
 
 	ClassDef(PixTestPattern, 1)
 

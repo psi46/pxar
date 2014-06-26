@@ -12,6 +12,7 @@ public:
   void init(); 
   void bookHist(std::string); 
   void doTest();
+  void stop(); 
 
 private:
 
@@ -19,6 +20,7 @@ private:
   int fParVoltageMax;
   int fParVoltageStep;
   int fParDelay;
+  bool fStop; 
 
   ClassDef(PixTestIV, 1)
 

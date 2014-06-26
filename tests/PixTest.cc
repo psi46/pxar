@@ -26,6 +26,7 @@ PixTest::PixTest(PixSetup *a, string name) {
   fPixSetup       = a;
   fApi            = a->getApi(); 
   fTestParameters = a->getPixTestParameters(); 
+  fTimeStamp      = new TTimeStamp(); 
 
   fName = name;
   setToolTips();
@@ -783,10 +784,18 @@ TProfile2D* PixTest::bookTProfile2D(std::string sname, std::string title, int nb
 int PixTest::histCycle(string hname) {
   TH1* h(0); 
   int cnt(0); 
+  if (fPixSetup->doRootFileUpdate()) fDirectory->ReadAll();
   h = (TH1*)fDirectory->FindObject(Form("%s_V%d", hname.c_str(), cnt));
+  //   TKey *k(0); 
+  //   k = (TKey*)fDirectory->FindKey(Form("%s_V%d", hname.c_str(), cnt)); 
+  //   cout << k << endl;
+  //   if (k) h = (TH1*)k->ReadObj();
   while (h) {
     ++cnt;
     h = (TH1*)fDirectory->FindObject(Form("%s_V%d", hname.c_str(), cnt));
+    //     k = (TKey*)fDirectory->FindKey(Form("%s_V%d", hname.c_str(), cnt)); 
+    //     cout << k << endl;
+    //     if (k) h = (TH1*)k->ReadObj();
   }
   return cnt;
 }
@@ -1323,3 +1332,106 @@ void PixTest::setDacs(string dacName, vector<uint8_t> v) {
 }
 
 
+// ----------------------------------------------------------------------
+vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
+  vector<pair<int,int> > hotPixels(0);
+  double mean(0.);
+  for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+    for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+      mean += h->GetBinContent(ix+1, iy+1); 
+    }
+  }
+  mean /= h->GetNbinsX()*h->GetNbinsY();
+
+  double fos = 5.0;
+  double bc(0.);
+  double hitThr = (mean < 10.?10.:3.*mean);
+  LOG(logDEBUG) << "average number of unexpected hits per pixel: " 
+		<< mean
+		<< " hit threshold: " << hitThr;
+  for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+    for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+      bc = h->GetBinContent(ix+1, iy+1);
+      if (bc > hitThr && bc > fos*mean) {
+	hotPixels.push_back(make_pair(ix,iy));
+	LOG(logDEBUG) << "Found a hot pixel with " << bc << " hits "
+		      << " and masking Pixel (" << ix << ',' << iy << ')';
+      }
+    }
+  }
+  return hotPixels;
+}
+
+// ----------------------------------------------------------------------
+pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
+  vector<pixel> results;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
+  int cnt(0); 
+  bool done = false;
+  while (!done){
+    try {
+      results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      done = true; 
+    } catch(DataMissingEvent &e) {
+      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
+  fDirectory->cd(); 
+  vector<TH2D*> maps;
+  vector<TH2D*> xMaps;
+  TH2D *h2(0),*h3(0); 
+  int vthrcomp = fApi -> _dut -> getDAC(0,"vthrcomp");
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    LOG(logDEBUG) << "Create hist " << Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc); 
+    h2 = bookTH2D(Form("%s_%d_C%d", name.c_str(), vthrcomp, iroc), 
+		  Form("%s_%d_C%d", name.c_str(), vthrcomp, rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    h3 = bookTH2D(Form("X-ray_Hit_map_%d_C%d", vthrcomp, iroc), 
+		  Form("X-ray_Hit_map_%d_C%d", vthrcomp, rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.); 
+    h2->SetMinimum(0.);
+    h3->SetMinimum(0.);
+    
+    h2->SetDirectory(fDirectory); 
+    h3->SetDirectory(fDirectory);
+    
+    setTitles(h2, "col", "row"); 
+    setTitles(h3, "col", "row"); 
+        
+    maps.push_back(h2); 
+    xMaps.push_back(h3);
+  }
+  int idx(-1);  
+
+  for (unsigned int i = 0; i < results.size(); ++i) {
+    idx = getIdxFromId(results[i].roc_id);
+    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
+      h2 = maps[idx];
+      h3 = xMaps[idx];
+      if (FLAGS | FLAG_CHECK_ORDER) {
+	if (results[i].getValue() > 0) {
+	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
+	} 
+	else { 
+	  //add a hit to the X-ray counter if a hit comes in out of order
+	  h3->Fill(results[i].column, results[i].row, 1);
+        }
+      } 
+      else {
+	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
+      } 
+    }
+    else {
+      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
+    }
+  }
+  LOG(logDEBUG) << "Size of results from : PixTestXray::xEfficiencyMaps " << results.size();
+  return make_pair(maps,xMaps); 
+}

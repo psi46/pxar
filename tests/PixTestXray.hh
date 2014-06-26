@@ -21,7 +21,6 @@ public:
   void doPhRun(); 
   void doRateScan();
   void doTest();
-  void doXPixelAlive();
  
   bool setTrgFrequency(uint8_t TrgTkDel);
   void finalCleanup();
@@ -29,6 +28,7 @@ public:
 
   void readData();
   void analyzeData();
+
   double meanHit(TH2D*); 
   double noiseLevel(TH2D*); 
   int   countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
@@ -37,14 +37,15 @@ public:
 
 private:
 
-  int      fParTriggerFrequency;
-  int      fParRunSeconds; 
-  int      fParStepSeconds; 
-  int      fParVthrCompMin, fParVthrCompMax; 
-  bool     fParFillTree;
-  bool	   fParDelayTBM;
-  uint16_t fParNtrig; 
-  int      fParVcal; 
+  std::string   fParSource;
+  int           fParTriggerFrequency;
+  int           fParRunSeconds; 
+  int           fParStepSeconds; 
+  int           fParVthrCompMin, fParVthrCompMax; 
+  bool          fParFillTree;
+  bool	        fParDelayTBM;
+  uint16_t      fParNtrig; 
+  int           fParVcal; 
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
@@ -63,11 +64,11 @@ private:
   std::vector<TH1D*> fQ;
   std::vector<TProfile2D*> fQmap;
 
-  // -- xPixelAlive
-  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, uint16_t FLAGS);
-  std::string getVthrCompString(std::vector<uint8_t>rocIds,std::vector<int> VthrComp);
-  std::vector<int> xPixelAliveSingleSweep();
-  
+  std::vector<TH1D*> fPH;
+  std::vector<TProfile2D*> fPHmap;
+  std::vector<TH2D*> fHmap;
+
+
   
   ClassDef(PixTestXray, 1)
 

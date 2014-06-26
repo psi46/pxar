@@ -1,6 +1,7 @@
 #include <stdlib.h>     /* atof, atoi */
 #include <algorithm>    // std::find
 #include <iostream>
+#include <fstream>
 
 #include <TH1.h>
 #include <TRandom.h>
@@ -48,7 +49,6 @@ bool PixTestTrim::setParameter(string parName, string sval) {
 	fParVcal = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParVcal  ->" << fParVcal << "<- from sval = " << sval;
       }
-
       break;
     }
   }
@@ -373,6 +373,7 @@ void PixTestTrim::trimTest() {
   }
 
   // -- save into files
+  fPixSetup->getConfigParameters()->setTrimVcalSuffix(Form("%d", fParVcal)); 
   saveDacs();
   saveTrimBits();
   
@@ -648,11 +649,7 @@ void PixTestTrim::output4moreweb() {
       h->Write(); 
       continue;
     }
-
-
-
-    // VcalThresholdMap_C{ChipNo}Distribution
-
   }
   pDir->cd(); 
 }
+
