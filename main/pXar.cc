@@ -217,7 +217,15 @@ int main(int argc, char *argv[]){
     do {
       LOG(logINFO) << "enter test to run";
       cout << "pxar> "; 
-      cin >> input; 
+      string input;
+      std::getline(cin, input);
+      string::size_type m1 = input.find(" "); 
+      if (m1 != string::npos) {
+	string parameters = input.substr(m1); 
+	input = input.substr(0, m1);
+	LOG(logINFO) << "  test: " << input << " setting parameters: ->" << parameters << "<-"; 
+	ptp->setTestParameters(input, parameters); 
+      }
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       
       if (!input.compare("gui"))  runGui(a, argc, argv); 
