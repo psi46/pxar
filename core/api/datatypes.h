@@ -31,15 +31,11 @@ namespace pxar {
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
      */
-  pixel() : roc_id(0), column(0), row(0), value(0), variance(0) {}
+  pixel() : roc_id(0), column(0), row(0), _mean(0), _variance(0) {}
 
     /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, double _value) : roc_id(_roc_id), column(_column), row(_row), _mean(compactFloat(_value)) {}
-
-    /** Constructor for pixel objects with rawdata pixel address & value initialization.
-     */
-  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
+  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, double _value) : roc_id(_roc_id), column(_column), row(_row), _variance(0) { setValue(_value); }
 
     /** Constructor for pixel objects with rawdata pixel address & value and ROC id initialization.
      */
