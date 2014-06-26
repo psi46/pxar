@@ -60,16 +60,17 @@ xtalk               checkbox
 -- Scurves
 adjustvcal          checkbox(1)
 Ntrig               5
-DAC                 Vcal
+DAC                 VthrComp
 DacLo               0
 DacHi               200
 scurves             button
 
 -- Trim
 trim                button
-Vcal                40
 Ntrig               10
+Vcal                40
 TrimBits            button
+
 
 -- GainPedestal
 showFits            checkbox
@@ -97,14 +98,14 @@ DelayTBM            checkbox
 FillTree            checkbox  
 
 -- HighRate
-maskhotpixels       button
+xPixelAlive         button
+trgfrequency(khz)   20
+Ntrig               5
+Vcal                200
+runDaq              button
 runseconds          2
-trgfrequency(khz)   100
 DelayTBM            checkbox  
 FillTree            checkbox  
-xPixelAlive         button
-Ntrig               50
-Vcal                200
 
 -- DAQ
 Ntrig               0

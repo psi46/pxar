@@ -128,7 +128,6 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
       done = true;
     } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -201,11 +200,9 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       done = true; 
     } catch(DataMissingEvent &e) {
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
       ++cnt;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -294,7 +291,6 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 	  results = fApi->getThresholdMap(dac, daclo, dachi, FLAGS, ntrig);
 	  done = true; 
 	} catch(pxarException &e) {
-	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
@@ -307,7 +303,6 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 	  results = fApi->getThresholdMap(dac, FLAGS, ntrig);
 	  done = true; 
 	} catch(pxarException &e) {
-	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
@@ -824,7 +819,6 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
       scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
       done = true; 
     } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -1002,6 +996,17 @@ vector<TH1*> PixTest::mapsWithString(vector<TH1*>maps, string name) {
 }
 
 // ----------------------------------------------------------------------
+vector<TH2D*> PixTest::mapsWithString(vector<TH2D*>maps, string name) {
+  vector<TH2D*> results; 
+  string hname(""); 
+  for (unsigned i = 0; i <  maps.size(); ++i) {
+    hname = maps[i]->GetName(); 
+    if (string::npos != hname.find(name)) results.push_back(maps[i]); 
+  }
+  return results; 
+}
+
+// ----------------------------------------------------------------------
 void PixTest::fillDacHist(vector<pair<uint8_t, vector<pixel> > > &results, TH1D *h, int icol, int irow, int iroc) {
   h->Reset();
   int ri(-1), ic(-1), ir(-1); 
@@ -1070,11 +1075,9 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       }
       done = true;
     } catch(DataMissingEvent &e) {
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
       ++cnt;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -1343,7 +1346,7 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
   }
   mean /= h->GetNbinsX()*h->GetNbinsY();
 
-  double fos = 5.0;
+  double fos = 6.0;
   double bc(0.);
   double hitThr = (mean < 10.?10.:3.*mean);
   LOG(logDEBUG) << "average number of unexpected hits per pixel: " 
@@ -1362,8 +1365,10 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
   return hotPixels;
 }
 
+
 // ----------------------------------------------------------------------
 pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
+
   vector<pixel> results;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
   int cnt(0); 
@@ -1373,29 +1378,28 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       done = true; 
     } catch(DataMissingEvent &e) {
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
       ++cnt;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
       ++cnt;
     }
     done = (cnt>5) || done;
   }
+  LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
 
   fDirectory->cd(); 
   vector<TH2D*> maps;
   vector<TH2D*> xMaps;
   TH2D *h2(0),*h3(0); 
-  int vthrcomp = fApi -> _dut -> getDAC(0,"vthrcomp");
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc); 
-    h2 = bookTH2D(Form("%s_%d_C%d", name.c_str(), vthrcomp, iroc), 
-		  Form("%s_%d_C%d", name.c_str(), vthrcomp, rocIds[iroc]), 
+    h2 = bookTH2D(Form("%s_calmap_C%d", name.c_str(), rocIds[iroc]), 
+		  Form("%s_calmap_C%d", name.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
-    h3 = bookTH2D(Form("X-ray_Hit_map_%d_C%d", vthrcomp, iroc), 
-		  Form("X-ray_Hit_map_%d_C%d", vthrcomp, rocIds[iroc]), 
+    fHistOptions.insert(make_pair(h2,"colz"));
+    h3 = bookTH2D(Form("%s_xraymap_C%d", name.c_str(), rocIds[iroc]), 
+		  Form("%s_xraymap_C%d", name.c_str(), rocIds[iroc]), 
 		  52, 0., 52., 80, 0., 80.); 
+    fHistOptions.insert(make_pair(h3,"colz"));
     h2->SetMinimum(0.);
     h3->SetMinimum(0.);
     
@@ -1408,8 +1412,8 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
     maps.push_back(h2); 
     xMaps.push_back(h3);
   }
-  int idx(-1);  
 
+  int idx(-1);  
   for (unsigned int i = 0; i < results.size(); ++i) {
     idx = getIdxFromId(results[i].roc_id);
     if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
@@ -1432,6 +1436,6 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
       LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
     }
   }
-  LOG(logDEBUG) << "Size of results from : PixTestXray::xEfficiencyMaps " << results.size();
-  return make_pair(maps,xMaps); 
+  LOG(logDEBUG) << "Size of results from : PixTestHighRate::xEfficiencyMaps" << results.size();
+  return make_pair(maps, xMaps); 
 }

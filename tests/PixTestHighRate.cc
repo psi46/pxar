@@ -113,6 +113,11 @@ void PixTestHighRate::runCommand(std::string command) {
     return;
   }
 
+  if (!command.compare("rundaq")) {
+    doRunDaq(); 
+    return;
+  }
+
   if (!command.compare("xpixelalive")) {
     doXPixelAlive(); 
     return;
@@ -146,7 +151,23 @@ void PixTestHighRate::setToolTips() {
 void PixTestHighRate::bookHist(string name) {
   fDirectory->cd(); 
   if (fParFillTree) bookTree();  
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  unsigned nrocs = rocIds.size(); 
   
+  //-- Sets up the histogram
+  TH2D *h2(0);
+  for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+    h2 = bookTH2D(Form("hitMap_%s_C%d", name.c_str(), rocIds[iroc]), Form("hitMap_%s_C%d", name.c_str(), rocIds[iroc]), 
+		  52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.);
+    h2->SetDirectory(fDirectory);
+    fHistOptions.insert(make_pair(h2,"colz"));
+    fHitMap.push_back(h2);
+  }
+  
+  copy(fHitMap.begin(), fHitMap.end(), back_inserter(fHistList));
+
 }
 
 
@@ -161,8 +182,9 @@ PixTestHighRate::~PixTestHighRate() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doTest() {
   bigBanner(Form("PixTestHighRate::doTest()"));
-  maskHotPixels();
+  //  maskHotPixels();
   doXPixelAlive();
+  doRunDaq();
   LOG(logINFO) << "PixTestHighRate::doTest() done ";
 }
 
@@ -173,27 +195,15 @@ void PixTestHighRate::doXPixelAlive() {
   cacheDacs();
 
   fDirectory->cd();
+  PixTest::update(); 
 
   fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  vector<int> currVthrComp(rocIds.size(),0);
-  
-  xPixelAliveSingleSweep();
-
-  restoreDacs();
-  LOG(logINFO) << "PixTestHighRate::doXPixelAlive() done";
-
-}
-
-// ----------------------------------------------------------------------
-vector<int> PixTestHighRate::xPixelAliveSingleSweep() { 
-  
-  pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("PixelAlive", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED); 
+ 
+  pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("highRate", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED); 
   vector<TH2D*> test2 = tests.first;
   vector<TH2D*> test3 = tests.second;
   vector<int> deadPixel(test2.size(), 0); 
@@ -220,16 +230,14 @@ vector<int> PixTestHighRate::xPixelAliveSingleSweep() {
       }
     }
   }
+
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   copy(test3.begin(), test3.end(), back_inserter(fHistList));
-
   TH2D *h = (TH2D*)(fHistList.back());
-
   h->Draw(getHistOption(h).c_str());
-  
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
- 
+
   // -- summary printout
   string deadPixelString, probPixelString, xHitsString, numTrigsString, vCalHitsString,xRayHitEfficiencyString,xRayRateString;
   for (unsigned int i = 0; i < probPixel.size(); ++i) {
@@ -243,7 +251,6 @@ vector<int> PixTestHighRate::xPixelAliveSingleSweep() {
     xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./0.64*1000.);
   }
 
-  
   LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
   LOG(logINFO) << "number of red-efficiency pixels:    " << probPixelString;
   LOG(logINFO) << "number of X-ray hits detected: " << xHitsString;
@@ -251,81 +258,11 @@ vector<int> PixTestHighRate::xPixelAliveSingleSweep() {
   LOG(logINFO) << "number of Vcal hits detected: " << vCalHitsString;
   LOG(logINFO) << "Vcal hit detection efficiency (%): " << xRayHitEfficiencyString;
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
-  return xHits;
+  LOG(logINFO) << "PixTestHighRate::doXPixelAlive() done";
+  restoreDacs();
 }
 
 
-// ----------------------------------------------------------------------
-pair<vector<TH2D*>,vector<TH2D*> > PixTestHighRate::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
-
-  vector<pixel> results;
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
-  int cnt(0); 
-  bool done = false;
-  while (!done){
-    try {
-      results = fApi->getEfficiencyMap(FLAGS, ntrig);
-      done = true; 
-    } catch(DataMissingEvent &e) {
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-      ++cnt;
-    }
-    done = (cnt>5) || done;
-  }
-  LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
-
-  fDirectory->cd(); 
-  vector<TH2D*> maps;
-  vector<TH2D*> xMaps;
-  TH2D *h2(0),*h3(0); 
-  int vthrcomp = fApi -> _dut -> getDAC(0,"vthrcomp");
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc); 
-    h2 = bookTH2D(Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, iroc), Form("%s_VthrComp_%d_C%d", name.c_str(), vthrcomp, rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h3 = bookTH2D(Form("X-ray_Hit_map_VthrComp_%d_C%d", vthrcomp, iroc), Form("X-ray_Hit_map_VthrComp_%d_C%d", vthrcomp, rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
-    h2->SetMinimum(0.);
-    h3->SetMinimum(0.);
-    
-    h2->SetDirectory(fDirectory); 
-    h3->SetDirectory(fDirectory);
-    
-    setTitles(h2, "col", "row"); 
-    setTitles(h3, "col", "row"); 
-        
-    maps.push_back(h2); 
-    xMaps.push_back(h3);
-  }
-  int idx(-1);  
-
-  for (unsigned int i = 0; i < results.size(); ++i) {
-    idx = getIdxFromId(results[i].roc_id);
-    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
-      h2 = maps[idx];
-      h3 = xMaps[idx];
-      if (FLAGS | FLAG_CHECK_ORDER) {
-	if (results[i].getValue() > 0) {
-	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
-	} 
-	else { 
-	  //add a hit to the X-ray counter if a hit comes in out of order
-	  h3->Fill(results[i].column, results[i].row, 1);
-        }
-      } 
-      else {
-	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
-      } 
-    }
-    else {
-      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
-    }
-  }
-  LOG(logDEBUG) << "Size of results from : PixTestHighRate::xEfficiencyMaps" << results.size();
-  return make_pair(maps,xMaps); 
-}
 
 // ----------------------------------------------------------------------
 double PixTestHighRate::meanHit(TH2D *h2) {
@@ -432,9 +369,6 @@ void PixTestHighRate::maskHotPixels() {
 
   fDirectory->cd();
 
-  fApi->setDAC("ctrlreg", 4);
-  fApi->setDAC("vcal", 200);
-
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   
@@ -459,17 +393,26 @@ void PixTestHighRate::maskHotPixels() {
       fHitMap[i]->Reset();
     }
 
-    doHitMap(2); 
-    for (unsigned int i = 0; i < fHitMap.size(); ++i) {
+    doHitMap(1); 
+    for (unsigned int i = 0; i < rocIds.size(); ++i) {
       vector<pair<int,int> > hotPixels = checkHotPixels(fHitMap[i]);
-      for (unsigned int i=0; i<hotPixels.size();++i) {
+      for (unsigned int j = 0; j<hotPixels.size(); ++j) {
  	LOG(logDEBUG) << "mask hot pixel ROC/col/row: " << static_cast<int>(rocIds[i]) 
- 		      << "/" <<  hotPixels[i].first << "/" << hotPixels[i].second; 
- 	fApi->_dut->maskPixel(hotPixels[i].first, hotPixels[i].second, true, rocIds[i]);
+ 		      << "/" <<  hotPixels[j].first << "/" << hotPixels[j].second; 
+ 	fApi->_dut->maskPixel(hotPixels[j].first, hotPixels[j].second, true,  rocIds[i]);
+ 	fApi->_dut->testPixel(hotPixels[j].first, hotPixels[j].second, false, rocIds[i]);
       }
     }
 
   }
+
+
+  LOG(logINFO) << "# masked pixels per ROC:"; 
+  for (unsigned int i = 0; i < rocIds.size(); ++i) {
+    LOG(logINFO) << " ROC " << static_cast<int>(rocIds[i]) << ": " << static_cast<int>(fApi->_dut->getNMaskedPixels(rocIds[i])); 
+  }
+
+  restoreDacs();
 }
 
 
@@ -496,7 +439,8 @@ void PixTestHighRate::doHitMap(int nseconds) {
   fApi->daqStart();
 
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-  LOG(logINFO) << "PixTestHighRate::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << nseconds << " seconds";
+  LOG(logINFO) << "PixTestHighRate::doRateScan start TriggerLoop with period " << finalPeriod 
+	       << " and duration " << nseconds << " seconds";
     
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
@@ -539,5 +483,45 @@ void PixTestHighRate::readData() {
     }
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
+}
+
+
+
+// ----------------------------------------------------------------------
+void PixTestHighRate::doRunDaq() {
+
+  if (0 == fHitMap.size()) bookHist("daqbbtest");
+
+  banner(Form("PixTestHighRate::runDaq() running for %d seconds", fParRunSeconds));
+
+  fDirectory->cd();
+  PixTest::update(); 
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(false);
+  fDirectory->cd();
+  doHitMap(fParRunSeconds); 
+
+  TH2D *h = (TH2D*)(fHistList.back());
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update(); 
+
+  vector<TH2D*> v = mapsWithString(fHitMap, "daqbbtest"); 
+  string zPixelString(""); 
+  for (unsigned int i = 0; i < v.size(); ++i) {
+    int cnt(0); 
+    LOG(logDEBUG) << "analyzing " << v[i]->GetName(); 
+    for (int ix = 0; ix < v[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < v[i]->GetNbinsY(); ++iy) {
+	if (0 == v[i]->GetBinContent(ix+1, iy+1)) ++cnt;
+      }
+    }
+    zPixelString += Form(" %4d ", cnt);
+  }
+  
+  LOG(logINFO) << "Pixels without X-ray hits (per ROC): " << zPixelString; 
+  LOG(logINFO) << "PixTestHighRate::doRunDaq() done";
+
 }
 

@@ -20,21 +20,19 @@ public:
   void runCommand(std::string command); 
   void doTest();
   void doXPixelAlive();
+  void doRunDaq(); 
+  void maskHotPixels(); 
  
   bool setTrgFrequency(uint8_t TrgTkDel);
   void finalCleanup();
   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
   void readData();
-  void maskHotPixels(); 
   void doHitMap(int nseconds = 1);
-
-  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, uint16_t FLAGS);
-  std::vector<int> xPixelAliveSingleSweep();
 
   double meanHit(TH2D*); 
   double noiseLevel(TH2D*); 
-  int   countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
+  int    countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
 
 private:
 
