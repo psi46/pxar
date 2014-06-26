@@ -1343,7 +1343,7 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
   }
   mean /= h->GetNbinsX()*h->GetNbinsY();
 
-  double fos = 5.0;
+  double fos = 6.0;
   double bc(0.);
   double hitThr = (mean < 10.?10.:3.*mean);
   LOG(logDEBUG) << "average number of unexpected hits per pixel: " 
