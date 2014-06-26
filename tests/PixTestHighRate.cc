@@ -260,86 +260,9 @@ void PixTestHighRate::doXPixelAlive() {
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
   LOG(logINFO) << "PixTestHighRate::doXPixelAlive() done";
   restoreDacs();
-
-
 }
 
 
-// ----------------------------------------------------------------------
-pair<vector<TH2D*>,vector<TH2D*> > PixTestHighRate::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
-
-  vector<pixel> results;
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
-  int cnt(0); 
-  bool done = false;
-  while (!done){
-    try {
-      results = fApi->getEfficiencyMap(FLAGS, ntrig);
-      done = true; 
-    } catch(DataMissingEvent &e) {
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-      ++cnt;
-      if (e.numberMissing > 10) done = true; 
-    } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-      ++cnt;
-    }
-    done = (cnt>5) || done;
-  }
-  LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
-
-  fDirectory->cd(); 
-  vector<TH2D*> maps;
-  vector<TH2D*> xMaps;
-  TH2D *h2(0),*h3(0); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    h2 = bookTH2D(Form("%s_calmap_C%d", name.c_str(), rocIds[iroc]), 
-		  Form("%s_calmap_C%d", name.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h2,"colz"));
-    h3 = bookTH2D(Form("%s_xraymap_C%d", name.c_str(), rocIds[iroc]), 
-		  Form("%s_xraymap_C%d", name.c_str(), rocIds[iroc]), 
-		  52, 0., 52., 80, 0., 80.); 
-    fHistOptions.insert(make_pair(h3,"colz"));
-    h2->SetMinimum(0.);
-    h3->SetMinimum(0.);
-    
-    h2->SetDirectory(fDirectory); 
-    h3->SetDirectory(fDirectory);
-    
-    setTitles(h2, "col", "row"); 
-    setTitles(h3, "col", "row"); 
-        
-    maps.push_back(h2); 
-    xMaps.push_back(h3);
-  }
-
-  int idx(-1);  
-  for (unsigned int i = 0; i < results.size(); ++i) {
-    idx = getIdxFromId(results[i].roc_id);
-    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
-      h2 = maps[idx];
-      h3 = xMaps[idx];
-      if (FLAGS | FLAG_CHECK_ORDER) {
-	if (results[i].value > 0) {
-	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
-	} 
-	else { 
-	  //add a hit to the X-ray counter if a hit comes in out of order
-	  h3->Fill(results[i].column, results[i].row, 1);
-        }
-      } 
-      else {
-	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
-      } 
-    }
-    else {
-      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
-    }
-  }
-  LOG(logDEBUG) << "Size of results from : PixTestHighRate::xEfficiencyMaps" << results.size();
-  return make_pair(maps, xMaps); 
-}
 
 // ----------------------------------------------------------------------
 double PixTestHighRate::meanHit(TH2D *h2) {
@@ -516,7 +439,8 @@ void PixTestHighRate::doHitMap(int nseconds) {
   fApi->daqStart();
 
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-  LOG(logINFO) << "PixTestHighRate::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << nseconds << " seconds";
+  LOG(logINFO) << "PixTestHighRate::doRateScan start TriggerLoop with period " << finalPeriod 
+	       << " and duration " << nseconds << " seconds";
     
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
@@ -582,6 +506,22 @@ void PixTestHighRate::doRunDaq() {
   h->Draw(getHistOption(h).c_str());
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
+
+  vector<TH2D*> v = mapsWithString(fHitMap, "daqbbtest"); 
+  string zPixelString(""); 
+  for (unsigned int i = 0; i < v.size(); ++i) {
+    int cnt(0); 
+    LOG(logDEBUG) << "analyzing " << v[i]->GetName(); 
+    for (int ix = 0; ix < v[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < v[i]->GetNbinsY(); ++iy) {
+	if (0 == v[i]->GetBinContent(ix+1, iy+1)) ++cnt;
+      }
+    }
+    zPixelString += Form(" %4d ", cnt);
+  }
+  
+  LOG(logINFO) << "Pixels without X-ray hits (per ROC): " << zPixelString; 
+  LOG(logINFO) << "PixTestHighRate::doRunDaq() done";
 
 }
 

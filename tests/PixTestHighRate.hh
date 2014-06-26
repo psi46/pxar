@@ -30,8 +30,6 @@ public:
   void readData();
   void doHitMap(int nseconds = 1);
 
-  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, uint16_t FLAGS);
-
   double meanHit(TH2D*); 
   double noiseLevel(TH2D*); 
   int    countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
