@@ -41,12 +41,50 @@ namespace pxar {
      */
   pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
 
-    void decodeRaw(uint32_t raw, bool invert);
+    /** Getter function to return ROC ID
+     */
+    uint8_t getRoc() { return roc_id; };
+
+    /** Getter function to return column id
+     */
+    uint8_t getColumn() { return column; };
+
+    /** Getter function to return row id
+     */
+    uint8_t getRow() { return row; };
+
+    /** ROC ID - continuously numbered according to their appeareance
+     *  in the readout chain
+     */
     uint8_t roc_id;
+
+    /** Pixel column address
+     */
     uint8_t column;
+
+    /** Pixel row address
+     */
     uint8_t row;
-    int16_t value;
-    uint16_t variance;
+
+    /** Member function to get the signal variance for this pixel hit
+     */
+    double getVariance() { return expandFloat(_variance); };
+
+    /** Member function to set the signal variance for this pixel hit
+     */
+    void setVariance(double var) { _variance = compactFloat(var); };
+
+    /** Member function to get the value stored for this pixel hit
+     */
+    double getValue() { 
+      return static_cast<double>(_mean);
+    };
+
+    /** Member function to get the value stored for this pixel hit
+     */
+    void setValue(double val) { 
+      _mean = static_cast<int16_t>(val);
+    };
 
     /** Overloaded comparison operator
      */
@@ -69,6 +107,24 @@ namespace pxar {
     }
 
   private:
+    /** 16bit unsigned int for storing compressed floating point
+     *  mean value (either pulse height or efficiency)
+     */
+    int16_t _mean;
+
+    /** 16bit unsigned int for storing compressed floating point
+     *  variance
+     */
+    uint16_t _variance;
+
+    /** Decoding function for PSI46 dig raw ROC data. Parameter "invert"
+     *  allows decoding of PSI46dig data which has an inverted pixel
+     *  address.
+     *  This function throws a pxar::DataDecodingError exception in
+     *  case of a failed decoding attempts.
+     */
+    void decodeRaw(uint32_t raw, bool invert);
+
     /** Helper function to compress double input value into
      *  a 16bit fixed-width integer for storage
      */
@@ -88,7 +144,7 @@ namespace pxar {
     friend std::ostream & operator<<(std::ostream &out, pixel& px) {
       out << "ROC " << static_cast<int>(px.roc_id)
 	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
-	  << "," << static_cast<int>(px.value) << "]";
+	  << "," << static_cast<double>(px.getValue()) << "]";
       return out;
     }
   };
