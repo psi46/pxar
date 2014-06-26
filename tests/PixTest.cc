@@ -784,7 +784,7 @@ TProfile2D* PixTest::bookTProfile2D(std::string sname, std::string title, int nb
 int PixTest::histCycle(string hname) {
   TH1* h(0); 
   int cnt(0); 
-  fDirectory->ReadAll();
+  if (fPixSetup->doRootFileUpdate()) fDirectory->ReadAll();
   h = (TH1*)fDirectory->FindObject(Form("%s_V%d", hname.c_str(), cnt));
   //   TKey *k(0); 
   //   k = (TKey*)fDirectory->FindKey(Form("%s_V%d", hname.c_str(), cnt)); 
