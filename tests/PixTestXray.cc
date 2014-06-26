@@ -609,8 +609,8 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTestXray::xEfficiencyMaps(string name, uin
       h2 = maps[idx];
       h3 = xMaps[idx];
       if (FLAGS | FLAG_CHECK_ORDER) {
-	if (results[i].value > 0) {
-	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+	if (results[i].getValue() > 0) {
+	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
 	} 
 	else { 
 	  //add a hit to the X-ray counter if a hit comes in out of order
@@ -618,7 +618,7 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTestXray::xEfficiencyMaps(string name, uin
         }
       } 
       else {
-	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
       } 
     }
     else {
@@ -812,7 +812,7 @@ void PixTestXray::processData(uint16_t numevents) {
 	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, 
 					      it->pixels[ipix].column, 
 					      it->pixels[ipix].row, 
-					      it->pixels[ipix].value));
+					      it->pixels[ipix].getValue()));
       } else {
 	q = 0;
       }
@@ -824,7 +824,7 @@ void PixTestXray::processData(uint16_t numevents) {
 	fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
 	fTreeEvent.pcol[ipix] = it->pixels[ipix].column; 
 	fTreeEvent.prow[ipix] = it->pixels[ipix].row; 
-	fTreeEvent.pval[ipix] = it->pixels[ipix].value; 
+	fTreeEvent.pval[ipix] = it->pixels[ipix].getValue(); 
 	fTreeEvent.pq[ipix]   = q;
       }
     }

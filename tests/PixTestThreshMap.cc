@@ -139,7 +139,7 @@ void PixTestThreshMap::doTest() {
 
   for(std::vector<pixel>::size_type idx = 0; idx < results.size() ; idx++) {
     
-    maps[id2idx[results[idx].roc_id]]->SetBinContent(results[idx].column,results[idx].row,results[idx].value);
+    maps[id2idx[results[idx].roc_id]]->SetBinContent(results[idx].column,results[idx].row,results[idx].getValue());
 
   }
 
@@ -179,8 +179,8 @@ void PixTestThreshMap::doTest() {
 		 LOG(logDEBUG) << "Data not aligned.";
 		}
 	
-		int thr1 = results[num].value;
-		int thr2 = results2[num].value;
+		int thr1 = results[num].getValue();
+		int thr2 = results2[num].getValue();
 		if(thr1 > 0 && thr2 > 0)
 		   hResults[rocIds[results[num].roc_id]]->Fill(thr1-thr2);
 	    }

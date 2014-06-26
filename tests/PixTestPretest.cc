@@ -417,7 +417,7 @@ void PixTestPretest::setVthrCompCalDel() {
       vector<pixel> wpix = w.second;
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
 	if (wpix[ipix].roc_id == rocIds[iroc]) {
-	  h2->Fill(idac1, idac2, wpix[ipix].value); 
+	  h2->Fill(idac1, idac2, wpix[ipix].getValue()); 
 	} else {
 	  LOG(logDEBUG) << "ghost ROC " << static_cast<unsigned int>(wpix[ipix].roc_id) << " seen with pixel "
 			<< static_cast<unsigned int>(wpix[ipix].column) << " " << static_cast<unsigned int>(wpix[ipix].row); 
@@ -694,7 +694,7 @@ void PixTestPretest::setCalDel() {
 	  && vpix[ipx].row == fPIX[0].second
 	  ) {
 
-	int nn = vpix.at(ipx).value;
+	int nn = vpix.at(ipx).getValue();
 
 	if (nn > nm[fId2Idx[roc]]) {
 	  nm[fId2Idx[roc]] = nn;
@@ -1024,8 +1024,8 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTestPretest::xEfficiencyMaps(string name, 
       h2 = maps[idx];
       h3 = xMaps[idx];
       if (FLAGS | FLAG_CHECK_ORDER) {
-	if (results[i].value > 0) {
-	  h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+	if (results[i].getValue() > 0) {
+	  h2->Fill(results[i].column, results[i].row, results[i].getValue()); 
 	} 
 	else { 
 	  //add a hit to the X-ray counter if a hit comes in out of order
@@ -1033,7 +1033,7 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTestPretest::xEfficiencyMaps(string name, 
         }
       } 
       else {
-	h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+	h2->Fill(results[i].column, results[i].row, results[i].getValue()); 
       } 
     }
     else {

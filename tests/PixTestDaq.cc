@@ -251,12 +251,12 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 			for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
 				idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt[iroc];
 				fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-				fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].value);
-				fPh[idx]->Fill(it->pixels[ipix].value);
+				fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
+				fPh[idx]->Fill(it->pixels[ipix].getValue());
 
 				if (fPhCalOK) {
 					q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, it->pixels[ipix].column,	
-											  it->pixels[ipix].row, it->pixels[ipix].value));
+									      it->pixels[ipix].row, it->pixels[ipix].getValue()));
 				}
 				else {
 					q = 0;
@@ -268,7 +268,7 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 					fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
 					fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
 					fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-					fTreeEvent.pval[ipix] = it->pixels[ipix].value;
+					fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
 					fTreeEvent.pq[ipix] = q;
 				}
 			}

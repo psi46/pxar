@@ -205,7 +205,7 @@ void PixTestDacScan::doTest() {
 	  hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, rocIds[iroc]);
 	  h = hmap[hname];
 	  if (h) {
-	    h->Fill(idac, vpix[ipix].value); 
+	    h->Fill(idac, vpix[ipix].getValue()); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find "  << hname; 
 	  }

@@ -380,8 +380,8 @@ void PixTestPattern::FillHistos(vector<pxar::Event> data) {
 				for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
 					idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt[iroc];
 					fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-					fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].value);
-					fPh[idx]->Fill(it->pixels[ipix].value);
+					fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
+					fPh[idx]->Fill(it->pixels[ipix].getValue());
 				}
 			}
 		}

@@ -137,7 +137,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   for (unsigned int idac = 0; idac < results.size(); ++idac) {
     int dacval = results[idac].first; 
     for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
-      val = results[idac].second[ipix].value;
+      val = results[idac].second[ipix].getValue();
       h->Fill(dacval, val);
     }
   }
@@ -233,9 +233,9 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
 	LOG(logINFO) << "ROC/row/col = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row) 
 		     << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
-		     << " now adding " << static_cast<float>(results[i].value);
+		     << " now adding " << static_cast<float>(results[i].getValue());
       }
-      h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].value)); 
+      h2->Fill(results[i].column, results[i].row, static_cast<float>(results[i].getValue())); 
     } else {
       LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc_id << " not found"; 
     }
@@ -317,7 +317,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       ic =   results[ipix].column; 
       ir =   results[ipix].row; 
       iroc = getIdxFromId(results[ipix].roc_id); 
-      val =  results[ipix].value;
+      val =  results[ipix].getValue();
       if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[ipix].roc_id)) {
 	((TH2D*)resultMaps[iroc])->Fill(ic, ir, val); 
       } else {
@@ -843,7 +843,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
     for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
       idx = getIdxFromId(vpix[ipix].roc_id); 
       if (scanHists[idx]) {
-	scanHists[idx]->Fill(idac, vpix[ipix].value); 
+	scanHists[idx]->Fill(idac, vpix[ipix].getValue()); 
       } else {
 	LOG(logDEBUG) << "histogram for ROC " << vpix[ipix].roc_id << " not found" << endl;
       }
@@ -1007,7 +1007,7 @@ void PixTest::fillDacHist(vector<pair<uint8_t, vector<pixel> > > &results, TH1D 
       if (irow > -1 && ir != irow) continue;
       if (ic > 51 || ir > 79) continue;
 
-      h->Fill(dac, results[idac].second[ipix].value); 
+      h->Fill(dac, results[idac].second[ipix].getValue()); 
     }
   }
 
@@ -1080,7 +1080,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       if (ic > 51 || ir > 79) {
 	continue;
       }
-      val =  results[idac].second[ipix].value;
+      val =  results[idac].second[ipix].getValue();
       if (1 == ihit) {
 	maps[getIdxFromId(iroc)][ic*80+ir]->Fill(dac, val);
       } else if (2 == ihit) {

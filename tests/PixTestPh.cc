@@ -160,7 +160,7 @@ void PixTestPh::doTest() {
       name = Form("PH_c%d_r%d_C%d", ic, ir, roc); 
       h1 = hists[name];
       if (h1) {
-	h1->Fill(vpix[ipx].value);
+	h1->Fill(vpix[ipx].getValue());
       } else {
 	LOG(logDEBUG) << " histogram " << Form("PH_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }

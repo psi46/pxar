@@ -140,7 +140,7 @@ void PixTestPhOptimization::doTest() {
     //retrieving info from the vcal thr map for THIS random pixel
     for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
       if(thrit->column == randomPix.column && thrit->row == randomPix.row){
-	minthr=thrit->value;
+	minthr=thrit->getValue();
       }
     }
   }
@@ -244,7 +244,7 @@ void PixTestPhOptimization::doTest() {
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
 	if (vpix[ipix].roc_id == rocIds[iroc]) {
-	  h1->Fill(idac, vpix[ipix].value);
+	  h1->Fill(idac, vpix[ipix].getValue());
 	}
       }
     }
@@ -283,7 +283,7 @@ void PixTestPhOptimization::doTest() {
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
 	if (vpix[ipix].roc_id == rocIds[iroc]) {
-	  h1->Fill(idac, vpix[ipix].value);
+	  h1->Fill(idac, vpix[ipix].getValue());
 	}
       }
     }
@@ -382,7 +382,7 @@ void PixTestPhOptimization::GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std
     int maxph = 255;
     int init_phScale =255;
     int flag_maxPh=0;
-    maxpixel.value = 0;
+    maxpixel.setValue(0);
     while(maxph>254 && flag_maxPh<52){
       fApi->setDAC("phscale", init_phScale);
       fApi->setDAC("vcal",255);
@@ -406,7 +406,7 @@ void PixTestPhOptimization::GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std
       LOG(logDEBUG) << "result size "<<result.size()<<endl;
       for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
 	isPixGood=true;
-	if(px->value > maxpixel.value){
+	if(px->getValue() > maxpixel.getValue()){
 	  for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
 	    if(bad_it->first == px->column && bad_it->second == px->row){
 	      isPixGood=false;
@@ -414,7 +414,7 @@ void PixTestPhOptimization::GetMaxPhPixel(pxar::pixel &maxpixel, std::vector<std
 	  }
 	  if(isPixGood){
 	    maxpixel = *px;
-	    maxph = px->value;
+	    maxph = px->getValue();
 	  }
 	}
       }
@@ -436,7 +436,7 @@ void PixTestPhOptimization::GetMinPixel(pxar::pixel &minpixel, std::vector<pxar:
   fApi->_dut->maskAllPixels(false);  
   for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
     isPixGood=true;
-    if(thrit->value > minthr) {
+    if(thrit->getValue() > minthr) {
       for(std::vector<std::pair<int, int> >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
 	  if(bad_it->first == thrit->column && bad_it->second == thrit->row){
 	    isPixGood=false;
@@ -444,7 +444,7 @@ void PixTestPhOptimization::GetMinPixel(pxar::pixel &minpixel, std::vector<pxar:
       }
       if(isPixGood){
 	minpixel = *thrit;
-	  minthr = minpixel.value;
+	minthr = minpixel.getValue();
       }
     }
   }
@@ -469,8 +469,8 @@ int PixTestPhOptimization::InsideRangePH(int po_opt,  std::vector< std::pair<uin
   LOG(logDEBUG) << "dacdac at min vcal has size "<<dacdac_min.size()<<endl;
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
     if(dacit_max->first == po_opt && dacit_min->first == po_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
-      maxPh=dacit_max->second.second[0].value;
-      minPh=dacit_min->second.second[0].value;
+      maxPh=dacit_max->second.second[0].getValue();
+      minPh=dacit_min->second.second[0].getValue();
       lowEd = (minPh > safetyMargin);
       upEd = (maxPh < 255 - safetyMargin);
       upEd_dist = abs(maxPh - (255 - safetyMargin));
@@ -502,8 +502,8 @@ int PixTestPhOptimization::CentrePhRange(int po_opt_in, int ps_opt,  std::vector
   //or two for cycles??
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
     if(dacit_max->second.first == ps_opt && dacit_min->second.first == ps_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
-      maxPh=dacit_max->second.second.at(0).value;
-      minPh=dacit_min->second.second.at(0).value;
+      maxPh=dacit_max->second.second.at(0).getValue();
+      minPh=dacit_min->second.second.at(0).getValue();
       dist = abs(minPh - (255 - maxPh));
       if (dist < bestDist){
 	po_opt_out = dacit_max->first;
@@ -533,8 +533,8 @@ int PixTestPhOptimization::StretchPH(int po_opt, int ps_opt_in,  std::vector< st
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
   while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
     if(dacit_max->first == po_opt && dacit_min->first == po_opt && dacit_min->second.second.size() && dacit_max->second.second.size()) {
-      maxPh=dacit_max->second.second.at(0).value;
-      minPh=dacit_min->second.second.at(0).value;
+      maxPh=dacit_max->second.second.at(0).getValue();
+      minPh=dacit_min->second.second.at(0).getValue();
       lowEd = (minPh > safetyMargin);
       upEd = (maxPh < 255 - safetyMargin);
       upEd_dist = abs(maxPh - (255 - safetyMargin));
