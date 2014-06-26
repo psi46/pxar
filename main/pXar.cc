@@ -219,6 +219,7 @@ int main(int argc, char *argv[]){
       cout << "pxar> "; 
       string input;
       std::getline(cin, input);
+      if (input.size() == 0) stop = true;
       string::size_type m1 = input.find(" "); 
       if (m1 != string::npos) {
 	string parameters = input.substr(m1); 
