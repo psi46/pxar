@@ -16,7 +16,6 @@ public:
   void runCommand(std::string); 
   void trimBitTest();
   void trimTest();
-  void getVthrCompThr();
 
   int adjustVtrim(); 
   std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax); 
@@ -30,11 +29,6 @@ private:
   int     fParVcal, fParNtrig; 
   std::vector<std::pair<int, int> > fPIX; 
   int fTrimBits[16][52][80]; 
-  
-  //-- VthrComp for X-rays calibration
-  bool    fFinal;
-  std::string getVthrCompString(std::vector<uint8_t>rocIds,std::vector<int> VthrComp);
-  std::vector<int> xPixelAliveSingleSweep();
   
   ClassDef(PixTestTrim, 1)
 
