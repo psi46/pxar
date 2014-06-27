@@ -222,6 +222,7 @@ void PixTestGainPedestal::measure() {
     }
   }
 
+  double sf(2.), err(0.);
   for (unsigned int i = 0; i < lresult.size(); ++i) {
     int dac = lresult[i].first; 
     vector<pixel> vpix = lresult[i].second;
@@ -233,7 +234,7 @@ void PixTestGainPedestal::measure() {
       h1 = fHists[name];
       if (h1) {
 	h1->SetBinContent(dac+1, vpix[ipx].getValue());
-	h1->SetBinError(dac+1, vpix[ipx].getVariance()); //FIXME using variance as error
+	h1->SetBinError(dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
       } else {
 	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }
@@ -252,7 +253,8 @@ void PixTestGainPedestal::measure() {
       h1 = fHists[name];
       if (h1) {
 	h1->SetBinContent(scaleLo*dac+1, vpix[ipx].getValue());
-	h1->SetBinError(scaleLo*dac+1, vpix[ipx].getVariance()); //FIXME using variance as error
+	err = vpix[ipx].getVariance();
+	h1->SetBinError(scaleLo*dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
       } else {
 	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }
