@@ -37,19 +37,20 @@
 #include "log.h"
 
 using namespace pxar;
+#define NUMPORTS 31
 
-int Cport[30],
+int Cport[NUMPORTS],
   rs_error;
 
 struct termios new_port_settings,
-  old_port_settings[30];
+  old_port_settings[NUMPORTS];
 
-char comports[30][16]={"/dev/ttyS0","/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4","/dev/ttyS5",
+char comports[NUMPORTS][30]={"/dev/ttyS0","/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4","/dev/ttyS5",
                        "/dev/ttyS6","/dev/ttyS7","/dev/ttyS8","/dev/ttyS9","/dev/ttyS10","/dev/ttyS11",
                        "/dev/ttyS12","/dev/ttyS13","/dev/ttyS14","/dev/ttyS15","/dev/ttyUSB0",
                        "/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3","/dev/ttyUSB4","/dev/ttyUSB5",
                        "/dev/ttyAMA0","/dev/ttyAMA1","/dev/ttyACM0","/dev/ttyACM1",
-                       "/dev/rfcomm0","/dev/rfcomm1","/dev/ircomm0","/dev/ircomm1"};
+                       "/dev/rfcomm0","/dev/rfcomm1","/dev/ircomm0","/dev/ircomm1","/dev/tty.KeySerial1"};
 
 int comport_number=16; // "/dev/ttyUSB0"
 
@@ -57,7 +58,7 @@ int RS232_OpenComport(int comport_number, int baudrate)
 {
   int baudr, status;
 
-  if((comport_number>29)||(comport_number<0))
+  if((comport_number>=NUMPORTS)||(comport_number<0))
     {
       LOG(logCRITICAL) << "Illegal comport number " << comport_number << "!";
       return(1);
