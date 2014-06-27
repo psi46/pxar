@@ -15,7 +15,7 @@ using namespace pxar;
 
 // ----------------------------------------------------------------------
 hvsupply::hvsupply() {
-  const int comPortNumber = 16; /* /dev/ttyUSB0 */
+  const int comPortNumber = 16; /* /dev/tty.KeySerial1 */
   if(!openComPort(comPortNumber,57600)) {
     LOG(logCRITICAL) << "Error connecting via RS232 port!";
     throw UsbConnectionError("Error connecting via RS232 port!");
