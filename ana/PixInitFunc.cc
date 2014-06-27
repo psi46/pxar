@@ -137,9 +137,9 @@ TF1* PixInitFunc::gpTanPol(TH1 *h) {
 // ----------------------------------------------------------------------
 TF1* PixInitFunc::gpTanH(TH1 *h) {
 
-  double lo = h->GetBinLowEdge(1); 
-  double hi = h->FindLastBinAbove(0.9*h->GetMaximum());
-  hi = h->GetBinLowEdge(h->GetNbinsX()+1); 
+  double lo = 0.; //h->GetBinLowEdge(1); 
+  double hi = 1700.; //h->FindLastBinAbove(0.9*h->GetMaximum());
+
   // -- setup function
   TF1* f = (TF1*)gROOT->FindObject("PIF_gpTanH");
   if (0 == f) {
@@ -154,11 +154,18 @@ TF1* PixInitFunc::gpTanH(TH1 *h) {
     f->SetRange(lo, hi); 
   }
 
-  f->SetParameter(0, 0.002);
-  f->SetParameter(1, 1.0);
+  f->SetParameter(0, 1.4e-3);
+  f->SetParLimits(0, 1.e-3, 2.e-3);
+
+  f->SetParameter(1, 0.8);
+  f->SetParLimits(1, 0., 20.);
+
   double middle = h->GetMaximum() - h->GetMinimum();
   double step = h->GetMaximum() - middle; 
+
   f->SetParameter(2, middle);
+  f->SetParLimits(2, 0., 2*middle);
+
   f->SetParameter(3, step);
 
   return f;
