@@ -149,6 +149,7 @@ void PixTestGainPedestal::measure() {
   TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string name; 
+  fHists.clear();
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int ix = 0; ix < 52; ++ix) {
       for (unsigned int iy = 0; iy < 80; ++iy) {
