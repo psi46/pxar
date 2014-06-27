@@ -22,12 +22,10 @@ cdef class Pixel:
         self.thisptr.roc_id = p.roc_id
         self.thisptr.column = p.column
         self.thisptr.row = p.row
-        self.thisptr.value = p.value
+        self.thisptr.setValue(p.getValue())
     cdef c_clone(self, pixel* p):
         del self.thisptr
         self.thisptr = p
-    def decode(self, int address):
-        self.thisptr.decode(address)
     property roc_id:
         def __get__(self): return self.thisptr.roc_id
         def __set__(self, roc_id): self.thisptr.roc_id = roc_id
@@ -37,10 +35,10 @@ cdef class Pixel:
     property row:
         def __get__(self): return self.thisptr.row
         def __set__(self, row): self.thisptr.row = row
-    property value:
-        def __get__(self): return self.thisptr.value
-        def __set__(self, value): self.thisptr.value = value
-
+    def setValue(self, double value):
+        self.thisptr.setValue(value)
+    def getValue(self):
+        return self.thisptr.getValue()
 
 cdef class PixelConfig:
     cdef pixelConfig *thisptr      # hold a C++ instance which we're wrapping
@@ -310,7 +308,7 @@ cdef class PyPxarCore:
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
+                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
         return numpy.array(hits)
 
     def getEfficiencyVsDAC(self, string dacName, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
@@ -325,7 +323,7 @@ cdef class PyPxarCore:
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
+                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
         return numpy.array(hits)
 
     def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Min, uint8_t dac2Max, uint16_t flags = 0, uint32_t nTriggers=16):
@@ -340,7 +338,7 @@ cdef class PyPxarCore:
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].value
+                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
         return numpy.array(hits)
 
     def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
@@ -351,7 +349,7 @@ cdef class PyPxarCore:
         #This currently only returns one single pixel! The rest is lost...
         for d in xrange(r.size()):
             if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].value)
+                hits.append(r[d].second.second[0].getValue())
             else:
                 hits.append(0)
         return numpy.array(hits)
@@ -364,7 +362,7 @@ cdef class PyPxarCore:
         #This currently only returns one single pixel! The rest is lost...
         for d in xrange(r.size()):
             if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].value)
+                hits.append(r[d].second.second[0].getValue())
             else:
                 hits.append(0)
         return numpy.array(hits)
@@ -378,7 +376,7 @@ cdef class PyPxarCore:
         for i in xrange(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
+            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
         return numpy.array(hits)
 
     def getEfficiencyMap(self, int flags, int nTriggers):
@@ -390,7 +388,7 @@ cdef class PyPxarCore:
         for i in xrange(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
+            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
         return numpy.array(hits)
 
     def getThresholdMap(self, string dacName, int flags, int nTriggers):
@@ -402,7 +400,7 @@ cdef class PyPxarCore:
         for i in xrange(self.dut.n_rocs):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
+            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
         return numpy.array(hits)
 
 #    def int32_t getReadbackValue(self, string parameterName):

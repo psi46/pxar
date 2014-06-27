@@ -14,7 +14,8 @@ cdef extern from "api.h" namespace "pxar":
         int32_t value
         pixel()
         pixel(int32_t address, int32_t data)
-        void decode(int32_t address)
+        double getValue()
+        void setValue(double val)
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass Event:
