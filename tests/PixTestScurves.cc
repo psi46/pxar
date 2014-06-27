@@ -295,18 +295,20 @@ void PixTestScurves::adjustVcal() {
   fApi->_dut->testPixel(11, 20, true);
   fApi->_dut->maskPixel(11, 20, false);
   
-  try{
-    vector<TH2D *> hv; 
-    TH2D *h(0); 
-    for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
-      h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
-      hv.push_back(h); 
-    }
+  vector<TH2D *> hv; 
+  TH2D *h(0); 
+  for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+    h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
+    hv.push_back(h); 
+  }
+  
+  int ntrig(5); 
 
-    int ntrig(5); 
+  try{
+    
     vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  results = 
       fApi->getEfficiencyVsDACDAC("vthrcomp", 0, 255, "vcal", 0, 255, FLAGS, ntrig);
-
+    
     int idx(-1);
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];
@@ -314,10 +316,10 @@ void PixTestScurves::adjustVcal() {
       pair<uint8_t, vector<pixel> > w = v.second;      
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
-
+      
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
 	idx = getIdxFromId(wpix[ipix].roc_id);
-	hv[idx]->Fill(idac1, idac2, wpix[ipix].value); 
+	hv[idx]->Fill(idac1, idac2, wpix[ipix].getValue()); 
       }
     }
     
@@ -335,8 +337,8 @@ void PixTestScurves::adjustVcal() {
       vcal.push_back(vcalthr); 
     }
     
-  } catch(DataMissingEvent &e){
-    LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+  } catch(pxarException &e){
+    LOG(logCRITICAL) << "problem with readout: "<< e.what() << " setting vcal = 100"; 
     for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
       vcal.push_back(100); 
     }

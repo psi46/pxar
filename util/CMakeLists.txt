@@ -1,6 +1,6 @@
 # Build util library
 
-INCLUDE_DIRECTORIES(. ${PROJECT_SOURCE_DIR}/ana )
+INCLUDE_DIRECTORIES(.)
 
 SET (UTILLIB_SOURCES
 ConfigParameters.cc

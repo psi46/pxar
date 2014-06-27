@@ -176,9 +176,12 @@ void PixTestDacScan::doTest() {
 	    done = true;
 	  }
 	} catch(DataMissingEvent &e){
-	  LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	  LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	  ++cnt;
 	  if (e.numberMissing > 10) done = true; 
+	} catch(pxarException &e) {
+	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	  ++cnt;
 	}
 	done = (cnt>5) || done;
       }
@@ -202,7 +205,7 @@ void PixTestDacScan::doTest() {
 	  hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, rocIds[iroc]);
 	  h = hmap[hname];
 	  if (h) {
-	    h->Fill(idac, vpix[ipix].value); 
+	    h->Fill(idac, vpix[ipix].getValue()); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find "  << hname; 
 	  }

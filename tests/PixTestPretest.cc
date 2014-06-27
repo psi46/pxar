@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdlib.h>  
 #include <algorithm> 
 
@@ -143,9 +144,9 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-
   // -- save DACs!
   saveDacs();
+  LOG(logINFO) << "PixTestPretest::doTest() done";
 }
 
 // ----------------------------------------------------------------------
@@ -176,6 +177,7 @@ void PixTestPretest::runCommand(std::string command) {
     setVthrCompId(); 
     return;
   }
+  
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
@@ -387,9 +389,12 @@ void PixTestPretest::setVthrCompCalDel() {
 	rresults = fApi->getEfficiencyVsDACDAC("caldel", 0, 255, "vthrcomp", 0, 150, FLAGS, fParNtrig);
 	done = true;
       } catch(DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	++cnt;
 	if (e.numberMissing > 10) done = true; 
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -405,7 +410,7 @@ void PixTestPretest::setVthrCompCalDel() {
       vector<pixel> wpix = w.second;
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
 	if (wpix[ipix].roc_id == rocIds[iroc]) {
-	  h2->Fill(idac1, idac2, wpix[ipix].value); 
+	  h2->Fill(idac1, idac2, wpix[ipix].getValue()); 
 	} else {
 	  LOG(logDEBUG) << "ghost ROC " << static_cast<unsigned int>(wpix[ipix].roc_id) << " seen with pixel "
 			<< static_cast<unsigned int>(wpix[ipix].column) << " " << static_cast<unsigned int>(wpix[ipix].row); 
@@ -634,9 +639,12 @@ void PixTestPretest::setCalDel() {
       results =  fApi->getEfficiencyVsDAC(DacName, 0, 250, FLAGS, fParNtrig);
       done = true;
     } catch(DataMissingEvent &e){
-      LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
       ++cnt;
       if (e.numberMissing > 10) done = true; 
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
     }
     done = (cnt>5) || done;
   }
@@ -679,7 +687,7 @@ void PixTestPretest::setCalDel() {
 	  && vpix[ipx].row == fPIX[0].second
 	  ) {
 
-	int nn = vpix.at(ipx).value;
+	int nn = vpix.at(ipx).getValue();
 
 	if (nn > nm[fId2Idx[roc]]) {
 	  nm[fId2Idx[roc]] = nn;

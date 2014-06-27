@@ -42,7 +42,7 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
 	  for (std::vector< pxar::pixel >::iterator pixit = dacit->second.second.begin(); pixit != dacit->second.second.end(); ++pixit) {
 	    if(pixit->roc_id == roc && pixit->column == column && pixit->row == row) {
 	      found = true;
-	      int value = dacit->second.second.at(0).value;
+	      int value = dacit->second.second.at(0).getValue();
 	      if(value == nTrig) std::cout << "X";
 	      else if(value > nTrig) std::cout << "#";
 	      else std::cout << value;
@@ -93,8 +93,8 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
       if(!mapit->second.empty()) {
 	for(std::vector<pxar::pixel>::iterator it = mapit->second.begin(); it != mapit->second.end(); ++it) {
 	  if(it->roc_id == roc && it->column == column && it->row == row) {
-	    if(it->value == trig) { std::cout << "o"; found = true; }
-	    else if(it->value > trig) { std::cout << "."; found = true; }
+	    if(it->getValue() == trig) { std::cout << "o"; found = true; }
+	    else if(it->getValue() > trig) { std::cout << "."; found = true; }
 	    break;
 	  }
 	}
@@ -187,10 +187,10 @@ void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc, uint8_t wid
       bool found = false;
       for (std::vector< pxar::pixel >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 	if(mapit->row == row && mapit->column == column && mapit->roc_id == roc) {
-	  if((int)mapit->value == nTrig) std::cout << std::setw(width) << "X";
-	  else if((int)mapit->value == 0) std::cout << std::setw(width) << "-";
-	  else if((int)mapit->value > nTrig) std::cout << std::setw(width) << "#";
-	  else std::cout << std::setw(width) << (int)mapit->value;
+	  if((int)mapit->getValue() == nTrig) std::cout << std::setw(width) << "X";
+	  else if((int)mapit->getValue() == 0) std::cout << std::setw(width) << "-";
+	  else if((int)mapit->getValue() > nTrig) std::cout << std::setw(width) << "#";
+	  else std::cout << std::setw(width) << (int)mapit->getValue();
 	  found = true;
 	  break;
 	}

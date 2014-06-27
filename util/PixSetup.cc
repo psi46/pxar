@@ -12,6 +12,7 @@ PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
   fMoreWebCloning    = false; 
+  fDoUpdateRootFile  = false;
   init(); 
 }
 

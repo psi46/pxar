@@ -20,6 +20,7 @@ public:
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
+  
 
 private:
 
@@ -28,7 +29,9 @@ private:
   int     fNoiseMargin;
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
-  bool    fProblem; 
+  bool    fProblem;
+   
+
 
   ClassDef(PixTestPretest, 1)
 

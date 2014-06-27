@@ -217,7 +217,7 @@ void PixTestDacScanPh::doTest()
 	  vpix[ipx].column == col &&
 	  vpix[ipx].row == row ) {
 	h1 = hsts.at(roc);
-	h1->Fill( idac, vpix[ipx].value ); // already averaged
+	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
       } // valid
 
     } // pix
@@ -239,7 +239,7 @@ void PixTestDacScanPh::doTest()
       << "roc " << setw(2) << (int) vpix9[ipx].roc_id
       << " pix " << setw(2) << (int) vpix9[ipx].column
       << " " << setw(2) << (int) vpix9[ipx].row
-      << " thr " << setw(3) << vpix9[ipx].value;
+      << " thr " << setw(3) << vpix9[ipx].getValue();
 
   if( col > -1 )
     fApi->_dut->testPixel( col, row, false );

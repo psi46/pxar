@@ -240,7 +240,7 @@ void PixTestDacScanThr::doTest()
 
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
 
-      uint8_t thr = vpix[ipx].value;
+      uint8_t thr = vpix[ipx].getValue();
       if( thr == 255 ) continue; // invalid
 
       uint8_t roc = vpix[ipx].roc_id;

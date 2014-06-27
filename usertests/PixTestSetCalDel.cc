@@ -153,7 +153,7 @@ void PixTestSetCalDel::doTest() {
 
       int roc = vpix.at(ipx).roc_id;
 
-      int nn = vpix.at(ipx).value;
+      int nn = vpix.at(ipx).getValue();
 
       if( nn > nm[roc] ) {
 	nm[roc] = nn;

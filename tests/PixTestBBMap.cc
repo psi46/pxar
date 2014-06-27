@@ -144,7 +144,7 @@ void PixTestBBMap::doTest() {
 
   // -- summary printout
   string bbString(""), hname(""); 
-  float bbprob(0.); 
+  double bbprob(0.); 
   for (unsigned int i = 0; i < thrmapsCals.size(); ++i) {
     hname = thrmapsCals[i]->GetName();
     if (string::npos == hname.find("dist_thr_")) continue;

@@ -56,6 +56,7 @@ int RS232_OpenComport(int, int);
 int RS232_PollComport(int, char *, int);
 int RS232_SendByte(int, unsigned char);
 int RS232_SendBuf(int, unsigned char *, int);
+int RS232_SendBufString(int, char *, int);
 void RS232_CloseComport(int);
 void RS232_cputs(int, const char *);
 int RS232_IsDCDEnabled(int);
@@ -73,10 +74,12 @@ void closeComPort();
 int writeCommand(const char *command);
 int writeCommandAndReadAnswer(const char *command,char *answer);
 
+int writeCommandString(const char *command);
+int writeCommandStringAndReadAnswer(const char *command,char *answer, int delay = 2);
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif
-
-

@@ -43,12 +43,12 @@ int main(int argc, char *argv[]){
 
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
-    verbosity("INFO"), flashFile("nada"), runtest("fulltest"); 
+    verbosity("INFO"), flashFile("nada"), runtest("fulltest"), trimVcal(""), testParameters("nada"); 
   bool doRunGui(false), 
     doRunScript(false), 
     doRunSingleTest(false), 
     doUpdateFlash(false),
-    doAnalysisOnly(false),
+    doUpdateRootFile(false),
     doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
@@ -60,19 +60,23 @@ int main(int argc, char *argv[]){
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
       cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
+      cout << "-p \"p1=v1[;p2=v2]\"  set parameters for test" << endl;
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
+      cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       return 0;
     }
-    if (!strcmp(argv[i],"-a"))                                {doAnalysisOnly = true;} 
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
-    if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"--dir"))    {dir  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
     if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
+    if (!strcmp(argv[i],"-p"))                                {testParameters  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
+    if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
+    if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;} 
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
   }
 
@@ -121,16 +125,23 @@ int main(int argc, char *argv[]){
     rootfile  = configParameters->getDirectory() + "/" + rootfile;
   }
 
+  if (trimVcal.compare("")) {
+    configParameters->setTrimVcalSuffix(trimVcal); 
+  }
+  
   logfile = rootfile; 
   PixUtil::replaceAll(logfile, ".root", ".log");
-  createBackup(rootfile, logfile); 
   
   LOG(logINFO)<< "pxar: dumping results into " << rootfile << " logfile = " << logfile;
   TFile *rfile(0); 
   FILE* lfile;
-  if (doAnalysisOnly) {
+  if (doUpdateRootFile) {
     rfile = TFile::Open(rootfile.c_str(), "UPDATE"); 
+    lfile = fopen(logfile.c_str(), "a");
+    SetLogOutput::Stream() = lfile;
+    SetLogOutput::Duplicate() = true;
   } else {
+    createBackup(rootfile, logfile); 
     rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
     lfile = fopen(logfile.c_str(), "a");
     SetLogOutput::Stream() = lfile;
@@ -185,17 +196,19 @@ int main(int argc, char *argv[]){
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
   a.setMoreWebCloning(doMoreWebCloning); 
+  a.setRootFileUpdate(doUpdateRootFile);
 
   if (doRunGui) {
     runGui(a, argc, argv); 
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
     if (configParameters->getHvOn()) api->HVon(); 
+    if (testParameters.compare("nada")) {
+      ptp->setTestParameters(runtest, testParameters); 
+    }
     PixTest *t = factory->createTest(runtest, &a);
     t->doTest();
     delete t; 
-    delete api; 
-    return 0;
   } else {
     string input; 
     bool stop(false);
@@ -205,7 +218,16 @@ int main(int argc, char *argv[]){
     do {
       LOG(logINFO) << "enter test to run";
       cout << "pxar> "; 
-      cin >> input; 
+      string input;
+      std::getline(cin, input);
+      if (input.size() == 0) stop = true;
+      string::size_type m1 = input.find(" "); 
+      if (m1 != string::npos) {
+	string parameters = input.substr(m1); 
+	input = input.substr(0, m1);
+	LOG(logINFO) << "  test: " << input << " setting parameters: ->" << parameters << "<-"; 
+	ptp->setTestParameters(input, parameters); 
+      }
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       
       if (!input.compare("gui"))  runGui(a, argc, argv); 
