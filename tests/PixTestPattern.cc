@@ -380,7 +380,6 @@ void PixTestPattern::setHistos(){
 // ----------------------------------------------------------------------
 void PixTestPattern::FillHistos(std::vector<pxar::Event> data) {	
 		std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-		int pixCnt(0);
 		int idx(-1);
 		std::vector<uint8_t> cnt;
 		//not to fill always the first histo:
@@ -545,7 +544,7 @@ void PixTestPattern::TriggerLoop(int checkfreq) {
 			mDelay(checkfreq * 1000);
 			timeff = t.get() - timepaused;
 			LOG(logINFO) << "PixTestPattern:: elapsed time " << timeff / 1000 << " seconds";
-			if (timeff / 1000 >= fParSeconds)       {
+			if (timeff / 1000 >= (uint64_t)fParSeconds)       {
 				fDaq_loop = false;
 				TotalTime = true;
 				break;
