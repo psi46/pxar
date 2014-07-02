@@ -355,32 +355,32 @@ void PixTestPattern::FillHistos(std::vector<pxar::Event> data, std::vector<TH2D*
 
 		for (std::vector<pxar::Event>::iterator it = data.begin(); it != data.end(); ++it) {
 
-			for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-
-				if (fParFillTree) {
-					fTreeEvent.header = it->header;
-					fTreeEvent.dac = 0;
-					fTreeEvent.trailer = it->trailer;
-					fTreeEvent.numDecoderErrors = it->numDecoderErrors;
-					fTreeEvent.npix = it->pixels.size();
-				}
-				for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-					idx = getIdxFromId(it->pixels[ipix].roc_id) ;
-					hits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-					phmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-					ph[idx]->Fill(it->pixels[ipix].getValue());
-					if (fParFillTree) {
-						fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
-						fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
-						fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-						fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
-						fTreeEvent.pq[ipix] = 0; //no charge..
-					}
-				}				
-				if (fParFillTree) fTree->Fill();
+			if (fParFillTree) {
+				fTreeEvent.header = it->header;
+				fTreeEvent.dac = 0;
+				fTreeEvent.trailer = it->trailer;
+				fTreeEvent.numDecoderErrors = it->numDecoderErrors;
+				fTreeEvent.npix = it->pixels.size();
 			}
+			for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+				idx = getIdxFromId(it->pixels[ipix].roc_id) ;
+				if(idx == -1) {
+					LOG(logWARNING) << "PixTestPattern::FillHistos() wrong 'idx' value --> return";
+					return;    			
+				}
+				hits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+				phmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
+				ph[idx]->Fill(it->pixels[ipix].getValue());
+				if (fParFillTree) {
+					fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
+					fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
+					fTreeEvent.prow[ipix] = it->pixels[ipix].row;
+					fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
+					fTreeEvent.pq[ipix] = 0; //no charge..
+				}
+			}				
+			if (fParFillTree) fTree->Fill();
 		}
-
 		//to draw the hitsmap as 'online' check.
 		TH2D* h2 = (TH2D*)(hits.back());
 		h2->Draw(getHistOption(h2).c_str());
@@ -504,7 +504,7 @@ void PixTestPattern::TriggerLoop(int checkfreq, std::vector<TH2D*> hits, std::ve
 		}
 		//start triggerloop:
 		fPeriod = fApi->daqTriggerLoop(fParPeriod);
-		if (nloop == 1) LOG(logINFO) << "PixTestPattern:: TriggerLoop period = " << fPeriod << " clks";
+		if (nloop == 1) { LOG(logINFO) << "PixTestPattern:: TriggerLoop period = " << fPeriod << " clks"; }
 		
 		//check every checkfreq seconds if buffer is full less then 80%:
 		while (fApi->daqStatus(perFull) && perFull < 80 && fDaq_loop) {
@@ -637,7 +637,6 @@ void PixTestPattern::doTest()
 		setTitles(h1, "ADC", "Entries/bin");
 		Ph.push_back(h1);
 	}
-
 
 	// Start the DAQ:
 	//::::::::::::::::::::::::::::::::
