@@ -272,6 +272,9 @@ void PixTestDaq::ProcessData(uint16_t numevents){
   	//to draw the hitsmap as 'online' check.
 	TH2D* h2 = (TH2D*)(fHits.back());
 	h2->Draw(getHistOption(h2).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+	PixTest::update();
+
 	LOG(logINFO) << Form("events read: %6ld, pixels seen: %3d, hist entries: %4d",
 	                 daqdat.size(), pixCnt,	static_cast<int>(fHits[0]->GetEntries()));	
 }
