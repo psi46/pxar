@@ -1441,6 +1441,14 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 
+    // If we have an old TBM version set up the DESER400 to read old data format:
+    // "old" is everything before TBM08B (so: TBM08, TBM08A)
+    if(tbmtype < TBM_08B) { 
+      LOG(logDEBUGHAL) << "Pre-series TBM with outdated trailer format. Configuring DESER400 accordingly.";
+      _testboard->Daq_Deser400_OldFormat(true);
+    }
+    else { _testboard->Daq_Deser400_OldFormat(false); }
+
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
     _testboard->Daq_Start(1);
