@@ -164,6 +164,7 @@ void PixTestDaq::pgToDefault() {
 void PixTestDaq::setHistos(){
 	
 	if (fParFillTree) bookTree();
+	fHits.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();
 
 	std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 	TH1D *h1(0);
@@ -291,21 +292,20 @@ void PixTestDaq::FinalCleaning() {
 // ----------------------------------------------------------------------
 void PixTestDaq::doTest() {
 
+  PixTest::update();
+  fDirectory->cd();
+  fPg_setup.clear();
+
   //Immediately stop if parameters not in range	
   if (fParOutOfRange) return;
   
   LOG(logINFO) << "PixTestDaq::doTest() start.";
 
-  PixTest::update(); 
-  fDirectory->cd();
-
-  fPg_setup.clear();
-
   //Set the ClockStretch
   fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay
    
   //Set the histograms:
-  if(fHits.size() == 0) setHistos();  //to book histo only for the first 'doTest'.
+  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
 
   // Start the DAQ:
   //::::::::::::::::::::::::::::::::
