@@ -242,6 +242,7 @@ namespace pxar {
       // FIXME this is just an example.
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
+      _devices["tbm08b"]        = TBM_08B;
       _devices["tbm09"]         = TBM_09;
     }
 
