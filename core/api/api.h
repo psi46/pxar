@@ -373,8 +373,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint16_t flags = 0, uint16_t nTriggers = 16);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTrigger);
 
     /** Method to scan a DAC range and measure the efficiency
      *
@@ -399,7 +398,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
     /** Method to scan a DAC range and measure the pixel threshold
      *
@@ -444,9 +443,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					      std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					      uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the efficiency
      *
@@ -457,9 +454,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, 
-					     std::string dac2name, uint8_t dac2min, uint8_t dac2max, 
-					     uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
     /** Method to get a map of the pulse height
      *
@@ -469,7 +464,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector<pixel> getPulseheightMap(uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector<pixel> getPulseheightMap(uint16_t flags, uint16_t nTriggers);
 
     /** Method to get a map of the efficiency
      *
@@ -479,7 +474,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector<pixel> getEfficiencyMap(uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector<pixel> getEfficiencyMap(uint16_t flags, uint16_t nTriggers);
 
     /** Method to get a map of the pixel threshold
      *
@@ -522,7 +517,7 @@ namespace pxar {
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags, uint16_t nTriggers);
 
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
