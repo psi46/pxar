@@ -75,7 +75,7 @@ int writeCommand(const char *command);
 int writeCommandAndReadAnswer(const char *command,char *answer);
 
 int writeCommandString(const char *command);
-int writeCommandStringAndReadAnswer(const char *command,char *answer, int delay = 2);
+int writeCommandStringAndReadAnswer(const char *command,char *answer, int delay = 200);
 
 
 #ifdef __cplusplus

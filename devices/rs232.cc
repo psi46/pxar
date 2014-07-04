@@ -479,7 +479,7 @@ int writeCommandStringAndReadAnswer(const char *command, char *answer, int delay
     return 0;
   }
    
-  usleep(delay*1000000);
+  usleep(delay*1000);
 
   // init buffer
   *answer = 0;   
