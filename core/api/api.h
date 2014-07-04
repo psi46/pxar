@@ -659,7 +659,7 @@ namespace pxar {
 
     /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors and return the threshold value.
      */
