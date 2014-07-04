@@ -583,8 +583,9 @@ int main(int argc, char* argv[]) {
 
     // Call the test:
     int nTrig22 = 100;
+    // Let's do this one sparse and scan only every 3rd DAC value:
     std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
-      effscandata22 = _api->getEfficiencyVsDAC("vcal", 0, 90, 0, nTrig22);
+      effscandata22 = _api->getEfficiencyVsDAC("vcal", 3, 0, 90, 0, nTrig22);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata22.size() << std::endl;
