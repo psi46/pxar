@@ -668,7 +668,7 @@ namespace pxar {
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags, bool efficiency);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > repackDacDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags, bool efficiency);
 
     /** Helper function for conversion from string to register value
      *

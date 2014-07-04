@@ -839,7 +839,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags,false);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,false);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -906,7 +906,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags,true);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,true);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -1504,7 +1504,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
   std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
 
   if(packed.size() % static_cast<size_t>((dacMax-dacMin)/dacStep+1) != 0) {
-    LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>(dacMax-dacMin+1) << " DAC values!";
+    LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>((dacMax-dacMin)/dacStep+1) << " DAC values!";
     return result;
   }
 
@@ -1682,7 +1682,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScan
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result;
 
   // Measure time:
@@ -1691,19 +1691,21 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   // First reduce triggers, we have #nTriggers Events which belong together:
   std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
 
-  if(packed.size() % static_cast<size_t>((dac1max-dac1min+1)*(dac2max-dac2min+1)) != 0) {
-    LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>((dac1max-dac1min+1)*(dac2max-dac2min+1)) << " DAC values!";
+  if(packed.size() % static_cast<size_t>(((dac1max-dac1min)/dac1step+1)*((dac2max-dac2min)/dac2step+1)) != 0) {
+    LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>(((dac1max-dac1min)/dac1step+1)*((dac2max-dac2min)/dac2step+1)) << " DAC values!";
     return result;
   }
 
   LOG(logDEBUGAPI) << "Packing DAC range [" << static_cast<int>(dac1min) << " - " << static_cast<int>(dac1max) 
-		   << "]x[" << static_cast<int>(dac2min) << " - " << static_cast<int>(dac2max)
+		   << ", step size " << static_cast<int>(dac1step) << "]x[" 
+		   << static_cast<int>(dac2min) << " - " << static_cast<int>(dac2max)
+		   << ", step size " << static_cast<int>(dac2step)
 		   << "], data has " << packed.size() << " entries.";
 
   // Prepare the result vector
-  for(size_t dac1 = dac1min; dac1 <= dac1max; dac1++) {
+  for(size_t dac1 = dac1min; dac1 <= dac1max; dac1 += dac1step) {
     std::pair<uint8_t,std::vector<pixel> > dacpair;
-    for(size_t dac2 = dac2min; dac2 <= dac2max; dac2++) {
+    for(size_t dac2 = dac2min; dac2 <= dac2max; dac2 += dac2step) {
       dacpair = std::make_pair(dac2,std::vector<pixel>());
       result.push_back(std::make_pair(dac1,dacpair));
     }
@@ -1717,15 +1719,15 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
     if(current2dac > dac2max) {
       current2dac = dac2min;
-      current1dac++;
+      current1dac += dac1step;
     }
     if(current1dac > dac1max) { current1dac = dac1min; }
 
-    result.at((current1dac-dac1min)*(dac2max-dac2min+1) + (current2dac-dac2min)).second.second.insert(result.at((current1dac-dac1min)*(dac2max-dac2min+1) + (current2dac-dac2min)).second.second.end(),
+    result.at((current1dac-dac1min)/dac1step*((dac2max-dac2min)/dac2step+1) + (current2dac-dac2min)/dac2step).second.second.insert(result.at((current1dac-dac1min)/dac1step*((dac2max-dac2min)/dac2step+1) + (current2dac-dac2min)/dac2step).second.second.end(),
 												       (*Eventit)->pixels.begin(),
 												       (*Eventit)->pixels.end());
     i++;
-    current2dac++;
+    current2dac += dac2step;
   }
   
   // Cleanup temporary data:
