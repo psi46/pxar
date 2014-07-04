@@ -718,16 +718,17 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   // Get the full DAC range for scanning:
   uint8_t dac1min = 0;
   uint8_t dac1max = getDACRange(dacName);
-  return getThresholdVsDAC(dacName, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers);
+  uint8_t dacStep = 1;
+  return getThresholdVsDAC(dacName, dacStep, dac1min, dac1max, dac2name, dacStep, dac2min, dac2max, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
   // No threshold level provided - set threshold to 50%:
   uint8_t threshold = 50;
-  return api::getThresholdVsDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, threshold, flags, nTriggers);
+  return api::getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -779,11 +780,13 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   param.push_back(static_cast<int32_t>(dac2max));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
+  param.push_back(static_cast<int32_t>(dac1step));
+  param.push_back(static_cast<int32_t>(dac2step));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1min,dac1max,dac2min,dac2max,threshold,nTriggers,flags);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,threshold,nTriggers,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -998,16 +1001,17 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   // Get the full DAC range for scanning:
   uint8_t dacMin = 0;
   uint8_t dacMax = getDACRange(dacName);
-  return getThresholdMap(dacName, dacMin, dacMax, flags, nTriggers);
+  uint8_t dacStep = 1;
+  return getThresholdMap(dacName, dacStep, dacMin, dacMax, flags, nTriggers);
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
   // No threshold level provided - set threshold to 50%:
   uint8_t threshold = 50;
-  return getThresholdMap(dacName, dacMin, dacMax, threshold, flags, nTriggers);
+  return getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers);
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
@@ -1036,12 +1040,13 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacMin, uin
   param.push_back(static_cast<int32_t>(dacMax));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
+  param.push_back(static_cast<int32_t>(dacStep));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel> result = repackThresholdMapData(data, dacMin, dacMax, threshold, nTriggers, flags);
+  std::vector<pixel> result = repackThresholdMapData(data, dacStep, dacMin, dacMax, threshold, nTriggers, flags);
 
   return result;
 }
@@ -1555,7 +1560,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
   return result;
 }
 
-std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
+std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
 
@@ -1569,7 +1574,7 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   timer t;
 
   // First, pack the data as it would be a regular Dac Scan:
-  std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacMin, dacMax, nTriggers, flags, true);
+  std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacStep, dacMin, dacMax, nTriggers, flags, true);
 
   // Efficiency map:
   std::map<pixel,uint8_t> oldvalue;  
@@ -1623,7 +1628,7 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1min, uint8_t dac1max, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
 
@@ -1637,7 +1642,8 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScan
   timer t;
 
   // First, pack the data as it would be a regular DacDac Scan:
-  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1min,dac1max,dac2min,dac2max,nTriggers,flags,true);
+  //FIXME stepping size!
+  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,true);
 
   // Efficiency map:
   std::map<uint8_t,std::map<pixel,uint8_t> > oldvalue;  

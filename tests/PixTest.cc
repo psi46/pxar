@@ -289,7 +289,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       bool done = false;
       while (!done){
 	try {
-	  results = fApi->getThresholdMap(dac, daclo, dachi, FLAGS, ntrig);
+	  results = fApi->getThresholdMap(dac, 1, daclo, dachi, FLAGS, ntrig);
 	  done = true; 
 	} catch(pxarException &e) {
 	  ++cnt;
