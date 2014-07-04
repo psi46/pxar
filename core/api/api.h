@@ -467,6 +467,21 @@ namespace pxar {
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
+    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the
+     *  pulse height
+     *
+     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
+     *  values with a pxar::pixel vector. The value of the pxar::pixel struct is the
+     *  averaged pulse height over "nTriggers" triggers.
+     *  The dacStep parameters can be used to set the increment of the DAC scan, i.e.
+     *  only sparsely scanning every nth DAC. Increment can be set independently
+     *  for both scanning dimensions.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
+     */
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
+
     /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the efficiency
      *
      *  Returns a vector containing pairs of DAC1 values and pais of DAC2
@@ -477,6 +492,20 @@ namespace pxar {
      *
      */
     std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
+
+    /** Method to scan a 2D DAC-Range (DAC1 vs. DAC2) and measure the efficiency
+     *
+     *  Returns a vector containing pairs of DAC1 values and pais of DAC2
+     *  values with a pxar::pixel vector. The value of the pxar::pixel struct is the
+     *  number of hits in that pixel. Efficiency == 1 for nhits == nTriggers
+     *  The dacStep parameters can be used to set the increment of the DAC scan, i.e.
+     *  only sparsely scanning every nth DAC. Increment can be set independently
+     *  for both scanning dimensions.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     *
+     */
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers);
 
     /** Method to get a map of the pulse height
      *
