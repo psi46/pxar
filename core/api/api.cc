@@ -600,8 +600,13 @@ bool api::setTbmReg(std::string regName, uint8_t regValue) {
   return true;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-										uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+
+  // No step size provided - scanning all DACs with step size 1:
+  return getPulseheightVsDAC(dacName, 1, dacMin, dacMax, flags, nTriggers);
+}
+
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -630,11 +635,12 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
 
   // Load the test parameters into vector
   std::vector<int32_t> param;
-  param.push_back(static_cast<int32_t>(dacRegister));  
+  param.push_back(static_cast<int32_t>(dacRegister));
   param.push_back(static_cast<int32_t>(dacMin));
   param.push_back(static_cast<int32_t>(dacMax));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
+  param.push_back(static_cast<int32_t>(dacStep));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
@@ -652,8 +658,13 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-									       uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+
+  // No step size provided - scanning all DACs with step size 1:
+  return getEfficiencyVsDAC(dacName, 1, dacMin, dacMax, flags, nTriggers);
+}
+
+std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -685,6 +696,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   param.push_back(static_cast<int32_t>(dacMax));
   param.push_back(static_cast<int32_t>(flags));
   param.push_back(static_cast<int32_t>(nTriggers));
+  param.push_back(static_cast<int32_t>(dacStep));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
   std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);

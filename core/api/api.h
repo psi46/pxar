@@ -368,12 +368,24 @@ namespace pxar {
      *
      *  Returns a vector of pairs containing set dac value and a pxar::pixel vector,
      *  with the value of the pxar::pixel struct being the averaged pulse height
-     *  over "nTriggers" triggers
+     *  over "nTriggers" triggers.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers);
+
+    /** Method to scan a DAC range and measure the pulse height
+     *
+     *  Returns a vector of pairs containing set dac value and a pxar::pixel vector,
+     *  with the value of the pxar::pixel struct being the averaged pulse height
+     *  over "nTriggers" triggers.
+     *  The dacStep parameter can be used to set the increment of the DAC scan, i.e.
+     *  only sparsely scanning every nth DAC.
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
      *
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTrigger);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getPulseheightVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTrigger);
 
     /** Method to scan a DAC range and measure the efficiency
      *
@@ -382,10 +394,20 @@ namespace pxar {
      *  pixel. Efficiency == 1 for nhits == nTriggers
      *
      *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
-     *
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, 
-					  uint16_t flags = 0, uint16_t nTriggers=16);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers);
+
+    /** Method to scan a DAC range and measure the efficiency
+     *
+     *  Returns a vector of pairs containing set dac value and pixels,
+     *  with the value of the pxar::pixel struct being the number of hits in that
+     *  pixel. Efficiency == 1 for nhits == nTriggers
+     *  The dacStep parameter can be used to set the increment of the DAC scan, i.e.
+     *  only sparsely scanning every nth DAC.
+     *
+     *  If the readout of the DTB is corrupt, a pxar::DataMissingEvent is thrown.
+     */
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > getEfficiencyVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers);
 
     /** Method to scan a DAC range and measure the pixel threshold
      *
