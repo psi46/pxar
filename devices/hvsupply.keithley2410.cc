@@ -35,6 +35,8 @@ hvsupply::hvsupply() {
   writeCommandString(":CURR:PROT:LEV 100E-6\n");   // Set compliance limit to 100 uA
   writeCommandString(":SENS:CURR:RANG 20E-6\n");   // Select measuring range of 20 uA
   writeCommandString(":SENS:CURR:NPLC 10\n");      // Set integration period to maximum (=10). Unit is power line cycles, i.e. 10/60=0.167s in the US and 10/50=0.2s in Europe
+  writeCommandString(":SENS:VOLT:RANG:AUTO ON\n"); // Set voltage ranging to auto for measurement
+  writeCommandString(":SOUR:VOLT:RANG:AUTO ON\n"); // Set voltage ranging to auto for the source
   writeCommandString(":SOUR:VOLT:IMM:AMPL 0\n");   // Set a voltage of 0 V immediately
   writeCommandString(":FORM:ELEM VOLT,CURR\n");    // Select readout format, e.g. get a number pair with voltage and current
 
