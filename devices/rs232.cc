@@ -395,6 +395,7 @@ int writeCommand(const char *command)
 //---------------------------------------------------------------------------
 // Allows writing commands to the Keithley 2410
 int writeCommandString(const char *command) {
+  LOG(logDEBUGRS232) <<"RS232 Command: " << command;
   int  len;
   char cmd[256];  
 
@@ -417,7 +418,7 @@ int writeCommandString(const char *command) {
 
 //---------------------------------------------------------------------------
 int writeCommandAndReadAnswer(const char *command, char *answer) {
-  LOG(logDEBUGRPC) << "RS232 Command: " << command;
+  LOG(logDEBUGRS232) << "RS232 Command: " << command;
         
   int  bytesRead;
   char inbuf[256];
@@ -455,14 +456,14 @@ int writeCommandAndReadAnswer(const char *command, char *answer) {
   }
 
   usleep(100000);  
-  LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
+  LOG(logDEBUGRS232) << "RS232 Answer: " << answer;
   return 1;
 }
 
 //---------------------------------------------------------------------------
 // Allows writing commands to the Keithley 2410
 int writeCommandStringAndReadAnswer(const char *command, char *answer, int delay) {
-  LOG(logDEBUGRPC) << "RS232 Command: " << command;
+  LOG(logDEBUGRS232) << "RS232 Command: " << command;
 
   int  bytesRead;
   char inbuf[256];
@@ -502,7 +503,7 @@ int writeCommandStringAndReadAnswer(const char *command, char *answer, int delay
   }
 
   usleep(100000);
-  LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
+  LOG(logDEBUGRS232) << "RS232 Answer: " << answer;
   return 1;
 }
 
