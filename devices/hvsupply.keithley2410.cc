@@ -30,7 +30,7 @@ hvsupply::hvsupply() {
   writeCommandString(":SOUR:VOLT:MODE FIX\n");     // Select fixed voltage mode
   writeCommandString(":FUNC:CONC ON\n");           // Turn concurrent mode on, i.e. allow readout of voltage and current simultaneously
   writeCommandString(":SENS:AVER:TCON REP\n");     // Choose repeating filter, i.e. make sure the average is made of the selected nuber of readings
-  writeCommandString(":SENS:AVER:COUNT 2\n");      // Use 2 readings to average
+  writeCommandString(":SENS:AVER:COUNT 1\n");      // Use 1 reading to average. Used to be 2 but then voltages are averaged with previous value... need to understand this FIXME
   writeCommandString(":SENS:AVER:STAT ON\n");      // Enable the averaging
   writeCommandString(":CURR:PROT:LEV 100E-6\n");   // Set compliance limit to 100 uA
   writeCommandString(":SENS:CURR:RANG 20E-6\n");   // Select measuring range of 20 uA
@@ -112,9 +112,19 @@ bool hvsupply::tripped() {
 }
     
 // ----------------------------------------------------------------------
+std::pair<double, double> hvsupply::getReading() {
+  float voltage(0), current(0);
+  char answer[1000] = {0};
+
+  writeCommandStringAndReadAnswer(":READ?", answer);
+  sscanf(answer, "%e,%e", &voltage, &current);
+  return std::make_pair(voltage, current);
+}
+
+// ----------------------------------------------------------------------
 double hvsupply::getVoltage() {
   float voltage(0), current(0);
-  char answer[1000] = {0};  
+  char answer[1000] = {0};
 
   writeCommandStringAndReadAnswer(":READ?", answer);
   sscanf(answer, "%e,%e", &voltage, &current);
@@ -125,7 +135,7 @@ double hvsupply::getVoltage() {
 double hvsupply::getCurrent() {
 
   float current(0), voltage(0);
-  char answer[1000] = {0};  
+  char answer[1000] = {0};
 
   writeCommandStringAndReadAnswer(":READ?", answer);
   sscanf(answer, "%e,%e", &voltage, &current);

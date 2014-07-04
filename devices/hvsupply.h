@@ -20,6 +20,7 @@ typedef unsigned char uint8_t;
 #else
 #include <stdint.h>
 #endif
+#include <utility>
 
 namespace pxar {
 
@@ -55,7 +56,11 @@ namespace pxar {
      */
     bool setVoltage(double volts);
     
-    /** Reads back the configured voltage. Value is given in v (Volts)
+    /** Reads back the measured voltage and current. Value is given in V (Volts) and A (Amperes)
+     */
+    std::pair<double, double> getReading();
+
+    /** Reads back the measured voltage. Value is given in V (Volts)
      */
     double getVoltage();
 

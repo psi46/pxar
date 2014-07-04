@@ -125,6 +125,7 @@ void PixTestIV::doTest() {
   
   // -- loop over voltage:
   double voltMeasured(-1.), amps(-1.);
+  std::pair<double,double> msrmt;
   for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {    
     hv->setVoltage(voltSet);
     // -- get within 1V of specified voltage. Try at most 5 times.
@@ -133,7 +134,8 @@ void PixTestIV::doTest() {
       gSystem->ProcessEvents();
       if (fStop) break;
       mDelay(fParDelay*500); 
-      voltMeasured = hv->getVoltage(); 
+      msrmt = hv->getReading();
+      voltMeasured = msrmt.first;
       if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!
       ++ntry;
     }
@@ -141,8 +143,8 @@ void PixTestIV::doTest() {
 
     fTimeStamp->Set();
     ts.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), fTimeStamp->GetTimeSpec().tv_sec));
-    amps = hv->getCurrent()*1E6;
-    voltMeasured = hv->getVoltage();
+    amps = msrmt.second*1E6;
+    voltMeasured = msrmt.first;
     vm.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), voltMeasured));
 
     if (hv->tripped() || ((amps<-99.) && (voltMeasured !=0.))) {
@@ -150,7 +152,7 @@ void PixTestIV::doTest() {
       tripped = voltSet;
       break;
     }
-    LOG(logINFO) << Form("V = %4d (meas: %+7.2f) I = %4.2e uA (ntry = %d) %ld", 
+    LOG(logINFO) << Form("V = %4d (meas: %+7.2f ) I = %4.2e uA (ntry = %d ) %ld", 
 			 -voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
     if (TMath::Abs(amps) > 0.) {
       h1->Fill(TMath::Abs(voltSet), TMath::Abs(amps));
