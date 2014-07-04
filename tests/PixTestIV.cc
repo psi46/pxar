@@ -152,6 +152,11 @@ void PixTestIV::doTest() {
       tripped = voltSet;
       break;
     }
+    if (hv->interrupted() || ((amps<-99.) && (voltMeasured !=0.))) {
+      LOG(logCRITICAL) << "User aborted measurement on HV supply, aborting IV test";
+      tripped = voltSet;
+      break;
+    }
     LOG(logINFO) << Form("V = %4d (meas: %+7.2f ) I = %4.2e uA (ntry = %d ) %ld", 
 			 -voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
     if (TMath::Abs(amps) > 0.) {

@@ -82,6 +82,10 @@ namespace pxar {
      */
     bool tripped();
   
+    /** Did the user abort the measurement on the power supply?
+     */
+    bool interrupted();
+
   }; // class hvsupply
 
 } //namespace pxar

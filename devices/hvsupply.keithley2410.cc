@@ -110,7 +110,19 @@ bool hvsupply::tripped() {
   }
   return false;
 }
-    
+
+// ----------------------------------------------------------------------
+bool hvsupply::interrupted() {
+  char answer[1000] = {0};
+  writeCommandStringAndReadAnswer(":OUTP:STAT?",answer);
+  int a;
+  sscanf(answer, "%d", &a);
+  if (0 == a) {
+    return true;
+  }
+  return false;
+}
+
 // ----------------------------------------------------------------------
 std::pair<double, double> hvsupply::getReading() {
   float voltage(0), current(0);
