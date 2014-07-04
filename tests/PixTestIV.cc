@@ -133,7 +133,7 @@ void PixTestIV::doTest() {
     while (ntry < 5) {
       gSystem->ProcessEvents();
       if (fStop) break;
-      mDelay(fParDelay*500); 
+      mDelay(fParDelay); 
       msrmt = hv->getReading();
       voltMeasured = msrmt.first;
       if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!

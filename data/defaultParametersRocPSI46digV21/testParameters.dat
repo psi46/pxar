@@ -119,5 +119,5 @@ FillTree            checkbox
 VoltageMin          0
 VoltageMax          600
 VoltageStep         5
-Delay               3
+Delay               1500
 
