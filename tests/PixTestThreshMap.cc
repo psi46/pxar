@@ -140,12 +140,12 @@ void PixTestThreshMap::doTest() {
   uint16_t flags = 0;
   if(fParRisingEdge) flags |= FLAG_RISING_EDGE;
   if(fParCalS) flags |= FLAG_CALS;
-  std::vector<pixel> results = fApi->getThresholdMap(fParDac, fParLoDAC,fParHiDAC,fParThresholdLevel,flags, fParNtrig);
+  std::vector<pixel> results = fApi->getThresholdMap(fParDac, 1, fParLoDAC,fParHiDAC,fParThresholdLevel,flags, fParNtrig);
    
   LOG(logINFO) << "Pixels returned: " << results.size();
 
   for(std::vector<pixel>::size_type idx = 0; idx < results.size() ; idx++) {
-    maps[id2idx[results[idx].roc_id]]->SetBinContent(results[idx].column+1,results[idx].row+1,results[idx].value);
+    maps[id2idx[results[idx].roc_id]]->SetBinContent(results[idx].column+1,results[idx].row+1,results[idx].getValue());
   }
 
   for (unsigned int i = 0; i < maps.size(); ++i) {

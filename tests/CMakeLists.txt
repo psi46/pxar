@@ -17,6 +17,7 @@ PixTestDacDacScan.cc
 PixTestScurves.cc
 PixTestGainPedestal.cc
 PixTestTrim.cc
+PixTestThreshMap.cc
 PixTestSetup.cc
 PixTestPattern.cc
 PixTestPretest.cc
@@ -42,6 +43,7 @@ PixTestDacDacScan.hh
 PixTestScurves.hh
 PixTestGainPedestal.hh
 PixTestTrim.hh
+PixTestThreshMap.hh
 PixTestSetup.hh
 PixTestPattern.hh
 PixTestPretest.hh

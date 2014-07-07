@@ -14,6 +14,7 @@
 #include "PixTestScurves.hh"
 #include "PixTestGainPedestal.hh"
 #include "PixTestSetup.hh"
+#include "PixTestThreshMap.hh"
 #include "PixTestPretest.hh"
 #include "PixTestPattern.hh"
 #include "PixTestDaq.hh"
@@ -68,6 +69,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("setup")) return new PixTestSetup(a, "Setup"); 
   if (!name.compare("tbm")) return new PixTestTbm(a, "Tbm"); 
   if (!name.compare("trim")) return new PixTestTrim(a, "Trim"); 
+  if (!name.compare("threshmap")) return new PixTestThreshMap(a, "ThreshMap"); 
   if (!name.compare("daq")) return new PixTestDaq(a, "DAQ"); 
   if (!name.compare("xray")) return new PixTestXray(a, "Xray"); 
   if (!name.compare("highrate")) return new PixTestHighRate(a, "HighRate"); 
