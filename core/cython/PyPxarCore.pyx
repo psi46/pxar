@@ -372,7 +372,7 @@ cdef class PyPxarCore:
         #TODO wrap data refilling into single function, rather than copy paste
         hits = []
         for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros(52,80))
+            hits.append(numpy.zeros((52,80)))
         for d in xrange(r.size()):
             hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
         return numpy.array(hits)
