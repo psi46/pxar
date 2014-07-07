@@ -646,7 +646,7 @@ int main(int argc, char* argv[]) {
     // Call the test:
     int nTrig5 = 10;
     _api->setDAC("ctrlreg",0);
-    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,140,FLAG_FORCE_MASKED | FLAG_RISING_EDGE,nTrig5);
+    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",1,0,140,FLAG_FORCE_MASKED | FLAG_RISING_EDGE,nTrig5);
     std::cout << "Data size returned: " << thrmap.size() << std::endl;
 
     // Threshold map:
