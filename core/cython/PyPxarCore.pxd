@@ -158,16 +158,14 @@ cdef extern from "api.h" namespace "pxar":
         uint8_t getDACRange(string dacName) except +
         bool setTbmReg(string regName, uint8_t regValue, uint8_t tbmid) except +
         bool setTbmReg(string regName, uint8_t regValue) except +
-        vector[pair[uint8_t, vector[pixel]]] getPulseheightVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers)  except +
-        vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) except +
-        vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(string dacName, string dac2Name, uint8_t dac2Min, uint8_t dac2Max, uint16_t flags, uint16_t nTriggers) except +
-        vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(string dac1Name, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Min, uint8_t dac2Max, uint16_t flags, uint16_t nTriggers) except +
-        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) except +
-        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getEfficiencyVsDACDAC(string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) except +
+        vector[pair[uint8_t, vector[pixel]]] getPulseheightVsDAC(string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers)  except +
+        vector[pair[uint8_t, vector[pixel]]] getEfficiencyVsDAC(string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) except +
+        vector[pair[uint8_t, vector[pixel]]] getThresholdVsDAC(string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, uint8_t threshold, uint16_t flags, uint16_t nTriggers) except +
+        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getPulseheightVsDACDAC(string dac1name, uint8_t dac1Step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2Step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) except +
+        vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] getEfficiencyVsDACDAC(string dac1name, uint8_t dac1Step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2Step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) except +
         vector[pixel] getPulseheightMap(uint16_t flags, uint16_t nTriggers) except +
         vector[pixel] getEfficiencyMap(uint16_t flags, uint16_t nTriggers) except +
-        vector[pixel] getThresholdMap(string dacName, uint16_t flags, uint16_t nTriggers) except +
-        vector[pixel] getThresholdMap(string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) except +
+        vector[pixel] getThresholdMap(string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) except +
         int32_t getReadbackValue(string parameterName) except +
         bool daqStart() except +
         bool daqStatus() except +
