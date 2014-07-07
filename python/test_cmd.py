@@ -1,24 +1,33 @@
 import PyPxarCore
 from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyDictionary
-
+from functools import wraps # used in parameter verification decorator
 
 import cmd      # for command interface and parsing
-import argparse # for command line option parsing
 import sys
 
-# TODO: extend dict to get ROC_REG and filter for 'false' state
 dacdict = PyDictionary()
 
-class ArgumentParserError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-# override the default exit of argparse when encountering wrong options:
-class ThrowingArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write('error: %s\n' % message)
-        self.print_help()
-        raise ArgumentParserError(message)
+# decorator used for parameter parsing/verification on each cmd function call
+def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = types
+    def __temp1(f):
+        @wraps(f) # makes sure the docstring of the orig. function is passed on
+        def __temp2(self, text):
+            ps = filter(lambda p: p, text.split(" "))
+            if len(ps) < n:
+                print "Error: this command needs %d arguments (%d given)" % (n, len(ps))
+                return
+            if len(ps) > m:
+                print "Error: this command takes at most %d arguments (%d given)" % (m, len(ps))
+                return
+            # now verify the type
+            try:
+                ps = [ c(p) for c, p in zip(cs, ps) ]
+            except ValueError as e:
+                print "Error: '" + str(p) + "' does not have " + str(c)
+                return
+            f(self, *ps)
+        return __temp2
+    return __temp1
 
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
@@ -33,28 +42,34 @@ class PxarCoreCmd(cmd.Cmd):
         """ clean exit when receiving EOF (Ctrl-D) """
         return True
 
-# TODO: ODER DECORATOR
-# see: https://coderwall.com/p/jiczbg
-#      http://www.rmi.net/~lutz/rangetest.html
-    def do_setDAC(self, line):
-        """setDAC [DAC name] [value] [-r [ROCID]]
+    @arity(2,3,[str, int, int])
+    def do_setDAC(self, dacname, value, rocid = None):
+        """setDAC [DAC name] [value] [ROCID]
         Set the DAC to given value for given roc ID"""
-        
-        parser = ThrowingArgumentParser()
-        parser.add_argument("-r", "--roc", "--rocid", help="Set DAC only for ROC with specified ID", default=None, type=int, metavar="ROCID")
-        parser.add_argument("dacname", help="Which DAC to set (given by name)")
-        parser.add_argument("value", help="The value to set the DAC to", type=int)
-        try:
-            args = parser.parse_args(line.split())
-            self.api.setDAC(args.dacname, args.value, args.roc)
-        except ArgumentParserError, e: pass
+        self.api.setDAC(dacname, value, rocid)
 
     def complete_setDAC(self, text, line, start_index, end_index):
-        if text:
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
             return [dac for dac in dacdict.getAllROCNames()
-                    if dac.startswith(text)]
+                        if dac.startswith(text)]
         else:
-            return DACS
+            if len(line.split(" ")) > 2:
+                # return help for the cmd, removing line breaks and double spaces
+                return [self.do_setDAC.__doc__.replace('\n',': ').replace('  ',' '), '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    def do_quit(self, arg):
+        sys.exit(1)
+
+    def help_quit(self):
+        print "syntax: quit",
+        print "-- terminates the application"
+
+    # shortcuts
+    do_q = do_quit
 
 # collect some basic settings
 
@@ -134,7 +149,7 @@ pixels = list()
 for column in range(0, 51):
     for row in range(0, 79):
         p = PixelConfig(column,row,15)
-        #p.enable = True
+        p.mask = False
         pixels.append(p)
 
 print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
@@ -146,8 +161,6 @@ for rocs in range(0,15):
     rocDacs.append(dacs)
 
 api.initDUT(0,"tbm08",tbmDACs,"psi46digv2",rocDacs,rocPixels)
-
-print "pixel 35 is " + str(pixels[35].enable)
 
 api.testAllPixels(True)
 print " enabled all pixels"
