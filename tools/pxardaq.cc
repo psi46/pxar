@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
   if(testpulses) {
      pg_setup.push_back(std::make_pair("resetroc",25));    // PG_RESR
      pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
-     pg_setup.push_back(std::make_pair("triggter",16));    // PG_TRG
+     pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
      pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
      pattern_delay = 1000;
   }
