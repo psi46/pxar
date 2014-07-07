@@ -509,7 +509,7 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
     _hal->rocSetDAC(_dut->roc.at(rocid).i2c_address,dacRegister,dacValue);
   }
   else {
-    LOG(logERROR) << "ROC " << rocid << " does not exist in the DUT!";
+    LOG(logERROR) << "ROC " << static_cast<int>(rocid) << " does not exist in the DUT!";
     return false;
   }
   return true;
