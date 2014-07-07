@@ -87,7 +87,14 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
     if(trig%5 == 0) std::cout << std::setw(3) << trig << " |";
     else std::cout << std::setw(3) << " " << " |";
 
+    int xvalue = data.begin()->first;
     for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
+
+      // Fill sparse X values with spaces:
+      while(xvalue < mapit->first) {
+	std::cout << " ";
+	xvalue++;
+      }
 
       bool found = false;
       if(!mapit->second.empty()) {
@@ -102,15 +109,20 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
 
       if(!found && trig == 0) { std::cout << "o"; }
       else if(!found) std::cout << " ";
+
+      // Next x value:
+      xvalue++;
     }
     std::cout << std::endl;
   }
   
   std::cout << "    |";
-  for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
-  std::cout << std::endl << "     ";
   uint8_t daclower = data.front().first;
   uint8_t dachigher= data.back().first;
+
+  // Axis
+  for(size_t dac = daclower; dac <= dachigher; dac++) { std::cout << "_"; }
+  std::cout << std::endl << "     ";
 
   // Axis ticks
   for(size_t dac = daclower; dac <= dachigher; dac++) { 
@@ -571,8 +583,9 @@ int main(int argc, char* argv[]) {
 
     // Call the test:
     int nTrig22 = 100;
+    // Let's do this one sparse and scan only every 3rd DAC value:
     std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
-      effscandata22 = _api->getEfficiencyVsDAC("vcal", 0, 90, 0, nTrig22);
+      effscandata22 = _api->getEfficiencyVsDAC("vcal", 3, 0, 90, 0, nTrig22);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata22.size() << std::endl;
@@ -633,7 +646,7 @@ int main(int argc, char* argv[]) {
     // Call the test:
     int nTrig5 = 10;
     _api->setDAC("ctrlreg",0);
-    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",0,140,FLAG_FORCE_MASKED | FLAG_RISING_EDGE,nTrig5);
+    std::vector< pxar::pixel > thrmap = _api->getThresholdMap("vcal",1,0,140,FLAG_FORCE_MASKED | FLAG_RISING_EDGE,nTrig5);
     std::cout << "Data size returned: " << thrmap.size() << std::endl;
 
     // Threshold map:

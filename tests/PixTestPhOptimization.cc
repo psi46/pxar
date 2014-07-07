@@ -111,7 +111,8 @@ void PixTestPhOptimization::doTest() {
   bool done(false);
   while (!done) {
     try {
-      thrmap = fApi->getThresholdMap("vcal", 0, 255, FLAG_RISING_EDGE, 10);
+      // Scanning the full VCal range, so no need to specify bounds:
+      thrmap = fApi->getThresholdMap("vcal", FLAG_RISING_EDGE, 10);
       done = true;
     } catch(pxarException &e) {
       LOG(logCRITICAL) << "pXar execption: "<< e.what(); 

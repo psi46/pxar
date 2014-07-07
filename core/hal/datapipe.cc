@@ -34,45 +34,38 @@ namespace pxar {
     return lastSample = buffer[pos++];
   }
 
-
   rawEvent* dtbEventSplitter::SplitDeser400() {
     record.Clear();
 
     // If last one had Event end marker, get a new sample:
-    if (GetLast() & 0x00f0) { Get(); }
+    if (!nextStartDetected) { Get(); }
 
     // If new sample does not have start marker keep on reading until we find it:
-    if (!(GetLast() & 0x0080)) {
+    if ((GetLast() & 0xe000) != 0xa000) {
       record.SetStartError();
-      while (!(GetLast() & 0x0080)) Get();
+      Get();
     }
+    record.Add(GetLast());
 
     // Else keep reading and adding samples until we find any marker.
-    do {
-      // If total Event size is too big, break:
-      if (record.GetSize() >= 40000) {
-	record.SetOverflow();
-	break;
+    while ((Get() & 0xe000) != 0xc000) {
+      // Check if the last read sample has Event end marker:
+      if ((GetLast() & 0xe000) == 0xa000) {
+	record.SetEndError();
+	nextStartDetected = true;
+	return &record;
       }
-
-      // FIXME Very first Event starts with 0xC - which srews up empty Event detection here!
-      // If the Event start sample is also Event end sample, write and quit:
-      //if((GetLast() & 0xf000) == 0xf000) { break; }
-
-      record.Add(GetLast() & 0x00ff);
-    } while ((Get() & 0x00f0) != 0x00f0);
-
-    // Check if the last read sample has Event end marker:
-    if (GetLast() & 0x00f0) record.Add(GetLast() & 0x00ff);
-    // Else set Event end error:
-    else record.SetEndError();
+      // If total Event size is too big, break:
+      if (record.GetSize() < 40000) record.Add(GetLast());
+      else record.SetOverflow();
+    }
+    record.Add(GetLast());
 
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << listVector(record.data,true);
 
     return &record;
   }
-
 
   rawEvent* dtbEventSplitter::SplitDeser160() {
     record.Clear();
@@ -112,14 +105,15 @@ namespace pxar {
     return &record;
   }
 
-
   Event* dtbEventDecoder::DecodeDeser400() {
 
     roc_Event.Clear();
     rawEvent *sample = Get();
 
-    uint16_t hdr = 0, trl = 0;
     unsigned int raw = 0;
+    unsigned int pos = 0;
+    unsigned int size = sample->GetSize();
+    uint16_t v;
 
     // Get the right ROC id, channel 0: 0-7, channel 1: 8-15
     int16_t roc_n = -1 + GetChannel() * 8;
@@ -127,48 +121,76 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     
-    for (unsigned int i = 0; i < sample->GetSize(); i++) {
-      int d = (*sample)[i] & 0xf;
-      int q = ((*sample)[i]>>4) & 0xf;
 
-      switch (q) {
-      case  0: break;
+    // --- decode TBM header ---------------------------------
 
-      case  1: raw = d; break;
-      case  2: raw = (raw<<4) + d; break;
-      case  3: raw = (raw<<4) + d; break;
-      case  4: raw = (raw<<4) + d; break;
-      case  5: raw = (raw<<4) + d; break;
-      case  6: raw = (raw<<4) + d;
-	{
-	  try{
-	    pixel pix(raw,static_cast<uint8_t>(roc_n),invertedAddress);
-	    roc_Event.pixels.push_back(pix);
+    // H1
+    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    //if ((v & 0xe000) != 0xa000) roc_Event.error |= 0x0800;
+    raw = (v & 0x00ff) << 8;
+
+    // H2
+    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    //if ((v & 0xe000) != 0x8000) roc_Event.error |= 0x0400;
+    raw += v & 0x00ff;
+
+    roc_Event.header = raw;
+
+    // --- decode ROC data -----------------------------------
+
+    // while ROC header
+    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    while ((v & 0xe000) == 0x4000) { // ROC Header
+
+      // Count ROC Headers up:
+      roc_n++;
+
+      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+      while ((v & 0xe000) <= 0x2000) { // R0 ... R1
+
+	for (unsigned int i = 0; i <= 1; i++) {
+	  if ((v >> 13) != i) { // R<i>
+	    //px_error |= (1<<i);
+	    if (v & 0x8000) { // TBM header/trailer
+	      //pixel.error = 0x1fff;
+	      //roc.error |= 0x0001;
+	      //roc.pixel.push_back(pixel);
+	      //x.roc.push_back(roc);
+	      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+	      goto trailer;
+	    }
 	  }
-	  catch(DataDecoderError /*&e*/){
-	    // decoding of raw address lead to invalid address
-	    roc_Event.numDecoderErrors++; // keep track of number of such errors
-	  }
-	  break;
+	  raw = (raw << 12) + (v & 0x0fff);
+	  v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
 	}
-      case  7: roc_n++; break;
 
-      case  8: hdr = d; break;
-      case  9: hdr = (hdr<<4) + d; break;
-      case 10: hdr = (hdr<<4) + d; break;
-      case 11: hdr = (hdr<<4) + d;
-	roc_Event.header = hdr;
-	roc_n = -1 + GetChannel() * 8;
-	break;
-
-      case 12: trl = d; break;
-      case 13: trl = (trl<<4) + d; break;
-      case 14: trl = (trl<<4) + d; break;
-      case 15: trl = (trl<<4) + d;
-	roc_Event.trailer = trl;
-	break;
+	try {
+	  pixel pix(raw,static_cast<uint8_t>(roc_n),invertedAddress);
+	  roc_Event.pixels.push_back(pix);
+	}
+	catch(DataDecoderError /*&e*/){
+	  // decoding of raw address lead to invalid address
+	  roc_Event.numDecoderErrors++; // keep track of number of such errors
+	}
       }
+      //if (roc.error) x.error |= 0x0001;
+      //x.roc.push_back(roc);
     }
+
+    // --- decode TBM trailer --------------------------------
+  trailer:
+    raw = 0;
+
+    // T1
+    //if ((v & 0xe000) != 0xe000) roc_Event.error |= 0x0080;
+    raw = (v & 0x00ff) << 8;
+
+    // T2
+    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    //if ((v & 0xe000) != 0xc000) roc_Event.error |= 0x0040;
+    raw += v & 0x00ff;
+
+    roc_Event.trailer = raw;
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;

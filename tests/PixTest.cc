@@ -215,8 +215,8 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), iroc); 
-    h2 = bookTH2D(Form("%s_C%d", name.c_str(), iroc), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.); 
+    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), rocIds[iroc]);
+    h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
     setTitles(h2, "col", "row"); 
@@ -226,10 +226,11 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   int idx(-1); 
   for (unsigned int i = 0; i < results.size(); ++i) {
     idx = getIdxFromId(results[i].roc_id);
-    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
+    // if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
+    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[i].roc_id)) {
       h2 = maps[idx];
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
-	LOG(logINFO) << "ROC/row/col = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row) 
+	LOG(logINFO) << "ROC/col/row = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row)
 		     << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
 		     << " now adding " << static_cast<float>(results[i].getValue());
       }
@@ -288,7 +289,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       bool done = false;
       while (!done){
 	try {
-	  results = fApi->getThresholdMap(dac, daclo, dachi, FLAGS, ntrig);
+	  results = fApi->getThresholdMap(dac, 1, daclo, dachi, FLAGS, ntrig);
 	  done = true; 
 	} catch(pxarException &e) {
 	  ++cnt;
