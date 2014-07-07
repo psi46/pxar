@@ -148,7 +148,6 @@ cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
     def __cinit__(self, usbId = "*", logLevel = "INFO"):
         self.thisptr = new pxarCore(usbId, logLevel)
-        self.dut = None
     def __dealloc__(self):
         del self.thisptr
     def initTestboard(self,sig_delays, power_settings, pg_setup):
@@ -306,7 +305,7 @@ cdef class PyPxarCore:
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
         s = (52, 80, dacMax-dacMin+1)
-        for i in range(self.dut.n_rocs):
+        for i in range(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
@@ -321,7 +320,7 @@ cdef class PyPxarCore:
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
         s = (52, 80, dacMax-dacMin+1)
-        for i in range(self.dut.n_rocs):
+        for i in range(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
@@ -336,7 +335,7 @@ cdef class PyPxarCore:
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
         s = (52, 80, dac2Max-dac2Min+1)
-        for i in range(self.dut.n_rocs):
+        for i in range(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
@@ -373,10 +372,9 @@ cdef class PyPxarCore:
         cdef vector[pixel] r
         r = self.thisptr.getPulseheightMap(flags, nTriggers)
         #TODO wrap data refilling into single function, rather than copy paste
-        s = self.dut.get_roc_shape()
         hits = []
-        for i in xrange(self.dut.n_rocs):
-            hits.append(numpy.zeros(s))
+        for i in xrange(self.thisptr._dut.getNRocs()):
+            hits.append(numpy.zeros(52,80))
         for d in xrange(r.size()):
             hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
         return numpy.array(hits)
@@ -385,10 +383,9 @@ cdef class PyPxarCore:
         cdef vector[pixel] r
         r = self.thisptr.getEfficiencyMap(flags, nTriggers)
         #TODO wrap data refilling into single function, rather than copy paste
-        s = self.dut.get_roc_shape()
         hits = []
-        for i in xrange(self.dut.n_rocs):
-            hits.append(numpy.zeros(s))
+        for i in xrange(self.thisptr._dut.getNRocs()):
+            hits.append(numpy.zeros(52,80))
         for d in xrange(r.size()):
             hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
         return numpy.array(hits)
@@ -397,10 +394,9 @@ cdef class PyPxarCore:
         cdef vector[pixel] r
         #TODO wrap data refilling into single function, rather than copy paste
         r = self.thisptr.getThresholdMap(dacName, flags, nTriggers)
-        s = self.dut.get_roc_shape()
         hits = []
-        for i in xrange(self.dut.n_rocs):
-            hits.append(numpy.zeros(s))
+        for i in xrange(self.thisptr._dut.getNRocs()):
+            hits.append(numpy.zeros(52,80))
         for d in xrange(r.size()):
             hits[r[d].roc_id][r[d].column][r[d].row] = r[d].value
         return numpy.array(hits)
