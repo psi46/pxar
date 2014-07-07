@@ -53,14 +53,163 @@ class PxarCoreCmd(cmd.Cmd):
             set_printoptions(threshold=nan)
             self.fullOutput = True
 
+    @arity(0,0,[])
+    def do_getVersion(self):
+        """getVersion: returns the pxarcore library version"""
+        print self.api.getVersion()
+        
+    def complete_getVersion(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getVersion.__doc__, '']
+
+    @arity(1,1,[str])
+    def do_flashTB(self, filename):
+        """flashTB [filename]: flash the DTB with new firmware"""
+        self.api.flashTB(filename)
+        
+    def complete_flashTB(self, text, line, start_index, end_index):
+        # return help for the cmd
+        # FIXME file/path tab completen would be nice here...
+        return [self.do_flashTB.__doc__, '']
+
+    @arity(0,0,[])
+    def do_HVon(self):
+        """HVon: switch High voltage for sensor bias on"""
+        self.api.HVon()
+        
+    def complete_HVon(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_HVon.__doc__, '']
+
+    @arity(0,0,[])
+    def do_Poff(self):
+        """Pon: switch DTB power output off"""
+        self.api.Poff()
+        
+    def complete_Poff(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_Poff.__doc__, '']
+
+    @arity(0,0,[])
+    def do_Pon(self):
+        """Pon: switch DTB power output on"""
+        self.api.Pon()
+        
+    def complete_Pon(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_Pon.__doc__, '']
+
+    @arity(0,0,[])
+    def do_HVoff(self):
+        """HVoff: switch High voltage for sensor bias off"""
+        self.api.HVoff()
+        
+    def complete_HVoff(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_HVoff.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getTBia(self):
+        """getTBia: returns analog DTB current"""
+        print "Analog Current: ", (self.api.getTBia()*1000), " mA"
+        
+    def complete_getTBia(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTBia.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getTBva(self):
+        """getTBva: returns analog DTB voltage"""
+        print "Analog Voltage: ", self.api.getTBva(), " V"
+        
+    def complete_getTBva(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTBva.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getTBid(self):
+        """getTBid: returns digital DTB current"""
+        print "Digital Current: ", (self.api.getTBid()*1000), " mA"
+        
+    def complete_getTBid(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTBid.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getTBvd(self):
+        """getTBvd: returns digital DTB voltage"""
+        print "Digital Voltage: ", self.api.getTBvd(), " V"
+        
+    def complete_getTBvd(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTBvd.__doc__, '']
+
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
         print self.api.getEfficiencyMap(flags,nTriggers)
         
-    def complete_setDAC(self, text, line, start_index, end_index):
+    def complete_getEfficiencyMap(self, text, line, start_index, end_index):
         # return help for the cmd
-        return [self.do_setDAC.__doc__, '']
+        return [self.do_getEfficiencyMap.__doc__, '']
+
+    @arity(0,2,[int, int])
+    def do_getPulseheightMap(self, flags = 0, nTriggers = 10):
+        """getPulseheightMap [flags = 0] [nTriggers = 10]: returns the pulseheight map"""
+        print self.api.getPulseheightMap(flags,nTriggers)
+        
+    def complete_getPulseheightMap(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getPulseheightMap.__doc__, '']
+
+    @arity(1,3,[str, int, int])
+    def do_getThresholdMap(self, dacname, dacstep = 1, ddacmin = 0, dacmax = 255, threshold = 50, flags = 0, nTriggers = 10):
+        """getPulseheightMap [DAC name] [flags = 0] [nTriggers = 10]: returns the threshold map for the given DAC"""
+        print self.api.getThresholdMap(dacname,1,0,255,50,flags,nTriggers)
+        
+    def complete_getThresholdMap(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_getThresholdMap.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    @arity(2,2,[str, str])
+    def do_SignalProbe(self, probe, name):
+        """SignalProbe [probe] [name]: Switches DTB probe output [probe] to signal [name]"""
+        self.api.SignalProbe(probe,name)
+
+    def complete_SignalProbe(self, text, line, start_index, end_index):
+        probes = ["d1","d2","a1","a2"]
+        if len(line.split(" ")) <= 2: # first argument
+            if text: # started to type
+                # list matching entries
+                return [pr for pr in probes
+                        if pr.startswith(text)]
+            else:
+                # list all probes
+                return probes
+        elif len(line.split(" ")) <= 3: # second argument
+            if text: # started to type
+                # list matching entries
+                # FIXME return content of the correct probes dictionary (analog or digital)
+                #return [pr for pr in probedict.getAllNames()
+                #        if pr.startswith(text)]
+                return 0
+            else:
+                # return all signals:
+                # FIXME return all signals fo correct probe dictionary (analog or digital)
+                #return probedict.getAllNames()
+                return 0
+        else:
+            # return help for the cmd
+            return [self.do_SignalProbe.__doc__, '']
 
     @arity(2,3,[str, int, int])
     def do_setDAC(self, dacname, value, rocid = None):
@@ -76,6 +225,24 @@ class PxarCoreCmd(cmd.Cmd):
             if len(line.split(" ")) > 2:
                 # return help for the cmd
                 return [self.do_setDAC.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    @arity(1,1,[str])
+    def do_getDACRange(self, dacname):
+        """getDACRange [DAC name]: Get the valid value range for the given DAC"""
+        print "DAC ", dacname, ": 0 -", self.api.getDACRange(dacname)
+
+    def complete_getDACRange(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_getDACRange.__doc__, '']
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
