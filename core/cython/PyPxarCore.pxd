@@ -181,3 +181,11 @@ cdef extern from "api.h" namespace "pxar":
         uint32_t daqGetNDecoderErrors()
         bool daqStop() except +
 
+cdef extern from "dictionaries.h" namespace "pxar":
+    cdef cppclass RegisterDictionary:
+        vector[string] getAllROCNames()
+        vector[string] getAllDTBNames()
+        vector[string] getAllTBMNames()
+
+cdef extern from "dictionaries.h" namespace "pxar::RegisterDictionary":
+        RegisterDictionary* getInstance()

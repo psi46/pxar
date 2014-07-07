@@ -443,3 +443,38 @@ cdef class PyPxarCore:
     def daqStop(self):
         return self.thisptr.daqStop()
 
+cdef class PyRegisterDictionary:
+    cdef RegisterDictionary *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisptr = getInstance()
+    def __dealloc__(self):
+        del self.thisptr
+    def getAllROCNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllROCNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
+    def getAllDTBNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllDTBNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
+    def getAllTBMNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllTBMNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
+
+# wrap the c++ singleton inside a python singleton to assure we don't create mem leaks
+class PyDictionary:
+    __instance=None
+    def __init__(self):
+        if PyDictionary.__instance is None:
+            PyDictionary.__instance=PyRegisterDictionary()
+#        else:
+#            print "already initialized dictionary"
+    def __getattr__(self,attr):
+        return getattr(self.__instance,attr)
