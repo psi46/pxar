@@ -36,14 +36,15 @@ DAC2HI              255
 PIX                 11,20 
 
 -- Pattern
-pgcycles            10
+pgcycles            100
 triggerloop         checkbox(0)
-period              300
+period              1000
 seconds             1
 patternfromfile     checkbox(0)
 resultsonfile       checkbox(0)
 binaryoutput        checkbox(0)
-filename            defaultPattern
+inputfile           testPatterns
+outputfile          defaultPattern
 unmaskall           checkbox(0)
 resettodefault      button
 

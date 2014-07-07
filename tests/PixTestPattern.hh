@@ -35,7 +35,8 @@ private:
 	bool	fPatternFromFile;
 	bool	fResultsOnFile;
 	bool    fBinOut;
-	std::string fFileName;
+	std::string fInputFile;
+	std::string fOutputFile;
 	bool	fUnMaskAll;
 	bool	fParFillTree;
 

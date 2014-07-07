@@ -20,7 +20,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fFileName("null"), fUnMaskAll(0), fParFillTree(0){
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fInputFile("null"), fOutputFile("null"), fUnMaskAll(0), fParFillTree(0){
 	PixTest::init();
 	init();
 	LOG(logDEBUG) << "PixTestPattern ctor(PixSetup &a, string, TGTab *)";
@@ -105,10 +105,16 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fBinOut -> " << fBinOut;
 			}
 
-			if (!parName.compare("filename")){
-				fFileName = sval.c_str();
+			if (!parName.compare("inputfile")){
+				fInputFile = sval.c_str();
 				setToolTips();
-				LOG(logDEBUG) << "  setting fFileName -> " << fFileName;
+				LOG(logDEBUG) << "  setting fInputFile -> " << fInputFile;
+			}
+
+			if (!parName.compare("outputfile")){
+				fOutputFile = sval.c_str();
+				setToolTips();
+				LOG(logDEBUG) << "  setting fOutputFile -> " << fOutputFile;
 			}
 
 			if (!parName.compare("unmaskall")){
@@ -432,8 +438,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 		string FileName;
 		if (flag == "trg") sstr << "_" << par1 << "pgCycles";
 		else sstr << "_" << par1 << "sec" << "_" << par2;
-		if (fBinOut) FileName = f_Directory + "/" + fFileName.c_str() + sstr.str() + ".bin";
-		else FileName = f_Directory + "/" + fFileName.c_str() + sstr.str() + ".dat";
+		if (fBinOut) FileName = f_Directory + "/" + fOutputFile.c_str() + sstr.str() + ".bin";
+		else FileName = f_Directory + "/" + fOutputFile.c_str() + sstr.str() + ".dat";
 
 
 		if (fBinOut)
@@ -571,7 +577,7 @@ void PixTestPattern::doTest()
 	string fname;
 	ConfigParameters* config = ConfigParameters::Singleton();
 	f_Directory = config->getDirectory();
-	fname = f_Directory + "/testPatterns.dat";
+	fname = f_Directory + "/" + fInputFile + ".dat";
 
 	// to unmask all or only selected pixels:
 	if (fUnMaskAll) {
