@@ -295,10 +295,10 @@ cdef class PyPxarCore:
             return self.thisptr.setTbmReg(regName, regValue)
         else:
             return self.thisptr.setTbmReg(regName, regValue, tbmid)
-    def getPulseheightVsDAC(self, string dacName, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
+    def getPulseheightVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
         #TODO understand why this returns empty data
-        r = self.thisptr.getPulseheightVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
+        r = self.thisptr.getPulseheightVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
@@ -310,10 +310,10 @@ cdef class PyPxarCore:
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
         return numpy.array(hits)
 
-    def getEfficiencyVsDAC(self, string dacName, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
+    def getEfficiencyVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
         #TODO understand why this returns empty data
-        r = self.thisptr.getEfficiencyVsDAC(dacName, dacMin, dacMax, flags, nTriggers)
+        r = self.thisptr.getEfficiencyVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
@@ -325,10 +325,10 @@ cdef class PyPxarCore:
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
         return numpy.array(hits)
 
-    def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Min, uint8_t dac2Max, uint16_t flags = 0, uint32_t nTriggers=16):
+    def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, threshold, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
         #TODO understand why this returns empty data
-        r = self.thisptr.getThresholdVsDAC(dac1Name, dac1Min, dac1Max, dac2Name, dac2Min, dac2Max, flags, nTriggers)
+        r = self.thisptr.getThresholdVsDAC(dac1Name, dac1Step, dac1Min, dac1Max, dac2Name, dac2Step, dac2Min, dac2Max, threshold, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
@@ -340,9 +340,9 @@ cdef class PyPxarCore:
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
         return numpy.array(hits)
 
-    def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+    def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
-        r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers)
+        r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row, check if indices make sense, currently not running!
         #This currently only returns one single pixel! The rest is lost...
@@ -353,9 +353,9 @@ cdef class PyPxarCore:
                 hits.append(0)
         return numpy.array(hits)
 
-    def getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+    def getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
-        r = self.thisptr.getPulseheightVsDACDAC(dac1name, dac1min, dac1max, dac2name, dac2min, dac2max, flags, nTriggers)
+        r = self.thisptr.getPulseheightVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row, check if indices make sense, currently not running!
         #This currently only returns one single pixel! The rest is lost...
@@ -388,10 +388,10 @@ cdef class PyPxarCore:
             hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
         return numpy.array(hits)
 
-    def getThresholdMap(self, string dacName, int flags, int nTriggers):
+    def getThresholdMap(self, string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, int flags, int nTriggers):
         cdef vector[pixel] r
         #TODO wrap data refilling into single function, rather than copy paste
-        r = self.thisptr.getThresholdMap(dacName, flags, nTriggers)
+        r = self.thisptr.getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers)
         hits = []
         for i in xrange(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(52,80))
