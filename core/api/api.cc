@@ -1970,6 +1970,12 @@ void api::getDecoderErrorCount(std::vector<Event*> &data){
   }
 }
 
+void api::setClockSource(uint8_t src) 
+{ 
+  LOG(logDEBUGAPI) << "Set Clock Source " << static_cast<int>(src) ;  
+  _hal->SetClockSource(src);   
+}
+
 void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
 {
   LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 
