@@ -308,6 +308,15 @@ namespace pxar {
       return "";
     }
 
+    // Return all signal names for the type in question:
+    inline std::vector<std::string> getAllNames() {
+      std::vector<std::string> names;
+      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	names.push_back((*iter).first);
+      }
+      return names;
+    }
+
   private:
     ProbeDictionary() {
       // Probe name and values
