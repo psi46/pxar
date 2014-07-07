@@ -42,7 +42,7 @@ void asciitornado(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector
 	  for (std::vector< pxar::pixel >::iterator pixit = dacit->second.second.begin(); pixit != dacit->second.second.end(); ++pixit) {
 	    if(pixit->roc_id == roc && pixit->column == column && pixit->row == row) {
 	      found = true;
-	      int value = dacit->second.second.at(0).value;
+	      int value = dacit->second.second.at(0).getValue();
 	      if(value == nTrig) std::cout << "X";
 	      else if(value > nTrig) std::cout << "#";
 	      else std::cout << value;
@@ -87,14 +87,21 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
     if(trig%5 == 0) std::cout << std::setw(3) << trig << " |";
     else std::cout << std::setw(3) << " " << " |";
 
+    int xvalue = data.begin()->first;
     for (std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
+
+      // Fill sparse X values with spaces:
+      while(xvalue < mapit->first) {
+	std::cout << " ";
+	xvalue++;
+      }
 
       bool found = false;
       if(!mapit->second.empty()) {
 	for(std::vector<pxar::pixel>::iterator it = mapit->second.begin(); it != mapit->second.end(); ++it) {
 	  if(it->roc_id == roc && it->column == column && it->row == row) {
-	    if(it->value == trig) { std::cout << "o"; found = true; }
-	    else if(it->value > trig) { std::cout << "."; found = true; }
+	    if(it->getValue() == trig) { std::cout << "o"; found = true; }
+	    else if(it->getValue() > trig) { std::cout << "."; found = true; }
 	    break;
 	  }
 	}
@@ -102,15 +109,20 @@ void asciihisto(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > data
 
       if(!found && trig == 0) { std::cout << "o"; }
       else if(!found) std::cout << " ";
+
+      // Next x value:
+      xvalue++;
     }
     std::cout << std::endl;
   }
   
   std::cout << "    |";
-  for(size_t dac = 0; dac < data.size(); dac++) { std::cout << "_"; }
-  std::cout << std::endl << "     ";
   uint8_t daclower = data.front().first;
   uint8_t dachigher= data.back().first;
+
+  // Axis
+  for(size_t dac = daclower; dac <= dachigher; dac++) { std::cout << "_"; }
+  std::cout << std::endl << "     ";
 
   // Axis ticks
   for(size_t dac = daclower; dac <= dachigher; dac++) { 
@@ -187,10 +199,10 @@ void asciimap(std::vector<pxar::pixel> data, int nTrig, uint8_t roc, uint8_t wid
       bool found = false;
       for (std::vector< pxar::pixel >::iterator mapit = data.begin(); mapit != data.end(); ++mapit) {
 	if(mapit->row == row && mapit->column == column && mapit->roc_id == roc) {
-	  if((int)mapit->value == nTrig) std::cout << std::setw(width) << "X";
-	  else if((int)mapit->value == 0) std::cout << std::setw(width) << "-";
-	  else if((int)mapit->value > nTrig) std::cout << std::setw(width) << "#";
-	  else std::cout << std::setw(width) << (int)mapit->value;
+	  if((int)mapit->getValue() == nTrig) std::cout << std::setw(width) << "X";
+	  else if((int)mapit->getValue() == 0) std::cout << std::setw(width) << "-";
+	  else if((int)mapit->getValue() > nTrig) std::cout << std::setw(width) << "#";
+	  else std::cout << std::setw(width) << (int)mapit->getValue();
 	  found = true;
 	  break;
 	}
@@ -214,7 +226,7 @@ int main(int argc, char* argv[]) {
   // Prepare some vectors for all the configurations we use:
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
-  std::vector<std::pair<uint16_t,uint8_t> > pg_setup;
+  std::vector<std::pair<std::string,uint8_t> > pg_setup;
 
   // DTB delays
 
@@ -313,9 +325,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Module setup." << std::endl;
 
     // Pattern Generator:
-    pg_setup.push_back(std::make_pair(0x1000,15)); // PG_REST
-    pg_setup.push_back(std::make_pair(0x0400,106)); // PG_CAL
-    pg_setup.push_back(std::make_pair(0x2200,0));  // PG_TRG PG_SYNC
+    pg_setup.push_back(std::make_pair("resettbm",15)); // PG_REST
+    pg_setup.push_back(std::make_pair("calibrate",106)); // PG_CAL
+    pg_setup.push_back(std::make_pair("trigger;sync",0));  // PG_TRG PG_SYNC
 
     // TBM configuration:
     std::vector<std::pair<std::string,uint8_t> > regs;
@@ -340,10 +352,10 @@ int main(int argc, char* argv[]) {
     std::cout << "Single ROC setup." << std::endl;
 
     // Pattern Generator:
-    pg_setup.push_back(std::make_pair(0x0800,25));    // PG_RESR
-    pg_setup.push_back(std::make_pair(0x0400,101+5)); // PG_CAL
-    pg_setup.push_back(std::make_pair(0x0200,16));    // PG_TRG
-    pg_setup.push_back(std::make_pair(0x0100,0));     // PG_TOK
+    pg_setup.push_back(std::make_pair("resetroc",25));    // PG_RESR
+    pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
+    pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
+    pg_setup.push_back(std::make_pair("token;sync",0));     // PG_TOK
 
     // One ROC config:
     rocDACs.push_back(dacs);
@@ -571,8 +583,9 @@ int main(int argc, char* argv[]) {
 
     // Call the test:
     int nTrig22 = 100;
+    // Let's do this one sparse and scan only every 3rd DAC value:
     std::vector< std::pair<uint8_t, std::vector<pxar::pixel> > > 
-      effscandata22 = _api->getEfficiencyVsDAC("vcal", 0, 90, 0, nTrig22);
+      effscandata22 = _api->getEfficiencyVsDAC("vcal", 3, 0, 90, 0, nTrig22);
     
     // Check out the data we received:
     std::cout << "Number of stored (DAC, pixels) pairs in data: " << effscandata22.size() << std::endl;

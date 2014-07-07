@@ -23,6 +23,7 @@ public:
   bool doNotFit() {return fDoNotFit;}
 
   TF1* errScurve(TH1 *h); 
+  TF1* xrayScan(TH1 *h); 
   TF1* weibullCdf(TH1 *h); 
   TF1* gpTanPol(TH1 *h); 
   TF1* gpTanH(TH1 *h);

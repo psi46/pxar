@@ -38,7 +38,7 @@ namespace {
   double PIF_gpTanPol( Double_t *x, Double_t *par) {
     if (par[0]*x[0] - par[4] > xCut) return tanXCut + (x[0] - (xCut + par[4])/par[0])* 1e8;
     double result = TMath::Tan(par[0]*x[0] - par[4]) + par[1]*x[0]*x[0]*x[0] + par[5]*x[0]*x[0] + par[2]*x[0] + par[3];
-    cout << result << endl;
+    //    cout << result << endl;
     return result; 
   }
 
@@ -123,12 +123,12 @@ TF1* PixInitFunc::gpTanPol(TH1 *h) {
 					    + f->GetParameter(1)*xup*xup*xup + slope*xup + f->GetParameter(3)))/(xup*xup));
   else f->SetParameter(5, 0.);
   
-  cout << f->GetParameter(0) << endl;
-  cout << f->GetParameter(1) << endl;
-  cout << f->GetParameter(2) << endl;
-  cout << f->GetParameter(3) << endl;
-  cout << f->GetParameter(4) << endl;
-  cout << f->GetParameter(5) << endl;
+//   cout << f->GetParameter(0) << endl;
+//   cout << f->GetParameter(1) << endl;
+//   cout << f->GetParameter(2) << endl;
+//   cout << f->GetParameter(3) << endl;
+//   cout << f->GetParameter(4) << endl;
+//   cout << f->GetParameter(5) << endl;
 
   return f;
 }
@@ -137,9 +137,9 @@ TF1* PixInitFunc::gpTanPol(TH1 *h) {
 // ----------------------------------------------------------------------
 TF1* PixInitFunc::gpTanH(TH1 *h) {
 
-  double lo = h->GetBinLowEdge(1); 
-  double hi = h->FindLastBinAbove(0.9*h->GetMaximum());
-  hi = h->GetBinLowEdge(h->GetNbinsX()+1); 
+  double lo = 0.; //h->GetBinLowEdge(1); 
+  double hi = 1700.; //h->FindLastBinAbove(0.9*h->GetMaximum());
+
   // -- setup function
   TF1* f = (TF1*)gROOT->FindObject("PIF_gpTanH");
   if (0 == f) {
@@ -154,11 +154,18 @@ TF1* PixInitFunc::gpTanH(TH1 *h) {
     f->SetRange(lo, hi); 
   }
 
-  f->SetParameter(0, 0.002);
-  f->SetParameter(1, 1.0);
+  f->SetParameter(0, 1.4e-3);
+  f->SetParLimits(0, 1.e-3, 2.e-3);
+
+  f->SetParameter(1, 0.8);
+  f->SetParLimits(1, 0., 20.);
+
   double middle = h->GetMaximum() - h->GetMinimum();
   double step = h->GetMaximum() - middle; 
+
   f->SetParameter(2, middle);
+  f->SetParLimits(2, 0., 2*middle);
+
   f->SetParameter(3, step);
 
   return f;
@@ -266,6 +273,58 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   return f; 
 }
 
+// ----------------------------------------------------------------------
+TF1* PixInitFunc::xrayScan(TH1 *h) {
+
+  // -- determine step function and start of function range
+  double lo = h->GetBinCenter(h->FindFirstBinAbove(0.)); 
+  double hi = h->GetBinCenter(h->FindLastBinAbove(0.9*h->GetMaximum()));
+  double hmax = h->GetMaximum(); 
+
+  double pol0(0.); 
+  double threshold(-1.), plateau(-1), width(-1.); 
+  for (int i = h->FindBin(lo); i < h->GetNbinsX(); i += 5) {
+    if (h->GetBinCenter(i) > hi - 10.) break;
+    h->Fit("pol0", "qr", "", h->GetBinCenter(i), hi); 
+    pol0 = h->GetFunction("pol0")->GetParameter(0); 
+    //    cout << h->GetBinCenter(i) << " pol0 = " << pol0 << endl;
+
+    double a = pol0/hmax;
+    if (a > 0.5 && threshold < 0) {
+      threshold = h->GetBinCenter(i);
+    }
+    plateau = pol0;
+  }
+
+  width = 0.5*(threshold - lo);
+
+  //   cout << "lo = " << lo << endl;
+  //   cout << "hi = " << hi << endl;
+  //   cout << "threshold = " << threshold << endl;
+  //   cout << "plateau   = " << plateau << endl;
+
+  // -- setup function
+  TF1* f = (TF1*)gROOT->FindObject("PIF_err");
+  if (0 == f) {
+    f = new TF1("PIF_err", PIF_err, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 4);
+    f->SetParNames("step", "slope", "floor", "plateau");                       
+    f->SetNpx(1000);
+    f->SetRange(lo, hi); 
+  } else {
+    f->ReleaseParameter(0);     
+    f->ReleaseParameter(1);     
+    f->ReleaseParameter(2);     
+    f->ReleaseParameter(3); 
+    f->SetRange(lo, hi); 
+  }
+  
+  f->SetParameter(0, threshold); 
+  f->SetParameter(1, width); 
+  f->SetParameter(2, 1.); 
+  f->SetParameter(3, 0.5*plateau);
+  return f; 
+}
+
 
 
 
@@ -295,9 +354,9 @@ void PixInitFunc::initExpo(double &p0, double &p1, TH1 *h) {
     p0 = 50.;
   }
 
-  cout << "fLo: " << fLo << " fHi: " << fHi << endl;
-  cout << "ylo: " << ylo << " yhi: " << yhi << endl;
-  cout << "p0:  " << p0 <<  " p1:  " << p1 << endl;
+//   cout << "fLo: " << fLo << " fHi: " << fHi << endl;
+//   cout << "ylo: " << ylo << " yhi: " << yhi << endl;
+//   cout << "p0:  " << p0 <<  " p1:  " << p1 << endl;
 
 }
 

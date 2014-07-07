@@ -117,14 +117,14 @@ bool PixTestParameters::setTestParameter(string testname, string parname, string
   for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
     if (imap->first.compare(testname)) continue;
     LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
-    vector<pair<string, string> > pars = imap->second; 
-    for (unsigned int i = 0; i < pars.size(); ++i) {
-      if (!pars[i].first.compare(parname)) {
-	pars[i].second = value; 
-	LOG(logDEBUG) << " setting  " << pars[i].first << " to new value " << pars[i].second;
+    //    vector<pair<string, string> > pars = imap->second; 
+    for (unsigned int i = 0; i < imap->second.size(); ++i) {
+      if (!imap->second[i].first.compare(parname)) {
+	imap->second[i].second = value; 
+	LOG(logDEBUG) << " setting  " << imap->second[i].first << " to new value " << imap->second[i].second;
+	return true;
       }
     }
-    return true;
   }
 
   return false; 
@@ -163,10 +163,65 @@ bool PixTestParameters::setTestParameters(string testname, vector<std::pair<std:
 
   for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
     if (imap->first.compare(testname)) continue;
-    LOG(logDEBUG) << "PixTestParameters: ->" << imap->first << "<-";
     imap->second = v;
     return true;
   }
 
   return false;
+}
+
+
+// ----------------------------------------------------------------------
+bool PixTestParameters::setTestParameters(string testname, string testParameters) {
+
+  for (map<string, vector<pair<string, string> > >::iterator imap = fTests.begin(); imap != fTests.end(); ++imap) {  
+    string ltname = imap->first; 
+    if (!ltname.compare(testname)) {
+      vector<pair<string, string> > v = splitStringIntoParameters(testParameters);
+      for (unsigned int i = 0; i < v.size(); ++i) {
+	setTestParameter(testname, v[i].first, v[i].second); 
+      }
+      return true;
+    }
+  }
+
+  return false; 
+}
+
+// ----------------------------------------------------------------------
+vector<pair<string, string> > PixTestParameters::splitStringIntoParameters(string testParameters) {
+  vector<pair<string, string> > v; 
+  
+  replaceAll(testParameters, " ", ""); 
+  replaceAll(testParameters, "\t", ""); 
+  string::size_type m0 = 0;
+  string::size_type m1 = testParameters.find("="); 
+  string::size_type m2 = testParameters.find(";"); 
+  if (m2 == string::npos) {
+    m2 = testParameters.size();
+  }
+  string var, val; 
+  do {
+    var = testParameters.substr(m0, m1-m0); 
+    val = testParameters.substr(m1+1, m2-m1-1); 
+    v.push_back(make_pair(var, val)); 
+    if (m2 == testParameters.size()) break;
+    m0 = m2+1; 
+    m1 = testParameters.find("=", m0);
+    m2 = testParameters.find(";", m0);
+    if (m2 == string::npos) m2 = testParameters.size();
+  } while (m1 < testParameters.size()); 
+  
+  return v; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestParameters::replaceAll(string& str, const string& from, const string& to) {
+  if (from.empty()) return;
+  size_t start_pos = 0;
+  while((start_pos = str.find(from, start_pos)) != string::npos) {
+     str.replace(start_pos, from.length(), to);
+    start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+  }
 }

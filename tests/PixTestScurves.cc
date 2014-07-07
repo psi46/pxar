@@ -59,10 +59,11 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       }
 
       if (!parName.compare("adjustvcal")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
 	fAdjustVcal = atoi(sval.c_str()); 
 	setToolTips();
       }
-      ;
 
       setToolTips();
       break;
@@ -161,8 +162,8 @@ void PixTestScurves::scurves() {
 
   string command(fParDac);
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
-  if (fAdjustVcal && !command.compare("vthrcomp")) {
-    cout << "adjustVcal()" << endl;
+  if (!command.compare("vthrcomp") && fAdjustVcal) {
+    LOG(logINFO) << "adjusting VCAL to have VthrComp average threshold at default VthrComp";
     adjustVcal(); 
   }
   
@@ -233,7 +234,6 @@ void PixTestScurves::fitS() {
 	  h = (TH1D*)fDirectory->Get(Form("scurveVcal_Vcal_c%d_r%d_C%d", ic, ir, iroc)); 
 	  if (0 == h) continue;
 	  
-	  cout << h->GetTitle() << endl;
 	  h->Fit(f, "qr", "", fPIF->fLo, fPIF->fHi); 
 	  
 	  double Threshold  = f->GetParameter(0); 
@@ -245,19 +245,19 @@ void PixTestScurves::fitS() {
     }
   } 
 
-  if (!fParDac.compare("VthrComp")) {
+  string dacname(fParDac);
+  std::transform(dacname.begin(), dacname.end(), dacname.begin(), ::tolower);
+  if (!dacname.compare("vthrcomp")) {
     TH1D *h = (TH1D*)fDirectory->Get("scurveVthrComp_VthrComp_c51_r62_C0");
     
-    fPIF->fLo = fParDacLo+1;
-    fPIF->fHi = h->FindLastBinAbove(0.5*h->GetMaximum());  
 
     for (int iroc = 0; iroc < 1; ++iroc) {
       for (int ic = 0; ic < 10; ++ic) {
 	for (int ir = 0; ir < 20; ++ir) {
 	  h = (TH1D*)fDirectory->Get(Form("scurveVthrComp_VthrComp_c%d_r%d_C%d", ic, ir, iroc)); 
 	  if (0 == h) continue;
-	  
-	  cout << h->GetTitle() << endl;
+	  fPIF->fLo = fParDacLo+1;
+	  fPIF->fHi = h->FindLastBinAbove(0.5*h->GetMaximum());  
 	  TF1  *f = fPIF->errScurve(h); 
 	  f->SetLineColor(kBlue); 
 	  if (fPIF->doNotFit()) {
@@ -295,18 +295,20 @@ void PixTestScurves::adjustVcal() {
   fApi->_dut->testPixel(11, 20, true);
   fApi->_dut->maskPixel(11, 20, false);
   
-  try{
-    vector<TH2D *> hv; 
-    TH2D *h(0); 
-    for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
-      h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
-      hv.push_back(h); 
-    }
+  vector<TH2D *> hv; 
+  TH2D *h(0); 
+  for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+    h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
+    hv.push_back(h); 
+  }
+  
+  int ntrig(5); 
 
-    int ntrig(5); 
+  try{
+    
     vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  results = 
       fApi->getEfficiencyVsDACDAC("vthrcomp", 0, 255, "vcal", 0, 255, FLAGS, ntrig);
-
+    
     int idx(-1);
     for (unsigned int i = 0; i < results.size(); ++i) {
       pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];
@@ -314,10 +316,10 @@ void PixTestScurves::adjustVcal() {
       pair<uint8_t, vector<pixel> > w = v.second;      
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
-
+      
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
 	idx = getIdxFromId(wpix[ipix].roc_id);
-	hv[idx]->Fill(idac1, idac2, wpix[ipix].value); 
+	hv[idx]->Fill(idac1, idac2, wpix[ipix].getValue()); 
       }
     }
     
@@ -327,7 +329,6 @@ void PixTestScurves::adjustVcal() {
       PixTest::update();      
       
       int vcthr = fApi->_dut->getDAC(rocIds[iroc], "vthrcomp");
-      cout << "vcthr = " << vcthr << endl;
       TH1D *h0 = hv[iroc]->ProjectionY("h0_px", vcthr, vcthr+1); 
       int vcalthr = h0->FindFirstBinAbove(0.5*ntrig); 
       delete h0; 
@@ -336,8 +337,8 @@ void PixTestScurves::adjustVcal() {
       vcal.push_back(vcalthr); 
     }
     
-  } catch(DataMissingEvent &e){
-    LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+  } catch(pxarException &e){
+    LOG(logCRITICAL) << "problem with readout: "<< e.what() << " setting vcal = 100"; 
     for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
       vcal.push_back(100); 
     }
@@ -367,7 +368,6 @@ void PixTestScurves::output4moreweb() {
     if (string::npos == name.find("_V0"))  continue;
     if (string::npos != name.find("dist_"))  continue;
     if (string::npos == name.find("thr_scurve"))  continue;
-    cout << "output4moreweb: " << name << endl;
     if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
       PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
     }

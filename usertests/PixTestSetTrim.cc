@@ -153,10 +153,10 @@ void PixTestSetTrim::RocThrMap( uint8_t roc, uint32_t nTrig,
 
   for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
     if( vpix[ipx].roc_id == roc ) {
-      h2->Fill( vpix[ipx].column, vpix[ipx].row, vpix[ipx].value );
-      h1->Fill( vpix[ipx].value );
+      h2->Fill( vpix[ipx].column, vpix[ipx].row, vpix[ipx].getValue());
+      h1->Fill( vpix[ipx].getValue());
       if( vpix[ipx].column < 52 && vpix[ipx].row < 80 )
-	modthr[roc][vpix[ipx].column][vpix[ipx].row] = vpix[ipx].value;
+	modthr[roc][vpix[ipx].column][vpix[ipx].row] = vpix[ipx].getValue();
     }
   }
 
@@ -362,7 +362,7 @@ void PixTestSetTrim::doTest()
 	if( vpix9[ipx].roc_id == roc &&
 	    vpix9[ipx].column == maxcol &&
 	    vpix9[ipx].row == maxrow )
-	  thr = vpix9[ipx].value;
+	  thr = vpix9[ipx].getValue();
 
       LOG(logINFO)
 	<< "Vtrim " << setw(3) << itrim

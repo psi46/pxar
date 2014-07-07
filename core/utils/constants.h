@@ -21,7 +21,8 @@ namespace pxar {
 // FIXME just an example...
 #define TBM_08             0x01
 #define TBM_08A            0x02
-#define TBM_09             0x03
+#define TBM_08B            0x03
+#define TBM_09             0x04
 
 
 // --- TBM Register -----------------------------------------------------------
@@ -34,6 +35,7 @@ namespace pxar {
 #define TBM_REG_SET_PKAM_COUNTER    0x08
 #define TBM_REG_SET_DELAYS          0x0A
 #define TBM_REG_TEMPERATURE_CONTROL 0x0C
+#define TBM_REG_CORES_A_B           0x0E
 
 
 // --- ROC Size ---------------------------------------------------------------
@@ -158,6 +160,7 @@ namespace pxar {
 
 
 // --- Testboard pulse pattern generator --------------------------------------
+#define PG_NONE  0x0000
 #define PG_TOK   0x0100
 #define PG_TRG   0x0200
 #define PG_CAL   0x0400

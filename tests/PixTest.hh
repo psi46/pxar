@@ -19,10 +19,12 @@ typedef char int8_t;
 #include <TQObject.h> 
 #include <TH1.h> 
 #include <TH2.h> 
+#include <TProfile2D.h> 
 #include <TTree.h> 
 #include <TDirectory.h> 
 #include <TFile.h>
 #include <TSystem.h>
+#include <TTimeStamp.h>
 
 #include "api.h"
 #include "log.h"
@@ -41,6 +43,7 @@ typedef struct {
   uint8_t pcol[2000];
   uint8_t prow[2000];
   uint8_t pval[2000];
+  uint16_t pq[2000];
 } TreeEvent;
 
 
@@ -90,6 +93,8 @@ public:
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
+  /// hint to what happens if the user hits the "stop" button
+  virtual std::string getStopTip() {return fStopTip;}
   /// hint to what happens if the user hits the "summary" button
   virtual std::string getSummaryTip() {return fSummaryTip;}
   /// get the string describing the test (called from PixTab::updateToolTips)
@@ -103,12 +108,10 @@ public:
   void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag = 0);
   /// do the scurve analysis
   void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
-  /// do the gain/pedestal analysis
-  void gainPedestalAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with hit maps
-  std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL); 
+  std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
   /// result controls the amount of information (histograms) returned
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
@@ -119,10 +122,25 @@ public:
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
 
+
+  /// Calculate average number of hits per pixel, and if this average is above
+  /// a certain threshold, then look if there are any pixels which are a margin of
+  /// safety above the average, and then mask these pixels and add them to the mask
+  /// list.
+  std::vector<std::pair<int,int> > checkHotPixels(TH2D* h);
+
+  /// Return pixelAlive map and additional hit map when running with external source
+  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
+								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+
   /// book a TH1D, adding version information to the name and title 
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
   /// book a TH2D, adding version information to the name and title 
   TH2D* bookTH2D(std::string sname, std::string title, int nbinsx, double xmin, double xmax, int nbinsy, double ymin, double max); 
+  /// book a TProfile2D, adding version information to the name and title 
+  TProfile2D* bookTProfile2D(std::string sname, std::string title, 
+			    int nbinsx, double xmin, double xmax, int nbinsy, double ymin, double max,
+			    std::string option = ""); 
   /// fill the results of a api::getEfficiencyVsDAC into a TH1D; if icol/irow/iroc are > -1, then fill only 'correct' pixels
   void fillDacHist(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > &results, TH1D *h, 
 		   int icol = -1, int irow = -1, int iroc = -1); 
@@ -144,18 +162,24 @@ public:
   double getMinimumThreshold(std::vector<TH1*>);
   /// return maximum threshold in a set of maps
   double getMaximumThreshold(std::vector<TH1*>);
-  /// return a list of TH1* that have 'name' as part to their histogram name
+  /// return a list of TH* that have 'name' as part to their histogram name
   std::vector<TH1*> mapsWithString(std::vector<TH1*>, std::string name);
+  std::vector<TH2D*> mapsWithString(std::vector<TH2D*>, std::string name);
 
   /// produce eye-catching printouts
   void print(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void banner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   void bigBanner(std::string, pxar::TLogLevel log = pxar::logINFO); 
   
-  /// cache DACs
+  /// cache all DACs 
   void cacheDacs(bool verbose = false); 
-  /// restore DACs
+  /// restore all DACs
   void restoreDacs(bool verbose = false); 
+
+  /// return from all ROCs the DAC dacName
+  std::vector<uint8_t> getDacs(std::string dacName); 
+  /// set on all ROCs the DAC dacName
+  void setDacs(std::string dacName, std::vector<uint8_t> dacVector); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 
@@ -233,7 +257,7 @@ protected:
   int                  fNtrig; 
   std::vector<double>  fPhErrP0, fPhErrP1; 
 
-  std::string           fName, fTestTip, fSummaryTip; ///< information for this test
+  std::string           fName, fTestTip, fSummaryTip, fStopTip; ///< information for this test
 
   std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
@@ -248,6 +272,7 @@ protected:
   std::map<int, int>    fId2Idx; ///< map the ROC ID onto the (results vector) index of the ROC
   TTree                *fTree; 
   TreeEvent             fTreeEvent;
+  TTimeStamp           *fTimeStamp; 
 
 
   ClassDef(PixTest, 1); // testing PixTest

@@ -4,13 +4,13 @@ ClkMax              19
 saveTbParameters    button
 
 -- Pretest
+programroc          button
 targetIa            24
 setVana             button
 PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
-setPhRange          button
 Ntrig               5
 SaveDacs            button
 
@@ -22,11 +22,11 @@ maskTest            button
 addressDecodingTest button
 
 -- DacScan
-PHmap               checkbox
+PHmap               checkbox(1)
 Ntrig               10
-DAC                 caldel
+DAC                 vcal
 DACLO               0
-DACHI               250
+DACHI               255
 PIX                 11,20 
 
 -- DacDacScan
@@ -34,11 +34,23 @@ PHmap               checkbox
 Ntrig               10
 DAC1                caldel
 DAC1LO              0
-DAC1HI              250
+DAC1HI              255
 DAC2                vthrcomp
 DAC2LO              0
-DAC2HI              250
+DAC2HI              255
 PIX                 11,20 
+
+-- Pattern
+pgcycles            10
+triggerloop         checkbox(0)
+period              300
+seconds             1
+patternfromfile     checkbox(0)
+resultsonfile       checkbox(0)
+binaryoutput        checkbox(0)
+filename            defaultPattern
+unmaskall           checkbox(0)
+resettodefault      button
 
 -- BumpBonding
 Ntrig               5
@@ -46,22 +58,19 @@ vcals               250
 xtalk               checkbox
 
 -- Scurves
+adjustvcal          checkbox(1)
 Ntrig               5
 DAC                 VthrComp
 DacLo               0
 DacHi               200
 scurves             button
-fits                button
 
 -- Trim
 trim                button
+Ntrig               10
+Vcal                40
 TrimBits            button
-Ntrig               2
-Vcal                50
-VcalLo              25 
-VcalHi              75 
-VthrCompLo          0 
-VthrCompHi          50 
+
 
 -- GainPedestal
 showFits            checkbox
@@ -72,20 +81,43 @@ measure             button
 fit                 button
 save                button
 
--- Pattern
-ntrig         0
-trigloop      1
-period        -1
-seconds       1
-patternfromfile     1
-resultsonfile       1
-binaryoutput        0
-outfilename      defaultdata.dat
-testallpixels 0
-maskallpixels 0
-resettodefault  button
-
 -- PhOptimization
-ntrig 10
-singlePix 1
+ntrig               10
+singlePix           1
+
+-- Xray
+source              Ag
+phrun               button
+runseconds          100
+trgfrequency(khz)   100
+ratescan            button
+vthrcompmin         10
+vthrcompmax         80
+stepseconds         5
+DelayTBM            checkbox  
+FillTree            checkbox  
+
+-- HighRate
+xPixelAlive         button
+trgfrequency(khz)   20
+Ntrig               5
+Vcal                200
+runDaq              button
+runseconds          2
+DelayTBM            checkbox  
+FillTree            checkbox  
+
+-- DAQ
+Ntrig               0
+iterations          10
+seconds             30
+trgfrequency(khz)   100
+DelayTBM            checkbox
+FillTree            checkbox
+
+-- IV
+VoltageMin          0
+VoltageMax          600
+VoltageStep         5
+Delay               3
 

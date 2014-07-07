@@ -83,25 +83,34 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
-  fPixSetup->setMoreWebCloning(true);
+  //  fPixSetup->setMoreWebCloning(true);
 
   vector<string> suite;
   suite.push_back("alive"); 
-  suite.push_back("phoptimization"); 
   suite.push_back("bumpbonding"); 
   suite.push_back("scurves");
   suite.push_back("trim"); 
+  suite.push_back("phoptimization"); 
   suite.push_back("gainpedestal"); 
 
   PixTest *t(0); 
-  
+
+  string trimvcal(""); 
   PixTestFactory *factory = PixTestFactory::instance(); 
   for (unsigned int i = 0; i < suite.size(); ++i) {
     t =  factory->createTest(suite[i], fPixSetup);
+
+    if (!suite[i].compare("trim")) {
+      trimvcal = t->getParameter("vcal"); 
+      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal); 
+    }
+
     t->doTest(); 
+
     delete t; 
   }
 
+  //  fPixSetup->setMoreWebCloning(false);
 }
 
 

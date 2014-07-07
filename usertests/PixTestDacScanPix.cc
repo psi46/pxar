@@ -192,7 +192,7 @@ void PixTestDacScanPix::doTest()
 	  vpix[ipx].column == col &&
 	  vpix[ipx].row == row ) {
 	h1 = hsts.at(roc);
-	h1->Fill( idac, vpix[ipx].value ); // already averaged
+	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
       } // valid
 
     } // pix

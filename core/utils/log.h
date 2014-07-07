@@ -12,7 +12,6 @@ typedef unsigned int DWORD;
 #include <Windows4Root.h>
 #else
 #if (defined WIN32)
-#define NOMINMAX
 typedef unsigned int uint32_t;
 #include <Windows.h>
 #else

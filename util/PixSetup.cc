@@ -12,6 +12,7 @@ PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp) {
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
   fMoreWebCloning    = false; 
+  fDoUpdateRootFile  = false;
   init(); 
 }
 
@@ -29,7 +30,7 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   vector<vector<pixelConfig> >                 rocPixels = fConfigParameters->getRocPixelConfig();
   vector<pair<string,uint8_t> >                sig_delays = fConfigParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = fConfigParameters->getTbPowerSettings();
-  vector<pair<uint16_t, uint8_t> >             pg_setup = fConfigParameters->getTbPgSettings();
+  vector<pair<std::string, uint8_t> >             pg_setup = fConfigParameters->getTbPgSettings();
 
   fApi = new pxar::api("*", verbosity);
   fApi->initTestboard(sig_delays, power_settings, pg_setup);

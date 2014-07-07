@@ -16,6 +16,7 @@ public:
   void runCommand(std::string command); 
   
   void measure();
+  void printHistograms();
   void fit(); 
   void saveGainPedestalParameters(); 
 
@@ -27,6 +28,7 @@ private:
   int         fParShowFits, fParNtrig, fParNpointsLo, fParNpointsHi;
 
   std::map<std::string, TH1D*> fHists; 
+  std::vector<int> fLpoints, fHpoints;
 
   ClassDef(PixTestGainPedestal, 1)
 

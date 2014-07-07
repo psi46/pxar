@@ -20,7 +20,7 @@ using namespace pxar;
 ClassImp(PixTestGainPedestal)
 
 // ----------------------------------------------------------------------
-PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), fParShowFits(0), fParNtrig(-1), fParNpointsLo(-1), fParNpointsHi(-1) {
+PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), fParShowFits(0), fParNtrig(-1)  {
   PixTest::init();
   init(); 
 }
@@ -47,16 +47,6 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
 	fParNtrig = atoi(sval.c_str()); 
 	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
-      if (!parName.compare("npointslo")) {
-	fParNpointsLo = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNpointsLo  ->" << fParNpointsLo << "<- from sval = " << sval;
-      }
-
-      if (!parName.compare("npointshi")) {
-	fParNpointsHi = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNpointsHi  ->" << fParNpointsHi << "<- from sval = " << sval;
-      }
-
       setToolTips();
       break;
     }
@@ -76,6 +66,20 @@ void PixTestGainPedestal::setToolTips() {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::init() {
+
+  fLpoints.clear();
+  fLpoints.push_back(50); 
+  fLpoints.push_back(100); 
+  fLpoints.push_back(150); 
+  fLpoints.push_back(200); 
+  fLpoints.push_back(250); 
+
+  fHpoints.clear();
+  fHpoints.push_back(30); 
+  fHpoints.push_back(50); 
+  fHpoints.push_back(70); 
+  fHpoints.push_back(90); 
+  fHpoints.push_back(200); 
 
   setToolTips(); 
 
@@ -106,8 +110,7 @@ void PixTestGainPedestal::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
-  bigBanner(Form("PixTestGainPedestal::doTest() ntrig = %d, npointsLo = %d, npointHi = %d", 
-		 fParNtrig, fParNpointsLo, fParNpointsHi));
+  bigBanner(Form("PixTestGainPedestal::doTest() ntrig = %d", fParNtrig));
 
   measure();
   fit();
@@ -142,11 +145,11 @@ void PixTestGainPedestal::measure() {
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   cacheDacs();
-
-
+ 
   TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string name; 
+  fHists.clear();
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     for (unsigned int ix = 0; ix < 52; ++ix) {
       for (unsigned int iy = 0; iy < 80; ++iy) {
@@ -170,22 +173,27 @@ void PixTestGainPedestal::measure() {
   // -- first low range 
   fApi->setDAC("ctrlreg", 0);
 
+  //    OutputFile << "Low range:  50 100 150 200 250 " << endl;
+  //    OutputFile << "High range:  30  50  70  90 200 " << endl;
+
   vector<pair<uint8_t, vector<pixel> > > rresult, lresult, hresult; 
-  int step = 256/fParNpointsLo;
-  for (int i = 0; i < fParNpointsLo; ++i) {
-    LOG(logINFO) << "scanning low vcal = " << i*step;
+  for (unsigned int i = 0; i < fLpoints.size(); ++i) {
+    LOG(logINFO) << "scanning low vcal = " << fLpoints[i];
     int cnt(0); 
     bool done = false;
     while (!done){
       try {
-	rresult = fApi->getPulseheightVsDAC("vcal", i*step, i*step, FLAGS, fParNtrig);
+	rresult = fApi->getPulseheightVsDAC("vcal", fLpoints[i], fLpoints[i], FLAGS, fParNtrig);
 	copy(rresult.begin(), rresult.end(), back_inserter(lresult)); 
 	done = true; // got our data successfully
       }
       catch(pxar::DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	++cnt;
 	if (e.numberMissing > 10) done = true; 
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -193,26 +201,29 @@ void PixTestGainPedestal::measure() {
 
   // -- and high range
   fApi->setDAC("ctrlreg", 4);
-  step = 250/fParNpointsHi;
-  for (int i = 0; i < fParNpointsHi; ++i) {
-    LOG(logINFO) << "scanning high vcal = " << 10 + i*step << " (= " << 7*(10 + i*step) << " in low range)";
+  for (unsigned int i = 0; i < fHpoints.size(); ++i) {
+    LOG(logINFO) << "scanning high vcal = " << fHpoints[i] << " (= " << 7*fHpoints[i] << " in low range)";
     int cnt(0); 
     bool done = false;
     while (!done){
       try {
-	rresult = fApi->getPulseheightVsDAC("vcal", 10 + i*step, 10 + i*step, FLAGS, fParNtrig);
+	rresult = fApi->getPulseheightVsDAC("vcal", fHpoints[i], fHpoints[i], FLAGS, fParNtrig);
 	copy(rresult.begin(), rresult.end(), back_inserter(hresult)); 
 	done = true; // got our data successfully
       }
       catch(pxar::DataMissingEvent &e){
-	LOG(logDEBUG) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
 	++cnt;
 	if (e.numberMissing > 10) done = true; 
+      } catch(pxarException &e) {
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
   }
 
+  double sf(2.), err(0.);
   for (unsigned int i = 0; i < lresult.size(); ++i) {
     int dac = lresult[i].first; 
     vector<pixel> vpix = lresult[i].second;
@@ -223,8 +234,8 @@ void PixTestGainPedestal::measure() {
       name = Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc); 
       h1 = fHists[name];
       if (h1) {
-	h1->SetBinContent(dac+1, vpix[ipx].value);
-	h1->SetBinError(dac+1, 0.05*vpix[ipx].value); //FIXME constant 5% error assumption!?
+	h1->SetBinContent(dac+1, vpix[ipx].getValue());
+	h1->SetBinError(dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
       } else {
 	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }
@@ -242,8 +253,9 @@ void PixTestGainPedestal::measure() {
       name = Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc); 
       h1 = fHists[name];
       if (h1) {
-	h1->SetBinContent(scaleLo*dac+1, vpix[ipx].value);
-	h1->SetBinError(scaleLo*dac+1, 0.05*vpix[ipx].value); //FIXME constant 5% error assumption!?
+	h1->SetBinContent(scaleLo*dac+1, vpix[ipx].getValue());
+	err = vpix[ipx].getVariance();
+	h1->SetBinError(scaleLo*dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
       } else {
 	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }
@@ -254,6 +266,8 @@ void PixTestGainPedestal::measure() {
   gROOT->ForceStyle();
   h1->Draw(); 
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+
+  printHistograms();
 
   PixTest::update(); 
   restoreDacs();
@@ -342,4 +356,50 @@ void PixTestGainPedestal::saveGainPedestalParameters() {
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::output4moreweb() {
   // -- nothing required here
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestGainPedestal::printHistograms() {
+
+  ofstream OutputFile;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  unsigned nRocs = rocIds.size(); 
+
+  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+
+    OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), 
+			 fPixSetup->getConfigParameters()->getGainPedestalFileName().c_str(), 
+			 iroc));
+
+    OutputFile << "Pulse heights for the following Vcal values:" << endl;
+    OutputFile << "Low range:  ";
+    for (unsigned int i = 0; i < fLpoints.size(); ++i) OutputFile << fLpoints[i] << " "; 
+    OutputFile << endl;
+    OutputFile << "High range:  ";
+    for (unsigned int i = 0; i < fHpoints.size(); ++i) OutputFile << fHpoints[i] << " "; 
+    OutputFile << endl;
+    OutputFile << endl;
+
+    TH1D *h1(0); 
+    for (int ic = 0; ic < 52; ++ic) {
+      for (int ir = 0; ir < 80; ++ir) {
+	h1 = fHists[Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)];
+
+	string h1name(h1->GetName()), line(""); 
+
+	for (unsigned int i = 0; i < fLpoints.size(); ++i) {
+	  line += Form(" %3d", static_cast<int>(h1->GetBinContent(fLpoints[i]+1))); 
+	}
+	
+	for (unsigned int i = 0; i < fHpoints.size(); ++i) {
+	  line += Form(" %3d", static_cast<int>(h1->GetBinContent(7*fHpoints[i]+1))); 
+	}
+	
+	line += Form("    Pix %2d %2d", ic, ir); 
+	OutputFile << line << endl;
+      }
+    }
+    OutputFile.close();
+  }
 }

@@ -7,7 +7,9 @@ SET (TESTLIB_SOURCES
 PixTest.cc
 PixTestDaq.cc
 PixTestXray.cc
+PixTestHighRate.cc
 PixTestCurrentVsDac.cc
+PixTestIV.cc
 PixTestAlive.cc
 PixTestTbm.cc
 PixTestDacScan.cc
@@ -21,7 +23,6 @@ PixTestPretest.cc
 PixTestFactory.cc
 PixTestPh.cc
 PixTestPhOptimization.cc
-PixTestThreshMap.cc
 PixTestBBMap.cc	
 PixTestFullTest.cc
 )
@@ -31,7 +32,9 @@ set(TESTLIB_HEADERS
 PixTest.hh
 PixTestDaq.hh
 PixTestXray.hh
+PixTestHighRate.hh
 PixTestCurrentVsDac.hh
+PixTestIV.hh
 PixTestAlive.hh
 PixTestTbm.hh
 PixTestDacScan.hh
@@ -45,7 +48,6 @@ PixTestPretest.hh
 PixTestFactory.hh
 PixTestPh.hh
 PixTestPhOptimization.hh
-PixTestThreshMap.hh
 PixTestBBMap.hh
 PixTestFullTest.hh
 )
@@ -61,7 +63,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${TESTLIB_HEADERS}" "${TESTLIB_DICTIONARY}" "${MY_
 # create a shared library
 ADD_LIBRARY( pxartests SHARED ${TESTLIB_SOURCES} ${TESTLIB_DICTIONARY} )
 # link against our core library, the util lib, the root stuff, and the USB libs
-target_link_libraries(pxartests pxarutil pxarana ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
+target_link_libraries(pxartests pxarutil pxarana ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} ${DEVICES_LINK_LIBRARY})
 
 # install the lib in the appropriate directory
 INSTALL(TARGETS pxartests

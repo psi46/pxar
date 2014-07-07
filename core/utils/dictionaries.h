@@ -26,6 +26,7 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
+#define PG_ERR  0xFF00
 
 namespace pxar {
 
@@ -99,20 +100,34 @@ namespace pxar {
       _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
       _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
       _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
-      _registers["triggerdelay"] = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
+      _registers["triggerdelay"]  = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
 
       //------- TBM registers -----------------------------
-      _registers["counters"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
-      _registers["mode"]             = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
+      _registers["counters"]      = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
+      _registers["base0"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
 
-      _registers["clear"]            = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
-      _registers["inject"]           = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["mode"]          = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
+      _registers["base2"]         = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
 
-      _registers["pkam_set"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
-      _registers["delays"]           = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
-      _registers["temperature"]      = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      _registers["clear"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["inject"]        = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["base4"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+
+      _registers["pkam_set"]      = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
+      _registers["base8"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
+
+      _registers["delays"]        = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
+      _registers["basea"]         = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
+
+      _registers["autoreset"]     = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      _registers["basec"]         = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      // In the old TBM these were the temperature registers:
+      _registers["temperature"]   = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+
+      _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
+      _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
 
 
       //------- ROC registers -----------------------------
@@ -217,8 +232,8 @@ namespace pxar {
 
     // Return the register id for the name in question:
     inline uint8_t getDevCode(std::string name) {
-      try { return _devices[name]; }
-      catch(...) { return 0x0; }
+      if(_devices.find(name) != _devices.end()) { return _devices[name]; }
+      else { return 0x0; }
     }
 
   private:
@@ -241,6 +256,7 @@ namespace pxar {
       // FIXME this is just an example.
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
+      _devices["tbm08b"]        = TBM_08B;
       _devices["tbm09"]         = TBM_09;
     }
 
@@ -262,10 +278,18 @@ namespace pxar {
       return &instance;
     }
 
-    // Return the register id for the name in question:
+    // Return the signal id for the probe signal in question:
     inline uint8_t getSignal(std::string name) {
-      try { return _signals[name]; }
-      catch(...) { return PROBE_OFF; }
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PROBE_OFF; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint8_t signal) {
+      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
     }
 
   private:
@@ -329,15 +353,21 @@ namespace pxar {
 
     // Return the register id for the name in question:
     inline uint8_t getSignal(std::string name) {
-      try { return _signals[name]; }
-      catch(...) { return PROBEA_OFF; }
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PROBEA_OFF; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint8_t signal) {
+      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
     }
 
   private:
     ProbeADictionary() {
       // Probe name and values
-
-      // Digital signals:
       _signals["tin"]    = PROBEA_TIN;
       _signals["sdata1"] = PROBEA_SDATA1;
       _signals["sdata2"] = PROBEA_SDATA2;
@@ -354,6 +384,73 @@ namespace pxar {
     void operator=(ProbeADictionary const&); // Don't implement
   };
 
+  /** Map for pattern generator signal name lookup
+   *  All signal names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class PatternGeneratorDictionary {
+  public:
+    static PatternGeneratorDictionary * getInstance() {
+      static PatternGeneratorDictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint16_t getSignal(std::string name) {
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PG_ERR; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint16_t signal) {
+      for(std::map<std::string, uint16_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
+    }
+
+  private:
+    PatternGeneratorDictionary() {
+      // None (empty cycle):
+      _signals["none"]      = PG_NONE;
+      _signals["empty"]     = PG_NONE;
+      _signals["delay"]     = PG_NONE;
+      
+      // Token:
+      _signals["pg_tok"]    = PG_TOK;
+      _signals["tok"]       = PG_TOK;
+      _signals["token"]     = PG_TOK;
+
+      // Trigger:
+      _signals["pg_trg"]    = PG_TRG;
+      _signals["trg"]       = PG_TRG;
+      _signals["trigger"]   = PG_TRG;
+
+      // Calibrate signal
+      _signals["pg_cal"]    = PG_CAL;
+      _signals["cal"]       = PG_CAL;
+      _signals["calibrate"] = PG_CAL;
+
+      // ROC Reset Signal
+      _signals["pg_resr"]   = PG_RESR;
+      _signals["resr"]      = PG_RESR;
+      _signals["resetroc"]  = PG_RESR;
+
+      // TBM Reset Signal
+      _signals["pg_rest"]   = PG_REST;
+      _signals["rest"]      = PG_REST;
+      _signals["resettbm"]  = PG_REST;
+
+      // PG Sync Signal
+      _signals["pg_sync"]   = PG_SYNC;
+      _signals["sync"]      = PG_SYNC;
+    }
+
+    std::map<std::string, uint16_t> _signals;
+    PatternGeneratorDictionary(PatternGeneratorDictionary const&); // Don't Implement
+    void operator=(PatternGeneratorDictionary const&); // Don't implement
+  };
 
 } //namespace pxar
 
