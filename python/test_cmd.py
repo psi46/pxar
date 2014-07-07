@@ -1,6 +1,7 @@
 import PyPxarCore
 from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyDictionary
 from functools import wraps # used in parameter verification decorator
+from numpy import set_printoptions, nan
 
 import cmd      # for command interface and parsing
 import sys
@@ -31,6 +32,7 @@ def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = t
 
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
+    fullOutput=False
 
     def __init__(self, api):
         cmd.Cmd.__init__(self)
@@ -42,10 +44,27 @@ class PxarCoreCmd(cmd.Cmd):
         """ clean exit when receiving EOF (Ctrl-D) """
         return True
 
+    def do_switchFullOutput(self, line):
+        """Switch between full and suppressed output of all pixels"""
+        if self.fullOutput:
+            set_printoptions(threshold=1000)
+            self.fullOutput = False
+        else:
+            set_printoptions(threshold=nan)
+            self.fullOutput = True
+
+    @arity(0,2,[int, int])
+    def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
+        """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
+        print self.api.getEfficiencyMap(flags,nTriggers)
+        
+    def complete_setDAC(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setDAC.__doc__, '']
+
     @arity(2,3,[str, int, int])
     def do_setDAC(self, dacname, value, rocid = None):
-        """setDAC [DAC name] [value] [ROCID]
-        Set the DAC to given value for given roc ID"""
+        """setDAC [DAC name] [value] [ROCID]: Set the DAC to given value for given roc ID"""
         self.api.setDAC(dacname, value, rocid)
 
     def complete_setDAC(self, text, line, start_index, end_index):
@@ -55,18 +74,15 @@ class PxarCoreCmd(cmd.Cmd):
                         if dac.startswith(text)]
         else:
             if len(line.split(" ")) > 2:
-                # return help for the cmd, removing line breaks and double spaces
-                return [self.do_setDAC.__doc__.replace('\n',': ').replace('  ',' '), '']
+                # return help for the cmd
+                return [self.do_setDAC.__doc__, '']
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
 
     def do_quit(self, arg):
+        """quit: terminates the application"""
         sys.exit(1)
-
-    def help_quit(self):
-        print "syntax: quit",
-        print "-- terminates the application"
 
     # shortcuts
     do_q = do_quit
@@ -96,7 +112,7 @@ pg_setup = (
 ("PG_TOK",0))    
 
 # Start an API instance from the core pXar library
-api = PyPxarCore(usbId="*",logLevel="DEBUGAPI")
+api = PyPxarCore(usbId="*",logLevel="INFO")
 print api.getVersion()
 if not api.initTestboard(pg_setup = pg_setup, 
                          power_settings = power_settings, 
