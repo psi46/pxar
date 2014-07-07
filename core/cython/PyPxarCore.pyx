@@ -448,7 +448,7 @@ cdef class PyRegisterDictionary:
     def __cinit__(self):
         self.thisptr = getInstance()
     def __dealloc__(self):
-        del self.thisptr
+        self.thisptr = NULL
     def getAllROCNames(self):
         names = []
         cdef vector[string] v = self.thisptr.getAllROCNames()
