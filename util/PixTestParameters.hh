@@ -16,8 +16,12 @@ public:
   bool setTestParameter(std::string testname, std::string parname, std::string value);
   bool addTestParameter(std::string testname, std::string parname, std::string value);
   bool setTestParameters(std::string testname, std::vector<std::pair<std::string, std::string> > );
+  bool setTestParameters(std::string testname, std::string testParameters);
+  std::vector<std::pair<std::string, std::string> > splitStringIntoParameters(std::string testParameters);
   std::vector<std::string> getTests(); 
   void dump(); 
+
+  void replaceAll(std::string& str, const std::string& from, const std::string& to);
 
 private: 
   std::map<std::string, std::vector<std::pair<std::string, std::string> > > fTests;

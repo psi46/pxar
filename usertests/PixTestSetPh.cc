@@ -173,12 +173,12 @@ void PixTestSetPh::doTest()
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
       uint8_t roc = vpix[ipx].roc_id;
       if( roc < 16 )
-	pix_ph[roc] = vpix[ipx].value;
+	pix_ph[roc] = vpix[ipx].getValue();
       LOG(logINFO) << "ipx " << setw(2) << ipx
 		   << ": ROC " << setw(2) << (int) vpix[ipx].roc_id
 		   << " col " << setw(2) << (int) vpix[ipx].column
 		   << " row " << setw(2) << (int) vpix[ipx].row
-		   << " val " << setw(3) << (int) vpix[ipx].value;
+		   << " val " << setw(3) << (int) vpix[ipx].getValue();
     }
 
     // check:
@@ -259,7 +259,7 @@ void PixTestSetPh::doTest()
 	  vpix[ipx].column == col &&
 	  vpix[ipx].row == row ) {
 	h1 = hmin.at(roc);
-	h1->Fill( idac, vpix[ipx].value ); // already averaged
+	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
       } // valid
 
     } // pix
@@ -317,7 +317,7 @@ void PixTestSetPh::doTest()
 	  vpix[ipx].column == col &&
 	  vpix[ipx].row == row ) {
 	h1 = hmax.at(roc);
-	h1->Fill( idac, vpix[ipx].value ); // already averaged
+	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
       } // valid
 
     } // pix
@@ -428,7 +428,7 @@ void PixTestSetPh::doTest()
 	  vpix[ipx].column == col &&
 	  vpix[ipx].row == row ) {
 	h1 = href.at(roc);
-	h1->Fill( idac, vpix[ipx].value ); // already averaged
+	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
       } // valid
 
     } // pix
@@ -521,9 +521,9 @@ void PixTestSetPh::doTest()
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
       h2 = maps9.at( vpix[ipx].roc_id );
       if( h2 ) h2->SetBinContent( vpix[ipx].column + 1, vpix[ipx].row + 1,
-				  vpix[ipx].value );
+				  vpix[ipx].getValue());
       h1 = hsts9.at( vpix[ipx].roc_id );
-      if( h1 ) h1->Fill( vpix[ipx].value );
+      if( h1 ) h1->Fill( vpix[ipx].getValue());
     }
 
     for( size_t roc = 0; roc < nRocs; ++roc ) {
@@ -627,15 +627,15 @@ void PixTestSetPh::doTest()
       if( vpix[ipx].roc_id == 0 &&
 	  vpix[ipx].column == 0 &&
 	  vpix[ipx].row == 0 &&
-	  vpix[ipx].value == 0 ) {
+	  vpix[ipx].getValue() == 0 ) {
 	LOG(logINFO) << "vpix[" << ipx << "] all zero, skipped";
 	continue;
       }
       h2 = maps0.at( vpix[ipx].roc_id );
       if( h2 ) h2->SetBinContent( vpix[ipx].column + 1, vpix[ipx].row + 1,
-				  vpix[ipx].value );
+				  vpix[ipx].getValue());
       h1 = hsts0.at( vpix[ipx].roc_id );
-      if( h1 ) h1->Fill( vpix[ipx].value );
+      if( h1 ) h1->Fill( vpix[ipx].getValue());
     }
 
     for( size_t roc = 0; roc < nRocs; ++roc ) {
@@ -769,7 +769,7 @@ void PixTestSetPh::doTest()
 	if( vpix0[ipx].roc_id == roc &&
 	    vpix0[ipx].column == min_col &&
 	    vpix0[ipx].row == min_row )
-	  min_ph = vpix0[ipx].value;
+	  min_ph = vpix0[ipx].getValue();
       fApi->_dut->testPixel( min_col, min_row, false, roc );
 
       fApi->setDAC( "Vcal", max_vcal, roc );
@@ -779,7 +779,7 @@ void PixTestSetPh::doTest()
 	if( vpix9[ipx].roc_id == roc &&
 	    vpix9[ipx].column == max_col &&
 	    vpix9[ipx].row == max_row )
-	  max_ph = vpix9[ipx].value;
+	  max_ph = vpix9[ipx].getValue();
       fApi->_dut->testPixel( max_col, max_row, false, roc );
 
       range = static_cast<int>(max_ph - min_ph);

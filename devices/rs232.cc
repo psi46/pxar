@@ -127,7 +127,7 @@ int RS232_OpenComport(int comport_number, int baudrate)
   new_port_settings.c_cflag = baudr | CS8 | CLOCAL | CREAD;
   new_port_settings.c_iflag = IGNPAR;
   new_port_settings.c_oflag = 0;
-  new_port_settings.c_lflag = 0;
+  new_port_settings.c_lflag = FLUSHO;
   new_port_settings.c_cc[VMIN] = 0;      /* block untill n bytes are received */
   new_port_settings.c_cc[VTIME] = 0;     /* block untill a timer expires (n * 100 mSec.) */
   rs_error = tcsetattr(Cport[comport_number], TCSANOW, &new_port_settings);
@@ -179,6 +179,12 @@ int RS232_SendByte(int comport_number, unsigned char byte)
 
 
 int RS232_SendBuf(int comport_number, unsigned char *buf, int size)
+{
+  return(write(Cport[comport_number], buf, size));
+}
+
+// Need this function to talk to the Keithlez 2410
+int RS232_SendBufString(int comport_number, char *buf, int size)
 {
   return(write(Cport[comport_number], buf, size));
 }
@@ -387,8 +393,30 @@ int writeCommand(const char *command)
 }
 
 //---------------------------------------------------------------------------
-int writeCommandAndReadAnswer(const char *command, char *answer)
-{
+// Allows writing commands to the Keithley 2410
+int writeCommandString(const char *command) {
+  int  len;
+  char cmd[256];  
+
+  strncpy(cmd, command, 250);
+  cmd[250] = 0;
+
+  // terminate command with CR+ LF
+  if (!strstr(cmd, "\r\n")) {
+    strcat(cmd, "\r\n");
+  }
+
+  len = strlen(cmd);
+  RS232_SendBufString(comport_number, cmd, len);
+
+  usleep(20000);
+
+  return 1;
+}
+
+
+//---------------------------------------------------------------------------
+int writeCommandAndReadAnswer(const char *command, char *answer) {
   LOG(logDEBUGRPC) << "RS232 Command: " << command;
         
   int  bytesRead;
@@ -430,3 +458,52 @@ int writeCommandAndReadAnswer(const char *command, char *answer)
   LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
   return 1;
 }
+
+//---------------------------------------------------------------------------
+// Allows writing commands to the Keithley 2410
+int writeCommandStringAndReadAnswer(const char *command, char *answer, int delay) {
+  LOG(logDEBUGRPC) << "RS232 Command: " << command;
+
+  int  bytesRead;
+  char inbuf[256];
+  int  to = 0;
+  char *p;
+
+  if (!answer) {
+    return 0;
+  }
+
+  // write command to HV device
+  if (!writeCommandString(command)) {  
+    return 0;
+  }
+   
+  usleep(delay*1000000);
+
+  // init buffer
+  *answer = 0;   
+
+  // read answer (terminated with CR)
+  to = 0;
+  do {
+    bytesRead = RS232_PollComport(comport_number, inbuf, sizeof(inbuf));
+  
+    if (bytesRead > 0) {
+      inbuf[bytesRead] = 0;
+      strcat(answer, inbuf);
+      to = 0;
+    }
+    usleep(10000);
+  } while ( (strstr(answer, "\r\n") == 0) && (++to < 80) ); // wait for CR or t$
+  
+  //         // clear trailing CR
+  if ( (p  = strstr(answer, "\r\n")) ) {
+    *p = 0;
+  }
+
+  usleep(100000);
+  LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
+  return 1;
+}
+
+

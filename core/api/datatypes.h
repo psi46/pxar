@@ -19,6 +19,8 @@ typedef unsigned char uint8_t;
 #include <iostream>
 #include <vector>
 #include <map>
+#include <limits>
+#include <cmath>
 
 namespace pxar {
 
@@ -29,47 +31,60 @@ namespace pxar {
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
      */
-  pixel() : roc_id(0), column(0), row(0), value(0) {}
+  pixel() : roc_id(0), column(0), row(0), _mean(0), _variance(0) {}
 
     /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(int32_t address, int32_t data) : value(data) { decode(address); }
-
-    /** Constructor for pixel objects with address and value initialization.
-     */
-  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, int32_t _value) : roc_id(_roc_id), column(_column), row(_row), value(_value) {}
-
-    /** Constructor for pixel objects with rawdata pixel address & value initialization.
-     */
-  pixel(uint32_t rawdata, bool invertAddress = false) : roc_id(0) { decodeRaw(rawdata,invertAddress); }
+  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, double _value) : roc_id(_roc_id), column(_column), row(_row), _variance(0) { setValue(_value); }
 
     /** Constructor for pixel objects with rawdata pixel address & value and ROC id initialization.
      */
   pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
 
-    /** Function to fill the pixel with linear encoded data from RPC transfer.
-     *  The address transmitted from the NIOS soft core is encoded in the following
-     *  way:
-     *
-     *  Split the address and distribute it over ROC, column and row:
-     *   * pixel column: max(51 -> 110011), requires 6 bits (R)
-     *   * pixel row: max(79 -> 1001111), requires 7 bits (C)
-     *   * roc id: max(15 -> 1111), requires 4 bits (I)
-     *
-     *  So everything can be stored in one 32 bits variable:
-     *
-     *   ........ ....IIII ..CCCCCC .RRRRRRR
+    /** Getter function to return ROC ID
      */
-    inline void decode(int32_t address) {
-      roc_id = (address>>16)&15;
-      column = (address>>8)&63;
-      row = (address)&127;
-    }
-    void decodeRaw(uint32_t raw, bool invert);
+    uint8_t getRoc() { return roc_id; };
+
+    /** Getter function to return column id
+     */
+    uint8_t getColumn() { return column; };
+
+    /** Getter function to return row id
+     */
+    uint8_t getRow() { return row; };
+
+    /** ROC ID - continuously numbered according to their appeareance
+     *  in the readout chain
+     */
     uint8_t roc_id;
+
+    /** Pixel column address
+     */
     uint8_t column;
+
+    /** Pixel row address
+     */
     uint8_t row;
-    int32_t value;
+
+    /** Member function to get the signal variance for this pixel hit
+     */
+    double getVariance() { return expandFloat(_variance); };
+
+    /** Member function to set the signal variance for this pixel hit
+     */
+    void setVariance(double var) { _variance = compactFloat(var); };
+
+    /** Member function to get the value stored for this pixel hit
+     */
+    double getValue() { 
+      return static_cast<double>(_mean);
+    };
+
+    /** Member function to get the value stored for this pixel hit
+     */
+    void setValue(double val) { 
+      _mean = static_cast<int16_t>(val);
+    };
 
     /** Overloaded comparison operator
      */
@@ -92,12 +107,44 @@ namespace pxar {
     }
 
   private:
+    /** 16bit unsigned int for storing compressed floating point
+     *  mean value (either pulse height or efficiency)
+     */
+    int16_t _mean;
+
+    /** 16bit unsigned int for storing compressed floating point
+     *  variance
+     */
+    uint16_t _variance;
+
+    /** Decoding function for PSI46 dig raw ROC data. Parameter "invert"
+     *  allows decoding of PSI46dig data which has an inverted pixel
+     *  address.
+     *  This function throws a pxar::DataDecodingError exception in
+     *  case of a failed decoding attempts.
+     */
+    void decodeRaw(uint32_t raw, bool invert);
+
+    /** Helper function to compress double input value into
+     *  a 16bit fixed-width integer for storage
+     */
+    uint16_t compactFloat(double input) {
+      return round(input*std::numeric_limits<uint16_t>::max());
+    }
+
+    /** Helper function to expand 16bit fixed-width integer value to
+     *  floating point value with precision roughly ~10^-4
+     */
+    double expandFloat(uint16_t input) {
+      return static_cast<double>(input)/std::numeric_limits<uint16_t>::max();
+    }
+
     /** Overloaded ostream operator for simple printing of pixel data
      */
     friend std::ostream & operator<<(std::ostream &out, pixel& px) {
       out << "ROC " << static_cast<int>(px.roc_id)
 	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
-	  << "," << static_cast<int>(px.value) << "]";
+	  << "," << static_cast<double>(px.getValue()) << "]";
       return out;
     }
   };

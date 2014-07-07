@@ -44,7 +44,7 @@ std::string pxarCore::getVersion() { return PACKAGE_STRING; }
 
 bool pxarCore::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 			std::vector<std::pair<std::string,double> > power_settings,
-			     std::vector<std::pair<std::string,uint8_t> > pg_setup) {
+			std::vector<std::pair<std::string,uint8_t> > pg_setup) {
 
   // Check the HAL status before doing anything else:
   if(!_hal->compatible()) return false;
@@ -1063,7 +1063,16 @@ bool pxarCore::daqStart() {
   return true;
 }
 
-bool pxarCore::daqStatus() {
+bool pxarCore::daqStatus()
+{
+
+  uint8_t perFull;
+
+  return daqStatus(perFull);
+
+}
+
+bool pxarCore::daqStatus(uint8_t & perFull) {
 
   // Check if a DAQ session is running:
   if(!_daq_running) {
@@ -1074,6 +1083,7 @@ bool pxarCore::daqStatus() {
   // Check if we still have enough buffer memory left (with some safety margin).
   // Only filling buffer up to 90% in order not to lose data.
   uint32_t filled_buffer = _hal->daqBufferStatus();
+  perFull = static_cast<uint8_t>(static_cast<float>(filled_buffer)/_daq_buffersize*100.0);
   if(filled_buffer > 0.9*_daq_buffersize) {
     LOG(logWARNING) << "DAQ buffer about to overflow!";
     return false;
@@ -1091,9 +1101,10 @@ uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting too small for configured "
+    LOG(logWARNING) << "Trigger frequency too high for configured "
 		    << "Pattern generator. "
-		    << "Setting loop delay to " << period << " clk";
+		    << "Forcing loop delay to " << period << " clk";
+    LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
   // Just passing the call to the HAL, not doing anything else here:
   _hal->daqTrigger(nTrig,period);
@@ -1108,9 +1119,10 @@ uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting too small for configured "
+    LOG(logWARNING) << "Trigger frequency too high for configured "
 		    << "Pattern generator. "
-		    << "Setting loop delay to " << period << " clk";
+		    << "Forcing loop delay to " << period << " clk";
+    LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
   _hal->daqTriggerLoop(period);
   return period;
@@ -1188,7 +1200,10 @@ uint32_t pxarCore::daqGetNDecoderErrors() {
 bool pxarCore::daqStop() {
 
   if(!status()) {return false;}
-  if(!daqStatus()) {return false;}
+  if(!_daq_running) {
+    LOG(logINFO) << "No DAQ running, not executing daqStop command.";
+    return false;
+  }
 
   _daq_running = false;
   
@@ -1381,25 +1396,38 @@ std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_
 
     Event * evt = new Event();
     std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
+    std::map<pixel,double> pxmean = std::map<pixel,double>();
+    std::map<pixel,double> pxm2 = std::map<pixel,double>();
 
     for(std::vector<Event*>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
 
       // Loop over all contained pixels:
       for(std::vector<pixel>::iterator pixit = (*it)->pixels.begin(); pixit != (*it)->pixels.end(); ++pixit) {
-	
+
 	// Check if we have that particular pixel already in:
 	std::vector<pixel>::iterator px = std::find_if(evt->pixels.begin(),
 						       evt->pixels.end(),
 						       findPixelXY(pixit->column, pixit->row, pixit->roc_id));
 	// Pixel is known:
 	if(px != evt->pixels.end()) {
-	  if(efficiency) { px->value += 1; }
-	  else { px->value += pixit->value; pxcount[*px]++; }
+	  if(efficiency) { px->setValue(px->getValue()+1); }
+	  else {
+	    // Calculate the variance incrementally:
+	    double delta = pixit->getValue() - pxmean[*px];
+	    pxmean[*px] += delta/pxcount[*px];
+	    pxm2[*px] += delta*(pixit->getValue() - pxmean[*px]);
+	    pxcount[*px]++;
+	  }
 	}
 	// Pixel is new:
 	else {
-	  if(efficiency) { pixit->value = 1; }
-	  else { pxcount.insert(std::make_pair(*pixit,1)); }
+	  if(efficiency) { pixit->setValue(1); }
+	  else { 
+	    // Initialize counters and temporary variables:
+	    pxcount.insert(std::make_pair(*pixit,1));
+	    pxmean.insert(std::make_pair(*pixit,0));
+	    pxm2.insert(std::make_pair(*pixit,0));
+	  }
 	  evt->pixels.push_back(*pixit);
 	}
       }
@@ -1408,10 +1436,12 @@ std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_
       delete *it;
     }
 
-    // Divide the pulseheight by the number of triggers received:
+    // Calculate mean and variance for the pulse height depending on the
+    // number of triggers received:
     if(!efficiency) {
       for(std::vector<pixel>::iterator px = evt->pixels.begin(); px != evt->pixels.end(); ++px) {
-	px->value/=pxcount[*px];
+	px->setValue(pxmean[*px]); // The mean
+	px->setVariance(pxm2[*px]/(pxcount[*px] - 1)); // The variance
       }
     }
     packed.push_back(evt);
@@ -1440,7 +1470,7 @@ std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t n
     for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
       if(((flags&FLAG_CHECK_ORDER) != 0) && (pixit->column != expected_column || pixit->row != expected_row)) {
 	LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << (int)expected_column << "," << (int)expected_row << ",x]";
-	pixit->value = -1;
+	pixit->setValue(pixit->getValue()-1);
       }
       result.push_back(*pixit);
     } // loop over pixels
@@ -1539,23 +1569,23 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       if(px != result.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
-	uint8_t delta_new = abs(pixit->value - threshold);
-	bool positive_slope = (pixit->value-oldvalue[*px] > 0 ? true : false);
+	uint8_t delta_new = abs(pixit->getValue() - threshold);
+	bool positive_slope = (pixit->getValue()-oldvalue[*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
 	if(!positive_slope) continue; 
 	if(!(delta_new < delta_old)) continue; 
 
 	// Update the DAC threshold value for the pixel:
-	px->value = it->first;
+	px->setValue(it->first);
 	// Update the oldvalue map:
-	oldvalue[*px] = pixit->value;
+	oldvalue[*px] = pixit->getValue();
       }
       // Pixel is new, just adding it:
       else {
 	// Store the pixel with original efficiency
-	oldvalue.insert(std::make_pair(*pixit,pixit->value));
+	oldvalue.insert(std::make_pair(*pixit,pixit->getValue()));
 	// Push pixel to result vector with current DAC as value field:
-	pixit->value = it->first;
+	pixit->setValue(it->first);
 	result.push_back(*pixit);
       }
     }
@@ -1622,23 +1652,23 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
       if(px != dac->second.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[dac->first][*px] - threshold);
-	uint8_t delta_new = abs(pixit->value - threshold);
-	bool positive_slope = (pixit->value - oldvalue[dac->first][*px] > 0 ? true : false);
+	uint8_t delta_new = abs(pixit->getValue() - threshold);
+	bool positive_slope = (pixit->getValue() - oldvalue[dac->first][*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
 	if(!positive_slope) continue;
 	if(!(delta_new < delta_old)) continue;
 
 	// Update the DAC threshold value for the pixel:
-	px->value = it->first;
+	px->setValue(it->first);
 	// Update the oldvalue map:
-	oldvalue[dac->first][*px] = pixit->value;
+	oldvalue[dac->first][*px] = pixit->getValue();
       }
       // Pixel is new, just adding it:
       else {
 	// Store the pixel with original efficiency
-	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value));
+	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->getValue()));
 	// Push pixel to result vector with current DAC as value field:
-	pixit->value = it->first;
+	pixit->setValue(it->first);
 	dac->second.push_back(*pixit);
       }
     }

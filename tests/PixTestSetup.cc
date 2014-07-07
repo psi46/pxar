@@ -55,7 +55,7 @@ bool PixTestSetup::setParameter(string parName, string sval) {
 
 void PixTestSetup::init()
 {
-  LOG(logINFO) << "PixTestSetup::init()";
+  LOG(logDEBUG) << "PixTestSetup::init()";
 
   fDirectory = gFile->GetDirectory(fName.c_str());
   if (!fDirectory)

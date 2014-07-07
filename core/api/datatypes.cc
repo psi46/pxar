@@ -7,7 +7,7 @@ namespace pxar {
 
 
   void pixel::decodeRaw(uint32_t raw, bool invert) {
-    value = (raw & 0x0f) + ((raw >> 1) & 0xf0);
+    setValue(static_cast<double>((raw & 0x0f) + ((raw >> 1) & 0xf0)));
     if( (raw & 0x10) >0) {
       LOG(logDEBUGAPI) << "invalid pulse-height fill bit from raw value of "<< std::hex << raw << std::dec << ": " << *this;
       throw DataDecoderError("Error decoding pixel raw value");

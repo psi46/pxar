@@ -12,12 +12,15 @@ public:
   void init(); 
   void bookHist(std::string); 
   void doTest();
+  void stop(); 
 
 private:
 
-  uint32_t fParVoltageMax;
-  uint32_t fParVoltageStep;
-  uint32_t fParDelay;
+  int fParVoltageMin;
+  int fParVoltageMax;
+  int fParVoltageStep;
+  int fParDelay;
+  bool fStop; 
 
   ClassDef(PixTestIV, 1)
 
