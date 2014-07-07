@@ -74,7 +74,7 @@ namespace pxar {
 	else { return type;}
     }
 
-    // Return the register name for the register in question:
+    // Return the register size for the register in question:
     inline uint8_t getSize(uint8_t id, uint8_t type) {
       for(std::map<std::string, dacConfig>::iterator iter = _registers.begin(); iter != _registers.end(); ++iter) {
 	if((*iter).second._type == type && (*iter).second._id == id) {
@@ -92,6 +92,22 @@ namespace pxar {
       }
       return "";
     }
+
+    // Return all (preferred) register names for the type in question:
+    inline std::vector<std::string> getAllNames(uint8_t type) {
+      std::vector<std::string> names;
+      for(std::map<std::string, dacConfig>::iterator iter = _registers.begin(); iter != _registers.end(); ++iter) {
+	if((*iter).second._type == type && (*iter).second._preferred == true) {
+	  names.push_back((*iter).first);
+	}
+      }
+      return names;
+    }
+
+    // Return all (preferred) register names for a single type:
+    inline std::vector<std::string> getAllROCNames() {return getAllNames(ROC_REG);}
+    inline std::vector<std::string> getAllDTBNames() {return getAllNames(DTB_REG);}
+    inline std::vector<std::string> getAllTBMNames() {return getAllNames(TBM_REG);}
 
   private:
     RegisterDictionary() {
