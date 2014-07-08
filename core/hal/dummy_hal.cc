@@ -545,6 +545,9 @@ void hal::SignalProbeA1(uint8_t /*signal*/) {
 void hal::SignalProbeA2(uint8_t /*signal*/) {
 }
 
+void hal::SetClockSource(uint8_t src) {
+}
+
 void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {
 }
 
