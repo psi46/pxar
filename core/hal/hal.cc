@@ -1415,7 +1415,11 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
-
+void hal::SetClockSource(uint8_t src) {
+	_testboard->SetClockSource(src);
+	_testboard->uDelay(100);
+	_testboard->Flush();
+}
 
 void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
 
