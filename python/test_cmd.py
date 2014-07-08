@@ -208,7 +208,7 @@ class PxarCoreCmd(cmd.Cmd):
 
     @arity(4,6,[str, int, int, int, int, int])
     def do_getPulseheightVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
-        """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight map"""
+        """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 1D DAC scan"""
         print self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
 
     def complete_getPulseheightVsDAC(self, text, line, start_index, end_index):
@@ -220,6 +220,46 @@ class PxarCoreCmd(cmd.Cmd):
             if len(line.split(" ")) > 2:
                 # return help for the cmd
                 return [self.do_getPulseheightVsDAC.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    @arity(4,6,[str, int, int, int, int, int])
+    def do_getEfficiencyVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
+        """getEfficiencyVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
+        print self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
+
+    def complete_getEfficiencyVsDAC(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_getEfficiencyVsDAC.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    @arity(8,11,[str, int, int, int, str, int, int, int, int, int, int])
+    def do_getThresholdVsDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold = 50, flags = 0, nTriggers = 10):
+        """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
+        print self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
+
+    def complete_getThresholdVsDAC(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        elif text and len(line.split(" ")) == 6:
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                    if dac.startswith(text)]
+        else:
+            if (len(line.split(" ")) > 2 and len(line.split(" ")) < 6) or len(line.split(" ")) > 6:
+                # return help for the cmd
+                return [self.do_getThresholdVsDAC.__doc__, '']
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
@@ -285,6 +325,42 @@ class PxarCoreCmd(cmd.Cmd):
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
+
+    @arity(3,4,[int, int, int, int])
+    def do_testPixel(self, col, row, enable, rocid = None):
+        """testPixel [column] [row] [enable] [ROC id]: enable/disable testing of pixel"""
+        self.api.testPixel(col,row,enable,rocid)
+        
+    def complete_testPixel(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_testPixel.__doc__, '']
+
+    @arity(1,2,[int, int])
+    def do_testAllPixels(self, enable, rocid = None):
+        """testAllPixels [enable] [rocid]: enable/disable tesing for all pixels on given ROC"""
+        self.api.testAllPixels(enable,rocid)
+        
+    def complete_testAllPixels(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_testAllPixels.__doc__, '']
+
+    @arity(3,4,[int, int, int, int])
+    def do_maskPixel(self, col, row, enable, rocid = None):
+        """maskPixel [column] [row] [enable] [ROC id]: mask/unmask pixel"""
+        self.api.maskPixel(col,row,enable,rocid)
+        
+    def complete_maskPixel(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_maskPixel.__doc__, '']
+
+    @arity(1,2,[int, int])
+    def do_maskAllPixels(self, enable, rocid = None):
+        """maskAllPixels [enable] [rocid]: mask/unmask all pixels on given ROC"""
+        self.api.maskAllPixels(enable,rocid)
+        
+    def complete_maskAllPixels(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_maskAllPixels.__doc__, '']
 
     def do_quit(self, arg):
         """quit: terminates the application"""
