@@ -231,25 +231,23 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // Get singleton Probe dictionary object:
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
 
-  for(int i = 0 ; i <= 7 ; i++) {
-    std::string entryname = _dict->getName(i,PROBE_ANALOG).c_str();
-    if(entryname != "") {
-      signalBoxA[0]->AddEntry(entryname.c_str(),i);
-      signalBoxA[1]->AddEntry(entryname.c_str(),i);
-    }
+  // Get all analog probes:
+  std::vector<std::string> analogsignals = _dict->getAllAnalogNames();
+  std::vector<std::string> digitalsignals = _dict->getAllDigitalNames();
+
+  for(std::vector<std::string>::iterator it = analogsignals.begin(); it != analogsignals.end(); it++) {
+    signalBoxA[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
+    signalBoxA[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
   }
 
-  for(int i = 0 ; i <= 24 ; i++) {
-    std::string entryname = _dict->getName(i,PROBE_DIGITAL).c_str();
-    if(entryname != "") {
-      signalBoxD[0]->AddEntry(entryname.c_str(),i);
-      signalBoxD[1]->AddEntry(entryname.c_str(),i);
-    }
+  for(std::vector<std::string>::iterator it = digitalsignals.begin(); it != digitalsignals.end(); it++) {
+    signalBoxD[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
+    signalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
   }
 
    for(int i = 0 ; i <= 1 ; i++) {
-	signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-	signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+     signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+     signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
    }
 
    
