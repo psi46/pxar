@@ -114,10 +114,10 @@ cdef class PxEvent:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "====== " + str(self.header) + " ======\n"
+        s = "====== " + hex(self.header) + " ======\n"
         for px in self.pixels:
             s += str(px)
-        s += "\n====== " + str(self.trailer) + " ======"
+        s += "\n====== " + hex(self.trailer) + " ======"
         return str(s)
     cdef c_clone(self, Event* p):
         del self.thisptr
