@@ -1,3 +1,7 @@
+#!/usr/bin/env python2
+"""
+Python Command Line Interface to the pxar API.
+"""
 import PyPxarCore
 from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyProbeDictionary
 from functools import wraps # used in parameter verification decorator
@@ -46,7 +50,47 @@ def extract_full_argument(line, endidx):
     newstart = line.rfind(" ", 0, endidx)
     return line[newstart:endidx]
 
+class PxarConfigFile:
+    """ class that loads the old-style config files of psi46expert """
+    config = {}
+    def __init__(self, f):
+        import shlex
+        thisf = open(f)
+        for line in thisf:
+            if not line.startswith("--"):
+                parts = shlex.split(line)
+                if len(parts) == 2:
+                    self.config[parts[0].lower()] = parts[1]
+    def show(self):
+        print self.config
+    def get(self, opt, default = None):
+        if default:
+            return self.config.get(opt.lower(),default)
+        else:
+            return self.config[opt.lower()]
 
+class PxarParametersFile:
+    """ class that loads the old-style parameters files of psi46expert """
+    config = {}
+    def __init__(self, f):
+        import shlex
+        thisf = open(f)
+        for line in thisf:
+            if not line.startswith("--"):
+                parts = shlex.split(line)
+                if len(parts) == 3:
+                    # ignore the first part (index/line number)
+                    self.config[parts[1].lower()] = parts[2]
+    def show(self):
+        print self.config
+    def get(self, opt, default = None):
+        if default:
+            return self.config.get(opt.lower(),default)
+        else:
+            return self.config[opt.lower()]
+    def getAll(self):
+        return self.config
+    
 
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
@@ -222,12 +266,25 @@ class PxarCoreCmd(cmd.Cmd):
                 # list all probes
                 return probes
         elif len(line.split(" ")) <= 3: # second argument
+            p = line.split(" ")[1:2]
+            print 
             if text: # started to type
-                return [pr for pr in probedict.getAllNames()
-                        if pr.startswith(text)]
+                if p.startswith("a"):
+                    return [pr for pr in probedict.getAllAnalogNames()
+                            if pr.startswith(text)]
+                elif p.startswith("d"):
+                    return [pr for pr in probedict.getAllDigitalNames()
+                            if pr.startswith(text)]
+                else:
+                    return [self.do_SignalProbe.__doc__, '']
             else:
                 # return all signals:
-                return probedict.getAllNames()
+                if p.startswith("a"):
+                    return probedict.getAllAnalogNames()
+                elif p.startswith("d"):
+                    return probedict.getAllDigitalNames()
+                else:
+                    return [self.do_SignalProbe.__doc__, '']
         else:
             # return help for the cmd
             return [self.do_SignalProbe.__doc__, '']
@@ -275,99 +332,88 @@ class PxarCoreCmd(cmd.Cmd):
     # shortcuts
     do_q = do_quit
 
-# collect some basic settings
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+        progName = os.path.basename(argv.pop(0))
 
-# Signal delays
-sig_delays = {
-"clk":2,
-"ctr":2,
-"sda":17,
-"tin":7,
-"deser160phase":4}
+    print argv
+    # command line argument parsing
+    import argparse
+    parser = argparse.ArgumentParser(prog=progName, description="A Simple Command Line Interface to the pxar API.")
+    parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
+    parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
+    args = parser.parse_args(argv)
 
-# Power settings:
-power_settings = {
-"va":1.9,
-"vd":2.6,
-"ia":1.190,
-"id":1.10}
+    if not args.dir or not os.path.isdir(args.dir):
+        print "Error: no or invalid configuration directory specified!"
+        sys.exit(100)
+    
+    config = PxarConfigFile('%sconfigParameters.dat'%(os.path.join(args.dir,"")))
+    tbparameters = PxarParametersFile('%s%s'%(os.path.join(args.dir,""),config.get("tbParameters")))
+    tbmparameters = PxarParametersFile('%s%s'%(os.path.join(args.dir,""),config.get("tbmParameters")))
 
-# Pattern Generator for single ROC operation:
-pg_setup = (
-("PG_RESR",25),  
-("PG_CAL",101+5),
-("PG_TRG",16),   
-("PG_TOK",0))    
+    # Power settings:
+    power_settings = {
+        "va":config.get("va",1.9),
+        "vd":config.get("vd",2.6),
+        "ia":config.get("ia",1.190),
+        "id":config.get("id",1.10)}
 
-# Start an API instance from the core pXar library
-api = PyPxarCore(usbId="*",logLevel="INFO")
-print api.getVersion()
-if not api.initTestboard(pg_setup = pg_setup, 
-                         power_settings = power_settings, 
-                         sig_delays = sig_delays):
-    print "WARNING: could not init DTB -- possible firmware mismatch."
-    print "Please check if a new FW version is available"
-    exit
+    # Pattern Generator for single ROC operation:
+    pg_setup = (
+        ("PG_RESR",25),  
+        ("PG_CAL",101+5),
+        ("PG_TRG",16),   
+        ("PG_TOK",0))    
+    
 
-tbmDACs = [{
-        "clear":0xF0,       # Init TBM, Reset ROC
-        "counters":0x01,    # Disable PKAM Counter
-        "mode":0xC0,        # Set Mode = Calibration
-        "pkam_set":0x10,    # Set PKAM Counter
-        "delays":0x00,      # Set Delays
-        "temperature": 0x00 # Turn off Temperature Measurement
-        }]
+    # Start an API instance from the core pxar library
+    api = PyPxarCore(usbId=config.get("testboardName"),logLevel=args.verbosity)
+    print api.getVersion()
+    if not api.initTestboard(pg_setup = pg_setup, 
+                             power_settings = power_settings,
+                             sig_delays = tbparameters.getAll()):
+        print "WARNING: could not init DTB -- possible firmware mismatch."
+        print "Please check if a new FW version is available"
+        exit
 
-print "Have DAC config for " + str(len(tbmDACs)) + " TBMs:"
-for idx, tbmDAC in enumerate(tbmDACs):
-    for key in tbmDAC:
-        print "  TBM dac: " + str(key) + " = " + str(tbmDAC[key])
+    
+    tbmDACs = []
+    for tbm in xrange(int(config.get("nTbms"))):
+        tbmDACs.append(tbmparameters.getAll())
+
+    print "Have DAC config for " + str(len(tbmDACs)) + " TBMs:"
+    for idx, tbmDAC in enumerate(tbmDACs):
+        for key in tbmDAC:
+            print "  TBM dac: " + str(key) + " = " + str(tbmDAC[key])
+
+    # init pixel list
+    pixels = list()
+    for column in range(0, 51):
+        for row in range(0, 79):
+            p = PixelConfig(column,row,15)
+            p.mask = False
+            pixels.append(p)
+
+    rocDacs = []
+    rocPixels = list()
+    for roc in xrange(int(config.get("nrocs"))):
+        dacconfig = PxarParametersFile('%s%s_C%i.dat'%(os.path.join(args.dir,""),config.get("dacParameters"),roc))
+        rocDacs.append(dacconfig.getAll())
+        rocPixels.append(pixels)
+
+    print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
+            
+    api.initDUT(0,config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
+
+    api.testAllPixels(True)
+    print " enabled all pixels"
+
+    # start the cmd line and wait for user interaction
+    PxarCoreCmd(api).cmdloop()
 
 
-dacs = {
-    "Vdig":7,
-    "Vana":84,
-    "Vsf":30,
-    "Vcomp":12,
-    "VwllPr":60,
-    "VwllSh":60,
-    "VhldDel":230,
-    "Vtrim":29,
-    "VthrComp":86,
-    "VIBias_Bus":1,
-    "Vbias_sf":6,
-    "VoffsetOp":40,
-    "VOffsetRO":129,
-    "VIon":120,
-    "Vcomp_ADC":100,
-    "VIref_ADC":91,
-    "VIbias_roc":150,
-    "VIColOr":50,
-    "Vcal":220,
-    "CalDel":122,
-    "CtrlReg":4,
-    "WBC":100
-    }
 
-pixels = list()
-for column in range(0, 51):
-    for row in range(0, 79):
-        p = PixelConfig(column,row,15)
-        p.mask = False
-        pixels.append(p)
-
-print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
-
-rocPixels = list()
-rocDacs = list()
-for rocs in range(0,15):
-    rocPixels.append(pixels)
-    rocDacs.append(dacs)
-
-api.initDUT(0,"tbm08",tbmDACs,"psi46digv2",rocDacs,rocPixels)
-
-api.testAllPixels(True)
-print " enabled all pixels"
-#api.getPulseheightVsDAC("vcal", 15, 32)
-
-PxarCoreCmd(api).cmdloop()
+if __name__ == "__main__":
+    sys.exit(main())
