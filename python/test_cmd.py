@@ -170,6 +170,45 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getTBvd.__doc__, '']
 
+    @arity(0,0,[])
+    def do_daqStart(self):
+        """daqStart: starts a new DAQ session"""
+        self.api.daqStart()
+        
+    def complete_daqStart(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqStart.__doc__, '']
+
+    @arity(0,0,[])
+    def do_daqStatus(self):
+        """daqStatus: reports status of the running DAQ session"""
+        if self.api.daqStatus(): 
+            print "DAQ session is fine"
+        else:
+            print "DAQ session returns faulty state"
+        
+    def complete_daqStatus(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqStatus.__doc__, '']
+
+    @arity(0,0,[])
+    def do_daqStop(self):
+        """daqStop: stops the running DAQ session"""
+        self.api.daqStop()
+        
+    def complete_daqStop(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqStop.__doc__, '']
+
+    @arity(1,2,[int, int])
+    def do_daqTrigger(self, ntrig, period = 0):
+        """daqTrigger [ntrig] [period = 0]: sends ntrig patterns to the device"""
+        self.api.daqTrigger(ntrig,period)
+        
+    def complete_daqTrigger(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqTrigger.__doc__, '']
+
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
