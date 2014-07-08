@@ -244,7 +244,7 @@ class PxarCoreCmd(cmd.Cmd):
 
     @arity(8,11,[str, int, int, int, str, int, int, int, int, int, int])
     def do_getThresholdVsDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold = 50, flags = 0, nTriggers = 10):
-        """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
+        """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the threshold for DAC1 over a 1D DAC2 scan"""
         print self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
 
     def complete_getThresholdVsDAC(self, text, line, start_index, end_index):
@@ -260,6 +260,50 @@ class PxarCoreCmd(cmd.Cmd):
             if (len(line.split(" ")) > 2 and len(line.split(" ")) < 6) or len(line.split(" ")) > 6:
                 # return help for the cmd
                 return [self.do_getThresholdVsDAC.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    @arity(8,10,[str, int, int, int, str, int, int, int, int, int])
+    def do_getPulseheightVsDACDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags = 0, nTriggers = 10):
+        """getPulseheightVsDACDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 2D DAC1-DAC2 scan"""
+        print self.api.getPulseheightVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
+
+    def complete_getPulseheightVsDACDAC(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        elif text and len(line.split(" ")) == 6:
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                    if dac.startswith(text)]
+        else:
+            if (len(line.split(" ")) > 2 and len(line.split(" ")) < 6) or len(line.split(" ")) > 6:
+                # return help for the cmd
+                return [self.do_getPulseheightVsDACDAC.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
+    @arity(8,10,[str, int, int, int, str, int, int, int, int, int])
+    def do_getEfficiencyVsDACDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags = 0, nTriggers = 10):
+        """getEfficiencyVsDACDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [flags = 0] [nTriggers = 10]: returns the efficiency over a 2D DAC1-DAC2 scan"""
+        print self.api.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
+
+    def complete_getEfficiencyVsDACDAC(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        elif text and len(line.split(" ")) == 6:
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                    if dac.startswith(text)]
+        else:
+            if (len(line.split(" ")) > 2 and len(line.split(" ")) < 6) or len(line.split(" ")) > 6:
+                # return help for the cmd
+                return [self.do_getEfficiencyVsDACDAC.__doc__, '']
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
