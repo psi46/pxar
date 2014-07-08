@@ -85,6 +85,8 @@ class PxarParametersFile:
                     if len(parts) == 3:
                         # ignore the first part (index/line number)
                         self.config[parts[1].lower()] = parts[2]
+                    elif len(parts) == 2:
+                        self.config[parts[0].lower()] = parts[1]
         finally:
             thisf.close()
     def show(self):
