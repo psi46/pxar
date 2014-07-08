@@ -288,6 +288,21 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqGetEvent.__doc__, '']
 
+    @arity(0,0,[])
+    def do_daqGetBuffer(self):
+        """daqGetBuffer: read full raw data DTB buffer"""
+        dat = self.api.daqGetBuffer()
+        s = ""
+        for i in dat:
+            if i & 0x0FF0 == 0x07f0:
+                s += "\n"
+            s += '{:04x}'.format(i) + " "
+        print s
+
+    def complete_daqGetBuffer(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetBuffer.__doc__, '']
+
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
