@@ -307,12 +307,11 @@ cdef class PyPxarCore:
             return self.thisptr.setTbmReg(regName, regValue, tbmid)
     def getPulseheightVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
-        #TODO understand why this returns empty data
         r = self.thisptr.getPulseheightVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dacMax-dacMin+1)
+        s = (52, 80, (dacMax-dacMin)/dacStep+1)
         for i in range(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
@@ -322,12 +321,11 @@ cdef class PyPxarCore:
 
     def getEfficiencyVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
-        #TODO understand why this returns empty data
         r = self.thisptr.getEfficiencyVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dacMax-dacMin+1)
+        s = (52, 80, (dacMax-dacMin)/dacStep+1)
         for i in range(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
@@ -337,12 +335,11 @@ cdef class PyPxarCore:
 
     def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, threshold, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
-        #TODO understand why this returns empty data
         r = self.thisptr.getThresholdVsDAC(dac1Name, dac1Step, dac1Min, dac1Max, dac2Name, dac2Step, dac2Min, dac2Max, threshold, flags, nTriggers)
         hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, dac2Max-dac2Min+1)
+        s = (52, 80, (dac2Max-dac2Min)/dac2Step+1)
         for i in range(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros(s))
         for d in xrange(r.size()):
