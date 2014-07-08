@@ -18,6 +18,10 @@ cdef class Pixel:
             self.thisptr = new pixel()
     def __dealloc__(self):
         del self.thisptr
+    def __str__(self):
+        s = "ROC " + str(self.roc_id)
+        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.getValue()) + "] "
+        return s
     cdef fill(self, pixel p):
         self.thisptr.roc_id = p.roc_id
         self.thisptr.column = p.column
@@ -109,6 +113,12 @@ cdef class PxEvent:
             self.thisptr = new Event()
     def __dealloc__(self):
         del self.thisptr
+    def __str__(self):
+        s = "====== " + str(self.header) + "\n"
+        for px in self.pixels:
+            s += str(px)
+        s += "\n====== " + str(self.trailer) + "\n"
+        return str(s)
     cdef c_clone(self, Event* p):
         del self.thisptr
         self.thisptr = p
