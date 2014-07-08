@@ -589,6 +589,11 @@ namespace pxar {
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
+    /** Set the clock source. 
+     *  0 to internal clock, 1 to external clock.
+     */
+    void setClockSource(uint8_t src); 
+
     /** Set the clock stretch.
 	FIXME missing documentation
 	A width of 0 disables the clock stretch

@@ -230,10 +230,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   // Get singleton Probe dictionary object:
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
-  ProbeADictionary * _Adict = ProbeADictionary::getInstance();
 
   for(int i = 0 ; i <= 7 ; i++) {
-    std::string entryname = _Adict->getName(i).c_str();
+    std::string entryname = _dict->getName(i,PROBE_ANALOG).c_str();
     if(entryname != "") {
       signalBoxA[0]->AddEntry(entryname.c_str(),i);
       signalBoxA[1]->AddEntry(entryname.c_str(),i);
@@ -241,7 +240,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   }
 
   for(int i = 0 ; i <= 24 ; i++) {
-    std::string entryname = _dict->getName(i).c_str();
+    std::string entryname = _dict->getName(i,PROBE_DIGITAL).c_str();
     if(entryname != "") {
       signalBoxD[0]->AddEntry(entryname.c_str(),i);
       signalBoxD[1]->AddEntry(entryname.c_str(),i);
@@ -260,10 +259,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   //Load saved values
 
-  signalBoxA[0]->Select(_Adict->getSignal(fConfigParameters->getProbe("a1")),false);
-  signalBoxA[1]->Select(_Adict->getSignal(fConfigParameters->getProbe("a2")),false);
-  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1")),false);
-  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2")),false);
+  signalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
+  signalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
+  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
+  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
 
 
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());

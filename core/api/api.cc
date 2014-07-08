@@ -427,6 +427,9 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
 
   if(!_hal->status()) {return false;}
 
+  // Get singleton Probe dictionary object:
+  ProbeDictionary * _dict = ProbeDictionary::getInstance();
+
   // Convert the probe name to lower case for comparison:
   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
   
@@ -436,11 +439,8 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
   // Digital signal probes:
   if(probe.compare(0,1,"d") == 0) {
     
-    // Get singleton Probe dictionary object:
-    ProbeDictionary * _dict = ProbeDictionary::getInstance();
-  
     // And get the register value from the dictionary object:
-    uint8_t signal = _dict->getSignal(name);
+    uint8_t signal = _dict->getSignal(name,PROBE_DIGITAL);
     LOG(logDEBUGAPI) << "Digital probe signal lookup for \"" << name 
 		     << "\" returned signal: " << static_cast<int>(signal);
 
@@ -457,11 +457,8 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
   // Analog signal probes:
   else if(probe.compare(0,1,"a") == 0) {
 
-    // Get singleton Probe dictionary object:
-    ProbeADictionary * _dict = ProbeADictionary::getInstance();
-  
     // And get the register value from the dictionary object:
-    uint8_t signal = _dict->getSignal(name);
+    uint8_t signal = _dict->getSignal(name,PROBE_ANALOG);
     LOG(logDEBUGAPI) << "Analog probe signal lookup for \"" << name 
 		     << "\" returned signal: " << static_cast<int>(signal);
 
@@ -1968,6 +1965,12 @@ void pxarCore::getDecoderErrorCount(std::vector<Event*> &data){
   if (_ndecode_errors_lastdaq){
     LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
   }
+}
+
+void pxarCore::setClockSource(uint8_t src) 
+{ 
+  LOG(logDEBUGAPI) << "Set Clock Source " << static_cast<int>(src) ;  
+  _hal->SetClockSource(src);   
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
