@@ -4,11 +4,14 @@ from functools import wraps # used in parameter verification decorator
 from numpy import set_printoptions, nan
 
 import cmd      # for command interface and parsing
+import os # for file system cmds
 import sys
 
 dacdict = PyDictionary()
 
-# decorator used for parameter parsing/verification on each cmd function call
+# "arity": decorator used for parameter parsing/verification on each cmd function call
+# Usually, the cmd module only passes a single string ('line') with all parameters;
+# this decorator divides and verifies the types of each parameter.
 def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = types
     def __temp1(f):
         @wraps(f) # makes sure the docstring of the orig. function is passed on
@@ -29,6 +32,19 @@ def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = t
             f(self, *ps)
         return __temp2
     return __temp1
+
+def get_possible_filename_completions(text):
+    head, tail = os.path.split(text.strip())
+    if head == "": #no head
+        head = "."
+    files = os.listdir(head)
+    return [ f for f in files if f.startswith(tail) ]
+ 
+def extract_full_argument(line, endidx):
+    newstart = line.rfind(" ", 0, endidx)
+    return line[newstart:endidx]
+
+
 
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
@@ -68,9 +84,17 @@ class PxarCoreCmd(cmd.Cmd):
         self.api.flashTB(filename)
         
     def complete_flashTB(self, text, line, start_index, end_index):
-        # return help for the cmd
-        # FIXME file/path tab completen would be nice here...
-        return [self.do_flashTB.__doc__, '']
+        # tab-completion for the file path:
+        try:
+            # remove specific delimeters from the readline parser
+            # to allow completion of filenames with dashes
+            import readline
+            delims = readline.get_completer_delims( )
+            delims = delims.replace('-', '')
+            readline.set_completer_delims(delims)
+        except ImportError:
+            pass
+        return get_possible_filename_completions(extract_full_argument(line,end_index))
 
     @arity(0,0,[])
     def do_HVon(self):
