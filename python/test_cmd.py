@@ -180,6 +180,24 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all DACS
                 return dacdict.getAllROCNames()
 
+    @arity(4,6,[str, int, int, int, int, int])
+    def do_getPulseheightVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
+        """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight map"""
+        print self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
+
+    def complete_getPulseheightVsDAC(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllROCNames()
+                        if dac.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_getPulseheightVsDAC.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllROCNames()
+
     @arity(2,2,[str, str])
     def do_SignalProbe(self, probe, name):
         """SignalProbe [probe] [name]: Switches DTB probe output [probe] to signal [name]"""
