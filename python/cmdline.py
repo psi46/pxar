@@ -572,12 +572,17 @@ def main(argv=None):
         "id":config.get("id",1.10)}
 
     # Pattern Generator for single ROC operation:
-    pg_setup = (
-        ("PG_RESR",25),  
-        ("PG_CAL",101+5),
-        ("PG_TRG",16),   
-        ("PG_TOK",0))    
-    
+    if int(config.get("nTbms")) == 0:
+        pg_setup = (
+            ("PG_RESR",25),
+            ("PG_CAL",106),
+            ("PG_TRG",16),
+            ("PG_TOK",0))
+    else:
+        pg_setup = (
+            ("PG_REST",15),
+            ("PG_CAL",106),
+            ("PG_TRG",0))
 
     # Start an API instance from the core pxar library
     api = PyPxarCore(usbId=config.get("testboardName"),logLevel=args.verbosity)
