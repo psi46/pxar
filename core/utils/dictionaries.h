@@ -30,6 +30,7 @@ typedef unsigned char uint8_t;
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
+#define PROBE_NONE    0xFF
 
 namespace pxar {
 
@@ -299,16 +300,25 @@ namespace pxar {
 
     // Return the signal id for the probe signal in question:
     inline uint8_t getSignal(std::string name, uint8_t type) {
-      if(_signals.find(name)->second._type == type) {
-	return _signals.find(name)->second._signal;
+      // Looking for digital probe signal:
+      if(type == PROBE_DIGITAL && _signals.find(name)->second._signal_dig != PROBE_NONE) {
+	return _signals.find(name)->second._signal_dig;
       }
+      // Looking for analog probe signal:
+      else if(type == PROBE_ANALOG && _signals.find(name)->second._signal_ana != PROBE_NONE) {
+	return _signals.find(name)->second._signal_ana;
+      }
+      // Couldn't find any matching signal:
       else { return type; }
     }
 
     // Return the signal name for the probe signal in question:
     inline std::string getName(uint8_t signal, uint8_t type) {
       for(std::map<std::string, probeConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
-	if((*iter).second._type == type && (*iter).second._signal == signal && (*iter).second._preferred == true) {
+	if(type == PROBE_DIGITAL && iter->second._signal_dig == signal && iter->second._preferred == true) {
+	  return (*iter).first;
+	}
+	else if(type == PROBE_ANALOG && iter->second._signal_ana == signal && iter->second._preferred == true) {
 	  return (*iter).first;
 	}
       }
@@ -331,61 +341,55 @@ namespace pxar {
     class probeConfig {
     public:
       probeConfig() {}
-    probeConfig(uint8_t signal, uint8_t type, bool preferred) : _signal(signal), _type(type), _preferred(preferred) {}
-    probeConfig(uint8_t signal, uint8_t type) : _signal(signal), _type(type), _preferred(true) {}
-      uint8_t _signal;
-      uint8_t _type;
+    probeConfig(uint8_t signal_dig, uint8_t signal_ana, bool preferred = true) : _signal_dig(signal_dig), _signal_ana(signal_ana), _preferred(preferred) {}
+      uint8_t _signal_dig;
+      uint8_t _signal_ana;
       bool _preferred;
     };
 
     ProbeDictionary() {
       // Probe name and values
 
-      // Digital signals:
-      _signals["off"]        = probeConfig(PROBE_OFF,PROBE_DIGITAL);
-      _signals["clk"]        = probeConfig(PROBE_CLK,PROBE_DIGITAL);
-      _signals["sda"]        = probeConfig(PROBE_SDA,PROBE_DIGITAL);
-      _signals["sdasend"]    = probeConfig(PROBE_SDA_SEND,PROBE_DIGITAL);
-      _signals["pgtok"]      = probeConfig(PROBE_PG_TOK,PROBE_DIGITAL);
-      _signals["pgtrg"]      = probeConfig(PROBE_PG_TRG,PROBE_DIGITAL);
-      _signals["pgcal"]      = probeConfig(PROBE_PG_CAL,PROBE_DIGITAL);
+      // Signals accessible via both analog and digital ports:
+      _signals["tin"]    = probeConfig(PROBE_TIN,PROBEA_TIN);
+      _signals["ctr"]    = probeConfig(PROBE_CTR,PROBEA_CTR);
+      _signals["clk"]    = probeConfig(PROBE_CLK,PROBEA_CLK);
+      _signals["sda"]    = probeConfig(PROBE_SDA,PROBEA_SDA);
+      _signals["tout"]   = probeConfig(PROBE_TOUT,PROBEA_TOUT);
+      _signals["off"]    = probeConfig(PROBE_OFF,PROBEA_OFF);
 
-      _signals["pgresr"]     = probeConfig(PROBE_PG_RES_ROC,PROBE_DIGITAL,false);
-      _signals["pgresroc"]   = probeConfig(PROBE_PG_RES_ROC,PROBE_DIGITAL);
+      // Purely digital signals:
+      _signals["sdasend"]    = probeConfig(PROBE_SDA_SEND,PROBE_NONE);
+      _signals["pgtok"]      = probeConfig(PROBE_PG_TOK,PROBE_NONE);
+      _signals["pgtrg"]      = probeConfig(PROBE_PG_TRG,PROBE_NONE);
+      _signals["pgcal"]      = probeConfig(PROBE_PG_CAL,PROBE_NONE);
 
-      _signals["pgrest"]     = probeConfig(PROBE_PG_RES_TBM,PROBE_DIGITAL,false);
-      _signals["pgrestbm"]   = probeConfig(PROBE_PG_RES_TBM,PROBE_DIGITAL);
+      _signals["pgresr"]     = probeConfig(PROBE_PG_RES_ROC,PROBE_NONE,false);
+      _signals["pgresroc"]   = probeConfig(PROBE_PG_RES_ROC,PROBE_NONE);
 
-      _signals["pgsync"]     = probeConfig(PROBE_PG_SYNC,PROBE_DIGITAL);
-      _signals["ctr"]        = probeConfig(PROBE_CTR,PROBE_DIGITAL);
-      _signals["tin"]        = probeConfig(PROBE_TIN,PROBE_DIGITAL);
-      _signals["tout"]       = probeConfig(PROBE_TOUT,PROBE_DIGITAL);
+      _signals["pgrest"]     = probeConfig(PROBE_PG_RES_TBM,PROBE_NONE,false);
+      _signals["pgrestbm"]   = probeConfig(PROBE_PG_RES_TBM,PROBE_NONE);
 
-      _signals["clkp"]       = probeConfig(PROBE_CLK_PRESEN,PROBE_DIGITAL);
-      _signals["clkpresent"] = probeConfig(PROBE_CLK_PRESEN,PROBE_DIGITAL);
+      _signals["pgsync"]     = probeConfig(PROBE_PG_SYNC,PROBE_NONE);
 
-      _signals["clkg"]       = probeConfig(PROBE_CLK_GOOD,PROBE_DIGITAL);
-      _signals["clkgood"]    = probeConfig(PROBE_CLK_GOOD,PROBE_DIGITAL);
+      _signals["clkp"]       = probeConfig(PROBE_CLK_PRESEN,PROBE_NONE);
+      _signals["clkpresent"] = probeConfig(PROBE_CLK_PRESEN,PROBE_NONE,false);
 
-      _signals["daq0wr"]     = probeConfig(PROBE_DAQ0_WR,PROBE_DIGITAL);
-      _signals["crc"]        = probeConfig(PROBE_CRC,PROBE_DIGITAL);
-      _signals["adcrunning"] = probeConfig(PROBE_ADC_RUNNING,PROBE_DIGITAL);
-      _signals["adcrun"]     = probeConfig(PROBE_ADC_RUN,PROBE_DIGITAL);
-      _signals["adcpgate"]   = probeConfig(PROBE_ADC_PGATE,PROBE_DIGITAL);
-      _signals["adcstart"]   = probeConfig(PROBE_ADC_START,PROBE_DIGITAL);
-      _signals["adcsgate"]   = probeConfig(PROBE_ADC_SGATE,PROBE_DIGITAL);
-      _signals["adcs"]       = probeConfig(PROBE_ADC_S,PROBE_DIGITAL);
+      _signals["clkg"]       = probeConfig(PROBE_CLK_GOOD,PROBE_NONE);
+      _signals["clkgood"]    = probeConfig(PROBE_CLK_GOOD,PROBE_NONE,false);
 
-      // Analog signals:
-      _signals["tin"]    = probeConfig(PROBEA_TIN,PROBE_ANALOG);
-      _signals["sdata1"] = probeConfig(PROBEA_SDATA1,PROBE_ANALOG);
-      _signals["sdata2"] = probeConfig(PROBEA_SDATA2,PROBE_ANALOG);
-      _signals["ctr"]    = probeConfig(PROBEA_CTR,PROBE_ANALOG);
-      _signals["clk"]    = probeConfig(PROBEA_CLK,PROBE_ANALOG);
-      _signals["sda"]    = probeConfig(PROBEA_SDA,PROBE_ANALOG);
-      _signals["tout"]   = probeConfig(PROBEA_TOUT,PROBE_ANALOG);
-      _signals["off"]    = probeConfig(PROBEA_OFF,PROBE_ANALOG);
+      _signals["daq0wr"]     = probeConfig(PROBE_DAQ0_WR,PROBE_NONE);
+      _signals["crc"]        = probeConfig(PROBE_CRC,PROBE_NONE);
+      _signals["adcrunning"] = probeConfig(PROBE_ADC_RUNNING,PROBE_NONE);
+      _signals["adcrun"]     = probeConfig(PROBE_ADC_RUN,PROBE_NONE);
+      _signals["adcpgate"]   = probeConfig(PROBE_ADC_PGATE,PROBE_NONE);
+      _signals["adcstart"]   = probeConfig(PROBE_ADC_START,PROBE_NONE);
+      _signals["adcsgate"]   = probeConfig(PROBE_ADC_SGATE,PROBE_NONE);
+      _signals["adcs"]       = probeConfig(PROBE_ADC_S,PROBE_NONE);
 
+      // Purely analog signals:
+      _signals["sdata1"] = probeConfig(PROBE_NONE,PROBEA_SDATA1);
+      _signals["sdata2"] = probeConfig(PROBE_NONE,PROBEA_SDATA2);
     }
 
     std::map<std::string, probeConfig> _signals;
