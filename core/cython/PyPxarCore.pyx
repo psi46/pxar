@@ -269,8 +269,8 @@ cdef class PyPxarCore:
             self.thisptr._dut.maskPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.maskPixel(col, row, enable)
-    def programDUT(self):
-        return self.thisptr.programDUT()
+    #def programDUT(self):
+        #return self.thisptr.programDUT()
     def status(self):
         return self.thisptr.status()
     def flashTB(self, string filename):
