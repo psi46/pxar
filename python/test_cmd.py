@@ -52,15 +52,18 @@ def extract_full_argument(line, endidx):
 
 class PxarConfigFile:
     """ class that loads the old-style config files of psi46expert """
-    config = {}
     def __init__(self, f):
+        self.config = {}
         import shlex
         thisf = open(f)
-        for line in thisf:
-            if not line.startswith("--"):
-                parts = shlex.split(line)
-                if len(parts) == 2:
-                    self.config[parts[0].lower()] = parts[1]
+        try:
+            for line in thisf:
+                if not line.startswith("--"):
+                    parts = shlex.split(line)
+                    if len(parts) == 2:
+                        self.config[parts[0].lower()] = parts[1]
+        finally:
+            thisf.close()
     def show(self):
         print self.config
     def get(self, opt, default = None):
@@ -71,16 +74,19 @@ class PxarConfigFile:
 
 class PxarParametersFile:
     """ class that loads the old-style parameters files of psi46expert """
-    config = {}
     def __init__(self, f):
+        self.config = {}
         import shlex
         thisf = open(f)
-        for line in thisf:
-            if not line.startswith("--"):
-                parts = shlex.split(line)
-                if len(parts) == 3:
-                    # ignore the first part (index/line number)
-                    self.config[parts[1].lower()] = parts[2]
+        try:
+            for line in thisf:
+                if not line.startswith("--"):
+                    parts = shlex.split(line)
+                    if len(parts) == 3:
+                        # ignore the first part (index/line number)
+                        self.config[parts[1].lower()] = parts[2]
+        finally:
+            thisf.close()
     def show(self):
         print self.config
     def get(self, opt, default = None):
@@ -352,7 +358,6 @@ def main(argv=None):
     config = PxarConfigFile('%sconfigParameters.dat'%(os.path.join(args.dir,"")))
     tbparameters = PxarParametersFile('%s%s'%(os.path.join(args.dir,""),config.get("tbParameters")))
     tbmparameters = PxarParametersFile('%s%s'%(os.path.join(args.dir,""),config.get("tbmParameters")))
-
     # Power settings:
     power_settings = {
         "va":config.get("va",1.9),
@@ -380,7 +385,7 @@ def main(argv=None):
 
     
     tbmDACs = []
-    for tbm in xrange(int(config.get("nTbms"))):
+    for tbm in range(int(config.get("nTbms"))):
         tbmDACs.append(tbmparameters.getAll())
 
     print "Have DAC config for " + str(len(tbmDACs)) + " TBMs:"
