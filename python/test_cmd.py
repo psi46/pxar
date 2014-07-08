@@ -1,5 +1,5 @@
 import PyPxarCore
-from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyDictionary
+from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyProbeDictionary
 from functools import wraps # used in parameter verification decorator
 from numpy import set_printoptions, nan
 
@@ -7,7 +7,9 @@ import cmd      # for command interface and parsing
 import os # for file system cmds
 import sys
 
-dacdict = PyDictionary()
+# set up the DAC and probe dictionaries
+dacdict = PyRegisterDictionary()
+probedict = PyProbeDictionary()
 
 # "arity": decorator used for parameter parsing/verification on each cmd function call
 # Usually, the cmd module only passes a single string ('line') with all parameters;
@@ -221,16 +223,11 @@ class PxarCoreCmd(cmd.Cmd):
                 return probes
         elif len(line.split(" ")) <= 3: # second argument
             if text: # started to type
-                # list matching entries
-                # FIXME return content of the correct probes dictionary (analog or digital)
-                #return [pr for pr in probedict.getAllNames()
-                #        if pr.startswith(text)]
-                return 0
+                return [pr for pr in probedict.getAllNames()
+                        if pr.startswith(text)]
             else:
                 # return all signals:
-                # FIXME return all signals fo correct probe dictionary (analog or digital)
-                #return probedict.getAllNames()
-                return 0
+                return probedict.getAllNames()
         else:
             # return help for the cmd
             return [self.do_SignalProbe.__doc__, '']
