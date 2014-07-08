@@ -601,8 +601,8 @@ def main(argv=None):
 
     # init pixel list
     pixels = list()
-    for column in range(0, 51):
-        for row in range(0, 79):
+    for column in range(0, 52):
+        for row in range(0, 80):
             p = PixelConfig(column,row,15)
             p.mask = False
             pixels.append(p)
