@@ -161,11 +161,11 @@ cdef class PyPxarCore:
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
         for key, value in sig_delays.items():
-            sd.push_back(pair[string,uint8_t](key,value))
+            sd.push_back(pair[string,uint8_t](key,int(value)))
         for key, value in power_settings.items():
-            ps.push_back((key,value))
+            ps.push_back((key,float(value)))
         for item in enumerate(pg_setup):
-            pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
+            pgs.push_back(pair[string, uint8_t ](item[1][0],int(item[1][1])))
         return self.thisptr.initTestboard(sd, ps, pgs)
     def setTestboardPower(self, power_settings):
         """ Initializer method for the testboard
@@ -176,7 +176,7 @@ cdef class PyPxarCore:
         # type conversions for fixed-width integers need to
         # be handled very explicitly: creating pairs to push into vects
         for key, value in power_settings.items():
-            ps.push_back((key,value))
+            ps.push_back((key,float(value)))
         self.thisptr.setTestboardPower(ps)
     def setTestboardDelays(self, sig_delays):
         """ Initializer method for the testboard
@@ -217,11 +217,11 @@ cdef class PyPxarCore:
         for idx, tbmDAC in enumerate(tbmDACs):
             td.push_back(vector[pair[string,uint8_t]]())
             for key, value in tbmDAC.items():
-                td.at(idx).push_back(pair[string,uint8_t](key,value))
+                td.at(idx).push_back(pair[string,uint8_t](key,int(value)))
         for idx, rocDAC in enumerate(rocDACs):
             rd.push_back(vector[pair[string,uint8_t]]())
             for key, value in rocDAC.items():
-                rd.at(idx).push_back(pair[string,uint8_t](key,value))
+                rd.at(idx).push_back(pair[string,uint8_t](key,int(value)))
         for idx, rocPixel in enumerate(rocPixels):
             rpcs.push_back(vector[pixelConfig]())
             for pc in rocPixel:
