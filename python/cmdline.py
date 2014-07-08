@@ -132,6 +132,15 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getVersion.__doc__, '']
 
+    @arity(0,0,[])
+    def do_status(self):
+        """status: returns the pxarcore library status"""
+        print self.api.status()
+        
+    def complete_status(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_status.__doc__, '']
+
     @arity(1,1,[str])
     def do_flashTB(self, filename):
         """flashTB [filename]: flash the DTB with new firmware"""
