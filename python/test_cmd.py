@@ -174,7 +174,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_daqStart(self):
         """daqStart: starts a new DAQ session"""
         self.api.daqStart()
-        
+
     def complete_daqStart(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqStart.__doc__, '']
@@ -186,7 +186,7 @@ class PxarCoreCmd(cmd.Cmd):
             print "DAQ session is fine"
         else:
             print "DAQ session returns faulty state"
-        
+
     def complete_daqStatus(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqStatus.__doc__, '']
@@ -195,7 +195,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_daqStop(self):
         """daqStop: stops the running DAQ session"""
         self.api.daqStop()
-        
+
     def complete_daqStop(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqStop.__doc__, '']
@@ -204,10 +204,37 @@ class PxarCoreCmd(cmd.Cmd):
     def do_daqTrigger(self, ntrig, period = 0):
         """daqTrigger [ntrig] [period = 0]: sends ntrig patterns to the device"""
         self.api.daqTrigger(ntrig,period)
-        
+
     def complete_daqTrigger(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqTrigger.__doc__, '']
+
+    @arity(1,1,[int])
+    def do_daqTriggerLoop(self, period):
+        """daqTriggerLoop [period]: starts trigger loop with given period (in BC/40MHz)"""
+        self.api.daqTriggerLoop(period)
+
+    def complete_daqTriggerLoop(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqTriggerLoop.__doc__, '']
+
+    @arity(0,0,[])
+    def do_daqTriggerLoopHalt(self):
+        """daqTriggerLoopHalt: stops the trigger loop"""
+        self.api.daqTriggerLoopHalt()
+
+    def complete_daqTriggerLoopHalt(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqTriggerLoopHalt.__doc__, '']
+
+    @arity(0,0,[])
+    def do_daqGetEvent(self):
+        """daqGetEvent: read one event from the event buffer"""
+        print self.api.daqGetEvent()
+
+    def complete_daqGetEvent(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetEvent.__doc__, '']
 
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
