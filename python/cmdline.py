@@ -289,6 +289,16 @@ class PxarCoreCmd(cmd.Cmd):
         return [self.do_daqGetEvent.__doc__, '']
 
     @arity(0,0,[])
+    def do_daqGetEventBuffer(self):
+        """daqGetEventBuffer: read all decoded events from the DTB buffer"""
+        for evt in self.api.daqGetEventBuffer():
+            print evt
+
+    def complete_daqGetEventBuffer(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetEventBuffer.__doc__, '']
+
+    @arity(0,0,[])
     def do_daqGetBuffer(self):
         """daqGetBuffer: read full raw data DTB buffer"""
         dat = self.api.daqGetBuffer()
