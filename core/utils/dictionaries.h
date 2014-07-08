@@ -325,14 +325,22 @@ namespace pxar {
       return "";
     }
 
-    // Return all signal names for the type in question:
-    inline std::vector<std::string> getAllNames() {
+    // Return all (preferred) signal names for the type in question:
+    inline std::vector<std::string> getAllNames(uint8_t type) {
       std::vector<std::string> names;
-      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
-	names.push_back((*iter).first);
+      for(std::map<std::string, probeConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(((type == PROBE_DIGITAL && iter->second._signal_dig != PROBE_NONE)
+	    || (type == PROBE_ANALOG && iter->second._signal_ana != PROBE_NONE))
+	   && (*iter).second._preferred == true) {
+	  names.push_back((*iter).first);
+	}
       }
       return names;
     }
+
+    // Return all (preferred) signal names for a single type:
+    inline std::vector<std::string> getAllAnalogNames() {return getAllNames(PROBE_ANALOG);}
+    inline std::vector<std::string> getAllDigitalNames() {return getAllNames(PROBE_DIGITAL);}
 
   private:
 
