@@ -441,10 +441,11 @@ cdef class PyPxarCore:
     def daqStop(self):
         return self.thisptr.daqStop()
 
+cimport regdict
 cdef class PyRegisterDictionary:
-    cdef RegisterDictionary *thisptr      # hold a C++ instance which we're wrapping
+    cdef regdict.RegisterDictionary *thisptr      # hold a C++ instance which we're wrapping
     def __cinit__(self):
-        self.thisptr = getInstance()
+        self.thisptr = regdict.getInstance()
     def __dealloc__(self):
         self.thisptr = NULL
     def getAllROCNames(self):
@@ -466,13 +467,32 @@ cdef class PyRegisterDictionary:
             names.append(v.at(i))
         return names
 
-# wrap the c++ singleton inside a python singleton to assure we don't create mem leaks
-class PyDictionary:
-    __instance=None
-    def __init__(self):
-        if PyDictionary.__instance is None:
-            PyDictionary.__instance=PyRegisterDictionary()
-#        else:
-#            print "already initialized dictionary"
-    def __getattr__(self,attr):
-        return getattr(self.__instance,attr)
+cimport probedict
+cdef class PyProbeDictionary:
+    cdef probedict.ProbeDictionary *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisptr = probedict.getInstance()
+    def __dealloc__(self):
+        self.thisptr = NULL
+    def getAllAnalogNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllAnalogNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
+    def getAllDigitalNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllDigitalNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
+    def getAllNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllDigitalNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        v = self.thisptr.getAllAnalogNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
+        
