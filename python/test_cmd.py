@@ -162,10 +162,10 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getPulseheightMap.__doc__, '']
 
-    @arity(1,3,[str, int, int])
-    def do_getThresholdMap(self, dacname, dacstep = 1, ddacmin = 0, dacmax = 255, threshold = 50, flags = 0, nTriggers = 10):
-        """getPulseheightMap [DAC name] [flags = 0] [nTriggers = 10]: returns the threshold map for the given DAC"""
-        print self.api.getThresholdMap(dacname,1,0,255,50,flags,nTriggers)
+    @arity(1,7,[str, int, int, int, int, int, int])
+    def do_getThresholdMap(self, dacname, dacstep = 1, dacmin = 0, dacmax = 255, threshold = 50, flags = 0, nTriggers = 10):
+        """getThresholdMap [DAC name] [step size] [min] [max] [threshold] [flags = 0] [nTriggers = 10]: returns the threshold map for the given DAC"""
+        print self.api.getThresholdMap(dacname,dacstep,dacmin,dacmax,threshold,flags,nTriggers)
         
     def complete_getThresholdMap(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
