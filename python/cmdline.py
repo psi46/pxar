@@ -442,8 +442,7 @@ class PxarCoreCmd(cmd.Cmd):
                 # list all probes
                 return probes
         elif len(line.split(" ")) <= 3: # second argument
-            p = line.split(" ")[1:2]
-            print 
+            p = "".join(line.split(" ")[1:2])
             if text: # started to type
                 if p.startswith("a"):
                     return [pr for pr in probedict.getAllAnalogNames()
@@ -620,7 +619,7 @@ def main(argv=None):
         rocPixels.append(pixels)
 
     print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
-            
+
     api.initDUT(0,config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
 
     api.testAllPixels(True)
