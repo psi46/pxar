@@ -4,8 +4,8 @@ Python Command Line Interface to the pxar API.
 """
 import PyPxarCore
 from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyProbeDictionary
-from functools import wraps # used in parameter verification decorator
 from numpy import set_printoptions, nan
+from pxar_helpers import * # arity decorator, PxarStartup, PxarConfigFile, PxarParametersFile and others
 
 import cmd      # for command interface and parsing
 import os # for file system cmds
@@ -14,92 +14,7 @@ import sys
 # set up the DAC and probe dictionaries
 dacdict = PyRegisterDictionary()
 probedict = PyProbeDictionary()
-
-# "arity": decorator used for parameter parsing/verification on each cmd function call
-# Usually, the cmd module only passes a single string ('line') with all parameters;
-# this decorator divides and verifies the types of each parameter.
-def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = types
-    def __temp1(f):
-        @wraps(f) # makes sure the docstring of the orig. function is passed on
-        def __temp2(self, text):
-            ps = filter(lambda p: p, text.split(" "))
-            if len(ps) < n:
-                print "Error: this command needs %d arguments (%d given)" % (n, len(ps))
-                return
-            if len(ps) > m:
-                print "Error: this command takes at most %d arguments (%d given)" % (m, len(ps))
-                return
-            # now verify the type
-            try:
-                ps = [ c(p) for c, p in zip(cs, ps) ]
-            except ValueError as e:
-                print "Error: '" + str(p) + "' does not have " + str(c)
-                return
-            f(self, *ps)
-        return __temp2
-    return __temp1
-
-def get_possible_filename_completions(text):
-    head, tail = os.path.split(text.strip())
-    if head == "": #no head
-        head = "."
-    files = os.listdir(head)
-    return [ f for f in files if f.startswith(tail) ]
- 
-def extract_full_argument(line, endidx):
-    newstart = line.rfind(" ", 0, endidx)
-    return line[newstart:endidx]
-
-class PxarConfigFile:
-    """ class that loads the old-style config files of psi46expert """
-    def __init__(self, f):
-        self.config = {}
-        import shlex
-        thisf = open(f)
-        try:
-            for line in thisf:
-                if not line.startswith("--"):
-                    parts = shlex.split(line)
-                    if len(parts) == 2:
-                        self.config[parts[0].lower()] = parts[1]
-        finally:
-            thisf.close()
-    def show(self):
-        print self.config
-    def get(self, opt, default = None):
-        if default:
-            return self.config.get(opt.lower(),default)
-        else:
-            return self.config[opt.lower()]
-
-class PxarParametersFile:
-    """ class that loads the old-style parameters files of psi46expert """
-    def __init__(self, f):
-        self.config = {}
-        import shlex
-        thisf = open(f)
-        try:
-            for line in thisf:
-                if not line.startswith("--"):
-                    parts = shlex.split(line)
-                    if len(parts) == 3:
-                        # ignore the first part (index/line number)
-                        self.config[parts[1].lower()] = parts[2]
-                    elif len(parts) == 2:
-                        self.config[parts[0].lower()] = parts[1]
-        finally:
-            thisf.close()
-    def show(self):
-        print self.config
-    def get(self, opt, default = None):
-        if default:
-            return self.config.get(opt.lower(),default)
-        else:
-            return self.config[opt.lower()]
-    def getAll(self):
-        return self.config
     
-
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
     fullOutput=False
@@ -123,7 +38,7 @@ class PxarCoreCmd(cmd.Cmd):
             set_printoptions(threshold=nan)
             self.fullOutput = True
 
-    @arity(0,0,[])
+    @arity(0,0,[]) # decorator for argument verification defined in pxar_helpers.py
     def do_getVersion(self):
         """getVersion: returns the pxarcore library version"""
         print self.api.getVersion()
@@ -607,78 +522,10 @@ def main(argv=None):
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
     args = parser.parse_args(argv)
 
-    if not args.dir or not os.path.isdir(args.dir):
-        print "Error: no or invalid configuration directory specified!"
-        sys.exit(100)
-    
-    config = PxarConfigFile('%sconfigParameters.dat'%(os.path.join(args.dir,"")))
-    tbparameters = PxarParametersFile('%s%s'%(os.path.join(args.dir,""),config.get("tbParameters")))
-    tbmparameters = PxarParametersFile('%s%s'%(os.path.join(args.dir,""),config.get("tbmParameters")))
-    # Power settings:
-    power_settings = {
-        "va":config.get("va",1.9),
-        "vd":config.get("vd",2.6),
-        "ia":config.get("ia",1.190),
-        "id":config.get("id",1.10)}
-
-    # Pattern Generator for single ROC operation:
-    if int(config.get("nTbms")) == 0:
-        pg_setup = (
-            ("PG_RESR",25),
-            ("PG_CAL",106),
-            ("PG_TRG",16),
-            ("PG_TOK",0))
-    else:
-        pg_setup = (
-            ("PG_REST",15),
-            ("PG_CAL",106),
-            ("PG_TRG",0))
-
-    # Start an API instance from the core pxar library
-    api = PyPxarCore(usbId=config.get("testboardName"),logLevel=args.verbosity)
-    print api.getVersion()
-    if not api.initTestboard(pg_setup = pg_setup, 
-                             power_settings = power_settings,
-                             sig_delays = tbparameters.getAll()):
-        print "WARNING: could not init DTB -- possible firmware mismatch."
-        print "Please check if a new FW version is available"
-        exit
-
-    
-    tbmDACs = []
-    for tbm in range(int(config.get("nTbms"))):
-        tbmDACs.append(tbmparameters.getAll())
-
-    print "Have DAC config for " + str(len(tbmDACs)) + " TBMs:"
-    for idx, tbmDAC in enumerate(tbmDACs):
-        for key in tbmDAC:
-            print "  TBM dac: " + str(key) + " = " + str(tbmDAC[key])
-
-    # init pixel list
-    pixels = list()
-    for column in range(0, 52):
-        for row in range(0, 80):
-            p = PixelConfig(column,row,15)
-            p.mask = False
-            pixels.append(p)
-
-    rocDacs = []
-    rocPixels = list()
-    for roc in xrange(int(config.get("nrocs"))):
-        dacconfig = PxarParametersFile('%s%s_C%i.dat'%(os.path.join(args.dir,""),config.get("dacParameters"),roc))
-        rocDacs.append(dacconfig.getAll())
-        rocPixels.append(pixels)
-
-    print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
-
-    api.initDUT(0,config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
-
-    api.testAllPixels(True)
-    print " enabled all pixels"
+    api = PxarStartup(args.dir,args.verbosity)
 
     # start the cmd line and wait for user interaction
     PxarCoreCmd(api).cmdloop()
-
 
 
 if __name__ == "__main__":
