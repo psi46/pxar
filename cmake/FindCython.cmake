@@ -37,6 +37,27 @@ else()
     )
 endif()
 
+# Check cython's version if we're using cmake >= 2.6
+IF(CYTHON_EXECUTABLE AND NOT CMAKE_MAJOR_VERSION LESS 2 AND NOT CMAKE_MINOR_VERSION LESS 6)
+	SET(CYTH_VERSION_MAJOR 0)
+	SET(CYTH_VERSION_MINOR 0)
+	SET(CYTH_VERSION_PATCH 0)
+
+	# Extract the cython version from the --version flag
+	execute_process(COMMAND ${CYTHON_EXECUTABLE} --version
+ 	                ERROR_VARIABLE _CVERNO)
+
+	STRING(REGEX MATCH "[^0-9]?[0-9]+\\.[0-9]+\\.?[0-9]?" CYTH_VERSION "${_CVERNO}")
+
+	MESSAGE("-- Cython: found version ${CYTH_VERSION}")
+
+	# Check found version against required one
+	#IF (DEFINED Cython_FIND_VERSION AND ${CYTH_VERSION} VERSION_LESS Cython_FIND_VERSION)
+	#	SET(CYTHON_FOUND FALSE)
+	#ELSE ()
+	#	SET(CYTHON_FOUND TRUE)
+	#ENDIF ()
+ENDIF(CYTHON_EXECUTABLE AND NOT CMAKE_MAJOR_VERSION LESS 2 AND NOT CMAKE_MINOR_VERSION LESS 6)
 
 include( FindPackageHandleStandardArgs )
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( Cython REQUIRED_VARS CYTHON_EXECUTABLE )
