@@ -17,6 +17,9 @@ hal::hal(std::string /*name*/) :
   // Print the useful SW/FW versioning info:
   PrintInfo();
 
+  // Initialize rand():
+  srand (time(NULL));
+
   // Check if all RPC calls are matched:
   if(CheckCompatibility()) {
     // Set compatibility flag
@@ -216,9 +219,6 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
 
-  // Initialize rand():
-  srand (time(NULL));
-    
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
