@@ -227,11 +227,11 @@ cdef class PyPxarCore:
         for idx, tbmDAC in enumerate(tbmDACs):
             td.push_back(vector[pair[string,uint8_t]]())
             for key, value in tbmDAC.items():
-                td.at(idx).push_back(pair[string,uint8_t](key,int(value,0)))
+                td.at(idx).push_back(pair[string,uint8_t](key,int(value,0) if isinstance(value,str) else int(value)))
         for idx, rocDAC in enumerate(rocDACs):
             rd.push_back(vector[pair[string,uint8_t]]())
             for key, value in rocDAC.items():
-                rd.at(idx).push_back(pair[string,uint8_t](key,int(value,0)))
+                rd.at(idx).push_back(pair[string,uint8_t](key,int(value,0) if isinstance(value,str) else int(value)))
         for idx, rocPixel in enumerate(rocPixels):
             rpcs.push_back(vector[pixelConfig]())
             for pc in rocPixel:
