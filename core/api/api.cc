@@ -1081,9 +1081,12 @@ bool api::daqStart() {
     _hal->AllColumnsSetEnable(rocit->i2c_address,true);
   }
 
-  // Check the DUT if we have TBMs enabled or not and choose the right
-  // deserializer:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],_dut->getNEnabledTbms(),_daq_buffersize);
+  // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
+  uint8_t type = 0x0;
+  if(!_dut->tbm.empty()) { type = _dut->tbm.at(0).type; }
+
+  // And start the DAQ session:
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type,_daq_buffersize);
 
   _daq_running = true;
   return true;
