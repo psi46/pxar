@@ -1970,10 +1970,20 @@ void api::getDecoderErrorCount(std::vector<Event*> &data){
   }
 }
 
-void api::setClockSource(uint8_t src) 
-{ 
-  LOG(logDEBUGAPI) << "Set Clock Source " << static_cast<int>(src) ;  
-  _hal->SetClockSource(src);   
+bool api::setExternalClock(bool enable) {
+
+  LOG(logDEBUGAPI) << "Setting clock to " << (enable ? "external" : "internal") << " source.";
+  if(enable) {
+    // Try to set the clock to external source:
+    if(_hal->IsClockPresent()) { _hal->SetClockSource(1); return true; }
+    else LOG(logCRITICAL) << "DTB reports that no external clock is present!";
+    return false;
+  }
+  else {
+    // Set the clock to internal source:
+    _hal->SetClockSource(0);
+    return true;
+  }
 }
 
 void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
