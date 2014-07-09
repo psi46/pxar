@@ -16,3 +16,7 @@ obj/
 
 # auto-generated files should not be added 
 usertests/PixUserTestFactory.cc
+
+# ignore python byte code
+*.pyc
+
