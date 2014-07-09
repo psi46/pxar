@@ -600,7 +600,6 @@ def main(argv=None):
         argv = sys.argv
         progName = os.path.basename(argv.pop(0))
 
-    print argv
     # command line argument parsing
     import argparse
     parser = argparse.ArgumentParser(prog=progName, description="A Simple Command Line Interface to the pxar API.")

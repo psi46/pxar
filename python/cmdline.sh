@@ -1,6 +1,8 @@
 #!/bin/sh
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../lib
-export PYTHONPATH=$PYTHONPATH:../lib
+PXARDIR="$(readlink -f $(dirname $0)/..)"
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PXARDIR/lib
+export PYTHONPATH=$PYTHONPATH:$PXARDIR/lib
 
 # Run the cmd script requiring python lib and pxar core lib:
-python cmdline.py $*
+python $PXARDIR/python/cmdline.py $*
