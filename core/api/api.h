@@ -589,10 +589,11 @@ namespace pxar {
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
-    /** Set the clock source. 
-     *  0 to internal clock, 1 to external clock.
+    /** Enable or disable the external clock source of the DTB.
+     *  This function will return "false" if no external clock is present,
+     *  clock is then left on internal.
      */
-    void setClockSource(uint8_t src); 
+    bool setExternalClock(bool enable); 
 
     /** Set the clock stretch.
 	FIXME missing documentation

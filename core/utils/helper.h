@@ -25,6 +25,8 @@ typedef unsigned char uint8_t;
 #include <unistd.h>
 #endif // WIN32
 
+#include "api.h"
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -145,6 +147,28 @@ namespace pxar {
       os << static_cast<int>(*it) << " ";
     }
     if(hex) { os << std::dec; }
+    return os.str();
+  }
+
+  /** Helper function to return a printed list of flags
+   */
+  std::string inline listFlags(uint32_t flags) {
+    std::stringstream os;
+
+    // No flags given:
+    if(flags == 0) return "(0) ";
+
+    if((flags&FLAG_FORCE_SERIAL) != 0) { os << "FLAG_FORCE_SERIAL, "; flags -= FLAG_FORCE_SERIAL; }
+    if((flags&FLAG_CALS) != 0) { os << "FLAG_CALS, "; flags -= FLAG_CALS; }
+    if((flags&FLAG_XTALK) != 0) { os << "FLAG_XTALK, "; flags -= FLAG_XTALK; }
+    if((flags&FLAG_RISING_EDGE) != 0) { os << "FLAG_RISING_EDGE, "; flags -= FLAG_RISING_EDGE; }
+    if((flags&FLAG_FORCE_MASKED) != 0) { os << "FLAG_FORCE_MASKED (obsolete), "; flags -= FLAG_FORCE_MASKED; }
+    if((flags&FLAG_DISABLE_DACCAL) != 0) { os << "FLAG_DISABLE_DACCAL, "; flags -= FLAG_DISABLE_DACCAL; }
+    if((flags&FLAG_NOSORT) != 0) { os << "FLAG_NOSORT, "; flags -= FLAG_NOSORT; }
+    if((flags&FLAG_CHECK_ORDER) != 0) { os << "FLAG_CHECK_ORDER, "; flags -= FLAG_CHECK_ORDER; }
+    if((flags&FLAG_FORCE_UNMASKED) != 0) { os << "FLAG_FORCE_UNMASKED, "; flags -= FLAG_FORCE_UNMASKED; }
+
+    if(flags != 0) os << "Unknown flag: " << flags;
     return os.str();
   }
 
