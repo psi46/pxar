@@ -83,7 +83,8 @@ class PxarCoreCmd(cmd.Cmd):
             print "Error: cannot open file '" + filename + "'"
         try:
             for line in f:
-                if not line.startswith("#"):
+                if not line.startswith("#") and not line.isspace():
+                    print line.replace('\n', ' ').replace('\r', '')
                     self.onecmd(line)
         finally:
             f.close()
