@@ -1421,6 +1421,10 @@ void hal::SetClockSource(uint8_t src) {
 	_testboard->Flush();
 }
 
+bool hal::IsClockPresent() {
+  return _testboard->IsClockPresent();
+}
+
 void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
 
   _testboard->SetClockStretch(src, delay, width);
