@@ -17,10 +17,10 @@ probedict = PyProbeDictionary()
     
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
-    fullOutput=False
 
     def __init__(self, api):
         cmd.Cmd.__init__(self)
+        self.fullOutput=False
         self.prompt = "pxar core =>> "
         self.intro  = "Welcome to the pxar core console!"  ## defaults to None
         self.api = api
@@ -62,6 +62,33 @@ class PxarCoreCmd(cmd.Cmd):
         self.api.flashTB(filename)
         
     def complete_flashTB(self, text, line, start_index, end_index):
+        # tab-completion for the file path:
+        try:
+            # remove specific delimeters from the readline parser
+            # to allow completion of filenames with dashes
+            import readline
+            delims = readline.get_completer_delims( )
+            delims = delims.replace('-', '')
+            readline.set_completer_delims(delims)
+        except ImportError:
+            pass
+        return get_possible_filename_completions(extract_full_argument(line,end_index))
+
+    @arity(1,1,[str])
+    def do_loadscript(self, filename):
+        """loadscript [filename]: loads a list of commands to be executed on the pxar cmdline"""
+        try:
+            f = open(filename)
+        except IOError:
+            print "Error: cannot open file '" + filename + "'"
+        try:
+            for line in f:
+                if not line.startswith("#"):
+                    self.onecmd(line)
+        finally:
+            f.close()
+        
+    def complete_loadscript(self, text, line, start_index, end_index):
         # tab-completion for the file path:
         try:
             # remove specific delimeters from the readline parser
@@ -520,13 +547,18 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog=progName, description="A Simple Command Line Interface to the pxar API.")
     parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
+    parser.add_argument('--load', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
     args = parser.parse_args(argv)
 
     api = PxarStartup(args.dir,args.verbosity)
 
-    # start the cmd line and wait for user interaction
-    PxarCoreCmd(api).cmdloop()
-
+    # start the cmd line
+    prompt = PxarCoreCmd(api)
+    # run the startup script if requested
+    if args.load:
+        prompt.do_loadscript(args.load)
+    # start user interaction
+    prompt.cmdloop()
 
 if __name__ == "__main__":
     sys.exit(main())
