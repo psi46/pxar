@@ -6,7 +6,7 @@ using namespace std;
 using namespace pxar;
 
 // ----------------------------------------------------------------------
-PixSetup::PixSetup(api *a, PixTestParameters *tp, ConfigParameters *cp) {
+PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
   fApi               = a; 
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
@@ -32,7 +32,7 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   vector<pair<string, double> >                power_settings = fConfigParameters->getTbPowerSettings();
   vector<pair<std::string, uint8_t> >             pg_setup = fConfigParameters->getTbPgSettings();
 
-  fApi = new pxar::api("*", verbosity);
+  fApi = new pxar::pxarCore("*", verbosity);
   fApi->initTestboard(sig_delays, power_settings, pg_setup);
   fApi->initDUT(fConfigParameters->getHubId(),
 		fConfigParameters->getTbmType(), tbmDACs, 

@@ -143,7 +143,7 @@ namespace pxar {
    *  scanning 4160 pixels after another the code will select the function
    *  to scan a full ROC in one go automatically.
    */
-  class DLLEXPORT api {
+  class DLLEXPORT pxarCore {
 
   public:
 
@@ -159,14 +159,14 @@ namespace pxar {
      *  a pxar::FirmwareVersionMismatch exception is thrown.
      *
      */
-    api(std::string usbId = "*", std::string logLevel = "WARNING");
+    pxarCore(std::string usbId = "*", std::string logLevel = "WARNING");
 
     /** Default destructor for libpxar API
      *
      *  Will power down the DTB, disconnect properly from the testboard,
      *  and destroy the pxar::hal object.
      */
-    ~api();
+    ~pxarCore();
 
     /** Returns the version string for the pxar API.
      *
@@ -182,7 +182,7 @@ namespace pxar {
 
     /** Initializer method for the testboard
      *
-     *  Initializes the tesboard with signal delay settings, and voltage/current
+     *  Initializes the testboard with signal delay settings, and voltage/current
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
      *  The name lookup is performed via the central API dictionaries.
@@ -829,7 +829,7 @@ namespace pxar {
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
 
-  }; // class api
+  }; // class pxarCore
 
 
   class DLLEXPORT dut {
@@ -837,7 +837,7 @@ namespace pxar {
     /** Allow the API class to access private members of the DUT - noone else
      *  should be able to access them! 
      */
-    friend class api;
+    friend class pxarCore;
     
   public:
 

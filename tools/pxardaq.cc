@@ -168,7 +168,7 @@ int main(int argc, char* argv[]) {
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*",verbosity != "" ? verbosity : "INFO");
+    _api = new pxar::pxarCore("*",verbosity != "" ? verbosity : "INFO");
   
     // Initialize the testboard:
     if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {

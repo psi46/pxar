@@ -10,7 +10,7 @@
 int main(int argc, char* argv[]) {
 
   // API pointer:
-  pxar::api * _api;
+  pxar::pxarCore * _api;
 
   // By default use wildcard as DTB name:
   std::string dtbname = "*";
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
 
   // Create new API instance:
   try {
-    _api = new pxar::api(dtbname, verbosity);
+    _api = new pxar::pxarCore(dtbname, verbosity);
 
     // Let's flash the DTB with the provided file:
     _api->flashTB(flashfilename);

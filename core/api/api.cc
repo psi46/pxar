@@ -16,7 +16,7 @@
 
 using namespace pxar;
 
-api::api(std::string usbId, std::string logLevel) : 
+pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
   _ndecode_errors_lastdaq(0)
@@ -35,14 +35,14 @@ api::api(std::string usbId, std::string logLevel) :
   _dut = new dut();
 }
 
-api::~api() {
+pxarCore::~pxarCore() {
   delete _dut;
   delete _hal;
 }
 
-std::string api::getVersion() { return PACKAGE_STRING; }
+std::string pxarCore::getVersion() { return PACKAGE_STRING; }
 
-bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
+bool pxarCore::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
 			std::vector<std::pair<std::string,double> > power_settings,
 			std::vector<std::pair<std::string,uint8_t> > pg_setup) {
 
@@ -65,7 +65,7 @@ bool api::initTestboard(std::vector<std::pair<std::string,uint8_t> > sig_delays,
   return true;
 }
 
-void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
+void pxarCore::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
   if(!_hal->status()) {
     LOG(logERROR) << "Signal delays not updated!";
     return;
@@ -75,7 +75,7 @@ void api::setTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_de
   LOG(logDEBUGAPI) << "Testboard signal delays updated.";
 }
 
-void api::setPatternGenerator(std::vector<std::pair<std::string,uint8_t> > pg_setup) {
+void pxarCore::setPatternGenerator(std::vector<std::pair<std::string,uint8_t> > pg_setup) {
   if(!_hal->status()) {
     LOG(logERROR) << "Pattern generator not updated!";
     return;
@@ -85,7 +85,7 @@ void api::setPatternGenerator(std::vector<std::pair<std::string,uint8_t> > pg_se
   LOG(logDEBUGAPI) << "Pattern generator verified and updated.";
 }
 
-void api::setTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
+void pxarCore::setTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
   if(!_hal->status()) {
     LOG(logERROR) << "Voltages/current limits not upated!";
     return;
@@ -95,7 +95,7 @@ void api::setTestboardPower(std::vector<std::pair<std::string,double> > power_se
   LOG(logDEBUGAPI) << "Voltages/current limits updated.";
 }
 
-bool api::initDUT(uint8_t hubid,
+bool pxarCore::initDUT(uint8_t hubid,
 		  std::string tbmtype, 
 		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		  std::string roctype,
@@ -262,7 +262,7 @@ bool api::initDUT(uint8_t hubid,
   return programDUT();
 }
 
-bool api::programDUT() {
+bool pxarCore::programDUT() {
 
   if(!_dut->_initialized) {
     LOG(logERROR) << "DUT not initialized, unable to program it.";
@@ -297,13 +297,13 @@ bool api::programDUT() {
 }
 
 // API status function, checks HAL and DUT statuses
-bool api::status() {
+bool pxarCore::status() {
   if(_hal->status() && _dut->status()) return true;
   return false;
 }
 
 // Lookup register and check value range
-bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type) {
+bool pxarCore::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t type) {
 
   // Convert the name to lower case for comparison:
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -335,7 +335,7 @@ bool api::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uint8_t 
 }
 
 // Return the device code for the given name, return 0x0 if invalid:
-uint8_t api::stringToDeviceCode(std::string name) {
+uint8_t pxarCore::stringToDeviceCode(std::string name) {
 
   // Convert the name to lower case for comparison:
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -355,7 +355,7 @@ uint8_t api::stringToDeviceCode(std::string name) {
 
 // DTB functions
 
-bool api::flashTB(std::string filename) {
+bool pxarCore::flashTB(std::string filename) {
 
   if(_hal->status() || _dut->status()) {
     LOG(logERROR) << "The testboard should only be flashed without initialization"
@@ -382,48 +382,48 @@ bool api::flashTB(std::string filename) {
   return status;
 }
 
-double api::getTBia() {
+double pxarCore::getTBia() {
   if(!_hal->status()) {return 0;}
   return _hal->getTBia();
 }
 
-double api::getTBva() {
+double pxarCore::getTBva() {
   if(!_hal->status()) {return 0;}
   return _hal->getTBva();
 }
 
-double api::getTBid() {
+double pxarCore::getTBid() {
   if(!_hal->status()) {return 0;}
   return _hal->getTBid();
 }
 
-double api::getTBvd() {
+double pxarCore::getTBvd() {
   if(!_hal->status()) {return 0;}
   return _hal->getTBvd();
 }
 
 
-void api::HVoff() {
+void pxarCore::HVoff() {
   _hal->HVoff();
 }
 
-void api::HVon() {
+void pxarCore::HVon() {
   _hal->HVon();
 }
 
-void api::Poff() {
+void pxarCore::Poff() {
   _hal->Poff();
   // Reset the programmed state of the DUT (lost by turning off power)
   _dut->_programmed = false;
 }
 
-void api::Pon() {
+void pxarCore::Pon() {
   // Power is turned on when programming the DUT.
   // Re-program the DUT after power has been switched on:
   programDUT();
 }
 
-bool api::SignalProbe(std::string probe, std::string name) {
+bool pxarCore::SignalProbe(std::string probe, std::string name) {
 
   if(!_hal->status()) {return false;}
 
@@ -481,7 +481,7 @@ bool api::SignalProbe(std::string probe, std::string name) {
   
 // TEST functions
 
-bool api::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
+bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
   
   if(!status()) {return false;}
 
@@ -506,13 +506,13 @@ bool api::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
     _hal->rocSetDAC(_dut->roc.at(rocid).i2c_address,dacRegister,dacValue);
   }
   else {
-    LOG(logERROR) << "ROC " << rocid << " does not exist in the DUT!";
+    LOG(logERROR) << "ROC " << static_cast<int>(rocid) << " does not exist in the DUT!";
     return false;
   }
   return true;
 }
 
-bool api::setDAC(std::string dacName, uint8_t dacValue) {
+bool pxarCore::setDAC(std::string dacName, uint8_t dacValue) {
   
   if(!status()) {return false;}
 
@@ -541,7 +541,7 @@ bool api::setDAC(std::string dacName, uint8_t dacValue) {
   return true;
 }
 
-uint8_t api::getDACRange(std::string dacName) {
+uint8_t pxarCore::getDACRange(std::string dacName) {
   
   // Get the register number and check the range from dictionary:
   uint8_t dacRegister;
@@ -555,7 +555,7 @@ uint8_t api::getDACRange(std::string dacName) {
   return _dict->getSize(dacRegister, ROC_REG);
 }
 
-bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
+bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
   if(!status()) {return 0;}
   
@@ -589,7 +589,7 @@ bool api::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
   return true;
 }
 
-bool api::setTbmReg(std::string regName, uint8_t regValue) {
+bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
 
   for(size_t tbms = 0; tbms < _dut->tbm.size(); ++tbms) {
     if(!setTbmReg(regName, regValue, tbms)) return false;
@@ -597,13 +597,13 @@ bool api::setTbmReg(std::string regName, uint8_t regValue) {
   return true;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   // No step size provided - scanning all DACs with step size 1:
   return getPulseheightVsDAC(dacName, 1, dacMin, dacMax, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getPulseheightVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -655,13 +655,13 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getPulseheightVsDAC(
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getEfficiencyVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   // No step size provided - scanning all DACs with step size 1:
   return getEfficiencyVsDAC(dacName, 1, dacMin, dacMax, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getEfficiencyVsDAC(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -711,7 +711,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getEfficiencyVsDAC(s
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getThresholdVsDAC(std::string dacName, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
   // Get the full DAC range for scanning:
   uint8_t dac1min = 0;
   uint8_t dac1max = getDACRange(dacName);
@@ -719,13 +719,13 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
   return getThresholdVsDAC(dacName, dacStep, dac1min, dac1max, dac2name, dacStep, dac2min, dac2max, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getThresholdVsDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
   // No threshold level provided - set threshold to 50%:
   uint8_t threshold = 50;
-  return api::getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers);
+  return getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getThresholdVsDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::vector<pixel> > >();}
 
@@ -800,13 +800,13 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::getThresholdVsDAC(st
 }
 
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
 
   // No step size provided - scanning all DACs with step size 1:
   return getPulseheightVsDACDAC(dac1name, 1, dac1min, dac1max, dac2name, 1, dac2min, dac2max, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::getPulseheightVsDACDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
 
@@ -873,13 +873,13 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
 
   // No step size provided - scanning all DACs with step size 1:
   return getEfficiencyVsDACDAC(dac1name, 1, dac1min, dac1max, dac2name, 1, dac2min, dac2max, flags, nTriggers);
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::getEfficiencyVsDACDAC(std::string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, std::string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > >();}
 
@@ -946,7 +946,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
   return result;
 }
 
-std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> pxarCore::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
@@ -970,7 +970,7 @@ std::vector<pixel> api::getPulseheightMap(uint16_t flags, uint16_t nTriggers) {
   return result;
 }
 
-std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> pxarCore::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
@@ -994,7 +994,7 @@ std::vector<pixel> api::getEfficiencyMap(uint16_t flags, uint16_t nTriggers) {
   return result;
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> pxarCore::getThresholdMap(std::string dacName, uint16_t flags, uint16_t nTriggers) {
   // Get the full DAC range for scanning:
   uint8_t dacMin = 0;
   uint8_t dacMax = getDACRange(dacName);
@@ -1002,13 +1002,13 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint16_t flags, uin
   return getThresholdMap(dacName, dacStep, dacMin, dacMax, flags, nTriggers);
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> pxarCore::getThresholdMap(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
   // No threshold level provided - set threshold to 50%:
   uint8_t threshold = 50;
   return getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers);
 }
 
-std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
+std::vector<pixel> pxarCore::getThresholdMap(std::string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) {
 
   if(!status()) {return std::vector<pixel>();}
 
@@ -1048,7 +1048,7 @@ std::vector<pixel> api::getThresholdMap(std::string dacName, uint8_t dacStep, ui
   return result;
 }
   
-int32_t api::getReadbackValue(std::string /*parameterName*/) {
+int32_t pxarCore::getReadbackValue(std::string /*parameterName*/) {
 
   if(!status()) {return -1;}
   LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
@@ -1060,7 +1060,7 @@ int32_t api::getReadbackValue(std::string /*parameterName*/) {
 
 // DAQ functions
 
-bool api::daqStart() {
+bool pxarCore::daqStart() {
 
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
@@ -1092,7 +1092,7 @@ bool api::daqStart() {
   return true;
 }
 
-bool api::daqStatus()
+bool pxarCore::daqStatus()
 {
 
   uint8_t perFull;
@@ -1101,7 +1101,7 @@ bool api::daqStatus()
 
 }
 
-bool api::daqStatus(uint8_t & perFull) {
+bool pxarCore::daqStatus(uint8_t & perFull) {
 
   // Check if a DAQ session is running:
   if(!_daq_running) {
@@ -1123,7 +1123,7 @@ bool api::daqStatus(uint8_t & perFull) {
   return true;
 }
 
-uint16_t api::daqTrigger(uint32_t nTrig, uint16_t period) {
+uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
 
   if(!daqStatus()) { return 0; }
   // Pattern Generator loop doesn't work for delay periods smaller than
@@ -1140,7 +1140,7 @@ uint16_t api::daqTrigger(uint32_t nTrig, uint16_t period) {
   return period;
 }
 
-uint16_t api::daqTriggerLoop(uint16_t period) {
+uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
 
   if(!daqStatus()) { return 0; }
 
@@ -1157,20 +1157,20 @@ uint16_t api::daqTriggerLoop(uint16_t period) {
   return period;
 }
 
-void api::daqTriggerLoopHalt() {
+void pxarCore::daqTriggerLoopHalt() {
 
   // Just halt the pattern generator loop:
   _hal->daqTriggerLoopHalt();
 }
 
-std::vector<uint16_t> api::daqGetBuffer() {
+std::vector<uint16_t> pxarCore::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   std::vector<uint16_t> buffer = _hal->daqBuffer();
   return buffer;
 }
 
-std::vector<rawEvent> api::daqGetRawEventBuffer() {
+std::vector<rawEvent> pxarCore::daqGetRawEventBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs
@@ -1184,7 +1184,7 @@ std::vector<rawEvent> api::daqGetRawEventBuffer() {
   return data;
 }
 
-std::vector<Event> api::daqGetEventBuffer() {
+std::vector<Event> pxarCore::daqGetEventBuffer() {
 
   // Reading out all data from the DTB and returning the decoded Event buffer.
   // Select the right readout channels depending on the number of TBMs
@@ -1201,7 +1201,7 @@ std::vector<Event> api::daqGetEventBuffer() {
   return data;
 }
 
-Event api::daqGetEvent() {
+Event pxarCore::daqGetEvent() {
 
   // Check DAQ status:
   if(!daqStatus()) { return Event(); }
@@ -1210,7 +1210,7 @@ Event api::daqGetEvent() {
   return (*_hal->daqEvent());
 }
 
-rawEvent api::daqGetRawEvent() {
+rawEvent pxarCore::daqGetRawEvent() {
 
   // Check DAQ status:
   if(!daqStatus()) { return rawEvent(); }
@@ -1219,14 +1219,14 @@ rawEvent api::daqGetRawEvent() {
   return (*_hal->daqRawEvent());
 }
 
-uint32_t api::daqGetNDecoderErrors() {
+uint32_t pxarCore::daqGetNDecoderErrors() {
 
   // Return the accumulated number of decoding errors:
   return _ndecode_errors_lastdaq;
 }
 
 
-bool api::daqStop() {
+bool pxarCore::daqStop() {
 
   if(!status()) {return false;}
   if(!_daq_running) {
@@ -1254,7 +1254,7 @@ bool api::daqStop() {
 }
 
 
-std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags) {
+std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags) {
   
   // pointer to vector to hold our data
   std::vector<Event*> data = std::vector<Event*>();
@@ -1412,7 +1412,7 @@ std::vector<Event*> api::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelPa
 } // expandLoop()
 
 
-std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency) {
+std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency) {
 
   std::vector<Event*> packed;
 
@@ -1479,7 +1479,7 @@ std::vector<Event*> api::condenseTriggers(std::vector<Event*> data, uint16_t nTr
   return packed;
 }
 
-std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
+std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
 
   // Keep track of the pixel to be expected:
   uint8_t expected_column = 0, expected_row = 0;
@@ -1522,7 +1522,7 @@ std::vector<pixel> api::repackMapData (std::vector<Event*> data, uint16_t nTrigg
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency){
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency){
 
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result;
 
@@ -1560,7 +1560,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > api::repackDacScanData (s
   return result;
 }
 
-std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
+std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
 
@@ -1628,7 +1628,7 @@ std::vector<pixel> api::repackThresholdMapData (std::vector<Event*> data, uint8_
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
 
@@ -1712,7 +1712,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > api::repackThresholdDacScan
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result;
 
   // Measure time:
@@ -1769,7 +1769,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > api:
 }
 
 // Update mask and trim bits for the full DUT in NIOS structs:
-void api::MaskAndTrimNIOS() {
+void pxarCore::MaskAndTrimNIOS() {
 
   // First transmit all configured I2C addresses:
   _hal->SetupI2CValues(_dut->getRocI2Caddr());
@@ -1781,7 +1781,7 @@ void api::MaskAndTrimNIOS() {
 }
 
 // Mask/Unmask and trim all ROCs:
-void api::MaskAndTrim(bool trim) {
+void pxarCore::MaskAndTrim(bool trim) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     MaskAndTrim(trim,rocit);
@@ -1789,7 +1789,7 @@ void api::MaskAndTrim(bool trim) {
 }
 
 // Mask/Unmask and trim one ROC:
-void api::MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit) {
+void pxarCore::MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit) {
 
   // This ROC is supposed to be trimmed as configured, so let's trim it:
   if(trim) {
@@ -1808,7 +1808,7 @@ void api::MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit) {
 }
 
 // Program the calibrate bits in ROC PUCs:
-void api::SetCalibrateBits(bool enable) {
+void pxarCore::SetCalibrateBits(bool enable) {
 
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
@@ -1827,7 +1827,7 @@ void api::SetCalibrateBits(bool enable) {
   }
 }
 
-void api::checkTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
+void pxarCore::checkTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_delays) {
 
   // Take care of the signal delay settings:
   std::map<uint8_t,uint8_t> delays;
@@ -1850,7 +1850,7 @@ void api::checkTestboardDelays(std::vector<std::pair<std::string,uint8_t> > sig_
   _dut->sig_delays = delays;
 }
 
-void api::checkTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
+void pxarCore::checkTestboardPower(std::vector<std::pair<std::string,double> > power_settings) {
 
   // Read the power settings and make sure we got all, these here are the allowed limits:
   double va = 2.5, vd = 3.0, ia = 3.0, id = 3.0;
@@ -1891,7 +1891,7 @@ void api::checkTestboardPower(std::vector<std::pair<std::string,double> > power_
   }
 }
 
-void api::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &pg_setup) {
+void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &pg_setup) {
   
   std::vector<std::pair<uint16_t,uint8_t> > patterns;
 
@@ -1948,7 +1948,7 @@ void api::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t> > &p
   _dut->pg_sum = getPatternGeneratorDelaySum(_dut->pg_setup);
 }
 
-uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
+uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup) {
 
   uint32_t delay_sum = 0;
   // Total cycle time is sum of delays plus once clock cycle for the actual command:
@@ -1959,7 +1959,7 @@ uint32_t api::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t
   return delay_sum;
 }
 
-void api::getDecoderErrorCount(std::vector<Event*> &data){
+void pxarCore::getDecoderErrorCount(std::vector<Event*> &data){
   // check the data for any decoding errors (stored in the events as counters)
   _ndecode_errors_lastdaq = 0; // reset counter
   for (std::vector<Event*>::iterator evtit = data.begin(); evtit != data.end(); ++evtit){
@@ -1970,7 +1970,7 @@ void api::getDecoderErrorCount(std::vector<Event*> &data){
   }
 }
 
-bool api::setExternalClock(bool enable) {
+bool pxarCore::setExternalClock(bool enable) {
 
   LOG(logDEBUGAPI) << "Setting clock to " << (enable ? "external" : "internal") << " source.";
   if(enable) {
@@ -1986,7 +1986,7 @@ bool api::setExternalClock(bool enable) {
   }
 }
 
-void api::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
+void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
 {
   LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 
   _hal->SetClockStretch(src,width,delay);
