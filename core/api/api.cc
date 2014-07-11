@@ -1987,13 +1987,13 @@ bool pxarCore::setExternalClock(bool enable) {
   LOG(logDEBUGAPI) << "Setting clock to " << (enable ? "external" : "internal") << " source.";
   if(enable) {
     // Try to set the clock to external source:
-    if(_hal->IsClockPresent()) { _hal->SetClockSource(1); return true; }
+    if(_hal->IsClockPresent()) { _hal->SetClockSource(CLK_SRC_EXT); return true; }
     else LOG(logCRITICAL) << "DTB reports that no external clock is present!";
     return false;
   }
   else {
     // Set the clock to internal source:
-    _hal->SetClockSource(0);
+    _hal->SetClockSource(CLK_SRC_INT);
     return true;
   }
 }
