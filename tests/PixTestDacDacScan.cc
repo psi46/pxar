@@ -149,14 +149,17 @@ void PixTestDacDacScan::doTest() {
   uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   PixTest::update(); 
-  LOG(logDEBUG) << "dac scan " << fParDAC1 << " vs. " << fParDAC2 << " ntrig = " << fParNtrig << " for npixels = " << fPIX.size(); 
 
   string zname = fParDAC1 + string(":") + fParDAC2; 
   bookHist(zname);
   string::size_type s1 = zname.find(":"); 
   string dac1 = zname.substr(0, s1); 
   string dac2 = zname.substr(s1+1); 
-  LOG(logDEBUG) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-";
+  LOG(logINFO) << "PixTestDacDacScan: " << dac1 << "[" << fParLoDAC1 << ", " << fParHiDAC1 << "]" 
+	       << " vs. " << dac2  << "[" << fParLoDAC2 << ", " << fParHiDAC2 << "]" 
+	       << (fParPHmap?" average PH":" readouts")
+	       << ", ntrig = " << fParNtrig 
+	       << ", npixels = " << fPIX.size(); 
   
   TH2D *h2(0);
   map<string, TH2D*> maps;
