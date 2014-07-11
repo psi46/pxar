@@ -140,7 +140,7 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       deser160phase = sigIt->second;
     }
     else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
-      LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second) << " clk";
+      LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
     else {
