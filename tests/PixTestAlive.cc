@@ -141,9 +141,9 @@ void PixTestAlive::aliveTest() {
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+  banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d (low range)", fParNtrig, fParVcal));
 
-  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
@@ -195,9 +195,9 @@ void PixTestAlive::maskTest() {
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d", static_cast<int>(fParNtrig), fParVcal));
+  banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d  (low range)", static_cast<int>(fParNtrig), fParVcal));
 
-  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
@@ -247,9 +247,9 @@ void PixTestAlive::addressDecodingTest() {
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  banner(Form("PixTestAlive::addressDecodingTest() vcal = %d", static_cast<int>(fParVcal)));
+  banner(Form("PixTestAlive::addressDecodingTest() vcal = %d (low range)", static_cast<int>(fParVcal)));
 
-  fApi->setDAC("ctrlreg", 4);
+  fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fParVcal);
 
   fDirectory->cd();

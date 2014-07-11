@@ -230,7 +230,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
     if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[i].roc_id)) {
       h2 = maps[idx];
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
-	LOG(logINFO) << "ROC/col/row = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row)
+	LOG(logDEBUG) << "ROC/col/row = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row)
 		     << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
 		     << " now adding " << static_cast<float>(results[i].getValue());
       }
@@ -1182,12 +1182,6 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
       if (result & 0x4) {
 	//	cout << "add " << rmaps[i]->GetName() << endl;
 	fHistList.push_back(rmaps[i]);
-      }
-      // -- write all hists to file if requested
-      if (0 && result & 0x4) {
-	rmaps[i]->SetDirectory(fDirectory); 
-	rmaps[i]->Write();
-	delete rmaps[i];
       }
     }
     if (dumpFile) OutputFile.close();
