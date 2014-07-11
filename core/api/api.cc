@@ -1454,7 +1454,7 @@ std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_
 	  else { 
 	    // Initialize counters and temporary variables:
 	    pxcount.insert(std::make_pair(*pixit,1));
-	    pxmean.insert(std::make_pair(*pixit,0));
+	    pxmean.insert(std::make_pair(*pixit,pixit->getValue()));
 	    pxm2.insert(std::make_pair(*pixit,0));
 	  }
 	  evt->pixels.push_back(*pixit);
