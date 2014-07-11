@@ -42,13 +42,15 @@ TF1* errScurveOld(TH1 *h) {
     f = new TF1("PIF_err_old",  PIF_errOld, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 4);
     f->SetParNames("p0", "p1", "p2", "p3");                       
     f->SetNpx(1000);
-    f->SetRange(lo, hi); 
   } 
 
-  f->SetParameter(0, 2.5);
-  f->SetParameter(1, 140.); 
+  f->SetRange(lo, hi); 
+
+  cout << "initializing to " << 0.5*h1->GetMaximum() << endl;
+  f->SetParameter(0, 0.5*h1->GetMaximum());
+  f->SetParameter(1, 30.); 
   f->SetParameter(2, .2); 
-  f->SetParameter(3, 2.5); 
+  f->SetParameter(3, 0.5*h1->GetMaximum()); 
 
   return f; 
 }
@@ -99,10 +101,57 @@ void fitScurve(int idx = 0, double p0 = -1., double p1 = -1., double p2 = -1., d
   
   f1->SetLineColor(kBlue); 
 
-  f1->FixParameter(0, 0.5*h1->GetMaximum()); 
+  //  f1->FixParameter(0, 0.5*h1->GetMaximum()); 
   f1->FixParameter(3, 0.5*h1->GetMaximum()); 
   
-  h1->Fit(f1); 
+  h1->Fit(f1, "r"); 
   double sig = 1./(TMath::Sqrt(2.)*f1->GetParameter(2));
   cout << "==> " << sig << endl;
+}
+
+
+// ----------------------------------------------------------------------
+void overlay() {
+
+  TFile *f0 = TFile::Open("roc/pxar-ntrig5.root");
+  TH1D *h0 = (TH1D*)f0->Get("Scurves/dist_sig_scurveVcal_Vcal_C0_V0");
+
+  TFile *f1 = TFile::Open("roc/pxar-ntrig10.root");
+  TH1D *h1 = (TH1D*)f1->Get("Scurves/dist_sig_scurveVcal_Vcal_C0_V0");
+
+  TFile *f2 = TFile::Open("roc/pxar-ntrig50.root");
+  TH1D *h2 = (TH1D*)f2->Get("Scurves/dist_sig_scurveVcal_Vcal_C0_V0");
+
+  TFile *f3 = TFile::Open("roc/pxar-ntrig100.root");
+  TH1D *h3 = (TH1D*)f3->Get("Scurves/dist_sig_scurveVcal_Vcal_C0_V0");
+
+  TFile *f4 = TFile::Open("roc/pxar-ntrig200.root");
+  TH1D *h4 = (TH1D*)f4->Get("Scurves/dist_sig_scurveVcal_Vcal_C0_V0");
+  
+  h4->Draw();
+
+  h0->SetLineColor(kRed);
+  h0->Draw("samehist");
+  tl.SetTextColor(kRed);
+  tl.DrawLatex(0.6, 0.75, "ntrig = 5"); 
+
+  h1->SetLineColor(kCyan);
+  h1->Draw("samehist");
+  tl.SetTextColor(kCyan);
+  tl.DrawLatex(0.6, 0.70, "ntrig = 10"); 
+
+  h2->SetLineColor(kBlue);
+  h2->Draw("samehist");
+  tl.SetTextColor(kBlue);
+  tl.DrawLatex(0.6, 0.65, "ntrig = 50"); 
+
+  h3->SetLineColor(kGreen);
+  h3->Draw("samehist");
+  tl.SetTextColor(kGreen);
+  tl.DrawLatex(0.6, 0.60, "ntrig = 100"); 
+
+  tl.SetTextColor(kBlack); 
+  tl.DrawLatex(0.6, 0.55, "ntrig = 200"); 
+
+  
 }
