@@ -154,7 +154,10 @@ void PixTestDacScan::doTest() {
 
 
   PixTest::update(); 
-  LOG(logINFO) << "PixTestDacScan::doTest() ntrig = " << fParNtrig;
+  LOG(logINFO) << "PixTestDacScan: " << fParDAC << "[" << fParLoDAC << ", " << fParHiDAC << "]"
+	       << (fParPHmap?" average PH":" readouts")
+	       << ", ntrig = " << fParNtrig 
+	       << ", npixels = " << fPIX.size(); 
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
