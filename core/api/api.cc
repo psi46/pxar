@@ -1495,11 +1495,23 @@ std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t n
 
   // Loop over all Events we have:
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
+
     // For every Event, loop over all contained pixels:
     for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
-      if(((flags&FLAG_CHECK_ORDER) != 0) && (pixit->column != expected_column || pixit->row != expected_row)) {
-	LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << (int)expected_column << "," << (int)expected_row << ",x]";
-	pixit->setValue(-1);
+      // Check for pulsed pixels being present:
+      if((flags&FLAG_CHECK_ORDER) != 0) {
+	if(pixit->column != expected_column || pixit->row != expected_row) {
+
+	  // With the full chip unmasked we want to know if the pixel in question was amongst the ones recorded:
+	  if((flags&FLAG_FORCE_UNMASKED) != 0) { LOG(logDEBUGPIPES) << "This is a background hit: " << (*pixit); }
+	  else {
+	    // With only the pixel in question unmasked we want to warn about other appeareances:
+	    LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << (int)expected_column << "," << (int)expected_row << ",x]";
+	  }
+
+	  // Convention: set a negative pixel value for out-of-order pixel hits:
+	  pixit->setValue(-1*pixit->getValue());
+	}
       }
       result.push_back(*pixit);
     } // loop over pixels

@@ -71,10 +71,9 @@ typedef unsigned char uint8_t;
  *  in a wrong position (e.g. expecting pixel 13,8 but receiving pixel 13,9) are flagged with a
  *  negative pulse height. This flag can be used e.g. for pixel address test to make sure all of them
  *  are answering with their correct address.
- *  This flag might not work correctly with FLAG_FORCE_UNMASKED, since noise pixel hits
- *  might end up being flagged as out-of-order.
+ *  When running with FLAG_FORCE_UNMASKED all noise or background pixel hits will be flagged as such
+ *  by setting anegative pulse height. This allows separation into calibrate hit and noise hit maps.
  */
-
 #define FLAG_CHECK_ORDER 0x0080
 
 /** Flag to unmask and trim all pixels before the test starts. This might be a tad faster but one
