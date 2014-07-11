@@ -1182,12 +1182,6 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 	//	cout << "add " << rmaps[i]->GetName() << endl;
 	fHistList.push_back(rmaps[i]);
       }
-      // -- write all hists to file if requested
-      if (0 && result & 0x4) {
-	rmaps[i]->SetDirectory(fDirectory); 
-	rmaps[i]->Write();
-	delete rmaps[i];
-      }
     }
     if (dumpFile) OutputFile.close();
 
