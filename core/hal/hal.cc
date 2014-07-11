@@ -632,7 +632,7 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   // We expect one Event per pixel per trigger, all ROCs are triggered in parallel:
   int expected = nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
 
-  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
@@ -682,7 +682,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
-  LOG(logDEBUGHAL) << "Called MultiRocOnePixelCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocOnePixelCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
 		   << static_cast<int>(row) << " on "
 		   << roci2cs.size() << " ROCs with the I2C addresses:";
@@ -737,7 +737,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
   // We are expecting one Event per pixel per trigger, only one ROC is triggered:
   int expected = nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
 
-  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(roci2c) << ".";
+  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(roci2c) << ".";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1, tbmtype);
 
@@ -789,7 +789,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
   LOG(logDEBUGHAL) << "Called SingleRocOnePixelCalibrate for pixel " << static_cast<int>(column) << ","
-		   << static_cast<int>(row) << " with flags " << static_cast<int>(flags) << ", running "
+		   << static_cast<int>(row) << " with flags " << listFlags(flags) << ", running "
 		   << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   estimateDataVolume(nTriggers, 1, tbmtype);
@@ -841,16 +841,18 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
   uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   // We are expecting one Event per DAC setting per trigger per pixel:
-  int expected = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
+  int expected = static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
 
-  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
-		   << " to " << static_cast<int>(dacmax);
+		   << " to " << static_cast<int>(dacmax)
+		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size(), tbmtype);
 
@@ -866,7 +868,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, dacmin, dacmax);
+    done = _testboard->LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -900,18 +902,20 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
   uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   // We expect one Event per DAC value per trigger:
-  int expected = static_cast<size_t>(dacmax-dacmin+1)*nTriggers;
+  int expected = static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers;
 
- LOG(logDEBUGHAL) << "Called MultiRocOnePixelDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocOnePixelDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
 		   << static_cast<int>(row) << " on "
 		   << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
-		   << " to " << static_cast<int>(dacmax);
+		   << " to " << static_cast<int>(dacmax)
+		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size(), tbmtype);
 
@@ -927,7 +931,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
+    done = _testboard->LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -961,14 +965,16 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
   uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   // We expect one Event per DAC value per trigger per pixel:
-  int expected = static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
+  int expected = static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
 
-  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
-		   << " to " << static_cast<int>(dacmax);
+		   << " to " << static_cast<int>(dacmax)
+		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1, tbmtype);
 
@@ -984,7 +990,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, dacmin, dacmax);
+    done = _testboard->LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -1018,14 +1024,16 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
   uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   // We expect one Event per DAC value per trigger:
-  int expected = static_cast<size_t>(dacmax-dacmin+1)*nTriggers;
+  int expected = static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers;
 
-  LOG(logDEBUGHAL) << "Called SingleRocOnePixelDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called SingleRocOnePixelDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dacreg) 
 		   << " from " << static_cast<int>(dacmin) 
-		   << " to " << static_cast<int>(dacmax);
+		   << " to " << static_cast<int>(dacmax)
+		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1, tbmtype);
 
@@ -1041,7 +1049,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, dacmin, dacmax);
+    done = _testboard->LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -1078,19 +1086,23 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   // We expect one Event per DAC1 value per DAC2 value per trigger per pixel:
-  int expected = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
+  int expected = static_cast<size_t>((dac1max-dac1min)/dac1step+1)*static_cast<size_t>((dac2max-dac2min)/dac2step+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
 
-  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocAllPixelsDacDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
 		   << " from " << static_cast<int>(dac1min) 
 		   << " to " << static_cast<int>(dac1max)
+		   << " (step size " << static_cast<int>(dac1step) << ")"
 		   << " vs. DAC " << static_cast<int>(dac2reg) 
 		   << " from " << static_cast<int>(dac2min) 
-		   << " to " << static_cast<int>(dac2max);
+		   << " to " << static_cast<int>(dac2max)
+		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size(), tbmtype);
 
@@ -1106,7 +1118,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
+    done = _testboard->LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -1143,11 +1155,13 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   // We expect one Event per DAC1 value per DAC2 value per trigger:
-  int expected = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers;
+  int expected = static_cast<size_t>((dac1max-dac1min)/dac1step+1)*static_cast<size_t>((dac2max-dac2min)/dac2step+1)*nTriggers;
 
-  LOG(logDEBUGHAL) << "Called MultiRocOnePixelDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called MultiRocOnePixelDacDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
 
   LOG(logDEBUGHAL) << "Function will take care of pixel " << static_cast<int>(column) << "," 
 		   << static_cast<int>(row) << " on "
@@ -1156,9 +1170,11 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
 		   << " from " << static_cast<int>(dac1min) 
 		   << " to " << static_cast<int>(dac1max)
+		   << " (step size " << static_cast<int>(dac1step) << ")"
 		   << " vs. DAC " << static_cast<int>(dac2reg) 
 		   << " from " << static_cast<int>(dac2min) 
-		   << " to " << static_cast<int>(dac2max);
+		   << " to " << static_cast<int>(dac2max)
+		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size(), tbmtype);
 
@@ -1174,7 +1190,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
+    done = _testboard->LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -1211,18 +1227,22 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   // We expect one Event per DAC1 value per DAC2 value per trigger per pixel:
-  int expected = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
+  int expected = static_cast<size_t>((dac1max-dac1min)/dac1step+1)*static_cast<size_t>((dac2max-dac2min)/dac2step+1)*nTriggers*ROC_NUMCOLS*ROC_NUMROWS;
 
-  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called SingleRocAllPixelsDacDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
 
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
 		   << " from " << static_cast<int>(dac1min) 
 		   << " to " << static_cast<int>(dac1max)
+		   << " (step size " << static_cast<int>(dac1step) << ")"
 		   << " vs. DAC " << static_cast<int>(dac2reg) 
 		   << " from " << static_cast<int>(dac2min) 
-		   << " to " << static_cast<int>(dac2max);
+		   << " to " << static_cast<int>(dac2max)
+		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1, tbmtype);
 
@@ -1238,7 +1258,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
+    done = _testboard->LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -1275,18 +1295,22 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   // We expect one Event per DAC1 value per DAC2 value per trigger:
-  int expected = static_cast<size_t>(dac1max-dac1min+1)*static_cast<size_t>(dac2max-dac2min+1)*nTriggers;
+  int expected = static_cast<size_t>((dac1max-dac1min)/dac1step+1)*static_cast<size_t>((dac2max-dac2min)/dac2step+1)*nTriggers;
 
-  LOG(logDEBUGHAL) << "Called SingleRocOnePixelDacDacScan with flags " << static_cast<int>(flags) << ", running " << nTriggers << " triggers.";
+  LOG(logDEBUGHAL) << "Called SingleRocOnePixelDacDacScan with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
 
   LOG(logDEBUGHAL) << "Scanning DAC " << static_cast<int>(dac1reg) 
 		   << " from " << static_cast<int>(dac1min) 
 		   << " to " << static_cast<int>(dac1max)
+		   << " (step size " << static_cast<int>(dac1step) << ")"
 		   << " vs. DAC " << static_cast<int>(dac2reg) 
 		   << " from " << static_cast<int>(dac2min) 
-		   << " to " << static_cast<int>(dac2max);
+		   << " to " << static_cast<int>(dac2max)
+		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1, tbmtype);
 
@@ -1302,7 +1326,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
     // Delete previously read events:
     tmpdata.clear();
 
-    done = _testboard->LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, dac1min, dac1max, dac2reg, dac2min, dac2max);
+    done = _testboard->LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
@@ -1391,7 +1415,15 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
+void hal::SetClockSource(uint8_t src) {
+	_testboard->SetClockSource(src);
+	_testboard->uDelay(100);
+	_testboard->Flush();
+}
 
+bool hal::IsClockPresent() {
+  return _testboard->IsClockPresent();
+}
 
 void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
 
@@ -1440,6 +1472,14 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
+
+    // If we have an old TBM version set up the DESER400 to read old data format:
+    // "old" is everything before TBM08B (so: TBM08, TBM08A)
+    if(tbmtype < TBM_08B) { 
+      LOG(logDEBUGHAL) << "Pre-series TBM with outdated trailer format. Configuring DESER400 accordingly.";
+      _testboard->Daq_Deser400_OldFormat(true);
+    }
+    else { _testboard->Daq_Deser400_OldFormat(false); }
 
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();

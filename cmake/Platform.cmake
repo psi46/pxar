@@ -16,6 +16,7 @@ elseif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -Wall"  CACHE STRING "Relwithdebinfo options." FORCE )
 elseif(MSVC)
    message(STATUS "Using MSVC-specific preprocessor identifiers and options")
+   add_definitions(-DNOMINMAX) # disables the min/max macros
    add_definitions("/wd4275") # disables warning concerning dll-interface (comes up for std classes too often)
    add_definitions("/wd4251") # disables warning concerning dll-interface (comes up for std classes too often)
    add_definitions("/wd4800") # disables warning concerning casting done inside ROOT classes.

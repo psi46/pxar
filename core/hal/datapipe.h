@@ -166,6 +166,8 @@ namespace pxar {
     // The splitter routines:
     rawEvent* SplitDeser160();
     rawEvent* SplitDeser400();
+
+    bool nextStartDetected;
   public:
     dtbEventSplitter() {}
   };

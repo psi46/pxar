@@ -97,9 +97,9 @@ int main(int argc, char *argv[]){
   }
 
 
-  pxar::api *api(0);
+  pxar::pxarCore *api(0);
   if (doUpdateFlash) {
-    api = new pxar::api("*", verbosity);
+    api = new pxar::pxarCore("*", verbosity);
     struct stat buffer;   
     if (stat(flashFile.c_str(), &buffer) == 0) {
       
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
   vector<pair<std::string, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
 
   try {
-    api = new pxar::api("*", verbosity);
+    api = new pxar::pxarCore("*", verbosity);
     
     api->initTestboard(sig_delays, power_settings, pg_setup);
     api->initDUT(configParameters->getHubId(),

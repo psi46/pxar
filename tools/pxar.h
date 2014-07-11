@@ -3,7 +3,7 @@
 
 #include "api.h"
 
-pxar::api * _api;
+pxar::pxarCore * _api;
 
 #endif
 

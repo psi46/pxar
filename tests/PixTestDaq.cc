@@ -51,9 +51,9 @@ void PixTestDaq::init() {
 
 // ----------------------------------------------------------------------
 void PixTestDaq::setToolTips() {
-  fTestTip    = string("run DAQ") ;
-  fSummaryTip = string("Show summary plot") ;
-  fStopTip    = string("Stop DAQ");
+  fTestTip    = string("Run DAQ - data from each run will be added to the same histogram.") ;
+  fSummaryTip = string("to be implemented") ;
+  fStopTip    = string("Stop DAQ and save data.");
 }
 
 // ----------------------------------------------------------------------
@@ -164,6 +164,7 @@ void PixTestDaq::pgToDefault() {
 void PixTestDaq::setHistos(){
 	
 	if (fParFillTree) bookTree();
+	fHits.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();
 
 	std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 	TH1D *h1(0);
@@ -224,18 +225,10 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 
 	LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
 
-	TH1D *h1(0);
-	TH2D *h2(0);
-	TProfile2D *p2(0);
 	int pixCnt(0);
 	int idx(-1);
 	uint16_t q;
 	vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-	std::vector<uint8_t> cnt;
-	//not to fill always the first histo:
-	for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) 
-		cnt.push_back((uint8_t)(histCycle(Form("hits_C%d", iroc)) - 1));
-
 	for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
 		pixCnt += it->pixels.size();
 
@@ -247,67 +240,44 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 			fTreeEvent.npix = it->pixels.size();
 		}
 
-		for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){  //DEBUG check if tree is ok with ROCs..
-			for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-				idx = getIdxFromId(it->pixels[ipix].roc_id) + cnt[iroc];
-				fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-				fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-				fPh[idx]->Fill(it->pixels[ipix].getValue());
+		for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+			idx = getIdxFromId(it->pixels[ipix].roc_id);
+			if(idx == -1) {
+				LOG(logWARNING) << "PixTestDaq::ProcessData() wrong 'idx' value --> return";
+				return;    			
+			}
+			fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+			fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
+			fPh[idx]->Fill(it->pixels[ipix].getValue());
 
-				if (fPhCalOK) {
-					q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, it->pixels[ipix].column,	
-									      it->pixels[ipix].row, it->pixels[ipix].getValue()));
-				}
-				else {
-					q = 0;
-				}
-				fQ[idx]->Fill(q);
-				fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
-
+			if (fPhCalOK) {
+				q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, it->pixels[ipix].column,	
+								      it->pixels[ipix].row, it->pixels[ipix].getValue()));
+			}
+			else {
+				q = 0;
+			}
+			fQ[idx]->Fill(q);
+			fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
 				if (fParFillTree) {
-					fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
-					fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
-					fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-					fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
-					fTreeEvent.pq[ipix] = q;
-				}
+				fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
+				fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
+				fTreeEvent.prow[ipix] = it->pixels[ipix].row;
+				fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
+				fTreeEvent.pq[ipix] = q;
 			}
 		}
-		if (fParFillTree) fTree->Fill();
 	}
-
-	LOG(logINFO) << Form("events read: %6ld, pixels seen: %3d, hist entries: %4d",
-		                 daqdat.size(), pixCnt,	static_cast<int>(fHits[0]->GetEntries()));
-
-	copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
-	h1 = (TH1D*)(fHistList.back());
-	h1->Draw(getHistOption(h1).c_str());
-	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-	PixTest::update();
-
-	copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
-	p2 = (TProfile2D*)(fHistList.back());
-	p2->Draw(getHistOption(p2).c_str());
-	fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
-	PixTest::update();
-
-	copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
-	h1 = (TH1D*)(fHistList.back());
-	h1->Draw(getHistOption(h2).c_str());
-	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-	PixTest::update();
-
-	copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
-	p2 = (TProfile2D*)(fHistList.back());
-	p2->Draw(getHistOption(p2).c_str());
-	fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
-	PixTest::update();
-
-	copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
-	h2 = (TH2D*)(fHistList.back());
+	if (fParFillTree) fTree->Fill();
+	
+  	//to draw the hitsmap as 'online' check.
+	TH2D* h2 = (TH2D*)(fHits.back());
 	h2->Draw(getHistOption(h2).c_str());
 	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
 	PixTest::update();
+
+	LOG(logINFO) << Form("events read: %6ld, pixels seen: %3d, hist entries: %4d",
+	                 daqdat.size(), pixCnt,	static_cast<int>(fHits[0]->GetEntries()));	
 }
 
 // ----------------------------------------------------------------------
@@ -322,21 +292,30 @@ void PixTestDaq::FinalCleaning() {
 // ----------------------------------------------------------------------
 void PixTestDaq::doTest() {
 
+  PixTest::update();
+  fDirectory->cd();
+  fPg_setup.clear();
+
   //Immediately stop if parameters not in range	
   if (fParOutOfRange) return;
   
   LOG(logINFO) << "PixTestDaq::doTest() start.";
 
-  PixTest::update(); 
-  fDirectory->cd();
-
-  fPg_setup.clear();
-
   //Set the ClockStretch
   fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay
    
   //Set the histograms:
-  setHistos();
+  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
+
+  //To print on shell the number of masked pixels per ROC:
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  LOG(logINFO) << "PixTestDaq::Number of masked pixels:";
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+	  LOG(logINFO) << "PixTestDaq::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
+  }  
+
+  // Start the DAQ:
+  //::::::::::::::::::::::::::::::::
 
   //First send only a RES:
   fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
@@ -429,12 +408,29 @@ void PixTestDaq::doTest() {
 	  }
 	}
   }
+  //::::::::::::::::::::::::::::::
+  //DAQ - THE END.
 
+  //to draw and save histograms
+  TH1D *h1(0);
+  TH2D *h2(0);
+  TProfile2D *p2(0);
+  copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
+  copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
+  copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
+  copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
+  copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+  for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+   	(*il)->Draw((getHistOption(*il)).c_str()); 
+  }
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), p2);
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
   PixTest::update();
 
   FinalCleaning();
-
   fApi->setClockStretch(0, 0, 0); //No Stretch after trigger, 0 delay
-
   LOG(logINFO) << "PixTestDaq::doTest() done";
 }

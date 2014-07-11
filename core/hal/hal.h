@@ -105,6 +105,14 @@ namespace pxar {
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);
 
+    /** Set the clock source
+     */
+    void SetClockSource(uint8_t src);
+
+    /** Check if external clock is present
+     */
+    bool IsClockPresent();
+
     /** Set the clock stretch 
     */
     void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);

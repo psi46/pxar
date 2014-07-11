@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "1.3.0")
-SET(PXAR_FW_VERSION "2.22")
+SET(PXAR_VERSION "1.4.5")
+SET(PXAR_FW_VERSION "3.2")
 
 
 #########################################
@@ -210,14 +210,14 @@ IF(BUILD_pxarui)
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
 
-  # Build the usertests and usertest library
+  # Build the usertests library
   ADD_SUBDIRECTORY(usertests)
-
-  # Build the pXar GUI
-  ADD_SUBDIRECTORY(gui)
 
   # Build the pXar executable
   ADD_SUBDIRECTORY(main)
+
+  # Build the pXar GUI
+  ADD_SUBDIRECTORY(gui)
 
 ENDIF(BUILD_pxarui)
 

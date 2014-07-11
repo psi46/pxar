@@ -373,7 +373,8 @@ void ConfigParameters::readRocPixelConfig() {
 	pxar::pixelConfig a; 
 	a.column = ic; 
 	a.row = ir; 
-	a.trim = 0; 
+	a.trim = 0;
+	a.mask = false;
 	if (rocmasked[i]) {
 	  vector<pair<int, int> > v = vmask[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
@@ -382,8 +383,6 @@ void ConfigParameters::readRocPixelConfig() {
 	      a.mask = true;
 	    }
 	  }
-	} else {
-	  a.mask = false;
 	}
 	a.enable = true;
 	v.push_back(a); 

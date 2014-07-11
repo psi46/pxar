@@ -17,6 +17,9 @@ hal::hal(std::string /*name*/) :
   // Print the useful SW/FW versioning info:
   PrintInfo();
 
+  // Initialize rand():
+  srand (time(NULL));
+
   // Check if all RPC calls are matched:
   if(CheckCompatibility()) {
     // Set compatibility flag
@@ -167,23 +170,34 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
 
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
 	Event* evt = new Event();
+	// Generate a slightly random pulse height between 90 and 100:
+	uint16_t pulseheight = rand() % 2 + 90;
 	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
 	  // Introduce some address encoding issues:
-	  if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(*roc,i,j+1,90)); } // PX 0,1 answers as PX 0,2
+	  if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(*roc,i,j+1,pulseheight)); } // PX 0,1 answers as PX 0,2
 	  else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
-	  else { evt->pixels.push_back(pixel(*roc,i,j,90)); }
+	  else { evt->pixels.push_back(pixel(*roc,i,j,pulseheight)); }
+
+	  // If the full chip is unmasked, add some noise hits:
+	  if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%2) != 0) {
+	    evt->pixels.push_back(pixel(*roc,rand()%52,rand()%80,pulseheight));
+	  }
+
+	  // Count pixels:
+	  total_pixel += evt->pixels.size();
 	}
 	data.push_back(evt);
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
@@ -213,12 +227,11 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
-  // Initialize rand():
-  srand (time(NULL));
-    
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
@@ -228,13 +241,22 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
 	// Introduce some address encoding issues:
 	if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(rocid,i,j+1,pulseheight));} // PX 0,1 answers as PX 0,2
 	else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
+	if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 6) { evt->pixels.push_back(pixel(rocid,i,j+1,pulseheight));} // PX 0,6 answers as PX 0,7
 	else { evt->pixels.push_back(pixel(rocid,i,j,pulseheight)); }
+
+	  // If the full chip is unmasked, add some noise hits:
+	  if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%2) != 0) {
+	    evt->pixels.push_back(pixel(rocid,rand()%52,rand()%80,pulseheight));
+	  }
+
+	  // Count pixels:
+	  total_pixel += evt->pixels.size();
 	data.push_back(evt);
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
 
   return data;
 }
@@ -543,6 +565,13 @@ void hal::SignalProbeA1(uint8_t /*signal*/) {
 }
 
 void hal::SignalProbeA2(uint8_t /*signal*/) {
+}
+
+void hal::SetClockSource(uint8_t /*src*/) {
+}
+
+bool hal::IsClockPresent() {
+  return true;
 }
 
 void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {

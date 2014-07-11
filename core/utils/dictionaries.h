@@ -28,6 +28,10 @@ typedef unsigned char uint8_t;
 #define ROC_REG 0x00
 #define PG_ERR  0xFF00
 
+#define PROBE_ANALOG  PROBEA_OFF
+#define PROBE_DIGITAL PROBE_OFF
+#define PROBE_NONE    0xFF
+
 namespace pxar {
 
   /** class to store a DAC config
@@ -74,7 +78,7 @@ namespace pxar {
 	else { return type;}
     }
 
-    // Return the register name for the register in question:
+    // Return the register size for the register in question:
     inline uint8_t getSize(uint8_t id, uint8_t type) {
       for(std::map<std::string, dacConfig>::iterator iter = _registers.begin(); iter != _registers.end(); ++iter) {
 	if((*iter).second._type == type && (*iter).second._id == id) {
@@ -93,6 +97,22 @@ namespace pxar {
       return "";
     }
 
+    // Return all (preferred) register names for the type in question:
+    inline std::vector<std::string> getAllNames(uint8_t type) {
+      std::vector<std::string> names;
+      for(std::map<std::string, dacConfig>::iterator iter = _registers.begin(); iter != _registers.end(); ++iter) {
+	if((*iter).second._type == type && (*iter).second._preferred == true) {
+	  names.push_back((*iter).first);
+	}
+      }
+      return names;
+    }
+
+    // Return all (preferred) register names for a single type:
+    inline std::vector<std::string> getAllROCNames() {return getAllNames(ROC_REG);}
+    inline std::vector<std::string> getAllDTBNames() {return getAllNames(DTB_REG);}
+    inline std::vector<std::string> getAllTBMNames() {return getAllNames(TBM_REG);}
+
   private:
     RegisterDictionary() {
       //------- DTB registers -----------------------------
@@ -100,20 +120,34 @@ namespace pxar {
       _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
       _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
       _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
-      _registers["triggerdelay"] = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
+      _registers["triggerdelay"]  = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
 
       //------- TBM registers -----------------------------
-      _registers["counters"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
-      _registers["mode"]             = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
+      _registers["counters"]      = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
+      _registers["base0"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
 
-      _registers["clear"]            = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
-      _registers["inject"]           = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["mode"]          = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
+      _registers["base2"]         = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
 
-      _registers["pkam_set"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
-      _registers["delays"]           = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
-      _registers["temperature"]      = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      _registers["clear"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["inject"]        = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["base4"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+
+      _registers["pkam_set"]      = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
+      _registers["base8"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
+
+      _registers["delays"]        = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
+      _registers["basea"]         = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
+
+      _registers["autoreset"]     = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      _registers["basec"]         = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      // In the old TBM these were the temperature registers:
+      _registers["temperature"]   = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+
+      _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
+      _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
 
 
       //------- ROC registers -----------------------------
@@ -242,6 +276,7 @@ namespace pxar {
       // FIXME this is just an example.
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
+      _devices["tbm08b"]        = TBM_08B;
       _devices["tbm09"]         = TBM_09;
     }
 
@@ -251,7 +286,7 @@ namespace pxar {
   };
 
   
-  /** Map for DTB digital probe signal name lookup
+  /** Map for DTB analog & digital probe signal name lookup
    *  All signal names are lower case, check is case-insensitive.
    *  Singleton class, only one object of this floating around.
    */
@@ -264,110 +299,112 @@ namespace pxar {
     }
 
     // Return the signal id for the probe signal in question:
-    inline uint8_t getSignal(std::string name) {
-      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
-      else { return PROBE_OFF; }
+    inline uint8_t getSignal(std::string name, uint8_t type) {
+      // Looking for digital probe signal:
+      if(type == PROBE_DIGITAL && _signals.find(name)->second._signal_dig != PROBE_NONE) {
+	return _signals.find(name)->second._signal_dig;
+      }
+      // Looking for analog probe signal:
+      else if(type == PROBE_ANALOG && _signals.find(name)->second._signal_ana != PROBE_NONE) {
+	return _signals.find(name)->second._signal_ana;
+      }
+      // Couldn't find any matching signal:
+      else { return type; }
     }
 
     // Return the signal name for the probe signal in question:
-    inline std::string getName(uint8_t signal) {
-      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
-	if((*iter).second == signal) { return (*iter).first; }
+    inline std::string getName(uint8_t signal, uint8_t type) {
+      for(std::map<std::string, probeConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(type == PROBE_DIGITAL && iter->second._signal_dig == signal && iter->second._preferred == true) {
+	  return (*iter).first;
+	}
+	else if(type == PROBE_ANALOG && iter->second._signal_ana == signal && iter->second._preferred == true) {
+	  return (*iter).first;
+	}
       }
       return "";
     }
 
+    // Return all (preferred) signal names for the type in question:
+    inline std::vector<std::string> getAllNames(uint8_t type) {
+      std::vector<std::string> names;
+      for(std::map<std::string, probeConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(((type == PROBE_DIGITAL && iter->second._signal_dig != PROBE_NONE)
+	    || (type == PROBE_ANALOG && iter->second._signal_ana != PROBE_NONE))
+	   && (*iter).second._preferred == true) {
+	  names.push_back((*iter).first);
+	}
+      }
+      return names;
+    }
+
+    // Return all (preferred) signal names for a single type:
+    inline std::vector<std::string> getAllAnalogNames() {return getAllNames(PROBE_ANALOG);}
+    inline std::vector<std::string> getAllDigitalNames() {return getAllNames(PROBE_DIGITAL);}
+
   private:
+
+    /** class to store a probe signal config
+     */
+    class probeConfig {
+    public:
+      probeConfig() {}
+    probeConfig(uint8_t signal_dig, uint8_t signal_ana, bool preferred = true) : _signal_dig(signal_dig), _signal_ana(signal_ana), _preferred(preferred) {}
+      uint8_t _signal_dig;
+      uint8_t _signal_ana;
+      bool _preferred;
+    };
+
     ProbeDictionary() {
       // Probe name and values
 
-      // Digital signals:
-      _signals["off"]        = PROBE_OFF;
-      _signals["clk"]        = PROBE_CLK;
-      _signals["sda"]        = PROBE_SDA;
-      _signals["sdasend"]        = PROBE_SDA_SEND;
-      _signals["pgtok"]      = PROBE_PG_TOK;
-      _signals["pgtrg"]      = PROBE_PG_TRG;
-      _signals["pgcal"]      = PROBE_PG_CAL;
+      // Signals accessible via both analog and digital ports:
+      _signals["tin"]    = probeConfig(PROBE_TIN,PROBEA_TIN);
+      _signals["ctr"]    = probeConfig(PROBE_CTR,PROBEA_CTR);
+      _signals["clk"]    = probeConfig(PROBE_CLK,PROBEA_CLK);
+      _signals["sda"]    = probeConfig(PROBE_SDA,PROBEA_SDA);
+      _signals["tout"]   = probeConfig(PROBE_TOUT,PROBEA_TOUT);
+      _signals["off"]    = probeConfig(PROBE_OFF,PROBEA_OFF);
 
-      _signals["pgresr"]     = PROBE_PG_RES_ROC;
-      _signals["pgresroc"]   = PROBE_PG_RES_ROC;
+      // Purely digital signals:
+      _signals["sdasend"]    = probeConfig(PROBE_SDA_SEND,PROBE_NONE);
+      _signals["pgtok"]      = probeConfig(PROBE_PG_TOK,PROBE_NONE);
+      _signals["pgtrg"]      = probeConfig(PROBE_PG_TRG,PROBE_NONE);
+      _signals["pgcal"]      = probeConfig(PROBE_PG_CAL,PROBE_NONE);
 
-      _signals["pgrest"]     = PROBE_PG_RES_TBM;
-      _signals["pgrestbm"]   = PROBE_PG_RES_TBM;
+      _signals["pgresr"]     = probeConfig(PROBE_PG_RES_ROC,PROBE_NONE,false);
+      _signals["pgresroc"]   = probeConfig(PROBE_PG_RES_ROC,PROBE_NONE);
 
-      _signals["pgsync"]     = PROBE_PG_SYNC;
-      _signals["ctr"]        = PROBE_CTR;
-      _signals["tin"]        = PROBE_TIN;
-      _signals["tout"]       = PROBE_TOUT;
+      _signals["pgrest"]     = probeConfig(PROBE_PG_RES_TBM,PROBE_NONE,false);
+      _signals["pgrestbm"]   = probeConfig(PROBE_PG_RES_TBM,PROBE_NONE);
 
-      _signals["clkp"]       = PROBE_CLK_PRESEN;
-      _signals["clkpresent"] = PROBE_CLK_PRESEN;
+      _signals["pgsync"]     = probeConfig(PROBE_PG_SYNC,PROBE_NONE);
 
-      _signals["clkg"]       = PROBE_CLK_GOOD;
-      _signals["clkgood"]    = PROBE_CLK_GOOD;
+      _signals["clkp"]       = probeConfig(PROBE_CLK_PRESEN,PROBE_NONE);
+      _signals["clkpresent"] = probeConfig(PROBE_CLK_PRESEN,PROBE_NONE,false);
 
-      _signals["daq0wr"]     = PROBE_DAQ0_WR;
-      _signals["crc"]        = PROBE_CRC;
-      _signals["adcrunning"] = PROBE_ADC_RUNNING;
-      _signals["adcrun"]     = PROBE_ADC_RUN;
-      _signals["adcpgate"]   = PROBE_ADC_PGATE;
-      _signals["adcstart"]   = PROBE_ADC_START;
-      _signals["adcsgate"]   = PROBE_ADC_SGATE;
-      _signals["adcs"]       = PROBE_ADC_S;
+      _signals["clkg"]       = probeConfig(PROBE_CLK_GOOD,PROBE_NONE);
+      _signals["clkgood"]    = probeConfig(PROBE_CLK_GOOD,PROBE_NONE,false);
 
+      _signals["daq0wr"]     = probeConfig(PROBE_DAQ0_WR,PROBE_NONE);
+      _signals["crc"]        = probeConfig(PROBE_CRC,PROBE_NONE);
+      _signals["adcrunning"] = probeConfig(PROBE_ADC_RUNNING,PROBE_NONE);
+      _signals["adcrun"]     = probeConfig(PROBE_ADC_RUN,PROBE_NONE);
+      _signals["adcpgate"]   = probeConfig(PROBE_ADC_PGATE,PROBE_NONE);
+      _signals["adcstart"]   = probeConfig(PROBE_ADC_START,PROBE_NONE);
+      _signals["adcsgate"]   = probeConfig(PROBE_ADC_SGATE,PROBE_NONE);
+      _signals["adcs"]       = probeConfig(PROBE_ADC_S,PROBE_NONE);
+
+      // Purely analog signals:
+      _signals["sdata1"] = probeConfig(PROBE_NONE,PROBEA_SDATA1);
+      _signals["sdata2"] = probeConfig(PROBE_NONE,PROBEA_SDATA2);
     }
 
-    std::map<std::string, uint8_t> _signals;
+    std::map<std::string, probeConfig> _signals;
     ProbeDictionary(ProbeDictionary const&); // Don't Implement
     void operator=(ProbeDictionary const&); // Don't implement
   };
 
-
-  /** Map for DTB analog probe signal name lookup
-   *  All signal names are lower case, check is case-insensitive.
-   *  Singleton class, only one object of this floating around.
-   */
-  class ProbeADictionary {
-  public:
-    static ProbeADictionary * getInstance() {
-      static ProbeADictionary instance; // Guaranteed to be destroyed.
-      // Instantiated on first use.
-      return &instance;
-    }
-
-    // Return the register id for the name in question:
-    inline uint8_t getSignal(std::string name) {
-      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
-      else { return PROBEA_OFF; }
-    }
-
-    // Return the signal name for the probe signal in question:
-    inline std::string getName(uint8_t signal) {
-      for(std::map<std::string, uint8_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
-	if((*iter).second == signal) { return (*iter).first; }
-      }
-      return "";
-    }
-
-  private:
-    ProbeADictionary() {
-      // Probe name and values
-      _signals["tin"]    = PROBEA_TIN;
-      _signals["sdata1"] = PROBEA_SDATA1;
-      _signals["sdata2"] = PROBEA_SDATA2;
-      _signals["ctr"]    = PROBEA_CTR;
-      _signals["clk"]    = PROBEA_CLK;
-      _signals["sda"]    = PROBEA_SDA;
-      _signals["tout"]   = PROBEA_TOUT;
-      _signals["off"]    = PROBEA_OFF;
-
-    }
-
-    std::map<std::string, uint8_t> _signals;
-    ProbeADictionary(ProbeADictionary const&); // Don't Implement
-    void operator=(ProbeADictionary const&); // Don't implement
-  };
 
   /** Map for pattern generator signal name lookup
    *  All signal names are lower case, check is case-insensitive.

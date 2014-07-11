@@ -20,10 +20,9 @@ public:
 	void runCommand(std::string);
 	bool setPattern(std::string);
 	bool setPixels(std::string, std::string);
-	void setHistos();
-	void FillHistos(std::vector<pxar::Event> );
-	void PrintEvents(int, int, std::string);
-	void TriggerLoop(int );
+	void FillHistos(std::vector<pxar::Event> , std::vector<TH2D*> , std::vector<TProfile2D*> , std::vector<TH1D*> );
+	void PrintEvents(int, int, std::string, std::vector<TH2D*> , std::vector<TProfile2D*> , std::vector<TH1D*> );
+	void TriggerLoop(int , std::vector<TH2D*> , std::vector<TProfile2D*> , std::vector<TH1D*> );
 	void pgToDefault();
 	void FinalCleaning();
 
@@ -36,7 +35,8 @@ private:
 	bool	fPatternFromFile;
 	bool	fResultsOnFile;
 	bool    fBinOut;
-	std::string fFileName;
+	std::string fInputFile;
+	std::string fOutputFile;
 	bool	fUnMaskAll;
 	bool	fParFillTree;
 
@@ -47,13 +47,6 @@ private:
 	std::vector<std::pair<int, int> > fPIXm;
 	uint16_t fPeriod;
 	int		fCheckFreq;
-
-	std::vector<TH2D*> fHits;
-	std::vector<TProfile2D*> fPhmap;
-	std::vector<TH1D*> fPh;
-	TH2D* fH2;
-	TProfile2D* fP2;
-	TH1D* fH1;
 
 	ClassDef(PixTestPattern, 1)
 
