@@ -124,12 +124,12 @@ void PixTestScurves::doTest() {
 
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
-  fParDacHi = 250;
+  fParDacHi = 150;
   scurves();
 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
-  fParDacHi = 250;
+  fParDacHi = 120;
   scurves();
 
 
