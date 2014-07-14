@@ -123,13 +123,13 @@ void PixTestScurves::doTest() {
   bigBanner(Form("PixTestScurves::doTest() ntrig = %d", fParNtrig));
 
   fParDac = "VthrComp"; 
-  fParDacLo = 0; 
+  fParDacLo = 10; 
   fParDacHi = 150;
   scurves();
 
   fParDac = "Vcal"; 
-  fParDacLo = 0; 
-  fParDacHi = 120;
+  fParDacLo = 30; 
+  fParDacHi = 180;
   scurves();
 
 
