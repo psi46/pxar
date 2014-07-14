@@ -60,30 +60,67 @@ using namespace std;
 // forward declarations
 class CmdProc;
 class Statement;
+class Token;
+
+
+
+class IntList{
+    int singleValue;
+    vector< pair<int,int> > ranges; 
+    public:
+    enum {IMIN=-1, IMAX=-2, UNDEFINED=-3};
+    IntList():singleValue(UNDEFINED){ranges.clear();}
+    bool parse( Token & , const bool append=false );
+    
+    int value(){return singleValue;}
+    bool isSingleValue(){return (!(singleValue==UNDEFINED));}
+    vector<int> getVect(const int imin=0, const int imax=0);
+    //vector<int> get(vector<int> );
+};
 
 class Arg{
- public:
-  enum argtype {UNDEF,STRING, ILIST};
- Arg(string s):type(STRING),svalue(s){};
- Arg(int i):type(ILIST){lvalue.clear(); lvalue.push_back(i);}
- Arg(vector<int> v):type(ILIST),lvalue(v){};
+    public:
+    enum argtype {UNDEF,STRING_T, IVALUE_T, ILIST_T};
+    Arg(string s):type(STRING_T),svalue(s){};
+    //Arg(int i):type(ILIST_T){ivalue=i;}
+    Arg(IntList v){
+        if( v.isSingleValue() ){
+            type=IVALUE_T;
+            ivalue=v.value();
+        }else{
+            type=ILIST_T;
+            lvalue=v;
+        }
+    }
+    bool getInt(int & value){ if (type==IVALUE_T){value=ivalue; return true;}return false;}
 
-  bool getInt(int & value){ if ((type==ILIST)&&(lvalue.size()==1)){value=lvalue[0]; return true;}return false;}
+    bool getList(IntList & value){ if(type==ILIST_T){ value=lvalue; return true;} return false;}
+    bool getVect(vector<int> & value, const int imin=0, const int imax=0){
+        if(type==ILIST_T){ 
+            value=lvalue.getVect(imin, imax);
+            return true;
+        }else if(type==IVALUE_T){
+            value.push_back( ivalue);
+            return true;
+        }else{
+             return false;
+        }
+    }
+    bool getString(string & value){ if(type==STRING_T){ value=svalue; return true;}return false;}
 
-  bool getList(vector<int> & value){ if(type==ILIST){ value=lvalue; return true;} return false;}
-  bool getString(string & value){ if(type==STRING){ value=svalue; return true;}return false;}
-
-  argtype type;
-  string svalue;
-  vector<int> lvalue;
-  string str(){
-    stringstream s;
-    if ((type==ILIST)&&(lvalue.size()==1)){ s << lvalue[0];}
-    else if (type==ILIST) { s << "vector("<<lvalue.size()<<")";}
-    else if (type==STRING){ s << "'" << svalue <<"'";}
-    else s <<"???";
-    return s.str();
-  }
+    argtype type;
+    string svalue;
+    IntList lvalue;
+    int ivalue;
+    
+    string str(){
+        stringstream s;
+        if (type==IVALUE_T){ s << ivalue;}
+        else if (type==ILIST_T) { s << "vector("<<")";}
+        else if (type==STRING_T){ s << "'" << svalue <<"'";}
+        else s <<"???";
+        return s.str();
+    }
 
 };
 
@@ -98,7 +135,8 @@ class Keyword{
   bool match(const char *, int &);
   bool match(const char *, string &);
   bool match(const char * s, vector<int> & , vector<int> &);
- 
+   bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
+
   unsigned int narg(){return argv.size();};
   string str();
 
@@ -131,19 +169,30 @@ class Token{
 
 /* containers for syntax elements */
 
+
 class Target{
- public:
-  vector<int> values;
+    public:
+    IntList lvalues;        // parsed
+    vector<int> ivalues;  // expanded
+    bool expanded;
 
-  string name;
-  int value(){ return values.size()==1 ? values[0] : -1;};  // for single valued targets
+    string name;
+    void expand( const int imin=0, const int imax=0 ){
+        if (expanded) return;
+        ivalues=lvalues.getVect(imin, imax); expanded=true;
+    }
+    unsigned int size(){ if (!expanded){ return 0;}else{ return ivalues.size();}}
+    vector<int> values(){return ivalues;}// todo fix unexpanded
+    Target():name(""){expanded=false;}
+    Target(string s):name(s){expanded=false;}
+  
+    // for single valued targets
+    int value(){ if (!expanded) {return 0;}else{return ivalues.size()==1 ? ivalues[0] : -1;}; }
+    Target(string name, const int value):name(name){ivalues.clear();ivalues.push_back( value );expanded=true;}
+    Target get(unsigned int i){ Target t(name, ivalues[i]); return t;};
 
- Target():name(""){values.clear(); values.push_back(-1);}
- Target(string name, int value=-1):name(name){values.clear();values.push_back(value);}
-  Target get(unsigned int i){ Target t(name, values[i]); return t;};
-
-  bool parse( Token & );
-  string str();
+    bool parse( Token & );
+    string str();
 
 }; 
 
@@ -169,6 +218,7 @@ class Statement{
  public:
  Statement():
   isAssignment(false), name(""), has_localTarget(false), keyword(""){block=NULL;};
+  ~Statement(){ if (!(block==NULL)) delete block;}
   bool parse( Token & );
   bool exec(CmdProc *, Target &);
 };
@@ -178,6 +228,8 @@ class CmdProc {
 
  public:
   CmdProc();
+  CmdProc( CmdProc* p);
+  ~CmdProc();
   int exec(string s);
   int exec(const char* p){ return exec(string(p));}
 
@@ -195,7 +247,6 @@ class CmdProc {
 
   Target defaultTarget;
   map<string, deque <string> > macros;
-  map< string, int > vars;
   
 };
 

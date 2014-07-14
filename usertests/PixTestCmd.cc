@@ -1,13 +1,17 @@
 // -- author: Wolfram Erdmann
-// get analog current vs vana from testboard and roc readback
+// opens up a command line window
 
-#include <algorithm>  // std::find
 #include "PixTestCmd.hh"
 #include "log.h"
 #include "constants.h"
 #include <TGLayout.h>
 #include <TGClient.h>
 #include <TGFrame.h>
+
+#include <iostream>
+#include <fstream>
+
+//#define DEBUG
 
 using namespace std;
 using namespace pxar;
@@ -42,15 +46,13 @@ void PixTestCmd::init()
     if( !fDirectory )
         fDirectory = gFile->mkdir( fName.c_str() );
     fDirectory->cd();
-  
-    
 }
 
 // ----------------------------------------------------------------------
 void PixTestCmd::setToolTips()
 {
   fTestTip = string( "void");
-  fSummaryTip = string("summary plot to be implemented");
+  fSummaryTip = string("nothing to summarize here");
 }
 
 //------------------------------------------------------------------------------
@@ -71,6 +73,12 @@ PixTestCmd::~PixTestCmd()
     (*il)->Write();
   }
   
+  // dump the history file for future use
+  ofstream fout(".history");
+  for(unsigned int i=max(0,(int)cmdHistory.size()-100); i<cmdHistory.size(); i++){
+      fout << cmdHistory[i] << endl;
+  }
+  
 }
 
 void PixTestCmd::DoTextField(){
@@ -81,14 +89,22 @@ void PixTestCmd::DoTextField(){
     int stat = cmd->exec( s );
     string reply=cmd->out.str();
     if (reply.size()>0){
+        
+        // try color coding, doesn't really work with TGTextView
         if(stat==0){
             transcript->SetForegroundColor(0x0000ff);
         }else{
             transcript->SetForegroundColor(0xff0000);
         }
-        transcript->AddLine( reply.c_str() );
+        
+        // break multiline output into lines
+        std::stringstream ss( reply );
+        std::string line;
+        while(std::getline(ss,line,'\n')){
+            transcript->AddLine( line.c_str() );
+        }
     }
-    if(transcript->ReturnLineCount() > 6)
+    if(transcript->ReturnLineCount() > 6)// visible lines(how do I know?)
         transcript->SetVsbPosition(transcript->ReturnLineCount());
 
     commandLine->SetText("");
@@ -97,7 +113,9 @@ void PixTestCmd::DoTextField(){
 }
 void PixTestCmd::DoUpArrow(){
     if (historyIndex>0) historyIndex--;
-    commandLine->SetText(cmdHistory[historyIndex].c_str());
+    if (cmdHistory.size()>0){
+        commandLine->SetText(cmdHistory[historyIndex].c_str());
+    }
 }
 
 void PixTestCmd::DoDnArrow(){
@@ -148,6 +166,17 @@ void PixTestCmd::doTest()
 
     fDirectory->cd();
     fHistList.clear();
+    
+    // read the history file for future use
+    ifstream inputFile(".history");
+    if ( inputFile.is_open()){
+        string line;
+        while( getline( inputFile, line ) ){
+            cmdHistory.push_back(line);  
+        }
+        historyIndex = cmdHistory.size();
+    }
+
     PixTest::update();
 
     createWidgets();
@@ -181,9 +210,10 @@ void PixTestCmd::doTest()
 
 #include <sstream>
 #include <string>
-#include <strings.h>  //index
 #include <iomanip>
 
+#include <iostream>
+#include <fstream>
 
 /**********************  Token handling with macros  ********/
 string Token::front(bool expand){
@@ -247,14 +277,13 @@ bool StrToI(string word, int & v)
     const char * digits = "0123456789ABCDEF";
     int base;
     int i;
-    const char * d0 = index(digits, '0');
+    const char * d0 = strchr(digits, '0');
+
     int len = word.size();
-    /* $ indicate macros now
     if ((len>0) && (word[0] == '$')) { 
         base = 16;
         i = 1;
-	} else*/ 
-      if ((len>1) && (word[0] == '0') && (word[1] == 'x')) {
+    } else if ((len>1) && (word[0] == '0') && (word[1] == 'x')) {
         base = 16;
         i = 2;
     } else {
@@ -265,7 +294,7 @@ bool StrToI(string word, int & v)
 
     int a = 0;
     const char * d;
-    while ((i < len) && ((d = index(digits, word[i])) != NULL)) {
+    while ((i < len) && ((d = strchr(digits, word[i])) != NULL)) {
         a = base * a + d - d0;
         i++;
     }
@@ -276,53 +305,117 @@ bool StrToI(string word, int & v)
 }
 
 
-bool parseIntegerList( Token & words,  vector<int> & ilist, bool append=false){
-  /* parse a list of integers (rocs, rows, columns..), such as
-     1:5,8:16  or 1,2,5,7
-     hexadecimal values are allowed (see StrToI)
-     recycled from syscmd
-  */
-  //cout << "parsing integer list starting with " << words.front() << endl;
-  if (!append) ilist.clear();
 
-  if ( (words.front()=="*") ){
-    words.pop_front();
-    for(int i=0; i<16; i++){ ilist.push_back(i);}
-  }else{
-    int i1,i2 ; // for ranges
-    do
-      {
-	if (! StrToI(words.front(), i1)) {
-	  //cerr << "illegal integer " << endl;
-	  return false;
-	}
-	i2 = i1;
-	words.pop_front();
-	// optionally followed by :i2 to define a range
-	if ( (!words.empty()) && (words.front()==":")){
-	  words.pop_front();
-	  if (! StrToI(words.front(), i2)) {
-	    cerr << "illegal integer " << endl;
-	    return false;
-	  }
-	  words.pop_front();
-	}
-	for (int j = i1; j <= i2; j++) { ilist.push_back(j);}
 
-	// continue until no more comma separated list elements found
-	if ( (!words.empty()) && (words.front()==",")){
-	  words.pop_front();
-	}else{
-	  break;
-	}
-      }
-    while (!words.empty());
+bool IntList::parse(Token & token,  const bool append){
+    /* parse a list of integers (rocs, rows, columns..), such as
+     * 1:5,8:16  or 1,2,5,7
+     * hexadecimal values are allowed (see StrToI)
+     * equivalent of parseIntegerList in SysCmd with wildcard support
+     */
+    
+    if (!append) ranges.clear();
+
+    if ( (token.front()=="*") ){
+        token.pop_front();
+        ranges.push_back(  make_pair( IMIN, IMAX ) );
+    }else{
+        int i1,i2 ; // for ranges
+        do {
+            if (token.front()==":"){
+                i1 = IMIN;
+            }else{
+                if ( StrToI(token.front(), i1)) {
+                    token.pop_front();
+                }else{
+                    return false;  // not an IntList
+                }
+            }
+           // optionally followed by :i2 to define a range
+            if ( (!token.empty()) && (token.front()==":")){
+                token.pop_front();
+                if (token.empty()){
+                    i2=IMAX;
+                }else{
+                    if (StrToI(token.front(), i2)) {
+                        token.pop_front();
+                    }else if(token.front()=="~"){
+                        token.pop_front();
+                        i2=IMAX;
+                    }else{
+                        cout << "syntax error parsing integer list" << endl;
+                        return false;
+                    }
+                }
+            }else{
+                i2=i1; // just one value
+            }
+            ranges.push_back( make_pair( i1, i2 ) );
+            if ((ranges.size()==1) && (i1==i2)){
+                singleValue = i1;
+            }else{
+                singleValue = UNDEFINED;
+            }
+
+            // continue until no more comma separated list elements found
+            if ( (!token.empty()) && (token.front()==",")){
+                token.pop_front();
+            }else{
+                break;
+            }
+        } while (!token.empty());
     // end of the list reached
   }
-  //cout << "returning ilist with size " << ilist.size() << endl;
+#ifdef DEBUG
+  cout << "IntList " << ranges.size() << " single=" << (!(singleValue==UNDEFINED)) << endl;
+  for(unsigned int i=0; i<ranges.size(); i++){cout << ranges[i].first << ":" << ranges[i].second << endl;}
+  cout << "---------" << endl;
+#endif
   return true;
 }
 
+vector<int> IntList::getVect(const int imin, const int imax){
+    vector<int> IntList;
+    for(unsigned int j=0; j<ranges.size(); j++){
+        int i1 = ranges[j].first;
+        int i2 = ranges[j].second;
+        
+        if( i1 == IMIN ){ i1=imin;}
+        if( i2 == IMAX ){ i2=imax;}
+        for(int i=i1; i<i2+1; i++){
+            IntList.push_back(i);
+        }
+    }
+    return IntList;
+}
+/*
+vector<int> IntList::get(const vector<int> valuelist){
+    vector<int> IntList;
+    for(unsigned int j=0; j<ranges.size(); j++){
+        int k1, k2;
+        if (ranges[j].first==IMIN) {
+            k1 = 0;
+        }else{
+            for(unsigned int k=0; k<valuelist.size(); k++){
+                if (ranges[j].first==valuelist[k]) k1==k;
+            }
+        }
+ 
+        if (ranges[j].second==IMAX) {
+            k2 = valuelist.size();
+        }else{
+            for(k=0; k<valuelist.size(); k++){
+                if (ranges[j].second==valuelist[k]) k2==k;
+            }
+        }
+
+        for(int k=k1; k<k2; k++){
+            IntList.push_back(valuelist[k]);
+        }
+    }
+    return IntList;
+}
+*/
 
 bool is_whitespace(unsigned int  i, const string & s){
   if ( i<s.size() ){
@@ -348,72 +441,74 @@ string findchar(char c, unsigned int & i, string s){
 
 
 deque <string > getWords(const string & s){
-  // chop a string into words
-  deque<string> words;
-  unsigned int i=0;
-  const char * symbols="\",:()[];=\n";
+    // chop a string into words
+    deque<string> words;
+    unsigned int i=0;
+    const char * symbols="\",:()[];=\n";
 
-  string word="";
-  while( i<s.size() ){
+    string word="";
+    while( i<s.size() ){
 
-    while( is_whitespace(i,s) ){i++;};
+        while( is_whitespace(i,s) ){i++;};
 
-    if (s[i]=='"'){
-      word = findchar('"',i,s);
-      if ((i<s.size()) && (s[i]=='"')) i++;
-    }else  if ( index(symbols, s[i]) != NULL){
-      word.push_back(s[i++]);
-    }else{
-      while( (i<s.size()) && (! is_whitespace(i,s)) 
-	     && (index(symbols, s[i]) == NULL) ) {
-	word.push_back(s[i++]);
-      }	  
+        if (s[i]=='"'){
+            word = findchar('"',i,s);
+            if ((i<s.size()) && (s[i]=='"')) i++;
+        }else  if ( strchr(symbols, s[i]) != NULL){
+            word.push_back(s[i++]);
+        }else{
+            while( (i<s.size()) && (! is_whitespace(i,s)) 
+                    && (strchr(symbols, s[i]) == NULL) ) {
+                word.push_back(s[i++]);
+            }   
+        }
+        words.push_back(word);
+        // special treatment of whitespace following colon to allow
+        // beats range notation such as pixe 5: 7:10
+        if (word==":"){
+            if( (i>=s.size()) || is_whitespace(i,s) ){
+                words.push_back("~");
+            }
+        }
+        word="";
     }
-    words.push_back(word);
-    word="";
-  }
-  return words;
+    return words;
 }
 
 string Target::str(){
-  stringstream s;
-  s<<"["<<name;
-  if (name=="roc"){
-    for(unsigned int i=0; i<values.size()-1; i++){
-      s<< " " << values[i] << ",";
+    stringstream s;
+    s<<"["<<name;
+    if (name=="roc"){
+        if(!expanded) { expand(0, 15);}
+        for(unsigned int i=0; i<ivalues.size()-1; i++){
+            s<< " " << ivalues[i] << ",";
+        }
+        s<<" "<<ivalues[ivalues.size()-1];
     }
-    s<<" "<<values[values.size()-1];
-  }
-  s<<"]";
-  return  s.str();
+    s<<"]";
+    return  s.str();
 }
 
 /*********************** syntax element parsers ***********************/
 
 bool Target::parse(Token & token){
+    
   if (token.empty()) return false;
+  
   name = token.front();
   if (name=="roc") {
     token.pop_front();
     if (!token.empty()){
-      // is the next token a number or wildcard?
-      string s= token.front();
-      if ((s=="*") || (s==":") || isdigit( s[0] )){
-	// FIXME wildcard list should be configurable
-	return parseIntegerList(token, values); 
-      }else{
-	return false;	// FIXME could make sense for single rocs
-      }
+        lvalues.parse( token );
     }
-    cerr << "error parsing roc ids" << endl;
-    return false;
+    return true;
   }else if ((name=="tbm") || (name=="tb")) {
     token.pop_front();
     return true;
   }else{
-    return false;
+   return false;  // not a target
   }
-  return false;
+  return false;   
 }
 
 
@@ -476,11 +571,11 @@ bool Statement::parse(Token & token){
             block=NULL;
             keyword = Keyword( token.front() );
             token.pop_front();
-            vector<int> ilist;
+            IntList IntList; 
             while( (!token.empty()) &&  !( (token.front()==";") || (token.front()=="]") ) ){
-                if (parseIntegerList(token, ilist)){
-                    keyword.argv.push_back(ilist);
-                }else{	   
+                if (IntList.parse(token)){
+                    keyword.argv.push_back(IntList);
+                }else{     
                     keyword.argv.push_back(token.front());
                     token.pop_front();
                 }
@@ -502,7 +597,6 @@ bool Block::parse(Token & token){
     block    :=  "[" <statement> ( ";" <statement> ) "]"
   */
   if (token.empty()) return false;
-  //cout << "parsing Block starting with " << token.front() << endl;
   stmts.clear();
   if ( !(token.front()=="[") ) return false;
   token.pop_front();
@@ -515,13 +609,13 @@ bool Block::parse(Token & token){
     
     if (!token.empty()){
       if (token.front()=="]"){
-	token.pop_front();
-	break;
+    token.pop_front();
+    break;
       } else if (token.front()==";"){
-	token.pop_front();
+    token.pop_front();
       }else{
-	cerr << "expected ';' instead of " << token.front() << endl;
-	return false;
+    cerr << "expected ';' instead of " << token.front() << endl;
+    return false;
       }
     }
 
@@ -544,7 +638,12 @@ bool  Keyword::match(const char * s1, string & s2){
 }
 
 bool Keyword::match(const char * s, vector<int> & v1, vector<int> & v2){
-  return  (kw(s)) && (narg()==2) && (argv[0].getList(v1)) && (argv[1].getList(v2));
+  return  (kw(s)) && (narg()==2) && (argv[0].getVect(v1)) && (argv[1].getVect(v2));
+}
+
+bool Keyword::match(const char * s, vector<int> & v1, const int i1min, const int i1max, 
+    vector<int> & v2, const int i2min, const int i2max){
+  return  (kw(s)) && (narg()==2) && (argv[0].getVect(v1, i1min, i1max)) && (argv[1].getVect(v2, i2min, i2max));
 }
 
 string Keyword::str(){
@@ -561,7 +660,6 @@ string Keyword::str(){
 
 
 bool Block::exec(CmdProc * proc, Target & target){
-  //cout << "executing block [" << statements.size() << "]" << endl;
   bool success=true;
   for (unsigned int i=0; i<stmts.size(); i++){
     success |= stmts[i]->exec(proc, target); 
@@ -573,54 +671,64 @@ bool Block::exec(CmdProc * proc, Target & target){
 
 bool Statement::exec(CmdProc * proc, Target & target){
 
-  if (isAssignment){
-    //proc->setVariable( targets.name, block );
-    //cout << "assignment" <<endl;
-    return true; 
-
-  }else{
-
-    if( has_localTarget && (block==NULL) && (keyword.keyword=="") ){
-      // just a target definition, set the default
-      proc->setDefaultTarget( localTarget );
-      proc->out << "target set to " << proc->defaultTarget.str();
-      return true;
-    }
-
-    Target useTarget;
-    if( has_localTarget ){
-      useTarget = localTarget;
-    }else{
-      useTarget = target; 
-    }
-	  
-      
-    if ( (block==NULL) && !(keyword.keyword=="") ){
-
-    // keyword + arguments ==> execute
-      for(unsigned int i=0; i<useTarget.values.size();  i++){
-	Target t = useTarget.get(i);
-	if (! (proc->process(keyword,  t))) return false;
-      }
-      return true;
-
-    }else if (!(block==NULL) ){
-
-      for(unsigned int i=0; i< useTarget.values.size();  i++){
-	Target t = useTarget.get(i);
-	if (!(block->exec(proc, t) )) return false;
-      }
-      return true;
+    if (isAssignment){
+            //proc->setVariable( targets.name, block );
+            return true; 
 
     }else{
-      
-      return false;
-      // should not be here
+
+        if( has_localTarget && (block==NULL) && (keyword.keyword=="") ){
+            // just a target definition, set the default
+            proc->setDefaultTarget( localTarget );
+            proc->out << "target set to " << proc->defaultTarget.str();
+            return true;
+        }
+
+        Target useTarget;
+        if( has_localTarget ){
+            useTarget = localTarget;
+        }else{
+            useTarget = target; 
+        }
+        
+        
+          
+        if ( (block==NULL) && !(keyword.keyword=="") ){
+            // keyword + arguments ==> execute
+            if(useTarget.name=="roc"){
+                useTarget.expand( 0, 15 );
+                for(unsigned int i=0; i<useTarget.size();  i++){
+                    Target t = useTarget.get(i);
+                    if (! (proc->process(keyword,  t))) return false;
+                }
+                return true;
+            }else{
+                return proc->process(keyword, useTarget);
+            }
+
+        }else if (!(block==NULL) ){
+
+            // block
+            if(target.name=="roc"){
+                useTarget.expand( 0, 16 );
+                for(unsigned int i=0; i< useTarget.size();  i++){
+                    Target t = useTarget.get(i);
+                    if (!(block->exec(proc, t) )) return false;
+                }
+                return true;
+            }else{
+                return block->exec(proc, useTarget); 
+            }
+
+        }else{
+          
+            // should not be here
+            return false;
+
+        }
 
     }
-
-  }
-  return false;// should not get here
+    return false;// should not get here
 }
 
 
@@ -628,9 +736,23 @@ bool Statement::exec(CmdProc * proc, Target & target){
 /* Command Processor */
 CmdProc::CmdProc()
 {
-  verbose=false;
-  defaultTarget = Target("tb");
-  //fApi = new DummyApiJustForTesting();
+
+    verbose=false;
+    defaultTarget = Target("roc",0);
+
+}
+
+
+CmdProc::CmdProc(CmdProc * p)
+{
+
+    verbose = p->verbose;
+    defaultTarget = p->defaultTarget;
+    macros = p->macros;
+ 
+}
+
+CmdProc::~CmdProc(){
 }
 
 
@@ -638,14 +760,18 @@ CmdProc::CmdProc()
 /**************** call-backs for script processing ***********************/
 
 int CmdProc::tb(Keyword kw){
-    /* implementation of testboard commands */
+    /* implementation of testboard commands 
+     * return -1 for unrecognized commands
+     * return  0 for success
+     * return >0 for errors
+     */
     string s;
-    if ( kw.match("ia") ){  out <<  "ia=" << fApi->getTBia(); }
-    else if( kw.match("hvon")  ){ fApi->HVon(); }
-    else if( kw.match("hvoff") ){ fApi->HVoff(); }
-    else if( kw.match("pon")   ){ fApi->Pon(); }
-    else if( kw.match("poff")  ){ fApi->Poff(); }
-    else if( kw.match("adc")   ){
+    if     ( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia(); return 0;}
+    else if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
+    else if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
+    else if( kw.match("pon")   ){ fApi->Pon(); return 0; }
+    else if( kw.match("poff")  ){ fApi->Poff(); return 0; }
+    else if( kw.match("adc") || kw.match("dread")   ){
         fApi->daqStart();
         fApi->daqTrigger(1);
         std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
@@ -653,6 +779,7 @@ int CmdProc::tb(Keyword kw){
         for(unsigned int i=0; i<buf.size(); i++){
             out  << buf[i];
         }
+         return 0;
     }
     else if( kw.match("adcraw")   ){
         fApi->daqStart();
@@ -662,12 +789,9 @@ int CmdProc::tb(Keyword kw){
         for(unsigned int i=0; i<buf.size(); i++){
             out << " " <<hex << setw(4)<< setfill('0')  << buf[i];
         }
+        return 0;
     }
-    else{
-        out << "unknown testboard command " << kw.str();
-        return 1;
-    }
-    return 0;
+    return -1;
 }
 
 
@@ -680,30 +804,30 @@ int CmdProc::roc( Keyword kw, int rocId){
     else if (kw.match("lorange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfb, rocId);}
     else if (kw.match("enable") ) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|2, rocId);}
     else if (kw.match("disable")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfd, rocId);}
-    else if (kw.match("mask")){ fApi->_dut->maskAllPixels(true, rocId);}
-    else if (kw.match("arm", col, row)||(kw.match("pixd", col, row))
-      ||kw.match("pixe", col, row)
+    else if (kw.match("mask")   ) { fApi->_dut->maskAllPixels(true, rocId); }
+    else if (kw.match("cald")   ) { fApi->_dut->testAllPixels(false, rocId); }
+    else if (kw.match("arm", col, 0, 51, row, 0, 79) 
+      || kw.match("pixd", col, 0, 51, row, 0, 79)
+      || kw.match("pixe", col, 0, 51, row, 0, 79)
     ){
+        //cout << col.size() << " " << row.size() << endl;
+        // are "enable" and "arm" the same in apispeak?
         for(unsigned int c=0; c<col.size(); c++){
             for(unsigned int r=0; r<row.size(); r++){
+                //cout << c << " " << col[c] << "  :  " << row[r] << endl;
                 if (kw.keyword=="arm"){
-                    fApi->_dut->testPixel(col[c], row[c], true); // which roc?
-                    fApi->_dut->maskPixel(col[c], row[c], false);
+                    fApi->_dut->testPixel(col[c], row[r], true, rocId); 
+                    fApi->_dut->maskPixel(col[c], row[r], false, rocId);
                 }else if (kw.keyword=="pixd"){
-                    fApi->_dut->testPixel(col[c], row[c], true);
-                    fApi->_dut->maskPixel(col[c], row[c], true);
+                    fApi->_dut->testPixel(col[c], row[r], false, rocId);
+                    fApi->_dut->maskPixel(col[c], row[r], true, rocId);
                 }else if (kw.keyword=="pixe"){
-                    fApi->_dut->testPixel(col[c], row[c], true);
-                    fApi->_dut->maskPixel(col[c], row[c], false);
+                    fApi->_dut->testPixel(col[c], row[r], true, rocId);
+                    fApi->_dut->maskPixel(col[c], row[r], false, rocId);
                 }
              }
         }
-        out << "this doesn't really work, I don't seem to understand the api";
-        /*
-          for f in `find . -name *.h*`; do sed -i -e "s/private\:/public\:/" $f; done
-        fApi->MaskAndTrim(true);
-        fApi->SetCalibrateBits(true);
-        * */
+
     }else{
         out << "unknown roc command " << kw.str();
         return 1;
@@ -725,7 +849,7 @@ bool CmdProc::process(Keyword keyword, Target target){
 
 
     if( keyword.match("macros")){
-    // dump the list of macros
+        // dump the list of macros
         for( map<string, deque<string> >::iterator it=macros.begin(); 
             it!=macros.end(); it++){
             out << it->first << ":";
@@ -736,29 +860,49 @@ bool CmdProc::process(Keyword keyword, Target target){
         }
         return true;
     }
-    if (keyword.match("help")){
-        out << "under construction, essentially compatible to the psi46expert command line";
-        return true;
+    
+    
+    string filename;
+    
+    if (keyword.match("exec", filename)){
+        
+        // execute a file with a new command processor
+        CmdProc * p = new CmdProc( this );
+        ifstream inputFile( filename.c_str());
+        if ( inputFile.is_open()) {
+            string line;
+            while( getline( inputFile, line ) ){
+                p->exec(line);  
+                out << p->out.str() << endl;
+            }
+            return true;
+            
+        }  else {
+            
+            out << " Unable to open file ";;
+            return false;
+        }
     }
+    
+    string message;
+    if ( keyword.match("echo", message)){
+        out << message;
+        return true;
+    }   
 
 
 
     // 
-    if(target.name=="tb"){
+    int stat = tb( keyword );
+    if ( stat >=0 ) return (stat==0);
+    
+    //stat = tbm( keyword );
+   //if ( stat >=0 ) return (stat==0);
+         
+ 
+    stat = roc(keyword, target.value());
 
-        tb( keyword );
-
-    } else if (target.name=="tbm") {
-        
-        // todo
-        
-    } else if (target.name=="roc") {
-
-        roc(keyword, target.value());
-
-    }
-
-  return true;
+    return (stat==0);
 } 
 
 
