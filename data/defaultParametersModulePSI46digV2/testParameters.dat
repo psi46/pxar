@@ -54,7 +54,7 @@ xtalk               checkbox
 
 -- Scurves
 adjustvcal          checkbox(1)
-Ntrig               5
+Ntrig               50
 DAC                 VthrComp
 DacLo               0
 DacHi               200
