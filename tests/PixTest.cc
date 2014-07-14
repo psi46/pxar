@@ -1136,7 +1136,10 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
     fHistOptions.insert(make_pair(h4, "colz")); 
 
     //    std::transform(dac.begin(), dac.end(), dac.begin(), ::tolower);
-    if (!name.compare("scurveVthrComp")) {
+    //    if (!name.compare("scurveVthrComp")) {
+    string lname(name); 
+    std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
+    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
       dumpFile = true; 
       OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
       OutputFile << "Mode 1 " << "Ntrig " << getParameter("ntrig") << endl;
@@ -1200,7 +1203,7 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
       TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
       resultMaps.push_back(d1); 
       fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 6., zeroSuppressed); 
       resultMaps.push_back(d2); 
       fHistList.push_back(d2); 
       TH1* d3 = distribution((TH2D*)h4, 256, 0., 256., zeroSuppressed); 

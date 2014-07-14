@@ -1,32 +1,31 @@
-
+#i.e. trg freq = 600bx
 -- Pattern
 
 delay , 255
+delay , 239
+cal   , 106
+
+trg   , 20
 delay , 219
-cal   , 106
-
-trg   , 20
-tok   , 219
 delay , 255
 cal   , 106
 
 trg   , 20
-tok   , 219
+delay , 219
 delay , 255
 cal   , 106
 
 trg   , 20
-tok   , 219
+delay , 219
 delay , 255
 cal   , 106
 
 trg   , 20
-tok   , 70
+delay , 70
 delay , 255
 delay , 255
 
-trg   , 20
-tok   , 0
+trg   , 0
 
 
 -- Test Pixels (col,row)

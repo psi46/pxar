@@ -125,10 +125,18 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				LOG(logDEBUG) << "  setting fUnMaskAll -> " << fUnMaskAll;
 			}
 
+			if (!parName.compare("externalclk")){
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fExtClk = atoi(sval.c_str());
+				setToolTips();
+				LOG(logDEBUG) << "  setting fExtClk -> " << fExtClk;
+			}
+
 			if (!parName.compare("filltree")) {
 				fParFillTree = !(atoi(sval.c_str()) == 0);
 				setToolTips();
-				LOG(logINFO) << "  setting fParFillTree -> " << fParFillTree;
+				LOG(logDEBUG) << "  setting fParFillTree -> " << fParFillTree;
 			}
 
 			break;
@@ -644,6 +652,17 @@ void PixTestPattern::doTest()
 		Ph.push_back(h1);
 	}
 
+	// Select external clock (from input parameter)
+	if (fExtClk){ 
+		LOG(logINFO) << "PixTestPattern:: Setting CLK to external";
+		fApi->setExternalClock(false);   //toggle needed (FW issue?)
+		fApi->setExternalClock(true);
+	}
+	else {
+		fApi->setExternalClock(true);
+		fApi->setExternalClock(false);
+	}
+
 	// Start the DAQ:
 	//::::::::::::::::::::::::::::::::
 
@@ -656,7 +675,7 @@ void PixTestPattern::doTest()
 
 	fApi->daqStart();
 
-	//send only one trigger to reset:
+	// Send only one trigger to reset:
 	fApi->daqTrigger(1, fPeriod);
 	LOG(logINFO) << "PixTestPattern:: RES sent once ";
 
