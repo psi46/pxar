@@ -46,6 +46,8 @@ binaryoutput        checkbox(0)
 inputfile           testPatterns
 outputfile          defaultPattern
 unmaskall           checkbox(0)
+externalclk         checkbox(0)
+filltree            checkbox(0)
 resettodefault      button
 
 -- BumpBonding

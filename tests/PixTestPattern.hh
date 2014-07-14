@@ -38,6 +38,7 @@ private:
 	std::string fInputFile;
 	std::string fOutputFile;
 	bool	fUnMaskAll;
+	bool	fExtClk;
 	bool	fParFillTree;
 
 	bool    fParOutOfRange;
