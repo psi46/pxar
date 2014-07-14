@@ -1203,7 +1203,7 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
       TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
       resultMaps.push_back(d1); 
       fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 6., zeroSuppressed); 
       resultMaps.push_back(d2); 
       fHistList.push_back(d2); 
       TH1* d3 = distribution((TH2D*)h4, 256, 0., 256., zeroSuppressed); 
