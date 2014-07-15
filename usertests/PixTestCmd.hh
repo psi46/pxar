@@ -68,7 +68,7 @@ class IntList{
     int singleValue;
     vector< pair<int,int> > ranges; 
     public:
-    enum {IMIN=-1, IMAX=-2, UNDEFINED=-3};
+    enum special{IMIN=-1, IMAX=-2, UNDEFINED=-3};
     IntList():singleValue(UNDEFINED){ranges.clear();}
     bool parse( Token & , const bool append=false );
     
