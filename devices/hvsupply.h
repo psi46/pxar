@@ -63,6 +63,10 @@ namespace pxar {
      */
     double getCurrent();
 
+    /** Reads back the voltage and the current drawn. Value is given in A (Amperes)
+     */
+    void getVoltageCurrent(float &voltage, float &current);
+
     /** Enables compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)
      */
