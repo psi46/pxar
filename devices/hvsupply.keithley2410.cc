@@ -12,10 +12,11 @@
 #include <iostream>
 
 using namespace pxar;
+#define COM_PORT_NUMBER 30 //See listing in rs232.cc
 
 // ----------------------------------------------------------------------
 hvsupply::hvsupply() {
-  const int comPortNumber = 16; /* /dev/ttyUSB0 */
+  const int comPortNumber = COM_PORT_NUMBER;
   if(!openComPort(comPortNumber,57600)) {
     LOG(logCRITICAL) << "Error connecting via RS232 port!";
     throw UsbConnectionError("Error connecting via RS232 port!");
