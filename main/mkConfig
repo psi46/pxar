@@ -104,18 +104,15 @@ if ($opt_p) {
     print "patterns: $patterns\n";
 
     my @files = glob("$dir/*");
-    print "files: ",  join(", " , @files), "\n";
 
     foreach $repl (@patterns) {
 	($pref, $orig, $change, $postf) = split(/\//, $repl); 
-	print "change: $orig -> $change \n" ;
 	foreach $file (@files) {
 	    open(IN, "$file") || die "Cannot open $file\n";
-	    print "open $file\n";
 	    @lines = <IN>; 
 	    close(IN); 
 	    if (grep /$orig/, @lines) {
-		print "hello\n";
+		print "$file: changing $orig -> $change\n" ;
 		grep(s/$orig/$change/g, @lines); 
 		open(OUT, ">$file") || die "Cannot open $file for output\n";
 		print OUT @lines;
