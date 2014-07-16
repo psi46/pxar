@@ -291,7 +291,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 	try {
 	  results = fApi->getThresholdMap(dac, 1, daclo, dachi, FLAGS, ntrig);
 	  done = true; 
-	} catch(pxarException &e) {
+	} catch(pxarException &/*e*/) {
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
