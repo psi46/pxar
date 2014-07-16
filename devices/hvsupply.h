@@ -11,6 +11,8 @@
  */
 #include "pxardllexport.h"
 
+#include <string>
+
 /** Cannot use stdint.h when running rootcint on WIN32 */
 #if ((defined WIN32) && (defined __CINT__))
 typedef int int32_t;
@@ -35,7 +37,7 @@ namespace pxar {
      *
      *  Connects to the device, initializes communication
      */
-    hvsupply();
+    hvsupply(std::string portname = "");
 
     /** Default destructor for the hvsupply library
      *
