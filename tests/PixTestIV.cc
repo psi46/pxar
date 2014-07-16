@@ -21,7 +21,7 @@ using namespace std;
 ClassImp(PixTestIV)
 
 // ----------------------------------------------------------------------
-PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false) {
+PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false), fParPort("") {
   PixTest::init();
   init();
 }
@@ -53,6 +53,10 @@ bool PixTestIV::setParameter(string parName, string sval) {
       }
       if(!parName.compare("delay")) {
 	fParDelay = atoi(sval.c_str());
+	setToolTips();
+      }
+      if(!parName.compare("port")) {
+	fParPort = sval;
 	setToolTips();
       }
       break;
@@ -115,7 +119,7 @@ void PixTestIV::doTest() {
   int tripped(-1);
 
   LOG(logINFO) << "Starting IV curve measurement...";
-  pxar::hvsupply *hv = new pxar::hvsupply();
+  pxar::hvsupply *hv = new pxar::hvsupply(fParPort.c_str());
   hv->hvOn();
   double vOld = hv->getVoltage();
   LOG(logDEBUG) << "HV supply has default voltage: " << vOld; 

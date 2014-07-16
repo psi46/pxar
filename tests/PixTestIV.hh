@@ -21,6 +21,7 @@ private:
   int fParVoltageStep;
   int fParDelay;
   bool fStop; 
+  std::string fParPort; 
 
   ClassDef(PixTestIV, 1)
 
