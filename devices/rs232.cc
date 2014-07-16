@@ -107,7 +107,8 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     }
 
-  printf("Opening com port: %s\n",comports[comport_number]);
+
+  printf("Opening com port: %s\n", comports[comport_number]);
   rs_error = 0;
   Cport[comport_number] = open(comports[comport_number], O_RDWR | O_NOCTTY | O_NDELAY);
   if(Cport[comport_number]==-1)
@@ -124,6 +125,11 @@ int RS232_OpenComport(int comport_number, int baudrate)
       return(1);
     }
   new_port_settings = old_port_settings[comport_number];
+
+  memset(&new_port_settings, 0, sizeof(new_port_settings));  /* clear the new struct */
+
+  new_port_settings.c_cflag = baudr | CS8 | CLOCAL | CREAD;
+  new_port_settings.c_iflag = IGNPAR;
 
   cfsetospeed(&new_port_settings,baudr);
   cfsetispeed(&new_port_settings,baudr);
@@ -155,7 +161,6 @@ int RS232_OpenComport(int comport_number, int baudrate)
 
   return(0);
 }
-
 
 int RS232_PollComport(int comport_number, char *buf, int size)
 {
@@ -333,10 +338,14 @@ void RS232_cputs(int comport_number, const char *text)  /* sends a string to ser
 }
 
 //---------------------------------------------------------------------------
-int openComPort(const int comPortNumber,const int baud)
+int openComPort(const int comPortNumber,const int baud, const char *name)
 {
   comport_number=comPortNumber;
-    
+  if (strcmp(name, "")) {
+    sprintf(comports[0], "%s", name); 
+    comport_number = 0; 
+  }
+
   if(RS232_OpenComport(comport_number, baud))
     {
       LOG(logCRITICAL) << "Cannot open COM port!";
