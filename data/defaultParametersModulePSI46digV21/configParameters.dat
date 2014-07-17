@@ -4,7 +4,7 @@ testboardName *
 
 tbParameters tbParameters.dat
 dacParameters dacParameters
-tbmParameters tbmParameters.dat
+tbmParameters tbmParameters
 trimParameters trimParameters
 testParameters testParameters.dat
 maskFile defaultMaskFile.dat
@@ -14,7 +14,7 @@ rootFileName pxar.root
 
 nModules 1
 nRocs 16
-nTbms 1
+nTbms 2
 hubId 31
 tbmEnable 1
 tbmEmulator 0
