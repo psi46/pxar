@@ -126,6 +126,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   while (!done) {
     try {
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true;
     } catch(pxarException &e) {
       ++cnt;
@@ -198,6 +199,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   while (!done){
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(DataMissingEvent &e) {
       ++cnt;
@@ -290,6 +292,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       while (!done){
 	try {
 	  results = fApi->getThresholdMap(dac, 1, daclo, dachi, FLAGS, ntrig);
+	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true; 
 	} catch(pxarException &/*e*/) {
 	  ++cnt;
@@ -302,6 +305,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       while (!done){
 	try {
 	  results = fApi->getThresholdMap(dac, FLAGS, ntrig);
+	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true; 
 	} catch(pxarException &e) {
 	  ++cnt;
@@ -818,6 +822,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
   while (!done){
     try {
       scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(pxarException &e) {
       ++cnt;
@@ -1071,8 +1076,10 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
     try{
       if (1 == ihit) {
 	results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, fNtrig); 
+	fNDaqErrors = fApi->daqGetNDecoderErrors();
       } else {
 	results = fApi->getPulseheightVsDAC(dac, dacmin, dacmax, FLAGS, fNtrig); 
+	fNDaqErrors = fApi->daqGetNDecoderErrors();
       }
       done = true;
     } catch(DataMissingEvent &e) {
@@ -1374,6 +1381,7 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
   while (!done){
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(DataMissingEvent &e) {
       ++cnt;

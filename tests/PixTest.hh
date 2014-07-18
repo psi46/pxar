@@ -256,6 +256,7 @@ protected:
   double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
   int                  fNtrig; 
   std::vector<double>  fPhErrP0, fPhErrP1; 
+  uint32_t             fNDaqErrors; 
 
   std::string           fName, fTestTip, fSummaryTip, fStopTip; ///< information for this test
 
