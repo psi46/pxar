@@ -221,12 +221,10 @@ sub cleanFiles {
 
     for ($i = 0; $i < 2; $i++) {
 	$file = "$dir/tbmParameters_C${i}a.dat";
-	print "try removing $file\n";
 	if (-e "$file") {
 	    unlink($file); 
 	}
 	$file = "$dir/tbmParameters_C${i}b.dat";
-	print "try removing $file\n";
 	if (-e "$file") {
 	    unlink($file); 
 	}
