@@ -381,7 +381,6 @@ resettodefault      button
 -- BumpBonding
 Ntrig               5
 vcals               250
-xtalk               checkbox
 
 -- Scurves
 adjustvcal          checkbox(1)
