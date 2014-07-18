@@ -149,7 +149,27 @@ void PixTestBBMap::doTest() {
     hname = thrmapsCals[i]->GetName();
     if (string::npos == hname.find("dist_thr_")) continue;
     h = (TH1D*)thrmapsCals[i];
-    bbprob = h->Integral(1, 10); 
+    int imax = h->GetMaximumBin(); 
+    int firstZero(-1), lastZero(-1); 
+    for (int ibin = imax; ibin < h->GetNbinsX(); ++ibin) {
+      if (h->GetBinContent(ibin) < 1 && firstZero < 0) {
+	firstZero = ibin;
+      }
+      if (firstZero > 0 && h->GetBinContent(ibin) > 0) {
+	lastZero = ibin; 
+	break;
+      }
+    }
+
+    int bmin(0); 
+    if (lastZero - firstZero > 10) {
+      bmin = lastZero - 1;
+    } else {
+      bmin = firstZero + 5;
+    }
+
+    //    bbprob = h->Integral(1, 10);
+    bbprob = h->Integral(bmin, h->GetNbinsX()); 
     bbString += Form(" %6.4f", bbprob); 
   }
 
