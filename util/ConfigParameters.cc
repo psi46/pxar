@@ -610,13 +610,10 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
 // ----------------------------------------------------------------------
 void ConfigParameters::readTbmDacs() {
   if (!fReadTbmParameters) {
-    // string filename; 
+    string filename; 
     for (unsigned int i = 0; i < fnTbms; ++i) {
-      //filename = fDirectory + "/" + fTbmParametersFileName; 
-      // vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
-      std::stringstream filename;
-      filename << fDirectory << "/" << fTbmParametersFileName << "_C" << i << ".dat";
-      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
+      filename = fDirectory + "/" + fTbmParametersFileName; 
+      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
       fTbmParameters.push_back(rocDacs); 
     }
     fReadTbmParameters = true; 
