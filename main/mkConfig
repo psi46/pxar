@@ -55,7 +55,7 @@ if ($opt_r) {
     if (grep(/$opt_r/, @rocok)) {
 	$roctype = $opt_r;
     } else {
-	print "roc type $opt_r not known, resetting to $roctype\n";
+	print "roc type $opt_r not known, resetting to $roctype (known ROC types: ", join(", " , @rocok), ")\n";
     }
 }
 &setDacs;
@@ -67,7 +67,7 @@ if ($opt_t) {
     if (grep(/$opt_t/, @tbmok)) {
 	$tbmtype = $opt_t;
     } else {
-	print "TBM type $opt_t not known, resetting to $tbmtype\n";
+	print "TBM type $opt_t not known, resetting to $tbmtype (known TBM types: ", join(", " , @tbmok), ")\n";
     }
 }
 
@@ -219,9 +219,17 @@ sub cleanFiles {
 	unlink($file); 
     }
 
-    $file = "$dir/tbmParameters.dat";
-    if (-e "$file") {
-	unlink($file); 
+    for ($i = 0; $i < 2; $i++) {
+	$file = "$dir/tbmParameters_C${i}a.dat";
+	print "try removing $file\n";
+	if (-e "$file") {
+	    unlink($file); 
+	}
+	$file = "$dir/tbmParameters_C${i}b.dat";
+	print "try removing $file\n";
+	if (-e "$file") {
+	    unlink($file); 
+	}
     }
 
     $file = "$dir/configParameters.dat";
@@ -256,7 +264,7 @@ testboardName *
 
 tbParameters tbParameters.dat
 dacParameters dacParameters
-tbmParameters tbmParameters.dat
+tbmParameters tbmParameters
 trimParameters trimParameters
 testParameters testParameters.dat
 maskFile defaultMaskFile.dat
@@ -506,11 +514,17 @@ sub printDacParameters {
 
 # ----------------------------------------------------------------------
 sub printTbmParameters {
-    my $file = "$dir/tbmParameters.dat";
-    open(FH, ">$file") || die "cannot open $file\n";
-    print FH $tbms;
-    close(FH);
-    
+    for ($itbm = 0; $itbm < $ntbms; $itbm++) {
+	my $file = "$dir/tbmParameters_C${itbm}a.dat";
+	open(FH, ">$file") || die "cannot open $file\n";
+	print FH $tbms;
+	close(FH);
+
+	my $file = "$dir/tbmParameters_C${itbm}b.dat";
+	open(FH, ">$file") || die "cannot open $file\n";
+	print FH $tbms;
+	close(FH);
+    }
 
 }
 
