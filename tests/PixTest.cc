@@ -203,8 +203,10 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
       done = true; 
     } catch(DataMissingEvent &e) {
       ++cnt;
+      fNDaqErrors = 666666;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -295,6 +297,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true; 
 	} catch(pxarException &/*e*/) {
+	  fNDaqErrors = 666667;
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
@@ -308,6 +311,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
 	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true; 
 	} catch(pxarException &e) {
+	  fNDaqErrors = 666667;
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
@@ -825,6 +829,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -1083,9 +1088,11 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       }
       done = true;
     } catch(DataMissingEvent &e) {
+      fNDaqErrors = 666666;
       ++cnt;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -1332,6 +1339,19 @@ vector<uint8_t> PixTest::getDacs(string dacName) {
 }
 
 // ----------------------------------------------------------------------
+string PixTest::getDacsString(std::string dacName) {
+  vector<uint8_t> v = getDacs(dacName); 
+  stringstream s; 
+  unsigned int vsize = v.size();
+  for (unsigned int i = 0; i < vsize; ++i) {
+    s << static_cast<int>(v[i]); 
+    if (i < vsize-1) s << " "; 
+  }
+  return s.str(); 
+}
+
+
+// ----------------------------------------------------------------------
 void PixTest::setDacs(string dacName, vector<uint8_t> v) {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
@@ -1385,8 +1405,10 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
       done = true; 
     } catch(DataMissingEvent &e) {
       ++cnt;
+      fNDaqErrors = 666666;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;

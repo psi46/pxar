@@ -180,6 +180,8 @@ public:
   std::vector<uint8_t> getDacs(std::string dacName); 
   /// set on all ROCs the DAC dacName
   void setDacs(std::string dacName, std::vector<uint8_t> dacVector); 
+  /// return from all ROCs the DAC dacName as a string
+  std::string getDacsString(std::string dacName); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 
