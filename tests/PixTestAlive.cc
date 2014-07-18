@@ -184,7 +184,7 @@ void PixTestAlive::aliveTest() {
   }
   LOG(logINFO) << "PixTestAlive::aliveTest() done";
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
-  LOG(logINFO) << "number of red-efficiency pixels: " << probPixelString;
+  LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
   
 }
 
