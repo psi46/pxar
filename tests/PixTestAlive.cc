@@ -143,7 +143,6 @@ void PixTestAlive::aliveTest() {
   PixTest::update(); 
   banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d (low range)", fParNtrig, fParVcal));
 
-  fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
