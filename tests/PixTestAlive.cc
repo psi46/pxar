@@ -141,13 +141,16 @@ void PixTestAlive::aliveTest() {
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d (low range)", fParNtrig, fParVcal));
+  string ctrlregstring = getDacsString("ctrlreg"); 
+  banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
+	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
 
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
+  fNDaqErrors = 0; 
   vector<TH2D*> test2 = efficiencyMaps("PixelAlive", fParNtrig, FLAG_FORCE_MASKED); 
   vector<int> deadPixel(test2.size(), 0); 
   vector<int> probPixel(test2.size(), 0); 
@@ -181,7 +184,8 @@ void PixTestAlive::aliveTest() {
     probPixelString += Form(" %4d", probPixel[i]); 
     deadPixelString += Form(" %4d", deadPixel[i]); 
   }
-  LOG(logINFO) << "PixTestAlive::aliveTest() done";
+  LOG(logINFO) << "PixTestAlive::aliveTest() done" 
+	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
   
@@ -194,13 +198,17 @@ void PixTestAlive::maskTest() {
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d  (low range)", static_cast<int>(fParNtrig), fParVcal));
+
+  string ctrlregstring = getDacsString("ctrlreg"); 
+  banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
+	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
 
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(true);
 
+  fNDaqErrors = 0; 
   vector<TH2D*> test2 = efficiencyMaps("MaskTest", fParNtrig, FLAG_FORCE_MASKED); 
   vector<int> maskPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
@@ -234,7 +242,8 @@ void PixTestAlive::maskTest() {
   for (unsigned int i = 0; i < maskPixel.size(); ++i) {
     maskPixelString += Form(" %4d", maskPixel[i]); 
   }
-  LOG(logINFO) << "PixTestAlive::maskTest() done";
+  LOG(logINFO) << "PixTestAlive::maskTest() done" 
+	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of mask-defect pixels (per ROC): " << maskPixelString;
 }
 
@@ -245,7 +254,9 @@ void PixTestAlive::addressDecodingTest() {
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
-  banner(Form("PixTestAlive::addressDecodingTest() vcal = %d (low range)", static_cast<int>(fParVcal)));
+  string ctrlregstring = getDacsString("ctrlreg"); 
+  banner(Form("PixTestAlive::addressDecodingTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
+	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
 
   fApi->setDAC("vcal", fParVcal);
 
@@ -256,6 +267,7 @@ void PixTestAlive::addressDecodingTest() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
+  fNDaqErrors = 0; 
   vector<TH2D*> test2 = efficiencyMaps("AddressDecodingTest", fParNtrig, FLAG_CHECK_ORDER|FLAG_FORCE_MASKED); 
   vector<int> addrPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
@@ -291,7 +303,8 @@ void PixTestAlive::addressDecodingTest() {
   for (unsigned int i = 0; i < addrPixel.size(); ++i) {
     addrPixelString += Form(" %4d", addrPixel[i]); 
   }
-  LOG(logINFO) << "PixTestAlive::addressDecodingTest() done";
+  LOG(logINFO) << "PixTestAlive::addressDecodingTest() done" 
+	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of address-decoding pixels (per ROC): " << addrPixelString;
 }
 
