@@ -196,7 +196,6 @@ void PixTestAlive::maskTest() {
   PixTest::update(); 
   banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d  (low range)", static_cast<int>(fParNtrig), fParVcal));
 
-  fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
@@ -248,7 +247,6 @@ void PixTestAlive::addressDecodingTest() {
   PixTest::update(); 
   banner(Form("PixTestAlive::addressDecodingTest() vcal = %d (low range)", static_cast<int>(fParVcal)));
 
-  fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fParVcal);
 
   fDirectory->cd();
