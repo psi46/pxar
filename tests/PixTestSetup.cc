@@ -9,7 +9,6 @@
 #include "log.h"
 #include "constants.h"
 
-
 using namespace std;
 using namespace pxar;
 
@@ -140,20 +139,20 @@ void PixTestSetup::doTest()
       // Set up the delays in the DTB:
       fApi->setTestboardDelays(getMagicDelays(iclk,ideser));
 
-      // Send the triggers and read out the events:
-      fApi->daqTrigger(Ntrig,period);
-      daqRawEv = fApi->daqGetRawEventBuffer();
+      // Send the triggers and read out the events:    
+	  fApi->daqTrigger(Ntrig,period);	  	       
+	  daqRawEv = fApi->daqGetRawEventBuffer();
 
       unsigned int head_good = 0;
       unsigned int head_bad = 0;
 
       // Trying to find the ROC header 0x7f8 in the raw DESER160 data:
-      for(std::vector<rawEvent>::iterator evt = daqRawEv.begin(); evt != daqRawEv.end(); ++evt) {
-	// Get the first word from ROC header:
-	int head = static_cast<int>(evt->data.at(0) & 0xffc);
-	if (head == 0x7f8) { head_good++; }
-	else head_bad++;
-      }
+	  for (std::vector<rawEvent>::iterator evt = daqRawEv.begin(); evt != daqRawEv.end(); ++evt) {
+		  // Get the first word from ROC header:
+		  int head = static_cast<int>(evt->data.at(0) & 0xffc);
+		  if (head == 0x7f8) { head_good++; }
+		  else head_bad++;
+	  }
 
       // Print the stuff:
       if(head_good > 0) {
@@ -168,7 +167,7 @@ void PixTestSetup::doTest()
       else if(head_bad > 0) {
 	oneline << std::hex << " " << std::setw(3) << std::setfill('0') << (daqRawEv.at(0).data.at(0) & 0xffc) << std::setfill(' ') << "    " << std::dec;
       }
-      else oneline << "[...]";
+      else oneline << " [.]    ";
     }
     LOG(logINFO) << oneline.str();
   }
