@@ -4,7 +4,11 @@
 #include "PixTestCmd.hh"
 #include "log.h"
 #include "constants.h"
+
+#if (defined WIN32)
 #include <Windows4Root.h>  //needed before any ROOT header
+#endif
+
 #include <TGLayout.h>
 #include <TGClient.h>
 #include <TGFrame.h>
