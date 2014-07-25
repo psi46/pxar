@@ -2,6 +2,7 @@
 // to set clk and deser160phase for single roc test
 
 #include <stdlib.h>   // atof, atoi
+#include <iostream>
 #include <algorithm>  // std::find
 #include <TBox.h>
 
@@ -178,9 +179,22 @@ void PixTestSetup::doTest()
 
   int finalclk, finaldeser;
   histo->Draw("colz");
-  Int_t bin = histo->GetMaximumBin();
+  Int_t bin = histo->GetMaximumBin(); //set always to minimum binx/biny  
   Int_t binx, biny, binz;
   histo->GetBinXYZ(bin, binx, biny, binz);
+
+  //to choose a middle value between various 'good clk':
+  LOG(logDEBUG) << "PixTestSetup:: choosing the good clk phase.";
+  Double_t val1 = histo->GetBinContent(bin);
+  Double_t val2 = 0;
+  int cnt = 0;
+  for (int ibiny = (biny+1); ibiny <= fClkMax; ibiny ++) {
+	  val2 = histo->GetBinContent(binx, ibiny);
+	  if (val2 < val1) break;
+	  else  cnt++;
+  }
+  biny = biny + ((int)(cnt / 2));
+
   Double_t x1 = histo->GetXaxis()->GetBinLowEdge(binx);
   Double_t x2 = histo->GetXaxis()->GetBinUpEdge(binx);
   Double_t y1 = histo->GetYaxis()->GetBinLowEdge(biny);
@@ -198,12 +212,13 @@ void PixTestSetup::doTest()
 
     finalclk = biny - 1;
     finaldeser = binx - 1;
-    LOG(logINFO) << "DTB Delay Setup found good delays at " << "clk = "<< finalclk << ", deser160 = " << finaldeser;
+    LOG(logINFO) << "Found good delays at " << "CLK = "<< finalclk << ", DESER160 = " << finaldeser;
   }
   else {
     //back to default values
     finalclk = finaldeser = 4;
-    LOG(logINFO) << "DTB Delay Setup could not find any good delays. Falling back to default values.";
+    LOG(logINFO) << "DTB Delay Setup could not find any good delays.";
+	LOG(logINFO) << "Falling back to default values.";
   }
 
   // Update the histogram, also print the added box around selected settings:
@@ -224,6 +239,8 @@ void PixTestSetup::doTest()
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
   
   fHistList.clear();
+
+  LOG(logINFO) << "PixTestSetup::doTest() done for.";
 }
 
 std::vector<std::pair<std::string,uint8_t> > PixTestSetup::getMagicDelays(uint8_t clk, uint8_t deser160) {
@@ -238,7 +255,7 @@ std::vector<std::pair<std::string,uint8_t> > PixTestSetup::getMagicDelays(uint8_
 
 // ----------------------------------------------------------------------
 void PixTestSetup::saveTbParameters() {
-  LOG(logINFO) << "Write Tb parameters to file"; 
+  LOG(logINFO) << "PixTestSetup:: Write Tb parameters to file."; 
   fPixSetup->getConfigParameters()->writeTbParameterFile();
 }
 
