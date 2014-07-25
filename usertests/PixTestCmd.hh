@@ -3,7 +3,11 @@
 #define PIXTESTCMD_H
 
 #include "PixTest.hh"
-#include <Windows4Root.h>
+
+#if (defined WIN32)
+#include <Windows4Root.h>  //needed before any ROOT header
+#endif
+
 #include <TGFrame.h>
 #include <TGTextView.h>
 #include <TGTextEntry.h>
