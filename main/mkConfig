@@ -465,7 +465,7 @@ ClkMax              19
 saveTbParameters    button
 
 -- BareModule
-nsteps              3
+ntests              3
 
 EOF
 }

@@ -20,7 +20,7 @@ using namespace pxar;
 ClassImp(PixTestPattern)
 
 //------------------------------------------------------------------------------
-PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fInputFile("null"), fOutputFile("null"), fUnMaskAll(0), fParFillTree(0){
+PixTestPattern::PixTestPattern(PixSetup *a, std::string name) : PixTest(a, name), fParPgCycles(0), fParTrigLoop(0), fParPeriod(0), fParSeconds(0), fPatternFromFile(0), fResultsOnFile(1), fBinOut(0), fInputFile("null"), fOutputFile("null"), fUnMaskAll(0), fExtClk(0), fParFillTree(0){
 	PixTest::init();
 	init();
 	LOG(logDEBUG) << "PixTestPattern ctor(PixSetup &a, string, TGTab *)";
