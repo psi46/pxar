@@ -21,7 +21,7 @@ using namespace std;
 ClassImp(PixTestIV)
 
 // ----------------------------------------------------------------------
-PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false) {
+PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false), fParPort("") {
   PixTest::init();
   init();
 }
@@ -53,6 +53,10 @@ bool PixTestIV::setParameter(string parName, string sval) {
       }
       if(!parName.compare("delay")) {
 	fParDelay = atoi(sval.c_str());
+	setToolTips();
+      }
+      if(!parName.compare("port")) {
+	fParPort = sval;
 	setToolTips();
       }
       break;
@@ -115,25 +119,26 @@ void PixTestIV::doTest() {
   int tripped(-1);
 
   LOG(logINFO) << "Starting IV curve measurement...";
-  pxar::hvsupply *hv = new pxar::hvsupply();
+  pxar::hvsupply *hv = new pxar::hvsupply(fParPort.c_str());
   hv->hvOn();
   double vOld = hv->getVoltage();
   LOG(logDEBUG) << "HV supply has default voltage: " << vOld; 
-  hv->setCurrentLimit(50);
 
   TTimeStamp startTs;
   
   // -- loop over voltage:
-  double voltMeasured(-1.), amps(-1.);
+  float voltMeasured(-1.), amps(-1.);
   for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {    
     hv->setVoltage(voltSet);
+    mDelay(fParDelay*1000); 
     // -- get within 1V of specified voltage. Try at most 5 times.
     int ntry(0);
     while (ntry < 5) {
       gSystem->ProcessEvents();
       if (fStop) break;
-      mDelay(fParDelay*500); 
-      voltMeasured = hv->getVoltage(); 
+      //      voltMeasured = hv->getVoltage(); 
+      hv->getVoltageCurrent(voltMeasured, amps);
+      amps *= 1.e6;
       if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!
       ++ntry;
     }
@@ -141,8 +146,8 @@ void PixTestIV::doTest() {
 
     fTimeStamp->Set();
     ts.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), fTimeStamp->GetTimeSpec().tv_sec));
-    amps = hv->getCurrent()*1E6;
-    voltMeasured = hv->getVoltage();
+    //    amps = hv->getCurrent()*1E6;
+    //    voltMeasured = hv->getVoltage();
     vm.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), voltMeasured));
 
     if (hv->tripped() || ((amps<-99.) && (voltMeasured !=0.))) {
@@ -157,8 +162,7 @@ void PixTestIV::doTest() {
     }
     h1->Draw("p");
     PixTest::update();
-
-    gSystem->ProcessEvents();
+    //    gSystem->ProcessEvents();
   }
 
   // -- ramp down voltage
@@ -179,14 +183,14 @@ void PixTestIV::doTest() {
   ofstream OutputFile;
   OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
   OutputFile << "# IV test from "   << startTs.AsString("l") << endl;
-  OutputFile << "# Voltage[V] Current[A]    Timestamp" << endl << endl;
+  OutputFile << "#voltage(V)\tcurrent(A)\ttimestamp" << endl;
 
   for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
     if (tripped > -1 && voltSet >= tripped) break;
     OutputFile << Form("%+8.3f\t%+e\t%ld", 
 		       //		       static_cast<double>(voltSet), 
 		       static_cast<double>(vm[voltSet]), 
-		       1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
+		       -1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
 		       static_cast<unsigned long>(ts[voltSet])
 		       )
       

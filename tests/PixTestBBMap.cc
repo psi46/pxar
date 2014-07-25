@@ -89,7 +89,7 @@ void PixTestBBMap::doTest() {
 
   cacheDacs();
   PixTest::update();
-  bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d, xtalk = %d", fParNtrig, fParVcalS, fParXtalk));
+  bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d (high range), xtalk = %d", fParNtrig, fParVcalS, fParXtalk));
  
   fDirectory->cd();
 
@@ -102,7 +102,7 @@ void PixTestBBMap::doTest() {
 
   int result(7);
 
-  LOG(logDEBUG) << "taking CalS threshold maps";
+  fNDaqErrors = 0; 
   vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 170, result, 1, flag);
 
   if (fParXtalk) {
@@ -144,20 +144,50 @@ void PixTestBBMap::doTest() {
 
   // -- summary printout
   string bbString(""), hname(""); 
-  double bbprob(0.); 
+  int bbprob(0); 
   for (unsigned int i = 0; i < thrmapsCals.size(); ++i) {
     hname = thrmapsCals[i]->GetName();
     if (string::npos == hname.find("dist_thr_")) continue;
     h = (TH1D*)thrmapsCals[i];
-    bbprob = h->Integral(1, 10); 
-    bbString += Form(" %6.4f", bbprob); 
+    int imax = h->GetMaximumBin(); 
+    LOG(logDEBUG) << "setting imax to bin with maximum: " << imax; 
+    if (imax > 0.9*h->GetNbinsX()) {
+      imax = h->FindBin(h->GetMean()); 
+      LOG(logDEBUG) << "resetting to imax to bin with mean: " << imax; 
+    }
+    int firstZero(-1), lastZero(-1); 
+    for (int ibin = imax; ibin < h->GetNbinsX(); ++ibin) {
+      if (h->GetBinContent(ibin) < 1 && firstZero < 0) {
+	firstZero = ibin;
+      }
+      if (firstZero > 0 && h->GetBinContent(ibin) > 0) {
+	lastZero = ibin-1; 
+	break;
+      }
+    }
+
+    int bmin(0); 
+    if (lastZero - firstZero > 10) {
+      bmin = lastZero - 1;
+    } else {
+      bmin = firstZero + 5;
+    }
+
+    LOG(logDEBUG)  << "firstZero: " << firstZero 
+		   << " lastZero: " << lastZero
+		   << " -> bmin: " << bmin;
+
+    //    bbprob = h->Integral(1, 10);
+    bbprob = static_cast<int>(h->Integral(bmin, h->FindBin(200))); 
+    bbString += Form(" %d", bbprob); 
   }
 
   h->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
   
-  LOG(logINFO) << "PixTestBBMap::doTest() done";
+  LOG(logINFO) << "PixTestBBMap::doTest() done"
+	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
 
 }

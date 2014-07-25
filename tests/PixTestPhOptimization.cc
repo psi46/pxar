@@ -141,7 +141,7 @@ void PixTestPhOptimization::doTest() {
     //retrieving info from the vcal thr map for THIS random pixel
     for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
       if(thrit->column == randomPix.column && thrit->row == randomPix.row){
-	minthr=thrit->getValue();
+	minthr=static_cast<int>(thrit->getValue());
       }
     }
   }
@@ -445,7 +445,7 @@ void PixTestPhOptimization::GetMinPixel(pxar::pixel &minpixel, std::vector<pxar:
       }
       if(isPixGood){
 	minpixel = *thrit;
-	minthr = minpixel.getValue();
+	minthr = static_cast<int>(minpixel.getValue());
       }
     }
   }

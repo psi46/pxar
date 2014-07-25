@@ -1,9 +1,0 @@
-0       clear   0xF0
-1    counters   0x81
-2        mode   0xC0
-3    pkam_set   0x10
-4      delays   0x00
-5       basee   0x20
-6 temperature   0x00
-
-	

@@ -180,6 +180,8 @@ public:
   std::vector<uint8_t> getDacs(std::string dacName); 
   /// set on all ROCs the DAC dacName
   void setDacs(std::string dacName, std::vector<uint8_t> dacVector); 
+  /// return from all ROCs the DAC dacName as a string
+  std::string getDacsString(std::string dacName); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 
@@ -256,6 +258,7 @@ protected:
   double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
   int                  fNtrig; 
   std::vector<double>  fPhErrP0, fPhErrP1; 
+  uint32_t             fNDaqErrors; 
 
   std::string           fName, fTestTip, fSummaryTip, fStopTip; ///< information for this test
 

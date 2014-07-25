@@ -4,12 +4,14 @@
 #include "PixTestCmd.hh"
 #include "log.h"
 #include "constants.h"
+#include <Windows4Root.h>  //needed before any ROOT header
 #include <TGLayout.h>
 #include <TGClient.h>
 #include <TGFrame.h>
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 //#define DEBUG
 
