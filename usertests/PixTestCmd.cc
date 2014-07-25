@@ -85,7 +85,8 @@ void PixTestCmd::DoTextField(){
     string s=commandLine->GetText();
     transcript->SetForegroundColor(1);
     transcript->AddLine((">"+s).c_str());
-    
+    commandLine->SetText("");
+
     int stat = cmd->exec( s );
     string reply=cmd->out.str();
     if (reply.size()>0){
@@ -107,9 +108,10 @@ void PixTestCmd::DoTextField(){
     if(transcript->ReturnLineCount() > 6)// visible lines(how do I know?)
         transcript->SetVsbPosition(transcript->ReturnLineCount());
 
-    commandLine->SetText("");
-    cmdHistory.push_back(s);
-    historyIndex=cmdHistory.size();
+    if ( (cmdHistory.size()==0) || (! (cmdHistory.back()==s))){
+        cmdHistory.push_back(s);
+        historyIndex=cmdHistory.size();
+    }
 }
 void PixTestCmd::DoUpArrow(){
     if (historyIndex>0) historyIndex--;
@@ -214,6 +216,7 @@ void PixTestCmd::doTest()
 
 #include <iostream>
 #include <fstream>
+#include "dictionaries.h"
 
 /**********************  Token handling with macros  ********/
 string Token::front(bool expand){
@@ -286,6 +289,9 @@ bool StrToI(string word, int & v)
     } else if ((len>1) && (word[0] == '0') && (word[1] == 'x')) {
         base = 16;
         i = 2;
+    } else if ((len>1) && (word[0] == 'b') && ((word[1]== '0')||(word[1])=='1')) {
+        base = 2;
+        i = 1;
     } else {
         base = 10;
         i = 0;
@@ -295,6 +301,7 @@ bool StrToI(string word, int & v)
     int a = 0;
     const char * d;
     while ((i < len) && ((d = strchr(digits, word[i])) != NULL)) {
+        // fixme verify that d-d0 <base
         a = base * a + d - d0;
         i++;
     }
@@ -633,9 +640,27 @@ bool  Keyword::match(const char * s, int & value){
   return  (kw(s)) && (narg()==1) && (argv[0].getInt(value));
 }
 
+bool  Keyword::greedy_match(const char * s1, string & s2){
+    if (! kw(s1) ) return false;
+    s2="";
+    for(unsigned int i=0; i<narg(); i++){ s2+=argv[i].str();}
+    return  true;
+}
+
+bool  Keyword::match(const char * s, int & value1, int & value2){
+  return  (kw(s)) && (narg()==2) && (argv[0].getInt(value1)) && (argv[1].getInt(value2));
+}
+
+bool  Keyword::greedy_match(const char * s1, int& value1, int& value2, int& value3, string & s2){
+    return (kw(s1)) && (narg()>2)  && (argv[0].getInt(value1))
+     && (argv[1].getInt(value2))   && (argv[2].getInt(value3))
+     && concat(3, s2 );
+}
+
 bool  Keyword::match(const char * s1, string & s2){
   return  (kw(s1)) && (narg()==1) && (argv[0].getString(s2));
 }
+
 
 bool Keyword::match(const char * s, vector<int> & v1, vector<int> & v2){
   return  (kw(s)) && (narg()==2) && (argv[0].getVect(v1)) && (argv[1].getVect(v2));
@@ -765,13 +790,19 @@ int CmdProc::tb(Keyword kw){
      * return  0 for success
      * return >0 for errors
      */
-    string s;
+    int step, pattern, delay;
+    string s, comment;
     if     ( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia(); return 0;}
+    else if( kw.match("id")    ){  out <<  "id=" << fApi->getTBid(); return 0;}
+    else if( kw.match("getia") ){  out <<  "ia=" << fApi->getTBia() <<"mA"; return 0;}
+    else if( kw.match("getid") ){  out <<  "id=" << fApi->getTBid() <<"mA"; return 0;}
     else if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
     else if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
     else if( kw.match("pon")   ){ fApi->Pon(); return 0; }
     else if( kw.match("poff")  ){ fApi->Poff(); return 0; }
-    else if( kw.match("adc") || kw.match("dread")   ){
+    else if( kw.match("D1", s) ){ fApi->SignalProbe("D1",s);}
+    else if( kw.match("D2", s) ){ fApi->SignalProbe("D2",s);}
+    else if( kw.match("adc") || kw.match("dread") ){
         fApi->daqStart();
         fApi->daqTrigger(1);
         std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
@@ -791,12 +822,20 @@ int CmdProc::tb(Keyword kw){
         }
         return 0;
     }
+    
+    if( kw.greedy_match("pgset",step, pattern, delay, comment)){
+        out << "pgset " << step << " " << pattern << " " << delay;
+        return 0;
+    }
     return -1;
 }
 
 
 int CmdProc::roc( Keyword kw, int rocId){
-    /* implementation of roc commands */
+    /* implementation of roc commands 
+     * return 0 if the command has not been handled here
+     * otherwise execute and return some non-zero status
+     *  */
     vector<int> col, row;
     int value;
     if (kw.match("vana", value))  { fApi->setDAC("Vana",value, rocId ); }
@@ -837,6 +876,31 @@ int CmdProc::roc( Keyword kw, int rocId){
   return 0;
 }
 
+
+int CmdProc::tbmset(int address, int  value){
+    /* emulate direct access by undoing what the api does */
+   uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
+   const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
+   fApi->setTbmReg( apinames[ idx], value );
+   return 1;
+}
+int CmdProc::tbmsetbit(int address, int  value){
+    /* emulate direct access by undoing what the api does */
+   uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
+   const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
+   fApi->getTbmReg( 
+   fApi->setTbmReg( apinames[ idx], value );
+   return 1;
+}
+
+
+int CmdProc::tbm(Keyword kw){
+    //RegisterDictionary * _dict = RegisterDictionary::getInstance();
+    int address, value;
+    if (kw.match("tbmset", address, value))  { return tbmset(address, value);  }
+    if (kw.match("disable","triggers")){ return tbmsetbit(address, 6, 1);}
+    return 0;
+}
 
 
 bool CmdProc::process(Keyword keyword, Target target){
@@ -885,7 +949,7 @@ bool CmdProc::process(Keyword keyword, Target target){
     }
     
     string message;
-    if ( keyword.match("echo", message)){
+    if ( keyword.greedy_match("echo", message) || keyword.greedy_match("log",message) ){
         out << message;
         return true;
     }   
@@ -896,8 +960,8 @@ bool CmdProc::process(Keyword keyword, Target target){
     int stat = tb( keyword );
     if ( stat >=0 ) return (stat==0);
     
-    //stat = tbm( keyword );
-   //if ( stat >=0 ) return (stat==0);
+    stat = tbm( keyword );
+    if ( stat >=0 ) return (stat==0);
          
  
     stat = roc(keyword, target.value());
@@ -913,6 +977,10 @@ bool CmdProc::process(Keyword keyword, Target target){
 int CmdProc::exec(std::string s){
     
     out.str("");
+
+    //  skip empty lines and comments
+    if( (s.size()==0) || (s[0]=='#') || (s[0]=='-') ) return 0;
+    
     // parse and execute a string, leads to call-backs to CmdProc::process
     Token words( getWords(s) );
     words.macros=&macros;

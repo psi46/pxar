@@ -133,9 +133,13 @@ class Keyword{
 
   bool match(const char * s){ return kw(s) && (narg()==0); };
   bool match(const char *, int &);
+  bool match(const char *, int &, int &);
   bool match(const char *, string &);
   bool match(const char * s, vector<int> & , vector<int> &);
-   bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
+  bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
+  bool greedy_match(const char *, string &);
+  bool greedy_match(const char *, int &, int&, int&, string &);
+  bool concat(unsigned int i, string &s){  s="";  for (;i<argv.size(); i++) s+=argv[i].str(); return true;}
 
   unsigned int narg(){return argv.size();};
   string str();
@@ -239,10 +243,12 @@ class CmdProc {
   pxar::pxarCore * fApi;
   stringstream out;
 
+  int tbmset(int address, int value);
 
 
   bool verbose;
   int tb(Keyword);
+  int tbm(Keyword);
   int roc(Keyword, int rocid);
 
   Target defaultTarget;
