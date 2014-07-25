@@ -3,6 +3,7 @@
 #define PIXTESTCMD_H
 
 #include "PixTest.hh"
+#include <Windows4Root.h>
 #include <TGFrame.h>
 #include <TGTextView.h>
 #include <TGTextEntry.h>
