@@ -14,6 +14,7 @@
 
 \usepackage{graphicx} % Required for the inclusion of images
 \usepackage{listings}
+\usepackage[toc, nonumberlist]{glossaries} % must go after hyperref, so entries are clickable
 \setlength\parindent{0pt} % Removes all indentation from paragraphs
 
 \renewcommand{\labelenumi}{\alph{enumi}.} % Make numbering in the enumerate environment by letter rather than number (e.g. section 6)
@@ -23,6 +24,13 @@
 %----------------------------------------------------------------------------------------
 
 \input{doc/usermanual/symbols.tex}
+
+% Load glossary
+\loadglsentries{doc/usermanual/glossary.tex}
+
+\renewcommand*\glsgroupskip{}
+\renewcommand*{\glspostdescription}{.\vspace{-0.5\baselineskip}}
+\makeglossaries
 
 \title{pxar User Manual} % Title
 
@@ -37,8 +45,10 @@
 
 
 \begin{abstract}
-The goal of this document is to provide a user manual for operation of
+The document provides an overview of the pxar software, the calibration and data acquisition framework used fore the CMS Pixel Phase I Upgrade project. It describes how to install and run the software and provides a user manual for operation of
 PSI46 Chips and Modules with the Digital Testboard (DTB).
+
+Furthermore, many of the implemented chip and module tests are described as well as how users may integrate their own test procedures and algorithms into the pxar framework by writing their own user tests and scripts.
 \end{abstract}
 
 \newpage
@@ -49,6 +59,8 @@ PSI46 Chips and Modules with the Digital Testboard (DTB).
 
 \input{doc/usermanual/introduction.tex}
 \newpage
+\input{doc/usermanual/installation.tex}
+\newpage
 \input{doc/usermanual/hwOverview.tex}
 \newpage
 \input{doc/usermanual/swOverview.tex}
@@ -58,6 +70,9 @@ PSI46 Chips and Modules with the Digital Testboard (DTB).
 \input{doc/usermanual/tests.tex}
 \newpage
 \input{doc/usermanual/usertests.tex}
+
+\newpage
+\printglossaries
 
 \newpage
 \clearpage

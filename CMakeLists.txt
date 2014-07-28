@@ -254,8 +254,10 @@ IF(LATEX_COMPILER)
   INCLUDE(cmake/UseLATEX.cmake)
   ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex 
     INPUTS 
+    doc/usermanual/glossary.tex
     doc/usermanual/symbols.tex 
     doc/usermanual/introduction.tex
+    doc/usermanual/installation.tex
     doc/usermanual/hwOverview.tex 
     doc/usermanual/swOverview.tex
     doc/usermanual/tutorial.tex
