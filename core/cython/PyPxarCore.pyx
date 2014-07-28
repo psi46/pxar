@@ -244,6 +244,9 @@ cdef class PyPxarCore:
             self.thisptr._dut.testAllPixels(enable,rocid)
         else:
             self.thisptr._dut.testAllPixels(enable)
+
+    def getTbmDACs(self, int tbmid):
+        return self.thisptr._dut.getTbmDACs(tbmid)
   
     def updateTrimBits(self, trimming, int rocid):
         cdef vector[pixelConfig] v

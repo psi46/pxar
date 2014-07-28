@@ -495,6 +495,16 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all registers
                 return dacdict.getAllTBMNames()
 
+
+    @arity(1,1,[int])
+    def do_getTbmDACs(self, tbmid):
+        """getTbmDACs [id]: get the currently programmed register settings for TBM #id"""
+        print self.api.getTbmDACs(tbmid)
+
+    def complete_getTbmDACs(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTbmDACs.__doc__, '']
+
     @arity(3,4,[int, int, int, int])
     def do_testPixel(self, col, row, enable, rocid = None):
         """testPixel [column] [row] [enable] [ROC id]: enable/disable testing of pixel"""
