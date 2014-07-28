@@ -99,7 +99,9 @@ def PxarStartup(directory, verbosity):
     
     config = PxarConfigFile('%sconfigParameters.dat'%(os.path.join(directory,"")))
     tbparameters = PxarParametersFile('%s%s'%(os.path.join(directory,""),config.get("tbParameters")))
-    tbmparameters = PxarParametersFile('%s%s'%(os.path.join(directory,""),config.get("tbmParameters")))
+    if int(config.get("nTbms")) != 0:
+        tbmparameters = PxarParametersFile('%s%s'%(os.path.join(directory,""),config.get("tbmParameters")))
+
     # Power settings:
     power_settings = {
         "va":config.get("va",1.9),
