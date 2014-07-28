@@ -151,16 +151,21 @@ void PixTestBareModule::doTest() {
 
 	//check if probes are in contact
 	double minIa = 10; // [mA]
+	bool inContact;
 	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
 	fApi->Pon();
 	mDelay(1000);
 	double ia = fApi->getTBia()*1E3; // [mA]
-	if (ia > minIa) { LOG(logINFO) << "PixTestBareModule:: contact OK, ia = " << ia << " mA"; }
+	if (ia > minIa) { 
+		LOG(logINFO) << "PixTestBareModule:: contact OK, ia = " << ia << " mA"; 
+		inContact = true;
+	}
 	else {   // loose limit
 		fApi->Poff();
 		LOG(logWARNING) << "PixTestBareModule:: ia < " << minIa << " mA - CHECK PROBES CONTACT.";
 		LOG(logWARNING) << "PixTestBareModule:: ENTER continue OR stop.";
 		bool goodIn = false;
+		inContact = false;
 		do{
 			string input;
 			std::getline(cin, input);
@@ -171,21 +176,21 @@ void PixTestBareModule::doTest() {
 			}
 			std::transform(input.begin(), input.end(), input.begin(), ::tolower);
 			if (!input.compare("continue")) {
-				goodIn = true;
+				goodIn = true; 
+				inContact = true;
 				LOG(logINFO) << "PixTestBareModule:: test will continue.";
 				break;
 			}
 			else if (!input.compare("stop")) {
 				goodIn = true;
 				LOG(logINFO) << "PixTestBareModule:: bare module test will be stopped.";
-				return;
 			}
 			else LOG(logINFO) << "PixTestBareModule:: unvalid input.";
 		} while (!goodIn);
 	}
 	
 	//ROC test
-	doTestRoc(fParNSteps);
+	if (inContact) { doTestRoc(fParNSteps); }
 		
 	//separation
 	LOG(logINFO) << "PixTestBareModule:: HV and LV are off.";
