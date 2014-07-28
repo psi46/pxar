@@ -19,7 +19,6 @@ public:
 private:
   int          fParNtrig; 
   int          fParVcalS; 
-  int          fParXtalk; 
   
   ClassDef(PixTestBBMap, 1); 
 
