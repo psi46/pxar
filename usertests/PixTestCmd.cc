@@ -4,12 +4,18 @@
 #include "PixTestCmd.hh"
 #include "log.h"
 #include "constants.h"
+
+#if (defined WIN32)
+#include <Windows4Root.h>  //needed before any ROOT header
+#endif
+
 #include <TGLayout.h>
 #include <TGClient.h>
 #include <TGFrame.h>
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 //#define DEBUG
 
@@ -85,7 +91,8 @@ void PixTestCmd::DoTextField(){
     string s=commandLine->GetText();
     transcript->SetForegroundColor(1);
     transcript->AddLine((">"+s).c_str());
-    
+    commandLine->SetText("");
+
     int stat = cmd->exec( s );
     string reply=cmd->out.str();
     if (reply.size()>0){
@@ -107,9 +114,10 @@ void PixTestCmd::DoTextField(){
     if(transcript->ReturnLineCount() > 6)// visible lines(how do I know?)
         transcript->SetVsbPosition(transcript->ReturnLineCount());
 
-    commandLine->SetText("");
-    cmdHistory.push_back(s);
-    historyIndex=cmdHistory.size();
+    if ( (cmdHistory.size()==0) || (! (cmdHistory.back()==s))){
+        cmdHistory.push_back(s);
+        historyIndex=cmdHistory.size();
+    }
 }
 void PixTestCmd::DoUpArrow(){
     if (historyIndex>0) historyIndex--;
@@ -214,6 +222,7 @@ void PixTestCmd::doTest()
 
 #include <iostream>
 #include <fstream>
+#include "dictionaries.h"
 
 /**********************  Token handling with macros  ********/
 string Token::front(bool expand){
@@ -274,7 +283,7 @@ bool StrToI(string word, int & v)
 */
 
 {
-    const char * digits = "0123456789ABCDEF";
+    const char * digits = "0123456789abcdef";
     int base;
     int i;
     const char * d0 = strchr(digits, '0');
@@ -286,6 +295,9 @@ bool StrToI(string word, int & v)
     } else if ((len>1) && (word[0] == '0') && (word[1] == 'x')) {
         base = 16;
         i = 2;
+    } else if ((len>1) && (word[0] == 'b') && ((word[1]== '0')||(word[1])=='1')) {
+        base = 2;
+        i = 1;
     } else {
         base = 10;
         i = 0;
@@ -294,7 +306,7 @@ bool StrToI(string word, int & v)
 
     int a = 0;
     const char * d;
-    while ((i < len) && ((d = strchr(digits, word[i])) != NULL)) {
+    while ((i < len) && ((d = strchr(digits, word[i])) != NULL) && (d-d0<base) ) {
         a = base * a + d - d0;
         i++;
     }
@@ -445,11 +457,12 @@ deque <string > getWords(const string & s){
     deque<string> words;
     unsigned int i=0;
     const char * symbols="\",:()[];=\n";
-
+    
+    while( is_whitespace(i,s) ){i++;};
+ 
     string word="";
     while( i<s.size() ){
 
-        while( is_whitespace(i,s) ){i++;};
 
         if (s[i]=='"'){
             word = findchar('"',i,s);
@@ -471,6 +484,8 @@ deque <string > getWords(const string & s){
             }
         }
         word="";
+        while( is_whitespace(i,s) ){i++;};
+ 
     }
     return words;
 }
@@ -593,36 +608,35 @@ bool Statement::parse(Token & token){
 
 
 bool Block::parse(Token & token){
-  /*
-    block    :=  "[" <statement> ( ";" <statement> ) "]"
-  */
-  if (token.empty()) return false;
-  stmts.clear();
-  if ( !(token.front()=="[") ) return false;
-  token.pop_front();
+    /*
+        block    :=  "[" <statement> ( ";" <statement> )* "]"
+    */
+    if (token.empty()) return false;
+    stmts.clear();
+    if ( !(token.front()=="[") ) return false;
+    token.pop_front();
 
-  while( !token.empty() ){
-    Statement * st = new Statement();
-    bool stat = st->parse( token );
-    if (! stat) return false;
-    stmts.push_back( st );
+    while( !token.empty() ){
+        Statement * st = new Statement();
+        bool stat = st->parse( token );
+        if (! stat) return false;
+        stmts.push_back( st );
     
-    if (!token.empty()){
-      if (token.front()=="]"){
-    token.pop_front();
-    break;
-      } else if (token.front()==";"){
-    token.pop_front();
-      }else{
-    cerr << "expected ';' instead of " << token.front() << endl;
-    return false;
-      }
+        if (!token.empty()){
+            if (token.front()=="]"){
+                token.pop_front();
+                break;
+            } else if (token.front()==";"){
+                token.pop_front();
+            }else{
+                cerr << "expected ';' instead of " << token.front() << endl;
+                return false;
+            }
+        }
+
     }
-
-  }
-  
-  return true; 
-
+    //cout << "parsed block with size " << stmts.size() << endl;
+    return true; 
 }
 
 
@@ -633,9 +647,54 @@ bool  Keyword::match(const char * s, int & value){
   return  (kw(s)) && (narg()==1) && (argv[0].getInt(value));
 }
 
+bool  Keyword::match(const char * s, const char * s1){
+    if (narg() !=1 ) return false;
+    return  (kw(s)) && (narg()==1) && (argv[0].scmp(s1));
+}
+
+
+bool  Keyword::match(const char * s, string & s1, vector<string> & options, stringstream & err){
+    if (narg() !=1 ) return false;
+    s1 = "";
+    if ( (kw(s)) && (narg()==1) ){
+        for(unsigned int i=0; i<options.size(); i++){
+            if ( argv[0].svalue==options[i] ){
+                s1 = argv[0].svalue;
+                return true;
+            }
+        }
+        err << "possible options for keyword "<< s << " are :\n";
+        for(unsigned int i=0; i<options.size(); i++){
+            err << " " <<options[i];
+        }
+        err << "\n";
+        return false;
+    }
+    return false;
+}
+
+
+bool  Keyword::greedy_match(const char * s1, string & s2){
+    if (! kw(s1) ) return false;
+    s2="";
+    for(unsigned int i=0; i<narg(); i++){ s2+=argv[i].str();}
+    return  true;
+}
+
+bool  Keyword::match(const char * s, int & value1, int & value2){
+  return  (kw(s)) && (narg()==2) && (argv[0].getInt(value1)) && (argv[1].getInt(value2));
+}
+
+bool  Keyword::greedy_match(const char * s1, int& value1, int& value2, int& value3, string & s2){
+    return (kw(s1)) && (narg()>2)  && (argv[0].getInt(value1))
+     && (argv[1].getInt(value2))   && (argv[2].getInt(value3))
+     && concat(3, s2 );
+}
+
 bool  Keyword::match(const char * s1, string & s2){
   return  (kw(s1)) && (narg()==1) && (argv[0].getString(s2));
 }
+
 
 bool Keyword::match(const char * s, vector<int> & v1, vector<int> & v2){
   return  (kw(s)) && (narg()==2) && (argv[0].getVect(v1)) && (argv[1].getVect(v2));
@@ -660,11 +719,11 @@ string Keyword::str(){
 
 
 bool Block::exec(CmdProc * proc, Target & target){
-  bool success=true;
-  for (unsigned int i=0; i<stmts.size(); i++){
-    success |= stmts[i]->exec(proc, target); 
-  }
-  return success;
+    bool success=true;
+    for (unsigned int i=0; i<stmts.size(); i++){
+        success |= stmts[i]->exec(proc, target); 
+    }
+    return success;
 }
 
 
@@ -710,7 +769,7 @@ bool Statement::exec(CmdProc * proc, Target & target){
 
             // block
             if(target.name=="roc"){
-                useTarget.expand( 0, 16 );
+                useTarget.expand( 0, 15 );
                 for(unsigned int i=0; i< useTarget.size();  i++){
                     Target t = useTarget.get(i);
                     if (!(block->exec(proc, t) )) return false;
@@ -739,7 +798,10 @@ CmdProc::CmdProc()
 
     verbose=false;
     defaultTarget = Target("roc",0);
-
+    _dict = RegisterDictionary::getInstance();
+    _probeDict = ProbeDictionary::getInstance();
+    fA_names = _probeDict->getAllAnalogNames();
+    fD_names = _probeDict->getAllDigitalNames();
 }
 
 
@@ -755,58 +817,162 @@ CmdProc::CmdProc(CmdProc * p)
 CmdProc::~CmdProc(){
 }
 
+/**************** implement some hardware functionalities *************/
+
+int CmdProc::tbmset(int address, int  value){
+    /* emulate direct access */
+   uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
+   const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
+   fApi->setTbmReg( apinames[ idx], value );
+   return 0; // nonzero values for errors
+}
+
+int CmdProc::tbmsetbit(int address, int bit, int value){
+    /* set individual bits */
+    uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
+    const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
+    /* get the current register content */
+    for(size_t tbmid = 0; tbmid < fApi->_dut->getNTbms(); ++tbmid) {
+        std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(tbmid);
+        for(unsigned int i=0; i<regs.size(); i++){
+            unsigned int iid = _dict->getRegister(regs[i].first, TBM_REG);
+            if (iid == idx){
+                // found it , do something
+                uint8_t present = regs[i].second;
+                if (value==1){
+                    present |= (1 << bit);
+                }else{
+                    present &=  ~(1 << bit) & 0xFF;
+                }
+                out << "changing tbm reg " <<  apinames[ idx];
+                out << " from " << hex << (int) regs[i].second;
+                out << " to " << hex << (int) present << "\n";
+                fApi->setTbmReg( apinames[ idx], present );
+            }
+        }
+    }
+   return 0; // nonzero values for errors
+
+}
+
+
+int CmdProc::adctest(const string signal){
+    unsigned int n=1024;
+    vector<double> y;
+    if ( fApi->daqADC(signal, n, y) ){
+        //if (y.size()<n){ out<<"incomplete, only "<<y.size()<< " words read\n";}
+        //cout << "y.size=" << y.size() << endl;
+        //for(unsigned int i=0; i<n; i++){ cout << i << "  " << y[i] << endl;}
+        sort( y.begin(), y.end());
+        unsigned int m=y.size();
+        double low(0), high(0), ny(0);
+        for(unsigned int i=int(0.1*m); i<int(0.3*m); i++){
+            low += y[i];
+            high += y[m-i];
+            ny++;
+        }
+        out << signal << "  low level=" << low/ny << " high level = " << high/ny << "\n";
+    }else{
+        out << "error getting adc data";
+    }
+    return 0;
+}
+
+
+
+int CmdProc::sequence(int seq){
+    vector< pair<string, uint8_t> > pgsetup;
+    pgsetup.push_back( make_pair( "sync", 10) );
+    unsigned int tct(106), trc(10), ttk(30);
+    if (seq & 0x08 ) { pgsetup.push_back( make_pair( "resr", trc) ); }
+    if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal", tct )); }
+    if (seq & 0x02 ) { pgsetup.push_back( make_pair("trg", ttk )); }
+    if (seq & 0x01 ) { pgsetup.push_back( make_pair("token", 1)); }
+    pgsetup.push_back(make_pair("none", 255));
+    pgsetup.push_back(make_pair("none", 255));
+    pgsetup.push_back(make_pair("none", 255));
+    pgsetup.push_back(make_pair("none", 0));
+    fApi->setPatternGenerator(pgsetup);
+    return 0;
+}
 
 
 /**************** call-backs for script processing ***********************/
 
 int CmdProc::tb(Keyword kw){
-    /* implementation of testboard commands 
+    /* handle testboard commands 
      * return -1 for unrecognized commands
      * return  0 for success
      * return >0 for errors
      */
-    string s;
-    if     ( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia(); return 0;}
-    else if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
-    else if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
-    else if( kw.match("pon")   ){ fApi->Pon(); return 0; }
-    else if( kw.match("poff")  ){ fApi->Poff(); return 0; }
-    else if( kw.match("adc") || kw.match("dread")   ){
-        fApi->daqStart();
-        fApi->daqTrigger(1);
+    int step, pattern, delay;
+    string s, comment;
+    if( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia(); return 0;}
+    if( kw.match("id")    ){  out <<  "id=" << fApi->getTBid(); return 0;}
+    if( kw.match("getia") ){  out <<  "ia=" << fApi->getTBia() <<"mA"; return 0;}
+    if( kw.match("getid") ){  out <<  "id=" << fApi->getTBid() <<"mA"; return 0;}
+    if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
+    if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
+    if( kw.match("pon")   ){ fApi->Pon(); return 0; }
+    if( kw.match("poff")  ){ fApi->Poff(); return 0; }
+    if( kw.match("d1", s, fD_names, out ) ){ fApi->SignalProbe("D1",s); return 0;}
+    if( kw.match("d2", s, fD_names, out ) ){ fApi->SignalProbe("D2",s); return 0;}
+    if( kw.match("a1", s, fA_names, out ) ){ fApi->SignalProbe("A1",s); return 0;}
+    if( kw.match("a2", s, fA_names, out ) ){ fApi->SignalProbe("A2",s); return 0;}
+    if( kw.match("adc", s, fA_names, out ) ){ fApi->SignalProbe("adc",s); return 0;}  
+    if( kw.match("seq", pattern)){ sequence(pattern); return 0;}
+    if( kw.match("seq","t")){ sequence( 2 ); return 0; }
+    if( kw.match("seq","ct")){ sequence( 6 ); return 0; }
+    if( kw.match("seq","rct")){ sequence( 14 ); return 0; }
+    if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;}  
+    if( kw.match("sdata") ){ adctest("sdata1"); return 0;}
+    if( kw.match("adc") || kw.match("dread") ){
+        fApi->daqStart(1000, false);
+        fApi->daqTrigger(1, 1000);
         std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
-        fApi->daqStop();
+        fApi->daqStop(false);
         for(unsigned int i=0; i<buf.size(); i++){
             out  << buf[i];
         }
-         return 0;
+        return 0;
     }
-    else if( kw.match("adcraw")   ){
-        fApi->daqStart();
-        fApi->daqTrigger(1);
+    if( kw.match("adcraw")   ){
+        fApi->daqStart(1000, false);
+        fApi->daqTrigger(1, 1000);
         std::vector<uint16_t> buf = fApi->daqGetBuffer();
-        fApi->daqStop();
+        fApi->daqStop(false);
+        out << buf.size() << " words read \n";
         for(unsigned int i=0; i<buf.size(); i++){
             out << " " <<hex << setw(4)<< setfill('0')  << buf[i];
         }
         return 0;
     }
+    
+    if( kw.greedy_match("pgset",step, pattern, delay, comment)){
+        out << "pgset " << step << " " << pattern << " " << delay;
+        return 0;
+    }
+    //if( kw.match("seq","t"){ pgseq();}
     return -1;
 }
 
 
 int CmdProc::roc( Keyword kw, int rocId){
-    /* implementation of roc commands */
+    /* handle roc commands 
+     * return -1 for unrecognized commands
+     * return  0 for success
+     * return >0 for errors
+     */
     vector<int> col, row;
     int value;
-    if (kw.match("vana", value))  { fApi->setDAC("Vana",value, rocId ); }
-    else if (kw.match("hirange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|4, rocId);}
-    else if (kw.match("lorange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfb, rocId);}
-    else if (kw.match("enable") ) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|2, rocId);}
-    else if (kw.match("disable")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfd, rocId);}
-    else if (kw.match("mask")   ) { fApi->_dut->maskAllPixels(true, rocId); }
-    else if (kw.match("cald")   ) { fApi->_dut->testAllPixels(false, rocId); }
-    else if (kw.match("arm", col, 0, 51, row, 0, 79) 
+    if (kw.match("vana", value))  { fApi->setDAC("Vana",value, rocId );  return 0 ;  }
+    if (kw.match("hirange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|4, rocId);return 0 ;}
+    if (kw.match("lorange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfb, rocId);return 0 ;}
+    if (kw.match("enable") ) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|2, rocId);return 0 ;}
+    if (kw.match("disable")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfd, rocId);return 0 ;}
+    if (kw.match("mask")   ) { fApi->_dut->maskAllPixels(true, rocId); return 0 ;}
+    if (kw.match("cald")   ) { fApi->_dut->testAllPixels(false, rocId); return 0 ;}
+    if (kw.match("arm", col, 0, 51, row, 0, 79) 
       || kw.match("pixd", col, 0, 51, row, 0, 79)
       || kw.match("pixe", col, 0, 51, row, 0, 79)
     ){
@@ -827,20 +993,31 @@ int CmdProc::roc( Keyword kw, int rocId){
                 }
              }
         }
-
-    }else{
-        out << "unknown roc command " << kw.str();
-        return 1;
-    }
+    return 0 ;
+  }
     
-    
-  return 0;
+  return -1;
 }
 
 
+int CmdProc::tbm(Keyword kw){
+    /* handle tbm commands 
+     * return -1 for unrecognized commands
+     * return  0 for success
+     * return >0 for errors
+     */
+    int address, value;
+    if (kw.match("tbmset", address, value))  { return tbmset(address, value);  }
+    if (kw.match("enable","triggers")){ return tbmsetbit(0, 6, 0);}
+    if (kw.match("disable","triggers")){ return tbmsetbit(0, 6, 1);}
+    if (kw.match("enable","pkam")){ return tbmsetbit(0, 0, 0);}
+    if (kw.match("disable","pkam")){ return tbmsetbit(0, 0, 1);}
+    return -1; // nothing done
+}
+
 
 bool CmdProc::process(Keyword keyword, Target target){
-    // this is where things are actually done (eventually)
+    /* process a parsed command line */
 
     // debugging printout
     if (verbose){
@@ -884,8 +1061,11 @@ bool CmdProc::process(Keyword keyword, Target target){
         }
     }
     
+    if (keyword.match("verbose")){ verbose=true; return true;}
+    if (keyword.match("quiet")){ verbose=false; return true;}
+    
     string message;
-    if ( keyword.match("echo", message)){
+    if ( keyword.greedy_match("echo", message) || keyword.greedy_match("log",message) ){
         out << message;
         return true;
     }   
@@ -896,13 +1076,15 @@ bool CmdProc::process(Keyword keyword, Target target){
     int stat = tb( keyword );
     if ( stat >=0 ) return (stat==0);
     
-    //stat = tbm( keyword );
-   //if ( stat >=0 ) return (stat==0);
+    stat = tbm( keyword );
+    if ( stat >=0 ) return (stat==0);
          
  
     stat = roc(keyword, target.value());
+    if ( stat >=0 ) return (stat==0);
 
-    return (stat==0);
+    out << "unrecognized command";
+    return false;
 } 
 
 
@@ -913,6 +1095,20 @@ bool CmdProc::process(Keyword keyword, Target target){
 int CmdProc::exec(std::string s){
     
     out.str("");
+
+    //  skip empty lines and comments
+    if( (s.size()==0) || (s[0]=='#') || (s[0]=='-') ) return 0;
+
+
+    // pre-processing: to lower, remove underscores
+    std::string t="";
+    for(unsigned int i=0; i<s.size(); i++){
+        if ( !(s[i]=='_') ){
+            t.push_back( tolower( s[i] ));
+        }
+    }
+    s=t;
+    
     // parse and execute a string, leads to call-backs to CmdProc::process
     Token words( getWords(s) );
     words.macros=&macros;
@@ -920,18 +1116,18 @@ int CmdProc::exec(std::string s){
 
     int j=0;
     //parse
-    vector < Statement > stmts;
+    vector < Statement *> stmts;
     while( (!words.empty()) && (j++ < 2000)){
-        Statement c;
-        bool stat=  c.parse( words );
-        if( stat){
+        Statement * c = new Statement; 
+        bool stat=  c->parse( words );
+        if( stat ){
             stmts.push_back( c );
         }
         if (!words.empty()) {
             if (words.front()==";") {
                 words.pop_front();
             }else{
-                out << "expected ';' instead of " << words.front();
+                out << "expected ';' instead of '" << words.front() << "'";
                 return 1;
             }
         }
@@ -939,7 +1135,7 @@ int CmdProc::exec(std::string s){
 
     bool ok = true;
     for( unsigned int i=0; i<stmts.size(); i++){
-        ok |= stmts[i].exec(this, defaultTarget);
+        ok |= stmts[i]->exec(this, defaultTarget);
     }
 
     if (ok){

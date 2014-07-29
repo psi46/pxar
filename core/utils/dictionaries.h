@@ -125,28 +125,28 @@ namespace pxar {
 
 
       //------- TBM registers -----------------------------
-      _registers["counters"]      = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
+      _registers["counters"]      = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG,false);
       _registers["base0"]         = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG);
 
-      _registers["mode"]          = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
+      _registers["mode"]          = dacConfig(TBM_REG_SET_MODE,255,TBM_REG,false);
       _registers["base2"]         = dacConfig(TBM_REG_SET_MODE,255,TBM_REG);
 
-      _registers["clear"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
-      _registers["inject"]        = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
+      _registers["clear"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG,false);
+      _registers["inject"]        = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG,false);
       _registers["base4"]         = dacConfig(TBM_REG_CLEAR_INJECT,255,TBM_REG);
 
-      _registers["pkam_set"]      = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
+      _registers["pkam_set"]      = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG,false);
       _registers["base8"]         = dacConfig(TBM_REG_SET_PKAM_COUNTER,255,TBM_REG);
 
-      _registers["delays"]        = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
+      _registers["delays"]        = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG,false);
       _registers["basea"]         = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
 
-      _registers["autoreset"]     = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      _registers["autoreset"]     = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG,false);
       _registers["basec"]         = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
       // In the old TBM these were the temperature registers:
-      _registers["temperature"]   = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
+      _registers["temperature"]   = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG,false);
 
-      _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
+      _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
 
 

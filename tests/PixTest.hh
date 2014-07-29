@@ -42,7 +42,7 @@ typedef struct {
   uint8_t proc[2000];
   uint8_t pcol[2000];
   uint8_t prow[2000];
-  uint8_t pval[2000];
+  double pval[2000];
   uint16_t pq[2000];
 } TreeEvent;
 

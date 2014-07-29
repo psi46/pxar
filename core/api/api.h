@@ -22,6 +22,7 @@ typedef unsigned char uint8_t;
 #include <stdint.h>
 #endif
 
+
 #include <string>
 #include <vector>
 #include <map>
@@ -318,6 +319,8 @@ namespace pxar {
       *  In case of an invalid signal identifier the output is turned off.
       */
     bool SignalProbe(std::string probe, std::string name);
+    
+    bool daqADC(std::string name, unsigned int nSample,std::vector <double> & result);
 
 
     // TEST functions
@@ -609,6 +612,7 @@ namespace pxar {
      *  pixels in question before calling pxar::daqStart()!
      */
     bool daqStart();
+    bool daqStart(const int bufsize, const bool init);
 
     /** Function to get back the DAQ status
      *
@@ -658,6 +662,7 @@ namespace pxar {
     /** Function to stop the running data acquisition
      */
     bool daqStop();
+    bool daqStop(const bool init);
 
     /** Function to return the full currently available raw event buffer from
      *  the testboard RAM. No decoding is performed, the data stream is just
@@ -692,6 +697,7 @@ namespace pxar {
      *  Returns true if everything is setup correctly for operation
      */
     bool status();
+    
     
   private:
 
@@ -827,7 +833,7 @@ namespace pxar {
 
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
-
+    
   }; // class pxarCore
 
 

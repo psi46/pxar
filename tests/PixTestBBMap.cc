@@ -15,7 +15,7 @@ using namespace pxar;
 ClassImp(PixTestBBMap)
 
 //------------------------------------------------------------------------------
-PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), fParNtrig(-1), fParVcalS(200), fParXtalk(0) {
+PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), fParNtrig(-1), fParVcalS(200) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBBMap ctor(PixSetup &a, string, TGTab *)";
@@ -45,13 +45,6 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
       }
       if (!parName.compare( "vcals")) { 
 	s >> fParVcalS; 
-	setToolTips();
-	return true;
-      }
-      if (!parName.compare( "xtalk"))  { 
-	PixUtil::replaceAll(sval, "checkbox(", ""); 
-	PixUtil::replaceAll(sval, ")", ""); 
-	fParXtalk = atoi(sval.c_str()); 
 	setToolTips();
 	return true;
       }
@@ -89,7 +82,7 @@ void PixTestBBMap::doTest() {
 
   cacheDacs();
   PixTest::update();
-  bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d (high range), xtalk = %d", fParNtrig, fParVcalS, fParXtalk));
+  bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d (high range)", fParNtrig, fParVcalS));
  
   fDirectory->cd();
 
@@ -105,39 +98,6 @@ void PixTestBBMap::doTest() {
   fNDaqErrors = 0; 
   vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 170, result, 1, flag);
 
-  if (fParXtalk) {
-    LOG(logDEBUG) << "taking Xtalk maps";
-    vector<TH1*> thrmapsXtalk = scurveMaps("VthrComp", "calSMapXtalk", fParNtrig, 0, 170, result, 1, flag | FLAG_XTALK); 
-
-    LOG(logDEBUG) << "map analysis";
-    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-    for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
-      unsigned int rocId = getIdFromIdx(idx);
-      TH2D* rocmapRaw = (TH2D*)thrmapsCals[idx];
-      TH2D* rocmapBB(0); 
-      TH2D* rocmapXtalk(0);
-      
-      rocmapBB  = (TH2D*)rocmapRaw->Clone(Form("BB-%2d",rocId));
-      rocmapBB->SetTitle(Form("CalS - Xtalk %2d",rocId));
-      rocmapXtalk = (TH2D*)thrmapsXtalk[idx];  
-      rocmapBB->Add(rocmapXtalk, -1.);
-      fHistOptions.insert(make_pair(rocmapBB, "colz"));
-      fHistList.push_back(rocmapBB);
-      
-      TH1D* hdistBB = bookTH1D(Form("dist_CalS-Xtalksubtracted_C%d", rocId), 
-			       Form("CalS-Xtalksubtracted C%d", rocId), 
-			       514, -257., 257.);
-      
-      for (int col = 0; col < ROC_NUMCOLS; col++) {
-	for (int row = 0; row < ROC_NUMROWS; row++) {
-	  hdistBB->Fill(rocmapBB->GetBinContent(col+1, row+1));
-	}
-      }
-      fHistList.push_back(hdistBB);
-    }
-
-  }
-  
   TH1D *h(0);
   
   restoreDacs();
@@ -177,8 +137,7 @@ void PixTestBBMap::doTest() {
 		   << " lastZero: " << lastZero
 		   << " -> bmin: " << bmin;
 
-    //    bbprob = h->Integral(1, 10);
-    bbprob = static_cast<int>(h->Integral(bmin, h->FindBin(200))); 
+	bbprob = static_cast<int>(h->Integral(bmin, h->FindBin(255)));
     bbString += Form(" %d", bbprob); 
   }
 

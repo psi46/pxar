@@ -3,6 +3,12 @@
 #define PIXTESTCMD_H
 
 #include "PixTest.hh"
+#include "dictionaries.h"
+
+#if (defined WIN32)
+#include <Windows4Root.h>  //needed before any ROOT header
+#endif
+
 #include <TGFrame.h>
 #include <TGTextView.h>
 #include <TGTextEntry.h>
@@ -107,6 +113,7 @@ class Arg{
         }
     }
     bool getString(string & value){ if(type==STRING_T){ value=svalue; return true;}return false;}
+    bool scmp(const char *s){ return (type==STRING_T)&&( strcmp(s, svalue.c_str())==0 );}
 
     argtype type;
     string svalue;
@@ -125,23 +132,29 @@ class Arg{
 };
 
 class Keyword{
-  bool kw(const char* s){ return (strcmp(s, keyword.c_str())==0);};
+    bool kw(const char* s){ return (strcmp(s, keyword.c_str())==0);};
 
- public:
- Keyword():keyword(""){};
- Keyword(string s):keyword(s){};
+    public:
+    Keyword():keyword(""){};
+    Keyword(string s):keyword(s){};
 
-  bool match(const char * s){ return kw(s) && (narg()==0); };
-  bool match(const char *, int &);
-  bool match(const char *, string &);
-  bool match(const char * s, vector<int> & , vector<int> &);
-   bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
+    bool match(const char * s){ return kw(s) && (narg()==0); };
+    bool match(const char * s1, const char * s2);
+    bool match(const char * s, string & s1, vector<string> & options, stringstream & err);
+    bool match(const char *, int &);
+    bool match(const char *, int &, int &);
+    bool match(const char *, string &);
+    bool match(const char * s, vector<int> & , vector<int> &);
+    bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
+    bool greedy_match(const char *, string &);
+    bool greedy_match(const char *, int &, int&, int&, string &);
+    bool concat(unsigned int i, string &s){  s="";  for (;i<argv.size(); i++) s+=argv[i].str(); return true;}
 
-  unsigned int narg(){return argv.size();};
-  string str();
+    unsigned int narg(){return argv.size();};
+    string str();
 
-  string keyword;
-  vector<Arg> argv;
+    string keyword;
+    vector<Arg> argv;
 };
 
 
@@ -212,15 +225,17 @@ class Statement{
 
   bool has_localTarget; // true if the statement has a target identifier
   Target localTarget;   // target(s) for the following statement
-  Keyword keyword;
   Block * block;
 
  public:
  Statement():
   isAssignment(false), name(""), has_localTarget(false), keyword(""){block=NULL;};
-  ~Statement(){ if (!(block==NULL)) delete block;}
+  ~Statement(){ if (!(block==NULL)) delete block; }
   bool parse( Token & );
   bool exec(CmdProc *, Target &);
+  
+  Keyword keyword;
+
 };
 
 
@@ -238,11 +253,21 @@ class CmdProc {
 
   pxar::pxarCore * fApi;
   stringstream out;
-
+  pxar::RegisterDictionary * _dict;
+  pxar::ProbeDictionary * _probeDict;
+  vector<string>  fD_names;
+  vector<string> fA_names;
+  
+  
+  int tbmset(int address, int value);
+  int tbmsetbit(int address, int bit,  int value);
+  int adctest(const string s);
+  int sequence(int seq);
 
 
   bool verbose;
   int tb(Keyword);
+  int tbm(Keyword);
   int roc(Keyword, int rocid);
 
   Target defaultTarget;

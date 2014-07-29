@@ -99,7 +99,7 @@ def PxarStartup(directory, verbosity):
     
     config = PxarConfigFile('%sconfigParameters.dat'%(os.path.join(directory,"")))
     tbparameters = PxarParametersFile('%s%s'%(os.path.join(directory,""),config.get("tbParameters")))
-    tbmparameters = PxarParametersFile('%s%s'%(os.path.join(directory,""),config.get("tbmParameters")))
+
     # Power settings:
     power_settings = {
         "va":config.get("va",1.9),
@@ -133,12 +133,14 @@ def PxarStartup(directory, verbosity):
     
     tbmDACs = []
     for tbm in range(int(config.get("nTbms"))):
-        tbmDACs.append(tbmparameters.getAll())
+        for n in range(2):
+            tbmparameters = PxarParametersFile('%s%s'%(os.path.join(directory,""),config.get("tbmParameters") + "_C" + str(tbm) + ("a" if n%2 == 0 else "b") + ".dat"))
+            tbmDACs.append(tbmparameters.getAll())
 
-    print "Have DAC config for " + str(len(tbmDACs)) + " TBMs:"
+    print "Have DAC config for " + str(len(tbmDACs)) + " TBM cores:"
     for idx, tbmDAC in enumerate(tbmDACs):
         for key in tbmDAC:
-            print "  TBM dac: " + str(key) + " = " + str(tbmDAC[key])
+            print "  TBM " + str(idx/2) + ("a" if idx%2 == 0 else "b") + " dac: " + str(key) + " = " + str(tbmDAC[key])
 
     # init pixel list
     pixels = list()
