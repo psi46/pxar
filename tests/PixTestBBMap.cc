@@ -137,8 +137,7 @@ void PixTestBBMap::doTest() {
 		   << " lastZero: " << lastZero
 		   << " -> bmin: " << bmin;
 
-    //    bbprob = h->Integral(1, 10);
-    bbprob = static_cast<int>(h->Integral(bmin, h->FindBin(200))); 
+	bbprob = static_cast<int>(h->Integral(bmin, h->FindBin(255)));
     bbString += Form(" %d", bbprob); 
   }
 

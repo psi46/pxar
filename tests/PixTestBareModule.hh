@@ -15,6 +15,7 @@ public:
 	void bookHist(std::string);
 	
 	void runCommand(std::string );
+	bool checkIfInContact();
 	void doStdTest(std::string );
 	void doTestRoc(int );
 	void doTest();
