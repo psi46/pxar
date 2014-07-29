@@ -283,7 +283,7 @@ bool StrToI(string word, int & v)
 */
 
 {
-    const char * digits = "0123456789ABCDEF";
+    const char * digits = "0123456789abcdef";
     int base;
     int i;
     const char * d0 = strchr(digits, '0');
@@ -306,8 +306,7 @@ bool StrToI(string word, int & v)
 
     int a = 0;
     const char * d;
-    while ((i < len) && ((d = strchr(digits, word[i])) != NULL)) {
-        // fixme verify that d-d0 <base
+    while ((i < len) && ((d = strchr(digits, word[i])) != NULL) && (d-d0<base) ) {
         a = base * a + d - d0;
         i++;
     }
@@ -654,6 +653,27 @@ bool  Keyword::match(const char * s, const char * s1){
 }
 
 
+bool  Keyword::match(const char * s, string & s1, vector<string> & options, stringstream & err){
+    if (narg() !=1 ) return false;
+    s1 = "";
+    if ( (kw(s)) && (narg()==1) ){
+        for(unsigned int i=0; i<options.size(); i++){
+            if ( argv[0].svalue==options[i] ){
+                s1 = argv[0].svalue;
+                return true;
+            }
+        }
+        err << "possible options for keyword "<< s << " are :\n";
+        for(unsigned int i=0; i<options.size(); i++){
+            err << " " <<options[i];
+        }
+        err << "\n";
+        return false;
+    }
+    return false;
+}
+
+
 bool  Keyword::greedy_match(const char * s1, string & s2){
     if (! kw(s1) ) return false;
     s2="";
@@ -779,7 +799,9 @@ CmdProc::CmdProc()
     verbose=false;
     defaultTarget = Target("roc",0);
     _dict = RegisterDictionary::getInstance();
-
+    _probeDict = ProbeDictionary::getInstance();
+    fA_names = _probeDict->getAllAnalogNames();
+    fD_names = _probeDict->getAllDigitalNames();
 }
 
 
@@ -809,7 +831,7 @@ int CmdProc::tbmsetbit(int address, int bit, int value){
     /* set individual bits */
     uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
     const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
-    /* jump through some api hoops to get the current value */
+    /* get the current register content */
     for(size_t tbmid = 0; tbmid < fApi->_dut->getNTbms(); ++tbmid) {
         std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(tbmid);
         for(unsigned int i=0; i<regs.size(); i++){
@@ -822,12 +844,56 @@ int CmdProc::tbmsetbit(int address, int bit, int value){
                 }else{
                     present &=  ~(1 << bit) & 0xFF;
                 }
-                fApi->setTbmReg( apinames[ idx], value );
+                out << "changing tbm reg " <<  apinames[ idx];
+                out << " from " << hex << (int) regs[i].second;
+                out << " to " << hex << (int) present << "\n";
+                fApi->setTbmReg( apinames[ idx], present );
             }
         }
     }
    return 0; // nonzero values for errors
 
+}
+
+
+int CmdProc::adctest(const string signal){
+    unsigned int n=1024;
+    vector<double> y;
+    if ( fApi->daqADC(signal, n, y) ){
+        //if (y.size()<n){ out<<"incomplete, only "<<y.size()<< " words read\n";}
+        //cout << "y.size=" << y.size() << endl;
+        //for(unsigned int i=0; i<n; i++){ cout << i << "  " << y[i] << endl;}
+        sort( y.begin(), y.end());
+        unsigned int m=y.size();
+        double low(0), high(0), ny(0);
+        for(unsigned int i=int(0.1*m); i<int(0.3*m); i++){
+            low += y[i];
+            high += y[m-i];
+            ny++;
+        }
+        out << signal << "  low level=" << low/ny << " high level = " << high/ny << "\n";
+    }else{
+        out << "error getting adc data";
+    }
+    return 0;
+}
+
+
+
+int CmdProc::sequence(int seq){
+    vector< pair<string, uint8_t> > pgsetup;
+    pgsetup.push_back( make_pair( "sync", 10) );
+    unsigned int tct(106), trc(10), ttk(30);
+    if (seq & 0x08 ) { pgsetup.push_back( make_pair( "resr", trc) ); }
+    if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal", tct )); }
+    if (seq & 0x02 ) { pgsetup.push_back( make_pair("trg", ttk )); }
+    if (seq & 0x01 ) { pgsetup.push_back( make_pair("token", 1)); }
+    pgsetup.push_back(make_pair("none", 255));
+    pgsetup.push_back(make_pair("none", 255));
+    pgsetup.push_back(make_pair("none", 255));
+    pgsetup.push_back(make_pair("none", 0));
+    fApi->setPatternGenerator(pgsetup);
+    return 0;
 }
 
 
@@ -849,23 +915,33 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
     if( kw.match("pon")   ){ fApi->Pon(); return 0; }
     if( kw.match("poff")  ){ fApi->Poff(); return 0; }
-    if( kw.match("D1", s) ){ fApi->SignalProbe("D1",s); return 0;}
-    if( kw.match("D2", s) ){ fApi->SignalProbe("D2",s); return 0;}
+    if( kw.match("d1", s, fD_names, out ) ){ fApi->SignalProbe("D1",s); return 0;}
+    if( kw.match("d2", s, fD_names, out ) ){ fApi->SignalProbe("D2",s); return 0;}
+    if( kw.match("a1", s, fA_names, out ) ){ fApi->SignalProbe("A1",s); return 0;}
+    if( kw.match("a2", s, fA_names, out ) ){ fApi->SignalProbe("A2",s); return 0;}
+    if( kw.match("adc", s, fA_names, out ) ){ fApi->SignalProbe("adc",s); return 0;}  
+    if( kw.match("seq", pattern)){ sequence(pattern); return 0;}
+    if( kw.match("seq","t")){ sequence( 2 ); return 0; }
+    if( kw.match("seq","ct")){ sequence( 6 ); return 0; }
+    if( kw.match("seq","rct")){ sequence( 14 ); return 0; }
+    if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;}  
+    if( kw.match("sdata") ){ adctest("sdata1"); return 0;}
     if( kw.match("adc") || kw.match("dread") ){
-        fApi->daqStart();
-        fApi->daqTrigger(1);
+        fApi->daqStart(1000, false);
+        fApi->daqTrigger(1, 1000);
         std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
-        fApi->daqStop();
+        fApi->daqStop(false);
         for(unsigned int i=0; i<buf.size(); i++){
             out  << buf[i];
         }
         return 0;
     }
     if( kw.match("adcraw")   ){
-        fApi->daqStart();
-        fApi->daqTrigger(1);
+        fApi->daqStart(1000, false);
+        fApi->daqTrigger(1, 1000);
         std::vector<uint16_t> buf = fApi->daqGetBuffer();
-        fApi->daqStop();
+        fApi->daqStop(false);
+        out << buf.size() << " words read \n";
         for(unsigned int i=0; i<buf.size(); i++){
             out << " " <<hex << setw(4)<< setfill('0')  << buf[i];
         }
@@ -876,6 +952,7 @@ int CmdProc::tb(Keyword kw){
         out << "pgset " << step << " " << pattern << " " << delay;
         return 0;
     }
+    //if( kw.match("seq","t"){ pgseq();}
     return -1;
 }
 
@@ -1021,6 +1098,16 @@ int CmdProc::exec(std::string s){
 
     //  skip empty lines and comments
     if( (s.size()==0) || (s[0]=='#') || (s[0]=='-') ) return 0;
+
+
+    // pre-processing: to lower, remove underscores
+    std::string t="";
+    for(unsigned int i=0; i<s.size(); i++){
+        if ( !(s[i]=='_') ){
+            t.push_back( tolower( s[i] ));
+        }
+    }
+    s=t;
     
     // parse and execute a string, leads to call-backs to CmdProc::process
     Token words( getWords(s) );
