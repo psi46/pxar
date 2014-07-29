@@ -41,7 +41,13 @@ Make sure to get the development version, which may be named \texttt{libusb-1.0-
 \subsubsection{FDT2XX / FTDI library}
 The DTB features a FTDI USB chip which needs the a special driver to communicate over USB. There are two options available. The FTDI library is a open source driver for the FTDI chips and is shipped with most Linux distributions and can usually installed via the package manager. The package is usually called \texttt{libftdi-dev} or similar. However, this driver has shown performance problems in the past and should only be used as fallback in case the proprietary driver does not work for some reason.
 
-The proprietary driver privided by the FTDI company is called FTD2XX. Its binaries and header files can be fetched from \url{http://www.ftdichip.com/Drivers/D2XX.htm}. Make sure to pick the correct version for your operating system and system architecture. The dirver library and header files should be placed in the usual install locations of your system, e.g. for a Linux distribution usually \texttt{/usr/local/lib} and \texttt{/usr/local/include} are a good choice since those directories are not supervised by the package manager but the files are discovered by CMake.
+The proprietary driver privided by the FTDI company is called FTD2XX. Its binaries and header files can be fetched from \url{http://www.ftdichip.com/Drivers/D2XX.htm}. Make sure to pick the correct version for your operating system and system architecture. The dirver library and header files should be placed in the usual install locations of your system, e.g. for a Linux distribution usually \texttt{/usr/local/lib} and \texttt{/usr/local/include} are a good choice since those directories are not supervised by the package manager but the files are discovered by CMake. The files from the package are required:
+\begin{verbatim}
+ftd2xx.h
+WinTypes.h
+libftd2xx.so
+\end{verbatim}
+It might be necessary to crea a symlink pointing to libftd2xx.so (without the additional version numbers).
 
 \subsubsection{Python, Cython, Numpy}
 In case you want to use the Python interface to the \pxar core library to use the Pythin Command Line Interface or write short and simple scripts to program the detector and perform tests, you need Python 2.7, the python libraries, as well as Cython (version 0.19 or later) and the Python-Numpy package. All should be available for Linux (via the package manager), OS X and Windows.
