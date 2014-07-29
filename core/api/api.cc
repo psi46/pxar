@@ -458,7 +458,7 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
   else if(probe.compare(0,1,"a") == 0) {
 
     // And get the register value from the dictionary object:
-    uint8_t signal = _dict->getSignal(name,PROBE_ANALOG);
+    uint8_t signal = _dict->getSignal(name, PROBE_ANALOG);
     LOG(logDEBUGAPI) << "Analog probe signal lookup for \"" << name 
 		     << "\" returned signal: " << static_cast<int>(signal);
 
@@ -471,12 +471,68 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
       _hal->SignalProbeA2(signal);
       return true;
     }
+    else if (probe.compare("adc") == 0) {
+       _hal->SignalProbeADC(signal, 0);
+      return true;
+    }
   }
     
   LOG(logERROR) << "Invalid probe name \"" << probe << "\" selected!";
   return false;
 }
 
+
+
+bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <double> & result){
+    
+    // translate signal name, copied from "SignalProbe"
+    if(!_hal->status()) {return false;}
+    ProbeDictionary * _dict = ProbeDictionary::getInstance();
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    uint8_t signal = _dict->getSignal(name, PROBE_ANALOG);
+ 
+    //vector<pair<string,uint8_t> > orgdelays = _dut->sig_delays;
+    vector<pair<string,uint8_t> > sigdelays;
+   
+    int gain = GAIN_1;
+    double scale=1; 
+    if ( (signal == PROBEA_SDATA1) || (signal == PROBEA_SDATA2) ){
+        gain = GAIN_4;
+        scale = 1.;  // FIXME ADC to mV??
+    }    
+    
+     
+    _hal->SignalProbeA1(signal); // just for debugging, remove later
+    result.clear();
+    result.resize(20*nSample);
+    
+    for(unsigned int dly=0; dly<20; dly++){
+        sigdelays.clear();
+        sigdelays.push_back(std::make_pair("clk", dly));
+        sigdelays.push_back(std::make_pair("ctr", dly));
+        sigdelays.push_back(std::make_pair("sda", dly + 15));
+        sigdelays.push_back(std::make_pair("tin", dly + 5));
+        setTestboardDelays(sigdelays);
+        
+        vector<uint16_t> data = _hal->daqADC(signal, gain, nSample, 1, 1);
+    
+        for(unsigned int i=0; i<nSample; i++){
+            int y = data[20] & 0x0fff;
+            if (y & 0x0800) y |= 0xfffff000;
+            result[ 20*i+dly ]=y*scale;
+       }
+   }
+   
+   int clk=4;  // where can I get this from?
+   sigdelays.clear();
+    sigdelays.push_back(std::make_pair("clk", clk));
+    sigdelays.push_back(std::make_pair("ctr", clk));
+    sigdelays.push_back(std::make_pair("sda", clk + 15));
+    sigdelays.push_back(std::make_pair("tin", clk + 5));
+    setTestboardDelays(sigdelays);
+
+   return true;
+}
 
   
 // TEST functions
@@ -2004,3 +2060,61 @@ void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
   _hal->SetClockStretch(src,width,delay);
   
 }
+
+
+// alternative daq methods for module debugging
+
+bool pxarCore::daqStart(const int bufsize, const bool init) {
+
+  if(!status()) {return false;}
+  if(daqStatus()) {return false;}
+  _hal->daqClear();
+
+  if (init){
+  
+    MaskAndTrim(true);
+    SetCalibrateBits(true);
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+        _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+    }
+  }
+
+  // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
+  uint8_t type = 0x0;
+  if(!_dut->tbm.empty()) { type = _dut->tbm.at(0).type; }
+
+  // And start the DAQ session:
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type, bufsize);
+
+  _daq_running = true;
+  return true;
+}
+
+bool pxarCore::daqStop(const bool init) {
+
+  if(!status()) {return false;}
+  if(!_daq_running) {
+    return false;
+  }
+
+  _daq_running = false;
+  
+  // Stop all active DAQ channels:
+  _hal->daqStop();
+
+  // Mask all pixels in the device again:
+  if(init){
+    MaskAndTrim(false);
+
+    // Reset all the Calibrate bits and signals:
+    SetCalibrateBits(false);
+
+    // Detaching all columns to the readout:
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+        _hal->AllColumnsSetEnable(rocit->i2c_address,false);
+    }
+  }
+
+  return true;
+}
+
