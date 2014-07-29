@@ -40,24 +40,24 @@ bool PixTestIV::setParameter(string parName, string sval) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if(!parName.compare("voltagemin")) {
-	fParVoltageMin = atoi(sval.c_str());
-	setToolTips();
+        fParVoltageMin = atof(sval.c_str());
+        setToolTips();
       }
       if(!parName.compare("voltagemax")) {
-	fParVoltageMax = atoi(sval.c_str());
-	setToolTips();
+        fParVoltageMax = atof(sval.c_str());
+        setToolTips();
       }
       if(!parName.compare("voltagestep")) {
-	fParVoltageStep = atoi(sval.c_str());
-	setToolTips();
+        fParVoltageStep = atof(sval.c_str());
+        setToolTips();
       }
       if(!parName.compare("delay")) {
-	fParDelay = atoi(sval.c_str());
-	setToolTips();
+        fParDelay = atof(sval.c_str());
+        setToolTips();
       }
       if(!parName.compare("port")) {
-	fParPort = sval;
-	setToolTips();
+        fParPort = sval;
+        setToolTips();
       }
       break;
     }
@@ -125,10 +125,13 @@ void PixTestIV::doTest() {
   LOG(logDEBUG) << "HV supply has default voltage: " << vOld; 
 
   TTimeStamp startTs;
-  
+  if(hv->supportSweep()){
+	  hv->sweep();
+  }
+  else
   // -- loop over voltage:
   float voltMeasured(-1.), amps(-1.);
-  for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {    
+  for(float voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {    
     hv->setVoltage(voltSet);
     mDelay(fParDelay*1000); 
     // -- get within 1V of specified voltage. Try at most 5 times.
@@ -166,7 +169,7 @@ void PixTestIV::doTest() {
   }
 
   // -- ramp down voltage
-  int vstep(50); 
+  int vstep(50);
   for (int voltSet = fParVoltageMax - vstep; voltSet > 100; voltSet -= vstep) {
     LOG(logDEBUG) << "ramping down voltage, Vset = " << voltSet;
     hv->setVoltage(voltSet);

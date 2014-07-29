@@ -16,11 +16,11 @@ public:
 
 private:
 
-  int fParVoltageMin;
-  int fParVoltageMax;
-  int fParVoltageStep;
-  int fParDelay;
-  bool fStop; 
+  double fParVoltageMin;
+  double fParVoltageMax;
+  double fParVoltageStep;
+  double fParDelay;
+  bool fStop;
   std::string fParPort; 
 
   ClassDef(PixTestIV, 1)

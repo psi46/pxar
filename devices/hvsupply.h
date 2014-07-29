@@ -12,6 +12,7 @@
 #include "pxardllexport.h"
 
 #include <string>
+#include <vector>
 
 /** Cannot use stdint.h when running rootcint on WIN32 */
 #if ((defined WIN32) && (defined __CINT__))
@@ -24,6 +25,14 @@ typedef unsigned char uint8_t;
 #endif
 
 namespace pxar {
+
+  /** Helper Data structure for IV measurements
+   */
+  class DLLEXPORT IVMeasure {
+    public:
+      double voltage;
+      double current;	  
+  }; class IVMeasure
 
   /** pxar interface class for HV Power Supply devices
    *
@@ -82,6 +91,14 @@ namespace pxar {
     /** Did the HV supply trip?
      */
     bool tripped();
+    
+    /** Does HV support sweep internally?
+     */
+    bool supportSweep();
+    
+    /** Perform internal sweep
+     */
+    std::vector<IVMeasure> sweep(double vStart, double vEnd, double vStep);
   
   }; // class hvsupply
 
