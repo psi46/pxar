@@ -74,31 +74,42 @@ class IntList{
     int singleValue;
     vector< pair<int,int> > ranges; 
     public:
-    enum special{IMIN=-1, IMAX=-2, UNDEFINED=-3};
+    enum special{IMIN=-1, IMAX=-2, UNDEFINED=-3, IVAR=-4};
     IntList():singleValue(UNDEFINED){ranges.clear();}
     bool parse( Token & , const bool append=false );
     
     int value(){return singleValue;}
     bool isSingleValue(){return (!(singleValue==UNDEFINED));}
+    bool isVariable(){return ( (singleValue==IVAR));}
     vector<int> getVect(const int imin=0, const int imax=0);
     //vector<int> get(vector<int> );
 };
 
 class Arg{
     public:
-    enum argtype {UNDEF,STRING_T, IVALUE_T, ILIST_T};
+    static int varvalue;
+    enum argtype {UNDEF,STRING_T, IVALUE_T, IVAR_T, ILIST_T};
     Arg(string s):type(STRING_T),svalue(s){};
     //Arg(int i):type(ILIST_T){ivalue=i;}
     Arg(IntList v){
         if( v.isSingleValue() ){
-            type=IVALUE_T;
-            ivalue=v.value();
+            if (v.isVariable()){
+                type = IVAR_T;
+                ivalue=0; // determined at execution gime
+            }else{
+                type=IVALUE_T;
+                ivalue=v.value();
+            }
         }else{
             type=ILIST_T;
             lvalue=v;
         }
     }
-    bool getInt(int & value){ if (type==IVALUE_T){value=ivalue; return true;}return false;}
+    bool getInt(int & value){ 
+        if (type==IVALUE_T){value=ivalue; return true;}
+        if (type==IVAR_T){value=varvalue; return true;}
+        return false;
+    }
 
     bool getList(IntList & value){ if(type==ILIST_T){ value=lvalue; return true;} return false;}
     bool getVect(vector<int> & value, const int imin=0, const int imax=0){
@@ -107,6 +118,9 @@ class Arg{
             return true;
         }else if(type==IVALUE_T){
             value.push_back( ivalue);
+            return true;
+        }else if(type==IVAR_T){
+            value.push_back( varvalue );
             return true;
         }else{
              return false;
@@ -123,6 +137,7 @@ class Arg{
     string str(){
         stringstream s;
         if (type==IVALUE_T){ s << ivalue;}
+        else if (type==IVAR_T){ s << varvalue;}
         else if (type==ILIST_T) { s << "vector("<<")";}
         else if (type==STRING_T){ s << "'" << svalue <<"'";}
         else s <<"???";
@@ -248,7 +263,7 @@ class CmdProc {
   int exec(string s);
   int exec(const char* p){ return exec(string(p));}
 
-  bool process(Keyword, Target );
+  bool process(Keyword, Target, bool );
   bool setDefaultTarget( Target t){ defaultTarget=t; return true; }
 
   pxar::pxarCore * fApi;
@@ -257,6 +272,11 @@ class CmdProc {
   pxar::ProbeDictionary * _probeDict;
   vector<string>  fD_names;
   vector<string> fA_names;
+  static const unsigned int fnDAC_names;
+  static const char * const fDAC_names[];
+  bool fPixelConfigNeeded;
+  unsigned int fTCT, fTRC, fTTK;
+  unsigned int fSeq;
   
   
   int tbmset(int address, int value);
