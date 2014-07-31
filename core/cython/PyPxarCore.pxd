@@ -174,7 +174,7 @@ cdef extern from "api.h" namespace "pxar":
         void daqTriggerLoopHalt() except +
         Event daqGetEvent() except +
         rawEvent daqGetRawEvent() except +
-        vector[rawEvent] daqGetRawBuffer() except +
+        vector[rawEvent] daqGetRawEventBuffer() except +
         vector[Event] daqGetEventBuffer() except +
         vector[uint16_t] daqGetBuffer() except +
         uint32_t daqGetNDecoderErrors()

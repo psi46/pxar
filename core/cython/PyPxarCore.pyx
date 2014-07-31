@@ -443,10 +443,23 @@ cdef class PyPxarCore:
             pixelevents.append(p)
         return pixelevents
 
+    def daqGetRawEvent(self):
+        cdef rawEvent r
+        hits = []
+        r = self.thisptr.daqGetRawEvent()
+        for i in range(r.data.size()):
+            hits.append(r.data[i])
+        return hits
+
     def daqGetBuffer(self):
         cdef vector[uint16_t] r
         r = self.thisptr.daqGetBuffer()
         return r
+
+    def daqGetRawEventBuffer(self):
+        # Since we're just returning the 16bit ints as rawEvent in python,
+        # this is the same as dqGetBuffer:
+        return self.thisptr.daqGetBuffer()
 
     def daqStop(self):
         return self.thisptr.daqStop()
