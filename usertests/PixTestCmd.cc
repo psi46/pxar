@@ -189,7 +189,7 @@ void PixTestCmd::doTest()
     PixTest::update();
 
     createWidgets();
-    cmd = new CmdProc();
+    cmd = new CmdProc(  );
     cmd->fApi=fApi;
 
     PixTest::update();
@@ -523,7 +523,7 @@ bool Target::parse(Token & token){
         lvalues.parse( token );
     }
     return true;
-  }else if ((name=="tbm") || (name=="tb")) {
+  }else if ((name=="tbm") || (name=="tbma") || (name=="tbmb") || (name=="tb")) {
     token.pop_front();
     return true;
   }else{
@@ -823,7 +823,7 @@ const char * const CmdProc::fDAC_names[CmdProc::fnDAC_names] =
    
 CmdProc::CmdProc()
 {
-
+    /* note: fApi is not defined yet !*/
     verbose=false;
     defaultTarget = Target("roc",0);
     _dict = RegisterDictionary::getInstance();
@@ -834,7 +834,9 @@ CmdProc::CmdProc()
     fTCT = 105;
     fTRC = 10;
     fTTK = 30;
+    fBufsize = 10000;
     fSeq = 0;  // remember the last sequence used
+ 
 }
 
 
@@ -852,41 +854,54 @@ CmdProc::~CmdProc(){
 
 /**************** implement some hardware functionalities *************/
 
+
 int CmdProc::tbmset(int address, int  value){
-    /* emulate direct access */
-   uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
-   const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
-   fApi->setTbmReg( apinames[ idx], value );
-   return 0; // nonzero values for errors
+    
+    /* emulate direct access via register address */
+    uint8_t core;
+    uint8_t base = (address & 0xF0);
+    if( base == 0xF0){ core = 1;}
+    else if(base==0xE0){ core = 0;}
+    else {out << "bad tbm register address "<< hex << address << dec << "\n"; return 1;};
+   
+    uint8_t idx = (address & 0x0F) >> 1;  
+    const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
+    fApi->setTbmReg( apinames[ idx], value, core );
+
+    return 0; // nonzero values for errors
 }
 
-int CmdProc::tbmsetbit(int address, int bit, int value){
-    /* set individual bits */
-    uint8_t idx = address & 0xF >> 1;  // throw away base/core for now
-    const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
-    /* get the current register content */
-    for(size_t tbmid = 0; tbmid < fApi->_dut->getNTbms(); ++tbmid) {
-        std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(tbmid);
-        for(unsigned int i=0; i<regs.size(); i++){
-            unsigned int iid = _dict->getRegister(regs[i].first, TBM_REG);
-            if (iid == idx){
-                // found it , do something
-                uint8_t present = regs[i].second;
-                if (value==1){
-                    present |= (1 << bit);
-                }else{
-                    present &=  ~(1 << bit) & 0xFF;
+int CmdProc::tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask){
+    /* set a tbm register, allow setting a subset of bits (thoese where mask=1)
+     * the default value of mask is 0xff, i.e. all bits are changed
+     * the coreMask is 1 for tbma, 2 for tbmb, 3 for both
+    */
+    for(size_t core=0; core<2; core++){
+        if ( ((coreMask >> core) & 1) == 1 ){
+            std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(core);
+            for(unsigned int i=0; i<regs.size(); i++){
+                if (name==regs[i].first){
+                    // found it , do something
+                    uint8_t present = regs[i].second;
+                    uint8_t update = value & valueMask;
+                    update |= (present & (~valueMask) );
+                    out << "changing tbm reg " <<  name << "["<<core<<"]";
+                    out << " from 0x" << hex << (int) regs[i].second;
+                    out << " to 0x" << hex << (int) update << "\n";
+                    fApi->setTbmReg( name, update, core );
                 }
-                out << "changing tbm reg " <<  apinames[ idx];
-                out << " from " << hex << (int) regs[i].second;
-                out << " to " << hex << (int) present << "\n";
-                fApi->setTbmReg( apinames[ idx], present );
             }
         }
-    }
-   return 0; // nonzero values for errors
-
+     }
+    return 0; // nonzero values for errors
 }
+
+
+int CmdProc::tbmsetbit(string name, uint8_t coreMask, int bit, int value){
+    /* set individual bits */
+    return tbmset(name, coreMask, (value & 1)<<bit, 1<<bit);
+}
+
 
 
 int CmdProc::adctest(const string signal){
@@ -920,8 +935,9 @@ int CmdProc::sequence(int seq){
     if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal", fTCT )); }
     if (seq & 0x02 ) { pgsetup.push_back( make_pair("trg", fTTK )); }
     if (seq & 0x01 ) { pgsetup.push_back( make_pair("token", 1)); }
-    pgsetup.push_back(make_pair("none", 255));
-    pgsetup.push_back(make_pair("none", 255));
+    for(unsigned int i=0; i<(fBufsize-fTTK-20)/256; i++){
+        pgsetup.push_back(make_pair("none", 255));
+    }
     pgsetup.push_back(make_pair("none", 255));
     pgsetup.push_back(make_pair("none", 0));
     fApi->setPatternGenerator(pgsetup);
@@ -958,32 +974,33 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("seq","ct")){ sequence( 6 ); return 0; }
     if( kw.match("seq","rct")){ sequence( 14 ); return 0; }
     if( kw.match("seq","rctt")){ sequence( 15 ); return 0; }
+    //if( kw.match("res"){ int s0=fSeq; sequence( 8 ); pg_single(); sequence(s0);}
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;}  
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("ttk", value)){ fTTK=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("trc", value)){ fTRC=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("adc") || kw.match("dread") ){
-        fApi->daqStart(1000, fPixelConfigNeeded);
-        fApi->daqTrigger(1, 1000);
+        fApi->daqStart(fBufsize, fPixelConfigNeeded);
+        fApi->daqTrigger(1, fBufsize);
         std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
         fApi->daqStop(false);
         for(unsigned int i=0; i<buf.size(); i++){
             out  << buf[i];
         }
-        out << "xxx\n";
+        out << " ["<<buf.size()<<"]\n";
         fPixelConfigNeeded = false;
         return 0;
     }
     if( kw.match("raw")   ){
-        fApi->daqStart(1000, fPixelConfigNeeded);
-        fApi->daqTrigger(1, 1000);
+        fApi->daqStart(fBufsize, fPixelConfigNeeded);
+        fApi->daqTrigger(1, fBufsize);
         std::vector<uint16_t> buf = fApi->daqGetBuffer();
         fApi->daqStop(false);
         out << dec << buf.size() << " words read:";
         for(unsigned int i=0; i<buf.size(); i++){
             out << " " <<hex << setw(4)<< setfill('0')  << buf[i];
         }
-        out << "("<< dec << buf.size() <<")\n";
+        out << "["<< dec << buf.size() <<"]\n";
         fPixelConfigNeeded = false;
         return 0;
     }
@@ -1007,10 +1024,10 @@ int CmdProc::roc( Keyword kw, int rocId){
     for(unsigned int i=0; i<fnDAC_names; i++){
         if (kw.match(fDAC_names[i],value)){ fApi->setDAC(kw.keyword,value, rocId );  return 0 ;  }
     }
-    if (kw.match("hirange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|4, rocId);return 0 ;}
-    if (kw.match("lorange")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfb, rocId);return 0 ;}
-    if (kw.match("enable") ) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")|2, rocId);return 0 ;}
-    if (kw.match("disable")) {fApi->setDAC("ctrlreg", fApi->_dut->getDAC(rocId, "ctrlreg")&0xfd, rocId);return 0 ;}
+    if (kw.match("hirange")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))|4, rocId);return 0 ;}
+    if (kw.match("lorange")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))&0xfb, rocId);return 0 ;}
+    if (kw.match("disable") ) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))|2, rocId);return 0 ;}
+    if (kw.match("enable")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))&0xfd, rocId);return 0 ;}
     if (kw.match("mask")   ) { fApi->_dut->maskAllPixels(true, rocId); fPixelConfigNeeded = true; return 0 ;}
     if (kw.match("cald")   ) { fApi->_dut->testAllPixels(false, rocId); fPixelConfigNeeded = true; return 0 ;}
     if (kw.match("arm", col, 0, 51, row, 0, 79) 
@@ -1021,7 +1038,7 @@ int CmdProc::roc( Keyword kw, int rocId){
         // are "enable" and "arm" the same in apispeak?
         for(unsigned int c=0; c<col.size(); c++){
             for(unsigned int r=0; r<row.size(); r++){
-                //cout << c << " " << col[c] << "  :  " << row[r] << endl;
+                if(verbose) { cout << kw.keyword << " roc " << rocId << "  " << col[c] << "  :  " << row[r] << endl; }
                 if (kw.keyword=="arm"){
                     fApi->_dut->testPixel(col[c], row[r], true, rocId); 
                     fApi->_dut->maskPixel(col[c], row[r], false, rocId);
@@ -1043,20 +1060,41 @@ int CmdProc::roc( Keyword kw, int rocId){
 }
 
 
-int CmdProc::tbm(Keyword kw){
+int CmdProc::tbm(Keyword kw, int cores){
     /* handle tbm commands 
+     * core=1 = TBMA, 2=TBMB, 3=both
      * return -1 for unrecognized commands
      * return  0 for success
      * return >0 for errors
      */
+     if(verbose) { cout << "tbm " << kw.keyword << "cores =" << cores << endl;}
     int address, value;
     if (kw.match("tbmset", address, value))  { return tbmset(address, value);  }
-    if (kw.match("enable","triggers")){ return tbmsetbit(0, 6, 0);}
-    if (kw.match("disable","triggers")){ return tbmsetbit(0, 6, 1);}
-    if (kw.match("enable","pkam")){ return tbmsetbit(0, 0, 0);}
-    if (kw.match("disable","pkam")){ return tbmsetbit(0, 0, 1);}
-    if (kw.match("enable","autoreset")){ return tbmsetbit(0, 7, 0);}
-    if (kw.match("disable","autoreset")){ return tbmsetbit(0, 7, 1);}
+    if (kw.match("enable", "pkam")     ){ return tbmsetbit("base0",cores, 0, 0);}
+    if (kw.match("disable","pkam")     ){ return tbmsetbit("base0",cores, 0, 1);}
+    if (kw.match("accept", "triggers") ){ return tbmsetbit("base0",cores, 4, 0);}
+    if (kw.match("ignore", "triggers") ){ return tbmsetbit("base0",cores, 4, 1);}
+    if (kw.match("enable", "triggers") ){ return tbmsetbit("base0",cores, 6, 0);}
+    if (kw.match("disable","triggers") ){ return tbmsetbit("base0",cores, 6, 1);}
+    if (kw.match("enable", "autoreset")){ return tbmsetbit("base0",cores, 7, 0);}
+    if (kw.match("disable","autoreset")){ return tbmsetbit("base0",cores, 7, 1);}
+    if (kw.match("mode","cal"  )    ){ return tbmset("base2",cores,   0xC0);}
+    if (kw.match("mode","clear")    ){ return tbmset("base2",cores,   0x00);}
+    if (kw.match("inject","trg")    ){ return tbmset("base4",cores,      1);}
+    if (kw.match("reset","roc")     ){ return tbmset("base4",cores, (1<<2));}
+    if (kw.match("inject","cal")    ){ return tbmset("base4",cores, (1<<3));}
+    if (kw.match("reset","tbm")     ){ return tbmset("base4",cores, (1<<4));}
+    if (kw.match("clear","stack")   ){ return tbmset("base4",cores, (1<<5));}
+    if (kw.match("clear","token")   ){ return tbmset("base4",cores, (1<<6));}
+    if (kw.match("clear","counter") ){ return tbmset("base4",cores, (1<<7));}
+    if (kw.match("pkamcounter",value)){return tbmset("base8",cores,  value);}
+    if (kw.match("autoreset",value)  ){return tbmset("basec",cores,  value);}
+    if (kw.match("dly0",value)  ){return tbmset("basea", cores,  (value&0x7)   , 0x07);}
+    if (kw.match("dly1",value)  ){return tbmset("basea", cores,  (value&0x7)<<3, 0x38);}
+    if (kw.match("dlyhdr",value)){return tbmset("basea", cores,  (value&0x1)<<6, 0x40);}
+    if (kw.match("dlytok",value)){return tbmset("basea", cores,  (value&0x1)<<7, 0x80);}
+    if (kw.match("phase400",value) ){return tbmset("basee", 1, (value&0x7)<<2, 0x1c);}
+    if (kw.match("phase160",value) ){return tbmset("basee", 1, (value&0x7)<<5, 0x70);}
     return -1; // nothing done
 }
 
@@ -1141,6 +1179,16 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
             if ( stat >=0 ) return (stat==0);
         }
         
+        else if (target.name=="tbma")  {
+            stat =  tbm( keyword, 1 );
+            if ( stat >=0 ) return (stat==0);
+        }
+        
+        else if (target.name=="tbmb")  {
+            stat =  tbm( keyword, 2 );
+            if ( stat >=0 ) return (stat==0);
+        }
+        
         else if (target.name=="roc")  {
             stat =  roc(keyword, target.value());
             if ( stat >=0 ) return (stat==0);
@@ -1153,7 +1201,7 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
     stat = tb( keyword );
     if ( stat >=0 ) return (stat==0);
     
-    stat = tbm( keyword );
+    stat = tbm( keyword ); // hmmm, how does that work for default targets?
     if ( stat >=0 ) return (stat==0);
          
  
@@ -1177,12 +1225,12 @@ int CmdProc::exec(std::string s){
     if( (s.size()==0) || (s[0]=='#') || (s[0]=='-') ) return 0;
 
 
-    // pre-processing: to lower, remove underscores
+    // pre-processing: to lower
     std::string t="";
     for(unsigned int i=0; i<s.size(); i++){
-        if ( !(s[i]=='_') ){
+        //if ( !(s[i]=='_') ){ fixme: removing all underscores leads to problems with dacs, must do it for binary numbers only
             t.push_back( tolower( s[i] ));
-        }
+        //}
     }
     s=t;
     

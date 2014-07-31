@@ -276,18 +276,22 @@ class CmdProc {
   static const char * const fDAC_names[];
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
+  unsigned int fBufsize;
   unsigned int fSeq;
   
   
+  vector<uint8_t> gettbmids(int core);
   int tbmset(int address, int value);
-  int tbmsetbit(int address, int bit,  int value);
+  int tbmset   (string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
+  int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
+
   int adctest(const string s);
   int sequence(int seq);
 
 
   bool verbose;
   int tb(Keyword);
-  int tbm(Keyword);
+  int tbm(Keyword, int cores=3);
   int roc(Keyword, int rocid);
 
   Target defaultTarget;
