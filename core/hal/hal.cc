@@ -1562,9 +1562,12 @@ std::vector<Event*> hal::daqAllEvents() {
 
   while(1) {
     // Read the next Event from each of the pipes:
-    Event* current_Event = new Event();
-    try { current_Event = Eventpump0.Get(); }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true; }
+    Event* current_Event;
+    try { current_Event = new Event(*Eventpump0.Get()); }
+    catch (dsBufferEmpty &) {
+      LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true;
+      current_Event = new Event();
+    }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
 
     if(src1.isConnected()) {
@@ -1597,13 +1600,12 @@ std::vector<Event*> hal::daqAllEvents() {
     }
     else { done_ch3 = true; }
 
-    evt.push_back(current_Event);
-
     // If all readout is finished, return:
     if(done_ch0 && done_ch1 && done_ch2 && done_ch3) {
       LOG(logDEBUGHAL) << "Drained all DAQ channels.";
       break;
     }
+    else { evt.push_back(current_Event); }
   }
 
   return evt;
@@ -1670,10 +1672,13 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
 
   while(1) {
     // Read the next Event from each of the pipes:
-    rawEvent* current_Event = new rawEvent();
+    rawEvent* current_Event;
 
-    try { current_Event = rawpump0.Get(); }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true; }
+    try { current_Event = new rawEvent(*rawpump0.Get()); }
+    catch (dsBufferEmpty &) {
+      LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true;
+      current_Event = new rawEvent();
+    }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
 
     if(src1.isConnected()) {
@@ -1706,13 +1711,12 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
     }
     else { done_ch3 = true; }
 
-    raw.push_back(current_Event);
-
     // If all readout is finished, return:
     if(done_ch0 && done_ch1 && done_ch2 && done_ch3) {
       LOG(logDEBUGHAL) << "Drained all DAQ channels.";
       break;
     }
+    else { raw.push_back(current_Event); }
   }
 
   return raw;
