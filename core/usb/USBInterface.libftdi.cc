@@ -519,7 +519,7 @@ bool CUSB::Show()
   LOG(logINFO) << "  - max timeout for read calls set to " << m_timeout << "ms";
 
   unsigned char latency;
-  if (ftdi_get_latency_timer(&ftdic,&latency)==0){ LOG(logINFO) << "  - FTDI latency timer set to " << (int) latency;}
+  if (ftdi_get_latency_timer(&ftdic,&latency)==0){ LOG(logINFO) << "  - FTDI latency timer set to " << static_cast<int>(latency); }
   LOG(logINFO) << "  - data waiting in local read buffer: " << !(tail == head);
  
   return true;
