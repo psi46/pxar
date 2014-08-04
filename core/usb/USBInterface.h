@@ -78,7 +78,7 @@ public:
   void Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead);
   void Read(void *buffer, uint32_t bytesToRead){
     uint32_t bytesRead;
-    Read(bytesToRead, (unsigned char *)buffer, bytesRead);
+    Read(bytesToRead, reinterpret_cast<unsigned char *>(buffer), bytesRead);
     if (bytesRead != bytesToRead) throw CRpcError(CRpcError::READ_ERROR);
   }
   void Write(const void *buffer, uint32_t bytesToWrite) { 
@@ -104,37 +104,37 @@ public:
   { Read(x, count*sizeof(char)); }
 
   void Read_SHORT(int16_t &x)
-  { Read((unsigned char *)(&x), sizeof(int16_t)); }
+  { Read(reinterpret_cast<unsigned char *>(&x), sizeof(int16_t)); }
 
   void Read_SHORTS(int16_t *x, uint16_t count)
   { Read(x, count*sizeof(int16_t)); }
 
   void Read_USHORT(uint16_t &x)
-  { Read((unsigned char *)(&x), sizeof(int16_t)); }
+  { Read(reinterpret_cast<unsigned char *>(&x), sizeof(int16_t)); }
 
   void Read_USHORTS(uint16_t *x, uint16_t count)
   { Read(x, count*sizeof(int16_t)); }
 
   void Read_INT(int32_t &x)
-  { Read((unsigned char *)(&x), sizeof(int32_t)); }
+  { Read(reinterpret_cast<unsigned char *>(&x), sizeof(int32_t)); }
 
   void Read_INTS(int32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
   void Read_UINT(uint32_t &x)
-  { Read((unsigned char *)(&x), sizeof(int32_t)); }
+  { Read(reinterpret_cast<unsigned char *>(&x), sizeof(int32_t)); }
 
   void Read_UINTS(uint32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
   void Read_LONG(int32_t &x)
-  { Read((unsigned char *)(&x), sizeof(int32_t)); }
+  { Read(reinterpret_cast<unsigned char *>(&x), sizeof(int32_t)); }
 
   void Read_LONGS(int32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
 
   void Read_ULONG(uint32_t &x)
-  { Read((unsigned char *)(&x), sizeof(int32_t)); }
+  { Read(reinterpret_cast<unsigned char *>(&x), sizeof(int32_t)); }
 
   void Read_ULONGS(uint32_t *x, uint16_t count)
   { Read(x, count*sizeof(int32_t)); }
