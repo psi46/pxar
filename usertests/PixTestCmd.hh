@@ -17,8 +17,9 @@
 #include <deque>
 #include <string>
 #include <vector>
-#include <iostream>  // cout, debugging only
+#include <iostream>  // cout, debugging only (need ostream, though)
 #include <sstream>   // for producing string representations
+#include <fstream>
 
 class CmdProc;
 
@@ -155,7 +156,8 @@ class Keyword{
 
     bool match(const char * s){ return kw(s) && (narg()==0); };
     bool match(const char * s1, const char * s2);
-    bool match(const char * s, string & s1, vector<string> & options, stringstream & err);
+    bool match(const char * s1, const char * s2, string &);
+    bool match(const char * s, string & s1, vector<string> & options, ostream & err);
     bool match(const char *, int &);
     bool match(const char *, int &, int &);
     bool match(const char *, string &);
@@ -244,12 +246,14 @@ class Statement{
 
  public:
  Statement():
-  isAssignment(false), name(""), has_localTarget(false), keyword(""){block=NULL;};
+  isAssignment(false), name(""), has_localTarget(false), keyword(""), redirected(false), out_filename(""){block=NULL;};
   ~Statement(){ if (!(block==NULL)) delete block; }
   bool parse( Token & );
   bool exec(CmdProc *, Target &);
   
   Keyword keyword;
+  bool redirected;
+  string out_filename;
 
 };
 
@@ -257,9 +261,10 @@ class Statement{
 class CmdProc {
 
  public:
-  CmdProc();
+  CmdProc(){init();};
   CmdProc( CmdProc* p);
   ~CmdProc();
+  void init();
   int exec(string s);
   int exec(const char* p){ return exec(string(p));}
 
@@ -267,7 +272,7 @@ class CmdProc {
   bool setDefaultTarget( Target t){ defaultTarget=t; return true; }
 
   pxar::pxarCore * fApi;
-  stringstream out;
+  stringstream out; 
   pxar::RegisterDictionary * _dict;
   pxar::ProbeDictionary * _probeDict;
   vector<string>  fD_names;
@@ -280,11 +285,12 @@ class CmdProc {
   unsigned int fSeq;
   
   
-  vector<uint8_t> gettbmids(int core);
   int tbmset(int address, int value);
   int tbmset   (string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
-
+  int rawDump(int level=0);
+  int pixDecodeRaw(int);
+  
   int adctest(const string s);
   int sequence(int seq);
 
