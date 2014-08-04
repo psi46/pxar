@@ -121,17 +121,17 @@ bool pxarCore::initDUT(uint8_t hubid,
   for(std::vector<std::vector<pixelConfig> >::iterator rocit = rocPixels.begin();rocit != rocPixels.end(); rocit++){
     // check pixel configuration sizes
     if ((*rocit).size() == 0){
-      LOG(logWARNING) << "No pixel configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
+      LOG(logWARNING) << "No pixel configured for ROC "<< static_cast<int>(rocit - rocPixels.begin()) << "!";
     }
     if ((*rocit).size() > 4160){
-      LOG(logCRITICAL) << "Too many pixels (N_pixel="<< (*rocit).size() <<" > 4160) configured for ROC "<< (int)(rocit - rocPixels.begin()) << "!";
+      LOG(logCRITICAL) << "Too many pixels (N_pixel="<< rocit->size() <<" > 4160) configured for ROC "<< static_cast<int>(rocit - rocPixels.begin()) << "!";
       throw InvalidConfig("Too many pixels (>4160) configured");
     }
     // check individual pixel configurations
     int nduplicates = 0;
-    for(std::vector<pixelConfig>::iterator pixit = (*rocit).begin();pixit != (*rocit).end(); pixit++){
-      if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelXY((*pixit).column,(*pixit).row)) > 1){
-	LOG(logCRITICAL) << "Config for pixel in column " << (int) (*pixit).column<< " and row "<< (int) (*pixit).row << " present multiple times in ROC " << (int)(rocit-rocPixels.begin()) << "!";
+    for(std::vector<pixelConfig>::iterator pixit = rocit->begin(); pixit != rocit->end(); pixit++){
+      if (std::count_if(rocit->begin(),rocit->end(),findPixelXY(pixit->column,pixit->row)) > 1){
+	LOG(logCRITICAL) << "Config for pixel in column " << static_cast<int>(pixit->column) << " and row "<< static_cast<int>(pixit->row) << " present multiple times in ROC " << static_cast<int>(rocit-rocPixels.begin()) << "!";
 	nduplicates++;
       }
     }
@@ -141,7 +141,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 
     // check for pixels out of range
     if (std::count_if((*rocit).begin(),(*rocit).end(),findPixelBeyondXY(51,79)) > 0) {
-      LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< (int)(rocit - rocPixels.begin())<< "!";
+      LOG(logCRITICAL) << "Found pixels with values for column and row outside of valid address range on ROC "<< static_cast<int>(rocit - rocPixels.begin()) << "!";
       throw InvalidConfig("Found pixels with values for column and row outside of valid address range");
     }
   }
@@ -158,7 +158,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
 
-    LOG(logDEBUGAPI) << "Processing TBM Core " << (int)(tbmIt - tbmDACs.begin());
+    LOG(logDEBUGAPI) << "Processing TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin());
     // Prepare a new TBM configuration
     tbmConfig newtbm;
 
@@ -1562,7 +1562,7 @@ std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t n
 	  if((flags&FLAG_FORCE_UNMASKED) != 0) { LOG(logDEBUGPIPES) << "This is a background hit: " << (*pixit); }
 	  else {
 	    // With only the pixel in question unmasked we want to warn about other appeareances:
-	    LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << (int)expected_column << "," << (int)expected_row << ",x]";
+	    LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << static_cast<int>(expected_column) << "," << static_cast<int>(expected_row) << ",x]";
 	  }
 
 	  // Convention: set a negative pixel value for out-of-order pixel hits:

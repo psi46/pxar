@@ -7,7 +7,6 @@ SET(LIB_SOURCE_FILES
   "rpc/rpc_calls.cpp"
   "rpc/rpc.cpp"
   "rpc/rpc_error.cpp"
-  "rpc/rpc_io.cpp"
   # API
   "api/api.cc"
   "api/datatypes.cc"
