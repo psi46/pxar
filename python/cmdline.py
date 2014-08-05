@@ -554,6 +554,24 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_maskAllPixels.__doc__, '']
 
+    @arity(1,1,[int])
+    def do_getNEnabledPixels(self, rocid):
+        """getNEnabledPixels [ROC id]: returns number of enabled pixels for ROC id"""
+        print self.api.getNEnabledPixels(rocid)
+
+    def complete_getNEnabledPixels(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getNEnabledPixels.__doc__, '']
+
+    @arity(1,1,[int])
+    def do_getNMaskedPixels(self, rocid):
+        """getNMaskedPixels [ROC id]: returns number of masked pixels for ROC id"""
+        print self.api.getNMaskedPixels(rocid)
+
+    def complete_getNMaskedPixels(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getNMaskedPixels.__doc__, '']
+
     def do_quit(self, arg):
         """quit: terminates the application"""
         sys.exit(1)

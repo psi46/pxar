@@ -272,6 +272,18 @@ cdef class PyPxarCore:
             self.thisptr._dut.maskPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.maskPixel(col, row, enable)
+    def getNMaskedPixels(self, int rocid):
+        return self.thisptr._dut.getNMaskedPixels(rocid)
+    def getNEnabledPixels(self, int rocid):
+        return self.thisptr._dut.getNEnabledPixels(rocid)
+    def getNEnabledTbms(self):
+        return self.thisptr._dut.getNEnabledTbms()
+    def getNEnabledRocs(self):
+        return self.thisptr._dut.getNEnabledRocs()
+    def getNTbms(self):
+        return self.thisptr._dut.getNTbms()
+    def getNRocs(self):
+        return self.thisptr._dut.getNRocs()
     #def programDUT(self):
         #return self.thisptr.programDUT()
     def status(self):
