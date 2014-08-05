@@ -114,7 +114,7 @@ void PixTestIV::doTest() {
 
   PixTest::update();
 
-  gPad->SetLogy(1);
+  if(gPad) gPad->SetLogy(1);
 
   int tripped(-1);
 
