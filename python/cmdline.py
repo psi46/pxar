@@ -251,6 +251,19 @@ class PxarCoreCmd(cmd.Cmd):
         return [self.do_daqGetEventBuffer.__doc__, '']
 
     @arity(0,0,[])
+    def do_daqGetRawEvent(self):
+        """daqGetRawEvent: read one raw event from the event buffer"""
+        dat = self.api.daqGetRawEvent()
+        s = ""
+        for i in dat:
+            s += '{:03x}'.format(i) + " "
+        print s
+
+    def complete_daqGetRawEvent(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetRawEvent.__doc__, '']
+
+    @arity(0,0,[])
     def do_daqGetBuffer(self):
         """daqGetBuffer: read full raw data DTB buffer"""
         dat = self.api.daqGetBuffer()
@@ -540,6 +553,24 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_maskAllPixels(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_maskAllPixels.__doc__, '']
+
+    @arity(1,1,[int])
+    def do_getNEnabledPixels(self, rocid):
+        """getNEnabledPixels [ROC id]: returns number of enabled pixels for ROC id"""
+        print self.api.getNEnabledPixels(rocid)
+
+    def complete_getNEnabledPixels(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getNEnabledPixels.__doc__, '']
+
+    @arity(1,1,[int])
+    def do_getNMaskedPixels(self, rocid):
+        """getNMaskedPixels [ROC id]: returns number of masked pixels for ROC id"""
+        print self.api.getNMaskedPixels(rocid)
+
+    def complete_getNMaskedPixels(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getNMaskedPixels.__doc__, '']
 
     def do_quit(self, arg):
         """quit: terminates the application"""

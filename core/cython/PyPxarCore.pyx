@@ -114,10 +114,10 @@ cdef class PxEvent:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "====== " + hex(self.header) + " ======\n"
+        s = "====== " + hex(self.header) + " ====== "
         for px in self.pixels:
             s += str(px)
-        s += "\n====== " + hex(self.trailer) + " ======"
+        s += " ====== " + hex(self.trailer) + " ======\n"
         return str(s)
     cdef c_clone(self, Event* p):
         del self.thisptr
@@ -272,6 +272,18 @@ cdef class PyPxarCore:
             self.thisptr._dut.maskPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.maskPixel(col, row, enable)
+    def getNMaskedPixels(self, int rocid):
+        return self.thisptr._dut.getNMaskedPixels(rocid)
+    def getNEnabledPixels(self, int rocid):
+        return self.thisptr._dut.getNEnabledPixels(rocid)
+    def getNEnabledTbms(self):
+        return self.thisptr._dut.getNEnabledTbms()
+    def getNEnabledRocs(self):
+        return self.thisptr._dut.getNEnabledRocs()
+    def getNTbms(self):
+        return self.thisptr._dut.getNTbms()
+    def getNRocs(self):
+        return self.thisptr._dut.getNRocs()
     #def programDUT(self):
         #return self.thisptr.programDUT()
     def status(self):
@@ -443,10 +455,23 @@ cdef class PyPxarCore:
             pixelevents.append(p)
         return pixelevents
 
+    def daqGetRawEvent(self):
+        cdef rawEvent r
+        hits = []
+        r = self.thisptr.daqGetRawEvent()
+        for i in range(r.data.size()):
+            hits.append(r.data[i])
+        return hits
+
     def daqGetBuffer(self):
         cdef vector[uint16_t] r
         r = self.thisptr.daqGetBuffer()
         return r
+
+    def daqGetRawEventBuffer(self):
+        # Since we're just returning the 16bit ints as rawEvent in python,
+        # this is the same as dqGetBuffer:
+        return self.thisptr.daqGetBuffer()
 
     def daqStop(self):
         return self.thisptr.daqStop()

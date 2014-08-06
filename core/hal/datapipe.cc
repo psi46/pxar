@@ -148,7 +148,7 @@ namespace pxar {
       v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
       while ((v & 0xe000) <= 0x2000) { // R0 ... R1
 
-	for (unsigned int i = 0; i <= 1; i++) {
+	for (int i = 0; i <= 1; i++) {
 	  if ((v >> 13) != i) { // R<i>
 	    //px_error |= (1<<i);
 	    if (v & 0x8000) { // TBM header/trailer

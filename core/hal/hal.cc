@@ -754,11 +754,8 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
     tmpdata.clear();
 
     done = _testboard->LoopSingleRocAllPixelsCalibrate(roci2c, nTriggers, flags);
-    uint32_t words = daqBufferStatus();
-    LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << words << " words...";
-    timer t2;
+    LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
     tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << "USB transfer speed: " << static_cast<double>(words)*2000/(1024*1024)/t2.get() << "MB/s";
     LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
     data.insert(data.end(),tmpdata.begin(),tmpdata.end());
   }
@@ -1513,26 +1510,37 @@ Event* hal::daqEvent() {
   if(src2.isConnected()) { splitter2 >> decoder2 >> Eventpump2; }
   if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    // Read the next Event from each of the pipes, copy the data:
-    *current_Event = *Eventpump0.Get();
-    if(src1.isConnected()) {
+  // Read the next Event from each of the pipes, copy the data:
+  try { *current_Event = *Eventpump0.Get(); }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+
+  if(src1.isConnected()) {
+    try {
       Event* tmp = Eventpump1.Get(); 
       current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
-    if(src2.isConnected()) {
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  
+  if(src2.isConnected()) {
+    try {
       Event* tmp = Eventpump2.Get(); 
       current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
-    if(src3.isConnected()) {
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+
+  if(src3.isConnected()) {
+    try {
       Event* tmp = Eventpump3.Get(); 
       current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
   return current_Event;
 }
@@ -1548,29 +1556,57 @@ std::vector<Event*> hal::daqAllEvents() {
   if(src2.isConnected()) { splitter2 >> decoder2 >> Eventpump2; }
   if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    while(1) {
-      // Read the next Event from each of the pipes:
-      Event* current_Event = new Event(*Eventpump0.Get());
-      if(src1.isConnected()) {
+  // Prepare channel flags:
+  bool done_ch0, done_ch1, done_ch2, done_ch3;
+  done_ch0 = done_ch1 = done_ch2 = done_ch3 = false;
+
+  while(1) {
+    // Read the next Event from each of the pipes:
+    Event* current_Event;
+    try { current_Event = new Event(*Eventpump0.Get()); }
+    catch (dsBufferEmpty &) {
+      LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true;
+      current_Event = new Event();
+    }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
+
+    if(src1.isConnected()) {
+      try {
 	Event* tmp = Eventpump1.Get(); 
 	current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
-      if(src2.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; done_ch1 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
+    }
+    else { done_ch1 = true; }
+
+    if(src2.isConnected()) {
+      try {
 	Event* tmp = Eventpump2.Get(); 
 	current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
-      if(src3.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; done_ch2 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
+    }
+    else { done_ch2 = true; }
+
+    if(src3.isConnected()) {
+      try {
 	Event* tmp = Eventpump3.Get(); 
 	current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
-      evt.push_back(current_Event);
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; done_ch3 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
     }
+    else { done_ch3 = true; }
+
+    // If all readout is finished, return:
+    if(done_ch0 && done_ch1 && done_ch2 && done_ch3) {
+      LOG(logDEBUGHAL) << "Drained all DAQ channels.";
+      break;
+    }
+    else { evt.push_back(current_Event); }
   }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
   return evt;
 }
@@ -1586,26 +1622,35 @@ rawEvent* hal::daqRawEvent() {
   if(src2.isConnected()) { splitter2 >> rawpump2; }
   if(src3.isConnected()) { splitter3 >> rawpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    // Read the next Event from each of the pipes, copy the data:
-    *current_Event = *rawpump0.Get();
-    if(src1.isConnected()) {
+  // Read the next Event from each of the pipes, copy the data:
+  try { *current_Event = *rawpump0.Get(); }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+
+  if(src1.isConnected()) {
+    try {
       rawEvent tmp = *rawpump1.Get();
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
     }
-    if(src2.isConnected()) {
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(src2.isConnected()) {
+    try {
       rawEvent tmp = *rawpump2.Get();
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
     }
-    if(src3.isConnected()) {
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(src3.isConnected()) {
+    try {
       rawEvent tmp = *rawpump3.Get();
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
     }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
   return current_Event;
 }
@@ -1621,29 +1666,58 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
   if(src2.isConnected()) { splitter2 >> rawpump2; }
   if(src3.isConnected()) { splitter3 >> rawpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    while(1) {
-      // Read the next Event from each of the pipes:
-      rawEvent* current_Event = new rawEvent(*rawpump0.Get());
-      if(src1.isConnected()) {
+  // Prepare channel flags:
+  bool done_ch0, done_ch1, done_ch2, done_ch3;
+  done_ch0 = done_ch1 = done_ch2 = done_ch3 = false;
+
+  while(1) {
+    // Read the next Event from each of the pipes:
+    rawEvent* current_Event;
+
+    try { current_Event = new rawEvent(*rawpump0.Get()); }
+    catch (dsBufferEmpty &) {
+      LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true;
+      current_Event = new rawEvent();
+    }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+
+    if(src1.isConnected()) {
+      try {
 	rawEvent tmp = *rawpump1.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
-      if(src2.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; done_ch1 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+    }
+    else { done_ch1 = true; }
+
+    if(src2.isConnected()) {
+      try {
 	rawEvent tmp = *rawpump2.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
-      if(src3.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; done_ch2 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+    }
+    else { done_ch2 = true; }
+
+    if(src3.isConnected()) {
+      try {
 	rawEvent tmp = *rawpump3.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
-      raw.push_back(current_Event);
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; done_ch3 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
     }
+    else { done_ch3 = true; }
+
+    // If all readout is finished, return:
+    if(done_ch0 && done_ch1 && done_ch2 && done_ch3) {
+      LOG(logDEBUGHAL) << "Drained all DAQ channels.";
+      break;
+    }
+    else { raw.push_back(current_Event); }
   }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
 
   return raw;
 }
@@ -1659,19 +1733,26 @@ std::vector<uint16_t> hal::daqBuffer() {
   if(src2.isConnected()) { src2 >> rawpump2; }
   if(src3.isConnected()) { src3 >> rawpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    while(1) {
-      // Read the next Event from each of the pipes:
-      raw.push_back(rawpump0.Get());
-      if(src1.isConnected()) { raw.push_back(rawpump1.Get()); }
-      if(src2.isConnected()) { raw.push_back(rawpump2.Get()); }
-      if(src3.isConnected()) { raw.push_back(rawpump3.Get()); }
-    }
+  // Read the full data blob from each of the pipes:
+  try { while(1) { raw.push_back(rawpump0.Get()); } }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+
+  if(src1.isConnected()) {
+    try { while(1) { raw.push_back(rawpump1.Get()); } }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
   }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+  if(src2.isConnected()) {
+    try { while(1) { raw.push_back(rawpump2.Get()); } }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+  }
+  if(src3.isConnected()) {
+    try { while(1) { raw.push_back(rawpump3.Get()); } }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+  }
 
   return raw;
 }

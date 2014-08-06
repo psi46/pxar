@@ -140,7 +140,7 @@ void PixTestIV::doTest() {
 
   PixTest::update();
 
-  gPad->SetLogy(1);
+  if(gPad) gPad->SetLogy(1);
 
   if(hv->supportSweep()){
     hv->sweep(fParVoltageMin, fParVoltageMin, fParVoltageStep);
