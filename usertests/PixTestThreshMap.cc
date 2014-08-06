@@ -55,6 +55,10 @@ bool PixTestThreshMap::setParameter(string parName, string sval) {
 	fParHiDAC = static_cast<uint16_t>(atoi(sval.c_str())); 
 	setToolTips();
       }
+      if (!parName.compare("stepsize")) {
+	fParStepSize = static_cast<uint16_t>(atoi(sval.c_str())); 
+	setToolTips();
+      }
       if (!parName.compare("risingedge")) {
 	fParRisingEdge = atoi(sval.c_str()) != 0;
 	setToolTips();
@@ -140,7 +144,7 @@ void PixTestThreshMap::doTest() {
   uint16_t flags = 0;
   if(fParRisingEdge) flags |= FLAG_RISING_EDGE;
   if(fParCalS) flags |= FLAG_CALS;
-  std::vector<pixel> results = fApi->getThresholdMap(fParDac, 1, fParLoDAC,fParHiDAC,fParThresholdLevel,flags, fParNtrig);
+  std::vector<pixel> results = fApi->getThresholdMap(fParDac, fParStepSize, fParLoDAC,fParHiDAC,fParThresholdLevel,flags, fParNtrig);
    
   LOG(logINFO) << "Pixels returned: " << results.size();
 

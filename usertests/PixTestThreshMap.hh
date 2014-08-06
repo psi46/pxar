@@ -24,7 +24,8 @@ private:
   uint8_t fParThresholdLevel;
   uint16_t fParNtrig;
   int 	   fParLoDAC; 
-  int 	   fParHiDAC; 
+  int 	   fParHiDAC;
+  int      fParStepSize;
   bool     fParRisingEdge;
   bool     fParCalS;
 
