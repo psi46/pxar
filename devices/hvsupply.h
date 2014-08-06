@@ -98,7 +98,7 @@ namespace pxar {
     
     /** Perform internal sweep
      */
-    std::vector<IVMeasure> sweep(double vStart, double vEnd, double vStep);
+    void sweep(double vStart, double vEnd, double vStep);
   
   }; // class hvsupply
 

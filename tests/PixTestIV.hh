@@ -16,6 +16,7 @@ public:
 
 private:
 
+  void sweep();
   double fParVoltageMin;
   double fParVoltageMax;
   double fParVoltageStep;
