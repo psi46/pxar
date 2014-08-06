@@ -8,6 +8,38 @@
 
 using namespace pxar;
 
+pxar::pixel getNoiseHit(uint8_t rocid, size_t i, size_t j) {
+
+  // Generate a slightly random pulse height between 80 and 100:
+  uint16_t pulseheight = rand()%20 + 80;
+
+  // We can't pulse the same pixel twice in one trigger:
+  size_t col = rand()%52;
+  while(col == i) col = rand()%52;
+  size_t row = rand()%80;
+  while(row == j) row = rand()%80;
+
+  pixel px = pixel(rocid,col,row,pulseheight);
+  LOG(logDEBUGPIPES) << "Adding noise hit: " << px;
+  return px;
+}
+
+void fillEvent(pxar::Event * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags) {
+
+  // Generate a slightly random pulse height between 90 and 100:
+  uint16_t pulseheight = rand() % 2 + 90;
+
+  // Introduce some address encoding issues:
+  if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 1) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,1 answers as PX 0,2
+  else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 2) { } // PX 0,2 is dead
+  else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 6) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,6 answers as PX 0,7
+  else { evt->pixels.push_back(pixel(rocid,col,row,pulseheight)); }
+
+  // If the full chip is unmasked, add some noise hits:
+  if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) { evt->pixels.push_back(getNoiseHit(rocid,col,row)); }
+
+}
+
 hal::hal(std::string /*name*/) :
   _initialized(false),
   _compatible(false),
@@ -16,6 +48,9 @@ hal::hal(std::string /*name*/) :
 {
   // Print the useful SW/FW versioning info:
   PrintInfo();
+
+  // Initialize rand():
+  srand (time(NULL));
 
   // Check if all RPC calls are matched:
   if(CheckCompatibility()) {
@@ -165,46 +200,55 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> rocids,
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
+	// New event:
 	Event* evt = new Event();
 	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
-	  // Introduce some address encoding issues:
-	  if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(*roc,i,j+1,90)); } // PX 0,1 answers as PX 0,2
-	  else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
-	  else { evt->pixels.push_back(pixel(*roc,i,j,90)); }
+	  // Fill the event with some pixels from the current ROC:
+	  fillEvent(evt,*roc,i,j,flags);
 	}
+	// Count pixels:
+	total_pixel += evt->pixels.size();
 	data.push_back(evt);
+	LOG(logDEBUGPIPES) << *evt;
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
 std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  // uint32_t flags = static_cast<uint32_t>(parameter.at(0));
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
   for(size_t k = 0; k < nTriggers; k++) {
     Event* evt = new Event();
     for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
-      evt->pixels.push_back(pixel(*roc,column,row,90));
+      // Fill the event with some pixels from the current ROC:
+      fillEvent(evt,*roc,column,row,flags);
     }
+    // Count pixels:
+    total_pixel += evt->pixels.size();
     data.push_back(evt);
+    LOG(logDEBUGPIPES) << *evt;
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
@@ -213,48 +257,51 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t rocid, std::vector<
   uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
-  // Initialize rand():
-  srand (time(NULL));
-    
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
+	// Create a new event:
 	Event* evt = new Event();
-	// Generate a slightly random pulse height between 90 and 100:
-	uint16_t pulseheight = rand() % 2 + 90;
-	// Introduce some address encoding issues:
-	if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 1) { evt->pixels.push_back(pixel(rocid,i,j+1,pulseheight));} // PX 0,1 answers as PX 0,2
-	else if((flags&FLAG_CHECK_ORDER) != 0 && i == 0 && j == 2) { } // PX 0,2 is dead
-	else { evt->pixels.push_back(pixel(rocid,i,j,pulseheight)); }
+	fillEvent(evt,rocid,i,j,flags);
+
+	// Count pixels:
+	total_pixel += evt->pixels.size();
 	data.push_back(evt);
+	LOG(logDEBUGPIPES) << *evt;
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
 std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  // int32_t flags = parameter.at(0);
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
   for(size_t k = 0; k < nTriggers; k++) {
     Event* evt = new Event();
-    evt->pixels.push_back(pixel(rocid,column,row,90));
+    fillEvent(evt,rocid,column,row,flags);
+
+    // Count pixels:
+    total_pixel += evt->pixels.size();
     data.push_back(evt);
+    LOG(logDEBUGPIPES) << *evt;
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
@@ -543,6 +590,13 @@ void hal::SignalProbeA1(uint8_t /*signal*/) {
 }
 
 void hal::SignalProbeA2(uint8_t /*signal*/) {
+}
+
+void hal::SetClockSource(uint8_t /*src*/) {
+}
+
+bool hal::IsClockPresent() {
+  return true;
 }
 
 void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {

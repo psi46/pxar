@@ -149,14 +149,17 @@ void PixTestDacDacScan::doTest() {
   uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   PixTest::update(); 
-  LOG(logDEBUG) << "dac scan " << fParDAC1 << " vs. " << fParDAC2 << " ntrig = " << fParNtrig << " for npixels = " << fPIX.size(); 
 
   string zname = fParDAC1 + string(":") + fParDAC2; 
   bookHist(zname);
   string::size_type s1 = zname.find(":"); 
   string dac1 = zname.substr(0, s1); 
   string dac2 = zname.substr(s1+1); 
-  LOG(logDEBUG) << "PixTestDacDacScan for dacs ->" << dac1 << "<- and ->" << dac2 << "<-";
+  LOG(logINFO) << "PixTestDacDacScan: " << dac1 << "[" << fParLoDAC1 << ", " << fParHiDAC1 << "]" 
+	       << " vs. " << dac2  << "[" << fParLoDAC2 << ", " << fParHiDAC2 << "]" 
+	       << (fParPHmap?" average PH":" readouts")
+	       << ", ntrig = " << fParNtrig 
+	       << ", npixels = " << fPIX.size(); 
   
   TH2D *h2(0);
   map<string, TH2D*> maps;
@@ -182,34 +185,41 @@ void PixTestDacDacScan::doTest() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults, results;
+  int problems(0); 
+  fNDaqErrors = 0; 
   for (unsigned int i = 0; i < fPIX.size(); ++i) {
     if (fPIX[i].first > -1)  {
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
       fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
       bool done = false;
+      int cnt(0); 
       while (!done) {
-	int cnt(0); 
 	try{
 	  if (0 == fParPHmap) {
 	    rresults = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 						   fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
+	    fNDaqErrors = fApi->daqGetNDecoderErrors();
 	    done = true;
 	  } else {
 	    rresults = fApi->getPulseheightVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 						    fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
+	    fNDaqErrors = fApi->daqGetNDecoderErrors();
 	    done = true;
 	  }
 	} catch(DataMissingEvent &e){
 	  LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+	  fNDaqErrors = 666666;
 	  ++cnt;
 	  if (e.numberMissing > 10) done = true; 
 	} catch(pxarException &e) {
 	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	  fNDaqErrors = 666667;
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
       }
 
+      if (fNDaqErrors > 0) problems = fNDaqErrors; 
       copy(rresults.begin(), rresults.end(), back_inserter(results)); 
 
       fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
@@ -243,10 +253,12 @@ void PixTestDacDacScan::doTest() {
 
     }
 
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-    if (h) h->Draw(getHistOption(h).c_str());
-    PixTest::update(); 
   }
+
+  LOG(logINFO) << "dac dac scan done" << (problems > 0? Form(" problems observed: %d", problems): " no problems seen"); 
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  if (h) h->Draw(getHistOption(h).c_str());
+  PixTest::update(); 
 
 }
 

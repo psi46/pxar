@@ -130,7 +130,7 @@ namespace pxar {
      *  a 16bit fixed-width integer for storage
      */
     uint16_t compactFloat(double input) {
-      return round(input*std::numeric_limits<uint16_t>::max());
+      return static_cast<uint16_t>(round(input*std::numeric_limits<uint16_t>::max()));
     }
 
     /** Helper function to expand 16bit fixed-width integer value to

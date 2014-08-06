@@ -42,7 +42,7 @@ typedef struct {
   uint8_t proc[2000];
   uint8_t pcol[2000];
   uint8_t prow[2000];
-  uint8_t pval[2000];
+  double pval[2000];
   uint16_t pq[2000];
 } TreeEvent;
 
@@ -180,6 +180,8 @@ public:
   std::vector<uint8_t> getDacs(std::string dacName); 
   /// set on all ROCs the DAC dacName
   void setDacs(std::string dacName, std::vector<uint8_t> dacVector); 
+  /// return from all ROCs the DAC dacName as a string
+  std::string getDacsString(std::string dacName); 
 
   /// combine all available ROC maps into a module map
   virtual TH1* moduleMap(std::string histname); 
@@ -247,7 +249,7 @@ protected:
   int histCycle(std::string hname);   ///< determine histogram cycle
   void fillMap(TH2D *hmod, TH2D *hroc, int iroc);  ///< provides the coordinate transformation to module map
 
-  pxar::api            *fApi;  ///< pointer to the API
+  pxar::pxarCore            *fApi;  ///< pointer to the API
   PixSetup             *fPixSetup;  ///< all necessary stuff in one place
   PixTestParameters    *fTestParameters;  ///< the repository of all test parameters
   PixInitFunc          *fPIF;    ///< function instantiation and automatic initialization
@@ -256,6 +258,7 @@ protected:
   double               fThresholdN; ///< variable for passing back the threshold where noise leads to loss of efficiency
   int                  fNtrig; 
   std::vector<double>  fPhErrP0, fPhErrP1; 
+  uint32_t             fNDaqErrors; 
 
   std::string           fName, fTestTip, fSummaryTip, fStopTip; ///< information for this test
 

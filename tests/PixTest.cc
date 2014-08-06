@@ -126,6 +126,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   while (!done) {
     try {
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true;
     } catch(pxarException &e) {
       ++cnt;
@@ -198,11 +199,14 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   while (!done){
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(DataMissingEvent &e) {
       ++cnt;
+      fNDaqErrors = 666666;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -230,7 +234,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
     if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[i].roc_id)) {
       h2 = maps[idx];
       if (h2->GetBinContent(results[i].column+1, results[i].row+1) > 0) {
-	LOG(logINFO) << "ROC/col/row = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row)
+	LOG(logDEBUG) << "ROC/col/row = " << int(results[i].roc_id) << "/" << int(results[i].column) << "/" << int(results[i].row)
 		     << " with = " << h2->GetBinContent(results[i].column+1, results[i].row+1)
 		     << " now adding " << static_cast<float>(results[i].getValue());
       }
@@ -290,8 +294,10 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       while (!done){
 	try {
 	  results = fApi->getThresholdMap(dac, 1, daclo, dachi, FLAGS, ntrig);
+	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true; 
-	} catch(pxarException &e) {
+	} catch(pxarException &/*e*/) {
+	  fNDaqErrors = 666667;
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
@@ -302,8 +308,10 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
       while (!done){
 	try {
 	  results = fApi->getThresholdMap(dac, FLAGS, ntrig);
+	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true; 
 	} catch(pxarException &e) {
+	  fNDaqErrors = 666667;
 	  ++cnt;
 	}
 	done = (cnt>5) || done;
@@ -566,34 +574,34 @@ bool PixTest::threshold(TH1 *h) {
   if (fPIF->doNotFit()) {
     fThreshold  = f->GetParameter(0); 
     //    cout << " nofit fThreshold = " << fThreshold << endl;
-    fThresholdE = 1.;
-    fSigma      = 0.5;
-    fSigmaE     = 0.5;
+    fThresholdE = 0.3;
+    fSigma      = 0.;
+    fSigmaE     = 0.;
   } else {
     h->Fit(f, "qr", "", lo, hi); 
     fThreshold  = f->GetParameter(0); 
     //    cout << " w/fit fThreshold = " << fThreshold << endl;
     fThresholdE = f->GetParError(0); 
-    fSigma      = 1./(TMath::Sqrt(2.)*f->GetParameter(1)); 
+    fSigma      = 1./(TMath::Sqrt(2.)/f->GetParameter(1)); 
     fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
   }
 
   fThresholdN = h->FindLastBinAbove(0.5*h->GetMaximum()); 
   
   if (fThreshold < h->GetBinLowEdge(1)) {
-    fThreshold  = 0.; 
-    fThresholdE = 0.; 
-    fSigma  = 0.; 
-    fSigmaE = 0.; 
-    fThresholdN = 0.;
+    fThreshold  = -2.; 
+    fThresholdE = -2.; 
+    fSigma  = -2.; 
+    fSigmaE = -2.; 
+    fThresholdN = -2.;
     return false;
   }
 
   if (fThreshold > h->GetBinLowEdge(h->GetNbinsX())) {
     fThreshold  = h->GetBinLowEdge(h->GetNbinsX()); 
-    fThresholdE = 0.; 
-    fSigma  = 0.; 
-    fSigmaE = 0.; 
+    fThresholdE = -1.; 
+    fSigma  = -1.; 
+    fSigmaE = -1.; 
     fThresholdN = fThreshold;
     return false;
   }
@@ -818,8 +826,10 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
   while (!done){
     try {
       scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -1071,14 +1081,18 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
     try{
       if (1 == ihit) {
 	results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, fNtrig); 
+	fNDaqErrors = fApi->daqGetNDecoderErrors();
       } else {
 	results = fApi->getPulseheightVsDAC(dac, dacmin, dacmax, FLAGS, fNtrig); 
+	fNDaqErrors = fApi->daqGetNDecoderErrors();
       }
       done = true;
     } catch(DataMissingEvent &e) {
+      fNDaqErrors = 666666;
       ++cnt;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -1135,8 +1149,11 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 		  52, 0., 52., 80, 0., 80.); 
     fHistOptions.insert(make_pair(h4, "colz")); 
 
-    std::transform(dac.begin(), dac.end(), dac.begin(), ::tolower);
-    if (!name.compare("scurveVthrComp")) {
+    //    std::transform(dac.begin(), dac.end(), dac.begin(), ::tolower);
+    //    if (!name.compare("scurveVthrComp")) {
+    string lname(name); 
+    std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
+    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
       dumpFile = true; 
       OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
       OutputFile << "Mode 1 " << "Ntrig " << getParameter("ntrig") << endl;
@@ -1183,12 +1200,6 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
 	//	cout << "add " << rmaps[i]->GetName() << endl;
 	fHistList.push_back(rmaps[i]);
       }
-      // -- write all hists to file if requested
-      if (0 && result & 0x4) {
-	rmaps[i]->SetDirectory(fDirectory); 
-	rmaps[i]->Write();
-	delete rmaps[i];
-      }
     }
     if (dumpFile) OutputFile.close();
 
@@ -1206,7 +1217,7 @@ void PixTest::scurveAna(string dac, string name, vector<vector<TH1*> > maps, vec
       TH1* d1 = distribution((TH2D*)h2, 256, 0., 256., zeroSuppressed); 
       resultMaps.push_back(d1); 
       fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 4., zeroSuppressed); 
+      TH1* d2 = distribution((TH2D*)h3, 100, 0., 6., zeroSuppressed); 
       resultMaps.push_back(d2); 
       fHistList.push_back(d2); 
       TH1* d3 = distribution((TH2D*)h4, 256, 0., 256., zeroSuppressed); 
@@ -1328,6 +1339,19 @@ vector<uint8_t> PixTest::getDacs(string dacName) {
 }
 
 // ----------------------------------------------------------------------
+string PixTest::getDacsString(std::string dacName) {
+  vector<uint8_t> v = getDacs(dacName); 
+  stringstream s; 
+  unsigned int vsize = v.size();
+  for (unsigned int i = 0; i < vsize; ++i) {
+    s << static_cast<int>(v[i]); 
+    if (i < vsize-1) s << " "; 
+  }
+  return s.str(); 
+}
+
+
+// ----------------------------------------------------------------------
 void PixTest::setDacs(string dacName, vector<uint8_t> v) {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
@@ -1377,11 +1401,14 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
   while (!done){
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
     } catch(DataMissingEvent &e) {
       ++cnt;
+      fNDaqErrors = 666666;
       if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
+      fNDaqErrors = 666667;
       ++cnt;
     }
     done = (cnt>5) || done;

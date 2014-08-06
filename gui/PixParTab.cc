@@ -34,9 +34,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   UInt_t w = fGui->getTabs()->GetWidth(); 
   UInt_t h = fGui->getTabs()->GetHeight(); 
 
-  //   fhFrame = new TGHorizontalFrame(fTabFrame);
   fhFrame = new TGCompositeFrame(fTabFrame, w, h, kHorizontalFrame);
-
   fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderL, fBorderR, fBorderT, fBorderB));
 
   TGTabElement *tabel = fGui->getTabs()->GetTabTab(fTabName.c_str());
@@ -56,6 +54,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   vFrame = new TGVerticalFrame(fhFrame);
   fhFrame->AddFrame(vFrame, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   g1Frame = new TGGroupFrame(vFrame, "Testboard");
+  vFrame->AddFrame(g1Frame);
   vector<pair<string, uint8_t> > amap = fConfigParameters->getTbParameters();
   for (unsigned int i = 0; i < amap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX); 
@@ -87,8 +86,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
     tb = new TGTextBuffer(5); 
     tl = new TGLabel(hFrame, dmap[i].first.c_str());
-    tl->SetWidth(100);
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB)); 
+    tl->SetWidth(100);
 
     te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100); 
     hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB)); 
@@ -100,24 +99,24 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     te->Connect("TextChanged(const char *)", "PixParTab", this, "powerYellow()");
 
     tset = new TGTextButton(hFrame, "Set", i);
+    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB)); 
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
     tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
     tset->Connect("Clicked()", "PixParTab", this, "setPowerSettings()");
-    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB)); 
   }
 
   tset = new TGTextButton(g1Frame, "Save Parameters");
+  g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB)); 
   tset->SetToolTipText(Form("Write the testboard parameters to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveTbParameters()");
-  g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB)); 
-
-  vFrame->AddFrame(g1Frame);
 
   // -- TBM Parameters
   TGCompositeFrame *bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
+  vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, fBorderL, fBorderR, fBorderT, fBorderB));  
   vector<vector<pair<string, uint8_t> > > cmap;
   for (unsigned int i = 0; i < fGui->getApi()->_dut->getNTbms(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i); 
+    tcb->Connect("Clicked()", "PixParTab", this, "selectTbm()");
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB)); 
     fSelectTbm.push_back(tcb); 
     vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getTbmDACs(i);
@@ -130,13 +129,15 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       fSelectTbm[itbm]->SetState(kButtonDown);
     }
   }
-  vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, fBorderL, fBorderR, fBorderT, fBorderB));  
   updateSelection();
 
+  //  hFrame = new TGHorizontalFrame(vFrame);
+  //  vFrame->AddFrame(hFrame, new TGLayoutHints(kLHintsBottom, fBorderL, fBorderR, fBorderT, fBorderB));
+
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
+  vFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
   
   if (cmap.size() > 0) {
-
     unsigned int firsttbm(0); 
     for (unsigned int i = 0; i < fSelectTbm.size(); ++i) {
       if (kButtonDown == fSelectTbm[i]->GetState()) {
@@ -155,8 +156,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
 	  tb = new TGTextBuffer(5); 
 	  tl = new TGLabel(hFrame, amap[i].first.c_str());
-	  tl->SetWidth(100);
 	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB)); 
+	  tl->SetWidth(100);
 	  
 	  te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(70); 
 	  te->SetToolTipText("note that the numbers are in binary format (in case this is not obvious)");
@@ -178,15 +179,15 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	
       }
       fTbmParIds.push_back(parids);
-      vFrame->AddFrame(g2Frame);
-      g1Frame->SetWidth(g2Frame->GetDefaultWidth());
+      //      vFrame->AddFrame(g2Frame);
+      g2Frame->SetWidth(g2Frame->GetDefaultWidth());
     }
 
 
     tset = new TGTextButton(g2Frame, "Save Parameters");
+    g2Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB)); 
     tset->SetToolTipText(Form("Write the TBM parameters of all selected TBMs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
     tset->Connect("Clicked()", "PixParTab", this, "saveTbmParameters()");
-    g2Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB)); 
   }
 
   // -- DAC Parameters
@@ -590,6 +591,13 @@ void PixParTab::selectTbm(int id) {
 
   LOG(logDEBUG) << "selectTbm: id = " << id;
   fSelectedTbm = id; 
+
+  map<string, uint8_t> amap = fTbmParIds[fSelectedTbm]; 
+  for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
+    
+    std::bitset<8> bits((*mapit).second);
+    fTbmTextEntries[(*mapit).first]->SetText(Form("%s", bits.to_string().c_str()));
+  }
   updateSelection();
 }
 
@@ -665,8 +673,9 @@ void PixParTab::saveTbParameters() {
 // ----------------------------------------------------------------------
 void PixParTab::saveTbmParameters() {
   LOG(logDEBUG) << "save Tbm parameters"; 
-  int itbm(0); 
-  fConfigParameters->writeTbmParameterFile(0, fGui->getApi()->_dut->getTbmDACs(itbm)); 
+  for (unsigned int itbm = 0; itbm < fGui->getApi()->_dut->getNTbms(); itbm += 2) {
+    fConfigParameters->writeTbmParameterFile(itbm, fGui->getApi()->_dut->getTbmDACs(itbm), fGui->getApi()->_dut->getTbmDACs(itbm+1)); 
+  }
 }
 
 // ----------------------------------------------------------------------

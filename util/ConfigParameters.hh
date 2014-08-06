@@ -50,7 +50,9 @@ public:
   // NB: if you add a variable name after the second argument, the dictionary will not compile anymore??!?!
   bool writeDacParameterFile(int iroc, std::vector<std::pair<std::string, uint8_t> > );
   bool writeTrimFile(int iroc, std::vector<pxar::pixelConfig> );
-  bool writeTbmParameterFile(int itbm, std::vector<std::pair<std::string, uint8_t> > );
+  bool writeTbmParameterFile(int itbm, 
+			     std::vector<std::pair<std::string, uint8_t> > , 
+			     std::vector<std::pair<std::string, uint8_t> > );
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 

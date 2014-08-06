@@ -37,19 +37,20 @@
 #include "log.h"
 
 using namespace pxar;
+#define NUMPORTS 31
 
-int Cport[30],
+int Cport[NUMPORTS],
   rs_error;
 
 struct termios new_port_settings,
-  old_port_settings[30];
+  old_port_settings[NUMPORTS];
 
-char comports[30][16]={"/dev/ttyS0","/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4","/dev/ttyS5",
+char comports[NUMPORTS][30]={"/dev/ttyS0","/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4","/dev/ttyS5",
                        "/dev/ttyS6","/dev/ttyS7","/dev/ttyS8","/dev/ttyS9","/dev/ttyS10","/dev/ttyS11",
                        "/dev/ttyS12","/dev/ttyS13","/dev/ttyS14","/dev/ttyS15","/dev/ttyUSB0",
                        "/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3","/dev/ttyUSB4","/dev/ttyUSB5",
                        "/dev/ttyAMA0","/dev/ttyAMA1","/dev/ttyACM0","/dev/ttyACM1",
-                       "/dev/rfcomm0","/dev/rfcomm1","/dev/ircomm0","/dev/ircomm1"};
+                       "/dev/rfcomm0","/dev/rfcomm1","/dev/ircomm0","/dev/ircomm1","/dev/tty.KeySerial1"};
 
 int comport_number=16; // "/dev/ttyUSB0"
 
@@ -57,7 +58,7 @@ int RS232_OpenComport(int comport_number, int baudrate)
 {
   int baudr, status;
 
-  if((comport_number>29)||(comport_number<0))
+  if((comport_number>=NUMPORTS)||(comport_number<0))
     {
       LOG(logCRITICAL) << "Illegal comport number " << comport_number << "!";
       return(1);
@@ -106,6 +107,8 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     }
 
+
+  printf("Opening com port: %s\n", comports[comport_number]);
   rs_error = 0;
   Cport[comport_number] = open(comports[comport_number], O_RDWR | O_NOCTTY | O_NDELAY);
   if(Cport[comport_number]==-1)
@@ -121,16 +124,19 @@ int RS232_OpenComport(int comport_number, int baudrate)
       perror("unable to read portsettings ");
       return(1);
     }
+  new_port_settings = old_port_settings[comport_number];
 
   memset(&new_port_settings, 0, sizeof(new_port_settings));  /* clear the new struct */
 
   new_port_settings.c_cflag = baudr | CS8 | CLOCAL | CREAD;
   new_port_settings.c_iflag = IGNPAR;
-  new_port_settings.c_oflag = 0;
-  new_port_settings.c_lflag = FLUSHO;
-  new_port_settings.c_cc[VMIN] = 0;      /* block untill n bytes are received */
-  new_port_settings.c_cc[VTIME] = 0;     /* block untill a timer expires (n * 100 mSec.) */
+
+  cfsetospeed(&new_port_settings,baudr);
+  cfsetispeed(&new_port_settings,baudr);
+  
   rs_error = tcsetattr(Cport[comport_number], TCSANOW, &new_port_settings);
+  
+  
   if(rs_error==-1)
     {
       close(Cport[comport_number]);
@@ -155,7 +161,6 @@ int RS232_OpenComport(int comport_number, int baudrate)
 
   return(0);
 }
-
 
 int RS232_PollComport(int comport_number, char *buf, int size)
 {
@@ -333,10 +338,14 @@ void RS232_cputs(int comport_number, const char *text)  /* sends a string to ser
 }
 
 //---------------------------------------------------------------------------
-int openComPort(const int comPortNumber,const int baud)
+int openComPort(const int comPortNumber,const int baud, const char *name)
 {
   comport_number=comPortNumber;
-    
+  if (strcmp(name, "")) {
+    sprintf(comports[0], "%s", name); 
+    comport_number = 0; 
+  }
+
   if(RS232_OpenComport(comport_number, baud))
     {
       LOG(logCRITICAL) << "Cannot open COM port!";

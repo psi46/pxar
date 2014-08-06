@@ -23,6 +23,7 @@
 #include "PixTestPh.hh"
 #include "PixTestPhOptimization.hh"
 #include "PixTestBBMap.hh"
+#include "PixTestBareModule.hh"
 #include "PixTestFullTest.hh"
 
 using namespace std;
@@ -76,6 +77,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
   if (!name.compare("phoptimization")) return new PixTestPhOptimization(a, "PhOptimization");
   if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
+  if (!name.compare("baremodule")) return new PixTestBareModule(a, "BareModule");
   if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");
   return 0; 
 }

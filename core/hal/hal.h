@@ -105,6 +105,14 @@ namespace pxar {
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);
 
+    /** Set the clock source
+     */
+    void SetClockSource(uint8_t src);
+
+    /** Check if external clock is present
+     */
+    bool IsClockPresent();
+
     /** Set the clock stretch 
     */
     void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);
@@ -145,7 +153,11 @@ namespace pxar {
      */
     void SignalProbeA2(uint8_t signal);
 
-
+    /** Selects input for the ADC 
+     */
+    void SignalProbeADC(uint8_t signal, uint8_t gain);
+    vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, int nSample, uint8_t start, uint8_t stop);
+    
     // TEST COMMANDS
 
     /** Function to return Module maps of calibration pulses

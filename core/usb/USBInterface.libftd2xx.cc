@@ -34,29 +34,29 @@ CUSB::CUSB(){
 
 const char* CUSB::GetErrorMsg(int error)
 {
-	switch (error)
-	{
-	case FT_OK:                          return "ok";
-	case FT_INVALID_HANDLE:              return "invalid handle";
-	case FT_DEVICE_NOT_FOUND:            return "device not found";
-	case FT_DEVICE_NOT_OPENED:           return "device not opened";
-	case FT_IO_ERROR:                    return "io error";
-	case FT_INSUFFICIENT_RESOURCES:      return "insufficient resource";
-	case FT_INVALID_PARAMETER:           return "invalid parameter";
-	case FT_INVALID_BAUD_RATE:           return "invalid baud rate";
-	case FT_DEVICE_NOT_OPENED_FOR_ERASE: return "device not opened for erase";
-	case FT_DEVICE_NOT_OPENED_FOR_WRITE: return "device not opened for write";
-	case FT_FAILED_TO_WRITE_DEVICE:      return "failed to write device";
-	case FT_EEPROM_READ_FAILED:          return "eeprom read failed";
-	case FT_EEPROM_WRITE_FAILED:         return "eeprom write failed";
-	case FT_EEPROM_ERASE_FAILED:         return "eeprom erase failed";
-	case FT_EEPROM_NOT_PRESENT:          return "eeprom not present";
-	case FT_EEPROM_NOT_PROGRAMMED:       return "eeprom not programmed";
-	case FT_INVALID_ARGS:                return "invalid args";
-	case FT_NOT_SUPPORTED:               return "not supported";
-	case FT_OTHER_ERROR:                 return "other error";
-	}
-	return "unknown error";
+  switch (error)
+    {
+    case FT_OK:                          return "ok";
+    case FT_INVALID_HANDLE:              return "invalid handle";
+    case FT_DEVICE_NOT_FOUND:            return "device not found";
+    case FT_DEVICE_NOT_OPENED:           return "device not opened";
+    case FT_IO_ERROR:                    return "io error";
+    case FT_INSUFFICIENT_RESOURCES:      return "insufficient resource";
+    case FT_INVALID_PARAMETER:           return "invalid parameter";
+    case FT_INVALID_BAUD_RATE:           return "invalid baud rate";
+    case FT_DEVICE_NOT_OPENED_FOR_ERASE: return "device not opened for erase";
+    case FT_DEVICE_NOT_OPENED_FOR_WRITE: return "device not opened for write";
+    case FT_FAILED_TO_WRITE_DEVICE:      return "failed to write device";
+    case FT_EEPROM_READ_FAILED:          return "eeprom read failed";
+    case FT_EEPROM_WRITE_FAILED:         return "eeprom write failed";
+    case FT_EEPROM_ERASE_FAILED:         return "eeprom erase failed";
+    case FT_EEPROM_NOT_PRESENT:          return "eeprom not present";
+    case FT_EEPROM_NOT_PROGRAMMED:       return "eeprom not programmed";
+    case FT_INVALID_ARGS:                return "invalid args";
+    case FT_NOT_SUPPORTED:               return "not supported";
+    case FT_OTHER_ERROR:                 return "other error";
+    default:                             return "unknown error";
+    }
 }
 
 
@@ -78,7 +78,7 @@ bool CUSB::EnumFirst(uint32_t &nDevices)
 bool CUSB::EnumNext(char name[])
 {
 	if (enumPos >= enumCount) return false;
-	ftdiStatus = FT_ListDevices((PVOID)enumPos, name, FT_LIST_BY_INDEX);
+	ftdiStatus = FT_ListDevices(reinterpret_cast<PVOID>(enumPos), name, FT_LIST_BY_INDEX);
 	if (ftdiStatus != FT_OK)
 	{
 		enumCount = enumPos = 0;
@@ -94,7 +94,7 @@ bool CUSB::Enum(char name[], uint32_t pos)
 {
 	enumPos=pos;
 	if (enumPos >= enumCount) return false;
-	ftdiStatus = FT_ListDevices((PVOID)enumPos, name, FT_LIST_BY_INDEX);
+	ftdiStatus = FT_ListDevices(reinterpret_cast<PVOID>(enumPos), name, FT_LIST_BY_INDEX);
 	if (ftdiStatus != FT_OK)
 	{
 		enumCount = enumPos = 0;
@@ -153,12 +153,12 @@ bool CUSB::Open(char serialNumber[])
         continue;
 
       /* Read the serial number from the device */
-      ok = libusb_get_string_descriptor_ascii(handle, descriptor.iSerialNumber, (unsigned char *) serial, 20);
+      ok = libusb_get_string_descriptor_ascii(handle, descriptor.iSerialNumber, reinterpret_cast<unsigned char *>(serial), 20);
       if( ok < 0)
         continue;
 
       /* Check the device serial number */
-      if( strcmp(serialNumber, serial) == 0) {
+      if(strcmp(serialNumber, serial) == 0) {
         /* that's our device */
         found = true;
 
@@ -219,7 +219,7 @@ void CUSB::Write(uint32_t bytesToWrite, const void *buffer)
 	for (k=0; k < bytesToWrite; k++)
 	{
 		if (m_posW >= USBWRITEBUFFERSIZE) { Flush(); }
-		m_bufferW[m_posW++] = ((unsigned char*)buffer)[k];
+		m_bufferW[m_posW++] = (reinterpret_cast<unsigned char*>(const_cast<void*>(buffer)))[k];
 	}
 }
 
@@ -291,7 +291,7 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 	for (i=0; i<bytesToRead; i++)
 	{
 		if (m_posR<m_sizeR)
-			((unsigned char*)buffer)[i] = m_bufferR[m_posR++];
+		  (reinterpret_cast<unsigned char*>(const_cast<void*>(buffer)))[i] = m_bufferR[m_posR++];
 
 		else if (!timeout)
 		{
@@ -302,7 +302,7 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 			if (m_sizeR < n) timeout = true;
 
 			if (m_posR<m_sizeR)
-				((unsigned char*)buffer)[i] = m_bufferR[m_posR++];
+			  (reinterpret_cast<unsigned char*>(const_cast<void*>(buffer)))[i] = m_bufferR[m_posR++];
 			else
 			{   // timeout (bytesRead < bytesToRead)
 				bytesRead = i;

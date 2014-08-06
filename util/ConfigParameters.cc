@@ -58,7 +58,7 @@ void ConfigParameters::initialize() {
 
   fTrimVcalSuffix                = ""; 
   fDACParametersFileName         = "defaultDACParameters";
-  fTbmParametersFileName         = "defaultTBMParameters.dat";
+  fTbmParametersFileName         = "defaultTBMParameters";
   fTBParametersFileName          = "defaultTBParameters.dat";
   fTrimParametersFileName        = "defaultTrimParameters";
   fTestParametersFileName        = "defaultTestParameters.dat";
@@ -589,7 +589,7 @@ vector<string> ConfigParameters::getDacs() {
 void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
     for (unsigned int i = 0; i < fnRocs; ++i) {
-      std::stringstream filename;
+      stringstream filename;
       filename << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
       vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
       fDacParameters.push_back(rocDacs); 
@@ -612,9 +612,12 @@ void ConfigParameters::readTbmDacs() {
   if (!fReadTbmParameters) {
     string filename; 
     for (unsigned int i = 0; i < fnTbms; ++i) {
-      filename = fDirectory + "/" + fTbmParametersFileName; 
-      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename); 
-      fTbmParameters.push_back(rocDacs); 
+      for (unsigned int ic = 0; ic < 2; ++ic) {
+	stringstream filename;
+	filename << fDirectory << "/" << fTbmParametersFileName << "_C" << i << (ic==0?"a":"b") << ".dat"; 
+	vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
+	fTbmParameters.push_back(rocDacs); 
+      }
     }
     fReadTbmParameters = true; 
   }
@@ -812,30 +815,36 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > v) {
+bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > vA, vector<pair<string, uint8_t> > vB) {
 
-  std::stringstream fname;
-  fname << fDirectory << "/" << getTbmParameterFileName();
+  vector<pair<string, uint8_t> > v;
+  for (unsigned int ic = 0; ic < 2; ++ic) {
+    stringstream fname;
+    fname << fDirectory << "/" << fTbmParametersFileName << "_C" << itbm << (ic==0?"a":"b") << ".dat"; 
 
-  LOG(logDEBUG) << "nothing done for the time being with " << itbm << ", working with one TBM at the moment";
-  //fname << "_C" << itbm << ".dat";
-
-  ofstream OutputFile;
-  OutputFile.open((fname.str()).c_str());
-  if (!OutputFile.is_open()) {
-    return false; 
-  } else {
-    LOG(logDEBUG) << "write tbm parameters into " << (fname.str()).c_str(); 
-  } 
+    ofstream OutputFile;
+    OutputFile.open((fname.str()).c_str());
+    if (!OutputFile.is_open()) {
+      return false; 
+    } else {
+      LOG(logDEBUG) << "write tbm parameters into " << (fname.str()).c_str(); 
+    } 
   
-  RegisterDictionary *a = RegisterDictionary::getInstance();
-  for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
-	       << setw(11) << idac->first  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
-	       << endl;
+    if (0 == ic) {
+      v = vA;
+    } else {
+      v = vB; 
+    }
+
+    RegisterDictionary *a = RegisterDictionary::getInstance();
+    for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+      OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
+		 << setw(11) << idac->first  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
+		 << endl;
+    }
+    
+    OutputFile.close();
   }
-  
-  OutputFile.close();
   return true;
 }
 

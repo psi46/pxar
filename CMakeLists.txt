@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "1.4.2")
-SET(PXAR_FW_VERSION "3.1")
+SET(PXAR_VERSION "1.4.6")
+SET(PXAR_FW_VERSION "3.3")
 
 
 #########################################
@@ -66,9 +66,14 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRE
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Set the correct build type and allow command line options:
-IF(NOT DEFINED ${CMAKE_BUILD_TYPE})
-  SET(CMAKE_BUILD_TYPE Relwithdebinfo)
-ENDIF(NOT DEFINED ${CMAKE_BUILD_TYPE})
+# Set a default build type if none was specified
+IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  MESSAGE(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
+ENDIF()
 
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
@@ -210,14 +215,14 @@ IF(BUILD_pxarui)
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
 
-  # Build the usertests and usertest library
+  # Build the usertests library
   ADD_SUBDIRECTORY(usertests)
-
-  # Build the pXar GUI
-  ADD_SUBDIRECTORY(gui)
 
   # Build the pXar executable
   ADD_SUBDIRECTORY(main)
+
+  # Build the pXar GUI
+  ADD_SUBDIRECTORY(gui)
 
 ENDIF(BUILD_pxarui)
 

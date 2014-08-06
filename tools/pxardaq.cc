@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
   if(testpulses) {
      pg_setup.push_back(std::make_pair("resetroc",25));    // PG_RESR
      pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
-     pg_setup.push_back(std::make_pair("triggter",16));    // PG_TRG
+     pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
      pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
      pattern_delay = 1000;
   }
@@ -168,7 +168,7 @@ int main(int argc, char* argv[]) {
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*",verbosity != "" ? verbosity : "INFO");
+    _api = new pxar::pxarCore("*",verbosity != "" ? verbosity : "INFO");
   
     // Initialize the testboard:
     if(!_api->initTestboard(sig_delays, power_settings, pg_setup)) {

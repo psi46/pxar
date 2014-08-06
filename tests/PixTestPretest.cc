@@ -687,7 +687,7 @@ void PixTestPretest::setCalDel() {
 	  && vpix[ipx].row == fPIX[0].second
 	  ) {
 
-	int nn = vpix.at(ipx).getValue();
+	int nn = (int)vpix.at(ipx).getValue();
 
 	if (nn > nm[fId2Idx[roc]]) {
 	  nm[fId2Idx[roc]] = nn;

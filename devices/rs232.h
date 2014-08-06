@@ -68,7 +68,7 @@ void RS232_enableRTS(int);
 void RS232_disableRTS(int);
 
 
-int openComPort(const int comPortNumber,const int baud);
+int openComPort(const int comPortNumber,const int baud, const char *name = "");
 void closeComPort();
 
 int writeCommand(const char *command);

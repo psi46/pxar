@@ -364,7 +364,7 @@ int main(int argc, char* argv[]) {
 
   // Create new API instance:
   try {
-    _api = new pxar::api("*",argv[1] ? argv[1] : "DEBUG");
+    _api = new pxar::pxarCore("*",argv[1] ? argv[1] : "DEBUG");
 
     // Allow CLI parameter flashing:
     if(argc > 2 && strcmp(argv[2],"-f") == 0) {

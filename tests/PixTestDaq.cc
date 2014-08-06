@@ -307,6 +307,13 @@ void PixTestDaq::doTest() {
   //Set the histograms:
   if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
 
+  //To print on shell the number of masked pixels per ROC:
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  LOG(logINFO) << "PixTestDaq::Number of masked pixels:";
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+	  LOG(logINFO) << "PixTestDaq::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
+  }  
+
   // Start the DAQ:
   //::::::::::::::::::::::::::::::::
 

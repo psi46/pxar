@@ -22,6 +22,7 @@ typedef unsigned char uint8_t;
 #include <stdint.h>
 #endif
 
+
 #include <string>
 #include <vector>
 #include <map>
@@ -71,10 +72,9 @@ typedef unsigned char uint8_t;
  *  in a wrong position (e.g. expecting pixel 13,8 but receiving pixel 13,9) are flagged with a
  *  negative pulse height. This flag can be used e.g. for pixel address test to make sure all of them
  *  are answering with their correct address.
- *  This flag might not work correctly with FLAG_FORCE_UNMASKED, since noise pixel hits
- *  might end up being flagged as out-of-order.
+ *  When running with FLAG_FORCE_UNMASKED all noise or background pixel hits will be flagged as such
+ *  by setting anegative pulse height. This allows separation into calibrate hit and noise hit maps.
  */
-
 #define FLAG_CHECK_ORDER 0x0080
 
 /** Flag to unmask and trim all pixels before the test starts. This might be a tad faster but one
@@ -143,7 +143,7 @@ namespace pxar {
    *  scanning 4160 pixels after another the code will select the function
    *  to scan a full ROC in one go automatically.
    */
-  class DLLEXPORT api {
+  class DLLEXPORT pxarCore {
 
   public:
 
@@ -159,14 +159,14 @@ namespace pxar {
      *  a pxar::FirmwareVersionMismatch exception is thrown.
      *
      */
-    api(std::string usbId = "*", std::string logLevel = "WARNING");
+    pxarCore(std::string usbId = "*", std::string logLevel = "WARNING");
 
     /** Default destructor for libpxar API
      *
      *  Will power down the DTB, disconnect properly from the testboard,
      *  and destroy the pxar::hal object.
      */
-    ~api();
+    ~pxarCore();
 
     /** Returns the version string for the pxar API.
      *
@@ -182,7 +182,7 @@ namespace pxar {
 
     /** Initializer method for the testboard
      *
-     *  Initializes the tesboard with signal delay settings, and voltage/current
+     *  Initializes the testboard with signal delay settings, and voltage/current
      *  limit settings (power_settings) and the initial pattern generator setup
      *  (pg_setup), all provided via vectors of pairs with descriptive name.
      *  The name lookup is performed via the central API dictionaries.
@@ -319,6 +319,8 @@ namespace pxar {
       *  In case of an invalid signal identifier the output is turned off.
       */
     bool SignalProbe(std::string probe, std::string name);
+    
+    bool daqADC(std::string name, unsigned int nSample,std::vector <double> & result);
 
 
     // TEST functions
@@ -349,8 +351,9 @@ namespace pxar {
      *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      *
-     *  This function will set the respective register always in both cores of
-     *  the TBM specified.
+     *  This function will set the respective register in the TBM core specified
+     *  by the "tbmid". Be aware of the fact that TBM Alpha cores are numbered 
+     *  with even IDs (0,2,...) and TBM Beta cores with odd IDs (1,3,...).
      */
     bool setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid);
 
@@ -359,8 +362,9 @@ namespace pxar {
      *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      *
-     *  This function will set the respective register always in both cores of
-     *  all TBMs configured in the DUT.
+     *  This function will set the respective register in the TBM core specified
+     *  by the "tbmid". Be aware of the fact that TBM Alpha cores are numbered 
+     *  with even IDs (0,2,...) and TBM Beta cores with odd IDs (1,3,...).
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
@@ -589,6 +593,12 @@ namespace pxar {
     // FIXME missing documentation
     int32_t getReadbackValue(std::string parameterName);
 
+    /** Enable or disable the external clock source of the DTB.
+     *  This function will return "false" if no external clock is present,
+     *  clock is then left on internal.
+     */
+    bool setExternalClock(bool enable); 
+
     /** Set the clock stretch.
 	FIXME missing documentation
 	A width of 0 disables the clock stretch
@@ -604,6 +614,7 @@ namespace pxar {
      *  pixels in question before calling pxar::daqStart()!
      */
     bool daqStart();
+    bool daqStart(const int bufsize, const bool init);
 
     /** Function to get back the DAQ status
      *
@@ -653,6 +664,7 @@ namespace pxar {
     /** Function to stop the running data acquisition
      */
     bool daqStop();
+    bool daqStop(const bool init);
 
     /** Function to return the full currently available raw event buffer from
      *  the testboard RAM. No decoding is performed, the data stream is just
@@ -687,6 +699,7 @@ namespace pxar {
      *  Returns true if everything is setup correctly for operation
      */
     bool status();
+    
     
   private:
 
@@ -822,8 +835,8 @@ namespace pxar {
 
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
-
-  }; // class api
+    
+  }; // class pxarCore
 
 
   class DLLEXPORT dut {
@@ -831,7 +844,7 @@ namespace pxar {
     /** Allow the API class to access private members of the DUT - noone else
      *  should be able to access them! 
      */
-    friend class api;
+    friend class pxarCore;
     
   public:
 

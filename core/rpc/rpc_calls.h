@@ -144,6 +144,7 @@ public:
 	// --- Clock Settings ---------------------------------------------------
 	RPC_EXPORT bool IsClockPresent();
 	RPC_EXPORT void SetClock(uint8_t MHz);
+	RPC_EXPORT void SetClockSource(uint8_t source);
 	RPC_EXPORT void SetClockStretch(uint8_t src, uint16_t delay, uint16_t width);
 
 
@@ -213,7 +214,6 @@ public:
 	RPC_EXPORT void Daq_DeselectAll();
 	
 	RPC_EXPORT void Daq_Select_Datagenerator(uint16_t startvalue);
-	RPC_EXPORT void SetClockSource(uint8_t source);
 
 
 	// --- ROC/module Communication -----------------------------------------

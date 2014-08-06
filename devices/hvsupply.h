@@ -11,6 +11,8 @@
  */
 #include "pxardllexport.h"
 
+#include <string>
+
 /** Cannot use stdint.h when running rootcint on WIN32 */
 #if ((defined WIN32) && (defined __CINT__))
 typedef int int32_t;
@@ -35,7 +37,7 @@ namespace pxar {
      *
      *  Connects to the device, initializes communication
      */
-    hvsupply();
+    hvsupply(std::string portname = "");
 
     /** Default destructor for the hvsupply library
      *
@@ -62,6 +64,10 @@ namespace pxar {
     /** Reads back the current drawn. Value is given in A (Amperes)
      */
     double getCurrent();
+
+    /** Reads back the voltage and the current drawn. Value is given in A (Amperes)
+     */
+    void getVoltageCurrent(float &voltage, float &current);
 
     /** Enables compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)

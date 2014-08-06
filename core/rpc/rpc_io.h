@@ -13,8 +13,6 @@
 
 class CRpcIo
 {
-protected:
-	void Dump(const char *msg, const void *buffer, uint32_t size);
 public:
 	virtual ~CRpcIo() {}
 	virtual void Write(const void *buffer, uint32_t size) = 0;

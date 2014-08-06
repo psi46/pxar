@@ -267,7 +267,8 @@ std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
 
     for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin(); 
 	it != tbm.at(tbmId).dacs.end(); ++it) {
-      vec.push_back(std::make_pair(_dict->getName(it->first,TBM_REG),it->second));
+      // We need to strip the core identifier in order to look up the register name from the dictionary (&0x0F):
+      vec.push_back(std::make_pair(_dict->getName((it->first&0x0F),TBM_REG),it->second));
     }
     return vec;
   }

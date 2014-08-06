@@ -230,27 +230,24 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   // Get singleton Probe dictionary object:
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
-  ProbeADictionary * _Adict = ProbeADictionary::getInstance();
 
-  for(int i = 0 ; i <= 7 ; i++) {
-    std::string entryname = _Adict->getName(i).c_str();
-    if(entryname != "") {
-      signalBoxA[0]->AddEntry(entryname.c_str(),i);
-      signalBoxA[1]->AddEntry(entryname.c_str(),i);
-    }
+  // Get all analog probes:
+  std::vector<std::string> analogsignals = _dict->getAllAnalogNames();
+  std::vector<std::string> digitalsignals = _dict->getAllDigitalNames();
+
+  for(std::vector<std::string>::iterator it = analogsignals.begin(); it != analogsignals.end(); it++) {
+    signalBoxA[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
+    signalBoxA[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
   }
 
-  for(int i = 0 ; i <= 24 ; i++) {
-    std::string entryname = _dict->getName(i).c_str();
-    if(entryname != "") {
-      signalBoxD[0]->AddEntry(entryname.c_str(),i);
-      signalBoxD[1]->AddEntry(entryname.c_str(),i);
-    }
+  for(std::vector<std::string>::iterator it = digitalsignals.begin(); it != digitalsignals.end(); it++) {
+    signalBoxD[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
+    signalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
   }
 
    for(int i = 0 ; i <= 1 ; i++) {
-	signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-	signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+     signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+     signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
    }
 
    
@@ -260,10 +257,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   //Load saved values
 
-  signalBoxA[0]->Select(_Adict->getSignal(fConfigParameters->getProbe("a1")),false);
-  signalBoxA[1]->Select(_Adict->getSignal(fConfigParameters->getProbe("a2")),false);
-  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1")),false);
-  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2")),false);
+  signalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
+  signalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
+  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
+  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
 
 
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
