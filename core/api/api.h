@@ -351,8 +351,9 @@ namespace pxar {
      *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      *
-     *  This function will set the respective register always in both cores of
-     *  the TBM specified.
+     *  This function will set the respective register in the TBM core specified
+     *  by the "tbmid". Be aware of the fact that TBM Alpha cores are numbered 
+     *  with even IDs (0,2,...) and TBM Beta cores with odd IDs (1,3,...).
      */
     bool setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid);
 
@@ -361,8 +362,9 @@ namespace pxar {
      *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      *
-     *  This function will set the respective register always in both cores of
-     *  all TBMs configured in the DUT.
+     *  This function will set the respective register in the TBM core specified
+     *  by the "tbmid". Be aware of the fact that TBM Alpha cores are numbered 
+     *  with even IDs (0,2,...) and TBM Beta cores with odd IDs (1,3,...).
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
