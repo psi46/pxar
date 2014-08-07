@@ -355,7 +355,10 @@ bool PixTestPattern::setPixels(string fname, string flag) {
 		return false;
 	}
 	
-	if (flag == "Test")	LOG(logINFO) << "PixTestPattern:: " << npix << " 'armed'  pixels:" << sstr.str();
+	if (flag == "Test")	{
+		LOG(logINFO) << "PixTestPattern:: " << npix << " 'armed'  pixels:" << sstr.str();
+		fNpix = npix;
+	}
 	else				LOG(logINFO) << "PixTestPattern:: " << npix << " unmasked pixels:" << sstr.str();
 	sstr.clear();
 
@@ -541,7 +544,6 @@ void PixTestPattern::TriggerLoop(int checkfreq, std::vector<TH2D*> hits, std::ve
 		}
 		else {
 				if (TotalTime) { LOG(logINFO) << "PixTestPattern:: total time reached - DAQ stopped."; }
-				//fApi->daqTriggerLoopHalt();
 				fApi->daqStop();			
 		}
 		// Get events and Print results on shell/file:
@@ -575,6 +577,7 @@ void PixTestPattern::doTest()
 	fDirectory->cd();
 	fPg_setup.clear();
 	PixTest::update();
+	fNpix = 0;
 
 	//setparameters and check if in range	
 	if (fParOutOfRange) return;
@@ -630,22 +633,29 @@ void PixTestPattern::doTest()
 	TH1D* h1;
 	if (fParFillTree) bookTree();
 	std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+	//set histos name according to input parameters:
+	std::stringstream histname; 
+	histname << "_" << fNpix << "pix";
+	if (!fParTrigLoop) histname << "_" << fParPgCycles << "cyc";
+	else histname << "_" << fParSeconds << "sec";
+	if (!fPatternFromFile) 	histname << "_stdPG";
+
 	for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-		h2 = bookTH2D(Form("hits_C%d", rocIds[iroc]), Form("hits_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+		h2 = bookTH2D(Form("hits_C%d%s", rocIds[iroc], histname.str()), Form("hits_C%d%s", rocIds[iroc], histname.str()), 52, 0., 52., 80, 0., 80.);
 		h2->SetMinimum(0.);
 		h2->SetDirectory(fDirectory);
 		setTitles(h2, "col", "row");
 		fHistOptions.insert(make_pair(h2, "colz"));
 		Hits.push_back(h2);
 
-		p2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+		p2 = bookTProfile2D(Form("phMap_C%d%s", rocIds[iroc], histname.str()), Form("phMap_C%d%s", rocIds[iroc], histname.str()), 52, 0., 52., 80, 0., 80.);
 		p2 ->SetMinimum(0.);
 		p2->SetDirectory(fDirectory);
 		setTitles(p2, "col", "row");
 		fHistOptions.insert(make_pair(p2, "colz"));
 		Phmap.push_back(p2);
 
-		h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
+		h1 = bookTH1D(Form("ph_C%d%s", rocIds[iroc], histname.str()), Form("ph_C%d%s", rocIds[iroc], histname.str()), 256, 0., 256.);
 		h1->SetMinimum(0.);
 		h1->SetDirectory(fDirectory);
 		setTitles(h1, "ADC", "Entries/bin");
