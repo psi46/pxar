@@ -634,28 +634,29 @@ void PixTestPattern::doTest()
 	if (fParFillTree) bookTree();
 	std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 	//set histos name according to input parameters:
-	std::stringstream histname; 
-	histname << "_" << fNpix << "pix";
-	if (!fParTrigLoop) histname << "_" << fParPgCycles << "cyc";
-	else histname << "_" << fParSeconds << "sec";
-	if (!fPatternFromFile) 	histname << "_stdPG";
+	std::stringstream strs; 
+	strs << "_" << fNpix << "pix";
+	if (!fParTrigLoop) strs << "_" << fParPgCycles << "cyc";
+	else strs << "_" << fParSeconds << "sec";
+	if (!fPatternFromFile) 	strs << "_stdPG";
+	string histname = strs.str();
 
 	for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-		h2 = bookTH2D(Form("hits_C%d%s", rocIds[iroc], histname.str()), Form("hits_C%d%s", rocIds[iroc], histname.str()), 52, 0., 52., 80, 0., 80.);
+		h2 = bookTH2D(Form("hits_C%d%s", rocIds[iroc], histname.c_str()), Form("hits_C%d%s", rocIds[iroc], histname.c_str()), 52, 0., 52., 80, 0., 80.);
 		h2->SetMinimum(0.);
 		h2->SetDirectory(fDirectory);
 		setTitles(h2, "col", "row");
 		fHistOptions.insert(make_pair(h2, "colz"));
 		Hits.push_back(h2);
 
-		p2 = bookTProfile2D(Form("phMap_C%d%s", rocIds[iroc], histname.str()), Form("phMap_C%d%s", rocIds[iroc], histname.str()), 52, 0., 52., 80, 0., 80.);
+		p2 = bookTProfile2D(Form("phMap_C%d%s", rocIds[iroc], histname.c_str()), Form("phMap_C%d%s", rocIds[iroc], histname.c_str()), 52, 0., 52., 80, 0., 80.);
 		p2 ->SetMinimum(0.);
 		p2->SetDirectory(fDirectory);
 		setTitles(p2, "col", "row");
-		fHistOptions.insert(make_pair(p2, "colz"));
+		c_fHistOptions.insert(make_pair(p2, "colz"));
 		Phmap.push_back(p2);
 
-		h1 = bookTH1D(Form("ph_C%d%s", rocIds[iroc], histname.str()), Form("ph_C%d%s", rocIds[iroc], histname.str()), 256, 0., 256.);
+		h1 = bookTH1D(Form("ph_C%d%s", rocIds[iroc], histname.c_str()), Form("ph_C%d%s", rocIds[iroc], histname.c_str()), 256, 0., 256.);
 		h1->SetMinimum(0.);
 		h1->SetDirectory(fDirectory);
 		setTitles(h1, "ADC", "Entries/bin");
