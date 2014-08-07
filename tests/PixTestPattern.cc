@@ -653,7 +653,7 @@ void PixTestPattern::doTest()
 		p2 ->SetMinimum(0.);
 		p2->SetDirectory(fDirectory);
 		setTitles(p2, "col", "row");
-		c_fHistOptions.insert(make_pair(p2, "colz"));
+		fHistOptions.insert(make_pair(p2, "colz"));
 		Phmap.push_back(p2);
 
 		h1 = bookTH1D(Form("ph_C%d%s", rocIds[iroc], histname.c_str()), Form("ph_C%d%s", rocIds[iroc], histname.c_str()), 256, 0., 256.);
