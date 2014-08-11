@@ -13,151 +13,135 @@
 
 using namespace pxar;
 using namespace std;
-#define COM_PORT_NUMBER 29 //See listing in rs232.cc
 
-// ----------------------------------------------------------------------
-hvsupply::hvsupply(string portname) {
-  if (!portname.compare("")) {
-    const int comPortNumber = COM_PORT_NUMBER;
-    if(!openComPort(comPortNumber,57600)) {
-      LOG(logCRITICAL) << "Error connecting via RS232 port!";
-      throw UsbConnectionError("Error connecting via RS232 port!");
-    }
-  } else {
-    const int comPortNumber = 0;
-    if (!openComPort(comPortNumber,57600, portname.c_str())) {
-      LOG(logCRITICAL) << "Error connecting via RS232 port!";
-      throw UsbConnectionError("Error connecting via RS232 port!");
-    }
+HVSupply::HVSupply(string portname)
+{
+  if (!openComPort(portname,57600)) {
+    LOG(logCRITICAL) << "Error connecting via RS232 port!";
+    throw UsbConnectionError("Error connecting via RS232 port!");
   }
 
   LOG(logDEBUG) << "Opened COM port to Keithley 2410";
 
-
-  writeCommandString("*RST\n");                    // Reset the unit to factory settings
-  writeCommandString(":SYST:BEEP:STAT OFF\n");     // Turn off beeper
-  writeCommandString(":ROUT:TERM REAR\n");         // Switch to rear outlet
-  writeCommandString(":SOUR:VOLT:MODE FIX\n");     // Select fixed voltage mode
-  writeCommandString(":FUNC:CONC ON\n");           // Turn concurrent mode on, i.e. allow readout of voltage and current simultaneously
-  writeCommandString(":SENS:AVER:TCON REP\n");     // Choose repeating filter, i.e. make sure the average is made of the selected nuber of readings
-  writeCommandString(":SENS:AVER:COUNT 1\n");      // Use 1 readings to average
-  writeCommandString(":SENS:AVER:STAT ON\n");      // Enable the averaging
-  writeCommandString(":CURR:PROT:LEV 100E-6\n");   // Set compliance limit to 100 uA
-  writeCommandString(":SENS:CURR:RANG 20E-6\n");   // Select measuring range of 20 uA
-  writeCommandString(":SENS:CURR:NPLC 10\n");      // Set integration period to maximum (=10). 
-                                                   // Unit is power line cycles, i.e. 10/60=0.167s in the US and 10/50=0.2s in Europe
-  writeCommandString("SOUR:VOLT:IMM:AMPL -100\n"); // Set a voltage of -100 V immediately (why?)
-  writeCommandString(":FORM:ELEM VOLT,CURR\n");    // Select readout format, e.g. get a number pair with voltage and current
+  writeData("*RST");                    // Reset the unit to factory settings
+  writeData(":SYST:BEEP:STAT OFF");     // Turn off beeper
+  writeData(":ROUT:TERM REAR");         // Switch to rear outlet
+  writeData(":SOUR:VOLT:MODE FIX");     // Select fixed voltage mode
+  writeData(":FUNC:CONC ON");           // Turn concurrent mode on, i.e. allow readout of voltage and current simultaneously
+  writeData(":SENS:AVER:TCON REP");     // Choose repeating filter, i.e. make sure the average is made of the selected nuber of readings
+  writeData(":SENS:AVER:COUNT 1");      // Use 1 readings to average
+  writeData(":SENS:AVER:STAT ON");      // Enable the averaging
+  writeData(":CURR:PROT:LEV 100E-6");   // Set compliance limit to 100 uA
+  writeData(":SENS:CURR:RANG 20E-6");   // Select measuring range of 20 uA
+  writeData(":SENS:CURR:NPLC 10");      // Set integration period to maximum (=10). 
+                                        //     Unit is power line cycles, i.e. 10/60=0.167s in the US and 10/50=0.2s in Europe
+  writeData("SOUR:VOLT:IMM:AMPL -100"); // Set a voltage of -100 V immediately (why?)
+  writeData(":FORM:ELEM VOLT,CURR");    // Select readout format, e.g. get a number pair with voltage and current
 
 }
 
-
-// ----------------------------------------------------------------------
-hvsupply::~hvsupply() {
+HVSupply::~HVSupply()
+{
   LOG(logDEBUG) << "Turning Power Supply OFF";
-  writeCommandString("OUTPUT 0");
-  char answer[256] = { 0 };
-  writeCommandStringAndReadAnswer(":OUTP:STAT?",answer);
+  writeData("OUTPUT 0");
+  string answer;
+  writeReadBack(":OUTP:STAT?", answer);
   LOG(logDEBUG) <<"State of Keithley after shut down: " <<  answer;
 
   // Switch back to local mode:
-  writeCommandString(":SYST:LOC");
+  writeData(":SYST:LOC");
   closeComPort();
 }
 
-// ----------------------------------------------------------------------
-bool hvsupply::hvOn() {
+bool HVSupply::hvOn()
+{
   LOG(logDEBUG) << "Turning KEITHLEY 2410 on";
-  char answer[256] = { 0 };  
-  writeCommandString("OUTPUT 1");
-  writeCommandString(":INIT");
-  writeCommandStringAndReadAnswer(":OUTP:STAT?",answer);
+  writeData("OUTPUT 1");
+  writeData(":INIT");
+  
+  string answer;
+  writeReadBack(":OUTP:STAT?",answer);
   LOG(logDEBUG) <<"State of Keithley: " <<  answer;
   int a; 
-  sscanf(answer, "%d", &a); 
-  if (0 == a) {
-    return false;
-  }
-  return true;
+  sscanf(answer.c_str(), "%d", &a);
+  return (a == 1) ? true : false;
 }
 
-    
-// ----------------------------------------------------------------------
-bool hvsupply::hvOff() {
-  char answer[1000] = {0};  
+bool HVSupply::hvOff()
+{
   LOG(logDEBUG) << "Turning Keithley 2410 off";
-  writeCommandString("OUTPUT 0");
-  writeCommandStringAndReadAnswer(":OUTP:STAT?",answer);
+  writeData("OUTPUT 0");
+  
+  string answer;
+  writeReadBack(":OUTP:STAT?", answer);
   LOG(logDEBUG) <<"State of Keithley: " <<  answer;
   int a; 
-  sscanf(answer, "%d", &a); 
-  if (1 == a) {
-    return false;
-  }
-  return true;
+  sscanf(answer.c_str(), "%d", &a);
+  return (a == 0) ? true : false;
 }
 
-
-    
-// ----------------------------------------------------------------------
-bool hvsupply::setVoltage(double volts) {
-  char string[100];
-  if (volts < 0.) volts = -1.*volts;
-  sprintf(string, "SOUR:VOLT:IMM:AMPL -%i", static_cast<int>(volts));
-  writeCommandString(string);
-  sleep(1); 
-  return false;
+bool HVSupply::setVoltage(double volts)
+{
+  string data("SOUR:VOLT:IMM:AMPL ");
+  data += to_string(volts);
+  return writeData(data);
 }
 
-
-// ----------------------------------------------------------------------
-bool hvsupply::tripped() {
-  char answer[1000] = {0};  
-  writeCommandStringAndReadAnswer(":SENS:CURR:PROT:TRIP?", answer);
+bool HVSupply::tripped()
+{
+  string answer;
+  writeReadBack(":SENS:CURR:PROT:TRIP?", answer);
   int a; 
-  sscanf(answer, "%d", &a); 
-  if (1 == a) {
-    return true;
-  }
-  return false;
+  sscanf(answer.c_str(), "%d", &a); 
+  return (a == 1) ? true : false;
 }
     
-// ----------------------------------------------------------------------
-void hvsupply::getVoltageCurrent(float &voltage, float &current) {
-  char answer[1000] = {0};  
-
-  writeCommandStringAndReadAnswer(":READ?", answer);
-  sscanf(answer, "%e,%e", &voltage, &current);
+void HVSupply::getVoltageCurrent(float &voltage, float &current)
+{
+  string answer;
+  writeReadBack(":READ?", answer);
+  sscanf(answer.c_str(), "%e,%e", &voltage, &current);
 }
 
-// ----------------------------------------------------------------------
-double hvsupply::getVoltage() {
+double HVSupply::getVoltage()
+{
   float voltage(0), current(0);
-  char answer[1000] = {0};  
 
-  writeCommandStringAndReadAnswer(":READ?", answer);
-  sscanf(answer, "%e,%e", &voltage, &current);
+  string answer;
+  writeReadBack(":READ?", answer);
+  sscanf(answer.c_str(), "%e,%e", &voltage, &current);
   return voltage;
 }
 
-// ----------------------------------------------------------------------
-double hvsupply::getCurrent() {
-
+double HVSupply::getCurrent()
+{
   float current(0), voltage(0);
-  char answer[1000] = {0};  
 
-  writeCommandStringAndReadAnswer(":READ?", answer);
-  sscanf(answer, "%e,%e", &voltage, &current);
+  string answer;
+  writeReadBack(":READ?", answer);
+  sscanf(answer.c_str(), "%e,%e", &voltage, &current);
   return current;
-
 }
 
-// ----------------------------------------------------------------------
-bool hvsupply::setCurrentLimit(uint32_t /*microampere*/) {
+bool HVSupply::setCurrentLimit(int microampere)
+{
   return false;
 }
 
-// ----------------------------------------------------------------------
-double hvsupply::getCurrentLimit() {
+double HVSupply::getCurrentLimit()
+{
   return 2000;
 }
+
+void HVSupply::sweepStart(double vStart, double vEnd, double vStep, double delay){
+  
+}
+
+bool HVSupply::sweepRunning(){
+  return false;
+}
+
+void HVSupply::sweepRead(double &voltSet, double &voltRead, double &current){
+
+}
+

@@ -101,122 +101,72 @@ void PixTestIV::doTest() {
 
   fDirectory->cd();
   
-  int numMeasurements = (fParVoltageMax - fParVoltageMin)/fParVoltageStep
+  int numMeasurements = (fParVoltageMax - fParVoltageMin)/fParVoltageStep;
   
   TH1D *h1(0);
-  h1 = bookTH1D("IVcurve", "IV curve", num_measurements, 0, fParVoltageMax+1);
+  h1 = bookTH1D("IVcurve", "IV curve", numMeasurements, 0, fParVoltageMax+1);
   h1->SetMinimum(1.e-2);
   h1->SetMarkerStyle(20);
   h1->SetMarkerSize(1.3);
   h1->SetStats(0.);
   setTitles(h1, "-U [V]", "-I [uA]");
 
-  unsigned int timeStamps[numMeasurements];
-  double voltageSettings[numMeasurements];
-  double voltageMeasurements[numMeasurements];
-  double currentMeasurements[numMeasurements];
+  vector<double> voltageMeasurements;
+  vector<double> currentMeasurements;
+  vector<TTimeStamp> timeStamps;
   
-  for(unsigned int i = 0; i < numMeasurements;i++) {
-    voltageSettings[i] = fParVoltageMin + i*fParVoltageStep;
-  }
   PixTest::update();
   gPad->SetLogy(true);
   
-  if(hv->supportSweep()){
-    hv->sweep(voltageSettings, 
-              timeStamps, 
-              voltageMeasurements, 
-              currentMeasurements);
-  } else{
+  LOG(logINFO) << "Starting IV curve measurement...";
+  pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str());
+
+  hv->sweepStart(fParVoltageMin,fParVoltageMax,fParVoltageStep,fParDelay);
+  while(hv->sweepRunning()){
+    double voltSet, voltRead, current;
+    hv->sweepRead(voltSet, voltRead, current);
+    voltageMeasurements.push_back(voltRead);
+    currentMeasurements.push_back(current);
+    h1->Fill(voltSet, current);
     
+    TTimeStamp ts;
+    ts.Set();
+    timeStamps.push_back(ts);
     
+    LOG(logINFO) << Form("V = %4f (meas: %+7.2f) I = %4.2e uA %s", 
+                         voltSet, voltRead, current, fTimeStamp->AsString("c"));
+    
+    h1->Draw("p");
+    PixTest::update();
+    gSystem->ProcessEvents();
+    if(fStop) break;
   }
-  
-  //////////////////////////////////////////
-  
-  
-  map<int, uint32_t> ts;
-  map<int, double> vm;
-
-  PixTest::update();
-
-  if(gPad) gPad->SetLogy(1);
-
-  if(hv->supportSweep()){
-    hv->sweep(fParVoltageMin, fParVoltageMin, fParVoltageStep);
-  }
-  else{
-    int tripVoltage = -1;
-    TTimeStamp startTs;
-    // -- loop over voltage:
-    float voltMeasured(-1.), amps(-1.);
-    for(float voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {    
-      hv->setVoltage(voltSet);
-      mDelay(fParDelay*1000); 
-      // -- get within 0.5V of specified voltage. Try at most 5 times.
-      int ntry(0);
-      while (ntry < 5) {
-        gSystem->ProcessEvents();
-        if (fStop) break;
-        hv->getVoltageCurrent(voltMeasured, amps);
-        amps *= 1.e6;
-        if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!
-        ++ntry;
-      }
-      if (fStop) break;
-
-      fTimeStamp->Set();
-      ts.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), fTimeStamp->GetTimeSpec().tv_sec));
-      vm.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), voltMeasured));
-
-      if (hv->tripped() || ((amps<-99.) && (voltMeasured !=0.))) {
-        LOG(logCRITICAL) << "HV supply tripped, aborting IV test"; 
-        tripVoltage = voltSet;
-        break;
-      }
-      LOG(logINFO) << Form("V = %4d (meas: %+7.2f) I = %4.2e uA (ntry = %d) %ld", 
-                           -voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
-      if (TMath::Abs(amps) > 0.) {
-        h1->Fill(TMath::Abs(voltSet), TMath::Abs(amps));
-      }
-      h1->Draw("p");
-      PixTest::update();
-    }
-
-    // -- ramp down voltage
-    int vstep(50);
-    for (int voltSet = fParVoltageMax - vstep; voltSet > 100; voltSet -= vstep) {
-      LOG(logDEBUG) << "ramping down voltage, Vset = " << voltSet;
-      hv->setVoltage(voltSet);
-    }
-    delete hv;
-}
 
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   h1->Draw("p");
   PixTest::update();
+  
+  writeOutput(voltageMeasurements, currentMeasurements, timeStamps);
+  LOG(logINFO) << "PixTestIV::doTest() done ";
+#endif
+}
 
+void PixTestIV::writeOutput(vector<double>       &voltageMeasurements,
+                            vector<double>       &currentMeasurements,
+                            vector<TTimeStamp>   &timeStamps){  
   ofstream OutputFile;
   OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
-  OutputFile << "# IV test from "   << startTs.AsString("l") << endl;
+  OutputFile << "# IV test from "   << timeStamps[0].AsString("l") << endl;
   OutputFile << "#voltage(V)\tcurrent(A)\ttimestamp" << endl;
-
-  for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
-    if (tripVoltage > -1 && voltSet >= tripVoltage) break;
-    OutputFile << Form("%+8.3f\t%+e\t%ld", 
-               static_cast<double>(vm[voltSet]), 
-               -1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
-               static_cast<unsigned long>(ts[voltSet])
-               ) << endl; 
+  
+  unsigned int numMeasurements = voltageMeasurements.size();
+  for (unsigned int i = 0; i < numMeasurements; i++) {
+    OutputFile << Form("%+8.3f\t%+e\t%s", voltageMeasurements[i],
+                                          currentMeasurements[i],
+                                          timeStamps[i].AsString("c"))
+               << endl; 
   }
   OutputFile.close();
-#endif
-  LOG(logINFO) << "PixTestIV::doTest() done ";
 }
 
-void PixTestIV::sweep(){
-  
-  
-  
-}

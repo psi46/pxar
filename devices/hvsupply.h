@@ -26,19 +26,11 @@ typedef unsigned char uint8_t;
 
 namespace pxar {
 
-  /** Helper Data structure for IV measurements
-   */
-  class DLLEXPORT IVMeasure {
-    public:
-      double voltage;
-      double current;	  
-  }; class IVMeasure
-
   /** pxar interface class for HV Power Supply devices
    *
    *  Correct implementation for your device has to be chosen at compile time.
    */
-  class DLLEXPORT hvsupply {
+  class DLLEXPORT HVSupply {
 
   public:
 
@@ -46,13 +38,13 @@ namespace pxar {
      *
      *  Connects to the device, initializes communication
      */
-    hvsupply(std::string portname = "");
+    HVSupply(std::string portname = "");
 
     /** Default destructor for the hvsupply library
      *
      *  Will turn off the HV and terminate connection to the HV Power Supply device.
      */
-    ~hvsupply();
+    ~HVSupply();
 
     /** Turn on the HV output
      */
@@ -81,7 +73,7 @@ namespace pxar {
     /** Enables compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)
      */
-    bool setCurrentLimit(uint32_t microampere);
+    bool setCurrentLimit(int microampere);
 
     /** Reads back the set current limit in compliance mode. Value is given
      *  in uA (micro Ampere)
@@ -92,13 +84,11 @@ namespace pxar {
      */
     bool tripped();
     
-    /** Does HV support sweep internally?
+    /** Perform IV sweep
      */
-    bool supportSweep();
-    
-    /** Perform internal sweep
-     */
-    void sweep(double vStart, double vEnd, double vStep);
+    void sweepStart(double vStart, double vEnd, double vStep, double delay);
+    bool sweepRunning();
+    void sweepRead(double &voltSet, double &voltRead, double &current);
   
   }; // class hvsupply
 

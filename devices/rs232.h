@@ -33,13 +33,8 @@
 
 /* For more info and how to use this libray, visit: http://www.teuniz.net/RS-232/ */
 
-
-#ifndef rs232_INCLUDED
-#define rs232_INCLUDED
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef rs232_H
+#define rs232_H
 
 #include <stdio.h>
 #include <string.h>
@@ -52,34 +47,29 @@ extern "C" {
 #include <sys/stat.h>
 #include <limits.h>
 
-int RS232_OpenComport(int, int);
-int RS232_PollComport(int, char *, int);
-int RS232_SendByte(int, unsigned char);
-int RS232_SendBuf(int, unsigned char *, int);
-int RS232_SendBufString(int, char *, int);
-void RS232_CloseComport(int);
-void RS232_cputs(int, const char *);
-int RS232_IsDCDEnabled(int);
-int RS232_IsCTSEnabled(int);
-int RS232_IsDSREnabled(int);
-void RS232_enableDTR(int);
-void RS232_disableDTR(int);
-void RS232_enableRTS(int);
-void RS232_disableRTS(int);
+int RS232_OpenComport(const char* portName, int baudrate);
+int RS232_PollComport(char *buf, int size);
+int RS232_SendByte(char byte);
+int RS232_SendBuf(char *buf, int size);
+void RS232_CloseComport();
+
+int RS232_IsDCDEnabled();
+int RS232_IsCTSEnabled();
+int RS232_IsDSREnabled();
+
+void RS232_enableDTR();
+void RS232_disableDTR();
+void RS232_enableRTS();
+void RS232_disableRTS();
 
 
-int openComPort(const int comPortNumber,const int baud, const char *name = "");
+#include <string>
+using namespace std;
+
+int openComPort(string name, int baud);
 void closeComPort();
 
-int writeCommand(const char *command);
-int writeCommandAndReadAnswer(const char *command,char *answer);
-
-int writeCommandString(const char *command);
-int writeCommandStringAndReadAnswer(const char *command,char *answer, int delay = 2);
-
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
+int writeData(string data);
+int readData(string &data, string endToken = "\r\n");
+int writeReadBack(string dataOut, string &dataIn, string endToken = "\r\n");
 #endif
