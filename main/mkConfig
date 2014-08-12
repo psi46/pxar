@@ -450,8 +450,8 @@ FillTree            checkbox
 
 -- IV
 port                /dev/FIXME
-VoltageMin          0
-VoltageMax          600
+VoltageStart        0
+VoltageStop         600
 VoltageStep         5
 Delay               1
 

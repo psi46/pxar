@@ -37,8 +37,8 @@ private:
                    std::vector<double>        &currentMeasurements,
                    std::vector<TTimeStamp>    &timeStamps);
   
-  double fParVoltageMin;
-  double fParVoltageMax;
+  double fParVoltageStart;
+  double fParVoltageStop;
   double fParVoltageStep;
   double fParDelay;
   bool fStop;

@@ -10,6 +10,7 @@
  *  as class DLLEXPORT className
  */
 #include "pxardllexport.h"
+#include "rs232.h"
 
 #include <string>
 #include <vector>
@@ -31,7 +32,16 @@ namespace pxar {
    *  Correct implementation for your device has to be chosen at compile time.
    */
   class DLLEXPORT HVSupply {
-
+    RS232Conn serial;
+    
+  /** Private variables related to keeping track of IV sweeps*/
+    int sweepReads;
+    int currentSweepRead;
+    double voltStart;
+    double voltStop;
+    double voltStep;
+    double delay;
+  
   public:
 
     /** Default constructor for the hvsupply library
@@ -68,12 +78,12 @@ namespace pxar {
 
     /** Reads back the voltage and the current drawn. Value is given in A (Amperes)
      */
-    void getVoltageCurrent(float &voltage, float &current);
+    void getVoltageCurrent(double &voltage, double &current);
 
     /** Enables compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)
      */
-    bool setCurrentLimit(int microampere);
+    bool setCurrentLimit(double microampere);
 
     /** Reads back the set current limit in compliance mode. Value is given
      *  in uA (micro Ampere)
@@ -86,7 +96,7 @@ namespace pxar {
     
     /** Perform IV sweep
      */
-    void sweepStart(double vStart, double vEnd, double vStep, double delay);
+    void sweepStart(double voltStart, double voltStop, double voltStep, double delay);
     bool sweepRunning();
     void sweepRead(double &voltSet, double &voltRead, double &current);
   

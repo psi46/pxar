@@ -36,20 +36,62 @@
 #include "rs232.h"
 #include "log.h"
 
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <limits.h>
+
+#include <cstdio>
+
 using namespace pxar;
 using namespace std;
 
-int port;
-int rs_error;
+#define NULL_FD -1
 
-struct termios new_port_settings,
-               old_port_settings;
+RS232Conn::RS232Conn(const string &portName, int baudRate){
+  this->portName = portName;
+  this->baudRate = baudRate;
+  port = NULL_FD;
+  writeSuffix = "\r\n";
+  readSuffix = "\r\n";
+}
+RS232Conn::RS232Conn() : RS232Conn("",0) { }
 
-int RS232_OpenComport(const char* portName, int baudrate)
-{
-  int baudr, status;
+RS232Conn::~RS232Conn(){
+  if(port != NULL_FD){
+    closePort();
+  }
+}
 
-  switch(baudrate)
+void RS232Conn::setPortName(const string &portName){
+  if (port != NULL_FD){
+    perror("Cannot change port name while port is open");
+    return;
+  }
+  this->portName = portName;
+}
+
+void RS232Conn::setBaudRate(int baudRate){
+  if (this->port != NULL_FD){
+    perror("Cannot change baud rate while port is open");
+    return;
+  }
+  this->baudRate = baudRate;
+}
+
+void RS232Conn::setReadSuffix(const std::string &suffix){
+  readSuffix = suffix;
+}
+
+void RS232Conn::setWriteSuffix(const std::string &suffix){
+  writeSuffix = suffix;
+}
+
+bool RS232Conn::openPort(){
+  int baudr;
+  switch(baudRate)
     {
     case      50 : baudr = B50;
       break;
@@ -87,100 +129,144 @@ int RS232_OpenComport(const char* portName, int baudrate)
       break;
     case  230400 : baudr = B230400;
       break;
-    default      : LOG(logCRITICAL) << "Invalid baud rate " << baudrate << "!";
+    default      : LOG(logCRITICAL) << "Invalid baud rate " << baudRate << "!";
       return(1);
       break;
     }
 
-
-  printf("Opening com port: %s\n", portName);
-  rs_error = 0;
-  port = open(portName, O_RDWR | O_NOCTTY | O_NDELAY);
+  printf("Opening com port: %s with baud: %d\n", portName.c_str(), baudRate);
+  this->port = open(portName.c_str(), O_RDWR | O_NOCTTY);
   if(port==-1)
   {
+    port = NULL_FD;
     perror("unable to open comport ");
-    return(1);
+    return false;
   }
-
-  rs_error = tcgetattr(port, &old_port_settings);
-  if(rs_error==-1)
-  {
-    close(port);
+  
+  int rsError;
+  rsError = tcgetattr(port, &oldPortSettings);
+  if(rsError==-1){
+    closePort();
     perror("unable to read portsettings ");
-    return(1);
+    return false;
   }
   
-  memset(&new_port_settings, 0, sizeof(new_port_settings));  /* clear the new struct */
-
-  new_port_settings.c_cflag = CS8 | CLOCAL | CREAD;
-  new_port_settings.c_iflag = IGNPAR;
-  //new_port_settings.c_lflag = ECHO; //TODO: See how this jives with echo readback below
-
-  cfsetspeed(&new_port_settings,baudr);
+  struct termios newPortSettings;
+  memset(&newPortSettings, 0, sizeof(newPortSettings));
+  newPortSettings.c_cflag = CS8 | CLOCAL | CREAD;
+  newPortSettings.c_iflag = IGNPAR;
+  cfsetspeed(&newPortSettings,baudr);
   
-  rs_error = tcsetattr(port, TCSANOW, &new_port_settings);
-  if(rs_error==-1)
-  {
-    close(port);
+  rsError = tcsetattr(port, TCSANOW, &newPortSettings);
+  if(rsError==-1){
+    closePort();
     perror("unable to adjust portsettings ");
-    return(1);
+    return false;
   }
-
-  if(ioctl(port, TIOCMGET, &status) == -1)
-  {
+  
+  int status = 0;
+  rsError = ioctl(port, TIOCMGET, &status);
+  if(rsError == -1){
+    closePort();
     perror("unable to get portstatus");
-    return(1);
+    return false;
   }
 
   status |= TIOCM_DTR;    /* turn on DTR */
   status |= TIOCM_RTS;    /* turn on RTS */
 
-  if(ioctl(port, TIOCMSET, &status) == -1)
-  {
+  rsError = ioctl(port, TIOCMSET, &status);
+  if(rsError == -1){
+    closePort();
     perror("unable to set portstatus");
-    return(1);
+    return false;
   }
 
-  return(0);
+  return true;
 }
 
-int RS232_PollComport(char *buf, int size)
-{
-  return read(port, buf, size);
-}
-
-
-int RS232_SendByte(const char byte)
-{
-  return write(port, &byte, 1);
-}
-
-
-int RS232_SendBuf(const char *buf, int size)
-{
-  return write(port, buf, size);
-}
-
-void RS232_CloseComport()
-{
+void RS232Conn::closePort(){
+  if(port == NULL_FD) return;
   int status;
-
-  if(ioctl(port, TIOCMGET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMGET, &status) == -1){
     perror("unable to get portstatus");
   }
 
   status &= ~TIOCM_DTR;    /* turn off DTR */
   status &= ~TIOCM_RTS;    /* turn off RTS */
 
-  if(ioctl(port, TIOCMSET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMSET, &status) == -1){
     perror("unable to set portstatus");
   }
 
-  tcsetattr(port, TCSANOW, &old_port_settings);
+  tcsetattr(port, TCSANOW, &oldPortSettings);
   close(port);
+  port = NULL_FD;
 }
+
+
+int RS232Conn::writeBuf(const char *buf, int len){
+  if (port == NULL_FD){
+    perror("Cannot write to non-open port");
+    return 0;
+  }
+  int status = write(port, buf, len);
+  if (status == -1){
+    perror("Error writing to RS232 Port");
+    return 0;
+  }
+  return status;
+}
+
+int RS232Conn::writeData(const string &data)
+{
+  unsigned int bytesWritten = 0;
+  bytesWritten += writeBuf(data.c_str(), data.size());
+  bytesWritten += writeBuf(writeSuffix.c_str(), writeSuffix.size());
+  usleep(1E6*.001);
+  return bytesWritten;
+}
+
+int RS232Conn::pollPort(char &buf){
+  if(port == NULL_FD){
+    perror("Cannot poll non-open port!");
+    return -1;
+  }
+  int status = read(port, &buf, 1);
+  return status;
+}
+
+bool stringEndsWith(string &data, string &suffix){
+  unsigned int dataSize = data.size();
+  unsigned int suffixSize = suffix.size();
+  if (dataSize < suffixSize)
+    return false;
+  else
+    return data.substr(dataSize-suffixSize,suffixSize) == suffix;
+}
+
+int RS232Conn::readData(string &data){
+  unsigned int suffixSize = this->readSuffix.size();
+  unsigned int dataSize = data.size();
+  unsigned int readSize = 0;
+  while (data.size() < suffixSize || !stringEndsWith(data, readSuffix)){
+    char buf;
+    int status = pollPort(buf);
+    if(status == 1) {
+      data.append(1,buf);
+      readSize++;
+    }
+    dataSize = data.size();
+  }
+  data = data.substr(0,dataSize-suffixSize);
+  return readSize;
+}
+
+void RS232Conn::writeReadBack(const string &dataOut, string &dataIn){
+  writeData(dataOut);
+  readData(dataIn);
+}
+
 
 /*
   Constant  Description
@@ -199,165 +285,64 @@ void RS232_CloseComport()
   http://linux.die.net/man/4/tty_ioctl
 */
 
-int RS232_IsDCDEnabled()
-{
+bool RS232Conn::isDCDEnabled(){
   int status;
-
   ioctl(port, TIOCMGET, &status);
-
-  if(status&TIOCM_CAR) return(1);
-  else return(0);
+  return status & TIOCM_CAR;
 }
 
-int RS232_IsCTSEnabled()
-{
+bool RS232Conn::isCTSEnabled(){
   int status;
-
   ioctl(port, TIOCMGET, &status);
-
-  if(status&TIOCM_CTS) return(1);
-  else return(0);
+  return status & TIOCM_CTS;
 }
 
-int RS232_IsDSREnabled()
-{
+bool RS232Conn::isDSREnabled(){
   int status;
-
   ioctl(port, TIOCMGET, &status);
-
-  if(status&TIOCM_DSR) return(1);
-  else return(0);
+  return status & TIOCM_DSR;
 }
 
-void RS232_enableDTR()
-{
+void RS232Conn::enableDTR(){
   int status;
-
-  if(ioctl(port, TIOCMGET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMGET, &status) == -1){
     perror("unable to get portstatus");
   }
-
   status |= TIOCM_DTR;    /* turn on DTR */
-
-  if(ioctl(port, TIOCMSET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMSET, &status) == -1){
     perror("unable to set portstatus");
   }
 }
 
-void RS232_disableDTR()
-{
+void RS232Conn::disableDTR(){
   int status;
-
-  if(ioctl(port, TIOCMGET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMGET, &status) == -1){
     perror("unable to get portstatus");
   }
-
   status &= ~TIOCM_DTR;    /* turn off DTR */
-
-  if(ioctl(port, TIOCMSET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMSET, &status) == -1){
     perror("unable to set portstatus");
   }
 }
 
-void RS232_enableRTS()
-{
+void RS232Conn::enableRTS(){
   int status;
-
-  if(ioctl(port, TIOCMGET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMGET, &status) == -1){
     perror("unable to get portstatus");
   }
-
   status |= TIOCM_RTS;    /* turn on RTS */
-
-  if(ioctl(port, TIOCMSET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMSET, &status) == -1){
     perror("unable to set portstatus");
   }
 }
 
-void RS232_disableRTS()
-{
+void RS232Conn::disableRTS(){
   int status;
-
-  if(ioctl(port, TIOCMGET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMGET, &status) == -1){
     perror("unable to get portstatus");
   }
-
   status &= ~TIOCM_RTS;    /* turn off RTS */
-
-  if(ioctl(port, TIOCMSET, &status) == -1)
-  {
+  if(ioctl(port, TIOCMSET, &status) == -1){
     perror("unable to set portstatus");
   }
-}
-
-bool stringEndsWith(string &data, string &suffix){
-  int dataSize = data.size();
-  int suffixSize = suffix.size();
-  if (dataSize < suffixSize)
-    return false;
-  else
-    return data.substr(dataSize-suffixSize,suffixSize) == suffix;
-}
-
-////////////////////////////////////////
-//External Interface
-////////////////////////////////////////
-
-int openComPort(string name, int baud)
-{
-  if(RS232_OpenComport(name.c_str(), baud))
-  {
-    LOG(logCRITICAL) << "Cannot open COM port!";
-    return 0;
-  }
-  return 1;
-}
-
-void closeComPort()
-{
-  RS232_CloseComport();
-}
-
-int writeData(string data)
-{
-  int len = data.size();
-  string suffix("\r\n");
-  if (len < 2 || !stringEndsWith(data, suffix)) {
-    data += suffix;
-  }
-  int status = RS232_SendBuf(data.c_str(), data.size());
-  return (status == -1) ? 0 : 1;
-}
-
-int readData(string &data, string endToken)
-{
-  unsigned int tokenSize = endToken.size();
-  unsigned int dataSize = data.size();
-  unsigned int readSize = 0;
-  while (data.size() < tokenSize || !stringEndsWith(data,endToken))
-  {
-    char buf;
-    int status = RS232_PollComport(&buf, 1);
-    if(status == 1) {
-      data.append(buf,1);
-      readSize++;
-    }
-    dataSize = data.size();
-  }
-  data = data.substr(0,dataSize-tokenSize);
-  return readSize;
-}
-
-int writeReadBack(string dataOut, string &dataIn, string endToken){
-  if(!writeData(dataOut)){
-    return 0;
-  }
-  return readData(dataIn, endToken);
 }

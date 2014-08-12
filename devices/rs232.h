@@ -36,40 +36,44 @@
 #ifndef rs232_H
 #define rs232_H
 
-#include <stdio.h>
-#include <string.h>
-
 #include <termios.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <limits.h>
-
-int RS232_OpenComport(const char* portName, int baudrate);
-int RS232_PollComport(char *buf, int size);
-int RS232_SendByte(char byte);
-int RS232_SendBuf(char *buf, int size);
-void RS232_CloseComport();
-
-int RS232_IsDCDEnabled();
-int RS232_IsCTSEnabled();
-int RS232_IsDSREnabled();
-
-void RS232_enableDTR();
-void RS232_disableDTR();
-void RS232_enableRTS();
-void RS232_disableRTS();
-
-
 #include <string>
-using namespace std;
 
-int openComPort(string name, int baud);
-void closeComPort();
+class RS232Conn{
+    std::string portName;
+    std::string writeSuffix;
+    std::string readSuffix;
+    int port;
+    int baudRate;
+    struct termios oldPortSettings;
+    
+    int pollPort(char &buf);
+    int writeBuf(const char *buf, int len);
+    
+  public:
+    RS232Conn();
+    RS232Conn(const std::string &portName, int baudrate);
+    ~RS232Conn();
+    
+    bool openPort();
+    void closePort();
+    
+    void setPortName(const std::string &portName);
+    void setBaudRate(int baudRate);
+    void setReadSuffix(const std::string &suffix);
+    void setWriteSuffix(const std::string &suffix);
+    
+    int writeData(const std::string &data);
+    int readData(std::string &data);
+    void writeReadBack(const std::string &dataOut, std::string &dataIn);
 
-int writeData(string data);
-int readData(string &data, string endToken = "\r\n");
-int writeReadBack(string dataOut, string &dataIn, string endToken = "\r\n");
+    bool isDCDEnabled();
+    bool isCTSEnabled();
+    bool isDSREnabled();
+
+    void enableDTR();
+    void disableDTR();
+    void enableRTS();
+    void disableRTS();
+};
 #endif
