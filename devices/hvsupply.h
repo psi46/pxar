@@ -41,6 +41,11 @@ namespace pxar {
     double voltStop;
     double voltStep;
     double delay;
+
+  /** State variables */
+    double voltsCurrent;
+    bool hvIsOn;
+    bool supplyTripped;
   
   public:
 
@@ -48,7 +53,7 @@ namespace pxar {
      *
      *  Connects to the device, initializes communication
      */
-    HVSupply(std::string portname = "");
+    HVSupply(const std::string &portname);
 
     /** Default destructor for the hvsupply library
      *
@@ -66,39 +71,39 @@ namespace pxar {
     
     /** Sets the desired voltage
      */
-    bool setVoltage(double volts);
+    bool setVolts(double volts);
     
     /** Reads back the configured voltage. Value is given in v (Volts)
      */
-    double getVoltage();
+    double getVolts();
 
     /** Reads back the current drawn. Value is given in A (Amperes)
      */
-    double getCurrent();
+    double getAmps();
 
     /** Reads back the voltage and the current drawn. Value is given in A (Amperes)
      */
-    void getVoltageCurrent(double &voltage, double &current);
+    void getVoltsAmps(double &volts, double &amps);
 
     /** Enables compliance mode and sets the current limit (to be given in uA,
      *  micro Ampere)
      */
-    bool setCurrentLimit(double microampere);
+    bool setMicroampsLimit(double microamps);
 
     /** Reads back the set current limit in compliance mode. Value is given
      *  in uA (micro Ampere)
      */
-    double getCurrentLimit();
+    double getMicroampsLimit();
 
     /** Did the HV supply trip?
      */
-    bool tripped();
+    bool isTripped();
     
     /** Perform IV sweep
      */
     void sweepStart(double voltStart, double voltStop, double voltStep, double delay);
     bool sweepRunning();
-    void sweepRead(double &voltSet, double &voltRead, double &current);
+    void sweepRead(double &voltSet, double &voltRead, double &amps);
   
   }; // class hvsupply
 

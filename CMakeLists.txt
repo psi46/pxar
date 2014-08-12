@@ -255,25 +255,25 @@ ENDIF(DOXYGEN_FOUND)
 # The code resides here:
 # https://github.com/kmorel/UseLATEX
 
-#FIND_PACKAGE(LATEX)
-#IF(LATEX_COMPILER)
-#  MESSAGE(STATUS "Found LaTeX compiler.")
-#  INCLUDE(cmake/UseLATEX.cmake)
-#  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex 
-#    INPUTS 
-#    doc/usermanual/symbols.tex 
-#    doc/usermanual/introduction.tex
-#    doc/usermanual/hwOverview.tex 
-#    doc/usermanual/swOverview.tex
-#    doc/usermanual/tutorial.tex
-#    doc/usermanual/tests.tex
-#    doc/usermanual/usertests.tex
-#    doc/usermanual/references.tex
-#    NO_DEFAULT
-#    )
-#ELSE(LATEX_COMPILER)
-#  MESSAGE(STATUS "No LaTeX found, cannot compile user manual.")
-#ENDIF(LATEX_COMPILER)
+FIND_PACKAGE(LATEX)
+IF(LATEX_COMPILER)
+  MESSAGE(STATUS "Found LaTeX compiler.")
+  INCLUDE(cmake/UseLATEX.cmake)
+  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex 
+    INPUTS 
+    doc/usermanual/symbols.tex 
+    doc/usermanual/introduction.tex
+    doc/usermanual/hwOverview.tex 
+    doc/usermanual/swOverview.tex
+    doc/usermanual/tutorial.tex
+    doc/usermanual/tests.tex
+    doc/usermanual/usertests.tex
+    doc/usermanual/references.tex
+    NO_DEFAULT
+    )
+ELSE(LATEX_COMPILER)
+  MESSAGE(STATUS "No LaTeX found, cannot compile user manual.")
+ENDIF(LATEX_COMPILER)
 
 #######################################################
 # Print out system information useful for bug reports #

@@ -13,17 +13,20 @@
 using namespace pxar;
 using namespace std;
 
-HVSupply::HVSupply(string portname)
+HVSupply::HVSupply(const string &portname)
 {
+  voltsCurrent = 0;
+  hvIsOn = false;
+  supplyTripped = false;
+
   serial.setPortName(portname);
   serial.setBaudRate(57600);
-  
+
   bool portIsOpen = serial.openPort();
   if (!portIsOpen) {
     LOG(logCRITICAL) << "Error connecting via RS232 port!";
     throw UsbConnectionError("Error connecting via RS232 port!");
   }
-
   LOG(logDEBUG) << "Opened COM port to Keithley 2410";
 
   serial.writeData("*RST");                    // Reset the unit to factory settings
@@ -31,7 +34,6 @@ HVSupply::HVSupply(string portname)
   serial.writeData(":SOUR:FUNC VOLT");         // Set supply to voltage
   serial.writeData(":SENS:FUNC 'CURR:DC'");    // Set measurement to DC current
   serial.writeData(":FUNC:CONC ON");           // Turn concurrent mode on, i.e. allow readout of voltage and current simultaneously
-  //serial.writeData(":SENS:CURR:RANG AUTO");   // Select measuring range of 20 uA
   serial.writeData(":SENS:CURR:NPLC 10");      // Set integration period to maximum (=10). 
                                                //     Unit is power line cycles, i.e. 10/60=0.167s in the US and 10/50=0.2s in Europe
   serial.writeData(":FORM:ELEM VOLT,CURR");    // Select readout format, e.g. get a number pair with voltage and current
@@ -54,9 +56,9 @@ HVSupply::~HVSupply()
 
 bool HVSupply::hvOn()
 {
+  hvIsOn = true;
   LOG(logDEBUG) << "Turning KEITHLEY 2410 on";
-  serial.writeData("OUTPUT 1");
-  serial.writeData(":INIT");
+  serial.writeData(":OUTP:STAT ON");
   
   string answer;
   serial.writeReadBack(":OUTP:STAT?",answer);
@@ -68,8 +70,9 @@ bool HVSupply::hvOn()
 
 bool HVSupply::hvOff()
 {
+  hvIsOn = false;
   LOG(logDEBUG) << "Turning Keithley 2410 off";
-  serial.writeData("OUTPUT 0");
+  serial.writeData(":OUTP:STAT OFF");
   
   string answer;
   serial.writeReadBack(":OUTP:STAT?", answer);
@@ -79,57 +82,51 @@ bool HVSupply::hvOff()
   return (a == 0) ? true : false;
 }
 
-bool HVSupply::setVoltage(double volts)
+bool HVSupply::setVolts(double volts)
 {
+  voltsCurrent = volts;
   string data("SOUR:VOLT:IMM:AMPL ");
   data += to_string(volts);
   return serial.writeData(data);
 }
 
-bool HVSupply::tripped()
+bool HVSupply::isTripped()
 {
   string answer;
   serial.writeReadBack(":SENS:CURR:PROT:TRIP?", answer);
   int a; 
   sscanf(answer.c_str(), "%d", &a); 
-  return (a == 1) ? true : false;
+  supplyTripped = (a == 1) ? true : false;
+  return supplyTripped;
 }
     
-void HVSupply::getVoltageCurrent(double &voltage, double &current)
+void HVSupply::getVoltsAmps(double &volts, double &amps)
 {
   string answer;
   serial.writeReadBack(":READ?", answer);
-  sscanf(answer.c_str(), "%le,%le", &voltage, &current);
+  sscanf(answer.c_str(), "%le,%le", &volts, &amps);
 }
 
-double HVSupply::getVoltage()
+double HVSupply::getVolts()
 {
-  double voltage(0), current(0);
-
-  string answer;
-  serial.writeReadBack(":READ?", answer);
-  sscanf(answer.c_str(), "%le,%le", &voltage, &current);
-  return voltage;
+  double volts(0), amps(0);
+  getVoltsAmps(volts, amps);
+  return volts;
 }
 
-double HVSupply::getCurrent()
+double HVSupply::getAmps()
 {
-  double current(0), voltage(0);
-
-  string answer;
-  serial.writeReadBack(":READ?", answer);
-  sscanf(answer.c_str(), "%le,%le", &voltage, &current);
-  return current;
+  double volts(0), amps(0);
+  getVoltsAmps(volts, amps);
+  return amps;
 }
 
-bool HVSupply::setCurrentLimit(double microampere)
-{
-  string command = ":CURR:PROT:LEV " + to_string(microampere*1E-6); 
+bool HVSupply::setMicroampsLimit(double microamps){
+  string command = ":CURR:PROT:LEV " + to_string(microamps*1E-6); 
   return serial.writeData(command) > 0;
 }
 
-double HVSupply::getCurrentLimit()
-{
+double HVSupply::getMicroampsLimit(){
   string answer;
   serial.writeReadBack(":CURR:PROT:LEV?",answer);
   double limitAmps;
@@ -157,9 +154,9 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
   serial.writeData(":SOUR:SWE:RANG AUTO");             //Set range to auto
   serial.writeData(":SOUR:SWE:SPAC LIN");              //Use linear sweep
   command = ":TRIG:COUNT " + to_string(sweepReads);
-  serial.writeData(command);                           //Number of measurements(should be compatable with START|STOP|STEP)
+  serial.writeData(command);                           //Number of measurements
   command = ":SOUR:DEL " + to_string(delay);
-  serial.writeData(command);                           //Delay between Voltage set and current measure
+  serial.writeData(command);                           //Delay between source and measure
   serial.writeData(":OUTP:STAT ON");
   serial.writeData(":READ?");
   serial.setReadSuffix(",");
@@ -169,23 +166,23 @@ bool HVSupply::sweepRunning(){
   return currentSweepRead < sweepReads;
 }
 
-void HVSupply::sweepRead(double &voltSet, double &voltRead, double &current){
+void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
   if(currentSweepRead >= sweepReads) return;
   string voltStr;
-  string currStr;
+  string ampsStr;
   if (currentSweepRead < sweepReads - 1){
     serial.readData(voltStr);
-    serial.readData(currStr);
+    serial.readData(ampsStr);
   } else{ //Final Reading
     serial.readData(voltStr);
     serial.setReadSuffix("\r\n");
-    serial.readData(currStr);
+    serial.readData(ampsStr);
     serial.writeData(":OUTP:STAT OFF");
   }
   
   voltSet = voltStart + voltStep*currentSweepRead;
   sscanf(voltStr.c_str(), "%le", &voltRead);
-  sscanf(currStr.c_str(), "%le", &current);
+  sscanf(ampsStr.c_str(), "%le", &amps);
   
   currentSweepRead++;
 }

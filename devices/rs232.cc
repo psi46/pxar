@@ -49,6 +49,7 @@ using namespace pxar;
 using namespace std;
 
 #define NULL_FD -1
+//#define DEBUG_RS232
 
 RS232Conn::RS232Conn(const string &portName, int baudRate){
   this->portName = portName;
@@ -220,6 +221,9 @@ int RS232Conn::writeBuf(const char *buf, int len){
 
 int RS232Conn::writeData(const string &data)
 {
+#ifdef DEBUG_RS232
+    printf("[RS232] Sending Data : \"%s\"\n",data.c_str());
+#endif
   unsigned int bytesWritten = 0;
   bytesWritten += writeBuf(data.c_str(), data.size());
   bytesWritten += writeBuf(writeSuffix.c_str(), writeSuffix.size());
@@ -246,20 +250,22 @@ bool stringEndsWith(string &data, string &suffix){
 }
 
 int RS232Conn::readData(string &data){
+  data.clear();
+  unsigned int dataSize = 0;
   unsigned int suffixSize = this->readSuffix.size();
-  unsigned int dataSize = data.size();
-  unsigned int readSize = 0;
   while (data.size() < suffixSize || !stringEndsWith(data, readSuffix)){
     char buf;
     int status = pollPort(buf);
     if(status == 1) {
       data.append(1,buf);
-      readSize++;
+      dataSize++;
     }
-    dataSize = data.size();
   }
   data = data.substr(0,dataSize-suffixSize);
-  return readSize;
+#ifdef DEBUG_RS232
+    printf("[RS232] Received Data : \"%s\"\n",data.c_str());
+#endif
+  return data.size();
 }
 
 void RS232Conn::writeReadBack(const string &dataOut, string &dataIn){

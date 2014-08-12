@@ -128,7 +128,7 @@ void PixTestIV::doTest() {
   
   LOG(logINFO) << "Starting IV curve measurement...";
   pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str());
-  hv->setCurrentLimit(100);
+  hv->setMicroampsLimit(100);
 
   hv->sweepStart(fParVoltageStart,fParVoltageStop,fParVoltageStep,fParDelay);
   while(hv->sweepRunning()){
