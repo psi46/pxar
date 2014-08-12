@@ -111,8 +111,9 @@ void PixTestCmd::DoTextField(){
             transcript->AddLine( line.c_str() );
         }
     }
-    if(transcript->ReturnLineCount() > 6)// visible lines(how do I know?)
+    if(transcript->ReturnHeighestColHeight() >= transcript->GetHeight()){
         transcript->SetVsbPosition(transcript->ReturnLineCount());
+    }
 
     if ( (cmdHistory.size()==0) || (! (cmdHistory.back()==s))){
         cmdHistory.push_back(s);
@@ -342,6 +343,7 @@ bool IntList::parse(Token & token,  const bool append){
         do {
             if (token.front()==":"){
                 i1 = IMIN;
+                i2 = IMAX; // in case nothing else follows
             }else{
                 if ( StrToI(token.front(), i1)) {
                     token.pop_front();
@@ -483,7 +485,7 @@ deque <string > getWords(const string & s){
         }
         words.push_back(word);
         // special treatment of whitespace following colon to allow
-        // beats range notation such as pixe 5: 7:10
+        // Beats range notation such as pixe 5: 7:10
         if (word==":"){
             if( (i>=s.size()) || is_whitespace(i,s) ){
                 words.push_back("~");
@@ -861,7 +863,7 @@ void CmdProc::init()
     _probeDict = ProbeDictionary::getInstance();
     fA_names = _probeDict->getAllAnalogNames();
     fD_names = _probeDict->getAllDigitalNames();
-    fPixelConfigNeeded = false;
+    fPixelConfigNeeded = true;
     fTCT = 105;
     fTRC = 10;
     fTTK = 30;
@@ -912,6 +914,11 @@ int CmdProc::tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask)
      * the default value of mask is 0xff, i.e. all bits are changed
      * the coreMask is 1 for tbma, 2 for tbmb, 3 for both
     */
+    if ((value & (~valueMask) )>0) {
+        out << "Warning! tbm set value " << hex << (int) value 
+            << " has bits outside mask ("<<hex<< (int) valueMask << ")\n";
+    }
+         
     for(size_t core=0; core<2; core++){
         if ( ((coreMask >> core) & 1) == 1 ){
             std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(core);
@@ -944,9 +951,6 @@ int CmdProc::adctest(const string signal){
     unsigned int n=1024;
     vector<double> y;
     if ( fApi->daqADC(signal, n, y) ){
-        //if (y.size()<n){ out<<"incomplete, only "<<y.size()<< " words read\n";}
-        //cout << "y.size=" << y.size() << endl;
-        //for(unsigned int i=0; i<n; i++){ cout << i << "  " << y[i] << endl;}
         sort( y.begin(), y.end());
         unsigned int m=y.size();
         double low(0), high(0), ny(0);
@@ -999,20 +1003,24 @@ int CmdProc::rawDump(int level){
     fPixelConfigNeeded = false;
     
     out << dec << buf.size() << " words read";
-    for(unsigned int i=0; i<buf.size(); i++){
-        if(fApi->_dut->getNTbms()>0){
-            if ((buf[i]&0xE000)==0xA000){ out << "\n";}
+    if(level==0){
+        for(unsigned int i=0; i<buf.size(); i++){
+            if(fApi->_dut->getNTbms()>0){
+                if ((buf[i]&0xE000)==0xA000){ out << "\n";}
+            }
+            out << " " <<hex << setw(4)<< setfill('0')  << buf[i];
         }
-        out << " " <<hex << setw(4)<< setfill('0')  << buf[i];
-    }
+    }   
     out << "\n";
     
     // do a bit of decoding, adapted from psi46test
     if ((level>0)&&(fApi->_dut->getNTbms()>0)) {
         uint8_t roc=0;
+        uint8_t tbm=0;
         unsigned int i=0;
+        
 
-        while(i<buf.size()){
+        while(i<buf.size() && (i<500) ){
             
             out << hex << setw(4)<< setfill('0')  << buf[i] << " ";
             uint16_t flag= (buf[i]&0xE000);
@@ -1051,7 +1059,7 @@ int CmdProc::rawDump(int level){
             
             
             if( flag == 0x4000 ){
-                out << "     Roc Header " << dec << (int)roc ;
+                out << "     Roc Header " << dec << (int)(roc+8*tbm) ;
                 roc ++;
                 // what's in the remaining bits?
                 out << "\n";
@@ -1105,8 +1113,17 @@ int CmdProc::rawDump(int level){
                 if( t2 & 0x80 ) { out << ", StackFullnow";}
                 if( t2 & 0x40 ) { out << ", PKAMReset";}
                 out <<  ", StackCount=" << (int) (t2&0x3F)  << "\n";
+                tbm++;
+                roc=0;
+                continue;
             }
             
+            out << "unhandled Flag \n";
+            i++;
+            
+        }
+        if(i<buf.size()){
+            out << "==> very long readout! stopped decoding after "<< i << "words\n";
         }
     }
         
@@ -1217,33 +1234,36 @@ int CmdProc::roc( Keyword kw, int rocId){
     if (kw.match("enable")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))&0xfd, rocId);return 0 ;}
     if (kw.match("mask")   ) { fApi->_dut->maskAllPixels(true, rocId); fPixelConfigNeeded = true; return 0 ;}
     if (kw.match("cald")   ) { fApi->_dut->testAllPixels(false, rocId); fPixelConfigNeeded = true; return 0 ;}
-    if (kw.match("arm", col, 0, 51, row, 0, 79) 
+    if ( kw.match("arm",  col, 0, 51, row, 0, 79) 
       || kw.match("pixd", col, 0, 51, row, 0, 79)
       || kw.match("pixe", col, 0, 51, row, 0, 79)
     ){
-        //cout << col.size() << " " << row.size() << endl;
-        // are "enable" and "arm" the same in apispeak?
+        // testPixel(true) : pixelConfig.enable = true => cal-inject,reported "active" by info()
+        // maskPixel(true/false) : pixelConfig.mask = true /false 
         for(unsigned int c=0; c<col.size(); c++){
             for(unsigned int r=0; r<row.size(); r++){
-                if(verbose) { cout << kw.keyword << " roc " << rocId << "  " << col[c] << "  :  " << row[r] << endl; }
+                if(verbose) { cout << kw.keyword << " roc " << rocId << ": " << col[c] << "," << row[r] << endl; }
                 if (kw.keyword=="arm"){
-                    fApi->_dut->testPixel(col[c], row[r], true, rocId); 
+                    fApi->_dut->testPixel(col[c], row[r], true,  rocId); 
                     fApi->_dut->maskPixel(col[c], row[r], false, rocId);
                 }else if (kw.keyword=="pixd"){
-                    fApi->_dut->testPixel(col[c], row[r], false, rocId);
-                    fApi->_dut->maskPixel(col[c], row[r], true, rocId);
+                    if(verbose){out << "masked before pixd:"<<dec << fApi->_dut->getNMaskedPixels(rocId);}
+                    fApi->_dut->maskPixel(col[c], row[r], true,  rocId);
+                    if(verbose){out << ", masked after pixd:"<<dec << fApi->_dut->getNMaskedPixels(rocId);}
                 }else if (kw.keyword=="pixe"){
-                    fApi->_dut->testPixel(col[c], row[r], true, rocId);
+                    if(verbose){out << "masked before pixe:"<<dec << fApi->_dut->getNMaskedPixels(rocId);}
                     fApi->_dut->maskPixel(col[c], row[r], false, rocId);
-                }
+                    if(verbose){out << ", masked after pixe:"<<dec << fApi->_dut->getNMaskedPixels(rocId);}
+               }
              }
         }
         fPixelConfigNeeded = true;
 
-    return 0 ;
-  }
+        return 0 ;
+    }
+
     
-  return -1;
+    return -1;
 }
 
 
@@ -1281,7 +1301,7 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("dlyhdr",value)){return tbmset("basea", cores,  (value&0x1)<<6, 0x40);}
     if (kw.match("dlytok",value)){return tbmset("basea", cores,  (value&0x1)<<7, 0x80);}
     if (kw.match("phase400",value) ){return tbmset("basee", 1, (value&0x7)<<2, 0x1c);}
-    if (kw.match("phase160",value) ){return tbmset("basee", 1, (value&0x7)<<5, 0x70);}
+    if (kw.match("phase160",value) ){return tbmset("basee", 1, (value&0x7)<<5, 0xe0);}
     return -1; // nothing done
 }
 
@@ -1300,6 +1320,11 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
 
     if (target.name=="do"){
         Arg::varvalue = target.value();
+    }
+    
+    if (keyword.match("info")){
+        fApi->_dut->info();
+        return true;
     }
     
     if( keyword.match("macros")){
@@ -1329,6 +1354,7 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
                 p->exec(line);  
                 out << p->out.str();
             }
+            delete p;
             return true;
             
         }  else {
@@ -1423,7 +1449,7 @@ int CmdProc::exec(std::string s){
     // parse and execute a string, leads to call-backs to CmdProc::process
     Token words( getWords(s) );
     words.macros=&macros;
-    macros["test"] = getWords("roc 0 vana 5");
+    macros["start"] = getWords("roc * mask; roc * cald; reset tbm; seq 14");
 
     int j=0;
     //parse

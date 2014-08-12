@@ -283,6 +283,9 @@ class CmdProc {
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
   unsigned int fSeq;
+  bool verbose;
+  Target defaultTarget;
+  map<string, deque <string> > macros;
   
   
   int tbmset(int address, int value);
@@ -295,13 +298,10 @@ class CmdProc {
   int sequence(int seq);
 
 
-  bool verbose;
   int tb(Keyword);
   int tbm(Keyword, int cores=3);
   int roc(Keyword, int rocid);
 
-  Target defaultTarget;
-  map<string, deque <string> > macros;
   
 };
 

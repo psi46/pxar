@@ -130,6 +130,7 @@ bool PixTestBareModule::checkIfInContact() {
 			else LOG(logINFO) << "PixTestBareModule:: unvalid input.";
 		} while (!goodIn);
 	}
+	return false;
 }
 
 //----------------------------------------------------------

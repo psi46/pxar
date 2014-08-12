@@ -317,7 +317,12 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(4,6,[str, int, int, int, int, int])
     def do_getPulseheightVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 1D DAC scan"""
-        print self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
+        data = self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
+        for idac, dac in enumerate(data):
+            s = "DAC " + str(idac) + ": "
+            for px in dac:
+                s += str(px)
+            print s
 
     def complete_getPulseheightVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -335,7 +340,12 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(4,6,[str, int, int, int, int, int])
     def do_getEfficiencyVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getEfficiencyVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
-        print self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
+        data = self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
+        for idac, dac in enumerate(data):
+            s = "DAC " + str(idac) + ": "
+            for px in dac:
+                s += str(px)
+            print s
 
     def complete_getEfficiencyVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -353,7 +363,12 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(8,11,[str, int, int, int, str, int, int, int, int, int, int])
     def do_getThresholdVsDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold = 50, flags = 0, nTriggers = 10):
         """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the threshold for DAC1 over a 1D DAC2 scan"""
-        print self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
+        data = self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
+        for idac, dac in enumerate(data):
+            s = "DAC " + str(idac) + ": "
+            for px in dac:
+                s += str(px)
+            print s
 
     def complete_getThresholdVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type

@@ -491,7 +491,11 @@ bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <doubl
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
     uint8_t signal = _dict->getSignal(name, PROBE_ANALOG);
  
-    //vector<pair<string,uint8_t> > orgdelays = _dut->sig_delays;
+    uint8_t clk0=_dut->sig_delays[SIG_CLK];
+    uint8_t ctr0=_dut->sig_delays[SIG_CTR];
+    uint8_t sda0=_dut->sig_delays[SIG_SDA];
+    uint8_t tin0=_dut->sig_delays[SIG_TIN];
+    
     vector<pair<string,uint8_t> > sigdelays;
    
     int gain = GAIN_1;
@@ -502,7 +506,6 @@ bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <doubl
     }    
     
      
-    _hal->SignalProbeA1(signal); // just for debugging, remove later
     result.clear();
     result.resize(20*nSample);
     
@@ -522,13 +525,13 @@ bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <doubl
             result[ 20*i+dly ]=y*scale;
        }
    }
-   
-   int clk=4;  // where can I get this from?
-   sigdelays.clear();
-    sigdelays.push_back(std::make_pair("clk", clk));
-    sigdelays.push_back(std::make_pair("ctr", clk));
-    sigdelays.push_back(std::make_pair("sda", clk + 15));
-    sigdelays.push_back(std::make_pair("tin", clk + 5));
+
+    // restore original delays
+    sigdelays.clear();
+    sigdelays.push_back(std::make_pair("clk", clk0));
+    sigdelays.push_back(std::make_pair("ctr", ctr0));
+    sigdelays.push_back(std::make_pair("sda", sda0));
+    sigdelays.push_back(std::make_pair("tin", tin0));
     setTestboardDelays(sigdelays);
 
    return true;
