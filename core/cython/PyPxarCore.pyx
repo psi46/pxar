@@ -337,15 +337,42 @@ cdef class PyPxarCore:
     def getEfficiencyVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
         r = self.thisptr.getEfficiencyVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
-        hits = []
+        dac_steps = list()
+        for d in xrange(r.size()):
+            pixels = list()
+            for pix in range(r[d].second.size()):
+                p = r[d].second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
+                       
+        
+        #cdef vector[pair[uint8_t, vector[pixel]]] r
+        #r = self.thisptr.getEfficiencyVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
+        #hits = []
         #TODO not hardcode col, row
         #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, (dacMax-dacMin)/dacStep+1)
-        for i in range(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros(s))
+        #s = (52, 80, (dacMax-dacMin)/dacStep+1)
+        #for i in range(self.thisptr._dut.getNRocs()):
+        #    hits.append(numpy.zeros(s))
+        #for d in xrange(r.size()):
+        #    for pix in range(r[d].second.size()):
+        #        hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
+        #return numpy.array(hits)
+
+    def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
+        cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
+        r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
+        hits = []
+        #TODO not hardcode col, row, check if indices make sense, currently not running!
+        #This currently only returns one single pixel! The rest is lost...
         for d in xrange(r.size()):
-            for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
+            if r[d].second.second.size() > 0:
+                hits.append(r[d].second.second[0].getValue())
+            else:
+                hits.append(0)
         return numpy.array(hits)
 
     def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, threshold, uint16_t flags = 0, uint32_t nTriggers=16):
@@ -360,19 +387,6 @@ cdef class PyPxarCore:
         for d in xrange(r.size()):
             for pix in range(r[d].second.size()):
                 hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
-        return numpy.array(hits)
-
-    def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
-        cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
-        r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row, check if indices make sense, currently not running!
-        #This currently only returns one single pixel! The rest is lost...
-        for d in xrange(r.size()):
-            if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].getValue())
-            else:
-                hits.append(0)
         return numpy.array(hits)
 
     def getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
