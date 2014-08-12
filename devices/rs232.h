@@ -40,12 +40,13 @@
 #include <string>
 
 class RS232Conn{
-    std::string portName;
-    std::string writeSuffix;
-    std::string readSuffix;
-    int port;
-    int baudRate;
-    struct termios oldPortSettings;
+    std::string portName;           //Name of port, eg. /dev/ttyUSB0
+    std::string writeSuffix;        //Suffix appended to write data, default "\r\n"
+    std::string readSuffix;         //Suffix stripped from read data, also signals end of read, default "\r\n"
+    int port;                       //port file descriptor
+    int baudRate;                   //port baudrate
+    struct termios oldPortSettings; //backup port settings
+    bool removeEcho;                //Set true if device echos back input
     
     int pollPort(char &buf);
     int writeBuf(const char *buf, int len);
@@ -62,6 +63,7 @@ class RS232Conn{
     void setBaudRate(int baudRate);
     void setReadSuffix(const std::string &suffix);
     void setWriteSuffix(const std::string &suffix);
+    void setRemoveEcho(bool removeEcho);
     
     int writeData(const std::string &data);
     int readData(std::string &data);

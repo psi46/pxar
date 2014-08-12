@@ -90,6 +90,10 @@ void RS232Conn::setWriteSuffix(const std::string &suffix){
   writeSuffix = suffix;
 }
 
+void RS232Conn::setRemoveEcho(bool removeEcho){
+  this->removeEcho = removeEcho;
+}
+
 bool RS232Conn::openPort(){
   int baudr;
   switch(baudRate)
@@ -228,6 +232,10 @@ int RS232Conn::writeData(const string &data)
   bytesWritten += writeBuf(data.c_str(), data.size());
   bytesWritten += writeBuf(writeSuffix.c_str(), writeSuffix.size());
   usleep(1E6*.001);
+  if(removeEcho) {
+    string echo;
+    readData(echo);
+  }
   return bytesWritten;
 }
 

@@ -19,20 +19,6 @@ public:
   void stop(); 
 
 private:
-
-  /**
-   * Call sweep to aquire IV curve.
-   * sweep_auto is preferred if HV supply can do a sweep internally
-   * otherwise, sweep_manual is called
-   */
-  void sweepAuto(std::vector<double>        &voltageMeasurements,
-                 std::vector<double>        &currentMeasurements,
-                 std::vector<unsigned long> &timeStamps, 
-                 TH1D                  *h1);
-  void sweepManual(std::vector<double>        &voltageMeasurements,
-                   std::vector<double>        &currentMeasurements,
-                   std::vector<unsigned long> &timeStamps, 
-                   TH1D                  *h1);
   void writeOutput(std::vector<double>        &voltageMeasurements,
                    std::vector<double>        &currentMeasurements,
                    std::vector<TTimeStamp>    &timeStamps);

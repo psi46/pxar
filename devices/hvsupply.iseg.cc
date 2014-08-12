@@ -78,6 +78,7 @@ HVSupply::HVSupply(const string &portName) {
 
   serial.setPortName(portName);
   serial.setBaudRate(9600);
+  serial.setRemoveEcho(true);
   bool portIsOpen = serial.openPort();
 
   if(!portIsOpen) {
