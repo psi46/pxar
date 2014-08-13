@@ -24,6 +24,22 @@ pxar::pixel getNoiseHit(uint8_t rocid, size_t i, size_t j) {
   return px;
 }
 
+bool isInTornadoRegion(size_t dac1min, size_t dac1max, size_t dac1, size_t dac2min, size_t dac2max, size_t dac2) {
+
+  size_t epsilon = 5;
+  double tornadowidth = 40;
+  double ymax = dac1max / (1 + exp(0.05*((dac2max-dac2min+1)/2 - tornadowidth - dac2))) + dac1min;
+  double ymin = dac1max / (1 + exp(0.05*((dac2max-dac2min+1)/2 + tornadowidth - dac2))) + dac1min;
+  if(dac1 < ymax && dac1 > ymin) {
+    size_t dymax = ymax - dac1;
+    size_t dymin = dac1 - ymin;
+    if(dymax < epsilon) return (rand()%(epsilon-dymax) == 0);
+    else if(dymin < epsilon) return (rand()%(epsilon-dymin) == 0);
+    else return true;
+  }
+  else return false;
+}
+
 void fillEvent(pxar::Event * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags) {
 
   // Generate a slightly random pulse height between 90 and 100:
@@ -447,141 +463,153 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
 
 std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-
-  // Create a working band:
-  uint8_t dacquat = static_cast<uint8_t>(dac1max-dac1min)/4;
+  size_t total_pixel = 0;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
-      for(size_t dac1 = 0; dac1 < static_cast<uint8_t>(dac1max-dac1min+1); dac1++) {
-	for(size_t dac2 = 0; dac2 < static_cast<uint8_t>(dac2max-dac2min+1); dac2++) {
+      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
+	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
 	  for(size_t k = 0; k < nTriggers; k++) {
+	    // Create a new event:
 	    Event* evt = new Event();
 	    for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
 	      // Mimic some working band of the two DACs:
-	      if(dac2 < static_cast<uint8_t>(dac1*1.2+dacquat) && dac2 > static_cast<uint8_t>(dac1*0.8-dacquat)) {
-		evt->pixels.push_back(pixel(*roc,i,j,90));
+	      if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+		fillEvent(evt,*roc,i,j,flags);
 	      }
 	    }
+	    // Count pixels:
+	    total_pixel += evt->pixels.size();
 	    data.push_back(evt);
+	    LOG(logDEBUGPIPES) << *evt;
 	  }
 	}
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
 std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
-  // Create a working band:
-  uint8_t dacquat = static_cast<uint8_t>(dac1max-dac1min)/4;
-
-  for(size_t dac1 = 0; dac1 < static_cast<uint8_t>(dac1max-dac1min+1); dac1++) {
-    for(size_t dac2 = 0; dac2 < static_cast<uint8_t>(dac2max-dac2min+1); dac2++) {
+  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
+    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
       for(size_t k = 0; k < nTriggers; k++) {
+	// Create a new event:
 	Event* evt = new Event();
 	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
 	  // Mimic some working band of the two DACs:
-	  if(dac2 < static_cast<uint8_t>(dac1*1.2+dacquat) && dac2 > static_cast<uint8_t>(dac1*0.8-dacquat)) {
-	    evt->pixels.push_back(pixel(*roc,column,row,90));
+	  if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+	    fillEvent(evt,*roc,column,row,flags);
 	  }
 	}
+	// Count pixels:
+	total_pixel += evt->pixels.size();
 	data.push_back(evt);
+	LOG(logDEBUGPIPES) << *evt;
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
 std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
-
-  // Create a working band:
-  uint8_t dacquat = static_cast<uint8_t>(dac1max-dac1min)/4;
+  size_t total_pixel = 0;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
-      for(size_t dac1 = 0; dac1 < static_cast<uint8_t>(dac1max-dac1min+1); dac1++) {
-	for(size_t dac2 = 0; dac2 < static_cast<uint8_t>(dac2max-dac2min+1); dac2++) {
+      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
+	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
 	  for(size_t k = 0; k < nTriggers; k++) {
+	    // Create a new event:
 	    Event* evt = new Event();
 	    // Mimic some working band of the two DACs:
-	    if(dac2 < static_cast<uint8_t>(dac1*1.2+dacquat) && dac2 > static_cast<uint8_t>(dac1*0.8-dacquat)) {
-	      evt->pixels.push_back(pixel(rocid,i,j,90));
+	    if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+	      fillEvent(evt,rocid,i,j,flags);
 	    }
+	    // Count pixels:
+	    total_pixel += evt->pixels.size();
 	    data.push_back(evt);
+	    LOG(logDEBUGPIPES) << *evt;
 	  }
 	}
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
 std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
+  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
 
+  LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
   LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers << " events.";
   std::vector<Event*> data;
+  size_t total_pixel = 0;
 
-  // Create a working band:
-  uint8_t dacquat = static_cast<uint8_t>(dac1max-dac1min)/4;
-
-  for(size_t dac1 = 0; dac1 < static_cast<uint8_t>(dac1max-dac1min+1); dac1++) {
-    for(size_t dac2 = 0; dac2 < static_cast<uint8_t>(dac2max-dac2min+1); dac2++) {
+  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
+    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
       for(size_t k = 0; k < nTriggers; k++) {
+	// Create a new event:
 	Event* evt = new Event();
 	// Mimic some working band of the two DACs:
-	if(dac2 < static_cast<uint8_t>(dac1*1.2+dacquat) && dac2 > static_cast<uint8_t>(dac1*0.8-dacquat)) {
-	  evt->pixels.push_back(pixel(rocid,column,row,90));
+	if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+	  fillEvent(evt,rocid,column,row,flags);
 	}
+	// Count pixels:
+	total_pixel += evt->pixels.size();
 	data.push_back(evt);
+	LOG(logDEBUGPIPES) << *evt;
       }
     }
   }
 
-  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events.";
-
+  LOG(logDEBUGHAL) << "Readout size: " << data.size() << " Events (" << total_pixel << " pixels).";
   return data;
 }
 
