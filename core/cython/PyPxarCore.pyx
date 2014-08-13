@@ -351,15 +351,17 @@ cdef class PyPxarCore:
     def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
         r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row, check if indices make sense, currently not running!
-        #This currently only returns one single pixel! The rest is lost...
+        # Return the linearized matrix with all pixels:
+        dac_steps = list()
         for d in xrange(r.size()):
-            if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].getValue())
-            else:
-                hits.append(0)
-        return numpy.array(hits)
+            pixels = list()
+            for pix in xrange(r[d].second.second.size()):
+                p = r[d].second.second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
 
     def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, threshold, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
@@ -378,15 +380,17 @@ cdef class PyPxarCore:
     def getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
         r = self.thisptr.getPulseheightVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row, check if indices make sense, currently not running!
-        #This currently only returns one single pixel! The rest is lost...
+        # Return the linearized matrix with all pixels:
+        dac_steps = list()
         for d in xrange(r.size()):
-            if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].getValue())
-            else:
-                hits.append(0)
-        return numpy.array(hits)
+            pixels = list()
+            for pix in xrange(r[d].second.second.size()):
+                p = r[d].second.second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
 
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
