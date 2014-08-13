@@ -592,6 +592,9 @@ void hal::SignalProbeA1(uint8_t /*signal*/) {
 void hal::SignalProbeA2(uint8_t /*signal*/) {
 }
 
+void hal::SignalProbeADC(uint8_t /*signal*/, uint8_t /*gain*/) {
+}
+
 void hal::SetClockSource(uint8_t /*src*/) {
 }
 
@@ -646,3 +649,7 @@ uint32_t hal::daqBufferStatus() { return 0; }
 void hal::daqStop() {}
 
 void hal::daqClear() {}
+
+std::vector<uint16_t> hal::daqADC(uint8_t /*analog_probe*/, uint8_t /*gain*/, int /*nSample*/, uint8_t /*start*/, uint8_t /*stop*/){
+  return vector<uint16_t>();
+}
