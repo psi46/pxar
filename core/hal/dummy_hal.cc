@@ -324,20 +324,21 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t rocid, uint8_t colum
 
 std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
   uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
-      for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac++) {
+      for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
 	for(size_t k = 0; k < nTriggers; k++) {
 	  // Create new event:
 	  Event* evt = new Event();
@@ -361,18 +362,19 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> rocids, s
 
 std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
   uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
 
-  for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac++) {
+  for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
     for(size_t k = 0; k < nTriggers; k++) {
       // Create new event:
       Event* evt = new Event();
@@ -394,20 +396,21 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> rocids, ui
 
 std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
   uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
-      for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac++) {
+      for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
 	for(size_t k = 0; k < nTriggers; k++) {
 	  // Create new event:
 	  Event* evt = new Event();
@@ -430,20 +433,20 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t rocid, std::vector<in
 
 std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
   
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
   uint8_t dacmax = static_cast<uint8_t>(parameter.at(2));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(3));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(4));
+  uint8_t dacstep = static_cast<uint8_t>(parameter.at(5));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dacmax-dacmin+1)*nTriggers << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dacmax-dacmin)/dacstep+1)*nTriggers << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
   uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
 
-  for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac++) {
+  for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
     for(size_t k = 0; k < nTriggers; k++) {
-      LOG(logDEBUGHAL) << "trig " << k;
       // Create a new event:
       Event* evt = new Event();
       // Mimic some edge at 50% of the DAC range:
@@ -463,22 +466,24 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t rocid, uint8_t column,
 
 std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dac2max-dac2min)/dac2step+1)*static_cast<size_t>((dac1max-dac1min)/dac1step+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
-      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
-	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
+      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
 	  for(size_t k = 0; k < nTriggers; k++) {
 	    // Create a new event:
 	    Event* evt = new Event();
@@ -504,20 +509,22 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> rocids
 
 std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dac2max-dac2min)/dac2step+1)*static_cast<size_t>((dac1max-dac1min)/dac1step+1)*nTriggers << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
 
-  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
-    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
+  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
       for(size_t k = 0; k < nTriggers; k++) {
 	// Create a new event:
 	Event* evt = new Event();
@@ -541,22 +548,24 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> rocids,
 
 std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dac2max-dac2min)/dac2step+1)*static_cast<size_t>((dac1max-dac1min)/dac1step+1)*nTriggers*ROC_NUMROWS*ROC_NUMCOLS << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
 
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
-      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
-	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
+      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
 	  for(size_t k = 0; k < nTriggers; k++) {
 	    // Create a new event:
 	    Event* evt = new Event();
@@ -580,20 +589,22 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t rocid, std::vector
 
 std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
 
-  uint32_t flags = static_cast<uint32_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
   uint8_t dac1max = static_cast<uint8_t>(parameter.at(2));
   uint8_t dac2min = static_cast<uint8_t>(parameter.at(4));
   uint8_t dac2max = static_cast<uint8_t>(parameter.at(5));
+  uint16_t flags = static_cast<uint16_t>(parameter.at(6));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(7));
+  uint8_t dac1step = static_cast<uint8_t>(parameter.at(8));
+  uint8_t dac2step = static_cast<uint8_t>(parameter.at(9));
 
   LOG(logDEBUGHAL) << "Flags: " << listFlags(flags);
-  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>(dac2max-dac2min+1)*static_cast<size_t>(dac1max-dac1min+1)*nTriggers << " events.";
+  LOG(logDEBUGHAL) << "Expecting " << static_cast<size_t>((dac2max-dac2min)/dac2step+1)*static_cast<size_t>((dac1max-dac1min)/dac1step+1)*nTriggers << " events.";
   std::vector<Event*> data;
   size_t total_pixel = 0;
 
-  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1++) {
-    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2++) {
+  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
       for(size_t k = 0; k < nTriggers; k++) {
 	// Create a new event:
 	Event* evt = new Event();
