@@ -232,7 +232,8 @@ void PixTestXray::doPhRun() {
   if (0 == fQ.size()) {
     if (fParFillTree) bookTree(); 
     TH1D *h1(0); 
-    TH2D *h2(0); 
+    TH2D *h2(0);
+    TH1D *h3(0); 
     TProfile2D *p2(0); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       h2 = bookTH2D(Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
@@ -279,12 +280,17 @@ void PixTestXray::doPhRun() {
       setTitles(h1, "PH [ADC]", "Entries/bin");
       fPH.push_back(h1);
     }
+    h3 = bookTH1D(Form("ntrig_%s", fParSource.c_str()),
+	Form("ntrig_%s", fParSource.c_str()),1,0,1);
+    h3->SetDirectory(fDirectory);
+    fTriggers.push_back(h3);
 
     copy(fHmap.begin(), fHmap.end(), back_inserter(fHistList));
     copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
     copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
     copy(fPHmap.begin(), fPHmap.end(), back_inserter(fHistList));
     copy(fPH.begin(), fPH.end(), back_inserter(fHistList));
+    copy(fTriggers.begin(), fTriggers.end(), back_inserter(fHistList));
   }
 
   fPg_setup.push_back(make_pair("resetroc", 0));
@@ -691,6 +697,7 @@ void PixTestXray::processData(uint16_t numevents) {
   LOG(logDEBUG) << Form(" # events read: %6ld, pixels seen in all events: %3d", daqdat.size(), pixCnt);
   
   fHmap[0]->Draw("colz");
+  fTriggers[0]->SetBinContent(1, fTriggers[0]->GetBinContent(1) + daqdat.size());
   PixTest::update();
 }
 
