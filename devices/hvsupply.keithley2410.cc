@@ -15,6 +15,14 @@ using namespace std;
 
 HVSupply::HVSupply(const string &portname)
 {
+
+  printf("Make sure the Keithley2410 is using the following RS232 Settings:\n");
+  printf("Baud Rate: 57600\n");
+  printf("Bits: 8\n");
+  printf("Parity: None\n");
+  printf("Terminator: <CR>+<LF>\n");
+  printf("Control Flow: None\n");
+
   voltsCurrent = 0;
   hvIsOn = false;
   supplyTripped = false;
