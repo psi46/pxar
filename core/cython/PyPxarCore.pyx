@@ -257,6 +257,9 @@ cdef class PyPxarCore:
             v.push_back(pc)
         self.thisptr._dut.updateTrimBits(v, rocid)
     
+    def info(self):
+        self.thisptr._dut.info()
+
     def testPixel(self, int col, int row, bool enable, rocid = None):
         if rocid is not None:
             self.thisptr._dut.testPixel(col, row, enable,rocid)

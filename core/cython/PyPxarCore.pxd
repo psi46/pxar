@@ -53,7 +53,7 @@ cdef extern from "api.h" namespace "pxar":
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass dut:
         dut()
-        info()
+        void info()
         int32_t getNEnabledPixels(uint8_t rocid)
         int32_t getNMaskedPixels(uint8_t rocid)
         int32_t getNEnabledTbms()
