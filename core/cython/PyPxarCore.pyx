@@ -260,6 +260,12 @@ cdef class PyPxarCore:
     def info(self):
         self.thisptr._dut.info()
 
+    def setROCEnable(self, int rocid, bool enable):
+        self.thisptr._dut.setROCEnable(rocid, enable)
+
+    def setTBMEnable(self, int tbmid, bool enable):
+        self.thisptr._dut.setTBMEnable(tbmid, enable)
+
     def testPixel(self, int col, int row, bool enable, rocid = None):
         if rocid is not None:
             self.thisptr._dut.testPixel(col, row, enable,rocid)

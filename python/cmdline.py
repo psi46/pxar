@@ -552,11 +552,29 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_info.__doc__, '']
 
+    @arity(2,2,[int, int])
+    def do_setROCEnable(self, rocid, enable):
+        """setROCEnable [ROC id] [enable]: enable/disable the ROC with given ID"""
+        self.api.setROCEnable(rocid,enable)
+
+    def complete_setROCEnable(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setROCEnable.__doc__, '']
+
+    @arity(2,2,[int, int])
+    def do_setTBMEnable(self, tbmid, enable):
+        """setTBMEnable [ROC id] [enable]: enable/disable the ROC with given ID"""
+        self.api.setTBMEnable(tbmid,enable)
+
+   def complete_setTBMEnable(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setTBMEnable.__doc__, '']
+
     @arity(3,4,[int, int, int, int])
     def do_testPixel(self, col, row, enable, rocid = None):
         """testPixel [column] [row] [enable] [ROC id]: enable/disable testing of pixel"""
         self.api.testPixel(col,row,enable,rocid)
-        
+
     def complete_testPixel(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_testPixel.__doc__, '']
@@ -565,7 +583,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_testAllPixels(self, enable, rocid = None):
         """testAllPixels [enable] [rocid]: enable/disable tesing for all pixels on given ROC"""
         self.api.testAllPixels(enable,rocid)
-        
+
     def complete_testAllPixels(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_testAllPixels.__doc__, '']
