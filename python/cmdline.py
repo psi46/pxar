@@ -566,7 +566,7 @@ class PxarCoreCmd(cmd.Cmd):
         """setTBMEnable [ROC id] [enable]: enable/disable the ROC with given ID"""
         self.api.setTBMEnable(tbmid,enable)
 
-   def complete_setTBMEnable(self, text, line, start_index, end_index):
+    def complete_setTBMEnable(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_setTBMEnable.__doc__, '']
 
