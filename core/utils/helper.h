@@ -27,6 +27,7 @@ typedef unsigned char uint8_t;
 
 #include "api.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -134,6 +135,20 @@ namespace pxar {
 	return (config.i2c_address == _i2c_address);
       }
   };
+
+  /** Helper to compare the pixel configuration of rocConfigs
+  */
+  bool inline comparePixelConfiguration(const std::vector<pixelConfig> pxA, const std::vector<pixelConfig> pxB) {
+
+    // Check the number of enabled pixels:
+    if(pxA.size() != pxB.size()) return false;
+
+    // Check the single pixels:
+    for(std::vector<pixelConfig>::const_iterator pixit = pxA.begin(); pixit != pxA.end(); pixit++){
+      if(std::count_if(pxB.begin(), pxB.end(), findPixelXY(pixit->column,pixit->row)) != 1) { return false; }
+    }
+    return true;
+  }
 
   /** Helper function to return a printed list of an integer vector, used to shield
    *  debug code from being executed if debug level is not sufficient

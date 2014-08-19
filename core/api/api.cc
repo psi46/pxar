@@ -1321,6 +1321,18 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   // Start test timer:
   timer t;
 
+  // Check if all pixels are configured the same way on all ROCs. If this is not the case, we need to run this in FLAG_FORCE_SERIAL mode:
+  std::vector<uint8_t> enabledRocs = _dut->getEnabledRocIDs();
+  for(std::vector<uint8_t>::iterator rc = enabledRocs.begin(); rc != enabledRocs.end(); ++rc) {
+    // Compare the configuration of the first ROC with all others:
+    if(!comparePixelConfiguration(_dut->getEnabledPixels(enabledRocs.at(0)),_dut->getEnabledPixels(*rc))) {
+      flags |= FLAG_FORCE_SERIAL;
+      LOG(logDEBUGAPI) << "Not all ROCs have their pixels configured the same way. "
+		       << "Running in FLAG_FORCE_SERIAL mode.";
+      break;
+    }
+  }
+
   // Do the masking/unmasking&trimming for all ROCs first.
   // Unless we are running in FLAG_FORCE_UNMASKED mode, we need to transmit the new trim values to the NIOS core and mask the whole DUT:
   if((flags & FLAG_FORCE_UNMASKED) == 0) {
@@ -1348,7 +1360,6 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     } // ROCs parallel
     // Otherwise call the Pixel Parallel function several times:
     else if (multipixelfn != NULL) {
-      // FIXME we need to make sure it's the same pixel on all ROCs enabled!
       
       // Get one of the enabled ROCs:
       std::vector<uint8_t> enabledRocs = _dut->getEnabledRocIDs();
