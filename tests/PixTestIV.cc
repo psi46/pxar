@@ -151,6 +151,7 @@ void PixTestIV::doTest() {
     gSystem->ProcessEvents();
     if(fStop) break;
   }
+  delete hv;
 
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
