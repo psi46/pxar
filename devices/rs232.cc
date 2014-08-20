@@ -187,6 +187,8 @@ bool RS232Conn::openPort(){
     return false;
   }
 
+  tcflush(port, TCIOFLUSH); //drop any old data on port
+
   return true;
 }
 

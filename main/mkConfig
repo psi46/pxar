@@ -450,10 +450,11 @@ FillTree            checkbox
 
 -- IV
 port                /dev/FIXME
-VoltageStart        0
-VoltageStop         600
-VoltageStep         5
-Delay               1
+voltageStart        0
+voltageStop         600
+voltageStep         5
+delay               1
+compliance(ua)      100
 
 EOF
 

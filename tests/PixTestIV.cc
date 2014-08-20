@@ -1,4 +1,4 @@
-#include <stdlib.h>    
+#include <cstdlib>    
 #include <algorithm>   
 #include <iostream>
 #include <fstream>
@@ -26,8 +26,9 @@ PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name),
                                                  fParVoltageStop(150), 
                                                  fParVoltageStep(5), 
                                                  fParDelay(1), 
+                                                 fParCompliance(100),
                                                  fStop(false), 
-                                                 fParPort("") {
+                                                 fParPort(""){
   PixTest::init();
   init();
 }
@@ -47,24 +48,23 @@ bool PixTestIV::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if(!parName.compare("voltagestart")) {
         fParVoltageStart = atof(sval.c_str());
-        setToolTips();
       }
       if(!parName.compare("voltagestop")) {
         fParVoltageStop = atof(sval.c_str());
-        setToolTips();
       }
       if(!parName.compare("voltagestep")) {
-        fParVoltageStep = atof(sval.c_str());
-        setToolTips();
+        fParVoltageStep = fabs(atof(sval.c_str()));
       }
       if(!parName.compare("delay(seconds)")) {
         fParDelay = atof(sval.c_str());
-        setToolTips();
       }
       if(!parName.compare("port")) {
         fParPort = sval;
-        setToolTips();
       }
+      if(!parName.compare("compliance(ua)")) {
+        fParCompliance = atof(sval.c_str());
+      }
+      setToolTips();
       break;
     }
   }
@@ -110,8 +110,8 @@ void PixTestIV::doTest() {
   int numMeasurements = ceil(fabs((fParVoltageStart - fParVoltageStop)/fParVoltageStep));
   
   TH1D *h1(0);
-  double vMin = min(fParVoltageStart, fParVoltageStop);
-  double vMax = max(fParVoltageStart, fParVoltageStop)+fabs(fParVoltageStep);
+  double vMin = min(fParVoltageStart, fParVoltageStop) - fParVoltageStep*.5;
+  double vMax = vMin + numMeasurements*fParVoltageStep;
   h1 = bookTH1D("IVcurve", "IV curve", numMeasurements, vMin, vMax);
   h1->SetMinimum(1.e-2);
   h1->SetMarkerStyle(20);
@@ -122,15 +122,16 @@ void PixTestIV::doTest() {
   vector<double> voltageMeasurements;
   vector<double> currentMeasurements;
   vector<TTimeStamp> timeStamps;
-  
+  double signedStep = (fParVoltageStart < fParVoltageStop) ? fParVoltageStep
+                                                           : -fParVoltageStep;
   PixTest::update();
   if(gPad) gPad->SetLogy(true);
   
   LOG(logINFO) << "Starting IV curve measurement...";
   pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str());
-  hv->setMicroampsLimit(100);
+  hv->setMicroampsLimit(fParCompliance);
 
-  hv->sweepStart(fParVoltageStart,fParVoltageStop,fParVoltageStep,fParDelay);
+  hv->sweepStart(fParVoltageStart,fParVoltageStop,signedStep,fParDelay);
   while(hv->sweepRunning()){
     double voltSet, voltRead, current;
     hv->sweepRead(voltSet, voltRead, current);
@@ -143,7 +144,7 @@ void PixTestIV::doTest() {
     timeStamps.push_back(ts);
     
     LOG(logINFO) << Form("V = %4f (meas: %+7.2f) I = %4.2e uA %s", 
-                         voltSet, voltRead, current, fTimeStamp->AsString("c"));
+                         voltSet, voltRead, current*1E6, fTimeStamp->AsString("c"));
     
     h1->Draw("p");
     PixTest::update();

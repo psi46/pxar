@@ -32,14 +32,15 @@ HVSupply::HVSupply(const string &portname)
 
   serial.writeData("*RST");                    // Reset the unit to factory settings
   serial.writeData(":ROUT:TERM REAR");         // Switch to rear outlet
+  serial.writeData(":OUTP:SMOD NORM");         // Permits discharging of capacitive load when output is off
+  serial.writeData(":SYST:AZER ON");           // Enables Auto-Zeroing of ADCs
   serial.writeData(":SOUR:FUNC VOLT");         // Set supply to voltage
+  serial.writeData(":SOUR:VOLT:MODE FIXED");   // Set fixed voltage mode(aka not sweep)
   serial.writeData(":SENS:FUNC 'CURR:DC'");    // Set measurement to DC current
   serial.writeData(":FUNC:CONC ON");           // Turn concurrent mode on, i.e. allow readout of voltage and current simultaneously
   serial.writeData(":SENS:CURR:NPLC 10");      // Set integration period to maximum (=10). 
                                                //     Unit is power line cycles, i.e. 10/60=0.167s in the US and 10/50=0.2s in Europe
   serial.writeData(":FORM:ELEM VOLT,CURR");    // Select readout format, e.g. get a number pair with voltage and current
-  
-
 }
 
 HVSupply::~HVSupply()
@@ -179,6 +180,7 @@ void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
     serial.setReadSuffix("\r\n");
     serial.readData(ampsStr);
     serial.writeData(":OUTP:STAT OFF");
+    serial.writeData(":SOUR:VOLT:MODE FIXED");
   }
   
   voltSet = voltStart + voltStep*currentSweepRead;

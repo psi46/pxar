@@ -23,10 +23,11 @@ private:
                    std::vector<double>        &currentMeasurements,
                    std::vector<TTimeStamp>    &timeStamps);
   
-  double fParVoltageStart;
-  double fParVoltageStop;
-  double fParVoltageStep;
-  double fParDelay;
+  double fParVoltageStart;      //volts
+  double fParVoltageStop;       //volts
+  double fParVoltageStep;       //volts
+  double fParDelay;             //seconds
+  double fParCompliance;        //uA
   bool fStop;
   std::string fParPort; 
 
