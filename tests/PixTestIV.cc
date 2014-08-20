@@ -131,13 +131,13 @@ void PixTestIV::doTest() {
   pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str());
   hv->setMicroampsLimit(fParCompliance);
 
-  hv->sweepStart(fParVoltageStart,fParVoltageStop,signedStep,fParDelay);
+  hv->sweepStart(-fParVoltageStart,-fParVoltageStop,-signedStep,fParDelay);
   while(hv->sweepRunning()){
     double voltSet, voltRead, current;
     hv->sweepRead(voltSet, voltRead, current);
     voltageMeasurements.push_back(voltRead);
     currentMeasurements.push_back(current);
-    h1->Fill(voltSet, current);
+    h1->Fill(-voltSet, -current);
     
     TTimeStamp ts;
     ts.Set();
