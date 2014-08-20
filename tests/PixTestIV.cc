@@ -144,7 +144,7 @@ void PixTestIV::doTest() {
     timeStamps.push_back(ts);
     
     LOG(logINFO) << Form("V = %4f (meas: %+7.2f) I = %4.2e uA %s", 
-                         voltSet, voltRead, current*1E6, fTimeStamp->AsString("c"));
+                         voltSet, voltRead, current*1E6, ts.AsString("c"));
     
     h1->Draw("p");
     PixTest::update();

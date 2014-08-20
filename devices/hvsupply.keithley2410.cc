@@ -38,7 +38,8 @@ HVSupply::HVSupply(const string &portname)
   }
   LOG(logDEBUG) << "Opened COM port to Keithley 2410";
 
-  serial.writeData("*RST");                    // Reset the unit to factory settings
+  serial.writeData("*RST");                    // Reset the unit to default
+  serial.writeData("*RST");                    // Really reset the unit to default
   serial.writeData(":ROUT:TERM REAR");         // Switch to rear outlet
   serial.writeData(":OUTP:SMOD NORM");         // Permits discharging of capacitive load when output is off
   serial.writeData(":SYST:AZER ON");           // Enables Auto-Zeroing of ADCs
