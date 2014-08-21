@@ -45,7 +45,13 @@ private:
   PHCalibration fPhCal;
   bool	   fParOutOfRange;
   bool     fDaq_loop;
-  
+  uint32_t fTriggerCount; 
+  uint32_t fSPixCount;
+  int fSPixRow;
+  int fSPixCol; 
+  int fSPixRoc;
+  bool singPixEffTest;
+
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
   std::vector<TH2D*> fHits;
