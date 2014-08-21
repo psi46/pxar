@@ -1,4 +1,95 @@
-Cw78lFkQ#q
+#include <stdlib.h>     /* atof, atoi */
+#include <algorithm>    // std::find
+#include <iostream>
+#include "PixTestDaq.hh"
+#include "log.h"
+#include "helper.h"
+#include "timer.h"
+
+
+using namespace std;
+using namespace pxar;
+
+ClassImp(PixTestDaq)
+
+// ----------------------------------------------------------------------
+PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParStretch(0), fParFillTree(0), fParSeconds(0), fParTriggerFrequency(0), fParIter(0), fParDelayTBM(0), fParResetROC(0) {
+  PixTest::init();
+  init(); 
+  LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
+  fTree = 0; 
+
+  fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
+  fPhCalOK = fPhCal.initialized();
+}
+
+
+//----------------------------------------------------------
+PixTestDaq::PixTestDaq() : PixTest() {
+  LOG(logDEBUG) << "PixTestDaq ctor()";
+  fTree = 0;
+}
+
+//----------------------------------------------------------
+PixTestDaq::~PixTestDaq() {
+	LOG(logDEBUG) << "PixTestDaq dtor, saving tree ... ";
+	fDirectory->cd();
+	if (fTree && fParFillTree) fTree->Write();
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::init() {
+  LOG(logDEBUG) << "PixTestDaq::init()";
+
+  setToolTips();
+  fDirectory = gFile->GetDirectory(fName.c_str()); 
+  if (!fDirectory) {
+    fDirectory = gFile->mkdir(fName.c_str()); 
+  } 
+  fDirectory->cd(); 
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::setToolTips() {
+  fTestTip    = string("Run DAQ - data from each run will be added to the same histogram.") ;
+  fSummaryTip = string("to be implemented") ;
+  fStopTip    = string("Stop DAQ and save data.");
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::bookHist(string name) {
+	fDirectory->cd();
+	LOG(logDEBUG) << "nothing done with " << name;
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::stop(){
+	// Interrupt the test 
+	fDaq_loop = false;
+	LOG(logINFO) << "Stop pressed. Ending test.";
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::runCommand(std::string command) {
+
+	if (command == "stop")
+		stop();
+	else
+		LOG(logINFO) << "Command " << command << " not implemented.";
+}
+
+// ----------------------------------------------------------------------
+bool PixTestDaq::setParameter(string parName, string sval) {
+	bool found(false);
+	singPixEffTest = true;
+	fSPixRow = 25;
+	fSPixCol = 40;
+	fSPixRoc = 10;
+	fParOutOfRange = false;
+	std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
+	for (unsigned int i = 0; i < fParameters.size(); ++i) {
+		if (fParameters[i].first == parName) {
+			found = true;
 			if (!parName.compare("ntrig")) {
 				fParNtrig = atoi(sval.c_str());
 				setToolTips();
