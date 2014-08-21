@@ -445,7 +445,6 @@ Ntrig               0
 iterations          10
 seconds             30
 trgfrequency(khz)   100
-DelayTBM            checkbox
 FillTree            checkbox
 
 -- IV
