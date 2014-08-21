@@ -13,7 +13,7 @@ using namespace pxar;
 ClassImp(PixTestDaq)
 
 // ----------------------------------------------------------------------
-PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParStretch(0), fParFillTree(0), fParSeconds(0), fParTriggerFrequency(0), fParIter(0), fParDelayTBM(0), fParResetROC(0) {
+PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParStretch(0), fParFillTree(0), fParSeconds(0), fParTriggerFrequency(0), fParIter(0), fParResetROC(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
@@ -98,10 +98,6 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 				fParStretch = atoi(sval.c_str());
 				setToolTips();
 			}
-			if (!parName.compare("delaytbm")) {
-				fParDelayTBM = !(atoi(sval.c_str()) == 0);
-				setToolTips();
-			}
 			if (!parName.compare("filltree")) {
 				fParFillTree = !(atoi(sval.c_str()) == 0);
 				setToolTips();
@@ -126,26 +122,32 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 //----------------------------------------------------------
 bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel){
 
+	int nDel = 0;
 	uint8_t trgtkdel = TrgTkDel;
 	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
-	double fClkDelays = period_ns / 25 - trgtkdel;
-	uint16_t ClkDelays = (uint16_t)fClkDelays;  //debug -- aprox to def
-	uint16_t i = ClkDelays;
-
+	fParPeriod = (uint16_t)period_ns / 25;
+	uint16_t ClkDelays = fParPeriod - trgtkdel;
+	
 	//add right delay between triggers:
-	if (fParResetROC) {
+	
+	if (fParResetROC) {       //by default not reset (already done before daqstart)
 		fPg_setup.push_back(make_pair("resetroc", 15));
 		ClkDelays -= 15;
+		nDel++;
 	}
-	while (i>255){
+
+	while (ClkDelays>255){
 		fPg_setup.push_back(make_pair("delay", 255));
-		i = i - 255;
+		ClkDelays = ClkDelays - 255;
+		nDel ++;
 	}
-	fPg_setup.push_back(make_pair("delay", i));
+	fPg_setup.push_back(make_pair("delay", ClkDelays));
 
 	//then send trigger and token:
 	fPg_setup.push_back(make_pair("trg", trgtkdel));
 	fPg_setup.push_back(make_pair("tok", 0));
+	
+	fParPeriod = fParPeriod + 4 + nDel; //to align to the new pg minimum (1 additional clk cycle per PG call);
 
 	return true;
 }
@@ -331,13 +333,9 @@ void PixTestDaq::doTest() {
   LOG(logINFO) << "PixTestDaq::RES sent once ";
 
   fApi->daqStop();
-  //fApi->daqClear();
 
   fPg_setup.clear();
   LOG(logINFO) << "PixTestDaq::PG_Setup clean";
-
-  if(fParDelayTBM)
-  	fApi->setTbmReg("delays",0x40); //FPix timing
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
@@ -359,7 +357,7 @@ void PixTestDaq::doTest() {
 
 	for (int i = 0; i < fParIter && fDaq_loop; i++) {
 		//Send the triggers:
-    	fApi->daqTrigger(fParNtrig);
+    	fApi->daqTrigger(fParNtrig, fParPeriod);
 		gSystem->ProcessEvents();
 		ProcessData(0);
 	}
@@ -368,8 +366,8 @@ void PixTestDaq::doTest() {
   } else {  //Use seconds
 
 	//Start trigger loop + buffer fill management:
-	int finalPeriod = fApi->daqTriggerLoop(0);  //Period is automatically set to the minimum by Api function
-	LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
+	fApi->daqTriggerLoop(fParPeriod);
+	LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << fParPeriod << " and duration " << fParSeconds << " seconds";
 
 	  //To control the buffer filling
 	uint8_t perFull;
@@ -399,7 +397,7 @@ void PixTestDaq::doTest() {
 		  timepaused += diff;
 		  LOG(logDEBUG) << "Readout time: " << timepaused / 1000 << " seconds.";
 		  LOG(logINFO) << "Resuming triggers for " << fParSeconds - (timeff/1000) << " seconds.";
-		  fApi->daqTriggerLoop(0);
+		  fApi->daqTriggerLoop(fParPeriod);
 	  }
 	  else {
 		  if (TotalTime) { LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped."; }
