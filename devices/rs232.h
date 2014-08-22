@@ -47,13 +47,13 @@ class RS232Conn{
     int baudRate;                   //port baudrate
     struct termios oldPortSettings; //backup port settings
     bool removeEcho;                //Set true if device echos back input
+    double timeout;                 //Read Timeout in seconds
     
     int pollPort(char &buf);
     int writeBuf(const char *buf, int len);
     
   public:
     RS232Conn();
-    RS232Conn(const std::string &portName, int baudrate);
     ~RS232Conn();
     
     bool openPort();
@@ -64,6 +64,7 @@ class RS232Conn{
     void setReadSuffix(const std::string &suffix);
     void setWriteSuffix(const std::string &suffix);
     void setRemoveEcho(bool removeEcho);
+    void setTimeout(double timeout);
     
     int writeData(const std::string &data);
     int readData(std::string &data);

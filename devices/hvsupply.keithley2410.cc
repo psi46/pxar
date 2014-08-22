@@ -13,15 +13,15 @@
 using namespace pxar;
 using namespace std;
 
-HVSupply::HVSupply(const string &portname)
+HVSupply::HVSupply(const string &portname, double timeout)
 {
 
-  printf("Make sure the Keithley2410 is using the following RS232 Settings:\n");
-  printf("Baud Rate: 57600\n");
-  printf("Bits: 8\n");
-  printf("Parity: None\n");
-  printf("Terminator: <CR>+<LF>\n");
-  printf("Control Flow: None\n");
+  LOG(logINFO) << "Make sure the Keithley2410 is using the following RS232 settings:";
+  LOG(logINFO) << "\t|Baud Rate: 57600";
+  LOG(logINFO) << "\t|Bits: 8";
+  LOG(logINFO) << "\t|Parity: None";
+  LOG(logINFO) << "\t|Terminator: <CR>+<LF>";
+  LOG(logINFO) << "\t|Control Flow: None";
 
   voltsCurrent = 0;
   hvIsOn = false;
@@ -30,6 +30,7 @@ HVSupply::HVSupply(const string &portname)
   serial.setPortName(portname);
   serial.setBaudRate(57600);
   serial.setRemoveEcho(false);
+  serial.setTimeout(timeout);
 
   bool portIsOpen = serial.openPort();
   if (!portIsOpen) {
