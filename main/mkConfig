@@ -372,18 +372,18 @@ DAC2HI              255
 PIX                 11,20 
 
 -- Pattern
-pgcycles            100
+externalclk         checkbox(0)
 triggerloop         checkbox(0)
+seconds             5
 period              1000
-seconds             1
+pgcycles            100
 patternfromfile     checkbox(0)
+unmaskall           checkbox(0)
+inputfile           testPatterns
+filltree            checkbox(0)
 resultsonfile       checkbox(0)
 binaryoutput        checkbox(0)
-inputfile           testPatterns
 outputfile          defaultPattern
-unmaskall           checkbox(0)
-externalclk         checkbox(0)
-filltree            checkbox(0)
 resettodefault      button
 
 -- BumpBonding
