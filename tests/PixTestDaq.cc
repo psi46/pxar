@@ -269,9 +269,9 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 				fTreeEvent.pq[ipix] = q;
 			}
 		}
+		if (fParFillTree) fTree->Fill();
 	}
-	if (fParFillTree) fTree->Fill();
-	
+
   	//to draw the hitsmap as 'online' check.
 	TH2D* h2 = (TH2D*)(fHits.back());
 	h2->Draw(getHistOption(h2).c_str());
