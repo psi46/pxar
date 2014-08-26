@@ -70,7 +70,7 @@ RS232Conn::~RS232Conn(){
 
 void RS232Conn::setPortName(const string &portName){
   if (port != NULL_FD){
-    LOG(logCRITICAL) << "Cannot change port name while port is open";
+    LOG(logCRITICAL) << "[RS232] Cannot change port name while port is open";
     return;
   }
   this->portName = portName;
@@ -78,10 +78,26 @@ void RS232Conn::setPortName(const string &portName){
 
 void RS232Conn::setBaudRate(int baudRate){
   if (this->port != NULL_FD){
-    LOG(logCRITICAL) << "Cannot change baud rate while port is open";
+    LOG(logCRITICAL) << "[RS232] Cannot change baud rate while port is open";
     return;
   }
   this->baudRate = baudRate;
+}
+
+void RS232Conn::setFlowControl(bool flowControl){
+  if (port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot change flow control while port is open";
+    return;
+  }
+  this->flowControl = flowControl;
+}
+
+void RS232Conn::setParity(bool parity){
+  if (port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot change parity while port is open";
+    return;
+  }
+  this->parity = parity;
 }
 
 void RS232Conn::setReadSuffix(const std::string &suffix){
@@ -102,7 +118,7 @@ void RS232Conn::setTimeout(double timeout){
 
 bool RS232Conn::openPort(){
   if(port != NULL_FD){
-    LOG(logCRITICAL) << "Cannot Open Port.\"" << portName << "\"Port already Open ";
+    LOG(logCRITICAL) << "[RS232] CCannot Open Port.\"" << portName << "\"Port already Open ";
     return false;
   }
   int baudr;
@@ -144,17 +160,17 @@ bool RS232Conn::openPort(){
       break;
     case  230400 : baudr = B230400;
       break;
-    default      : LOG(logCRITICAL) << "Invalid baud rate " << baudRate << "!";
+    default      : LOG(logCRITICAL) << "[RS232] CInvalid baud rate " << baudRate << "!";
       return(1);
       break;
     }
 
-  LOG(logINFO) << "Opening com port: "<< portName<<" with baud: "<<baudRate;
+  LOG(logINFO) << "[RS232] COpening com port: "<< portName<<" with baud: "<<baudRate;
   this->port = open(portName.c_str(), O_RDWR | O_NOCTTY);
   if(port==-1)
   {
     port = NULL_FD;
-    LOG(logCRITICAL) << "unable to open comport ";
+    LOG(logCRITICAL) << "[RS232] Cunable to open comport ";
     return false;
   }
   
@@ -162,20 +178,27 @@ bool RS232Conn::openPort(){
   rsError = tcgetattr(port, &oldPortSettings);
   if(rsError==-1){
     closePort();
-    LOG(logCRITICAL) << "unable to read portsettings ";
+    LOG(logCRITICAL) << "[RS232] Cunable to read portsettings ";
     return false;
   }
   
   struct termios newPortSettings;
   memset(&newPortSettings, 0, sizeof(newPortSettings));
   newPortSettings.c_cflag = CS8 | CLOCAL | CREAD;
-  newPortSettings.c_iflag = IGNPAR;
+  if(parity){
+    newPortSettings.c_cflag |= PARENB | PARODD;
+  } else{
+    newPortSettings.c_iflag |= IGNPAR;
+  }
+  if(flowControl){
+    newPortSettings.c_iflag = IXON | IXOFF;
+  }
   cfsetspeed(&newPortSettings,baudr);
   
   rsError = tcsetattr(port, TCSANOW, &newPortSettings);
   if(rsError==-1){
     closePort();
-    LOG(logCRITICAL) << "unable to adjust portsettings ";
+    LOG(logCRITICAL) << "[RS232] Cunable to adjust portsettings ";
     return false;
   }
   
@@ -183,7 +206,7 @@ bool RS232Conn::openPort(){
   rsError = ioctl(port, TIOCMGET, &status);
   if(rsError == -1){
     closePort();
-    LOG(logCRITICAL) << "unable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] Cunable to get portstatus";
     return false;
   }
 
@@ -193,7 +216,7 @@ bool RS232Conn::openPort(){
   rsError = ioctl(port, TIOCMSET, &status);
   if(rsError == -1){
     closePort();
-    LOG(logCRITICAL) << "unable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] Cunable to set portstatus";
     return false;
   }
 
@@ -206,14 +229,14 @@ void RS232Conn::closePort(){
   if(port == NULL_FD) return;
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "unable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] Unable to get portstatus";
   }
 
   status &= ~TIOCM_DTR;    /* turn off DTR */
   status &= ~TIOCM_RTS;    /* turn off RTS */
 
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "unable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] Unable to set portstatus";
   }
 
   tcsetattr(port, TCSANOW, &oldPortSettings);
@@ -224,12 +247,12 @@ void RS232Conn::closePort(){
 
 int RS232Conn::writeBuf(const char *buf, int len){
   if (port == NULL_FD){
-    LOG(logCRITICAL) << "Cannot write to non-open port";
+    LOG(logCRITICAL) << "[RS232] Cannot write to non-open port";
     return 0;
   }
   int status = write(port, buf, len);
   if (status == -1){
-    LOG(logCRITICAL) << "Error writing to RS232 Port";
+    LOG(logCRITICAL) << "[RS232] Error writing to RS232 Port";
     return 0;
   }
   return status;
@@ -243,17 +266,16 @@ int RS232Conn::writeData(const string &data)
   unsigned int bytesWritten = 0;
   bytesWritten += writeBuf(data.c_str(), data.size());
   bytesWritten += writeBuf(writeSuffix.c_str(), writeSuffix.size());
-  usleep(1E6*.001);
+  usleep(1E6*.01);
   if(removeEcho) {
-    string echo;
-    readData(echo);
+    readEcho(data);
   }
   return bytesWritten;
 }
 
 int RS232Conn::pollPort(char &buf){
   if(port == NULL_FD){
-    LOG(logCRITICAL) << "Cannot poll non-open port!";
+    LOG(logCRITICAL) << "[RS232]Cannot poll non-open port!";
     return -1;
   }
   int status = read(port, &buf, 1);
@@ -286,7 +308,7 @@ int RS232Conn::readData(string &data){
     }
     tCurr = time(NULL);
     if (difftime(tCurr,tStart) > timeout){
-      LOG(logCRITICAL) << "Serial Timeout";
+      LOG(logCRITICAL) << "[RS232] Serial Timeout";
       break;
     }
   }
@@ -295,6 +317,19 @@ int RS232Conn::readData(string &data){
     LOG(logINFO) << "[RS232] Received Data : \""<<data<<"\"";
 #endif
   return data.size();
+}
+
+bool RS232Conn::readEcho(const string &data){
+  string readSuffixStore = readSuffix;
+  setReadSuffix(writeSuffix);
+  string echo;
+  readData(echo);
+  setReadSuffix(readSuffixStore);
+  if( echo != data){
+    LOG(logWARNING) << "[RS232] Echo \""<<echo<<"\" does not match write \""<<data<<"\"";
+    return false;
+  }
+  return true;
 }
 
 void RS232Conn::writeReadBack(const string &dataOut, string &dataIn){
@@ -341,43 +376,43 @@ bool RS232Conn::isDSREnabled(){
 void RS232Conn::enableDTR(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "unable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
   }
   status |= TIOCM_DTR;    /* turn on DTR */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "unable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
   }
 }
 
 void RS232Conn::disableDTR(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "unable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to get portstatus";
   }
   status &= ~TIOCM_DTR;    /* turn off DTR */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "unable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
   }
 }
 
 void RS232Conn::enableRTS(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "unable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to get portstatus";
   }
   status |= TIOCM_RTS;    /* turn on RTS */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "unable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
   }
 }
 
 void RS232Conn::disableRTS(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "unable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to get portstatus";
   }
   status &= ~TIOCM_RTS;    /* turn off RTS */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "unable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
   }
 }

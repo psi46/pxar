@@ -19,9 +19,9 @@ HVSupply::HVSupply(const string &portname, double timeout)
   LOG(logINFO) << "Make sure the Keithley2410 is using the following RS232 settings:";
   LOG(logINFO) << "\t|Baud Rate: 57600";
   LOG(logINFO) << "\t|Bits: 8";
-  LOG(logINFO) << "\t|Parity: None";
+  LOG(logINFO) << "\t|Parity: ODD";
   LOG(logINFO) << "\t|Terminator: <CR>+<LF>";
-  LOG(logINFO) << "\t|Control Flow: None";
+  LOG(logINFO) << "\t|Control Flow: XON-XOFF";
 
   voltsCurrent = 0;
   hvIsOn = false;
@@ -29,6 +29,8 @@ HVSupply::HVSupply(const string &portname, double timeout)
 
   serial.setPortName(portname);
   serial.setBaudRate(57600);
+  serial.setFlowControl(true);
+  serial.setParity(true);
   serial.setRemoveEcho(false);
   serial.setTimeout(timeout);
 
@@ -40,7 +42,6 @@ HVSupply::HVSupply(const string &portname, double timeout)
   LOG(logDEBUG) << "Opened COM port to Keithley 2410";
 
   serial.writeData("*RST");                    // Reset the unit to default
-  serial.writeData("*RST");                    // Really reset the unit to default
   serial.writeData(":ROUT:TERM REAR");         // Switch to rear outlet
   serial.writeData(":OUTP:SMOD NORM");         // Permits discharging of capacitive load when output is off
   serial.writeData(":SYST:AZER ON");           // Enables Auto-Zeroing of ADCs
@@ -170,6 +171,7 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
   command = ":SOUR:DEL " + to_string(delay);
   serial.writeData(command);                           //Delay between source and measure
   serial.writeData(":OUTP:STAT ON");
+  serial.writeData(":TRIG:CLE");
   serial.writeData(":READ?");
   serial.setReadSuffix(",");
 }
