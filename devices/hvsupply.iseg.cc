@@ -9,16 +9,15 @@
 #include "log.h"
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 
 using namespace pxar;
+using namespace std;
 
-// Set Voltage
-float voltage_set;
-bool hv_status;
-bool supply_tripped;
-
-double outToDouble(char * word) {
+double outToDouble(const string &wordStr) {
+  char* word = (char*)calloc(wordStr.size()+1, sizeof(char));
+  strcpy(word, wordStr.c_str());
   int sign=1;
   int orderSign=1;
   int order = 0;
@@ -36,60 +35,66 @@ double outToDouble(char * word) {
     order = atoi(istr);
     istr = strtok (NULL," +-");
   }
-
+  free(word);
   return (sign*value*pow(10,orderSign*order));
 }
 
-void handleAnswers(char* answer) {
+void handleAnswers(const string &answer, bool &supplyTripped) {
   
-  if(strcmp(answer,"S1=ON") == 0) { 
+  if(answer == "S1=ON") { 
     LOG(logDEBUG) << "Device is ON."; }
-  else if(strcmp(answer,"S1=OFF") == 0) {
+  else if(answer == "S1=OFF") {
     LOG(logCRITICAL) << "HV Power Supply set to OFF!";
     throw InvalidConfig("HV Power Supply set to OFF!");
   }
-  else if(strcmp(answer,"S1=TRP") == 0) { 
+  else if(answer == "S1=TRP") { 
     LOG(logCRITICAL) << "Power supply tripped!";
-    supply_tripped = true;
+    supplyTripped = true;
   }
-  else if(strcmp(answer,"S1=MAN") == 0) { 
+  else if(answer == "S1=MAN") { 
     LOG(logCRITICAL) << "HV Power Supply set to MANUAL mode!";
     throw InvalidConfig("HV Power Supply set to MANUAL mode!");
   }
-  else if(strcmp(answer,"S1=L2H") == 0) {
+  else if(answer == "S1=L2H") {
     LOG(logDEBUG) << "Voltage is rising."; }
-  else if(strcmp(answer,"S1=H2L") == 0) {
+  else if(answer == "S1=H2L") {
     LOG(logDEBUG) << "Voltage is falling."; }
   else {
     LOG(logDEBUG) << "Unknown device return value.";
-    supply_tripped = false;
+    supplyTripped = false;
   }
 }
 
 // Constructor: Connects to the device, initializes communication
-hvsupply::hvsupply() {
+HVSupply::HVSupply(const string &portName) {
 
   // "S1": Read status
   // "D1": New set-voltage
   // "G1": Apply new set-voltage
 
-  hv_status = false;
-  supply_tripped = false;
-  const int comPortNumber = 16; /* /dev/ttyUSB0 */
-  if(!openComPort(comPortNumber,9600)) {
+  voltsCurrent = 0;
+  hvIsOn = false;
+  supplyTripped = false;
+
+  serial.setPortName(portName);
+  serial.setBaudRate(9600);
+  serial.setRemoveEcho(true);
+  bool portIsOpen = serial.openPort();
+
+  if(!portIsOpen) {
     LOG(logCRITICAL) << "Error connecting via RS232 port!";
     throw UsbConnectionError("Error connecting via RS232 port!");
   }
   LOG(logDEBUG) << "Opened COM port to Iseg device.";
 
-  char answer[256] = { 0 };
-  writeCommandAndReadAnswer("S1", answer);
-  if(strcmp(answer,"S1=ON") != 0) {
+  string answer;
+  serial.writeReadBack("S1", answer);
+  if(answer == "S1=ON") {
     // Try once more:
-    writeCommandAndReadAnswer("S1", answer);
+    serial.writeReadBack("S1", answer);
   }
-  handleAnswers(answer);
-  if(strcmp(answer,"S1=ON") != 0) {
+  handleAnswers(answer, supplyTripped);
+  if(answer == "S1=ON") {
     LOG(logCRITICAL) << "Devide did not return proper status code!";
     throw UsbConnectionError("Devide did not return proper status code!");
   }
@@ -100,110 +105,131 @@ hvsupply::hvsupply() {
 }
 
 // Destructor: Will turn off the HV and terminate connection to the HV Power Supply device.
-hvsupply::~hvsupply() {
+HVSupply::~HVSupply() {
   hvOff();
   mDelay(2000);
-  closeComPort(); // Close the COM port
+  serial.closePort(); // Close the COM port
 }
 
 // Turn on the HV output
-bool hvsupply::hvOn() {
-  LOG(logDEBUG) << "Turning HV ON (" << voltage_set << " V)";
+bool HVSupply::hvOn() {
+  LOG(logDEBUG) << "Turning HV ON (" << voltsCurrent << " V)";
 
-  char command[256] = {0};
-  char answer[256] = {0};
-  sprintf(&command[0],"D1=%.f",voltage_set);
-  writeCommandAndReadAnswer(command, answer);
-  writeCommandAndReadAnswer("G1", answer);
-  handleAnswers(answer);
+  string command = "D1=" + to_string(voltsCurrent);
+  string answer;
+  serial.writeReadBack(command, answer);
+  serial.writeReadBack("G1", answer);
+  handleAnswers(answer, supplyTripped);
 
   // State machine: HV is on
-  hv_status = true;
+  hvIsOn = true;
   return false;
 }
-    
+
 // Turn off the HV output
-bool hvsupply::hvOff() {
+bool HVSupply::hvOff() {
   LOG(logDEBUG) << "Turning HV OFF";
 
-  char answer[256] = {0};
-  writeCommandAndReadAnswer("D1=0", answer);
-  writeCommandAndReadAnswer("G1", answer);
-  handleAnswers(answer);
+  string answer;
+  serial.writeReadBack("D1=0", answer);
+  serial.writeReadBack("G1", answer);
+  handleAnswers(answer, supplyTripped);
 
   // State machine: HV is off
-  hv_status = false;
+  hvIsOn = false;
   return true;
 }
     
 // Sets the desired voltage
-bool hvsupply::setVoltage(double volts) {
+bool HVSupply::setVolts(double volts) {
   // Internally store voltage:
-  voltage_set = static_cast<float>(volts);
+  voltsCurrent = volts;
   // Only write to device if state machine indicates HV on:
-  if(hv_status) {
-    LOG(logDEBUG) << "Setting HV to " << voltage_set << " V.";
-    char command[256] = {0};
-    char answer[256] = {0};
-    sprintf(&command[0],"D1=%.f",voltage_set);
-    writeCommandAndReadAnswer(command, answer);
-    writeCommandAndReadAnswer("G1", answer);
-    handleAnswers(answer);
+  if(hvIsOn) {
+    LOG(logDEBUG) << "Setting HV to " << voltsCurrent << " V.";
+    string command = "D1=" + to_string(voltsCurrent);
+    string answer;
+    serial.writeReadBack(command, answer);
+    serial.writeReadBack("G1", answer);
+    handleAnswers(answer, supplyTripped);
   }
   else {
-    LOG(logDEBUG) << "Set HV to " << voltage_set << " V, not activated.";
+    LOG(logDEBUG) << "Set HV to " << voltsCurrent << " V, not activated.";
   }
   // FIXME not checking for return codes yet!
   return true;
 }
     
 // Reads back the configured voltage
-double hvsupply::getVoltage() {
-  char answer[256] = {0};
-  writeCommandAndReadAnswer("U1", answer);
+double HVSupply::getVolts() {
+  string answer;
+  serial.writeReadBack("U1", answer);
   return outToDouble(answer);
 }
 
 // Reads back the current drawn
-double hvsupply::getCurrent() {
-  char answer[256] = {0};
-  writeCommandAndReadAnswer("I1", answer);
+double HVSupply::getAmps() {
+  string answer;
+  serial.writeReadBack("I1", answer);
   return outToDouble(answer);
 }
 
 // Enables Compliance mode and sets the current limit (to be given in uA, micro Ampere)
-bool hvsupply::setCurrentLimit(uint32_t microampere) {
-  if(microampere > 99) {
-    LOG(logERROR) << "Current limit " << microampere << " uA too high."
+bool HVSupply::setMicroampsLimit(double microamps) {
+  if(microamps > 99) {
+    LOG(logERROR) << "Current limit " << microamps << " uA too high."
 		  << " Device only delivers 50 uA.";
     return false;
   }
 
-  LOG(logDEBUG) << "Setting current limit to " << microampere << " uA.";
+  LOG(logDEBUG) << "Setting current limit to " << microamps << " uA.";
 
-  char command[256] = {0};
-  char answer[256] = {0};
   // Factor 100 is required since this value is the sensitive region,
   // not milliamps!
-  sprintf(&command[0],"LS1=%i",microampere*1000);
-  writeCommandAndReadAnswer(command, answer);
-  writeCommandAndReadAnswer("G1", answer);
-  handleAnswers(answer);
+  string command = "LS1=" + to_string(microamps*1000); //Why 1000, not 100?
+  string answer;
+  serial.writeReadBack(command, answer);
+  serial.writeReadBack("G1", answer);
+  handleAnswers(answer, supplyTripped);
   return true;
 }
 
 // Reads back the set current limit in compliance mode. Value is given in uA (micro Ampere)
-double hvsupply::getCurrentLimit() {
-  char answer[256] = {0};
-  writeCommandAndReadAnswer("LS1", answer);
+double HVSupply::getMicroampsLimit() {
+  string answer;
+  serial.writeReadBack("LS1", answer);
   // Return value is in Ampere, give in uA:
   return outToDouble(answer)*1000000;
 }
 
 // ----------------------------------------------------------------------
-bool hvsupply::tripped() {
+bool HVSupply::isTripped() {
 
-  if(supply_tripped) return true;
+  if(supplyTripped) return true;
   return false;
 }
-    
+
+void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, double delay){
+  this->voltStart = voltStart;
+  this->voltStop = voltStop;
+  this->voltStep = voltStep;
+  this->delay = delay;
+  this->sweepReads = ceil(fabs((voltStart - voltStop) / voltStep));
+  this->currentSweepRead = 0;
+  hvOn();
+}
+
+bool HVSupply::sweepRunning(){
+  return currentSweepRead < sweepReads;
+}
+
+void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
+  if(currentSweepRead >= sweepReads) return;
+  voltSet = voltStart + voltStep*currentSweepRead;
+  setVolts(voltSet);
+  usleep(delay * 1E6);
+  getVoltsAmps(voltRead, amps);
+  currentSweepRead++;
+  if(currentSweepRead == sweepReads) hvOff();
+}
+
