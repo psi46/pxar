@@ -66,7 +66,7 @@ void handleAnswers(const string &answer, bool &supplyTripped) {
 }
 
 // Constructor: Connects to the device, initializes communication
-HVSupply::HVSupply(const string &portName) {
+HVSupply::HVSupply(const string &portName, double timeout) {
 
   // "S1": Read status
   // "D1": New set-voltage
@@ -78,6 +78,8 @@ HVSupply::HVSupply(const string &portName) {
 
   serial.setPortName(portName);
   serial.setBaudRate(9600);
+  serial.setFlowControl(false);
+  serial.setParity(false);       //Uses no parity bit
   serial.setRemoveEcho(true);
   bool portIsOpen = serial.openPort();
 
@@ -174,6 +176,12 @@ double HVSupply::getAmps() {
   return outToDouble(answer);
 }
 
+void HVSupply::getVoltsAmps(double &volts, double &amps){
+  volts = getVolts();
+  amps = getAmps();
+}
+
+
 // Enables Compliance mode and sets the current limit (to be given in uA, micro Ampere)
 bool HVSupply::setMicroampsLimit(double microamps) {
   if(microamps > 99) {
@@ -230,6 +238,6 @@ void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
   usleep(delay * 1E6);
   getVoltsAmps(voltRead, amps);
   currentSweepRead++;
-  if(currentSweepRead == sweepReads) hvOff();
+  if(currentSweepRead == sweepReads) hvOff(); //TODO: May need to ramp down voltage
 }
 

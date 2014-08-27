@@ -30,8 +30,8 @@ HVSupply::HVSupply(const string &portname, double timeout)
   serial.setPortName(portname);
   serial.setBaudRate(57600);
   serial.setFlowControl(true);
-  serial.setParity(true);
-  serial.setRemoveEcho(false);
+  serial.setParity(true);       //Uses odd parity bit
+  serial.setRemoveEcho(false);  //Keithley2410 does not echo input
   serial.setTimeout(timeout);
 
   bool portIsOpen = serial.openPort();
