@@ -380,39 +380,39 @@ void RS232Conn::enableDTR(){
   }
   status |= TIOCM_DTR;    /* turn on DTR */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
   }
 }
 
 void RS232Conn::disableDTR(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
   }
   status &= ~TIOCM_DTR;    /* turn off DTR */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
   }
 }
 
 void RS232Conn::enableRTS(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
   }
   status |= TIOCM_RTS;    /* turn on RTS */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
   }
 }
 
 void RS232Conn::disableRTS(){
   int status;
   if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
   }
   status &= ~TIOCM_RTS;    /* turn off RTS */
   if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] uunable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
   }
 }
