@@ -51,7 +51,7 @@ using namespace pxar;
 using namespace std;
 
 #define NULL_FD -1
-#define DEBUG_RS232
+//#define DEBUG_RS232
 
 RS232Conn::RS232Conn(){
   portName = "";
