@@ -367,8 +367,22 @@ bool hal::FindDTB(std::string &usbId) {
   }
 
   if (devList.size() == 1) {
-    usbId = devList[0];
+    if(usbId == "*") { usbId = devList[0]; }
+    else if(usbId != devList[0]) {
+      LOG(logCRITICAL) << "Could not find DTB \"" << usbId << "\".";
+      throw UsbConnectionError("Could not find DTB " + usbId);
+    }
     return true;
+  }
+
+  // Check if selected DTB is among connected:
+  if(usbId != "*") {
+    for (nr=0; nr<devList.size(); nr++) {
+      if(usbId == devList.at(nr)) {
+	LOG(logINFO) << "Found DTB " << usbId;
+	return true;
+      }
+    }
   }
 
   // If more than 1 connected device list them
