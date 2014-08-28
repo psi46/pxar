@@ -13,6 +13,7 @@
 #include "rs232.h"
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 /** Cannot use stdint.h when running rootcint on WIN32 */
@@ -53,7 +54,7 @@ namespace pxar {
      *
      *  Connects to the device, initializes communication
      */
-    HVSupply(const std::string &portname);
+    HVSupply(const std::string &portname, double timeout);
 
     /** Default destructor for the hvsupply library
      *
@@ -106,6 +107,17 @@ namespace pxar {
     void sweepRead(double &voltSet, double &voltRead, double &amps);
   
   }; // class hvsupply
+
+
+  /** to_string
+   *  Converts stringstream compatable objects to their string representation
+   */
+  template <typename T>
+  std::string to_string(T i){
+    std::ostringstream oss;
+    oss << i;
+    return oss.str();
+  }
 
 } //namespace pxar
 

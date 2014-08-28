@@ -128,7 +128,8 @@ void PixTestIV::doTest() {
   if(gPad) gPad->SetLogy(true);
   
   LOG(logINFO) << "Starting IV curve measurement...";
-  pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str());
+  double serialTimeout = (fParDelay > 1.0) ? fParDelay*5 : 5.0;
+  pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str(), serialTimeout);
   hv->setMicroampsLimit(fParCompliance);
 
   hv->sweepStart(-fParVoltageStart,-fParVoltageStop,-signedStep,fParDelay);

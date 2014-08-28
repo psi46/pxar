@@ -45,15 +45,17 @@ class RS232Conn{
     std::string readSuffix;         //Suffix stripped from read data, also signals end of read, default "\r\n"
     int port;                       //port file descriptor
     int baudRate;                   //port baudrate
+    bool flowControl;               //X-ON X-OFF software flow control
+    bool parity;                    //Enable Odd/None parity bits
     struct termios oldPortSettings; //backup port settings
     bool removeEcho;                //Set true if device echos back input
+    double timeout;                 //Read Timeout in seconds
     
     int pollPort(char &buf);
     int writeBuf(const char *buf, int len);
     
   public:
     RS232Conn();
-    RS232Conn(const std::string &portName, int baudrate);
     ~RS232Conn();
     
     bool openPort();
@@ -61,11 +63,15 @@ class RS232Conn{
     
     void setPortName(const std::string &portName);
     void setBaudRate(int baudRate);
+    void setFlowControl(bool flowControl);
+    void setParity(bool parity);
     void setReadSuffix(const std::string &suffix);
     void setWriteSuffix(const std::string &suffix);
     void setRemoveEcho(bool removeEcho);
+    void setTimeout(double timeout);
     
     int writeData(const std::string &data);
+    bool readEcho(const std::string &data);
     int readData(std::string &data);
     void writeReadBack(const std::string &dataOut, std::string &dataIn);
 
