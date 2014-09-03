@@ -400,18 +400,18 @@ int main(int argc, char* argv[]) {
 #ifdef BUILD_HV
     // Let's do some HV tricks:
     std::cout << "Doing HV supply test:" << std::endl;
-    pxar::hvsupply * myHvSupply = new pxar::hvsupply();
-    myHvSupply->setVoltage(100);
-    myHvSupply->setCurrentLimit(50);
+    pxar::HVSupply * myHvSupply = new pxar::HVSupply("/dev/ttyUSB0",0);
+    myHvSupply->setVolts(100);
+    myHvSupply->setMicroampsLimit(50);
     myHvSupply->hvOn();
     sleep(5);
-    std::cout << "Current limit: " << myHvSupply->getCurrentLimit() << std::endl;
+    std::cout << "Current limit: " << myHvSupply->getMicroampsLimit() << std::endl;
     std::cout << "Current: " 
-	      << myHvSupply->getCurrent() << std::endl;
+	      << myHvSupply->getAmps() << std::endl;
     sleep(5);
-    myHvSupply->setCurrentLimit(30);
+    myHvSupply->setMicroampsLimit(30);
     myHvSupply->hvOff();
-    myHvSupply->setVoltage(100);
+    myHvSupply->setVolts(100);
     delete myHvSupply;
 #else
     std::cout << "Not build with HV supply support." << std::endl;
