@@ -199,6 +199,9 @@ typedef pxarLog<SetLogOutput> Log;
 
 #define __FILE_NAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
+#define IFLOG(level) \
+  if (level > pxar::Log::ReportingLevel())
+
 #define LOG(level)				\
   if (level > pxar::Log::ReportingLevel() || !pxar::SetLogOutput::Stream()) ; \
   else pxar::Log().Get(level,__FILE_NAME__,__func__,__LINE__)
