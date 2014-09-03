@@ -86,11 +86,13 @@ include( cmake/Platform.cmake)
 FIND_PACKAGE(Threads)
 
 IF(INTERFACE_ETH)
+  ADD_DEFINITIONS(-DINTERFACE_ETH)
   # Find the required libraries for the ethernet interface:
   FIND_PACKAGE(PCAP)
 ENDIF(INTERFACE_ETH)
 
 IF(INTERFACE_USB)
+  ADD_DEFINITIONS(-DINTERFACE_USB)
   # Find the FTDI chip drivers, either the open source or proprietary one,
   # depending on the build option we set. Use the other as fallback:
   FIND_PACKAGE(FTD2XX)
