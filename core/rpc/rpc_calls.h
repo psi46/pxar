@@ -1,20 +1,41 @@
 #pragma once
 
 #include "rpc.h"
+
+#ifdef INTERFACE_USB
 #include "USBInterface.h"
+#endif /* INTERFACE_USB */
+
+#ifdef INTERFACE_ETH
+#include "EthernetInterface.h"
+#endif /* INTERFACE_ETH */
 
 class CTestboard
 {
 	RPC_DEFS
 	RPC_THREAD
 
-	CUSB usb;
+#ifdef INTERFACE_USB
+  CUSB *usb;
+#endif /* INTERFACE_USB */
+
+#ifdef INTERFACE_ETH
+  CEthernet *ethernet;
+#endif /* INTERFACE_ETH */
 
 public:
 	CRpcIo& GetIo() { return *rpc_io; }
 
 	CTestboard() { 
-	  RPC_INIT rpc_io = &usb;
+	  RPC_INIT 
+
+#ifdef INTERFACE_USB
+	  usb = NULL;
+#endif /* INTERFACE_USB */
+
+#ifdef INTERFACE_ETH
+	  ethernet = NULL;
+#endif /* INTERFACE_ETH */
 	}
 	~CTestboard() { RPC_EXIT }
 
@@ -63,35 +84,76 @@ public:
 
 	inline bool Open(string &name, bool init=true) {
 	  rpc_Clear();
-	  if (!usb.Open(&(name[0]))) return false;
+	  if (!rpc_io->Open(&(name[0]))) return false;
 	  if (init) Init();
 	  return true;
 	}
 
 	void Close() {
-	  usb.Close();
+	  rpc_io->Close();
 	  rpc_Clear();
 	}
 
-	bool EnumFirst(unsigned int &nDevices) { return usb.EnumFirst(nDevices); }
-	bool EnumNext(string &name) {
+	void SelectInterface(CRpcIo * io) {
+	  rpc_io = io;
+	}
+
+	void ClearInterface() {
+	  rpc_io = &RpcIoNull;
+	}
+
+	std::vector<CRpcIo*> GetInterfaceList() {
+	  std::vector<CRpcIo*> ifList;
+
+#ifdef INTERFACE_ETH
+	  if(ethernet == NULL) {
+	    try {
+	      ethernet = new CEthernet();
+	      ifList.push_back(ethernet);
+	    }
+	    catch(CRpcError e) {
+	      LOG(pxar::logERROR) << "Error initiating ethernet. "
+				  << "Please ensure proper permissions are granted.";
+	    }
+	  } else { ifList.push_back(ethernet); }
+#endif /*INTERFACE_ETH*/
+
+#ifdef INTERFACE_USB
+	  if(usb == NULL) {
+	    try {
+	      usb = new CUSB();
+	      ifList.push_back(usb);
+	    }
+	    catch(CRpcError e) {
+	      LOG(pxar::logERROR) << "Error initiating usb. "
+				  << "Please ensure proper permissions are granted.";
+	    }
+	  }
+	  else { ifList.push_back(usb); }
+#endif /*INTERFACE_USB*/
+
+	  return ifList;
+	}
+
+	bool EnumFirst(CRpcIo* io, unsigned int &nDevices) { return io->EnumFirst(nDevices); }
+	bool EnumNext(CRpcIo* io, string &name) {
 	  char s[64];
-	  if (!usb.EnumNext(s)) return false;
+	  if (!io->EnumNext(s)) return false;
 	  name = s;
 	  return true;
 	}
-	bool Enum(unsigned int pos, string &name) {
+	bool Enum(CRpcIo* io, unsigned int pos, string &name) {
 	  char s[64];
-	  if (!usb.Enum(s, pos)) return false;
+	  if (!io->Enum(s, pos)) return false;
 	  name = s;
 	  return true;
 	}
 
-	void SetTimeout(unsigned int timeout) { usb.SetTimeout(timeout); }
+	void SetTimeout(unsigned int timeout) { rpc_io->SetTimeout(timeout); }
 
-	bool IsConnected() { return usb.Connected(); }
+	bool IsConnected() { return rpc_io->Connected(); }
 	const char * ConnectionError()
-	{ return usb.GetErrorMsg(usb.GetLastError()); }
+	{ return rpc_io->GetErrorMsg(rpc_io->GetLastError()); }
 
 	void Flush() { rpc_io->Flush(); }
 	void Clear() { rpc_io->Clear(); }
