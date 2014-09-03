@@ -85,8 +85,12 @@ include( cmake/Platform.cmake)
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
-# unless we are building only a dummy DTB instance, we need the FTI and USB libraries:
-IF(NOT BUILD_dummydtb)
+IF(INTERFACE_ETH)
+  # Find the required libraries for the ethernet interface:
+  FIND_PACKAGE(PCAP)
+ENDIF(INTERFACE_ETH)
+
+IF(INTERFACE_USB)
   # Find the FTDI chip drivers, either the open source or proprietary one,
   # depending on the build option we set. Use the other as fallback:
   FIND_PACKAGE(FTD2XX)
@@ -139,7 +143,7 @@ IF(NOT BUILD_dummydtb)
     INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
   ENDIF(NOT WIN32 OR NOT FTD2XX_FOUND)
 
-ENDIF(NOT BUILD_dummydtb)
+ENDIF(INTERFACE_USB)
 
 
 # Find Python libraries
