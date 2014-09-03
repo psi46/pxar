@@ -126,7 +126,6 @@ void rpc_TranslateCallName(const string &in, string &out)
 	unsigned int pos = size;
 	try
 	{
-		if (pos == string::npos) throw int(1);
 		pos++;
 		int i = 0;
 		while (pos < in.size())
