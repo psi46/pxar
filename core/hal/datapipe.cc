@@ -91,11 +91,11 @@ namespace pxar {
       // If the Event start sample is also Event end sample, write and quit:
       if((GetLast() & 0xc000) == 0xc000) { break; }
 
-      record.Add(GetLast() & 0x0fff);
+      record.Add(GetLast());
     } while ((Get() & 0xc000) == 0);
 
     // Check if the last read sample has Event end marker:
-    if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
+    if (GetLast() & 0x4000) record.Add(GetLast());
     // Else set Event end error:
     else record.SetEndError();
 
