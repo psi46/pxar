@@ -278,10 +278,14 @@ std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
 void dut::printDACs(size_t rocId) {
 
   if(status() && rocId < roc.size()) {
+    // Get singleton DAC dictionary object:
+    RegisterDictionary * _dict = RegisterDictionary::getInstance();
+
+
     LOG(logINFO) << "Printing current DAC settings for ROC " << rocId << ":";
     for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
 	it != roc.at(rocId).dacs.end(); ++it) {
-      LOG(logINFO) << "DAC" << static_cast<int>(it->first) << " = " << static_cast<int>(it->second);
+      LOG(logINFO) << "DAC " << _dict->getName(it->first,ROC_REG) << " (" << static_cast<int>(it->first) << ") = " << static_cast<int>(it->second);
     }
   }
 }
