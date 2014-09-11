@@ -264,13 +264,13 @@ void RS232Conn::writeData(const string &data)
     LOG(logINFO) << "[RS232] Sending Data : \""<<data<<"\"";
 #endif
   unsigned int bytesWritten = 0;
-  bytesWritten += writeBuf(data.c_str(), data.size());
-  bytesWritten += writeBuf(terminator.c_str(), terminator.size());
-  usleep(1E6*.01);
+  string dataTerm = data + terminator;
+  bytesWritten += writeBuf(dataTerm.c_str(), dataTerm.size());
+  usleep(1E6*.02);
   if(removeEcho) {
     readEcho(data);
   }
-  if(bytesWritten != (data.size() + terminator.size())){
+  if(bytesWritten != (dataTerm.size())){
     LOG(logWARNING) << "[RS232] Missing Data on Write";
   }
 }

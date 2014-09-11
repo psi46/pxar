@@ -57,7 +57,7 @@ HVSupply::HVSupply(const string &portname, double timeout)
 HVSupply::~HVSupply()
 {
   LOG(logDEBUG) << "Turning Power Supply OFF";
-  serial.writeData("OUTP:STAT OFF");
+  serial.writeData(":OUTP:STAT OFF");
   string answer;
   serial.writeReadBack(":OUTP:STAT?", answer);
   LOG(logDEBUG) <<"State of Keithley after shut down: " <<  answer;
@@ -158,16 +158,17 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
   this->currentSweepRead = 0;
   
   string command;
+  serial.writeData(":SOUR:VOLT:MODE LIST");             //Enable sweep mode
   
-  command = ":SOUR:VOLT:START " + to_string(voltStart);
-  serial.writeData(command);                           //Set Start Voltage
-  command = ":SOUR:VOLT:STOP " + to_string(voltStop);
-  serial.writeData(command);                           //Set Stop Voltage
-  command = ":SOUR:VOLT:STEP " + to_string(voltStep);
-  serial.writeData(command);                           //Set Voltage Step
-  serial.writeData(":SOUR:VOLT:MODE SWE");             //Enable speep mode
+  command = ":SOUR:LIST:VOLT ";
+  for(int i = 0; i < (sweepReads-1); i++){
+    command += to_string(voltStart + voltStep*i);
+    command += ",";
+  }
+  command += to_string(voltStart + voltStep*(sweepReads-1));
+  serial.writeData(command);
+  
   serial.writeData(":SOUR:SWE:RANG AUTO");             //Set range to auto
-  serial.writeData(":SOUR:SWE:SPAC LIN");              //Use linear sweep
   command = ":TRIG:COUNT " + to_string(sweepReads);
   serial.writeData(command);                           //Number of measurements
   command = ":SOUR:DEL " + to_string(delay);
@@ -198,6 +199,7 @@ bool HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
   } 
   voltSet = voltStart + voltStep*currentSweepRead;
   
+  currentSweepRead++;
   if(quit){ //Final Reading or sweep was aborted
     sweepIsRunning = false;
     serial.setReadSuffix("");
@@ -206,7 +208,6 @@ bool HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
     bool aborted = currentSweepRead != sweepReads;
     return aborted;
   }
-  currentSweepRead++;
   return false;
 }
 
