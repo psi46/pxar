@@ -235,9 +235,9 @@ namespace pxar {
   pixelConfig() : 
     _column(0), _row(0), 
       _trim(15), _mask(true), _enable(false) {}
-  pixelConfig(uint8_t column, uint8_t row, uint8_t trim) : 
+  pixelConfig(uint8_t column, uint8_t row, uint8_t trim, bool mask = true, bool enable = false) : 
     _column(column), _row(row), _trim(trim),
-      _mask(true), _enable(false) {}
+      _mask(mask), _enable(enable) {}
     uint8_t column() const { return _column; }
     void setColumn(uint8_t column) { _column = column; }
     uint8_t row() const { return _row; }

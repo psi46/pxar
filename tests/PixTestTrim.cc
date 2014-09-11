@@ -399,9 +399,9 @@ void PixTestTrim::trimBitTest() {
     vector<pixelConfig> pix = fApi->_dut->getEnabledPixels(rocIds[i]);
     int ix(-1), iy(-1); 
     for (unsigned int ipix = 0; ipix < pix.size(); ++ipix) {
-      ix = pix[ipix].column;
-      iy = pix[ipix].row;
-      fTrimBits[i][ix][iy] = pix[ipix].trim;
+      ix = pix[ipix].column();
+      iy = pix[ipix].row();
+      fTrimBits[i][ix][iy] = pix[ipix].trim();
     }
   }
   
@@ -570,9 +570,9 @@ void PixTestTrim::setTrimBits(int itrim) {
     vector<pixelConfig> pix = fApi->_dut->getEnabledPixels(rocIds[ir]);
     for (unsigned int ipix = 0; ipix < pix.size(); ++ipix) {
       if (itrim > -1) {
-	fTrimBits[ir][pix[ipix].column][pix[ipix].row] = itrim;
+	fTrimBits[ir][pix[ipix].column()][pix[ipix].row()] = itrim;
       }
-      fApi->_dut->updateTrimBits(pix[ipix].column, pix[ipix].row, fTrimBits[ir][pix[ipix].column][pix[ipix].row], rocIds[ir]);
+      fApi->_dut->updateTrimBits(pix[ipix].column(), pix[ipix].row(), fTrimBits[ir][pix[ipix].column()][pix[ipix].row()], rocIds[ir]);
     }
   }
 }
