@@ -207,7 +207,7 @@ double HVSupply::getMicroampsLimit() {
   string answer;
   serial.writeReadBack("LS1", answer);
   // Return value is in Ampere, give in uA:
-  return outToDouble(answer)*1000000;
+  return outToDouble(answer)*1E6;
 }
 
 // ----------------------------------------------------------------------
@@ -231,7 +231,7 @@ bool HVSupply::sweepRunning(){
   return sweepIsRunning;
 }
 
-void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
+bool HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
   if(currentSweepRead >= sweepReads) return;
   voltSet = voltStart + voltStep*currentSweepRead;
   setVolts(voltSet);
@@ -239,5 +239,6 @@ void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
   getVoltsAmps(voltRead, amps);
   currentSweepRead++;
   if(currentSweepRead == sweepReads) hvOff(); //TODO: May need to ramp down voltage
+  return false;// TODO: Make this return true if sweep was aborted
 }
 

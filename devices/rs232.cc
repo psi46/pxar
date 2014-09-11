@@ -281,6 +281,10 @@ int RS232Conn::pollPort(char &buf){
     return -1;
   }
   int status = read(port, &buf, 1);
+  if(buf >= 0x11 && buf <= 0x14){
+    return 0; //Filter out XON-XOFF Characters that
+              //somehow make it to this point.
+  }
   return status;
 }
 
@@ -319,6 +323,7 @@ bool RS232Conn::readData(string &data){
     tCurr = time(NULL);
     if (difftime(tCurr,tStart) > timeout){
       LOG(logCRITICAL) << "[RS232] Serial Timeout";
+      readingStatus = TIMEOUT;
       break;
     }
     readingStatus = readStatus(data);
@@ -328,9 +333,11 @@ bool RS232Conn::readData(string &data){
   if(readingStatus == MATCH_SUFFIX){
     data = data.substr(0,dataSize-readSuffix.size());
     endLine = false;
-  }else{ // readingStatus == ReadStatus::MATCH_TERMINATOR
+  }else if(readingStatus == MATCH_TERMINATOR){
     data = data.substr(0,dataSize-terminator.size());
     endLine = true;
+  }else{ //TIMEOUT
+    endLine = false; 
   }
     
 #ifdef DEBUG_RS232

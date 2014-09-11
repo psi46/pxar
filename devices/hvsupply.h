@@ -101,11 +101,15 @@ namespace pxar {
      */
     bool isTripped();
     
-    /** Perform IV sweep
+    /** Initiate an IV sweep
      */
     void sweepStart(double voltStart, double voltStop, double voltStep, double delay);
+    /** Check if IV Sweep has more readings
+     */
     bool sweepRunning();
-    void sweepRead(double &voltSet, double &voltRead, double &amps);
+    /** Consume a reading from the IV curve in progress. Returns true if sweep was aborted
+     */
+    bool sweepRead(double &voltSet, double &voltRead, double &amps);
   
   }; // class hvsupply
 

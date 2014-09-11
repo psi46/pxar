@@ -44,7 +44,8 @@ class RS232Conn{
     enum ReadStatus{
         CONTINUE,
         MATCH_SUFFIX,
-        MATCH_TERMINATOR
+        MATCH_TERMINATOR,
+        TIMEOUT
     };
 
     std::string portName;           //Name of port, eg. /dev/ttyUSB0

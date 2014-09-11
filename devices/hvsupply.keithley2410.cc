@@ -57,7 +57,7 @@ HVSupply::HVSupply(const string &portname, double timeout)
 HVSupply::~HVSupply()
 {
   LOG(logDEBUG) << "Turning Power Supply OFF";
-  serial.writeData("OUTPUT 0");
+  serial.writeData("OUTP:STAT OFF");
   string answer;
   serial.writeReadBack(":OUTP:STAT?", answer);
   LOG(logDEBUG) <<"State of Keithley after shut down: " <<  answer;
@@ -172,7 +172,7 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
   serial.writeData(command);                           //Number of measurements
   command = ":SOUR:DEL " + to_string(delay);
   serial.writeData(command);                           //Delay between source and measure
-  serial.writeData(":SOUR:SWE:CAB EARL");              //Enable Sweep abort
+  serial.writeData(":SOUR:SWE:CAB LATE");              //Enable Sweep abort
   serial.writeData(":OUTP:STAT ON");
   serial.writeData(":TRIG:CLE");
   serial.writeData(":READ?");
@@ -184,8 +184,8 @@ bool HVSupply::sweepRunning(){
   return sweepIsRunning;
 }
 
-void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
-  if(!sweepIsRunning) return;
+bool HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
+  if(!sweepIsRunning) return false;
   string voltStr;
   string ampsStr;
   
@@ -203,7 +203,10 @@ void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
     serial.setReadSuffix("");
     serial.writeData(":OUTP:STAT OFF");
     serial.writeData(":SOUR:VOLT:MODE FIXED");
+    bool aborted = currentSweepRead != sweepReads;
+    return aborted;
   }
   currentSweepRead++;
+  return false;
 }
 
