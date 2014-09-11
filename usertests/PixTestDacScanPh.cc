@@ -211,13 +211,13 @@ void PixTestDacScanPh::doTest()
 
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
 
-      uint8_t roc = vpix[ipx].roc_id;
+      uint8_t roc = vpix[ipx].roc();
 
       if( roc < nRocs &&
-	  vpix[ipx].column == col &&
-	  vpix[ipx].row == row ) {
+	  vpix[ipx].column() == col &&
+	  vpix[ipx].row() == row ) {
 	h1 = hsts.at(roc);
-	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
+	h1->Fill( idac, vpix[ipx].value()); // already averaged
       } // valid
 
     } // pix
@@ -236,10 +236,10 @@ void PixTestDacScanPh::doTest()
   vector<pixel> vpix9 = fApi->getThresholdMap( "Vcal", flags, fParNtrig );
   for( size_t ipx = 0; ipx < vpix9.size(); ++ipx )
     LOG(logINFO)
-      << "roc " << setw(2) << (int) vpix9[ipx].roc_id
-      << " pix " << setw(2) << (int) vpix9[ipx].column
-      << " " << setw(2) << (int) vpix9[ipx].row
-      << " thr " << setw(3) << vpix9[ipx].getValue();
+      << "roc " << setw(2) << (int) vpix9[ipx].roc()
+      << " pix " << setw(2) << (int) vpix9[ipx].column()
+      << " " << setw(2) << (int) vpix9[ipx].row()
+      << " thr " << setw(3) << vpix9[ipx].value();
 
   if( col > -1 )
     fApi->_dut->testPixel( col, row, false );

@@ -419,13 +419,13 @@ void PixTestBarePretest::setVthrCompCalDel() {
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	if (wpix[ipix].roc_id == rocIds[iroc]) {
-	  if (wpix[ipix].getValue() >= fParNtrig/2){
-	    h2->Fill(idac1, idac2, wpix[ipix].getValue()); 
+	if (wpix[ipix].roc() == rocIds[iroc]) {
+	  if (wpix[ipix].value() >= fParNtrig/2){
+	    h2->Fill(idac1, idac2, wpix[ipix].value()); 
 	  }
 	} else {
-	  LOG(logDEBUG) << "ghost ROC " << static_cast<unsigned int>(wpix[ipix].roc_id) << " seen with pixel "
-			<< static_cast<unsigned int>(wpix[ipix].column) << " " << static_cast<unsigned int>(wpix[ipix].row); 
+	  LOG(logDEBUG) << "ghost ROC " << static_cast<unsigned int>(wpix[ipix].roc()) << " seen with pixel "
+			<< static_cast<unsigned int>(wpix[ipix].column()) << " " << static_cast<unsigned int>(wpix[ipix].row()); 
 	}
       }
     }
@@ -762,14 +762,14 @@ void PixTestBarePretest::setCalDel() {
     vector<pixel> vpix = results[i].second; 
 
     for (size_t ipx = 0; ipx < vpix.size(); ++ipx)  {
-      uint32_t roc = vpix.at(ipx).roc_id;
+      uint32_t roc = vpix.at(ipx).roc();
 
       if (fId2Idx[roc] < nRocs
-	  && vpix[ipx].column == fPIX[0].first 
-	  && vpix[ipx].row == fPIX[0].second
+	  && vpix[ipx].column() == fPIX[0].first 
+	  && vpix[ipx].row() == fPIX[0].second
 	  ) {
 
-	int nn = vpix.at(ipx).getValue();
+	int nn = vpix.at(ipx).value();
 
 	if (nn > nm[fId2Idx[roc]]) {
 	  nm[fId2Idx[roc]] = nn;

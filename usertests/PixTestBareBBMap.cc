@@ -136,13 +136,13 @@ void PixTestBareBBMap::doTest() {
     for (unsigned int idac = 0; idac < results_bbmap.size(); ++idac) {
       int dac = results_bbmap[idac].first; 
       for (unsigned int ipix = 0; ipix < results_bbmap[idac].second.size(); ++ipix) {
-	ic =   results_bbmap[idac].second[ipix].column; 
-	ir =   results_bbmap[idac].second[ipix].row; 
-	iroc = results_bbmap[idac].second[ipix].roc_id; 
+	ic =   results_bbmap[idac].second[ipix].column(); 
+	ir =   results_bbmap[idac].second[ipix].row(); 
+	iroc = results_bbmap[idac].second[ipix].roc(); 
 	if (ic > 51 || ir > 79) {
 	  continue;
 	}
-	val =  results_bbmap[idac].second[ipix].getValue();
+	val =  results_bbmap[idac].second[ipix].value();
 	h22->Fill(80 * ic + ir, dac, val);
       //cout << "dac: " << dac << " ic: " << ic << " ir: " << ir << " iroc: "  << iroc << " val: "  << val << " "<< 80*ic + ir << endl;
       }

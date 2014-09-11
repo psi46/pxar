@@ -186,13 +186,13 @@ void PixTestDacScanPix::doTest()
 
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
 
-      uint8_t roc = vpix[ipx].roc_id;
+      uint8_t roc = vpix[ipx].roc();
 
       if( roc < nRocs &&
-	  vpix[ipx].column == col &&
-	  vpix[ipx].row == row ) {
+	  vpix[ipx].column() == col &&
+	  vpix[ipx].row() == row ) {
 	h1 = hsts.at(roc);
-	h1->Fill( idac, vpix[ipx].getValue()); // already averaged
+	h1->Fill( idac, vpix[ipx].value()); // already averaged
       } // valid
 
     } // pix

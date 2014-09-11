@@ -195,10 +195,10 @@ void PixTestDacScanRoc::doTest()
 
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
 
-      uint8_t roc = vpix[ipx].roc_id;
+      uint8_t roc = vpix[ipx].roc();
 
       if( roc < nRocs ) {
-	int32_t readouts = (int32_t)vpix[ipx].getValue();
+	int32_t readouts = (int32_t)vpix[ipx].value();
 	if( readouts == fParNtrig )
 	  hPerfect[roc]->Fill( idac );
 	if( readouts >= fParNtrig/2 )
