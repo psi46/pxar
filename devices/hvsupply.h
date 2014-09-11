@@ -38,6 +38,7 @@ namespace pxar {
   /** Private variables related to keeping track of IV sweeps*/
     int sweepReads;
     int currentSweepRead;
+    bool sweepIsRunning;
     double voltStart;
     double voltStop;
     double voltStep;

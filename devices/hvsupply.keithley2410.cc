@@ -100,7 +100,8 @@ bool HVSupply::setVolts(double volts)
   voltsCurrent = volts;
   string data("SOUR:VOLT:IMM:AMPL ");
   data += to_string(volts);
-  return serial.writeData(data);
+  serial.writeData(data);
+  return true;
 }
 
 bool HVSupply::isTripped()
@@ -136,7 +137,8 @@ double HVSupply::getAmps()
 
 bool HVSupply::setMicroampsLimit(double microamps){
   string command = ":CURR:PROT:LEV " + to_string(microamps*1E-6); 
-  return serial.writeData(command) > 0;
+  serial.writeData(command);
+  return true;
 }
 
 double HVSupply::getMicroampsLimit(){
@@ -170,35 +172,38 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
   serial.writeData(command);                           //Number of measurements
   command = ":SOUR:DEL " + to_string(delay);
   serial.writeData(command);                           //Delay between source and measure
+  serial.writeData(":SOUR:SWE:CAB EARL");              //Enable Sweep abort
   serial.writeData(":OUTP:STAT ON");
   serial.writeData(":TRIG:CLE");
   serial.writeData(":READ?");
   serial.setReadSuffix(",");
+  sweepIsRunning = true;
 }
 
 bool HVSupply::sweepRunning(){
-  return currentSweepRead < sweepReads;
+  return sweepIsRunning;
 }
 
 void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
-  if(currentSweepRead >= sweepReads) return;
+  if(!sweepIsRunning) return;
   string voltStr;
   string ampsStr;
-  if (currentSweepRead < sweepReads - 1){
-    serial.readData(voltStr);
-    serial.readData(ampsStr);
-  } else{ //Final Reading
-    serial.readData(voltStr);
-    serial.setReadSuffix("\r\n");
-    serial.readData(ampsStr);
+  
+  bool quit = false;
+  quit = serial.readData(voltStr);
+  sscanf(voltStr.c_str(), "%le", &voltRead);
+  if(!quit){
+    quit = serial.readData(ampsStr);
+    sscanf(ampsStr.c_str(), "%le", &amps);
+  } 
+  voltSet = voltStart + voltStep*currentSweepRead;
+  
+  if(quit){ //Final Reading or sweep was aborted
+    sweepIsRunning = false;
+    serial.setReadSuffix("");
     serial.writeData(":OUTP:STAT OFF");
     serial.writeData(":SOUR:VOLT:MODE FIXED");
   }
-  
-  voltSet = voltStart + voltStep*currentSweepRead;
-  sscanf(voltStr.c_str(), "%le", &voltRead);
-  sscanf(ampsStr.c_str(), "%le", &amps);
-  
   currentSweepRead++;
 }
 

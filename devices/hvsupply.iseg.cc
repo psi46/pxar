@@ -228,7 +228,7 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
 }
 
 bool HVSupply::sweepRunning(){
-  return currentSweepRead < sweepReads;
+  return sweepIsRunning;
 }
 
 void HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){

@@ -58,8 +58,8 @@ RS232Conn::RS232Conn(){
   baudRate = 0;
   timeout = 1;
   port = NULL_FD;
-  writeSuffix = "\r\n";
-  readSuffix = "\r\n";
+  terminator = "\r\n";
+  readSuffix = "";
 }
 
 RS232Conn::~RS232Conn(){
@@ -104,8 +104,8 @@ void RS232Conn::setReadSuffix(const std::string &suffix){
   readSuffix = suffix;
 }
 
-void RS232Conn::setWriteSuffix(const std::string &suffix){
-  writeSuffix = suffix;
+void RS232Conn::setTerminator(const std::string &term){
+  terminator = term;
 }
 
 void RS232Conn::setRemoveEcho(bool removeEcho){
@@ -160,17 +160,17 @@ bool RS232Conn::openPort(){
       break;
     case  230400 : baudr = B230400;
       break;
-    default      : LOG(logCRITICAL) << "[RS232] CInvalid baud rate " << baudRate << "!";
+    default      : LOG(logCRITICAL) << "[RS232] Invalid baud rate " << baudRate << "!";
       return(1);
       break;
     }
 
-  LOG(logINFO) << "[RS232] COpening com port: "<< portName<<" with baud: "<<baudRate;
+  LOG(logINFO) << "[RS232] Opening com port: "<< portName<<" with baud: "<<baudRate;
   this->port = open(portName.c_str(), O_RDWR | O_NOCTTY);
   if(port==-1)
   {
     port = NULL_FD;
-    LOG(logCRITICAL) << "[RS232] Cunable to open comport ";
+    LOG(logCRITICAL) << "[RS232] unable to open comport ";
     return false;
   }
   
@@ -178,7 +178,7 @@ bool RS232Conn::openPort(){
   rsError = tcgetattr(port, &oldPortSettings);
   if(rsError==-1){
     closePort();
-    LOG(logCRITICAL) << "[RS232] Cunable to read portsettings ";
+    LOG(logCRITICAL) << "[RS232] unable to read portsettings ";
     return false;
   }
   
@@ -198,7 +198,7 @@ bool RS232Conn::openPort(){
   rsError = tcsetattr(port, TCSANOW, &newPortSettings);
   if(rsError==-1){
     closePort();
-    LOG(logCRITICAL) << "[RS232] Cunable to adjust portsettings ";
+    LOG(logCRITICAL) << "[RS232] unable to adjust portsettings ";
     return false;
   }
   
@@ -206,7 +206,7 @@ bool RS232Conn::openPort(){
   rsError = ioctl(port, TIOCMGET, &status);
   if(rsError == -1){
     closePort();
-    LOG(logCRITICAL) << "[RS232] Cunable to get portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
     return false;
   }
 
@@ -216,7 +216,7 @@ bool RS232Conn::openPort(){
   rsError = ioctl(port, TIOCMSET, &status);
   if(rsError == -1){
     closePort();
-    LOG(logCRITICAL) << "[RS232] Cunable to set portstatus";
+    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
     return false;
   }
 
@@ -258,47 +258,57 @@ int RS232Conn::writeBuf(const char *buf, int len){
   return status;
 }
 
-int RS232Conn::writeData(const string &data)
+void RS232Conn::writeData(const string &data)
 {
 #ifdef DEBUG_RS232
     LOG(logINFO) << "[RS232] Sending Data : \""<<data<<"\"";
 #endif
   unsigned int bytesWritten = 0;
   bytesWritten += writeBuf(data.c_str(), data.size());
-  bytesWritten += writeBuf(writeSuffix.c_str(), writeSuffix.size());
+  bytesWritten += writeBuf(terminator.c_str(), terminator.size());
   usleep(1E6*.01);
   if(removeEcho) {
     readEcho(data);
   }
-  return bytesWritten;
+  if(bytesWritten != (data.size() + terminator.size())){
+    LOG(logWARNING) << "[RS232] Missing Data on Write";
+  }
 }
 
 int RS232Conn::pollPort(char &buf){
   if(port == NULL_FD){
-    LOG(logCRITICAL) << "[RS232]Cannot poll non-open port!";
+    LOG(logCRITICAL) << "[RS232] Cannot poll non-open port!";
     return -1;
   }
   int status = read(port, &buf, 1);
   return status;
 }
 
-bool stringEndsWith(string &data, string &suffix){
+int RS232Conn::readStatus(const string &data){
   unsigned int dataSize = data.size();
-  unsigned int suffixSize = suffix.size();
-  if (dataSize < suffixSize)
-    return false;
-  else
-    return data.substr(dataSize-suffixSize,suffixSize) == suffix;
+  unsigned int suffixSize = readSuffix.size();
+  unsigned int termSize = terminator.size();
+  
+  if(suffixSize > 0){
+    if(dataSize > suffixSize && data.substr(dataSize-suffixSize,suffixSize) == readSuffix)
+      return MATCH_SUFFIX; //Indicates a match on the readSuffix
+  }
+  if(dataSize > termSize && data.substr(dataSize-termSize,termSize) == terminator){
+    return MATCH_TERMINATOR; //Indicates a match on the line terminator
+  } else{
+    return CONTINUE; //Indicates no match no terminator or readSuffix
+  }
 }
 
-int RS232Conn::readData(string &data){
+bool RS232Conn::readData(string &data){
   data.clear();
   unsigned int dataSize = 0;
-  unsigned int suffixSize = this->readSuffix.size();
   time_t tStart;
   time_t tCurr;
   tStart = time(NULL);
-  while (data.size() < suffixSize || !stringEndsWith(data, readSuffix)){
+  
+  int readingStatus;
+  do{
     char buf;
     int status = pollPort(buf);
     if(status == 1) {
@@ -311,17 +321,27 @@ int RS232Conn::readData(string &data){
       LOG(logCRITICAL) << "[RS232] Serial Timeout";
       break;
     }
+    readingStatus = readStatus(data);
+  } while(readingStatus == CONTINUE);
+  
+  bool endLine;
+  if(readingStatus == MATCH_SUFFIX){
+    data = data.substr(0,dataSize-readSuffix.size());
+    endLine = false;
+  }else{ // readingStatus == ReadStatus::MATCH_TERMINATOR
+    data = data.substr(0,dataSize-terminator.size());
+    endLine = true;
   }
-  data = data.substr(0,dataSize-suffixSize);
+    
 #ifdef DEBUG_RS232
-    LOG(logINFO) << "[RS232] Received Data : \""<<data<<"\"";
+  LOG(logINFO) << "[RS232] Received Data : \""<<data<<"\"";
 #endif
-  return data.size();
+  return endLine;
 }
 
 bool RS232Conn::readEcho(const string &data){
   string readSuffixStore = readSuffix;
-  setReadSuffix(writeSuffix);
+  setReadSuffix("");
   string echo;
   readData(echo);
   setReadSuffix(readSuffixStore);
