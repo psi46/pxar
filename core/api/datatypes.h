@@ -46,13 +46,25 @@ namespace pxar {
      */
     uint8_t roc() const { return _roc_id; };
 
+    /** Setter function to set the ROC id
+     */
+    void setRoc(uint8_t roc) { _roc_id = roc; };
+
     /** Getter function to return column id
      */
     uint8_t column() const { return _column; };
 
+    /** Setter function to set the column id
+     */
+    void setColumn(uint8_t column) { _column = column; };
+
     /** Getter function to return row id
      */
     uint8_t row() const { return _row; };
+
+    /** Setter function to set the row id
+     */
+    void setRow(uint8_t row) { _row = row; };
 
     /** Member function to get the signal variance for this pixel hit
      */
@@ -227,8 +239,11 @@ namespace pxar {
     _column(column), _row(row), _trim(trim),
       _mask(true), _enable(false) {}
     uint8_t column() const { return _column; }
+    void setColumn(uint8_t column) { _column = column; }
     uint8_t row() const { return _row; }
+    void setRow(uint8_t row) { _row = row; }
     uint8_t roc() const { return _roc_id; }
+    void setRoc(uint8_t roc) { _roc_id = roc; }
     uint8_t trim() const { return _trim; }
     void setTrim(uint8_t trim) { _trim = trim; }
     bool mask() const { return _mask; }
