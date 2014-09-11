@@ -32,44 +32,31 @@ namespace pxar {
 
     /** Default constructor for pixel objects, defaulting all member variables to zero
      */
-  pixel() : roc_id(0), column(0), row(0), _mean(0), _variance(0) {}
+  pixel() : _roc_id(0), _column(0), _row(0), _mean(0), _variance(0) {}
 
     /** Constructor for pixel objects with address and value initialization.
      */
-  pixel(uint8_t _roc_id, uint8_t _column, uint8_t _row, double _value) : roc_id(_roc_id), column(_column), row(_row), _variance(0) { setValue(_value); }
+  pixel(uint8_t roc_id, uint8_t column, uint8_t row, double value) : _roc_id(roc_id), _column(column), _row(row), _variance(0) { setValue(value); }
 
     /** Constructor for pixel objects with rawdata pixel address & value and ROC id initialization.
      */
-  pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
+  pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : _roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
 
     /** Getter function to return ROC ID
      */
-    uint8_t getRoc() { return roc_id; };
+    uint8_t roc() const { return _roc_id; };
 
     /** Getter function to return column id
      */
-    uint8_t getColumn() { return column; };
+    uint8_t column() const { return _column; };
 
     /** Getter function to return row id
      */
-    uint8_t getRow() { return row; };
-
-    /** ROC ID - continuously numbered according to their appeareance
-     *  in the readout chain
-     */
-    uint8_t roc_id;
-
-    /** Pixel column address
-     */
-    uint8_t column;
-
-    /** Pixel row address
-     */
-    uint8_t row;
+    uint8_t row() const { return _row; };
 
     /** Member function to get the signal variance for this pixel hit
      */
-    double getVariance() { return expandFloat(_variance); };
+    double variance() { return expandFloat(_variance); };
 
     /** Member function to set the signal variance for this pixel hit
      */
@@ -77,7 +64,7 @@ namespace pxar {
 
     /** Member function to get the value stored for this pixel hit
      */
-    double getValue() { 
+    double value() { 
       return static_cast<double>(_mean);
     };
 
@@ -90,24 +77,37 @@ namespace pxar {
     /** Overloaded comparison operator
      */
     bool operator == (const pixel& px) {
-      return ((px.roc_id == roc_id )
-	      && (px.column == column)
-	      && (px.row == row));
+      return ((px.roc() == _roc_id )
+	      && (px.column() == _column)
+	      && (px.row() == _row));
     }
 
     /** Overloaded < operator
      */
     bool operator < (const pixel& px) const {
-      if(roc_id == px.roc_id) {
-	if(column == px.column) {
-	  return row < px.row;
+      if(_roc_id == px.roc()) {
+	if(_column == px.column()) {
+	  return _row < px.row();
 	}
-	return column < px.column;
+	return _column < px.column();
       }
-      return roc_id < px.roc_id;
+      return _roc_id < px.roc();
     }
 
   private:
+    /** ROC ID - continuously numbered according to their appeareance
+     *  in the readout chain
+     */
+    uint8_t _roc_id;
+
+    /** Pixel column address
+     */
+    uint8_t _column;
+
+    /** Pixel row address
+     */
+    uint8_t _row;
+
     /** 16bit unsigned int for storing compressed floating point
      *  mean value (either pulse height or efficiency)
      */
@@ -143,9 +143,9 @@ namespace pxar {
     /** Overloaded ostream operator for simple printing of pixel data
      */
     friend std::ostream & operator<<(std::ostream &out, pixel& px) {
-      out << "ROC " << static_cast<int>(px.roc_id)
-	  << " [" << static_cast<int>(px.column) << "," << static_cast<int>(px.row) 
-	  << "," << static_cast<double>(px.getValue()) << "]";
+      out << "ROC " << static_cast<int>(px.roc())
+	  << " [" << static_cast<int>(px.column()) << "," << static_cast<int>(px.row()) 
+	  << "," << static_cast<double>(px.value()) << "]";
       return out;
     }
   };
@@ -221,17 +221,27 @@ namespace pxar {
   class DLLEXPORT pixelConfig {
   public:
   pixelConfig() : 
-    column(0), row(0), 
-      trim(15), mask(true), enable(false) {}
-  pixelConfig(uint8_t _column, uint8_t _row, uint8_t _trim) : 
-    column(_column), row(_row), trim(_trim),
-      mask(true), enable(false) {}
-    uint8_t column;
-    uint8_t row;
-    uint8_t roc_id;
-    uint8_t trim;
-    bool mask;
-    bool enable;
+    _column(0), _row(0), 
+      _trim(15), _mask(true), _enable(false) {}
+  pixelConfig(uint8_t column, uint8_t row, uint8_t trim) : 
+    _column(column), _row(row), _trim(trim),
+      _mask(true), _enable(false) {}
+    uint8_t column() const { return _column; }
+    uint8_t row() const { return _row; }
+    uint8_t roc() const { return _roc_id; }
+    uint8_t trim() const { return _trim; }
+    void setTrim(uint8_t trim) { _trim = trim; }
+    bool mask() const { return _mask; }
+    void setMask(bool mask) { _mask = mask; }
+    bool enable() const { return _enable; }
+    void setEnable(bool enable) { _enable = enable; }
+  private:
+    uint8_t _column;
+    uint8_t _row;
+    uint8_t _roc_id;
+    uint8_t _trim;
+    bool _mask;
+    bool _enable;
   };
 
   /** Class for ROC states
@@ -241,12 +251,15 @@ namespace pxar {
    */
   class DLLEXPORT rocConfig {
   public:
-  rocConfig() : pixels(), dacs(), type(0), enable(true) {}
+  rocConfig() : pixels(), dacs(), type(0), _enable(true) {}
     std::vector< pixelConfig > pixels;
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
     uint8_t i2c_address;
-    bool enable;
+    bool enable() const { return _enable; }
+    void setEnable(bool enable) { _enable = enable; }
+  private:
+    bool _enable;
   };
 
   /** Class for TBM states

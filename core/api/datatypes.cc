@@ -23,10 +23,10 @@ namespace pxar {
     if(invert) { r0 ^= 0x7; }
     int r = r2*36 + r1*6 + r0;
     
-    row = 80 - r/2;
-    column = 2*c + (r&1);
+    _row = 80 - r/2;
+    _column = 2*c + (r&1);
     
-    if (row >= ROC_NUMROWS || column >= ROC_NUMCOLS){
+    if (_row >= ROC_NUMROWS || _column >= ROC_NUMCOLS){
       LOG(logDEBUGAPI) << "invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
       throw DataDecoderError("Error decoding pixel raw value");
     }
