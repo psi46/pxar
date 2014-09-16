@@ -189,6 +189,66 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   return resultMaps; 
 }
 
+
+// ----------------------------------------------------------------------
+vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
+
+  vector<pixel> results;
+
+  int cnt(0); 
+  bool done = false;
+  while (!done){
+    try {
+      results = fApi->getPulseheightMap(FLAGS, ntrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      done = true; 
+    } catch(DataMissingEvent &e) {
+      ++cnt;
+      fNDaqErrors = 666666;
+      if (e.numberMissing > 10) done = true; 
+    } catch(pxarException &e) {
+      fNDaqErrors = 666667;
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+  LOG(logDEBUG) << " eff result size = " << results.size(); 
+
+  fDirectory->cd(); 
+  vector<TH2D*> maps;
+  TH2D *h2(0); 
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), rocIds[iroc]);
+    h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.); 
+    h2->SetDirectory(fDirectory); 
+    fHistOptions.insert(make_pair(h2, "colz")); 
+    setTitles(h2, "col", "row"); 
+    maps.push_back(h2); 
+  }
+  
+  int idx(-1); 
+  for (unsigned int i = 0; i < results.size(); ++i) {
+    idx = getIdxFromId(results[i].roc());
+    if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[i].roc())) {
+      h2 = maps[idx];
+      if (h2->GetBinContent(results[i].column()+1, results[i].row()+1) > 0) {
+	LOG(logDEBUG) << "ROC/col/row = " << int(results[i].roc()) << "/" << int(results[i].column()) << "/" << int(results[i].row())
+		     << " with = " << h2->GetBinContent(results[i].column()+1, results[i].row()+1)
+		     << " now adding " << static_cast<float>(results[i].value());
+      }
+      h2->Fill(results[i].column(), results[i].row(), static_cast<float>(results[i].value())); 
+    } else {
+      LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc() << " not found"; 
+    }
+  }
+
+  return maps; 
+}
+
+
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
 
@@ -223,6 +283,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
+    fHistOptions.insert(make_pair(h2, "colz")); 
     setTitles(h2, "col", "row"); 
     maps.push_back(h2); 
   }
