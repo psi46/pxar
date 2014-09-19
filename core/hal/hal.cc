@@ -555,10 +555,10 @@ void hal::SetupTrimValues(uint8_t roci2c, std::vector<pixelConfig> pixels) {
 
   // Write the information from the pixel configs:
   for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-    size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
+    size_t position = pxIt->column()*ROC_NUMROWS + pxIt->row();
     // trim values larger than 15 are interpreted as masked:
-    if(pxIt->mask) trim[position] = 20;
-    else trim[position] = pxIt->trim;
+    if(pxIt->mask()) trim[position] = 20;
+    else trim[position] = pxIt->trim();
   }
 
   LOG(logDEBUGHAL) << "Updating NIOS trimming & masking configuration for ROC with I2C address " 
@@ -588,9 +588,9 @@ void hal::RocSetMask(uint8_t roci2c, bool mask, std::vector<pixelConfig> pixels)
     
     // Write the information from the pixel configs:
     for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-      size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
-      if(pxIt->mask) trim[position] = -1;
-      else trim[position] = pxIt->trim;
+      size_t position = pxIt->column()*ROC_NUMROWS + pxIt->row();
+      if(pxIt->mask()) trim[position] = -1;
+      else trim[position] = pxIt->trim();
     }
 
     // We really want to program that full thing with correct mask/trim bits:

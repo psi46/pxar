@@ -318,8 +318,8 @@ void PixTestScurves::adjustVcal() {
       vector<pixel> wpix = w.second;
       
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	idx = getIdxFromId(wpix[ipix].roc_id);
-	hv[idx]->Fill(idac1, idac2, wpix[ipix].getValue()); 
+	idx = getIdxFromId(wpix[ipix].roc());
+	hv[idx]->Fill(idac1, idac2, wpix[ipix].value()); 
       }
     }
     

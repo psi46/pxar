@@ -91,11 +91,11 @@ namespace pxar {
       // If the Event start sample is also Event end sample, write and quit:
       if((GetLast() & 0xc000) == 0xc000) { break; }
 
-      record.Add(GetLast() & 0x0fff);
+      record.Add(GetLast());
     } while ((Get() & 0xc000) == 0);
 
     // Check if the last read sample has Event end marker:
-    if (GetLast() & 0x4000) record.Add(GetLast() & 0x0fff);
+    if (GetLast() & 0x4000) record.Add(GetLast());
     // Else set Event end error:
     else record.SetEndError();
 
@@ -207,11 +207,11 @@ namespace pxar {
     unsigned int n = sample->GetSize();
     if (n > 0) {
       if (n > 1) roc_Event.pixels.reserve((n-1)/2);
-      roc_Event.header = (*sample)[0];
+      roc_Event.header = (*sample)[0] & 0x0fff;
       unsigned int pos = 1;
       while (pos < n-1) {
-	uint32_t raw = (*sample)[pos++] << 12;
-	raw += (*sample)[pos++];
+	uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
+	raw += (*sample)[pos++] & 0x0fff;
 	try{
 	  pixel pix(raw,invertedAddress);
 	  roc_Event.pixels.push_back(pix);

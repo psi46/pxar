@@ -378,21 +378,16 @@ void ConfigParameters::readRocPixelConfig() {
     vector<pxar::pixelConfig> v;
     for (uint8_t ic = 0; ic < fnCol; ++ic) {
       for (uint8_t ir = 0; ir < fnRow; ++ir) {
-	pxar::pixelConfig a; 
-	a.column = ic; 
-	a.row = ir; 
-	a.trim = 0;
-	a.mask = false;
+	pxar::pixelConfig a(ic,ir,0,false,true); 
 	if (rocmasked[i]) {
 	  vector<pair<int, int> > v = vmask[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
 	    if (v[j].first == ic && v[j].second == ir) {
 	      LOG(logINFO) << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
-	      a.mask = true;
+	      a.setMask(true);
 	    }
 	  }
 	}
-	a.enable = true;
 	v.push_back(a); 
       }
     }
@@ -450,7 +445,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     uval = ival;
     unsigned int index = icol*80+irow; 
     if (index <= v.size()) {
-      v[index].trim = uval; 
+      v[index].setTrim(uval);
     } else {
       LOG(logINFO) << " not matching entry in trim vector found for row/col = " << irow << "/" << icol;
     }
@@ -704,7 +699,7 @@ bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
 bool ConfigParameters::setTrimBits(int trim) {
   for (unsigned int iroc = 0; iroc < fRocPixelConfigs.size(); ++iroc) {
     for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
-      fRocPixelConfigs[iroc][ipix].trim = trim; 
+      fRocPixelConfigs[iroc][ipix].setTrim(trim);
     }
   }
   return true;
@@ -784,9 +779,9 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   }
     
   for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
-    OutputFile << setw(2) << static_cast<int>(ipix->trim) 
+    OutputFile << setw(2) << static_cast<int>(ipix->trim()) 
 	       << "   Pix " << setw(2) 
-	       << static_cast<int>(ipix->column) << " " << setw(2) << static_cast<int>(ipix->row) 
+	       << static_cast<int>(ipix->column()) << " " << setw(2) << static_cast<int>(ipix->row()) 
 	       << endl;
   }
   

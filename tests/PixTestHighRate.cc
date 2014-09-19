@@ -479,7 +479,7 @@ void PixTestHighRate::readData() {
     pixCnt += it->pixels.size();
     
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-      fHitMap[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+      fHitMap[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
     }
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";

@@ -237,15 +237,15 @@ void PixTestDacDacScan::doTest() {
       vector<pixel> wpix = w.second;
 
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	if (wpix[ipix].roc_id == rocIds[iroc]) {
+	if (wpix[ipix].roc() == rocIds[iroc]) {
 	  h = maps[Form("%s_%s_%s_c%d_r%d_C%d", 
-			name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc])];
+			name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc])];
 	  if (h) {
-	    h->Fill(idac1, idac2, wpix[ipix].getValue()); 
+	    h->Fill(idac1, idac2, wpix[ipix].value()); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find " 
 			  << Form("%s_%s_%s_c%d_r%d_C%d", 
-				  name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc]);
+				  name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc]);
 	  }
 
 	}

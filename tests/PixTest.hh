@@ -110,6 +110,8 @@ public:
   void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
+  /// returns TH2D's with pulseheight maps
+  std::vector<TH2D*> phMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
