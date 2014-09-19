@@ -130,8 +130,8 @@ bool pxarCore::initDUT(uint8_t hubid,
     // check individual pixel configurations
     int nduplicates = 0;
     for(std::vector<pixelConfig>::iterator pixit = rocit->begin(); pixit != rocit->end(); pixit++){
-      if (std::count_if(rocit->begin(),rocit->end(),findPixelXY(pixit->column,pixit->row)) > 1){
-	LOG(logCRITICAL) << "Config for pixel in column " << static_cast<int>(pixit->column) << " and row "<< static_cast<int>(pixit->row) << " present multiple times in ROC " << static_cast<int>(rocit-rocPixels.begin()) << "!";
+      if (std::count_if(rocit->begin(),rocit->end(),findPixelXY(pixit->column(),pixit->row())) > 1){
+	LOG(logCRITICAL) << "Config for pixel in column " << static_cast<int>(pixit->column()) << " and row "<< static_cast<int>(pixit->row()) << " present multiple times in ROC " << static_cast<int>(rocit-rocPixels.begin()) << "!";
 	nduplicates++;
       }
     }
@@ -241,12 +241,12 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Loop over all pixelConfigs supplied:
     for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt) {
       // Check the trim value to be within boundaries:
-      if((*pixIt).trim > 15) {
+      if((*pixIt).trim() > 15) {
 	LOG(logWARNING) << "Pixel " 
-			<< static_cast<int>((*pixIt).column) << ", " 
-			<< static_cast<int>((*pixIt).row )<< " trim value " 
-			<< static_cast<int>((*pixIt).trim) << " exceeds limit. Set to 15.";
-	(*pixIt).trim = 15;
+			<< static_cast<int>((*pixIt).column()) << ", " 
+			<< static_cast<int>((*pixIt).row())<< " trim value " 
+			<< static_cast<int>((*pixIt).trim()) << " exceeds limit. Set to 15.";
+	(*pixIt).setTrim(15);
       }
       // Push the pixelConfigs into the rocConfig:
       newroc.pixels.push_back(*pixIt);
@@ -491,7 +491,11 @@ bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <doubl
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
     uint8_t signal = _dict->getSignal(name, PROBE_ANALOG);
  
-    //vector<pair<string,uint8_t> > orgdelays = _dut->sig_delays;
+    uint8_t clk0=_dut->sig_delays[SIG_CLK];
+    uint8_t ctr0=_dut->sig_delays[SIG_CTR];
+    uint8_t sda0=_dut->sig_delays[SIG_SDA];
+    uint8_t tin0=_dut->sig_delays[SIG_TIN];
+    
     vector<pair<string,uint8_t> > sigdelays;
    
     int gain = GAIN_1;
@@ -502,7 +506,6 @@ bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <doubl
     }    
     
      
-    _hal->SignalProbeA1(signal); // just for debugging, remove later
     result.clear();
     result.resize(20*nSample);
     
@@ -522,13 +525,13 @@ bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <doubl
             result[ 20*i+dly ]=y*scale;
        }
    }
-   
-   int clk=4;  // where can I get this from?
-   sigdelays.clear();
-    sigdelays.push_back(std::make_pair("clk", clk));
-    sigdelays.push_back(std::make_pair("ctr", clk));
-    sigdelays.push_back(std::make_pair("sda", clk + 15));
-    sigdelays.push_back(std::make_pair("tin", clk + 5));
+
+    // restore original delays
+    sigdelays.clear();
+    sigdelays.push_back(std::make_pair("clk", clk0));
+    sigdelays.push_back(std::make_pair("ctr", ctr0));
+    sigdelays.push_back(std::make_pair("sda", sda0));
+    sigdelays.push_back(std::make_pair("tin", tin0));
     setTestboardDelays(sigdelays);
 
    return true;
@@ -1318,6 +1321,18 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   // Start test timer:
   timer t;
 
+  // Check if all pixels are configured the same way on all ROCs. If this is not the case, we need to run this in FLAG_FORCE_SERIAL mode:
+  std::vector<uint8_t> enabledRocs = _dut->getEnabledRocIDs();
+  for(std::vector<uint8_t>::iterator rc = enabledRocs.begin(); rc != enabledRocs.end(); ++rc) {
+    // Compare the configuration of the first ROC with all others:
+    if(!comparePixelConfiguration(_dut->getEnabledPixels(enabledRocs.at(0)),_dut->getEnabledPixels(*rc))) {
+      flags |= FLAG_FORCE_SERIAL;
+      LOG(logDEBUGAPI) << "Not all ROCs have their pixels configured the same way. "
+		       << "Running in FLAG_FORCE_SERIAL mode.";
+      break;
+    }
+  }
+
   // Do the masking/unmasking&trimming for all ROCs first.
   // Unless we are running in FLAG_FORCE_UNMASKED mode, we need to transmit the new trim values to the NIOS core and mask the whole DUT:
   if((flags & FLAG_FORCE_UNMASKED) == 0) {
@@ -1345,7 +1360,6 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     } // ROCs parallel
     // Otherwise call the Pixel Parallel function several times:
     else if (multipixelfn != NULL) {
-      // FIXME we need to make sure it's the same pixel on all ROCs enabled!
       
       // Get one of the enabled ROCs:
       std::vector<uint8_t> enabledRocs = _dut->getEnabledRocIDs();
@@ -1357,7 +1371,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
 
       for (std::vector<pixelConfig>::iterator px = enabledPixels.begin(); px != enabledPixels.end(); ++px) {
 	// execute call to HAL layer routine and store data in buffer
-	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column, px->row, param);
+	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column(), px->row(), param);
 
 	// merge pixel data into roc data storage vector
 	if (rocdata.empty()){
@@ -1423,7 +1437,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
 
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
-	  std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column, pixit->row, param);
+	  std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column(), pixit->row(), param);
 	  // merge pixel data into roc data storage vector
 	  if (rocdata.empty()){
 	    rocdata = buffer; // for first time call
@@ -1492,15 +1506,15 @@ std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_
 	// Check if we have that particular pixel already in:
 	std::vector<pixel>::iterator px = std::find_if(evt->pixels.begin(),
 						       evt->pixels.end(),
-						       findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+						       findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
 	// Pixel is known:
 	if(px != evt->pixels.end()) {
-	  if(efficiency) { px->setValue(px->getValue()+1); }
+	  if(efficiency) { px->setValue(px->value()+1); }
 	  else {
 	    // Calculate the variance incrementally:
-	    double delta = pixit->getValue() - pxmean[*px];
+	    double delta = pixit->value() - pxmean[*px];
 	    pxmean[*px] += delta/pxcount[*px];
-	    pxm2[*px] += delta*(pixit->getValue() - pxmean[*px]);
+	    pxm2[*px] += delta*(pixit->value() - pxmean[*px]);
 	    pxcount[*px]++;
 	  }
 	}
@@ -1510,7 +1524,7 @@ std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_
 	  else { 
 	    // Initialize counters and temporary variables:
 	    pxcount.insert(std::make_pair(*pixit,1));
-	    pxmean.insert(std::make_pair(*pixit,pixit->getValue()));
+	    pxmean.insert(std::make_pair(*pixit,pixit->value()));
 	    pxm2.insert(std::make_pair(*pixit,0));
 	  }
 	  evt->pixels.push_back(*pixit);
@@ -1556,7 +1570,7 @@ std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t n
     for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
       // Check for pulsed pixels being present:
       if((flags&FLAG_CHECK_ORDER) != 0) {
-	if(pixit->column != expected_column || pixit->row != expected_row) {
+	if(pixit->column() != expected_column || pixit->row() != expected_row) {
 
 	  // With the full chip unmasked we want to know if the pixel in question was amongst the ones recorded:
 	  if((flags&FLAG_FORCE_UNMASKED) != 0) { LOG(logDEBUGPIPES) << "This is a background hit: " << (*pixit); }
@@ -1566,7 +1580,7 @@ std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t n
 	  }
 
 	  // Convention: set a negative pixel value for out-of-order pixel hits:
-	  pixit->setValue(-1*pixit->getValue());
+	  pixit->setValue(-1*pixit->value());
 	}
       }
       result.push_back(*pixit);
@@ -1661,13 +1675,13 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       // Check if we have that particular pixel already in:
       std::vector<pixel>::iterator px = std::find_if(result.begin(),
 						     result.end(),
-						     findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+						     findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
       // Pixel is known:
       if(px != result.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
-	uint8_t delta_new = abs(pixit->getValue() - threshold);
-	bool positive_slope = (pixit->getValue()-oldvalue[*px] > 0 ? true : false);
+	uint8_t delta_new = abs(pixit->value() - threshold);
+	bool positive_slope = (pixit->value()-oldvalue[*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
 	if(!positive_slope) continue; 
 	if(!(delta_new < delta_old)) continue; 
@@ -1675,12 +1689,12 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 	// Update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
-	oldvalue[*px] = pixit->getValue();
+	oldvalue[*px] = pixit->value();
       }
       // Pixel is new, just adding it:
       else {
 	// Store the pixel with original efficiency
-	oldvalue.insert(std::make_pair(*pixit,pixit->getValue()));
+	oldvalue.insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
 	pixit->setValue(it->first);
 	result.push_back(*pixit);
@@ -1744,14 +1758,14 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
       // Check if we have that particular pixel already in:
       std::vector<pixel>::iterator px = std::find_if(dac->second.begin(),
 						     dac->second.end(),
-						     findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+						     findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
 
       // Pixel is known:
       if(px != dac->second.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[dac->first][*px] - threshold);
-	uint8_t delta_new = abs(pixit->getValue() - threshold);
-	bool positive_slope = (pixit->getValue() - oldvalue[dac->first][*px] > 0 ? true : false);
+	uint8_t delta_new = abs(pixit->value() - threshold);
+	bool positive_slope = (pixit->value() - oldvalue[dac->first][*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
 	if(!positive_slope) continue;
 	if(!(delta_new < delta_old)) continue;
@@ -1759,12 +1773,12 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
 	// Update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
-	oldvalue[dac->first][*px] = pixit->getValue();
+	oldvalue[dac->first][*px] = pixit->value();
       }
       // Pixel is new, just adding it:
       else {
 	// Store the pixel with original efficiency
-	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->getValue()));
+	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
 	pixit->setValue(it->first);
 	dac->second.push_back(*pixit);
@@ -1886,7 +1900,7 @@ void pxarCore::SetCalibrateBits(bool enable) {
     if(enable) {
       // Loop over all pixels in this ROC and set the Cal bit:
       for(std::vector<pixelConfig>::iterator pxit = rocit->pixels.begin(); pxit != rocit->pixels.end(); ++pxit) {
-	if(pxit->enable == true) { _hal->PixelSetCalibrate(rocit->i2c_address,pxit->column,pxit->row,0); }
+	if(pxit->enable() == true) { _hal->PixelSetCalibrate(rocit->i2c_address,pxit->column(),pxit->row(),0); }
       }
 
     }

@@ -154,13 +154,13 @@ void PixTestPh::doTest() {
   for (unsigned int i = 0; i < result.size(); ++i) {
     vector<pixel> vpix = result[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
-      int roc = vpix[ipx].roc_id;
-      int ic = vpix[ipx].column;
-      int ir = vpix[ipx].row;
+      int roc = vpix[ipx].roc();
+      int ic = vpix[ipx].column();
+      int ir = vpix[ipx].row();
       name = Form("PH_c%d_r%d_C%d", ic, ir, roc); 
       h1 = hists[name];
       if (h1) {
-	h1->Fill(vpix[ipx].getValue());
+	h1->Fill(vpix[ipx].value());
       } else {
 	LOG(logDEBUG) << " histogram " << Form("PH_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }

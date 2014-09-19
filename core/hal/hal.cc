@@ -367,8 +367,22 @@ bool hal::FindDTB(std::string &usbId) {
   }
 
   if (devList.size() == 1) {
-    usbId = devList[0];
+    if(usbId == "*") { usbId = devList[0]; }
+    else if(usbId != devList[0]) {
+      LOG(logCRITICAL) << "Could not find DTB \"" << usbId << "\".";
+      throw UsbConnectionError("Could not find DTB " + usbId);
+    }
     return true;
+  }
+
+  // Check if selected DTB is among connected:
+  if(usbId != "*") {
+    for (nr=0; nr<devList.size(); nr++) {
+      if(usbId == devList.at(nr)) {
+	LOG(logINFO) << "Found DTB " << usbId;
+	return true;
+      }
+    }
   }
 
   // If more than 1 connected device list them
@@ -527,10 +541,10 @@ void hal::SetupTrimValues(uint8_t roci2c, std::vector<pixelConfig> pixels) {
 
   // Write the information from the pixel configs:
   for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-    size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
+    size_t position = pxIt->column()*ROC_NUMROWS + pxIt->row();
     // trim values larger than 15 are interpreted as masked:
-    if(pxIt->mask) trim[position] = 20;
-    else trim[position] = pxIt->trim;
+    if(pxIt->mask()) trim[position] = 20;
+    else trim[position] = pxIt->trim();
   }
 
   LOG(logDEBUGHAL) << "Updating NIOS trimming & masking configuration for ROC with I2C address " 
@@ -560,9 +574,9 @@ void hal::RocSetMask(uint8_t roci2c, bool mask, std::vector<pixelConfig> pixels)
     
     // Write the information from the pixel configs:
     for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-      size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
-      if(pxIt->mask) trim[position] = -1;
-      else trim[position] = pxIt->trim;
+      size_t position = pxIt->column()*ROC_NUMROWS + pxIt->row();
+      if(pxIt->mask()) trim[position] = -1;
+      else trim[position] = pxIt->trim();
     }
 
     // We really want to program that full thing with correct mask/trim bits:

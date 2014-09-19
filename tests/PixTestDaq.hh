@@ -33,12 +33,12 @@ private:
   void stop();
 
   uint32_t fParNtrig; 
+  uint16_t fParPeriod;
   uint16_t fParStretch; 
   bool     fParFillTree;
   uint16_t fParSeconds;
   uint16_t fParTriggerFrequency;
   uint16_t fParIter;
-  bool	   fParDelayTBM;
   bool	   fParResetROC;
   
   bool     fPhCalOK;

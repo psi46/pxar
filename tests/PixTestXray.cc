@@ -232,7 +232,8 @@ void PixTestXray::doPhRun() {
   if (0 == fQ.size()) {
     if (fParFillTree) bookTree(); 
     TH1D *h1(0); 
-    TH2D *h2(0); 
+    TH2D *h2(0);
+    TH1D *h3(0); 
     TProfile2D *p2(0); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       h2 = bookTH2D(Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
@@ -279,12 +280,17 @@ void PixTestXray::doPhRun() {
       setTitles(h1, "PH [ADC]", "Entries/bin");
       fPH.push_back(h1);
     }
+    h3 = bookTH1D(Form("ntrig_%s", fParSource.c_str()),
+	Form("ntrig_%s", fParSource.c_str()),1,0,1);
+    h3->SetDirectory(fDirectory);
+    fTriggers.push_back(h3);
 
     copy(fHmap.begin(), fHmap.end(), back_inserter(fHistList));
     copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
     copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
     copy(fPHmap.begin(), fPHmap.end(), back_inserter(fHistList));
     copy(fPH.begin(), fPH.end(), back_inserter(fHistList));
+    copy(fTriggers.begin(), fTriggers.end(), back_inserter(fHistList));
   }
 
   fPg_setup.push_back(make_pair("resetroc", 0));
@@ -503,7 +509,7 @@ void PixTestXray::readData() {
     pixCnt += it->pixels.size();
     
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-      fHitMap[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+      fHitMap[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
     }
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
@@ -659,28 +665,28 @@ void PixTestXray::processData(uint16_t numevents) {
     }
 
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
-      idx = getIdxFromId(it->pixels[ipix].roc_id);
+      idx = getIdxFromId(it->pixels[ipix].roc());
 
       if (fPhCalOK) {
-	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, 
-					      it->pixels[ipix].column, 
-					      it->pixels[ipix].row, 
-					      it->pixels[ipix].getValue()));
+	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), 
+					      it->pixels[ipix].column(), 
+					      it->pixels[ipix].row(), 
+					      it->pixels[ipix].value()));
       } else {
 	q = 0;
       }
-      fHmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+      fHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
       fQ[idx]->Fill(q);
-      fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
+      fQmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), q);
 
-      fPHmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-      fPH[idx]->Fill(it->pixels[ipix].getValue());
+      fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+      fPH[idx]->Fill(it->pixels[ipix].value());
 	
       if (fParFillTree) {
-	fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
-	fTreeEvent.pcol[ipix] = it->pixels[ipix].column; 
-	fTreeEvent.prow[ipix] = it->pixels[ipix].row; 
-	fTreeEvent.pval[ipix] = it->pixels[ipix].getValue(); 
+	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
+	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
+	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
+	fTreeEvent.pval[ipix] = it->pixels[ipix].value(); 
 	fTreeEvent.pq[ipix]   = q;
       }
     }
@@ -691,6 +697,7 @@ void PixTestXray::processData(uint16_t numevents) {
   LOG(logDEBUG) << Form(" # events read: %6ld, pixels seen in all events: %3d", daqdat.size(), pixCnt);
   
   fHmap[0]->Draw("colz");
+  fTriggers[0]->SetBinContent(1, fTriggers[0]->GetBinContent(1) + daqdat.size());
   PixTest::update();
 }
 

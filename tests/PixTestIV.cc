@@ -1,4 +1,4 @@
-#include <stdlib.h>    
+#include <cstdlib>    
 #include <algorithm>   
 #include <iostream>
 #include <fstream>
@@ -21,7 +21,14 @@ using namespace std;
 ClassImp(PixTestIV)
 
 // ----------------------------------------------------------------------
-PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), fParVoltageMax(150), fParVoltageStep(5), fParDelay(1), fStop(false), fParPort("") {
+PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), 
+                                                 fParVoltageStart(0),
+                                                 fParVoltageStop(150), 
+                                                 fParVoltageStep(5), 
+                                                 fParDelay(1), 
+                                                 fParCompliance(100),
+                                                 fStop(false), 
+                                                 fParPort(""){
   PixTest::init();
   init();
 }
@@ -39,26 +46,25 @@ bool PixTestIV::setParameter(string parName, string sval) {
     if (fParameters[i].first == parName) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if(!parName.compare("voltagemin")) {
-	fParVoltageMin = atoi(sval.c_str());
-	setToolTips();
+      if(!parName.compare("voltagestart")) {
+        fParVoltageStart = atof(sval.c_str());
       }
-      if(!parName.compare("voltagemax")) {
-	fParVoltageMax = atoi(sval.c_str());
-	setToolTips();
+      if(!parName.compare("voltagestop")) {
+        fParVoltageStop = atof(sval.c_str());
       }
       if(!parName.compare("voltagestep")) {
-	fParVoltageStep = atoi(sval.c_str());
-	setToolTips();
+        fParVoltageStep = fabs(atof(sval.c_str()));
       }
-      if(!parName.compare("delay")) {
-	fParDelay = atoi(sval.c_str());
-	setToolTips();
+      if(!parName.compare("delay(seconds)")) {
+        fParDelay = atof(sval.c_str());
       }
       if(!parName.compare("port")) {
-	fParPort = sval;
-	setToolTips();
+        fParPort = sval;
       }
+      if(!parName.compare("compliance(ua)")) {
+        fParCompliance = atof(sval.c_str());
+      }
+      setToolTips();
       break;
     }
   }
@@ -95,108 +101,84 @@ PixTestIV::~PixTestIV() {
 void PixTestIV::doTest() {
 
 #ifndef BUILD_HV
-  LOG(logERROR) << "Not build with HV supply support.";
+  LOG(logERROR) << "Not built with HV supply support.";
   return;
 #else
 
   fDirectory->cd();
-
+  
+  int numMeasurements = ceil(fabs((fParVoltageStart - fParVoltageStop)/fParVoltageStep));
+  
   TH1D *h1(0);
-  h1 = bookTH1D("IVcurve", "IV curve", fParVoltageMax+1, 0, fParVoltageMax+1);
+  double vMin = min(fParVoltageStart, fParVoltageStop) - fParVoltageStep*.5;
+  double vMax = vMin + numMeasurements*fParVoltageStep;
+  h1 = bookTH1D("IVcurve", "IV curve", numMeasurements, vMin, vMax);
   h1->SetMinimum(1.e-2);
   h1->SetMarkerStyle(20);
   h1->SetMarkerSize(1.3);
   h1->SetStats(0.);
   setTitles(h1, "-U [V]", "-I [uA]");
 
-  map<int, uint32_t> ts; 
-  map<int, double> vm; 
-
+  vector<double> voltageMeasurements;
+  vector<double> currentMeasurements;
+  vector<TTimeStamp> timeStamps;
+  double signedStep = (fParVoltageStart < fParVoltageStop) ? fParVoltageStep
+                                                           : -fParVoltageStep;
   PixTest::update();
-
-  gPad->SetLogy(1);
-
-  int tripped(-1);
-
-  LOG(logINFO) << "Starting IV curve measurement...";
-  pxar::hvsupply *hv = new pxar::hvsupply(fParPort.c_str());
-  hv->hvOn();
-  double vOld = hv->getVoltage();
-  LOG(logDEBUG) << "HV supply has default voltage: " << vOld; 
-
-  TTimeStamp startTs;
+  if(gPad) gPad->SetLogy(true);
   
-  // -- loop over voltage:
-  float voltMeasured(-1.), amps(-1.);
-  for(int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {    
-    hv->setVoltage(voltSet);
-    mDelay(fParDelay*1000); 
-    // -- get within 1V of specified voltage. Try at most 5 times.
-    int ntry(0);
-    while (ntry < 5) {
-      gSystem->ProcessEvents();
-      if (fStop) break;
-      //      voltMeasured = hv->getVoltage(); 
-      hv->getVoltageCurrent(voltMeasured, amps);
-      amps *= 1.e6;
-      if (TMath::Abs(voltSet + voltMeasured) < 0.5) break; // assume that voltMeasured is negative!
-      ++ntry;
-    }
-    if (fStop) break;
+  LOG(logINFO) << "Starting IV curve measurement...";
+  double serialTimeout = (fParDelay > 1.0) ? fParDelay*5 : 5.0;
+  pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str(), serialTimeout);
+  hv->setMicroampsLimit(fParCompliance);
 
-    fTimeStamp->Set();
-    ts.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), fTimeStamp->GetTimeSpec().tv_sec));
-    //    amps = hv->getCurrent()*1E6;
-    //    voltMeasured = hv->getVoltage();
-    vm.insert(make_pair(static_cast<uint32_t>(TMath::Abs(voltSet)), voltMeasured));
-
-    if (hv->tripped() || ((amps<-99.) && (voltMeasured !=0.))) {
-      LOG(logCRITICAL) << "HV supply tripped, aborting IV test"; 
-      tripped = voltSet;
-      break;
-    }
-    LOG(logINFO) << Form("V = %4d (meas: %+7.2f) I = %4.2e uA (ntry = %d) %ld", 
-			 -voltSet, voltMeasured, amps, ntry, fTimeStamp->GetTimeSpec().tv_sec);
-    if (TMath::Abs(amps) > 0.) {
-      h1->Fill(TMath::Abs(voltSet), TMath::Abs(amps));
-    }
+  hv->sweepStart(-fParVoltageStart,-fParVoltageStop,-signedStep,fParDelay);
+  while(hv->sweepRunning()){
+    double voltSet, voltRead, current;
+    hv->sweepRead(voltSet, voltRead, current);
+    voltageMeasurements.push_back(voltRead);
+    currentMeasurements.push_back(current);
+    h1->Fill(-voltSet, -current);
+    
+    TTimeStamp ts;
+    ts.Set();
+    timeStamps.push_back(ts);
+    
+    LOG(logINFO) << Form("V = %4f (meas: %+7.2f) I = %4.2e uA %s", 
+                         voltSet, voltRead, current*1E6, ts.AsString("c"));
+    
     h1->Draw("p");
     PixTest::update();
-    //    gSystem->ProcessEvents();
+    gSystem->ProcessEvents();
+    if(fStop) break;
   }
-
-  // -- ramp down voltage
-  int vstep(50); 
-  for (int voltSet = fParVoltageMax - vstep; voltSet > 100; voltSet -= vstep) {
-    LOG(logDEBUG) << "ramping down voltage, Vset = " << voltSet;
-    hv->setVoltage(voltSet);
-  }
-  hv->setVoltage(vOld);
   delete hv;
-
 
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   h1->Draw("p");
   PixTest::update();
+  
+  writeOutput(voltageMeasurements, currentMeasurements, timeStamps);
+  LOG(logINFO) << "PixTestIV::doTest() done ";
+#endif
+}
 
+void PixTestIV::writeOutput(vector<double>       &voltageMeasurements,
+                            vector<double>       &currentMeasurements,
+                            vector<TTimeStamp>   &timeStamps){  
   ofstream OutputFile;
   OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
-  OutputFile << "# IV test from "   << startTs.AsString("l") << endl;
+  OutputFile << "# IV test from "   << timeStamps[0].AsString("l") << endl;
   OutputFile << "#voltage(V)\tcurrent(A)\ttimestamp" << endl;
-
-  for (int voltSet = fParVoltageMin; voltSet <= fParVoltageMax; voltSet += fParVoltageStep) {
-    if (tripped > -1 && voltSet >= tripped) break;
-    OutputFile << Form("%+8.3f\t%+e\t%ld", 
-		       //		       static_cast<double>(voltSet), 
-		       static_cast<double>(vm[voltSet]), 
-		       -1.e-6*h1->GetBinContent(h1->FindBin(voltSet)), 
-		       static_cast<unsigned long>(ts[voltSet])
-		       )
-      
-	       << endl; 
+  
+  unsigned int numMeasurements = voltageMeasurements.size();
+  for (unsigned int i = 0; i < numMeasurements; i++) {
+    OutputFile << Form("%+8.3f\t%+e\t%s", voltageMeasurements[i],
+                                          currentMeasurements[i],
+                                          timeStamps[i].AsString("c"))
+               << endl; 
   }
   OutputFile.close();
-#endif
-  LOG(logINFO) << "PixTestIV::doTest() done ";
 }
+

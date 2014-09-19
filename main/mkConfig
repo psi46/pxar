@@ -372,18 +372,18 @@ DAC2HI              255
 PIX                 11,20 
 
 -- Pattern
-pgcycles            100
+externalclk         checkbox(0)
 triggerloop         checkbox(0)
+seconds             5
 period              1000
-seconds             1
+pgcycles            100
 patternfromfile     checkbox(0)
+unmaskall           checkbox(0)
+inputfile           testPatterns
+filltree            checkbox(0)
 resultsonfile       checkbox(0)
 binaryoutput        checkbox(0)
-inputfile           testPatterns
 outputfile          defaultPattern
-unmaskall           checkbox(0)
-externalclk         checkbox(0)
-filltree            checkbox(0)
 resettodefault      button
 
 -- BumpBonding
@@ -418,6 +418,15 @@ save                button
 ntrig               10
 singlePix           1
 
+-- PhOpt
+PIX                 11,20
+ntrig               10
+singlePix           1
+vcallow             50
+vcalhigh            255 
+phmin               30
+phmax               220
+
 -- Xray
 source              Ag
 phrun               button
@@ -445,15 +454,15 @@ Ntrig               0
 iterations          10
 seconds             30
 trgfrequency(khz)   100
-DelayTBM            checkbox
 FillTree            checkbox
 
 -- IV
 port                /dev/FIXME
-VoltageMin          0
-VoltageMax          600
-VoltageStep         5
-Delay               1
+voltageStart        0
+voltageStop         600
+voltageStep         5
+delay               1
+compliance(ua)      100
 
 EOF
 

@@ -33,53 +33,55 @@
 
 /* For more info and how to use this libray, visit: http://www.teuniz.net/RS-232/ */
 
-
-#ifndef rs232_INCLUDED
-#define rs232_INCLUDED
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stdio.h>
-#include <string.h>
+#ifndef rs232_H
+#define rs232_H
 
 #include <termios.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <limits.h>
+#include <string>
 
-int RS232_OpenComport(int, int);
-int RS232_PollComport(int, char *, int);
-int RS232_SendByte(int, unsigned char);
-int RS232_SendBuf(int, unsigned char *, int);
-int RS232_SendBufString(int, char *, int);
-void RS232_CloseComport(int);
-void RS232_cputs(int, const char *);
-int RS232_IsDCDEnabled(int);
-int RS232_IsCTSEnabled(int);
-int RS232_IsDSREnabled(int);
-void RS232_enableDTR(int);
-void RS232_disableDTR(int);
-void RS232_enableRTS(int);
-void RS232_disableRTS(int);
+class RS232Conn{
+    std::string portName;           //Name of port, eg. /dev/ttyUSB0
+    std::string writeSuffix;        //Suffix appended to write data, default "\r\n"
+    std::string readSuffix;         //Suffix stripped from read data, also signals end of read, default "\r\n"
+    int port;                       //port file descriptor
+    int baudRate;                   //port baudrate
+    bool flowControl;               //X-ON X-OFF software flow control
+    bool parity;                    //Enable Odd/None parity bits
+    struct termios oldPortSettings; //backup port settings
+    bool removeEcho;                //Set true if device echos back input
+    double timeout;                 //Read Timeout in seconds
+    
+    int pollPort(char &buf);
+    int writeBuf(const char *buf, int len);
+    
+  public:
+    RS232Conn();
+    ~RS232Conn();
+    
+    bool openPort();
+    void closePort();
+    
+    void setPortName(const std::string &portName);
+    void setBaudRate(int baudRate);
+    void setFlowControl(bool flowControl);
+    void setParity(bool parity);
+    void setReadSuffix(const std::string &suffix);
+    void setWriteSuffix(const std::string &suffix);
+    void setRemoveEcho(bool removeEcho);
+    void setTimeout(double timeout);
+    
+    int writeData(const std::string &data);
+    bool readEcho(const std::string &data);
+    int readData(std::string &data);
+    void writeReadBack(const std::string &dataOut, std::string &dataIn);
 
+    bool isDCDEnabled();
+    bool isCTSEnabled();
+    bool isDSREnabled();
 
-int openComPort(const int comPortNumber,const int baud, const char *name = "");
-void closeComPort();
-
-int writeCommand(const char *command);
-int writeCommandAndReadAnswer(const char *command,char *answer);
-
-int writeCommandString(const char *command);
-int writeCommandStringAndReadAnswer(const char *command,char *answer, int delay = 2);
-
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
+    void enableDTR();
+    void disableDTR();
+    void enableRTS();
+    void disableRTS();
+};
 #endif

@@ -144,10 +144,10 @@ void PixTestMapThr::doTest()
   // data:
 
   for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
-    h2 = maps.at(vpix[ipx].roc_id);
-    if( h2 ) h2->Fill( vpix[ipx].column, vpix[ipx].row, vpix[ipx].getValue());
-    h1 = hsts.at(vpix[ipx].roc_id);
-    if( h1 ) h1->Fill( vpix[ipx].getValue());
+    h2 = maps.at(vpix[ipx].roc());
+    if( h2 ) h2->Fill( vpix[ipx].column(), vpix[ipx].row(), vpix[ipx].value());
+    h1 = hsts.at(vpix[ipx].roc());
+    if( h1 ) h1->Fill( vpix[ipx].value());
   }
 
   for( size_t roc = 0; roc < nRocs; ++roc ) {

@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "1.4.6")
-SET(PXAR_FW_VERSION "3.3")
+SET(PXAR_VERSION "1.5.1")
+SET(PXAR_FW_VERSION "3.4")
 
 
 #########################################
@@ -70,9 +70,6 @@ INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   MESSAGE(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui
-  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-    "MinSizeRel" "RelWithDebInfo")
 ENDIF()
 
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
@@ -88,57 +85,62 @@ include( cmake/Platform.cmake)
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
-# Find the FTDI chip drivers, either the open source or proprietary one,
-# depending on the build option we set. Use the other as fallback:
-FIND_PACKAGE(FTD2XX)
-FIND_PACKAGE(FTDI)
+# unless we are building only a dummy DTB instance, we need the FTI and USB libraries:
+IF(NOT BUILD_dummydtb)
+  # Find the FTDI chip drivers, either the open source or proprietary one,
+  # depending on the build option we set. Use the other as fallback:
+  FIND_PACKAGE(FTD2XX)
+  FIND_PACKAGE(FTDI)
 
-# init the variable that will later hold the FTDI library name we link against
-SET(FTDI_LINK_LIBRARY "")
+  # init the variable that will later hold the FTDI library name we link against
+  SET(FTDI_LINK_LIBRARY "")
 
-IF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
-  # We have none of the two options available, this doesn't work!
-  MESSAGE(FATAL_ERROR "No FTDI library found. Provide either libftdi or libftd2xx! Please refer to the documentation for detailed instructions.")
-ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
-  # One of the options is available, let's figure out which one to use!
-  IF(USE_FTD2XX AND FTD2XX_FOUND)
-    # We want FTD2XX, we have FTD2XX.
-    MESSAGE(STATUS "Using libFTD2XX.")
-    SET(FTDI_LINK_LIBRARY ${FTD2XX_LIBRARY})
-    INCLUDE_DIRECTORIES(SYSTEM ${FTD2XX_INCLUDE_DIR})
-  ENDIF(USE_FTD2XX AND FTD2XX_FOUND)
+  IF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
+    # We have none of the two options available, this doesn't work!
+    MESSAGE(FATAL_ERROR "No FTDI library found. Provide either libftdi or libftd2xx! Please refer to the documentation for detailed instructions.")
+  ELSE(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
+    # One of the options is available, let's figure out which one to use!
+    IF(USE_FTD2XX AND FTD2XX_FOUND)
+      # We want FTD2XX, we have FTD2XX.
+      MESSAGE(STATUS "Using libFTD2XX.")
+      SET(FTDI_LINK_LIBRARY ${FTD2XX_LIBRARY})
+      INCLUDE_DIRECTORIES(SYSTEM ${FTD2XX_INCLUDE_DIR})
+    ENDIF(USE_FTD2XX AND FTD2XX_FOUND)
 
-  IF(USE_FTD2XX AND NOT FTD2XX_FOUND)
-    # We want FTD2XX but it's not there. So let's take FTDI.
-    SET(USE_FTD2XX FALSE)
-    MESSAGE(STATUS "Using libFTDI as fallback. LibFTD2XX could not be found.")
-    ADD_DEFINITIONS(-DHAVE_LIBFTDI)
-    SET(FTDI_LINK_LIBRARY ${FTDI_LIBRARY})
-    INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
-  ENDIF(USE_FTD2XX AND NOT FTD2XX_FOUND)
+    IF(USE_FTD2XX AND NOT FTD2XX_FOUND)
+      # We want FTD2XX but it's not there. So let's take FTDI.
+      SET(USE_FTD2XX FALSE)
+      MESSAGE(STATUS "Using libFTDI as fallback. LibFTD2XX could not be found.")
+      ADD_DEFINITIONS(-DHAVE_LIBFTDI)
+      SET(FTDI_LINK_LIBRARY ${FTDI_LIBRARY})
+      INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
+    ENDIF(USE_FTD2XX AND NOT FTD2XX_FOUND)
 
-  IF(NOT USE_FTD2XX AND FTDI_FOUND)
-    # We want FTDI, and we have it.
-    MESSAGE(STATUS "Using libFTDI.")
-    ADD_DEFINITIONS(-DHAVE_LIBFTDI)
-    SET(FTDI_LINK_LIBRARY ${FTDI_LIBRARY})
-    INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
-  ENDIF(NOT USE_FTD2XX AND FTDI_FOUND)
+    IF(NOT USE_FTD2XX AND FTDI_FOUND)
+      # We want FTDI, and we have it.
+      MESSAGE(STATUS "Using libFTDI.")
+      ADD_DEFINITIONS(-DHAVE_LIBFTDI)
+      SET(FTDI_LINK_LIBRARY ${FTDI_LIBRARY})
+      INCLUDE_DIRECTORIES(SYSTEM ${FTDI_INCLUDE_DIR})
+    ENDIF(NOT USE_FTD2XX AND FTDI_FOUND)
 
-  IF(NOT USE_FTD2XX AND NOT FTDI_FOUND)
-    # We want FTDI but we only have FTD2XX, so let's take that instead.
-    SET(USE_FTD2XX TRUE)
-    MESSAGE(STATUS "Using libFTD2XX as fallback. LibFTDI could not be found.")
-    INCLUDE_DIRECTORIES(SYSTEM ${FTD2XX_INCLUDE_DIR})
-    SET(FTDI_LINK_LIBRARY ${FTD2XX_LIBRARY})
-  ENDIF(NOT USE_FTD2XX AND NOT FTDI_FOUND)
-ENDIF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
+    IF(NOT USE_FTD2XX AND NOT FTDI_FOUND)
+      # We want FTDI but we only have FTD2XX, so let's take that instead.
+      SET(USE_FTD2XX TRUE)
+      MESSAGE(STATUS "Using libFTD2XX as fallback. LibFTDI could not be found.")
+      INCLUDE_DIRECTORIES(SYSTEM ${FTD2XX_INCLUDE_DIR})
+      SET(FTDI_LINK_LIBRARY ${FTD2XX_LIBRARY})
+    ENDIF(NOT USE_FTD2XX AND NOT FTDI_FOUND)
+  ENDIF(NOT FTDI_FOUND AND NOT FTD2XX_FOUND)
 
-# Check for libusb-1.0 package (not required on Windows w/ FTD2XX library):
-IF(NOT WIN32 OR NOT FTD2XX_FOUND)
-  FIND_PACKAGE(libusb-1.0 REQUIRED)
-  INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
-ENDIF(NOT WIN32 OR NOT FTD2XX_FOUND)
+  # Check for libusb-1.0 package (not required on Windows w/ FTD2XX library):
+  IF(NOT WIN32 OR NOT FTD2XX_FOUND)
+    FIND_PACKAGE(libusb-1.0 REQUIRED)
+    INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
+  ENDIF(NOT WIN32 OR NOT FTD2XX_FOUND)
+
+ENDIF(NOT BUILD_dummydtb)
+
 
 # Find Python libraries
 #FIND_PACKAGE(PythonLibs)
