@@ -1674,15 +1674,16 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
     // For every DAC value, loop over all pixels:
     for(std::vector<pixel>::iterator pixit = it->second.begin(); pixit != it->second.end(); ++pixit) {
-      // Check if we have that particular pixel already in:
-      std::vector<pixel>::iterator px = std::find_if(result.begin(),
-						     result.end(),
-						     findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
-      //check if for this pixel a threshold has been found already
+      // Check if for this pixel a threshold has been found already and we can skip the rest:
       std::vector<pixel>::iterator px_found = std::find_if(found.begin(),
 							   found.end(),
 							   findPixelXY(pixit->column, pixit->row, pixit->roc_id));
       if(px_found != found.end()) continue;
+
+      // Check if we have that particular pixel already in the result vector:
+      std::vector<pixel>::iterator px = std::find_if(result.begin(),
+						     result.end(),
+						     findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
   
       // Pixel is known:
       if(px != result.end()) {
