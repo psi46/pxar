@@ -470,7 +470,7 @@ void PixTestTrim::trimBitTest() {
   for (unsigned int i = 0; i < steps.size(); ++i) {
     thr = steps[i];
     for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
-      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], iroc), Form("TrimBit%d_C%d", btrim[i], iroc), 256, 0., 256); 
+      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]), Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]), 256, 0., 256); 
       for (int ix = 0; ix < 52; ++ix) {
 	for (int iy = 0; iy < 80; ++iy) {
 	  dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
