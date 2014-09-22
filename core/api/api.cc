@@ -1677,7 +1677,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       // Check if for this pixel a threshold has been found already and we can skip the rest:
       std::vector<pixel>::iterator px_found = std::find_if(found.begin(),
 							   found.end(),
-							   findPixelXY(pixit->column, pixit->row, pixit->roc_id));
+							   findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
       if(px_found != found.end()) continue;
 
       // Check if we have that particular pixel already in the result vector:
@@ -1705,7 +1705,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       // Pixel is new, just adding it:
       else {
         // If the pixel is fully efficient at the first DAC value and we are looking for rising edge, the threshold is 0
-	if(pixit->getValue() == nTriggers && (flags&FLAG_RISING_EDGE) != 0) { found.push_back(*pixit); }
+	if(pixit->value() == nTriggers && (flags&FLAG_RISING_EDGE) != 0) { found.push_back(*pixit); }
 	// Store the pixel with original efficiency
 	oldvalue.insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
