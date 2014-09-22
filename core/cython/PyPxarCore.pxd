@@ -176,6 +176,8 @@ cdef extern from "api.h" namespace "pxar":
         vector[pixel] getEfficiencyMap(uint16_t flags, uint16_t nTriggers) except +
         vector[pixel] getThresholdMap(string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) except +
         int32_t getReadbackValue(string parameterName) except +
+        bool setExternalClock(bool enable) except +
+        void setClockStretch(uint8_t src, uint16_t delay, uint16_t width) except +
         bool daqStart() except +
         bool daqStatus() except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +

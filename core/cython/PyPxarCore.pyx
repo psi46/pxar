@@ -435,6 +435,12 @@ cdef class PyPxarCore:
 
 #    def int32_t getReadbackValue(self, string parameterName):
 
+    def setExternalClock(self, bool enable):
+        return self.thisptr.setExternalClock(enable)
+
+    def setClockStretch(self, uint8_t src, uint16_t delay, uint16_t width):
+        self.thisptr.setClockStretch(src, delay, width)
+
     def daqStart(self):
         return self.thisptr.daqStart()
 
