@@ -1399,7 +1399,6 @@ void hal::Poff() {
 }
 
 
-
 // Testboard probe channel selectors:
 
 void hal::SignalProbeD1(uint8_t signal) {
@@ -1449,6 +1448,11 @@ void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
   _testboard->Flush();
 }
 
+void hal::SigSetMode(uint8_t signal, uint8_t mode) {
+    _testboard->Sig_SetMode(signal, mode);
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
 
 void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) {
 
