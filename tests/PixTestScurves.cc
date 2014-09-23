@@ -172,7 +172,8 @@ void PixTestScurves::scurves() {
   fApi->_dut->maskAllPixels(false);
 
   int results(7); 
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1); 
+  int FLAG = FLAG_FORCE_MASKED;
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1, FLAG); 
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
@@ -281,7 +282,7 @@ void PixTestScurves::fitS() {
 void PixTestScurves::adjustVcal() {
 
   vector<int> vcal; 
-  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   unsigned nrocs = rocIds.size();
@@ -298,7 +299,7 @@ void PixTestScurves::adjustVcal() {
   vector<TH2D *> hv; 
   TH2D *h(0); 
   for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
-    h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
+    h = bookTH2D(Form("adjustVcal_C%d", rocIds[iroc]), Form("adjustVcal_C%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
     hv.push_back(h); 
   }
   
@@ -333,7 +334,7 @@ void PixTestScurves::adjustVcal() {
       int vcalthr = h0->FindFirstBinAbove(0.5*ntrig); 
       delete h0; 
 
-      LOG(logDEBUG) << "ROC " << rocIds[iroc] << " vthrcomp = " << vcthr << " -> vcal = " << vcalthr;
+      LOG(logDEBUG) << "ROC " << static_cast<int>(rocIds[iroc]) << " vthrcomp = " << vcthr << " -> vcal = " << vcalthr;
       vcal.push_back(vcalthr); 
     }
     
