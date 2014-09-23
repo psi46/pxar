@@ -447,8 +447,8 @@ void PixTestPretest::setVthrCompCalDel() {
     delete h0;
 
     h1->SetBinContent(rocIds[iroc]+1, calDel[iroc]); 
-    h1->SetBinError(rocIds[iroc]+1, calDelE[iroc]); 
-    LOG(logDEBUG) << "CalDel: " << calDel[iroc] << " +/- " << calDelE[iroc];
+    h1->SetBinError(rocIds[iroc]+1, 0.5*calDelE[iroc]); 
+    LOG(logDEBUG) << "CalDel: " << calDel[iroc] << " +/- " << 0.5*calDelE[iroc];
     
     h2->Draw(getHistOption(h2).c_str());
     PixTest::update(); 
