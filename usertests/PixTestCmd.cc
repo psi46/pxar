@@ -111,9 +111,8 @@ void PixTestCmd::DoTextField(){
             transcript->AddLine( line.c_str() );
         }
     }
-    if(transcript->ReturnHeighestColHeight() >= transcript->GetHeight()){
-        transcript->SetVsbPosition(transcript->ReturnLineCount());
-    }
+
+    transcript->ShowBottom();
 
     if ( (cmdHistory.size()==0) || (! (cmdHistory.back()==s))){
         cmdHistory.push_back(s);
@@ -146,8 +145,8 @@ void PixTestCmd::createWidgets(){
     
     // == Transcript ============================================================================================
 
-    textOutputFrame = new TGHorizontalFrame(tf, w, 100);
-    transcript = new TGTextView(textOutputFrame, w, 100);
+    textOutputFrame = new TGHorizontalFrame(tf, w, 200);
+    transcript = new TGTextView(textOutputFrame, w, 200);
     textOutputFrame->AddFrame(transcript, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
 
     tf->AddFrame(textOutputFrame, new TGLayoutHints(kLHintsExpandX| kLHintsExpandY, 10, 10, 2, 2));
@@ -192,6 +191,7 @@ void PixTestCmd::doTest()
     createWidgets();
     cmd = new CmdProc(  );
     cmd->fApi=fApi;
+    cmd->fPixSetup = fPixSetup;
 
     PixTest::update();
     //fDisplayedHist = find( fHistList.begin(), fHistList.end(), h1 );
@@ -868,7 +868,9 @@ void CmdProc::init()
     fTRC = 10;
     fTTK = 30;
     fBufsize = 10000;
-    fSeq = 0;  // remember the last sequence used
+    fSeq = 0;  // pg sequence bits
+    fPgRunning = false;
+
     out.str("");
 }
 
@@ -879,12 +881,14 @@ CmdProc::CmdProc(CmdProc * p)
     verbose = p->verbose;
     defaultTarget = p->defaultTarget;
     fSeq = p->fSeq;
+    fPgRunning = p->fPgRunning;
     fTCT = p->fTCT;
     fTRC = p->fTRC;
     fTTK = p->fTTK;
     fBufsize=p->fBufsize;
     macros = p->macros;
     fApi = p->fApi;
+    fPixSetup = p->fPixSetup;
 }
 
 CmdProc::~CmdProc(){
@@ -996,6 +1000,7 @@ int CmdProc::pixDecodeRaw(int raw){
 }
 
 int CmdProc::rawDump(int level){
+    pg_sequence( fSeq ); // set up the pattern generator
     fApi->daqStart(fBufsize, fPixelConfigNeeded);
     fApi->daqTrigger(1, fBufsize);
     std::vector<uint16_t> buf = fApi->daqGetBuffer();
@@ -1014,10 +1019,10 @@ int CmdProc::rawDump(int level){
     out << "\n";
     
     // do a bit of decoding, adapted from psi46test
+    unsigned int i=0;
     if ((level>0)&&(fApi->_dut->getNTbms()>0)) {
         uint8_t roc=0;
         uint8_t tbm=0;
-        unsigned int i=0;
         
 
         while(i<buf.size() && (i<500) ){
@@ -1126,29 +1131,90 @@ int CmdProc::rawDump(int level){
             out << "==> very long readout! stopped decoding after "<< i << "words\n";
         }
     }
-        
     
+    else if ((level>0)&&(fApi->_dut->getNTbms() == 0)) {
+        // single ROC
+        while(i<buf.size() && (i<500) ){
+            
+            out << hex << setw(4)<< setfill('0')  << buf[i];
+            
+            if ( (buf[i] & 0x0ff8) == 0x07f8 ){
+                out << "       header D=" << (buf[i] & 1);
+                if ((buf[i] &2 )>0) { out << " S";}
+                out << "\n";
+                i++;
+            }
+            else if( (i+1)<buf.size() ){
+                out << " " << hex << setw(4)<< setfill('0') << buf[i+1] << "  hit";
+                int raw = ((buf[i] & 0x0fff)  << 12) + (buf[i+1] & 0x0fff);
+                pixDecodeRaw(raw);
+                out << "\n";
+                i+=2;
+            }else{
+                out << "unexpected end of data\n";
+            }
+        }
+    }
+       
+    pg_restore(); // undo any changes
     return 0;   
 }
 
-
 int CmdProc::sequence(int seq){
+    // update the sequence, but only re-program the DTB if actually running
+    fSeq = seq;
+    if( fPgRunning ) pg_sequence(seq);
+    return 0;
+}
+int CmdProc::pg_loop(){
+    uint16_t delay = pg_sequence( fSeq );
+    fApi->daqTriggerLoop( delay );
+    fPgRunning = true;
+    return 0;
+}
+
+int CmdProc::pg_stop(){
+    fPgRunning = false;
+    pg_restore();
+    return 0;
+}
+
+int CmdProc::pg_sequence(int seq){
+    // configure the DTB pattern generator for a simple sequence
+    // as other tests don't seem to take care of the pg configuration,
+    // this must be undone afterwards (using pg_restore)
+    cout << "configuring pg for sequence " << seq << endl;
     vector< pair<string, uint8_t> > pgsetup;
     pgsetup.push_back( make_pair( "sync", 10) );
     if (seq & 0x08 ) { pgsetup.push_back( make_pair("resr", fTRC) ); }
     if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal",  fTCT )); }
     if (seq & 0x02 ) { pgsetup.push_back( make_pair("trg",  fTTK )); }
     if (seq & 0x01 ) { pgsetup.push_back( make_pair("token", 1)); }
+    uint16_t delay = 11 + fTRC+1 + fTCT+1 + fTTK+1 +2;
+    // allow enough time to fill the buffer
     int m = (fBufsize-fTTK-20)/256;
     if (m>0){
         for(int i=0; i<m; i++){
             pgsetup.push_back(make_pair("none", 255));
+            delay +=256;
         }
     }
     pgsetup.push_back(make_pair("none", 255));
     pgsetup.push_back(make_pair("none", 0));
+    delay+=256+8;
+    
+    cout << "calculated delay " << delay <<endl;
+    //uint16_t delay = fApi->getPatternGeneratorDelaySum( pgsetup );
     fApi->setPatternGenerator(pgsetup);
-    fSeq = seq;
+    return delay;
+}
+
+
+int CmdProc::pg_restore(){
+    // restore the default pattern generator so that it works for other tests
+    std::vector<std::pair<std::string,uint8_t> > pg_setup
+        =  fPixSetup->getConfigParameters()->getTbPgSettings();
+	fApi->setPatternGenerator(pg_setup);
     return 0;
 }
 
@@ -1182,6 +1248,11 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("seq","ct")){ sequence( 6 ); return 0; }
     if( kw.match("seq","rct")){ sequence( 14 ); return 0; }
     if( kw.match("seq","rctt")){ sequence( 15 ); return 0; }
+    if( kw.match("pg","restore")){ return pg_restore();}
+    if( kw.match("loop") ){ return pg_loop();}
+    if( kw.match("stop") ){ return pg_stop();}
+    if( kw.match("pg","loop") ){ return pg_loop();}
+    if( kw.match("pg","stop") ){ return pg_stop();}
     //if( kw.match("res"){ int s0=fSeq; sequence( 8 ); pg_single(); sequence(s0);}
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;}  
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
