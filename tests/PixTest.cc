@@ -117,7 +117,8 @@ void PixTest::resetDirectory() {
 
 // ----------------------------------------------------------------------
 int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   TH1D *h = new TH1D("h1", "h1", 256, 0., 256.); 
 
   vector<pair<uint8_t, vector<pixel> > > results;
@@ -879,7 +880,8 @@ string PixTest::getHistOption(TH1* h) {
 // ----------------------------------------------------------------------
 vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
 
   vector<pair<uint8_t, vector<pixel> > > scans;
   int cnt(0); 
@@ -1121,7 +1123,8 @@ void PixTest::print(string what, TLogLevel log) {
 
 // ----------------------------------------------------------------------
 void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag) {
-  uint16_t FLAGS = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  //  uint16_t FLAGS = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = flag | FLAG_FORCE_MASKED;
 
   fNtrig = ntrig; 
 
@@ -1372,7 +1375,7 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
       for(int c=0; c<52; c++){
 	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
 	if (eff<ntrig){
-	  LOG(logDEBUG)<<"Pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig << ";  blacklisting";
+	  LOG(logDEBUG) << "ROC idx = " << i << " pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig << ";  blacklisting";
 	  badPix.first = c;
 	  badPix.second = r;
 	  deadPixelsRoc.push_back(badPix);
