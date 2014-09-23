@@ -13,7 +13,7 @@
 #
 #
 # History    2014/07/15 First shot: static setup (will change, eventually, probably)
-# -------             
+# -------
 #
 #
 # ----------------------------------------------------------------------
@@ -22,16 +22,16 @@ use Getopt::Std;
 getopts('d:hmp:r:t:');
 
 # -- define known hardware types
-my @rocok = ("digv2", "digv21"); 
-my @tbmok = ("TBM08", "TBM08b"); 
+my @rocok = ("digv2", "digv21");
+my @tbmok = ("TBM08", "TBM08b");
 
 if ($opt_h) {
     &printHelp;
-    exit(0); 
+    exit(0);
 }
 
 # -- create directory or if existing, remove all config files from the old one
-my $dir = "roc"; 
+my $dir = "roc";
 if ($opt_d) {
     $dir = $opt_d;
     if (!-d "$dir") {
@@ -42,15 +42,15 @@ if ($opt_d) {
 }
 
 # -- number of rocs and tbms
-my $nrocs = 1; 
-my $ntbms = 0; 
+my $nrocs = 1;
+my $ntbms = 0;
 if ($opt_m) {
-    $nrocs = 16; 
-    $ntbms = 1; 
+    $nrocs = 16;
+    $ntbms = 1;
 }
 
 # -- ROC type from either command line or by default
-my $dacs = ""; 
+my $dacs = "";
 my $roctype = "digv21";
 if ($opt_r) {
     if (grep(/$opt_r/, @rocok)) {
@@ -62,7 +62,7 @@ if ($opt_r) {
 &setDacs;
 
 # -- TBM type from either command line or by default
-my $tbms = ""; 
+my $tbms = "";
 my $tbmtype = "TBM08";
 if ($opt_t) {
     if (grep(/$opt_t/, @tbmok)) {
@@ -73,11 +73,11 @@ if ($opt_t) {
 }
 
 # -- create all config files
-print "dumping "; 
+print "dumping ";
 if ($opt_m) {
-    print "module"; 
+    print "module";
 } else {
-    print "roc"; 
+    print "roc";
 }
 print " config files into directory $dir for ROC type $roctype";
 if ($opt_m) {
@@ -101,31 +101,31 @@ if ($opt_m) {
 # -- apply all (string) substitutions
 if ($opt_p) {
     if ($opt_p) {$patterns = $opt_p; }
-    @patterns = split(/%/, $patterns); 
+    @patterns = split(/%/, $patterns);
     print "patterns: $patterns\n";
 
     my @files = glob("$dir/*");
 
     foreach $repl (@patterns) {
-	($pref, $orig, $change, $postf) = split(/\//, $repl); 
+	($pref, $orig, $change, $postf) = split(/\//, $repl);
 	foreach $file (@files) {
 	    open(IN, "$file") || die "Cannot open $file\n";
-	    @lines = <IN>; 
-	    close(IN); 
+	    @lines = <IN>;
+	    close(IN);
 	    if (grep /$orig/, @lines) {
 		print "$file: changing $orig -> $change\n" ;
-		grep(s/$orig/$change/g, @lines); 
+		grep(s/$orig/$change/g, @lines);
 		open(OUT, ">$file") || die "Cannot open $file for output\n";
 		print OUT @lines;
 		close(OUT);
 	    }
 	}
-	
+
     }
 }
 
 # -- that's it
-exit(0); 
+exit(0);
 
 
 # ----------------------------------------------------------------------
@@ -154,13 +154,13 @@ sub setTbms {
 	$tbms .= "3    pkam_set   0x10\n";
 	$tbms .= "4      delays   0x00\n";
 	$tbms .= "5 temperature   0x00\n";
-    } 
+    }
 
 }
 
 # ----------------------------------------------------------------------
 sub setDacs {
-    $dacs = ""; 
+    $dacs = "";
     if ($roctype eq "digv21") {
 	$dacs .= "  1 vdig       6  \n";
 	$dacs .= "  2 vana       79 \n";
@@ -211,52 +211,52 @@ sub setDacs {
 
 # ----------------------------------------------------------------------
 sub cleanFiles {
-    my $file; 
+    my $file;
     for ($i = 0; $i < 16; $i++) {
 	$file = "$dir/trimParameters_C$i.dat";
 	if (-e "$file") {
-	    unlink($file); 
+	    unlink($file);
 	}
 	$file = "$dir/dacParameters_C$i.dat";
 	if (-e "$file") {
-	    unlink($file); 
+	    unlink($file);
 	}
     }
 
     $file = "$dir/tbParameters.dat";
     if (-e "$file") {
-	unlink($file); 
+	unlink($file);
     }
 
     for ($i = 0; $i < 2; $i++) {
 	$file = "$dir/tbmParameters_C${i}a.dat";
 	if (-e "$file") {
-	    unlink($file); 
+	    unlink($file);
 	}
 	$file = "$dir/tbmParameters_C${i}b.dat";
 	if (-e "$file") {
-	    unlink($file); 
+	    unlink($file);
 	}
     }
 
     $file = "$dir/configParameters.dat";
     if (-e "$file") {
-	unlink($file); 
+	unlink($file);
     }
 
     $file = "$dir/defaultMaskFile.dat";
     if (-e "$file") {
-	unlink($file); 
+	unlink($file);
     }
 
     $file = "$dir/testPatterns.dat";
     if (-e "$file") {
-	unlink($file); 
+	unlink($file);
     }
 
     $file = "$dir/testParameters.dat";
     if (-e "$file") {
-	unlink($file); 
+	unlink($file);
     }
 }
 
@@ -264,7 +264,7 @@ sub cleanFiles {
 sub printConfigParameters {
     my $file = "$dir/configParameters.dat";
     open(FH, ">$file") || die "cannot open $file\n";
-    print FH <<"EOF";  
+    print FH <<"EOF";
 testboardName *
 
 -- parameter files
@@ -291,7 +291,7 @@ EOF
 	print FH "tbmEnable 0\n";
     }
 
-    print FH <<"EOF";  
+    print FH <<"EOF";
 tbmEmulator 0
 hvOn 1
 tbmChannel 0
@@ -301,7 +301,7 @@ if ($roctype eq "digv21") {
     print FH "rocType psi46digv2.1\n";
 } elsif ($roctype eq "digv2") {
     print FH "rocType psi46digv2\n";
-} 
+}
 
 if ($opt_m) {
     if ($tbmtype eq "TBM08") {
@@ -310,9 +310,9 @@ if ($opt_m) {
 	print FH "tbmType tbm08b\n";
     } else {
 	print FH "tbmType tbm08b\n";
-    } 
+    }
 }
-    print FH <<"EOF";  
+    print FH <<"EOF";
 
 halfModule 0
 
@@ -333,7 +333,7 @@ EOF
 sub printTestParameters {
     my $file = "$dir/testParameters.dat";
     open(FH, ">$file") || die "cannot open $file\n";
-    print FH <<"EOF";  
+    print FH <<"EOF";
 -- Pretest
 programroc          button
 targetIa            24
@@ -346,7 +346,15 @@ fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
 
--- PixelAlive 
+-- Timing
+fastscan            checkbox(1)
+targetclk           5
+clocksdascan        button
+nrocs               16
+phasescan           button
+savetbparameters    button
+
+-- PixelAlive
 Ntrig               10
 Vcal                200
 aliveTest           button
@@ -359,7 +367,7 @@ Ntrig               10
 DAC                 vcal
 DACLO               0
 DACHI               255
-PIX                 11,20 
+PIX                 11,20
 
 -- DacDacScan
 PHmap               checkbox
@@ -370,7 +378,7 @@ DAC1HI              255
 DAC2                vthrcomp
 DAC2LO              0
 DAC2HI              255
-PIX                 11,20 
+PIX                 11,20
 
 -- Pattern
 externalclk         checkbox(0)
@@ -424,7 +432,7 @@ PIX                 11,20
 ntrig               10
 singlePix           1
 vcallow             50
-vcalhigh            255 
+vcalhigh            255
 phmin               30
 phmax               220
 
@@ -437,8 +445,8 @@ ratescan            button
 vthrcompmin         10
 vthrcompmax         80
 stepseconds         5
-DelayTBM            checkbox  
-FillTree            checkbox  
+DelayTBM            checkbox
+FillTree            checkbox
 
 -- HighRate
 xPixelAlive         button
@@ -447,8 +455,8 @@ Ntrig               5
 Vcal                200
 runDaq              button
 runseconds          2
-DelayTBM            checkbox  
-FillTree            checkbox  
+DelayTBM            checkbox
+FillTree            checkbox
 
 -- DAQ
 Ntrig               0
@@ -481,14 +489,14 @@ EOF
 }
 
 close(FH);
-    
+
 }
 
 # ----------------------------------------------------------------------
 sub printTbParameters {
     my $file = "$dir/tbParameters.dat";
     open(FH, ">$file") || die "cannot open $file\n";
-    print FH <<"EOF";  
+    print FH <<"EOF";
   0             clk    4
   1             ctr    4
   2             sda   19
@@ -514,7 +522,7 @@ sub printTrimParameters {
 	}
 	close(FH);
     }
-    
+
 
 }
 
@@ -527,7 +535,7 @@ sub printDacParameters {
 	print FH $dacs;
 	close(FH);
     }
-    
+
 
 }
 
@@ -553,7 +561,7 @@ sub printTbmParameters {
 sub printTestPatterns {
     my $file = "$dir/testPatterns.dat";
     open(FH, ">$file") || die "cannot open $file\n";
-    print FH <<"EOF";  
+    print FH <<"EOF";
 
 -- Pattern
 
@@ -605,7 +613,7 @@ close(FH);
 sub printMaskFile {
     my $file = "$dir/defaultMaskFile.dat";
     open(FH, ">$file") || die "cannot open $file\n";
-    print FH <<"EOF";  
+    print FH <<"EOF";
 # how to Mask
 # pix 0 42 51
 # col 0 21
@@ -620,7 +628,7 @@ EOF
 
 # ----------------------------------------------------------------------
 sub printHelp {
-    $" = " "; 
+    $" = " ";
     print "ROC types known: ",  join(", " , @rocok), "\n";
     print "TBM types known: ",  join(", " , @tbmok), "\n";
     print <<"EOF";
@@ -640,6 +648,3 @@ EOF
 
     print "for all other questions, read the source code ... \n";
 }
-
-
-
