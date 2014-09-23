@@ -287,8 +287,8 @@ void PixTestPhOpt::scan(string name) {
       if (h) {
 	h->Fill(idac1, idac2, wpix[ipix].value()); 
       } else {
-	LOG(logDEBUG) << "XX did not find " 
-		      << Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc]);
+	LOG(logDEBUG) << "random pixel " 
+		      << Form("%d/%d on ROC %d", wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc]) << " not requested, but seen";
       }
     }
   }
