@@ -342,6 +342,7 @@ PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
+fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
 
