@@ -30,9 +30,9 @@ cdef class Pixel:
     cdef c_clone(self, pixel* p):
         del self.thisptr
         self.thisptr = p
-    property roc_id:
+    property roc:
         def __get__(self): return self.thisptr.roc()
-        def __set__(self, roc_id): self.thisptr.setRoc(roc_id)
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
         def __get__(self): return self.thisptr.column()
         def __set__(self, column): self.thisptr.setColumn(column)
