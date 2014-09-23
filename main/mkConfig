@@ -422,7 +422,6 @@ singlePix           1
 -- PhOpt
 PIX                 11,20
 ntrig               10
-singlePix           1
 vcallow             50
 vcalhigh            255 
 phmin               30
