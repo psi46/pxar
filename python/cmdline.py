@@ -174,6 +174,27 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getTBvd.__doc__, '']
 
+    @arity(1,1,[int])
+    def do_setExternalClock(self, enable):
+        """setExternalClock [enable]: enables the external DTB clock input, switches off the internal clock. Only switches if external clock is present."""
+        if self.api.setExternalClock(enable) is True:
+            print "Switched to " + ("external" if enable else "internal") + " clock."
+        else:
+            print "Could not switch to " + ("external" if enable else "internal") + " clock!"
+
+    def complete_setExternalClock(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setExternalClock.__doc__, '']
+
+    @arity(3,3,[int,int,int])
+    def do_setClockStretch(self, src, delay, width):
+        """setClockStretch [src] [delay] [width]: enables the clock stretch mechanism with the parameters given."""
+        self.api.setClockStretch(src,delay,width)
+
+    def complete_setClockStretch(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setClockStretch.__doc__, '']
+
     @arity(0,0,[])
     def do_daqStart(self):
         """daqStart: starts a new DAQ session"""

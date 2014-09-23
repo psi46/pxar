@@ -325,6 +325,7 @@ void PixTestAlive::output4moreweb() {
       if (string::npos != name.find(Form("PixelAlive_C%d", rocIds[i]))) h1 = (TH2D*)(*il); 
       if (h0 && h1) break;
     }
+    if(!h0 || !h1) continue; 
     LOG(logDEBUG) << "merge " << h0->GetName() << " into " << h1->GetName(); 
     for (int ix = 0; ix < h0->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < h0->GetNbinsY(); ++iy) {

@@ -30,9 +30,9 @@ cdef class Pixel:
     cdef c_clone(self, pixel* p):
         del self.thisptr
         self.thisptr = p
-    property roc_id:
+    property roc:
         def __get__(self): return self.thisptr.roc()
-        def __set__(self, roc_id): self.thisptr.setRoc(roc_id)
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
         def __get__(self): return self.thisptr.column()
         def __set__(self, column): self.thisptr.setColumn(column)
@@ -434,6 +434,12 @@ cdef class PyPxarCore:
         return numpy.array(hits)
 
 #    def int32_t getReadbackValue(self, string parameterName):
+
+    def setExternalClock(self, bool enable):
+        return self.thisptr.setExternalClock(enable)
+
+    def setClockStretch(self, uint8_t src, uint16_t delay, uint16_t width):
+        self.thisptr.setClockStretch(src, delay, width)
 
     def daqStart(self):
         return self.thisptr.daqStart()
