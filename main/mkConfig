@@ -316,6 +316,11 @@ if ($opt_m) {
 
 halfModule 0
 
+probeA1 sdata1
+probeA2 sdata2
+probeD1 clk
+probeD2 ctr
+
 -- voltages and current limits
 
 ia 1.190
