@@ -48,10 +48,6 @@ bool PixTestTiming::setParameter(string parName, string sval) {
         fTargetClk = atoi(sval.c_str());
         LOG(logDEBUG) << "PixTestTiming::PixTest() targetclk = " << fTargetClk;
       }
-      if (!parName.compare("nrocs")) {
-        fNROCs = atoi(sval.c_str());
-        LOG(logDEBUG) << "PixTestTiming::PixTest() fnrocs = " << fNROCs;
-      }
       break;
     }
   }
@@ -135,7 +131,7 @@ void PixTestTiming::ClkSdaScan() {
   pxar::mDelay(2000);
   double IA = fApi->getTBia();
 
-  // Start test timer:
+  // Start test timer
   timer t;
 
   //Scan the Clock and SDA to find the working values. iclk starts at fTargetClk and ends at fTargetClk-1. Both sda and clk ranges are limited to 0-19.
@@ -230,56 +226,65 @@ void PixTestTiming::PhaseScan() {
   vector<rawEvent> daqRawEv;
 
   int nTBMs = fApi->_dut->getNTbms();
-  bool goodtimings = false;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  vector<int> nROCs;
 
-  // Start test timer:
+  for (int itbm = 0; itbm < nTBMs; itbm++) {
+    fApi->setTbmReg("basea", 0, itbm); //Reset the ROC delays
+    nROCs.push_back(0);
+  }
+  //Count up the ROC on each TBM Core
+  for (size_t iROC=0; iROC<rocIds.size(); iROC++) {
+    if (rocIds[iROC]<8) nROCs[0]++;
+    else nROCs[1]++;
+  }
+
+  bool goodtimings = false;
+  fFastScan=true;
+
+  // Start test timer
   timer t;
 
   fApi->daqStart();
   // Loop through all possible TBM phase settings.
   for (int iclk160 = 0; iclk160 < 8 && !goodtimings; iclk160++) {
-    for (int iclk400 = 0; iclk400 < 8 && !goodtimings; iclk400++) {
+    for (int clk400 = 0; clk400 < 4 && !goodtimings; clk400++) {
+      int iclk400 = (iclk160+clk400) % 8;
       uint8_t delaysetting = iclk160<<5 | iclk400<<2;
       fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
-      fApi->setTbmReg("basea", 0, 0); //Reset ROC phases for TBM Core A to 0
-      fApi->setTbmReg("basea", 0, 1); //Reset ROC phases for TBM Core B to 0
       LOG(logINFO) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();;
+      ClkSdaScan(); //Everytime you adjust the TBM clock phase, the DAQ phase must also be adjusted!
       fApi->daqTrigger(1,period);
       daqRawEv = fApi->daqGetRawEventBuffer();
-      // If TBM phase setting is bad, don't bother scanning the ROCs Phases
-      if (daqRawEv.size()==0) continue;
-      // If Phase setting is good, then scan through all possible ROC delays... quite slow.
-      for (int ROCDelayCoreA = 0; ROCDelayCoreA < 256 && !goodtimings; ROCDelayCoreA++) {
-        fApi->setTbmReg("basea", ROCDelayCoreA, 0);
-        for (int ROCDelayCoreB = 0; ROCDelayCoreB < 256 && !goodtimings; ROCDelayCoreB++) {
-          fApi->setTbmReg("basea", ROCDelayCoreB, 1);
+      //if (daqRawEv.size() < 1) continue;
+      vector<int> GoodROCDelays;
+      //Loop through each TBM core and count the number of ROC headers on the core for all 256 delay settings
+      for (int itbm = 0; itbm < nTBMs; itbm++) {
+        for (int ROCDelay = 0; ROCDelay < 256; ROCDelay++) {
+          fApi->setTbmReg("basea", ROCDelay, itbm);
           fApi->daqTrigger(1,period);
           daqRawEv = fApi->daqGetRawEventBuffer();
           if (daqRawEv.size() < 1) continue;
           rawEvent event = daqRawEv.at(0);
           LOG(logDEBUG) << "Event: " << event;
-          if (event.data.size() < 3) continue;
-          int rocheader = event.data.at(2) >> 2;
-          int header_count = 0;
-          int trailer_count = 0;
+          int rocpos = (itbm==0) ? 2:6+nROCs[itbm-1];
           int rocheader_count = 0;
-          for (size_t idata=0; idata < event.data.size(); idata++) {
-            if (event.data.at(idata) >> 8  == 160) header_count++;
-            if (event.data.at(idata) == 49152) trailer_count++;
-            if (event.data.at(idata) >> 2 == rocheader) rocheader_count++;
-          }
-          LOG(logDEBUG) << "Headers: " << header_count << " Trailers: " << trailer_count << " ROC Headers: " << rocheader_count;
-          if (header_count==nTBMs && trailer_count==nTBMs && rocheader_count==fNROCs) {
-            goodtimings = true;
-            fPixSetup->getConfigParameters()->setTbmDac("basee", delaysetting, 0);
-            fPixSetup->getConfigParameters()->setTbmDac("basea", ROCDelayCoreA, 0);
-            fPixSetup->getConfigParameters()->setTbmDac("basea", ROCDelayCoreB, 1);
-            LOG(logINFO) << "Good Timings Found!";
-            LOG(logINFO) << "TBMPhase basee: " << bitset<8>(delaysetting).to_string();
-            LOG(logINFO) << "ROCPhase TBM Core A basea: " << bitset<8>(ROCDelayCoreA).to_string();
-            LOG(logINFO) << "ROCPhase TBM Core B basea: " << bitset<8>(ROCDelayCoreB).to_string();
+          if (int(event.data.size()) < rocpos) continue;
+          for (int idata = rocpos; idata < rocpos+nROCs[itbm]; idata++) if (event.data.at(idata) >> 12 == 4) rocheader_count++; //Count the number of ROCs on TBM Core itbm
+          LOG(logDEBUG) << rocheader_count << " ROC headers found for TBM Core " << itbm << ". Looking for " << nROCs[itbm] << ".";
+          if (rocheader_count==nROCs[itbm]) {
+            GoodROCDelays.push_back(ROCDelay);
+            fPixSetup->getConfigParameters()->setTbmDac("basea", ROCDelay, itbm);
+            if (int(GoodROCDelays.size())==nTBMs) goodtimings = true;
+            break;
           }
         }
+      }
+      if (goodtimings){
+        fPixSetup->getConfigParameters()->setTbmDac("basee", delaysetting, 0);
+        LOG(logINFO) << "Good Timings Found!";
+        LOG(logINFO) << "TBMPhase basee: " << bitset<8>(delaysetting).to_string();
+        for (int itbm = 0; itbm < nTBMs; itbm++) LOG(logINFO) << "ROCPhase TBM Core " << itbm << " basea: " << bitset<8>(GoodROCDelays[itbm]).to_string();
       }
     }
   }
@@ -288,6 +293,11 @@ void PixTestTiming::PhaseScan() {
   // Reset the pattern generator to the configured default:
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
 
+  if (!goodtimings) {
+    LOG(logERROR) << "No working TBM-ROC Phase found. Verify you have disabled bypassed ROCs in pXar on the h/w tab.";
+    for (int itbm = 0; itbm < nTBMs; itbm++) LOG(logERROR) << "PhaseScan searched for " << nROCs[itbm] << " ROCs on TBM Core " << itbm << ".";
+    return;
+  }
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
   LOG(logINFO) << "PixTestTiming::PhaseScan() done.";

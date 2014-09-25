@@ -24,7 +24,6 @@ public:
 private:
 
     int     fTargetClk;
-    int     fNROCs;
     bool    fFastScan;
 
 	ClassDef(PixTestTiming, 1)
