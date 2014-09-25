@@ -72,11 +72,13 @@ bool PixTestPhOpt::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str());
 	  str2 = sval.substr(s1+1);
 	  pixr = atoi(str2.c_str());
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr));
 	  addSelectedPixels(sval); 
 	  LOG(logDEBUG) << "  adding to FPIX ->" << pixc << "/" << pixr << " fPIX.size() = " << fPIX.size() ;
 	} else {
 	  clearSelectedPixels();
+	  addSelectedPixels("-1,-1"); 
 	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
 	}
       }
