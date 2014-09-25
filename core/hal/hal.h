@@ -156,7 +156,8 @@ namespace pxar {
     /** Selects input for the ADC 
      */
     void SignalProbeADC(uint8_t signal, uint8_t gain);
-    vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, int nSample, uint8_t start, uint8_t stop);
+    
+    vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop=0);
     
     // TEST COMMANDS
 
