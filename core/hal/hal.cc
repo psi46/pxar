@@ -1836,38 +1836,26 @@ void hal::daqClear() {
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
 }
 
-
-
-vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
-    // analog_probe = signal to be sampled
-    // gain = adc gain  (higher values = higher gain but also slower)
-    // nSample = max. number of samples to be taken
-    // source  = start signal
-    //           0 = none (off)
-    //           1 = pg_sync
-    //           2 = i2c
-    //           3 = token in
-    // start   = delay after start signal
-    // stop    = not sure, takes nSample samples when stop is 0
+std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
     
-    vector<uint16_t> data;
-    _testboard->SignalProbeADC(analog_probe, gain);
-    _testboard->uDelay(100);
-    _testboard->Flush();
-    _testboard->Daq_Select_ADC(nSample, source, start, stop);
-    _testboard->uDelay(1000);
-    _testboard->Flush();
-    _testboard->Daq_Open(nSample, 0);
-    _testboard->uDelay(10);
-    _testboard->Daq_Start(0);
-    _testboard->Pg_Single();
-    _testboard->uDelay(1000);
-    _testboard->Daq_Stop(0);
-    _testboard->Daq_Read(data, nSample);
-    //_testboard->Daq_Select_ADC(10, 0, 1, 1);
-    //_testboard->Daq_DeselectAll();
-    _testboard->Flush();
+  std::vector<uint16_t> data;
+  _testboard->SignalProbeADC(analog_probe, gain);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+  _testboard->Daq_Select_ADC(nSample, source, start, stop);
+  _testboard->uDelay(1000);
+  _testboard->Flush();
+  _testboard->Daq_Open(nSample, 0);
+  _testboard->uDelay(10);
+  _testboard->Daq_Start(0);
+  _testboard->Pg_Single();
+  _testboard->uDelay(1000);
+  _testboard->Daq_Stop(0);
+  _testboard->Daq_Read(data, nSample);
+  //_testboard->Daq_Select_ADC(10, 0, 1, 1);
+  //_testboard->Daq_DeselectAll();
+  _testboard->Flush();
 
-    return data;
+  return data;
 }
 
