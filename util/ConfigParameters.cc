@@ -74,6 +74,11 @@ void ConfigParameters::initialize() {
   va = -1.;
   vd = -1.;
 
+  fProbeA1 = "sdata1";
+  fProbeA2 = "sdata2"; 
+  fProbeD1 = "clk";
+  fProbeD2 = "ctr";
+
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46v2";
   fTbmType = ""; 

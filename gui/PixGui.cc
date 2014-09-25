@@ -340,6 +340,8 @@ void PixGui::CloseWindow() {
   gApplication->Terminate(0);
 
 }
+
+// ----------------------------------------------------------------------
 void PixGui::selectProbes(Int_t /*id*/) {
    TGComboBox *box = (TGComboBox *) gTQSender;
    
@@ -349,7 +351,7 @@ void PixGui::selectProbes(Int_t /*id*/) {
 
    fConfigParameters->setProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
 
-   fConfigParameters->writeConfigParameterFile();
+   //   fConfigParameters->writeConfigParameterFile();
 
 }
 

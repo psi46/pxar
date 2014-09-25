@@ -1836,27 +1836,26 @@ void hal::daqClear() {
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
 }
 
+std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
+    
+  std::vector<uint16_t> data;
+  _testboard->SignalProbeADC(analog_probe, gain);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+  _testboard->Daq_Select_ADC(nSample, source, start, stop);
+  _testboard->uDelay(1000);
+  _testboard->Flush();
+  _testboard->Daq_Open(nSample, 0);
+  _testboard->uDelay(10);
+  _testboard->Daq_Start(0);
+  _testboard->Pg_Single();
+  _testboard->uDelay(1000);
+  _testboard->Daq_Stop(0);
+  _testboard->Daq_Read(data, nSample);
+  //_testboard->Daq_Select_ADC(10, 0, 1, 1);
+  //_testboard->Daq_DeselectAll();
+  _testboard->Flush();
 
-
-vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, int nSample, uint8_t start, uint8_t stop){
-    vector<uint16_t> data;
-    _testboard->uDelay(100);
-    _testboard->SignalProbeD1( 9);
-    _testboard->SignalProbeD2(17);
-    _testboard->SignalProbeA2(analog_probe);
-    _testboard->SignalProbeADC(analog_probe, gain);
-    _testboard->uDelay(100);
-    _testboard->Flush();
-    _testboard->Daq_Select_ADC(nSample, 1, start, stop);
-    _testboard->uDelay(1000);
-    _testboard->Flush();
-    _testboard->Daq_Open(nSample, 0);
-    _testboard->uDelay(10);
-    _testboard->Daq_Start(0);
-    _testboard->Pg_Single();
-    _testboard->uDelay(1000);
-    _testboard->Daq_Stop(0);
-    _testboard->Daq_Read(data, nSample);
-    return data;
+  return data;
 }
 

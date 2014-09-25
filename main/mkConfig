@@ -316,6 +316,11 @@ if ($opt_m) {
 
 halfModule 0
 
+probeA1 sdata1
+probeA2 sdata2
+probeD1 clk
+probeD2 ctr
+
 -- voltages and current limits
 
 ia 1.190
@@ -342,6 +347,7 @@ PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
 setVthrCompCalDel   button
+fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
 
@@ -421,7 +427,6 @@ singlePix           1
 -- PhOpt
 PIX                 11,20
 ntrig               10
-singlePix           1
 vcallow             50
 vcalhigh            255 
 phmin               30

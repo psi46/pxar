@@ -483,59 +483,19 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
 
 
 
-bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <double> & result){
+std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start){
     
-    // translate signal name, copied from "SignalProbe"
-    if(!_hal->status()) {return false;}
+    vector<uint16_t> data;
+    if(!_hal->status()) {return data;}
+    
     ProbeDictionary * _dict = ProbeDictionary::getInstance();
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    uint8_t signal = _dict->getSignal(name, PROBE_ANALOG);
+    std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
+    uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
  
-    uint8_t clk0=_dut->sig_delays[SIG_CLK];
-    uint8_t ctr0=_dut->sig_delays[SIG_CTR];
-    uint8_t sda0=_dut->sig_delays[SIG_SDA];
-    uint8_t tin0=_dut->sig_delays[SIG_TIN];
-    
-    vector<pair<string,uint8_t> > sigdelays;
-   
-    int gain = GAIN_1;
-    double scale=1; 
-    if ( (signal == PROBEA_SDATA1) || (signal == PROBEA_SDATA2) ){
-        gain = GAIN_4;
-        scale = 1.;  // FIXME ADC to mV??
-    }    
-    
-     
-    result.clear();
-    result.resize(20*nSample);
-    
-    for(unsigned int dly=0; dly<20; dly++){
-        sigdelays.clear();
-        sigdelays.push_back(std::make_pair("clk", dly));
-        sigdelays.push_back(std::make_pair("ctr", dly));
-        sigdelays.push_back(std::make_pair("sda", dly + 15));
-        sigdelays.push_back(std::make_pair("tin", dly + 5));
-        setTestboardDelays(sigdelays);
-        
-        vector<uint16_t> data = _hal->daqADC(signal, gain, nSample, 1, 1);
-    
-        for(unsigned int i=0; i<nSample; i++){
-            int y = data[20] & 0x0fff;
-            if (y & 0x0800) y |= 0xfffff000;
-            result[ 20*i+dly ]=y*scale;
-       }
-   }
-
-    // restore original delays
-    sigdelays.clear();
-    sigdelays.push_back(std::make_pair("clk", clk0));
-    sigdelays.push_back(std::make_pair("ctr", ctr0));
-    sigdelays.push_back(std::make_pair("sda", sda0));
-    sigdelays.push_back(std::make_pair("tin", tin0));
-    setTestboardDelays(sigdelays);
-
-   return true;
+    data = _hal->daqADC(signal, gain, nSample, source, start);
+    return data;
 }
+
 
   
 // TEST functions

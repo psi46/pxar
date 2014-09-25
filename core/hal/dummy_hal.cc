@@ -716,6 +716,6 @@ void hal::daqStop() {}
 
 void hal::daqClear() {}
 
-std::vector<uint16_t> hal::daqADC(uint8_t /*analog_probe*/, uint8_t /*gain*/, int /*nSample*/, uint8_t /*start*/, uint8_t /*stop*/){
+std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
   return vector<uint16_t>();
 }

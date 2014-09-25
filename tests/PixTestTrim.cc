@@ -140,7 +140,6 @@ void PixTestTrim::trimTest() {
 
   double NSIGMA(2); 
 
-
   fPIX.clear(); 
 
   fApi->_dut->testAllPixels(true);
@@ -233,7 +232,8 @@ void PixTestTrim::trimTest() {
     bool done(false);
     while (!done) {
       try {
-	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+	//	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_MASKED, 10);
 	done = true;
       } catch(pxarException &e) {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
