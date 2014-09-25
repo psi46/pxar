@@ -23,7 +23,6 @@ private:
   std::map<std::string, TH2D*> fMaps;
 
   int     fParNtrig, fVcalLow, fVcalHigh, fPhMin, fPhMax;
-  bool    fFlagSinglePix;
 
   ClassDef(PixTestPhOpt, 1)
 
