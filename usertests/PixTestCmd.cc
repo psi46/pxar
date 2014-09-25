@@ -557,6 +557,7 @@ bool Statement::parse(Token & token){
             }while((n>0)&&(!token.empty()));
 
             if (n==0){
+                cout << "Statement::parse adding macro " << name << endl;
                 token.add_macro(name, macro);
                 return true;
             }else{
@@ -666,6 +667,10 @@ bool Block::parse(Token & token){
 
 bool  Keyword::match(const char * s, int & value){
   return  (kw(s)) && (narg()==1) && (argv[0].getInt(value));
+}
+
+bool  Keyword::match(const char * s, int & value, const char * s1){
+  return  (kw(s)) && (narg()==2) && (argv[0].getInt(value))  && (argv[1].scmp(s1)) ;
 }
 
 bool  Keyword::match(const char * s, const char * s1){
@@ -870,7 +875,8 @@ void CmdProc::init()
     fBufsize = 10000;
     fSeq = 0;  // pg sequence bits
     fPgRunning = false;
-
+    macros["start"] = getWords("[roc * mask; roc * cald; reset tbm; seq 14]");
+    macros["startroc"] = getWords("[mask; seq 15; arm 20 20; tct 106; vcal 200; adc]");
     out.str("");
 }
 
@@ -951,24 +957,78 @@ int CmdProc::tbmsetbit(string name, uint8_t coreMask, int bit, int value){
 
 
 
-int CmdProc::adctest(const string signal){
-    unsigned int n=1024;
-    vector<double> y;
-    if ( fApi->daqADC(signal, n, y) ){
-        sort( y.begin(), y.end());
-        unsigned int m=y.size();
-        double low(0), high(0), ny(0);
-        for(unsigned int i=int(0.1*m); i<int(0.3*m); i++){
-            low += y[i];
-            high += y[m-i];
-            ny++;
-        }
-        out << signal << "  low level=" << low/ny << " high level = " << high/ny << "\n";
+
+int CmdProc::adctest(const string signalName){
+    
+    // part 1 , acquire data : delay scan
+   
+   
+    uint8_t gain = GAIN_1;
+    uint8_t source = 1; // pg_sync
+    uint8_t start  = 1;  // wait
+    double scale=0.25;  // empirical for gain 1 ("+"-"-")
+    if ( (signalName=="sda") ){
     }else{
-        out << "error getting adc data";
+    //if ( (signalName == "sdata1") || (signalName == "sdata2")  || (signalName == "tout") ){
+        vector< pair<string, uint8_t> > pgsetup;
+        pgsetup.push_back( make_pair("resr", 20 ) );
+        pgsetup.push_back( make_pair("sync", 3) );
+        pgsetup.push_back( make_pair("trg", 16)); //trg+sync?
+        pgsetup.push_back( make_pair("tok", 0) ); 
+        fApi->setPatternGenerator(pgsetup);
+        gain = GAIN_1;
+        source = 1; // sync
+    }
+    
+    uint16_t nSample = 50;
+    unsigned int nDly = 20;
+    vector<int> y(nDly * nSample);
+    int ymin=0xffff;
+    int ymax=-ymin;
+
+    vector<pair<string,uint8_t> > sigdelays;
+   
+    for(unsigned int dly=0; dly<nDly; dly++){
+        sigdelays.clear();
+        sigdelays.push_back(std::make_pair("clk", dly));
+        sigdelays.push_back(std::make_pair("ctr", dly));
+        sigdelays.push_back(std::make_pair("sda", dly + 15));
+        sigdelays.push_back(std::make_pair("tin", dly + 5));
+        fApi->setTestboardDelays(sigdelays);
+            
+        vector<uint16_t> data = fApi->daqADC(signalName, gain, nSample, source, start);
+        
+        if (data.size()<nSample) {
+            cout << "Warning, data size = " << data.size() << endl;
+        }else{
+            for(unsigned int i=0; i<nSample; i++){
+                int raw = data[i] & 0x0fff;
+                if (raw & 0x0800) raw |= 0xfffff000;  // sign
+                if (raw>ymax) ymax=raw;
+                if (raw<ymin) ymin=raw;
+                y[ nDly*i+ nDly-1-dly ]=raw;
+                //cout << dly << " " << i << " " << raw << endl;
+           }
+       }
+   }
+
+    // restore delays, signals (modified by daqADC) and pg
+    ConfigParameters *p = fPixSetup->getConfigParameters();
+    sigdelays = p->getTbSigDelays();
+    fApi->setTestboardDelays(sigdelays);
+    
+  
+     pg_restore();
+     
+    if (ymin<ymax){
+        out << signalName << "  low level=" << ymin*scale << " mV high level = " << ymax*scale << " mV  (differential)\n";
+    }else{
+        out << "no signal found\n";
     }
     return 0;
 }
+
+
 
 int CmdProc::pixDecodeRaw(int raw){
     int ph(0), error(0),x(0),y(0);
@@ -1001,7 +1061,10 @@ int CmdProc::pixDecodeRaw(int raw){
 
 int CmdProc::rawDump(int level){
     pg_sequence( fSeq ); // set up the pattern generator
-    fApi->daqStart(fBufsize, fPixelConfigNeeded);
+    bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
+    if (! stat ){
+        cout << "something wrong with daqstart !!!" << endl;
+    }
     fApi->daqTrigger(1, fBufsize);
     std::vector<uint16_t> buf = fApi->daqGetBuffer();
     fApi->daqStop(false);
@@ -1183,9 +1246,8 @@ int CmdProc::pg_sequence(int seq){
     // configure the DTB pattern generator for a simple sequence
     // as other tests don't seem to take care of the pg configuration,
     // this must be undone afterwards (using pg_restore)
-    cout << "configuring pg for sequence " << seq << endl;
     vector< pair<string, uint8_t> > pgsetup;
-    pgsetup.push_back( make_pair( "sync", 10) );
+    if (seq & 0x10 ) { pgsetup.push_back( make_pair("sync", 10) );}
     if (seq & 0x08 ) { pgsetup.push_back( make_pair("resr", fTRC) ); }
     if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal",  fTCT )); }
     if (seq & 0x02 ) { pgsetup.push_back( make_pair("trg",  fTTK )); }
@@ -1203,8 +1265,6 @@ int CmdProc::pg_sequence(int seq){
     pgsetup.push_back(make_pair("none", 0));
     delay+=256+8;
     
-    cout << "calculated delay " << delay <<endl;
-    //uint16_t delay = fApi->getPatternGeneratorDelaySum( pgsetup );
     fApi->setPatternGenerator(pgsetup);
     return delay;
 }
@@ -1299,6 +1359,17 @@ int CmdProc::roc( Keyword kw, int rocId){
     for(unsigned int i=0; i<fnDAC_names; i++){
         if (kw.match(fDAC_names[i],value)){ fApi->setDAC(kw.keyword,value, rocId );  return 0 ;  }
     }
+    if (kw.match("vcal",value,"hi")){
+        fApi->setDAC(kw.keyword,value, rocId );
+        fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))|4, rocId);
+        return 0 ;
+    }
+    if (kw.match("vcal",value,"lo")){
+        fApi->setDAC(kw.keyword,value, rocId );
+        fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))&0xfb, rocId);
+        return 0 ;
+    }
+        
     if (kw.match("hirange")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))|4, rocId);return 0 ;}
     if (kw.match("lorange")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))&0xfb, rocId);return 0 ;}
     if (kw.match("disable") ) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))|2, rocId);return 0 ;}
@@ -1511,16 +1582,14 @@ int CmdProc::exec(std::string s){
     // pre-processing: to lower
     std::string t="";
     for(unsigned int i=0; i<s.size(); i++){
-        //if ( !(s[i]=='_') ){ fixme: removing all underscores leads to problems with dacs, must do it for binary numbers only
             t.push_back( tolower( s[i] ));
-        //}
     }
     s=t;
     
     // parse and execute a string, leads to call-backs to CmdProc::process
     Token words( getWords(s) );
-    words.macros=&macros;
-    macros["start"] = getWords("roc * mask; roc * cald; reset tbm; seq 14");
+    
+    words.macros=&macros;  // use the macro list of this CmdProc instance
 
     int j=0;
     //parse

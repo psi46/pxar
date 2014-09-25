@@ -155,6 +155,7 @@ class Keyword{
     Keyword(string s):keyword(s){};
 
     bool match(const char * s){ return kw(s) && (narg()==0); };
+    bool match(const char * s, int & value, const char * s1);
     bool match(const char * s1, const char * s2);
     bool match(const char * s1, const char * s2, string &);
     bool match(const char * s, string & s1, vector<string> & options, ostream & err);
@@ -297,6 +298,7 @@ class CmdProc {
   int rawDump(int level=0);
   int pixDecodeRaw(int);
   
+  int adctest0(const string s);
   int adctest(const string s);
   int sequence(int seq);
   int pg_sequence(int seq);
