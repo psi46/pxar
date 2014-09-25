@@ -156,7 +156,20 @@ namespace pxar {
     /** Selects input for the ADC 
      */
     void SignalProbeADC(uint8_t signal, uint8_t gain);
-    vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, int nSample, uint8_t start, uint8_t stop);
+    
+    /** Record data using the DTB ADC. The following parameters are available:
+	analog_probe = signal to be sampled
+	gain = adc gain  (higher values = higher gain but also slower)
+	nSample = max. number of samples to be taken
+	source  = start signal
+	      0 = none (off)
+	      1 = pg_sync
+	      2 = i2c
+	      3 = token in
+	start   = delay after start signal
+	stop    = not sure, takes nSample samples when stop is 0
+      */
+    std::vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop = 0);
     
     // TEST COMMANDS
 

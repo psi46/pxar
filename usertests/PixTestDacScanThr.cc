@@ -240,14 +240,14 @@ void PixTestDacScanThr::doTest()
 
     for( size_t ipx = 0; ipx < vpix.size(); ++ipx ) {
 
-	  uint8_t thr = (uint8_t)vpix[ipx].getValue();
+	  uint8_t thr = (uint8_t)vpix[ipx].value();
       if( thr == 255 ) continue; // invalid
 
-      uint8_t roc = vpix[ipx].roc_id;
+      uint8_t roc = vpix[ipx].roc();
 
       if( roc < nRocs &&
-	  vpix[ipx].column == col &&
-	  vpix[ipx].row == row ) {
+	  vpix[ipx].column() == col &&
+	  vpix[ipx].row() == row ) {
 	h1 = hsts.at(roc);
 	h1->Fill( idac, thr );
       } // valid

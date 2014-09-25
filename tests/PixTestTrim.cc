@@ -22,9 +22,6 @@ PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), fPar
   PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
-  for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logDEBUG) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
-  }
 }
 
 
@@ -140,9 +137,6 @@ void PixTestTrim::trimTest() {
 
   double NSIGMA(2); 
 
-
-  fPIX.clear(); 
-
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
@@ -233,7 +227,8 @@ void PixTestTrim::trimTest() {
     bool done(false);
     while (!done) {
       try {
-	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+	//	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED, 10);
+	results = fApi->getEfficiencyVsDAC("vcal", 0, vcalHi, FLAG_FORCE_MASKED, 10);
 	done = true;
       } catch(pxarException &e) {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
@@ -399,9 +394,9 @@ void PixTestTrim::trimBitTest() {
     vector<pixelConfig> pix = fApi->_dut->getEnabledPixels(rocIds[i]);
     int ix(-1), iy(-1); 
     for (unsigned int ipix = 0; ipix < pix.size(); ++ipix) {
-      ix = pix[ipix].column;
-      iy = pix[ipix].row;
-      fTrimBits[i][ix][iy] = pix[ipix].trim;
+      ix = pix[ipix].column();
+      iy = pix[ipix].row();
+      fTrimBits[i][ix][iy] = pix[ipix].trim();
     }
   }
   
@@ -470,7 +465,7 @@ void PixTestTrim::trimBitTest() {
   for (unsigned int i = 0; i < steps.size(); ++i) {
     thr = steps[i];
     for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
-      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], iroc), Form("TrimBit%d_C%d", btrim[i], iroc), 256, 0., 256); 
+      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]), Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]), 256, 0., 256); 
       for (int ix = 0; ix < 52; ++ix) {
 	for (int iy = 0; iy < 80; ++iy) {
 	  dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
@@ -570,9 +565,9 @@ void PixTestTrim::setTrimBits(int itrim) {
     vector<pixelConfig> pix = fApi->_dut->getEnabledPixels(rocIds[ir]);
     for (unsigned int ipix = 0; ipix < pix.size(); ++ipix) {
       if (itrim > -1) {
-	fTrimBits[ir][pix[ipix].column][pix[ipix].row] = itrim;
+	fTrimBits[ir][pix[ipix].column()][pix[ipix].row()] = itrim;
       }
-      fApi->_dut->updateTrimBits(pix[ipix].column, pix[ipix].row, fTrimBits[ir][pix[ipix].column][pix[ipix].row], rocIds[ir]);
+      fApi->_dut->updateTrimBits(pix[ipix].column(), pix[ipix].row(), fTrimBits[ir][pix[ipix].column()][pix[ipix].row()], rocIds[ir]);
     }
   }
 }

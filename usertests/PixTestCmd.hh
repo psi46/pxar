@@ -155,6 +155,7 @@ class Keyword{
     Keyword(string s):keyword(s){};
 
     bool match(const char * s){ return kw(s) && (narg()==0); };
+    bool match(const char * s, int & value, const char * s1);
     bool match(const char * s1, const char * s2);
     bool match(const char * s1, const char * s2, string &);
     bool match(const char * s, string & s1, vector<string> & options, ostream & err);
@@ -272,6 +273,8 @@ class CmdProc {
   bool setDefaultTarget( Target t){ defaultTarget=t; return true; }
 
   pxar::pxarCore * fApi;
+  PixSetup * fPixSetup;
+  
   stringstream out; 
   pxar::RegisterDictionary * _dict;
   pxar::ProbeDictionary * _probeDict;
@@ -283,6 +286,7 @@ class CmdProc {
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
   unsigned int fSeq;
+  bool fPgRunning;
   bool verbose;
   Target defaultTarget;
   map<string, deque <string> > macros;
@@ -294,9 +298,13 @@ class CmdProc {
   int rawDump(int level=0);
   int pixDecodeRaw(int);
   
+  int adctest0(const string s);
   int adctest(const string s);
   int sequence(int seq);
-
+  int pg_sequence(int seq);
+  int pg_restore();
+  int pg_loop();
+  int pg_stop();
 
   int tb(Keyword);
   int tbm(Keyword, int cores=3);

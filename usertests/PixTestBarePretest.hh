@@ -1,13 +1,13 @@
-#ifndef PIXTESTPRETEST_H
-#define PIXTESTPRETEST_H
+#ifndef PIXTESTBAREPRETEST_H
+#define PIXTESTBAREPRETEST_H
 
 #include "PixTest.hh"
 
-class DLLEXPORT PixTestPretest: public PixTest {
+class DLLEXPORT PixTestBarePretest: public PixTest {
 public:
-  PixTestPretest(PixSetup *, std::string);
-  PixTestPretest();
-  virtual ~PixTestPretest();
+  PixTestBarePretest(PixSetup *, std::string);
+  PixTestBarePretest();
+  virtual ~PixTestBarePretest();
   virtual bool setParameter(std::string parName, std::string sval);
   void init();
   void setToolTips();
@@ -29,12 +29,9 @@ private:
   int     fNoiseMargin;
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
-  double  fParFracCalDel;
   bool    fProblem;
-   
 
-
-  ClassDef(PixTestPretest, 1)
+  ClassDef(PixTestBarePretest, 1)
 
 };
 #endif

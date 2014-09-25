@@ -19,30 +19,29 @@ cdef class Pixel:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "ROC " + str(self.roc_id)
-        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.getValue()) + "] "
+        s = "ROC " + str(self.roc)
+        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.value) + "] "
         return s
     cdef fill(self, pixel p):
-        self.thisptr.roc_id = p.roc_id
-        self.thisptr.column = p.column
-        self.thisptr.row = p.row
-        self.thisptr.setValue(p.getValue())
+        self.thisptr.setRoc(p.roc())
+        self.thisptr.setColumn(p.column())
+        self.thisptr.setRow(p.row())
+        self.thisptr.setValue(p.value())
     cdef c_clone(self, pixel* p):
         del self.thisptr
         self.thisptr = p
-    property roc_id:
-        def __get__(self): return self.thisptr.roc_id
-        def __set__(self, roc_id): self.thisptr.roc_id = roc_id
+    property roc:
+        def __get__(self): return self.thisptr.roc()
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
-        def __get__(self): return self.thisptr.column
-        def __set__(self, column): self.thisptr.column = column
+        def __get__(self): return self.thisptr.column()
+        def __set__(self, column): self.thisptr.setColumn(column)
     property row:
-        def __get__(self): return self.thisptr.row
-        def __set__(self, row): self.thisptr.row = row
-    def setValue(self, double value):
-        self.thisptr.setValue(value)
-    def getValue(self):
-        return self.thisptr.getValue()
+        def __get__(self): return self.thisptr.row()
+        def __set__(self, row): self.thisptr.setRow(row)
+    property value:
+        def __get__(self): return self.thisptr.value()
+        def __set__(self, value): self.thisptr.setValue(value)
 
 cdef class PixelConfig:
     cdef pixelConfig *thisptr      # hold a C++ instance which we're wrapping
@@ -57,20 +56,20 @@ cdef class PixelConfig:
         del self.thisptr
         thisptr = p
     property column:
-        def __get__(self): return self.thisptr.column
-        def __set__(self, column): self.thisptr.column = column
+        def __get__(self): return self.thisptr.column()
+        def __set__(self, column): self.thisptr.setColumn(column)
     property row:
-        def __get__(self): return self.thisptr.row
-        def __set__(self, row): self.thisptr.row = row
+        def __get__(self): return self.thisptr.row()
+        def __set__(self, row): self.thisptr.setRow(row)
     property trim:
-        def __get__(self): return self.thisptr.trim
-        def __set__(self, trim): self.thisptr.trim = trim
+        def __get__(self): return self.thisptr.trim()
+        def __set__(self, trim): self.thisptr.setTrim(trim)
     property enable:
-        def __get__(self): return self.thisptr.enable
-        def __set__(self, enable): self.thisptr.enable = enable
+        def __get__(self): return self.thisptr.enable()
+        def __set__(self, enable): self.thisptr.setEnable(enable)
     property mask:
-        def __get__(self): return self.thisptr.mask
-        def __set__(self, mask): self.thisptr.mask = mask
+        def __get__(self): return self.thisptr.mask()
+        def __set__(self, mask): self.thisptr.setMask(mask)
 
 
 cdef class RocConfig:
@@ -104,8 +103,8 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.type
         def __set__(self, value): self.thisptr.type = value
     property enable:
-        def __get__(self): return self.thisptr.enable
-        def __set__(self, enable): self.thisptr.enable = enable
+        def __get__(self): return self.thisptr.enable()
+        def __set__(self, enable): self.thisptr.setEnable(enable)
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
@@ -409,7 +408,7 @@ cdef class PyPxarCore:
         for i in xrange(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros((52,80)))
         for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
+            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
         return numpy.array(hits)
 
     def getEfficiencyMap(self, int flags, int nTriggers):
@@ -420,7 +419,7 @@ cdef class PyPxarCore:
         for i in xrange(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros((52,80)))
         for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
+            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
         return numpy.array(hits)
 
     def getThresholdMap(self, string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, int flags, int nTriggers):
@@ -431,10 +430,16 @@ cdef class PyPxarCore:
         for i in xrange(self.thisptr._dut.getNRocs()):
             hits.append(numpy.zeros((52,80)))
         for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
+            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
         return numpy.array(hits)
 
 #    def int32_t getReadbackValue(self, string parameterName):
+
+    def setExternalClock(self, bool enable):
+        return self.thisptr.setExternalClock(enable)
+
+    def setClockStretch(self, uint8_t src, uint16_t delay, uint16_t width):
+        self.thisptr.setClockStretch(src, delay, width)
 
     def daqStart(self):
         return self.thisptr.daqStart()

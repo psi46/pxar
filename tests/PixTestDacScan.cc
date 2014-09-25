@@ -70,24 +70,15 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str()); 
 	  str2 = sval.substr(s1+1); 
 	  pixr = atoi(str2.c_str()); 
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr)); 
+	  addSelectedPixels(sval); 
 	} else {
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(-1, -1)); 
+	  addSelectedPixels("-1,-1"); 
 	}
       }
-      if (!parName.compare("pix1")) {
-	LOG(logWARNING) << "please change parameter name from PIX1 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix2")) {
-	LOG(logWARNING) << "please change parameter name from PIX2 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix3")) {
-	LOG(logWARNING) << "please change parameter name from PIX3 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix4")) {
-	LOG(logWARNING) << "please change parameter name from PIX4 to PIX (can appear multiple times)"; 
-      }
-
       break;
     }
   }
@@ -211,11 +202,11 @@ void PixTestDacScan::doTest() {
       
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-	if (vpix[ipix].roc_id == rocIds[iroc]) {
-	  hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, rocIds[iroc]);
+	if (vpix[ipix].roc() == rocIds[iroc]) {
+	  hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column(), vpix[ipix].row(), rocIds[iroc]);
 	  h = hmap[hname];
 	  if (h) {
-	    h->Fill(idac, vpix[ipix].getValue()); 
+	    h->Fill(idac, vpix[ipix].value()); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find "  << hname; 
 	  }

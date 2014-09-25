@@ -8,14 +8,16 @@ from libcpp cimport bool
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:
-        uint8_t roc_id
-        uint8_t column
-        uint8_t row
-        int32_t value
+        uint8_t roc()
+        uint8_t column()
+        uint8_t row()
         pixel()
         pixel(int32_t address, int32_t data)
-        double getValue()
+        double value()
         void setValue(double val)
+        void setRoc(uint8_t roc)
+        void setColumn(uint8_t column)
+        void setRow(uint8_t row)
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass Event:
@@ -27,11 +29,17 @@ cdef extern from "api.h" namespace "pxar":
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixelConfig:
-        uint8_t trim
-        uint8_t column
-        uint8_t row
-        bool mask
-        bool enable
+        uint8_t trim()
+        uint8_t column()
+        uint8_t row()
+        bool mask()
+        bool enable()
+        void setColumn(uint8_t column)
+        void setRoc(uint8_t roc)
+        void setRow(uint8_t row)
+        void setMask(bool mask)
+        void setEnable(bool enable)
+        void setTrim(uint8_t trim)
         pixelConfig()
         pixelConfig(uint8_t column, uint8_t row, uint8_t trim)
 
@@ -40,7 +48,8 @@ cdef extern from "api.h" namespace "pxar":
         vector[pixelConfig] pixels
         map[uint8_t, uint8_t] dacs
         uint8_t type
-        bool enable
+        bool enable()
+        void setEnable(bool enable)
         rocConfig()
 
 cdef extern from "api.h" namespace "pxar":
@@ -167,6 +176,8 @@ cdef extern from "api.h" namespace "pxar":
         vector[pixel] getEfficiencyMap(uint16_t flags, uint16_t nTriggers) except +
         vector[pixel] getThresholdMap(string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, uint16_t flags, uint16_t nTriggers) except +
         int32_t getReadbackValue(string parameterName) except +
+        bool setExternalClock(bool enable) except +
+        void setClockStretch(uint8_t src, uint16_t delay, uint16_t width) except +
         bool daqStart() except +
         bool daqStatus() except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +

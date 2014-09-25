@@ -243,29 +243,29 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 		}
 
 		for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-			idx = getIdxFromId(it->pixels[ipix].roc_id);
+			idx = getIdxFromId(it->pixels[ipix].roc());
 			if(idx == -1) {
 				LOG(logWARNING) << "PixTestDaq::ProcessData() wrong 'idx' value --> return";
 				return;    			
 			}
-			fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-			fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-			fPh[idx]->Fill(it->pixels[ipix].getValue());
+			fHits[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+			fPhmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+			fPh[idx]->Fill(it->pixels[ipix].value());
 
 			if (fPhCalOK) {
-				q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, it->pixels[ipix].column,	
-								      it->pixels[ipix].row, it->pixels[ipix].getValue()));
+				q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), it->pixels[ipix].column(),	
+								      it->pixels[ipix].row(), it->pixels[ipix].value()));
 			}
 			else {
 				q = 0;
 			}
 			fQ[idx]->Fill(q);
-			fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
+			fQmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), q);
 				if (fParFillTree) {
-				fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
-				fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
-				fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-				fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
+				fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+				fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+				fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+				fTreeEvent.pval[ipix] = it->pixels[ipix].value();
 				fTreeEvent.pq[ipix] = q;
 			}
 		}

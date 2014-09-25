@@ -320,9 +320,8 @@ namespace pxar {
       */
     bool SignalProbe(std::string probe, std::string name);
     
-    bool daqADC(std::string name, unsigned int nSample,std::vector <double> & result);
-
-
+    std::vector<uint16_t> daqADC(std::string signal, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start);
+ 
     // TEST functions
 
     /** Set a DAC value on the DUT for one specific ROC

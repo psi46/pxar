@@ -509,7 +509,7 @@ void PixTestXray::readData() {
     pixCnt += it->pixels.size();
     
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-      fHitMap[getIdxFromId(it->pixels[ipix].roc_id)]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+      fHitMap[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
     }
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
@@ -665,28 +665,28 @@ void PixTestXray::processData(uint16_t numevents) {
     }
 
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
-      idx = getIdxFromId(it->pixels[ipix].roc_id);
+      idx = getIdxFromId(it->pixels[ipix].roc());
 
       if (fPhCalOK) {
-	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, 
-					      it->pixels[ipix].column, 
-					      it->pixels[ipix].row, 
-					      it->pixels[ipix].getValue()));
+	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), 
+					      it->pixels[ipix].column(), 
+					      it->pixels[ipix].row(), 
+					      it->pixels[ipix].value()));
       } else {
 	q = 0;
       }
-      fHmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
+      fHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
       fQ[idx]->Fill(q);
-      fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
+      fQmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), q);
 
-      fPHmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-      fPH[idx]->Fill(it->pixels[ipix].getValue());
+      fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+      fPH[idx]->Fill(it->pixels[ipix].value());
 	
       if (fParFillTree) {
-	fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id; 
-	fTreeEvent.pcol[ipix] = it->pixels[ipix].column; 
-	fTreeEvent.prow[ipix] = it->pixels[ipix].row; 
-	fTreeEvent.pval[ipix] = it->pixels[ipix].getValue(); 
+	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
+	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
+	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
+	fTreeEvent.pval[ipix] = it->pixels[ipix].value(); 
 	fTreeEvent.pq[ipix]   = q;
       }
     }

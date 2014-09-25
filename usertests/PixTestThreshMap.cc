@@ -149,7 +149,7 @@ void PixTestThreshMap::doTest() {
   LOG(logINFO) << "Pixels returned: " << results.size();
 
   for(std::vector<pixel>::size_type idx = 0; idx < results.size() ; idx++) {
-    maps[id2idx[results[idx].roc_id]]->SetBinContent(results[idx].column+1,results[idx].row+1,results[idx].getValue());
+    maps[id2idx[results[idx].roc()]]->SetBinContent(results[idx].column()+1,results[idx].row()+1,results[idx].value());
   }
 
   for (unsigned int i = 0; i < maps.size(); ++i) {

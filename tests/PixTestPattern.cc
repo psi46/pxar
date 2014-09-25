@@ -380,19 +380,19 @@ void PixTestPattern::FillHistos(std::vector<pxar::Event> data, std::vector<TH2D*
 				fTreeEvent.npix = it->pixels.size();
 			}
 			for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-				idx = getIdxFromId(it->pixels[ipix].roc_id) ;
+			        idx = getIdxFromId(it->pixels[ipix].roc()) ;
 				if(idx == -1) {
 					LOG(logWARNING) << "PixTestPattern::FillHistos() wrong 'idx' value --> return";
 					return;    			
 				}
-				hits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-				phmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-				ph[idx]->Fill(it->pixels[ipix].getValue());
+				hits[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+				phmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+				ph[idx]->Fill(it->pixels[ipix].value());
 				if (fParFillTree) {
-					fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
-					fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
-					fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-					fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
+				        fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+					fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+					fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+					fTreeEvent.pval[ipix] = it->pixels[ipix].value();
 					fTreeEvent.pq[ipix] = 0; //no charge..
 				}
 			}				

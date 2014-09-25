@@ -28,11 +28,11 @@ bool isInTornadoRegion(size_t dac1min, size_t dac1max, size_t dac1, size_t dac2m
 
   size_t epsilon = 5;
   double tornadowidth = 40;
-  double ymax = dac1max / (1 + exp(0.05*((dac2max-dac2min+1)/2 - tornadowidth - dac2))) + dac1min;
-  double ymin = dac1max / (1 + exp(0.05*((dac2max-dac2min+1)/2 + tornadowidth - dac2))) + dac1min;
-  if(dac1 < ymax && dac1 > ymin) {
-    size_t dymax = ymax - dac1;
-    size_t dymin = dac1 - ymin;
+  double ymax = dac2max / (1 + exp(0.05*((dac1max-dac1min+1)/2 - tornadowidth - dac1))) + dac2min;
+  double ymin = dac2max / (1 + exp(0.05*((dac1max-dac1min+1)/2 + tornadowidth - dac1))) + dac2min;
+  if(dac2 < ymax && dac2 > ymin) {
+    size_t dymax = ymax - dac2;
+    size_t dymin = dac2 - ymin;
     if(dymax < epsilon) return (rand()%(epsilon-dymax) == 0);
     else if(dymin < epsilon) return (rand()%(epsilon-dymin) == 0);
     else return true;
@@ -716,6 +716,6 @@ void hal::daqStop() {}
 
 void hal::daqClear() {}
 
-std::vector<uint16_t> hal::daqADC(uint8_t /*analog_probe*/, uint8_t /*gain*/, int /*nSample*/, uint8_t /*start*/, uint8_t /*stop*/){
+std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
   return vector<uint16_t>();
 }

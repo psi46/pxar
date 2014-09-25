@@ -174,6 +174,27 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getTBvd.__doc__, '']
 
+    @arity(1,1,[int])
+    def do_setExternalClock(self, enable):
+        """setExternalClock [enable]: enables the external DTB clock input, switches off the internal clock. Only switches if external clock is present."""
+        if self.api.setExternalClock(enable) is True:
+            print "Switched to " + ("external" if enable else "internal") + " clock."
+        else:
+            print "Could not switch to " + ("external" if enable else "internal") + " clock!"
+
+    def complete_setExternalClock(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setExternalClock.__doc__, '']
+
+    @arity(3,3,[int,int,int])
+    def do_setClockStretch(self, src, delay, width):
+        """setClockStretch [src] [delay] [width]: enables the clock stretch mechanism with the parameters given."""
+        self.api.setClockStretch(src,delay,width)
+
+    def complete_setClockStretch(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setClockStretch.__doc__, '']
+
     @arity(0,0,[])
     def do_daqStart(self):
         """daqStart: starts a new DAQ session"""
@@ -318,11 +339,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getPulseheightVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 1D DAC scan"""
         data = self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC " + str(idac*dacstep) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        print_data(self.fullOutput,data,dacstep)
 
     def complete_getPulseheightVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -341,11 +358,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getEfficiencyVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
         data = self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC " + str(idac*dacstep) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        print_data(self.fullOutput,data,dacstep)
 
     def complete_getEfficiencyVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -364,11 +377,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getThresholdVsDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold = 50, flags = 0, nTriggers = 10):
         """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the threshold for DAC1 over a 1D DAC2 scan"""
         data = self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC " + str(idac*dacstep) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        print_data(self.fullOutput,data,dac1step)
 
     def complete_getThresholdVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type

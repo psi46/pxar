@@ -302,6 +302,9 @@ public:
 	// -- enable/disable a double column
 	RPC_EXPORT void roc_Col_Enable(uint8_t col, bool on);
 
+	// -- enable/disable all double columns
+	RPC_EXPORT void roc_AllCol_Enable(bool on);
+
 	// -- mask all pixels of a column and the coresponding double column
 	RPC_EXPORT void roc_Col_Mask(uint8_t col);
 
