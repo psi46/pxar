@@ -2041,6 +2041,13 @@ bool pxarCore::setExternalClock(bool enable) {
   }
 }
 
+void pxarCore::setSignalMode(uint8_t signal, uint8_t mode) {
+ 
+  LOG(logDEBUGAPI) << "Setting signal " << signal << " to mode " << mode << ".";
+  _hal->SigSetMode(signal, mode);
+}
+
+
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
 {
   LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 
