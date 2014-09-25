@@ -22,9 +22,6 @@ PixTestTrim::PixTestTrim(PixSetup *a, std::string name) : PixTest(a, name), fPar
   PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestTrim ctor(PixSetup &a, string, TGTab *)";
-  for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logDEBUG) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
-  }
 }
 
 
@@ -139,8 +136,6 @@ void PixTestTrim::trimTest() {
   banner(Form("PixTestTrim::trimTest() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
 
   double NSIGMA(2); 
-
-  fPIX.clear(); 
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
