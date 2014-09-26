@@ -32,6 +32,7 @@ typedef char int8_t;
 #include "PixInitFunc.hh"
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
+#include "shist256.hh"
 
 typedef struct { 
   uint16_t dac;
@@ -105,9 +106,9 @@ public:
   /// work-around to cope with suboptimal pxar/core
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
   /// kind of another work-around (splitting the range, adjusting ntrig, etc)
-  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag = 0);
+  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int flag = 0);
   /// do the scurve analysis
-  void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  void scurveAna(std::string dac, std::string name, std::vector<shist256*> maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with pulseheight maps
@@ -151,7 +152,7 @@ public:
   virtual void sparseRoc(int npix = 8);
 
   /// creates a 1D distribution of a map
-  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax, bool zeroSuppressed = false); 
+  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
   /// fit an s-curve to a distribution. Fills fThreshold, fThresholdE, fSigma, fSigmaE
   bool threshold(TH1 *); 
   /// find first bin above 50% level. Fills fThreshold, fThresholdE, fSigma, fSigmaE
