@@ -1207,7 +1207,7 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
     for (unsigned int i = iroc*4160; i < (iroc+1)*4160; ++i) {
       if (maps[i]->getSumOfWeights() < 1) {
-	OutputFile << empty << endl;
+	if (dumpFile) OutputFile << empty << endl;
 	continue;
       }
       
@@ -1218,7 +1218,7 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
       }
 
       bool ok = threshold(h1); 
-      if (!ok) {
+      if (result&0x10 && !ok) {
 	TH1D *h1c = (TH1D*)h1->Clone(Form("c%d_r%d_C%d", ic, ir, rocIds[iroc])); 
 	h1c->SetTitle(Form("problematic Scurve Thr (c%d_r%d_C%d), thr = %4.3f", ic, ir, rocIds[iroc], fThreshold));
 	fHistList.push_back(h1c); 
