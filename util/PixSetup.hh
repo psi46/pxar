@@ -29,6 +29,8 @@ public:
   bool               doMoreWebCloning() {return fMoreWebCloning;}
   void               setRootFileUpdate(bool x) {fDoUpdateRootFile = x;}
   bool               doRootFileUpdate() {return fDoUpdateRootFile;}
+
+  void              *fPxarMemory, *fPxarMemHi;
 private: 
   bool              fMoreWebCloning;
   bool              fDoUpdateRootFile; 
@@ -38,6 +40,7 @@ private:
   pxar::pxarCore    *fApi; 
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
+
 
 };
 
