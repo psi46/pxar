@@ -129,7 +129,7 @@ void PixTestBBMap::doTest() {
 
     bbprob = static_cast<int>(h->Integral(cutDead, h->FindBin(255)));
     bbString += Form(" %4d", bbprob); 
-    bbCuts += Form(" %3d", cutDead); 
+    bbCuts   += Form(" %4d", cutDead); 
   }
 
   h->Draw();
@@ -191,7 +191,7 @@ int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
     int bin = h->GetXaxis()->FindBin(xp);
     double yp = h->GetBinContent(bin);
     f->SetParameters(yp, xp, 2.);
-    h->Fit(f, "Q"); 
+    h->Fit(f, "Q+"); 
     double peak = h->GetFunction(name.c_str())->GetParameter(1); 
     double sigma = h->GetFunction(name.c_str())->GetParameter(2); 
     if (0 == p) {
