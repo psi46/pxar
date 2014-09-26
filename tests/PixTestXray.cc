@@ -474,7 +474,7 @@ void PixTestXray::doRateScan() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, 3); 
+  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, 9); 
 
   fHits[0]->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
