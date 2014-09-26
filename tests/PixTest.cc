@@ -322,7 +322,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, int ntrig, uint16_t flag)
 
 // ----------------------------------------------------------------------
 vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t dachi, int ntrig, uint16_t flag) {
-
+  // use at your own risk; pxarCore::getThresholdMap may or may not work as intended
   vector<TH1*> resultMaps; 
 
   if (daclo > dachi) {
@@ -1219,7 +1219,9 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
       bool ok = threshold(h1); 
       if (!ok) {
-	//	LOG(logINFO) << "  failed fit for " << rmaps[i]->GetName() << ", adding to list of hists";
+	TH1D *h1c = (TH1D*)h1->Clone(Form("c%d_r%d_C%d", ic, ir, rocIds[iroc])); 
+	h1c->SetTitle(Form("problematic Scurve Thr (c%d_r%d_C%d), thr = %4.3f", ic, ir, rocIds[iroc], fThreshold));
+	fHistList.push_back(h1c); 
       }
       PixUtil::idx2rcr(i, roc, ic, ir);
       h2->SetBinContent(ic+1, ir+1, fThreshold); 
@@ -1247,26 +1249,35 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
     if (result & 0x1) {
       resultMaps.push_back(h2); 
       fHistList.push_back(h2); 
+    }
+    if (result & 0x2) {
       resultMaps.push_back(h3); 
       fHistList.push_back(h3); 
+    } 
+    if (result & 0x4) {
       resultMaps.push_back(h4); 
       fHistList.push_back(h4); 
     }
 
-    if (result & 0x2) {
-      TH1* d1 = distribution((TH2D*)h2, 256, 0., 256.); 
-      resultMaps.push_back(d1); 
-      fHistList.push_back(d1); 
-      TH1* d2 = distribution((TH2D*)h3, 100, 0., 6.); 
-      resultMaps.push_back(d2); 
-      fHistList.push_back(d2); 
-      TH1* d3 = distribution((TH2D*)h4, 256, 0., 256.); 
-      resultMaps.push_back(d3); 
-      fHistList.push_back(d3); 
+    if (result & 0x8) {
+      if (result & 0x1) {
+	TH1* d1 = distribution((TH2D*)h2, 256, 0., 256.); 
+	resultMaps.push_back(d1); 
+	fHistList.push_back(d1); 
+      }
+      if (result & 0x2) {
+	TH1* d2 = distribution((TH2D*)h3, 100, 0., 6.); 
+	resultMaps.push_back(d2); 
+	fHistList.push_back(d2); 
+      }
+      if (result & 0x4) {
+	TH1* d3 = distribution((TH2D*)h4, 256, 0., 256.); 
+	resultMaps.push_back(d3); 
+	fHistList.push_back(d3); 
+      }
     }
 
   }
-
 
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
 
