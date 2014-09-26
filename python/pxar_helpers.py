@@ -32,6 +32,16 @@ def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = t
         return __temp2
     return __temp1
 
+def print_data(fullOutput,data,stepsize=1):
+    for idac, dac in enumerate(data):
+        s = "DAC " + str(idac*stepsize) + ": "
+        if fullOutput:
+            for px in dac:
+                s += str(px)
+        else:
+            s += str(len(dac)) + " pixels"
+        print s
+
 def get_possible_filename_completions(text):
     head, tail = os.path.split(text.strip())
     if head == "": #no head
