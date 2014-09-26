@@ -7,6 +7,7 @@ ConfigParameters.cc
 PixSetup.cc
 PixTestParameters.cc
 rsstools.cc
+shist256.cc
 )
 
 # fill list of header files 
