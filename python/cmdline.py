@@ -462,6 +462,24 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all DACS
                 return dacdict.getAllROCNames()
 
+    @arity(2,2,[str, int])
+    def do_setSignalMode(self, signal, mode):
+        """setSignalMode [signal] [mode]: Set the DTB signal to given mode"""
+        self.api.setSignalMode(signal, mode)
+
+    def complete_setSignalMode(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [sig for sig in dacdict.getAllDTBNames()
+                        if sig.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_setSignalMode.__doc__, '']
+            else:
+                # return all signals
+                return dacdict.getAllDTBNames()
+
     @arity(2,2,[str, str])
     def do_SignalProbe(self, probe, name):
         """SignalProbe [probe] [name]: Switches DTB probe output [probe] to signal [name]"""
