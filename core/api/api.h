@@ -605,11 +605,13 @@ namespace pxar {
     void setClockStretch(uint8_t src, uint16_t delay, uint16_t width);
 
     /** Set Signal Mode.
-    Define any testboard signal (e.g. clk) to the state constant high, constant low, or normal oscillation.
-    signal: 0 (SIG_CLK), 1 (SIG_CTR), 2 (SIG_SDA) or 3 (SIG_TIN)
-    mode: 0 (normal), 1 (low) or 2 (high)
+	Define any testboard signal (e.g. clk) to the state constant high, constant low,
+	or normal oscillation.
+	signal: "clk", "ctr", "sda", or "tin"
+	mode: 0 (normal), 1 (low) or 2 (high)
      */
-    void setSignalMode(uint8_t signal, uint8_t mode);
+    void setSignalMode(std::string signal, uint8_t mode);
+
 
     // DAQ functions
 
