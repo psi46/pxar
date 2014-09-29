@@ -1,6 +1,7 @@
 #include <iostream>
 #include "PixSetup.hh"
 #include "log.h"
+#include <cstdlib>
 
 #include "rsstools.hh"
 #include "shist256.hh"
