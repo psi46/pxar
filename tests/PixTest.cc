@@ -151,9 +151,6 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 }
 
 // ----------------------------------------------------------------------
-// result & 0x1 == 1 -> return thr+sig+thn maps 
-// result & 0x2 == 2 -> return thr+sig+thn+dist (projections) of maps
-// result & 0x4 == 4 -> write to file: all pixel histograms with outlier threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result, int ihit, int flag) {
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -624,14 +621,12 @@ bool PixTest::threshold(TH1 *h) {
 
   if (fPIF->doNotFit()) {
     fThreshold  = f->GetParameter(0); 
-    //    cout << " nofit fThreshold = " << fThreshold << endl;
     fThresholdE = 0.3;
     fSigma      = 0.;
     fSigmaE     = 0.;
   } else {
     h->Fit(f, "qr", "", lo, hi); 
     fThreshold  = f->GetParameter(0); 
-    //    cout << " w/fit fThreshold = " << fThreshold << endl;
     fThresholdE = f->GetParError(0); 
     fSigma      = 1./(TMath::Sqrt(2.)/f->GetParameter(1)); 
     fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
@@ -984,7 +979,8 @@ vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double ns
       LOG(logDEBUG) << "minThr = " << minThr << " minThrN = " << minThrN << " -> result = " << result;
     } else {
       result = minThr; 
-      LOG(logDEBUG) << "minThr = " << minThr << " minThrLimit = " << minThrLimit << " -> result = " << result;
+      LOG(logDEBUG) << "minThr = " << minThr << " minThrLimit = " << minThrLimit  << " minThrNLimit = " << minThrNLimit 
+		    << " -> result = " << result << " -> " << static_cast<int>(result);
     }
     results.push_back(static_cast<int>(result)); 
   }
