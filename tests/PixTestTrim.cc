@@ -155,6 +155,7 @@ void PixTestTrim::trimTest() {
   
   TH2D* h2(0); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[iroc]) << " VthrComp = " << minVthrComp[iroc]; 
     fApi->setDAC("VthrComp", static_cast<uint8_t>(minVthrComp[iroc]), rocIds[iroc]); 
     rocVthrComp.insert(make_pair(rocIds[iroc], minVthrComp[iroc])); 
   }
