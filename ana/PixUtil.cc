@@ -54,6 +54,8 @@ double PixUtil::dBinomial(int in, int iN) {
 
 // ----------------------------------------------------------------------
 int PixUtil::rcr2idx(int iroc, int icol, int irow) {
+  if (irow < 0 || irow > 79) return -1; 
+  if (icol < 0 || icol > 51) return -1; 
   return iroc*80*52 + icol*80 + irow;
 }
 
