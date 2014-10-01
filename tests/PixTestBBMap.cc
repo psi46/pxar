@@ -137,7 +137,7 @@ void PixTestBBMap::doTest() {
   PixTest::update(); 
   
   LOG(logINFO) << "PixTestBBMap::doTest() done"
-	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
+	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
 
