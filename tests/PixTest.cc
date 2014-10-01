@@ -126,6 +126,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   int cnt(0); 
   bool done(false);
   while (!done) {
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
@@ -133,7 +134,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
     } catch(pxarException &e) {
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
 
   int val(0); 
@@ -165,12 +166,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
   shist256 *ph;
 
-  int idx(0), roc, col, row; 
+  int idx(0);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     for (unsigned int ic = 0; ic < 52; ++ic) {
       for (unsigned int ir = 0; ir < 80; ++ir) {
 	idx = PixUtil::rcr2idx(iroc, ic, ir); 
-	PixUtil::idx2rcr(idx, roc, col, row); 
 	ph = pshistBlock + idx;
 	maps.push_back(ph); 
       }
@@ -198,19 +198,16 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getPulseheightMap(FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
-    } catch(DataMissingEvent &e) {
-      ++cnt;
-      fNDaqErrors = 666666;
-      if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
@@ -257,14 +254,11 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
-    } catch(DataMissingEvent &e) {
-      ++cnt;
-      fNDaqErrors = 666666;
-      if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
       ++cnt;
@@ -870,6 +864,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
@@ -878,7 +873,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
       fNDaqErrors = 666667;
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
 
 
@@ -1107,7 +1102,6 @@ void PixTest::print(string what, TLogLevel log) {
 
 // ----------------------------------------------------------------------
 void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int flag) {
-  //  uint16_t FLAGS = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   uint16_t FLAGS = flag | FLAG_FORCE_MASKED;
 
   fNtrig = ntrig; 
@@ -1156,7 +1150,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       }
       val =  results[idac].second[ipix].value();
       idx = PixUtil::rcr2idx(getIdxFromId(iroc), ic, ir);
-      maps[idx]->fill(dac, val);
+      if (idx > -1) maps[idx]->fill(dac, val);
     }
   }
   
@@ -1435,19 +1429,16 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
-    } catch(DataMissingEvent &e) {
-      ++cnt;
-      fNDaqErrors = 666666;
-      if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
   LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
 
