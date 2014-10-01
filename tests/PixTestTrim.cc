@@ -362,7 +362,7 @@ void PixTestTrim::trimTest() {
   //  vector<TH1*> thro = mapsWithString(thr2, "thr_");
   double maxthr = getMaximumThreshold(thr2);
   double minthr = getMinimumThreshold(thr2);
-  print(Form("TrimThr2 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimStepCorr4 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr2a = trimStep("trimStepCorr4", correction, thr2, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -374,7 +374,7 @@ void PixTestTrim::trimTest() {
   //  thro = mapsWithString(thr3, "thr_");
   maxthr = getMaximumThreshold(thr2a);
   minthr = getMinimumThreshold(thr2a);
-  print(Form("TrimStepCorr4 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimStepCorr2 extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr3a = trimStep("trimStepCorr2", correction, thr2a, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -385,7 +385,7 @@ void PixTestTrim::trimTest() {
   //  thro = mapsWithString(thr4, "thr_");
   maxthr = getMaximumThreshold(thr3a);
   minthr = getMinimumThreshold(thr3a);
-  print(Form("TrimStepCorr2 extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimStepCorr1a extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr4a = trimStep("trimStepCorr1a", correction, thr3a, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -396,7 +396,7 @@ void PixTestTrim::trimTest() {
   //  thro = mapsWithString(thr5, "thr_");
   maxthr = getMaximumThreshold(thr4a);
   minthr = getMinimumThreshold(thr4a);
-  print(Form("TrimStepCorr1a extremal thresholds: %f .. %f", minthr,  maxthr));
+  print(Form("TrimStepCorr1b extremal thresholds: %f .. %f", minthr,  maxthr));
   if (maxthr < 245) maxthr += 10; 
   if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr5a = trimStep("trimStepCorr1b", correction, thr4a, static_cast<int>(minthr), static_cast<int>(maxthr));
@@ -419,6 +419,7 @@ void PixTestTrim::trimTest() {
     fHistList.push_back(d1); 
   }
 
+  print(Form("TrimThrFinal extremal thresholds: %d .. %d", fParVcal-20,  fParVcal+20));
   vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", fParNtrig, fParVcal-20, fParVcal+20, 9); 
   string trimMeanString, trimRmsString; 
   for (unsigned int i = 0; i < thrF.size(); ++i) {
