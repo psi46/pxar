@@ -51,3 +51,17 @@ double PixUtil::dBinomial(int in, int iN) {
   if (n == 0) return 0.3/TMath::Sqrt(N);
   return TMath::Sqrt(TMath::Abs(w*(1-w)/N));
 }
+
+// ----------------------------------------------------------------------
+int PixUtil::rcr2idx(int iroc, int icol, int irow) {
+  return iroc*80*52 + icol*80 + irow;
+}
+
+
+// ----------------------------------------------------------------------
+void PixUtil::idx2rcr(int idx, int &iroc, int &icol, int &irow) {
+  iroc = idx/4160;
+  int r = idx - iroc*4160;
+  icol = r/80;
+  irow = r%80;
+}

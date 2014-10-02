@@ -32,6 +32,7 @@ typedef char int8_t;
 #include "PixInitFunc.hh"
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
+#include "shist256.hh"
 
 typedef struct { 
   uint16_t dac;
@@ -105,9 +106,9 @@ public:
   /// work-around to cope with suboptimal pxar/core
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
   /// kind of another work-around (splitting the range, adjusting ntrig, etc)
-  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag = 0);
+  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int flag = 0);
   /// do the scurve analysis
-  void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  void scurveAna(std::string dac, std::string name, std::vector<shist256*> maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
   /// returns TH2D's with pulseheight maps
@@ -115,11 +116,15 @@ public:
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
-  /// result controls the amount of information (histograms) returned
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
   /// flag allows to pass in other flags
+  /// result controls the amount of information (histograms) returned:
+  /// result & 1: thr        maps
+  /// result & 2: sig        maps
+  /// result & 4: noise edge maps
+  /// result & 8: also dump distributions for those maps enabled with 1,2, or 3
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
-			       int result = 1, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
+			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -151,7 +156,7 @@ public:
   virtual void sparseRoc(int npix = 8);
 
   /// creates a 1D distribution of a map
-  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax, bool zeroSuppressed = false); 
+  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
   /// fit an s-curve to a distribution. Fills fThreshold, fThresholdE, fSigma, fSigmaE
   bool threshold(TH1 *); 
   /// find first bin above 50% level. Fills fThreshold, fThresholdE, fSigma, fSigmaE

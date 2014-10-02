@@ -19,8 +19,8 @@ cdef class Pixel:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "ROC " + str(self.roc())
-        s += " [" + str(self.column()) + "," + str(self.row()) + "," + str(self.value()) + "] "
+        s = "ROC " + str(self.roc)
+        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.value) + "] "
         return s
     cdef fill(self, pixel p):
         self.thisptr.setRoc(p.roc())
