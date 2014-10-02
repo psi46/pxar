@@ -86,7 +86,8 @@ void PixTest::bookTree() {
     fTreeEvent.proc[ipix] = 0; 
     fTreeEvent.pcol[ipix] = 0; 
     fTreeEvent.prow[ipix] = 0; 
-    fTreeEvent.pval[ipix] = 0; 
+    fTreeEvent.pval[ipix] = 0.; 
+    fTreeEvent.pq[ipix]   = 0.; 
   }
 
   if (0 == fTree) {
@@ -98,7 +99,8 @@ void PixTest::bookTree() {
     fTree->Branch("proc", fTreeEvent.proc, "proc[npix]/b");
     fTree->Branch("pcol", fTreeEvent.pcol, "pcol[npix]/b");
     fTree->Branch("prow", fTreeEvent.prow, "prow[npix]/b");
-    fTree->Branch("pval", fTreeEvent.pval, "pval[npix]/b");
+    fTree->Branch("pval", fTreeEvent.pval, "pval[npix]/D");
+    fTree->Branch("pq",   fTreeEvent.pq,   "pq[npix]/D");
   }
 }
 
