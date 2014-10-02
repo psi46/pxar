@@ -141,7 +141,7 @@ void PixTestGainPedestal::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::measure() {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   cacheDacs();
@@ -195,7 +195,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 
@@ -219,7 +219,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 

@@ -668,10 +668,10 @@ void PixTestXray::processData(uint16_t numevents) {
       idx = getIdxFromId(it->pixels[ipix].roc());
 
       if (fPhCalOK) {
-	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), 
-					      it->pixels[ipix].column(), 
-					      it->pixels[ipix].row(), 
-					      it->pixels[ipix].value()));
+	q = fPhCal.vcal(it->pixels[ipix].roc(), 
+			it->pixels[ipix].column(), 
+			it->pixels[ipix].row(), 
+			it->pixels[ipix].value());
       } else {
 	q = 0;
       }

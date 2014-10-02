@@ -86,7 +86,8 @@ void PixTest::bookTree() {
     fTreeEvent.proc[ipix] = 0; 
     fTreeEvent.pcol[ipix] = 0; 
     fTreeEvent.prow[ipix] = 0; 
-    fTreeEvent.pval[ipix] = 0; 
+    fTreeEvent.pval[ipix] = 0.; 
+    fTreeEvent.pq[ipix]   = 0.; 
   }
 
   if (0 == fTree) {
@@ -98,7 +99,8 @@ void PixTest::bookTree() {
     fTree->Branch("proc", fTreeEvent.proc, "proc[npix]/b");
     fTree->Branch("pcol", fTreeEvent.pcol, "pcol[npix]/b");
     fTree->Branch("prow", fTreeEvent.prow, "prow[npix]/b");
-    fTree->Branch("pval", fTreeEvent.pval, "pval[npix]/b");
+    fTree->Branch("pval", fTreeEvent.pval, "pval[npix]/D");
+    fTree->Branch("pq",   fTreeEvent.pq,   "pq[npix]/D");
   }
 }
 
@@ -126,6 +128,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   int cnt(0); 
   bool done(false);
   while (!done) {
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
@@ -133,7 +136,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
     } catch(pxarException &e) {
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
 
   int val(0); 
@@ -151,9 +154,6 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 }
 
 // ----------------------------------------------------------------------
-// result & 0x1 == 1 -> return thr+sig+thn maps 
-// result & 0x2 == 2 -> return thr+sig+thn+dist (projections) of maps
-// result & 0x4 == 4 -> write to file: all pixel histograms with outlier threshold/sigma
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result, int ihit, int flag) {
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -168,12 +168,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
   shist256 *ph;
 
-  int idx(0), roc, col, row; 
+  int idx(0);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     for (unsigned int ic = 0; ic < 52; ++ic) {
       for (unsigned int ir = 0; ir < 80; ++ir) {
 	idx = PixUtil::rcr2idx(iroc, ic, ir); 
-	PixUtil::idx2rcr(idx, roc, col, row); 
 	ph = pshistBlock + idx;
 	maps.push_back(ph); 
       }
@@ -201,19 +200,16 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getPulseheightMap(FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
-    } catch(DataMissingEvent &e) {
-      ++cnt;
-      fNDaqErrors = 666666;
-      if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
   LOG(logDEBUG) << " eff result size = " << results.size(); 
 
@@ -260,14 +256,11 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
-    } catch(DataMissingEvent &e) {
-      ++cnt;
-      fNDaqErrors = 666666;
-      if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
       ++cnt;
@@ -624,14 +617,12 @@ bool PixTest::threshold(TH1 *h) {
 
   if (fPIF->doNotFit()) {
     fThreshold  = f->GetParameter(0); 
-    //    cout << " nofit fThreshold = " << fThreshold << endl;
     fThresholdE = 0.3;
     fSigma      = 0.;
     fSigmaE     = 0.;
   } else {
     h->Fit(f, "qr", "", lo, hi); 
     fThreshold  = f->GetParameter(0); 
-    //    cout << " w/fit fThreshold = " << fThreshold << endl;
     fThresholdE = f->GetParError(0); 
     fSigma      = 1./(TMath::Sqrt(2.)/f->GetParameter(1)); 
     fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
@@ -875,6 +866,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
@@ -883,7 +875,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
       fNDaqErrors = 666667;
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
 
 
@@ -984,7 +976,8 @@ vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double ns
       LOG(logDEBUG) << "minThr = " << minThr << " minThrN = " << minThrN << " -> result = " << result;
     } else {
       result = minThr; 
-      LOG(logDEBUG) << "minThr = " << minThr << " minThrLimit = " << minThrLimit << " -> result = " << result;
+      LOG(logDEBUG) << "minThr = " << minThr << " minThrLimit = " << minThrLimit  << " minThrNLimit = " << minThrNLimit 
+		    << " -> result = " << result << " -> " << static_cast<int>(result);
     }
     results.push_back(static_cast<int>(result)); 
   }
@@ -1111,7 +1104,6 @@ void PixTest::print(string what, TLogLevel log) {
 
 // ----------------------------------------------------------------------
 void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int flag) {
-  //  uint16_t FLAGS = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   uint16_t FLAGS = flag | FLAG_FORCE_MASKED;
 
   fNtrig = ntrig; 
@@ -1160,7 +1152,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       }
       val =  results[idac].second[ipix].value();
       idx = PixUtil::rcr2idx(getIdxFromId(iroc), ic, ir);
-      maps[idx]->fill(dac, val);
+      if (idx > -1) maps[idx]->fill(dac, val);
     }
   }
   
@@ -1207,7 +1199,7 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
     for (unsigned int i = iroc*4160; i < (iroc+1)*4160; ++i) {
       if (maps[i]->getSumOfWeights() < 1) {
-	OutputFile << empty << endl;
+	if (dumpFile) OutputFile << empty << endl;
 	continue;
       }
       
@@ -1218,7 +1210,7 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
       }
 
       bool ok = threshold(h1); 
-      if (!ok) {
+      if (result&0x10 && !ok) {
 	TH1D *h1c = (TH1D*)h1->Clone(Form("c%d_r%d_C%d", ic, ir, rocIds[iroc])); 
 	h1c->SetTitle(Form("problematic Scurve Thr (c%d_r%d_C%d), thr = %4.3f", ic, ir, rocIds[iroc], fThreshold));
 	fHistList.push_back(h1c); 
@@ -1439,19 +1431,16 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
   int cnt(0); 
   bool done = false;
   while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
     try {
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       fNDaqErrors = fApi->daqGetNDecoderErrors();
       done = true; 
-    } catch(DataMissingEvent &e) {
-      ++cnt;
-      fNDaqErrors = 666666;
-      if (e.numberMissing > 10) done = true; 
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
       ++cnt;
     }
-    done = (cnt>5) || done;
+    done = (cnt>2) || done;
   }
   LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
 

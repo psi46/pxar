@@ -137,7 +137,7 @@ void PixTestBBMap::doTest() {
   PixTest::update(); 
   
   LOG(logINFO) << "PixTestBBMap::doTest() done"
-	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
+	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
 
@@ -177,13 +177,14 @@ int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
 
   Float_t *xpeaks = s.GetPositionX();
   string name; 
-  double lcuts[2]; lcuts[0] = lcuts[1] = 255.;
+  double lcuts[3]; lcuts[0] = lcuts[1] = lcuts[2] = 255.;
   TF1 *f(0); 
+  double peak, sigma;
+  int fittedPeaks(0); 
   for (int p = 0; p < npeaks; ++p) {
     double xp = xpeaks[p];
     if (p > 1) continue;
     if (xp > 200) {
-      LOG(logDEBUG) << "do not fit peak at " << xp;
       continue;
     }
     name = Form("gauss_%d", p); 
@@ -192,31 +193,54 @@ int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
     double yp = h->GetBinContent(bin);
     f->SetParameters(yp, xp, 2.);
     h->Fit(f, "Q+"); 
-    double peak = h->GetFunction(name.c_str())->GetParameter(1); 
-    double sigma = h->GetFunction(name.c_str())->GetParameter(2); 
+    ++fittedPeaks;
+    peak = h->GetFunction(name.c_str())->GetParameter(1); 
+    sigma = h->GetFunction(name.c_str())->GetParameter(2); 
     if (0 == p) {
       lcuts[0] = peak + 3*sigma; 
-      lcuts[1] = peak + 5*sigma; // in case there is no second peak, put here 5 sigma position
+      if (h->Integral(h->FindBin(peak + 10.*sigma), 250) > 10.) {
+	lcuts[1] = peak + 5*sigma;
+      } else {
+	lcuts[1] = peak + 10*sigma;
+      }
     } else {
       lcuts[1] = peak - 3*sigma; 
+      lcuts[2] = peak - sigma; 
     }
     delete f;
   }
   
   int startbin = (int)(0.5*(lcuts[0] + lcuts[1])); 
   int endbin = (int)(lcuts[1]); 
+  if (endbin <= startbin) {
+    endbin = (int)(lcuts[2]); 
+    if (endbin < startbin) {
+      endbin = 255.;
+    }
+  }
+
   int minbin(0); 
   double minval(999.); 
-
-  LOG(logDEBUG) << "cuts: " << lcuts[0]  << " .. " << lcuts[1] 
-		<< " startbin = " << startbin << " endbin = " << endbin;
-  for (int i = startbin; i < endbin; ++i) {
+  
+  for (int i = startbin; i <= endbin; ++i) {
     if (h->GetBinContent(i) < minval) {
-      minval = h->GetBinContent(i); 
-      minbin = i; 
+      if (1 == fittedPeaks) {
+	if (0 == h->Integral(i, i+4)) {
+	  minval = h->GetBinContent(i); 
+	  minbin = i; 
+	} else {
+	  minbin = endbin;
+	}
+      } else {
+	minval = h->GetBinContent(i); 
+	minbin = i; 
+      }
     }
   }
   
-  LOG(logDEBUG) << "cut for dead bump bonds: " << minbin << " (obtained for minval = " << minval << ")";
-  return minbin; 
+  LOG(logDEBUG) << "cut for dead bump bonds: " << minbin << " (obtained for minval = " << minval << ")" 
+		<< " start: " << startbin << " .. " << endbin 
+		<< " last peak: " << peak << " last sigma: " << sigma
+		<< " lcuts[0] = " << lcuts[0] << " lcuts[1] = " << lcuts[1];
+  return minbin+1; 
 }

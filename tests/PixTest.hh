@@ -39,12 +39,12 @@ typedef struct {
   uint16_t header; 
   uint16_t trailer; 
   uint16_t numDecoderErrors;
-  uint8_t npix;
-  uint8_t proc[2000];
-  uint8_t pcol[2000];
-  uint8_t prow[2000];
-  double pval[2000];
-  uint16_t pq[2000];
+  uint8_t  npix;
+  uint8_t  proc[2000];
+  uint8_t  pcol[2000];
+  uint8_t  prow[2000];
+  double   pval[2000];
+  double   pq[2000];
 } TreeEvent;
 
 
@@ -119,10 +119,11 @@ public:
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
   /// flag allows to pass in other flags
   /// result controls the amount of information (histograms) returned:
-  /// result & 1: thr        maps
-  /// result & 2: sig        maps
-  /// result & 4: noise edge maps
-  /// result & 8: also dump distributions for those maps enabled with 1,2, or 3
+  /// result & 0x1: thr        maps
+  /// result & 0x2: sig        maps
+  /// result & 0x4: noise edge maps
+  /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 3
+  /// result &0x10: dump 'problematic' threshold histogram fits
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
 			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
