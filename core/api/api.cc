@@ -1605,6 +1605,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
 std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
+  //Vector of pixels for which a threshold has already been found
+  std::vector<pixel> found;
 
   // Threshold is the the given efficiency level "thresholdlevel"
   // Using ceiling function to take higher threshold when in doubt.
@@ -1632,10 +1634,17 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
     // For every DAC value, loop over all pixels:
     for(std::vector<pixel>::iterator pixit = it->second.begin(); pixit != it->second.end(); ++pixit) {
-      // Check if we have that particular pixel already in:
+      // Check if for this pixel a threshold has been found already and we can skip the rest:
+      std::vector<pixel>::iterator px_found = std::find_if(found.begin(),
+							   found.end(),
+							   findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+      if(px_found != found.end()) continue;
+
+      // Check if we have that particular pixel already in the result vector:
       std::vector<pixel>::iterator px = std::find_if(result.begin(),
 						     result.end(),
 						     findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+  
       // Pixel is known:
       if(px != result.end()) {
 	// Calculate efficiency deltas and slope:
@@ -1643,8 +1652,10 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 	uint8_t delta_new = abs(pixit->value() - threshold);
 	bool positive_slope = (pixit->value()-oldvalue[*px] > 0 ? true : false);
 	// Check which value is closer to the threshold:
-	if(!positive_slope) continue; 
-	if(!(delta_new < delta_old)) continue; 
+	if(!positive_slope || !(delta_new < delta_old)) {        
+	  found.push_back(*pixit);    
+	  continue; 
+	}
 
 	// Update the DAC threshold value for the pixel:
 	px->setValue(it->first);
@@ -1653,6 +1664,8 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       }
       // Pixel is new, just adding it:
       else {
+        // If the pixel is fully efficient at the first DAC value and we are looking for rising edge, the threshold is 0
+	if(pixit->value() == nTriggers && (flags&FLAG_RISING_EDGE) != 0) { found.push_back(*pixit); }
 	// Store the pixel with original efficiency
 	oldvalue.insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
@@ -2026,6 +2039,17 @@ bool pxarCore::setExternalClock(bool enable) {
     _hal->SetClockSource(CLK_SRC_INT);
     return true;
   }
+}
+
+void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
+ 
+  uint8_t sigRegister, value = 0;
+  if(!verifyRegister(signal, sigRegister, value, DTB_REG)) return;
+  
+  LOG(logDEBUGAPI) << "Setting signal " << signal << " (" 
+		   << static_cast<int>(sigRegister) << ")  to mode "
+		   << static_cast<int>(mode) << ".";
+  _hal->SigSetMode(sigRegister, mode);
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)

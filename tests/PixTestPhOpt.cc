@@ -249,21 +249,16 @@ void PixTestPhOpt::scan(string name) {
       bool done = false;
       int cnt(0); 
       while (!done) {
+	LOG(logDEBUG) << "      attempt #" << cnt;
 	try{
 	  rresults = fApi->getPulseheightVsDACDAC("phoffset", 0, 255, "phscale", 0, 255, FLAGS, fParNtrig);
 	  fNDaqErrors = fApi->daqGetNDecoderErrors();
 	  done = true;
-	} catch(DataMissingEvent &e){
-	  LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-	  fNDaqErrors = 666666;
-	  ++cnt;
-	  if (e.numberMissing > 10) done = true; 
 	} catch(pxarException &e) {
-	  LOG(logCRITICAL) << "pXar exception: "<< e.what(); 
 	  fNDaqErrors = 666667;
 	  ++cnt;
 	}
-	done = (cnt>5) || done;
+	done = (cnt>2) || done;
       }
 
       if (fNDaqErrors > 0) problems = fNDaqErrors; 

@@ -20,7 +20,6 @@ typedef unsigned char uint8_t;
 #include <string>
 #include <map>
 #include "constants.h"
-#include "api.h"
 #include <iostream>
 
 #define DTB_REG 0xFF

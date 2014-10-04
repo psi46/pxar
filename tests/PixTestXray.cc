@@ -474,7 +474,7 @@ void PixTestXray::doRateScan() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, 3); 
+  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, 9); 
 
   fHits[0]->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
@@ -668,10 +668,10 @@ void PixTestXray::processData(uint16_t numevents) {
       idx = getIdxFromId(it->pixels[ipix].roc());
 
       if (fPhCalOK) {
-	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), 
-					      it->pixels[ipix].column(), 
-					      it->pixels[ipix].row(), 
-					      it->pixels[ipix].value()));
+	q = fPhCal.vcal(it->pixels[ipix].roc(), 
+			it->pixels[ipix].column(), 
+			it->pixels[ipix].row(), 
+			it->pixels[ipix].value());
       } else {
 	q = 0;
       }

@@ -4,6 +4,7 @@
 
 #include <TStopwatch.h>
 #include <TStyle.h>
+#include <TMarker.h>
 
 #include "PixTestPretest.hh"
 #include "log.h"
@@ -348,7 +349,6 @@ void PixTestPretest::setVana() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompCalDel() {
-  //  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED;
   uint16_t FLAGS = FLAG_FORCE_MASKED;
 
   cacheDacs();
@@ -428,7 +428,6 @@ void PixTestPretest::setVthrCompCalDel() {
       maps[wpix[ipix].roc()]->Fill(idac1, idac2, wpix[ipix].value()); 
     }
   }
-
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {  
     h2 = maps[rocIds[iroc]];
     TH1D *hy = h2->ProjectionY("_py", 5, h2->GetNbinsX()); 
@@ -449,7 +448,14 @@ void PixTestPretest::setVthrCompCalDel() {
     double cdLast  = h0->GetBinLowEdge(h0->FindLastBinAbove(0.5*cdMax)); 
     calDelE[iroc] = static_cast<int>(cdLast - cdFirst);
     calDel[iroc] = static_cast<int>(cdFirst + fParFracCalDel*calDelE[iroc]);
-    h2->SetBinContent(calDel[iroc]+1, vthrComp[iroc]+1, -1.);
+    TMarker *pm = new TMarker(calDel[iroc], vthrComp[iroc], 21); 
+    pm->SetMarkerColor(kWhite); 
+    pm->SetMarkerSize(2); 
+    h2->GetListOfFunctions()->Add(pm); 
+    pm = new TMarker(calDel[iroc], vthrComp[iroc], 7); 
+    pm->SetMarkerColor(kBlack); 
+    pm->SetMarkerSize(0.2); 
+    h2->GetListOfFunctions()->Add(pm); 
     delete h0;
 
     h1->SetBinContent(rocIds[iroc]+1, calDel[iroc]); 
@@ -471,10 +477,14 @@ void PixTestPretest::setVthrCompCalDel() {
   restoreDacs();
   string caldelString(""), vthrcompString(""); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    fApi->setDAC("CalDel", calDel[iroc], rocIds[iroc]);
-    caldelString += Form(" %4d", calDel[iroc]); 
+    if (calDel[iroc] > 0) {
+      fApi->setDAC("CalDel", calDel[iroc], rocIds[iroc]);
+      caldelString += Form("  %4d", calDel[iroc]); 
+    } else {
+      caldelString += Form(" _%4d", fApi->_dut->getDAC(rocIds[iroc], "caldel")); 
+    }
     fApi->setDAC("VthrComp", vthrComp[iroc], rocIds[iroc]);
-    vthrcompString += Form(" %4d", vthrComp[iroc]); 
+    vthrcompString += Form("  %4d", vthrComp[iroc]); 
   }
 
   // -- summary printout

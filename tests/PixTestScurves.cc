@@ -10,7 +10,7 @@
 #include "PixTestScurves.hh"
 #include "PixUtil.hh"
 #include "log.h"
-
+#include "rsstools.hh"
 
 using namespace std;
 using namespace pxar;
@@ -158,6 +158,7 @@ void PixTestScurves::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestScurves::scurves() {
+  fDirectory->cd();
   cacheDacs();
 
   string command(fParDac);
@@ -171,7 +172,7 @@ void PixTestScurves::scurves() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int results(7); 
+  int results(15); 
   int FLAG = FLAG_FORCE_MASKED;
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1, FLAG); 
   TH1 *h1 = (*fDisplayedHist); 
