@@ -1181,6 +1181,7 @@ uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
     LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
   _hal->daqTriggerLoop(period);
+  LOG(logDEBUGAPI) << "Loop period set to " << period << " clk";
   return period;
 }
 
