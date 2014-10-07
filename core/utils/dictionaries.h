@@ -122,6 +122,9 @@ namespace pxar {
       _registers["triggerdelay"]  = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
+      _registers["tout"]          = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
+      _registers["rda"]           = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
+
 
       //------- TBM registers -----------------------------
       _registers["counters"]      = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG,false);

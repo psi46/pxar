@@ -143,9 +143,9 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
-    else if( (sigIt->first == SIG_TOUT) || (sigIt->first == SIG_RDA) ){
+    else if(sigIt->first == SIG_RDA_TOUT) {
       LOG(logDEBUGHAL) << "set TOUT / RDA delay to value " << static_cast<int>(sigIt->second);
-      _testboard-> Sig_SetRdaToutDelay(sigIt->second);
+      _testboard->Sig_SetRdaToutDelay(sigIt->second);
     }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
