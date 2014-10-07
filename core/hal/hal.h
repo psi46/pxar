@@ -82,6 +82,15 @@ namespace pxar {
     /** select signal mode
      */
     void SigSetMode(uint8_t signal, uint8_t mode);
+    
+    
+    /** select termination for RDA/TOUT to LCDS (for modules)
+     */
+    void SigSetLCDS();
+
+    /** select termination for RDA/TOUT to LVDS (for single ROCs)
+     */
+    void SigSetLVDS();
 
     /** Set HubID
      */

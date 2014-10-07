@@ -143,6 +143,10 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
+    else if( (sigIt->first == SIG_TOUT) || (sigIt->first == SIG_RDA) ){
+      LOG(logDEBUGHAL) << "set TOUT / RDA delay to value " << static_cast<int>(sigIt->second);
+      _testboard-> Sig_SetRdaToutDelay(sigIt->second);
+    }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
@@ -1454,6 +1458,20 @@ void hal::SigSetMode(uint8_t signal, uint8_t mode) {
     _testboard->Flush();
 }
 
+void hal::SigSetLCDS(){
+    _testboard->Sig_SetLCDS();
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
+
+void hal::SigSetLVDS(){
+    _testboard->Sig_SetLVDS();
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
+
+
+
 void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
@@ -1851,13 +1869,20 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
   _testboard->Flush();
   _testboard->Daq_Open(nSample, 0);
   _testboard->uDelay(10);
-  _testboard->Daq_Start(0);
-  _testboard->Pg_Single();
+  if( source == 1){
+    _testboard->Daq_Start(0);
+    _testboard->Pg_Single();
+  }else if (source==2){
+    _testboard->roc_SetDAC(250, 195);
+    _testboard->roc_SetDAC(250,  61);
+    _testboard->Daq_Start(0);
+    _testboard->roc_SetDAC(250, 195);
+    _testboard->roc_SetDAC(250,  61);
+  }
   _testboard->uDelay(1000);
   _testboard->Daq_Stop(0);
   _testboard->Daq_Read(data, nSample);
-  //_testboard->Daq_Select_ADC(10, 0, 1, 1);
-  //_testboard->Daq_DeselectAll();
+  _testboard->Daq_Close(0);
   _testboard->Flush();
 
   return data;
