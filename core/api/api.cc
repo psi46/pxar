@@ -207,6 +207,17 @@ bool pxarCore::initDUT(uint8_t hubid,
     _dut->tbm.push_back(newtbm);
   }
 
+  // Check if we have any TBM present to select termination for the DTB RDA/Tout input:
+  if(!_dut->tbm.empty()) {
+    // We have RDA input from a TBM, this needs LCDS termination:
+    _hal->SigSetLCDS();
+    LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LCDS.";
+  }
+  else {
+    // We expect the direct TokenOut signal from a ROC which needs LVDS termination:
+    _hal->SigSetLVDS();
+    LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LVDS.";
+  }
 
   // Initialize ROCs:
   size_t nROCs = 0;
