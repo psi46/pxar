@@ -79,6 +79,10 @@ namespace pxar {
      */
     void Poff();
 
+    /** select signal mode
+     */
+    void SigSetMode(uint8_t signal, uint8_t mode);
+
     /** Set HubID
      */
     void setHubId(uint8_t hubid) {hubId = hubid;}

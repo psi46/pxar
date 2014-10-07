@@ -139,11 +139,6 @@ void PixTestPhOptimization::doTest() {
     minpixel.setRow(randomPix.row());
     LOG(logDEBUG)<<"random pixel: "<<maxpixel<<", "<<minpixel<<"is not on the blacklist";
     //retrieving info from the vcal thr map for THIS random pixel
-    for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
-      if(thrit->column() == randomPix.column() && thrit->row() == randomPix.row()){
-	minthr=static_cast<int>(thrit->value());
-      }
-    }
   }
   else{
     LOG(logDEBUG)<<"**********Ph range will be optimised on the whole ROC***********";
@@ -152,6 +147,12 @@ void PixTestPhOptimization::doTest() {
     // getting pixel showing the largest vcal threshold (i.e., all other pixels are responding)
     GetMinPixel(minpixel, thrmap, badPixels);
   }
+  for(std::vector<pxar::pixel>::iterator thrit = thrmap.begin(); thrit != thrmap.end(); thrit++){
+    if(thrit->column() == minpixel.column() && thrit->row() == minpixel.row()){
+      minthr=static_cast<int>(thrit->value());
+    }
+  }
+
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
   fApi->_dut->testPixel(maxpixel.column(),maxpixel.row(),true);

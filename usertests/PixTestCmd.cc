@@ -873,7 +873,7 @@ void CmdProc::init()
     fTRC = 10;
     fTTK = 30;
     fBufsize = 10000;
-    fSeq = 0;  // pg sequence bits
+    fSeq = 7;  // pg sequence bits
     fPgRunning = false;
     macros["start"] = getWords("[roc * mask; roc * cald; reset tbm; seq 14]");
     macros["startroc"] = getWords("[mask; seq 15; arm 20 20; tct 106; vcal 200; adc]");
@@ -967,33 +967,38 @@ int CmdProc::adctest(const string signalName){
     uint8_t source = 1; // pg_sync
     uint8_t start  = 1;  // wait
     double scale=0.25;  // empirical for gain 1 ("+"-"-")
-    if ( (signalName=="sda") ){
+    if ( (signalName=="sda") || (signalName=="rda") ){
+        source = 2;        // trigger on sdata
+        start  = 7;
     }else{
-    //if ( (signalName == "sdata1") || (signalName == "sdata2")  || (signalName == "tout") ){
         vector< pair<string, uint8_t> > pgsetup;
+        // no trigger! Need the idle pattern for TBM output
+        // real readout is too fast. For single ROCs a token is needed.
         pgsetup.push_back( make_pair("resr", 20 ) );
-        pgsetup.push_back( make_pair("sync", 3) );
-        pgsetup.push_back( make_pair("trg", 16)); //trg+sync?
-        pgsetup.push_back( make_pair("tok", 0) ); 
+        pgsetup.push_back( make_pair("sync;tok", 0 ) ); 
         fApi->setPatternGenerator(pgsetup);
         gain = GAIN_1;
         source = 1; // sync
     }
     
-    uint16_t nSample = 50;
-    unsigned int nDly = 20;
+    uint16_t nSample = 1024;
+    unsigned int nDly = 20; // stepsize 1.25 ns
     vector<int> y(nDly * nSample);
     int ymin=0xffff;
     int ymax=-ymin;
-
     vector<pair<string,uint8_t> > sigdelays;
    
     for(unsigned int dly=0; dly<nDly; dly++){
+        
         sigdelays.clear();
-        sigdelays.push_back(std::make_pair("clk", dly));
-        sigdelays.push_back(std::make_pair("ctr", dly));
-        sigdelays.push_back(std::make_pair("sda", dly + 15));
-        sigdelays.push_back(std::make_pair("tin", dly + 5));
+        if(source==1){
+            sigdelays.push_back(std::make_pair("clk", dly));
+            sigdelays.push_back(std::make_pair("ctr", dly));
+            sigdelays.push_back(std::make_pair("sda", dly + 15));
+            sigdelays.push_back(std::make_pair("tin", dly + 5));
+        }else if(source==2){
+            sigdelays.push_back(std::make_pair("sda", dly ));
+        }
         fApi->setTestboardDelays(sigdelays);
             
         vector<uint16_t> data = fApi->daqADC(signalName, gain, nSample, source, start);
@@ -1010,6 +1015,7 @@ int CmdProc::adctest(const string signalName){
                 //cout << dly << " " << i << " " << raw << endl;
            }
        }
+
    }
 
     // restore delays, signals (modified by daqADC) and pg
@@ -1020,8 +1026,12 @@ int CmdProc::adctest(const string signalName){
   
      pg_restore();
      
+     
     if (ymin<ymax){
-        out << signalName << "  low level=" << ymin*scale << " mV high level = " << ymax*scale << " mV  (differential)\n";
+        out << signalName 
+            << "  low = " <<  fixed << setprecision(1) << ymin*scale << " mV"
+            << "  high= " <<  fixed << setprecision(1) << ymax*scale << " mV "
+            << "  amplitude = "<<  fixed << setprecision(1) << (ymax-ymin)*scale <<  " mVpp  (differential)\n";
     }else{
         out << "no signal found\n";
     }
@@ -1059,7 +1069,75 @@ int CmdProc::pixDecodeRaw(int raw){
     return error;
 }
 
+
+int CmdProc::readRocs(uint8_t  signal, double scale){
+    fApi->setDAC("readback", signal);
+    pg_sequence( 3 ); // cal+trig
+    fApi->daqStart(fBufsize, fPixelConfigNeeded);
+    fApi->daqTrigger(16, fBufsize);
+    fApi->daqGetRawEventBuffer();
+    fApi->daqTrigger(16, fBufsize);
+    std::vector<pxar::rawEvent> buf = fApi->daqGetRawEventBuffer();
+    fApi->daqStop(false);
+    if(buf.size()<16){
+        out << "only got " << buf.size() << " events instead of 16 !\n";
+        return 1;
+    }
+    
+    //size_t nRoc= fPixSetup->getConfigParameters()->getNrocs();
+    size_t nRoc = 0;
+    size_t nTBM = fApi->_dut->getNTbms();
+    
+    //vector<uint16_t> values(nRoc);
+    vector<uint16_t> values;
+    for(unsigned int i=0; i<buf.size(); i++){
+        unsigned int iroc=0;
+        for(unsigned int k=0; k<buf[i].data.size(); k++){
+            uint16_t w = buf[i].data[k];
+            if(    ( (nTBM == 0) && (k==0) ) 
+                || ( (nTBM > 0 ) && ((w & 0xf000)== 0x4000)) ){
+                uint8_t D = (w & 1);
+                uint8_t S = (w >>1) & 1;
+                if (iroc==values.size()) { values.push_back(0); }
+                uint16_t value = (values[iroc] << 1 ) + D;
+                if (S==1){
+                    value = (value >> (15-i));
+                }
+                values[iroc] = value;
+                iroc++;
+            }
+        }
+        if(iroc>nRoc) nRoc= iroc;
+    }
+    
+    for(uint i=0; i<nRoc; i++){
+        uint8_t rocid= (values[i] & 0xF000) >> 12;
+        uint8_t cmd = (values[i] & 0x0F00) >> 8;
+        uint8_t data = (values[i] & 0x00FF);
+        out << dec << i <<  "(" << (int)rocid << ")" << ": " << (int) data;
+        if(scale>0){
+            out << " ~ " << data*scale;
+        }
+        if (cmd==signal){
+            out << "\n";
+        }else{
+            out <<  "   readback inconsistent  " << (int)cmd << " <> " << signal << "\n";
+        }
+    }
+    
+    pg_restore();
+    return 0;
+}
+
 int CmdProc::rawDump(int level){
+    
+    // warn user when no data expected
+    if( (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
+        out << "The current sequence does not contain a trigger!\n";
+    }else if( (fApi->_dut->getNTbms()==0) && ((fSeq & 0x01 ) ==0 ) ){
+        out <<"The current sequence does not contain a token!\n";
+    }
+    
     pg_sequence( fSeq ); // set up the pattern generator
     bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
     if (! stat ){
@@ -1136,7 +1214,7 @@ int CmdProc::rawDump(int level){
             }
             
             
-            if (flag == 0){
+            if (flag == 0x0000){
                 int d1=buf[i++];
                 if(i>=buf.size()){
                     out << " unexpected end of data\n";
@@ -1149,6 +1227,10 @@ int CmdProc::rawDump(int level){
                     out << hex << setw(4)<< setfill('0')  << d2 << "     hit";
                     int raw = ((d1 &0x0fff) << 12) + (d2 & 0x0fff);
                     pixDecodeRaw(raw);
+                    if (roc==0) {
+                        out << "  Warning !! Never saw a ROC header.";
+                    }
+
                     out << "\n";
                 }else{
                     out << " unexpected flag \n";
@@ -1303,6 +1385,8 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("a1", s, fA_names, out ) ){ fApi->SignalProbe("A1",s); return 0;}
     if( kw.match("a2", s, fA_names, out ) ){ fApi->SignalProbe("A2",s); return 0;}
     if( kw.match("adc", s, fA_names, out ) ){ fApi->SignalProbe("adc",s); return 0;}  
+    if( kw.match("clock","external") ){ fApi->setExternalClock(true); return 0;}
+    if( kw.match("clock","internal") ){ fApi->setExternalClock(false); return 0;}    
     if( kw.match("seq", pattern)){ sequence(pattern); return 0;}
     if( kw.match("seq","t")){ sequence( 2 ); return 0; }
     if( kw.match("seq","ct")){ sequence( 6 ); return 0; }
@@ -1314,7 +1398,16 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("pg","loop") ){ return pg_loop();}
     if( kw.match("pg","stop") ){ return pg_stop();}
     //if( kw.match("res"){ int s0=fSeq; sequence( 8 ); pg_single(); sequence(s0);}
+    if( kw.match("sighi",s)){ fApi->setSignalMode(s,2); return 0;}
+    if( kw.match("siglo",s)){ fApi->setSignalMode(s,1); return 0;}
+    if( kw.match("signorm",s)){ fApi->setSignalMode(s,0); return 0;}
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;}  
+    if( kw.match("readrocs", value)){ return readRocs(value); }
+    if( kw.match("readback", "vd")) { return readRocs(8, 0.015);}
+    if( kw.match("readback", "va")) { return readRocs(9, 0.015);}
+    if( kw.match("readback", "vana")) { return readRocs(10, 0.0075);}
+    if( kw.match("readback", "vbg")) { return readRocs(11, 0.0075);}
+    if( kw.match("readback", "iana")){ return readRocs(12, 0.24); }
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("ttk", value)){ fTTK=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("trc", value)){ fTRC=value; if (fSeq>0){sequence(fSeq);} return 0;}
@@ -1479,6 +1572,12 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
             }
             out << endl;
         }
+        return true;
+    }
+    
+    if( keyword.match("help") ){
+        out << "Documentation can be found at ";
+        out << "http://cms.web.psi.ch/phase1/software/cmdline.html\n";
         return true;
     }
     

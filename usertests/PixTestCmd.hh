@@ -295,6 +295,7 @@ class CmdProc {
   int tbmset(int address, int value);
   int tbmset   (string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
+  int readRocs(uint8_t , double scale=0  );
   int rawDump(int level=0);
   int pixDecodeRaw(int);
   

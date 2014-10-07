@@ -363,6 +363,7 @@ namespace pxar {
       _signals["clk"]    = probeConfig(PROBE_CLK,PROBEA_CLK);
       _signals["sda"]    = probeConfig(PROBE_SDA,PROBEA_SDA);
       _signals["tout"]   = probeConfig(PROBE_TOUT,PROBEA_TOUT);
+      _signals["rda"]    = probeConfig(PROBE_TOUT,PROBEA_TOUT);
       _signals["off"]    = probeConfig(PROBE_OFF,PROBEA_OFF);
 
       // Purely digital signals:
