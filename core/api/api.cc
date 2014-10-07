@@ -490,6 +490,14 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
     
     ProbeDictionary * _dict = ProbeDictionary::getInstance();
     std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
+    //start temporary solution, eventually to be replaced by another 
+    // user callable api function
+    if(signalName=="rda"){
+        _hal->SigSetLCDS();
+    }else if(signalName=="tout"){
+        _hal->SigSetLVDS();
+    }
+    //end temporary solution
     uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
  
     data = _hal->daqADC(signal, gain, nSample, source, start);
@@ -2115,4 +2123,6 @@ bool pxarCore::daqStop(const bool init) {
 
   return true;
 }
+
+
 
