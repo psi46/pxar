@@ -1633,7 +1633,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacStep, dacMin, dacMax, nTriggers, flags, true);
 
   // Efficiency map:
-  std::map<pixel,uint8_t> oldvalue;  
+  std::map<pixel,uint8_t> oldvalue;
 
   // Then loop over all pixels and DAC settings, start from the back if we are looking for falling edge.
   // This ensures that we end up having the correct edge, even if the efficiency suddenly changes from 0 to max.
@@ -1677,7 +1677,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       // Pixel is new, just adding it:
       else {
         // If the pixel is fully efficient at the first DAC value and we are looking for rising edge, the threshold is 0
-	if(pixit->value() == nTriggers && (flags&FLAG_RISING_EDGE) != 0) { found.push_back(*pixit); }
+	if(pixit->value() >= threshold && (flags&FLAG_RISING_EDGE) != 0) { found.push_back(*pixit); }
 	// Store the pixel with original efficiency
 	oldvalue.insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
@@ -1709,7 +1709,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
   timer t;
 
   // First, pack the data as it would be a regular DacDac Scan:
-  //FIXME stepping size!
   std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,true);
 
   // Efficiency map:
