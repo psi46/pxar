@@ -190,18 +190,15 @@ namespace pxar {
 
     // Readback decoding:
     void evalReadback(uint8_t roc, uint16_t val);
-    unsigned int count[MOD_NUMROCS];
-    unsigned int shiftReg[MOD_NUMROCS];
-    unsigned int data[MOD_NUMROCS];
-    bool updated;
-    bool valid;
+    std::vector<uint16_t> count;
+    std::vector<uint16_t> shiftReg;
+    std::vector<std::vector<uint16_t> > readback;
 
-    Event* DecodeDeser160();
-    Event* DecodeDeser400();
   public:
   dtbEventDecoder() : decodingErrors(0), readback() {};
     void Clear() { decodingErrors = 0; readback.clear(); count.clear(); shiftReg.clear(); };
     uint32_t getErrorCount();
+    std::vector<std::vector<uint16_t> > getReadback();
   };
 }
 #endif
