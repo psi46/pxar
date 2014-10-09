@@ -443,6 +443,11 @@ namespace pxar {
     dtbEventSplitter splitter2;
     dtbEventSplitter splitter3;
 
+    dtbReadbackDecoder rbdec0;
+    dtbReadbackDecoder rbdec1;
+    dtbReadbackDecoder rbdec2;
+    dtbReadbackDecoder rbdec3;
+
     dtbEventDecoder decoder0;
     dtbEventDecoder decoder1;
     dtbEventDecoder decoder2;
