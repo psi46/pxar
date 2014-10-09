@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "datatypes.h"
+#include "constants.h"
 #include "rpc_calls.h"
 
 namespace pxar {
@@ -172,36 +173,6 @@ namespace pxar {
     dtbEventSplitter() {}
   };
 
-  // DTB data ROC readback extractor:
-  class dtbReadbackDecoder : public dataPipe<rawEvent*,rawEvent*> {
-
-    unsigned int count;
-    unsigned int shiftReg;
-    unsigned int data;
-    bool updated;
-    bool valid;
-
-    rawEvent* x;
-    rawEvent* Read() {
-      if(GetState()) return DecodeReadbackDeser400();
-      else return DecodeReadbackDeser160();
-    }
-    rawEvent* ReadLast() { return x; }
-    bool ReadState() { return GetState(); }
-    uint8_t ReadChannel() { return GetChannel(); }
-    uint8_t ReadDeviceType() { return GetDeviceType(); }
-
-    // the decoder routines:
-    rawEvent* DecodeReadbackDeser160();
-    rawEvent* DecodeReadbackDeser400();
-  public:
-  dtbReadbackDecoder() : count(0), shiftReg(0), data(0), updated(false), valid(false) {}
-    ~dtbReadbackDecoder() {}
-    bool IsUpdated() { return updated; }
-    bool IsValid() { return valid; }
-    unsigned int GetRdbData() { updated = false; return data; }
-  };
-
   // DTB data decoding class
   class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
     Event roc_Event;
@@ -213,6 +184,14 @@ namespace pxar {
     bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
+
+    // Readback decoding:
+    void evalReadback(uint8_t roc, uint16_t val);
+    unsigned int count[MOD_NUMROCS];
+    unsigned int shiftReg[MOD_NUMROCS];
+    unsigned int data[MOD_NUMROCS];
+    bool updated;
+    bool valid;
 
     Event* DecodeDeser160();
     Event* DecodeDeser400();

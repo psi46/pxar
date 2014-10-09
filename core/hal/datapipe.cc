@@ -105,30 +105,6 @@ namespace pxar {
     return &record;
   }
 
-  rawEvent* dtbReadbackDecoder::DecodeReadbackDeser160() {
-
-    x = Get();
-    unsigned int header = x->GetSize() ? (*x)[0] : 0;
-    if ((header & 0xffc) == 0x7f8) {
-	shiftReg <<= 1;	if (header & 1) shiftReg++;
-	count++;
-	if (header & 2) { // start marker
-	  if (count == 16) {
-	    data = shiftReg & 0xffff;
-	    updated = true;
-	    valid = true;
-	    LOG(logDEBUGPIPES) << "READBACK reg " << (data>>8) << ": " << (data&0x00ff)
-			       << " (0x" << std::hex << (data&0x00ff) << std::dec << ")";
-	  }
-	  count = 0;
-	}
-    }
-    else count = 0;
-    return x;
-  }
-
-  rawEvent* dtbReadbackDecoder::DecodeReadbackDeser400() {}
-
   Event* dtbEventDecoder::DecodeDeser400() {
 
     roc_Event.Clear();
@@ -168,6 +144,9 @@ namespace pxar {
 
       // Count ROC Headers up:
       roc_n++;
+
+      // Decode the readback bits in the ROC header:
+      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,v); }
 
       v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
       while ((v & 0xe000) <= 0x2000) { // R0 ... R1
@@ -232,6 +211,10 @@ namespace pxar {
     if (n > 0) {
       if (n > 1) roc_Event.pixels.reserve((n-1)/2);
       roc_Event.header = (*sample)[0] & 0x0fff;
+
+      // Decode the readback bits in the ROC header:
+      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(0,roc_Event.header); }
+
       unsigned int pos = 1;
       while (pos < n-1) {
 	uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
@@ -250,4 +233,24 @@ namespace pxar {
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
+
+  void dtbEventDecoder::evalReadback(uint8_t roc, uint16_t val) {
+    shiftReg[roc] <<= 1;
+    if(val&1) shiftReg[roc]++;
+    count[roc]++;
+    if(val&2) { // start marker
+      if (count[roc] == 16) {
+	data[roc] = shiftReg[roc];
+	updated = true;
+	valid = true;
+	LOG(logDEBUGAPI) << "Readback ROC " << static_cast<int>(roc) 
+			 << " reg " << ((data[roc]>>8)&0x00ff) << " (0x" << std::hex << ((data[roc]>>8)&0x00ff) << std::dec << "): " 
+			 << (data[roc]&0xff) << " (0x" << std::hex << (data[roc]&0xff) << std::dec << ")";
+      }
+      else { valid = false; }
+      count[roc] = 0;
+    }
+    else { updated = false; }
+  }
+
 }
