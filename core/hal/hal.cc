@@ -466,6 +466,10 @@ void hal::setTBvd(double VD) {
   _testboard->_SetVD(uint16_t(VD*1000));
 }
 
+void hal::setHubId(uint8_t hubid) {
+  LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
+  hubId = hubid;
+}
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {
 

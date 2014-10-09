@@ -94,7 +94,7 @@ namespace pxar {
 
     /** Set HubID
      */
-    void setHubId(uint8_t hubid) {hubId = hubid;}
+    void setHubId(uint8_t hubid);
 
     /** Set a DAC on a specific ROC with I2C address roci2c
      */
