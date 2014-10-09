@@ -105,6 +105,30 @@ namespace pxar {
     return &record;
   }
 
+  rawEvent* dtbReadbackDecoder::DecodeReadbackDeser160() {
+
+    x = Get();
+    unsigned int header = x->GetSize() ? (*x)[0] : 0;
+    if ((header & 0xffc) == 0x7f8) {
+	shiftReg <<= 1;	if (header & 1) shiftReg++;
+	count++;
+	if (header & 2) { // start marker
+	  if (count == 16) {
+	    data = shiftReg & 0xffff;
+	    updated = true;
+	    valid = true;
+	    LOG(logDEBUGPIPES) << "READBACK reg " << (data>>8) << ": " << (data&0x00ff)
+			       << " (0x" << std::hex << (data&0x00ff) << std::dec << ")";
+	  }
+	  count = 0;
+	}
+    }
+    else count = 0;
+    return x;
+  }
+
+  rawEvent* dtbReadbackDecoder::DecodeReadbackDeser400() {}
+
   Event* dtbEventDecoder::DecodeDeser400() {
 
     roc_Event.Clear();
