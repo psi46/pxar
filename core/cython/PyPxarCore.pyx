@@ -124,7 +124,6 @@ cdef class PxEvent:
     cdef fill(self, Event ev):
         self.thisptr.header = ev.header
         self.thisptr.trailer = ev.trailer
-        self.thisptr.numDecoderErrors = ev.numDecoderErrors
         for px in ev.pixels:
             self.thisptr.pixels.push_back(px)
     property pixels:
@@ -147,9 +146,6 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
-    property numDecoderErrors:
-        def __get__(self): return self.thisptr.numDecoderErrors
-        def __set__(self, errors): self.thisptr.numDecoderErrors = errors
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance

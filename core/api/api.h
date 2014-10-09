@@ -831,7 +831,7 @@ namespace pxar {
     /** Helper function to update the internaly cached number of decoder errors
      *  with the number found in the data sample passed to the function
      */
-    void getDecoderErrorCount(std::vector<Event*> &data);
+    void getDecoderErrorCount();
 
     /** Status of the DAQ
      */

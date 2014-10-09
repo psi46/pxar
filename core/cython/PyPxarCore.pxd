@@ -23,7 +23,6 @@ cdef extern from "api.h" namespace "pxar":
     cdef cppclass Event:
         uint16_t header
         uint16_t trailer
-        uint16_t numDecoderErrors
         vector[pixel] pixels
         Event()
 

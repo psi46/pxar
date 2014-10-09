@@ -3,7 +3,6 @@
 
 #include <stdexcept>
 #include "datatypes.h"
-#include "constants.h"
 #include "rpc_calls.h"
 
 namespace pxar {
@@ -185,6 +184,10 @@ namespace pxar {
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
+    Event* DecodeDeser160();
+    Event* DecodeDeser400();
+    uint32_t decodingErrors;
+
     // Readback decoding:
     void evalReadback(uint8_t roc, uint16_t val);
     unsigned int count[MOD_NUMROCS];
@@ -195,6 +198,10 @@ namespace pxar {
 
     Event* DecodeDeser160();
     Event* DecodeDeser400();
+  public:
+  dtbEventDecoder() : decodingErrors(0), readback() {};
+    void Clear() { decodingErrors = 0; readback.clear(); count.clear(); shiftReg.clear(); };
+    uint32_t getErrorCount();
   };
 }
 #endif

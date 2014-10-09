@@ -323,6 +323,10 @@ namespace pxar {
      */
     std::vector<Event*> daqAllEvents();
 
+    /** Return the current total decoding error number for all channels:
+     */
+    uint32_t daqErrorCount();
+
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
     void daqClear();

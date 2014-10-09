@@ -1483,6 +1483,9 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
   // Split the total buffer size when having more than one channel
   if(tbmtype != 0x00) { buffersize /= (tbmtype >= TBM_09 ? 4 : 2); }
 
+  // Clear all decoder instances:
+  decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
+
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
   src0 = dtbSource(_testboard,0,(tbmtype != 0x00),rocType,true);
@@ -1830,6 +1833,15 @@ uint32_t hal::daqBufferStatus() {
     buffered_data += _testboard->Daq_GetSize(channel);
   }
   return buffered_data;
+}
+
+uint32_t hal::daqErrorCount() {
+  // Check the active channels for decoding errors:
+  uint32_t errors = decoder0.getErrorCount();
+  if(src1.isConnected()) { errors += decoder1.getErrorCount(); }
+  if(src2.isConnected()) { errors += decoder2.getErrorCount(); }
+  if(src3.isConnected()) { errors += decoder3.getErrorCount(); }
+  return errors;
 }
 
 void hal::daqStop() {

@@ -1223,7 +1223,7 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
   // check the data for decoder errors and update our internal counter
-  getDecoderErrorCount(buffer);
+  getDecoderErrorCount();
 
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
@@ -1442,7 +1442,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   }
   
   // update the internal decoder error count for this data sample
-  getDecoderErrorCount(data);
+  getDecoderErrorCount();
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
@@ -2025,12 +2025,9 @@ uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,ui
   return delay_sum;
 }
 
-void pxarCore::getDecoderErrorCount(std::vector<Event*> &data){
+void pxarCore::getDecoderErrorCount(){
   // check the data for any decoding errors (stored in the events as counters)
-  _ndecode_errors_lastdaq = 0; // reset counter
-  for (std::vector<Event*>::iterator evtit = data.begin(); evtit != data.end(); ++evtit){
-    _ndecode_errors_lastdaq += (*evtit)->numDecoderErrors;
-  }
+  _ndecode_errors_lastdaq = _hal->daqErrorCount();
   if (_ndecode_errors_lastdaq){
     LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
   }
