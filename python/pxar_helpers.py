@@ -169,7 +169,7 @@ def PxarStartup(directory, verbosity):
 
     print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
 
-    api.initDUT(0,config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
+    api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
 
     api.testAllPixels(True)
     print "Now enabled all pixels"
