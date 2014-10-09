@@ -1481,7 +1481,7 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
   // Split the total buffer size when having more than one channel
-  if(tbmtype != 0x00) { buffersize /= (tbmtype == TBM_09 ? 4 : 2); }
+  if(tbmtype != 0x00) { buffersize /= (tbmtype >= TBM_09 ? 4 : 2); }
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
