@@ -1077,14 +1077,15 @@ std::vector<pixel> pxarCore::getThresholdMap(std::string dacName, uint8_t dacSte
 
   return result;
 }
-  
-int32_t pxarCore::getReadbackValue(std::string /*parameterName*/) {
 
-  if(!status()) {return -1;}
-  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
-  // do NOT throw an exception here: this is not a runtime problem
-  // and has to be fixed in the code -> cannot be handled by exceptions
-  return -1;
+std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
+
+  std::vector<std::vector<uint16_t> > values;
+  if(!status()) { return values; }
+
+  values = _hal->daqReadback();
+  LOG(logDEBUGAPI) << "Decoders provided readback values for " << values.size() << " ROCs.";
+  return values;
 }
 
 

@@ -494,6 +494,11 @@ cdef class PyPxarCore:
         # this is the same as dqGetBuffer:
         return self.thisptr.daqGetBuffer()
 
+    def daqGetReadback(self):
+        cdef vector[vector[uint16_t]] r
+        r = self.thisptr.daqGetReadback()
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
 

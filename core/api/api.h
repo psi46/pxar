@@ -589,9 +589,6 @@ namespace pxar {
      */
     std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags, uint16_t nTriggers);
 
-    // FIXME missing documentation
-    int32_t getReadbackValue(std::string parameterName);
-
     /** Enable or disable the external clock source of the DTB.
      *  This function will return "false" if no external clock is present,
      *  clock is then left on internal.
@@ -692,6 +689,13 @@ namespace pxar {
      *  separated in pxar::Events with additional header information available.
      */
     std::vector<Event> daqGetEventBuffer();
+
+    /** Function to return the full currently available ROC slow readback value
+     *  buffer. The data is stored until a new DAQ session or test is called and
+     *  can be fetched once (deleted at read time). The return vector contains
+     *  one vector of readback values for every ROC found in the readout chain.
+     */
+    std::vector<std::vector<uint16_t> > daqGetReadback();
 
     /** Function that returns the number of pixel decoding errors found in the
      *  last (non-raw) DAQ readout or API test call.

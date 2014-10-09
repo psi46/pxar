@@ -299,6 +299,21 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqGetBuffer.__doc__, '']
 
+    @arity(0,0,[])
+    def do_daqGetReadback(self):
+        """daqGetReadback: return all ROC readback values for the last DAQ session"""
+        dat = self.api.daqGetReadback()
+        for iroc, roc in enumerate(dat):
+            print "ROC " + str(iroc) + ":"
+            s = ""
+            for i in roc:
+                s += '{:04x}'.format(i) + " "
+            print s
+
+    def complete_daqGetReadback(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetReadback.__doc__, '']
+
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
