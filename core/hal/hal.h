@@ -327,6 +327,11 @@ namespace pxar {
      */
     uint32_t daqErrorCount();
 
+    /** Return all readback values for the last readout. Return format is a vector containing
+     *  one vector of uint16_t radback values for every ROC in the readout chain.
+     */
+    std::vector<std::vector<uint16_t> > daqReadback();
+
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
     void daqClear();

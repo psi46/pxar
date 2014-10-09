@@ -1844,6 +1844,21 @@ uint32_t hal::daqErrorCount() {
   return errors;
 }
 
+std::vector<std::vector<uint16_t> > hal::daqReadback() {
+
+  // Collect readback values from all decoder instances:
+  std::vector<std::vector<uint16_t> > rb0 = decoder0.getReadback();
+  std::vector<std::vector<uint16_t> > rb1 = decoder1.getReadback();
+  std::vector<std::vector<uint16_t> > rb2 = decoder2.getReadback();
+  std::vector<std::vector<uint16_t> > rb3 = decoder3.getReadback();
+
+  // Append them:
+  rb0.insert(rb0.end(),rb1.begin(),rb1.end());
+  rb0.insert(rb0.end(),rb2.begin(),rb2.end());
+  rb0.insert(rb0.end(),rb3.begin(),rb3.end());
+  return rb0;
+}
+
 void hal::daqStop() {
 
   // Stop the Pattern Generator, just in case (also stops Pg_Loop())
