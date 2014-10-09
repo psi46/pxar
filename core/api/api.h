@@ -694,7 +694,7 @@ namespace pxar {
     std::vector<Event> daqGetEventBuffer();
 
     /** Function that returns the number of pixel decoding errors found in the
-     *  last (non-raw) DAQ readout.
+     *  last (non-raw) DAQ readout or API test call.
      */
     uint32_t daqGetNDecoderErrors();
 
