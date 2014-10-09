@@ -883,6 +883,10 @@ namespace pxar {
      */
     size_t getNTbms();
 
+    /** Function returning the TBM type programmed:
+     */
+    std::string getTbmType();
+
     /** Function returning the number of enabled ROCs:
      */
     size_t getNEnabledRocs();
@@ -890,6 +894,10 @@ namespace pxar {
     /** Function returning the number of ROCs:
      */
     size_t getNRocs();
+
+    /** Function returning the ROC type programmed:
+     */
+    std::string getRocType();
 
     /** Function returning the enabled pixels configs for a specific ROC:
      */

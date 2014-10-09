@@ -642,6 +642,24 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getNEnabledPixels.__doc__, '']
 
+    @arity(0,0,[])
+    def do_getTbmType(self):
+        """getTbmType: returns device code for the TBM programmed"""
+        print self.api.getTbmType()
+
+    def complete_getTbmType(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTbmType.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getRocType(self):
+        """getRocType: returns device code for the ROCs programmed"""
+        print self.api.getRocType()
+
+    def complete_getRocType(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getRocType.__doc__, '']
+
     @arity(1,1,[int])
     def do_getNMaskedPixels(self, rocid):
         """getNMaskedPixels [ROC id]: returns number of masked pixels for ROC id"""

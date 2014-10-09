@@ -292,6 +292,10 @@ cdef class PyPxarCore:
         return self.thisptr._dut.getNTbms()
     def getNRocs(self):
         return self.thisptr._dut.getNRocs()
+    def getTbmType(self):
+        return self.thisptr._dut.getTbmType()
+    def getRocType(self):
+        return self.thisptr._dut.getRocType()
     #def programDUT(self):
         #return self.thisptr.programDUT()
     def status(self):
