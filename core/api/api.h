@@ -253,6 +253,19 @@ namespace pxar {
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		 std::vector<std::vector<pixelConfig> > rocPixels,
+		 std::vector<uint8_t> rocI2Cs);
+
+    /** Alternative initializer method for the DUT (attached devices).
+     *
+     *  As above, but automatically assumes consecutively numbered I2C addresses for
+     *  all attached ROCs, starting from zero.
+     */
+    bool initDUT(uint8_t hubid,
+		 std::string tbmtype, 
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		 std::string roctype,
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		 std::vector<std::vector<pixelConfig> > rocPixels);
 
     /** Programming method for the DUT (attached devices)

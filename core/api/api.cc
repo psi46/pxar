@@ -96,16 +96,39 @@ void pxarCore::setTestboardPower(std::vector<std::pair<std::string,double> > pow
 }
 
 bool pxarCore::initDUT(uint8_t hubid,
-		  std::string tbmtype, 
-		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		  std::string roctype,
-		  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		  std::vector<std::vector<pixelConfig> > rocPixels) {
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels) {
+  std::vector<uint8_t> rocI2Cs;
+  return initDUT(hubid, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(uint8_t hubid,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels,
+		       std::vector<uint8_t> rocI2Cs) {
 
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
   // Verification/sanitry checks of supplied DUT configuration values
+
+  // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
+  if(!rocI2Cs.empty()) {
+    if(rocI2Cs.size() != rocDACs.size()) {
+      LOG(logCRITICAL) << "Hm, we have " << rocI2Cs.size() << " I2C addresses but " << rocDACs.size() << " DAC configs.";
+      LOG(logCRITICAL) << "This cannot end well...";
+      throw InvalidConfig("Mismatch between number of I2C addresses and DAC configurations");
+    }
+    LOG(logDEBUGAPI) << "I2C addresses for all ROCs are provided as user input.";
+  }
+  else { LOG(logDEBUGAPI) << "I2C addresses will be automatically generated."; }
+
   // Check size of rocDACs and rocPixels against each other
   if(rocDACs.size() != rocPixels.size()) {
     LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
@@ -220,8 +243,6 @@ bool pxarCore::initDUT(uint8_t hubid,
   }
 
   // Initialize ROCs:
-  size_t nROCs = 0;
-
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator rocIt = rocDACs.begin(); rocIt != rocDACs.end(); ++rocIt){
 
     // Prepare a new ROC configuration
@@ -230,7 +251,10 @@ bool pxarCore::initDUT(uint8_t hubid,
     newroc.type = stringToDeviceCode(roctype);
     if(newroc.type == 0x0) return false;
 
-    newroc.i2c_address = static_cast<uint8_t>(rocIt - rocDACs.begin());
+    // If no I2C addresses have been supplied, we just assume they are consecutively numbered:
+    if(rocI2Cs.empty()) { newroc.i2c_address = static_cast<uint8_t>(rocIt - rocDACs.begin()); }
+    // if we have adresses, let's pick the right one and assign it:
+    else { newroc.i2c_address = static_cast<uint8_t>(rocI2Cs.at(rocIt - rocDACs.begin())); }
     LOG(logDEBUGAPI) << "I2C address for the next ROC is: " << static_cast<int>(newroc.i2c_address);
     
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
@@ -250,7 +274,7 @@ bool pxarCore::initDUT(uint8_t hubid,
     }
 
     // Loop over all pixelConfigs supplied:
-    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt) {
+    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(rocIt - rocDACs.begin()).begin(); pixIt != rocPixels.at(rocIt - rocDACs.begin()).end(); ++pixIt) {
       // Check the trim value to be within boundaries:
       if((*pixIt).trim() > 15) {
 	LOG(logWARNING) << "Pixel " 
@@ -265,7 +289,6 @@ bool pxarCore::initDUT(uint8_t hubid,
 
     // Done. Enable bit is already set by rocConfig constructor.
     _dut->roc.push_back(newroc);
-    nROCs++;
   }
 
   // All data is stored in the DUT struct, now programming it.
