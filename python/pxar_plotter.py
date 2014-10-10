@@ -4,15 +4,6 @@ import array
 
 class Plotter(object):
 
-    def __init__(self, config, test):
-        self.config = config
-        self.name = test.name
-        self._histos = [self.matrix_to_th2(result['data'], result['title'], result['x_title'], result['y_title']) for result in test.results]
-    
-    @property
-    def histos(self):
-        return self._histos
-
     @staticmethod
     def create_th1(data, step, minimum, maximum, name, x_title, y_title):
         th1 = ROOT.TH1F(name, name, int(maximum-minimum), minimum, maximum)

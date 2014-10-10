@@ -39,6 +39,14 @@ class PxarCoreCmd(cmd.Cmd):
         if(gui and guiAvailable):
             self.window = PxarGui(ROOT.gClient.GetRoot(),800,800)
     
+    def plot_map(self,data,name):
+        if(not self.window):
+            print data
+            return
+        plot = Plotter.create_th2(data, 52, 80, name, 'pixels x', 'pixels y')
+        self.window.histos.append(plot)
+        self.window.update()
+
     def do_EOF(self, line):
         """ clean exit when receiving EOF (Ctrl-D) """
         return True
@@ -341,12 +349,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
         data = self.api.getEfficiencyMap(flags,nTriggers)
-        if(self.window):
-            plot = Plotter.create_th2(data, 52, 80, 'efficiency map', 'x', 'y')
-            self.window.histos.append(plot)
-            self.window.update()
-        else:
-            print data
+        self.plot_map(data,"Efficiency")
         
     def complete_getEfficiencyMap(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -355,7 +358,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,2,[int, int])
     def do_getPulseheightMap(self, flags = 0, nTriggers = 10):
         """getPulseheightMap [flags = 0] [nTriggers = 10]: returns the pulseheight map"""
-        print self.api.getPulseheightMap(flags,nTriggers)
+        data = self.api.getPulseheightMap(flags,nTriggers)
+        self.plot_map(data,"Pulseheight")
         
     def complete_getPulseheightMap(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -364,7 +368,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(1,7,[str, int, int, int, int, int, int])
     def do_getThresholdMap(self, dacname, dacstep = 1, dacmin = 0, dacmax = 255, threshold = 50, flags = 0, nTriggers = 10):
         """getThresholdMap [DAC name] [step size] [min] [max] [threshold] [flags = 0] [nTriggers = 10]: returns the threshold map for the given DAC"""
-        print self.api.getThresholdMap(dacname,dacstep,dacmin,dacmax,threshold,flags,nTriggers)
+        data = self.api.getThresholdMap(dacname,dacstep,dacmin,dacmax,threshold,flags,nTriggers)
+        self.plot_map(data,"Threshold " + dacname)
         
     def complete_getThresholdMap(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
