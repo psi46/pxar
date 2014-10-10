@@ -7,7 +7,7 @@ class PxarGui( ROOT.TGMainFrame ):
         self.forward = ROOT.TPyDispatcher( self.draw_next )
         ROOT.TGMainFrame.__init__( self, parent, width, height )
 
-        self.Canvas    = ROOT.TRootEmbeddedCanvas('Canvas', self, 800, height-40)
+        self.Canvas = ROOT.TRootEmbeddedCanvas('Canvas', self, 800, height-40)
         self.AddFrame( self.Canvas, ROOT.TGLayoutHints() )
         self.ButtonsFrame = ROOT.TGHorizontalFrame( self, 200, 40 )
 
@@ -38,16 +38,16 @@ class PxarGui( ROOT.TGMainFrame ):
         '''Just draw what is in the self._histos[self.pos]'''
         if not self.histos:
             return
-            histo_type = type(self.histos[self.pos]) 
-            if histo_type == ROOT.TH2F:
-                self.histos[self.pos].Draw('COLZ')
-            elif histo_type == ROOT.THStack:
-                self.histos[self.pos].Draw('NOSTACK')
-            elif histo_type == ROOT.TGraph:
-                self.histos[self.pos].Draw('AL*')
-            else:
-                self.histos[self.pos].Draw()
-                ROOT.gPad.Update()
+        histo_type = type(self.histos[self.pos])
+        if histo_type == ROOT.TH2F:
+            self.histos[self.pos].Draw('COLZ')
+        elif histo_type == ROOT.THStack:
+            self.histos[self.pos].Draw('NOSTACK')
+        elif histo_type == ROOT.TGraph:
+            self.histos[self.pos].Draw('AL*')
+        else:
+            self.histos[self.pos].Draw()
+        ROOT.gPad.Update()
                 
     def draw_previous(self):
         '''Foward one position'''
