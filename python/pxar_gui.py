@@ -54,18 +54,18 @@ class PxarGui( ROOT.TGMainFrame ):
         self.pos -= 1
         if self.pos < 0:
             self.pos = 0
-            btn = ROOT.BindObject( ROOT.gTQSender, ROOT.TGTextButton )
-            if btn.WidgetId() == 10:
-                self.update_window()
+        btn = ROOT.BindObject( ROOT.gTQSender, ROOT.TGTextButton )
+        if btn.WidgetId() == 10:
+            self.update_window()
 
     def draw_next(self):
         '''Foward one position'''
         self.pos += 1
         if self.pos >= len(self.histos):
             self.pos = len(self.histos)-1
-            btn = ROOT.BindObject( ROOT.gTQSender, ROOT.TGTextButton )
-            if btn.WidgetId() == 10:
-                self.update_window()
+        btn = ROOT.BindObject( ROOT.gTQSender, ROOT.TGTextButton )
+        if btn.WidgetId() == 10:
+            self.update_window()
                 
     def update(self):
         '''Always go to last position'''
