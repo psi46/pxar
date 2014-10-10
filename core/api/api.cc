@@ -1687,13 +1687,16 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
 	uint8_t delta_new = abs(pixit->value() - threshold);
 	bool positive_slope = (pixit->value()-oldvalue[*px] > 0 ? true : false);
-	// Check which value is closer to the threshold:
-	if(!positive_slope || !(delta_new < delta_old)) {        
+	// Check which value is closer to the threshold. Only if the slope is positive AND
+	// the new delta between value and threshold is *larger* then the old delta, we 
+	// found the threshold. If slope is negative, we just have a ripple in the DAC's 
+	// distribution:
+	if(positive_slope && !(delta_new < delta_old)) {        
 	  found.push_back(*pixit);    
 	  continue; 
 	}
 
-	// Update the DAC threshold value for the pixel:
+	// No threshold found yet, update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
 	oldvalue[*px] = pixit->value();
