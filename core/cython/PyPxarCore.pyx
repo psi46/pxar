@@ -403,37 +403,32 @@ cdef class PyPxarCore:
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getPulseheightMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getEfficiencyMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getEfficiencyMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getThresholdMap(self, string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, int flags, int nTriggers):
         cdef vector[pixel] r
-        #TODO wrap data refilling into single function, rather than copy paste
         r = self.thisptr.getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers)
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
-
-#    def int32_t getReadbackValue(self, string parameterName):
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def setExternalClock(self, bool enable):
         return self.thisptr.setExternalClock(enable)
@@ -556,4 +551,5 @@ cdef class PyProbeDictionary:
         for i in xrange(v.size()):
             names.append(v.at(i))
         return names
-        
+
+
