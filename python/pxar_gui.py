@@ -5,6 +5,8 @@ class PxarGui( ROOT.TGMainFrame ):
         self.img = None #ROOT.TImage.Open('pic.jpg')
         self.previous = ROOT.TPyDispatcher( self.draw_previous )
         self.forward = ROOT.TPyDispatcher( self.draw_next )
+        self.printpdf = ROOT.TPyDispatcher( self.print_histo )
+
         ROOT.TGMainFrame.__init__( self, parent, width, height )
 
         self.Canvas = ROOT.TRootEmbeddedCanvas('Canvas', self, 800, height-40)
@@ -13,6 +15,10 @@ class PxarGui( ROOT.TGMainFrame ):
 
         self.DrawButton   = ROOT.TGTextButton( self.ButtonsFrame, '&Back', 10 )
         self.DrawButton.Connect( 'Clicked()', "TPyDispatcher", self.previous, 'Dispatch()' )
+        self.ButtonsFrame.AddFrame( self.DrawButton, ROOT.TGLayoutHints() )
+
+        self.DrawButton   = ROOT.TGTextButton( self.ButtonsFrame, '&Print', 10 )
+        self.DrawButton.Connect( 'Clicked()', "TPyDispatcher", self.printpdf, 'Dispatch()' )
         self.ButtonsFrame.AddFrame( self.DrawButton, ROOT.TGLayoutHints() )
 
         self.DrawButton   = ROOT.TGTextButton( self.ButtonsFrame, '&Next', 10 )
@@ -66,6 +72,12 @@ class PxarGui( ROOT.TGMainFrame ):
         btn = ROOT.BindObject( ROOT.gTQSender, ROOT.TGTextButton )
         if btn.WidgetId() == 10:
             self.update_window()
+
+    def print_histo(self):
+        '''Print current histogram to PDF'''
+        if not self.histos:
+            return
+        self.Canvas.SaveAs(self.histos[self.pos].GetTitle() + '.pdf')
                 
     def update(self):
         '''Always go to last position'''
