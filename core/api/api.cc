@@ -1641,7 +1641,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
 std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
-  //Vector of pixels for which a threshold has already been found
+  // Vector of pixels for which a threshold has already been found
   std::vector<pixel> found;
 
   // Threshold is the the given efficiency level "thresholdlevel"
@@ -1744,6 +1744,8 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
+  // Map of pixels with already assigned threshold (key is the dac2 value):
+  std::map<uint8_t,std::vector<pixel> > found;
 
   // Threshold is the the given efficiency level "thresholdlevel":
   // Using ceiling function to take higher threshold when in doubt.
@@ -1782,9 +1784,16 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
 	result.push_back(std::make_pair(it->second.first,std::vector<pixel>()));
 	dac = result.end() - 1;
 	// Also add an entry for bookkeeping:
+	found.insert(std::make_pair(it->second.first,std::vector<pixel>()));
 	oldvalue.insert(std::make_pair(it->second.first,std::map<pixel,uint8_t>()));
       }
       
+      // Check if for this pixel a threshold has been found already and we can skip the rest:
+      std::vector<pixel>::iterator px_found = std::find_if(found[dac->first].begin(),
+							   found[dac->first].end(),
+							   findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+      if(px_found != found[dac->first].end()) continue;
+
       // Check if we have that particular pixel already in:
       std::vector<pixel>::iterator px = std::find_if(dac->second.begin(),
 						     dac->second.end(),
@@ -1796,23 +1805,51 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
 	uint8_t delta_old = abs(oldvalue[dac->first][*px] - threshold);
 	uint8_t delta_new = abs(pixit->value() - threshold);
 	bool positive_slope = (pixit->value() - oldvalue[dac->first][*px] > 0 ? true : false);
-	// Check which value is closer to the threshold:
-	if(!positive_slope) continue;
-	if(!(delta_new < delta_old)) continue;
 
-	// Update the DAC threshold value for the pixel:
+        // Check which value is closer to the threshold. Only if the slope is positive AND
+	// the new delta between value and threshold is *larger* then the old delta, we 
+	// found the threshold. If slope is negative, we just have a ripple in the DAC's 
+	// distribution:
+	if(positive_slope && !(delta_new < delta_old)) {
+	  found[dac->first].push_back(*pixit);
+	  continue;
+	}
+
+        // No threshold found yet, update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
 	oldvalue[dac->first][*px] = pixit->value();
       }
       // Pixel is new, just adding it:
       else {
+        // If the pixel is above threshold at first appearance, the respective
+	// DAC value is set as its threshold:
+	if(pixit->value() >= threshold) { found[dac->first].push_back(*pixit); }
+
 	// Store the pixel with original efficiency
 	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
 	pixit->setValue(it->first);
 	dac->second.push_back(*pixit);
       }
+    }
+  }
+
+  // Check for pixels that have not reached the threshold at all:
+  for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator dac = result.begin(); dac != result.end(); ++dac) {
+    
+    for(std::vector<pixel>::iterator px = dac->second.begin(); px != dac->second.end(); px++) {
+      std::vector<pixel>::iterator px_found = std::find_if(found[dac->first].begin(),
+							   found[dac->first].end(),
+							   findPixelXY(px->column(), px->row(), px->roc()));
+      // The pixel is in the "found" vector, which means it crossed threshold at some point:
+      if(px_found != found[dac->first].end()) continue;
+
+      // The pixel is not in and never reached the threshold. We set the return value to
+      // "dacMax" (rising edge) or "dacMin" (falling edge):
+      if((flags&FLAG_RISING_EDGE) != 0) { px->setValue(dac2max); }
+      else { px->setValue(dac2min); }
+      LOG(logWARNING) << "No threshold found for " << (*px) << " at DAC value " << static_cast<int>(dac->first);
     }
   }
 
