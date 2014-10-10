@@ -7,6 +7,16 @@ from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyP
 from numpy import set_printoptions, nan
 from pxar_helpers import * # arity decorator, PxarStartup, PxarConfigFile, PxarParametersFile and others
 
+# Try to import ROOT:
+guiAvailable = True
+try:
+    import ROOT
+    ROOT.PyConfig.IgnoreCommandLineOptions = True
+    from pxar_gui import PxarGui
+except ImportError:
+    guiAvailable = False;
+    pass
+
 import cmd      # for command interface and parsing
 import os # for file system cmds
 import sys
@@ -18,16 +28,28 @@ probedict = PyProbeDictionary()
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
 
-    def __init__(self, api):
+    def __init__(self, api, gui):
         cmd.Cmd.__init__(self)
         self.fullOutput=False
-        self.prompt = "pxar core =>> "
+        self.prompt = "pxarCore =>> "
         self.intro  = "Welcome to the pxar core console!"  ## defaults to None
         self.api = api
+        self.window = None
+        if(gui and guiAvailable):
+            self.window = PxarGui(ROOT.gClient.GetRoot(),800,800)
     
     def do_EOF(self, line):
         """ clean exit when receiving EOF (Ctrl-D) """
         return True
+
+    def do_gui(self, line):
+        """Open the ROOT results browser"""
+        if not guiAvailable:
+            print "No GUI available (missing ROOT library)"
+            return
+        if self.window:
+            return
+        self.window = PxarGui( ROOT.gClient.GetRoot(), 800, 800 )
 
     def do_switchFullOutput(self, line):
         """Switch between full and suppressed output of all pixels"""
@@ -701,13 +723,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog=progName, description="A Simple Command Line Interface to the pxar API.")
     parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
+    parser.add_argument('--gui', '-g', action="store_true", help="The output verbosity set in the pxar API.")
     parser.add_argument('--load', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
     args = parser.parse_args(argv)
 
     api = PxarStartup(args.dir,args.verbosity)
 
     # start the cmd line
-    prompt = PxarCoreCmd(api)
+    prompt = PxarCoreCmd(api,args.gui)
     # run the startup script if requested
     if args.load:
         prompt.do_loadscript(args.load)
