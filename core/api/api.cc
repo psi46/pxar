@@ -1687,6 +1687,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
 	uint8_t delta_new = abs(pixit->value() - threshold);
 	bool positive_slope = (pixit->value()-oldvalue[*px] > 0 ? true : false);
+
 	// Check which value is closer to the threshold. Only if the slope is positive AND
 	// the new delta between value and threshold is *larger* then the old delta, we 
 	// found the threshold. If slope is negative, we just have a ripple in the DAC's 
@@ -1715,6 +1716,21 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 	result.push_back(*pixit);
       }
     }
+  }
+
+  // Check for pixels that have not reached the threshold at all:
+  for(std::vector<pixel>::iterator px = result.begin(); px != result.end(); ++px) {
+    std::vector<pixel>::iterator px_found = std::find_if(found.begin(),
+							 found.end(),
+							 findPixelXY(px->column(), px->row(), px->roc()));
+    // The pixel is in the "found" vector, which means it crossed threshold at some point:
+    if(px_found != found.end()) continue;
+
+    // The pixel is not in and never reached the threshold. We set the return value to
+    // "dacMax" (rising edge) or "dacMin" (falling edge):
+    if((flags&FLAG_RISING_EDGE) != 0) { px->setValue(dacMax); }
+    else { px->setValue(dacMin); }
+    LOG(logWARNING) << "No threshold found for " << (*px);
   }
 
   // Sort the output map by ROC->col->row - just because we are so nice:
