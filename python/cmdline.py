@@ -13,6 +13,7 @@ try:
     import ROOT
     ROOT.PyConfig.IgnoreCommandLineOptions = True
     from pxar_gui import PxarGui
+    from pxar_plotter import Plotter
 except ImportError:
     guiAvailable = False;
     pass
@@ -339,7 +340,13 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
-        print self.api.getEfficiencyMap(flags,nTriggers)
+        data = self.api.getEfficiencyMap(flags,nTriggers)
+        if(self.window):
+            plot = Plotter.create_th2(data, 52, 80, 'efficiency map', 'x', 'y')
+            self.window.histos.append(plot)
+            self.window.update()
+        else:
+            print data
         
     def complete_getEfficiencyMap(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -395,7 +402,12 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getEfficiencyVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
         data = self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        print_data(self.fullOutput,data,dacstep)
+        if(self.window):
+            plot = Plotter.create_th1(data, dacstep, dacmin, dacmax, 'efficiency vs dac', dacname, 'efficiency')
+            self.window.histos.append(plot)
+            self.window.update()
+        else:
+            print_data(self.fullOutput,data,dacstep)
 
     def complete_getEfficiencyVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
