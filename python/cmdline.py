@@ -4,7 +4,7 @@ Python Command Line Interface to the pxar API.
 """
 import PyPxarCore
 from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyProbeDictionary
-from numpy import set_printoptions, nan
+from numpy import set_printoptions, nan, zeros
 from pxar_helpers import * # arity decorator, PxarStartup, PxarConfigFile, PxarParametersFile and others
 
 # Try to import ROOT:
@@ -38,12 +38,81 @@ class PxarCoreCmd(cmd.Cmd):
         self.window = None
         if(gui and guiAvailable):
             self.window = PxarGui(ROOT.gClient.GetRoot(),800,800)
-    
-    def plot_map(self,data,name):
+
+    def plot_eventdisplay(self,data):
+        pixels = list()
+        # Multiple events:
+        if(isinstance(data,list)):
+            if(not self.window):
+                for evt in data:
+                    print evt
+                return
+            for evt in data:
+                for px in evt.pixels:
+                    pixels.append(px)
+        else:
+            if(not self.window):
+                print evt
+                return
+            for px in data.pixels:
+                pixels.append(px)
+        self.plot_map(pixels,'Event Display',True)
+
+    def plot_map(self,data,name,count=False):
         if(not self.window):
             print data
             return
-        plot = Plotter.create_th2(data, 52, 80, name, 'pixels x', 'pixels y')
+
+        # Prepare new numpy matrix:
+        d = zeros((52,80))
+        for px in data:
+            if(count):
+                d[px.column][px.row] += 1
+            else:
+                d[px.column][px.row] = px.value
+
+        plot = Plotter.create_th2(d, 0, 51, 0, 80, name, 'pixels x', 'pixels y', name)
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def plot_1d(self,data,name,dacname,min,max):
+        if(not self.window):
+            print_data(self.fullOutput,data,(max-min)/len(data))
+            return
+
+        # Prepare new numpy matrix:
+        d = zeros(len(data))
+        for idac, dac in enumerate(data):
+            if(dac):
+                d[idac] = dac[0].value
+
+        plot = Plotter.create_th1(d, min, max, name, dacname, name)
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def plot_2d(self,data,name,dac1,step1,min1,max1,dac2,step2,min2,max2):
+        if(not self.window):
+            for idac, dac in enumerate(data):
+                dac1 = min1 + (idac/((max2-min2)/step2+1))*step1
+                dac2 = min2 + (idac%((max2-min2)/step2+1))*step2
+                s = "DACs " + str(dac1) + ":" + str(dac2) + " - "
+                for px in dac:
+                    s += str(px)
+                print s
+            return
+        
+        # Prepare new numpy matrix:
+        bins1 = (max1-min1)/step1+1
+        bins2 = (max2-min2)/step2+1
+        d = zeros((bins1,bins2))
+
+        for idac, dac in enumerate(data):
+            if(dac):
+                bin1 = (idac/((max2-min2)/step2+1))
+                bin2 = (idac%((max2-min2)/step2+1))
+                d[bin1][bin2] = dac[0].value
+
+        plot = Plotter.create_th2(d, min1, max1, min2, max2, name, dac1, dac2, name)
         self.window.histos.append(plot)
         self.window.update()
 
@@ -286,7 +355,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEvent(self):
         """daqGetEvent: read one event from the event buffer"""
-        print self.api.daqGetEvent()
+        data = self.api.daqGetEvent()
+        self.plot_eventdisplay(data)
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -295,8 +365,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEventBuffer(self):
         """daqGetEventBuffer: read all decoded events from the DTB buffer"""
-        for evt in self.api.daqGetEventBuffer():
-            print evt
+        data = self.api.daqGetEventBuffer()
+        self.plot_eventdisplay(data)
 
     def complete_daqGetEventBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -388,7 +458,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getPulseheightVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 1D DAC scan"""
         data = self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        print_data(self.fullOutput,data,dacstep)
+        self.plot_1d(data,"Pulseheight",dacname,dacmin,dacmax)
 
     def complete_getPulseheightVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -407,12 +477,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getEfficiencyVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
         data = self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        if(self.window):
-            plot = Plotter.create_th1(data, dacstep, dacmin, dacmax, 'efficiency vs dac', dacname, 'efficiency')
-            self.window.histos.append(plot)
-            self.window.update()
-        else:
-            print_data(self.fullOutput,data,dacstep)
+        self.plot_1d(data,"Efficiency",dacname,dacmin,dacmax)
 
     def complete_getEfficiencyVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -431,7 +496,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getThresholdVsDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold = 50, flags = 0, nTriggers = 10):
         """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the threshold for DAC1 over a 1D DAC2 scan"""
         data = self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
-        print_data(self.fullOutput,data,dac1step)
+        self.plot_1d(data,"Threshold " + dac1name,dac2name,dac2min,dac2max)
 
     def complete_getThresholdVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -454,11 +519,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getPulseheightVsDACDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags = 0, nTriggers = 10):
         """getPulseheightVsDACDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 2D DAC1-DAC2 scan"""
         data = self.api.getPulseheightVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC index " + str(idac) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_2d(data,"Pulseheight",dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max)
 
     def complete_getPulseheightVsDACDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -481,11 +542,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyVsDACDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags = 0, nTriggers = 10):
         """getEfficiencyVsDACDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [flags = 0] [nTriggers = 10]: returns the efficiency over a 2D DAC1-DAC2 scan"""
         data = self.api.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC index " + str(idac) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_2d(data,"Efficiency",dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max)
 
     def complete_getEfficiencyVsDACDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
