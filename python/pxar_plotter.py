@@ -5,18 +5,17 @@ import array
 class Plotter(object):
 
     @staticmethod
-    def create_th1(data, step, minimum, maximum, name, x_title, y_title):
-        th1 = ROOT.TH1F(name, name, int(maximum-minimum), minimum, maximum)
+    def create_th1(data, minimum, maximum, name, x_title, y_title):
+        th1 = ROOT.TH1F(name, name, len(data), minimum, maximum)
         th1.SetDirectory(0)
         th1.GetXaxis().SetTitle(x_title)
         th1.GetYaxis().SetTitle(y_title)
         th1.SetDrawOption('HIST')
         th1.SetLineWidth(2)
-        for idac, dac in enumerate(data):
-            if(dac):
-                th1.Fill(idac,dac[0].value)
+        for ix, x in enumerate(data):
+            th1.Fill(ix,x)
         return th1
-        
+
     @staticmethod
     def create_tgraph(data, name, x_title, y_title, minimum = None, maximum = None):
         xdata = list(xrange(len(data)))
@@ -36,14 +35,16 @@ class Plotter(object):
         return gr
 
     @staticmethod
-    def create_th2(data, len_x, len_y, name, x_title, y_title):
-        th2 = ROOT.TH2F(name, name, len_x, 0, len_x , len_y, 0, len_y)
+    def create_th2(data, x_min, x_max, y_min, y_max, name, x_title, y_title, z_title):
+        th2 = ROOT.TH2F(name, name, data.shape[0], x_min, x_max, data.shape[1], y_min, y_max)
         th2.SetDirectory(0)
         th2.GetXaxis().SetTitle(x_title)
         th2.GetYaxis().SetTitle(y_title)
+        th2.GetZaxis().SetTitle(z_title)
         th2.SetDrawOption('COLZ')
-        for px in data:
-            th2.SetBinContent(px.column + 1, px.row + 1, px.value)
+        for ix, x in enumerate(data):
+            for iy, y in enumerate(x):
+                th2.SetBinContent(ix, iy, y)
         return th2
     
     def matrix_to_th2(self, matrix, name, x_title, y_title):
