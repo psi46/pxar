@@ -349,10 +349,11 @@ SaveDacs            button
 -- Timing
 fastscan            checkbox(1)
 targetclk           5
+ntrig               10
 clocksdascan        button
-nrocs               16
 phasescan           button
 savetbparameters    button
+timingtest          button
 
 -- PixelAlive
 Ntrig               10
