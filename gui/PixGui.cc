@@ -498,9 +498,9 @@ PixTest* PixGui::createTest(string testname) {
 
 // ----------------------------------------------------------------------
 void PixGui::selectedTab(int id) {
-  LOG(logDEBUG) << "Switched to tab " << id;
   if (0 == id) fParTab->updateParameters();
-  fTabs->SetTab(id); 
+  fTabs->SetTab(id);
+  LOG(logDEBUG) << "Switched to tab " << id;
 }
 
 
