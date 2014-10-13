@@ -1501,21 +1501,6 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
     src1 = dtbSource(_testboard,1,(tbmtype != 0x00),rocType,true);
     src1 >> splitter1;
 
-    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(tbmtype >= TBM_09) {
-      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
-
-      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,(tbmtype != 0x00),rocType,true);
-      src2 >> splitter2;
-
-      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,(tbmtype != 0x00),rocType,true);
-      src3 >> splitter3;
-    }
-
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 
@@ -1529,7 +1514,28 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
+
+    // And start the DAQ:
     _testboard->Daq_Start(1);
+
+    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
+    if(tbmtype >= TBM_09) {
+      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
+
+      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
+      src2 = dtbSource(_testboard,2,(tbmtype != 0x00),rocType,true);
+      src2 >> splitter2;
+
+      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
+      src3 = dtbSource(_testboard,3,(tbmtype != 0x00),rocType,true);
+      src3 >> splitter3;
+
+      // Start the DAQ also for channel 2 and 3:
+      _testboard->Daq_Start(2);
+      _testboard->Daq_Start(3);
+    }
   }
   else {
     LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
