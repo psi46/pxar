@@ -39,23 +39,18 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       if (!parName.compare("npix")) {
 	fParNpix = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNpix  ->" << fParNpix << "<- from sval = " << sval;
       }
       if (!parName.compare("dac")) {
 	fParDac = sval;
-	LOG(logDEBUG) << "  setting fParDac  ->" << fParDac << "<- from sval = " << sval;
       }
       if (!parName.compare("daclo")) {
 	fParDacLo = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParDacLo  ->" << fParDacLo << "<- from sval = " << sval;
       }
       if (!parName.compare("dachi")) {
 	fParDacHi = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParDacHi  ->" << fParDacHi << "<- from sval = " << sval;
       }
 
       if (!parName.compare("adjustvcal")) {
