@@ -18,10 +18,6 @@ ClassImp(PixTestDacScan)
 PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
   PixTest::init();
   init(); 
-  //  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
-  for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logDEBUG) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
-  }
 }
 
 
@@ -136,7 +132,6 @@ void PixTestDacScan::doTest() {
       h1 = bookTH1D(hname.c_str(), hname.c_str(), 256, 0., 256.); 
       h1->SetMinimum(0.); 
       setTitles(h1, Form("%s [DAC]", fParDAC.c_str()), (fParPHmap?"average PH":"readouts"));
-      if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
       hmap[hname] = h1;
       fHistList.push_back(h1); 
     }
