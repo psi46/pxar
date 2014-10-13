@@ -425,12 +425,13 @@ ntrig               10
 singlePix           1
 
 -- PhOpt
-PIX                 11,20
+adjustvthrcomp      checkbox(0)
 ntrig               10
 vcallow             50
 vcalhigh            255 
 phmin               30
 phmax               220
+PIX                 11,20
 
 -- Xray
 source              Ag
