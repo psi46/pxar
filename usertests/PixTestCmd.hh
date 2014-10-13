@@ -286,6 +286,7 @@ class CmdProc {
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
   unsigned int fSeq;
+  unsigned int fPeriod;
   bool fPgRunning;
   bool verbose;
   Target defaultTarget;
@@ -295,8 +296,11 @@ class CmdProc {
   int tbmset(int address, int value);
   int tbmset   (string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
+  int tbmget(string name, const uint8_t core, uint8_t & value);
+  int tbmscan();
+  int readRocs(uint8_t , double scale=0  );
   int rawDump(int level=0);
-  int pixDecodeRaw(int);
+  int pixDecodeRaw(int, int level=1);
   
   int adctest0(const string s);
   int adctest(const string s);

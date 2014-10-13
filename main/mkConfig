@@ -23,7 +23,7 @@ getopts('d:hmp:r:t:');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21"); 
-my @tbmok = ("TBM08", "TBM08b"); 
+my @tbmok = ("TBM08", "TBM08b", "TBM08b_FPIX", "TBM09"); 
 
 if ($opt_h) {
     &printHelp;
@@ -65,6 +65,7 @@ if ($opt_r) {
 my $tbms = ""; 
 my $tbmtype = "TBM08";
 if ($opt_t) {
+    $opt_t =~ tr/a-z/A-Z/;
     if (grep(/$opt_t/, @tbmok)) {
 	$tbmtype = $opt_t;
     } else {
@@ -154,7 +155,15 @@ sub setTbms {
 	$tbms .= "3    pkam_set   0x10\n";
 	$tbms .= "4      delays   0x00\n";
 	$tbms .= "5 temperature   0x00\n";
-    } 
+    } elsif ($tbmtype eq "TBM09") {
+	$tbms .= "0       clear   0xF0\n";
+	$tbms .= "1    counters   0x81\n";
+	$tbms .= "2        mode   0xC0\n";
+	$tbms .= "3    pkam_set   0x10\n";
+	$tbms .= "4      delays   0xE4\n";
+	$tbms .= "5       basee   0x24\n";
+	$tbms .= "6 temperature   0x00\n";
+    }
 
 }
 
@@ -308,8 +317,10 @@ if ($opt_m) {
 	print FH "tbmType tbm08\n";
     } elsif ($tbmtype eq "TBM08b") {
 	print FH "tbmType tbm08b\n";
+    } elsif ($tbmtype eq "TBM09") {
+	print FH "tbmType tbm09\n";
     } else {
-	print FH "tbmType tbm08b\n";
+	print FH "tbmType tbm08\n";
     } 
 }
     print FH <<"EOF";  
@@ -425,12 +436,13 @@ ntrig               10
 singlePix           1
 
 -- PhOpt
-PIX                 11,20
+adjustvthrcomp      checkbox(0)
 ntrig               10
 vcallow             50
 vcalhigh            255 
 phmin               30
 phmax               220
+PIX                 11,20
 
 -- Xray
 source              Ag

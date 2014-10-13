@@ -124,7 +124,6 @@ cdef class PxEvent:
     cdef fill(self, Event ev):
         self.thisptr.header = ev.header
         self.thisptr.trailer = ev.trailer
-        self.thisptr.numDecoderErrors = ev.numDecoderErrors
         for px in ev.pixels:
             self.thisptr.pixels.push_back(px)
     property pixels:
@@ -147,9 +146,6 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
-    property numDecoderErrors:
-        def __get__(self): return self.thisptr.numDecoderErrors
-        def __set__(self, errors): self.thisptr.numDecoderErrors = errors
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -292,6 +288,10 @@ cdef class PyPxarCore:
         return self.thisptr._dut.getNTbms()
     def getNRocs(self):
         return self.thisptr._dut.getNRocs()
+    def getTbmType(self):
+        return self.thisptr._dut.getTbmType()
+    def getRocType(self):
+        return self.thisptr._dut.getRocType()
     #def programDUT(self):
         #return self.thisptr.programDUT()
     def status(self):
@@ -403,37 +403,32 @@ cdef class PyPxarCore:
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getPulseheightMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getEfficiencyMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getEfficiencyMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getThresholdMap(self, string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, int flags, int nTriggers):
         cdef vector[pixel] r
-        #TODO wrap data refilling into single function, rather than copy paste
         r = self.thisptr.getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers)
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
-
-#    def int32_t getReadbackValue(self, string parameterName):
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def setExternalClock(self, bool enable):
         return self.thisptr.setExternalClock(enable)
@@ -494,6 +489,11 @@ cdef class PyPxarCore:
         # this is the same as dqGetBuffer:
         return self.thisptr.daqGetBuffer()
 
+    def daqGetReadback(self):
+        cdef vector[vector[uint16_t]] r
+        r = self.thisptr.daqGetReadback()
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
 
@@ -551,4 +551,5 @@ cdef class PyProbeDictionary:
         for i in xrange(v.size()):
             names.append(v.at(i))
         return names
-        
+
+

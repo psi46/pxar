@@ -192,7 +192,7 @@ int main(int argc, char *argv[]){
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" 
 						 + configParameters->getTestParameterFileName()
-						 ); 
+						 , true); 
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
   a.setMoreWebCloning(doMoreWebCloning); 

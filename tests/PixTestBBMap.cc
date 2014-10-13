@@ -132,8 +132,10 @@ void PixTestBBMap::doTest() {
     bbCuts   += Form(" %4d", cutDead); 
   }
 
-  h->Draw();
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  if(h) {
+    h->Draw();
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  }
   PixTest::update(); 
   
   LOG(logINFO) << "PixTestBBMap::doTest() done"

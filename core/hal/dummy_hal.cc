@@ -716,6 +716,23 @@ void hal::daqStop() {}
 
 void hal::daqClear() {}
 
-std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
+std::vector<uint16_t> hal::daqADC(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint8_t){
   return vector<uint16_t>();
 }
+
+void hal::SigSetMode(unsigned char, unsigned char) {}
+
+std::vector<std::vector<uint16_t> > hal::daqReadback() {
+  return std::vector<std::vector<uint16_t> >();
+}
+
+void hal::SigSetLVDS() {}
+
+void hal::setHubId(unsigned char) {}
+
+void hal::SigSetLCDS() {}
+
+uint32_t hal::daqErrorCount() {
+  return 0;
+}
+

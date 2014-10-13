@@ -143,6 +143,10 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
+    else if(sigIt->first == SIG_RDA_TOUT) {
+      LOG(logDEBUGHAL) << "set TOUT / RDA delay to value " << static_cast<int>(sigIt->second);
+      _testboard->Sig_SetRdaToutDelay(sigIt->second);
+    }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
@@ -476,6 +480,10 @@ void hal::setTBvd(double VD) {
   _testboard->_SetVD(uint16_t(VD*1000));
 }
 
+void hal::setHubId(uint8_t hubid) {
+  LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
+  hubId = hubid;
+}
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {
 
@@ -1468,16 +1476,39 @@ void hal::SigSetMode(uint8_t signal, uint8_t mode) {
     _testboard->Flush();
 }
 
+void hal::SigSetLCDS(){
+    _testboard->Sig_SetLCDS();
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
+
+void hal::SigSetLVDS(){
+    _testboard->Sig_SetLVDS();
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
+
+
+
 void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
+  // Length of a token chain (number of ROCs per data stream):
+  uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
+  // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
+  if(tbmtype != 0x00) { tokenChainLength *= (tbmtype >= TBM_09 ? 4 : 8); }
+  LOG(logDEBUGHAL) << "Determined Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
+
   // Split the total buffer size when having more than one channel
-  if(tbmtype != 0x00) { buffersize /= (tbmtype == TBM_09 ? 4 : 2); }
+  if(tbmtype != 0x00) { buffersize /= (tbmtype >= TBM_09 ? 4 : 2); }
+
+  // Clear all decoder instances:
+  decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,(tbmtype != 0x00),rocType,true);
+  src0 = dtbSource(_testboard,0,tokenChainLength,(tbmtype != 0x00),rocType,true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
@@ -1487,23 +1518,8 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,(tbmtype != 0x00),rocType,true);
+    src1 = dtbSource(_testboard,1,tokenChainLength,(tbmtype != 0x00),rocType,true);
     src1 >> splitter1;
-
-    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(tbmtype >= TBM_09) {
-      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
-
-      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,(tbmtype != 0x00),rocType,true);
-      src2 >> splitter2;
-
-      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,(tbmtype != 0x00),rocType,true);
-      src3 >> splitter3;
-    }
 
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
@@ -1518,7 +1534,28 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
+
+    // And start the DAQ:
     _testboard->Daq_Start(1);
+
+    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
+    if(tbmtype >= TBM_09) {
+      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
+
+      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
+      src2 = dtbSource(_testboard,2,tokenChainLength,(tbmtype != 0x00),rocType,true);
+      src2 >> splitter2;
+
+      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
+      src3 = dtbSource(_testboard,3,tokenChainLength,(tbmtype != 0x00),rocType,true);
+      src3 >> splitter3;
+
+      // Start the DAQ also for channel 2 and 3:
+      _testboard->Daq_Start(2);
+      _testboard->Daq_Start(3);
+    }
   }
   else {
     LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
@@ -1824,6 +1861,30 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
+uint32_t hal::daqErrorCount() {
+  // Check the active channels for decoding errors:
+  uint32_t errors = decoder0.getErrorCount();
+  if(src1.isConnected()) { errors += decoder1.getErrorCount(); }
+  if(src2.isConnected()) { errors += decoder2.getErrorCount(); }
+  if(src3.isConnected()) { errors += decoder3.getErrorCount(); }
+  return errors;
+}
+
+std::vector<std::vector<uint16_t> > hal::daqReadback() {
+
+  // Collect readback values from all decoder instances:
+  std::vector<std::vector<uint16_t> > rb0 = decoder0.getReadback();
+  std::vector<std::vector<uint16_t> > rb1 = decoder1.getReadback();
+  std::vector<std::vector<uint16_t> > rb2 = decoder2.getReadback();
+  std::vector<std::vector<uint16_t> > rb3 = decoder3.getReadback();
+
+  // Append them:
+  rb0.insert(rb0.end(),rb1.begin(),rb1.end());
+  rb0.insert(rb0.end(),rb2.begin(),rb2.end());
+  rb0.insert(rb0.end(),rb3.begin(),rb3.end());
+  return rb0;
+}
+
 void hal::daqStop() {
 
   // Stop the Pattern Generator, just in case (also stops Pg_Loop())
@@ -1865,13 +1926,20 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
   _testboard->Flush();
   _testboard->Daq_Open(nSample, 0);
   _testboard->uDelay(10);
-  _testboard->Daq_Start(0);
-  _testboard->Pg_Single();
+  if( source == 1){
+    _testboard->Daq_Start(0);
+    _testboard->Pg_Single();
+  }else if (source==2){
+    _testboard->roc_SetDAC(250, 195);
+    _testboard->roc_SetDAC(250,  61);
+    _testboard->Daq_Start(0);
+    _testboard->roc_SetDAC(250, 195);
+    _testboard->roc_SetDAC(250,  61);
+  }
   _testboard->uDelay(1000);
   _testboard->Daq_Stop(0);
   _testboard->Daq_Read(data, nSample);
-  //_testboard->Daq_Select_ADC(10, 0, 1, 1);
-  //_testboard->Daq_DeselectAll();
+  _testboard->Daq_Close(0);
   _testboard->Flush();
 
   return data;

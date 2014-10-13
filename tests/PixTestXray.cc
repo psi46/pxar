@@ -58,7 +58,6 @@ bool PixTestXray::setParameter(string parName, string sval) {
       }	
       if (!parName.compare("trgfrequency(khz)")) {
 	fParTriggerFrequency = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
 	setToolTips();
       }
       if (!parName.compare("runseconds")) {
@@ -660,7 +659,6 @@ void PixTestXray::processData(uint16_t numevents) {
       fTreeEvent.header           = it->header; 
       fTreeEvent.dac              = 0;
       fTreeEvent.trailer          = it->trailer; 
-      fTreeEvent.numDecoderErrors = it->numDecoderErrors;
       fTreeEvent.npix             = it->pixels.size();
     }
 

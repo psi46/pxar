@@ -65,6 +65,27 @@ size_t dut::getNRocs() {
   return roc.size();
 }
 
+std::string dut::getRocType() {
+  if(roc.empty()) return "";
+
+  // Get singleton DAC dictionary object:
+  DeviceDictionary * _dict = DeviceDictionary::getInstance();
+
+  // And get the device name from the dictionary object:
+  // Returning the type of ROC 0 should be fine since we're not mixing types.
+  return _dict->getName(roc.front().type);
+}
+
+std::string dut::getTbmType() {
+  if(tbm.empty()) return "";
+
+  // Get singleton DAC dictionary object:
+  DeviceDictionary * _dict = DeviceDictionary::getInstance();
+
+  // And get the device name from the dictionary object:
+  return _dict->getName(tbm.front().type);
+}
+
 size_t dut::getNEnabledTbms() {
   if (!status()) return 0;
   // loop over result, count enabled TBMs
