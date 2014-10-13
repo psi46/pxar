@@ -1,5 +1,6 @@
 #include "datapipe.h"
 #include "helper.h"
+#include "log.h"
 #include "constants.h"
 #include "exceptions.h"
 
@@ -170,6 +171,12 @@ namespace pxar {
 	}
 
 	try {
+	  // Check if this is just fill bits of the TBM09 data stream accounting for the other channel:
+	  if(GetTokenChainLength() == 4 && (raw&0xffffff) == 0xffffff) {
+	    LOG(logDEBUGPIPES) << "Empty hit detected (TBM09 data streams). Skipping.";
+	    continue;
+	  }
+
 	  // Get the right ROC id: Channel number x ROC offset (= token chain length)
 	  // TBM08x: channel 0: 0-7, channel 1: 8-15
 	  // TBM09x: channel 0: 0-3, channel 1: 4-7, channel 2: 8-11, channel 3: 12-15
