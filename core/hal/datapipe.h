@@ -186,6 +186,19 @@ namespace pxar {
 
     Event* DecodeDeser160();
     Event* DecodeDeser400();
+    uint32_t decodingErrors;
+
+    // Readback decoding:
+    void evalReadback(uint8_t roc, uint16_t val);
+    std::vector<uint16_t> count;
+    std::vector<uint16_t> shiftReg;
+    std::vector<std::vector<uint16_t> > readback;
+
+  public:
+  dtbEventDecoder() : decodingErrors(0), readback() {};
+    void Clear() { decodingErrors = 0; readback.clear(); count.clear(); shiftReg.clear(); };
+    uint32_t getErrorCount();
+    std::vector<std::vector<uint16_t> > getReadback();
   };
 }
 #endif

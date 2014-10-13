@@ -364,7 +364,6 @@ void PixTestPattern::FillHistos(std::vector<pxar::Event> data, std::vector<TH2D*
 				fTreeEvent.header = it->header;
 				fTreeEvent.dac = 0;
 				fTreeEvent.trailer = it->trailer;
-				fTreeEvent.numDecoderErrors = it->numDecoderErrors;
 				fTreeEvent.npix = it->pixels.size();
 			}
 			for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {

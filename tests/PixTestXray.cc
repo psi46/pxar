@@ -659,7 +659,6 @@ void PixTestXray::processData(uint16_t numevents) {
       fTreeEvent.header           = it->header; 
       fTreeEvent.dac              = 0;
       fTreeEvent.trailer          = it->trailer; 
-      fTreeEvent.numDecoderErrors = it->numDecoderErrors;
       fTreeEvent.npix             = it->pixels.size();
     }
 

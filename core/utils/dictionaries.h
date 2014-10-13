@@ -122,6 +122,9 @@ namespace pxar {
       _registers["triggerdelay"]  = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
 
+      _registers["tout"]          = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
+      _registers["rda"]           = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
+
 
       //------- TBM registers -----------------------------
       _registers["counters"]      = dacConfig(TBM_REG_COUNTER_SWITCHES,255,TBM_REG,false);
@@ -255,6 +258,14 @@ namespace pxar {
       else { return 0x0; }
     }
 
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint8_t devCode) {
+      for(std::map<std::string, uint8_t>::iterator iter = _devices.begin(); iter != _devices.end(); ++iter) {
+	if((*iter).second == devCode) { return (*iter).first; }
+      }
+      return "";
+    }
+
   private:
     DeviceDictionary() {
       // Device name and types
@@ -272,7 +283,6 @@ namespace pxar {
       _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 
       // TBM flavors:
-      // FIXME this is just an example.
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
       _devices["tbm08b"]        = TBM_08B;

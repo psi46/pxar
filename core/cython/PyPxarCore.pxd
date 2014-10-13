@@ -23,7 +23,6 @@ cdef extern from "api.h" namespace "pxar":
     cdef cppclass Event:
         uint16_t header
         uint16_t trailer
-        uint16_t numDecoderErrors
         vector[pixel] pixels
         Event()
 
@@ -67,8 +66,10 @@ cdef extern from "api.h" namespace "pxar":
         int32_t getNMaskedPixels(uint8_t rocid)
         int32_t getNEnabledTbms()
         int32_t getNTbms()
+        string getTbmType()
         int32_t getNEnabledRocs()
         int32_t getNRocs()
+        string getRocType()
         vector[ uint8_t ] getEnabledRocI2Caddr()
         vector[pixelConfig] getEnabledPixels(size_t rocid)
         vector[rocConfig] getEnabledRocs()
@@ -189,6 +190,7 @@ cdef extern from "api.h" namespace "pxar":
         vector[rawEvent] daqGetRawEventBuffer() except +
         vector[Event] daqGetEventBuffer() except +
         vector[uint16_t] daqGetBuffer() except +
+        vector[vector[uint16_t]] daqGetReadback() except +
         uint32_t daqGetNDecoderErrors()
         bool daqStop() except +
 
