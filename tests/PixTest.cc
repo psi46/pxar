@@ -54,7 +54,16 @@ PixTest::PixTest() {
 
 // ----------------------------------------------------------------------
 void PixTest::init() {
+  int verbose(0);
+   
+  if (verbose) {
+    cout << "test: " << getName()  << endl;
+  }
+  
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
+    if (verbose) cout << "fParameters[" << i << "].first = " << fParameters[i].first 
+		      << " fParameters[" << i << "].second = " << fParameters[i].second 
+		      << endl;
     setParameter(fParameters[i].first, fParameters[i].second); 
   }
 }
@@ -456,10 +465,12 @@ void PixTest::clearSelectedPixels() {
   fPIX.clear(); 
   std::vector<std::pair<std::string, std::string> > pnew;   
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
-    if (fParameters[i].first.compare("pix")) pnew.push_back(make_pair(fParameters[i].first, fParameters[i].second));
+    if (0 == fParameters[i].first.compare("pix")) {
+      pnew.push_back(make_pair("pix", "reset")); 
+    } else {
+      pnew.push_back(make_pair(fParameters[i].first, fParameters[i].second));
+    }
   }
-  
-  pnew.push_back(make_pair("pix", "reset")); 
   fParameters.clear();
   fParameters = pnew; 
 }
