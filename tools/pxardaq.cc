@@ -267,7 +267,7 @@ int main(int argc, char* argv[]) {
 
     // Sent one PG cycle with a reset:
     if(oos) {
-      _api->daqStart(pg_setup2);
+      _api->daqStart();
       _api->daqTrigger(1);
       _api->daqStop();
       std::vector<uint16_t> garbage = _api->daqGetBuffer();
