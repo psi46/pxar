@@ -41,11 +41,9 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("showfits")) {
 	fParShowFits = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParShowFits  ->" << fParShowFits << "<- from sval = " << sval;
       }
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       setToolTips();
       break;
