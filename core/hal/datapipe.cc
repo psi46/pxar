@@ -25,7 +25,9 @@ namespace pxar {
     } while (buffer.size() == 0);
 
     LOG(logDEBUGPIPES) << "----------------";
-    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel) << (tbm_present ? " DESER400 " : " DESER160 ");
+    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
+		       << " (" << static_cast<int>(chainlength) << " ROCs)"
+		       << (tbm_present ? " DESER400 " : " DESER160 ");
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
     LOG(logDEBUGPIPES) << "----------------";
     LOG(logDEBUGPIPES) << listVector(buffer,true);
@@ -168,8 +170,10 @@ namespace pxar {
 	}
 
 	try {
-	  // Get the right ROC id, channel 0: 0-7, channel 1: 8-15
-	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetChannel()*8),invertedAddress);
+	  // Get the right ROC id: Channel number x ROC offset (= token chain length)
+	  // TBM08x: channel 0: 0-7, channel 1: 8-15
+	  // TBM09x: channel 0: 0-3, channel 1: 4-7, channel 2: 8-11, channel 3: 12-15
+	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetChannel()*GetTokenChainLength()),invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	}
 	catch(DataDecoderError /*&e*/){
@@ -251,7 +255,7 @@ namespace pxar {
 	if(readback.size() <= roc) readback.resize(roc+1);
 	readback.at(roc).push_back(shiftReg.at(roc));
 
-	LOG(logDEBUGPIPES) << "Readback ROC " << static_cast<int>(roc+GetChannel()*8) << " "
+	LOG(logDEBUGPIPES) << "Readback ROC " << static_cast<int>(roc+GetChannel()*GetTokenChainLength()) << " "
 			   << ((readback.at(roc).back()>>8)&0x00ff) 
 			   << " (0x" << std::hex << ((readback.at(roc).back()>>8)&0x00ff) << std::dec << "): " 
 			   << (readback.at(roc).back()&0xff) 
