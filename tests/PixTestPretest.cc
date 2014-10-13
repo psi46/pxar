@@ -48,37 +48,30 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 
       if (!parName.compare("targetia")) {
 	fTargetIa = atoi(sval.c_str());  // [mA/ROC]
-	LOG(logDEBUG) << "setting fTargetIa    = " << fTargetIa << " mA/ROC";
       }
 
       if (!parName.compare("noisewidth")) {
 	fNoiseWidth = atoi(sval.c_str());  
-	LOG(logDEBUG) << "setting fNoiseWidth  = " << fNoiseWidth << " DAC units";
       }
 
       if (!parName.compare("noisemargin")) {
 	fNoiseMargin = atoi(sval.c_str());  // safety margin below noise
-	LOG(logDEBUG) << "setting fNoiseMargin = " << fNoiseMargin << " DAC units";
       }
 
       if (!parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
-	LOG(logDEBUG) << "setting fParNtrig    = " << fParNtrig; 
       }
 
       if (!parName.compare("vcal") ) {
 	fParVcal = atoi(sval.c_str() );
-	LOG(logDEBUG) << "setting fParVcal    = " << fParVcal; 
       }
 
       if (!parName.compare("deltavthrcomp") ) {
 	fParDeltaVthrComp = atoi(sval.c_str() );
-	LOG(logDEBUG) << "setting fParDeltaVthrComp    = " << fParDeltaVthrComp; 
       }
 
       if (!parName.compare("fraccaldel") ) {
 	fParFracCalDel = atof(sval.c_str() );
-	LOG(logDEBUG) << "setting fParFracCalDel    = " << fParFracCalDel; 
       }
 
       if (!parName.compare("pix") || !parName.compare("pix1") ) {
