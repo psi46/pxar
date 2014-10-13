@@ -17,12 +17,13 @@ public:
 
   void doTest(); 
   void scan(std::string name);
+  void adjustVthrComp();
 
 private:
 
   std::map<std::string, TH2D*> fMaps;
 
-  int     fParNtrig, fVcalLow, fVcalHigh, fPhMin, fPhMax;
+  int    fAdjustVthrComp, fParNtrig, fVcalLow, fVcalHigh, fPhMin, fPhMax;
 
   ClassDef(PixTestPhOpt, 1)
 
