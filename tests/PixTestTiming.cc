@@ -284,9 +284,8 @@ void PixTestTiming::PhaseScan() {
           fHistOptions.insert(make_pair(h2, "colz"));
           fApi->daqStart();
           for (int idelay = 0; idelay < 64 && !goodROCDelay; idelay++) {
-            fApi->daqStart();
             int ROCDelay = (delaytht << 6) | idelay;
-            LOG(logDEBUG) << "Testing ROC Delay: " << bitset<8>(ROCDelay).to_string() << "For TBM Core: " << itbm;
+            LOG(logDEBUG) << "Testing ROC Delay: " << bitset<8>(ROCDelay).to_string() << " For TBM Core: " << itbm;
             fApi->setTbmReg("basea", ROCDelay, itbm);
             fApi->daqTrigger(fNTrig+fTrigBuffer,period);
             daqRawEv = fApi->daqGetRawEventBuffer();
