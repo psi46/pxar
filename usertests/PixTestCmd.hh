@@ -286,6 +286,7 @@ class CmdProc {
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
   unsigned int fSeq;
+  unsigned int fPeriod;
   bool fPgRunning;
   bool verbose;
   Target defaultTarget;
