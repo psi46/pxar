@@ -65,6 +65,7 @@ if ($opt_r) {
 my $tbms = ""; 
 my $tbmtype = "TBM08";
 if ($opt_t) {
+    $opt_t =~ tr/a-z/A-Z/;
     if (grep(/$opt_t/, @tbmok)) {
 	$tbmtype = $opt_t;
     } else {
@@ -316,8 +317,10 @@ if ($opt_m) {
 	print FH "tbmType tbm08\n";
     } elsif ($tbmtype eq "TBM08b") {
 	print FH "tbmType tbm08b\n";
+    } elsif ($tbmtype eq "TBM09") {
+	print FH "tbmType tbm09\n";
     } else {
-	print FH "tbmType tbm08b\n";
+	print FH "tbmType tbm08\n";
     } 
 }
     print FH <<"EOF";  
