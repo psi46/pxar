@@ -58,7 +58,6 @@ bool PixTestXray::setParameter(string parName, string sval) {
       }	
       if (!parName.compare("trgfrequency(khz)")) {
 	fParTriggerFrequency = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
 	setToolTips();
       }
       if (!parName.compare("runseconds")) {

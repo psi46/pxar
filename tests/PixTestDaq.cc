@@ -104,7 +104,6 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 			}
 			if (!parName.compare("trgfrequency(khz)")){   // trigger frequency in kHz.
 				fParTriggerFrequency = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
 				if (fParTriggerFrequency == 0) {
 					LOG(logWARNING) << "PixTestDaq::setParameter() trgfrequency must be different from zero";
 					found = false; fParOutOfRange = true;
@@ -112,7 +111,6 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 			}
 			if (!parName.compare("seconds")){
 				fParSeconds = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting Seconds -> " << fParSeconds;
 			}
 		}
 	}
