@@ -877,6 +877,7 @@ void CmdProc::init()
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
+    fSignalLevel=255;
     macros["start"] = getWords("[roc * mask; roc * cald; reset tbm; seq 14]");
     macros["startroc"] = getWords("[mask; seq 15; arm 20 20; tct 106; vcal 200; adc]");
     macros["tbmonly"] = getWords("[reset tbm; tbm disable triggers; seq 10; adc]");
@@ -895,6 +896,7 @@ CmdProc::CmdProc(CmdProc * p)
     fTCT = p->fTCT;
     fTRC = p->fTRC;
     fTTK = p->fTTK;
+    fSignalLevel = p->fSignalLevel;
     fBufsize=p->fBufsize;
     macros = p->macros;
     fApi = p->fApi;
@@ -1010,6 +1012,34 @@ int CmdProc::tbmscan(){
     return 0;
 }
 
+
+int CmdProc::setTestboardDelay(string name, uint8_t value){
+    
+    vector<pair<string,uint8_t> > sigdelays;
+    ConfigParameters *p = fPixSetup->getConfigParameters();
+    sigdelays = p->getTbSigDelays();
+    for(size_t i=0; i<sigdelays.size(); i++){
+        if (sigdelays[i].first=="level"){
+            if(fSignalLevel>15){
+                fSignalLevel = sigdelays[i].second;
+            }else{
+                sigdelays[i] = std::make_pair("level", fSignalLevel);
+                p->setTbParameter("level",fSignalLevel);
+            }
+        }
+    }
+    
+    
+    if( !(name=="level") ){
+        sigdelays.clear();
+        sigdelays.push_back( std::make_pair(name, value) );
+        sigdelays.push_back( std::make_pair("level",fSignalLevel));
+    }
+    
+    fApi->setTestboardDelays(sigdelays);
+    return 0;
+}
+ 
 int CmdProc::adctest(const string signalName){
     
     // part 1 , acquire data : delay scan
@@ -1056,6 +1086,7 @@ int CmdProc::adctest(const string signalName){
         }else if(source==2){
             sigdelays.push_back(std::make_pair("sda", dly ));
         }
+        sigdelays.push_back(std::make_pair("level",fSignalLevel));
         fApi->setTestboardDelays(sigdelays);
             
         vector<uint16_t> data = fApi->daqADC(signalName, gain, nSample, source, start);
@@ -1142,14 +1173,23 @@ int CmdProc::pixDecodeRaw(int raw, int level){
 }
 
 
-int CmdProc::readRocs(uint8_t  signal, double scale){
-    
-    if ( ! (fApi->setDAC("readback", signal))){
-        out << "Warning ! May have failed to write to readback register\n";
+int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
+    /* readback bits in the roc header(s), if signal is not 0xff,
+     * program the readback register first, otherwise read back whatever
+     * the readback register has previously been set-up for.
+     * The latter mode is useful for the 'last dac' readback, while
+     * the former is useful for analog readbacks (triggers the ADC)
+     */
+     
+    if (signal<0xff){
+        if ( ! (fApi->setDAC("readback", signal))){
+            out << "Warning ! May have failed to write to readback register\n";
+        }
     }
+    
     pg_sequence( 3 ); // token+trigger
     fApi->daqStart(fBufsize, fPixelConfigNeeded);
-    fApi->daqTrigger(16, fPeriod);
+    fApi->daqTrigger(100, fPeriod);
     fApi->daqGetRawEventBuffer();
     fApi->daqTrigger(16, fPeriod);
     std::vector<pxar::rawEvent> buf = fApi->daqGetRawEventBuffer();
@@ -1173,6 +1213,7 @@ int CmdProc::readRocs(uint8_t  signal, double scale){
                 || ( (nTBM > 0 ) && ((w & 0xf000)== 0x4000)) ){
                 uint8_t D = (w & 1);
                 uint8_t S = (w >>1) & 1;
+                if(verbose && (iroc==0)) cout << "S,D=" << (int)S << "," << (int)D << endl;
                 if (iroc==values.size()) { values.push_back(0); start.push_back(-1); }
                 values[iroc] = ( values[iroc] << 1 ) + D;
                 if (S==1){
@@ -1191,24 +1232,29 @@ int CmdProc::readRocs(uint8_t  signal, double scale){
     }else{
     
         int average=0;
+        int nvalid=0;
         for(uint8_t iroc=0; iroc<nRoc; iroc++){
             if(verbose){
-                cout << "readback roc " << (int) iroc << "   start=" << start[iroc] << endl;
+                cout << "readback roc " << (int) iroc << "   start=" << start[iroc]
+                << "      raw = " <<  bitset<16>( values[iroc] ) 
+                << "  aligned = " << bitset<16>((values[iroc] >> (15-start[iroc]) ) | (values[iroc]<<(start[iroc]+1))) << endl;
             }
             if(start[iroc]>=0){
                 uint16_t value = (values[iroc] >> (15-start[iroc]) ) | (values[iroc]<<(start[iroc]+1));
                 uint8_t rocid= (value & 0xF000) >> 12;
                 uint8_t cmd  = (value & 0x0F00) >>  8;
                 uint8_t data = (value & 0x00FF);
-                average += data;
                 out << dec << fixed << setfill(' ') << setw(2) << (int) iroc
                     <<  "(" << setw(2) << (int) rocid << ")" << ": " 
                 << fixed << setw(3) << (int) data;
                 if(scale>0){
-                    out << " ~ " << fixed << setw(6)  << setprecision(3) << data*scale;
+                    out << " ~ " << fixed << setw(6)  << setprecision(3) << data*scale 
+                        << " " << units;
                 }
-                if (cmd==signal){
+                if ((cmd == signal)||(signal==0xff)){
                     out << "\n";
+                    average += data;
+                    nvalid+=1;
                 }else{
                     out <<  "   readback inconsistent  " << (int)cmd << " <> " << (int) signal << "\n";
                 }
@@ -1216,10 +1262,11 @@ int CmdProc::readRocs(uint8_t  signal, double scale){
                 out << dec << fixed << setfill(' ') << setw(2) << (int) iroc << " no startbit?\n";
             }
         }
-        if(nRoc>1){
-            out << "average:"  << dec<<fixed << setw(3) << int(average/nRoc);
+        if((nRoc>1)&&(nvalid>0)){
+            out << "average:"  << dec<<fixed << setw(3) << int(average/nvalid);
             if(scale>0){
-                out << " ~ " << fixed << setw(6)  << setprecision(3) << float(average)/nRoc*scale;
+                out << " ~ " << fixed << setw(6)  << setprecision(3) << float(average)/nvalid*scale
+                    << " " << units;  
             }
             out << "\n";
         }
@@ -1355,7 +1402,7 @@ int CmdProc::rawDump(int level){
                     
                     if( tbm09 && (roc == nRocPerToken) && (raw==0xffffff)){
                         // tbm09 possible "zero" hit
-                        out << " filler ";
+                        if(level>0) out << " filler ";
                     }else{
                         int stat = pixDecodeRaw(raw, level);
                         if((stat>0) && (level<0)) return 1;
@@ -1544,13 +1591,17 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("sighi",s)){ fApi->setSignalMode(s,2); return 0;}
     if( kw.match("siglo",s)){ fApi->setSignalMode(s,1); return 0;}
     if( kw.match("signorm",s)){ fApi->setSignalMode(s,0); return 0;}
+    if( kw.match("level",value)){ fSignalLevel=value; setTestboardDelay("level", value); return 0;}
+    if( kw.match("clk",value)){ setTestboardDelay("clk", value); return 0;}
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;}  
     if( kw.match("readrocs", value)){ return readRocs(value); }
-    if( kw.match("readback", "vd")) { return readRocs(8, 0.016);}
-    if( kw.match("readback", "va")) { return readRocs(9, 0.016);}
-    if( kw.match("readback", "vana")) { return readRocs(10, 0.008);}
-    if( kw.match("readback", "vbg")) { return readRocs(11, 0.008);}
-    if( kw.match("readback", "iana")){ return readRocs(12, 0.24); }
+    if( kw.match("readback")) { return readRocs();}
+    if( kw.match("readback", "vd")) { return readRocs(8, 0.016,"V");}
+    if( kw.match("readback", "va")) { return readRocs(9, 0.016,"V");}
+    if( kw.match("readback", "vana")) { return readRocs(10, 0.008,"V");}
+    if( kw.match("readback", "vbg")) { return readRocs(11, 0.008,"V");}
+    if( kw.match("readback", "iana")){ return readRocs(12, 0.24,"mA"); }
+    if( kw.match("readback", "ia")){ return readRocs(12, 0.24,"mA"); }
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("ttk", value)){ fTTK=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("trc", value)){ fTRC=value; if (fSeq>0){sequence(fSeq);} return 0;}

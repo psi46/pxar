@@ -287,6 +287,7 @@ class CmdProc {
   unsigned int fBufsize;
   unsigned int fSeq;
   unsigned int fPeriod;
+  uint8_t fSignalLevel;
   bool fPgRunning;
   bool verbose;
   Target defaultTarget;
@@ -298,9 +299,10 @@ class CmdProc {
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
   int tbmscan();
-  int readRocs(uint8_t , double scale=0  );
+  int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
   int rawDump(int level=0);
   int pixDecodeRaw(int, int level=1);
+  int setTestboardDelay(string name, uint8_t value);
   
   int adctest0(const string s);
   int adctest(const string s);
