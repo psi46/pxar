@@ -59,9 +59,9 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
 void PixTestBBMap::init() {
   LOG(logDEBUG) << "PixTestBBMap::init()";
   
-  fDirectory = gFile->GetDirectory( fName.c_str() );
-  if( !fDirectory ) {
-    fDirectory = gFile->mkdir( fName.c_str() );
+  fDirectory = gFile->GetDirectory(fName.c_str());
+  if (!fDirectory) {
+    fDirectory = gFile->mkdir(fName.c_str());
   }
   fDirectory->cd();
 }
@@ -132,7 +132,7 @@ void PixTestBBMap::doTest() {
     bbCuts   += Form(" %4d", cutDead); 
   }
 
-  if(h) {
+  if (h) {
     h->Draw();
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   }

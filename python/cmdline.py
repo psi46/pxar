@@ -52,7 +52,7 @@ class PxarCoreCmd(cmd.Cmd):
                     pixels.append(px)
         else:
             if(not self.window):
-                print evt
+                print data
                 return
             for px in data.pixels:
                 pixels.append(px)
