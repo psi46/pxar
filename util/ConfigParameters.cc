@@ -296,13 +296,8 @@ vector<pair<string, double> >  ConfigParameters::getTbPowerSettings() {
 vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   vector<pair<string, uint8_t> > a;
 
-  vector<string> sigdelays; 
-  sigdelays.push_back("clk");
-  sigdelays.push_back("ctr");
-  sigdelays.push_back("sda");
-  sigdelays.push_back("tin");
-  sigdelays.push_back("triggerdelay");
-  sigdelays.push_back("deser160phase");
+  RegisterDictionary *dict = RegisterDictionary::getInstance();
+  vector<string> sigdelays = dict->getAllDTBNames();
 
   if (!fReadTbParameters) readTbParameters();
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
