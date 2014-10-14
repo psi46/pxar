@@ -445,7 +445,7 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
         if (regiongood && regionsize+1>MaxGoodRegionSize) {
           MaxGoodRegionSize=regionsize+1;
           GoodROCDelay = (startbinx-1+regionsize/2)%8 | (startbiny-1+regionsize/2)%8<<3;
-        } else break;
+        }
       }
     }
   }
