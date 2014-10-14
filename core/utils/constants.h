@@ -91,6 +91,7 @@ namespace pxar {
 #define SIG_TIN 3
 #define SIG_RDA_TOUT 4
 
+#define SIG_LEVEL 0xFC
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
 #define SIG_DESER160PHASE 0xFE
 
