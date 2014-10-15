@@ -336,7 +336,7 @@ void PixTestDaq::doTest() {
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-  if (!setTrgFrequency(20)){
+  if (!setTrgFrequency(50)){
 	  FinalCleaning();
 	  return;
   }
