@@ -7,6 +7,16 @@ from libcpp.string cimport string
 from libcpp cimport bool
 
 cdef extern from "api.h" namespace "pxar":
+    cdef int _flag_force_serial   "FLAG_FORCE_SERIAL"
+    cdef int _flag_cals           "FLAG_CALS"
+    cdef int _flag_xtalk          "FLAG_XTALK"
+    cdef int _flag_rising_edge    "FLAG_RISING_EDGE"
+    cdef int _flag_disable_daccal "FLAG_DISABLE_DACCAL"
+    cdef int _flag_nosort         "FLAG_NOSORT"
+    cdef int _flag_check_order    "FLAG_CHECK_ORDER"
+    cdef int _flag_force_unmasked "FLAG_FORCE_UNMASKED"
+
+cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:
         uint8_t roc()
         uint8_t column()

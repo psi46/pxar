@@ -9,6 +9,15 @@ import numpy
 
 cimport PyPxarCore
 
+FLAG_FORCE_SERIAL   = int(_flag_force_serial)
+FLAG_CALS           = int(_flag_cals)
+FLAG_XTALK          = int(_flag_xtalk)
+FLAG_RISING_EDGE    = int(_flag_rising_edge)
+FLAG_DISABLE_DACCAL = int(_flag_disable_daccal)
+FLAG_NOSORT         = int(_flag_nosort)
+FLAG_CHECK_ORDER    = int(_flag_check_order)
+FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
+
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
     def __cinit__(self, address = None, data = None): # default to None to mimick overloading of constructor
