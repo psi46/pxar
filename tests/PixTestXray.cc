@@ -323,8 +323,7 @@ void PixTestXray::doPhRun() {
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     LOG(logINFO) << "buffer not full, at " << (int) perFull << "%";
     gSystem->ProcessEvents();
-    processData();
-    
+
     // Pause and drain the buffer if almost full.
     if (perFull > 80) {
       LOG(logINFO) << "Buffer almost full, pausing triggers.";
