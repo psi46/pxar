@@ -82,6 +82,7 @@ cdef extern from "api.h" namespace "pxar":
         string getRocType()
         vector[ uint8_t ] getEnabledRocI2Caddr()
         vector[pixelConfig] getEnabledPixels(size_t rocid)
+        vector[pixelConfig] getMaskedPixels(size_t rocid)
         vector[rocConfig] getEnabledRocs()
         vector[uint8_t] getEnabledRocIDs()
         vector[tbmConfig] getEnabledTbms()

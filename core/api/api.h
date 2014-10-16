@@ -920,6 +920,10 @@ namespace pxar {
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
 
+    /** Function returning all masked pixels configs for a specific ROC:
+     */
+    std::vector< pixelConfig > getMaskedPixels(size_t rocid);
+
     /** Function returning the enabled ROC configs
      */
     std::vector< rocConfig > getEnabledRocs();
