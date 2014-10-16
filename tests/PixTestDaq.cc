@@ -383,7 +383,6 @@ void PixTestDaq::doTest() {
 		  }
 		  LOG(logINFO) << "buffer not full, at " << (int)perFull << "%";
 		  gSystem->ProcessEvents();
-		  ProcessData();
 	  }
 	  if (fDaq_loop){
 		  LOG(logINFO) << "Buffer almost full, pausing triggers.";
