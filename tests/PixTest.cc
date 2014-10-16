@@ -176,6 +176,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   
   shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
   shist256 *ph;
+  rsstools rss;
 
   int idx(0);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
@@ -194,7 +195,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     scurveAna(dac, name, maps, resultMaps, result); 
   } 
 
-  LOG(logDEBUG) << "PixTest::scurveMaps end: getCurrentRSS() = " << getCurrentRSS();
+  LOG(logDEBUG) << "PixTest::scurveMaps end: getCurrentRSS() = " << rss.getCurrentRSS();
 
   return resultMaps; 
 }
