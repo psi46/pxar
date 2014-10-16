@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 #include <sys/stat.h>
 
 #if (defined WIN32)
@@ -172,7 +173,6 @@ int main(int argc, char *argv[]){
 
     LOG(logINFO) << "DUT info: ";
     api->_dut->info(); 
-    
   } 
   catch (pxar::InvalidConfig &e){
     std::cout << "pxar caught an exception due to invalid configuration settings: " << e.what() << std::endl;
@@ -203,11 +203,24 @@ int main(int argc, char *argv[]){
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
     if (configParameters->getHvOn()) api->HVon(); 
+
+    // -- search for subtest 
+    string::size_type m0 = runtest.find(":"); 
+    string subtest("nada"); 
+    if (m0 != string::npos) {
+      subtest = runtest.substr(m0+1); 
+      runtest = runtest.substr(0, m0); 
+    }
+    
     if (testParameters.compare("nada")) {
       ptp->setTestParameters(runtest, testParameters); 
     }
     PixTest *t = factory->createTest(runtest, &a);
-    t->doTest();
+    if (subtest.compare("nada")) {
+      t->runCommand(subtest); 
+    } else {
+      t->doTest();
+    }
     delete t; 
   } else {
     string input; 
@@ -221,13 +234,31 @@ int main(int argc, char *argv[]){
       string input;
       std::getline(cin, input);
       if (input.size() == 0) stop = true;
+      string parameters("nada"), subtest("nada");
+      // -- split input with space into testname(s) and parameters
       string::size_type m1 = input.find(" "); 
       if (m1 != string::npos) {
-	string parameters = input.substr(m1); 
+	parameters = input.substr(m1+1); 
 	input = input.substr(0, m1);
+	cout << "parameters: ->" << parameters << "<- input: ->" << input << "<-" << endl;
+      }
+      // -- find subtest
+      string::size_type m0 = input.find(":"); 
+      if (m0 != string::npos) {
+	subtest = input.substr(m0+1); 
+	input = input.substr(0, m0); 
+	cout << "subtest: ->" << subtest << "<- input: ->" << input << "<-" << endl;
+      }
+
+
+      if (!parameters.compare("nada")) {
+	LOG(logINFO) << "  test: " << input << " no parameter change"; 
+      } else {
 	LOG(logINFO) << "  test: " << input << " setting parameters: ->" << parameters << "<-"; 
 	ptp->setTestParameters(input, parameters); 
       }
+
+      std::transform(subtest.begin(), subtest.end(), subtest.begin(), ::tolower);
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       
       if (!input.compare("gui"))  runGui(a, argc, argv); 
@@ -239,7 +270,11 @@ int main(int argc, char *argv[]){
       LOG(logINFO) << "  running: " << input; 
       PixTest *t = factory->createTest(input, &a);
       if (t) {
-	t->doTest();
+	if (subtest.compare("nada")) {
+	  t->runCommand(subtest); 
+	} else {
+	  t->doTest();
+	}
 	delete t;
       } else {
 	LOG(logINFO) << "command ->" << input << "<- not known, ignored";

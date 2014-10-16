@@ -23,7 +23,7 @@ getopts('d:hmp:r:t:');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21"); 
-my @tbmok = ("TBM08", "TBM08b", "TBM08b_FPIX", "TBM09"); 
+my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM09"); 
 
 if ($opt_h) {
     &printHelp;
@@ -132,7 +132,7 @@ exit(0);
 # ----------------------------------------------------------------------
 sub setTbms {
     $tbms = "";
-    if ($tbmtype eq "TBM08b") {
+    if ($tbmtype eq "TBM08B") {
 	$tbms .= "0       clear   0xF0\n";
 	$tbms .= "1    counters   0x81\n";
 	$tbms .= "2        mode   0xC0\n";
@@ -140,7 +140,7 @@ sub setTbms {
 	$tbms .= "4      delays   0xE4\n";
 	$tbms .= "5       basee   0x20\n";
 	$tbms .= "6 temperature   0x00\n";
-    } elsif ($tbmtype eq "TBM08b_FPIX") {
+    } elsif ($tbmtype eq "TBM08B_FPIX") {
 	$tbms .= "0       clear   0xF0\n";
 	$tbms .= "1    counters   0x81\n";
 	$tbms .= "2        mode   0xC0\n";
@@ -509,6 +509,7 @@ sub printTbParameters {
   1             ctr    4
   2             sda   19
   3             tin    9
+  4           level   15
 EOF
 
     if (!$opt_m) {

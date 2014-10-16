@@ -336,7 +336,7 @@ void PixTestDaq::doTest() {
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-  if (!setTrgFrequency(20)){
+  if (!setTrgFrequency(50)){
 	  FinalCleaning();
 	  return;
   }
@@ -383,7 +383,6 @@ void PixTestDaq::doTest() {
 		  }
 		  LOG(logINFO) << "buffer not full, at " << (int)perFull << "%";
 		  gSystem->ProcessEvents();
-		  ProcessData();
 	  }
 	  if (fDaq_loop){
 		  LOG(logINFO) << "Buffer almost full, pausing triggers.";

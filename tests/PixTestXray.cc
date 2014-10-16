@@ -100,7 +100,7 @@ bool PixTestXray::setTrgFrequency(uint8_t TrgTkDel) {
   double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
   double fClkDelays = period_ns / 25 - trgtkdel;
   uint16_t ClkDelays = (uint16_t)fClkDelays; //debug -- aprox to def
-  
+
   // -- add right delay between triggers:
   uint16_t i = ClkDelays;
   while (i>255){
@@ -112,7 +112,7 @@ bool PixTestXray::setTrgFrequency(uint8_t TrgTkDel) {
   // -- then send trigger and token:
   fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG b000010
   fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
-  
+
   return true;
 }
 
@@ -300,12 +300,15 @@ void PixTestXray::doPhRun() {
   fApi->daqStop();
 
   fPg_setup.clear();
-  if (fParDelayTBM) fApi->setTbmReg("delays", 0x40);
+  if (fParDelayTBM) {
+    LOG(logINFO) << "set TBM register delays = 0x40";
+    fApi->setTbmReg("delays", 0x40);
+  }
 
   fDaq_loop = true;
 
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-  setTrgFrequency(20);
+  setTrgFrequency(50);
 
   fApi->setPatternGenerator(fPg_setup);
   fDaq_loop = true;
@@ -320,8 +323,7 @@ void PixTestXray::doPhRun() {
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     LOG(logINFO) << "buffer not full, at " << (int) perFull << "%";
     gSystem->ProcessEvents();
-    processData();
-    
+
     // Pause and drain the buffer if almost full.
     if (perFull > 80) {
       LOG(logINFO) << "Buffer almost full, pausing triggers.";
@@ -382,7 +384,7 @@ void PixTestXray::doRateScan() {
   fApi->daqTrigger(1, period);
   fApi->daqStop();
   fPg_setup.clear();
-  setTrgFrequency(20);
+  setTrgFrequency(50);
   fApi->setPatternGenerator(fPg_setup);
 
   // -- scan VthrComp  

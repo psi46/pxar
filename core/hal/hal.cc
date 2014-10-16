@@ -130,6 +130,16 @@ void hal::setTestboardPower(double va, double vd, double ia, double id) {
 
 void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
 
+  // Default signal level: 15 (highest)
+  uint8_t signal_level = 15;
+  // Find the signal level entry (if one):
+  std::map<uint8_t,uint8_t>::iterator lvl = sig_delays.find(SIG_LEVEL);
+  if(lvl != sig_delays.end()) {
+    signal_level = lvl->second;
+    sig_delays.erase(lvl);
+  }
+  LOG(logDEBUGHAL) << "Setting all DTB signal levels to " << static_cast<int>(signal_level);
+
   // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
@@ -150,8 +160,8 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
-      // Also set the signal level, all levels default to 15 (highest) for now:
-      _testboard->Sig_SetLevel(sigIt->first, 15);
+      // Also set the signal level:
+      _testboard->Sig_SetLevel(sigIt->first, signal_level);
     }
   }
   _testboard->Flush();

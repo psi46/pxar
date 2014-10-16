@@ -3,7 +3,7 @@
 Python Command Line Interface to the pxar API.
 """
 import PyPxarCore
-from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyProbeDictionary
+from PyPxarCore import *
 from numpy import set_printoptions, nan, zeros
 from pxar_helpers import * # arity decorator, PxarStartup, PxarConfigFile, PxarParametersFile and others
 
@@ -52,7 +52,7 @@ class PxarCoreCmd(cmd.Cmd):
                     pixels.append(px)
         else:
             if(not self.window):
-                print evt
+                print data
                 return
             for px in data.pixels:
                 pixels.append(px)
