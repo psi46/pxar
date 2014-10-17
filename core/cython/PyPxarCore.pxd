@@ -38,6 +38,7 @@ cdef extern from "api.h" namespace "pxar":
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixelConfig:
+        uint8_t roc()
         uint8_t trim()
         uint8_t column()
         uint8_t row()
