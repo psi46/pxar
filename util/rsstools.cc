@@ -1,11 +1,20 @@
 #include "rsstools.hh"
 
+// ----------------------------------------------------------------------
+rsstools::rsstools() {
+}
+
+// ----------------------------------------------------------------------
+rsstools::~rsstools() {
+}
+
+
 /**
  * Returns the peak (maximum so far) resident set size (physical
  * memory use) measured in bytes, or zero if the value cannot be
  * determined on this OS.
  */
-size_t getPeakRSS( )
+size_t rsstools::getPeakRSS()
 {
 #if defined(WIN32)
     /* Windows -------------------------------------------------- */
@@ -43,15 +52,11 @@ size_t getPeakRSS( )
 #endif
 }
 
-
-
-
-
 /**
  * Returns the current resident set size (physical memory use) measured
  * in bytes, or zero if the value cannot be determined on this OS.
  */
-size_t getCurrentRSS( )
+size_t rsstools::getCurrentRSS()
 {
 #if defined(WIN32)
     /* Windows -------------------------------------------------- */

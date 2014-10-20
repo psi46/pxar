@@ -1,6 +1,8 @@
 #ifndef PXAR_RSSTOOLS_H
 #define PXAR_RSSTOOLS_H
 
+#include "pxardllexport.h"
+
 /*
  * Author:  David Robert Nadeau
  * Site:    http://NadeauSoftware.com/
@@ -10,7 +12,7 @@
 
 #if defined(WIN32)
 #include <windows.h>
-#include <psapi.h>
+#include <Psapi.h>
 
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
 #include <unistd.h>
@@ -33,21 +35,26 @@
 #endif
 
 
+class DLLEXPORT rsstools{
+public:
+	rsstools();
+	~rsstools();
 
+	/**
+	 * Returns the peak (maximum so far) resident set size (physical
+	 * memory use) measured in bytes, or zero if the value cannot be
+	 * determined on this OS.
+	 */
+	size_t getPeakRSS();
 
+	/**
+	 * Returns the current resident set size (physical memory use) measured
+	 * in bytes, or zero if the value cannot be determined on this OS.
+	 */
+	size_t getCurrentRSS();
+private:
 
-/**
- * Returns the peak (maximum so far) resident set size (physical
- * memory use) measured in bytes, or zero if the value cannot be
- * determined on this OS.
- */
-size_t getPeakRSS( );
-
-/**
- * Returns the current resident set size (physical memory use) measured
- * in bytes, or zero if the value cannot be determined on this OS.
- */
-size_t getCurrentRSS( );
+};
 
 #endif
 

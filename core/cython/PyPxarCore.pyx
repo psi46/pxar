@@ -61,9 +61,19 @@ cdef class PixelConfig:
             self.thisptr = new pixelConfig()
     def __dealloc__(self):
         del self.thisptr
+    cdef fill(self, pixelConfig p):
+        self.thisptr.setRoc(p.roc())
+        self.thisptr.setColumn(p.column())
+        self.thisptr.setRow(p.row())
+        self.thisptr.setTrim(p.trim())
+        self.thisptr.setEnable(p.enable())
+        self.thisptr.setMask(p.mask())
     cdef c_clone(self, pixelConfig* p):
         del self.thisptr
         thisptr = p
+    property roc:
+        def __get__(self): return self.thisptr.roc()
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
         def __get__(self): return self.thisptr.column()
         def __set__(self, column): self.thisptr.setColumn(column)
@@ -285,10 +295,45 @@ cdef class PyPxarCore:
             self.thisptr._dut.maskPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.maskPixel(col, row, enable)
-    def getNMaskedPixels(self, int rocid):
-        return self.thisptr._dut.getNMaskedPixels(rocid)
-    def getNEnabledPixels(self, int rocid):
-        return self.thisptr._dut.getNEnabledPixels(rocid)
+
+    def getNMaskedPixels(self, rocid = None):
+        if rocid is not None:
+            return self.thisptr._dut.getNMaskedPixels(rocid)
+        else:
+            return self.thisptr._dut.getNMaskedPixels()
+
+    def getMaskedPixels(self, rocid = None):
+        cdef vector[pixelConfig] rpcs
+        if rocid is not None:
+            rpcs = self.thisptr._dut.getMaskedPixels(rocid)
+        else:
+            rpcs = self.thisptr._dut.getMaskedPixels()
+        pixelconfigs = list()
+        for p in rpcs:
+            pxc = PixelConfig()
+            pxc.fill(p)
+            pixelconfigs.append(pxc)
+        return pixelconfigs
+
+    def getNEnabledPixels(self, rocid = None):
+        if rocid is not None:
+            return self.thisptr._dut.getNEnabledPixels(rocid)
+        else:
+            return self.thisptr._dut.getNEnabledPixels()
+
+    def getEnabledPixels(self, rocid = None):
+        cdef vector[pixelConfig] rpcs
+        if rocid is not None:
+            rpcs = self.thisptr._dut.getEnabledPixels(rocid)
+        else:
+            rpcs = self.thisptr._dut.getEnabledPixels()
+        pixelconfigs = list()
+        for p in rpcs:
+            pxc = PixelConfig()
+            pxc.fill(p)
+            pixelconfigs.append(pxc)
+        return pixelconfigs
+
     def getNEnabledTbms(self):
         return self.thisptr._dut.getNEnabledTbms()
     def getNEnabledRocs(self):
