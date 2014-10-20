@@ -188,7 +188,8 @@ void PixTestAlive::aliveTest() {
 	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
-  
+
+  //  PixTest::hvOff();
 }
 
 
