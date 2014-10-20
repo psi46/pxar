@@ -246,6 +246,10 @@ public:
   void testDone(); // *SIGNAL*
   /// signal to PixTab to update the canvas
   void update();  // *SIGNAL*
+  /// turn HV off
+  void hvOff();  // *SIGNAL*
+  /// turn HV on
+  void hvOn();  // *SIGNAL*
   /// allow forward iteration through list of histograms
   TH1* nextHist(); 
   /// allow backward iteration through list of histograms
