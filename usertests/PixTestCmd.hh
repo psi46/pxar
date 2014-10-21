@@ -258,6 +258,18 @@ class Statement{
 
 };
 
+class DRecord{
+    public:
+    uint8_t type;
+    uint32_t w1,w2;
+    uint32_t data;
+    DRecord(uint8_t T=0xff, uint32_t D=0x00000000, uint16_t W1=0x000, uint16_t W2=0x0000){
+        type = T;
+        data = D;
+        w1 = W1;
+        w2 = W2;
+    }
+};
 
 class CmdProc {
 
@@ -285,10 +297,16 @@ class CmdProc {
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
+  vector<uint16_t>  fBuf;
   unsigned int fSeq;
   unsigned int fPeriod;
   uint8_t fSignalLevel;
   bool fPgRunning;
+  
+  int fDeser400XOR1;
+  int fDeser400XOR2;
+  int fDeser400err;
+  
   bool verbose;
   Target defaultTarget;
   map<string, deque <string> > macros;
@@ -299,7 +317,16 @@ class CmdProc {
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
   int tbmscan();
+  int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
+  
+  int countHits();
+  int countErrors();
+  int printData(int level);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
+  int getBuffer(vector<uint16_t> & buf,int verbosity=1);
+  int runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0);
+
+  int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1);
   int rawDump(int level=0);
   int pixDecodeRaw(int, int level=1);
   int setTestboardDelay(string name, uint8_t value);
@@ -307,7 +334,7 @@ class CmdProc {
   int adctest0(const string s);
   int adctest(const string s);
   int sequence(int seq);
-  int pg_sequence(int seq);
+  int pg_sequence(int seq, int length=0);
   int pg_restore();
   int pg_loop();
   int pg_stop();
