@@ -38,30 +38,6 @@ PixTestHighRate::PixTestHighRate() : PixTest() {
 
 
 // ----------------------------------------------------------------------
-bool PixTestHighRate::setTrgFrequency(uint8_t TrgTkDel, int triggerFreq) {
-  uint8_t trgtkdel = TrgTkDel;
-  
-  double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
-  double fClkDelays = period_ns / 25 - trgtkdel;
-  uint16_t ClkDelays = (uint16_t)fClkDelays; //debug -- aprox to def
-  
-  // -- add right delay between triggers:
-  uint16_t i = ClkDelays;
-  while (i>255){
-    fPg_setup.push_back(make_pair("delay", 255));
-    i = i - 255;
-  }
-  fPg_setup.push_back(make_pair("delay", i));
-  
-  // -- then send trigger and token:
-  fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG b000010
-  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
-  
-  return true;
-}
-
-
-// ----------------------------------------------------------------------
 bool PixTestHighRate::setParameter(string parName, string sval) {
   bool found(false);
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
@@ -263,26 +239,6 @@ void PixTestHighRate::doXPixelAlive() {
 }
 
 
-
-// ----------------------------------------------------------------------
-void PixTestHighRate::pgToDefault(vector<pair<std::string, uint8_t> > /*pg_setup*/) {
-  fPg_setup.clear();
-  LOG(logDEBUG) << "PixTestHighRate::PG_Setup clean";
-  
-  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-  fApi->setPatternGenerator(fPg_setup);
-  LOG(logINFO) << "PixTestHighRate::Xray pg_setup set to default.";
-}
-
-// ----------------------------------------------------------------------
-void PixTestHighRate::finalCleanup() {
-  pgToDefault(fPg_setup);
-  
-  fPg_setup.clear();
-}
-
-
-
 // ----------------------------------------------------------------------
 void PixTestHighRate::doRunDaq() {
 
@@ -354,7 +310,7 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
   fApi->daqTrigger(1, period);
   fApi->daqStop();
   fPg_setup.clear();
-  setTrgFrequency(50, fParTriggerFrequency);
+  setTriggerFrequency(fParTriggerFrequency, 50);
   fApi->setPatternGenerator(fPg_setup);
   
   timer t;
@@ -440,7 +396,7 @@ void PixTestHighRate::maskHotPixels() {
   fApi->daqTrigger(1, period);
   fApi->daqStop();
   fPg_setup.clear();
-  setTrgFrequency(50, TRGFREQ);
+  setTriggerFrequency(TRGFREQ, 50);
   fApi->setPatternGenerator(fPg_setup);
   
   timer t;

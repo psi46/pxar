@@ -1536,3 +1536,40 @@ void PixTest::maskPixels() {
   }
 
 }
+
+
+// ----------------------------------------------------------------------
+void PixTest::pgToDefault() {
+  fPg_setup.clear();
+  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+  fApi->setPatternGenerator(fPg_setup);
+  LOG(logINFO) << "pattern generator reset to default";
+}
+
+// ----------------------------------------------------------------------
+void PixTest::finalCleanup() {
+  pgToDefault();
+  fPg_setup.clear();
+}
+
+
+// ----------------------------------------------------------------------
+bool PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
+  double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
+  double clkDelays = period_ns / 25 - trgTkDel;
+  uint16_t ClkDelays = (uint16_t)clkDelays; //debug -- aprox to def
+  
+  // -- add right delay between triggers:
+  uint16_t i = ClkDelays;
+  while (i>255){
+    fPg_setup.push_back(make_pair("delay", 255));
+    i = i - 255;
+  }
+  fPg_setup.push_back(make_pair("delay", i));
+  
+  // -- then send trigger and token:
+  fPg_setup.push_back(make_pair("trg", trgTkDel));	// PG_TRG b000010
+  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
+  
+  return true;
+}

@@ -26,9 +26,7 @@ public:
   void fillMap(std::vector<TH2D*>);
   void maskHotPixels(); 
  
-  bool setTrgFrequency(uint8_t TrgTkDel, int triggerFreq = 20);
-  void finalCleanup();
-  void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
+  //  bool setTrgFrequency(uint8_t TrgTkDel, int triggerFreq = 20);
 
 private:
 
@@ -44,8 +42,6 @@ private:
 
   bool    fDaq_loop;
   
-  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
-
   std::vector<TH2D*> fHitMap;
   std::vector<std::vector<std::pair<int, int> > > fHotPixels;
   
