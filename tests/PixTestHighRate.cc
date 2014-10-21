@@ -300,7 +300,6 @@ void PixTestHighRate::doRunDaq() {
 
 
   // -- unmask entire chip and then mask hot pixels
-  maskHotPixels();
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
   for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
