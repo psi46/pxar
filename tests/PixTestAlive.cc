@@ -173,9 +173,11 @@ void PixTestAlive::aliveTest() {
   
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
+  if (h) {
+    h->Draw(getHistOption(h).c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
   restoreDacs();
 
   // -- summary printout
