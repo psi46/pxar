@@ -21,18 +21,14 @@ public:
   void doTest();
   void doXPixelAlive();
   void doRunDaq(); 
+
+  void doHitMap(int nseconds, std::vector<TH2D*>);
+  void fillMap(std::vector<TH2D*>);
   void maskHotPixels(); 
  
-  bool setTrgFrequency(uint8_t TrgTkDel);
+  bool setTrgFrequency(uint8_t TrgTkDel, int triggerFreq = 20);
   void finalCleanup();
   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
-
-  void readData();
-  void doHitMap(int nseconds = 1);
-
-  double meanHit(TH2D*); 
-  double noiseLevel(TH2D*); 
-  int    countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
 
 private:
 
@@ -51,7 +47,8 @@ private:
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
   std::vector<TH2D*> fHitMap;
-
+  std::vector<std::vector<std::pair<int, int> > > fHotPixels;
+  
   ClassDef(PixTestHighRate, 1)
 
 };
