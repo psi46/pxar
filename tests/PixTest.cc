@@ -1521,3 +1521,18 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
   return make_pair(maps, xMaps); 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTest::maskPixels() {
+  string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
+  vector<vector<pair<int, int> > > vmask = fPixSetup->getConfigParameters()->readMaskFile(mfile); 
+
+  for (unsigned int i = 0; i < vmask.size(); ++i) {
+    vector<pair<int, int> > mask = vmask[i]; 
+    for (unsigned int ipix = 0; ipix < mask.size(); ++ipix) {
+      LOG(logDEBUG) << "ROC " << getIdFromIdx(i) << " masking pixel " << mask[ipix].first << "/" << mask[ipix].second; 
+      fApi->_dut->maskPixel(mask[ipix].first, mask[ipix].second, true, getIdFromIdx(i)); 
+    }
+  }
+
+}

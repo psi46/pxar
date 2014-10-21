@@ -90,7 +90,8 @@ public:
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
   std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
-  
+  /// mask all pixels mentioned in the mask file
+  void maskPixels();     
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
