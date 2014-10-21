@@ -313,6 +313,19 @@ void PixTestDaq::doTest() {
 	  LOG(logINFO) << "PixTestDaq::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
   }  
 
+  // -- unmask entire chip and then mask hot pixels (from HighRate)
+  //maskHotPixels();
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(false);
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+	  vector<pair<int, int> > hot = fHotPixels[i];
+	  for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+		  LOG(logDEBUG) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second;
+		  fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i));
+	  }
+  }
+  maskPixels();
+  
   // Start the DAQ:
   //::::::::::::::::::::::::::::::::
 
