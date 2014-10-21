@@ -321,8 +321,11 @@ bool pxarCore::programDUT() {
     _hal->initROC(rocit->i2c_address,(*rocit).type, (*rocit).dacs);
   }
 
-  // As last step, mask all pixels in the device:
+  // As last step, mask all pixels in the device and detach all double column readouts::
   MaskAndTrim(false);
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+  }
 
   // The DUT is programmed, everything all right:
   _dut->_programmed = true;
