@@ -39,6 +39,28 @@ private:
   TGHorizontalFrame        *fHFrame1;
   TGHorizontalFrame        *fHFrame2;
 
+  // - - - - - -  Satoshi - - - - - 
+  TGLabel                *fTemperatureRef ;
+  TGLabel                *fTemperatureVal ; 
+  TGHorizontalFrame        *fHFrame_Tref;
+  TGHorizontalFrame        *fHFrame_Tval;
+  TGTextEntry            *fNmrTVal;
+  TGTextEntry            *fNmrTRef;
+  TGTextBuffer           *fTRefFileBuffer;
+  TGTextBuffer           *fTValFileBuffer;
+
+  TGLabel                *fTemperatureDiff ; 
+  TGHorizontalFrame      *fHFrame_TDiff;
+  TGTextEntry            *fNmrTDiff;
+  TGTextBuffer           *fTDiffFileBuffer;
+
+  TGLabel                *fTemperatureDegree ;
+  TGHorizontalFrame      *fHFrame_TDegree ; 
+  TGTextEntry            *fNmrTDegree ; 
+  TGTextBuffer           *fTDegreeFileBuffer ;
+
+
+
   time_t                fActTime;
   struct tm                *fTimeinfo;
 

@@ -57,7 +57,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   }
   
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
-  fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
+  fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.3), kFixedHeight);
   fH2 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.8), kFixedHeight);
 
   TGVerticalFrame *h1v1 = new TGVerticalFrame(fH1); 

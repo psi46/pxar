@@ -1860,3 +1860,6 @@ vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, int nSample, ui
     return data;
 }
 
+uint16_t hal::GetADC(uint8_t rpc_par1){
+  return _testboard->GetADC(rpc_par1);
+}
