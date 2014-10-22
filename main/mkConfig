@@ -317,6 +317,8 @@ if ($opt_m) {
 	print FH "tbmType tbm08\n";
     } elsif ($tbmtype eq "TBM08B") {
 	print FH "tbmType tbm08b\n";
+    } elsif ($tbmtype eq "TBM08B_FPIX") {
+	print FH "tbmType tbm08b\n"; #sic!
     } elsif ($tbmtype eq "TBM09") {
 	print FH "tbmType tbm09\n";
     } else {
