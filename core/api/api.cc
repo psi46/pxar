@@ -2134,6 +2134,8 @@ bool pxarCore::daqStop(const bool init) {
 
 uint16_t pxarCore::GetADC( uint8_t rpc_par1 ){
   
+  if( ! status() ) { return 0; } 
+
   return _hal->GetADC( rpc_par1 );
 
 }
