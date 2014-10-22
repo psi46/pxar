@@ -37,48 +37,17 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fDigiButton->ChangeOptions(fDigiButton->GetOptions() | kFixedWidth);
   fDigiButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 
-
-//  // - - - - - Satoshi - - - - - -
-//  TGString *temperature_ref = new TGString("T_ref");
-//  TGString *temperature_val = new TGString("T_val");
-//
-//  fHFrame_Tref = new TGHorizontalFrame(fMonitorFrame) ;
-//  fHFrame_Tval = new TGHorizontalFrame(fMonitorFrame) ;
-//
-//  fTemperatureRef = new TGLabel(fHFrame_Tref, temperature_ref);
-//  fTemperatureVal = new TGLabel(fHFrame_Tval, temperature_val);
-//
-//  fNmrTRef = new TGTextEntry(fHFrame_Tref, fTRefFileBuffer = new TGTextBuffer(100));
-//  fNmrTRef->SetWidth(100);
-//  fNmrTVal = new TGTextEntry(fHFrame_Tval, fTValFileBuffer = new TGTextBuffer(100));
-//  fNmrTVal->SetWidth(100);
-//
-//  fHFrame_Tref -> AddFrame( fTemperatureRef , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-//  fHFrame_Tref -> AddFrame( fNmrTRef , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-//  fHFrame_Tval -> AddFrame( fTemperatureVal , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-//  fHFrame_Tval -> AddFrame( fNmrTVal , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-//
-//  TGString *temperature_diff = new TGString("ADC diff");
-//  fHFrame_TDiff = new TGHorizontalFrame(fMonitorFrame) ;
-//  fTemperatureDiff = new TGLabel(fHFrame_TDiff, temperature_diff );
-//  fNmrTDiff = new TGTextEntry(fHFrame_TDiff, fTDiffFileBuffer = new TGTextBuffer(100));
-//  fNmrTDiff->SetWidth(100);
-//  fHFrame_TDiff -> AddFrame( fTemperatureDiff , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-//  fHFrame_TDiff -> AddFrame( fNmrTDiff , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-
-
   if( fGui -> GetHdiType() == "fpix" ){
     printf("this is fpixe");
-  TGString *temperature_degree = new TGString("Temperature");
-  fHFrame_TDegree = new TGHorizontalFrame(fMonitorFrame) ;
-  fTemperatureDegree = new TGLabel(fHFrame_TDegree, temperature_degree );
-  fNmrTDegree = new TGTextEntry(fHFrame_TDegree, fTDegreeFileBuffer = new TGTextBuffer(100));
-  fNmrTDegree->SetWidth(100);
-  fHFrame_TDegree -> AddFrame( fTemperatureDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-  fHFrame_TDegree -> AddFrame( fNmrTDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-//  /// - - -- - - - - - - satoshi - - - - - - - - - 
+    TGString *temperature_degree = new TGString("Temperature");
+    fHFrame_TDegree = new TGHorizontalFrame(fMonitorFrame) ;
+    fTemperatureDegree = new TGLabel(fHFrame_TDegree, temperature_degree );
+    fNmrTDegree = new TGTextEntry(fHFrame_TDegree, fTDegreeFileBuffer = new TGTextBuffer(100));
+    fNmrTDegree->SetWidth(100);
+    fHFrame_TDegree -> AddFrame( fTemperatureDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
+    fHFrame_TDegree -> AddFrame( fNmrTDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
   }else{
-      printf("this is NOT fpixe");
+    printf("this is NOT fpixe");
   }
 
   fActTime = time(NULL);
@@ -95,14 +64,9 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fMonitorFrame->AddFrame(fHFrame2, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
 
 
-  /// - -- satoshi 
-//  fMonitorFrame->AddFrame(fHFrame_Tref , new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
-//  fMonitorFrame->AddFrame(fHFrame_Tval , new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
-//  fMonitorFrame->AddFrame(fHFrame_TDiff, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
   if( fGui -> GetHdiType() == "fpix" ){
     fMonitorFrame->AddFrame(fHFrame_TDegree, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
   }
-  // - - - -satoshi - - -  
 
   f->AddFrame(fMonitorFrame, new TGLayoutHints(kLHintsTop,2,2,2,2));
 
@@ -152,37 +116,18 @@ void PixMonitor::Update() {
   fNmrAna->SetText(Form("%4.3f",ia));
   fNmrDigi->SetText(Form("%4.3f",id));
 
-
   if( fGui -> GetHdiType() == "fpix" ){
-    LOG(logINFO) << "this ls fpix";
-  }else{
-    LOG(logINFO) << "this ls not fpix";
+    if (fGui->getApi()) {
+      
+      uint16_t v_ref =  fGui->getApi()->GetADC( 5 ) ;
+      uint16_t v_val =  fGui->getApi()->GetADC( 4 ) ;
+      
+      fNmrTDegree->SetText(Form("%4f" , ( - ( v_val - v_ref ) - 0.92 ) / 6.55 ) ) ;
+
+    } else {
+      fNmrTDegree->SetText(Form("---"));
+    }
   }
-
-
-  if( fGui -> GetHdiType() == "fpix" ){
-  if (fGui->getApi()) {
-
-    LOG(logINFO) << "in if condition";
-
-    uint16_t v_ref =  fGui->getApi()->GetADC( 5 ) ;
-    uint16_t v_val =  fGui->getApi()->GetADC( 4 ) ;
-
-//     fNmrTRef ->SetText(Form("%4u" ,v_ref ) );
-//     fNmrTVal ->SetText(Form("%4u" ,v_val ) );
-//     fNmrTDiff->SetText(Form("%4i" ,(int)v_val - v_ref ) );
-    fNmrTDegree->SetText(Form("%4f" , ( - ( v_val - v_ref ) - 0.92 ) / 6.55 ) ) ;
-    
-
-  } else {
-//    fNmrTRef ->SetText(Form("---"));
-//    fNmrTVal ->SetText(Form("---"));
-//    fNmrTDiff->SetText(Form("---"));
-    fNmrTDegree->SetText(Form("---"));
-  }
-  } // end of if "HDI == FPIX"
-
-  LOG(logINFO) << "satoshi update - done";
 
 }
 
