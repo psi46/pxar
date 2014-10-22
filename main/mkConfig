@@ -315,7 +315,7 @@ if ($roctype eq "digv21") {
 if ($opt_m) {
     if ($tbmtype eq "TBM08") {
 	print FH "tbmType tbm08\n";
-    } elsif ($tbmtype eq "TBM08b") {
+    } elsif ($tbmtype eq "TBM08B") {
 	print FH "tbmType tbm08b\n";
     } elsif ($tbmtype eq "TBM09") {
 	print FH "tbmType tbm09\n";
