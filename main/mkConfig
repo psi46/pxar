@@ -1,12 +1,13 @@
 #! /usr/bin/perl
 
 # ----------------------------------------------------------------------
-# Usage     ../main/mkConfig -d directory [-t TBM08] [-r digv21] [-m] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
+# Usage     ../main/mkConfig -d directory [-f] [-t TBM08] [-r digv21] [-m] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
 # -----
 #
 # Options   -d directory              the directory into which all config files will be put
 # -------   -t TBM08                  the TBM type; mkConfig -h will list all known types
 #           -r digv21                 the ROC type; mkConfig -h will list all known types
+#           -f                        for FPIX type HDI (with temperature sensor)
 #           -m                        whether a module config directory should be set up (impacts nrocs, TBM setup, number of parameter files, etc)
 #           -h                        list all known ROC and TBM types and print help message
 #           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
@@ -19,7 +20,7 @@
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('d:hmp:r:t:');
+getopts('d:fhmp:r:t:');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21"); 
@@ -82,7 +83,11 @@ if ($opt_m) {
 }
 print " config files into directory $dir for ROC type $roctype";
 if ($opt_m) {
-    print " and TBM type $tbmtype\n";
+    print " and TBM type $tbmtype";
+} 
+
+if ($opt_f) {
+    print " and FPIX-type HDI\n";
 } else {
     print "\n";
 }
@@ -324,6 +329,11 @@ if ($opt_m) {
     } else {
 	print FH "tbmType tbm08\n";
     } 
+    if ($opt_f) {
+	print FH "hdiType fpix\n";
+    } else {
+	print FH "hdiType bpix\n";
+    }
 }
     print FH <<"EOF";  
 
@@ -655,6 +665,7 @@ Usage     ../main/mkConfig -d directory [-t TBM08] [-r digv21] [-m] [-h] [-p 's/
 Options   -d directory              the directory into which all config files will be put
 -------   -t TBM08                  the TBM type; mkConfig -h will list all known types
           -r digv21                 the ROC type; mkConfig -h will list all known types
+          -f                        for FPIX type HDI (with temperature sensor)
           -m                        whether a module config directory should be set up (impacts nrocs, TBM setup, number of parameter files, etc)
           -h                        list all known ROC and TBM types and print help message
           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %

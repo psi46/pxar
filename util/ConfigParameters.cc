@@ -83,6 +83,7 @@ void ConfigParameters::initialize() {
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46v2";
   fTbmType = ""; 
+  fHdiType = "bpix"; 
 }
 
 
@@ -186,6 +187,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
+      else if (0 == _name.compare("hdiType")) { fHdiType = _value; }
 
       else if (0 == _name.compare("probeA1")) { fProbeA1 = _value; }
       else if (0 == _name.compare("probeA2")) { fProbeA2 = _value; }
@@ -746,6 +748,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "tbmChannel %i\n", fTbmChannel);
   fprintf(file, "rocType %s\n", fRocType.c_str());
   if (fnTbms > 0) fprintf(file, "tbmType %s\n", fTbmType.c_str());
+  fprintf(file, "hdiType %s\n", fHdiType.c_str());
   fprintf(file, "halfModule %i\n", fHalfModule);
 
   fprintf(file, "\n");

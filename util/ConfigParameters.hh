@@ -74,6 +74,7 @@ public:
   std::string getDirectory()              {return fDirectory;}
   std::string getRocType()                {return fRocType;}
   std::string getTbmType()                {return fTbmType;}
+  std::string getHdiType()                {return fHdiType;}
 
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
@@ -151,7 +152,7 @@ private:
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;
-  std::string fRocType, fTbmType;
+  std::string fRocType, fTbmType, fHdiType;
   std::string fDirectory;
   std::string fTBName;
   bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;
