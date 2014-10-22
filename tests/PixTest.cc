@@ -1552,9 +1552,23 @@ void PixTest::finalCleanup() {
   fPg_setup.clear();
 }
 
+// ----------------------------------------------------------------------
+void PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
+  // -- setup DAQ for data taking
+  fPg_setup.clear();
+  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
+  uint16_t period = 28;
+  fApi->setPatternGenerator(fPg_setup);
+  fApi->daqStart();
+  fApi->daqTrigger(1, period);
+  fApi->daqStop();
+  fPg_setup.clear();
+  setTriggerFrequency(triggerFreq, trgTkDel);
+  fApi->setPatternGenerator(fPg_setup);
+}
 
 // ----------------------------------------------------------------------
-bool PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
+void PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
   double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
   double clkDelays = period_ns / 25 - trgTkDel;
   uint16_t ClkDelays = (uint16_t)clkDelays; //debug -- aprox to def
@@ -1570,6 +1584,4 @@ bool PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
   // -- then send trigger and token:
   fPg_setup.push_back(make_pair("trg", trgTkDel));	// PG_TRG b000010
   fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
-  
-  return true;
 }
