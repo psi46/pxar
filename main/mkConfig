@@ -448,6 +448,7 @@ phmax               220
 PIX                 11,20
 
 -- Xray
+maskHotPixels       button
 source              Ag
 phrun               button
 runseconds          100
