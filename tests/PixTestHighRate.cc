@@ -215,6 +215,8 @@ void PixTestHighRate::doXPixelAlive() {
   PixTest::update(); 
 
   // -- summary printout
+  //  int nrocs = fApi->_dut->getNEnabledRocs();
+  double sensorArea = 0.015 * 0.010 * 54 * 81; // in cm^2, accounting for larger edge pixels (J. Hoss 2014/10/21)
   string deadPixelString, probPixelString, xHitsString, numTrigsString, vCalHitsString,xRayHitEfficiencyString,xRayRateString;
   for (unsigned int i = 0; i < probPixel.size(); ++i) {
     probPixelString += Form(" %4d", probPixel[i]); 
@@ -224,7 +226,7 @@ void PixTestHighRate::doXPixelAlive() {
     int numTrigs = fParNtrig * 4160;
     numTrigsString += Form(" %4d", numTrigs );
     xRayHitEfficiencyString += Form(" %.1f", (vCalHits[i]+fParNtrig*deadPixel[i])/static_cast<double>(numTrigs)*100);
-    xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./0.64*1000.);
+    xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./sensorArea*1000.);
   }
 
   LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
@@ -301,22 +303,7 @@ void PixTestHighRate::doRunDaq() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 
-  // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  fApi->daqStop();
-  fPg_setup.clear();
-  setTriggerFrequency(fParTriggerFrequency, 50);
-  fApi->setPatternGenerator(fPg_setup);
-  
-  timer t;
-  uint8_t perFull;
-  fDaq_loop = true;
-    
+  prepareDaq(fParTriggerFrequency, 50);
   fApi->daqStart();
 
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
@@ -324,6 +311,9 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 	       << ", period " << finalPeriod 
 	       << " and duration " << nseconds << " seconds";
     
+  timer t;
+  uint8_t perFull;
+  fDaq_loop = true;
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
@@ -342,8 +332,8 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
   }
     
   fApi->daqTriggerLoopHalt();
-  
   fApi->daqStop();
+
   fillMap(h);
   finalCleanup();
        
@@ -387,17 +377,7 @@ void PixTestHighRate::maskHotPixels() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
 
-  // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  fApi->daqStop();
-  fPg_setup.clear();
-  setTriggerFrequency(TRGFREQ, 50);
-  fApi->setPatternGenerator(fPg_setup);
+  prepareDaq(TRGFREQ, 50);
   
   timer t;
   uint8_t perFull;
