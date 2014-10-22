@@ -66,6 +66,9 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
 //  fHFrame_TDiff -> AddFrame( fTemperatureDiff , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
 //  fHFrame_TDiff -> AddFrame( fNmrTDiff , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
 
+
+  if( fGui -> GetHdiType() == "fpix" ){
+    printf("this is fpixe");
   TGString *temperature_degree = new TGString("Temperature");
   fHFrame_TDegree = new TGHorizontalFrame(fMonitorFrame) ;
   fTemperatureDegree = new TGLabel(fHFrame_TDegree, temperature_degree );
@@ -74,6 +77,9 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fHFrame_TDegree -> AddFrame( fTemperatureDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
   fHFrame_TDegree -> AddFrame( fNmrTDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
 //  /// - - -- - - - - - - satoshi - - - - - - - - - 
+  }else{
+      printf("this is NOT fpixe");
+  }
 
   fActTime = time(NULL);
   fTimeinfo = localtime(&fActTime);
@@ -93,7 +99,9 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
 //  fMonitorFrame->AddFrame(fHFrame_Tref , new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
 //  fMonitorFrame->AddFrame(fHFrame_Tval , new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
 //  fMonitorFrame->AddFrame(fHFrame_TDiff, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
-  fMonitorFrame->AddFrame(fHFrame_TDegree, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
+  if( fGui -> GetHdiType() == "fpix" ){
+    fMonitorFrame->AddFrame(fHFrame_TDegree, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
+  }
   // - - - -satoshi - - -  
 
   f->AddFrame(fMonitorFrame, new TGLayoutHints(kLHintsTop,2,2,2,2));
@@ -145,11 +153,21 @@ void PixMonitor::Update() {
   fNmrDigi->SetText(Form("%4.3f",id));
 
 
+  if( fGui -> GetHdiType() == "fpix" ){
+    LOG(logINFO) << "this ls fpix";
+  }else{
+    LOG(logINFO) << "this ls not fpix";
+  }
+
+
+  if( fGui -> GetHdiType() == "fpix" ){
   if (fGui->getApi()) {
+
+    LOG(logINFO) << "in if condition";
 
     uint16_t v_ref =  fGui->getApi()->GetADC( 5 ) ;
     uint16_t v_val =  fGui->getApi()->GetADC( 4 ) ;
-    
+
 //     fNmrTRef ->SetText(Form("%4u" ,v_ref ) );
 //     fNmrTVal ->SetText(Form("%4u" ,v_val ) );
 //     fNmrTDiff->SetText(Form("%4i" ,(int)v_val - v_ref ) );
@@ -162,6 +180,10 @@ void PixMonitor::Update() {
 //    fNmrTDiff->SetText(Form("---"));
     fNmrTDegree->SetText(Form("---"));
   }
+  } // end of if "HDI == FPIX"
+
+  LOG(logINFO) << "satoshi update - done";
+
 }
 
 
