@@ -232,7 +232,7 @@ namespace pxar {
 	uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
 	raw += (*sample)[pos++] & 0x0fff;
 	try{
-	  pixel pix(raw,invertedAddress);
+	  pixel pix(raw,0,invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	}
 	catch(DataDecoderError /*&e*/){
