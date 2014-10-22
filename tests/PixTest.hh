@@ -142,6 +142,8 @@ public:
   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
+  /// determine hot pixels with high occupancy
+  void maskHotPixels(std::vector<TH2D*>); 
   /// set up DAQ (including call to setTriggerFrequency)
   void prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay

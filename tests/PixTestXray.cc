@@ -97,6 +97,11 @@ void PixTestXray::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
 
+  if (!command.compare("maskhotpixels")) {
+    doRunMaskHotPixels(); 
+    return;
+  }
+
   if (!command.compare("ratescan")) {
     doRateScan(); 
     return;
@@ -129,6 +134,26 @@ void PixTestXray::setToolTips() {
   fSummaryTip = string("to be implemented")
     ;
 }
+
+
+// ----------------------------------------------------------------------
+vector<TH2D*> PixTestXray::bookHotPixelMap() {
+  fDirectory->cd(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  unsigned nrocs = rocIds.size(); 
+  vector<TH2D*> v; 
+  for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+    TH2D *h2 = bookTH2D(Form("hotPixelMap_C%d", rocIds[iroc]), Form("hotPixelMap_C%d", rocIds[iroc]), 
+			52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.);
+    h2->SetDirectory(fDirectory);
+    fHotPixelMap.push_back(h2);
+    fHistOptions.insert(make_pair(h2,"colz"));
+    v.push_back(h2); 
+  }
+  copy(fHotPixelMap.begin(), fHotPixelMap.end(), back_inserter(fHistList));
+  return v; 
+}  
 
 
 // ----------------------------------------------------------------------
@@ -198,8 +223,18 @@ void PixTestXray::doPhRun() {
   PixTest::update(); 
   fDirectory->cd();
 
+  // -- unmask entire chip and then mask hot pixels
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+    vector<pair<int, int> > hot = fHotPixels[i]; 
+    for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second; 
+      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i)); 
+    }
+  }
+  maskPixels();
+
   
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
@@ -286,7 +321,8 @@ void PixTestXray::doPhRun() {
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
-      LOG(logINFO) << "Buffer almost full, pausing triggers.";
+      LOG(logINFO) << "run duration " << t.get()/1000 << " seconds, buffer almost full (" 
+		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
       processData(0);
       LOG(logINFO) << "Resuming triggers.";
@@ -294,7 +330,7 @@ void PixTestXray::doPhRun() {
     }
 
     if (static_cast<int>(t.get())/1000 >= fParRunSeconds)	{
-      LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
+      LOG(logINFO) << "data taking finished, elapsed time: " << t.get()/1000 << " seconds."; 
       fDaq_loop = false;
       break;
     }
@@ -687,3 +723,19 @@ void PixTestXray::processData(uint16_t numevents) {
 
 
 
+// ----------------------------------------------------------------------
+void PixTestXray::doRunMaskHotPixels() {    
+  PixTest::update(); 
+  vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels"); 
+  if (0 == v.size()) {
+    bookHist("hotpixels");
+    v = mapsWithString(fHitMap, "hotpixels"); 
+  }
+  for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
+  maskHotPixels(v); 
+  // -- display
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
+  v[0]->Draw("colz");
+  PixTest::update(); 
+  return;
+}

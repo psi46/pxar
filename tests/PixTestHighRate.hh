@@ -21,10 +21,10 @@ public:
   void doTest();
   void doXPixelAlive();
   void doRunDaq(); 
+  void doRunMaskHotPixels();
 
   void doHitMap(int nseconds, std::vector<TH2D*>);
   void fillMap(std::vector<TH2D*>);
-  void maskHotPixels(); 
  
 private:
 
