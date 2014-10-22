@@ -61,11 +61,13 @@ bool PixTestPh::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str());
 	  str2 = sval.substr(s1+1);
 	  pixr = atoi(str2.c_str());
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr));
 	  addSelectedPixels(sval); 
 	  LOG(logDEBUG) << "  adding to FPIX ->" << pixc << "/" << pixr << " fPIX.size() = " << fPIX.size() ;
 	} else {
 	  clearSelectedPixels();
+	  addSelectedPixels("-1,-1"); 
 	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
 	}
       }
@@ -154,13 +156,13 @@ void PixTestPh::doTest() {
   for (unsigned int i = 0; i < result.size(); ++i) {
     vector<pixel> vpix = result[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
-      int roc = vpix[ipx].roc_id;
-      int ic = vpix[ipx].column;
-      int ir = vpix[ipx].row;
+      int roc = vpix[ipx].roc();
+      int ic = vpix[ipx].column();
+      int ir = vpix[ipx].row();
       name = Form("PH_c%d_r%d_C%d", ic, ir, roc); 
       h1 = hists[name];
       if (h1) {
-	h1->Fill(vpix[ipx].getValue());
+	h1->Fill(vpix[ipx].value());
       } else {
 	LOG(logDEBUG) << " histogram " << Form("PH_c%d_r%d_C%d", ic, ir, roc) << " not found";
       }

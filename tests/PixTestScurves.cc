@@ -10,7 +10,7 @@
 #include "PixTestScurves.hh"
 #include "PixUtil.hh"
 #include "log.h"
-
+#include "rsstools.hh"
 
 using namespace std;
 using namespace pxar;
@@ -39,23 +39,18 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       if (!parName.compare("npix")) {
 	fParNpix = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNpix  ->" << fParNpix << "<- from sval = " << sval;
       }
       if (!parName.compare("dac")) {
 	fParDac = sval;
-	LOG(logDEBUG) << "  setting fParDac  ->" << fParDac << "<- from sval = " << sval;
       }
       if (!parName.compare("daclo")) {
 	fParDacLo = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParDacLo  ->" << fParDacLo << "<- from sval = " << sval;
       }
       if (!parName.compare("dachi")) {
 	fParDacHi = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParDacHi  ->" << fParDacHi << "<- from sval = " << sval;
       }
 
       if (!parName.compare("adjustvcal")) {
@@ -158,6 +153,7 @@ void PixTestScurves::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestScurves::scurves() {
+  fDirectory->cd();
   cacheDacs();
 
   string command(fParDac);
@@ -171,8 +167,9 @@ void PixTestScurves::scurves() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int results(7); 
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1); 
+  int results(15); 
+  int FLAG = FLAG_FORCE_MASKED;
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1, FLAG); 
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
@@ -281,7 +278,7 @@ void PixTestScurves::fitS() {
 void PixTestScurves::adjustVcal() {
 
   vector<int> vcal; 
-  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   unsigned nrocs = rocIds.size();
@@ -298,7 +295,7 @@ void PixTestScurves::adjustVcal() {
   vector<TH2D *> hv; 
   TH2D *h(0); 
   for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
-    h = bookTH2D(Form("adjustVcal%d", rocIds[iroc]), Form("adjustVcal%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
+    h = bookTH2D(Form("adjustVcal_C%d", rocIds[iroc]), Form("adjustVcal_C%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
     hv.push_back(h); 
   }
   
@@ -318,8 +315,8 @@ void PixTestScurves::adjustVcal() {
       vector<pixel> wpix = w.second;
       
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	idx = getIdxFromId(wpix[ipix].roc_id);
-	hv[idx]->Fill(idac1, idac2, wpix[ipix].getValue()); 
+	idx = getIdxFromId(wpix[ipix].roc());
+	hv[idx]->Fill(idac1, idac2, wpix[ipix].value()); 
       }
     }
     
@@ -333,7 +330,7 @@ void PixTestScurves::adjustVcal() {
       int vcalthr = h0->FindFirstBinAbove(0.5*ntrig); 
       delete h0; 
 
-      LOG(logDEBUG) << "ROC " << rocIds[iroc] << " vthrcomp = " << vcthr << " -> vcal = " << vcalthr;
+      LOG(logDEBUG) << "ROC " << static_cast<int>(rocIds[iroc]) << " vthrcomp = " << vcthr << " -> vcal = " << vcalthr;
       vcal.push_back(vcalthr); 
     }
     

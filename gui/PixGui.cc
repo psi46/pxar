@@ -120,6 +120,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     hvOff();
   }
 
+  // allow tests (bare module test in particular) to switch off HV
+  Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()"); 
+  Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()"); 
+
+
   hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
   hwControl->AddFrame(hvFrame);
@@ -340,6 +345,8 @@ void PixGui::CloseWindow() {
   gApplication->Terminate(0);
 
 }
+
+// ----------------------------------------------------------------------
 void PixGui::selectProbes(Int_t /*id*/) {
    TGComboBox *box = (TGComboBox *) gTQSender;
    
@@ -349,7 +356,7 @@ void PixGui::selectProbes(Int_t /*id*/) {
 
    fConfigParameters->setProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
 
-   fConfigParameters->writeConfigParameterFile();
+   //   fConfigParameters->writeConfigParameterFile();
 
 }
 
@@ -496,9 +503,9 @@ PixTest* PixGui::createTest(string testname) {
 
 // ----------------------------------------------------------------------
 void PixGui::selectedTab(int id) {
-  LOG(logDEBUG) << "Switched to tab " << id;
   if (0 == id) fParTab->updateParameters();
-  fTabs->SetTab(id); 
+  fTabs->SetTab(id);
+  LOG(logDEBUG) << "Switched to tab " << id;
 }
 
 

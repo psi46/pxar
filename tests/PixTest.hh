@@ -32,18 +32,19 @@ typedef char int8_t;
 #include "PixInitFunc.hh"
 #include "PixSetup.hh"
 #include "PixTestParameters.hh"
+#include "shist256.hh"
 
 typedef struct { 
   uint16_t dac;
   uint16_t header; 
   uint16_t trailer; 
   uint16_t numDecoderErrors;
-  uint8_t npix;
-  uint8_t proc[2000];
-  uint8_t pcol[2000];
-  uint8_t prow[2000];
-  double pval[2000];
-  uint16_t pq[2000];
+  uint8_t  npix;
+  uint8_t  proc[2000];
+  uint8_t  pcol[2000];
+  uint8_t  prow[2000];
+  double   pval[2000];
+  double   pq[2000];
 } TreeEvent;
 
 
@@ -89,7 +90,8 @@ public:
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
   std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
-  
+  /// mask all pixels mentioned in the mask file
+  void maskPixels();     
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
@@ -105,19 +107,26 @@ public:
   /// work-around to cope with suboptimal pxar/core
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
   /// kind of another work-around (splitting the range, adjusting ntrig, etc)
-  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<std::vector<TH1*> > maps, int ihit, int flag = 0);
+  void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int flag = 0);
   /// do the scurve analysis
-  void scurveAna(std::string dac, std::string name, std::vector<std::vector<TH1*> > maps, std::vector<TH1*> &resultMaps, int result);
+  void scurveAna(std::string dac, std::string name, std::vector<shist256*> maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
   void getPhError(std::string dac, int dacmin, int dacmax, int FLAGS, int ntrig);
+  /// returns TH2D's with pulseheight maps
+  std::vector<TH2D*> phMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
-  /// result controls the amount of information (histograms) returned
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
   /// flag allows to pass in other flags
+  /// result controls the amount of information (histograms) returned:
+  /// result & 0x1: thr        maps
+  /// result & 0x2: sig        maps
+  /// result & 0x4: noise edge maps
+  /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 3
+  /// result &0x10: dump 'problematic' threshold histogram fits
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
-			       int result = 1, int ihit = 1, int flag = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL); 
+			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
   std::vector<TH1*> thrMaps(std::string dac, std::string name, int ntrig, uint16_t flag = 0);
@@ -132,6 +141,16 @@ public:
   /// Return pixelAlive map and additional hit map when running with external source
   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+
+  /// determine hot pixels with high occupancy
+  void maskHotPixels(std::vector<TH2D*>); 
+  /// set up DAQ (including call to setTriggerFrequency)
+  void prepareDaq(int triggerFreq, uint8_t trgTkDel);
+  /// set trigger frequence [kHz] and trigger token delay
+  void setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
+  /// functions for DAQ
+  void finalCleanup();
+  void pgToDefault();
 
   /// book a TH1D, adding version information to the name and title 
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
@@ -149,7 +168,7 @@ public:
   virtual void sparseRoc(int npix = 8);
 
   /// creates a 1D distribution of a map
-  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax, bool zeroSuppressed = false); 
+  TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
   /// fit an s-curve to a distribution. Fills fThreshold, fThresholdE, fSigma, fSigmaE
   bool threshold(TH1 *); 
   /// find first bin above 50% level. Fills fThreshold, fThresholdE, fSigma, fSigmaE
@@ -238,6 +257,10 @@ public:
   void testDone(); // *SIGNAL*
   /// signal to PixTab to update the canvas
   void update();  // *SIGNAL*
+  /// turn HV off
+  void hvOff();  // *SIGNAL*
+  /// turn HV on
+  void hvOn();  // *SIGNAL*
   /// allow forward iteration through list of histograms
   TH1* nextHist(); 
   /// allow backward iteration through list of histograms
@@ -277,6 +300,9 @@ protected:
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
 
+  // -- data members for DAQ purposes
+  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
+  std::vector<std::vector<std::pair<int, int> > > fHotPixels;
 
   ClassDef(PixTest, 1); // testing PixTest
 

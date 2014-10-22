@@ -58,7 +58,7 @@ namespace pxar {
     template<class ConfigType>
       bool operator()(const ConfigType &config) const
       {
-	return config.enable == _isEnable;
+	return config.enable() == _isEnable;
       }
   };
 
@@ -74,7 +74,7 @@ namespace pxar {
     template<class ConfigType>
       bool operator()(const ConfigType &config) const
       {
-	return config.mask == _isMasked;
+	return config.mask() == _isMasked;
       }
   };
 
@@ -96,8 +96,8 @@ namespace pxar {
     template<class ConfigType>
       bool operator()(const ConfigType &config) const
       {
-	if(_check_roc) return (config.row == _row) && (config.column == _column) && (config.roc_id == _roc);
-	return (config.row == _row) && (config.column == _column);
+	if(_check_roc) return (config.row() == _row) && (config.column() == _column) && (config.roc() == _roc);
+	return (config.row() == _row) && (config.column() == _column);
       }
   };
 
@@ -116,7 +116,7 @@ namespace pxar {
     template<class ConfigType>
       bool operator()(const ConfigType &config) const
       {
-	return (config.row > _row) || (config.column > _column);
+	return (config.row() > _row) || (config.column() > _column);
       }
   };
 
@@ -145,7 +145,7 @@ namespace pxar {
 
     // Check the single pixels:
     for(std::vector<pixelConfig>::const_iterator pixit = pxA.begin(); pixit != pxA.end(); pixit++){
-      if(std::count_if(pxB.begin(), pxB.end(), findPixelXY(pixit->column,pixit->row)) != 1) { return false; }
+      if(std::count_if(pxB.begin(), pxB.end(), findPixelXY(pixit->column(),pixit->row())) != 1) { return false; }
     }
     return true;
   }

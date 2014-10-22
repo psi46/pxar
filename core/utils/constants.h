@@ -18,11 +18,10 @@ namespace pxar {
 
 
 // --- TBM Types ---------------------------------------------------------------
-// FIXME just an example...
-#define TBM_08             0x01
-#define TBM_08A            0x02
-#define TBM_08B            0x03
-#define TBM_09             0x04
+#define TBM_08             0x11
+#define TBM_08A            0x12
+#define TBM_08B            0x13
+#define TBM_09             0x14
 
 
 // --- TBM Register -----------------------------------------------------------
@@ -90,7 +89,9 @@ namespace pxar {
 #define SIG_CTR 1
 #define SIG_SDA 2
 #define SIG_TIN 3
+#define SIG_RDA_TOUT 4
 
+#define SIG_LEVEL 0xFC
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
 #define SIG_DESER160PHASE 0xFE
 

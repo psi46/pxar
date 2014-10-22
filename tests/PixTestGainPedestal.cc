@@ -41,11 +41,9 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("showfits")) {
 	fParShowFits = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParShowFits  ->" << fParShowFits << "<- from sval = " << sval;
       }
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       setToolTips();
       break;
@@ -141,7 +139,7 @@ void PixTestGainPedestal::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::measure() {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   cacheDacs();
@@ -195,7 +193,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 
@@ -219,7 +217,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 
@@ -228,13 +226,13 @@ void PixTestGainPedestal::measure() {
     int dac = lresult[i].first; 
     vector<pixel> vpix = lresult[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
-      int roc = vpix[ipx].roc_id;
-      int ic = vpix[ipx].column;
-      int ir = vpix[ipx].row;
+      int roc = vpix[ipx].roc();
+      int ic = vpix[ipx].column();
+      int ir = vpix[ipx].row();
       name = Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc); 
       h1 = fHists[name];
       if (h1) {
-	h1->SetBinContent(dac+1, vpix[ipx].getValue());
+	h1->SetBinContent(dac+1, vpix[ipx].value());
 	h1->SetBinError(dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
       } else {
 	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
@@ -247,14 +245,14 @@ void PixTestGainPedestal::measure() {
     int dac = hresult[i].first; 
     vector<pixel> vpix = hresult[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
-      int roc = vpix[ipx].roc_id;
-      int ic = vpix[ipx].column;
-      int ir = vpix[ipx].row;
+      int roc = vpix[ipx].roc();
+      int ic = vpix[ipx].column();
+      int ir = vpix[ipx].row();
       name = Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc); 
       h1 = fHists[name];
       if (h1) {
-	h1->SetBinContent(scaleLo*dac+1, vpix[ipx].getValue());
-	err = vpix[ipx].getVariance();
+	h1->SetBinContent(scaleLo*dac+1, vpix[ipx].value());
+	err = vpix[ipx].variance();
 	h1->SetBinError(scaleLo*dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
       } else {
 	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";

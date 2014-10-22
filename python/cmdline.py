@@ -3,9 +3,20 @@
 Python Command Line Interface to the pxar API.
 """
 import PyPxarCore
-from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyProbeDictionary
-from numpy import set_printoptions, nan
+from PyPxarCore import *
+from numpy import set_printoptions, nan, zeros
 from pxar_helpers import * # arity decorator, PxarStartup, PxarConfigFile, PxarParametersFile and others
+
+# Try to import ROOT:
+guiAvailable = True
+try:
+    import ROOT
+    ROOT.PyConfig.IgnoreCommandLineOptions = True
+    from pxar_gui import PxarGui
+    from pxar_plotter import Plotter
+except ImportError:
+    guiAvailable = False;
+    pass
 
 import cmd      # for command interface and parsing
 import os # for file system cmds
@@ -18,16 +29,116 @@ probedict = PyProbeDictionary()
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
 
-    def __init__(self, api):
+    def __init__(self, api, gui):
         cmd.Cmd.__init__(self)
         self.fullOutput=False
-        self.prompt = "pxar core =>> "
+        self.prompt = "pxarCore =>> "
         self.intro  = "Welcome to the pxar core console!"  ## defaults to None
         self.api = api
-    
+        self.window = None
+        if(gui and guiAvailable):
+            self.window = PxarGui(ROOT.gClient.GetRoot(),800,800)
+
+    def plot_eventdisplay(self,data):
+        pixels = list()
+        # Multiple events:
+        if(isinstance(data,list)):
+            if(not self.window):
+                for evt in data:
+                    print evt
+                return
+            for evt in data:
+                for px in evt.pixels:
+                    pixels.append(px)
+        else:
+            if(not self.window):
+                print data
+                return
+            for px in data.pixels:
+                pixels.append(px)
+        self.plot_map(pixels,'Event Display',True)
+
+    def plot_map(self,data,name,count=False):
+        if(not self.window):
+            print data
+            return
+
+        # Find number of ROCs present:
+        module = False
+        for px in data:
+            if px.roc > 0:
+                module = True
+                break
+
+        # Prepare new numpy matrix:
+        d = zeros((416 if module else 52,160 if module else 80))
+
+        for px in data:
+            xoffset = 52*(px.roc%8) if module else 0
+            yoffset = 80*int(px.roc/8) if module else 0
+            # Flip the ROCs upside down:
+            y = (px.row + yoffset) if (px.roc < 8) else (2*yoffset - px.row - 1)
+            # Reverse order of the upper ROC row:
+            x = (px.column + xoffset) if (px.roc < 8) else (415 - xoffset - px.column)
+            d[x][y] += 1 if count else px.value
+
+        plot = Plotter.create_th2(d, 0, 415 if module else 51, 0, 159 if module else 79, name, 'pixels x', 'pixels y', name)
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def plot_1d(self,data,name,dacname,min,max):
+        if(not self.window):
+            print_data(self.fullOutput,data,(max-min)/len(data))
+            return
+
+        # Prepare new numpy matrix:
+        d = zeros(len(data))
+        for idac, dac in enumerate(data):
+            if(dac):
+                d[idac] = dac[0].value
+
+        plot = Plotter.create_th1(d, min, max, name, dacname, name)
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def plot_2d(self,data,name,dac1,step1,min1,max1,dac2,step2,min2,max2):
+        if(not self.window):
+            for idac, dac in enumerate(data):
+                dac1 = min1 + (idac/((max2-min2)/step2+1))*step1
+                dac2 = min2 + (idac%((max2-min2)/step2+1))*step2
+                s = "DACs " + str(dac1) + ":" + str(dac2) + " - "
+                for px in dac:
+                    s += str(px)
+                print s
+            return
+        
+        # Prepare new numpy matrix:
+        bins1 = (max1-min1)/step1+1
+        bins2 = (max2-min2)/step2+1
+        d = zeros((bins1,bins2))
+
+        for idac, dac in enumerate(data):
+            if(dac):
+                bin1 = (idac/((max2-min2)/step2+1))
+                bin2 = (idac%((max2-min2)/step2+1))
+                d[bin1][bin2] = dac[0].value
+
+        plot = Plotter.create_th2(d, min1, max1, min2, max2, name, dac1, dac2, name)
+        self.window.histos.append(plot)
+        self.window.update()
+
     def do_EOF(self, line):
         """ clean exit when receiving EOF (Ctrl-D) """
         return True
+
+    def do_gui(self, line):
+        """Open the ROOT results browser"""
+        if not guiAvailable:
+            print "No GUI available (missing ROOT library)"
+            return
+        if self.window:
+            return
+        self.window = PxarGui( ROOT.gClient.GetRoot(), 800, 800 )
 
     def do_switchFullOutput(self, line):
         """Switch between full and suppressed output of all pixels"""
@@ -174,6 +285,27 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getTBvd.__doc__, '']
 
+    @arity(1,1,[int])
+    def do_setExternalClock(self, enable):
+        """setExternalClock [enable]: enables the external DTB clock input, switches off the internal clock. Only switches if external clock is present."""
+        if self.api.setExternalClock(enable) is True:
+            print "Switched to " + ("external" if enable else "internal") + " clock."
+        else:
+            print "Could not switch to " + ("external" if enable else "internal") + " clock!"
+
+    def complete_setExternalClock(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setExternalClock.__doc__, '']
+
+    @arity(3,3,[int,int,int])
+    def do_setClockStretch(self, src, delay, width):
+        """setClockStretch [src] [delay] [width]: enables the clock stretch mechanism with the parameters given."""
+        self.api.setClockStretch(src,delay,width)
+
+    def complete_setClockStretch(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_setClockStretch.__doc__, '']
+
     @arity(0,0,[])
     def do_daqStart(self):
         """daqStart: starts a new DAQ session"""
@@ -234,7 +366,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEvent(self):
         """daqGetEvent: read one event from the event buffer"""
-        print self.api.daqGetEvent()
+        data = self.api.daqGetEvent()
+        self.plot_eventdisplay(data)
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -243,8 +376,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEventBuffer(self):
         """daqGetEventBuffer: read all decoded events from the DTB buffer"""
-        for evt in self.api.daqGetEventBuffer():
-            print evt
+        data = self.api.daqGetEventBuffer()
+        self.plot_eventdisplay(data)
 
     def complete_daqGetEventBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -278,10 +411,26 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqGetBuffer.__doc__, '']
 
+    @arity(0,0,[])
+    def do_daqGetReadback(self):
+        """daqGetReadback: return all ROC readback values for the last DAQ session"""
+        dat = self.api.daqGetReadback()
+        for iroc, roc in enumerate(dat):
+            print "ROC " + str(iroc) + ":"
+            s = ""
+            for i in roc:
+                s += '{:04x}'.format(i) + " "
+            print s
+
+    def complete_daqGetReadback(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetReadback.__doc__, '']
+
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
-        print self.api.getEfficiencyMap(flags,nTriggers)
+        data = self.api.getEfficiencyMap(flags,nTriggers)
+        self.plot_map(data,"Efficiency")
         
     def complete_getEfficiencyMap(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -290,7 +439,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,2,[int, int])
     def do_getPulseheightMap(self, flags = 0, nTriggers = 10):
         """getPulseheightMap [flags = 0] [nTriggers = 10]: returns the pulseheight map"""
-        print self.api.getPulseheightMap(flags,nTriggers)
+        data = self.api.getPulseheightMap(flags,nTriggers)
+        self.plot_map(data,"Pulseheight")
         
     def complete_getPulseheightMap(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -299,7 +449,8 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(1,7,[str, int, int, int, int, int, int])
     def do_getThresholdMap(self, dacname, dacstep = 1, dacmin = 0, dacmax = 255, threshold = 50, flags = 0, nTriggers = 10):
         """getThresholdMap [DAC name] [step size] [min] [max] [threshold] [flags = 0] [nTriggers = 10]: returns the threshold map for the given DAC"""
-        print self.api.getThresholdMap(dacname,dacstep,dacmin,dacmax,threshold,flags,nTriggers)
+        data = self.api.getThresholdMap(dacname,dacstep,dacmin,dacmax,threshold,flags,nTriggers)
+        self.plot_map(data,"Threshold " + dacname)
         
     def complete_getThresholdMap(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -318,11 +469,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getPulseheightVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getPulseheightVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 1D DAC scan"""
         data = self.api.getPulseheightVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC " + str(idac*dacstep) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_1d(data,"Pulseheight",dacname,dacmin,dacmax)
 
     def complete_getPulseheightVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -341,11 +488,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyVsDAC(self, dacname, dacstep, dacmin, dacmax, flags = 0, nTriggers = 10):
         """getEfficiencyVsDAC [DAC name] [step size] [min] [max] [flags = 0] [nTriggers = 10]: returns the efficiency over a 1D DAC scan"""
         data = self.api.getEfficiencyVsDAC(dacname, dacstep, dacmin, dacmax, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC " + str(idac*dacstep) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_1d(data,"Efficiency",dacname,dacmin,dacmax)
 
     def complete_getEfficiencyVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -364,11 +507,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getThresholdVsDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold = 50, flags = 0, nTriggers = 10):
         """getThresholdVsDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [threshold = 50] [flags = 0] [nTriggers = 10]: returns the threshold for DAC1 over a 1D DAC2 scan"""
         data = self.api.getThresholdVsDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, threshold, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC " + str(idac*dacstep) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_1d(data,"Threshold " + dac1name,dac2name,dac2min,dac2max)
 
     def complete_getThresholdVsDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -391,11 +530,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getPulseheightVsDACDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags = 0, nTriggers = 10):
         """getPulseheightVsDACDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [flags = 0] [nTriggers = 10]: returns the pulseheight over a 2D DAC1-DAC2 scan"""
         data = self.api.getPulseheightVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC index " + str(idac) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_2d(data,"Pulseheight",dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max)
 
     def complete_getPulseheightVsDACDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -418,11 +553,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getEfficiencyVsDACDAC(self, dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags = 0, nTriggers = 10):
         """getEfficiencyVsDACDAC [DAC1 name] [step size 1] [min 1] [max 1] [DAC2 name] [step size 2] [min 2] [max 2] [flags = 0] [nTriggers = 10]: returns the efficiency over a 2D DAC1-DAC2 scan"""
         data = self.api.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        for idac, dac in enumerate(data):
-            s = "DAC index " + str(idac) + ": "
-            for px in dac:
-                s += str(px)
-            print s
+        self.plot_2d(data,"Efficiency",dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max)
 
     def complete_getEfficiencyVsDACDAC(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
@@ -440,6 +571,24 @@ class PxarCoreCmd(cmd.Cmd):
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
+
+    @arity(2,2,[str, int])
+    def do_setSignalMode(self, signal, mode):
+        """setSignalMode [signal] [mode]: Set the DTB signal to given mode"""
+        self.api.setSignalMode(signal, mode)
+
+    def complete_setSignalMode(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [sig for sig in dacdict.getAllDTBNames()
+                        if sig.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_setSignalMode.__doc__, '']
+            else:
+                # return all signals
+                return dacdict.getAllDTBNames()
 
     @arity(2,2,[str, str])
     def do_SignalProbe(self, probe, name):
@@ -615,6 +764,24 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getNEnabledPixels.__doc__, '']
 
+    @arity(0,0,[])
+    def do_getTbmType(self):
+        """getTbmType: returns device code for the TBM programmed"""
+        print self.api.getTbmType()
+
+    def complete_getTbmType(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getTbmType.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getRocType(self):
+        """getRocType: returns device code for the ROCs programmed"""
+        print self.api.getRocType()
+
+    def complete_getRocType(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getRocType.__doc__, '']
+
     @arity(1,1,[int])
     def do_getNMaskedPixels(self, rocid):
         """getNMaskedPixels [ROC id]: returns number of masked pixels for ROC id"""
@@ -641,13 +808,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog=progName, description="A Simple Command Line Interface to the pxar API.")
     parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
+    parser.add_argument('--gui', '-g', action="store_true", help="The output verbosity set in the pxar API.")
     parser.add_argument('--load', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
     args = parser.parse_args(argv)
 
     api = PxarStartup(args.dir,args.verbosity)
 
     # start the cmd line
-    prompt = PxarCoreCmd(api)
+    prompt = PxarCoreCmd(api,args.gui)
     # run the startup script if requested
     if args.load:
         prompt.do_loadscript(args.load)

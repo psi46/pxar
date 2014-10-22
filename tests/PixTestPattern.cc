@@ -46,7 +46,6 @@ bool PixTestPattern::setParameter(string parName, string sval)
 			if (!parName.compare("pgcycles")){
 				fParPgCycles = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting pgcycles -> " << fParPgCycles;
 				if (fParPgCycles < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() pg_cycles must be positive";
 					found = false; fParOutOfRange = true;
@@ -58,13 +57,11 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, ")", "");
 				fParTrigLoop = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fParTrigLoop -> " << fParTrigLoop;
 			}
 
 			if (!parName.compare("period")){
 				fParPeriod = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fParPeriod -> " << fParPeriod;
 				if (fParPeriod < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() period must be positive";
 					found = false; fParOutOfRange = true;
@@ -74,7 +71,6 @@ bool PixTestPattern::setParameter(string parName, string sval)
 			if (!parName.compare("seconds")){
 				fParSeconds = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fParSeconds -> " << fParSeconds;
 				if (fParSeconds < 0) {
 					LOG(logWARNING) << "PixTestPattern::setParameter() seconds must be positive";
 					found = false; fParOutOfRange = true;
@@ -86,7 +82,6 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, ")", "");
 				fPatternFromFile = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fPatternFromFile -> " << fPatternFromFile;
 			}
 
 			if (!parName.compare("resultsonfile")){
@@ -94,7 +89,6 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, ")", "");
 				fResultsOnFile = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fResultsOnFile -> " << fResultsOnFile;
 			}
 
 			if (!parName.compare("binaryoutput")){
@@ -102,19 +96,16 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, ")", "");
 				fBinOut = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fBinOut -> " << fBinOut;
 			}
 
 			if (!parName.compare("inputfile")){
 				fInputFile = sval.c_str();
 				setToolTips();
-				LOG(logDEBUG) << "  setting fInputFile -> " << fInputFile;
 			}
 
 			if (!parName.compare("outputfile")){
 				fOutputFile = sval.c_str();
 				setToolTips();
-				LOG(logDEBUG) << "  setting fOutputFile -> " << fOutputFile;
 			}
 
 			if (!parName.compare("unmaskall")){
@@ -122,7 +113,6 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, ")", "");
 				fUnMaskAll = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fUnMaskAll -> " << fUnMaskAll;
 			}
 
 			if (!parName.compare("externalclk")){
@@ -130,13 +120,11 @@ bool PixTestPattern::setParameter(string parName, string sval)
 				PixUtil::replaceAll(sval, ")", "");
 				fExtClk = atoi(sval.c_str());
 				setToolTips();
-				LOG(logDEBUG) << "  setting fExtClk -> " << fExtClk;
 			}
 
 			if (!parName.compare("filltree")) {
 				fParFillTree = !(atoi(sval.c_str()) == 0);
 				setToolTips();
-				LOG(logDEBUG) << "  setting fParFillTree -> " << fParFillTree;
 			}
 
 			break;
@@ -376,23 +364,22 @@ void PixTestPattern::FillHistos(std::vector<pxar::Event> data, std::vector<TH2D*
 				fTreeEvent.header = it->header;
 				fTreeEvent.dac = 0;
 				fTreeEvent.trailer = it->trailer;
-				fTreeEvent.numDecoderErrors = it->numDecoderErrors;
 				fTreeEvent.npix = it->pixels.size();
 			}
 			for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-				idx = getIdxFromId(it->pixels[ipix].roc_id) ;
+			        idx = getIdxFromId(it->pixels[ipix].roc()) ;
 				if(idx == -1) {
 					LOG(logWARNING) << "PixTestPattern::FillHistos() wrong 'idx' value --> return";
 					return;    			
 				}
-				hits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-				phmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-				ph[idx]->Fill(it->pixels[ipix].getValue());
+				hits[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+				phmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+				ph[idx]->Fill(it->pixels[ipix].value());
 				if (fParFillTree) {
-					fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
-					fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
-					fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-					fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
+				        fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+					fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+					fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+					fTreeEvent.pval[ipix] = it->pixels[ipix].value();
 					fTreeEvent.pq[ipix] = 0; //no charge..
 				}
 			}				

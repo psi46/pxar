@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <algorithm>
 #include <bitset>
 
@@ -74,9 +75,15 @@ void ConfigParameters::initialize() {
   va = -1.;
   vd = -1.;
 
+  fProbeA1 = "sdata1";
+  fProbeA2 = "sdata2"; 
+  fProbeD1 = "clk";
+  fProbeD2 = "ctr";
+
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46v2";
   fTbmType = ""; 
+  fHdiType = "bpix"; 
 }
 
 
@@ -180,6 +187,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
+      else if (0 == _name.compare("hdiType")) { fHdiType = _value; }
 
       else if (0 == _name.compare("probeA1")) { fProbeA1 = _value; }
       else if (0 == _name.compare("probeA2")) { fProbeA2 = _value; }
@@ -290,13 +298,8 @@ vector<pair<string, double> >  ConfigParameters::getTbPowerSettings() {
 vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   vector<pair<string, uint8_t> > a;
 
-  vector<string> sigdelays; 
-  sigdelays.push_back("clk");
-  sigdelays.push_back("ctr");
-  sigdelays.push_back("sda");
-  sigdelays.push_back("tin");
-  sigdelays.push_back("triggerdelay");
-  sigdelays.push_back("deser160phase");
+  RegisterDictionary *dict = RegisterDictionary::getInstance();
+  vector<string> sigdelays = dict->getAllDTBNames();
 
   if (!fReadTbParameters) readTbParameters();
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
@@ -378,21 +381,16 @@ void ConfigParameters::readRocPixelConfig() {
     vector<pxar::pixelConfig> v;
     for (uint8_t ic = 0; ic < fnCol; ++ic) {
       for (uint8_t ir = 0; ir < fnRow; ++ir) {
-	pxar::pixelConfig a; 
-	a.column = ic; 
-	a.row = ir; 
-	a.trim = 0;
-	a.mask = false;
+	pxar::pixelConfig a(ic,ir,0,false,true); 
 	if (rocmasked[i]) {
 	  vector<pair<int, int> > v = vmask[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
 	    if (v[j].first == ic && v[j].second == ir) {
 	      LOG(logINFO) << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
-	      a.mask = true;
+	      a.setMask(true);
 	    }
 	  }
 	}
-	a.enable = true;
 	v.push_back(a); 
       }
     }
@@ -450,7 +448,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     uval = ival;
     unsigned int index = icol*80+irow; 
     if (index <= v.size()) {
-      v[index].trim = uval; 
+      v[index].setTrim(uval);
     } else {
       LOG(logINFO) << " not matching entry in trim vector found for row/col = " << irow << "/" << icol;
     }
@@ -704,7 +702,7 @@ bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
 bool ConfigParameters::setTrimBits(int trim) {
   for (unsigned int iroc = 0; iroc < fRocPixelConfigs.size(); ++iroc) {
     for (unsigned int ipix = 0; ipix < fRocPixelConfigs[iroc].size(); ++ipix) {
-      fRocPixelConfigs[iroc][ipix].trim = trim; 
+      fRocPixelConfigs[iroc][ipix].setTrim(trim);
     }
   }
   return true;
@@ -750,6 +748,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "tbmChannel %i\n", fTbmChannel);
   fprintf(file, "rocType %s\n", fRocType.c_str());
   if (fnTbms > 0) fprintf(file, "tbmType %s\n", fTbmType.c_str());
+  fprintf(file, "hdiType %s\n", fHdiType.c_str());
   fprintf(file, "halfModule %i\n", fHalfModule);
 
   fprintf(file, "\n");
@@ -784,9 +783,9 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   }
     
   for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
-    OutputFile << setw(2) << static_cast<int>(ipix->trim) 
+    OutputFile << setw(2) << static_cast<int>(ipix->trim()) 
 	       << "   Pix " << setw(2) 
-	       << static_cast<int>(ipix->column) << " " << setw(2) << static_cast<int>(ipix->row) 
+	       << static_cast<int>(ipix->column()) << " " << setw(2) << static_cast<int>(ipix->row()) 
 	       << endl;
   }
   
@@ -845,9 +844,10 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
     }
 
     RegisterDictionary *a = RegisterDictionary::getInstance();
-    for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-      OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
-		 << setw(11) << idac->first  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
+    for (std::vector<std::pair<std::string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
+		 << idac->first  
+		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
 		 << endl;
     }
     
