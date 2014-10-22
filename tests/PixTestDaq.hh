@@ -54,6 +54,8 @@ private:
   std::vector<TH1D*> fQ;
   std::vector<TProfile2D*> fQmap;
 
+  std::vector<std::vector<std::pair<int, int> > > fHotPixels;
+
   ClassDef(PixTestDaq, 1)
 
 };

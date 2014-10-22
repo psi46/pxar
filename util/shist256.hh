@@ -1,7 +1,9 @@
 #ifndef SHIST256_H
 #define SHIST256_H
 
-class shist256 {
+#include "pxardllexport.h"
+
+class DLLEXPORT shist256{
 public:
   shist256(); 
   ~shist256();

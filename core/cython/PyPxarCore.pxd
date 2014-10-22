@@ -38,6 +38,7 @@ cdef extern from "api.h" namespace "pxar":
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixelConfig:
+        uint8_t roc()
         uint8_t trim()
         uint8_t column()
         uint8_t row()
@@ -73,7 +74,9 @@ cdef extern from "api.h" namespace "pxar":
         dut()
         void info()
         int32_t getNEnabledPixels(uint8_t rocid)
+        int32_t getNEnabledPixels()
         int32_t getNMaskedPixels(uint8_t rocid)
+        int32_t getNMaskedPixels()
         int32_t getNEnabledTbms()
         int32_t getNTbms()
         string getTbmType()
@@ -82,6 +85,9 @@ cdef extern from "api.h" namespace "pxar":
         string getRocType()
         vector[ uint8_t ] getEnabledRocI2Caddr()
         vector[pixelConfig] getEnabledPixels(size_t rocid)
+        vector[pixelConfig] getEnabledPixels()
+        vector[pixelConfig] getMaskedPixels(size_t rocid)
+        vector[pixelConfig] getMaskedPixels()
         vector[rocConfig] getEnabledRocs()
         vector[uint8_t] getEnabledRocIDs()
         vector[tbmConfig] getEnabledTbms()

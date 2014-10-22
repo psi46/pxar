@@ -176,6 +176,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   
   shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
   shist256 *ph;
+  rsstools rss;
 
   int idx(0);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
@@ -194,7 +195,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     scurveAna(dac, name, maps, resultMaps, result); 
   } 
 
-  LOG(logDEBUG) << "PixTest::scurveMaps end: getCurrentRSS() = " << getCurrentRSS();
+  LOG(logDEBUG) << "PixTest::scurveMaps end: getCurrentRSS() = " << rss.getCurrentRSS();
 
   return resultMaps; 
 }
@@ -523,6 +524,18 @@ void PixTest::testDone() {
 void PixTest::update() {
   //  cout << "PixTest::update()" << endl;
   Emit("update()"); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::hvOn() {
+  cout << "PixTest::hvOn()" << endl;
+  Emit("hvOn()"); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::hvOff() {
+  cout << "PixTest::hvOff()" << endl;
+  Emit("hvOff()"); 
 }
 
 
@@ -1508,3 +1521,55 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
   return make_pair(maps, xMaps); 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTest::maskPixels() {
+  string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
+  vector<vector<pair<int, int> > > vmask = fPixSetup->getConfigParameters()->readMaskFile(mfile); 
+
+  for (unsigned int i = 0; i < vmask.size(); ++i) {
+    vector<pair<int, int> > mask = vmask[i]; 
+    for (unsigned int ipix = 0; ipix < mask.size(); ++ipix) {
+      LOG(logDEBUG) << "ROC " << getIdFromIdx(i) << " masking pixel " << mask[ipix].first << "/" << mask[ipix].second; 
+      fApi->_dut->maskPixel(mask[ipix].first, mask[ipix].second, true, getIdFromIdx(i)); 
+    }
+  }
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::pgToDefault() {
+  fPg_setup.clear();
+  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+  fApi->setPatternGenerator(fPg_setup);
+  LOG(logINFO) << "pattern generator reset to default";
+}
+
+// ----------------------------------------------------------------------
+void PixTest::finalCleanup() {
+  pgToDefault();
+  fPg_setup.clear();
+}
+
+
+// ----------------------------------------------------------------------
+bool PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
+  double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
+  double clkDelays = period_ns / 25 - trgTkDel;
+  uint16_t ClkDelays = (uint16_t)clkDelays; //debug -- aprox to def
+  
+  // -- add right delay between triggers:
+  uint16_t i = ClkDelays;
+  while (i>255){
+    fPg_setup.push_back(make_pair("delay", 255));
+    i = i - 255;
+  }
+  fPg_setup.push_back(make_pair("delay", i));
+  
+  // -- then send trigger and token:
+  fPg_setup.push_back(make_pair("trg", trgTkDel));	// PG_TRG b000010
+  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
+  
+  return true;
+}

@@ -27,6 +27,7 @@ public:
   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
   void readData();
+  void readDataOld();
   void analyzeData();
 
   double meanHit(TH2D*); 

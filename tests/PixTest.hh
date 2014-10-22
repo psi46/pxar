@@ -90,7 +90,8 @@ public:
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
   std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
-  
+  /// mask all pixels mentioned in the mask file
+  void maskPixels();     
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
@@ -140,6 +141,12 @@ public:
   /// Return pixelAlive map and additional hit map when running with external source
   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+
+  /// set trigger frequence [kHz] and trigger token delay
+  bool setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
+  /// functions for DAQ
+  void finalCleanup();
+  void pgToDefault();
 
   /// book a TH1D, adding version information to the name and title 
   TH1D* bookTH1D(std::string sname, std::string title, int nbins, double xmin, double xmax); 
@@ -246,6 +253,10 @@ public:
   void testDone(); // *SIGNAL*
   /// signal to PixTab to update the canvas
   void update();  // *SIGNAL*
+  /// turn HV off
+  void hvOff();  // *SIGNAL*
+  /// turn HV on
+  void hvOn();  // *SIGNAL*
   /// allow forward iteration through list of histograms
   TH1* nextHist(); 
   /// allow backward iteration through list of histograms
@@ -285,6 +296,7 @@ protected:
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
 
+  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
   ClassDef(PixTest, 1); // testing PixTest
 

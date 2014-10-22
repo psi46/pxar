@@ -173,9 +173,11 @@ void PixTestAlive::aliveTest() {
   
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
+  if (h) {
+    h->Draw(getHistOption(h).c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
   restoreDacs();
 
   // -- summary printout
@@ -188,7 +190,8 @@ void PixTestAlive::aliveTest() {
 	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
-  
+
+  //  PixTest::hvOff();
 }
 
 

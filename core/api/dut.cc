@@ -46,9 +46,29 @@ size_t dut::getNEnabledPixels(uint8_t rocid) {
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configEnableSet(true));
 }
 
+size_t dut::getNEnabledPixels() {
+  if (!_initialized) return 0;
+  size_t nenabled = 0;
+  // Loop over all ROCs
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    nenabled += std::count_if(rocit->pixels.begin(),rocit->pixels.end(),configEnableSet(true));
+  }
+  return nenabled;
+}
+
 size_t dut::getNMaskedPixels(uint8_t rocid) {
   if (!_initialized || rocid >= roc.size()) return 0;
   return std::count_if(roc.at(rocid).pixels.begin(),roc.at(rocid).pixels.end(),configMaskSet(true));
+}
+
+size_t dut::getNMaskedPixels() {
+  if (!_initialized) return 0;
+  size_t nmasked = 0;
+  // Loop over all ROCs
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    nmasked += std::count_if(rocit->pixels.begin(),rocit->pixels.end(),configMaskSet(true));
+  }
+  return nmasked;
 }
 
 size_t dut::getNEnabledRocs() {
@@ -111,6 +131,54 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   // Search for pixels that have enable set
   for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
     if (it->enable()) result.push_back(*it);
+  }
+  return result;
+}
+
+std::vector< pixelConfig > dut::getEnabledPixels() {
+
+  std::vector< pixelConfig > result;
+
+  // Check if DUT is allright and the roc we are looking at exists:
+  if (!status()) return result;
+
+  // Loop over all ROCs
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    // Search for pixels that have enable set
+    for (std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it){
+      if (it->enable()) result.push_back(*it);
+    }
+  }
+  return result;
+}
+
+std::vector< pixelConfig > dut::getMaskedPixels(size_t rocid) {
+
+  std::vector< pixelConfig > result;
+
+  // Check if DUT is allright and the roc we are looking at exists:
+  if (!status() || !(rocid < roc.size())) return result;
+
+  // Search for pixels that have enable set
+  for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
+    if (it->mask()) result.push_back(*it);
+  }
+  return result;
+}
+
+std::vector< pixelConfig > dut::getMaskedPixels() {
+
+  std::vector< pixelConfig > result;
+
+  // Check if DUT is allright and the roc we are looking at exists:
+  if (!status()) return result;
+
+  // Loop over all ROCs
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    // Search for pixels that have enable set
+    for (std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it){
+      if (it->mask()) result.push_back(*it);
+    }
   }
   return result;
 }

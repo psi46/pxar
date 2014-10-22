@@ -120,6 +120,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     hvOff();
   }
 
+  // allow tests (bare module test in particular) to switch off HV
+  Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()"); 
+  Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()"); 
+
+
   hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
   hwControl->AddFrame(hvFrame);

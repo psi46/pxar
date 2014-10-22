@@ -888,9 +888,17 @@ namespace pxar {
      */
     size_t getNEnabledPixels(uint8_t rocid);
 
+    /** Function returning the number of enabled pixels on all ROCs:
+     */
+    size_t getNEnabledPixels();
+
     /** Function returning the number of masked pixels on a specific ROC:
      */
     size_t getNMaskedPixels(uint8_t rocid);
+
+    /** Function returning the number of masked pixels on all ROCs:
+     */
+    size_t getNMaskedPixels();
 
     /** Function returning the number of enabled TBMs:
      */
@@ -919,6 +927,18 @@ namespace pxar {
     /** Function returning the enabled pixels configs for a specific ROC:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
+
+    /** Function returning the enabled pixels configs for all ROCs:
+     */
+    std::vector< pixelConfig > getEnabledPixels();
+
+    /** Function returning all masked pixels configs for a specific ROC:
+     */
+    std::vector< pixelConfig > getMaskedPixels(size_t rocid);
+
+    /** Function returning all masked pixels configs for all ROCs:
+     */
+    std::vector< pixelConfig > getMaskedPixels();
 
     /** Function returning the enabled ROC configs
      */

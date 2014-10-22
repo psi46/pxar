@@ -223,6 +223,9 @@ void PixTestXray::doPhRun() {
 
   PixTest::update(); 
   fDirectory->cd();
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(false);
   
   fPg_setup.clear();
 
@@ -499,7 +502,7 @@ void PixTestXray::doRateScan() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestXray::readData() {
+void PixTestXray::readDataOld() {
 
   int pixCnt(0);  
   vector<pxar::Event> daqdat;
@@ -629,8 +632,58 @@ void PixTestXray::finalCleanup() {
 
 
 // ----------------------------------------------------------------------
+void PixTestXray::readData() {
+
+  int pixCnt(0);  
+  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  
+  for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+    pixCnt += it->pixels.size();
+
+    if (fParFillTree) {
+      fTreeEvent.header           = it->header; 
+      fTreeEvent.dac              = 0;
+      fTreeEvent.trailer          = it->trailer; 
+      fTreeEvent.npix             = it->pixels.size();
+    }
+
+    int idx(0); 
+    double q(0.);
+    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
+      idx = getIdxFromId(it->pixels[ipix].roc());
+      if (fPhCalOK) {
+	q = fPhCal.vcal(it->pixels[ipix].roc(), 
+			it->pixels[ipix].column(), 
+			it->pixels[ipix].row(), 
+			it->pixels[ipix].value());
+      } else {
+	q = 0;
+      }
+      fHitMap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+      fQ[idx]->Fill(q);
+      fQmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), q);
+
+      fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+      fPH[idx]->Fill(it->pixels[ipix].value());
+	
+      if (fParFillTree) {
+	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
+	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
+	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
+	fTreeEvent.pval[ipix] = it->pixels[ipix].value(); 
+	fTreeEvent.pq[ipix]   = q;
+      }
+    }
+    
+    if (fParFillTree) fTree->Fill();
+    
+  }
+  LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
+}
+
+
+// ----------------------------------------------------------------------
 void PixTestXray::processData(uint16_t numevents) {
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   fDirectory->cd();
   PixTest::update();
   

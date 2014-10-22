@@ -73,7 +73,8 @@ void PixSetup::killApi() {
 
 // ----------------------------------------------------------------------
 void PixSetup::init() {
-  LOG(logDEBUG) << "PixSetup init start; getCurrentRSS() = " << getCurrentRSS();
+  rsstools rss;
+  LOG(logDEBUG) << "PixSetup init start; getCurrentRSS() = " << rss.getCurrentRSS();
   int N(100000);
   //  fPxarMemory = std::malloc(300000000);
   fPxarMemory = std::calloc(N, sizeof(shist256));
@@ -98,6 +99,6 @@ void PixSetup::init() {
     //     p -= 1; 
     //     cout << p << ": " << p->get(0) << ", " << (p - (shist256*)fPxarMemory) << endl;
   }
-  LOG(logDEBUG) << "PixSetup init done;  getCurrentRSS() = " << getCurrentRSS() << " fPxarMemory = " << fPxarMemory;
+  LOG(logDEBUG) << "PixSetup init done;  getCurrentRSS() = " << rss.getCurrentRSS() << " fPxarMemory = " << fPxarMemory;
 }
 

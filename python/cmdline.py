@@ -63,15 +63,26 @@ class PxarCoreCmd(cmd.Cmd):
             print data
             return
 
-        # Prepare new numpy matrix:
-        d = zeros((52,80))
+        # Find number of ROCs present:
+        module = False
         for px in data:
-            if(count):
-                d[px.column][px.row] += 1
-            else:
-                d[px.column][px.row] = px.value
+            if px.roc > 0:
+                module = True
+                break
 
-        plot = Plotter.create_th2(d, 0, 51, 0, 80, name, 'pixels x', 'pixels y', name)
+        # Prepare new numpy matrix:
+        d = zeros((416 if module else 52,160 if module else 80))
+
+        for px in data:
+            xoffset = 52*(px.roc%8) if module else 0
+            yoffset = 80*int(px.roc/8) if module else 0
+            # Flip the ROCs upside down:
+            y = (px.row + yoffset) if (px.roc < 8) else (2*yoffset - px.row - 1)
+            # Reverse order of the upper ROC row:
+            x = (px.column + xoffset) if (px.roc < 8) else (415 - xoffset - px.column)
+            d[x][y] += 1 if count else px.value
+
+        plot = Plotter.create_th2(d, 0, 415 if module else 51, 0, 159 if module else 79, name, 'pixels x', 'pixels y', name)
         self.window.histos.append(plot)
         self.window.update()
 
