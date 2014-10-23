@@ -9,8 +9,8 @@
 #include <cstdlib>
 #include <stdio.h>
 
-#include "log.h"
 #include "dictionaries.h"
+#include "log.h"
 
 #include "ConfigParameters.hh"
 
@@ -234,6 +234,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
     //    cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     cleanupString(lines[i]);
+    if (lines[i].length() < 2) continue;
     s1 = lines[i].find(" "); 
     s2 = lines[i].rfind(" "); 
     if (s1 != s2) {
@@ -274,7 +275,12 @@ void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
-    LOG(logDEBUG) << dumpParameters(fTbParameters);
+    // LOG(logDEBUG) does not produce any printout for dummy_dtb!?
+    //     //    cout<< "hello: " << fTbParameters.size() << endl;
+    //     for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
+    //       LOG(logDEBUG) << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
+    //       cout << fTbParameters[i].first << ": " << (int)fTbParameters[i].second << endl;
+    //     }
     fReadTbParameters = true; 
   }
 }
@@ -1010,12 +1016,12 @@ std::string ConfigParameters::getProbe(std::string probe) {
 // ----------------------------------------------------------------------
 void ConfigParameters::cleanupString(string &s) {
   replaceAll(s, "\t", " "); 
+  string::size_type s1 = s.find("#");
+  if (string::npos != s1) s.erase(s1); 
   string::iterator new_end = unique(s.begin(), s.end(), bothAreSpaces);
   s.erase(new_end, s.end()); 
   if (s.substr(0, 1) == string(" ")) s.erase(0, 1); 
   if (s.substr(s.length()-1, 1) == string(" ")) s.erase(s.length()-1, 1); 
-  string::size_type s1 = s.find("#");
-  if (string::npos != s1) s.erase(s1, s.length()-s1); 
 }
 
 // ----------------------------------------------------------------------
