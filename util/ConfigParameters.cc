@@ -905,6 +905,7 @@ void ConfigParameters::readGainPedestalParameters() {
   ifstream is;
   vector<gainPedestalParameters> rocPar; 
   for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
+    lines.clear();
     rocPar.clear();
     std::stringstream fname;
     fname.str(std::string());
