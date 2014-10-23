@@ -27,6 +27,10 @@ PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name),
   fTree = 0; 
   fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
   fPhCalOK = fPhCal.initialized();
+
+  for (int i = 0; i < 16; ++i) {
+    cout << fPhCal.getParameters(i, 12, 13) << endl;
+  }
 }
 
 
