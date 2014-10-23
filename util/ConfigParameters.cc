@@ -233,12 +233,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   for (unsigned int i = 0; i < lines.size(); ++i) {
     //    cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    replaceAll(lines[i], "\t", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
-    lines[i].erase(new_end, lines[i].end()); 
-    if (lines[i].length() < 2) continue;
-    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
-    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
+    cleanupString(lines[i]);
     s1 = lines[i].find(" "); 
     s2 = lines[i].rfind(" "); 
     if (s1 != s2) {
@@ -427,7 +422,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
     replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
@@ -488,7 +483,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
     replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (0 == lines[i].length()) continue;
@@ -1012,8 +1007,16 @@ std::string ConfigParameters::getProbe(std::string probe) {
 }
 
 
-
-
+// ----------------------------------------------------------------------
+void ConfigParameters::cleanupString(string &s) {
+  replaceAll(s, "\t", " "); 
+  string::iterator new_end = unique(s.begin(), s.end(), bothAreSpaces);
+  s.erase(new_end, s.end()); 
+  if (s.substr(0, 1) == string(" ")) s.erase(0, 1); 
+  if (s.substr(s.length()-1, 1) == string(" ")) s.erase(s.length()-1, 1); 
+  string::size_type s1 = s.find("#");
+  if (string::npos != s1) s.erase(s1, s.length()-s1); 
+}
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::bothAreSpaces(char lhs, char rhs) { 

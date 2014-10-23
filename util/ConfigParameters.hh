@@ -134,6 +134,7 @@ public:
   
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
+  void cleanupString(std::string& str);
 
 private:
 
