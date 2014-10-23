@@ -275,12 +275,11 @@ void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
-    // LOG(logDEBUG) does not produce any printout for dummy_dtb!?
-    //     //    cout<< "hello: " << fTbParameters.size() << endl;
-    //     for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
-    //       LOG(logDEBUG) << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
-    //       cout << fTbParameters[i].first << ": " << (int)fTbParameters[i].second << endl;
-    //     }
+    // Cannot use LOG(...) for this printout, as pxarCore is instantiated only afterwards ...
+    for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
+      //      LOG(logDEBUG) << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
+      LOG(logINFO) << "        " << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
+    }
     fReadTbParameters = true; 
   }
 }
@@ -1018,6 +1017,7 @@ void ConfigParameters::cleanupString(string &s) {
   replaceAll(s, "\t", " "); 
   string::size_type s1 = s.find("#");
   if (string::npos != s1) s.erase(s1); 
+  if (0 == s.length()) return;
   string::iterator new_end = unique(s.begin(), s.end(), bothAreSpaces);
   s.erase(new_end, s.end()); 
   if (s.substr(0, 1) == string(" ")) s.erase(0, 1); 
