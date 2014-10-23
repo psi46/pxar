@@ -903,8 +903,9 @@ void ConfigParameters::readGainPedestalParameters() {
   vector<string> lines; 
   char  buffer[5000];
   ifstream is;
+  vector<gainPedestalParameters> rocPar; 
   for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
-    vector<gainPedestalParameters> rocPar; 
+    rocPar.clear();
     std::stringstream fname;
     fname.str(std::string());
     fname << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
