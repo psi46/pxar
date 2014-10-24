@@ -85,7 +85,7 @@ void PixTestHighRate::runCommand(std::string command) {
   LOG(logDEBUG) << "running command: " << command;
 
   if (!command.compare("maskhotpixels")) {
-    maskHotPixels(); 
+    doRunMaskHotPixels(); 
     return;
   }
 
@@ -215,6 +215,8 @@ void PixTestHighRate::doXPixelAlive() {
   PixTest::update(); 
 
   // -- summary printout
+  //  int nrocs = fApi->_dut->getNEnabledRocs();
+  double sensorArea = 0.015 * 0.010 * 54 * 81; // in cm^2, accounting for larger edge pixels (J. Hoss 2014/10/21)
   string deadPixelString, probPixelString, xHitsString, numTrigsString, vCalHitsString,xRayHitEfficiencyString,xRayRateString;
   for (unsigned int i = 0; i < probPixel.size(); ++i) {
     probPixelString += Form(" %4d", probPixel[i]); 
@@ -224,7 +226,7 @@ void PixTestHighRate::doXPixelAlive() {
     int numTrigs = fParNtrig * 4160;
     numTrigsString += Form(" %4d", numTrigs );
     xRayHitEfficiencyString += Form(" %.1f", (vCalHits[i]+fParNtrig*deadPixel[i])/static_cast<double>(numTrigs)*100);
-    xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./0.64*1000.);
+    xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./sensorArea*1000.);
   }
 
   LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
@@ -261,7 +263,7 @@ void PixTestHighRate::doRunDaq() {
   for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
     vector<pair<int, int> > hot = fHotPixels[i]; 
     for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
-      LOG(logDEBUG) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second; 
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second; 
       fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i)); 
     }
   }
@@ -269,7 +271,7 @@ void PixTestHighRate::doRunDaq() {
 
   // -- take data
   fDirectory->cd();
-  doHitMap(fParRunSeconds, fHitMap); 
+  doHitMap(fParRunSeconds, v); 
 
   // -- display
   TH2D *h = (TH2D*)(fHistList.back());
@@ -301,22 +303,7 @@ void PixTestHighRate::doRunDaq() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 
-  // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  fApi->daqStop();
-  fPg_setup.clear();
-  setTriggerFrequency(fParTriggerFrequency, 50);
-  fApi->setPatternGenerator(fPg_setup);
-  
-  timer t;
-  uint8_t perFull;
-  fDaq_loop = true;
-    
+  prepareDaq(fParTriggerFrequency, 50);
   fApi->daqStart();
 
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
@@ -324,10 +311,14 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 	       << ", period " << finalPeriod 
 	       << " and duration " << nseconds << " seconds";
     
+  timer t;
+  uint8_t perFull;
+  fDaq_loop = true;
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
-      LOG(logINFO) << "Buffer almost full, pausing triggers.";
+      LOG(logINFO) << "run duration " << t.get()/1000 << " seconds, buffer almost full (" 
+		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
       fillMap(h);
       LOG(logINFO) << "Resuming triggers.";
@@ -335,15 +326,15 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
     }
     
     if (static_cast<int>(t.get()/1000) >= nseconds)	{
-      LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds.";
+      LOG(logINFO) << "data taking finished, elapsed time: " << t.get()/1000 << " seconds.";
       fDaq_loop = false;
       break;
     }
   }
     
   fApi->daqTriggerLoopHalt();
-  
   fApi->daqStop();
+
   fillMap(h);
   finalCleanup();
        
@@ -366,88 +357,19 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
 }
 
 
-
-
-
 // ----------------------------------------------------------------------
-void PixTestHighRate::maskHotPixels() {
-
-  int NSECONDS(10); 
-  int TRGFREQ(100); // in kiloHertz
-
-  fHotPixels.clear(); 
-
+void PixTestHighRate::doRunMaskHotPixels() {    
+  PixTest::update(); 
   vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels"); 
   if (0 == v.size()) {
     bookHist("hotpixels");
     v = mapsWithString(fHitMap, "hotpixels"); 
   }
   for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
-
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(false);
-
-  // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  fApi->daqStop();
-  fPg_setup.clear();
-  setTriggerFrequency(TRGFREQ, 50);
-  fApi->setPatternGenerator(fPg_setup);
-  
-  timer t;
-  uint8_t perFull;
-  fDaq_loop = true;
-    
-  fApi->daqStart();
-
-  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-  LOG(logINFO) << "PixTestHighRate::maskHotPixels start TriggerLoop with period " << finalPeriod 
-	       << " and duration " << NSECONDS << " seconds and trigger rate " << TRGFREQ << " kHz";
-  
-  while (fApi->daqStatus(perFull) && fDaq_loop) {
-    if (perFull > 80) {
-      LOG(logINFO) << "Buffer almost full, pausing triggers.";
-      fApi->daqTriggerLoopHalt();
-      fillMap(v);
-      LOG(logINFO) << "Resuming triggers.";
-      fApi->daqTriggerLoop();
-    }
-    
-    if (static_cast<int>(t.get()/1000) >= NSECONDS)	{
-      LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds.";
-      fDaq_loop = false;
-      break;
-    }
-  }
-    
-  fApi->daqTriggerLoopHalt();
-  
-  fApi->daqStop();
-  fillMap(v);
-  finalCleanup();
-
-
-  // -- analysis of hit map
-  double THR = 1e-5*NSECONDS*TRGFREQ*1000; 
-  LOG(logDEBUG) << "hot pixel determination with THR = " << THR; 
-  TH2D *h(0); 
-  for (unsigned int i = 0; i < v.size(); ++i) {
-    h = v[i]; 
-    vector<pair<int, int> > hot; 
-    for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
-      for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
-	if (h->GetBinContent(ix+1, iy+1) > THR) {
-	  LOG(logDEBUG) << "ROC " << i << " with hot pixel " << ix << "/" << iy << ",  hits = " << h->GetBinContent(ix+1, iy+1);
-	  hot.push_back(make_pair(ix, iy)); 
-	}
-      }
-    }
-    fHotPixels.push_back(hot); 
-  }
-  
+  maskHotPixels(v); 
+  // -- display
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
+  v[0]->Draw("colz");
+  PixTest::update(); 
+  return;
 }

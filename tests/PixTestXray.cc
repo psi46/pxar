@@ -27,6 +27,7 @@ PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name),
   fTree = 0; 
   fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
   fPhCalOK = fPhCal.initialized();
+
 }
 
 
@@ -92,36 +93,15 @@ bool PixTestXray::setParameter(string parName, string sval) {
 }
 
 
-
-// ----------------------------------------------------------------------
-bool PixTestXray::setTrgFrequency(uint8_t TrgTkDel) {
-  uint8_t trgtkdel = TrgTkDel;
-  
-  double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
-  double fClkDelays = period_ns / 25 - trgtkdel;
-  uint16_t ClkDelays = (uint16_t)fClkDelays; //debug -- aprox to def
-
-  // -- add right delay between triggers:
-  uint16_t i = ClkDelays;
-  while (i>255){
-    fPg_setup.push_back(make_pair("delay", 255));
-    i = i - 255;
-  }
-  fPg_setup.push_back(make_pair("delay", i));
-  
-  // -- then send trigger and token:
-  fPg_setup.push_back(make_pair("trg", trgtkdel));	// PG_TRG b000010
-  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
-
-  return true;
-}
-
-
-
 // ----------------------------------------------------------------------
 void PixTestXray::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
+
+  if (!command.compare("maskhotpixels")) {
+    doRunMaskHotPixels(); 
+    return;
+  }
 
   if (!command.compare("ratescan")) {
     doRateScan(); 
@@ -155,6 +135,26 @@ void PixTestXray::setToolTips() {
   fSummaryTip = string("to be implemented")
     ;
 }
+
+
+// ----------------------------------------------------------------------
+vector<TH2D*> PixTestXray::bookHotPixelMap() {
+  fDirectory->cd(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  unsigned nrocs = rocIds.size(); 
+  vector<TH2D*> v; 
+  for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
+    TH2D *h2 = bookTH2D(Form("hotPixelMap_C%d", rocIds[iroc]), Form("hotPixelMap_C%d", rocIds[iroc]), 
+			52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.);
+    h2->SetDirectory(fDirectory);
+    fHotPixelMap.push_back(h2);
+    fHistOptions.insert(make_pair(h2,"colz"));
+    v.push_back(h2); 
+  }
+  copy(fHotPixelMap.begin(), fHotPixelMap.end(), back_inserter(fHistList));
+  return v; 
+}  
 
 
 // ----------------------------------------------------------------------
@@ -224,11 +224,19 @@ void PixTestXray::doPhRun() {
   PixTest::update(); 
   fDirectory->cd();
 
+  // -- unmask entire chip and then mask hot pixels
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
-  
-  fPg_setup.clear();
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+    vector<pair<int, int> > hot = fHotPixels[i]; 
+    for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second; 
+      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i)); 
+    }
+  }
+  maskPixels();
 
+  
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   if (0 == fQ.size()) {
@@ -295,60 +303,46 @@ void PixTestXray::doPhRun() {
     copy(fTriggers.begin(), fTriggers.end(), back_inserter(fHistList));
   }
 
-  fPg_setup.push_back(make_pair("resetroc", 0));
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
+  prepareDaq(fParTriggerFrequency, 50); 
   fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  fApi->daqStop();
 
-  fPg_setup.clear();
   if (fParDelayTBM) {
     LOG(logINFO) << "set TBM register delays = 0x40";
     fApi->setTbmReg("delays", 0x40);
   }
 
-  fDaq_loop = true;
-
-  LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-  setTrgFrequency(50);
-
-  fApi->setPatternGenerator(fPg_setup);
-  fDaq_loop = true;
-  fApi->daqStart();
-  
   int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
-  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with period "  << finalPeriod 
+  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with trigger frequency " << fParTriggerFrequency 
+	       << ", period "  << finalPeriod 
 	       << " and duration " << fParRunSeconds << " seconds";
   
   uint8_t perFull;
   timer t;
+  fDaq_loop = true;
   while (fApi->daqStatus(perFull) && fDaq_loop) {
-    LOG(logINFO) << "buffer not full, at " << (int) perFull << "%";
     gSystem->ProcessEvents();
-
-    // Pause and drain the buffer if almost full.
     if (perFull > 80) {
-      LOG(logINFO) << "Buffer almost full, pausing triggers.";
+      LOG(logINFO) << "run duration " << t.get()/1000 << " seconds, buffer almost full (" 
+		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
       processData(0);
       LOG(logINFO) << "Resuming triggers.";
       fApi->daqTriggerLoop();
     }
-    LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds."; 
+
     if (static_cast<int>(t.get())/1000 >= fParRunSeconds)	{
+      LOG(logINFO) << "data taking finished, elapsed time: " << t.get()/1000 << " seconds."; 
       fDaq_loop = false;
       break;
     }
   }
 
   fApi->daqTriggerLoopHalt();
-  
   fApi->daqStop();
+
   processData(0);
 
   finalCleanup();
-
   fQ[0]->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), fQ[0]);
   PixTest::update();
@@ -378,17 +372,8 @@ void PixTestXray::doRateScan() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
   
-  // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  fApi->daqStop();
-  fPg_setup.clear();
-  setTrgFrequency(50);
-  fApi->setPatternGenerator(fPg_setup);
+
+  prepareDaq(fParTriggerFrequency, 50);
 
   // -- scan VthrComp  
   for (fVthrComp = fParVthrCompMin; fVthrComp <= fParVthrCompMax;  ++fVthrComp) {
@@ -614,24 +599,6 @@ int PixTestXray::countHitsAndMaskPixels(TH2D *h2, double noiseLevel, int iroc) {
 
 
 // ----------------------------------------------------------------------
-void PixTestXray::pgToDefault(vector<pair<std::string, uint8_t> > /*pg_setup*/) {
-  fPg_setup.clear();
-  LOG(logDEBUG) << "PixTestXray::PG_Setup clean";
-  
-  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-  fApi->setPatternGenerator(fPg_setup);
-  LOG(logINFO) << "PixTestXray::Xray pg_setup set to default.";
-}
-
-// ----------------------------------------------------------------------
-void PixTestXray::finalCleanup() {
-  pgToDefault(fPg_setup);
-  
-  fPg_setup.clear();
-}
-
-
-// ----------------------------------------------------------------------
 void PixTestXray::readData() {
 
   int pixCnt(0);  
@@ -757,3 +724,19 @@ void PixTestXray::processData(uint16_t numevents) {
 
 
 
+// ----------------------------------------------------------------------
+void PixTestXray::doRunMaskHotPixels() {    
+  PixTest::update(); 
+  vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels"); 
+  if (0 == v.size()) {
+    bookHist("hotpixels");
+    v = mapsWithString(fHitMap, "hotpixels"); 
+  }
+  for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
+  maskHotPixels(v); 
+  // -- display
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
+  v[0]->Draw("colz");
+  PixTest::update(); 
+  return;
+}

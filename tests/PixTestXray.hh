@@ -16,15 +16,17 @@ public:
   void init(); 
   void setToolTips();
   void bookHist(std::string); 
+  std::vector<TH2D*> bookHotPixelMap();
 
   void runCommand(std::string command); 
   void doPhRun(); 
   void doRateScan();
+  void doRunMaskHotPixels();
   void doTest();
  
-  bool setTrgFrequency(uint8_t TrgTkDel);
-  void finalCleanup();
-  void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
+  //   bool setTrgFrequency(uint8_t TrgTkDel);
+  //   void finalCleanup();
+  //   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
   void readData();
   void readDataOld();
@@ -68,6 +70,7 @@ private:
   std::vector<TH1D*> fPH;
   std::vector<TProfile2D*> fPHmap;
   std::vector<TH2D*> fHmap;
+  std::vector<TH2D*> fHotPixelMap;
 
   std::vector<TH1D*> fTriggers;
   

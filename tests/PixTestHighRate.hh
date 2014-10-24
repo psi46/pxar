@@ -21,13 +21,11 @@ public:
   void doTest();
   void doXPixelAlive();
   void doRunDaq(); 
+  void doRunMaskHotPixels();
 
   void doHitMap(int nseconds, std::vector<TH2D*>);
   void fillMap(std::vector<TH2D*>);
-  void maskHotPixels(); 
  
-  //  bool setTrgFrequency(uint8_t TrgTkDel, int triggerFreq = 20);
-
 private:
 
   int      fParTriggerFrequency;
@@ -43,7 +41,6 @@ private:
   bool    fDaq_loop;
   
   std::vector<TH2D*> fHitMap;
-  std::vector<std::vector<std::pair<int, int> > > fHotPixels;
   
   ClassDef(PixTestHighRate, 1)
 

@@ -142,8 +142,12 @@ public:
   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
+  /// determine hot pixels with high occupancy
+  void maskHotPixels(std::vector<TH2D*>); 
+  /// set up DAQ (including call to setTriggerFrequency)
+  void prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
-  bool setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
+  void setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
   /// functions for DAQ
   void finalCleanup();
   void pgToDefault();
@@ -296,7 +300,9 @@ protected:
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
 
+  // -- data members for DAQ purposes
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
+  std::vector<std::vector<std::pair<int, int> > > fHotPixels;
 
   ClassDef(PixTest, 1); // testing PixTest
 
