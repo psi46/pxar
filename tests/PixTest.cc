@@ -1544,6 +1544,7 @@ void PixTest::pgToDefault() {
   fPg_setup.clear();
   fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
   fApi->setPatternGenerator(fPg_setup);
+  LOG(logDEBUG) << "PixTest::       pg_setup set to default.";
 }
 
 // ----------------------------------------------------------------------
@@ -1561,35 +1562,43 @@ void PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
+  LOG(logDEBUG) << "PixTestDaq::RES sent once.";
   fApi->daqStop();
   fPg_setup.clear();
   setTriggerFrequency(triggerFreq, trgTkDel);
   fApi->setPatternGenerator(fPg_setup);
 }
-
+//uint16_t
 // ----------------------------------------------------------------------
 void PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
-  double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
-  double clkDelays = period_ns / 25 - trgTkDel;
-  uint16_t ClkDelays = (uint16_t)clkDelays; //debug -- aprox to def
 
-  fPg_setup.clear();
-  
-  // -- add right delay between triggers:
-  uint16_t i = ClkDelays;
-  while (i>255){
-    fPg_setup.push_back(make_pair("delay", 255));
-    i = i - 255;
-  }
-  fPg_setup.push_back(make_pair("delay", i));
-  
-  // -- then send trigger and token:
-  fPg_setup.push_back(make_pair("trg", trgTkDel));	// PG_TRG b000010
-  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
-  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
-	  
+	uint16_t nDel = 0;
+	uint16_t totalPeriod = 0;
+
+	double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
+	double clkDelays = period_ns / 25 - trgTkDel;
+	uint16_t ClkDelays = (uint16_t)clkDelays; // aproximate to defect
+
+	fPg_setup.clear();
+
+	// -- add right delay between triggers:
+	uint16_t i = ClkDelays;
+	while (i>255){
+		fPg_setup.push_back(make_pair("delay", 255));
+		i = i - 255;
+		nDel++;
+	}
+	fPg_setup.push_back(make_pair("delay", i));
+
+	// -- then send trigger and token:
+	fPg_setup.push_back(make_pair("trg", trgTkDel));    // PG_TRG b000010
+	fPg_setup.push_back(make_pair("tok", 0));    // PG_TOK
+	if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
+
+	totalPeriod = ((uint16_t)period_ns / 25) + 4 + nDel; //+4 to align to the new pg minimum (1 additional clk cycle per PG call);
+
+//	return totalPeriod;
 }
-
 
 // ----------------------------------------------------------------------
 void PixTest::maskHotPixels(std::vector<TH2D*> v) {
