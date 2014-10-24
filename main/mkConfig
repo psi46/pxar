@@ -482,11 +482,15 @@ DelayTBM            checkbox
 FillTree            checkbox  
 
 -- DAQ
-Ntrig               0
-iterations          10
-seconds             30
+delayTBM            checkbox
+filltree            checkbox
 trgfrequency(khz)   100
-FillTree            checkbox
+maskHotPixels       button
+trgnumber           5
+iterations          10
+rundaqtrg           button
+daqseconds          5
+rundaqseconds       button
 
 -- IV
 port                /dev/FIXME
