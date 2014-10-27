@@ -79,9 +79,22 @@ namespace pxar {
      */
     void Poff();
 
+    /** select signal mode
+     */
+    void SigSetMode(uint8_t signal, uint8_t mode);
+    
+    
+    /** select termination for RDA/TOUT to LCDS (for modules)
+     */
+    void SigSetLCDS();
+
+    /** select termination for RDA/TOUT to LVDS (for single ROCs)
+     */
+    void SigSetLVDS();
+
     /** Set HubID
      */
-    void setHubId(uint8_t hubid) {hubId = hubid;}
+    void setHubId(uint8_t hubid);
 
     /** Set a DAC on a specific ROC with I2C address roci2c
      */
@@ -156,7 +169,20 @@ namespace pxar {
     /** Selects input for the ADC 
      */
     void SignalProbeADC(uint8_t signal, uint8_t gain);
-    vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, int nSample, uint8_t start, uint8_t stop);
+    
+    /** Record data using the DTB ADC. The following parameters are available:
+	analog_probe = signal to be sampled
+	gain = adc gain  (higher values = higher gain but also slower)
+	nSample = max. number of samples to be taken
+	source  = start signal
+	      0 = none (off)
+	      1 = pg_sync
+	      2 = i2c
+	      3 = token in
+	start   = delay after start signal
+	stop    = not sure, takes nSample samples when stop is 0
+      */
+    std::vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop = 0);
     
     // TEST COMMANDS
 
@@ -297,6 +323,15 @@ namespace pxar {
      */
     std::vector<Event*> daqAllEvents();
 
+    /** Return the current total decoding error number for all channels:
+     */
+    uint32_t daqErrorCount();
+
+    /** Return all readback values for the last readout. Return format is a vector containing
+     *  one vector of uint16_t radback values for every ROC in the readout chain.
+     */
+    std::vector<std::vector<uint16_t> > daqReadback();
+
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
     void daqClear();
@@ -330,6 +365,10 @@ namespace pxar {
     /** Set the Column Enable bit for all columns
      */
     void AllColumnsSetEnable(uint8_t roci2c, bool enable);
+
+    /** Get ADC value
+     */
+    uint16_t GetADC(uint8_t rpc_par1);
 
   private:
 

@@ -99,6 +99,9 @@ IF(BUILD_python)
 
   cython_add_module( PyPxarCore cython/PyPxarCore.pyx )
 
+set_target_properties( PyPxarCore
+  PROPERTIES COMPILE_FLAGS "-Wno-strict-aliasing" )
+
   target_link_libraries(PyPxarCore ${PROJECT_NAME})
 
   INSTALL(TARGETS PyPxarCore

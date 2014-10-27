@@ -3,6 +3,7 @@
 #include <sstream>   // parsing
 
 #include "PixTestPhOpt.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 using namespace std;
@@ -14,14 +15,14 @@ ClassImp(PixTestPhOpt)
 PixTestPhOpt::PixTestPhOpt() {}
 
 // ----------------------------------------------------------------------
-PixTestPhOpt::PixTestPhOpt(PixSetup *a, std::string name ) :  
+PixTestPhOpt::PixTestPhOpt(PixSetup *a, std::string name) :  
   PixTest(a, name), 
+  fAdjustVthrComp(0), 
   fParNtrig(-1), 
   fVcalLow(-1), 
   fVcalHigh(-1), 
   fPhMin(-1), 
-  fPhMax(-1), 
-  fFlagSinglePix(true) {
+  fPhMax(-1) {
   PixTest::init();
   init();
 }
@@ -37,40 +38,34 @@ bool PixTestPhOpt::setParameter(string parName, string sval) {
     if (!fParameters[i].first.compare(parName)) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("ntrig")) {
-	setTestParameter("ntrig", sval); 
-	fParNtrig = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fNtrig  ->" << fParNtrig
-		      << "<- from sval = " << sval;
-      }
-      if (!parName.compare("singlepix")) {
-	fFlagSinglePix = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fFlagSinglePix  ->" << fFlagSinglePix
-		      << "<- from sval = " << sval;
-      }
+
       if (!parName.compare("vcallow")) {
 	fVcalLow = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fVcalLow  ->" << fVcalLow
-		      << "<- from sval = " << sval;
       }
+
       if (!parName.compare("vcalhigh")) {
 	fVcalHigh = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fVcalHigh  ->" << fVcalHigh
-		      << "<- from sval = " << sval;
       }
 
       if (!parName.compare("phmin")) {
 	fPhMin = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fPhMin  ->" << fPhMin
-		      << "<- from sval = " << sval;
       }
 
       if (!parName.compare("phmax")) {
 	fPhMax = atoi(sval.c_str());
-	LOG(logDEBUG) << "  setting fPhMax  ->" << fPhMax
-		      << "<- from sval = " << sval;
       }
       
+      if (!parName.compare("ntrig")) {
+	fParNtrig = atoi(sval.c_str());
+      }
+
+      if (!parName.compare("adjustvthrcomp")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fAdjustVthrComp = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
       if (!parName.compare("pix")) {
         s1 = sval.find(",");
         if (string::npos != s1) {
@@ -78,15 +73,14 @@ bool PixTestPhOpt::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str());
 	  str2 = sval.substr(s1+1);
 	  pixr = atoi(str2.c_str());
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr));
 	  addSelectedPixels(sval); 
-	  LOG(logDEBUG) << "  adding to FPIX ->" << pixc << "/" << pixr << " fPIX.size() = " << fPIX.size() ;
 	} else {
 	  clearSelectedPixels();
-	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
+	  addSelectedPixels("-1,-1"); 
 	}
       }
-      break;
     }
   }
   return found;
@@ -110,15 +104,38 @@ PixTestPhOpt::~PixTestPhOpt() {}
 // ----------------------------------------------------------------------
 void PixTestPhOpt::doTest() {
 
-  if (0 == fPIX.size()) {
-    fPIX.push_back(make_pair(11, 12));
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  TH1 *hLo(0), *hHi(0);
+  TH2D *h2[16]; 
+  fPIX.clear();
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fPIX.push_back(make_pair(11,20)); 
+  }
+  cout << "fPIX.size() = " << fPIX.size() << endl;
+  cout << "rocIds.size() = " << rocIds.size() << endl;
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fApi->_dut->testPixel(fPIX[iroc].first, fPIX[iroc].second, true, rocIds[iroc]);
+    fApi->_dut->maskPixel(fPIX[iroc].first, fPIX[iroc].second, false, rocIds[iroc]);
   }
 
+
   cacheDacs();
-  bigBanner(Form("PixTestPhOpt::doTest() Ntrig = %d, singlePix = %d, vcal Low/High = %d/%d, fPIX[0,0] = %d/%d"
-		 , fParNtrig, (fFlagSinglePix?1:0), fVcalLow, fVcalHigh, fPIX[0].first, fPIX[0].second));
+  bigBanner(Form("PixTestPhOpt::doTest() Ntrig = %d, vcal Low/High = %d/%d, fPIX[0,0] = %d/%d, adjustVthrComp = %d"
+		 , fParNtrig, fVcalLow, fVcalHigh, fPIX[0].first, fPIX[0].second, fAdjustVthrComp));
   fDirectory->cd();
   PixTest::update();
+
+  if (fAdjustVthrComp) {
+    adjustVthrComp();
+  } 
+
+  vector<int> vthrComp; 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    vthrComp.push_back(fApi->_dut->getDAC(rocIds[iroc], "vthrcomp"));
+  }
 
   fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fVcalLow);
@@ -128,22 +145,20 @@ void PixTestPhOpt::doTest() {
   fApi->setDAC("vcal", fVcalHigh);
   scan("phHi");
 
-  TH1 *hLo(0), *hHi(0);
-  TH2D *h2[16]; 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  // -- analysis
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-    hLo = fMaps[Form("phLo_phoffset_phscale_c%d_r%d_C%d", fPIX[0].first, fPIX[0].second, rocIds[iroc])];
-    hHi = fMaps[Form("phHi_phoffset_phscale_c%d_r%d_C%d", fPIX[0].first, fPIX[0].second, rocIds[iroc])];
+    hLo = fMaps[Form("phLo_phoffset_phscale_c%d_r%d_C%d", fPIX[iroc].first, fPIX[iroc].second, rocIds[iroc])];
+    hHi = fMaps[Form("phHi_phoffset_phscale_c%d_r%d_C%d", fPIX[iroc].first, fPIX[iroc].second, rocIds[iroc])];
     h2[iroc] = bookTH2D(Form("phoffset_phscale_C%d", rocIds[iroc]), Form("phoffset_phscale_C%d", rocIds[iroc]), 
 			256, 0., 256., 256, 0., 256.);
     setTitles(h2[iroc], "phoffset", "phscale"); 
     fHistList.push_back(h2[iroc]);
     fHistOptions.insert(make_pair(h2[iroc], "colz")); 
     
-    for (int io = 0; io < 256; ++io) {
-      for (int is = 0; is < 256; ++is) {
-	if ((hLo->GetBinContent(io+1, is+1) > fPhMin) 
-	    && (hHi->GetBinContent(io+1, is+1) < fPhMax)) {
+    for (int io = 0; io < 255; ++io) {
+      for (int is = 0; is < 255; ++is) {
+	if ((hLo->GetBinContent(io+1, is+1) >= fPhMin) 
+	    && (hHi->GetBinContent(io+1, is+1) <= fPhMax)) {
 	  h2[iroc]->SetBinContent(io+1, is+1, hHi->GetBinContent(io+1, is+1) - hLo->GetBinContent(io+1, is+1)); 
 	}
       }
@@ -151,21 +166,32 @@ void PixTestPhOpt::doTest() {
     
   }
 
-  restoreDacs(); 
+  restoreDacs();
 
   // -- set phscale and phoffset to values corresponding to maximum range
   int io(-1), is(-1), ibla(-1), ibin(-1); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     ibin = h2[iroc]->GetMaximumBin(io, is, ibla); 
-    fApi->setDAC("phscale", is, rocIds[iroc]); 
-    fApi->setDAC("phoffset", io, rocIds[iroc]); 
+    LOG(logDEBUG) << " roc " << static_cast<int>(rocIds[iroc]) << " ibin = " << ibin << " io = " << io << " is = " << is 
+		  << " ibla = " << ibla;
+    
+    fApi->setDAC("vthrcomp", vthrComp[iroc], rocIds[iroc]); 
+    if (io > 10 && is > 10) {
+      fApi->setDAC("phscale", is, rocIds[iroc]); 
+      fApi->setDAC("phoffset", io, rocIds[iroc]); 
+    } else {
+      LOG(logWARNING) << " PH optimization did not converge for ROC " << static_cast<int>(rocIds[iroc]) << ", setting to default values";
+      fApi->setDAC("phscale", fApi->_dut->getDAC(rocIds[iroc], "phscale"), rocIds[iroc]); 
+      fApi->setDAC("phoffset", fApi->_dut->getDAC(rocIds[iroc], "phoffset"), rocIds[iroc]); 
+    }
   }
   saveDacs();
 
+  cacheDacs();
+  
   // -- validation
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  cacheDacs();
   fApi->setDAC("ctrlreg", 0);
   fApi->setDAC("vcal", fVcalLow);
   vector<TH2D*> loAlive = phMaps("phOptValLo", 10, FLAG_FORCE_MASKED); 
@@ -184,7 +210,6 @@ void PixTestPhOpt::doTest() {
   }
 
   restoreDacs();
-
 
   TH1 *h1(0); 
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
@@ -213,86 +238,134 @@ void PixTestPhOpt::scan(string name) {
 
   uint16_t FLAGS = FLAG_FORCE_MASKED;
 
-  TH2D *h2(0);
+  TH2D *h2(0), *hd(0);
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   int nx = 256;
   int ny = 256;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    for (unsigned int ip = 0; ip < fPIX.size(); ++ip) {
-      h2 = bookTH2D(Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
-		    Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), 
-		    nx, 0., static_cast<double>(nx), ny, 0., static_cast<double>(ny)); 
-      h2->SetMinimum(0.); 
-      setTitles(h2, "phoffset", "phscale"); 
-      fHistList.push_back(h2);
-      fHistOptions.insert(make_pair(h2, "colz")); 
-      fMaps.insert(make_pair(Form("%s_phoffset_phscale_c%d_r%d_C%d", 
-				 name.c_str(), fPIX[ip].first, fPIX[ip].second, rocIds[iroc]), h2)); 
-    }
-    
+    h2 = bookTH2D(Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), fPIX[iroc].first, fPIX[iroc].second, rocIds[iroc]), 
+		  Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), fPIX[iroc].first, fPIX[iroc].second, rocIds[iroc]), 
+		  nx, 0., static_cast<double>(nx), ny, 0., static_cast<double>(ny)); 
+    hd = h2; 
+    h2->SetMinimum(0.); 
+    setTitles(h2, "phoffset", "phscale"); 
+    fHistList.push_back(h2);
+    fHistOptions.insert(make_pair(h2, "colz")); 
+    fMaps.insert(make_pair(Form("%s_phoffset_phscale_c%d_r%d_C%d", 
+				name.c_str(), fPIX[iroc].first, fPIX[iroc].second, rocIds[iroc]), h2)); 
   }
 
-  fApi->_dut->testAllPixels(false);
-  fApi->_dut->maskAllPixels(true);
-  vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults, results;
-  int problems(0); 
+  vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  results;
   fNDaqErrors = 0; 
-  for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    if (fPIX[i].first > -1)  {
-      fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, true);
-      fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, false);
-      bool done = false;
-      int cnt(0); 
-      while (!done) {
-	try{
-	  rresults = fApi->getPulseheightVsDACDAC("phoffset", 0, 255, "phscale", 0, 255, FLAGS, fParNtrig);
-	  fNDaqErrors = fApi->daqGetNDecoderErrors();
-	  done = true;
-	} catch(DataMissingEvent &e){
-	  LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
-	  fNDaqErrors = 666666;
-	  ++cnt;
-	  if (e.numberMissing > 10) done = true; 
-	} catch(pxarException &e) {
-	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-	  fNDaqErrors = 666667;
-	  ++cnt;
-	}
-	done = (cnt>5) || done;
-      }
-
-      if (fNDaqErrors > 0) problems = fNDaqErrors; 
-      copy(rresults.begin(), rresults.end(), back_inserter(results)); 
-      
-      fApi->_dut->testPixel(fPIX[i].first, fPIX[i].second, false);
-      fApi->_dut->maskPixel(fPIX[i].first, fPIX[i].second, true);
+  bool done = false;
+  int cnt(0); 
+  while (!done) {
+    LOG(logDEBUG) << "      attempt #" << cnt;
+    try{
+      results = fApi->getPulseheightVsDACDAC("phoffset", 0, 255, "phscale", 0, 255, FLAGS, fParNtrig);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      done = true;
+    } catch(pxarException &e) {
+      fNDaqErrors = 666667;
+      ++cnt;
     }
+    done = (cnt>2) || done;
   }
-
+  
   TH2D *h(0); 
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    for (unsigned int i = 0; i < results.size(); ++i) {
-      pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];
-      int idac1 = v.first; 
-      pair<uint8_t, vector<pixel> > w = v.second;      
-      int idac2 = w.first;
-      vector<pixel> wpix = w.second;
-
-      for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	if (wpix[ipix].roc() == rocIds[iroc]) {
-	  h = fMaps[Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc])];
-	  if (h) {
-	    h->Fill(idac1, idac2, wpix[ipix].value()); 
-	  } else {
-	    LOG(logDEBUG) << "XX did not find " 
-			  << Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc]);
-	  }
-
-	}
+  int iroc(-1); 
+  for (unsigned int i = 0; i < results.size(); ++i) {
+    pair<uint8_t, pair<uint8_t, vector<pixel> > > v = results[i];
+    int idac1 = v.first; 
+    pair<uint8_t, vector<pixel> > w = v.second;      
+    int idac2 = w.first;
+    vector<pixel> wpix = w.second;
+    for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
+      iroc = wpix[ipix].roc();
+      h = fMaps[Form("%s_phoffset_phscale_c%d_r%d_C%d", name.c_str(), wpix[ipix].column(), wpix[ipix].row(), iroc)];
+      if (h) {
+	h->Fill(idac1, idac2, wpix[ipix].value()); 
+      } else {
+	LOG(logDEBUG) << "wrong pixel " 
+		      << Form("%d/%d on ROC %d", wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc]) << "; not requested, but seen";
       }
-
     }
-
   }
+
+  if (hd) hd->Draw("colz");
+  PixTest::update();
+
+}
+
+
+
+// ----------------------------------------------------------------------
+void PixTestPhOpt::adjustVthrComp() {
+
+  int NTRIG(5), RESERVE(30); 
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
+
+  map<string, TH1D*> hmap; 
+  string name("adjust_VthrComp"); 
+  string hname;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  TH1D *h1(0);
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    hname = Form("%s_c%d_r%d_C%d", name.c_str(), fPIX[iroc].first, fPIX[iroc].second, rocIds[iroc]);
+    h1 = bookTH1D(hname.c_str(), hname.c_str(), 256, 0., 256.); 
+    h1->SetMinimum(0.); 
+    hmap[hname] = h1;
+    fHistList.push_back(h1); 
+  }
+
+
+  // -- determine VthrComp with this pixel
+  int cnt(0); 
+  bool done(false);
+  vector<pair<uint8_t, vector<pixel> > > results;
+  while (!done) {
+    try{
+      results = fApi->getEfficiencyVsDAC("vthrcomp", 0, 200, FLAGS, NTRIG);
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      done = true;
+    } catch(pxarException &e) {
+      fNDaqErrors = 666667;
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>2) || done;
+  }
+  
+  for (unsigned int i = 0; i < results.size(); ++i) {
+    int idac1 = results[i].first; 
+    vector<pixel> wpix = results[i].second;      
+    for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
+      h1 = hmap[Form("%s_c%d_r%d_C%d", name.c_str(), wpix[ipix].column(), wpix[ipix].row(), wpix[ipix].roc())];
+      if (h1) {
+	h1->Fill(idac1, wpix[ipix].value()); 
+      } else {
+	LOG(logDEBUG) << "wrong pixel decoded"; 
+      }
+    }
+  }
+
+  map<string, TH1D*>::iterator hits = hmap.begin(); 
+  map<string, TH1D*>::iterator hite = hmap.end(); 
+  for (map<string, TH1D*>::iterator hit = hits; hit != hite; ++hit) {
+    h1 = hit->second; 
+    string h1name = h1->GetName();
+    string::size_type s1 = h1name.rfind("_C"); 
+    string::size_type s2 = h1name.rfind("_V"); 
+    string rocname = h1name.substr(s1+2, s2-s1-2);
+    int roc = atoi(rocname.c_str()); 
+    int thn      = h1->FindLastBinAbove(0.5*NTRIG); 
+    int vthrcomp = thn - RESERVE; 
+    fApi->setDAC("vthrcomp", vthrcomp, roc);
+    LOG(logDEBUG) << "rocname = ->" << rocname << "<- into roc = " << roc << " vthrcomp: " << vthrcomp;
+  
+  }
+
+  h1->Draw();
+  PixTest::update();
 
 }

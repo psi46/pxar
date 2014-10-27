@@ -6,6 +6,8 @@ SET (UTILLIB_SOURCES
 ConfigParameters.cc
 PixSetup.cc
 PixTestParameters.cc
+rsstools.cc
+shist256.cc
 )
 
 # fill list of header files 
@@ -13,6 +15,7 @@ set(UTILLIB_HEADERS
 ConfigParameters.hh
 PixSetup.hh
 PixTestParameters.hh
+#rsstools.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/util ${ROOT_INCLUDE_DIR} )

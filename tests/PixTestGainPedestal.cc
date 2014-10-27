@@ -41,11 +41,9 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("showfits")) {
 	fParShowFits = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParShowFits  ->" << fParShowFits << "<- from sval = " << sval;
       }
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
       }
       setToolTips();
       break;
@@ -141,7 +139,7 @@ void PixTestGainPedestal::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::measure() {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
   cacheDacs();
@@ -195,7 +193,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 
@@ -219,7 +217,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 

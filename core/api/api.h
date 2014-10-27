@@ -253,6 +253,19 @@ namespace pxar {
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		 std::vector<std::vector<pixelConfig> > rocPixels,
+		 std::vector<uint8_t> rocI2Cs);
+
+    /** Alternative initializer method for the DUT (attached devices).
+     *
+     *  As above, but automatically assumes consecutively numbered I2C addresses for
+     *  all attached ROCs, starting from zero.
+     */
+    bool initDUT(uint8_t hubid,
+		 std::string tbmtype, 
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		 std::string roctype,
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		 std::vector<std::vector<pixelConfig> > rocPixels);
 
     /** Programming method for the DUT (attached devices)
@@ -320,9 +333,8 @@ namespace pxar {
       */
     bool SignalProbe(std::string probe, std::string name);
     
-    bool daqADC(std::string name, unsigned int nSample,std::vector <double> & result);
-
-
+    std::vector<uint16_t> daqADC(std::string signal, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start);
+ 
     // TEST functions
 
     /** Set a DAC value on the DUT for one specific ROC
@@ -590,9 +602,6 @@ namespace pxar {
      */
     std::vector<pixel> getThresholdMap(std::string dacName, uint16_t flags, uint16_t nTriggers);
 
-    // FIXME missing documentation
-    int32_t getReadbackValue(std::string parameterName);
-
     /** Enable or disable the external clock source of the DTB.
      *  This function will return "false" if no external clock is present,
      *  clock is then left on internal.
@@ -604,6 +613,15 @@ namespace pxar {
 	A width of 0 disables the clock stretch
      */
     void setClockStretch(uint8_t src, uint16_t delay, uint16_t width);
+
+    /** Set Signal Mode.
+	Define any testboard signal (e.g. clk) to the state constant high, constant low,
+	or normal oscillation.
+	signal: "clk", "ctr", "sda", or "tin"
+	mode: 0 (normal), 1 (low) or 2 (high)
+     */
+    void setSignalMode(std::string signal, uint8_t mode);
+
 
     // DAQ functions
 
@@ -685,8 +703,15 @@ namespace pxar {
      */
     std::vector<Event> daqGetEventBuffer();
 
+    /** Function to return the full currently available ROC slow readback value
+     *  buffer. The data is stored until a new DAQ session or test is called and
+     *  can be fetched once (deleted at read time). The return vector contains
+     *  one vector of readback values for every ROC found in the readout chain.
+     */
+    std::vector<std::vector<uint16_t> > daqGetReadback();
+
     /** Function that returns the number of pixel decoding errors found in the
-     *  last (non-raw) DAQ readout.
+     *  last (non-raw) DAQ readout or API test call.
      */
     uint32_t daqGetNDecoderErrors();
 
@@ -699,8 +724,11 @@ namespace pxar {
      *  Returns true if everything is setup correctly for operation
      */
     bool status();
-    
-    
+
+    /** Get ADC value
+     */
+    uint16_t GetADC( uint8_t rpc_par1 ) ;
+
   private:
 
     /** Private HAL object for the API to access hardware routines
@@ -823,7 +851,7 @@ namespace pxar {
     /** Helper function to update the internaly cached number of decoder errors
      *  with the number found in the data sample passed to the function
      */
-    void getDecoderErrorCount(std::vector<Event*> &data);
+    void getDecoderErrorCount();
 
     /** Status of the DAQ
      */
@@ -863,9 +891,17 @@ namespace pxar {
      */
     size_t getNEnabledPixels(uint8_t rocid);
 
+    /** Function returning the number of enabled pixels on all ROCs:
+     */
+    size_t getNEnabledPixels();
+
     /** Function returning the number of masked pixels on a specific ROC:
      */
     size_t getNMaskedPixels(uint8_t rocid);
+
+    /** Function returning the number of masked pixels on all ROCs:
+     */
+    size_t getNMaskedPixels();
 
     /** Function returning the number of enabled TBMs:
      */
@@ -875,6 +911,10 @@ namespace pxar {
      */
     size_t getNTbms();
 
+    /** Function returning the TBM type programmed:
+     */
+    std::string getTbmType();
+
     /** Function returning the number of enabled ROCs:
      */
     size_t getNEnabledRocs();
@@ -883,9 +923,25 @@ namespace pxar {
      */
     size_t getNRocs();
 
+    /** Function returning the ROC type programmed:
+     */
+    std::string getRocType();
+
     /** Function returning the enabled pixels configs for a specific ROC:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
+
+    /** Function returning the enabled pixels configs for all ROCs:
+     */
+    std::vector< pixelConfig > getEnabledPixels();
+
+    /** Function returning all masked pixels configs for a specific ROC:
+     */
+    std::vector< pixelConfig > getMaskedPixels(size_t rocid);
+
+    /** Function returning all masked pixels configs for all ROCs:
+     */
+    std::vector< pixelConfig > getMaskedPixels();
 
     /** Function returning the enabled ROC configs
      */

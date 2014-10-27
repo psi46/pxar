@@ -133,12 +133,13 @@ void PixTestIV::doTest() {
   hv->setMicroampsLimit(fParCompliance);
 
   hv->sweepStart(-fParVoltageStart,-fParVoltageStop,-signedStep,fParDelay);
+  bool aborted;
   while(hv->sweepRunning()){
     double voltSet, voltRead, current;
-    hv->sweepRead(voltSet, voltRead, current);
+    aborted = hv->sweepRead(voltSet, voltRead, current);
     voltageMeasurements.push_back(voltRead);
     currentMeasurements.push_back(current);
-    h1->Fill(-voltSet, -current);
+    h1->Fill(-voltSet, -current*1E6);
     
     TTimeStamp ts;
     ts.Set();
@@ -154,22 +155,33 @@ void PixTestIV::doTest() {
   }
   delete hv;
 
+  if(aborted){
+    LOG(logWARNING) << "Sweep Aborted on Compliance!";
+  } 
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   h1->Draw("p");
   PixTest::update();
   
-  writeOutput(voltageMeasurements, currentMeasurements, timeStamps);
+  writeOutput(voltageMeasurements, currentMeasurements, timeStamps, aborted);
   LOG(logINFO) << "PixTestIV::doTest() done ";
 #endif
 }
 
 void PixTestIV::writeOutput(vector<double>       &voltageMeasurements,
                             vector<double>       &currentMeasurements,
-                            vector<TTimeStamp>   &timeStamps){  
+                            vector<TTimeStamp>   &timeStamps,
+                            bool aborted){  
   ofstream OutputFile;
   OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
   OutputFile << "# IV test from "   << timeStamps[0].AsString("l") << endl;
+  OutputFile << "#Test Parameters:" << endl;
+  OutputFile << "#   HV Supply:      Keithley2410" << endl;
+  OutputFile << "#   Voltage Start:  " << fParVoltageStart << endl;
+  OutputFile << "#   Voltage Stop:   " << fParVoltageStop << endl;
+  OutputFile << "#   Voltage Step:   " << fParVoltageStep << endl;
+  OutputFile << "#   Delay(s):       " << fParDelay << endl;
+  OutputFile << "#   Compliance(uA): " << fParCompliance << endl;
   OutputFile << "#voltage(V)\tcurrent(A)\ttimestamp" << endl;
   
   unsigned int numMeasurements = voltageMeasurements.size();
@@ -177,7 +189,12 @@ void PixTestIV::writeOutput(vector<double>       &voltageMeasurements,
     OutputFile << Form("%+8.3f\t%+e\t%s", voltageMeasurements[i],
                                           currentMeasurements[i],
                                           timeStamps[i].AsString("c"))
-               << endl; 
+               << endl;
+  }
+  if(aborted){
+    OutputFile << "#Sweep was aborted on compliance" << endl;
+  }else{
+    OutputFile << "#Sweep completed Normally" << endl;
   }
   OutputFile.close();
 }

@@ -39,6 +39,13 @@ private:
   TGHorizontalFrame        *fHFrame1;
   TGHorizontalFrame        *fHFrame2;
 
+  TGLabel                *fTemperatureDegree ;
+  TGHorizontalFrame      *fHFrame_TDegree ; 
+  TGTextEntry            *fNmrTDegree ; 
+  TGTextBuffer           *fTDegreeFileBuffer ;
+
+
+
   time_t                fActTime;
   struct tm                *fTimeinfo;
 

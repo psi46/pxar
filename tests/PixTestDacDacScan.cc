@@ -79,22 +79,14 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str()); 
 	  str2 = sval.substr(s1+1); 
 	  pixr = atoi(str2.c_str()); 
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr)); 
+	  addSelectedPixels(sval); 
 	} else {
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(-1, -1)); 
+	  addSelectedPixels("-1,-1"); 
 	}
-      }
-      if (!parName.compare("pix1")) {
-	LOG(logWARNING) << "please change parameter name from PIX1 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix2")) {
-	LOG(logWARNING) << "please change parameter name from PIX2 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix3")) {
-	LOG(logWARNING) << "please change parameter name from PIX3 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix4")) {
-	LOG(logWARNING) << "please change parameter name from PIX4 to PIX (can appear multiple times)"; 
       }
 
       break;
@@ -146,7 +138,8 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::doTest() {
-  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  //  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  uint16_t FLAGS = FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   PixTest::update(); 
 

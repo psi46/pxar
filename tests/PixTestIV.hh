@@ -21,7 +21,8 @@ public:
 private:
   void writeOutput(std::vector<double>        &voltageMeasurements,
                    std::vector<double>        &currentMeasurements,
-                   std::vector<TTimeStamp>    &timeStamps);
+                   std::vector<TTimeStamp>    &timeStamps,
+                   bool aborted);
   
   double fParVoltageStart;      //volts
   double fParVoltageStop;       //volts

@@ -9,6 +9,15 @@ import numpy
 
 cimport PyPxarCore
 
+FLAG_FORCE_SERIAL   = int(_flag_force_serial)
+FLAG_CALS           = int(_flag_cals)
+FLAG_XTALK          = int(_flag_xtalk)
+FLAG_RISING_EDGE    = int(_flag_rising_edge)
+FLAG_DISABLE_DACCAL = int(_flag_disable_daccal)
+FLAG_NOSORT         = int(_flag_nosort)
+FLAG_CHECK_ORDER    = int(_flag_check_order)
+FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
+
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
     def __cinit__(self, address = None, data = None): # default to None to mimick overloading of constructor
@@ -19,8 +28,8 @@ cdef class Pixel:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "ROC " + str(self.roc())
-        s += " [" + str(self.column()) + "," + str(self.row()) + "," + str(self.value()) + "] "
+        s = "ROC " + str(self.roc)
+        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.value) + "] "
         return s
     cdef fill(self, pixel p):
         self.thisptr.setRoc(p.roc())
@@ -30,9 +39,9 @@ cdef class Pixel:
     cdef c_clone(self, pixel* p):
         del self.thisptr
         self.thisptr = p
-    property roc_id:
+    property roc:
         def __get__(self): return self.thisptr.roc()
-        def __set__(self, roc_id): self.thisptr.setRoc(roc_id)
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
         def __get__(self): return self.thisptr.column()
         def __set__(self, column): self.thisptr.setColumn(column)
@@ -52,9 +61,19 @@ cdef class PixelConfig:
             self.thisptr = new pixelConfig()
     def __dealloc__(self):
         del self.thisptr
+    cdef fill(self, pixelConfig p):
+        self.thisptr.setRoc(p.roc())
+        self.thisptr.setColumn(p.column())
+        self.thisptr.setRow(p.row())
+        self.thisptr.setTrim(p.trim())
+        self.thisptr.setEnable(p.enable())
+        self.thisptr.setMask(p.mask())
     cdef c_clone(self, pixelConfig* p):
         del self.thisptr
         thisptr = p
+    property roc:
+        def __get__(self): return self.thisptr.roc()
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
         def __get__(self): return self.thisptr.column()
         def __set__(self, column): self.thisptr.setColumn(column)
@@ -124,7 +143,6 @@ cdef class PxEvent:
     cdef fill(self, Event ev):
         self.thisptr.header = ev.header
         self.thisptr.trailer = ev.trailer
-        self.thisptr.numDecoderErrors = ev.numDecoderErrors
         for px in ev.pixels:
             self.thisptr.pixels.push_back(px)
     property pixels:
@@ -147,9 +165,6 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
-    property numDecoderErrors:
-        def __get__(self): return self.thisptr.numDecoderErrors
-        def __set__(self, errors): self.thisptr.numDecoderErrors = errors
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -280,10 +295,45 @@ cdef class PyPxarCore:
             self.thisptr._dut.maskPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.maskPixel(col, row, enable)
-    def getNMaskedPixels(self, int rocid):
-        return self.thisptr._dut.getNMaskedPixels(rocid)
-    def getNEnabledPixels(self, int rocid):
-        return self.thisptr._dut.getNEnabledPixels(rocid)
+
+    def getNMaskedPixels(self, rocid = None):
+        if rocid is not None:
+            return self.thisptr._dut.getNMaskedPixels(rocid)
+        else:
+            return self.thisptr._dut.getNMaskedPixels()
+
+    def getMaskedPixels(self, rocid = None):
+        cdef vector[pixelConfig] rpcs
+        if rocid is not None:
+            rpcs = self.thisptr._dut.getMaskedPixels(rocid)
+        else:
+            rpcs = self.thisptr._dut.getMaskedPixels()
+        pixelconfigs = list()
+        for p in rpcs:
+            pxc = PixelConfig()
+            pxc.fill(p)
+            pixelconfigs.append(pxc)
+        return pixelconfigs
+
+    def getNEnabledPixels(self, rocid = None):
+        if rocid is not None:
+            return self.thisptr._dut.getNEnabledPixels(rocid)
+        else:
+            return self.thisptr._dut.getNEnabledPixels()
+
+    def getEnabledPixels(self, rocid = None):
+        cdef vector[pixelConfig] rpcs
+        if rocid is not None:
+            rpcs = self.thisptr._dut.getEnabledPixels(rocid)
+        else:
+            rpcs = self.thisptr._dut.getEnabledPixels()
+        pixelconfigs = list()
+        for p in rpcs:
+            pxc = PixelConfig()
+            pxc.fill(p)
+            pixelconfigs.append(pxc)
+        return pixelconfigs
+
     def getNEnabledTbms(self):
         return self.thisptr._dut.getNEnabledTbms()
     def getNEnabledRocs(self):
@@ -292,6 +342,10 @@ cdef class PyPxarCore:
         return self.thisptr._dut.getNTbms()
     def getNRocs(self):
         return self.thisptr._dut.getNRocs()
+    def getTbmType(self):
+        return self.thisptr._dut.getTbmType()
+    def getRocType(self):
+        return self.thisptr._dut.getRocType()
     #def programDUT(self):
         #return self.thisptr.programDUT()
     def status(self):
@@ -403,37 +457,41 @@ cdef class PyPxarCore:
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getPulseheightMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getEfficiencyMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getEfficiencyMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getThresholdMap(self, string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, int flags, int nTriggers):
         cdef vector[pixel] r
-        #TODO wrap data refilling into single function, rather than copy paste
         r = self.thisptr.getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers)
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc()][r[d].column()][r[d].row()] = r[d].value()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
-#    def int32_t getReadbackValue(self, string parameterName):
+    def setExternalClock(self, bool enable):
+        return self.thisptr.setExternalClock(enable)
+
+    def setClockStretch(self, uint8_t src, uint16_t delay, uint16_t width):
+        self.thisptr.setClockStretch(src, delay, width)
+
+    def setSignalMode(self, string signal, uint8_t mode):
+        self.thisptr.setSignalMode(signal, mode)
 
     def daqStart(self):
         return self.thisptr.daqStart()
@@ -484,6 +542,11 @@ cdef class PyPxarCore:
         # Since we're just returning the 16bit ints as rawEvent in python,
         # this is the same as dqGetBuffer:
         return self.thisptr.daqGetBuffer()
+
+    def daqGetReadback(self):
+        cdef vector[vector[uint16_t]] r
+        r = self.thisptr.daqGetReadback()
+        return r
 
     def daqStop(self):
         return self.thisptr.daqStop()
@@ -542,4 +605,5 @@ cdef class PyProbeDictionary:
         for i in xrange(v.size()):
             names.append(v.at(i))
         return names
-        
+
+

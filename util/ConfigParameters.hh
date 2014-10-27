@@ -56,7 +56,6 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
 
-  template <typename T1, typename T2> std::string dumpParameters(std::vector<std::pair<T1, T2> > v);
   static ConfigParameters* Singleton();
 
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
@@ -74,6 +73,7 @@ public:
   std::string getDirectory()              {return fDirectory;}
   std::string getRocType()                {return fRocType;}
   std::string getTbmType()                {return fTbmType;}
+  std::string getHdiType()                {return fHdiType;}
 
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
@@ -133,6 +133,7 @@ public:
   
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
+  void cleanupString(std::string& str);
 
 private:
 
@@ -151,7 +152,7 @@ private:
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;
-  std::string fRocType, fTbmType;
+  std::string fRocType, fTbmType, fHdiType;
   std::string fDirectory;
   std::string fTBName;
   bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;
@@ -172,15 +173,5 @@ private:
   static ConfigParameters* fInstance;
 
 };
-
-// ----------------------------------------------------------------------
-template <typename T1, typename T2> std::string ConfigParameters::dumpParameters(std::vector<std::pair<T1, T2> > v) {
-  std::stringstream line;
-  for(typename std::vector<std::pair<T1, T2> >::iterator it = v.begin(); it != v.end(); ++it) {
-    line << " " << it->first << ": " << static_cast<int>(it->second); 
-  }
-  return line.str();
-}
-
 
 #endif

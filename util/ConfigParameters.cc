@@ -2,14 +2,15 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <algorithm>
 #include <bitset>
 
 #include <cstdlib>
 #include <stdio.h>
 
-#include "log.h"
 #include "dictionaries.h"
+#include "log.h"
 
 #include "ConfigParameters.hh"
 
@@ -74,9 +75,15 @@ void ConfigParameters::initialize() {
   va = -1.;
   vd = -1.;
 
+  fProbeA1 = "sdata1";
+  fProbeA2 = "sdata2"; 
+  fProbeD1 = "clk";
+  fProbeD2 = "ctr";
+
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46v2";
   fTbmType = ""; 
+  fHdiType = "bpix"; 
 }
 
 
@@ -180,6 +187,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
+      else if (0 == _name.compare("hdiType")) { fHdiType = _value; }
 
       else if (0 == _name.compare("probeA1")) { fProbeA1 = _value; }
       else if (0 == _name.compare("probeA2")) { fProbeA2 = _value; }
@@ -225,12 +233,8 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   for (unsigned int i = 0; i < lines.size(); ++i) {
     //    cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    replaceAll(lines[i], "\t", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
-    lines[i].erase(new_end, lines[i].end()); 
+    cleanupString(lines[i]);
     if (lines[i].length() < 2) continue;
-    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
-    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
     s1 = lines[i].find(" "); 
     s2 = lines[i].rfind(" "); 
     if (s1 != s2) {
@@ -271,7 +275,11 @@ void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
     string filename = fDirectory + "/" + fTBParametersFileName; 
     fTbParameters = readDacFile(filename); 
-    LOG(logDEBUG) << dumpParameters(fTbParameters);
+    // Cannot use LOG(...) for this printout, as pxarCore is instantiated only afterwards ...
+    for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
+      //      LOG(logDEBUG) << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
+      LOG(logINFO) << "        " << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
+    }
     fReadTbParameters = true; 
   }
 }
@@ -290,13 +298,8 @@ vector<pair<string, double> >  ConfigParameters::getTbPowerSettings() {
 vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
   vector<pair<string, uint8_t> > a;
 
-  vector<string> sigdelays; 
-  sigdelays.push_back("clk");
-  sigdelays.push_back("ctr");
-  sigdelays.push_back("sda");
-  sigdelays.push_back("tin");
-  sigdelays.push_back("triggerdelay");
-  sigdelays.push_back("deser160phase");
+  RegisterDictionary *dict = RegisterDictionary::getInstance();
+  vector<string> sigdelays = dict->getAllDTBNames();
 
   if (!fReadTbParameters) readTbParameters();
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
@@ -424,7 +427,7 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
     replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (0 == lines[i].length()) continue;
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
@@ -485,7 +488,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     replaceAll(lines[i], "\t", " "); 
     replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), ConfigParameters::bothAreSpaces);
+    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), bothAreSpaces);
     lines[i].erase(new_end, lines[i].end()); 
     if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
     if (0 == lines[i].length()) continue;
@@ -745,6 +748,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "tbmChannel %i\n", fTbmChannel);
   fprintf(file, "rocType %s\n", fRocType.c_str());
   if (fnTbms > 0) fprintf(file, "tbmType %s\n", fTbmType.c_str());
+  fprintf(file, "hdiType %s\n", fHdiType.c_str());
   fprintf(file, "halfModule %i\n", fHalfModule);
 
   fprintf(file, "\n");
@@ -840,9 +844,10 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
     }
 
     RegisterDictionary *a = RegisterDictionary::getInstance();
-    for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-      OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
-		 << setw(11) << idac->first  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
+    for (std::vector<std::pair<std::string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
+		 << idac->first  
+		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
 		 << endl;
     }
     
@@ -898,8 +903,10 @@ void ConfigParameters::readGainPedestalParameters() {
   vector<string> lines; 
   char  buffer[5000];
   ifstream is;
+  vector<gainPedestalParameters> rocPar; 
   for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
-    vector<gainPedestalParameters> rocPar; 
+    lines.clear();
+    rocPar.clear();
     std::stringstream fname;
     fname.str(std::string());
     fname << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
@@ -1005,8 +1012,17 @@ std::string ConfigParameters::getProbe(std::string probe) {
 }
 
 
-
-
+// ----------------------------------------------------------------------
+void ConfigParameters::cleanupString(string &s) {
+  replaceAll(s, "\t", " "); 
+  string::size_type s1 = s.find("#");
+  if (string::npos != s1) s.erase(s1); 
+  if (0 == s.length()) return;
+  string::iterator new_end = unique(s.begin(), s.end(), bothAreSpaces);
+  s.erase(new_end, s.end()); 
+  if (s.substr(0, 1) == string(" ")) s.erase(0, 1); 
+  if (s.substr(s.length()-1, 1) == string(" ")) s.erase(s.length()-1, 1); 
+}
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::bothAreSpaces(char lhs, char rhs) { 

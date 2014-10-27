@@ -117,7 +117,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
     te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
-    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); // FIXME does not work?
+    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); 
     te->Connect("TabPressed()", "PixTab", this, "moveDown()"); 
 
     tset = new TGTextButton(hFrame, "Set", cnt);

@@ -26,6 +26,7 @@ namespace pxar {
     virtual T Read() = 0;
     virtual bool ReadState() = 0;
     virtual uint8_t ReadChannel() = 0;
+    virtual uint8_t ReadTokenChainLength() = 0;
     virtual uint8_t ReadDeviceType() = 0;
   public:
     virtual ~dataSource() {}
@@ -43,6 +44,7 @@ namespace pxar {
     T Read()     { return ReadLast();     }
     bool ReadState() { return false; }
     uint8_t ReadChannel() { throw dpNotConnected(); }
+    uint8_t ReadTokenChainLength() { throw dpNotConnected(); }
     uint8_t ReadDeviceType() { throw dpNotConnected(); }
     template <class TO> friend class dataSink;
   };
@@ -61,6 +63,7 @@ namespace pxar {
     T Get() { return src->Read(); }
     bool GetState() { return src->ReadState(); }
     uint8_t GetChannel() { return src->ReadChannel(); }
+    uint8_t GetTokenChainLength() { return src->ReadTokenChainLength(); }
     uint8_t GetDeviceType() { return src->ReadDeviceType(); }
     void GetAll() { while (true) Get(); }
     template <class TI, class TO> friend void operator >> (dataSource<TI> &, dataSink<TO> &); 
@@ -106,6 +109,7 @@ namespace pxar {
     // --- DTB control/state
     CTestboard * tb;
     uint8_t channel;
+    uint8_t chainlength;
     uint32_t dtbRemainingSize;
     uint8_t  dtbState;
     bool connected;
@@ -135,13 +139,17 @@ namespace pxar {
       if(!connected) throw dpNotConnected();
       return channel;
     }
+    uint8_t ReadTokenChainLength() {
+      if(!connected) throw dpNotConnected();
+      return chainlength;
+    }
     uint8_t ReadDeviceType() {
       if(!connected) throw dpNotConnected();
       return devicetype;
     }
   public:
-  dtbSource(CTestboard * src, uint8_t daqchannel, bool module, uint8_t roctype, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), tbm_present(module), devicetype(roctype), lastSample(0x4000), pos(0) {}
+  dtbSource(CTestboard * src, uint8_t daqchannel, uint8_t tokenChainLength, bool module, uint8_t roctype, bool endlessStream)
+    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), chainlength(tokenChainLength), connected(true), tbm_present(module), devicetype(roctype), lastSample(0x4000), pos(0) {}
   dtbSource() : connected(false) {}
     bool isConnected() { return connected; }
 
@@ -161,6 +169,7 @@ namespace pxar {
     rawEvent* ReadLast() { return &record; }
     bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
+    uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
     // The splitter routines:
@@ -182,10 +191,24 @@ namespace pxar {
     Event* ReadLast() { return &roc_Event; }
     bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
+    uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
     Event* DecodeDeser160();
     Event* DecodeDeser400();
+    uint32_t decodingErrors;
+
+    // Readback decoding:
+    void evalReadback(uint8_t roc, uint16_t val);
+    std::vector<uint16_t> count;
+    std::vector<uint16_t> shiftReg;
+    std::vector<std::vector<uint16_t> > readback;
+
+  public:
+  dtbEventDecoder() : decodingErrors(0), readback() {};
+    void Clear() { decodingErrors = 0; readback.clear(); count.clear(); shiftReg.clear(); };
+    uint32_t getErrorCount();
+    std::vector<std::vector<uint16_t> > getReadback();
   };
 }
 #endif

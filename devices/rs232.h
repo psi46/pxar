@@ -40,9 +40,17 @@
 #include <string>
 
 class RS232Conn{
+    
+    enum ReadStatus{
+        CONTINUE,
+        MATCH_SUFFIX,
+        MATCH_TERMINATOR,
+        TIMEOUT
+    };
+
     std::string portName;           //Name of port, eg. /dev/ttyUSB0
-    std::string writeSuffix;        //Suffix appended to write data, default "\r\n"
-    std::string readSuffix;         //Suffix stripped from read data, also signals end of read, default "\r\n"
+    std::string readSuffix;         //Suffix stripped from read data, also signals end of read, to ignore, set to ""
+    std::string terminator;         //Indicates the end of a read packet. Normally "\r\n"
     int port;                       //port file descriptor
     int baudRate;                   //port baudrate
     bool flowControl;               //X-ON X-OFF software flow control
@@ -53,6 +61,7 @@ class RS232Conn{
     
     int pollPort(char &buf);
     int writeBuf(const char *buf, int len);
+    int readStatus(const std::string &data);
     
   public:
     RS232Conn();
@@ -66,13 +75,14 @@ class RS232Conn{
     void setFlowControl(bool flowControl);
     void setParity(bool parity);
     void setReadSuffix(const std::string &suffix);
-    void setWriteSuffix(const std::string &suffix);
+    void setTerminator(const std::string &term);
     void setRemoveEcho(bool removeEcho);
     void setTimeout(double timeout);
     
-    int writeData(const std::string &data);
+    void writeData(const std::string &data);
     bool readEcho(const std::string &data);
-    int readData(std::string &data);
+    //returns true if this read reached the end of an input line(ie did not match on readSuffix)
+    bool readData(std::string &data);
     void writeReadBack(const std::string &dataOut, std::string &dataIn);
 
     bool isDCDEnabled();

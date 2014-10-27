@@ -96,16 +96,39 @@ void pxarCore::setTestboardPower(std::vector<std::pair<std::string,double> > pow
 }
 
 bool pxarCore::initDUT(uint8_t hubid,
-		  std::string tbmtype, 
-		  std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		  std::string roctype,
-		  std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		  std::vector<std::vector<pixelConfig> > rocPixels) {
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels) {
+  std::vector<uint8_t> rocI2Cs;
+  return initDUT(hubid, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(uint8_t hubid,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels,
+		       std::vector<uint8_t> rocI2Cs) {
 
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
   // Verification/sanitry checks of supplied DUT configuration values
+
+  // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
+  if(!rocI2Cs.empty()) {
+    if(rocI2Cs.size() != rocDACs.size()) {
+      LOG(logCRITICAL) << "Hm, we have " << rocI2Cs.size() << " I2C addresses but " << rocDACs.size() << " DAC configs.";
+      LOG(logCRITICAL) << "This cannot end well...";
+      throw InvalidConfig("Mismatch between number of I2C addresses and DAC configurations");
+    }
+    LOG(logDEBUGAPI) << "I2C addresses for all ROCs are provided as user input.";
+  }
+  else { LOG(logDEBUGAPI) << "I2C addresses will be automatically generated."; }
+
   // Check size of rocDACs and rocPixels against each other
   if(rocDACs.size() != rocPixels.size()) {
     LOG(logCRITICAL) << "Hm, we have " << rocDACs.size() << " DAC configs but " << rocPixels.size() << " pixel configs.";
@@ -207,10 +230,19 @@ bool pxarCore::initDUT(uint8_t hubid,
     _dut->tbm.push_back(newtbm);
   }
 
+  // Check if we have any TBM present to select termination for the DTB RDA/Tout input:
+  if(!_dut->tbm.empty()) {
+    // We have RDA input from a TBM, this needs LCDS termination:
+    _hal->SigSetLCDS();
+    LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LCDS.";
+  }
+  else {
+    // We expect the direct TokenOut signal from a ROC which needs LVDS termination:
+    _hal->SigSetLVDS();
+    LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LVDS.";
+  }
 
   // Initialize ROCs:
-  size_t nROCs = 0;
-
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator rocIt = rocDACs.begin(); rocIt != rocDACs.end(); ++rocIt){
 
     // Prepare a new ROC configuration
@@ -219,7 +251,10 @@ bool pxarCore::initDUT(uint8_t hubid,
     newroc.type = stringToDeviceCode(roctype);
     if(newroc.type == 0x0) return false;
 
-    newroc.i2c_address = static_cast<uint8_t>(rocIt - rocDACs.begin());
+    // If no I2C addresses have been supplied, we just assume they are consecutively numbered:
+    if(rocI2Cs.empty()) { newroc.i2c_address = static_cast<uint8_t>(rocIt - rocDACs.begin()); }
+    // if we have adresses, let's pick the right one and assign it:
+    else { newroc.i2c_address = static_cast<uint8_t>(rocI2Cs.at(rocIt - rocDACs.begin())); }
     LOG(logDEBUGAPI) << "I2C address for the next ROC is: " << static_cast<int>(newroc.i2c_address);
     
     // Loop over all the DAC settings supplied and fill them into the ROC dacs
@@ -239,7 +274,7 @@ bool pxarCore::initDUT(uint8_t hubid,
     }
 
     // Loop over all pixelConfigs supplied:
-    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(nROCs).begin(); pixIt != rocPixels.at(nROCs).end(); ++pixIt) {
+    for(std::vector<pixelConfig>::iterator pixIt = rocPixels.at(rocIt - rocDACs.begin()).begin(); pixIt != rocPixels.at(rocIt - rocDACs.begin()).end(); ++pixIt) {
       // Check the trim value to be within boundaries:
       if((*pixIt).trim() > 15) {
 	LOG(logWARNING) << "Pixel " 
@@ -254,7 +289,6 @@ bool pxarCore::initDUT(uint8_t hubid,
 
     // Done. Enable bit is already set by rocConfig constructor.
     _dut->roc.push_back(newroc);
-    nROCs++;
   }
 
   // All data is stored in the DUT struct, now programming it.
@@ -287,8 +321,11 @@ bool pxarCore::programDUT() {
     _hal->initROC(rocit->i2c_address,(*rocit).type, (*rocit).dacs);
   }
 
-  // As last step, mask all pixels in the device:
+  // As last step, mask all pixels in the device and detach all double column readouts::
   MaskAndTrim(false);
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+  }
 
   // The DUT is programmed, everything all right:
   _dut->_programmed = true;
@@ -483,59 +520,19 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
 
 
 
-bool pxarCore::daqADC(std::string name, unsigned int nSample, std::vector <double> & result){
+std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start){
     
-    // translate signal name, copied from "SignalProbe"
-    if(!_hal->status()) {return false;}
+    vector<uint16_t> data;
+    if(!_hal->status()) {return data;}
+    
     ProbeDictionary * _dict = ProbeDictionary::getInstance();
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    uint8_t signal = _dict->getSignal(name, PROBE_ANALOG);
+    std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
+    uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
  
-    uint8_t clk0=_dut->sig_delays[SIG_CLK];
-    uint8_t ctr0=_dut->sig_delays[SIG_CTR];
-    uint8_t sda0=_dut->sig_delays[SIG_SDA];
-    uint8_t tin0=_dut->sig_delays[SIG_TIN];
-    
-    vector<pair<string,uint8_t> > sigdelays;
-   
-    int gain = GAIN_1;
-    double scale=1; 
-    if ( (signal == PROBEA_SDATA1) || (signal == PROBEA_SDATA2) ){
-        gain = GAIN_4;
-        scale = 1.;  // FIXME ADC to mV??
-    }    
-    
-     
-    result.clear();
-    result.resize(20*nSample);
-    
-    for(unsigned int dly=0; dly<20; dly++){
-        sigdelays.clear();
-        sigdelays.push_back(std::make_pair("clk", dly));
-        sigdelays.push_back(std::make_pair("ctr", dly));
-        sigdelays.push_back(std::make_pair("sda", dly + 15));
-        sigdelays.push_back(std::make_pair("tin", dly + 5));
-        setTestboardDelays(sigdelays);
-        
-        vector<uint16_t> data = _hal->daqADC(signal, gain, nSample, 1, 1);
-    
-        for(unsigned int i=0; i<nSample; i++){
-            int y = data[20] & 0x0fff;
-            if (y & 0x0800) y |= 0xfffff000;
-            result[ 20*i+dly ]=y*scale;
-       }
-   }
-
-    // restore original delays
-    sigdelays.clear();
-    sigdelays.push_back(std::make_pair("clk", clk0));
-    sigdelays.push_back(std::make_pair("ctr", ctr0));
-    sigdelays.push_back(std::make_pair("sda", sda0));
-    sigdelays.push_back(std::make_pair("tin", tin0));
-    setTestboardDelays(sigdelays);
-
-   return true;
+    data = _hal->daqADC(signal, gain, nSample, source, start);
+    return data;
 }
+
 
   
 // TEST functions
@@ -1106,14 +1103,15 @@ std::vector<pixel> pxarCore::getThresholdMap(std::string dacName, uint8_t dacSte
 
   return result;
 }
-  
-int32_t pxarCore::getReadbackValue(std::string /*parameterName*/) {
 
-  if(!status()) {return -1;}
-  LOG(logCRITICAL) << "NOT IMPLEMENTED YET! (File a bug report if you need this urgently...)";
-  // do NOT throw an exception here: this is not a runtime problem
-  // and has to be fixed in the code -> cannot be handled by exceptions
-  return -1;
+std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
+
+  std::vector<std::vector<uint16_t> > values;
+  if(!status()) { return values; }
+
+  values = _hal->daqReadback();
+  LOG(logDEBUGAPI) << "Decoders provided readback values for " << values.size() << " ROCs.";
+  return values;
 }
 
 
@@ -1213,6 +1211,7 @@ uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
     LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
   }
   _hal->daqTriggerLoop(period);
+  LOG(logDEBUGAPI) << "Loop period set to " << period << " clk";
   return period;
 }
 
@@ -1251,7 +1250,7 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
   // check the data for decoder errors and update our internal counter
-  getDecoderErrorCount(buffer);
+  getDecoderErrorCount();
 
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
@@ -1470,7 +1469,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   }
   
   // update the internal decoder error count for this data sample
-  getDecoderErrorCount(data);
+  getDecoderErrorCount();
 
   // Test is over, mask the whole device again:
   MaskAndTrim(false);
@@ -1645,6 +1644,8 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
 std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
+  // Vector of pixels for which a threshold has already been found
+  std::vector<pixel> found;
 
   // Threshold is the the given efficiency level "thresholdlevel"
   // Using ceiling function to take higher threshold when in doubt.
@@ -1659,7 +1660,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacStep, dacMin, dacMax, nTriggers, flags, true);
 
   // Efficiency map:
-  std::map<pixel,uint8_t> oldvalue;  
+  std::map<pixel,uint8_t> oldvalue;
 
   // Then loop over all pixels and DAC settings, start from the back if we are looking for falling edge.
   // This ensures that we end up having the correct edge, even if the efficiency suddenly changes from 0 to max.
@@ -1672,34 +1673,67 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator it = it_start; it != it_end; it += increase_op) {
     // For every DAC value, loop over all pixels:
     for(std::vector<pixel>::iterator pixit = it->second.begin(); pixit != it->second.end(); ++pixit) {
-      // Check if we have that particular pixel already in:
+      // Check if for this pixel a threshold has been found already and we can skip the rest:
+      std::vector<pixel>::iterator px_found = std::find_if(found.begin(),
+							   found.end(),
+							   findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+      if(px_found != found.end()) continue;
+
+      // Check if we have that particular pixel already in the result vector:
       std::vector<pixel>::iterator px = std::find_if(result.begin(),
 						     result.end(),
 						     findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+  
       // Pixel is known:
       if(px != result.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
 	uint8_t delta_new = abs(pixit->value() - threshold);
 	bool positive_slope = (pixit->value()-oldvalue[*px] > 0 ? true : false);
-	// Check which value is closer to the threshold:
-	if(!positive_slope) continue; 
-	if(!(delta_new < delta_old)) continue; 
 
-	// Update the DAC threshold value for the pixel:
+	// Check which value is closer to the threshold. Only if the slope is positive AND
+	// the new delta between value and threshold is *larger* then the old delta, we 
+	// found the threshold. If slope is negative, we just have a ripple in the DAC's 
+	// distribution:
+	if(positive_slope && !(delta_new < delta_old)) {        
+	  found.push_back(*pixit);    
+	  continue; 
+	}
+
+	// No threshold found yet, update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
 	oldvalue[*px] = pixit->value();
       }
       // Pixel is new, just adding it:
       else {
+        // If the pixel is above threshold at first appearance, the respective
+	// DAC value is set as its threshold:
+	if(pixit->value() >= threshold) { found.push_back(*pixit); }
+
 	// Store the pixel with original efficiency
 	oldvalue.insert(std::make_pair(*pixit,pixit->value()));
+
 	// Push pixel to result vector with current DAC as value field:
 	pixit->setValue(it->first);
 	result.push_back(*pixit);
       }
     }
+  }
+
+  // Check for pixels that have not reached the threshold at all:
+  for(std::vector<pixel>::iterator px = result.begin(); px != result.end(); ++px) {
+    std::vector<pixel>::iterator px_found = std::find_if(found.begin(),
+							 found.end(),
+							 findPixelXY(px->column(), px->row(), px->roc()));
+    // The pixel is in the "found" vector, which means it crossed threshold at some point:
+    if(px_found != found.end()) continue;
+
+    // The pixel is not in and never reached the threshold. We set the return value to
+    // "dacMax" (rising edge) or "dacMin" (falling edge):
+    if((flags&FLAG_RISING_EDGE) != 0) { px->setValue(dacMax); }
+    else { px->setValue(dacMin); }
+    LOG(logWARNING) << "No threshold found for " << (*px);
   }
 
   // Sort the output map by ROC->col->row - just because we are so nice:
@@ -1713,6 +1747,8 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
+  // Map of pixels with already assigned threshold (key is the dac2 value):
+  std::map<uint8_t,std::vector<pixel> > found;
 
   // Threshold is the the given efficiency level "thresholdlevel":
   // Using ceiling function to take higher threshold when in doubt.
@@ -1724,7 +1760,6 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
   timer t;
 
   // First, pack the data as it would be a regular DacDac Scan:
-  //FIXME stepping size!
   std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,true);
 
   // Efficiency map:
@@ -1752,9 +1787,16 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
 	result.push_back(std::make_pair(it->second.first,std::vector<pixel>()));
 	dac = result.end() - 1;
 	// Also add an entry for bookkeeping:
+	found.insert(std::make_pair(it->second.first,std::vector<pixel>()));
 	oldvalue.insert(std::make_pair(it->second.first,std::map<pixel,uint8_t>()));
       }
       
+      // Check if for this pixel a threshold has been found already and we can skip the rest:
+      std::vector<pixel>::iterator px_found = std::find_if(found[dac->first].begin(),
+							   found[dac->first].end(),
+							   findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+      if(px_found != found[dac->first].end()) continue;
+
       // Check if we have that particular pixel already in:
       std::vector<pixel>::iterator px = std::find_if(dac->second.begin(),
 						     dac->second.end(),
@@ -1766,23 +1808,51 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
 	uint8_t delta_old = abs(oldvalue[dac->first][*px] - threshold);
 	uint8_t delta_new = abs(pixit->value() - threshold);
 	bool positive_slope = (pixit->value() - oldvalue[dac->first][*px] > 0 ? true : false);
-	// Check which value is closer to the threshold:
-	if(!positive_slope) continue;
-	if(!(delta_new < delta_old)) continue;
 
-	// Update the DAC threshold value for the pixel:
+        // Check which value is closer to the threshold. Only if the slope is positive AND
+	// the new delta between value and threshold is *larger* then the old delta, we 
+	// found the threshold. If slope is negative, we just have a ripple in the DAC's 
+	// distribution:
+	if(positive_slope && !(delta_new < delta_old)) {
+	  found[dac->first].push_back(*pixit);
+	  continue;
+	}
+
+        // No threshold found yet, update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
 	oldvalue[dac->first][*px] = pixit->value();
       }
       // Pixel is new, just adding it:
       else {
+        // If the pixel is above threshold at first appearance, the respective
+	// DAC value is set as its threshold:
+	if(pixit->value() >= threshold) { found[dac->first].push_back(*pixit); }
+
 	// Store the pixel with original efficiency
 	oldvalue[dac->first].insert(std::make_pair(*pixit,pixit->value()));
 	// Push pixel to result vector with current DAC as value field:
 	pixit->setValue(it->first);
 	dac->second.push_back(*pixit);
       }
+    }
+  }
+
+  // Check for pixels that have not reached the threshold at all:
+  for(std::vector<std::pair<uint8_t,std::vector<pixel> > >::iterator dac = result.begin(); dac != result.end(); ++dac) {
+    
+    for(std::vector<pixel>::iterator px = dac->second.begin(); px != dac->second.end(); px++) {
+      std::vector<pixel>::iterator px_found = std::find_if(found[dac->first].begin(),
+							   found[dac->first].end(),
+							   findPixelXY(px->column(), px->row(), px->roc()));
+      // The pixel is in the "found" vector, which means it crossed threshold at some point:
+      if(px_found != found[dac->first].end()) continue;
+
+      // The pixel is not in and never reached the threshold. We set the return value to
+      // "dacMax" (rising edge) or "dacMin" (falling edge):
+      if((flags&FLAG_RISING_EDGE) != 0) { px->setValue(dac2max); }
+      else { px->setValue(dac2min); }
+      LOG(logWARNING) << "No threshold found for " << (*px) << " at DAC value " << static_cast<int>(dac->first);
     }
   }
 
@@ -2041,12 +2111,9 @@ uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,ui
   return delay_sum;
 }
 
-void pxarCore::getDecoderErrorCount(std::vector<Event*> &data){
+void pxarCore::getDecoderErrorCount(){
   // check the data for any decoding errors (stored in the events as counters)
-  _ndecode_errors_lastdaq = 0; // reset counter
-  for (std::vector<Event*>::iterator evtit = data.begin(); evtit != data.end(); ++evtit){
-    _ndecode_errors_lastdaq += (*evtit)->numDecoderErrors;
-  }
+  _ndecode_errors_lastdaq = _hal->daqErrorCount();
   if (_ndecode_errors_lastdaq){
     LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
   }
@@ -2066,6 +2133,17 @@ bool pxarCore::setExternalClock(bool enable) {
     _hal->SetClockSource(CLK_SRC_INT);
     return true;
   }
+}
+
+void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
+ 
+  uint8_t sigRegister, value = 0;
+  if(!verifyRegister(signal, sigRegister, value, DTB_REG)) return;
+  
+  LOG(logDEBUGAPI) << "Setting signal " << signal << " (" 
+		   << static_cast<int>(sigRegister) << ")  to mode "
+		   << static_cast<int>(mode) << ".";
+  _hal->SigSetMode(sigRegister, mode);
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
@@ -2132,3 +2210,10 @@ bool pxarCore::daqStop(const bool init) {
   return true;
 }
 
+uint16_t pxarCore::GetADC( uint8_t rpc_par1 ){
+  
+  if( ! status() ) { return 0; } 
+
+  return _hal->GetADC( rpc_par1 );
+
+}
