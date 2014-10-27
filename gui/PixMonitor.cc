@@ -14,17 +14,17 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fHFrame1 = new TGHorizontalFrame(fMonitorFrame);
   fHFrame2 = new TGHorizontalFrame(fMonitorFrame);
 
-  TGString *a = new TGString("I(ana)");
-  TGString *d = new TGString("I(digi)");
+  TGString *a = new TGString("I(ana)    ");
+  TGString *d = new TGString("I(digi)    ");
 
   fAna = new TGLabel(fHFrame1, a);
   fDigi = new TGLabel(fHFrame2, d);
 
-  fNmrAna = new TGTextEntry(fHFrame1, fAnaFileBuffer = new TGTextBuffer(100));
+  fNmrAna = new TGTextEntry(fHFrame1, fAnaFileBuffer = new TGTextBuffer(50));
+  fNmrAna->SetWidth(50);
   fNmrAna->SetToolTipText(Form("Total analog current drawn by %s", (fGui->getPixSetup()->getConfigParameters()->getNrocs()>1?"module":"ROC")));
-  fNmrDigi = new TGTextEntry(fHFrame2, fDigiFileBuffer = new TGTextBuffer(100));
-  fNmrAna->SetWidth(100);
-  fNmrDigi->SetWidth(100);
+  fNmrDigi = new TGTextEntry(fHFrame2, fDigiFileBuffer = new TGTextBuffer(50));
+  fNmrDigi->SetWidth(50);
   fNmrDigi->SetToolTipText(Form("Total digital current drawn by %s", (fGui->getPixSetup()->getConfigParameters()->getNrocs()>1?"module":"ROC")));
 
   fAnaButton = new TGTextButton(fHFrame1," Draw ", B_DRAWANA);
@@ -37,17 +37,14 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fDigiButton->ChangeOptions(fDigiButton->GetOptions() | kFixedWidth);
   fDigiButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 
-  if( fGui -> GetHdiType() == "fpix" ){
-    printf("this is fpixe");
-    TGString *temperature_degree = new TGString("Temperature");
-    fHFrame_TDegree = new TGHorizontalFrame(fMonitorFrame) ;
-    fTemperatureDegree = new TGLabel(fHFrame_TDegree, temperature_degree );
-    fNmrTDegree = new TGTextEntry(fHFrame_TDegree, fTDegreeFileBuffer = new TGTextBuffer(100));
-    fNmrTDegree->SetWidth(100);
-    fHFrame_TDegree -> AddFrame( fTemperatureDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-    fHFrame_TDegree -> AddFrame( fNmrTDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
-  }else{
-    printf("this is NOT fpixe");
+  if ("fpix" == fGui->getHdiType()) {
+    TGString *temperature_degree = new TGString("T (deg C) ");
+    fHFrame_TDegree = new TGHorizontalFrame(fMonitorFrame);
+    fTemperatureDegree = new TGLabel(fHFrame_TDegree, temperature_degree);
+    fNmrTDegree = new TGTextEntry(fHFrame_TDegree, fTDegreeFileBuffer = new TGTextBuffer(40));
+    fNmrTDegree->SetWidth(40);
+    fHFrame_TDegree->AddFrame(fTemperatureDegree, new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2));
+    fHFrame_TDegree->AddFrame(fNmrTDegree, new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2));
   }
 
   fActTime = time(NULL);
@@ -64,7 +61,7 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fMonitorFrame->AddFrame(fHFrame2, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
 
 
-  if( fGui -> GetHdiType() == "fpix" ){
+  if ("fpix" == fGui->getHdiType()) {
     fMonitorFrame->AddFrame(fHFrame_TDegree, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
   }
 
@@ -113,17 +110,14 @@ void PixMonitor::Update() {
     id += 1.0; 
   }
 
-  fNmrAna->SetText(Form("%4.3f",ia));
-  fNmrDigi->SetText(Form("%4.3f",id));
+  fNmrAna->SetText(Form("%4.3f", ia));
+  fNmrDigi->SetText(Form("%4.3f", id));
 
-  if( fGui -> GetHdiType() == "fpix" ){
+  if ("fpix" == fGui->getHdiType()) {
     if (fGui->getApi()) {
-      
-      uint16_t v_ref =  fGui->getApi()->GetADC( 5 ) ;
-      uint16_t v_val =  fGui->getApi()->GetADC( 4 ) ;
-      
-      fNmrTDegree->SetText(Form("%4f" , ( - ( v_val - v_ref ) - 0.92 ) / 6.55 ) ) ;
-
+      uint16_t v_ref =  fGui->getApi()->GetADC(5);
+      uint16_t v_val =  fGui->getApi()->GetADC(4);
+      fNmrTDegree->SetText(Form("%3.1f", (-(v_val - v_ref) - 0.92) / 6.55));
     } else {
       fNmrTDegree->SetText(Form("---"));
     }
