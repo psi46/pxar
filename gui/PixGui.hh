@@ -72,7 +72,7 @@ public:
 
   ULong_t   fRed, fGreen, fYellow, fWhite, fDarkSeaGreen, fDarkOrange, fLavender, fDarkGray, fDarkSalmon; 
 
-  std::string GetHdiType();
+  std::string getHdiType();
   
 private: 
 

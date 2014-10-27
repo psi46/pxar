@@ -537,9 +537,6 @@ void PixGui::updateSelectedRocs(map<int, int> a) {
 }
 
 // ----------------------------------------------------------------------
-
-std::string PixGui::GetHdiType(){
-
-  return fConfigParameters->getHdiType() ;
-
+std::string PixGui::getHdiType() {
+  return fConfigParameters->getHdiType();
 }
