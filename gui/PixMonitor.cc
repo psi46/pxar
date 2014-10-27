@@ -37,6 +37,19 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
   fDigiButton->ChangeOptions(fDigiButton->GetOptions() | kFixedWidth);
   fDigiButton->Connect("Clicked()", "PixMonitor", this, "handleButtons()");
 
+  if( fGui -> GetHdiType() == "fpix" ){
+    printf("this is fpixe");
+    TGString *temperature_degree = new TGString("Temperature");
+    fHFrame_TDegree = new TGHorizontalFrame(fMonitorFrame) ;
+    fTemperatureDegree = new TGLabel(fHFrame_TDegree, temperature_degree );
+    fNmrTDegree = new TGTextEntry(fHFrame_TDegree, fTDegreeFileBuffer = new TGTextBuffer(100));
+    fNmrTDegree->SetWidth(100);
+    fHFrame_TDegree -> AddFrame( fTemperatureDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
+    fHFrame_TDegree -> AddFrame( fNmrTDegree , new TGLayoutHints(kLHintsTop | kLHintsLeft,2,2,2,2) );
+  }else{
+    printf("this is NOT fpixe");
+  }
+
   fActTime = time(NULL);
   fTimeinfo = localtime(&fActTime);
   
@@ -49,6 +62,11 @@ PixMonitor::PixMonitor(TGGroupFrame *f, PixGui *pixGui) {
  
   fMonitorFrame->AddFrame(fHFrame1, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
   fMonitorFrame->AddFrame(fHFrame2, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
+
+
+  if( fGui -> GetHdiType() == "fpix" ){
+    fMonitorFrame->AddFrame(fHFrame_TDegree, new TGLayoutHints(kLHintsTop | kLHintsExpandX,1,1,1,1));
+  }
 
   f->AddFrame(fMonitorFrame, new TGLayoutHints(kLHintsTop,2,2,2,2));
 
@@ -97,6 +115,19 @@ void PixMonitor::Update() {
 
   fNmrAna->SetText(Form("%4.3f",ia));
   fNmrDigi->SetText(Form("%4.3f",id));
+
+  if( fGui -> GetHdiType() == "fpix" ){
+    if (fGui->getApi()) {
+      
+      uint16_t v_ref =  fGui->getApi()->GetADC( 5 ) ;
+      uint16_t v_val =  fGui->getApi()->GetADC( 4 ) ;
+      
+      fNmrTDegree->SetText(Form("%4f" , ( - ( v_val - v_ref ) - 0.92 ) / 6.55 ) ) ;
+
+    } else {
+      fNmrTDegree->SetText(Form("---"));
+    }
+  }
 
 }
 

@@ -366,6 +366,10 @@ namespace pxar {
      */
     void AllColumnsSetEnable(uint8_t roci2c, bool enable);
 
+    /** Get ADC value
+     */
+    uint16_t GetADC(uint8_t rpc_par1);
+
   private:
 
     /** Private instance of the testboard RPC interface, routes all
