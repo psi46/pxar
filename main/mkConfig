@@ -196,7 +196,7 @@ sub setDacs {
 	$dacs .= "254 wbc        100\n";
 	$dacs .= "255 readback   0  \n";
     } elsif ($roctype eq "digv2") {
-	$dacs .= "  1       vdig  15\n";
+	$dacs .= "  1       vdig   6\n";
 	$dacs .= "  2       vana 110\n";
 	$dacs .= "  3        vsh 100\n";
 	$dacs .= "  4      vcomp  12\n";
