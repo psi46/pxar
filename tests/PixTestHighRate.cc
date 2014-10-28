@@ -203,7 +203,7 @@ void PixTestHighRate::doXPixelAlive() {
     if (string::npos != pgtmp[i].first.find("resettbm")) continue;
     fPg_setup.push_back(pgtmp[i]);
   }
-  if (1) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
+  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
 
   fApi->setPatternGenerator(fPg_setup);
 
