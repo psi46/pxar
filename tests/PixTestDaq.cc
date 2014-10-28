@@ -7,6 +7,8 @@
 #include "helper.h"
 #include "timer.h"
 
+#include "PixUtil.hh"
+
 using namespace std;
 using namespace pxar;
 
@@ -63,10 +65,14 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 		if (fParameters[i].first == parName) {
 			found = true;
 			if (!parName.compare("delaytbm")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
 				fParDelayTBM = !(atoi(sval.c_str()) == 0);
 				setToolTips();
 			}
 			if (!parName.compare("filltree")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
 				fParFillTree = !(atoi(sval.c_str()) == 0);
 				setToolTips();
 			}

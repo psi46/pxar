@@ -40,6 +40,8 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("showfits")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
 	fParShowFits = atoi(sval.c_str()); 
       }
       if (!parName.compare("ntrig")) {

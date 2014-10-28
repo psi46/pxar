@@ -3,13 +3,16 @@
 #include <algorithm>    // std::find
 #include <iostream>
 #include <fstream>
+
 #include "PixTestHighRate.hh"
 #include "log.h"
+#include "timer.h"
+
+#include "PixUtil.hh"
 
 
 #include <TH2.h>
 #include <TMath.h>
-#include "../core/utils/timer.h"
 
 using namespace std;
 using namespace pxar;
@@ -54,10 +57,14 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("delaytbm")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
 	fParDelayTBM = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
       if (!parName.compare("filltree")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
 	fParFillTree = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
