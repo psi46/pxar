@@ -206,10 +206,10 @@ sub setDacs {
 	$dacs .= " 11      vtrim   0\n";
 	$dacs .= " 12   vthrcomp  50\n";
 	$dacs .= " 13 vibias_bus   1\n";
-	$dacs .= " 14   vbias_sf  14\n";
-	$dacs .= " 15  voffsetop  60\n";
+	$dacs .= " 14   vbias_sf   6\n";
+	$dacs .= " 15  voffsetop  85\n";
 	$dacs .= " 17  phoffset  150\n";
-	$dacs .= " 18       vion  45\n";
+	$dacs .= " 18       vion 128\n";
 	$dacs .= " 19  vcomp_adc 100\n";
 	$dacs .= " 20  phscale    60\n";
 	$dacs .= " 22    vicolor  20\n";
