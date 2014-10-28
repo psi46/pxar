@@ -736,3 +736,6 @@ uint32_t hal::daqErrorCount() {
   return 0;
 }
 
+uint16_t hal::GetADC(uint8_t rpc_par1) {
+  return rpc_par1;
+}
