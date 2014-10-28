@@ -144,6 +144,10 @@ public:
 
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
+  /// send reset to ROC(s)
+  void resetROC();
+  /// send reset to TBM(s)
+  void resetTBM();
   /// set up DAQ (including call to setTriggerFrequency)
   void prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
