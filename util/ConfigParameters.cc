@@ -486,17 +486,12 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     //    cout << lines[i] << endl;   
     if (lines[i].substr(0, 1) == string("#")) continue;
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    replaceAll(lines[i], "\t", " "); 
-    replaceAll(lines[i], "Pix", " "); 
-    string::iterator new_end = unique(lines[i].begin(), lines[i].end(), bothAreSpaces);
-    lines[i].erase(new_end, lines[i].end()); 
-    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
+    cleanupString(lines[i]); 
     if (0 == lines[i].length()) continue;
-    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
 
     s1 = lines[i].find("roc"); 
     if (string::npos != s1) {
-      str3 = lines[i].substr(s1+1); 
+      str3 = lines[i].substr(s1+4); 
       iroc = atoi(str3.c_str()); 
       //      cout << "masking all pixels for ROC " << iroc << endl;
       if (iroc < fnRocs) {
