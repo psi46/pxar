@@ -283,8 +283,8 @@ void PixTestGainPedestal::fit() {
   fDirectory->cd();
 
 
-  TH1D *h1 = (*fHists.begin()).second; 
-  TF1 *f = fPIF->gpTanH(h1); 
+  TH1D *h1(0); 
+  TF1 *f(0); 
 
   vector<vector<gainPedestalParameters> > v;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -307,6 +307,7 @@ void PixTestGainPedestal::fit() {
   int ic, ir, iroc, idx; 
   for (map<string, TH1D*>::iterator i = fHists.begin(); i != hend; ++i) {
     h1 = (*i).second; 
+    f = fPIF->gpTanH(h1); 
     if (h1->GetEntries() < 1) continue;
     string h1name = h1->GetName();
     if (fParShowFits) {
