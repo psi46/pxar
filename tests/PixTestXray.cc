@@ -308,7 +308,7 @@ void PixTestXray::doPhRun() {
     copy(fTriggers.begin(), fTriggers.end(), back_inserter(fHistList));
   }
 
-  prepareDaq(fParTriggerFrequency, 50); 
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
   fApi->daqStart();
 
   if (fParDelayTBM) {
@@ -316,7 +316,7 @@ void PixTestXray::doPhRun() {
     fApi->setTbmReg("delays", 0x40);
   }
 
-  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with trigger frequency " << fParTriggerFrequency 
 	       << ", period "  << finalPeriod 
 	       << " and duration " << fParRunSeconds << " seconds";
@@ -332,7 +332,7 @@ void PixTestXray::doPhRun() {
       fApi->daqTriggerLoopHalt();
       processData(0);
       LOG(logINFO) << "Resuming triggers.";
-      fApi->daqTriggerLoop();
+	  fApi->daqTriggerLoop(finalPeriod);
     }
 
     if (static_cast<int>(t.get())/1000 >= fParRunSeconds)	{
@@ -378,7 +378,7 @@ void PixTestXray::doRateScan() {
   fApi->_dut->maskAllPixels(false);
   
 
-  prepareDaq(fParTriggerFrequency, 50);
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
 
   // -- scan VthrComp  
   for (fVthrComp = fParVthrCompMin; fVthrComp <= fParVthrCompMax;  ++fVthrComp) {
@@ -393,7 +393,7 @@ void PixTestXray::doRateScan() {
     LOG(logINFO)<< "Starting Loop with VthrComp = " << fVthrComp;
     fApi->daqStart();
 
-    int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+	int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
     LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParStepSeconds << " seconds";
     
     while (fApi->daqStatus(perFull) && fDaq_loop) {
@@ -403,7 +403,7 @@ void PixTestXray::doRateScan() {
 	fApi->daqTriggerLoopHalt();
 	readData();
 	LOG(logINFO) << "Resuming triggers.";
-	fApi->daqTriggerLoop();
+	fApi->daqTriggerLoop(finalPeriod);
       }
       
       if (static_cast<int>(t.get()/1000) >= fParStepSeconds)	{

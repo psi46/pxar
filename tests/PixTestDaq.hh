@@ -38,7 +38,6 @@ private:
   bool     fRunDaqTrigger;
   uint16_t fParSeconds;
   
-  uint16_t fParPeriod;
   bool     fPhCalOK;
   PHCalibration fPhCal;
   bool	   fParOutOfRange;
