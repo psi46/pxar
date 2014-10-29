@@ -1582,14 +1582,15 @@ void PixTest::resetTBM() {
 }
 
 // ----------------------------------------------------------------------
-void PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
+uint16_t PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
   resetROC(); 
-  setTriggerFrequency(triggerFreq, trgTkDel);
+  uint16_t totalPeriod = setTriggerFrequency(triggerFreq, trgTkDel);
   fApi->setPatternGenerator(fPg_setup);
+  return totalPeriod;
 }
 
 // ----------------------------------------------------------------------
-void PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
+uint16_t PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
 
   uint16_t nDel = 0;
   uint16_t totalPeriod = 0;
@@ -1615,7 +1616,7 @@ void PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
   if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
   
   totalPeriod = ((uint16_t)period_ns / 25) + 4 + nDel; //+4 to align to the new pg minimum (1 additional clk cycle per PG call);
-  //	return totalPeriod;
+  return totalPeriod;
 }
 
 // ----------------------------------------------------------------------
@@ -1631,7 +1632,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
 
-  prepareDaq(TRGFREQ, (uint8_t)500);
+  int totalPeriod = prepareDaq(TRGFREQ, (uint8_t)500);
   
   timer t;
   uint8_t perFull;
@@ -1639,7 +1640,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
     
   fApi->daqStart();
 
-  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::maskHotPixels start TriggerLoop with period " << finalPeriod 
 	       << " and duration " << NSECONDS << " seconds and trigger rate " << TRGFREQ << " kHz";
   
@@ -1657,7 +1658,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
       }
 
       LOG(logINFO) << "Resuming triggers.";
-      fApi->daqTriggerLoop();
+	  fApi->daqTriggerLoop(finalPeriod);
     }
     
     if (static_cast<int>(t.get()/1000) >= NSECONDS)	{

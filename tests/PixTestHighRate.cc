@@ -347,10 +347,10 @@ void PixTestHighRate::doRunDaq() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 
-  prepareDaq(fParTriggerFrequency, 50);
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
   fApi->daqStart();
 
-  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::doHitMap start TriggerLoop with trigger frequency " << fParTriggerFrequency 
 	       << ", period " << finalPeriod 
 	       << " and duration " << nseconds << " seconds";
@@ -366,7 +366,7 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
       fApi->daqTriggerLoopHalt();
       fillMap(h);
       LOG(logINFO) << "Resuming triggers.";
-      fApi->daqTriggerLoop();
+	  fApi->daqTriggerLoop(finalPeriod);
     }
     
     if (static_cast<int>(t.get()/1000) >= nseconds)	{

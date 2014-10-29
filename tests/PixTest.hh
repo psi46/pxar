@@ -149,9 +149,9 @@ public:
   /// send reset to TBM(s)
   void resetTBM();
   /// set up DAQ (including call to setTriggerFrequency)
-  void prepareDaq(int triggerFreq, uint8_t trgTkDel);
+  uint16_t prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
-  void setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
+  uint16_t setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
   /// functions for DAQ
   void finalCleanup();
   void pgToDefault();

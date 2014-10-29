@@ -300,13 +300,13 @@ void PixTestDaq::doDaqRun() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   LOG(logINFO) << "PixTestDaq:: Number of masked pixels:";
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-	  LOG(logINFO) << "PixTestDaq::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
+	  LOG(logINFO) << "PixTestDaq::    " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc)) << " - ROC " << static_cast<int>(iroc);
   }  
 
   // Start the DAQ:
   //::::::::::::::::::::::::::::::::
 
-  prepareDaq(fParTriggerFrequency, 50); //new common function defined in PixTest.cc // debug - implement period counting.
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50); //new common function defined in PixTest.cc
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
@@ -322,10 +322,9 @@ void PixTestDaq::doDaqRun() {
 
   //Using number of triggers
   if (fRunDaqTrigger) {
-	
 	LOG(logINFO) << "Sending " << fParNtrig << " triggers for " << fParIter << " iterations.";
 	for (int i = 0; i < fParIter && fDaq_loop; i++) {		//Send fParNtrig for fParIter
-    	fApi->daqTrigger(fParNtrig, fParPeriod);
+		fApi->daqTrigger(fParNtrig, totalPeriod);
 		gSystem->ProcessEvents();
 		ProcessData(0);
 	}
@@ -334,7 +333,7 @@ void PixTestDaq::doDaqRun() {
   } else {  //Use seconds
 
 	//Start trigger loop + buffer fill management:
-	int finalPeriod = fApi->daqTriggerLoop(fParPeriod); //debug - to be fixed
+	int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
 	LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
 	
 	  //To control the buffer filling
@@ -364,7 +363,7 @@ void PixTestDaq::doDaqRun() {
 		  timepaused += diff;
 		  LOG(logDEBUG) << "Readout time: " << timepaused / 1000 << " seconds.";
 		  LOG(logINFO) << "Resuming triggers for " << fParSeconds - (timeff/1000) << " seconds.";
-		  fApi->daqTriggerLoop(fParPeriod);
+		  fApi->daqTriggerLoop(finalPeriod);
 	  }
 	  else {
 		  if (TotalTime) { LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped."; }
