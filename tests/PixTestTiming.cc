@@ -181,7 +181,7 @@ void PixTestTiming::ClkSdaScan() {
             GoodSDA=goodsdalist[0];
           } else {
             sort(goodsdalist.begin(),goodsdalist.end());
-            for (size_t isda=1; isda<goodsdalist.size(); isda++) if (fabs(goodsdalist[isda]-goodsdalist[isda-1])>1) goodsdalist[isda] -= 20;
+            for (size_t isda=1; isda<goodsdalist.size(); isda++) if (abs(goodsdalist[isda]-goodsdalist[isda-1])>1) goodsdalist[isda] -= 20;
             sort(goodsdalist.begin(),goodsdalist.end());
             GoodSDA=goodsdalist[round(goodsdalist.size()/2)];
             if (GoodSDA<0) GoodSDA+=20;
