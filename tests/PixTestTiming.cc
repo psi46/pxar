@@ -7,6 +7,7 @@
 #include <TMarker.h>
 #include <TStyle.h>
 #include <TBox.h>
+#include <TMath.h>
 
 #include "PixTestTiming.hh"
 #include "PixUtil.hh"
@@ -152,7 +153,7 @@ void PixTestTiming::ClkSdaScan() {
       fApi->setDAC("vana", 70);
       pxar::mDelay(10);
       double NewIA = fApi->getTBia();
-      if (fabs(NewIA-IA) > 0.005) {
+      if (TMath::Abs(NewIA-IA) > 0.005) {
         h1->Fill(iclk,isda); //Need 5mA change in current to see if ROCs are programmable
         GoodClk=iclk;
         GoodSDA=isda;
@@ -181,7 +182,7 @@ void PixTestTiming::ClkSdaScan() {
             GoodSDA=goodsdalist[0];
           } else {
             sort(goodsdalist.begin(),goodsdalist.end());
-            for (size_t isda=1; isda<goodsdalist.size(); isda++) if (abs(goodsdalist[isda]-goodsdalist[isda-1])>1) goodsdalist[isda] -= 20;
+            for (size_t isda=1; isda<goodsdalist.size(); isda++) if (TMath::Abs(goodsdalist[isda]-goodsdalist[isda-1])>1) goodsdalist[isda] -= 20;
             sort(goodsdalist.begin(),goodsdalist.end());
             GoodSDA=goodsdalist[round(goodsdalist.size()/2)];
             if (GoodSDA<0) GoodSDA+=20;
