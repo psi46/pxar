@@ -92,6 +92,8 @@ public:
   std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
   /// mask all pixels mentioned in the mask file
   void maskPixels();     
+  /// query whether test 'failed'
+  bool testProblem() {return fProblem;}
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
@@ -303,6 +305,9 @@ protected:
   TTree                *fTree; 
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
+
+  bool                  fProblem;
+  
 
   // -- data members for DAQ purposes
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;

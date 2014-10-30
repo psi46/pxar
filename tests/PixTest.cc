@@ -30,6 +30,8 @@ PixTest::PixTest(PixSetup *a, string name) {
   fTestParameters = a->getPixTestParameters(); 
   fTimeStamp      = new TTimeStamp(); 
 
+  fProblem        = false; 
+
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
