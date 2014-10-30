@@ -267,6 +267,10 @@ public:
   void hvOff();  // *SIGNAL*
   /// turn HV on
   void hvOn();  // *SIGNAL*
+  /// turn DTB power off
+  void powerOff();  // *SIGNAL*
+  /// turn DTB power on
+  void powerOn();  // *SIGNAL*
   /// allow forward iteration through list of histograms
   TH1* nextHist(); 
   /// allow backward iteration through list of histograms

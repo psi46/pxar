@@ -531,14 +531,26 @@ void PixTest::update() {
 
 // ----------------------------------------------------------------------
 void PixTest::hvOn() {
-  cout << "PixTest::hvOn()" << endl;
+  //  cout << "PixTest::hvOn()" << endl;
   Emit("hvOn()"); 
 }
 
 // ----------------------------------------------------------------------
 void PixTest::hvOff() {
-  cout << "PixTest::hvOff()" << endl;
+  //  cout << "PixTest::hvOff()" << endl;
   Emit("hvOff()"); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::powerOn() {
+  //  cout << "PixTest::powerOn()" << endl;
+  Emit("powerOn()"); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::powerOff() {
+  //  cout << "PixTest::powerOff()" << endl;
+  Emit("powerOff()"); 
 }
 
 

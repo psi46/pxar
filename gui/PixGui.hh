@@ -57,6 +57,8 @@ public:
   bool isHvOn() {return fHV;}
   void hvOn();
   void hvOff();
+  void powerOn();
+  void powerOff();
 
   PixTest* createTest(std::string); 
 
