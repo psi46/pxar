@@ -19,6 +19,7 @@ public:
   std::vector<TH2D*> bookHotPixelMap();
 
   void runCommand(std::string command); 
+  void doStop();
   void doPhRun(); 
   void doRateScan();
   void doRunMaskHotPixels();

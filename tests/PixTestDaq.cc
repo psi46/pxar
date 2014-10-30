@@ -104,7 +104,7 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::stop(){
+void PixTestDaq::doStop(){
 	// Interrupt the test 
 	fDaq_loop = false;
 	LOG(logINFO) << "Stop pressed. Ending test.";
@@ -131,7 +131,7 @@ void PixTestDaq::doRunMaskHotPixels() {
 void PixTestDaq::runCommand(std::string command) {
 		
 	if (command == "stop")
-		stop();
+		doStop();
 	else if (!command.compare("maskhotpixels")) {
 		doRunMaskHotPixels();
 		return;

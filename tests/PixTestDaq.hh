@@ -19,7 +19,7 @@ public:
   void setToolTips();
   void bookHist(std::string);
   void doRunMaskHotPixels();
-  void stop();
+  void doStop();
   void runCommand(std::string command);
   virtual bool setParameter(std::string parName, std::string sval);
   void ProcessData(uint16_t numevents = 1000);

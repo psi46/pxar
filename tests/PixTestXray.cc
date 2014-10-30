@@ -103,6 +103,10 @@ void PixTestXray::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
 
+  if (!command.compare("stop")){
+     doStop();
+  }
+
   if (!command.compare("maskhotpixels")) {
     doRunMaskHotPixels(); 
     return;
@@ -138,6 +142,8 @@ void PixTestXray::setToolTips() {
   fTestTip    = string("Xray vcal calibration test")
     ;
   fSummaryTip = string("to be implemented")
+    ;
+  fStopTip = string("Stop 'phrun' and save data.")
     ;
 }
 
@@ -727,8 +733,6 @@ void PixTestXray::processData(uint16_t numevents) {
 }
 
 
-
-
 // ----------------------------------------------------------------------
 void PixTestXray::doRunMaskHotPixels() {    
   PixTest::update(); 
@@ -745,3 +749,12 @@ void PixTestXray::doRunMaskHotPixels() {
   PixTest::update(); 
   return;
 }
+
+
+// ----------------------------------------------------------------------
+void PixTestXray::doStop(){
+	// Interrupt the test 
+	fDaq_loop = false;
+	LOG(logINFO) << "Stop pressed. Ending test.";
+}
+

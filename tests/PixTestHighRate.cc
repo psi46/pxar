@@ -91,6 +91,10 @@ void PixTestHighRate::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
 
+  if (!command.compare("stop")){
+     doStop();
+  }
+
   if (!command.compare("maskhotpixels")) {
     doRunMaskHotPixels(); 
     return;
@@ -126,6 +130,8 @@ void PixTestHighRate::setToolTips() {
   fTestTip    = string("Xray vcal calibration test")
     ;
   fSummaryTip = string("to be implemented")
+    ;
+  fStopTip = string("Stop 'rundaq' and save data.")
     ;
 }
 
@@ -416,4 +422,11 @@ void PixTestHighRate::doRunMaskHotPixels() {
   v[0]->Draw("colz");
   PixTest::update(); 
   return;
+}
+
+// ----------------------------------------------------------------------
+void PixTestHighRate::doStop(){
+	// Interrupt the test 
+	fDaq_loop = false;
+	LOG(logINFO) << "Stop pressed. Ending test.";
 }
