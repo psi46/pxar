@@ -838,12 +838,12 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
       v = vB; 
     }
 
-    //    for (std::vector<std::pair<std::string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    for (size_t idac = 0; idac < v.size(); idac++) {
-      OutputFile << right << static_cast<int>(idac) << " " 
-                 << setw(11) << setfill(' ') << v[idac].first  
-                 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(v[idac].second)
-                 << endl;
+    RegisterDictionary *a = RegisterDictionary::getInstance();
+    for (std::vector<std::pair<std::string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
+		 << idac->first  
+		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
+		 << endl;
     }
     
     OutputFile.close();
