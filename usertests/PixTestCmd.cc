@@ -142,12 +142,12 @@ void PixTestCmd::DoDnArrow(){
 void PixTestCmd::createWidgets(){
     const TGWindow *main = gClient->GetRoot();
     unsigned int w=600;
-    tf = new TGTransientFrame(gClient->GetRoot(), main, 600, 600);//w,h
+    tf = new TGTransientFrame(gClient->GetRoot(), main, 600, 800);//w,h
     
     // == Transcript ============================================================================================
 
-    textOutputFrame = new TGHorizontalFrame(tf, w, 200);
-    transcript = new TGTextView(textOutputFrame, w, 200);
+    textOutputFrame = new TGHorizontalFrame(tf, w, 400);
+    transcript = new TGTextView(textOutputFrame, w, 400);
     textOutputFrame->AddFrame(transcript, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
 
     tf->AddFrame(textOutputFrame, new TGLayoutHints(kLHintsExpandX| kLHintsExpandY, 10, 10, 2, 2));
@@ -191,8 +191,9 @@ void PixTestCmd::doTest()
 
     createWidgets();
     cmd = new CmdProc(  );
-    cmd->fApi=fApi;
-    cmd->fPixSetup = fPixSetup;
+    cmd->setApi(fApi, fPixSetup);
+    //cmd->fApi=fApi;
+    //cmd->fPixSetup = fPixSetup;
 
     PixTest::update();
     //fDisplayedHist = find( fHistList.begin(), fHistList.end(), h1 );
@@ -329,7 +330,6 @@ bool IntList::parse(Token & token,  const bool append){
      * hexadecimal values are allowed (see StrToI)
      * equivalent of parseIntegerList in SysCmd with wildcard support
      */
-    
     if (!append) ranges.clear();
 
     if ( (token.front()=="*") ){
@@ -692,6 +692,10 @@ bool  Keyword::match(const char * s, int & value, const char * s1){
   return  (kw(s)) && (narg()==2) && (argv[0].getInt(value))  && (argv[1].scmp(s1)) ;
 }
 
+bool  Keyword::match(const char * s1, const char * s2, int & value){
+  return  (kw(s1)) && (narg()==2) && (argv[0].scmp(s2)) && (argv[1].getInt(value));
+}
+
 bool  Keyword::match(const char * s, const char * s1){
     if (narg() !=1 ) return false;
     return  (kw(s)) && (narg()==1) && (argv[0].scmp(s1));
@@ -733,6 +737,10 @@ bool  Keyword::greedy_match(const char * s1, string & s2){
 
 bool  Keyword::match(const char * s, int & value1, int & value2){
   return  (kw(s)) && (narg()==2) && (argv[0].getInt(value1)) && (argv[1].getInt(value2));
+}
+
+bool  Keyword::match(const char * s, int & value1, int & value2, int & value3){
+  return  (kw(s)) && (narg()==3) && (argv[0].getInt(value1)) && (argv[1].getInt(value2)) && (argv[2].getInt(value3));
 }
 
 bool  Keyword::greedy_match(const char * s1, int& value1, int& value2, int& value3, string & s2){
@@ -895,11 +903,24 @@ void CmdProc::init()
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
-    fSignalLevel=255;
+    //fSignalLevel=255;
     macros["start"] = getWords("[roc * mask; roc * cald; reset tbm; seq 14]");
     macros["startroc"] = getWords("[mask; seq 15; arm 20 20; tct 106; vcal 200; adc]");
     macros["tbmonly"] = getWords("[reset tbm; tbm disable triggers; seq 10; adc]");
     out.str("");
+}
+
+void CmdProc::setApi(pxar::pxarCore * api, PixSetup * setup){
+    /* set api instance and do related setups */
+    fApi = api;
+    fPixSetup = setup;
+    
+    ConfigParameters *p = fPixSetup->getConfigParameters();
+    if (fSigdelaysSetup.size()==0){
+        fSigdelaysSetup = p->getTbSigDelays();
+        fSigdelays = p->getTbSigDelays();
+    }
+   
 }
 
 
@@ -914,11 +935,13 @@ CmdProc::CmdProc(CmdProc * p)
     fTCT = p->fTCT;
     fTRC = p->fTRC;
     fTTK = p->fTTK;
-    fSignalLevel = p->fSignalLevel;
+    //fSignalLevel = p->fSignalLevel;
     fBufsize=p->fBufsize;
     macros = p->macros;
-    fApi = p->fApi;
-    fPixSetup = p->fPixSetup;
+    fSigdelaysSetup = p->fSigdelaysSetup;
+    setApi( p->fApi, p->fPixSetup);
+    //fApi = p->fApi;
+    //fPixSetup = p->fPixSetup;
 }
 
 CmdProc::~CmdProc(){
@@ -957,16 +980,21 @@ int CmdProc::tbmget(string name, const uint8_t core, uint8_t & value){
 }
 
 
-int CmdProc::tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask){
+int CmdProc::tbmset(string name, uint8_t cores, int value, uint8_t valueMask){
     /* set a tbm register, allow setting a subset of bits (thoese where mask=1)
      * the default value of mask is 0xff, i.e. all bits are changed
-     * the coreMask is 1 for tbma, 2 for tbmb, 3 for both
+     * the cores = 0:TBMA, 1:TBMB, >1 TBMA+TBMB
+     * 
     */
     if ((value & (~valueMask) )>0) {
         out << "Warning! tbm set value " << hex << (int) value 
             << " has bits outside mask ("<<hex<< (int) valueMask << ")\n";
     }
          
+    uint8_t coreMask = 3;
+    if (cores==0){coreMask=1;}  else if(cores==1){ coreMask=2;}
+    
+    int err=1;
     //out << "tbmset" << name << " " <<  (int) coreMask << " " << value << "  " << bitset<8>(valueMask) << "\n";
     for(size_t core=0; core<2; core++){
         if ( ((coreMask >> core) & 1) == 1 ){
@@ -986,11 +1014,12 @@ int CmdProc::tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask)
                         out << " to 0x" << hex << (int) update << "\n";
                     }
                     fApi->setTbmReg( name, update, core );
+                    err=0;
                 }
             }
         }
      }
-    return 0; // nonzero values for errors
+    return err; // nonzero values for errors
 }
 
 
@@ -1004,7 +1033,7 @@ int CmdProc::tbmsetbit(string name, uint8_t coreMask, int bit, int value){
 int CmdProc::countHits(){
     int nhit=0;
     vector<DRecord > data;
-    int stat = getBuffer(fBuf, 1);
+    int stat = getBuffer(fBuf, 1, 1);
     if (stat>0) return -1;
     stat = getData(fBuf, data, 100);
     if (stat>0) return -2;
@@ -1014,11 +1043,11 @@ int CmdProc::countHits(){
     return nhit;
 }
 
-int CmdProc::countErrors(){
+int CmdProc::countErrors(int ntrig, int nroc){
     vector<DRecord > data;
-    int stat = getBuffer(fBuf,0);
+    int stat = getBuffer(fBuf, ntrig, 0);
     if (stat>0) return -1;// no data
-    stat = getData(fBuf, data, 0);
+    stat = getData(fBuf, data, 0, nroc);
     return stat;
 }
 
@@ -1053,21 +1082,38 @@ int CmdProc::tctscan(unsigned int tctmin, unsigned int tctmax){
 
 int CmdProc::tbmscan(){
     uint8_t phasereg;
-    tbmget("basee", 1, phasereg);
+    int stat = tbmget("basee", 0, phasereg);
+    if(stat>0){
+        out << "error getting tbm delays from api \n";
+    }
     uint8_t p400c= (phasereg>>2) & 7;
     uint8_t p160c= (phasereg>>5) & 7;
+    
+    uint8_t ntpreg;
+    stat = tbmget("base0", 0, ntpreg);
+    if(stat>0){
+        out << "error getting base0 register from api \n";
+    }
+
     out << "400\\160 0  1  2  3  4  5  6  7\n";
     for(uint8_t p400=0; p400<8; p400++){
+        int deserxor[8] = {0,0,0,0,0,0,0,0};
         out << "  " << (int) p400 << " :  ";
         for(uint8_t p160=0; p160<8; p160++){
-            tbmset("basee", 1, (p160<<5)+(p400<<2));
-            
+            stat = tbmset("basee", 0, (p160<<5)+(p400<<2));
+            if(stat>0){
+                out << "error setting delay  base E " << hex << ((p160<<5)+(p400<<2)) << dec << "\n";
+            }
             int good=0; // 
             for(unsigned int k=0; k<10; k++){
-                good += ( (countErrors()>0) ? 0 : 1);
+                good += ( (countErrors(100)==0) ? 1 : 0);
+                for( unsigned int i=0;i<8; i++){
+                    deserxor[i] += ( (fDeser400XOR1 >> i) & 1);
+                }
             }
             char c=' ';
             if (good==10){ c='+';} 
+            else if (good>7) { c='o' ;}
             else if (good>0) { c='.' ;}
             
             if((p160==p160c)&&(p400==p400c)){
@@ -1076,39 +1122,121 @@ int CmdProc::tbmscan(){
                out << " " << c << " ";
             }
         }
+        
+        // only print phases when they can be real
+        if( (ntpreg & 0x40) == 0 ){
+            out << "   ";
+            for(unsigned int i=0; i<8; i++){
+                out << dec<< setw(3) << deserxor[i];
+            }
+        }
         out << "\n";
     }
-    tbmset("basee",1,phasereg);
+    tbmset("basee",0,phasereg);
     return 0;
 }
 
 
+
+
+int CmdProc::rocscan(){
+    uint8_t phasereg0, phasereg1;
+    int stat = tbmget("basea", 0, phasereg0) + tbmget("basea", 1, phasereg1);
+    if(stat>0){
+        out << "failed to get tbm registers from api\n";
+    }
+   
+    uint8_t thbits0= (phasereg0 & 0xC0);
+    //uint8_t thbits1= (phasereg1 & 0xC0);
+
+    out << "token     0   |   1   |\n";  
+    out << "h/t    0  | 1 | 0 | 1 |\n" ;
+    out << "rocs:-----------------|\n";
+    for(uint8_t dly=0; dly<8; dly++){
+        out << "  " << dec << (int) dly << " :  ";
+        for(uint8_t th=0; th<4; th++){
+            tbmset("basea", 0, (th<<6) | (dly<<3) | (dly));
+            tbmset("basea", 1, (th<<6) | (dly<<3) | (dly));
+            
+            int good=0; // 
+            for(unsigned int k=0; k<10; k++){
+                good += ( (countErrors(100)==0) ? 1 : 0);
+            }
+            char c=' ';
+            if (good==10){ c='+';} 
+            else if (good>7) { c='o' ;}
+            else if (good>0) { c='.' ;}
+
+            if( (dly==(phasereg0&0x7)) && (th==(thbits0>>6)) ){
+               out << "(" << c << ")|";
+            }else{
+               out << " " << c << " |";
+            }
+            
+        }
+        out << "\n";
+    }
+    tbmset("basea",0,phasereg0);
+    tbmset("basea",1,phasereg1);
+    return 0;
+}
+
+int CmdProc::setTestboardPower(string name, uint16_t value){
+    std::vector<std::pair<std::string,double> > power_settings;
+    power_settings.push_back(make_pair(name, 0.001*float(value)));
+    try{
+        fApi->setTestboardPower(power_settings);
+        return 0;
+    }catch(pxar::InvalidConfig){
+        out << "invalid config \n";
+        return 1;
+    }
+    
+}
+
 int CmdProc::setTestboardDelay(string name, uint8_t value){
     
-    vector<pair<string,uint8_t> > sigdelays;
     ConfigParameters *p = fPixSetup->getConfigParameters();
-    sigdelays = p->getTbSigDelays();
+    if (fSigdelaysSetup.size()==0){
+        fSigdelaysSetup = p->getTbSigDelays();
+        fSigdelays = p->getTbSigDelays();
+    }else{
+        // FIXME check whether gui values have changed
+        vector<pair<string,uint8_t> > sigdelays;
+        sigdelays = p->getTbSigDelays();
+    }
     
-    for(size_t i=0; i<sigdelays.size(); i++){
-        if (sigdelays[i].first=="level"){
-            if(fSignalLevel>15){
-                fSignalLevel = sigdelays[i].second;
-            }else{
-                sigdelays[i] = std::make_pair("level", fSignalLevel);
-                p->setTbParameter("level",fSignalLevel);
-            }
+
+    for(size_t i=0; i<fSigdelays.size(); i++){
+        if (fSigdelays[i].first==name){
+            fSigdelays[i] =  std::make_pair(name, value);
         }
+        //cout << fSigdelays[i].first << " : " << (int) fSigdelays[i].second << endl; 
     }
-    
-    
-    if( !(name=="level") ){
-        sigdelays.clear();
-        sigdelays.push_back( std::make_pair(name, value) );
-        sigdelays.push_back( std::make_pair("level",fSignalLevel));
-    }
-    
-    fApi->setTestboardDelays(sigdelays);
+    fApi->setTestboardDelays( fSigdelays );
+
     return 0;
+}
+
+
+
+int CmdProc::bursttest(int ntrig, int trigsep, int nburst){
+        burst(fBuf, ntrig, trigsep, nburst);
+        
+        vector<DRecord > data;
+        int stat = getData(fBuf, data, 0);
+        
+        int n=0;
+        for(unsigned int i=0; i<fBuf.size(); i++){
+            if((fBuf[i]&0xe000)==0xa000) {
+                if(i>0) out << "\n";
+                out << dec << setfill(' ') << setw(4) << ++n << ": ";
+            }
+            out << setw(4) << setfill('0') << hex << fBuf[i] << " ";
+        }
+        out << setfill(' ') << endl;
+        out << dec << stat << " errors\n";
+        return 0;
 }
 
 
@@ -1157,21 +1285,27 @@ int CmdProc::adctest(const string signalName){
     int ymin=0xffff;
     int ymax=-ymin;
     vector<int> yhist(2048);
-    setTestboardDelay("clk",0); // dummy call to make sure fLevel is initialized
     vector<pair<string,uint8_t> > sigdelays;
     for(unsigned int dly=0; dly<nDly; dly++){
         
         sigdelays.clear();
         if(source==1){
+            setTestboardDelay("clk", dly);
+            setTestboardDelay("ctr", dly);
+            setTestboardDelay("sda", dly+15);
+            setTestboardDelay("tin", dly+5);
+            /*
             sigdelays.push_back(std::make_pair("clk", dly));
             sigdelays.push_back(std::make_pair("ctr", dly));
             sigdelays.push_back(std::make_pair("sda", dly + 15));
             sigdelays.push_back(std::make_pair("tin", dly + 5));
+            * */
         }else if(source==2){
-            sigdelays.push_back(std::make_pair("sda", dly ));
+            //sigdelays.push_back(std::make_pair("sda", dly ));
+            setTestboardDelay("sda", dly);
         }
-        sigdelays.push_back(std::make_pair("level",fSignalLevel));
-        fApi->setTestboardDelays(sigdelays);
+        //sigdelays.push_back(std::make_pair("level",fSignalLevel));
+        //fApi->setTestboardDelays(sigdelays);
             
         vector<uint16_t> data = fApi->daqADC(signalName, gain, nSample, source, start);
         
@@ -1191,9 +1325,12 @@ int CmdProc::adctest(const string signalName){
    }
 
     // restore delays, signals (modified by daqADC) and pg
+    /*
     ConfigParameters *p = fPixSetup->getConfigParameters();
     sigdelays = p->getTbSigDelays();
     fApi->setTestboardDelays(sigdelays);
+    * */
+    setTestboardDelay("all");
     
   
      pg_restore();
@@ -1354,224 +1491,8 @@ int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
 
 
 
-int CmdProc::rawDump(int level){
-    // run a simple sequence, get data, decode and dump it
-    // returns a nonzero status in case of decoding errors
-    // level 
-    //-1 = dump nothing, just return the status
-    // 0 = dump raw data
-    // 1 = dump decoded data
-    
-    
-    // warn user when no data expected
-    if( (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
-        out << "The current sequence does not contain a trigger!\n";
-    }else if( (fApi->_dut->getNTbms()==0) && ((fSeq & 0x01 ) ==0 ) ){
-        out <<"The current sequence does not contain a token!\n";
-    }
-    
-    pg_sequence( fSeq ); // set up the pattern generator
-    bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
-    if (! stat ){
-        cout << "something wrong with daqstart !!!" << endl;
-    }
-    fApi->daqTrigger(1, fPeriod);
-    std::vector<uint16_t> buf = fApi->daqGetBuffer();
-    fApi->daqStop(false);
-    fPixelConfigNeeded = false;
-    
-    
-   
-    if(level >= 0){
-        out << dec << buf.size() << " words read";
-        if(level==0){
-            for(unsigned int i=0; i<buf.size(); i++){
-                if(fApi->_dut->getNTbms()>0){
-                    if ((buf[i]&0xE000)==0xA000){ out << "\n";}
-                }
-                out << " " <<hex << setw(4)<< setfill('0')  << buf[i] << setfill(' ');
-            }
-        }   
-        out << "\n";
-    }
-    
-    
-    // do a bit of decoding, adapted from psi46test
-    unsigned int i=0;
-    if ( fApi->_dut->getNTbms()>0 ) {
-        uint8_t roc=0;
-        uint8_t tbm=0;
-        uint8_t nRocPerToken = 8; // TBM08
-        
-        bool tbm09 =  (fApi->_dut->getTbmType() == "tbm09");
-        if(tbm09){
-            nRocPerToken = 4;
-        }
-        
-        
- 
-        while(i<buf.size() && (i<500) ){
-            
-            if(level>0) out << hex << setw(4)<< setfill('0')  << buf[i] << setfill(' ') << " ";
-            uint16_t flag= (buf[i]&0xE000);
-            
-            if( flag == 0xa000 ){
-                int h1=buf[i]&0xFF;
-                i++;
-                if(i>=buf.size()){
-                    if(level>0) out << " unexpected end of data\n";
-                    return 1;
-                }
-            
-                if(level>0) out << setw(4)<< setfill('0')  << buf[i] << setfill(' ') << " TBM Header ";
-                if(level>0) out << "event counter = " << dec << setfill(' ') << setw(3) << h1;
-                if ((buf[i]&0xE000)==0x8000){
-                    int h2 = buf[i]&0xFF;
-                    // complete header
-                    int dataId=(h2&0xC0)>>6;
-                    if (level>0){
-                        out << ", dataID=" << dec << setw(1) <<dataId << " ";
-                        if (dataId==2){
-                            out << ",mode=" << (int) ((h2&0x30)>>4);
-                            if(h2 & 8) { out << ", DisableTrigOut ";}
-                            if(h2 & 4) { out << ", DisableTrigIn ";}
-                            if(h2 & 2) { out << ", Pause ";}
-                            if(h2 & 1) { out << ", DisablePKAM ";}
-                        }else{
-                            out << ",value=" << hex << setw(2) << setfill('0') << (int)(h2&0x3F) << setfill(' ');
-                        }
-                    }
-                    i++;
-                    if(level>0) out << "\n";
-                }else{
-                    if(level>0) out << " incomplete header \n";
-                    return 1;
-                }
-                continue;
-            }// TBM header
-            
-            
-            if( flag == 0x4000 ){
-                if(level>0) out << "     Roc Header " 
-                    << dec << setw(2) << setfill(' ') << (int)(roc+nRocPerToken*tbm) ;
-                roc ++;
-                // what's in the remaining bits?
-                if(level>0) out << "\n";
-                i++;
-                continue;
-            }
-            
-            
-            if (flag == 0x0000){  // hit
-                int d1=buf[i++];
-                if(i>=buf.size()){
-                    if(level>0) out << " unexpected end of data\n";
-                    return 1;
-                }
-                
-                flag = buf[i]&0xe000;
-                int d2=buf[i++];
-                if (flag == 0x2000) {
-                    if(level>0) out << hex << setw(4)<< setfill('0')  << d2  << setfill(' ') << "     hit";
-                    unsigned int raw = ((d1 &0x0fff) << 12) + (d2 & 0x0fff);
-                    
-                    if( tbm09 && (roc == nRocPerToken) && (raw==0xffffff)){
-                        // tbm09 possible "zero" hit
-                        if(level>0) out << " filler ";
-                    }else{
-                        int stat = pixDecodeRaw(raw, level);
-                        if((stat>0) && (level<0)) return 1;
-                    }
-                    
-                    if (roc==0) {
-                        if(level>0){
-                            out << "  Warning !! Never saw a ROC header.";
-                        }else{
-                            return 1;
-                        }
-                    }
 
-                    if(level>0) out << "\n";
-                }else{
-                    if(level>0) out << " unexpected flag \n";
-                    return 1;
-                }
-                continue;
-            }
-            
-            if (flag  == 0xe000){
-                int t1=buf[i++];
-                if(i>=buf.size()){
-                    if(level>0) out << "unexpected end of data\n";
-                    return 1;
-                }
-                
-                flag = buf[i]&0xe000;
-                if (flag != 0xc000 ){
-                    if(level>0) out << "unexpected flag \n";
-                    continue;
-                }
-                int t2=buf[i++];
-                if(level>0){
-                    out << hex << setw(4)<< setfill('0')  << t2 << setfill(' ') << " TBM Trailer ";
-                    if( t1 & 0x80 ) { out << ", NoTokenPass";}
-                    if( t1 & 0x40 ) { out << ", ResetTBM";}
-                    if( t1 & 0x20 ) { out << ", ResetROC";}
-                    if( t1 & 0x10 ) { out << ", SyncError";}
-                    if( t1 & 0x08 ) { out << ", SyncTrigger";}
-                    if( t1 & 0x04 ) { out << ", ClrTrgCntr";}
-                    if( t1 & 0x02 ) { out << ", Cal";}
-                    if( t1 & 0x01 ) { out << ", StackFullWarn";}
-                    if( t2 & 0x80 ) { out << ", StackFullnow";}
-                    if( t2 & 0x40 ) { out << ", PKAMReset";}
-                    out <<  ", StackCount=" << (int) (t2&0x3F)  << "\n";
-                }
-                tbm++;
-                roc=0;
-                continue;
-            }
-            
-            if(level>0) out << "unhandled Flag " << (int) flag << "\n";
-            i++;
-            
-        }
-        if(i<buf.size()){
-            if(level>0) out << "==> very long readout! stopped decoding after "<< i << "words\n";
-            return 1;
-        }
-    }
-    
-    else if ((level>0)&&(fApi->_dut->getNTbms() == 0)) {
-        // single ROC
-        while(i<buf.size() && (i<500) ){
-            
-            out << hex << setw(4)<< setfill('0')  << buf[i] << setfill(' ');
-            
-            if ( (buf[i] & 0x0ff8) == 0x07f8 ){
-                out << "       header D=" << (buf[i] & 1);
-                if ((buf[i] &2 )>0) { out << " S";}
-                out << "\n";
-                i++;
-            }
-            else if( (i+1)<buf.size() ){
-                out << " " << hex << setw(4)<< setfill('0') << buf[i+1]  << setfill(' ') << "  hit";
-                int raw = ((buf[i] & 0x0fff)  << 12) + (buf[i+1] & 0x0fff);
-                pixDecodeRaw(raw);
-                out << "\n";
-                i+=2;
-            }else{
-                out << "unexpected end of data\n";
-                return 1;
-            }
-        }
-    }
-       
-    pg_restore(); // undo any changes
-    return 0;   
-}
-
-
-int CmdProc::getBuffer(vector<uint16_t> & buf, int verbosity){
+int CmdProc::getBuffer(vector<uint16_t> & buf, int ntrig, int verbosity){
     /* run one sequence and get the raw data from the DTB */
     
     // warn user when no data expected
@@ -1587,16 +1508,22 @@ int CmdProc::getBuffer(vector<uint16_t> & buf, int verbosity){
         if(verbosity>0){ out << "something wrong with daqstart !!!" << endl;}
         return 2;
     }
-    fApi->daqTrigger(1, fPeriod);
+    fApi->daqTrigger(ntrig, fPeriod);
     buf  = fApi->daqGetBuffer();
     fApi->daqStop(false);
     fPixelConfigNeeded = false;
     
     if(buf.size()==0){
         if(verbosity>0){ out << "no data !" << endl;}
+        pg_restore(); // undo any changes
         return 1; 
     }
+    
+    if(verbosity>0){
+        out << dec << buf.size() << " words read";
+    }
     pg_restore(); // undo any changes
+
     return 0;
 }
 
@@ -1625,7 +1552,13 @@ int CmdProc::runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosi
         if(verbosity>0){ out << "something wrong with daqstart !!!" << endl;}
         return 2;
     }
-    fApi->daqTrigger(ntrig, fPeriod);
+    
+    if(verbose) out << "runDaq  " << ftrigkhz  << "   " << length << "  " << fPeriod << endl;
+    int leff = 40* int(length / 40);  // emulate testboards cDelay
+    if(leff<length){
+        out << "period will be truncated to " << dec<< leff << " BC  = " << int(40000/leff) << " kHz !!" << endl;
+    }
+    fApi->daqTrigger(ntrig, length);
     
     buf  = fApi->daqGetBuffer();
     fApi->daqStop(false);
@@ -1641,7 +1574,53 @@ int CmdProc::runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosi
 
 
 
-int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity){
+
+int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, int verbosity){
+    /* run ntrig sequences and get the raw data from the DTB */
+    
+    // warn user when no data expected
+    if( (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
+        out << "The current sequence does not contain a trigger!\n";
+    }else if( (fApi->_dut->getNTbms()==0) && ((fSeq & 0x01 ) ==0 ) ){
+        out <<"The current sequence does not contain a token!\n";
+    }
+    
+    if(verbose) out << dec << "burst   ntrig=" << ntrig << "  separation " << trigsep << "  bursts " << nburst <<"\n";
+    vector< pair<string, uint8_t> > pgsetup;
+    pgsetup.push_back( make_pair("sync", 10) );
+    pgsetup.push_back( make_pair("resr", fTRC) );
+    pgsetup.push_back( make_pair("cal",  fTCT ));
+    for(int i=0; i<ntrig; i++){
+        pgsetup.push_back( make_pair("trg",  trigsep-1 ));
+    }
+    pgsetup.push_back( make_pair("token", 0));
+
+    fPeriod = fBufsize;
+ 
+    fApi->setPatternGenerator(pgsetup);
+    bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
+    if (! stat ){
+        if(verbosity>0){ out << "something wrong with daqstart !!!" << endl;}
+        return 2;
+    }
+    
+    fApi->daqTrigger(nburst, fPeriod);
+    
+    buf  = fApi->daqGetBuffer();
+    fApi->daqStop(false);
+    fPixelConfigNeeded = false;
+    
+    if(buf.size()==0){
+        if(verbosity>0){ out << "no data !" << endl;}
+        return 1; 
+    }
+    pg_restore(); // undo any changes
+    return 0;
+    
+}
+
+
+int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity, int nroc_expected){
     // pre-decoding and validity check of raw data in fBuf
     // returns the number of errors
     // record flags:
@@ -1651,11 +1630,11 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
     //  14 (0x0e) = tbm trailer 16 bits
     //  16  = filler 
    
-    /*
+   /*
     for(unsigned int i=0; i< buf.size(); i++){
-        cout << hex << setw(4) << setfill('0') << buf[i] << " ";
+        out << hex << setw(4) << setfill('0') << buf[i] << " ";
     }
-    cout << dec << setfill(' ') << endl;
+    out << dec << setfill(' ') << endl;
     */
     
     unsigned int nerr=0;
@@ -1706,20 +1685,25 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
             
             
             if( flag == 0x4 ){ // ROC header
-                roc ++;
-                if( (buf[i]&0x0004)>0 ) nerr++;
-                data.push_back( DRecord(0x4, buf[i]&0x3, buf[i]) );
-                uint8_t xordata = (buf[i] & 0x0ff0)>>4;
-                if ((tbm==0) && (roc==1)){
-                    fDeser400XOR1 = xordata;
-                }else if(( tbm<2 )&&(!(fDeser400XOR1==xordata) )){
+                if(nroc_expected==0){
                     nerr++;
-                    if (verbosity>0) out << "inconsistent XOR1 \n";
-                }else if ((tbm==2)&&(roc==1)){
-                    fDeser400XOR2=xordata;
-                }else if((tbm>1)&&(!(fDeser400XOR2==xordata) )){
-                    nerr++;
-                    if (verbosity>0) out << "inconsistent XOR2 \n";
+                    if(verbosity>0) out<< "no rocs expected\n";
+                }else{
+                    roc ++;
+                    if( (buf[i]&0x0004)>0 ) nerr++;
+                    data.push_back( DRecord(0x4, buf[i]&0x3, buf[i]) );
+                    uint8_t xordata = (buf[i] & 0x0ff0)>>4;
+                    if ((tbm==0) && (roc==1)){
+                        fDeser400XOR1 = xordata;
+                    }else if(( tbm<2 )&&(!(fDeser400XOR1==xordata) )){
+                        nerr++;
+                        if (verbosity>0) out << "inconsistent XOR1 \n";
+                    }else if ((tbm==2)&&(roc==1)){
+                        fDeser400XOR2=xordata;
+                    }else if((tbm>1)&&(!(fDeser400XOR2==xordata) )){
+                        nerr++;
+                        if (verbosity>0) out << "inconsistent XOR2 \n";
+                    }
                 }
                 
                 i++;
@@ -1728,10 +1712,16 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
             
             
             if (flag == 0x0){  // hit
+                if (roc==0) {
+                    if(verbosity>0) out << "no hit expected here\n";
+                    nerr++;
+                }
+
                 int d1=buf[i++];
                 if(i>=buf.size()){
-                    if(verbosity>1) out << " unexpected end of data\n";
-                    return 5;
+                    if(verbosity>0) out << " unexpected end of data\n";
+                    nerr++;
+                    return nerr;
                 }
                 
                 if (buf[i]&0x1000) fDeser400err++;
@@ -1746,10 +1736,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     }else{
                         data.push_back( DRecord(0x0, raw, buf[i-2], buf[i-1]) );
                     }
-                    
-                    if (roc==0) {
-                        nerr++;
-                    }
+                                        
                 }else{
                     if(verbosity>1) out << " unexpected qualifier \n";
                     nerr++;
@@ -1782,7 +1769,8 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 continue;
             }
             
-            cout << "unhandled Flag " << (int) flag <<"\n";
+            if((verbose) || (verbosity>0)){ cout << "unhandled Flag " << hex << (int) flag <<"\n" << dec;}
+            nerr++;
             i++;
             
         } // while i< buf.size()
@@ -1803,7 +1791,8 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 i+=2;
             }else{
                 out << "unexpected end of data\n";
-                return 9;
+                nerr++;
+                return nerr;
             }
         }
     }
@@ -1812,20 +1801,16 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
 }
 
 
-int CmdProc::printData(int level){
+int CmdProc::printData(vector<uint16_t> buf, int level){
     // produce a more or less decoded / annotated printout
- 
-    int stat = getBuffer( fBuf, level );
-   
    
     if(level >= 0){
-        out << dec << fBuf.size() << " words read";
         if(level>=0){
-            for(unsigned int i=0; i<fBuf.size(); i++){
+            for(unsigned int i=0; i<buf.size(); i++){
                 if(fApi->_dut->getNTbms()>0){
-                    if ((fBuf[i]&0xE000)==0xA000){ out << "\n";}
+                    if ((buf[i]&0xE000)==0xA000){ out << "\n";}
                 }
-                out << " " <<hex << setw(4)<< setfill('0')  << fBuf[i] << setfill(' ');
+                out << " " <<hex << setw(4)<< setfill('0')  << buf[i] << setfill(' ');
             }
         }   
         out << "\n";
@@ -1836,7 +1821,7 @@ int CmdProc::printData(int level){
         const int maxLines = 200;
 
         vector< DRecord > data;
-        stat = getData(fBuf, data, 100);
+        int stat = getData(buf, data, 100);
         
         uint8_t roc=0;
         uint8_t tbm=0;
@@ -1851,10 +1836,16 @@ int CmdProc::printData(int level){
         
         for(unsigned int i=0; (i<data.size())&&(lines<maxLines); i++){
             
+            char deserStat=' ';
+            if((data[i].w1 & 0x1000)>0){
+                deserStat='*';
+            }
+            
             if (data[i].type==15){
                 nstuff +=1;
             }else if(nstuff>0){
-                out << setw(4) << setfill('0') << hex << data[i-1].w1 << " " 
+                out << setw(4) << setfill('0') << hex << data[i-1].w1 
+                    << deserStat 
                     << setw(4) << setfill('0') << hex << data[i-1].w2 
                     << setfill(' ') << "  ";
                 if (nstuff==1){
@@ -1870,7 +1861,8 @@ int CmdProc::printData(int level){
             if (data[i].type==4){
                 
                 // ROC header, one 16 bit word
-                out << setw(4) << setfill('0') << hex << data[i].w1 << setfill(' ') << "       ";
+                out << setw(4) << setfill('0') << hex << data[i].w1 << setfill(' ') 
+                    << deserStat << "      ";
                 out << "ROC header ";
                 if (tbm>0){
                     out << dec << setw(2) << (int)(roc+nRocPerToken*(tbm-1)) ;
@@ -1887,7 +1879,8 @@ int CmdProc::printData(int level){
             }else if(!(data[i].type==15)){ 
                 
                 // all others are two 16 bit words
-                out << setw(4) << setfill('0') << hex << data[i].w1 << " " 
+                out << setw(4) << setfill('0') << hex << data[i].w1 
+                    << deserStat 
                     << setw(4) << setfill('0') << hex << data[i].w2 
                     << setfill(' ') << "  ";
                 lines++;
@@ -1945,8 +1938,10 @@ int CmdProc::printData(int level){
         
         // count hits (even if the dump was aborted)
         int nhit=0;
+        int nRocHeader=0;
         for(unsigned int i=0; i<data.size(); i++){
             if (data[i].type==0) nhit++;
+            if (data[i].type==4) nRocHeader++;
         }
         if(nhit>0){
             out << dec << nhit << " hits \n";
@@ -1958,8 +1953,10 @@ int CmdProc::printData(int level){
         if(fDeser400err>0){
             out << dec << fDeser400err <<  " invalid 5-bit symbols!\n";
         }
-        out << "XOR eye sdata 1       = " << bitset<8>(fDeser400XOR1) << endl;
-        out << "XOR eye sdata 2       = " << bitset<8>(fDeser400XOR2) << endl;
+        if((nRocHeader>0)&&(fApi->_dut->getNTbms()>0)){
+            out << "XOR eye sdata 1       = " << bitset<8>(fDeser400XOR1) << endl;
+            if(tbm09) out << "XOR eye sdata 2       = " << bitset<8>(fDeser400XOR2) << endl;
+        }
     }
 
  
@@ -1973,10 +1970,18 @@ int CmdProc::sequence(int seq){
     if( fPgRunning ) pg_sequence(seq);
     return 0;
 }
-int CmdProc::pg_loop(){
+int CmdProc::pg_loop(int value){
     uint16_t delay = pg_sequence( fSeq );
     fApi->daqStart(fBufsize, false); // otherwise daqTriggerLoop does nothing (status())
-    fApi->daqTriggerLoop( delay );
+    if(value==0){
+        cout << "calling api->daqTriggerLoop " << delay << endl;
+        uint16_t retval = fApi->daqTriggerLoop( delay );
+        cout << "return value " << retval << endl;
+    }else{
+        cout << "calling api->daqTriggerLoop " << value << endl;
+        uint16_t retval = fApi->daqTriggerLoop( value );
+        cout << "return value " << retval << endl;
+    }        
     fPgRunning = true;
     return 0;
 }
@@ -1989,40 +1994,14 @@ int CmdProc::pg_stop(){
     return 0;
 }
 
-/*
-int CmdProc::pg_sequence(int seq){
-    // configure the DTB pattern generator for a simple sequence
-    // as other tests don't seem to take care of the pg configuration,
-    // this must be undone afterwards (using pg_restore)
-    vector< pair<string, uint8_t> > pgsetup;
-    if (seq & 0x10 ) { pgsetup.push_back( make_pair("sync", 10) );}
-    if (seq & 0x08 ) { pgsetup.push_back( make_pair("resr", fTRC) ); }
-    if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal",  fTCT )); }
-    if (seq & 0x02 ) { pgsetup.push_back( make_pair("trg",  fTTK )); }
-    if (seq & 0x01 ) { pgsetup.push_back( make_pair("token", 1)); }
-    uint16_t delay = 11 + fTRC+1 + fTCT+1 + fTTK+1 +2;
-    // allow enough time to fill the buffer
-    int m = (fBufsize-fTTK-20)/256;
-    if (m>0){
-        for(int i=0; i<m; i++){
-            pgsetup.push_back(make_pair("none", 255));
-            delay +=256;
-        }
-    }
-    pgsetup.push_back(make_pair("none", 255));
-    pgsetup.push_back(make_pair("none", 0));
-    delay+=256+8;
-    fPeriod = delay;
-    fApi->setPatternGenerator(pgsetup);
-    return delay;
-}
-*/
+
 
 int CmdProc::pg_sequence(int seq, int length){
     // configure the DTB pattern generator for a simple sequence
     // as other tests don't seem to take care of the pg configuration,
     // this must be undone afterwards (using pg_restore)
     vector< pair<string, uint8_t> > pgsetup;
+    if (seq & 0x20 ) { pgsetup.push_back( make_pair("resettbm", 10) );}
     if (seq & 0x10 ) { pgsetup.push_back( make_pair("sync", 10) );}
     if (seq & 0x08 ) { pgsetup.push_back( make_pair("resr", fTRC) ); }
     if (seq & 0x04 ) { pgsetup.push_back( make_pair("cal",  fTCT )); }
@@ -2063,10 +2042,13 @@ int CmdProc::tb(Keyword kw){
 
     int step, pattern, delay, value;
     string s, comment, filename;
-    if( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia(); return 0;}
-    if( kw.match("id")    ){  out <<  "id=" << fApi->getTBid(); return 0;}
-    if( kw.match("getia") ){  out <<  "ia=" << fApi->getTBia() <<"mA"; return 0;}
-    if( kw.match("getid") ){  out <<  "id=" << fApi->getTBid() <<"mA"; return 0;}
+    if( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia()<<"\n"; return 0;}
+    if( kw.match("id")    ){  out <<  "id=" << fApi->getTBid()<<"\n"; return 0;}
+    if( kw.match("va")    ){  out <<  "va=" << fApi->getTBva()<<"\n"; return 0;}
+    if( kw.match("vd")    ){  out <<  "vd=" << fApi->getTBvd()<<"\n"; return 0;}
+    if( kw.match("set","vd", value)){ return setTestboardPower("vd", value);  }
+    if( kw.match("getia") ){  out <<  "ia=" << fApi->getTBia() <<"mA\n"; return 0;}
+    if( kw.match("getid") ){  out <<  "id=" << fApi->getTBid() <<"mA\n"; return 0;}
     if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
     if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
     if( kw.match("pon")   ){ fApi->Pon(); return 0; }
@@ -2085,6 +2067,7 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("seq","rctt")){ sequence( 15 ); return 0; }
     if( kw.match("pg","restore")){ return pg_restore();}
     if( kw.match("loop") ){ return pg_loop();}
+    if( kw.match("loop", value) ){ return pg_loop(value);}
     if( kw.match("stop") ){ return pg_stop();}
     if( kw.match("pg","loop") ){ return pg_loop();}
     if( kw.match("pg","stop") ){ return pg_stop();}
@@ -2092,8 +2075,17 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("sighi",s)){ fApi->setSignalMode(s,2); return 0;}
     if( kw.match("siglo",s)){ fApi->setSignalMode(s,1); return 0;}
     if( kw.match("signorm",s)){ fApi->setSignalMode(s,0); return 0;}
-    if( kw.match("level",value)){ fSignalLevel=value; setTestboardDelay("level", value); return 0;}
+    if( kw.match("level",value)){ setTestboardDelay("level", value); return 0;}
     if( kw.match("clk",value)){ setTestboardDelay("clk", value); return 0;}
+    if( kw.match("sda",value)){ setTestboardDelay("sda", value); return 0;}
+    if( kw.match("ctr",value)){ setTestboardDelay("ctr", value); return 0;}
+    if( kw.match("tbdly",value)){ 
+            setTestboardDelay("clk",value); 
+            setTestboardDelay("ctr",value); 
+            setTestboardDelay("sda",value+15); 
+            setTestboardDelay("tin",value); 
+            return 0;
+        }
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;} 
     if( kw.match("adctest") ){ adctest("clk"); adctest("ctr"); adctest("sda"); adctest("rda"); adctest("sdata1"); adctest("sdata2"); return 0;} 
     if( kw.match("readrocs", value)){ return readRocs(value); }
@@ -2104,7 +2096,7 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("readback", "vbg") ) { return readRocs(11, 0.008,"V"); }
     if( kw.match("readback", "iana")) { return readRocs(12, 0.24,"mA"); }
     if( kw.match("readback", "ia")  ) { return readRocs(12, 0.24,"mA"); }
-    if( kw.match("tctscan")){ tctscan(); return 0;}
+    if( kw.match("scan","tct")){ tctscan(); return 0;}
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("ttk", value)){ fTTK=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("trc", value)){ fTRC=value; if (fSeq>0){sequence(fSeq);} return 0;}
@@ -2121,11 +2113,21 @@ int CmdProc::tb(Keyword kw){
         return 0;
     }
     if( kw.match("raw") ){
-        rawDump();
+        int stat = getBuffer( fBuf, 1, 0 );
+        if(stat==0){
+            printData( fBuf, 0 );
+        }else{
+            out << " error getting data\n";
+        }
         return 0;
     }
     if( kw.match("adc")){
-        printData( 1 );
+        int stat = getBuffer( fBuf, 1, 1 );
+        if(stat==0){
+            printData( fBuf, 1 );
+        }else{
+            out << " error getting data\n";
+        }
         return 0;
     }
     
@@ -2134,8 +2136,12 @@ int CmdProc::tb(Keyword kw){
         
         runDaq(fBuf, ntrig, ftrigkhz);
         
+        vector<DRecord > data;
+        int stat = getData(fBuf, data, 0);
+        
         int n=0;
         for(unsigned int i=0; i<fBuf.size(); i++){
+            
             if((fBuf[i]&0xe000)==0xa000) {
                 if(i>0) out << "\n";
                 out << dec << setfill(' ') << setw(4) << ++n << ": ";
@@ -2143,9 +2149,15 @@ int CmdProc::tb(Keyword kw){
             out << setw(4) << setfill('0') << hex << fBuf[i] << " ";
         }
         out << setfill(' ') << endl;
+        out<< dec  << stat << " errors\n";
         return 0;
         
     }
+
+    int trigsep, nburst;
+    if( kw.match("burst", ntrig, trigsep, nburst) ){ return bursttest(ntrig, trigsep, nburst);}
+    if( kw.match("burst", ntrig, trigsep) ){ return bursttest(ntrig, trigsep);}
+    if( kw.match("burst",ntrig) ){ return bursttest(ntrig);}
 
     
     if( kw.greedy_match("pgset",step, pattern, delay, comment)){
@@ -2224,13 +2236,13 @@ int CmdProc::roc( Keyword kw, int rocId){
 
 int CmdProc::tbm(Keyword kw, int cores){
     /* handle tbm commands 
-     * core=1 = TBMA, 2=TBMB, 3=both
+     * core=0= TBMA, 1=TBMB, 2=both
      * return -1 for unrecognized commands
      * return  0 for success
      * return >0 for errors
      */
      if(verbose) { cout << "tbm " << kw.keyword << " ,cores =" << cores << endl;}
-    int address, value;
+    int address, value, value1, value2;
     if (kw.match("tbmset", address, value))  { return tbmset(address, value);  }
     if (kw.match("enable", "pkam")     ){ return tbmsetbit("base0",cores, 0, 0);}
     if (kw.match("disable","pkam")     ){ return tbmsetbit("base0",cores, 0, 1);}
@@ -2238,6 +2250,7 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("ignore", "triggers") ){ return tbmsetbit("base0",cores, 4, 1);}
     if (kw.match("enable", "triggers") ){ return tbmsetbit("base0",cores, 6, 0);}
     if (kw.match("disable","triggers") ){ return tbmsetbit("base0",cores, 6, 1);}
+    if (kw.match("ntp") ){ return tbmsetbit("base0",cores, 6, 1);}
     if (kw.match("enable", "autoreset")){ return tbmsetbit("base0",cores, 7, 0);}
     if (kw.match("disable","autoreset")){ return tbmsetbit("base0",cores, 7, 1);}
     if (kw.match("mode","cal"  )    ){ return tbmset("base2",cores,   0xC0);}
@@ -2257,9 +2270,11 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("dly1",value)  ){return tbmset("basea", cores,  (value&0x7)<<3, 0x38);}
     if (kw.match("dlyhdr",value)){return tbmset("basea", cores,  (value&0x1)<<6, 0x40);}
     if (kw.match("dlytok",value)){return tbmset("basea", cores,  (value&0x1)<<7, 0x80);}
-    if (kw.match("phase400",value) ){return tbmset("basee", 1, (value&0x7)<<2, 0x1c);}
-    if (kw.match("phase160",value) ){return tbmset("basee", 1, (value&0x7)<<5, 0xe0);}
-    if (kw.match("scan")){ return  tbmscan();}
+    if (kw.match("phase400",value) ){return tbmset("basee", 0, (value&0x7)<<2, 0x1c);}
+    if (kw.match("phase160",value) ){return tbmset("basee", 0, (value&0x7)<<5, 0xe0);}
+    if (kw.match("phases",value1, value2) ){return tbmset("basee", 0, ((value1&0x7)<<2) | ((value2&0x7)<<5), 0xfc);}
+    if (kw.match("scan","tbm")){ return  tbmscan();}
+    if (kw.match("scan","rocs")){ return  rocscan();}
     return -1; // nothing done
 }
 
@@ -2305,7 +2320,7 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
     }
     
     if( keyword.match("help","seq") ){
-        out << "1=tok, 2=trg, 4=cal, 8=res, 16=sync\n";
+        out << "1=tok, 2=trg, 4=cal, 8=res, 16=sync, 32=reset-tbm\n";
         return true;
     }
     
@@ -2344,6 +2359,22 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
         out << message << "\n";
         return true;
     }   
+    
+    
+    if  ( keyword.greedy_match("decode", message) ){
+        
+        vector<uint16_t>  buf;
+        for(unsigned int i=0; i<keyword.narg(); i++){
+            stringstream ss;
+            ss << hex << keyword.argv[i].raw();
+            uint16_t x=0;
+            ss >> x;
+            buf.push_back(x);
+        }
+        printData(buf, 1);
+       
+        return true;
+    }   
 
 
 
@@ -2362,12 +2393,12 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
         }
         
         else if (target.name=="tbma")  {
-            stat =  tbm( keyword, 1 );
+            stat =  tbm( keyword, 0 );
             if ( stat >=0 ) return (stat==0);
         }
         
         else if (target.name=="tbmb")  {
-            stat =  tbm( keyword, 2 );
+            stat =  tbm( keyword, 1 );
             if ( stat >=0 ) return (stat==0);
         }
         
