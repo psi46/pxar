@@ -841,7 +841,7 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
     //    for (std::vector<std::pair<std::string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
     for (size_t idac = 0; idac < v.size(); idac++) {
       OutputFile << right << static_cast<int>(idac) << " " 
-                 << v[idac].first  
+                 << setw(11) << setfill(' ') << v[idac].first  
                  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(v[idac].second)
                  << endl;
     }
