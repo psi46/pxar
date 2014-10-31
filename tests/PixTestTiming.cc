@@ -511,9 +511,10 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
 
 // ----------------------------------------------------------------------
 void PixTestTiming::saveTbmParameters() {
-  LOG(logINFO) << "PixTestTiming:: Write Tb parameters to file.";
+  LOG(logINFO) << "PixTestTiming:: Write Tbm parameters to file.";
+  fPixSetup->getConfigParameters()->writeTbParameterFile();
   for (unsigned int itbm = 0; itbm < fApi->_dut->getNTbms(); itbm += 2) {
-    fPixSetup->getConfigParameters()->writeTbmParameterFile(itbm, fPixSetup->getConfigParameters()->getTbmDacs()[itbm], fPixSetup->getConfigParameters()->getTbmDacs()[itbm+1]);
+    fPixSetup->getConfigParameters()->writeTbmParameterFile(itbm, fApi->_dut->getTbmDACs(itbm), fApi->_dut->getTbmDACs(itbm+1));
   }
 }
 
