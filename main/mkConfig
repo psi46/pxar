@@ -380,7 +380,7 @@ targetclk           5
 ntrig               10
 clocksdascan        button
 phasescan           button
-savetbparameters    button
+savetbmparameters   button
 timingtest          button
 
 -- PixelAlive

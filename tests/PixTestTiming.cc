@@ -113,7 +113,7 @@ void PixTestTiming::doTest() {
   PixTest::update();
 
   // -- save DACs!
-  saveTbParameters();
+  saveTbmParameters();
   LOG(logINFO) << "PixTestTiming::doTest() done";
 }
 
@@ -510,9 +510,12 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestTiming::saveTbParameters() {
-  LOG(logINFO) << "PixTestTiming:: Write Tb parameters to file.";
+void PixTestTiming::saveTbmParameters() {
+  LOG(logINFO) << "PixTestTiming:: Write Tbm parameters to file.";
   fPixSetup->getConfigParameters()->writeTbParameterFile();
+  for (unsigned int itbm = 0; itbm < fApi->_dut->getNTbms(); itbm += 2) {
+    fPixSetup->getConfigParameters()->writeTbmParameterFile(itbm, fApi->_dut->getTbmDACs(itbm), fApi->_dut->getTbmDACs(itbm+1));
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -527,8 +530,8 @@ void PixTestTiming::runCommand(string command) {
     PhaseScan();
     return;
   }
-  if (!command.compare("savetbparameters")) {
-    saveTbParameters();
+  if (!command.compare("savetbmparameters")) {
+    saveTbmParameters();
     return;
   }
   if (!command.compare("timingtest")) {
