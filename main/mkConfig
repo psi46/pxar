@@ -519,7 +519,12 @@ ClkMax              19
 saveTbParameters    button
 
 -- BareModule
-ntests              3
+checkcontact        button
+pretest             button
+alive               button
+bumpbonding         button
+dofullsequence      button
+stepmax(1-3)        3
 
 EOF
 }
