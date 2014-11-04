@@ -29,6 +29,7 @@ private:
   bool fFlagSinglePix;
   int fSafetyMarginUp;
   int fSafetyMarginLow;
+  int fMinThr;
 
   ClassDef(PixTestPhOptimization, 1)
 

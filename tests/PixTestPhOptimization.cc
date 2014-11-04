@@ -125,7 +125,19 @@ void PixTestPhOptimization::doTest() {
   int cnt(0); 
   bool done(false);
 
-  int minthr=40;
+   fMinThr=0;
+  string trimfile = fPixSetup->getConfigParameters()->getTrimParameterFileName();
+  trimfile.erase(0,14); //erases 'trimParamerers' from the name of the file
+  if(0!=(trimfile.compare(""))){
+      fMinThr = atoi(trimfile.c_str());
+  }
+  else{
+    LOG(logINFO)<<"***::: The test requires a TRIMMED module, but no TrimParameterFile is loaded :::***";
+    LOG(logINFO)<<"Vcal lower sample point will be set to 40";
+    fMinThr=40;
+  }
+  //  LOG(logDEBUG)<<"fMinThr from configparameters is "<<fMinThr;//<<" "<<fMinThr<<" "<<fPixSetup->getConfigParameters()->getTrimParameterFileName();
+  //fMinThr = 40;
 
   //flag allows to choose between PhOpt on single pixel (1) or on the whole roc (0)
   pair<int, pxar::pixel> maxpixel;
@@ -194,8 +206,9 @@ void PixTestPhOptimization::doTest() {
   }
 
   fApi->setDAC("ctrlreg",4);
-  //40 should be changed to the trim target value
-  fApi->setDAC("vcal",minthr+5);
+  //fMinThr has been read from config files
+  fMinThr*=1.1;
+  fApi->setDAC("vcal",fMinThr);
   fApi->setDAC("ctrlreg",4);
   //scanning through offset and scale for min pixel (or same randpixel)
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min;
@@ -483,8 +496,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels,   s
     while(minph<1 && flag_minPh<52){
       result.clear();
       fApi->setDAC("phscale", init_phScale);
-      //40 should be changed with the trim target value
-      fApi->setDAC("vcal",40+5);
+      fApi->setDAC("vcal",fMinThr);
       fApi->setDAC("ctrlreg",4);
       fApi->setDAC("phoffset",200);  
       int cnt(0); 
