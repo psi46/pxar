@@ -282,7 +282,7 @@ protected:
   int histCycle(std::string hname);   ///< determine histogram cycle
   void fillMap(TH2D *hmod, TH2D *hroc, int iroc);  ///< provides the coordinate transformation to module map
 
-  pxar::pxarCore            *fApi;  ///< pointer to the API
+  pxar::pxarCore       *fApi;  ///< pointer to the API
   PixSetup             *fPixSetup;  ///< all necessary stuff in one place
   PixTestParameters    *fTestParameters;  ///< the repository of all test parameters
   PixInitFunc          *fPIF;    ///< function instantiation and automatic initialization
