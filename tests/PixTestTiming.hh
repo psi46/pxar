@@ -17,8 +17,9 @@ public:
     void ClkSdaScan();
     void PhaseScan();
 	void doTest();
+    void LevelScan();
     void TimingTest();
-	void saveTbmParameters();
+	void saveParameters();
 	std::vector<std::pair<std::string,uint8_t> > getDelays(uint8_t , uint8_t);
     std::pair<int, int> getGoodRegion(TH2D*, int);
 
