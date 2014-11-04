@@ -518,17 +518,16 @@ void PixTestTiming::LevelScan() {
   fApi->setPatternGenerator(pg_setup);
 
   vector<uint8_t> GoodLevels;
+  fApi->daqStart();
+  fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
+  vector<rawEvent> daqRawEv;
+  daqRawEv = fApi->daqGetRawEventBuffer();
   for (uint8_t ilevel=0; ilevel<16; ilevel++){
     LOG(logDEBUG) << "Testing Level: " << int(ilevel);
     fPixSetup->getConfigParameters()->setTbParameter("level", ilevel);
     fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
-    vector<rawEvent> daqRawEv;
-    fApi->daqStart();
-    fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-    daqRawEv = fApi->daqGetRawEventBuffer();
     fApi->daqTrigger(fNTrig,period);
     daqRawEv = fApi->daqGetRawEventBuffer();
-    fApi->daqStop();
     int ngoodevents = 0;
     for (size_t ievent=0; ievent<daqRawEv.size(); ievent++) {
       rawEvent event = daqRawEv.at(ievent);
@@ -546,6 +545,7 @@ void PixTestTiming::LevelScan() {
     if (ngoodevents) h1->Fill(int(ilevel), ngoodevents);
     if (ngoodevents==fNTrig) GoodLevels.push_back(ilevel);
   }
+  fApi->daqStop();
 
   if (GoodLevels.size()) {
     uint8_t MeanLevel = 0;
