@@ -390,10 +390,8 @@ bool hal::FindDTB(std::string &usbId) {
   }
 
   // Check if selected DTB is among connected:
-  LOG(logINFO) << "usbId == " << usbId;
   if(usbId != "*") {
     for (nr=0; nr<devList.size(); nr++) {
-      LOG(logINFO) << "devlist[" << nr << "] == " << devList.at(nr);
       if(usbId == devList.at(nr)) {
 	LOG(logINFO) << "Found DTB " << usbId;
 	return true;
