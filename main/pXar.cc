@@ -155,9 +155,12 @@ int main(int argc, char *argv[]){
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
   vector<pair<std::string, uint8_t> >          pg_setup = configParameters->getTbPgSettings();
+  string tbname = "*";
+  if (configParameters->getTbName() != "")
+    tbname = configParameters->getTbName();
 
   try {
-    api = new pxar::pxarCore("*", verbosity);
+    api = new pxar::pxarCore(tbname, verbosity);
     
     api->initTestboard(sig_delays, power_settings, pg_setup);
     api->initDUT(configParameters->getHubId(),
