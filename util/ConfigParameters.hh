@@ -74,6 +74,7 @@ public:
   std::string getRocType()                {return fRocType;}
   std::string getTbmType()                {return fTbmType;}
   std::string getHdiType()                {return fHdiType;}
+  std::string getTbName()                 {return fTBName;}
 
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
