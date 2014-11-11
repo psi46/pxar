@@ -724,8 +724,11 @@ namespace pxar {
      *  Returns true if everything is setup correctly for operation
      */
     bool status();
-    
-    
+
+    /** Get ADC value
+     */
+    uint16_t GetADC( uint8_t rpc_par1 ) ;
+
   private:
 
     /** Private HAL object for the API to access hardware routines

@@ -57,6 +57,8 @@ public:
   bool isHvOn() {return fHV;}
   void hvOn();
   void hvOff();
+  void powerOn();
+  void powerOff();
 
   PixTest* createTest(std::string); 
 
@@ -72,6 +74,7 @@ public:
 
   ULong_t   fRed, fGreen, fYellow, fWhite, fDarkSeaGreen, fDarkOrange, fLavender, fDarkGray, fDarkSalmon; 
 
+  std::string getHdiType();
   
 private: 
 

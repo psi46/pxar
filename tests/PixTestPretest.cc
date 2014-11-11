@@ -22,8 +22,7 @@ PixTest(a, name),
   fParNtrig(-1), 
   fParVcal(200), 
   fParDeltaVthrComp(-50), 
-  fParFracCalDel(0.5), 
-  fProblem(false) {
+  fParFracCalDel(0.5) {
   PixTest::init();
   init(); 
 }

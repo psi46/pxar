@@ -192,6 +192,7 @@ void PixTestAlive::aliveTest() {
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
 
   //  PixTest::hvOff();
+  //  PixTest::powerOff(); 
 }
 
 

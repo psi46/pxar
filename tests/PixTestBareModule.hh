@@ -15,14 +15,14 @@ public:
 	void bookHist(std::string);
 	
 	void runCommand(std::string );
-	bool checkIfInContact();
+	bool checkIfInContact(bool );
 	void doStdTest(std::string );
-	void doTestRoc(int );
+	bool doRocTests(int );
 	void doTest();
 
 private:
 
-	int  fParNSteps;
+	int  fParMaxSteps;
 	bool fStop;
 
 	ClassDef(PixTestBareModule, 1)

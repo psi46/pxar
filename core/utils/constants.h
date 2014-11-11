@@ -43,13 +43,14 @@ namespace pxar {
 #define MOD_NUMROCS 16
 
 // --- ROC Types ---------------------------------------------------------------
-#define ROC_PSI46V2        0x01
-#define ROC_PSI46XDB       0x02
-#define ROC_PSI46DIG       0x03
-#define ROC_PSI46DIG_TRIG  0x04
-#define ROC_PSI46DIGV2_B   0x05
-#define ROC_PSI46DIGV2     0x06
-#define ROC_PSI46DIGV21    0x07
+#define ROC_PSI46V2           0x01
+#define ROC_PSI46XDB          0x02
+#define ROC_PSI46DIG          0x03
+#define ROC_PSI46DIG_TRIG     0x04
+#define ROC_PSI46DIGV2_B      0x05
+#define ROC_PSI46DIGV2        0x06
+#define ROC_PSI46DIGV21       0x07
+#define ROC_PSI46DIGV21RESPIN 0x08
 
 
 // --- ROC DACs ---------------------------------------------------------------

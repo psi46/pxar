@@ -30,6 +30,8 @@ PixTest::PixTest(PixSetup *a, string name) {
   fTestParameters = a->getPixTestParameters(); 
   fTimeStamp      = new TTimeStamp(); 
 
+  fProblem        = false; 
+
   fName = name;
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
@@ -529,14 +531,26 @@ void PixTest::update() {
 
 // ----------------------------------------------------------------------
 void PixTest::hvOn() {
-  cout << "PixTest::hvOn()" << endl;
+  //  cout << "PixTest::hvOn()" << endl;
   Emit("hvOn()"); 
 }
 
 // ----------------------------------------------------------------------
 void PixTest::hvOff() {
-  cout << "PixTest::hvOff()" << endl;
+  //  cout << "PixTest::hvOff()" << endl;
   Emit("hvOff()"); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::powerOn() {
+  //  cout << "PixTest::powerOn()" << endl;
+  Emit("powerOn()"); 
+}
+
+// ----------------------------------------------------------------------
+void PixTest::powerOff() {
+  //  cout << "PixTest::powerOff()" << endl;
+  Emit("powerOff()"); 
 }
 
 
@@ -1544,6 +1558,7 @@ void PixTest::pgToDefault() {
   fPg_setup.clear();
   fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
   fApi->setPatternGenerator(fPg_setup);
+  LOG(logINFO) << "PixTest::       pg_setup set to default.";
 }
 
 // ----------------------------------------------------------------------
@@ -1553,7 +1568,7 @@ void PixTest::finalCleanup() {
 }
 
 // ----------------------------------------------------------------------
-void PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
+void PixTest::resetROC() {
   // -- setup DAQ for data taking
   fPg_setup.clear();
   fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
@@ -1561,18 +1576,43 @@ void PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
+  LOG(logDEBUG) << "PixTest: resetROC sent once.";
   fApi->daqStop();
   fPg_setup.clear();
-  setTriggerFrequency(triggerFreq, trgTkDel);
-  fApi->setPatternGenerator(fPg_setup);
 }
 
 // ----------------------------------------------------------------------
-void PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
+void PixTest::resetTBM() {
+  // -- setup DAQ for data taking
+  fPg_setup.clear();
+  fPg_setup.push_back(make_pair("resettbm", 0)); // PG_RESR b001000
+  uint16_t period = 28;
+  fApi->setPatternGenerator(fPg_setup);
+  fApi->daqStart();
+  fApi->daqTrigger(1, period);
+  LOG(logDEBUG) << "PixTest: resetTBM sent once.";
+  fApi->daqStop();
+  fPg_setup.clear();
+}
+
+// ----------------------------------------------------------------------
+uint16_t PixTest::prepareDaq(int triggerFreq, uint8_t trgTkDel) {
+  resetROC(); 
+  uint16_t totalPeriod = setTriggerFrequency(triggerFreq, trgTkDel);
+  fApi->setPatternGenerator(fPg_setup);
+  return totalPeriod;
+}
+
+// ----------------------------------------------------------------------
+uint16_t PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
+
+  uint16_t nDel = 0;
+  uint16_t totalPeriod = 0;
+  
   double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
   double clkDelays = period_ns / 25 - trgTkDel;
-  uint16_t ClkDelays = (uint16_t)clkDelays; //debug -- aprox to def
-
+  uint16_t ClkDelays = (uint16_t)clkDelays; // aproximate to defect
+  
   fPg_setup.clear();
   
   // -- add right delay between triggers:
@@ -1580,16 +1620,18 @@ void PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
   while (i>255){
     fPg_setup.push_back(make_pair("delay", 255));
     i = i - 255;
+    nDel++;
   }
   fPg_setup.push_back(make_pair("delay", i));
   
   // -- then send trigger and token:
-  fPg_setup.push_back(make_pair("trg", trgTkDel));	// PG_TRG b000010
-  fPg_setup.push_back(make_pair("tok", 0));	// PG_TOK
+  fPg_setup.push_back(make_pair("trg", trgTkDel));    // PG_TRG b000010
+  fPg_setup.push_back(make_pair("tok", 0));    // PG_TOK
   if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
-	  
+  
+  totalPeriod = ((uint16_t)period_ns / 25) + 4 + nDel; //+4 to align to the new pg minimum (1 additional clk cycle per PG call);
+  return totalPeriod;
 }
-
 
 // ----------------------------------------------------------------------
 void PixTest::maskHotPixels(std::vector<TH2D*> v) {
@@ -1604,7 +1646,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
 
-  prepareDaq(TRGFREQ, (uint8_t)500);
+  int totalPeriod = prepareDaq(TRGFREQ, (uint8_t)500);
   
   timer t;
   uint8_t perFull;
@@ -1612,7 +1654,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
     
   fApi->daqStart();
 
-  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::maskHotPixels start TriggerLoop with period " << finalPeriod 
 	       << " and duration " << NSECONDS << " seconds and trigger rate " << TRGFREQ << " kHz";
   
@@ -1630,7 +1672,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
       }
 
       LOG(logINFO) << "Resuming triggers.";
-      fApi->daqTriggerLoop();
+	  fApi->daqTriggerLoop(finalPeriod);
     }
     
     if (static_cast<int>(t.get()/1000) >= NSECONDS)	{

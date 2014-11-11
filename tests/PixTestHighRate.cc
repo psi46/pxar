@@ -3,13 +3,16 @@
 #include <algorithm>    // std::find
 #include <iostream>
 #include <fstream>
+
 #include "PixTestHighRate.hh"
 #include "log.h"
+#include "timer.h"
+
+#include "PixUtil.hh"
 
 
 #include <TH2.h>
 #include <TMath.h>
-#include "../core/utils/timer.h"
 
 using namespace std;
 using namespace pxar;
@@ -54,10 +57,14 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("delaytbm")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
 	fParDelayTBM = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
       if (!parName.compare("filltree")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
 	fParFillTree = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
@@ -83,6 +90,10 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 void PixTestHighRate::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
+
+  if (!command.compare("stop")){
+     doStop();
+  }
 
   if (!command.compare("maskhotpixels")) {
     doRunMaskHotPixels(); 
@@ -119,6 +130,8 @@ void PixTestHighRate::setToolTips() {
   fTestTip    = string("Xray vcal calibration test")
     ;
   fSummaryTip = string("to be implemented")
+    ;
+  fStopTip = string("Stop 'rundaq' and save data.")
     ;
 }
 
@@ -173,11 +186,34 @@ void PixTestHighRate::doXPixelAlive() {
   fDirectory->cd();
   PixTest::update(); 
 
-  fApi->setDAC("ctrlreg", 4);
+  //??  fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+    vector<pair<int, int> > hot = fHotPixels[i]; 
+    for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second; 
+      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i)); 
+    }
+  }
+  maskPixels();
+
+  // -- pattern generator setup without resets
+  resetROC();
+  fPg_setup.clear();
+  vector<pair<string, uint8_t> > pgtmp = fPixSetup->getConfigParameters()->getTbPgSettings();
+  for (unsigned i = 0; i < pgtmp.size(); ++i) {
+    if (string::npos != pgtmp[i].first.find("resetroc")) continue;
+    if (string::npos != pgtmp[i].first.find("resettbm")) continue;
+    fPg_setup.push_back(pgtmp[i]);
+  }
+  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
+
+  fApi->setPatternGenerator(fPg_setup);
+
+
  
   pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("highRate", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED); 
   vector<TH2D*> test2 = tests.first;
@@ -185,15 +221,21 @@ void PixTestHighRate::doXPixelAlive() {
   vector<int> deadPixel(test2.size(), 0); 
   vector<int> probPixel(test2.size(), 0);
   vector<int> xHits(test3.size(),0);
-  vector<int> vCalHits (test2.size(),0);   
+  vector<int> fidHits(test2.size(),0);   
+  vector<int> allHits(test2.size(),0);   
+  vector<int> fidPixels(test2.size(),0);   
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
     fHistOptions.insert(make_pair(test3[i], "colz"));    
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
-        vCalHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
+        allHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
+	if ((ix > 1) && (ix < 50) && (iy < 79) && (test2[i]->GetBinContent(ix+1, iy+1) > 0)) {
+	  fidHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
+	  ++fidPixels[i];
+	}
 	// -- count dead pixels
-        if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
+	if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
 	  ++probPixel[i];
 	  if (test2[i]->GetBinContent(ix+1, iy+1) < 1) {
 	    ++deadPixel[i];
@@ -217,27 +259,35 @@ void PixTestHighRate::doXPixelAlive() {
   // -- summary printout
   //  int nrocs = fApi->_dut->getNEnabledRocs();
   double sensorArea = 0.015 * 0.010 * 54 * 81; // in cm^2, accounting for larger edge pixels (J. Hoss 2014/10/21)
-  string deadPixelString, probPixelString, xHitsString, numTrigsString, vCalHitsString,xRayHitEfficiencyString,xRayRateString;
+  string deadPixelString, probPixelString, xHitsString, numTrigsString, 
+    fidCalHitsString, allCalHitsString, 
+    fidCalEfficiencyString, allCalEfficiencyString, 
+    xRayRateString;
   for (unsigned int i = 0; i < probPixel.size(); ++i) {
     probPixelString += Form(" %4d", probPixel[i]); 
     deadPixelString += Form(" %4d", deadPixel[i]);
     xHitsString     += Form(" %4d", xHits[i]);
-    vCalHitsString += Form(" %4d",vCalHits[i]); 
+    allCalHitsString += Form(" %4d", allHits[i]); 
+    fidCalHitsString += Form(" %4d", fidHits[i]); 
     int numTrigs = fParNtrig * 4160;
     numTrigsString += Form(" %4d", numTrigs );
-    xRayHitEfficiencyString += Form(" %.1f", (vCalHits[i]+fParNtrig*deadPixel[i])/static_cast<double>(numTrigs)*100);
+    fidCalEfficiencyString += Form(" %.1f", fidHits[i]/static_cast<double>(fidPixels[i]*fParNtrig)*100);
+    allCalEfficiencyString += Form(" %.1f", allHits[i]/static_cast<double>(numTrigs)*100);
     xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./sensorArea*1000.);
   }
-
+  
   LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
   LOG(logINFO) << "number of red-efficiency pixels:    " << probPixelString;
   LOG(logINFO) << "number of X-ray hits detected: " << xHitsString;
   LOG(logINFO) << "number of triggers sent (total per ROC): " << numTrigsString;
-  LOG(logINFO) << "number of Vcal hits detected: " << vCalHitsString;
-  LOG(logINFO) << "Vcal hit detection efficiency (%): " << xRayHitEfficiencyString;
+  LOG(logINFO) << "number of Vcal hits detected: " << allCalHitsString;
+  LOG(logINFO) << "Vcal hit fiducial efficiency (%): " << fidCalEfficiencyString;
+  LOG(logINFO) << "Vcal hit overall efficiency (%): " << allCalEfficiencyString;
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
   LOG(logINFO) << "PixTestHighRate::doXPixelAlive() done";
   restoreDacs();
+
+  finalCleanup();
 }
 
 
@@ -303,10 +353,10 @@ void PixTestHighRate::doRunDaq() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 
-  prepareDaq(fParTriggerFrequency, 50);
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
   fApi->daqStart();
 
-  int finalPeriod = fApi->daqTriggerLoop(0);  //period is automatically set to the minimum by Api function
+  int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::doHitMap start TriggerLoop with trigger frequency " << fParTriggerFrequency 
 	       << ", period " << finalPeriod 
 	       << " and duration " << nseconds << " seconds";
@@ -322,7 +372,7 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
       fApi->daqTriggerLoopHalt();
       fillMap(h);
       LOG(logINFO) << "Resuming triggers.";
-      fApi->daqTriggerLoop();
+	  fApi->daqTriggerLoop(finalPeriod);
     }
     
     if (static_cast<int>(t.get()/1000) >= nseconds)	{
@@ -372,4 +422,11 @@ void PixTestHighRate::doRunMaskHotPixels() {
   v[0]->Draw("colz");
   PixTest::update(); 
   return;
+}
+
+// ----------------------------------------------------------------------
+void PixTestHighRate::doStop(){
+	// Interrupt the test 
+	fDaq_loop = false;
+	LOG(logINFO) << "Stop pressed. Ending test.";
 }

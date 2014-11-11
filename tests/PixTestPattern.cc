@@ -123,6 +123,8 @@ bool PixTestPattern::setParameter(string parName, string sval)
 			}
 
 			if (!parName.compare("filltree")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
 				fParFillTree = !(atoi(sval.c_str()) == 0);
 				setToolTips();
 			}

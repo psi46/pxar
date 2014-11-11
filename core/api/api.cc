@@ -1118,6 +1118,10 @@ std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
 // DAQ functions
 
 bool pxarCore::daqStart() {
+  return daqStart(_daq_buffersize,true);
+}
+
+bool pxarCore::daqStart(const int buffersize, const bool init) {
 
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
@@ -1125,25 +1129,38 @@ bool pxarCore::daqStart() {
   // Clearing previously initialized DAQ sessions:
   _hal->daqClear();
 
+  // Check requested buffer size:
+  if(buffersize > DTB_SOURCE_BUFFER_SIZE) {
+    LOG(logWARNING) << "Requested buffer size too large, setting to max. " \
+		    << DTB_SOURCE_BUFFER_SIZE;
+    _daq_buffersize = DTB_SOURCE_BUFFER_SIZE;
+  }
+  else { _daq_buffersize = buffersize; }
+
+
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
   
-  // Setup the configured mask and trim state of the DUT:
-  MaskAndTrim(true);
+  // Check if we want to program the DUT or just leave it:
+  if(init) {
+    // Setup the configured mask and trim state of the DUT:
+    MaskAndTrim(true);
 
-  // Set Calibrate bits in the PUCs (we use the testrange for that):
-  SetCalibrateBits(true);
+    // Set Calibrate bits in the PUCs (we use the testrange for that):
+    SetCalibrateBits(true);
 
-  // Attaching all columns to the readout:
-  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-    _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+    // Attaching all columns to the readout:
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+    }
   }
+  else { LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; }
 
   // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
   uint8_t type = 0x0;
   if(!_dut->tbm.empty()) { type = _dut->tbm.at(0).type; }
 
   // And start the DAQ session:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type,_daq_buffersize);
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type,buffersize);
 
   _daq_running = true;
   return true;
@@ -1285,6 +1302,10 @@ uint32_t pxarCore::daqGetNDecoderErrors() {
 
 
 bool pxarCore::daqStop() {
+  return daqStop(true);
+}
+
+bool pxarCore::daqStop(const bool init) {
 
   if(!status()) {return false;}
   if(!_daq_running) {
@@ -1297,16 +1318,20 @@ bool pxarCore::daqStop() {
   // Stop all active DAQ channels:
   _hal->daqStop();
 
-  // Mask all pixels in the device again:
-  MaskAndTrim(false);
+  // If the init flag is set, mask and clear the DUT again:
+  if(init) {
+    // Mask all pixels in the device again:
+    MaskAndTrim(false);
 
-  // Reset all the Calibrate bits and signals:
-  SetCalibrateBits(false);
+    // Reset all the Calibrate bits and signals:
+    SetCalibrateBits(false);
 
-  // Detaching all columns to the readout:
-  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-    _hal->AllColumnsSetEnable(rocit->i2c_address,false);
+    // Detaching all columns to the readout:
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+      _hal->AllColumnsSetEnable(rocit->i2c_address,false);
+    }
   }
+  else { LOG(logWARNING) << "Not masking DUT, not clearing Calibrate bits!"; }
 
   return true;
 }
@@ -1471,8 +1496,9 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   // update the internal decoder error count for this data sample
   getDecoderErrorCount();
 
-  // Test is over, mask the whole device again:
+  // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);
+  SetCalibrateBits(false);
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
@@ -2153,60 +2179,10 @@ void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
   
 }
 
-
-// alternative daq methods for module debugging
-
-bool pxarCore::daqStart(const int bufsize, const bool init) {
-
-  if(!status()) {return false;}
-  if(daqStatus()) {return false;}
-  _hal->daqClear();
-
-  if (init){
+uint16_t pxarCore::GetADC( uint8_t rpc_par1 ){
   
-    MaskAndTrim(true);
-    SetCalibrateBits(true);
-    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-        _hal->AllColumnsSetEnable(rocit->i2c_address,true);
-    }
-  }
+  if( ! status() ) { return 0; } 
 
-  // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
-  uint8_t type = 0x0;
-  if(!_dut->tbm.empty()) { type = _dut->tbm.at(0).type; }
+  return _hal->GetADC( rpc_par1 );
 
-  // And start the DAQ session:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type, bufsize);
-
-  _daq_running = true;
-  return true;
 }
-
-bool pxarCore::daqStop(const bool init) {
-
-  if(!status()) {return false;}
-  if(!_daq_running) {
-    return false;
-  }
-
-  _daq_running = false;
-  
-  // Stop all active DAQ channels:
-  _hal->daqStop();
-
-  // Mask all pixels in the device again:
-  if(init){
-    MaskAndTrim(false);
-
-    // Reset all the Calibrate bits and signals:
-    SetCalibrateBits(false);
-
-    // Detaching all columns to the readout:
-    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-        _hal->AllColumnsSetEnable(rocit->i2c_address,false);
-    }
-  }
-
-  return true;
-}
-

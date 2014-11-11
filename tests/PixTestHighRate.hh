@@ -22,6 +22,7 @@ public:
   void doXPixelAlive();
   void doRunDaq(); 
   void doRunMaskHotPixels();
+  void doStop();
 
   void doHitMap(int nseconds, std::vector<TH2D*>);
   void fillMap(std::vector<TH2D*>);

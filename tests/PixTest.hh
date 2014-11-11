@@ -92,6 +92,8 @@ public:
   std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
   /// mask all pixels mentioned in the mask file
   void maskPixels();     
+  /// query whether test 'failed'
+  bool testProblem() {return fProblem;}
 
   /// implement this to provide updated tool tips if the user changes test parameters
   virtual void setToolTips();
@@ -144,10 +146,14 @@ public:
 
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
+  /// send reset to ROC(s)
+  void resetROC();
+  /// send reset to TBM(s)
+  void resetTBM();
   /// set up DAQ (including call to setTriggerFrequency)
-  void prepareDaq(int triggerFreq, uint8_t trgTkDel);
+  uint16_t prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
-  void setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
+  uint16_t setTriggerFrequency(int triggerFreq, uint8_t TrgTkDel);
   /// functions for DAQ
   void finalCleanup();
   void pgToDefault();
@@ -261,6 +267,10 @@ public:
   void hvOff();  // *SIGNAL*
   /// turn HV on
   void hvOn();  // *SIGNAL*
+  /// turn DTB power off
+  void powerOff();  // *SIGNAL*
+  /// turn DTB power on
+  void powerOn();  // *SIGNAL*
   /// allow forward iteration through list of histograms
   TH1* nextHist(); 
   /// allow backward iteration through list of histograms
@@ -272,7 +282,7 @@ protected:
   int histCycle(std::string hname);   ///< determine histogram cycle
   void fillMap(TH2D *hmod, TH2D *hroc, int iroc);  ///< provides the coordinate transformation to module map
 
-  pxar::pxarCore            *fApi;  ///< pointer to the API
+  pxar::pxarCore       *fApi;  ///< pointer to the API
   PixSetup             *fPixSetup;  ///< all necessary stuff in one place
   PixTestParameters    *fTestParameters;  ///< the repository of all test parameters
   PixInitFunc          *fPIF;    ///< function instantiation and automatic initialization
@@ -299,6 +309,9 @@ protected:
   TTree                *fTree; 
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
+
+  bool                  fProblem;
+  
 
   // -- data members for DAQ purposes
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;

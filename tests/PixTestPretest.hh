@@ -30,9 +30,6 @@ private:
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
   double  fParFracCalDel;
-  bool    fProblem;
-   
-
 
   ClassDef(PixTestPretest, 1)
 
