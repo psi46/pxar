@@ -1051,9 +1051,6 @@ void ConfigParameters::readNrocs(string line) {
     }
     //  -- get the last one as well
     fIc2Addresses.push_back(atoi(ic2string.c_str())); 
-    for (unsigned int i = 0; i < fIc2Addresses.size(); ++i) {
-      cout << "ic2 " << i << ": " << (int)fIc2Addresses[i] << endl;
-    }
     if (fnRocs != fIc2Addresses.size()) {
       LOG(logWARNING) << "mismatch between number of ic2 addresses and nRocs! Resetting nRocs to " 
 		      <<  fIc2Addresses.size();
