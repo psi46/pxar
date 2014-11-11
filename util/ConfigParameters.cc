@@ -42,9 +42,8 @@ void ConfigParameters::initialize() {
   fnTbms = 1; 
   fnModules = 1;
   fHubId = 31;
+  fIc2Addresses.clear(); 
   
-  fCustomModule = 0;
-
   fHvOn = true;
   fTbmEnable = true;
   fTbmEmulator = false;
@@ -81,7 +80,7 @@ void ConfigParameters::initialize() {
   fProbeD2 = "ctr";
 
   rocZeroAnalogCurrent = 0.0;
-  fRocType = "psi46v2";
+  fRocType = "psi46digv21respin";
   fTbmType = ""; 
   fHdiType = "bpix"; 
 }
@@ -164,10 +163,9 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("maskFile")) { setMaskFileName(_value); }
 
       else if (0 == _name.compare("nModules")) { fnModules                  = _ivalue; }
-      else if (0 == _name.compare("nRocs")) { fnRocs                     = _ivalue; }
+      else if (0 == _name.compare("nRocs")) { readNrocs(_istring.str()); }
       else if (0 == _name.compare("nTbms")) { fnTbms                     = _ivalue; }
       else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
-      else if (0 == _name.compare("customModule")) { fCustomModule              = _ivalue; }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
@@ -731,8 +729,6 @@ bool ConfigParameters::writeConfigParameterFile() {
 
   fprintf(file, "-- configuration\n\n");
 
-  if (fCustomModule) fprintf(file, "customModule %i\n", fCustomModule);
-
   fprintf(file, "nModules %i\n", fnModules);
   fprintf(file, "nRocs %i\n", fnRocs);
   fprintf(file, "nTbms %i\n", fnTbms);
@@ -744,7 +740,6 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "rocType %s\n", fRocType.c_str());
   if (fnTbms > 0) fprintf(file, "tbmType %s\n", fTbmType.c_str());
   fprintf(file, "hdiType %s\n", fHdiType.c_str());
-  fprintf(file, "halfModule %i\n", fHalfModule);
 
   fprintf(file, "\n");
   fprintf(file, "-- voltages and current limits\n\n");
@@ -1031,5 +1026,37 @@ void ConfigParameters::replaceAll(string& str, const string& from, const string&
   while((start_pos = str.find(from, start_pos)) != string::npos) {
     str.replace(start_pos, from.length(), to);
     start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+  }
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readNrocs(string line) {
+  cleanupString(line);
+  string::size_type s0 = line.find(" "); 
+  string nrocs = line.substr(s0); 
+  fnRocs = atoi(nrocs.c_str()); 
+  string::size_type s1 = line.find("ic2:"); 
+  if (string::npos == s1) {
+    return;
+  } else {
+    string ic2string = line.substr(s1+5);
+    s0 = ic2string.find(","); 
+    string ic2(""), leftover("");
+    while (string::npos != s0) {
+      ic2 = ic2string.substr(0, s0);
+      fIc2Addresses.push_back(atoi(ic2.c_str())); 
+      ic2string = ic2string.substr(s0+1); 
+      s0 = ic2string.find(","); 
+    }
+    //  -- get the last one as well
+    fIc2Addresses.push_back(atoi(ic2string.c_str())); 
+    for (unsigned int i = 0; i < fIc2Addresses.size(); ++i) {
+      cout << "ic2 " << i << ": " << (int)fIc2Addresses[i] << endl;
+    }
+    if (fnRocs != fIc2Addresses.size()) {
+      LOG(logWARNING) << "mismatch between number of ic2 addresses and nRocs! Resetting nRocs to " 
+		      <<  fIc2Addresses.size();
+      fnRocs =  fIc2Addresses.size(); 
+    }
   }
 }
