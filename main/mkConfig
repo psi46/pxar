@@ -23,7 +23,7 @@ use Getopt::Std;
 getopts('d:fhmp:r:t:');
 
 # -- define known hardware types
-my @rocok = ("digv2", "digv21");
+my @rocok = ("digv2", "digv21", "digv21respin");
 my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM09");
 
 if ($opt_h) {
@@ -52,7 +52,7 @@ if ($opt_m) {
 
 # -- ROC type from either command line or by default
 my $dacs = "";
-my $roctype = "digv21";
+my $roctype = "digv21respin";
 if ($opt_r) {
     if (grep(/$opt_r/, @rocok)) {
 	$roctype = $opt_r;
@@ -175,7 +175,27 @@ sub setTbms {
 # ----------------------------------------------------------------------
 sub setDacs {
     $dacs = "";
-    if ($roctype eq "digv21") {
+    if ($roctype eq "digv21respin") {
+	$dacs .= "  1 vdig       6  \n";
+	$dacs .= "  2 vana       78 \n";
+	$dacs .= "  3 vsh        30 \n";
+	$dacs .= "  4 vcomp      12 \n";
+	$dacs .= "  7 vwllpr     150\n";
+	$dacs .= "  9 vwllsh     150\n";
+	$dacs .= " 10 vhlddel    250\n";
+	$dacs .= " 11 vtrim      0  \n";
+	$dacs .= " 12 vthrcomp   85 \n";
+	$dacs .= " 13 vibias_bus 30 \n";
+	$dacs .= " 17 phoffset   170\n";
+	$dacs .= " 19 vcomp_adc  50 \n";
+	$dacs .= " 20 phscale    130\n";
+	$dacs .= " 22 vicolor    10\n";
+	$dacs .= " 25 vcal       200\n";
+	$dacs .= " 26 caldel     96 \n";
+	$dacs .= "253 ctrlreg    0  \n";
+	$dacs .= "254 wbc        100\n";
+	$dacs .= "255 readback   0  \n";
+    } elsif ($roctype eq "digv21") {
 	$dacs .= "  1 vdig       6  \n";
 	$dacs .= "  2 vana       78 \n";
 	$dacs .= "  3 vsh        30 \n";
@@ -294,6 +314,7 @@ rootFileName pxar.root
 -- configuration
 
 nModules 1
+#nRocs $nrocs ic2: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
 nRocs $nrocs
 nTbms $ntbms
 EOF
@@ -315,7 +336,10 @@ if ($roctype eq "digv21") {
     print FH "rocType psi46digv2.1\n";
 } elsif ($roctype eq "digv2") {
     print FH "rocType psi46digv2\n";
+} elsif ($roctype eq "digv21respin") {
+    print FH "rocType psi46digv21respin\n";
 }
+
 
 if ($opt_m) {
     if ($tbmtype eq "TBM08") {
@@ -336,8 +360,6 @@ if ($opt_m) {
     }
 }
     print FH <<"EOF";
-
-halfModule 0
 
 probeA1 sdata1
 probeA2 sdata2
@@ -689,7 +711,7 @@ Options   -d directory              the directory into which all config files wi
           -h                        list all known ROC and TBM types and print help message
           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
 
-The default choices are: digv21 and TBM08
+The default choices are: digv21respin and TBM08
 EOF
 
     print "for all other questions, read the source code ... \n";
