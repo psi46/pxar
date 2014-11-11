@@ -1471,8 +1471,9 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   // update the internal decoder error count for this data sample
   getDecoderErrorCount();
 
-  // Test is over, mask the whole device again:
+  // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);
+  SetCalibrateBits(false);
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
