@@ -1129,6 +1129,15 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   // Clearing previously initialized DAQ sessions:
   _hal->daqClear();
 
+  // Check requested buffer size:
+  if(buffersize > DTB_SOURCE_BUFFER_SIZE) {
+    LOG(logWARNING) << "Requested buffer size too large, setting to max. " \
+		    << DTB_SOURCE_BUFFER_SIZE;
+    _daq_buffersize = DTB_SOURCE_BUFFER_SIZE;
+  }
+  else { _daq_buffersize = buffersize; }
+
+
   LOG(logDEBUGAPI) << "Starting new DAQ session...";
   
   // Check if we want to program the DUT or just leave it:
@@ -1144,6 +1153,7 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
       _hal->AllColumnsSetEnable(rocit->i2c_address,true);
     }
   }
+  else { LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; }
 
   // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
   uint8_t type = 0x0;
@@ -1321,6 +1331,7 @@ bool pxarCore::daqStop(const bool init) {
       _hal->AllColumnsSetEnable(rocit->i2c_address,false);
     }
   }
+  else { LOG(logWARNING) << "Not masking DUT, not clearing Calibrate bits!"; }
 
   return true;
 }
