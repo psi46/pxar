@@ -88,8 +88,8 @@ public:
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
   std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
-  bool customIc2Addresses() {return fIc2Addresses.size() > 0;} 
-  std::vector<uint8_t> getIc2Addresses() {return fIc2Addresses;}
+  bool customI2cAddresses() {return fI2cAddresses.size() > 0;} 
+  std::vector<uint8_t> getI2cAddresses() {return fI2cAddresses;}
 
   bool setTbParameter(std::string, uint8_t);
   bool setTbPowerSettings(std::string, double);
@@ -153,7 +153,7 @@ private:
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fHalfModule;
-  std::vector<uint8_t> fIc2Addresses; 
+  std::vector<uint8_t> fI2cAddresses; 
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;
