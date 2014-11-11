@@ -272,14 +272,15 @@ namespace pxar {
       // Device name and types
 
       // ROC flavors:
-      _devices["psi46v2"]       = ROC_PSI46V2;
-      _devices["psi46xdb"]      = ROC_PSI46XDB;
-      _devices["psi46dig"]      = ROC_PSI46DIG;
-      _devices["psi46dig_trig"] = ROC_PSI46DIG_TRIG;
-      _devices["psi46digv2_b"]  = ROC_PSI46DIGV2_B;
-      _devices["psi46digv2"]    = ROC_PSI46DIGV2;
-      _devices["psi46digv2.1"]  = ROC_PSI46DIGV21;
-      _devices["psi46digv21"]  = ROC_PSI46DIGV21;
+      _devices["psi46v2"]           = ROC_PSI46V2;
+      _devices["psi46xdb"]          = ROC_PSI46XDB;
+      _devices["psi46dig"]          = ROC_PSI46DIG;
+      _devices["psi46dig_trig"]     = ROC_PSI46DIG_TRIG;
+      _devices["psi46digv2_b"]      = ROC_PSI46DIGV2_B;
+      _devices["psi46digv2"]        = ROC_PSI46DIGV2;
+      _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
+      _devices["psi46digv21"]       = ROC_PSI46DIGV21;
+      _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
       // This name is not correct, but kept for legacy reasons:
       _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 

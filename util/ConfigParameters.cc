@@ -83,6 +83,7 @@ void ConfigParameters::initialize() {
   fRocType = "psi46digv21respin";
   fTbmType = ""; 
   fHdiType = "bpix"; 
+  fTBName = "*"; 
 }
 
 
