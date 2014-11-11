@@ -309,10 +309,13 @@ class CmdProc {
   vector<string> fA_names;
   static const unsigned int fnDAC_names;
   static const char * const fDAC_names[];
+  static int fGetBufMethod;
+  
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
   vector<uint16_t>  fBuf;
+  unsigned int fNumberOfEvents;
   unsigned int fSeq;
   unsigned int fPeriod;
   vector<pair<string,uint8_t> > fSigdelays;
@@ -337,10 +340,11 @@ class CmdProc {
   int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
   
   int countHits();
-  int countErrors(int ntrig=1, int nroc_expected=-1);
+  int countErrors(unsigned int ntrig=1, int nroc_expected=-1);
   int printData(vector<uint16_t> buf, int level);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
-  int getBuffer(vector<uint16_t> & buf, int ntrig=1, int verbosity=1);
+  int getBuffer(vector<uint16_t> & buf);
+  int getBuffer(vector<uint16_t> & buf, int ntrig, int verbosity=1);
   int runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0);
   int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
   int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1);
