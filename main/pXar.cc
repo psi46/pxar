@@ -160,10 +160,22 @@ int main(int argc, char *argv[]){
     api = new pxar::pxarCore("*", verbosity);
     
     api->initTestboard(sig_delays, power_settings, pg_setup);
-    api->initDUT(configParameters->getHubId(),
-		 configParameters->getTbmType(), tbmDACs, 
-		 configParameters->getRocType(), rocDACs, 
-		 rocPixels);
+    if (configParameters->customIc2Addresses()) {
+      string i2cstring("");
+      vector<uint8_t> ic2Addr = configParameters->getIc2Addresses(); 
+      for (unsigned int i = 0; i < ic2Addr.size(); ++i) i2cstring += Form(" %d", (int)ic2Addr[i]); 
+      LOG(logINFO) << "custom i2c addresses: " << i2cstring; 
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels, 
+		   ic2Addr);
+    } else {
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels);
+    }
 
     // -- Set up the four signal probe outputs:
     api->SignalProbe("a1", configParameters->getProbe("a1"));
