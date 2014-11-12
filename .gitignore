@@ -6,7 +6,8 @@ obj/
 
 # root files do not belong into the repository
 *.root
-
+*.pdf
+*.png
 
 # ignore backup files of any sort of editor:
 ~*

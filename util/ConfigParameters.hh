@@ -74,6 +74,7 @@ public:
   std::string getRocType()                {return fRocType;}
   std::string getTbmType()                {return fTbmType;}
   std::string getHdiType()                {return fHdiType;}
+  std::string getTbName()                 {return fTBName;}
 
   std::vector<std::pair<std::string,uint8_t> >  getTbParameters();
   std::vector<std::pair<std::string,double> >  getTbPowerSettings();
@@ -87,6 +88,8 @@ public:
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
   std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
+  bool customI2cAddresses() {return fI2cAddresses.size() > 0;} 
+  std::vector<uint8_t> getI2cAddresses() {return fI2cAddresses;}
 
   bool setTbParameter(std::string, uint8_t);
   bool setTbPowerSettings(std::string, double);
@@ -134,6 +137,7 @@ public:
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
   void cleanupString(std::string& str);
+  void readNrocs(std::string line);
 
 private:
 
@@ -148,7 +152,8 @@ private:
   std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
-  int fCustomModule, fHalfModule;
+  int fHalfModule;
+  std::vector<uint8_t> fI2cAddresses; 
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;

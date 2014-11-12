@@ -29,7 +29,7 @@ PixTestBareModule::PixTestBareModule() : PixTest() {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestBareModule::setParameter(string parName, string sval) {
+bool PixTestBareModule::setParameter(string parName, string sval) {  //debug - add roc num
 	bool found(false);
 	string stripParName;
 	for (unsigned int i = 0; i < fParameters.size(); ++i) {
@@ -182,8 +182,26 @@ void PixTestBareModule::doStdTest(std::string test) {
 	
 	PixTestFactory *factory = PixTestFactory::instance();
 	PixTest *t(0);
-	t = factory->createTest(test, fPixSetup);		
+	t = factory->createTest(test, fPixSetup);
 	t->doTest();
+
+	//to copy 'locally' the test histos
+	bool newHist = true;
+	string firstname, name;
+	while (newHist){		
+		TH1* h = t->nextHist();
+		if (firstname == "") firstname = h->GetName();
+		else name = h->GetName();
+		if (firstname == name) newHist = false;
+		else {
+			fHistList.push_back(h);
+			fHistOptions.insert(make_pair(h, t->getHistOption(h)));
+			h->Draw(t->getHistOption(h).c_str());
+			fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+			PixTest::update();
+		}
+	}
+	PixTest::update();
 	delete t;
 }
 
@@ -231,14 +249,16 @@ void PixTestBareModule::doTest() {
 	LOG(logINFO) << "PixTestBareModule:: *******************************";
 	LOG(logINFO) << "PixTestBareModule::doTest() start with " << fParMaxSteps << " test steps.";
 
+	fDirectory->cd();
 	bool sequenceEnded = false; //to handle pretest exception
 
 	//ROC test (only if iA > 10 mA)
 	if (checkIfInContact(1)) {
 		//to do test sequence:
 		sequenceEnded = doRocTests(fParMaxSteps);
+		PixTest::update();
 	}
-		
+
 	PixTest::hvOff();
 	LOG(logINFO) << "PixTestBareModule:: HV off.";
 	mDelay(2000);

@@ -155,15 +155,30 @@ int main(int argc, char *argv[]){
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
   vector<pair<std::string, uint8_t> >          pg_setup = configParameters->getTbPgSettings();
+  string tbname = "*";
+  if (configParameters->getTbName() != "")
+    tbname = configParameters->getTbName();
 
   try {
-    api = new pxar::pxarCore("*", verbosity);
+    api = new pxar::pxarCore(tbname, verbosity);
     
     api->initTestboard(sig_delays, power_settings, pg_setup);
-    api->initDUT(configParameters->getHubId(),
-		 configParameters->getTbmType(), tbmDACs, 
-		 configParameters->getRocType(), rocDACs, 
-		 rocPixels);
+    if (configParameters->customI2cAddresses()) {
+      string i2cstring("");
+      vector<uint8_t> i2cAddr = configParameters->getI2cAddresses(); 
+      for (unsigned int i = 0; i < i2cAddr.size(); ++i) i2cstring += Form(" %d", (int)i2cAddr[i]); 
+      LOG(logINFO) << "custom i2c addresses: " << i2cstring; 
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels, 
+		   i2cAddr);
+    } else {
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels);
+    }
 
     // -- Set up the four signal probe outputs:
     api->SignalProbe("a1", configParameters->getProbe("a1"));
