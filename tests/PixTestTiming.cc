@@ -253,7 +253,7 @@ void PixTestTiming::PhaseScan() {
 
   //Get the number of TBMs, Total ROCs, and ROCs per TBM
   int nTBMs = fApi->_dut->getNTbms();
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocI2Caddr();
   vector<int> nROCs;
   vector <vector<int> > nROCsPort;
   vector<TH2D*> phasehists;
@@ -445,7 +445,7 @@ void PixTestTiming::TimingTest() {
   banner(Form("PixTestTiming::TimingTest()"));
 
   size_t nTBMs = fApi->_dut->getNTbms();
-  size_t nROCs = fApi->_dut->getEnabledRocIDs().size();
+  size_t nROCs = fApi->_dut->getEnabledRocI2Caddr().size();
 
   // Setup a new pattern with only res and token:
   vector<pair<string, uint8_t> > pg_setup;
@@ -509,7 +509,7 @@ void PixTestTiming::LevelScan() {
 
   //Get the normal info
   size_t nTBMs = fApi->_dut->getNTbms();
-  size_t nROCs = fApi->_dut->getEnabledRocIDs().size();
+  size_t nROCs = fApi->_dut->getEnabledRocI2Caddr().size();
 
   // Setup a new pattern with only res and token:
   vector<pair<string, uint8_t> > pg_setup;
