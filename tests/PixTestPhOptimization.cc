@@ -141,7 +141,6 @@ void PixTestPhOptimization::doTest() {
       LOG(logDEBUG)<<"random pixel: "<<maxpixel.second<<", "<<minpixel.second<<"is not on the blacklist";
       maxpixels.insert(maxpixel);
       minpixels.insert(minpixel);
-      //retrieving info from the vcal thr map for THIS random pixel
     }
   }
   else{
@@ -182,6 +181,7 @@ void PixTestPhOptimization::doTest() {
   ps_opt = StretchPH(po_opt, ps_opt, dacdac_max, dacdac_min);
   
   //set optimized dacs and save
+  restoreDacs();
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     fApi->setDAC("phscale",ps_opt[rocIds[roc_it]], rocIds[roc_it] );
     fApi->setDAC("phoffset",po_opt[rocIds[roc_it]], rocIds[roc_it]);
@@ -197,9 +197,6 @@ void PixTestPhOptimization::doTest() {
     PixTest::update();
   }
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  restoreDacs(); //?
-
-  // -- FIXME: should be ROC specific! Must come after restoreDacs()!
 
   // -- print summary information
   string psString(""), poString(""); 
