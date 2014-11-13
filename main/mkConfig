@@ -490,6 +490,17 @@ phmin               30
 phmax               220
 PIX                 11,20
 
+-- Readback
+calibrateVd         button
+calibrateVa         button
+calibrateIa         button
+readbackVbg         button
+getCalibratedVbg    button
+useCalVd            checkbox(1)
+useCalVa            checkbox(0)
+getCalibratedIa     button
+setVana             button
+
 -- Xray
 maskHotPixels       button
 source              Ag
