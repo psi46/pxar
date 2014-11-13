@@ -477,8 +477,9 @@ save                button
 
 -- PhOptimization
 ntrig               10
-safetymargin        20
 singlePix           0
+safetymarginlow     15
+safetymarginup      10
 
 -- PhOpt
 adjustvthrcomp      checkbox(0)
