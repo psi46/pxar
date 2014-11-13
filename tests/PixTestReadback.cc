@@ -508,7 +508,7 @@ void PixTestReadback::CalibrateVd(){
     LOG(logDEBUG)<<"Voltage "<<Vd<<", readback "<<readback;
     rbVd.push_back(readback);
     h_rbVd->Fill(Vd, readback);
-    h_dacVd->Fill(Vd, Vd);
+    h_dacVd->Fill(Vd, fApi->getTBvd());
   }
   
   TF1* frb = new TF1("lin_vd", "[0] + x*[1]");
@@ -603,7 +603,7 @@ void PixTestReadback::CalibrateVa(){
     LOG(logDEBUG)<<"Voltage "<<Va<<", readback "<<readback;
     rbVa.push_back(readback);
     h_rbVa->Fill(Va, readback);
-    h_dacVa->Fill(Va, Va);
+    h_dacVa->Fill(Va, fApi->getTBva());
   }
 
   double rb_VaMax=0.;
@@ -635,21 +635,21 @@ uint8_t PixTestReadback::daqReadback(string dac, double vana, int8_t parReadback
     LOG(logDEBUG)<<"Wrong daqReadback function called!!!";
   }
   else if (!dac.compare("vd")){
-    vector<pair<string,double > > powerset;
-    //using some standard values, should be restored after
-    powerset.push_back(make_pair("ia", 1.19));
-    powerset.push_back(make_pair("id", 1.10));
-    powerset.push_back(make_pair("va", 1.9));
-    powerset.push_back(make_pair("vd", vana));
+    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
+    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
+      if( pow_it->first.compare("vd") == 0){
+	pow_it->second = vana;
+      }
+    }
     fApi->setTestboardPower(powerset);
   }
 else if (!dac.compare("va")){
-    //using some standard values, should be restored after
-    vector<pair<string,double > > powerset;
-    powerset.push_back(make_pair("ia", 1.19));
-    powerset.push_back(make_pair("id", 1.10));
-    powerset.push_back(make_pair("va", vana));
-    powerset.push_back(make_pair("vd", 2.6));
+    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
+    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
+      if( pow_it->first.compare("va") == 0){
+	pow_it->second = vana;
+      }
+    }
     fApi->setTestboardPower(powerset);
   }
 
@@ -729,7 +729,7 @@ uint8_t PixTestReadback::daqReadbackIa(){
   fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay
    
   //Set the histograms:
-  //  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
+  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
 
   //To print on shell the number of masked pixels per ROC:
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
