@@ -260,7 +260,7 @@ bool CUSB::Open(char serialNumber[])
     return false; 
   }
   
-  LOG(logDEBUGUSB) << " USBInterface::Open(): searching for device with serial number: '" << serialNumber << "'";
+  LOG(logINTERFACE) << " USBInterface::Open(): searching for device with serial number: '" << serialNumber << "'";
 
   // reset buffer index positions
   m_posR = m_sizeR = m_posW = 0;
@@ -282,18 +282,18 @@ bool CUSB::Open(char serialNumber[])
     if ((ftdiStatus = 
 	 ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 
 			      128, description, 128, serial, 128)) < 0){
-      LOG(logDEBUGUSB) << " USBInterface::Open(): Error polling USB device number " << i;
+      LOG(logINTERFACE) << " USBInterface::Open(): Error polling USB device number " << i;
       devlist = devlist->next;
       continue;
     }    
     if (strcmp(serialNumber,serial)!=0 && strcmp(serialNumber,"*")!=0){
       // not found, next device
-      LOG(logDEBUGUSB) << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'";
+      LOG(logINTERFACE) << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'";
 
       devlist = devlist->next;
     } else {
       // found the device
-      LOG(logDEBUGUSB) << " USBInterface::Open(): found device with serial " << serial;
+      LOG(logINTERFACE) << " USBInterface::Open(): found device with serial " << serial;
       // now open it
       ftdiStatus = ftdi_usb_open_dev(&ftdic, devlist->dev);
       if( ftdiStatus < 0) {
@@ -313,9 +313,9 @@ bool CUSB::Open(char serialNumber[])
 	/* Detach the kernel module from the device */
         ok = libusb_detach_kernel_driver(handle, 0);
         if( ok == 0){
-	  LOG(logDEBUGUSB) << " Detached kernel driver from selected testboard. ";
+	  LOG(logINTERFACE) << " Detached kernel driver from selected testboard. ";
         } else {
-          LOG(logDEBUGUSB) << "Unable to detach kernel driver from selected testboard.";
+          LOG(logINTERFACE) << "Unable to detach kernel driver from selected testboard.";
 	}
 	libusb_close(handle);
 
@@ -329,7 +329,7 @@ bool CUSB::Open(char serialNumber[])
 	}
       }
       isUSB_open = true;
-      LOG(logDEBUGUSB) << " FTDI successfully opened connection to device ";
+      LOG(logINTERFACE) << " FTDI successfully opened connection to device ";
 
     } // strcmp serial
   } // device loop

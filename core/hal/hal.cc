@@ -345,75 +345,88 @@ bool hal::CheckCompatibility() {
   return true;
 }
 
-bool hal::FindDTB(std::string &usbId) {
+bool hal::FindDTB(std::string &rpcId) {
 
-  // Find attached USB devices that match the DTB naming scheme:
+  // Try to access interfaces:
+  std::vector<CRpcIo*> interfaceList = _testboard->GetInterfaceList();
+  if(interfaceList.empty()) {
+    LOG(logCRITICAL) << "Could not find any interface.";
+    throw UsbConnectionError("Could not find any interface.");
+  }
+  else { LOG(logDEBUGHAL) << "Found " << interfaceList.size() << " interfaces."; }
+
+  // Find attached USB and/or ETH devices that match the DTB naming scheme:
   std::string name;
-  std::vector<std::string> devList;
+  std::vector<std::pair<CRpcIo*,std::string> > devList;
   unsigned int nDev;
   unsigned int nr;
 
-  try {
-    if (!_testboard->EnumFirst(nDev)) throw int(1);
-    for (nr=0; nr<nDev; nr++)	{
-      if (!_testboard->EnumNext(name)) continue;
-      if (name.size() < 4) continue;
-      if (name.compare(0, 4, "DTB_") == 0) devList.push_back(name);
+  for(std::vector<CRpcIo*>::iterator interface = interfaceList.begin(); interface != interfaceList.end(); interface++) {
+    try {
+      LOG(logDEBUGHAL) << "Querying interface " << std::string((*interface)->Name());
+      if (!_testboard->EnumFirst(*interface,nDev)) continue;
+      for (nr = 0; nr < nDev; nr++) {
+	if (!_testboard->EnumNext(*interface,name)) continue;
+	if (name.size() < 4) continue;
+	if (name.compare(0, 4, "DTB_") == 0) devList.push_back(std::make_pair(*interface,name));
+      }
     }
-  }
-  catch (int e) {
-    std::stringstream estr;
-    estr << e;
-    switch (e) {
-    case 1: 
-      LOG(logCRITICAL) << "Cannot access the USB driver"; 
-      throw UsbConnectionError("Cannot access the USB driver");
-      break;
-    default:
-      throw UsbConnectionError("Couldn't open connection, received error number " + estr.str());
-      break;
+    catch (CRpcError e) {
+      LOG(logCRITICAL) << "Error querying interface " << std::string((*interface)->Name());
+      throw UsbConnectionError("Error querying interface " + std::string((*interface)->Name()));
     }
   }
 
-  if (devList.size() == 0) {
-    LOG(logCRITICAL) << "No DTB connected.";
-    throw UsbConnectionError("No DTB connected.");
+  // We have no DTBs at all:
+  if(devList.empty()) {
+    LOG(logCRITICAL) << "Could not find any connected DTB.";
+    throw UsbConnectionError("Could not find any connected DTB.");
   }
+  else { LOG(logDEBUGHAL) << "Found " << devList.size() << " connected DTBs."; }
 
+  // We have one DTB, check if we can use it:
   if (devList.size() == 1) {
-    if(usbId == "*") { usbId = devList[0]; }
-    else if(usbId != devList[0]) {
-      LOG(logCRITICAL) << "Could not find DTB \"" << usbId << "\".";
-      throw UsbConnectionError("Could not find DTB " + usbId);
+    if(rpcId == "*") { rpcId = devList.front().second; }
+    else if(rpcId != devList.front().second) {
+      LOG(logCRITICAL) << "Could not find DTB \"" << rpcId << "\".";
+      throw UsbConnectionError("Could not find DTB " + rpcId);
     }
+    _testboard->SelectInterface(devList.front().first);
     return true;
   }
 
-  // Check if selected DTB is among connected:
-  if(usbId != "*") {
-    for (nr=0; nr<devList.size(); nr++) {
-      if(usbId == devList.at(nr)) {
-	LOG(logINFO) << "Found DTB " << usbId;
+  // We have more than one DTB - check if selected DTB is among connected:
+  if(rpcId != "*") {
+    for(nr = 0; nr < devList.size(); nr++) {
+      if(rpcId == devList.at(nr).second) {
+	LOG(logINFO) << "Found DTB " << rpcId;
+	_testboard->SelectInterface(devList.at(nr).first);
 	return true;
       }
     }
   }
 
   // If more than 1 connected device list them
-  LOG(logINFO) << "\nConnected DTBs:\n";
-  for (nr=0; nr<devList.size(); nr++) {
-    LOG(logINFO) << nr << ":" << devList[nr];
-    if (_testboard->Open(devList[nr], false)) {
+  LOG(logINFO) << "Connected DTBs:";
+  for(nr = 0; nr < devList.size(); nr++) {
+    LOG(logINFO) << nr << ": " << devList.at(nr).second << " on " << devList.at(nr).first->Name();
+    _testboard->SelectInterface(devList.at(nr).first);
+    if (_testboard->Open(devList.at(nr).second, false)) {
       try {
 	unsigned int bid = _testboard->GetBoardId();
-	LOG(logINFO) << "  BID=" << bid;
+	LOG(logINFO) << "BID = " << bid;
+      }
+      catch (CRpcError &e) {
+	LOG(logERROR) << "Problem: ";
+	e.What();
       }
       catch (...) {
-	LOG(logERROR) << "  Not identifiable\n";
+	LOG(logERROR) << "Not identifiable";
       }
       _testboard->Close();
     }
-    else LOG(logWARNING) << " - in use\n";
+    else LOG(logWARNING) << "-- in use";
+    _testboard->ClearInterface();
   }
 
   LOG(logINFO) << "Please choose DTB (0-" << (nDev-1) << "): ";
@@ -427,7 +440,8 @@ bool hal::FindDTB(std::string &usbId) {
   }
 
   // Return the selected DTB's USB id as reference string:
-  usbId = devList[nr];
+  rpcId = devList.at(nr).second;
+  _testboard->SelectInterface(devList.at(nr).first);
   return true;
 }
 

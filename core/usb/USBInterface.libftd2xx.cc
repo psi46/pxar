@@ -208,7 +208,7 @@ void CUSB::Close()
 {
 	if (!isUSB_open) return;
 	FT_Close(ftHandle);
-	isUSB_open = 0;
+	isUSB_open = false;
 }
 
 

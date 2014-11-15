@@ -21,6 +21,12 @@ OPTION(BUILD_tools  "Compile pxar tools? (flash, testpxar...)" OFF)
 OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
 OPTION(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" ON)
 
+# Build flag for Ethernet interface implementation:
+OPTION(INTERFACE_ETH "Build DTB Ethernet interface?" OFF)
+# Build flag for USB interface implementation:
+OPTION(INTERFACE_USB "Build DTB USB interface?" ON)
+# Switch off building for all interfaces:
+OPTION(BUILD_dummydtb "Do not build anny interface but simulate DTB?" OFF)
 
 ########################################
 # Setup the build environment for pxar #
@@ -85,8 +91,19 @@ include( cmake/Platform.cmake)
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
-# unless we are building only a dummy DTB instance, we need the FTI and USB libraries:
-IF(NOT BUILD_dummydtb)
+IF(BUILD_dummydtb)
+  MESSAGE(WARNING "Build flag BUILD_dummydtb passed. Turning off all interfaces")
+  SET(INTERFACE_ETH OFF)
+  SET(INTERFACE_USB OFF)
+ENDIF(BUILD_dummydtb)
+
+IF(INTERFACE_ETH)
+  # Find the required libraries for the ethernet interface:
+  FIND_PACKAGE(PCAP)
+  ADD_DEFINITIONS(-DINTERFACE_ETH)
+ENDIF(INTERFACE_ETH)
+
+IF(INTERFACE_USB)
   # Find the FTDI chip drivers, either the open source or proprietary one,
   # depending on the build option we set. Use the other as fallback:
   FIND_PACKAGE(FTD2XX)
@@ -139,12 +156,8 @@ IF(NOT BUILD_dummydtb)
     INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
   ENDIF(NOT WIN32 OR NOT FTD2XX_FOUND)
 
-ENDIF(NOT BUILD_dummydtb)
-
-
-# Find Python libraries
-#FIND_PACKAGE(PythonLibs)
-#INCLUDE_DIRECTORIES(SYSTEM ${PYTHON_INCLUDE_PATH})
+  ADD_DEFINITIONS(-DINTERFACE_USB)
+ENDIF(INTERFACE_USB)
 
 # set the path to which we will install later: default project home, can be changed using
 # cmake -DINSTALL_PREFIX=/some/dir ..
