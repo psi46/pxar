@@ -91,6 +91,12 @@ include( cmake/Platform.cmake)
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
+IF(BUILD_dummydtb)
+  MESSAGE(WARNING "Build flag BUILD_dummydtb passed. Turning off all interfaces")
+  SET(INTERFACE_ETH OFF)
+  SET(INTERFACE_USB OFF)
+ENDIF(BUILD_dummydtb)
+
 IF(INTERFACE_ETH)
   # Find the required libraries for the ethernet interface:
   FIND_PACKAGE(PCAP)
@@ -152,7 +158,6 @@ IF(INTERFACE_USB)
 
   ADD_DEFINITIONS(-DINTERFACE_USB)
 ENDIF(INTERFACE_USB)
-
 
 # Find Python libraries
 #FIND_PACKAGE(PythonLibs)
