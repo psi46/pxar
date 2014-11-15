@@ -159,10 +159,6 @@ IF(INTERFACE_USB)
   ADD_DEFINITIONS(-DINTERFACE_USB)
 ENDIF(INTERFACE_USB)
 
-# Find Python libraries
-#FIND_PACKAGE(PythonLibs)
-#INCLUDE_DIRECTORIES(SYSTEM ${PYTHON_INCLUDE_PATH})
-
 # set the path to which we will install later: default project home, can be changed using
 # cmake -DINSTALL_PREFIX=/some/dir ..
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
