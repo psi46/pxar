@@ -9,11 +9,6 @@ SET(LIB_SOURCE_FILES
   "api/dut.cc"
   )
 
-# Build flag for Ethernet interface implementation:
-option(INTERFACE_ETH "Build DTB Ethernet interface?" OFF)
-# Build flag for USB interface implementation:
-option(INTERFACE_USB "Build DTB USB interface?" ON)
-
 # If both interfaces are disabled, build a Dummy DTB responding to API calls:
 IF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
   # We only need the dummy HAL implementation for this:

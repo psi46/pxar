@@ -21,6 +21,12 @@ OPTION(BUILD_tools  "Compile pxar tools? (flash, testpxar...)" OFF)
 OPTION(USE_FTD2XX "Use the proprietary FTDI library instead of the open source version" ON)
 OPTION(BUILD_pxarui "Compile pXar UI, tests and executables (requires ROOT)?" ON)
 
+# Build flag for Ethernet interface implementation:
+OPTION(INTERFACE_ETH "Build DTB Ethernet interface?" OFF)
+# Build flag for USB interface implementation:
+OPTION(INTERFACE_USB "Build DTB USB interface?" ON)
+# Switch off building for all interfaces:
+OPTION(BUILD_dummydtb "Do not build anny interface but simulate DTB?" OFF)
 
 ########################################
 # Setup the build environment for pxar #
@@ -86,13 +92,12 @@ include( cmake/Platform.cmake)
 FIND_PACKAGE(Threads)
 
 IF(INTERFACE_ETH)
-  ADD_DEFINITIONS(-DINTERFACE_ETH)
   # Find the required libraries for the ethernet interface:
   FIND_PACKAGE(PCAP)
+  ADD_DEFINITIONS(-DINTERFACE_ETH)
 ENDIF(INTERFACE_ETH)
 
 IF(INTERFACE_USB)
-  ADD_DEFINITIONS(-DINTERFACE_USB)
   # Find the FTDI chip drivers, either the open source or proprietary one,
   # depending on the build option we set. Use the other as fallback:
   FIND_PACKAGE(FTD2XX)
@@ -145,6 +150,7 @@ IF(INTERFACE_USB)
     INCLUDE_DIRECTORIES(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
   ENDIF(NOT WIN32 OR NOT FTD2XX_FOUND)
 
+  ADD_DEFINITIONS(-DINTERFACE_USB)
 ENDIF(INTERFACE_USB)
 
 
