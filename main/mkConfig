@@ -628,6 +628,7 @@ sub printTbmParameters {
 
 	my $file = "$dir/tbmParameters_C${itbm}b.dat";
 	open(FH, ">$file") || die "cannot open $file\n";
+    $tbms =~ s/basee[ ]?.*/basee   0x00/;
 	print FH $tbms;
 	close(FH);
     }
