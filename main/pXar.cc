@@ -163,16 +163,16 @@ int main(int argc, char *argv[]){
     api = new pxar::pxarCore(tbname, verbosity);
     
     api->initTestboard(sig_delays, power_settings, pg_setup);
-    if (configParameters->customIc2Addresses()) {
+    if (configParameters->customI2cAddresses()) {
       string i2cstring("");
-      vector<uint8_t> ic2Addr = configParameters->getIc2Addresses(); 
-      for (unsigned int i = 0; i < ic2Addr.size(); ++i) i2cstring += Form(" %d", (int)ic2Addr[i]); 
+      vector<uint8_t> i2cAddr = configParameters->getI2cAddresses(); 
+      for (unsigned int i = 0; i < i2cAddr.size(); ++i) i2cstring += Form(" %d", (int)i2cAddr[i]); 
       LOG(logINFO) << "custom i2c addresses: " << i2cstring; 
       api->initDUT(configParameters->getHubId(),
 		   configParameters->getTbmType(), tbmDACs, 
 		   configParameters->getRocType(), rocDACs, 
 		   rocPixels, 
-		   ic2Addr);
+		   i2cAddr);
     } else {
       api->initDUT(configParameters->getHubId(),
 		   configParameters->getTbmType(), tbmDACs, 

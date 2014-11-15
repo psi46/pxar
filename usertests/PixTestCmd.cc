@@ -108,8 +108,13 @@ void PixTestCmd::DoTextField(){
         // break multiline output into lines
         std::stringstream ss( reply );
         std::string line;
+        int linecount=0;
         while(std::getline(ss,line,'\n')){
             transcript->AddLine( line.c_str() );
+            linecount++;
+            if (linecount>100000){
+                cout << "are you sure, this is line " << linecount << "\n" << line.c_str() << endl;
+            }
         }
     }
 
@@ -885,7 +890,8 @@ const char * const CmdProc::fDAC_names[CmdProc::fnDAC_names] =
  {"vdig","vana","vsh","vcomp","vwllpr","vwllsh","vhlddel","vtrim","vthrcomp",
  "vibias_bus","phoffset","vcomp_adc","phscale","vicolor","vcal",
  "caldel","ctrlreg","wbc","readback"};
-   
+int CmdProc::fGetBufMethod = 1;
+
 void CmdProc::init()
 {
     /* note: fApi may not be defined yet !*/
@@ -895,6 +901,7 @@ void CmdProc::init()
     _probeDict = ProbeDictionary::getInstance();
     fA_names = _probeDict->getAllAnalogNames();
     fD_names = _probeDict->getAllDigitalNames();
+    fGetBufMethod = 1;
     fPixelConfigNeeded = true;
     fTCT = 105;
     fTRC = 10;
@@ -1035,7 +1042,7 @@ int CmdProc::countHits(){
     vector<DRecord > data;
     int stat = getBuffer(fBuf, 1, 1);
     if (stat>0) return -1;
-    stat = getData(fBuf, data, 100);
+    stat = getData(fBuf, data, 0);
     if (stat>0) return -2;
     for(unsigned int i=0; i<data.size(); i++){
         if (data[i].type==0) nhit++;
@@ -1043,13 +1050,21 @@ int CmdProc::countHits(){
     return nhit;
 }
 
-int CmdProc::countErrors(int ntrig, int nroc){
+
+int CmdProc::countErrors(unsigned int ntrig, int nroc){
     vector<DRecord > data;
     int stat = getBuffer(fBuf, ntrig, 0);
     if (stat>0) return -1;// no data
     stat = getData(fBuf, data, 0, nroc);
-    return stat;
+    if (stat>0){
+        return stat;
+    }else{
+        if  (fNumberOfEvents==ntrig) return 0;
+        cout << "number of events (" << fNumberOfEvents << ") does not match triggers "<< ntrig << endl;
+        return 999;
+    }
 }
+
 
 int CmdProc::tctscan(unsigned int tctmin, unsigned int tctmax){
     unsigned int tct0 = fTCT;
@@ -1094,19 +1109,25 @@ int CmdProc::tbmscan(){
     if(stat>0){
         out << "error getting base0 register from api \n";
     }
-
+    
+    int nroc=16;
+    if( (ntpreg & 0x40) > 0 ){
+        nroc=0;
+    }
+    
     out << "400\\160 0  1  2  3  4  5  6  7\n";
     for(uint8_t p400=0; p400<8; p400++){
         int deserxor[8] = {0,0,0,0,0,0,0,0};
         out << "  " << (int) p400 << " :  ";
         for(uint8_t p160=0; p160<8; p160++){
-            stat = tbmset("basee", 0, (p160<<5)+(p400<<2));
+            stat = tbmset("basee", 0, ((p160&7)<<5)+((p400&7)<<2));
             if(stat>0){
                 out << "error setting delay  base E " << hex << ((p160<<5)+(p400<<2)) << dec << "\n";
             }
             int good=0; // 
             for(unsigned int k=0; k<10; k++){
-                good += ( (countErrors(100)==0) ? 1 : 0);
+                tbmset("base4", 2, 0x80); // temp fix, avoid event counter reaching 255
+                good += ( (countErrors(100, nroc)==0) ? 1 : 0);
                 for( unsigned int i=0;i<8; i++){
                     deserxor[i] += ( (fDeser400XOR1 >> i) & 1);
                 }
@@ -1490,6 +1511,20 @@ int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
 
 
 
+int CmdProc::getBuffer(vector<uint16_t> & buf){
+    if (fGetBufMethod==1){
+        buf.clear();
+        vector<rawEvent> vre = fApi->daqGetRawEventBuffer();
+        for(unsigned int i=0; i<vre.size(); i++){
+            for(unsigned int j=0; j<vre.at(i).GetSize(); j++){
+                buf.push_back( vre.at(i)[j] );
+            }
+        }
+    }else{
+        buf  = fApi->daqGetBuffer();
+    }
+    return 0;
+}
 
 
 int CmdProc::getBuffer(vector<uint16_t> & buf, int ntrig, int verbosity){
@@ -1502,14 +1537,18 @@ int CmdProc::getBuffer(vector<uint16_t> & buf, int ntrig, int verbosity){
         out <<"The current sequence does not contain a token!\n";
     }
     
+    buf.clear();
     pg_sequence( fSeq ); // set up the pattern generator
     bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
     if (! stat ){
         if(verbosity>0){ out << "something wrong with daqstart !!!" << endl;}
         return 2;
     }
+    
     fApi->daqTrigger(ntrig, fPeriod);
-    buf  = fApi->daqGetBuffer();
+    
+    getBuffer( buf );
+    
     fApi->daqStop(false);
     fPixelConfigNeeded = false;
     
@@ -1520,7 +1559,7 @@ int CmdProc::getBuffer(vector<uint16_t> & buf, int ntrig, int verbosity){
     }
     
     if(verbosity>0){
-        out << dec << buf.size() << " words read";
+        out << dec << buf.size() << " words read\n";
     }
     pg_restore(); // undo any changes
 
@@ -1559,8 +1598,7 @@ int CmdProc::runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosi
         out << "period will be truncated to " << dec<< leff << " BC  = " << int(40000/leff) << " kHz !!" << endl;
     }
     fApi->daqTrigger(ntrig, length);
-    
-    buf  = fApi->daqGetBuffer();
+    getBuffer( buf );
     fApi->daqStop(false);
     fPixelConfigNeeded = false;
     
@@ -1605,8 +1643,7 @@ int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, i
     }
     
     fApi->daqTrigger(nburst, fPeriod);
-    
-    buf  = fApi->daqGetBuffer();
+    getBuffer(buf);
     fApi->daqStop(false);
     fPixelConfigNeeded = false;
     
@@ -1629,13 +1666,15 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
     //  10 (0x0a) = tbm header  16 bits
     //  14 (0x0e) = tbm trailer 16 bits
     //  16  = filler 
+    //
+    // FIMXE, for >1 event this code required fGetBufMethod=1
    
-   /*
-    for(unsigned int i=0; i< buf.size(); i++){
-        out << hex << setw(4) << setfill('0') << buf[i] << " ";
-    }
-    out << dec << setfill(' ') << endl;
-    */
+    if(verbosity>100){
+        for(unsigned int i=0; i< buf.size(); i++){
+            out << hex << setw(4) << setfill('0') << buf[i] << " ";
+        }
+        out << dec << setfill(' ') << endl;
+    }   
     
     unsigned int nerr=0;
     
@@ -1643,16 +1682,24 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
     fDeser400err  =  0;
     fDeser400XOR1 =  0;
     fDeser400XOR2 =  0;
+    fNumberOfEvents = 0;
+    int XOR1=0;
+    int XOR2=0;
     
     unsigned int i=0;
     if ( fApi->_dut->getNTbms()>0 ) {
         uint8_t roc=0;
         uint8_t tbm=0;
         uint8_t nRocPerToken = 8; //for TBM08
+        uint8_t maxTBM=2;
         bool tbm09 =  (fApi->_dut->getTbmType() == "tbm09");
         if(tbm09){
             nRocPerToken = 4;
+            maxTBM=4;
         }
+        bool tbmHeaderSeen=false;
+        unsigned int nevent=0;
+        
         while(i<buf.size()){
             
             uint16_t flag= ((buf[i]>>12)&0xE);
@@ -1661,13 +1708,19 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
             
             if( flag == 0xa ){ // TBM header
             
-                if (buf[i]&0x0f00) nerr++;
+                tbmHeaderSeen=true;
+     
+                if (buf[i]&0x0f00) {
+                    nerr++; // should be 0
+                    if (verbosity>0) out << "illegal deser400 header record \n";
+                }
+                
                 uint8_t h1=buf[i]&0xFF;
                 i++;
                 if(i>=buf.size()){
                     if(verbosity>0) out << " unexpected end of data\n";
                     nerr++;
-                    return nerr;
+                    return nerr + fDeser400err;
                 }
                 
                 if (buf[i]&0x1000) fDeser400err++;
@@ -1675,34 +1728,61 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     uint8_t h2 = buf[i]&0xFF;
                     data.push_back( DRecord( 0xa, (h1<<8 | h2), buf[i-1], buf[i]) );
                     i++;
+                    /*
+                }else if(((buf[i]&0xE000)==0xC000)&&(h1==0xff)){
+                    // possibly a decoding problem event nr=255 + data Id=3
+                    nevent++;
+                    tbmHeaderSeen=false;
+                    data.push_back( DRecord(0xa, (h1<<8 | 0xc0), buf[i-1], 0) );
+                    data.push_back( DRecord(0xe, 0, 0, buf[i] ));
+                    if (tbm==maxTBM) tbm=0;
+                    i++;
+                    */
                 }else{
-                    if(verbosity>0) out << " incomplete header \n";
+                    if(verbosity>0){
+                        out << " incomplete header ";
+                        out << hex << (int) buf[i-1] << " " << (int) buf[i]  << dec << "\n";
+                    }
                     nerr ++;
-                    return nerr;
+                    return nerr + fDeser400err;
                 }
                 continue;
             }// TBM header
             
             
             if( flag == 0x4 ){ // ROC header
+            
+                if( !tbmHeaderSeen ){
+                    nerr++;
+                    if(verbosity>0)  out << "ROC header outside TBM header/trailer\n";
+                }
+                
                 if(nroc_expected==0){
                     nerr++;
                     if(verbosity>0) out<< "no rocs expected\n";
                 }else{
                     roc ++;
-                    if( (buf[i]&0x0004)>0 ) nerr++;
+                    if( (buf[i]&0x0004)>0 ) {
+                        nerr++;
+                        if(verbosity>0) out << "zero-bit in roc header not zero\n";
+                    }
                     data.push_back( DRecord(0x4, buf[i]&0x3, buf[i]) );
                     uint8_t xordata = (buf[i] & 0x0ff0)>>4;
-                    if ((tbm==0) && (roc==1)){
-                        fDeser400XOR1 = xordata;
-                    }else if(( tbm<2 )&&(!(fDeser400XOR1==xordata) )){
+                    if(xordata==0xff){
                         nerr++;
-                        if (verbosity>0) out << "inconsistent XOR1 \n";
-                    }else if ((tbm==2)&&(roc==1)){
-                        fDeser400XOR2=xordata;
-                    }else if((tbm>1)&&(!(fDeser400XOR2==xordata) )){
-                        nerr++;
-                        if (verbosity>0) out << "inconsistent XOR2 \n";
+                        if(verbosity>0) out << "Deser400 phase error\n";
+                    }else{
+                        if ((tbm==0) && (roc==1)){
+                            XOR1 = xordata;
+                        }else if(( tbm<2 )&&(!(XOR1==xordata) )){
+                            nerr++;
+                            if (verbosity>0) out << "inconsistent XOR1 \n";
+                        }else if ((tbm==2)&&(roc==1)){
+                            XOR2=xordata;
+                        }else if((tbm>1)&&(!(XOR2==xordata) )){
+                            nerr++;
+                            if (verbosity>0) out << "inconsistent XOR2 \n";
+                        }
                     }
                 }
                 
@@ -1721,7 +1801,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 if(i>=buf.size()){
                     if(verbosity>0) out << " unexpected end of data\n";
                     nerr++;
-                    return nerr;
+                    return nerr + fDeser400err;
                 }
                 
                 if (buf[i]&0x1000) fDeser400err++;
@@ -1738,33 +1818,55 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     }
                                         
                 }else{
-                    if(verbosity>1) out << " unexpected qualifier \n";
+                    if(verbosity>0) {
+                        out << " unexpected qualifier in ROC hit:" << (int) flag << " " 
+                            << hex << setw(4) << setfill('0')  << buf[i-1] 
+                            << dec << setfill(' ') << " at position "<< i-1 << "\n";
+                        }
                     nerr++;
-                    return nerr;
+                    return nerr + fDeser400err;
                 }
                 continue;
             }
             
             if (flag  == 0xe){
+                
+                tbmHeaderSeen=false;
                 // TBM trailer
-                if (buf[i]&0x0f00) nerr++;
+                if (buf[i]&0x0f00){
+                     nerr++;
+                     if(verbosity>0) out << "illegal data in deser400 trailer record \n";
+                 }
                 int t1=buf[i++];
                 if(i>=buf.size()){
                     nerr++;
-                    if(verbosity>1) out << "unexpected end of data\n";
-                    return nerr;
+                    if(verbosity>0) out << "unexpected end of data\n";
+                    return nerr + fDeser400err;
                 }
                 
                 flag = (buf[i]>>12)&0xe;
                 if (flag != 0xc ){
-                    if(verbosity>0) out << "unexpected qualifier " << (int) flag <<"\n";
+                    if(verbosity>0) out << "unexpected qualifier " << (int) flag <<"in TBM trailer \n";
                     continue;
                 }
                 if (buf[i]&0x1000) fDeser400err++;
-                if (buf[i]&0x0f00) nerr++;
+                if (buf[i]&0x0f00) {
+                    nerr++;
+                    if(verbosity>0) out << "illegal data in deser400 trailer record \n";
+                }
                 int t2=buf[i++];
                 data.push_back( DRecord(0xe, (t1&0xFF)<<8 | (t2&(0xff)), t1, t2) );
                 tbm++;
+                
+                if (tbm==maxTBM){
+                    tbm=0; // new event, this depends on the getBuffer method
+                    nevent++;
+                    fDeser400XOR1=XOR1;
+                    fDeser400XOR2=XOR2;
+                    XOR1=0;  // may change between events
+                    XOR2=0;
+                }
+                        
                 roc=0;
                 continue;
             }
@@ -1774,25 +1876,29 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
             i++;
             
         } // while i< buf.size()
-
+        
+        fNumberOfEvents = nevent;
     }
     
     else if (fApi->_dut->getNTbms() == 0) {
         // single ROC
         while(i<buf.size() && (i<500) ){
             
-            if ( (buf[i] & 0x0ff8) == 0x07f8 ){
+            //if ( (buf[i] & 0x0ff8) == 0x07f8 ){
+            if ( (buf[i] & 0x8000) == 0x8000 ){
+                // roc header
                 data.push_back(DRecord( 0x4, buf[i]&0x07, buf[i]));
                 i++;
             }
             else if( (i+1)<buf.size() ){
+                // hit
                  uint32_t raw = ((buf[i] & 0x0fff)  << 12) + (buf[i+1] & 0x0fff);
                  data.push_back(DRecord( 0, raw, buf[i], buf[i+1] ) );
                 i+=2;
             }else{
                 out << "unexpected end of data\n";
                 nerr++;
-                return nerr;
+                return nerr + fDeser400err;
             }
         }
     }
@@ -1959,10 +2065,8 @@ int CmdProc::printData(vector<uint16_t> buf, int level){
         }
     }
 
- 
     return 0;   
 }
-
 
 int CmdProc::sequence(int seq){
     // update the sequence, but only re-program the DTB if actually running
@@ -2064,6 +2168,7 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("seq","t")){ sequence( 2 ); return 0; }
     if( kw.match("seq","ct")){ sequence( 6 ); return 0; }
     if( kw.match("seq","rct")){ sequence( 14 ); return 0; }
+    if( kw.match("seq","ctt")){ sequence( 7 ); return 0; }
     if( kw.match("seq","rctt")){ sequence( 15 ); return 0; }
     if( kw.match("pg","restore")){ return pg_restore();}
     if( kw.match("loop") ){ return pg_loop();}
@@ -2100,6 +2205,8 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("ttk", value)){ fTTK=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("trc", value)){ fTRC=value; if (fSeq>0){sequence(fSeq);} return 0;}
+    if( kw.match("getbufmethod",value)){ fGetBufMethod=value; return 0;}
+    
     if( kw.match("dread") ){
         fApi->daqStart(fBufsize, fPixelConfigNeeded);
         fApi->daqTrigger(1, fPeriod);
@@ -2118,6 +2225,7 @@ int CmdProc::tb(Keyword kw){
             printData( fBuf, 0 );
         }else{
             out << " error getting data\n";
+            printData(fBuf, 0);
         }
         return 0;
     }
@@ -2127,6 +2235,7 @@ int CmdProc::tb(Keyword kw){
             printData( fBuf, 1 );
         }else{
             out << " error getting data\n";
+            printData(fBuf, 0);
         }
         return 0;
     }
@@ -2140,18 +2249,32 @@ int CmdProc::tb(Keyword kw){
         int stat = getData(fBuf, data, 0);
         
         int n=0;
-        for(unsigned int i=0; i<fBuf.size(); i++){
-            
-            if((fBuf[i]&0xe000)==0xa000) {
-                if(i>0) out << "\n";
-                out << dec << setfill(' ') << setw(4) << ++n << ": ";
-            }
-            out << setw(4) << setfill('0') << hex << fBuf[i] << " ";
-        }
-        out << setfill(' ') << endl;
-        out<< dec  << stat << " errors\n";
-        return 0;
         
+        if(fApi->_dut->getNTbms()==0){
+            // single ROC
+            for(unsigned int i=0; i<fBuf.size(); i++){
+                
+                if((fBuf[i]&0x8000)==0x8000){//((fBuf[i]&0x0ff8)==0x07f8) {
+                    if(i>0) out << "\n";
+                    out << dec << setfill(' ') << setw(4) << ++n << ": ";
+                }
+                out << setw(4) << setfill('0') << hex << fBuf[i] << " ";
+            }
+            out << setfill(' ') << endl;            
+            out<< dec  << stat << " errors\n";
+        }else{
+            for(unsigned int i=0; i<fBuf.size(); i++){
+                
+                if((fBuf[i]&0xe000)==0xa000) {
+                    if(i>0) out << "\n";
+                    out << dec << setfill(' ') << setw(4) << ++n << ": ";
+                }
+                out << setw(4) << setfill('0') << hex << fBuf[i] << " ";
+            }
+            out << setfill(' ') << endl;
+            out<< dec  << stat << " errors\n";
+        }
+        return 0;
     }
 
     int trigsep, nburst;
@@ -2200,7 +2323,8 @@ int CmdProc::roc( Keyword kw, int rocId){
     if (kw.match("disable") ) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))|2, rocId);return 0 ;}
     if (kw.match("enable")) {fApi->setDAC("ctrlreg", (fApi->_dut->getDAC(rocId, "ctrlreg"))&0xfd, rocId);return 0 ;}
     if (kw.match("mask")   ) { fApi->_dut->maskAllPixels(true, rocId); fPixelConfigNeeded = true; return 0 ;}
-    if (kw.match("cald")   ) {fApi->_dut->testAllPixels(false, rocId); fPixelConfigNeeded = true; return 0 ;}
+    //if (kw.match("cald")   ) {fApi->SetCalibrateBits(false); fApi->_dut->testAllPixels(false, rocId); fPixelConfigNeeded = true; return 0 ;}
+    if (kw.match("cald")   ) { fApi->_dut->testAllPixels(false, rocId); fPixelConfigNeeded = true; return 0 ;}
     if ( kw.match("arm",  col, 0, 51, row, 0, 79) 
       || kw.match("pixd", col, 0, 51, row, 0, 79)
       || kw.match("pixe", col, 0, 51, row, 0, 79)
@@ -2360,6 +2484,25 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
         return true;
     }   
     
+    
+    int event;
+    if  ( keyword.match("decode", event)){
+        vector<uint16_t> evbuf;
+        int n=0;
+        for(unsigned int i=0; i<fBuf.size(); i++){
+            
+            if(fApi->_dut->getNTbms()==0){
+                if ((fBuf[i]&0x8000)==0x8000){n++;}
+            }else{
+                if ((fBuf[i]&0xe000)==0xa000){ n++;}
+            }
+            if (n==event) {evbuf.push_back( fBuf[i]); }
+        
+        }
+        
+        printData(evbuf, 1);
+        return 0;
+    }
     
     if  ( keyword.greedy_match("decode", message) ){
         

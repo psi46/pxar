@@ -19,7 +19,8 @@ using namespace pxar;
 pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _ndecode_errors_lastdaq(0)
+  _ndecode_errors_lastdaq(0),
+  _daq_startstop_warning(false)
 {
 
   LOG(logQUIET) << "Instanciating API for " << PACKAGE_STRING;
@@ -1153,7 +1154,10 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
       _hal->AllColumnsSetEnable(rocit->i2c_address,true);
     }
   }
-  else { LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; }
+  else if(!_daq_startstop_warning){
+    LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; 
+    _daq_startstop_warning = true;
+  }
 
   // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
   uint8_t type = 0x0;
@@ -1331,7 +1335,10 @@ bool pxarCore::daqStop(const bool init) {
       _hal->AllColumnsSetEnable(rocit->i2c_address,false);
     }
   }
-  else { LOG(logWARNING) << "Not masking DUT, not clearing Calibrate bits!"; }
+  else if(!_daq_startstop_warning){
+    LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; 
+    _daq_startstop_warning = true;
+  }
 
   return true;
 }

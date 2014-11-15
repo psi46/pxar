@@ -22,6 +22,7 @@
 #include "PixTestHighRate.hh"
 #include "PixTestPh.hh"
 #include "PixTestPhOptimization.hh"
+#include "PixTestReadback.hh"
 #include "PixTestPhOpt.hh"
 #include "PixTestBBMap.hh"
 #include "PixTestBareModule.hh"
@@ -77,6 +78,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("highrate")) return new PixTestHighRate(a, "HighRate");
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
   if (!name.compare("phoptimization")) return new PixTestPhOptimization(a, "PhOptimization");
+  if (!name.compare("readback")) return new PixTestReadback(a, "Readback");
   if (!name.compare("phopt")) return new PixTestPhOpt(a, "PhOpt");
   if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
   if (!name.compare("baremodule")) return new PixTestBareModule(a, "BareModule");

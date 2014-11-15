@@ -42,7 +42,7 @@ void ConfigParameters::initialize() {
   fnTbms = 1; 
   fnModules = 1;
   fHubId = 31;
-  fIc2Addresses.clear(); 
+  fI2cAddresses.clear(); 
   
   fHvOn = true;
   fTbmEnable = true;
@@ -1036,25 +1036,25 @@ void ConfigParameters::readNrocs(string line) {
   string::size_type s0 = line.find(" "); 
   string nrocs = line.substr(s0); 
   fnRocs = atoi(nrocs.c_str()); 
-  string::size_type s1 = line.find("ic2:"); 
+  string::size_type s1 = line.find("i2c:"); 
   if (string::npos == s1) {
     return;
   } else {
-    string ic2string = line.substr(s1+5);
-    s0 = ic2string.find(","); 
-    string ic2(""), leftover("");
+    string i2cstring = line.substr(s1+5);
+    s0 = i2cstring.find(","); 
+    string i2c(""), leftover("");
     while (string::npos != s0) {
-      ic2 = ic2string.substr(0, s0);
-      fIc2Addresses.push_back(atoi(ic2.c_str())); 
-      ic2string = ic2string.substr(s0+1); 
-      s0 = ic2string.find(","); 
+      i2c = i2cstring.substr(0, s0);
+      fI2cAddresses.push_back(atoi(i2c.c_str())); 
+      i2cstring = i2cstring.substr(s0+1); 
+      s0 = i2cstring.find(","); 
     }
     //  -- get the last one as well
-    fIc2Addresses.push_back(atoi(ic2string.c_str())); 
-    if (fnRocs != fIc2Addresses.size()) {
-      LOG(logWARNING) << "mismatch between number of ic2 addresses and nRocs! Resetting nRocs to " 
-		      <<  fIc2Addresses.size();
-      fnRocs =  fIc2Addresses.size(); 
+    fI2cAddresses.push_back(atoi(i2cstring.c_str())); 
+    if (fnRocs != fI2cAddresses.size()) {
+      LOG(logWARNING) << "mismatch between number of i2c addresses and nRocs! Resetting nRocs to " 
+		      <<  fI2cAddresses.size();
+      fnRocs =  fI2cAddresses.size(); 
     }
   }
 }

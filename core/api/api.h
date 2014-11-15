@@ -863,6 +863,9 @@ namespace pxar {
 
     /** Number of pixel decoding errors in last DAQ readout */
     uint32_t _ndecode_errors_lastdaq;
+
+    /** Warned the user about not initializing the DUT */
+    bool _daq_startstop_warning;
     
   }; // class pxarCore
 
