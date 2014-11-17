@@ -25,17 +25,19 @@ public:
   void setHistos();
   void ProcessData(uint16_t numevents = 1000);
   void FinalCleaning();
-  uint8_t daqReadback(std::string dac, uint8_t vana, int8_t parReadback);
-  uint8_t daqReadback(std::string dac, double vana, int8_t parReadback);
-  uint8_t daqReadbackIa();
+  std::vector<uint8_t> daqReadback(std::string dac, uint8_t vana, int8_t parReadback);
+  std::vector<uint8_t> daqReadback(std::string dac, uint8_t vana, unsigned int roc, int8_t parReadback);
+  std::vector<uint8_t> daqReadback(std::string dac, double vana, int8_t parReadback);
+  std::vector<uint8_t> daqReadbackIa();
   void CalibrateIa();
   void CalibrateVana();
   void CalibrateVd();
   void CalibrateVa();
-  double getCalibratedVbg();
+  std::vector<double> getCalibratedVbg();
   void readbackVbg();
   void doTest();
-  double getCalibratedIa();
+  std::vector<double> getCalibratedIa();
+  double getCalibratedIa(unsigned int roc);
   void setVana();
   void doDAQ();
 
@@ -56,20 +58,20 @@ private:
   bool	   fParOutOfRange;
   bool     fDaq_loop;
 
-  double fPar0VdCal;
-  double fPar1VdCal;
-  double fPar0VaCal;
-  double fPar1VaCal;
-  double fPar0RbIaCal;
-  double fPar1RbIaCal;
-  double fPar0TbIaCal;
-  double fPar1TbIaCal;
-  double fPar2TbIaCal;
+  std::vector<double> fPar0VdCal;  
+  std::vector<double> fPar1VdCal;  
+  std::vector<double> fPar0VaCal;  
+  std::vector<double> fPar1VaCal;  
+  std::vector<double> fPar0RbIaCal;
+  std::vector<double> fPar1RbIaCal;
+  std::vector<double> fPar0TbIaCal;
+  std::vector<double> fPar1TbIaCal;
+  std::vector<double> fPar2TbIaCal;
 
   bool fCalwVd;
   bool fCalwVa;
 
-  double fRbVbg;
+  std::vector<double> fRbVbg;
 
   
 
