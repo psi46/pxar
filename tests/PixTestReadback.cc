@@ -855,8 +855,8 @@ else if (!dac.compare("va")){
   rb = fApi->daqGetReadback();
   std::vector<uint8_t> rb_val;
 
-  for(uint i=0; i<rb.size(); i++){
-    //    for(uint j=0; j<rb[i].size(); j++){
+  for(uint8_t i=0; i<rb.size(); i++){
+    //    for(uint8_t j=0; j<rb[i].size(); j++){
     // LOG(logDEBUG)<<"Readback values for vana = "<<(int)vana<<" : "<<(int)(rb[i][j]&0xff);
     rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
       // }
@@ -892,8 +892,8 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, int8
   rb = fApi->daqGetReadback();
   std::vector<uint8_t> rb_val;
 
-  for(uint i=0; i<rb.size(); i++){
-    //    for(uint j=0; j<rb[i].size(); j++){
+  for(uint8_t i=0; i<rb.size(); i++){
+    //    for(uint8_t j=0; j<rb[i].size(); j++){
     // LOG(logDEBUG)<<"Readback values for vana = "<<(int)vana<<" : "<<(int)(rb[i][j]&0xff);
     rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
       // }
@@ -928,8 +928,8 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, unsi
   rb = fApi->daqGetReadback();
   std::vector<uint8_t> rb_val;
 
-  for(uint i=0; i<rb.size(); i++){
-    //    for(uint j=0; j<rb[i].size(); j++){
+  for(uint8_t i=0; i<rb.size(); i++){
+    //    for(uint8_t j=0; j<rb[i].size(); j++){
     // LOG(logDEBUG)<<"Readback values for vana = "<<(int)vana<<" : "<<(int)(rb[i][j]&0xff);
     rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
       // }
@@ -1019,8 +1019,8 @@ std::vector<uint8_t> PixTestReadback::daqReadbackIa(){
   rb = fApi->daqGetReadback();
   std::vector<uint8_t> rb_val;
 
-  for(uint i=0; i<rb.size(); i++){
-    //    for(uint j=0; j<rb[i].size(); j++){
+  for(uint8_t i=0; i<rb.size(); i++){
+    //    for(uint8_t j=0; j<rb[i].size(); j++){
     // LOG(logDEBUG)<<"Readback values for vana = "<<(int)vana<<" : "<<(int)(rb[i][j]&0xff);
     rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
       // }
