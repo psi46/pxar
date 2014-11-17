@@ -59,6 +59,8 @@ class CUSB : public CRpcIo
 public:
   CUSB();
   ~CUSB();
+  const char* Name() { return "USB";};
+
   int32_t GetLastError() { return ftdiStatus; }
 #ifdef HAVE_LIBFTDI
   const char* GetErrorMsg();

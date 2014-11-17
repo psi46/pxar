@@ -253,7 +253,7 @@ void PixTestTiming::PhaseScan() {
 
   //Get the number of TBMs, Total ROCs, and ROCs per TBM
   int nTBMs = fApi->_dut->getNTbms();
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocI2Caddr();
   vector<int> nROCs;
   vector <vector<int> > nROCsPort;
   vector<TH2D*> phasehists;
@@ -445,7 +445,7 @@ void PixTestTiming::TimingTest() {
   banner(Form("PixTestTiming::TimingTest()"));
 
   size_t nTBMs = fApi->_dut->getNTbms();
-  size_t nROCs = fApi->_dut->getEnabledRocIDs().size();
+  size_t nROCs = fApi->_dut->getEnabledRocI2Caddr().size();
 
   // Setup a new pattern with only res and token:
   vector<pair<string, uint8_t> > pg_setup;
@@ -509,23 +509,23 @@ void PixTestTiming::LevelScan() {
 
   //Get the normal info
   size_t nTBMs = fApi->_dut->getNTbms();
-  size_t nROCs = fApi->_dut->getEnabledRocIDs().size();
+  size_t nROCs = fApi->_dut->getEnabledRocI2Caddr().size();
 
   // Setup a new pattern with only res and token:
   vector<pair<string, uint8_t> > pg_setup;
   pg_setup.push_back(make_pair("resetroc", 25));
   pg_setup.push_back(make_pair("trigger", 0));
-  fApi->setPatternGenerator(pg_setup);
 
   vector<uint8_t> GoodLevels;
   fApi->daqStart();
   fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
   vector<rawEvent> daqRawEv;
   daqRawEv = fApi->daqGetRawEventBuffer();
-  for (uint8_t ilevel=0; ilevel<16; ilevel++){
+  for (uint8_t ilevel=15; ilevel>0; ilevel--){
     LOG(logDEBUG) << "Testing Level: " << int(ilevel);
     fPixSetup->getConfigParameters()->setTbParameter("level", ilevel);
-    fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
+    fApi->initTestboard(fPixSetup->getConfigParameters()->getTbSigDelays(), fPixSetup->getConfigParameters()->getTbPowerSettings(), fPixSetup->getConfigParameters()->getTbPgSettings());
+    fApi->setPatternGenerator(pg_setup);
     fApi->daqTrigger(fNTrig,period);
     daqRawEv = fApi->daqGetRawEventBuffer();
     int ngoodevents = 0;
@@ -564,7 +564,7 @@ void PixTestTiming::LevelScan() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   PixTest::update();
 
-  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
+  fApi->initTestboard(fPixSetup->getConfigParameters()->getTbSigDelays(), fPixSetup->getConfigParameters()->getTbPowerSettings(), fPixSetup->getConfigParameters()->getTbPgSettings());
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 

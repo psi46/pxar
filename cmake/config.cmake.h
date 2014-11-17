@@ -11,4 +11,5 @@
 #define PACKAGE_FIRMWARE_URL "https://github.com/psi46/pixel-dtb-firmware/tree/master/FLASH"
 #define PACKAGE_FIRMWARE "v@PXAR_FW_VERSION@"
 
+#define ETHERNET_INTERFACE "eth0"
 #endif

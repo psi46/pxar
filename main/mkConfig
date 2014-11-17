@@ -477,8 +477,9 @@ save                button
 
 -- PhOptimization
 ntrig               10
-safetymargin        20
 singlePix           0
+safetymarginlow     15
+safetymarginup      10
 
 -- PhOpt
 adjustvthrcomp      checkbox(0)
@@ -488,6 +489,17 @@ vcalhigh            255
 phmin               30
 phmax               220
 PIX                 11,20
+
+-- Readback
+calibrateVd         button
+calibrateVa         button
+calibrateIa         button
+readbackVbg         button
+getCalibratedVbg    button
+useCalVd            checkbox(1)
+useCalVa            checkbox(0)
+getCalibratedIa     button
+setVana             button
 
 -- Xray
 maskHotPixels       button
@@ -616,6 +628,7 @@ sub printTbmParameters {
 
 	my $file = "$dir/tbmParameters_C${itbm}b.dat";
 	open(FH, ">$file") || die "cannot open $file\n";
+    $tbms =~ s/basee[ ]?.*/basee   0x00/;
 	print FH $tbms;
 	close(FH);
     }
