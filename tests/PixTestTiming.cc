@@ -112,10 +112,10 @@ void PixTestTiming::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
 
-  LevelScan();
-  h1 = (*fDisplayedHist);
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update();
+  //LevelScan();
+  //h1 = (*fDisplayedHist);
+  //h1->Draw(getHistOption(h1).c_str());
+  //PixTest::update();
  
   // -- save DACs!
   saveParameters();
