@@ -235,6 +235,10 @@ public:
 	RPC_EXPORT uint16_t _GetID();
 	RPC_EXPORT uint16_t _GetIA();
 
+	RPC_EXPORT uint16_t _GetVD_Reg();
+	RPC_EXPORT uint16_t _GetVDAC_Reg();
+	RPC_EXPORT uint16_t _GetVD_Cap();
+
 	RPC_EXPORT void HVon();
 	RPC_EXPORT void HVoff();
 	RPC_EXPORT void ResetOn();
