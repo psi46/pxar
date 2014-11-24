@@ -176,6 +176,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   vector<shist256*>  maps; 
   vector<TH1*>       resultMaps; 
+  resultMaps.clear();
   
   shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
   shist256 *ph;
@@ -898,6 +899,9 @@ string PixTest::getHistOption(TH1* h) {
 // ----------------------------------------------------------------------
 vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 
+  vector<int> results; 
+  results.clear();
+
   //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
   uint16_t FLAGS = FLAG_FORCE_MASKED;
 
@@ -946,7 +950,6 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
     }
   }
 
-  vector<int> results; 
   for (unsigned int i = 0; i < scanHists.size(); ++i) {
     scanHists[i]->Draw();
     update();
@@ -977,7 +980,8 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 // ----------------------------------------------------------------------
 vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double nsigma) {
   vector<int> results; 
- 
+  results.clear();
+
   TH2D *h2(0), *hn(0); 
   string hname(""); 
   for (unsigned int i = 0; i < maps.size(); ++i) {
