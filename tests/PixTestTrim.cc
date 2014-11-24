@@ -165,7 +165,7 @@ void PixTestTrim::trimTest() {
   // -- determine pixel with largest VCAL threshold
   print("Vcal thr map (pixel with maximum Vcal thr)"); 
   vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 0, 150, 1); 
-  if (thr1.size()/3 != rocIds.size()) {
+  if (thr1.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr1.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
     return;
   }
@@ -309,7 +309,7 @@ void PixTestTrim::trimTest() {
   // -- set trim bits
   int correction = 4;
   vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 200, 1); 
-  if (thr2.size()/3 != rocIds.size()) {
+  if (thr2.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr2.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
     return;
   }
