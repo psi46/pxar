@@ -1871,12 +1871,12 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
-uint32_t hal::daqErrorCount() {
-  // Check the active channels for decoding errors:
-  uint32_t errors = decoder0.getErrorCount();
-  if(src1.isConnected()) { errors += decoder1.getErrorCount(); }
-  if(src2.isConnected()) { errors += decoder2.getErrorCount(); }
-  if(src3.isConnected()) { errors += decoder3.getErrorCount(); }
+statistics hal::daqStatistics() {
+  // Read statistics from the active channels:
+  statistics errors = decoder0.getStatistics();
+  if(src1.isConnected()) { errors += decoder1.getStatistics(); }
+  if(src2.isConnected()) { errors += decoder2.getStatistics(); }
+  if(src3.isConnected()) { errors += decoder3.getStatistics(); }
   return errors;
 }
 

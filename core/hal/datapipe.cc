@@ -185,7 +185,7 @@ namespace pxar {
 	}
 	catch(DataDecoderError /*&e*/){
 	  // decoding of raw address lead to invalid address
-	  decodingErrors++;
+	  decodingStats.m_error_decoding_pixel++;
 	}
       }
       //if (roc.error) x.error |= 0x0001;
@@ -237,7 +237,7 @@ namespace pxar {
 	}
 	catch(DataDecoderError /*&e*/){
 	  // decoding of raw address lead to invalid address
-	  decodingErrors++; // keep track of number of such errors
+	  decodingStats.m_error_decoding_pixel++; // keep track of number of such errors
 	}
       }
     }
@@ -272,11 +272,11 @@ namespace pxar {
     }
   }
 
-  uint32_t dtbEventDecoder::getErrorCount() { 
-    // Automatically clear the number after it was read out:
-    uint32_t tmp = decodingErrors;
-    decodingErrors = 0;
-    return tmp; 
+  statistics dtbEventDecoder::getStatistics() { 
+    // Automatically clear the statistics after it was read out:
+    statistics tmp = decodingStats;
+    decodingStats.clear();
+    return tmp;
   }
 
   std::vector<std::vector<uint16_t> > dtbEventDecoder::getReadback() {
