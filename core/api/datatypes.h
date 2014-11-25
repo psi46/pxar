@@ -288,5 +288,34 @@ namespace pxar {
     bool enable;
   };
 
+  /** Class for storing decoded pixel readout data
+   */
+  class DLLEXPORT statistics {
+    /** Allow the dtbEventDecoder to directly alter private members of the statistics
+     */
+    friend class dtbEventDecoder;
+
+  public:
+  statistics() :
+    m_error_decoding_pixel(0) {};
+    // Print all statistics to stdout:
+    void print() {};
+    // Clear all statistics:
+    void clear();
+    friend statistics& operator+=(statistics &lhs, const statistics &rhs);
+
+    uint32_t error_decoding_pixel() { return m_error_decoding_pixel; };
+  private:
+    uint32_t info_events_empty;
+    uint32_t info_events_valid;
+    uint32_t info_pixels_valid;
+
+    // Total number of undecodable pixels (by address)
+    uint32_t m_error_decoding_pixel;
+    // Total number of undecodable pixels (by pulse height fill bit)
+    uint32_t m_error_decoding_pulseheight;
+    // Total number of pixels with row 80:
+    uint32_t m_error_decoding_buffer_corrupt;
+  };
 }
 #endif

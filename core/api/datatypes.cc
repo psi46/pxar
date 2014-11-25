@@ -32,4 +32,12 @@ namespace pxar {
     }
   }
 
+  void statistics::clear() {}
+
+  statistics& operator+=(statistics &lhs, const statistics &rhs) {
+    if(&lhs == &rhs) {/* self assignment */}
+    lhs.m_error_decoding_pixel += rhs.m_error_decoding_pixel;
+    return lhs;
+  }
+
 } // namespace pxar
