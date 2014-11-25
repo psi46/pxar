@@ -710,10 +710,11 @@ namespace pxar {
      */
     std::vector<std::vector<uint16_t> > daqGetReadback();
 
-    /** Function that returns the number of pixel decoding errors found in the
-     *  last (non-raw) DAQ readout or API test call.
+    /** Function that returns a class object of the type pxar::statistics containing
+     *  all collected error statistics from the last (non-raw) DAQ readout or API test 
+     *  call. Statistics can be fetched once and are then reset.
      */
-    uint32_t daqGetNDecoderErrors();
+    statistics getStatistics();
 
     /** DUT object for book keeping of settings
      */
@@ -851,7 +852,7 @@ namespace pxar {
     /** Helper function to update the internaly cached number of decoder errors
      *  with the number found in the data sample passed to the function
      */
-    void getDecoderErrorCount();
+    void getDecoderStats();
 
     /** Status of the DAQ
      */
@@ -861,8 +862,8 @@ namespace pxar {
      */
     uint32_t _daq_buffersize;
 
-    /** Number of pixel decoding errors in last DAQ readout */
-    uint32_t _ndecode_errors_lastdaq;
+    /** Statistics from the last DAQ readout */
+    statistics _stats_lastdaq;
 
     /** Warned the user about not initializing the DUT */
     bool _daq_startstop_warning;

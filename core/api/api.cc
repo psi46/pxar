@@ -19,7 +19,7 @@ using namespace pxar;
 pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _ndecode_errors_lastdaq(0),
+  _stats_lastdaq(),
   _daq_startstop_warning(false)
 {
 
@@ -534,6 +534,10 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
     return data;
 }
 
+statistics pxarCore::getStatistics() {
+  // Return the accumulated number of decoding errors:
+  return _stats_lastdaq;
+}
 
   
 // TEST functions
@@ -1271,7 +1275,7 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
   // check the data for decoder errors and update our internal counter
-  getDecoderErrorCount();
+  getDecoderStats();
 
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
@@ -1297,13 +1301,6 @@ rawEvent pxarCore::daqGetRawEvent() {
   // Return the next raw data record from the FIFO buffer:
   return (*_hal->daqRawEvent());
 }
-
-uint32_t pxarCore::daqGetNDecoderErrors() {
-
-  // Return the accumulated number of decoding errors:
-  return _ndecode_errors_lastdaq;
-}
-
 
 bool pxarCore::daqStop() {
   return daqStop(true);
@@ -1501,7 +1498,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   }
   
   // update the internal decoder error count for this data sample
-  getDecoderErrorCount();
+  getDecoderStats();
 
   // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);
@@ -2144,11 +2141,11 @@ uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,ui
   return delay_sum;
 }
 
-void pxarCore::getDecoderErrorCount(){
-  // check the data for any decoding errors (stored in the events as counters)
-  _ndecode_errors_lastdaq = _hal->daqErrorCount();
-  if (_ndecode_errors_lastdaq){
-    LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
+void pxarCore::getDecoderStats() {
+  // Read out collected statistics from the last DAq session:
+  _stats_lastdaq = _hal->daqStatistics();
+  if(_stats_lastdaq.error_decoding_pixel()){
+    LOG(logCRITICAL) << "A total of " << _stats_lastdaq.error_decoding_pixel() << " pixels could not be decoded in this DAQ readout.";
   }
 }
 
