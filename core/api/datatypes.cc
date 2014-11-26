@@ -38,6 +38,7 @@ namespace pxar {
     LOG(logINFO) << "Decoding statistics:";
     LOG(logINFO) << "  Event errors: \t        " << this->errors_event();
     LOG(logINFO) << "\t missing ROC header(s): " << this->errors_event_roc_missing();
+    LOG(logINFO) << "\t invalid 5bit words:    " << this->errors_event_invalid_words();
     LOG(logINFO) << "  Decoding errors: \t     " << this->errors_decoding();
     LOG(logINFO) << "\t pixel address:         " << this->errors_decoding_pixel();
     LOG(logINFO) << "\t pulse height fill bit: " << this->errors_decoding_pulseheight();
@@ -51,6 +52,7 @@ namespace pxar {
   statistics& operator+=(statistics &lhs, const statistics &rhs) {
     // Event errors:
     lhs.m_errors_event_roc_missing += rhs.m_errors_event_roc_missing;
+    lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
     // Pixel decoding errors:
     lhs.m_errors_decoding_pixel += rhs.m_errors_decoding_pixel;
     lhs.m_errors_decoding_pulseheight += rhs.m_errors_decoding_pulseheight;

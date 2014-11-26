@@ -298,6 +298,7 @@ namespace pxar {
   public:
   statistics() :
     m_errors_event_roc_missing(0),
+      m_errors_event_invalid_words(0),
       m_errors_decoding_pixel(0),
       m_errors_decoding_pulseheight(0),
       m_errors_decoding_buffer_corrupt(0)
@@ -310,14 +311,16 @@ namespace pxar {
       return (errors_decoding() + errors_event());
     };
     uint32_t errors_event() {
-      return (m_errors_event_roc_missing);
+      return (errors_event_roc_missing()
+	      + errors_event_invalid_words());
     };
     uint32_t errors_decoding() { 
-      return (m_errors_decoding_pixel 
-	      + m_errors_decoding_pulseheight
-	      + m_errors_decoding_buffer_corrupt);
+      return (errors_decoding_pixel()
+	      + errors_decoding_pulseheight()
+	      + errors_decoding_buffer_corrupt());
     };
     uint32_t errors_event_roc_missing() { return m_errors_event_roc_missing; }
+    uint32_t errors_event_invalid_words() { return m_errors_event_invalid_words; }
     uint32_t errors_decoding_pixel() { return m_errors_decoding_pixel; };
     uint32_t errors_decoding_pulseheight() { return m_errors_decoding_pulseheight; };
     uint32_t errors_decoding_buffer_corrupt() { return m_errors_decoding_buffer_corrupt; };
@@ -331,6 +334,9 @@ namespace pxar {
 
     // Total number of events with missing ROC header(s):
     uint32_t m_errors_event_roc_missing;
+    // Total number of invalid 5bit words detected by DESER400:
+    uint32_t m_errors_event_invalid_words;
+
     // Total number of undecodable pixels (by address)
     uint32_t m_errors_decoding_pixel;
     // Total number of undecodable pixels (by pulse height fill bit)
