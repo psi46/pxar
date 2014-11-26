@@ -49,7 +49,14 @@ namespace pxar {
   }
 
   void statistics::clear() {
-    //FIXME fill...
+    m_errors_event_start = 0;
+    m_errors_event_stop = 0;
+    m_errors_event_overflow = 0;
+    m_errors_event_roc_missing = 0;
+    m_errors_event_invalid_words = 0;
+    m_errors_decoding_pixel = 0;
+    m_errors_decoding_pulseheight = 0;
+    m_errors_decoding_buffer_corrupt = 0;
   }
 
   statistics& operator+=(statistics &lhs, const statistics &rhs) {
@@ -63,7 +70,7 @@ namespace pxar {
     lhs.m_errors_decoding_pixel += rhs.m_errors_decoding_pixel;
     lhs.m_errors_decoding_pulseheight += rhs.m_errors_decoding_pulseheight;
     lhs.m_errors_decoding_buffer_corrupt += rhs.m_errors_decoding_buffer_corrupt;
-    // FIXME fill...
+
     return lhs;
   }
 
