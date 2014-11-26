@@ -263,7 +263,7 @@ void PixTestPhOpt::scan(string name) {
     LOG(logDEBUG) << "      attempt #" << cnt;
     try{
       results = fApi->getPulseheightVsDACDAC("phoffset", 0, 255, "phscale", 0, 255, FLAGS, fParNtrig);
-      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true;
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
@@ -326,7 +326,7 @@ void PixTestPhOpt::adjustVthrComp() {
   while (!done) {
     try{
       results = fApi->getEfficiencyVsDAC("vthrcomp", 0, 200, FLAGS, NTRIG);
-      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true;
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
