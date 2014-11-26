@@ -183,9 +183,20 @@ namespace pxar {
 	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetChannel()*GetTokenChainLength()),invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	}
-	catch(DataDecoderError /*&e*/){
+	catch(DataInvalidAddressError /*&e*/){
 	  // decoding of raw address lead to invalid address
-	  decodingStats.m_error_decoding_pixel++;
+	  decodingStats.m_errors_decoding_pixel++;
+	}
+	catch(DataInvalidPulseheightError /*&e*/){
+	  // decoding of pulse height featured non-zero fill bit
+	  decodingStats.m_errors_decoding_pulseheight++;
+	}
+	catch(DataCorruptBufferError /*&e*/){
+	  // decoding returned row 80 - corrupt data buffer
+	  decodingStats.m_errors_decoding_buffer_corrupt++;
+	}
+	catch(DataDecodingError /*&e*/){
+	  LOG(logCRITICAL) << "Unknown decoding exception!";
 	}
       }
       //if (roc.error) x.error |= 0x0001;
@@ -235,9 +246,20 @@ namespace pxar {
 	  pixel pix(raw,0,invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	}
-	catch(DataDecoderError /*&e*/){
+	catch(DataInvalidAddressError /*&e*/){
 	  // decoding of raw address lead to invalid address
-	  decodingStats.m_error_decoding_pixel++; // keep track of number of such errors
+	  decodingStats.m_errors_decoding_pixel++;
+	}
+	catch(DataInvalidPulseheightError /*&e*/){
+	  // decoding of pulse height featured non-zero fill bit
+	  decodingStats.m_errors_decoding_pulseheight++;
+	}
+	catch(DataCorruptBufferError /*&e*/){
+	  // decoding returned row 80 - corrupt data buffer
+	  decodingStats.m_errors_decoding_buffer_corrupt++;
+	}
+	catch(DataDecodingError /*&e*/){
+	  LOG(logCRITICAL) << "Unknown decoding exception!";
 	}
       }
     }
