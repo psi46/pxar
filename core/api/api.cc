@@ -2142,10 +2142,11 @@ uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,ui
 }
 
 void pxarCore::getDecoderStats() {
-  // Read out collected statistics from the last DAq session:
+  // Read out collected statistics from the last DAQ session:
   _stats_lastdaq = _hal->daqStatistics();
-  if(_stats_lastdaq.error_decoding_pixel()){
-    LOG(logCRITICAL) << "A total of " << _stats_lastdaq.error_decoding_pixel() << " pixels could not be decoded in this DAQ readout.";
+  if(_stats_lastdaq.errors()){
+    LOG(logCRITICAL) << "There have been errors during this DAQ readout.";
+    _stats_lastdaq.print();
   }
 }
 
