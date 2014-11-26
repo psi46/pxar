@@ -297,25 +297,39 @@ namespace pxar {
 
   public:
   statistics() :
-    m_error_decoding_pixel(0) {};
+    m_errors_decoding_pixel(0),
+      m_errors_decoding_pulseheight(0),
+      m_errors_decoding_buffer_corrupt(0)
+	{};
     // Print all statistics to stdout:
-    void print() {};
-    // Clear all statistics:
-    void clear();
+    void print();
     friend statistics& operator+=(statistics &lhs, const statistics &rhs);
 
-    uint32_t error_decoding_pixel() { return m_error_decoding_pixel; };
+    uint32_t errors() {
+      return (errors_decoding());
+    };
+    uint32_t errors_decoding() { 
+      return (m_errors_decoding_pixel 
+	      + m_errors_decoding_pulseheight
+	      + m_errors_decoding_buffer_corrupt);
+    };
+    uint32_t errors_decoding_pixel() { return m_errors_decoding_pixel; };
+    uint32_t errors_decoding_pulseheight() { return m_errors_decoding_pulseheight; };
+    uint32_t errors_decoding_buffer_corrupt() { return m_errors_decoding_buffer_corrupt; };
   private:
+    // Clear all statistics:
+    void clear();
+
     uint32_t info_events_empty;
     uint32_t info_events_valid;
     uint32_t info_pixels_valid;
 
     // Total number of undecodable pixels (by address)
-    uint32_t m_error_decoding_pixel;
+    uint32_t m_errors_decoding_pixel;
     // Total number of undecodable pixels (by pulse height fill bit)
-    uint32_t m_error_decoding_pulseheight;
+    uint32_t m_errors_decoding_pulseheight;
     // Total number of pixels with row 80:
-    uint32_t m_error_decoding_buffer_corrupt;
+    uint32_t m_errors_decoding_buffer_corrupt;
   };
 }
 #endif

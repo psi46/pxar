@@ -32,11 +32,24 @@ namespace pxar {
     }
   }
 
-  void statistics::clear() {}
+  void statistics::print() {
+    // Print out the full statistics:
+    LOG(logINFO) << "Decoding statistics:";
+    LOG(logINFO) << "  Decoding errors: \t     " << this->errors_decoding();
+    LOG(logINFO) << "\t pixel address:         " << this->errors_decoding_pixel();
+    LOG(logINFO) << "\t pulse height fill bit: " << this->errors_decoding_pulseheight();
+    LOG(logINFO) << "\t buffer corruption:     " << this->errors_decoding_buffer_corrupt();
+  }
+
+  void statistics::clear() {
+    //FIXME fill...
+  }
 
   statistics& operator+=(statistics &lhs, const statistics &rhs) {
-    if(&lhs == &rhs) {/* self assignment */}
-    lhs.m_error_decoding_pixel += rhs.m_error_decoding_pixel;
+    lhs.m_errors_decoding_pixel += rhs.m_errors_decoding_pixel;
+    lhs.m_errors_decoding_pulseheight += rhs.m_errors_decoding_pulseheight;
+    lhs.m_errors_decoding_buffer_corrupt += rhs.m_errors_decoding_buffer_corrupt;
+    // FIXME fill...
     return lhs;
   }
 
