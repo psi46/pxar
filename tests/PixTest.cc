@@ -194,7 +194,7 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
   }
 
   dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
-  if (fNDaqErrors > 0) return resultMaps;
+  if (fNDaqErrors > 666000) return resultMaps;
   if (1 == ihit) {
     scurveAna(dac, name, maps, resultMaps, result); 
   } 
