@@ -128,6 +128,7 @@ namespace pxar {
     unsigned int pos = 0;
     unsigned int size = sample->GetSize();
     uint16_t v;
+    bool tmpError = false;
 
     // Count the ROC headers:
     int16_t roc_n = -1;
@@ -141,14 +142,17 @@ namespace pxar {
     // TBM Header 1:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
-    //if ((v & 0xe000) != 0xa000) roc_Event.error |= 0x0800;
+    if ((v & 0xe000) != 0xa000) tmpError = true;
     raw = (v & 0x00ff) << 8;
 
     // TBM Header 2:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
-    //if ((v & 0xe000) != 0x8000) roc_Event.error |= 0x0400;
+    if ((v & 0xe000) != 0x8000) tmpError = true;
     raw += v & 0x00ff;
+
+    if(tmpError) { decodingStats.m_errors_tbm_header++; }
+    tmpError = false;
 
     roc_Event.header = raw;
 
@@ -224,14 +228,16 @@ namespace pxar {
     raw = 0;
 
     // T1
-    //if ((v & 0xe000) != 0xe000) roc_Event.error |= 0x0080;
+    if ((v & 0xe000) != 0xe000) tmpError = true;
     raw = (v & 0x00ff) << 8;
 
     // T2
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
-    //if ((v & 0xe000) != 0xc000) roc_Event.error |= 0x0040;
+    if ((v & 0xe000) != 0xc000) tmpError = true;
     raw += v & 0x00ff;
+
+    if(tmpError) { decodingStats.m_errors_tbm_trailer++; }
 
     roc_Event.trailer = raw;
 
