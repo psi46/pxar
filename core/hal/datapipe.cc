@@ -313,18 +313,35 @@ namespace pxar {
     if(count.size() <= roc) count.resize(roc+1,0);
     count.at(roc)++;
 
-    if(val&2) { // start marker
+    if(val&2) { // start marker detected
       if (count.at(roc) == 16) {
 	// Write out the collected data:
 	if(readback.size() <= roc) readback.resize(roc+1);
 	readback.at(roc).push_back(shiftReg.at(roc));
 
-	LOG(logDEBUGPIPES) << "Readback ROC " << static_cast<int>(roc+GetChannel()*GetTokenChainLength()) << " "
-			   << ((readback.at(roc).back()>>8)&0x00ff) 
-			   << " (0x" << std::hex << ((readback.at(roc).back()>>8)&0x00ff) << std::dec << "): " 
-			   << (readback.at(roc).back()&0xff) 
-			   << " (0x" << std::hex << (readback.at(roc).back()&0xff) << std::dec << ")";
+	LOG(logDEBUGPIPES) << "Readback ROC "
+			   << static_cast<int>(roc+GetChannel()*GetTokenChainLength())
+			   << " " << ((readback.at(roc).back()>>8)&0x00ff)
+			   << " (0x" << std::hex << ((readback.at(roc).back()>>8)&0x00ff)
+			   << std::dec << "): " << (readback.at(roc).back()&0xff)
+			   << " (0x" << std::hex << (readback.at(roc).back()&0xff)
+			   << std::dec << ")";
       }
+      else {
+	// If this is the first readback cycle of the ROC, ignore the mismatch:
+	if(readback.size() <= roc || readback.at(roc).empty()) {
+	  LOG(logDEBUGAPI) << "ROC " << static_cast<int>(roc)
+			   << ": first readback marker after "
+			   << count.at(roc) << " readouts. Ignoring error condition.";
+	}
+	else {
+	  LOG(logWARNING) << "ROC " << static_cast<int>(roc)
+			  << ": Readback start marker after "
+			  << count.at(roc) << " readouts!";
+	  decodingStats.m_errors_roc_readback++;
+	}
+      }
+      // Reset the counter for this ROC:
       count.at(roc) = 0;
     }
   }
