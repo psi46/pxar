@@ -214,9 +214,6 @@ namespace pxar {
 	  // decoding returned row 80 - corrupt data buffer
 	  decodingStats.m_errors_pixel_buffer_corrupt++;
 	}
-	catch(DataDecodingError /*&e*/){
-	  LOG(logCRITICAL) << "Unknown decoding exception!";
-	}
       }
       //if (roc.error) x.error |= 0x0001;
       //x.roc.push_back(roc);
@@ -292,9 +289,6 @@ namespace pxar {
 	catch(DataCorruptBufferError /*&e*/){
 	  // decoding returned row 80 - corrupt data buffer
 	  decodingStats.m_errors_pixel_buffer_corrupt++;
-	}
-	catch(DataDecodingError /*&e*/){
-	  LOG(logCRITICAL) << "Unknown decoding exception!";
 	}
       }
     }
