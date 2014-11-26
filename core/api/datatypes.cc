@@ -37,19 +37,20 @@ namespace pxar {
     // Print out the full statistics:
     LOG(logINFO) << "Decoding statistics:";
     LOG(logINFO) << "  General information:";
-    LOG(logINFO) << "\t 16bit words read:      " << this->info_words_read();
-    LOG(logINFO) << "\t valid pixel hits:      " << this->info_pixels_valid();
-    LOG(logINFO) << "  Event errors: \t        " << this->errors_event();
-    LOG(logINFO) << "\t start marker:          " << this->errors_event_start();
-    LOG(logINFO) << "\t stop marker:           " << this->errors_event_stop();
-    LOG(logINFO) << "\t overflow:              " << this->errors_event_overflow();
-    LOG(logINFO) << "\t invalid 5bit words:    " << this->errors_event_invalid_words();
-    LOG(logINFO) << "  ROC errors: \t\t        " << this->errors_roc();
-    LOG(logINFO) << "\t missing ROC header(s): " << this->errors_roc_missing();
-    LOG(logINFO) << "  Pixel decoding errors:\t" << this->errors_pixel();
-    LOG(logINFO) << "\t pixel address:         " << this->errors_pixel_address();
-    LOG(logINFO) << "\t pulse height fill bit: " << this->errors_pixel_pulseheight();
-    LOG(logINFO) << "\t buffer corruption:     " << this->errors_pixel_buffer_corrupt();
+    LOG(logINFO) << "\t 16bit words read:         " << this->info_words_read();
+    LOG(logINFO) << "\t valid pixel hits:         " << this->info_pixels_valid();
+    LOG(logINFO) << "  Event errors: \t           " << this->errors_event();
+    LOG(logINFO) << "\t start marker:             " << this->errors_event_start();
+    LOG(logINFO) << "\t stop marker:              " << this->errors_event_stop();
+    LOG(logINFO) << "\t overflow:                 " << this->errors_event_overflow();
+    LOG(logINFO) << "\t invalid 5bit words:       " << this->errors_event_invalid_words();
+    LOG(logINFO) << "  ROC errors: \t\t           " << this->errors_roc();
+    LOG(logINFO) << "\t missing ROC header(s):    " << this->errors_roc_missing();
+    LOG(logINFO) << "\t misplaced readback start: " << this->errors_roc_readback();
+    LOG(logINFO) << "  Pixel decoding errors:\t   " << this->errors_pixel();
+    LOG(logINFO) << "\t pixel address:            " << this->errors_pixel_address();
+    LOG(logINFO) << "\t pulse height fill bit:    " << this->errors_pixel_pulseheight();
+    LOG(logINFO) << "\t buffer corruption:        " << this->errors_pixel_buffer_corrupt();
   }
 
   void statistics::clear() {
@@ -62,6 +63,8 @@ namespace pxar {
     m_errors_event_invalid_words = 0;
 
     m_errors_roc_missing = 0;
+    m_errors_roc_readback = 0;
+
     m_errors_pixel_address = 0;
     m_errors_pixel_pulseheight = 0;
     m_errors_pixel_buffer_corrupt = 0;
@@ -80,6 +83,7 @@ namespace pxar {
 
     // ROC errors:
     lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
+    lhs.m_errors_roc_readback += rhs.m_errors_roc_readback;
 
     // Pixel decoding errors:
     lhs.m_errors_pixel_address += rhs.m_errors_pixel_address;
