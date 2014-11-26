@@ -297,7 +297,10 @@ namespace pxar {
 
   public:
   statistics() :
-    m_errors_event_roc_missing(0),
+    m_errors_event_start(0),
+      m_errors_event_stop(0),
+      m_errors_event_overflow(0),
+      m_errors_event_roc_missing(0),
       m_errors_event_invalid_words(0),
       m_errors_decoding_pixel(0),
       m_errors_decoding_pulseheight(0),
@@ -311,7 +314,10 @@ namespace pxar {
       return (errors_decoding() + errors_event());
     };
     uint32_t errors_event() {
-      return (errors_event_roc_missing()
+      return (errors_event_start()
+	      + errors_event_stop()
+	      + errors_event_overflow()
+	      + errors_event_roc_missing()
 	      + errors_event_invalid_words());
     };
     uint32_t errors_decoding() { 
@@ -319,6 +325,9 @@ namespace pxar {
 	      + errors_decoding_pulseheight()
 	      + errors_decoding_buffer_corrupt());
     };
+    uint32_t errors_event_start() { return m_errors_event_start; }
+    uint32_t errors_event_stop() { return m_errors_event_stop; }
+    uint32_t errors_event_overflow() { return m_errors_event_overflow; }
     uint32_t errors_event_roc_missing() { return m_errors_event_roc_missing; }
     uint32_t errors_event_invalid_words() { return m_errors_event_invalid_words; }
     uint32_t errors_decoding_pixel() { return m_errors_decoding_pixel; };
@@ -332,6 +341,12 @@ namespace pxar {
     uint32_t info_events_valid;
     uint32_t info_pixels_valid;
 
+    // Total number of events with misplaced start
+    uint32_t m_errors_event_start;
+    // Total number of events with misplaced stop:
+    uint32_t m_errors_event_stop;
+    // Total number of events with data overflow:
+    uint32_t m_errors_event_overflow;
     // Total number of events with missing ROC header(s):
     uint32_t m_errors_event_roc_missing;
     // Total number of invalid 5bit words detected by DESER400:

@@ -37,6 +37,9 @@ namespace pxar {
     // Print out the full statistics:
     LOG(logINFO) << "Decoding statistics:";
     LOG(logINFO) << "  Event errors: \t        " << this->errors_event();
+    LOG(logINFO) << "\t start marker:          " << this->errors_event_start();
+    LOG(logINFO) << "\t stop marker:           " << this->errors_event_stop();
+    LOG(logINFO) << "\t overflow:              " << this->errors_event_overflow();
     LOG(logINFO) << "\t missing ROC header(s): " << this->errors_event_roc_missing();
     LOG(logINFO) << "\t invalid 5bit words:    " << this->errors_event_invalid_words();
     LOG(logINFO) << "  Decoding errors: \t     " << this->errors_decoding();
@@ -51,6 +54,9 @@ namespace pxar {
 
   statistics& operator+=(statistics &lhs, const statistics &rhs) {
     // Event errors:
+    lhs.m_errors_event_start += rhs.m_errors_event_start;
+    lhs.m_errors_event_stop += rhs.m_errors_event_stop;
+    lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
     lhs.m_errors_event_roc_missing += rhs.m_errors_event_roc_missing;
     lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
     // Pixel decoding errors:
