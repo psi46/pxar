@@ -218,7 +218,16 @@ namespace pxar {
 
     roc_Event.trailer = raw;
 
-    LOG(logDEBUGPIPES) << roc_Event;
+    // If the number of ROCs does not correspond to what we expect
+    // clear the event and return:
+    if(roc_n+1 != GetTokenChainLength()) {
+      LOG(logWARNING) << "Number of ROCs (" << roc_n+1
+		      << ") != Token Chain Length: " << GetTokenChainLength();
+      decodingStats.m_errors_event_roc_missing++;
+      roc_Event.Clear();
+    }
+    else LOG(logDEBUGPIPES) << roc_Event;
+
     return &roc_Event;
   }
 
