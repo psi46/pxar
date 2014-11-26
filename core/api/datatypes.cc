@@ -44,6 +44,9 @@ namespace pxar {
     LOG(logINFO) << "\t stop marker:              " << this->errors_event_stop();
     LOG(logINFO) << "\t overflow:                 " << this->errors_event_overflow();
     LOG(logINFO) << "\t invalid 5bit words:       " << this->errors_event_invalid_words();
+    LOG(logINFO) << "  TBM errors: \t\t           " << this->errors_tbm();
+    LOG(logINFO) << "\t flawed TBM headers:       " << this->errors_tbm_header();
+    LOG(logINFO) << "\t flawed TBM trailers:      " << this->errors_tbm_trailer();
     LOG(logINFO) << "  ROC errors: \t\t           " << this->errors_roc();
     LOG(logINFO) << "\t missing ROC header(s):    " << this->errors_roc_missing();
     LOG(logINFO) << "\t misplaced readback start: " << this->errors_roc_readback();
@@ -61,6 +64,9 @@ namespace pxar {
     m_errors_event_stop = 0;
     m_errors_event_overflow = 0;
     m_errors_event_invalid_words = 0;
+
+    m_errors_tbm_header = 0;
+    m_errors_tbm_trailer = 0;
 
     m_errors_roc_missing = 0;
     m_errors_roc_readback = 0;
@@ -80,6 +86,10 @@ namespace pxar {
     lhs.m_errors_event_stop += rhs.m_errors_event_stop;
     lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
     lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
+
+    // TBM errors:
+    lhs.m_errors_tbm_header += rhs.m_errors_tbm_header;
+    lhs.m_errors_tbm_trailer += rhs.m_errors_tbm_trailer;
 
     // ROC errors:
     lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;

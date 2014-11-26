@@ -301,6 +301,8 @@ namespace pxar {
       m_errors_event_stop(0),
       m_errors_event_overflow(0),
       m_errors_event_invalid_words(0),
+      m_errors_tbm_header(0),
+      m_errors_tbm_trailer(0),
       m_errors_roc_missing(0),
       m_errors_roc_readback(0),
       m_errors_pixel_address(0),
@@ -315,13 +317,17 @@ namespace pxar {
     uint32_t info_pixels_valid() {return m_info_pixels_valid; }
 
     uint32_t errors() {
-      return (errors_pixel() + errors_roc() + errors_event());
+      return (errors_pixel() + errors_tbm() + errors_roc() + errors_event());
     };
     uint32_t errors_event() {
       return (errors_event_start()
 	      + errors_event_stop()
 	      + errors_event_overflow()
 	      + errors_event_invalid_words());
+    };
+    uint32_t errors_tbm() {
+      return (errors_tbm_header()
+	      + errors_tbm_trailer());
     };
     uint32_t errors_roc() {
       return (errors_roc_missing()
@@ -336,6 +342,8 @@ namespace pxar {
     uint32_t errors_event_stop() { return m_errors_event_stop; }
     uint32_t errors_event_overflow() { return m_errors_event_overflow; }
     uint32_t errors_event_invalid_words() { return m_errors_event_invalid_words; }
+    uint32_t errors_tbm_header() { return m_errors_tbm_header; }
+    uint32_t errors_tbm_trailer() { return m_errors_tbm_trailer; }
     uint32_t errors_roc_missing() { return m_errors_roc_missing; }
     uint32_t errors_roc_readback() { return m_errors_roc_readback; }
     uint32_t errors_pixel_address() { return m_errors_pixel_address; };
@@ -362,6 +370,11 @@ namespace pxar {
     uint32_t m_errors_event_overflow;
     // Total number of invalid 5bit words detected by DESER400:
     uint32_t m_errors_event_invalid_words;
+
+    // Total number of events with flawed TBM header:
+    uint32_t m_errors_tbm_header;
+    // Total number of events with flawed TBM trailer:
+    uint32_t m_errors_tbm_trailer;
 
     // Total number of events with missing ROC header(s):
     uint32_t m_errors_roc_missing;
