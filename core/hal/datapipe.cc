@@ -108,10 +108,21 @@ namespace pxar {
     return &record;
   }
 
+  void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
+    // Check last bit of identifier nibble to be zero:
+    if((v & 0x1000) == 0x0000) { return; }
+    decodingStats.m_errors_event_invalid_words++;
+  }
+
   Event* dtbEventDecoder::DecodeDeser400() {
 
     roc_Event.Clear();
     rawEvent *sample = Get();
+
+    // Count possibe error states:
+    if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
+    if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
+    if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
 
     unsigned int raw = 0;
     unsigned int pos = 0;
@@ -127,13 +138,15 @@ namespace pxar {
 
     // --- decode TBM header ---------------------------------
 
-    // H1
+    // TBM Header 1:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    CheckInvalidWord(v);
     //if ((v & 0xe000) != 0xa000) roc_Event.error |= 0x0800;
     raw = (v & 0x00ff) << 8;
 
-    // H2
+    // TBM Header 2:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    CheckInvalidWord(v);
     //if ((v & 0xe000) != 0x8000) roc_Event.error |= 0x0400;
     raw += v & 0x00ff;
 
@@ -143,8 +156,9 @@ namespace pxar {
 
     // while ROC header
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-    while ((v & 0xe000) == 0x4000) { // ROC Header
+    CheckInvalidWord(v);
 
+    while ((v & 0xe000) == 0x4000) { // ROC Header
       // Count ROC Headers up:
       roc_n++;
 
@@ -152,6 +166,7 @@ namespace pxar {
       if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,v); }
 
       v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+      CheckInvalidWord(v);
       while ((v & 0xe000) <= 0x2000) { // R0 ... R1
 
 	for (int i = 0; i <= 1; i++) {
@@ -163,21 +178,24 @@ namespace pxar {
 	      //roc.pixel.push_back(pixel);
 	      //x.roc.push_back(roc);
 	      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+	      CheckInvalidWord(v);
 	      goto trailer;
 	    }
 	  }
 	  raw = (raw << 12) + (v & 0x0fff);
 	  v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+	  CheckInvalidWord(v);
 	}
 
 	try {
-	  // Check if this is just fill bits of the TBM09 data stream accounting for the other channel:
+	  // Check if this is just fill bits of the TBM09 data stream 
+	  // accounting for the other channel:
 	  if(GetTokenChainLength() == 4 && (raw&0xffffff) == 0xffffff) {
 	    LOG(logDEBUGPIPES) << "Empty hit detected (TBM09 data streams). Skipping.";
 	    continue;
 	  }
 
-	  // Get the right ROC id: Channel number x ROC offset (= token chain length)
+	  // Get the correct ROC id: Channel number x ROC offset (= token chain length)
 	  // TBM08x: channel 0: 0-7, channel 1: 8-15
 	  // TBM09x: channel 0: 0-3, channel 1: 4-7, channel 2: 8-11, channel 3: 12-15
 	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetChannel()*GetTokenChainLength()),invertedAddress);
@@ -213,6 +231,7 @@ namespace pxar {
 
     // T2
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
+    CheckInvalidWord(v);
     //if ((v & 0xe000) != 0xc000) roc_Event.error |= 0x0040;
     raw += v & 0x00ff;
 

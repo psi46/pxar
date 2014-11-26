@@ -204,6 +204,9 @@ namespace pxar {
     std::vector<uint16_t> shiftReg;
     std::vector<std::vector<uint16_t> > readback;
 
+    // Error checking:
+    void CheckInvalidWord(uint16_t);
+
   public:
   dtbEventDecoder() : decodingStats(), readback() {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); };
