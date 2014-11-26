@@ -33,43 +33,58 @@ namespace pxar {
     }
   }
 
-  void statistics::print() {
+  void statistics::dump() {
     // Print out the full statistics:
     LOG(logINFO) << "Decoding statistics:";
+    LOG(logINFO) << "  General information:";
+    LOG(logINFO) << "\t 16bit words read:      " << this->info_words_read();
+    LOG(logINFO) << "\t valid pixel hits:      " << this->info_pixels_valid();
     LOG(logINFO) << "  Event errors: \t        " << this->errors_event();
     LOG(logINFO) << "\t start marker:          " << this->errors_event_start();
     LOG(logINFO) << "\t stop marker:           " << this->errors_event_stop();
     LOG(logINFO) << "\t overflow:              " << this->errors_event_overflow();
-    LOG(logINFO) << "\t missing ROC header(s): " << this->errors_event_roc_missing();
     LOG(logINFO) << "\t invalid 5bit words:    " << this->errors_event_invalid_words();
-    LOG(logINFO) << "  Decoding errors: \t     " << this->errors_decoding();
-    LOG(logINFO) << "\t pixel address:         " << this->errors_decoding_pixel();
-    LOG(logINFO) << "\t pulse height fill bit: " << this->errors_decoding_pulseheight();
-    LOG(logINFO) << "\t buffer corruption:     " << this->errors_decoding_buffer_corrupt();
+    LOG(logINFO) << "  ROC errors: \t\t        " << this->errors_roc();
+    LOG(logINFO) << "\t missing ROC header(s): " << this->errors_roc_missing();
+    LOG(logINFO) << "  Pixel decoding errors:\t" << this->errors_pixel();
+    LOG(logINFO) << "\t pixel address:         " << this->errors_pixel_address();
+    LOG(logINFO) << "\t pulse height fill bit: " << this->errors_pixel_pulseheight();
+    LOG(logINFO) << "\t buffer corruption:     " << this->errors_pixel_buffer_corrupt();
   }
 
   void statistics::clear() {
+    m_info_words_read = 0;
+    m_info_pixels_valid = 0;
+
     m_errors_event_start = 0;
     m_errors_event_stop = 0;
     m_errors_event_overflow = 0;
-    m_errors_event_roc_missing = 0;
     m_errors_event_invalid_words = 0;
-    m_errors_decoding_pixel = 0;
-    m_errors_decoding_pulseheight = 0;
-    m_errors_decoding_buffer_corrupt = 0;
+
+    m_errors_roc_missing = 0;
+    m_errors_pixel_address = 0;
+    m_errors_pixel_pulseheight = 0;
+    m_errors_pixel_buffer_corrupt = 0;
   }
 
   statistics& operator+=(statistics &lhs, const statistics &rhs) {
+    // Informational bits:
+    lhs.m_info_words_read += rhs.m_info_words_read;
+    lhs.m_info_pixels_valid += rhs.m_info_pixels_valid;
+
     // Event errors:
     lhs.m_errors_event_start += rhs.m_errors_event_start;
     lhs.m_errors_event_stop += rhs.m_errors_event_stop;
     lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
-    lhs.m_errors_event_roc_missing += rhs.m_errors_event_roc_missing;
     lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
+
+    // ROC errors:
+    lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
+
     // Pixel decoding errors:
-    lhs.m_errors_decoding_pixel += rhs.m_errors_decoding_pixel;
-    lhs.m_errors_decoding_pulseheight += rhs.m_errors_decoding_pulseheight;
-    lhs.m_errors_decoding_buffer_corrupt += rhs.m_errors_decoding_buffer_corrupt;
+    lhs.m_errors_pixel_address += rhs.m_errors_pixel_address;
+    lhs.m_errors_pixel_pulseheight += rhs.m_errors_pixel_pulseheight;
+    lhs.m_errors_pixel_buffer_corrupt += rhs.m_errors_pixel_buffer_corrupt;
 
     return lhs;
   }

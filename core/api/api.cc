@@ -2146,7 +2146,7 @@ void pxarCore::getDecoderStats() {
   _stats_lastdaq = _hal->daqStatistics();
   if(_stats_lastdaq.errors()){
     LOG(logCRITICAL) << "There have been errors during this DAQ readout.";
-    _stats_lastdaq.print();
+    _stats_lastdaq.dump();
   }
 }
 
