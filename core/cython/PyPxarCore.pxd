@@ -70,6 +70,12 @@ cdef extern from "api.h" namespace "pxar":
         tbmConfig()
 
 cdef extern from "api.h" namespace "pxar":
+    cdef cppclass statistics:
+        void clear()
+        void dump()
+        statistics()
+
+cdef extern from "api.h" namespace "pxar":
     cdef cppclass dut:
         dut()
         void info()
@@ -207,6 +213,6 @@ cdef extern from "api.h" namespace "pxar":
         vector[Event] daqGetEventBuffer() except +
         vector[uint16_t] daqGetBuffer() except +
         vector[vector[uint16_t]] daqGetReadback() except +
-        uint32_t daqGetNDecoderErrors()
+        statistics getStatistics()
         bool daqStop() except +
 
