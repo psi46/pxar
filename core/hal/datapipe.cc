@@ -200,18 +200,19 @@ namespace pxar {
 	  // TBM09x: channel 0: 0-3, channel 1: 4-7, channel 2: 8-11, channel 3: 12-15
 	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetChannel()*GetTokenChainLength()),invertedAddress);
 	  roc_Event.pixels.push_back(pix);
+	  decodingStats.m_info_pixels_valid++;
 	}
 	catch(DataInvalidAddressError /*&e*/){
 	  // decoding of raw address lead to invalid address
-	  decodingStats.m_errors_decoding_pixel++;
+	  decodingStats.m_errors_pixel_address++;
 	}
 	catch(DataInvalidPulseheightError /*&e*/){
 	  // decoding of pulse height featured non-zero fill bit
-	  decodingStats.m_errors_decoding_pulseheight++;
+	  decodingStats.m_errors_pixel_pulseheight++;
 	}
 	catch(DataCorruptBufferError /*&e*/){
 	  // decoding returned row 80 - corrupt data buffer
-	  decodingStats.m_errors_decoding_buffer_corrupt++;
+	  decodingStats.m_errors_pixel_buffer_corrupt++;
 	}
 	catch(DataDecodingError /*&e*/){
 	  LOG(logCRITICAL) << "Unknown decoding exception!";
@@ -242,7 +243,7 @@ namespace pxar {
     if(roc_n+1 != GetTokenChainLength()) {
       LOG(logERROR) << "Number of ROCs (" << roc_n+1
 		    << ") != Token Chain Length: " << GetTokenChainLength();
-      decodingStats.m_errors_event_roc_missing++;
+      decodingStats.m_errors_roc_missing++;
     }
 
     LOG(logDEBUGPIPES) << roc_Event;
@@ -257,6 +258,12 @@ namespace pxar {
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
 
     rawEvent *sample = Get();
+
+    // Count possibe error states:
+    if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
+    if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
+    if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
+
     unsigned int n = sample->GetSize();
     if (n > 0) {
       if (n > 1) roc_Event.pixels.reserve((n-1)/2);
@@ -272,18 +279,19 @@ namespace pxar {
 	try{
 	  pixel pix(raw,0,invertedAddress);
 	  roc_Event.pixels.push_back(pix);
+	  decodingStats.m_info_pixels_valid++;
 	}
 	catch(DataInvalidAddressError /*&e*/){
 	  // decoding of raw address lead to invalid address
-	  decodingStats.m_errors_decoding_pixel++;
+	  decodingStats.m_errors_pixel_address++;
 	}
 	catch(DataInvalidPulseheightError /*&e*/){
 	  // decoding of pulse height featured non-zero fill bit
-	  decodingStats.m_errors_decoding_pulseheight++;
+	  decodingStats.m_errors_pixel_pulseheight++;
 	}
 	catch(DataCorruptBufferError /*&e*/){
 	  // decoding returned row 80 - corrupt data buffer
-	  decodingStats.m_errors_decoding_buffer_corrupt++;
+	  decodingStats.m_errors_pixel_buffer_corrupt++;
 	}
 	catch(DataDecodingError /*&e*/){
 	  LOG(logCRITICAL) << "Unknown decoding exception!";
