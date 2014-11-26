@@ -416,7 +416,7 @@ class PxarCoreCmd(cmd.Cmd):
         """daqGetReadback: return all ROC readback values for the last DAQ session"""
         dat = self.api.daqGetReadback()
         for iroc, roc in enumerate(dat):
-            print "ROC " + str(iroc) + ":"
+            print "ROC " + str(iroc) + ": (" + str(len(roc)) + " values)"
             s = ""
             for i in roc:
                 s += '{:04x}'.format(i) + " "
