@@ -1544,6 +1544,10 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
+    
+    // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
+    _testboard->Flush();  
+    mDelay(150); 
 
     // And start the DAQ:
     _testboard->Daq_Start(1);

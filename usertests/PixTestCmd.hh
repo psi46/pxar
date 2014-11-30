@@ -316,6 +316,8 @@ class CmdProc {
   unsigned int fBufsize;
   vector<uint16_t>  fBuf;
   unsigned int fNumberOfEvents;
+  unsigned int fHeaderCount;
+  vector<unsigned int> fHeadersWithErrors;
   unsigned int fSeq;
   unsigned int fPeriod;
   vector<pair<string,uint8_t> > fSigdelays;
@@ -324,7 +326,10 @@ class CmdProc {
   
   int fDeser400XOR1;
   int fDeser400XOR2;
+  int fDeser400XOR1sum[8];
   int fDeser400err;
+  static int fPrerun;
+  static bool fFW35;
   
   bool verbose;
   Target defaultTarget;
@@ -338,14 +343,18 @@ class CmdProc {
   int tbmscan();
   int rocscan();
   int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
+  int levelscan();
   
   int countHits();
-  int countErrors(unsigned int ntrig=1, int nroc_expected=-1);
+  int countErrors(unsigned int ntrig=1, int ftrigkhz=0, int nroc_expected=-1, bool setup=true);
+  int countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int nroc);
   int printData(vector<uint16_t> buf, int level);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
   int getBuffer(vector<uint16_t> & buf);
-  int getBuffer(vector<uint16_t> & buf, int ntrig, int verbosity=1);
-  int runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0);
+  int setupDaq(int ntrig, int ftrigkhz, int verbosity=0);
+  int restoreDaq(int verbosity=0);
+  int runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0, bool setup=true);
+  int runDaq(int ntrig, int ftrigkhz, int verbosity=0);
   int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
   int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1);
   int pixDecodeRaw(int, int level=1);
