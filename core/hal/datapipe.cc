@@ -118,6 +118,24 @@ namespace pxar {
     decodingStats.m_errors_event_invalid_words++;
   }
 
+  void dtbEventDecoder::CheckEventID(uint16_t v) {
+    // After startup, register the first event ID:
+    if(eventID == -1) { eventID = (v&0x00ff); }
+
+    // Check if TBM event ID matches with expectation:
+    if((v&0x00ff) != (eventID%256)) {
+      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
+		    << ") !=  TBM ID (" << static_cast<int>(v&0x00ff) << ")";
+      decodingStats.m_errors_tbm_eventid_mismatch++;
+      // To continue readout, set event ID to the currently decoded one:
+      eventID = (v&0x00ff);
+    }
+    else {
+      // Increment event counter:
+      eventID = (eventID%256) + 1;
+    }
+  }
+
   Event* dtbEventDecoder::DecodeDeser400() {
 
     roc_Event.Clear();
@@ -150,21 +168,8 @@ namespace pxar {
     raw = (v & 0x00ff) << 8;
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Evt ID " << static_cast<int>(v&0x00ff);
 
-    // After startup, register the first event ID:
-    if(eventID == -1) { eventID = (v&0x00ff); }
-
-    // Check if TBM event ID matches with expectation:
-    if((v&0x00ff) != (eventID%256)) {
-      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
-		    << ") !=  TBM ID (" << static_cast<int>(v&0x00ff) << ")";
-      decodingStats.m_errors_tbm_eventid_mismatch++;
-      // To continue readout, set event ID to the currently decoded one:
-      eventID = (v&0x00ff);
-    }
-    else {
-      // Increment event counter:
-      eventID = (eventID%256) + 1;
-    }
+    // Check for correct TBM event ID:
+    CheckEventID(v);
 
     // TBM Header 2:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
