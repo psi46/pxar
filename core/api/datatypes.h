@@ -303,6 +303,7 @@ namespace pxar {
       m_errors_event_invalid_words(0),
       m_errors_tbm_header(0),
       m_errors_tbm_trailer(0),
+      m_errors_tbm_eventid_mismatch(0),
       m_errors_roc_missing(0),
       m_errors_roc_readback(0),
       m_errors_pixel_address(0),
@@ -327,7 +328,8 @@ namespace pxar {
     };
     uint32_t errors_tbm() {
       return (errors_tbm_header()
-	      + errors_tbm_trailer());
+	      + errors_tbm_trailer()
+	      + errors_tbm_eventid_mismatch());
     };
     uint32_t errors_roc() {
       return (errors_roc_missing()
@@ -343,6 +345,7 @@ namespace pxar {
     uint32_t errors_event_overflow() { return m_errors_event_overflow; }
     uint32_t errors_event_invalid_words() { return m_errors_event_invalid_words; }
     uint32_t errors_tbm_header() { return m_errors_tbm_header; }
+    uint32_t errors_tbm_eventid_mismatch() { return m_errors_tbm_eventid_mismatch; }
     uint32_t errors_tbm_trailer() { return m_errors_tbm_trailer; }
     uint32_t errors_roc_missing() { return m_errors_roc_missing; }
     uint32_t errors_roc_readback() { return m_errors_roc_readback; }
@@ -375,6 +378,8 @@ namespace pxar {
     uint32_t m_errors_tbm_header;
     // Total number of events with flawed TBM trailer:
     uint32_t m_errors_tbm_trailer;
+    // Total number of event ID mismatches in the datastream:
+    uint32_t m_errors_tbm_eventid_mismatch;
 
     // Total number of events with missing ROC header(s):
     uint32_t m_errors_roc_missing;

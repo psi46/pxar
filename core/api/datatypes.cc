@@ -47,6 +47,7 @@ namespace pxar {
     LOG(logINFO) << "  TBM errors: \t\t           " << this->errors_tbm();
     LOG(logINFO) << "\t flawed TBM headers:       " << this->errors_tbm_header();
     LOG(logINFO) << "\t flawed TBM trailers:      " << this->errors_tbm_trailer();
+    LOG(logINFO) << "\t event ID mismatches:      " << this->errors_tbm_eventid_mismatch();
     LOG(logINFO) << "  ROC errors: \t\t           " << this->errors_roc();
     LOG(logINFO) << "\t missing ROC header(s):    " << this->errors_roc_missing();
     LOG(logINFO) << "\t misplaced readback start: " << this->errors_roc_readback();
@@ -67,6 +68,7 @@ namespace pxar {
 
     m_errors_tbm_header = 0;
     m_errors_tbm_trailer = 0;
+    m_errors_tbm_eventid_mismatch = 0;
 
     m_errors_roc_missing = 0;
     m_errors_roc_readback = 0;
@@ -90,6 +92,7 @@ namespace pxar {
     // TBM errors:
     lhs.m_errors_tbm_header += rhs.m_errors_tbm_header;
     lhs.m_errors_tbm_trailer += rhs.m_errors_tbm_trailer;
+    lhs.m_errors_tbm_eventid_mismatch += rhs.m_errors_tbm_eventid_mismatch;
 
     // ROC errors:
     lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
