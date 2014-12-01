@@ -52,6 +52,7 @@ namespace pxar {
     LOG(logINFO) << "\t missing ROC header(s):    " << this->errors_roc_missing();
     LOG(logINFO) << "\t misplaced readback start: " << this->errors_roc_readback();
     LOG(logINFO) << "  Pixel decoding errors:\t   " << this->errors_pixel();
+    LOG(logINFO) << "\t pixel data incomplete:    " << this->errors_pixel_incomplete();
     LOG(logINFO) << "\t pixel address:            " << this->errors_pixel_address();
     LOG(logINFO) << "\t pulse height fill bit:    " << this->errors_pixel_pulseheight();
     LOG(logINFO) << "\t buffer corruption:        " << this->errors_pixel_buffer_corrupt();
@@ -73,6 +74,7 @@ namespace pxar {
     m_errors_roc_missing = 0;
     m_errors_roc_readback = 0;
 
+    m_errors_pixel_incomplete = 0;
     m_errors_pixel_address = 0;
     m_errors_pixel_pulseheight = 0;
     m_errors_pixel_buffer_corrupt = 0;
@@ -99,6 +101,7 @@ namespace pxar {
     lhs.m_errors_roc_readback += rhs.m_errors_roc_readback;
 
     // Pixel decoding errors:
+    lhs.m_errors_pixel_incomplete += rhs.m_errors_pixel_incomplete;
     lhs.m_errors_pixel_address += rhs.m_errors_pixel_address;
     lhs.m_errors_pixel_pulseheight += rhs.m_errors_pixel_pulseheight;
     lhs.m_errors_pixel_buffer_corrupt += rhs.m_errors_pixel_buffer_corrupt;

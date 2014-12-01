@@ -25,15 +25,14 @@ namespace pxar {
       }
     } while (buffer.size() == 0);
 
-    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "----------------";
     LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
 		       << " (" << static_cast<int>(chainlength) << " ROCs)"
 		       << (tbm_present ? " DESER400 " : " DESER160 ");
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
-    LOG(logDEBUGPIPES) << "-------------------------";
-    LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
+    LOG(logDEBUGPIPES) << "----------------";
     LOG(logDEBUGPIPES) << listVector(buffer,true);
-    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "----------------";
 
     return lastSample = buffer[pos++];
   }
@@ -64,11 +63,9 @@ namespace pxar {
       else record.SetOverflow();
     }
     record.Add(GetLast());
-    nextStartDetected = false;
 
-    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
-    LOG(logDEBUGPIPES) << listVector(record.data,true);
     LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << listVector(record.data,true);
 
     return &record;
   }
@@ -105,9 +102,8 @@ namespace pxar {
     // Else set Event end error:
     else record.SetEndError();
 
-    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
-    LOG(logDEBUGPIPES) << listVector(record.data,true);
     LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << listVector(record.data,true);
 
     return &record;
   }
@@ -116,24 +112,6 @@ namespace pxar {
     // Check last bit of identifier nibble to be zero:
     if((v & 0x1000) == 0x0000) { return; }
     decodingStats.m_errors_event_invalid_words++;
-  }
-
-  void dtbEventDecoder::CheckEventID(uint16_t v) {
-    // After startup, register the first event ID:
-    if(eventID == -1) { eventID = (v&0x00ff); }
-
-    // Check if TBM event ID matches with expectation:
-    if((v&0x00ff) != (eventID%256)) {
-      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
-		    << ") !=  TBM ID (" << static_cast<int>(v&0x00ff) << ")";
-      decodingStats.m_errors_tbm_eventid_mismatch++;
-      // To continue readout, set event ID to the currently decoded one:
-      eventID = (v&0x00ff);
-    }
-    else {
-      // Increment event counter:
-      eventID = (eventID%256) + 1;
-    }
   }
 
   Event* dtbEventDecoder::DecodeDeser400() {
@@ -168,16 +146,12 @@ namespace pxar {
     raw = (v & 0x00ff) << 8;
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Evt ID " << static_cast<int>(v&0x00ff);
 
-    // Check for correct TBM event ID:
-    CheckEventID(v);
-
     // TBM Header 2:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0x8000) tmpError = true;
     raw += v & 0x00ff;
-    LOG(logDEBUGPIPES) << "\t Data ID " << static_cast<int>(((v & 0x00c0) >> 6)) 
-		       << " Value " << static_cast<int>((v & 0x003f));
+    LOG(logDEBUGPIPES) << "\t Data ID " << static_cast<int>(((v & 0x00c0) >> 6)) << " Value " << static_cast<int>((v & 0x003f));
 
     if(tmpError) { decodingStats.m_errors_tbm_header++; }
     tmpError = false;
@@ -205,8 +179,10 @@ namespace pxar {
 	  if ((v >> 13) != i) { // R<i>
 	    //px_error |= (1<<i);
 	    if (v & 0x8000) { // TBM header/trailer
-	      // Unexpected arrivel of TBM marker - pixel data is incomplete:
-	      decodingStats.m_errors_pixel_incomplete++;
+	      //pixel.error = 0x1fff;
+	      //roc.error |= 0x0001;
+	      //roc.pixel.push_back(pixel);
+	      //x.roc.push_back(roc);
 	      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
 	      CheckInvalidWord(v);
 	      goto trailer;
@@ -278,15 +254,19 @@ namespace pxar {
     if(tmpError) { decodingStats.m_errors_tbm_trailer++; }
 
     roc_Event.trailer = raw;
+<<<<<<< Updated upstream
 
     // If the number of ROCs does not correspond to what we expect
     // clear the event and return:
     if(roc_n+1 != GetTokenChainLength()) {
-      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
-		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
+      LOG(logERROR) << "Number of ROCs (" << roc_n+1
+		    << ") != Token Chain Length: " << GetTokenChainLength();
       decodingStats.m_errors_roc_missing++;
     }
 
+=======
+    
+>>>>>>> Stashed changes
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }

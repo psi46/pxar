@@ -336,7 +336,8 @@ namespace pxar {
 	      + errors_roc_readback());
     };
     uint32_t errors_pixel() { 
-      return (errors_pixel_address()
+      return (errors_pixel_incomplete()
+	      + errors_pixel_address()
 	      + errors_pixel_pulseheight()
 	      + errors_pixel_buffer_corrupt());
     };
@@ -349,6 +350,7 @@ namespace pxar {
     uint32_t errors_tbm_trailer() { return m_errors_tbm_trailer; }
     uint32_t errors_roc_missing() { return m_errors_roc_missing; }
     uint32_t errors_roc_readback() { return m_errors_roc_readback; }
+    uint32_t errors_pixel_incomplete() { return m_errors_pixel_incomplete; }
     uint32_t errors_pixel_address() { return m_errors_pixel_address; };
     uint32_t errors_pixel_pulseheight() { return m_errors_pixel_pulseheight; };
     uint32_t errors_pixel_buffer_corrupt() { return m_errors_pixel_buffer_corrupt; };
@@ -386,6 +388,8 @@ namespace pxar {
     // Total number of misplaced ROC readback start markers:
     uint32_t m_errors_roc_readback;
 
+    // Total number of undecodable pixels (data missing)
+    uint32_t m_errors_pixel_incomplete;
     // Total number of undecodable pixels (by address)
     uint32_t m_errors_pixel_address;
     // Total number of undecodable pixels (by pulse height fill bit)
