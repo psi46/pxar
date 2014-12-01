@@ -855,11 +855,6 @@ namespace pxar {
      */
     uint32_t getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
-    /** Helper function to update the internaly cached number of decoder errors
-     *  with the number found in the data sample passed to the function
-     */
-    void getDecoderStats();
-
     /** Status of the DAQ
      */
     bool _daq_running;
@@ -867,9 +862,6 @@ namespace pxar {
     /** Allocated memory size on the DTB for the currently running DAQ session
      */
     uint32_t _daq_buffersize;
-
-    /** Statistics from the last DAQ readout */
-    statistics _stats_lastdaq;
 
     /** Warned the user about not initializing the DUT */
     bool _daq_startstop_warning;

@@ -19,7 +19,6 @@ using namespace pxar;
 pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _stats_lastdaq(),
   _daq_startstop_warning(false)
 {
 
@@ -538,7 +537,7 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
 
 statistics pxarCore::getStatistics() {
   // Return the accumulated number of decoding errors:
-  return _stats_lastdaq;
+  return _hal->daqStatistics();
 }
 
   
@@ -1276,9 +1275,6 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   std::vector<Event> data = std::vector<Event>();
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
-  // check the data for decoder errors and update our internal counter
-  getDecoderStats();
-
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
@@ -1499,9 +1495,6 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     return data;
   }
   
-  // update the internal decoder error count for this data sample
-  getDecoderStats();
-
   // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);
   SetCalibrateBits(false);
@@ -2162,15 +2155,6 @@ uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,ui
   delay_sum++;
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
-}
-
-void pxarCore::getDecoderStats() {
-  // Read out collected statistics from the last DAQ session:
-  _stats_lastdaq = _hal->daqStatistics();
-  if(_stats_lastdaq.errors()){
-    LOG(logCRITICAL) << "There have been errors during this DAQ readout.";
-    _stats_lastdaq.dump();
-  }
 }
 
 bool pxarCore::setExternalClock(bool enable) {
