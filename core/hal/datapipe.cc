@@ -63,6 +63,7 @@ namespace pxar {
       else record.SetOverflow();
     }
     record.Add(GetLast());
+    nextStartDetected = false;
 
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << listVector(record.data,true);

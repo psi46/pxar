@@ -178,7 +178,8 @@ namespace pxar {
 
     bool nextStartDetected;
   public:
-    dtbEventSplitter() {}
+  dtbEventSplitter() :
+    nextStartDetected(false) {}
   };
 
   // DTB data decoding class
