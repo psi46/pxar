@@ -207,9 +207,10 @@ namespace pxar {
 
     // Error checking:
     void CheckInvalidWord(uint16_t);
+    int16_t eventID;
 
   public:
-  dtbEventDecoder() : decodingStats(), readback() {};
+  dtbEventDecoder() : decodingStats(), readback(), eventID(-1) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();

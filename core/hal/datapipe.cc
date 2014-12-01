@@ -148,12 +148,31 @@ namespace pxar {
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0xa000) tmpError = true;
     raw = (v & 0x00ff) << 8;
+    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Evt ID " << static_cast<int>(v&0x00ff);
+
+    // After startup, register the first event ID:
+    if(eventID == -1) { eventID = (v&0x00ff); }
+
+    // Check if TBM event ID matches with expectation:
+    if((v&0x00ff) != (eventID%256)) {
+      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
+		    << ") !=  TBM ID (" << static_cast<int>(v&0x00ff) << ")";
+      decodingStats.m_errors_tbm_eventid_mismatch++;
+      // To continue readout, set event ID to the currently decoded one:
+      eventID = (v&0x00ff);
+    }
+    else {
+      // Increment event counter:
+      eventID = (eventID%256) + 1;
+    }
 
     // TBM Header 2:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0x8000) tmpError = true;
     raw += v & 0x00ff;
+    LOG(logDEBUGPIPES) << "\t Data ID " << static_cast<int>(((v & 0x00c0) >> 6)) 
+		       << " Value " << static_cast<int>((v & 0x003f));
 
     if(tmpError) { decodingStats.m_errors_tbm_header++; }
     tmpError = false;
@@ -248,8 +267,8 @@ namespace pxar {
     // If the number of ROCs does not correspond to what we expect
     // clear the event and return:
     if(roc_n+1 != GetTokenChainLength()) {
-      LOG(logERROR) << "Number of ROCs (" << roc_n+1
-		    << ") != Token Chain Length: " << GetTokenChainLength();
+      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
+		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
       decodingStats.m_errors_roc_missing++;
     }
 
