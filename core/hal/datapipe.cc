@@ -194,6 +194,14 @@ namespace pxar {
       // Count ROC Headers up:
       roc_n++;
 
+      // Check for DESER400 failure:
+      if((v&0x0ff0) == 0x0ff0) {
+	LOG(logCRITICAL) << "TBM " << static_cast<int>(GetChannel())
+			 << " ROC " << static_cast<int>(roc_n)
+			 << " header reports DESER400 failure!";
+	// FIXME abort readout here by throwing exception?
+      }
+
       // Decode the readback bits in the ROC header:
       if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,v); }
 
