@@ -25,14 +25,15 @@ namespace pxar {
       }
     } while (buffer.size() == 0);
 
-    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
 		       << " (" << static_cast<int>(chainlength) << " ROCs)"
 		       << (tbm_present ? " DESER400 " : " DESER160 ");
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
-    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
     LOG(logDEBUGPIPES) << listVector(buffer,true);
-    LOG(logDEBUGPIPES) << "----------------";
+    LOG(logDEBUGPIPES) << "-------------------------";
 
     return lastSample = buffer[pos++];
   }
@@ -65,8 +66,9 @@ namespace pxar {
     record.Add(GetLast());
     nextStartDetected = false;
 
-    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
     LOG(logDEBUGPIPES) << listVector(record.data,true);
+    LOG(logDEBUGPIPES) << "-------------------------";
 
     return &record;
   }
@@ -103,8 +105,9 @@ namespace pxar {
     // Else set Event end error:
     else record.SetEndError();
 
-    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
     LOG(logDEBUGPIPES) << listVector(record.data,true);
+    LOG(logDEBUGPIPES) << "-------------------------";
 
     return &record;
   }
