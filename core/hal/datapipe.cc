@@ -253,12 +253,24 @@ namespace pxar {
     // T1
     if ((v & 0xe000) != 0xe000) tmpError = true;
     raw = (v & 0x00ff) << 8;
+    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " trailer content: " << std::hex << (v&0x00ff) << std::dec;
+    LOG(logDEBUGPIPES) << "\t Token Pass " << ((v&0x0080) == 0x0080 ? "FALSE" : "TRUE");
+    LOG(logDEBUGPIPES) << "\t REST " << static_cast<int>(v&0x0040);
+    LOG(logDEBUGPIPES) << "\t RESR " << static_cast<int>(v&0x0020);
+    LOG(logDEBUGPIPES) << "\t Sync Err " << static_cast<int>(v&00010);
+    LOG(logDEBUGPIPES) << "\t Sync Trigger " << static_cast<int>(v&0x0008);
+    LOG(logDEBUGPIPES) << "\t Clear Trig Count " << static_cast<int>(v&0x0004);
+    LOG(logDEBUGPIPES) << "\t Cal Trigger " << static_cast<int>(v&0x0002);
+    LOG(logDEBUGPIPES) << "\t Stack Full " << static_cast<int>(v&0x0001);
 
     // T2
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0xc000) tmpError = true;
     raw += v & 0x00ff;
+    LOG(logDEBUGPIPES) << "\t Stack Full Now " << static_cast<int>(v&0x0080);
+    LOG(logDEBUGPIPES) << "\t PKAM Reset " << static_cast<int>(v&0x0040);
+    LOG(logDEBUGPIPES) << "\t Stack Count " << static_cast<int>(v&0x003f);
 
     if(tmpError) { decodingStats.m_errors_tbm_trailer++; }
 
