@@ -625,12 +625,16 @@ void ConfigParameters::readTbmDacs() {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::setTbParameter(std::string var, uint8_t val) {
+bool ConfigParameters::setTbParameter(std::string var, uint8_t val, bool appendIfNotFound) {
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
     if (!fTbParameters[i].first.compare(var)) {
       fTbParameters[i].second = val;
       return true; 
     }
+  }
+  if (appendIfNotFound) {
+    fTbParameters.push_back(make_pair(var, val)); 
+    return true;
   }
   return false; 
 }

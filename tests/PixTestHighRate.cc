@@ -21,7 +21,7 @@ ClassImp(PixTestHighRate)
 
 // ----------------------------------------------------------------------
 PixTestHighRate::PixTestHighRate(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParTriggerFrequency(0), fParRunSeconds(0),  
+  fParTriggerFrequency(0), fParRunSeconds(0), fParTriggerDelay(20),
   fParFillTree(false), fParDelayTBM(false) {
   PixTest::init();
   init(); 
@@ -54,6 +54,10 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
       }
       if (!parName.compare("runseconds")) {
 	fParRunSeconds = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("triggerdelay")) {
+	fParTriggerDelay = atoi(sval.c_str()); 
 	setToolTips();
       }
       if (!parName.compare("delaytbm")) {
@@ -319,6 +323,24 @@ void PixTestHighRate::doRunDaq() {
   }
   maskPixels();
 
+  // -- cache triggerdelay
+  vector<pair<string, uint8_t> > oldDelays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  bool foundIt(false);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    if (oldDelays[i].first == "triggerdelay") foundIt = true;
+    LOG(logDEBUG) << " old set: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
+
+  vector<pair<string, uint8_t> > delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  if (!foundIt) {
+    delays.push_back(make_pair("triggerdelay", fParTriggerDelay)); 
+  }
+
+  for (unsigned int i = 0; i < delays.size(); ++i) {
+    LOG(logDEBUG) << " setting: " << delays[i].first << ": " << (int)delays[i].second;
+  }
+  fApi->setTestboardDelays(delays);
+  
   // -- take data
   fDirectory->cd();
   doHitMap(fParRunSeconds, v); 
@@ -330,7 +352,6 @@ void PixTestHighRate::doRunDaq() {
   PixTest::update(); 
 
   // -- analyze
-
   string zPixelString(""); 
   for (unsigned int i = 0; i < v.size(); ++i) {
     int cnt(0); 
@@ -342,6 +363,14 @@ void PixTestHighRate::doRunDaq() {
     }
     zPixelString += Form(" %4d ", cnt);
   }
+
+  // -- reset sig delays
+  fApi->setTestboardDelays(oldDelays);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    LOG(logDEBUG) << " resetting: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
+
+
   
   LOG(logINFO) << "Pixels without X-ray hits (per ROC): " << zPixelString; 
   LOG(logINFO) << "PixTestHighRate::doRunDaq() done";
