@@ -91,7 +91,7 @@ public:
   bool customI2cAddresses() {return fI2cAddresses.size() > 0;} 
   std::vector<uint8_t> getI2cAddresses() {return fI2cAddresses;}
 
-  bool setTbParameter(std::string, uint8_t);
+  bool setTbParameter(std::string, uint8_t, bool appendIfNotFound = false);
   bool setTbPowerSettings(std::string, double);
   bool setTbmDac(std::string var, uint8_t val, int itbm = -1);
   bool setRocDac(std::string var, uint8_t val, int iroc = -1);
