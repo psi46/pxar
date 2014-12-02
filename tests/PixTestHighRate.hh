@@ -31,6 +31,7 @@ private:
 
   int      fParTriggerFrequency;
   int      fParRunSeconds; 
+  int      fParTriggerDelay; 
   bool     fParFillTree;
   bool	   fParDelayTBM;
   uint16_t fParNtrig; 
