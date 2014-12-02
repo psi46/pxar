@@ -522,6 +522,7 @@ Ntrig               5
 Vcal                200
 runDaq              button
 runseconds          2
+triggerdelay        20
 DelayTBM            checkbox
 FillTree            checkbox
 
