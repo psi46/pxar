@@ -329,7 +329,7 @@ vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
     a.push_back(make_pair("trigger",16));    // PG_TRG  b000010
     a.push_back(make_pair("token",0));     // PG_TOK  b000001
   } else {
-    a.push_back(std::make_pair("resettbm",15));    // PG_REST
+    a.push_back(std::make_pair("resetroc",15));    // PG_REST
     a.push_back(std::make_pair("calibrate",wbc+6)); // PG_CAL
     a.push_back(std::make_pair("trigger;sync",0));     // PG_TRG PG_SYNC
   }
