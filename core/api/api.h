@@ -815,15 +815,21 @@ namespace pxar {
      */
     void MaskAndTrim(bool trim, std::vector<rocConfig>::iterator rocit);
 
+  public:
+  
     /** Helper function to setup the attached devices for operation using
      *  calibrate pulses.
      *
      *  It sets the Pixel Unit Cell (PUC) Calibrate bit for
      *  every pixels enabled in the test range (those for which the "enable" 
      *  flag has been set using the dut::testPixel() functions) 
+     * 
+     * Disclaimer: use at your own risk, don't rely on this method staying public
      */
     void SetCalibrateBits(bool enable);
-
+    
+   private:
+   
     /** Helper function to check validity of the pattern generator settings
      *  coming from the user space.
      *

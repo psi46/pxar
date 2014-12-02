@@ -322,11 +322,13 @@ bool pxarCore::programDUT() {
     _hal->initROC(rocit->i2c_address,(*rocit).type, (*rocit).dacs);
   }
 
-  // As last step, mask all pixels in the device and detach all double column readouts::
+  // As last step, mask all pixels in the device and detach all double column readouts:
   MaskAndTrim(false);
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->AllColumnsSetEnable(rocit->i2c_address,true);
   }
+  // Also clear all calibrate signals:
+  SetCalibrateBits(false);
 
   // The DUT is programmed, everything all right:
   _dut->_programmed = true;
@@ -2091,6 +2093,10 @@ void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t>
   }
   else { LOG(logDEBUGAPI) << "Pattern generator setup with " << pg_setup.size() << " entries provided."; }
 
+  // Some booleans to keep track of PG content:
+  bool have_trigger = false;
+  bool have_tbmreset = false;
+
   // Loop over all entries provided:
   for(std::vector<std::pair<std::string,uint8_t> >::iterator it = pg_setup.begin(); it != pg_setup.end(); ++it) {
 
@@ -2122,9 +2128,26 @@ void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t>
 	LOG(logCRITICAL) << "Could not find pattern generator signal \"" << s << "\" in the dictionary!";
 	throw InvalidConfig("Wrong pattern generator signal provided.");
       }
+
+      // Check for some specific signals:
+      if(sig == PG_TRG) have_trigger = true;
+      if(sig == PG_REST) have_tbmreset = true;
+
       LOG(logDEBUGAPI) << "Found PG signal " << s << " (" << std::hex << sig << std::dec << ")";
     }
     patterns.push_back(std::make_pair(signal,it->second));
+  }
+
+  // If there is no trigger, no data is requested and read out from any detector:
+  if(!have_trigger) {
+    LOG(logWARNING) << "Pattern generator does not contain a trigger signal. "
+		    << "No data is expected from the DUT!";
+  }
+  // If a TBM Reset is present the TBM event counter gets reset every cycle, so
+  // we can't use the event id to check for missing events in the readout:
+  if(have_tbmreset) {
+    LOG(logWARNING) << "Pattern generator contains TBM Reset signal. "
+		    << "No event number cross checks possible.";
   }
 
   // Store the Pattern Generator commands in the DUT:
