@@ -583,7 +583,7 @@ EOF
     if (!$opt_m) {
 	print FH "254   deser160phase    4\n";
     } else {
-	print FH "#253    triggerdelay   10\n";
+	print FH "#253    triggerdelay   20\n";
     }
     close(FH);
 
