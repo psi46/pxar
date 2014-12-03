@@ -6,6 +6,7 @@ SET (UTILLIB_SOURCES
 ConfigParameters.cc
 PixSetup.cc
 PixTestParameters.cc
+PixMonitor.cc
 rsstools.cc
 shist256.cc
 )
@@ -15,6 +16,7 @@ set(UTILLIB_HEADERS
 ConfigParameters.hh
 PixSetup.hh
 PixTestParameters.hh
+PixMonitor.hh
 #rsstools.hh
 )
 
