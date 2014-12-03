@@ -516,6 +516,21 @@ PixTest::~PixTest() {
     (*il)->SetDirectory(fDirectory); 
     (*il)->Write(); 
   }
+
+  TH1D *h = (TH1D*)gDirectory->Get("ha"); 
+  h->Draw();
+  cout << h->GetXaxis()->GetTitleSize() << endl;
+  if (h) {
+    h->SetDirectory(fDirectory); 
+    h->Write();
+  }
+
+  h = (TH1D*)gDirectory->Get("hd"); 
+  h->Draw();
+  if (h) {
+    h->SetDirectory(fDirectory); 
+    h->Write();
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -528,6 +543,8 @@ void PixTest::testDone() {
 void PixTest::update() {
   //  cout << "PixTest::update()" << endl;
   Emit("update()"); 
+  fPixSetup->getPixMonitor()->update();
+  
 }
 
 // ----------------------------------------------------------------------
