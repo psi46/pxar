@@ -35,7 +35,7 @@ typedef char int8_t;
 
 class ConfigParameters;
 class PixParTab;
-class PixMonitor;
+class PixMonitorFrame;
 class PixSetup;
 class PixTest; 
 class PixTestParameters;
@@ -108,7 +108,7 @@ private:
   pxar::pxarCore         *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
-  PixMonitor             *fMonitor; 
+  PixMonitorFrame        *fMonitor; 
   PixParTab              *fParTab;
 
   int                    fWidth, fHeight; 

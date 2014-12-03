@@ -14,7 +14,7 @@
 #include "PixTest.hh"
 #include "PixTestParameters.hh"
 #include "PixSetup.hh"
-#include "PixMonitor.hh"
+#include "PixMonitorFrame.hh"
 
 #include "dictionaries.h"
 
@@ -133,9 +133,9 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   hwControl->AddFrame(hvFrame);
 
   // h/w monitoring 
-  fMonitor = new PixMonitor(hwControl, this);
+  fMonitor = new PixMonitorFrame(hwControl, this);
   fTimer = new TTimer(1000);
-  fTimer->Connect("Timeout()", "PixMonitor", fMonitor, "Update()");
+  fTimer->Connect("Timeout()", "PixMonitorFrame", fMonitor, "Update()");
   fTimer->TurnOn();
     
   h1v2->AddFrame(hwControl, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -330,7 +330,8 @@ PixGui::~PixGui() {
 
 // ----------------------------------------------------------------------
 void PixGui::Cleanup() {
-    gApplication->Terminate(0);
+  fPixSetup->getPixMonitor()->dumpSummaries();
+  gApplication->Terminate(0);
 }
 
 
@@ -343,7 +344,8 @@ void PixGui::CloseWindow() {
   
   if (fTimer) fTimer->TurnOff();
   if (fApi) delete fApi; 
-  
+  fPixSetup->getPixMonitor()->dumpSummaries();
+
   //  DestroyWindow();
   gApplication->Terminate(0);
 
