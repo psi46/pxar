@@ -518,15 +518,12 @@ PixTest::~PixTest() {
   }
 
   TH1D *h = (TH1D*)gDirectory->Get("ha"); 
-  h->Draw();
-  cout << h->GetXaxis()->GetTitleSize() << endl;
   if (h) {
     h->SetDirectory(fDirectory); 
     h->Write();
   }
 
   h = (TH1D*)gDirectory->Get("hd"); 
-  h->Draw();
   if (h) {
     h->SetDirectory(fDirectory); 
     h->Write();
