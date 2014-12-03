@@ -7,7 +7,7 @@ SET (GUILIB_SOURCES
 PixGui.cc
 PixTab.cc
 PixParTab.cc
-PixMonitor.cc
+PixMonitorFrame.cc
 )
 
 # fill list of header files 
@@ -15,7 +15,7 @@ SET (GUILIB_HEADERS
 PixGui.hh
 PixTab.hh
 PixParTab.hh
-PixMonitor.hh
+PixMonitorFrame.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/gui ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/ana ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${ROOT_INCLUDE_DIR} )
