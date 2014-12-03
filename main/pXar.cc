@@ -300,6 +300,7 @@ int main(int argc, char *argv[]){
   }
   
   // -- clean exit (however, you should not get here when running with the GUI)
+  a.getPixMonitor()->dumpSummaries();
   rfile->Close();
   if (api) delete api;
 
