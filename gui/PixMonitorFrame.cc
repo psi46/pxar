@@ -2,6 +2,7 @@
 #include "log.h"
 
 #include "PixGui.hh"
+#include "PixTab.hh"
 #include "PixSetup.hh"
 #include "PixMonitor.hh"
 
@@ -87,12 +88,17 @@ void PixMonitorFrame::handleButtons(Int_t id) {
   fActTime = time(NULL);
   fTimeinfo = gmtime (&fActTime);
 
+  PixMonitor *a = fGui->getPixSetup()->getPixMonitor();
   switch(id) {
   case B_DRAWANA:
-    LOG(logINFO) << "Draw ana XXX FIXME IMPLEMENT THIS XXX";
+    a->drawHist("iana");
+    fGui->getPixTab()->update();
+    //    fGui->getTabs()->SetTab(fGui->getSelectedTab()); 
+    
     break;
   case B_DRAWDIGI:
-    LOG(logINFO) << "Draw digi XXX FIXME IMPLEMENT THIS XXX";
+    a->drawHist("idig");
+    fGui->getPixTab()->update();
     break;
   default:
     LOG(logINFO) << "Something went wrong in the PixMonitorFrame::handleButons method!";
