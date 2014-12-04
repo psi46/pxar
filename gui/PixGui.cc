@@ -526,8 +526,12 @@ PixTest* PixGui::createTest(string testname) {
 
 // ----------------------------------------------------------------------
 void PixGui::selectedTab(int id) {
-  if (0 == id) fParTab->updateParameters();
   fTabs->SetTab(id);
+  if (0 == id) {
+    fParTab->updateParameters();
+    fPixTab = 0;
+    return;
+  }
   fPixTab = fPixTabList[id-1];
   //  LOG(logDEBUG) << "Switched to tab " << id << " fPixTabList.size() = " << fPixTabList.size() << " fPixTab = " << fPixTab;
 }

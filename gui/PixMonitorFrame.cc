@@ -92,13 +92,13 @@ void PixMonitorFrame::handleButtons(Int_t id) {
   switch(id) {
   case B_DRAWANA:
     a->drawHist("iana");
-    fGui->getPixTab()->update();
+    if (fGui->getPixTab()) fGui->getPixTab()->update();
     //    fGui->getTabs()->SetTab(fGui->getSelectedTab()); 
     
     break;
   case B_DRAWDIGI:
     a->drawHist("idig");
-    fGui->getPixTab()->update();
+    if (fGui->getPixTab()) fGui->getPixTab()->update();
     break;
   default:
     LOG(logINFO) << "Something went wrong in the PixMonitorFrame::handleButons method!";
