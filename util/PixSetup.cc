@@ -14,6 +14,7 @@ PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
   fApi               = a; 
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
+  fPixMonitor        = new PixMonitor(a);
   fDoAnalysisOnly    = false; 
   fMoreWebCloning    = false; 
   fDoUpdateRootFile  = false;
@@ -45,6 +46,8 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   LOG(logINFO) << "DUT info: ";
   fApi->_dut->info(); 
 
+  fPixMonitor = new PixMonitor(fApi);
+
 
 }
 
@@ -53,6 +56,7 @@ PixSetup::PixSetup() {
   fApi               = 0; 
   fPixTestParameters = 0; 
   fConfigParameters  = 0; 
+  fPixMonitor        = 0;
   fDoAnalysisOnly    = false; 
   fMoreWebCloning    = false; 
   init(); 

@@ -508,13 +508,25 @@ void PixTest::dumpParameters() {
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
+  //  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
     //    LOG(logINFO) << "Write out " << (*il)->GetName();
     (*il)->SetDirectory(fDirectory); 
     (*il)->Write(); 
+  }
+
+  TH1D *h = (TH1D*)gDirectory->Get("ha"); 
+  if (h) {
+    h->SetDirectory(fDirectory); 
+    h->Write();
+  }
+
+  h = (TH1D*)gDirectory->Get("hd"); 
+  if (h) {
+    h->SetDirectory(fDirectory); 
+    h->Write();
   }
 }
 
@@ -528,6 +540,8 @@ void PixTest::testDone() {
 void PixTest::update() {
   //  cout << "PixTest::update()" << endl;
   Emit("update()"); 
+  fPixSetup->getPixMonitor()->update();
+  
 }
 
 // ----------------------------------------------------------------------

@@ -1,5 +1,5 @@
-#ifndef PIXMONITOR_H
-#define PIXMONITOR_H
+#ifndef PIXMONITORFRAME_H
+#define PIXMONITORFRAME_H
 
 #include "pxardllexport.h"
 
@@ -17,13 +17,13 @@
 
 class PixGui; 
 
-class DLLEXPORT PixMonitor: public TQObject {
+class DLLEXPORT PixMonitorFrame: public TQObject {
 public:
-  PixMonitor(TGGroupFrame *f, PixGui *p);
-  virtual ~PixMonitor();
+  PixMonitorFrame(TGGroupFrame *f, PixGui *p);
+  virtual ~PixMonitorFrame();
   virtual void handleButtons(Int_t id = -1);
   virtual void Update();
-  virtual std::string stringify(int x);
+  //  virtual std::string stringify(int x);
 
 private:
   PixGui                 *fGui; 
@@ -44,7 +44,7 @@ private:
   TGTextEntry            *fNmrTDegree ; 
   TGTextBuffer           *fTDegreeFileBuffer ;
 
-
+  
 
   time_t                fActTime;
   struct tm                *fTimeinfo;
@@ -55,7 +55,7 @@ private:
     B_DRAWDIGI
   };
 
-  ClassDef(PixMonitor, 1)
+  ClassDef(PixMonitorFrame, 1)
 
 };
 #endif

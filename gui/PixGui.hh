@@ -35,7 +35,8 @@ typedef char int8_t;
 
 class ConfigParameters;
 class PixParTab;
-class PixMonitor;
+class PixTab;
+class PixMonitorFrame;
 class PixSetup;
 class PixTest; 
 class PixTestParameters;
@@ -64,6 +65,7 @@ public:
 
   TGCompositeFrame	*fhFrame;
   TGTab               	*getTabs() {return fTabs;}
+  PixTab                *getPixTab() {return fPixTab;}
 
   int getWidth() {return fWidth;}
   int getHeight() {return fHeight;}
@@ -108,8 +110,11 @@ private:
   pxar::pxarCore         *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
-  PixMonitor             *fMonitor; 
+  PixMonitorFrame        *fMonitor; 
   PixParTab              *fParTab;
+
+  std::vector<PixTab*>   fPixTabList; 
+  PixTab                 *fPixTab;
 
   int                    fWidth, fHeight; 
   std::string            fOldDirectory;

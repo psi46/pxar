@@ -8,6 +8,7 @@
 
 #include "PixTestParameters.hh"
 #include "ConfigParameters.hh"
+#include "PixMonitor.hh"
 
 class DLLEXPORT PixSetup {
 public:
@@ -20,6 +21,7 @@ public:
   PixTestParameters* getPixTestParameters() {return fPixTestParameters;}
   ConfigParameters * getConfigParameters()  {return fConfigParameters;}
   pxar::pxarCore*    getApi() {return fApi;}
+  PixMonitor*        getPixMonitor() {return fPixMonitor;}
   bool               doAnalysisOnly() {return fDoAnalysisOnly;}
   void               setDoAnalysisOnly(bool x) {fDoAnalysisOnly = x;}
   bool               useRootLogon() {return fUseRootLogon;} 
@@ -40,7 +42,7 @@ private:
   pxar::pxarCore    *fApi; 
   PixTestParameters *fPixTestParameters; 
   ConfigParameters  *fConfigParameters;   
-
+  PixMonitor        *fPixMonitor; 
 
 };
 
