@@ -508,7 +508,7 @@ void PixTest::dumpParameters() {
 
 // ----------------------------------------------------------------------
 PixTest::~PixTest() {
-  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
+  //  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
