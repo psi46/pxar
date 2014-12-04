@@ -500,6 +500,9 @@ void PixGui::createTab(const char* csel) {
 
   fTestList.push_back(pt); 
   PixTab *t = new PixTab(this, pt, string(csel)); 
+  fPixTabList.push_back(t);
+  //  LOG(logDEBUG) << "added tab " << t << " to fPixTabList, now size() = " << fPixTabList.size();
+  
   pt->Connect("update()", "PixTab", t, "update()"); 
   //  fTabs->Resize(fTabs->GetDefaultSize());
   //  fTabs->MoveResize(0, 0, 800, 800);
@@ -525,7 +528,8 @@ PixTest* PixGui::createTest(string testname) {
 void PixGui::selectedTab(int id) {
   if (0 == id) fParTab->updateParameters();
   fTabs->SetTab(id);
-  LOG(logDEBUG) << "Switched to tab " << id;
+  fPixTab = fPixTabList[id-1];
+  //  LOG(logDEBUG) << "Switched to tab " << id << " fPixTabList.size() = " << fPixTabList.size() << " fPixTab = " << fPixTab;
 }
 
 
