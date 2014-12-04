@@ -99,6 +99,48 @@ void PixMonitor::update() {
 }
 
 // ----------------------------------------------------------------------
+void PixMonitor::drawHist(string hname) {
+
+  ULong_t begSec = fMeasurements[0].first;
+  ULong_t endSec = fMeasurements[fMeasurements.size()-1].first+1;
+  TTimeStamp ts(begSec); 
+
+  string title;
+  if (hname == "iana") title = "analog";
+  if (hname == "idig") title = "digital";
+  TH1D *ha = (TH1D*)gDirectory->Get("HA"); 
+  if (ha) delete ha; 
+  ha =  new TH1D("HA", Form("%s current measurements, start: %s / sec:%ld", title.c_str(), ts.AsString("lc"), begSec), 
+		 endSec-begSec, 0., endSec-begSec);
+  ha->SetXTitle(Form("seconds after %s", ts.AsString("lc"))); 
+  ha->SetTitleSize(0.03, "X");
+  ha->SetTitleOffset(1.5, "X");
+  ha->SetMinimum(0.);
+  ha->SetMarkerStyle(20);
+  ha->SetMarkerSize(1);
+
+
+  if (hname == "iana") {
+    for (unsigned int i = 0; i < fMeasurements.size(); ++i) {
+      int ibin = fMeasurements[i].first - begSec;
+      ha->SetBinContent(ibin+1, fMeasurements[i].second.first);
+    }
+  }
+
+  if (hname == "idig") {
+    for (unsigned int i = 0; i < fMeasurements.size(); ++i) {
+      int ibin = fMeasurements[i].first - begSec;
+      ha->SetBinContent(ibin+1, fMeasurements[i].second.second);
+    }
+  }
+
+  ha->Draw("p");
+
+}
+
+
+
+// ----------------------------------------------------------------------
 TH1D* PixMonitor::extendHist(TH1D *h, int ibin) {
   if (0 == h) return 0;
   int nbins = h->GetNbinsX(); 

@@ -22,18 +22,18 @@ public:
   PixMonitor(pxar::pxarCore *); 
   ~PixMonitor();
   void init(); 
-  void dumpSummaries();
-  void update(); 
 
+  void update(); 
   double getIana() {return fIana;}
   double getIdig() {return fIdig;}
 
+  void dumpSummaries();
+  void drawHist(std::string hname); 
 
+private: 
   TH1D* extendHist(TH1D *h, int nbins);
   UInt_t getHistMinSec(TH1D *h);
 
-
-private: 
   pxar::pxarCore  *fApi; 
   double           fIana, fIdig;
 
