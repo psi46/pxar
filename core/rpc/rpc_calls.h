@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rpc.h"
+#include <vector>
 
 #ifdef INTERFACE_USB
 #include "USBInterface.h"
@@ -22,6 +23,8 @@ class CTestboard
 #ifdef INTERFACE_ETH
   CEthernet *ethernet;
 #endif /* INTERFACE_ETH */
+
+  std::vector<CRpcIo*> interfaceList;
 
 public:
 	CRpcIo& GetIo() { return *rpc_io; }
@@ -98,41 +101,28 @@ public:
 	  rpc_io = io;
 	}
 
-	void ClearInterface() {
-	  rpc_io = &RpcIoNull;
-	}
+	bool SelectInterface(std::string ifaceName) {
 
-	std::vector<CRpcIo*> GetInterfaceList() {
-	  std::vector<CRpcIo*> ifList;
-
-#ifdef INTERFACE_ETH
-	  if(ethernet == NULL) {
+	  bool ifaceFound = false;
+	  for(std::vector<CRpcIo*>::iterator iface = interfaceList.begin(); iface != interfaceList.end(); iface++) {
 	    try {
-	      ethernet = new CEthernet();
-	      ifList.push_back(ethernet);
+	      if(ifaceName == std::string((*iface)->Name())) {
+		rpc_io = *iface;
+		LOG(pxar::logDEBUGRPC) << "Assigned interface " << std::string((*iface)->Name());
+		ifaceFound = true;
+	      }
 	    }
-	    catch(CRpcError e) {
-	      LOG(pxar::logERROR) << "Error initiating ethernet. "
-				  << "Please ensure proper permissions are granted.";
-	    }
-	  } else { ifList.push_back(ethernet); }
-#endif /*INTERFACE_ETH*/
-
-#ifdef INTERFACE_USB
-	  if(usb == NULL) {
-	    try {
-	      usb = new CUSB();
-	      ifList.push_back(usb);
-	    }
-	    catch(CRpcError e) {
-	      LOG(pxar::logERROR) << "Error initiating usb. "
-				  << "Please ensure proper permissions are granted.";
+	    catch (CRpcError &e) {
+	      LOG(pxar::logCRITICAL) << "Error querying interface " << std::string((*iface)->Name());
+	      return false;
 	    }
 	  }
-	  else { ifList.push_back(usb); }
-#endif /*INTERFACE_USB*/
 
-	  return ifList;
+	  return ifaceFound;
+	}
+
+	void ClearInterface() {
+	  rpc_io = &RpcIoNull;
 	}
 
 	bool EnumFirst(CRpcIo* io, unsigned int &nDevices) { return io->EnumFirst(nDevices); }
@@ -147,6 +137,69 @@ public:
 	  if (!io->Enum(s, pos)) return false;
 	  name = s;
 	  return true;
+	}
+
+	std::vector<CRpcIo*> GetInterfaceList() {
+	  interfaceList.clear();
+
+#ifdef INTERFACE_ETH
+	  if(ethernet == NULL) {
+	    try {
+	      ethernet = new CEthernet();
+	      interfaceList.push_back(ethernet);
+	    }
+	    catch(CRpcError e) {
+	      LOG(pxar::logERROR) << "Error initiating ethernet. "
+				  << "Please ensure proper permissions are granted.";
+	    }
+	  } else { interfaceList.push_back(ethernet); }
+#endif /*INTERFACE_ETH*/
+
+#ifdef INTERFACE_USB
+	  if(usb == NULL) {
+	    try {
+	      usb = new CUSB();
+	      interfaceList.push_back(usb);
+	    }
+	    catch(CRpcError e) {
+	      LOG(pxar::logERROR) << "Error initiating usb. "
+				  << "Please ensure proper permissions are granted.";
+	    }
+	  }
+	  else { interfaceList.push_back(usb); }
+#endif /*INTERFACE_USB*/
+
+	  return interfaceList;
+	}
+
+	uint32_t GetInterfaceListSize() {
+
+	  if(interfaceList.empty()) interfaceList = GetInterfaceList();
+	  return interfaceList.size();
+	}
+
+	std::vector<std::pair<std::string,std::string> > GetDeviceList() {
+	  std::vector<std::pair<std::string,std::string> > deviceList;
+	  std::string name;
+	  unsigned int nDev;
+	  unsigned int nr;
+
+	  for(std::vector<CRpcIo*>::iterator iface = interfaceList.begin(); iface != interfaceList.end(); iface++) {
+	    try {
+	      if (!EnumFirst(*iface,nDev)) continue;
+	      for (nr = 0; nr < nDev; nr++) {
+		if (!EnumNext(*iface,name)) continue;
+		if (name.size() < 4) continue;
+		if (name.compare(0, 4, "DTB_") == 0) deviceList.push_back(std::make_pair(std::string((*iface)->Name()),name));
+	      }
+	    }
+	    catch (CRpcError &e) {
+	      LOG(pxar::logCRITICAL) << "Error querying interface " << std::string((*iface)->Name());
+	      //throw pxar::UsbConnectionError("Error querying interface " + std::string((*iface)->Name()));
+	    }
+	  }
+
+	  return deviceList;
 	}
 
 	void SetTimeout(unsigned int timeout) { rpc_io->SetTimeout(timeout); }
