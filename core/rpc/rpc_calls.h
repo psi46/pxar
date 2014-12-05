@@ -169,6 +169,9 @@ public:
 	  else { interfaceList.push_back(usb); }
 #endif /*INTERFACE_USB*/
 
+	  for(std::vector<CRpcIo*>::iterator iface = interfaceList.begin(); iface != interfaceList.end(); iface++) {
+	    LOG(pxar::logDEBUGRPC) << "Found interface \"" << std::string((*iface)->Name()) << "\"";
+	  }
 	  return interfaceList;
 	}
 
