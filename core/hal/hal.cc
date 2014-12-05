@@ -381,7 +381,7 @@ bool hal::FindDTB(std::string &rpcId) {
     for(std::vector<std::pair<std::string,std::string> >::iterator dev = deviceList.begin(); dev != deviceList.end(); dev++) {
       if(rpcId == dev->second) {
 	LOG(logINFO) << "Found DTB " << rpcId;
-	///FIXME _testboard->SelectInterface(dev->first);
+	_testboard->SelectInterface(dev->first);
 	return true;
       }
     }
