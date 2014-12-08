@@ -1485,6 +1485,10 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
       LOG(logCRITICAL) << "LOOP EXPANSION FAILED -- NO MATCHING FUNCTION TO CALL?!";
       // do NOT throw an exception here: this is not a runtime problem
       // but can only be a bug in the code -> this could not be handled by unwinding the stack
+
+      // Mask device, clear leftover calibrate signals:
+      MaskAndTrim(false);
+      SetCalibrateBits(false);
       return data;
     }
   } // single roc fnc
@@ -1492,6 +1496,9 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   // check that we ended up with data
   if (data.empty()){
     LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
+    // Mask device, clear leftover calibrate signals:
+    MaskAndTrim(false);
+    SetCalibrateBits(false);
     return data;
   }
   
