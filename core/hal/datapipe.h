@@ -212,7 +212,7 @@ namespace pxar {
 
   public:
   dtbEventDecoder() : decodingStats(), readback(), eventID(-1) {};
-    void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); };
+    void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();
   };

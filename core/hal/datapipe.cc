@@ -130,10 +130,9 @@ namespace pxar {
       // To continue readout, set event ID to the currently decoded one:
       eventID = (v&0x00ff);
     }
-    else {
-      // Increment event counter:
-      eventID = (eventID%256) + 1;
-    }
+
+    // Increment event counter:
+    eventID = (eventID%256) + 1;
   }
 
   Event* dtbEventDecoder::DecodeDeser400() {
