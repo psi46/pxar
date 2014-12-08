@@ -453,6 +453,8 @@ vcals               250
 
 -- Scurves
 adjustvcal          checkbox(1)
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
 Ntrig               5
 DAC                 VthrComp
 DacLo               0
