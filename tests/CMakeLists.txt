@@ -25,7 +25,6 @@ PixTestFactory.cc
 PixTestPh.cc
 PixTestPhOptimization.cc
 PixTestReadback.cc
-PixTestPhOpt.cc
 PixTestBBMap.cc
 PixTestBareModule.cc
 PixTestFullTest.cc
@@ -54,7 +53,6 @@ PixTestFactory.hh
 PixTestPh.hh
 PixTestPhOptimization.hh
 PixTestReadback.hh
-PixTestPhOpt.hh
 PixTestBBMap.hh
 PixTestBareModule.hh
 PixTestFullTest.hh
