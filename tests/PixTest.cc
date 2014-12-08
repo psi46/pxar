@@ -1229,7 +1229,6 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
   int roc(0), ic(0), ir(0); 
   TH1D *h1 = new TH1D("h1", "h1", 256, 0., 256.); h1->Sumw2(); 
 
-  cout << "result flag: " << std::hex << result << std::dec << endl;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     LOG(logDEBUG) << "analyzing ROC " << static_cast<int>(rocIds[iroc]);
     h2 = bookTH2D(Form("thr_%s_%s_C%d", name.c_str(), dac.c_str(), rocIds[iroc]), 
@@ -1270,11 +1269,11 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
       bool ok = threshold(h1); 
       if ((result & 0x10 && !ok) || (result & 0x20)) {
-	TH1D *h1c = (TH1D*)h1->Clone(Form("scurve_c%d_r%d_C%d", ic, ir, rocIds[iroc])); 
+	TH1D *h1c = (TH1D*)h1->Clone(Form("scurve_%s_c%d_r%d_C%d", dac.c_str(), ic, ir, rocIds[iroc])); 
 	if (!ok) {
-	  h1c->SetTitle(Form("problematic scurve (c%d_r%d_C%d), thr = %4.3f", ic, ir, rocIds[iroc], fThreshold));
+	  h1c->SetTitle(Form("problematic %s scurve (c%d_r%d_C%d), thr = %4.3f", dac.c_str(), ic, ir, rocIds[iroc], fThreshold));
 	} else {
-	  h1c->SetTitle(Form("scurve (c%d_r%d_C%d), thr = %4.3f", ic, ir, rocIds[iroc], fThreshold));
+	  h1c->SetTitle(Form("%s scurve (c%d_r%d_C%d), thr = %4.3f", dac.c_str(), ic, ir, rocIds[iroc], fThreshold));
 	}
 	fHistList.push_back(h1c); 
       }
