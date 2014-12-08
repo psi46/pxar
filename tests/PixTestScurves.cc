@@ -64,7 +64,6 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 	PixUtil::replaceAll(sval, "checkbox(", ""); 
 	PixUtil::replaceAll(sval, ")", ""); 
 	fDumpAll = atoi(sval.c_str()); 
-	cout << "fDumpAll = " << fDumpAll << endl;
 	setToolTips();
       }
 
