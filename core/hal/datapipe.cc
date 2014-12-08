@@ -149,7 +149,7 @@ namespace pxar {
       roc_n++;
 
       // Decode the readback bits in the ROC header:
-      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,v); }
+      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),v); }
 
       v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
       while ((v & 0xe000) <= 0x2000) { // R0 ... R1

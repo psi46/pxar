@@ -113,7 +113,8 @@ public:
 	      }
 	    }
 	    catch (CRpcError &e) {
-	      LOG(pxar::logCRITICAL) << "Error querying interface " << std::string((*iface)->Name());
+	      LOG(pxar::logCRITICAL) << "Error querying interface " << std::string((*iface)->Name()) << ": ";
+	      e.What();
 	      return false;
 	    }
 	  }
@@ -161,7 +162,7 @@ public:
 	      usb = new CUSB();
 	      interfaceList.push_back(usb);
 	    }
-	    catch(CRpcError e) {
+	    catch(CRpcError /*e*/) {
 	      LOG(pxar::logERROR) << "Error initiating usb. "
 				  << "Please ensure proper permissions are granted.";
 	    }
@@ -197,7 +198,8 @@ public:
 	      }
 	    }
 	    catch (CRpcError &e) {
-	      LOG(pxar::logCRITICAL) << "Error querying interface " << std::string((*iface)->Name());
+	      LOG(pxar::logCRITICAL) << "Error querying interface " << std::string((*iface)->Name()) << ":";
+	      e.What();
 	      //throw pxar::UsbConnectionError("Error querying interface " + std::string((*iface)->Name()));
 	    }
 	  }
