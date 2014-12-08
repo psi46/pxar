@@ -1713,8 +1713,8 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
       if(px != result.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[*px] - threshold);
-	uint8_t delta_new = abs(pixit->value() - threshold);
-	bool positive_slope = (pixit->value()-oldvalue[*px] > 0 ? true : false);
+	uint8_t delta_new = abs(static_cast<uint8_t>(pixit->value()) - threshold);
+	bool positive_slope = (static_cast<uint8_t>(pixit->value()) - oldvalue[*px] > 0 ? true : false);
 
 	// Check which value is closer to the threshold. Only if the slope is positive AND
 	// the new delta between value and threshold is *larger* then the old delta, we 
@@ -1728,7 +1728,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
 	// No threshold found yet, update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
-	oldvalue[*px] = pixit->value();
+	oldvalue[*px] = static_cast<uint8_t>(pixit->value());
       }
       // Pixel is new, just adding it:
       else {
@@ -1831,8 +1831,8 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
       if(px != dac->second.end()) {
 	// Calculate efficiency deltas and slope:
 	uint8_t delta_old = abs(oldvalue[dac->first][*px] - threshold);
-	uint8_t delta_new = abs(pixit->value() - threshold);
-	bool positive_slope = (pixit->value() - oldvalue[dac->first][*px] > 0 ? true : false);
+	uint8_t delta_new = abs(static_cast<uint8_t>(pixit->value()) - threshold);
+	bool positive_slope = (static_cast<uint8_t>(pixit->value()) - oldvalue[dac->first][*px] > 0 ? true : false);
 
         // Check which value is closer to the threshold. Only if the slope is positive AND
 	// the new delta between value and threshold is *larger* then the old delta, we 
@@ -1846,7 +1846,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
         // No threshold found yet, update the DAC threshold value for the pixel:
 	px->setValue(it->first);
 	// Update the oldvalue map:
-	oldvalue[dac->first][*px] = pixit->value();
+	oldvalue[dac->first][*px] = static_cast<uint8_t>(pixit->value());
       }
       // Pixel is new, just adding it:
       else {

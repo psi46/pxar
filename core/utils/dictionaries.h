@@ -407,6 +407,72 @@ namespace pxar {
       _signals["adcsgate"]   = probeConfig(PROBE_ADC_SGATE,PROBE_NONE);
       _signals["adcs"]       = probeConfig(PROBE_ADC_S,PROBE_NONE);
 
+      _signals["tbm0gate"]      = probeConfig(PROBE_TBM0_GATE,PROBE_NONE);
+      _signals["tbmgate0"]      = probeConfig(PROBE_TBM0_GATE,PROBE_NONE,false);
+      _signals["tbm0data"]      = probeConfig(PROBE_TBM0_DATA,PROBE_NONE);
+      _signals["tbmdata0"]      = probeConfig(PROBE_TBM0_DATA,PROBE_NONE,false);
+      _signals["tbm0tbmhdr"]    = probeConfig(PROBE_TBM0_TBMHDR,PROBE_NONE);
+      _signals["tbmheader0"]    = probeConfig(PROBE_TBM0_TBMHDR,PROBE_NONE,false);
+      _signals["tbm0rochdr"]    = probeConfig(PROBE_TBM0_ROCHDR,PROBE_NONE);
+      _signals["tbmrocheader0"] = probeConfig(PROBE_TBM0_ROCHDR,PROBE_NONE,false);
+      _signals["tbm0tbmtrl"]    = probeConfig(PROBE_TBM0_TBMTRL,PROBE_NONE);
+      _signals["tbmtrailer0"]   = probeConfig(PROBE_TBM0_TBMTRL,PROBE_NONE,false);
+
+      _signals["tbm1gate"]      = probeConfig(PROBE_TBM1_GATE,PROBE_NONE);
+      _signals["tbmgate1"]      = probeConfig(PROBE_TBM1_GATE,PROBE_NONE,false);
+      _signals["tbm1data"]      = probeConfig(PROBE_TBM1_DATA,PROBE_NONE);
+      _signals["tbmdata1"]      = probeConfig(PROBE_TBM1_DATA,PROBE_NONE,false);
+      _signals["tbm1tbmhdr"]    = probeConfig(PROBE_TBM1_TBMHDR,PROBE_NONE);
+      _signals["tbmheader1"]    = probeConfig(PROBE_TBM1_TBMHDR,PROBE_NONE,false);
+      _signals["tbm1rochdr"]    = probeConfig(PROBE_TBM1_ROCHDR,PROBE_NONE);
+      _signals["tbmrocheader1"] = probeConfig(PROBE_TBM1_ROCHDR,PROBE_NONE,false);
+      _signals["tbm1tbmtrl"]    = probeConfig(PROBE_TBM1_TBMTRL,PROBE_NONE);
+      _signals["tbmtrailer1"]   = probeConfig(PROBE_TBM1_TBMTRL,PROBE_NONE,false);
+
+      _signals["tbm2gate"]      = probeConfig(PROBE_TBM2_GATE,PROBE_NONE);
+      _signals["tbmgate2"]      = probeConfig(PROBE_TBM2_GATE,PROBE_NONE,false);
+      _signals["tbm2data"]      = probeConfig(PROBE_TBM2_DATA,PROBE_NONE);
+      _signals["tbmdata2"]      = probeConfig(PROBE_TBM2_DATA,PROBE_NONE,false);
+      _signals["tbm2tbmhdr"]    = probeConfig(PROBE_TBM2_TBMHDR,PROBE_NONE);
+      _signals["tbmheader2"]    = probeConfig(PROBE_TBM2_TBMHDR,PROBE_NONE,false);
+      _signals["tbm2rochdr"]    = probeConfig(PROBE_TBM2_ROCHDR,PROBE_NONE);
+      _signals["tbmrocheader2"] = probeConfig(PROBE_TBM2_ROCHDR,PROBE_NONE,false);
+      _signals["tbm2tbmtrl"]    = probeConfig(PROBE_TBM2_TBMTRL,PROBE_NONE);
+      _signals["tbmtrailer2"]   = probeConfig(PROBE_TBM2_TBMTRL,PROBE_NONE,false);
+
+      _signals["tbm3gate"]      = probeConfig(PROBE_TBM3_GATE,PROBE_NONE);
+      _signals["tbmgate3"]      = probeConfig(PROBE_TBM3_GATE,PROBE_NONE,false);
+      _signals["tbm3data"]      = probeConfig(PROBE_TBM3_DATA,PROBE_NONE);
+      _signals["tbmdata3"]      = probeConfig(PROBE_TBM3_DATA,PROBE_NONE,false);
+      _signals["tbm3tbmhdr"]    = probeConfig(PROBE_TBM3_TBMHDR,PROBE_NONE);
+      _signals["tbmheader3"]    = probeConfig(PROBE_TBM3_TBMHDR,PROBE_NONE,false);
+      _signals["tbm3rochdr"]    = probeConfig(PROBE_TBM3_ROCHDR,PROBE_NONE);
+      _signals["tbmrocheader3"] = probeConfig(PROBE_TBM3_ROCHDR,PROBE_NONE,false);
+      _signals["tbm3tbmtrl"]    = probeConfig(PROBE_TBM3_TBMTRL,PROBE_NONE);
+      _signals["tbmtrailer3"]   = probeConfig(PROBE_TBM3_TBMTRL,PROBE_NONE,false);
+
+      _signals["tbm4gate"]      = probeConfig(PROBE_TBM4_GATE,PROBE_NONE);
+      _signals["tbmgate4"]      = probeConfig(PROBE_TBM4_GATE,PROBE_NONE,false);
+      _signals["tbm4data"]      = probeConfig(PROBE_TBM4_DATA,PROBE_NONE);
+      _signals["tbmdata4"]      = probeConfig(PROBE_TBM4_DATA,PROBE_NONE,false);
+      _signals["tbm4tbmhdr"]    = probeConfig(PROBE_TBM4_TBMHDR,PROBE_NONE);
+      _signals["tbmheader4"]    = probeConfig(PROBE_TBM4_TBMHDR,PROBE_NONE,false);
+      _signals["tbm4rochdr"]    = probeConfig(PROBE_TBM4_ROCHDR,PROBE_NONE);
+      _signals["tbmrocheader4"] = probeConfig(PROBE_TBM4_ROCHDR,PROBE_NONE,false);
+      _signals["tbm4tbmtrl"]    = probeConfig(PROBE_TBM4_TBMTRL,PROBE_NONE);
+      _signals["tbmtrailer4"]   = probeConfig(PROBE_TBM4_TBMTRL,PROBE_NONE,false);
+
+      _signals["tbm5gate"]      = probeConfig(PROBE_TBM5_GATE,PROBE_NONE);
+      _signals["tbmgate5"]      = probeConfig(PROBE_TBM5_GATE,PROBE_NONE,false);
+      _signals["tbm5data"]      = probeConfig(PROBE_TBM5_DATA,PROBE_NONE);
+      _signals["tbmdata5"]      = probeConfig(PROBE_TBM5_DATA,PROBE_NONE,false);
+      _signals["tbm5tbmhdr"]    = probeConfig(PROBE_TBM5_TBMHDR,PROBE_NONE);
+      _signals["tbmheader5"]    = probeConfig(PROBE_TBM5_TBMHDR,PROBE_NONE,false);
+      _signals["tbm5rochdr"]    = probeConfig(PROBE_TBM5_ROCHDR,PROBE_NONE);
+      _signals["tbmrocheader5"] = probeConfig(PROBE_TBM5_ROCHDR,PROBE_NONE,false);
+      _signals["tbm5tbmtrl"]    = probeConfig(PROBE_TBM5_TBMTRL,PROBE_NONE);
+      _signals["tbmtrailer5"]   = probeConfig(PROBE_TBM5_TBMTRL,PROBE_NONE,false);
+
       // Purely analog signals:
       _signals["sdata1"] = probeConfig(PROBE_NONE,PROBEA_SDATA1);
       _signals["sdata2"] = probeConfig(PROBE_NONE,PROBEA_SDATA2);

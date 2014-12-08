@@ -203,7 +203,7 @@ namespace pxar {
       }
 
       // Decode the readback bits in the ROC header:
-      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,v); }
+      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),v); }
 
       v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
       CheckInvalidWord(v);
