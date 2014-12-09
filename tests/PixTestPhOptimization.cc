@@ -185,8 +185,8 @@ void PixTestPhOptimization::doTest() {
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     fApi->setDAC("phscale",ps_opt[rocIds[roc_it]], rocIds[roc_it] );
     fApi->setDAC("phoffset",po_opt[rocIds[roc_it]], rocIds[roc_it]);
-    saveDacs();
   }
+  saveDacs();
 
   cacheDacs(); 
   //draw figures of merit of optimization
