@@ -60,6 +60,20 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 	setToolTips();
       }
 
+      if (!parName.compare("dumpall")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpAll = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
+      if (!parName.compare("dumpallproblematic")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpProblematic = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
       setToolTips();
       break;
     }
@@ -167,7 +181,10 @@ void PixTestScurves::scurves() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  int results(15); 
+  int results(0xf); 
+  if (fDumpAll) results |= 0x20;
+  if (fDumpProblematic) results |= 0x10;
+
   int FLAG = FLAG_FORCE_MASKED;
   vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1, FLAG); 
   TH1 *h1 = (*fDisplayedHist); 
@@ -296,6 +313,7 @@ void PixTestScurves::adjustVcal() {
   TH2D *h(0); 
   for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
     h = bookTH2D(Form("adjustVcal_C%d", rocIds[iroc]), Form("adjustVcal_C%d", rocIds[iroc]), 256, 0., 256., 256, 0., 256.); 
+    fHistOptions.insert(make_pair(h, "colz")); 
     hv.push_back(h); 
   }
   
