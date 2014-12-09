@@ -188,9 +188,11 @@ void PixTestPhOptimization::doTest() {
     saveDacs();
   }
 
+  cacheDacs(); 
   //draw figures of merit of optimization
   DrawPhMaps(minVcal, badPixels);
   DrawPhCurves(maxpixels, minpixels, po_opt, ps_opt);
+  restoreDacs();
 
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
     (*il)->Draw(getHistOption(*il).c_str());
@@ -811,7 +813,7 @@ void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::p
 
 void PixTestPhOptimization::SetMinThr(){
   fMinThr=0;
-  string trimfile = fPixSetup->getConfigParameters()->getTrimParameterFileName();
+  string trimfile = fPixSetup->getConfigParameters()->getTrimParameterFileName() + fPixSetup->getConfigParameters()->getTrimVcalSufix();
   trimfile.erase(0,14); //erases 'trimParamerers' from the name of the file
   if(0!=(trimfile.compare(""))){
     fMinThr = atoi(trimfile.c_str());
