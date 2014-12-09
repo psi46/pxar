@@ -22,6 +22,7 @@
 
 #include "PixTest.hh"
 #include "PixTestFactory.hh"
+#include "PixUserTestFactory.hh"
 #include "PixGui.hh"
 #include "PixSetup.hh"
 #include "PixUtil.hh"
@@ -217,6 +218,7 @@ int main(int argc, char *argv[]){
     runGui(a, argc, argv); 
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
+    PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
     if (configParameters->getHvOn()) api->HVon(); 
 
     // -- search for subtest 
@@ -231,16 +233,20 @@ int main(int argc, char *argv[]){
       ptp->setTestParameters(runtest, testParameters); 
     }
     PixTest *t = factory->createTest(runtest, &a);
-    if (subtest.compare("nada")) {
-      t->runCommand(subtest); 
-    } else {
-      t->doTest();
+    if (0 == t) t = userfactory->createTest(runtest, &a);
+    if (t) {
+      if (subtest.compare("nada")) {
+	t->runCommand(subtest); 
+      } else {
+	t->doTest();
+      }
+      delete t; 
     }
-    delete t; 
   } else {
     string input; 
     bool stop(false);
     PixTestFactory *factory = PixTestFactory::instance(); 
+    PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
     if (configParameters->getHvOn()) api->HVon(); 
     LOG(logINFO) << "enter 'restricted' command line mode";
     do {
@@ -284,6 +290,7 @@ int main(int argc, char *argv[]){
       if (stop) break;
       LOG(logINFO) << "  running: " << input; 
       PixTest *t = factory->createTest(input, &a);
+      if (0 == t) t = userfactory->createTest(input, &a);
       if (t) {
 	if (subtest.compare("nada")) {
 	  t->runCommand(subtest); 

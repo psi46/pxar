@@ -30,12 +30,12 @@ PixMonitorFrame::PixMonitorFrame(TGGroupFrame *f, PixGui *pixGui) {
   fNmrDigi->SetToolTipText(Form("Total digital current drawn by %s", (fGui->getPixSetup()->getConfigParameters()->getNrocs()>1?"module":"ROC")));
 
   fAnaButton = new TGTextButton(fHFrame1," Draw ", B_DRAWANA);
-  fAnaButton->SetToolTipText("not yet implemented");
+  fAnaButton->SetToolTipText("draw analog current measurements vs time");
   fAnaButton->ChangeOptions(fAnaButton->GetOptions() | kFixedWidth);
   fAnaButton->Connect("Clicked()", "PixMonitorFrame", this, "handleButtons()");
 
   fDigiButton = new TGTextButton(fHFrame2," Draw ", B_DRAWDIGI);
-  fDigiButton->SetToolTipText("not yet implemented");
+  fDigiButton->SetToolTipText("draw digital current measurements vs time");
   fDigiButton->ChangeOptions(fDigiButton->GetOptions() | kFixedWidth);
   fDigiButton->Connect("Clicked()", "PixMonitorFrame", this, "handleButtons()");
 

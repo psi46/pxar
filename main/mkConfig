@@ -396,16 +396,6 @@ fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
 
--- Timing
-fastscan            checkbox(0)
-targetclk           5
-ntrig               10
-clocksdascan        button
-phasescan           button
-levelscan           button
-saveparameters      button
-timingtest          button
-
 -- PixelAlive
 Ntrig               10
 Vcal                200
@@ -432,27 +422,25 @@ DAC2LO              0
 DAC2HI              255
 PIX                 11,20
 
--- Pattern
-externalclk         checkbox(0)
-triggerloop         checkbox(0)
-seconds             5
-period              1000
-pgcycles            100
-patternfromfile     checkbox(0)
-unmaskall           checkbox(0)
-inputfile           testPatterns
-filltree            checkbox(0)
-resultsonfile       checkbox(0)
-binaryoutput        checkbox(0)
-outputfile          defaultPattern
-resettodefault      button
-
 -- BumpBonding
 Ntrig               5
 vcals               250
 
+-- Readback
+calibrateVd         button
+calibrateVa         button
+calibrateIa         button
+readbackVbg         button
+getCalibratedVbg    button
+useCalVd            checkbox(1)
+useCalVa            checkbox(0)
+getCalibratedIa     button
+setVana             button
+
 -- Scurves
 adjustvcal          checkbox(1)
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
 Ntrig               5
 DAC                 VthrComp
 DacLo               0
@@ -464,7 +452,6 @@ trim                button
 Ntrig               10
 Vcal                40
 TrimBits            button
-
 
 -- GainPedestal
 showFits            checkbox
@@ -480,26 +467,6 @@ ntrig               10
 singlePix           0
 safetymarginlow     15
 safetymarginup      10
-
--- PhOpt
-adjustvthrcomp      checkbox(0)
-ntrig               10
-vcallow             50
-vcalhigh            255
-phmin               30
-phmax               220
-PIX                 11,20
-
--- Readback
-calibrateVd         button
-calibrateVa         button
-calibrateIa         button
-readbackVbg         button
-getCalibratedVbg    button
-useCalVd            checkbox(1)
-useCalVa            checkbox(0)
-getCalibratedIa     button
-setVana             button
 
 -- Xray
 maskHotPixels       button
@@ -526,17 +493,6 @@ triggerdelay        20
 DelayTBM            checkbox
 FillTree            checkbox
 
--- DAQ
-delayTBM            checkbox
-filltree            checkbox
-trgfrequency(khz)   100
-maskHotPixels       button
-trgnumber           5
-iterations          10
-rundaqtrg           button
-daqseconds          5
-rundaqseconds       button
-
 -- IV
 port                /dev/FIXME
 voltageStart        0
@@ -554,6 +510,44 @@ DeserMax            7
 ClkMax              19
 saveTbParameters    button
 
+EOF
+} else {
+    print FH <<"EOF";
+-- Timing
+fastscan            checkbox(0)
+targetclk           5
+ntrig               10
+clocksdascan        button
+phasescan           button
+levelscan           button
+saveparameters      button
+timingtest          button
+EOF
+} 
+
+
+close(FH);
+
+
+    
+    my $file2 = "$dir/moreTestParameters.dat";
+    open(FH, ">$file2") || die "cannot open $file2\n";
+    print FH <<"EOF";
+-- Pattern
+externalclk         checkbox(0)
+triggerloop         checkbox(0)
+seconds             5
+period              1000
+pgcycles            100
+patternfromfile     checkbox(0)
+unmaskall           checkbox(0)
+inputfile           testPatterns
+filltree            checkbox(0)
+resultsonfile       checkbox(0)
+binaryoutput        checkbox(0)
+outputfile          defaultPattern
+resettodefault      button
+
 -- BareModule
 checkcontact        button
 pretest             button
@@ -562,10 +556,22 @@ bumpbonding         button
 dofullsequence      button
 stepmax(1-3)        3
 
+-- DAQ
+delayTBM            checkbox
+filltree            checkbox
+trgfrequency(khz)   100
+maskHotPixels       button
+trgnumber           5
+iterations          10
+rundaqtrg           button
+daqseconds          5
+rundaqseconds       button
+
+
 EOF
-}
 
 close(FH);
+
 
 }
 
