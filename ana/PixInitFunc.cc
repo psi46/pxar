@@ -220,7 +220,7 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   double hmax(h->GetMaximum()); 
   for (int i = STARTBIN; i <= h->GetNbinsX(); ++i) {
     if (h->GetBinContent(i) > 0) {
-      ibin = i; 
+      ibin = i; // first bin above zero
       break;
     }
   }
@@ -228,7 +228,7 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   // require 2 consecutive bins on plateau
   for (int i = STARTBIN; i < h->GetNbinsX(); ++i) {
     if (h->GetBinContent(i) > 0.9*hmax && h->GetBinContent(i+1) > 0.9*hmax) {
-      jbin = i; 
+      jbin = i; // first bin "really" on plateau
       break;
     }
   }
@@ -241,9 +241,10 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
       break;
     }
   }
+  lo = lo + 0.6*(ibin-lo);
 
-  double hi = h->FindLastBinAbove(0.9*h->GetMaximum());
-
+  double hi = h->FindLastBinAbove(0.9*hmax);
+  hi = ibin + 0.3*(hi - jbin); 
 
   // -- setup function
   TF1* f = (TF1*)gROOT->FindObject("PIF_err");
@@ -260,8 +261,12 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
     f->SetRange(lo, hi); 
   }
   
-  f->SetParameter(0, h->GetBinCenter((ibin+jbin)/2)); 
-  f->SetParameter(1, 0.2); 
+  f->SetParameter(0, h->GetBinCenter(0.5*(ibin+jbin))); 
+  f->SetParameter(1, 2.0/(jbin-ibin)); 
+  //   cout << "init parameters 0: " << f->GetParameter(0) << " 1: " << f->GetParameter(1) 
+  //        << " ibin: " << ibin << " jbin: " << jbin
+  //        << " lo: " << lo << " hi: " << hi 
+  //        << endl;
   if (jbin == ibin) {
     //    cout << "XXXXXXXXXXX PixInitFunc: STEP FUNCTION " << h->GetTitle() << " ibin = " << ibin << " jbin = " << jbin << endl;
     f->FixParameter(0, h->GetBinCenter(jbin)); 
