@@ -1457,7 +1457,7 @@ string PixTest::getDacsString(std::string dacName) {
 void PixTest::setDacs(string dacName, vector<uint8_t> v) {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
-    fApi->setDAC(dacName, v[i], i); 
+    fApi->setDAC(dacName, v[i], rocIds[i]); 
   }
 }
 
