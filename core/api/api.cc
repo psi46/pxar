@@ -368,8 +368,8 @@ bool pxarCore::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uin
     value = static_cast<uint8_t>(regLimit);
   }
 
-  LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
-		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
+  // LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
+  //		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
   return true;
 }
 
@@ -543,7 +543,7 @@ statistics pxarCore::getStatistics() {
   
 // TEST functions
 
-bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
+bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocI2C) {
   
   if(!status()) {return false;}
 
@@ -552,25 +552,33 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
   if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-  if(_dut->roc.size() > rocid) {
+  std::vector<rocConfig>::iterator rocit;
+  for (rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
     // Set the DAC only in the given ROC (even if that is disabled!)
+    if(rocit->i2c_address == rocI2C) {
 
-    // Update the DUT DAC Value:
-    ret = _dut->roc.at(rocid).dacs.insert( std::make_pair(dacRegister,dacValue) );
-    if(ret.second == true) {
-      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
-    }
-    else {
-      _dut->roc.at(rocid).dacs[dacRegister] = dacValue;
-      LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
-    }
+      // Update the DUT DAC Value:
+      ret = rocit->dacs.insert(std::make_pair(dacRegister,dacValue));
+      if(ret.second == true) {
+	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
+      }
+      else {
+	rocit->dacs[dacRegister] = dacValue;
+	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
+      }
 
-    _hal->rocSetDAC(_dut->roc.at(rocid).i2c_address,dacRegister,dacValue);
+      _hal->rocSetDAC(rocI2C,dacRegister,dacValue);
+      break;
+    }
   }
-  else {
-    LOG(logERROR) << "ROC " << static_cast<int>(rocid) << " does not exist in the DUT!";
+
+  // We might not have found this ROC:
+  if(rocit == _dut->roc.end()) {
+    LOG(logERROR) << "ROC@I2C " << static_cast<int>(rocI2C) << " does not exist in the DUT!";
     return false;
   }
+
   return true;
 }
 
@@ -584,20 +592,22 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue) {
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
   // Set the DAC for all active ROCs:
-  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
-  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
+    // Check if this ROC is marked active:
+    if(!rocit->enable()) { continue; }
 
     // Update the DUT DAC Value:
-    ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
+    ret = rocit->dacs.insert(std::make_pair(dacRegister,dacValue));
     if(ret.second == true) {
       LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
     }
     else {
-      _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
+      rocit->dacs[dacRegister] = dacValue;
       LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
     }
 
-    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
+    _hal->rocSetDAC(rocit->i2c_address,dacRegister,dacValue);
   }
 
   return true;

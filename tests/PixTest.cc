@@ -8,6 +8,7 @@
 #include <TMath.h>
 #include <TStyle.h>
 #include <TGMsgBox.h>
+#include "TVirtualFitter.h"
 
 #include "PixTest.hh"
 #include "PixUtil.hh"
@@ -36,6 +37,8 @@ PixTest::PixTest(PixSetup *a, string name) {
   setToolTips();
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
   fTree = 0; 
+
+  //  TVirtualFitter::SetDefaultFitter("Minuit2");
 
   // -- provide default map when all ROCs are selected
   map<int, int> id2idx; 
@@ -669,11 +672,14 @@ bool PixTest::threshold(TH1 *h) {
   double lo, hi; 
   f->GetRange(lo, hi); 
 
+  fThresholdN = h->FindLastBinAbove(0.5*h->GetMaximum()); 
+
   if (fPIF->doNotFit()) {
     fThreshold  = f->GetParameter(0); 
     fThresholdE = 0.3;
     fSigma      = 0.;
     fSigmaE     = 0.;
+    return false;
   } else {
     h->Fit(f, "qr", "", lo, hi); 
     fThreshold  = f->GetParameter(0); 
@@ -682,7 +688,8 @@ bool PixTest::threshold(TH1 *h) {
     fSigmaE     = fSigma * f->GetParError(1) / f->GetParameter(1);
   }
 
-  fThresholdN = h->FindLastBinAbove(0.5*h->GetMaximum()); 
+  //  cout << "fit status: " << gMinuit->GetStatus()  << endl;
+
   
   if (fThreshold < h->GetBinLowEdge(1)) {
     fThreshold  = -2.; 
@@ -1256,19 +1263,21 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
 
     for (unsigned int i = iroc*4160; i < (iroc+1)*4160; ++i) {
+      PixUtil::idx2rcr(i, roc, ic, ir);
       if (maps[i]->getSumOfWeights() < 1) {
 	if (dumpFile) OutputFile << empty << endl;
 	continue;
       }
       
       // -- calculated "proper" errors
-      for (int ib = 0; ib <= 256; ++ib) {
+      h1->Reset();
+      for (int ib = 1; ib <= 256; ++ib) {
 	h1->SetBinContent(ib, maps[i]->get(ib));
 	h1->SetBinError(ib, fNtrig*PixUtil::dBinomial(static_cast<int>(maps[i]->get(ib)), fNtrig)); 
       }
 
       bool ok = threshold(h1); 
-      if ((result & 0x10 && !ok) || (result & 0x20)) {
+      if (((result & 0x10) && !ok) || (result & 0x20)) {
 	TH1D *h1c = (TH1D*)h1->Clone(Form("scurve_%s_c%d_r%d_C%d", dac.c_str(), ic, ir, rocIds[iroc])); 
 	if (!ok) {
 	  h1c->SetTitle(Form("problematic %s scurve (c%d_r%d_C%d), thr = %4.3f", dac.c_str(), ic, ir, rocIds[iroc], fThreshold));
@@ -1277,7 +1286,6 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 	}
 	fHistList.push_back(h1c); 
       }
-      PixUtil::idx2rcr(i, roc, ic, ir);
       h2->SetBinContent(ic+1, ir+1, fThreshold); 
       h2->SetBinError(ic+1, ir+1, fThresholdE); 
 
