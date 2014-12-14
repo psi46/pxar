@@ -369,8 +369,8 @@ bool pxarCore::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uin
     value = static_cast<uint8_t>(regLimit);
   }
 
-  LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
-		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
+  // LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
+  //		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
   return true;
 }
 
