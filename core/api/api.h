@@ -339,8 +339,8 @@ namespace pxar {
 
     /** Set a DAC value on the DUT for one specific ROC
      *
-     *  The "rocI2C" parameter can be used to select a specific ROC to program.
-     *  The ROC is identified by its unique I2C address.
+     *  The "rocID" parameter can be used to select a specific ROC to program.
+     *  The ROC is identified by its ID (counting all ROCs up from 0).
      *
      *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
