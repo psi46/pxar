@@ -118,8 +118,9 @@ namespace pxar {
 
   template <typename T>
     pxarLog<T>::~pxarLog() {
+    static T instance;
     os << std::endl;
-    T::Output(os.str());
+    instance.Output(os.str());
   }
 
   template <typename T>
