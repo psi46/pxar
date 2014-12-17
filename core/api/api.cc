@@ -543,7 +543,7 @@ statistics pxarCore::getStatistics() {
   
 // TEST functions
 
-bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocI2C) {
+bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocID) {
   
   if(!status()) {return false;}
 
@@ -556,7 +556,10 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocI2C) {
   for (rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
     // Set the DAC only in the given ROC (even if that is disabled!)
-    if(rocit->i2c_address == rocI2C) {
+    // WE ARE NOT USING the I2C address to identify the ROC currently:
+    //if(rocit->i2c_address == rocI2C) {
+    // But its ROC ID being just counted up from the first:
+    if(static_cast<int>(rocit - _dut->roc.begin()) == rocID) {
 
       // Update the DUT DAC Value:
       ret = rocit->dacs.insert(std::make_pair(dacRegister,dacValue));
@@ -568,14 +571,14 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocI2C) {
 	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
       }
 
-      _hal->rocSetDAC(rocI2C,dacRegister,dacValue);
+      _hal->rocSetDAC(rocit->i2c_address,dacRegister,dacValue);
       break;
     }
   }
 
   // We might not have found this ROC:
   if(rocit == _dut->roc.end()) {
-    LOG(logERROR) << "ROC@I2C " << static_cast<int>(rocI2C) << " does not exist in the DUT!";
+    LOG(logERROR) << "ROC@I2C " << static_cast<int>(rocID) << " does not exist in the DUT!";
     return false;
   }
 
