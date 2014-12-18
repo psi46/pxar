@@ -35,11 +35,11 @@ if ($opt_h) {
 my $dir = "roc";
 if ($opt_d) {
     $dir = $opt_d;
-    if (!-d "$dir") {
-	mkdir($dir);
-    } else {
-	&cleanFiles;
-    }
+}
+if (!-d "$dir") {
+    mkdir($dir);
+} else {
+    &cleanFiles;
 }
 
 # -- number of rocs and tbms
