@@ -195,11 +195,11 @@ namespace pxar {
 
       // Check for DESER400 failure:
       if((v&0x0ff0) == 0x0ff0) {
-	LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel())
-			   << " ROC " << static_cast<int>(roc_n)
-			   << " header reports DESER400 failure!";
+	LOG(logCRITICAL) << "TBM " << static_cast<int>(GetChannel())
+			 << " ROC " << static_cast<int>(roc_n)
+			 << " header reports DESER400 failure!";
 	decodingStats.m_errors_event_invalid_xor++;
-	// FIXME abort readout here by throwing exception?
+	throw DataDecodingError("Invalid XOR eye diagram encountered.");
       }
 
       // Decode the readback bits in the ROC header:

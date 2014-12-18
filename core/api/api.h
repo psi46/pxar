@@ -652,6 +652,9 @@ namespace pxar {
     /** Function to read out the earliest pxar::Event in buffer from the current
      *  data acquisition session. If no Event is buffered, the function will 
      *  wait for the next Event to arrive and then return it.
+     *
+     *  This function can throw a pxar::DataDecodingError exception in case severe
+     *  problems were encountered during the readout.
      */
     Event daqGetEvent();
 
@@ -701,6 +704,9 @@ namespace pxar {
     /** Function to return the full currently available pxar::Event buffer from the 
      *  testboard RAM. All data is decoded and the function returns decoded pixels 
      *  separated in pxar::Events with additional header information available.
+     *
+     *  This function can throw a pxar::DataDecodingError exception in case severe
+     *  problems were encountered during the readout.
      */
     std::vector<Event> daqGetEventBuffer();
 
