@@ -195,9 +195,10 @@ namespace pxar {
 
       // Check for DESER400 failure:
       if((v&0x0ff0) == 0x0ff0) {
-	LOG(logCRITICAL) << "TBM " << static_cast<int>(GetChannel())
-			 << " ROC " << static_cast<int>(roc_n)
-			 << " header reports DESER400 failure!";
+	LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel())
+			   << " ROC " << static_cast<int>(roc_n)
+			   << " header reports DESER400 failure!";
+	decodingStats.m_errors_event_invalid_xor++;
 	// FIXME abort readout here by throwing exception?
       }
 
@@ -210,9 +211,8 @@ namespace pxar {
 
 	for (int i = 0; i <= 1; i++) {
 	  if ((v >> 13) != i) { // R<i>
-	    //px_error |= (1<<i);
 	    if (v & 0x8000) { // TBM header/trailer
-	      // Unexpected arrivel of TBM marker - pixel data is incomplete:
+	      // Unexpected arrival of TBM marker - pixel data is incomplete:
 	      decodingStats.m_errors_pixel_incomplete++;
 	      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
 	      CheckInvalidWord(v);
