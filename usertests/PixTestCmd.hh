@@ -341,6 +341,7 @@ class CmdProc {
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
   int tbmscan();
+  int rawscan(int level=0);
   int rocscan();
   int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
   int levelscan();

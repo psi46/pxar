@@ -38,6 +38,8 @@ class PxarCoreCmd(cmd.Cmd):
         self.window = None
         if(gui and guiAvailable):
             self.window = PxarGui(ROOT.gClient.GetRoot(),800,800)
+        elif(gui and not guiAvailable):
+            print "No GUI available (missing ROOT library)"
 
     def plot_eventdisplay(self,data):
         pixels = list()
