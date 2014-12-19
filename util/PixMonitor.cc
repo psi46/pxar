@@ -32,6 +32,7 @@ void PixMonitor::init() {
 void PixMonitor::dumpSummaries() {
   gFile->cd();
   LOG(logDEBUG) << "PixMonitor::dumpSummaries"; 
+  if (fMeasurements.size() < 1) return;
   ULong_t begSec = fMeasurements[0].first;
   ULong_t endSec = fMeasurements[fMeasurements.size()-1].first+1;
   TTimeStamp ts(begSec); 
