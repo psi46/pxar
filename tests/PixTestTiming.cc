@@ -112,10 +112,10 @@ void PixTestTiming::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
 
-  //LevelScan();
-  //h1 = (*fDisplayedHist);
-  //h1->Draw(getHistOption(h1).c_str());
-  //PixTest::update();
+  LevelScan();
+  h1 = (*fDisplayedHist);
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update();
  
   // -- save DACs!
   saveParameters();
@@ -366,6 +366,7 @@ void PixTestTiming::PhaseScan() {
           }
           //Draw the plot
           if (GoodRegion.first) {
+            h2->SetMinimum(0);
             h2->Draw(getHistOption(h2).c_str());
             fHistList.push_back(h2);
             fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
@@ -515,19 +516,24 @@ void PixTestTiming::LevelScan() {
   vector<pair<string, uint8_t> > pg_setup;
   pg_setup.push_back(make_pair("resetroc", 25));
   pg_setup.push_back(make_pair("trigger", 0));
+  fApi->setPatternGenerator(pg_setup);
+
+  //Get Intial TBM Parameters
+  vector<pair<string, uint8_t> > InitTBMParameters = fPixSetup->getConfigParameters()->getTbParameters();
 
   vector<uint8_t> GoodLevels;
-  fApi->daqStart();
-  fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
   vector<rawEvent> daqRawEv;
   daqRawEv = fApi->daqGetRawEventBuffer();
-  for (uint8_t ilevel=15; ilevel>0; ilevel--){
+  for (uint8_t ilevel=15; ilevel>3; ilevel--){
     LOG(logDEBUG) << "Testing Level: " << int(ilevel);
     fPixSetup->getConfigParameters()->setTbParameter("level", ilevel);
-    fApi->initTestboard(fPixSetup->getConfigParameters()->getTbSigDelays(), fPixSetup->getConfigParameters()->getTbPowerSettings(), fPixSetup->getConfigParameters()->getTbPgSettings());
-    fApi->setPatternGenerator(pg_setup);
+    fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
+    fApi->daqStart();
+    fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
+    daqRawEv = fApi->daqGetRawEventBuffer();
     fApi->daqTrigger(fNTrig,period);
     daqRawEv = fApi->daqGetRawEventBuffer();
+    fApi->daqStop();
     int ngoodevents = 0;
     for (size_t ievent=0; ievent<daqRawEv.size(); ievent++) {
       rawEvent event = daqRawEv.at(ievent);
@@ -545,17 +551,18 @@ void PixTestTiming::LevelScan() {
     if (ngoodevents) h1->Fill(int(ilevel), ngoodevents);
     if (ngoodevents==fNTrig) GoodLevels.push_back(ilevel);
   }
-  fApi->daqStop();
 
   if (GoodLevels.size()) {
     uint8_t MeanLevel = 0;
     if (GoodLevels.size()==1) MeanLevel = GoodLevels.front();
     else MeanLevel = GoodLevels[GoodLevels.size()/2]; //Pick the median functional level (hope there's no gaps)
     fPixSetup->getConfigParameters()->setTbParameter("level", MeanLevel);
+    fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
     LOG(logINFO) << "DTB Level set to " << int(MeanLevel);
   } else {
     LOG(logERROR) << "No working level found! Verify you have disabled bypassed ROCs in pXar on the h/w tab.";
     LOG(logERROR) << "Level scan searched for " << nROCs << " total ROCs and " << nTBMs << " TBM Headers and Trailers.";
+    fApi->setTestboardDelays(InitTBMParameters);
   }
 
   //Draw the plot
@@ -564,7 +571,7 @@ void PixTestTiming::LevelScan() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   PixTest::update();
 
-  fApi->initTestboard(fPixSetup->getConfigParameters()->getTbSigDelays(), fPixSetup->getConfigParameters()->getTbPowerSettings(), fPixSetup->getConfigParameters()->getTbPgSettings());
+  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 
