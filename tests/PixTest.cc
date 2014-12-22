@@ -1621,7 +1621,7 @@ void PixTest::resetTBM() {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
-  LOG(logDEBUG) << "PixTest: resetTBM sent once.";
+  LOG(logINFO) << "IGNORE THE WARNING ABOVE!";
   fApi->daqStop();
   fPg_setup.clear();
 }
