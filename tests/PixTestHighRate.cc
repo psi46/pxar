@@ -234,7 +234,7 @@ void PixTestHighRate::doXPixelAlive() {
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
         allHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
-	if ((ix > 1) && (ix < 50) && (iy < 79) && (test2[i]->GetBinContent(ix+1, iy+1) > 0)) {
+	if ((ix > 0) && (ix < 51) && (iy < 79) && (test2[i]->GetBinContent(ix+1, iy+1) > 0)) {
 	  fidHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
 	  ++fidPixels[i];
 	}
