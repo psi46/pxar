@@ -228,15 +228,23 @@ void PixTestHighRate::doXPixelAlive() {
   vector<int> fidHits(test2.size(),0);
   vector<int> allHits(test2.size(),0);
   vector<int> fidPixels(test2.size(),0);
+  TH1D *h1(0), *h2(0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
     fHistOptions.insert(make_pair(test3[i], "colz"));
+    h1 = bookTH1D(Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
+    fHistList.push_back(h1); 
+    h2 = bookTH1D(Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
+    fHistList.push_back(h2); 
+    
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
         allHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
+	h1->Fill(test2[i]->GetBinContent(ix+1, iy+1)/fParNtrig);
 	if ((ix > 0) && (ix < 51) && (iy < 79) && (test2[i]->GetBinContent(ix+1, iy+1) > 0)) {
 	  fidHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
 	  ++fidPixels[i];
+	  h2->Fill(test2[i]->GetBinContent(ix+1, iy+1)/fParNtrig);
 	}
 	// -- count dead pixels
 	if (test2[i]->GetBinContent(ix+1, iy+1) < fParNtrig) {
@@ -280,9 +288,9 @@ void PixTestHighRate::doXPixelAlive() {
     xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./sensorArea*1000.);
   }
 
-  LOG(logINFO) << "number of dead pixels (per ROC):    " << deadPixelString;
-  LOG(logINFO) << "number of red-efficiency pixels:    " << probPixelString;
-  LOG(logINFO) << "number of X-ray hits detected: " << xHitsString;
+  LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
+  LOG(logINFO) << "number of red-efficiency pixels: " << probPixelString;
+  LOG(logINFO) << "number of X-ray hits detected:   " << xHitsString;
   LOG(logINFO) << "number of triggers sent (total per ROC): " << numTrigsString;
   LOG(logINFO) << "number of Vcal hits detected: " << allCalHitsString;
   LOG(logINFO) << "Vcal hit fiducial efficiency (%): " << fidCalEfficiencyString;
