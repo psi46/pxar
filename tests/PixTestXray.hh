@@ -57,6 +57,7 @@ private:
   bool    fDaq_loop;
   
   int     fVthrComp;
+  long int fEventsMax;
 
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
@@ -74,6 +75,8 @@ private:
   std::vector<TH2D*> fHotPixelMap;
 
   std::vector<TH1D*> fTriggers;
+  std::vector<TH1D*> fHitsVsEvents, fHitsVsColumn;
+  std::vector<TH2D*> fHitsVsEvtCol;
   
   ClassDef(PixTestXray, 1)
 
