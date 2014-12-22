@@ -1607,7 +1607,7 @@ void PixTest::resetROC() {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
-  LOG(logDEBUG) << "PixTest: resetROC sent once.";
+  LOG(logINFO) << "IGNORE THE WARNING ABOVE (resetROC sent)!";
   fApi->daqStop();
   fPg_setup.clear();
 }
@@ -1621,7 +1621,7 @@ void PixTest::resetTBM() {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
-  LOG(logINFO) << "IGNORE THE WARNING ABOVE!";
+  LOG(logINFO) << "IGNORE THE WARNING ABOVE  (resetTBM sent)!";
   fApi->daqStop();
   fPg_setup.clear();
 }
