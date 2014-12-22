@@ -6,7 +6,7 @@
 
 #include "PixTestHighRate.hh"
 #include "log.h"
-#include "timer.h"
+#include "TStopwatch.h"
 
 #include "PixUtil.hh"
 
@@ -407,22 +407,27 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 	       << " kHz, period " << finalPeriod
 	       << " and duration " << nseconds << " seconds";
 
-  timer t;
+  TStopwatch t;
   uint8_t perFull;
   fDaq_loop = true;
+  int seconds(0); 
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
-      LOG(logINFO) << "run duration " << t.get()/1000 << " seconds, buffer almost full ("
+      seconds = t.RealTime(); 
+      LOG(logINFO) << "run duration " << seconds << " seconds, buffer almost full ("
 		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
       fillMap(h);
       LOG(logINFO) << "Resuming triggers.";
-	  fApi->daqTriggerLoop(finalPeriod);
+      t.Start(kFALSE);
+      fApi->daqTriggerLoop(finalPeriod);
     }
 
-    if (static_cast<int>(t.get()/1000) >= nseconds)	{
-      LOG(logINFO) << "data taking finished, elapsed time: " << t.get()/1000 << " seconds.";
+    seconds = t.RealTime(); 
+    t.Start(kFALSE);
+    if (static_cast<int>(seconds) >= nseconds)	{
+      LOG(logINFO) << "data taking finished, elapsed time: " << seconds << " seconds.";
       fDaq_loop = false;
       break;
     }
