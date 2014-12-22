@@ -727,7 +727,6 @@ void PixTestXray::processData(uint16_t numevents) {
   
   int idx(-1); 
   uint16_t q; 
-  cout << "evtCnt = " << evtCnt << endl;
   for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     ++evtCnt;
     pixCnt += it->pixels.size(); 
@@ -773,7 +772,6 @@ void PixTestXray::processData(uint16_t numevents) {
     
     if (fParFillTree) fTree->Fill();
   }
-  cout << "evtCnt = " << evtCnt << endl;
   
   LOG(logDEBUG) << Form(" # events read: %6ld, pixels seen in all events: %3d", daqdat.size(), pixCnt);
   
