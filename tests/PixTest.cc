@@ -97,7 +97,12 @@ void PixTest::bookHist(string name) {
 
 // ----------------------------------------------------------------------
 void PixTest::bookTree() {
-  for (int ipix = 0; ipix < 2000; ++ipix) {
+  fTreeEvent.npix = 0; 
+  fTreeEvent.header = 0; 
+  fTreeEvent.trailer = 0; 
+  fTreeEvent.numDecoderErrors = 0; 
+  fTreeEvent.dac = 0; 
+  for (int ipix = 0; ipix < 20000; ++ipix) {
     fTreeEvent.proc[ipix] = 0; 
     fTreeEvent.pcol[ipix] = 0; 
     fTreeEvent.prow[ipix] = 0; 
