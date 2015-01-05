@@ -660,10 +660,10 @@ void PixTestXray::readData() {
     pixCnt += it->pixels.size();
 
     if (fParFillTree) {
+      bookTree();  
       fTreeEvent.header           = it->header; 
       fTreeEvent.dac              = 0;
       fTreeEvent.trailer          = it->trailer; 
-      fTreeEvent.npix             = it->pixels.size();
     }
 
     int idx(0); 
@@ -685,7 +685,8 @@ void PixTestXray::readData() {
       fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
       fPH[idx]->Fill(it->pixels[ipix].value());
 	
-      if (fParFillTree) {
+      if (fParFillTree && ipix < 20000) {
+	++fTreeEvent.npix;
 	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
 	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
 	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
@@ -733,10 +734,10 @@ void PixTestXray::processData(uint16_t numevents) {
     
     
     if (fParFillTree) {
+      bookTree();  
       fTreeEvent.header           = it->header; 
       fTreeEvent.dac              = 0;
       fTreeEvent.trailer          = it->trailer; 
-      fTreeEvent.npix             = it->pixels.size();
     }
 
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
@@ -761,7 +762,8 @@ void PixTestXray::processData(uint16_t numevents) {
       fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
       fPH[idx]->Fill(it->pixels[ipix].value());
 	
-      if (fParFillTree) {
+      if (fParFillTree && ipix < 20000) {
+	++fTreeEvent.npix;
 	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
 	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
 	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
