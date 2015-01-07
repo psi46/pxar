@@ -203,6 +203,16 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   tset->SetToolTipText("deselect all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
 
+  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Save DAC"));
+  tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
+  tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
+
+  
+  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Save Trim"));
+  tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
+  tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
+
+
   bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
   cmap.clear();
   for (unsigned int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
@@ -301,15 +311,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       fRocParIds.push_back(parids);
     }
 
-    tset = new TGTextButton(g1Frame, "Save DAC");
-    tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
-    tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
-    g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
-
-    tset = new TGTextButton(g1Frame, "Save Trim");
-    tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
-    tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
-    g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
   }
 
 
