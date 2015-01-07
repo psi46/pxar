@@ -43,6 +43,9 @@ PixTestHighRate::PixTestHighRate() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestHighRate::setParameter(string parName, string sval) {
   bool found(false);
+  string str1, str2; 
+  string::size_type s1;
+  int pixc, pixr; 
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
@@ -52,20 +55,24 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
 	setToolTips();
       }
+
       if (!parName.compare("runseconds")) {
 	fParRunSeconds = atoi(sval.c_str());
 	setToolTips();
       }
+
       if (!parName.compare("triggerdelay")) {
 	fParTriggerDelay = atoi(sval.c_str());
 	setToolTips();
       }
+
       if (!parName.compare("delaytbm")) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
 	fParDelayTBM = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
+
       if (!parName.compare("filltree")) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
@@ -77,9 +84,27 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str()));
 	setToolTips();
       }
+
       if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str());
 	setToolTips();
+      }
+
+      if (!parName.compare("pix") || !parName.compare("pix1") ) {
+	s1 = sval.find(",");
+	if (string::npos != s1) {
+	  str1 = sval.substr(0, s1);
+	  pixc = atoi(str1.c_str());
+	  str2 = sval.substr(s1+1);
+	  pixr = atoi(str2.c_str());
+	  clearSelectedPixels();
+	  fPIX.push_back( make_pair(pixc, pixr) );
+	  addSelectedPixels(sval); 
+	} else {
+	  clearSelectedPixels();
+	  addSelectedPixels("-1,-1"); 
+	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
+	}
       }
       break;
     }
@@ -111,6 +136,11 @@ void PixTestHighRate::runCommand(std::string command) {
 
   if (!command.compare("xpixelalive")) {
     doXPixelAlive();
+    return;
+  }
+
+  if (!command.compare("caldelscan")) {
+    doCalDelScan();
     return;
   }
 
@@ -180,6 +210,153 @@ void PixTestHighRate::doTest() {
   doRunDaq();
   LOG(logINFO) << "PixTestHighRate::doTest() done ";
 }
+
+// ----------------------------------------------------------------------
+void PixTestHighRate::doCalDelScan() {
+
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
+
+  int ntrig(10); 
+  banner(Form("PixTestHighRate::calDelScan() ntrig = %d, vcal = %d", ntrig, fParVcal));
+  cacheDacs();
+
+  fDirectory->cd();
+  PixTest::update();
+
+  fApi->setDAC("vcal", fParVcal);
+
+  // -- do local short 1D caldel scan
+  // --------------------------------
+  int ip = 0; 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  fApi->_dut->testPixel(fPIX[ip].first, fPIX[ip].second, true);
+  fApi->_dut->maskPixel(fPIX[ip].first, fPIX[ip].second, false);
+  
+  bool done = false;
+  vector<pair<uint8_t, vector<pixel> > >  results;
+  while (!done) {
+    results.clear(); 
+    int cnt(0); 
+    try{
+      results = fApi->getEfficiencyVsDAC("caldel", 0, 255, FLAGS, 3);
+      done = true;
+    } catch(DataMissingEvent &e){
+      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      ++cnt;
+      if (e.numberMissing > 10) done = true; 
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+  fApi->_dut->testPixel(fPIX[ip].first, fPIX[ip].second, false);
+  fApi->_dut->maskPixel(fPIX[ip].first, fPIX[ip].second, true);
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  TH1D *h1(0);
+  vector<TH1D*> maps;
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    h1 = bookTH1D(Form("hrCalDelScan_C%d", rocIds[iroc]), Form("hrCalDelScan_C%d", rocIds[iroc]), 256, 0., 256.);
+    h1->SetMinimum(0.); 
+    h1->SetDirectory(fDirectory); 
+    fHistList.push_back(h1); 
+    maps.push_back(h1); 
+  }
+  
+  int idx(-1); 
+  for (unsigned int i = 0; i < results.size(); ++i) {
+    int caldel = results[i].first; 
+    vector<pixel> pixels = results[i].second; 
+    for (unsigned int ipix = 0; ipix < pixels.size(); ++ipix) {
+      idx = getIdxFromId(pixels[ipix].roc());
+      h1 = maps[idx]; 
+      if (h1) {
+	h1->Fill(caldel, pixels[ipix].value()); 
+      } else {
+	LOG(logDEBUG) << "no histogram found for ROC " << pixels[ipix].roc() << " with index " << idx; 
+      }
+    }
+  }
+      
+  vector<int> calDelLo(rocIds.size(), -1); 
+  vector<int> calDelHi(rocIds.size(), -1); 
+  int DeltaCalDelMax(-1); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    double cdMax   = maps[iroc]->GetMaximum();
+    calDelLo[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindFirstBinAbove(0.5*cdMax))); 
+    calDelHi[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindLastBinAbove(0.5*cdMax)));
+    if (calDelHi[iroc] - calDelLo[iroc] > DeltaCalDelMax) {
+      DeltaCalDelMax = calDelHi[iroc] - calDelLo[iroc]; 
+    }
+    cout << "ROC " << iroc << " sets calddel from " << calDelLo[iroc] << " .. " << calDelHi[iroc] <<  " difference: " << calDelHi[iroc] - calDelLo[iroc] << endl;
+  }
+  cout << DeltaCalDelMax << endl;
+
+  // -- now to xEfficiencyMap vs CalDel
+  // ----------------------------------
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+    vector<pair<int, int> > hot = fHotPixels[i];
+    for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second;
+      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i));
+    }
+  }
+  maskPixels();
+
+  // -- pattern generator setup without resets
+  resetROC();
+  fPg_setup.clear();
+  vector<pair<string, uint8_t> > pgtmp = fPixSetup->getConfigParameters()->getTbPgSettings();
+  for (unsigned i = 0; i < pgtmp.size(); ++i) {
+    if (string::npos != pgtmp[i].first.find("resetroc")) continue;
+    if (string::npos != pgtmp[i].first.find("resettbm")) continue;
+    fPg_setup.push_back(pgtmp[i]);
+  }
+  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
+
+  fApi->setPatternGenerator(fPg_setup);
+
+
+  vector<int> calDelMax(rocIds.size(), -1); 
+  vector<int> calDelVal(rocIds.size(), -1); 
+  int nsteps(3); 
+  for (int i = 0; i < nsteps; ++i) {
+    // -- set CalDel per ROC 
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      int caldel = calDelLo[iroc] + i*(calDelHi[iroc]-calDelLo[iroc])/(nsteps-1);
+      fApi->setDAC("CalDel", caldel, rocIds[iroc]);
+      cout << "setting ROC " << iroc << " to caldel: " << caldel << endl;
+    }
+
+
+    pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("HRcaldelScan", ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+    vector<TH2D*> test2 = tests.first;
+    for (unsigned int i = 0; i < test2.size(); ++i) {
+      fHistOptions.insert(make_pair(test2[i], "colz"));
+      h1 = bookTH1D(Form("HR_CalDelScan_C%d", getIdFromIdx(i)),  Form("HR_CalDelScan_C%d", getIdFromIdx(i)),  201, 0., 1.005);
+      fHistList.push_back(h1); 
+      for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
+	  h1->Fill(test2[i]->GetBinContent(ix+1, iy+1)/ntrig);
+	}
+      }
+
+//       if (h1->GetMean() > calDelVal[i]) {
+// 	calDelMax[i] = 
+    }
+  }
+
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  PixTest::update(); 
+
+
+}
+
 
 // ----------------------------------------------------------------------
 void PixTestHighRate::doXPixelAlive() {
