@@ -482,6 +482,8 @@ DelayTBM            checkbox
 FillTree            checkbox
 
 -- HighRate
+PIX                 11,20
+CalDelScan          button
 maskHotPixels       button
 xPixelAlive         button
 trgfrequency(khz)   20
