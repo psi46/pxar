@@ -39,12 +39,12 @@ typedef struct {
   uint16_t header; 
   uint16_t trailer; 
   uint16_t numDecoderErrors;
-  uint8_t  npix;
-  uint8_t  proc[2000];
-  uint8_t  pcol[2000];
-  uint8_t  prow[2000];
-  double   pval[2000];
-  double   pq[2000];
+  uint16_t npix;
+  uint8_t  proc[20000];
+  uint8_t  pcol[20000];
+  uint8_t  prow[20000];
+  double   pval[20000];
+  double   pq[20000];
 } TreeEvent;
 
 

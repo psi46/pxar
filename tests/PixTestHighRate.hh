@@ -19,6 +19,7 @@ public:
 
   void runCommand(std::string command); 
   void doTest();
+  void doCalDelScan();
   void doXPixelAlive();
   void doRunDaq(); 
   void doRunMaskHotPixels();

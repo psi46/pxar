@@ -35,11 +35,11 @@ if ($opt_h) {
 my $dir = "roc";
 if ($opt_d) {
     $dir = $opt_d;
-    if (!-d "$dir") {
-	mkdir($dir);
-    } else {
-	&cleanFiles;
-    }
+}
+if (!-d "$dir") {
+    mkdir($dir);
+} else {
+    &cleanFiles;
 }
 
 # -- number of rocs and tbms
@@ -441,7 +441,7 @@ setVana             button
 adjustvcal          checkbox(1)
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
-Ntrig               5
+Ntrig               50
 DAC                 VthrComp
 DacLo               0
 DacHi               200
@@ -482,6 +482,8 @@ DelayTBM            checkbox
 FillTree            checkbox
 
 -- HighRate
+PIX                 11,20
+CalDelScan          button
 maskHotPixels       button
 xPixelAlive         button
 trgfrequency(khz)   20
@@ -515,7 +517,7 @@ EOF
     print FH <<"EOF";
 -- Timing
 fastscan            checkbox(0)
-targetclk           5
+targetclk           4
 ntrig               10
 clocksdascan        button
 phasescan           button

@@ -149,7 +149,7 @@ void PixTestDaq::runCommand(std::string command) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::bookHist(string name) {
+void PixTestDaq::bookHist(string /*name*/) {
 
 	if (fParFillTree) bookTree();
 	fHitMap.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();

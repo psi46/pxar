@@ -32,6 +32,7 @@ void PixMonitor::init() {
 void PixMonitor::dumpSummaries() {
   gFile->cd();
   LOG(logDEBUG) << "PixMonitor::dumpSummaries"; 
+  if (fMeasurements.size() < 1) return;
   ULong_t begSec = fMeasurements[0].first;
   ULong_t endSec = fMeasurements[fMeasurements.size()-1].first+1;
   TTimeStamp ts(begSec); 
@@ -66,7 +67,14 @@ void PixMonitor::dumpSummaries() {
 void PixMonitor::update() {
   int NBINS(10); 
   fIana = fApi->getTBia();
+  if (fIana < 1e-4) {
+    LOG(logERROR) << "analog current reading unphysical";
+  }
   fIdig = fApi->getTBid();
+  if (fIdig < 1e-4) {
+    LOG(logERROR) << "digital current reading unphysical";
+  }
+  
   TTimeStamp ts; 
   ULong_t seconds  = ts.GetSec();
   

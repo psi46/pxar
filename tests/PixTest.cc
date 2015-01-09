@@ -97,7 +97,12 @@ void PixTest::bookHist(string name) {
 
 // ----------------------------------------------------------------------
 void PixTest::bookTree() {
-  for (int ipix = 0; ipix < 2000; ++ipix) {
+  fTreeEvent.npix = 0; 
+  fTreeEvent.header = 0; 
+  fTreeEvent.trailer = 0; 
+  fTreeEvent.numDecoderErrors = 0; 
+  fTreeEvent.dac = 0; 
+  for (int ipix = 0; ipix < 20000; ++ipix) {
     fTreeEvent.proc[ipix] = 0; 
     fTreeEvent.pcol[ipix] = 0; 
     fTreeEvent.prow[ipix] = 0; 
@@ -1457,7 +1462,7 @@ string PixTest::getDacsString(std::string dacName) {
 void PixTest::setDacs(string dacName, vector<uint8_t> v) {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
-    fApi->setDAC(dacName, v[i], i); 
+    fApi->setDAC(dacName, v[i], rocIds[i]); 
   }
 }
 
@@ -1607,7 +1612,7 @@ void PixTest::resetROC() {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
-  LOG(logDEBUG) << "PixTest: resetROC sent once.";
+  LOG(logINFO) << "IGNORE THE WARNING ABOVE (resetROC sent)!";
   fApi->daqStop();
   fPg_setup.clear();
 }
@@ -1621,7 +1626,7 @@ void PixTest::resetTBM() {
   fApi->setPatternGenerator(fPg_setup);
   fApi->daqStart();
   fApi->daqTrigger(1, period);
-  LOG(logDEBUG) << "PixTest: resetTBM sent once.";
+  LOG(logINFO) << "IGNORE THE WARNING ABOVE  (resetTBM sent)!";
   fApi->daqStop();
   fPg_setup.clear();
 }
