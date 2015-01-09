@@ -68,11 +68,12 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // ---------------
   // -- left frame
   // ---------------
-  //  TGGroupFrame *leftFrame = new TGGroupFrame(h1v1, "left frame");
-  TGHorizontalFrame *leftFrame = new TGHorizontalFrame(h1v1);
+  TGGroupFrame *pStuff = new TGGroupFrame(h1v1, "lost in space");
+  h1v1->AddFrame(pStuff);
+  pStuff->SetWidth(500); 
+  TGVerticalFrame *FpStuff = new TGVerticalFrame(pStuff); 
+  pStuff->AddFrame(FpStuff); 
 
-  h1v1->AddFrame(leftFrame, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v1->SetWidth(400);
 
 
   // ---------------
@@ -207,27 +208,34 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // --------------
   // -- right frame
   // --------------
-  TGHorizontalFrame *bFrame = new TGHorizontalFrame(h1v3); 
-  h1v3->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN)); 
+  TGGroupFrame *pControl = new TGGroupFrame(h1v3, "pXar control");
+  h1v3->AddFrame(pControl);
+  TGVerticalFrame *FpControl = new TGVerticalFrame(pControl); 
+  pControl->AddFrame(FpControl); 
+
+  TGHorizontalFrame *bFrame = new TGHorizontalFrame(FpControl); 
+  FpControl->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN)); 
+
   TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
+  bFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
   exitButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
   exitButton->ChangeOptions(exitButton->GetOptions() );
   exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   exitButton->Resize(70,35);
   exitButton->ChangeBackground(fRed);
-  bFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
   TGTextButton *writeButton = new TGTextButton(bFrame, "write cfg files", B_WRITEALLFILES);
+  bFrame->AddFrame(writeButton, new TGLayoutHints(kLHintsBottom | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   writeButton->SetToolTipText("write all config files (ROC/TBM DAC, trim bits, DTB setup, config file)");
   writeButton->ChangeOptions(writeButton->GetOptions() );
   writeButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   writeButton->Resize(70,35);
   writeButton->ChangeBackground(fYellow);
-  bFrame->AddFrame(writeButton, new TGLayoutHints(kLHintsBottom | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
-  TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(h1v3, 150,75);
+  TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(FpControl, 150,75);
+  FpControl->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   rootfileFrame->SetName("rootfileFrame");
 
   TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
@@ -241,10 +249,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
   rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
  
-  h1v3->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
-  TGHorizontalFrame *dirFrame = new TGHorizontalFrame(h1v3, 150,75);
+  TGHorizontalFrame *dirFrame = new TGHorizontalFrame(FpControl, 150,75);
+  FpControl->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   dirFrame->SetName("dirFrame");
 
   TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
@@ -258,7 +266,6 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   doutput->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
   dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
  
-  h1v3->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
 
