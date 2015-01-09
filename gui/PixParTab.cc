@@ -25,6 +25,8 @@ ClassImp(PixParTab)
 PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   init(p, cfg, tabname);
 
+  fLockClk = true; 
+
   fBorderR = fBorderL = fBorderT = fBorderB = 2;
 
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
@@ -58,7 +60,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   g1Frame->AddFrame(hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX), new TGLayoutHints(kLHintsRight | kLHintsTop));
   tcb = new TGCheckButton(hFrame, "lock parameters to clk");
-  tcb->Connect("Clicked()", "PixParTab", this, "selectTbm()");
+  tcb->Connect("Clicked()", "PixParTab", this, "lockClk()");
+  tcb->SetState(kButtonDown);
   hFrame->AddFrame(tcb, new TGLayoutHints(kLHintsCenterY | kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
 
   vector<pair<string, uint8_t> > amap = fConfigParameters->getTbParameters();
@@ -394,12 +397,63 @@ void PixParTab::setTbParameter() {
   string svalue = ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText();
   uint8_t udac = atoi(svalue.c_str());
 
-  LOG(logDEBUG)  << "PixParTab::setTbParameter: " << fTbParIds[id] << ": " << int(udac);
-  fConfigParameters->setTbParameter(fTbParIds[id], udac);
-  ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fWhite);
+  // -- enforce: ctr = clk; sda = clk + 15; tin = clk + 5; 
+  if (fLockClk && (
+		   (fTbParIds[id] == "clk") 
+		   || (fTbParIds[id] == "ctr")
+		   || (fTbParIds[id] == "sda")
+		   || (fTbParIds[id] == "tin")
+		   )
+      ) {
+    int clk(0); 
+    if (fTbParIds[id] == "clk") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()); 
+    } else if (fTbParIds[id] == "ctr") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()); 
+    } else if (fTbParIds[id] == "sda") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()) - 15; 
+    } else if (fTbParIds[id] == "tin") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()) - 5; 
+    }
 
+    if (clk < 0) clk += 20;
+
+    if (svalue != "clk") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "clk" << ": " << int(clk);
+      fConfigParameters->setTbParameter("clk", clk);
+      ((TGTextEntry*)(fTbTextEntries["clk"]))->SetText(Form("%d", clk));
+      ((TGTextEntry*)(fTbTextEntries["clk"]))->SetBackgroundColor(fGui->fWhite);
+    }
+    if (svalue != "ctr") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "ctr" << ": " << int(clk);
+      fConfigParameters->setTbParameter("ctr", clk);
+      ((TGTextEntry*)(fTbTextEntries["ctr"]))->SetText(Form("%d", clk));
+      ((TGTextEntry*)(fTbTextEntries["ctr"]))->SetBackgroundColor(fGui->fWhite);
+    }
+    if (svalue != "sda") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "sda" << ": " << int(clk+15);
+      fConfigParameters->setTbParameter("sda", clk+15);
+      ((TGTextEntry*)(fTbTextEntries["sda"]))->SetText(Form("%d", clk+15));
+      ((TGTextEntry*)(fTbTextEntries["sda"]))->SetBackgroundColor(fGui->fWhite);
+    }
+    if (svalue != "tin") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "tin" << ": " << int(clk+5);
+      fConfigParameters->setTbParameter("tin", clk+5);
+      ((TGTextEntry*)(fTbTextEntries["tin"]))->SetText(Form("%d", clk+5));
+      ((TGTextEntry*)(fTbTextEntries["tin"]))->SetBackgroundColor(fGui->fWhite);
+    }
+  } else {
+    LOG(logDEBUG)  << "PixParTab::setTbParameter: " << fTbParIds[id] << ": " << int(udac);
+    fConfigParameters->setTbParameter(fTbParIds[id], udac);
+    ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fWhite);
+  }
+
+  //   std::vector<std::pair<std::string,uint8_t> >  a = fConfigParameters->getTbSigDelays();
+  //   for (unsigned int ai = 0; ai < a.size(); ++ai) {
+  //     cout << a[ai].first << ": " << (int)a[ai].second << endl;
+  //   }
+  
   initTestboard();
-
 }
 
 
@@ -416,6 +470,7 @@ void PixParTab::tbYellow() {
   }
 
   ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fYellow);
+
 }
 
 
@@ -680,6 +735,17 @@ void PixParTab::setLemo() {
     return;
   }
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixParTab::lockClk() {
+
+  if (fLockClk) {
+    fLockClk = false;
+  } else {
+    fLockClk = true;
+  }
 }
 
 

@@ -60,6 +60,8 @@ public:
   void tbYellow();
   void powerYellow();
 
+  void lockClk(); 
+
 //   void rocDown(); 
 //   void rocUp(); 
 //   void tbmDown(); 
@@ -111,6 +113,7 @@ protected:
 
   int                   fBorderR, fBorderL, fBorderT, fBorderB;
 
+  bool fLockClk;
 
   ClassDef(PixParTab, 1)
 
