@@ -19,7 +19,7 @@ class PixGui;
 
 class DLLEXPORT PixMonitorFrame: public TQObject {
 public:
-  PixMonitorFrame(TGGroupFrame *f, PixGui *p);
+  PixMonitorFrame(TGVerticalFrame *f, PixGui *p);
   virtual ~PixMonitorFrame();
   virtual void handleButtons(Int_t id = -1);
   virtual void Update();

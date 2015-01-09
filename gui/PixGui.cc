@@ -65,23 +65,36 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   TGVerticalFrame *h1v2 = new TGVerticalFrame(fH1);
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
+  // ---------------
   // -- left frame
+  // ---------------
   //  TGGroupFrame *leftFrame = new TGGroupFrame(h1v1, "left frame");
   TGHorizontalFrame *leftFrame = new TGHorizontalFrame(h1v1);
 
   h1v1->AddFrame(leftFrame, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   h1v1->SetWidth(400);
 
-  // -- middle frame
-  TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
 
-  // power
-  TGHorizontalFrame *powerFrame = new TGHorizontalFrame(hwControl, 150, 75);
+  // ---------------
+  // -- middle frame
+  // ---------------
+  TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
+  h1v2->AddFrame(hwControl);
+  TGHorizontalFrame *FhwControl = new TGHorizontalFrame(hwControl); 
+  hwControl->AddFrame(FhwControl);
+  TGVerticalFrame *h1v2l = new TGVerticalFrame(FhwControl); 
+  FhwControl->AddFrame(h1v2l);
+  TGVerticalFrame *h1v2r = new TGVerticalFrame(FhwControl);
+  FhwControl->AddFrame(h1v2r);
+
+  // left: power
+  TGHorizontalFrame *powerFrame = new TGHorizontalFrame(h1v2l, 150, 75);
+  h1v2l->AddFrame(powerFrame);
   powerFrame->SetName("powerFrame");
   powerFrame->AddFrame(new TGLabel(powerFrame, "Power: "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
   fbtnPower = new TGTextButton(powerFrame, "Off", B_POWER);
-  fbtnPower->SetToolTipText("Turn on/off power of DTB");
+  fbtnPower->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off module low voltage":"Turn on/off ROC low voltage");
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fPower) {
@@ -92,15 +105,16 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fbtnPower->SetText("Off");
   }
   powerFrame->AddFrame(fbtnPower, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-  hwControl->AddFrame(powerFrame);
   
-  // HV
-  TGHorizontalFrame *hvFrame = new TGHorizontalFrame(hwControl, 150,75);
+  // left: HV
+  TGHorizontalFrame *hvFrame = new TGHorizontalFrame(h1v2l, 150,75);
+  h1v2l->AddFrame(hvFrame);
   hvFrame->SetName("hvFrame");
   hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
-  fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off HV for module":"Turn on/off HV for ROC");
+  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+  fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off module bias voltage":"Turn on/off ROC bias voltage");
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fHV) {
@@ -109,28 +123,90 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     hvOff();
   }
 
-  // allow tests (bare module test in particular) to switch off HV
   Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()"); 
   Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()"); 
-
-  // allow tests (bare module test in particular) to switch off DTB power
   Connect("PixTest", "powerOn()", "PixGui", this, "powerOn()"); 
   Connect("PixTest", "powerOff()", "PixGui", this, "powerOff()"); 
 
-  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  hwControl->AddFrame(hvFrame);
-
-  // h/w monitoring 
-  fMonitor = new PixMonitorFrame(hwControl, this);
+  // Left: h/w monitoring 
+  fMonitor = new PixMonitorFrame(h1v2l, this);
   fTimer = new TTimer(1000);
   fTimer->Connect("Timeout()", "PixMonitorFrame", fMonitor, "Update()");
   fTimer->TurnOn();
-    
-  h1v2->AddFrame(hwControl, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v1->SetWidth(400);
 
+
+  // Right: scope probes
+  TGComboBox *signalBoxA[2];
+  TGComboBox *signalBoxD[2];
+
+  TGHorizontalFrame *sigFrame(0); 
+
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "A1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxA[0] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  signalBoxA[0]->SetName("a1");
+   
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxA[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  signalBoxA[1]->SetName("a2");
+
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "D1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxD[0] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  signalBoxD[0]->SetName("d1");
+
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "D2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxD[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  signalBoxD[1]->SetName("d2");
+
+  signalBoxA[0]->SetWidth(75);
+  signalBoxA[0]->SetHeight(20);
+  signalBoxA[1]->SetWidth(75);
+  signalBoxA[1]->SetHeight(20);
+  signalBoxD[0]->SetWidth(75);
+  signalBoxD[0]->SetHeight(20);
+  signalBoxD[1]->SetWidth(75);
+  signalBoxD[1]->SetHeight(20);
+
+  // Get singleton Probe dictionary object:
+  ProbeDictionary * _dict = ProbeDictionary::getInstance();
+
+  // Get all analog probes:
+  std::vector<std::string> analogsignals = _dict->getAllAnalogNames();
+  std::vector<std::string> digitalsignals = _dict->getAllDigitalNames();
+
+  for(std::vector<std::string>::iterator it = analogsignals.begin(); it != analogsignals.end(); it++) {
+    signalBoxA[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
+    signalBoxA[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
+  }
+
+  for(std::vector<std::string>::iterator it = digitalsignals.begin(); it != digitalsignals.end(); it++) {
+    signalBoxD[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
+    signalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
+  }
+
+  for(int i = 0 ; i <= 1 ; i++) {
+    signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+    signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+  }
+  
+  signalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
+  signalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
+  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
+  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
+
+
+
+  // --------------
   // -- right frame
+  // --------------
   TGHorizontalFrame *bFrame = new TGHorizontalFrame(h1v3); 
   h1v3->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN)); 
   TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
@@ -183,82 +259,6 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
  
   h1v3->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-
-  TGHorizontalFrame *sigFrameA = new TGHorizontalFrame(h1v3,0,0);
-  TGHorizontalFrame *sigFrameD = new TGHorizontalFrame(h1v3,0,0);
-
-  TGComboBox *signalBoxA[2];
-  TGComboBox *signalBoxD[2];
-
-  signalBoxA[0] = new TGComboBox(sigFrameA);
-  signalBoxA[0]->SetName("a1");
-
-  sigFrameA->AddFrame(new TGLabel(sigFrameA, "A1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameA->AddFrame(signalBoxA[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-   
-  signalBoxA[1] = new TGComboBox(sigFrameA);
-  signalBoxA[1]->SetName("a2");
-
-  sigFrameA->AddFrame(new TGLabel(sigFrameA, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameA->AddFrame(signalBoxA[1], new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  signalBoxD[0] = new TGComboBox(sigFrameD);
-  signalBoxD[0]->SetName("d1");
-
-  sigFrameD->AddFrame(new TGLabel(sigFrameD, "D1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameD->AddFrame(signalBoxD[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  signalBoxD[1] = new TGComboBox(sigFrameD);
-  signalBoxD[1]->SetName("d2");
-
-  sigFrameD->AddFrame(new TGLabel(sigFrameD, "D2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameD->AddFrame(signalBoxD[1], new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-
- 
-  signalBoxA[0]->SetWidth(75);
-  signalBoxA[0]->SetHeight(20);
-  signalBoxA[1]->SetWidth(75);
-  signalBoxA[1]->SetHeight(20);
-  signalBoxD[0]->SetWidth(75);
-  signalBoxD[0]->SetHeight(20);
-  signalBoxD[1]->SetWidth(75);
-  signalBoxD[1]->SetHeight(20);
-
-  // Get singleton Probe dictionary object:
-  ProbeDictionary * _dict = ProbeDictionary::getInstance();
-
-  // Get all analog probes:
-  std::vector<std::string> analogsignals = _dict->getAllAnalogNames();
-  std::vector<std::string> digitalsignals = _dict->getAllDigitalNames();
-
-  for(std::vector<std::string>::iterator it = analogsignals.begin(); it != analogsignals.end(); it++) {
-    signalBoxA[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
-    signalBoxA[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_ANALOG));
-  }
-
-  for(std::vector<std::string>::iterator it = digitalsignals.begin(); it != digitalsignals.end(); it++) {
-    signalBoxD[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
-    signalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
-  }
-
-   for(int i = 0 ; i <= 1 ; i++) {
-     signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-     signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-   }
-
-   
-  h1v3->AddFrame(sigFrameA, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v3->AddFrame(sigFrameD, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-
-  //Load saved values
-
-  signalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
-  signalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
-  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
-  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
-
 
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
 

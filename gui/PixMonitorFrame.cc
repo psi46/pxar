@@ -10,7 +10,7 @@ using namespace std;
 using namespace pxar; 
 
 // ----------------------------------------------------------------------
-PixMonitorFrame::PixMonitorFrame(TGGroupFrame *f, PixGui *pixGui) {
+PixMonitorFrame::PixMonitorFrame(TGVerticalFrame *f, PixGui *pixGui) {
   fGui = pixGui; 
   fMonitorFrame = new TGVerticalFrame(f);
   fHFrame1 = new TGHorizontalFrame(fMonitorFrame);
