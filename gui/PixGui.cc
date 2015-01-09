@@ -4,6 +4,7 @@
 
 #include "log.h"
 
+#include <TGComboBox.h>
 #include "PixTab.hh"
 #include "PixParTab.hh"
 #include "PixTestFactory.hh"
@@ -65,23 +66,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
   // -- left frame
-  TGGroupFrame *tabControl = new TGGroupFrame(h1v1, "Open test tabs");
+  //  TGGroupFrame *leftFrame = new TGGroupFrame(h1v1, "left frame");
+  TGHorizontalFrame *leftFrame = new TGHorizontalFrame(h1v1);
 
-  TGHorizontalFrame *testChooser = new TGHorizontalFrame(tabControl);
-  testChooser->SetName("testChooser");
-  testChooser->AddFrame(new TGLabel(testChooser, "Choose "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  fcmbTests = new TGComboBox(testChooser);
-  fcmbTests->SetWidth(150);
-  fcmbTests->SetHeight(20);
-  fcmbTests->Connect("Selected(char*)", "PixGui", this, "selectedTab(int)");
-
-  tabControl->AddFrame(testChooser);
-  testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-  testChooser->SetWidth(tabControl->GetWidth());
-
-  h1v1->AddFrame(tabControl, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v1->SetWidth(testChooser->GetWidth());
+  h1v1->AddFrame(leftFrame, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  h1v1->SetWidth(400);
 
   // -- middle frame
   TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
@@ -284,14 +273,11 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   if(fApi) fParTab = new PixParTab(this, fConfigParameters, "h/w"); 
 
-  fcmbTests->AddEntry("Ignore this ...", 0);
   vector<string> tests = fTestParameters->getTests();
   for (unsigned int i = 0; i < tests.size(); ++i) {
-    fcmbTests->AddEntry(tests[i].c_str(), i+1);
     createTab(tests[i].c_str()); 
   }
 
-  fcmbTests->Select(0);
   if(fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -312,7 +298,6 @@ PixGui::~PixGui() {
   LOG(logDEBUG) << "PixGui::destructor";
   delete fTimer;
   delete fMonitor; 
-  delete fcmbTests;
   delete fTabs;
   delete fParTab;
   delete fRootFileNameBuffer;
