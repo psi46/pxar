@@ -61,6 +61,8 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   g1Frame->AddFrame(hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX), new TGLayoutHints(kLHintsRight | kLHintsTop));
   tcb = new TGCheckButton(hFrame, "lock parameters to clk");
   tcb->Connect("Clicked()", "PixParTab", this, "lockClk()");
+  tcb->SetToolTipText("Enforce the relations ctr = clk; sda = clk+15; tin = clk+5");
+  tcb->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
   tcb->SetState(kButtonDown);
   hFrame->AddFrame(tcb, new TGLayoutHints(kLHintsCenterY | kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
 
