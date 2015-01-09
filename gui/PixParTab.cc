@@ -25,6 +25,8 @@ ClassImp(PixParTab)
 PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   init(p, cfg, tabname);
 
+  fLockClk = true; 
+
   fBorderR = fBorderL = fBorderT = fBorderB = 2;
 
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
@@ -55,15 +57,24 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   fhFrame->AddFrame(vFrame, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   g1Frame = new TGGroupFrame(vFrame, "Testboard");
   vFrame->AddFrame(g1Frame);
+
+  g1Frame->AddFrame(hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX), new TGLayoutHints(kLHintsRight | kLHintsTop));
+  tcb = new TGCheckButton(hFrame, "lock parameters to clk");
+  tcb->Connect("Clicked()", "PixParTab", this, "lockClk()");
+  tcb->SetToolTipText("Enforce the relations ctr = clk; sda = clk+15; tin = clk+5");
+  tcb->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
+  tcb->SetState(kButtonDown);
+  hFrame->AddFrame(tcb, new TGLayoutHints(kLHintsCenterY | kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
+
   vector<pair<string, uint8_t> > amap = fConfigParameters->getTbParameters();
   for (unsigned int i = 0; i < amap.size(); ++i) {
     hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX);
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    tb = new TGTextBuffer(5);
     tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
     hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
 
+    tb = new TGTextBuffer(5);
     te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100);
     hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
     fTbParIds.push_back(amap[i].first);
@@ -196,12 +207,22 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 
   hFrame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
   vFrame->AddFrame(hFrame);
-  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Select all", B_SELECTALL));
+  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Select all", B_SELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText("select all ROCs.\nSetting a DAC will affect all selected ROCs.\nTo view the DACs for a specific ROC, select *only* that ROC.");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
-  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Deselect all", B_DESELECTALL));
+  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Deselect all", B_DESELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText("deselect all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
+
+  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Save DAC"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
+  tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
+
+  
+  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Save Trim"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
+  tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
+
 
   bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
   cmap.clear();
@@ -301,15 +322,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       fRocParIds.push_back(parids);
     }
 
-    tset = new TGTextButton(g1Frame, "Save DAC");
-    tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
-    tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
-    g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
-
-    tset = new TGTextButton(g1Frame, "Save Trim");
-    tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
-    tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
-    g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
   }
 
 
@@ -387,12 +399,63 @@ void PixParTab::setTbParameter() {
   string svalue = ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText();
   uint8_t udac = atoi(svalue.c_str());
 
-  LOG(logDEBUG)  << "PixParTab::setTbParameter: " << fTbParIds[id] << ": " << int(udac);
-  fConfigParameters->setTbParameter(fTbParIds[id], udac);
-  ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fWhite);
+  // -- enforce: ctr = clk; sda = clk + 15; tin = clk + 5; 
+  if (fLockClk && (
+		   (fTbParIds[id] == "clk") 
+		   || (fTbParIds[id] == "ctr")
+		   || (fTbParIds[id] == "sda")
+		   || (fTbParIds[id] == "tin")
+		   )
+      ) {
+    int clk(0); 
+    if (fTbParIds[id] == "clk") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()); 
+    } else if (fTbParIds[id] == "ctr") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()); 
+    } else if (fTbParIds[id] == "sda") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()) - 15; 
+    } else if (fTbParIds[id] == "tin") {
+      clk = atoi(((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->GetText()) - 5; 
+    }
 
+    if (clk < 0) clk += 20;
+
+    if (svalue != "clk") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "clk" << ": " << int(clk);
+      fConfigParameters->setTbParameter("clk", clk);
+      ((TGTextEntry*)(fTbTextEntries["clk"]))->SetText(Form("%d", clk));
+      ((TGTextEntry*)(fTbTextEntries["clk"]))->SetBackgroundColor(fGui->fWhite);
+    }
+    if (svalue != "ctr") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "ctr" << ": " << int(clk);
+      fConfigParameters->setTbParameter("ctr", clk);
+      ((TGTextEntry*)(fTbTextEntries["ctr"]))->SetText(Form("%d", clk));
+      ((TGTextEntry*)(fTbTextEntries["ctr"]))->SetBackgroundColor(fGui->fWhite);
+    }
+    if (svalue != "sda") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "sda" << ": " << int(clk+15);
+      fConfigParameters->setTbParameter("sda", clk+15);
+      ((TGTextEntry*)(fTbTextEntries["sda"]))->SetText(Form("%d", clk+15));
+      ((TGTextEntry*)(fTbTextEntries["sda"]))->SetBackgroundColor(fGui->fWhite);
+    }
+    if (svalue != "tin") {
+      LOG(logDEBUG)  << "PixParTab::setTbParameter: " << "tin" << ": " << int(clk+5);
+      fConfigParameters->setTbParameter("tin", clk+5);
+      ((TGTextEntry*)(fTbTextEntries["tin"]))->SetText(Form("%d", clk+5));
+      ((TGTextEntry*)(fTbTextEntries["tin"]))->SetBackgroundColor(fGui->fWhite);
+    }
+  } else {
+    LOG(logDEBUG)  << "PixParTab::setTbParameter: " << fTbParIds[id] << ": " << int(udac);
+    fConfigParameters->setTbParameter(fTbParIds[id], udac);
+    ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fWhite);
+  }
+
+  //   std::vector<std::pair<std::string,uint8_t> >  a = fConfigParameters->getTbSigDelays();
+  //   for (unsigned int ai = 0; ai < a.size(); ++ai) {
+  //     cout << a[ai].first << ": " << (int)a[ai].second << endl;
+  //   }
+  
   initTestboard();
-
 }
 
 
@@ -409,6 +472,7 @@ void PixParTab::tbYellow() {
   }
 
   ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fYellow);
+
 }
 
 
@@ -673,6 +737,17 @@ void PixParTab::setLemo() {
     return;
   }
 
+}
+
+
+// ----------------------------------------------------------------------
+void PixParTab::lockClk() {
+
+  if (fLockClk) {
+    fLockClk = false;
+  } else {
+    fLockClk = true;
+  }
 }
 
 
