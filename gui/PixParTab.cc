@@ -274,7 +274,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
 	  tl->SetWidth(100);
 	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-	  te  = new TGTextEntry(hFrame, tb, idac); te->SetWidth(100);
+	  te  = new TGTextEntry(hFrame, tb, idac); te->SetWidth(30);
 	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
 	  te->SetText(Form("%d", int(amap[idac].second)));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
