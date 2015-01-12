@@ -201,8 +201,11 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   // -----------------
   // -- DAC Parameters
   // -----------------
-  vFrame = new TGVerticalFrame(fhFrame);
-  fhFrame->AddFrame(vFrame, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  g1Frame = new TGGroupFrame(fhFrame, "ROCs");
+  fhFrame->AddFrame(g1Frame);
+
+  vFrame = new TGVerticalFrame(g1Frame);
+  g1Frame->AddFrame(vFrame, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
 
   TGHorizontalFrame *h1Frame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
   vFrame->AddFrame(h1Frame);
