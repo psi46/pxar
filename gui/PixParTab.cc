@@ -142,9 +142,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   }
   updateSelection();
 
-  //  hFrame = new TGHorizontalFrame(vFrame);
-  //  vFrame->AddFrame(hFrame, new TGLayoutHints(kLHintsBottom, fBorderL, fBorderR, fBorderT, fBorderB));
-
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
   vFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
 
@@ -201,129 +198,110 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tset->Connect("Clicked()", "PixParTab", this, "saveTbmParameters()");
   }
 
+  // -----------------
   // -- DAC Parameters
+  // -----------------
   vFrame = new TGVerticalFrame(fhFrame);
   fhFrame->AddFrame(vFrame, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
 
-  hFrame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
-  vFrame->AddFrame(hFrame);
-  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Select all", B_SELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-  tset->SetToolTipText("select all ROCs.\nSetting a DAC will affect all selected ROCs.\nTo view the DACs for a specific ROC, select *only* that ROC.");
+  TGHorizontalFrame *h1Frame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
+  vFrame->AddFrame(h1Frame);
+
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Select all", B_SELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText("Select all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
-  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Deselect all", B_DESELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-  tset->SetToolTipText("deselect all ROCs");
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Deselect all", B_DESELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText("Deselect all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
 
-  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Save DAC"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Set DAC for ROC"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText("Change a DAC for one ROC and set this value for this ROC");
+  tset->Connect("Clicked()", "PixParTab", this, "setOneRocParameter()");
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Set DAC for all ROCs"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText("Change a DAC for one ROC and set this value for all ROCs");
+  tset->Connect("Clicked()", "PixParTab", this, "setAllRocParameter()");
+
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Save DAC"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
 
   
-  hFrame->AddFrame(tset = new TGTextButton(hFrame, "Save Trim"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Save Trim"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
 
 
-  bGroup = new TGCompositeFrame(vFrame, 60, 20, kHorizontalFrame |kSunkenFrame);
   cmap.clear();
   for (unsigned int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
-    tcb = new TGCheckButton(bGroup, Form("%d", i), i);
-    tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");
-    bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-    fSelectRoc.push_back(tcb);
     vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getDACs(i);
     cmap.push_back(smap);
   }
-  if (fSelectRoc.size() > 0) {
-    fSelectedRoc = 0;
-    // -- by default enable all present
-    for (unsigned iroc = 0; iroc < fSelectRoc.size(); ++iroc) {
-      fSelectRoc[iroc]->SetState(kButtonDown);
-    }
-  }
   updateSelection();
 
-  vFrame->AddFrame(bGroup, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, fBorderL, fBorderR, fBorderT, fBorderB));
-
-  hFrame = new TGHorizontalFrame(vFrame);
-  vFrame->AddFrame(hFrame, new TGLayoutHints(kLHintsBottom, fBorderL, fBorderR, fBorderT, fBorderB));
-
-  g1Frame = new TGGroupFrame(hFrame, "DACs of first selected ROC");
-  hFrame->AddFrame(g1Frame, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-  g2Frame = new TGGroupFrame(hFrame, "DACs of first selected ROC");
-  hFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
-
   if (cmap.size() > 0) {
-    unsigned int firstroc(0);
-    for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
-      if (kButtonDown == fSelectRoc[i]->GetState()) {
-	firstroc = i;
-	break;
-      }
+    h1Frame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
+    vFrame->AddFrame(h1Frame, new TGLayoutHints(kLHintsBottom, fBorderL, fBorderR, fBorderT, fBorderB));
+    
+    TGVerticalFrame *v1Frame(0); 
+    h1Frame->AddFrame(v1Frame = new TGVerticalFrame(h1Frame), 
+		      new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    
+    // -- left column with DAC names
+    amap = cmap[0];
+    hFrame = new TGHorizontalFrame(v1Frame, 300, 30, kLHintsExpandX);
+    v1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
+    tl = new TGLabel(hFrame, " ");
+    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    for (unsigned int idac = 0; idac < amap.size(); ++idac) {
+      v1Frame->AddFrame(hFrame = new TGHorizontalFrame(v1Frame, 300, 25, kFixedHeight), 
+			new TGLayoutHints(kLHintsRight|kLHintsCenterY));
+      hFrame->AddFrame(tl = new TGLabel(hFrame, amap[idac].first.c_str()), 
+		       new TGLayoutHints(kLHintsRight|kLHintsCenterY));
     }
 
+
+    // -- one column per ROC
     for (unsigned int iroc = 0; iroc < fGui->getApi()->_dut->getNRocs(); ++iroc) {
-      std::map<std::string, uint8_t>  parids;
+      map<string, TGTextEntry*>  rocTextEntries;
       amap = cmap[iroc];
-      unsigned int idac(0);
-      for (idac = 0; idac < 0.5*amap.size(); ++idac) {
-	if (static_cast<unsigned int>(iroc) == firstroc) {
-	  hFrame = new TGHorizontalFrame(g1Frame, 300, 30, kLHintsExpandX);
-	  g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  tb = new TGTextBuffer(5);
-	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
-	  tl->SetWidth(100);
-	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-	  te  = new TGTextEntry(hFrame, tb, idac); te->SetWidth(30);
-	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
-	  te->SetText(Form("%d", int(amap[idac].second)));
-	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
-	  te->Connect("TextChanged(const char *)", "PixParTab", this, "rocYellow()");
-	  tset = new TGTextButton(hFrame, "Set", idac);
-	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
-	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
-	  tset->Connect("Clicked()", "PixParTab", this, "setRocParameter()");
-	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-	}
+      h1Frame->AddFrame(v1Frame = new TGVerticalFrame(h1Frame), 
+			new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+      // ROC ID
+      v1Frame->AddFrame(hFrame = new TGHorizontalFrame(v1Frame, 300, 26, kLHintsExpandX),
+			new TGLayoutHints(kLHintsCenterY|kLHintsRight|kLHintsTop));
 
-	parids.insert(make_pair(amap[idac].first, amap[idac].second));
-	fRocTextEntries.insert(make_pair(amap[idac].first, te));
-	fRocTextMap.insert(make_pair(idac, amap[idac].first));
+      hFrame->AddFrame(tcb = new TGCheckButton(hFrame, Form("%d", iroc)), 
+		       new TGLayoutHints(kLHintsCenterY|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
+      tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");      
+      fSelectRoc.push_back(tcb);
+
+      // DACs
+      for (unsigned int idac = 0; idac < amap.size(); ++idac) {
+	v1Frame->AddFrame(hFrame = new TGHorizontalFrame(v1Frame, 300, 10), 
+			  new TGLayoutHints(kLHintsRight | kLHintsTop));
+	hFrame->AddFrame(te  = new TGTextEntry(hFrame, tb = new TGTextBuffer(3), idac),
+			 new TGLayoutHints(kLHintsCenterY|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
+	te->SetAlignment(kTextRight);
+	te->SetName(amap[idac].first.c_str()); 
+	te->SetWidth(30);
+	te->SetText(Form("%3d", int(amap[idac].second)));
+	te->Connect("ReturnPressed()", "PixParTab", this, "setOneRocParameter()");
+	te->Connect("TextChanged(const char *)", "PixParTab", this, "rocYellow()");
+	
+	rocTextEntries.insert(make_pair(amap[idac].first, te));
       }
-
-      for (idac = amap.size()/2+1; idac < amap.size(); ++idac) {
-	if (static_cast<unsigned int>(iroc) == firstroc) {
-	  hFrame = new TGHorizontalFrame(g2Frame, 300, 30, kLHintsExpandX);
-	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-	  tb = new TGTextBuffer(5);
-	  tl = new TGLabel(hFrame, amap[idac].first.c_str());
-	  tl->SetWidth(100);
-	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-
-	  te  = new TGTextEntry(hFrame, tb, idac); te->SetWidth(100);
-	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
-	  te->SetText(Form("%d", int(amap[idac].second)));
-	  te->Connect("ReturnPressed()", "PixParTab", this, "setRocParameter()");
-	  te->Connect("TextChanged(const char *)", "PixParTab", this, "rocYellow()");
-
-	  tset = new TGTextButton(hFrame, "Set", idac);
-	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
-	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
-	  tset->Connect("Clicked()", "PixParTab", this, "setRocParameter()");
-	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
-
-	}
-
-	parids.insert(make_pair(amap[idac].first, amap[idac].second));
-	fRocTextEntries.insert(make_pair(amap[idac].first, te));
-	fRocTextMap.insert(make_pair(idac, amap[idac].first));
-      }
-
-      fRocParIds.push_back(parids);
+      fRocTextEntries.push_back(rocTextEntries);
     }
+    
+    // -- by default enable all present
+    if (fSelectRoc.size() > 0) {
+      for (unsigned iroc = 0; iroc < fSelectRoc.size(); ++iroc) {
+	fSelectRoc[iroc]->SetState(kButtonDown);
+      }
+    }
+
 
   }
-
 
   fTabFrame->Layout();
   fTabFrame->MapSubwindows();
@@ -450,11 +428,7 @@ void PixParTab::setTbParameter() {
     ((TGTextEntry*)(fTbTextEntries[fTbParIds[id]]))->SetBackgroundColor(fGui->fWhite);
   }
 
-  //   std::vector<std::pair<std::string,uint8_t> >  a = fConfigParameters->getTbSigDelays();
-  //   for (unsigned int ai = 0; ai < a.size(); ++ai) {
-  //     cout << a[ai].first << ": " << (int)a[ai].second << endl;
-  //   }
-  
+ 
   initTestboard();
 }
 
@@ -597,11 +571,10 @@ void PixParTab::tbmYellow() {
 void PixParTab::updateParameters() {
   LOG(logDEBUG)  << "PixParTab::updateParameters: ";
 
-  for (unsigned int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
-    map<string, uint8_t> amap = fRocParIds[i];
-    for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
-      mapit->second = fGui->getApi()->_dut->getDAC(i, mapit->first);
-      if (static_cast<int>(i) == fSelectedRoc) fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second));
+  for (unsigned int iroc = 0; iroc < fGui->getApi()->_dut->getNRocs(); ++iroc) {
+    map<string, TGTextEntry*> amap = fRocTextEntries[iroc];
+    for (map<string, TGTextEntry*>::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
+      mapit->second->SetText(Form("%d", (int)(fGui->getApi()->_dut->getDAC(iroc, mapit->first))));
     }
   }
 
@@ -624,7 +597,6 @@ void PixParTab::updateParameters() {
 
 // ----------------------------------------------------------------------
 void PixParTab::selectRoc(int iroc) {
-
   bool selected(false);
   if (iroc == -1) {
     TGButton *btn = (TGButton *) gTQSender;
@@ -644,15 +616,8 @@ void PixParTab::selectRoc(int iroc) {
 	break;
       }
     }
-    LOG(logDEBUG) << "choosing first selected ROC (or 0) instead: " << iroc << endl;
   }
 
-  fSelectedRoc = iroc;
-
-  map<string, uint8_t> amap = fRocParIds[fSelectedRoc];
-  for (map<string, uint8_t >::iterator mapit = amap.begin(); mapit != amap.end(); ++mapit) {
-    fRocTextEntries[(*mapit).first]->SetText(Form("%d", (*mapit).second));
-  }
   updateSelection();
 }
 
@@ -679,49 +644,101 @@ void PixParTab::selectTbm(int id) {
 
 
 // ----------------------------------------------------------------------
-void PixParTab::setRocParameter() {
+void PixParTab::setAllRocParameter() {
   if (!fGui->getTabs()) return;
-  LOG(logDEBUG)  << "PixParTab::setRocParameter: ";
-
-  TGButton *btn = (TGButton *) gTQSender;
-  int id(-1);
-  id = btn->WidgetId();
-  if (-1 == id) {
-    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-    return;
-  }
-
-  string sdac = fRocTextMap[id];
-  string sval = fRocTextEntries[sdac]->GetText();
-  uint8_t udac = atoi(sval.c_str());
-
-  int iroc(-1);
-  for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
-    if (kButtonDown == fSelectRoc[i]->GetState()) {
+  set<TGTextEntry*>::iterator irc = fRocChanges.begin(); 
+  set<TGTextEntry*>::iterator ircE = fRocChanges.end(); 
+  for (; irc != ircE; ++irc) {
+    string sdac = (*irc)->GetName();
+    string sval = (*irc)->GetText();
+    uint8_t udac = atoi(sval.c_str());
+    int iroc(-1);
+    for (unsigned int i = 0; i < fGui->getApi()->_dut->getNRocs(); ++i) {
       iroc = i;
-      LOG(logDEBUG) << "ROC " << iroc << " is selected. id = " << id;
-      fRocParIds[iroc][sdac]  = udac;
-      LOG(logDEBUG)<< "xxx: ID = " << id << " roc = " << iroc
-		  << " -> " << sdac << " set to  int(udac) = " << int(udac);
+      LOG(logDEBUG)<< "roc = " << iroc  << " -> " << sdac << " set to  int(udac) = " << int(udac);
       fGui->getApi()->setDAC(sdac, udac, iroc);
-      fRocTextEntries[sdac]->SetBackgroundColor(fGui->fWhite);
+      (*irc)->SetFocus();
+      (*irc)->SetBackgroundColor(fGui->fWhite);
+      (*irc)->SetAlignment(kTextRight);
     }
+
+
   }
 
+  fRocChanges.clear();
+
+  updateParameters();
+}
+
+// ----------------------------------------------------------------------
+void PixParTab::setOneRocParameter() {
+  if (!fGui->getTabs()) return;
+  set<TGTextEntry*>::iterator irc = fRocChanges.begin(); 
+  set<TGTextEntry*>::iterator ircE = fRocChanges.end(); 
+
+  for (; irc != ircE; ++irc) {
+    string sdac = (*irc)->GetName();
+    string sval = (*irc)->GetText();
+    uint8_t udac = atoi(sval.c_str());
+    int iroc(-1);
+    for (unsigned int i = 0; i < fRocTextEntries.size(); ++i) {
+      for (map<string, TGTextEntry*>::iterator imap = fRocTextEntries[i].begin(); imap != fRocTextEntries[i].end(); ++imap) {
+	if (imap->second == *irc) {
+	  iroc = i; 
+	  goto found;
+	}
+      }
+    }
+    
+  found:
+    if (iroc < 0) {
+      LOG(logDEBUG) << "did not find ROC for TGTextEntry"; 
+      break;
+    }
+    LOG(logDEBUG)<< "roc = " << iroc << " -> " << sdac << " set to  int(udac) = " << int(udac);
+    fGui->getApi()->setDAC(sdac, udac, iroc);
+    fRocChanges.erase(*irc); 
+    (*irc)->SetFocus();
+    (*irc)->SetBackgroundColor(fGui->fWhite);
+    (*irc)->SetAlignment(kTextRight);
+  }
+
+  fRocChanges.clear();
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::rocYellow() {
-  TGButton *btn = (TGButton *) gTQSender;
-  int id(-1);
-  id = btn->WidgetId();
-  if (-1 == id) {
-    LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-    return;
+  TGTextEntry *f = (TGTextEntry*) gTQSender; 
+  if (f) {
+    int iroc(-1);
+    for (unsigned int i = 0; i < fRocTextEntries.size(); ++i) {
+      for (map<string, TGTextEntry*>::iterator imap = fRocTextEntries[i].begin(); imap != fRocTextEntries[i].end(); ++imap) {
+	if (imap->second == f) {
+	  iroc = i; 
+	  goto found; 
+	}
+      }
+    }
+  found:
+    if (iroc < 0) {
+      LOG(logDEBUG) << "did not find ROC for TGTextEntry"; 
+      return;
+    }
+    string sdac = f->GetName();
+    string sval = f->GetText();
+    uint8_t udac = atoi(sval.c_str());
+    
+    if (udac != fGui->getApi()->_dut->getDAC(iroc, sdac)) {
+      f->SetBackgroundColor(fGui->fYellow);
+      f->SetAlignment(kTextRight);
+      fRocChanges.insert(f);
+    } else {
+      f->SetBackgroundColor(fGui->fWhite);
+      f->SetAlignment(kTextRight);
+      fRocChanges.erase(f);
+    }
   }
 
-  string sdac = fRocTextMap[id];
-  ((TGTextEntry*)(fRocTextEntries[sdac]))->SetBackgroundColor(fGui->fYellow);
 }
 
 // ----------------------------------------------------------------------
@@ -742,7 +759,6 @@ void PixParTab::setLemo() {
 
 // ----------------------------------------------------------------------
 void PixParTab::lockClk() {
-
   if (fLockClk) {
     fLockClk = false;
   } else {
@@ -833,39 +849,3 @@ void PixParTab::updateSelection() {
   }
 
 }
-
-
-// // ----------------------------------------------------------------------
-// void PixParTab::rocUp() {
-//   TGButton *btn = (TGButton *) gTQSender;
-//   int id(-1);
-//   id = btn->WidgetId();
-//   if (-1 == id) {
-//     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-//     return;
-//   }
-
-//   if (id > 0) {
-//     ((TGTextEntry*)(fParTextEntries[fParIds[id-1]]))->SetFocus();
-//   } else {
-//     ((TGTextEntry*)(fParTextEntries[fParIds[fParIds.size()-1]]))->SetFocus();
-//   }
-// }
-
-// // ----------------------------------------------------------------------
-// void PixParTab::rocDown() {
-//   TGButton *btn = (TGButton *) gTQSender;
-//   int id(-1);
-//   id = btn->WidgetId();
-//   if (-1 == id) {
-//     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-//     return;
-//   }
-
-//   string sdac = fRocTextMap[id];
-//   if (id < static_cast<int>(fParIds.size()) - 1) {
-//     ((TGTextEntry*)(fRocTextEntries[sdac]))->SetFocus();
-//   } else {
-//     ((TGTextEntry*)(fParTextEntries[fParIds[0]]))->SetFocus();
-//   }
-// }
