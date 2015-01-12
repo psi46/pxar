@@ -21,7 +21,17 @@ PixTestReadback::PixTestReadback(PixSetup *a, std::string name) : PixTest(a, nam
   init(); 
   LOG(logDEBUG) << "PixTestReadback ctor(PixSetup &a, string, TGTab *)";
   fTree = 0; 
-  
+
+  vector<vector<pair<string, double> > > iniCal;
+  vector<pair<string, double> > prova1;
+  fRbCal =  fPixSetup->getConfigParameters()->getReadbackCal();
+  prova1 = fRbCal[0];
+  LOG(logDEBUG)<<"***???!!! calibration constants for readback !!!???***";
+  LOG(logDEBUG)<<"size is "<<prova1.size();
+  for(int iv=0; iv<prova1.size(); iv++){
+    LOG(logDEBUG)<<prova1[iv].first<<" "<<prova1[iv].second;
+  }
+
   //initialize all calibration factors to 1
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
@@ -35,6 +45,38 @@ PixTestReadback::PixTestReadback(PixSetup *a, std::string name) : PixTest(a, nam
     fPar1TbIaCal.push_back(1.);
     fPar2TbIaCal.push_back(1.);
     fRbVbg.push_back(0.);
+  }
+
+  for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+      if(!(ical->first.compare("par0vd"))){
+	fPar0VdCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par1vd"))){
+	fPar1VdCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par0va"))){
+	fPar0VaCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par1va"))){
+	fPar1VaCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par0rbia"))){
+	fPar0RbIaCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par1rbia"))){
+	fPar1RbIaCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par0tbia"))){
+	fPar0TbIaCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par1tbia"))){
+	fPar1TbIaCal[iroc] = ical->second;
+      }
+      else if(!(ical->first.compare("par2tbia"))){
+	fPar2TbIaCal[iroc] = ical->second;
+      }
+    }
   }
 
   fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
@@ -470,6 +512,34 @@ void PixTestReadback::CalibrateIa(){
   fPar2TbIaCal[iroc]=v_ftb[iroc]->GetParameter(2);
   }
 
+
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+      if(!(ical->first.compare("par0rbia"))){
+	ical->second = fPar0RbIaCal[iroc];
+      }
+      else if(!(ical->first.compare("par1rbia"))){
+	ical->second = fPar1RbIaCal[iroc];
+      }
+      else if(!(ical->first.compare("par0tbia"))){
+	ical->second = fPar0TbIaCal[iroc];
+      }
+      else if(!(ical->first.compare("par1tbia"))){
+	ical->second = fPar1TbIaCal[iroc];
+      }
+      else if(!(ical->first.compare("par2tbia"))){
+	ical->second = fPar2TbIaCal[iroc];
+      }
+    }
+  }
+  
+
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+      LOG(logDEBUG)<<"debug: "<<ical->first<<" "<<ical->second;
+    }
+  }
+
   TH1D* h_rbIaCal (0);
   vector<TH1D*> hs_rbIaCal;
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
@@ -496,6 +566,10 @@ void PixTestReadback::CalibrateIa(){
     fHistList.push_back(hs_rbIaCal[iroc]);
     fHistList.push_back(hs_tbIa[iroc]);
   }
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    fPixSetup->getConfigParameters()->writeReadbackFile(iroc, fRbCal[iroc]);    
+  }
+  
   restoreDacs();
 }
 
@@ -649,7 +723,7 @@ void PixTestReadback::CalibrateVd(){
     frb = new TF1(name.c_str(), "[0] + x*[1]");
     v_frb.push_back(frb);
   }
-
+  
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
     hs_rbVd[iroc]->Fit(v_frb[iroc], "W", "");
 
@@ -659,6 +733,23 @@ void PixTestReadback::CalibrateVd(){
     fHistList.push_back(hs_rbVd[iroc]);
     fHistList.push_back(hs_dacVd[iroc]);
   }
+
+
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+      if(!(ical->first.compare("par0vd"))){
+	ical->second = fPar0VdCal[iroc];
+      }
+      else if(!(ical->first.compare("par1vd"))){
+	ical->second = fPar1VdCal[iroc];
+      }
+    }
+  }
+
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    fPixSetup->getConfigParameters()->writeReadbackFile(iroc, fRbCal[iroc]);    
+  }
+  
   restoreDacs();
 }
 
@@ -816,6 +907,22 @@ void PixTestReadback::CalibrateVa(){
     fHistList.push_back(hs_rbVa[iroc]);
     fHistList.push_back(hs_dacVa[iroc]);
   }
+  
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+      if(!(ical->first.compare("par0va"))){
+	ical->second = fPar0VaCal[iroc];
+      }
+      else if(!(ical->first.compare("par1va"))){
+	ical->second = fPar1VaCal[iroc];
+      }
+    }
+  }
+
+  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+    fPixSetup->getConfigParameters()->writeReadbackFile(iroc, fRbCal[iroc]);    
+  }
+
   restoreDacs();
 }
 
@@ -854,7 +961,11 @@ else if (!dac.compare("va")){
   std::vector<std::vector<uint16_t> > rb;
   rb = fApi->daqGetReadback();
   std::vector<uint8_t> rb_val;
-
+//  for(uint8_t i=0; i<rb.size(); i++){
+//      for(uint8_t j=0; i<rb[i].size(); j++){
+//	LOG(logDEBUG)<<";;;*** DEBUG readback ***;;; "<<i<<" "<<j<<" :"<<rb[i][j];
+//      }
+//  }
   for(uint8_t i=0; i<rb.size(); i++){
     //    for(uint8_t j=0; j<rb[i].size(); j++){
     // LOG(logDEBUG)<<"Readback values for vana = "<<(int)vana<<" : "<<(int)(rb[i][j]&0xff);

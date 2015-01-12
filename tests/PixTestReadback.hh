@@ -68,6 +68,8 @@ private:
   std::vector<double> fPar1TbIaCal;
   std::vector<double> fPar2TbIaCal;
 
+  std::vector<std::vector<std::pair<std::string, double> > > fRbCal;
+
   bool fCalwVd;
   bool fCalwVa;
 

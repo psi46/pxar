@@ -35,7 +35,7 @@ ConfigParameters::ConfigParameters(string filename) {
 
 // ----------------------------------------------------------------------
 void ConfigParameters::initialize() {
-  fReadTbParameters = fReadTbmParameters = fReadDacParameters = fReadRocPixelConfig = false; 
+  fReadTbParameters = fReadTbmParameters = fReadDacParameters = fReadRocPixelConfig = fReadReadbackCal = false; 
   fnCol = 52; 
   fnRow = 80; 
   fnRocs = 16;
@@ -68,6 +68,7 @@ void ConfigParameters::initialize() {
   fRootFileName                  = "expert.root";
   fGainPedestalParameterFileName = "phCalibrationFitTanH";
   fGainPedestalFileName          = "phCalibration";
+  fReadbackCalFileName           = "readbackCal";
 
   ia = -1.; 
   id = -1.;
@@ -100,6 +101,7 @@ void ConfigParameters::readAllConfigParameterFiles() {
   readRocPixelConfig();
   readRocDacs();
   readTbmDacs();
+  readReadbackCal();
 }
 
 
@@ -1061,4 +1063,95 @@ void ConfigParameters::readNrocs(string line) {
       fnRocs =  fI2cAddresses.size(); 
     }
   }
+}
+
+
+/////////////////////////////////
+
+void ConfigParameters::readReadbackCal() {
+  if (!fReadReadbackCal) {
+    for (unsigned int i = 0; i < fnRocs; ++i) {
+      stringstream filename;
+      filename << fDirectory << "/" << fReadbackCalFileName << "_C" << i << ".dat"; 
+      vector<pair<string, double> > rbCal = readReadbackFile(filename.str()); 
+      fReadbackCal.push_back(rbCal); 
+    }
+    fReadReadbackCal = true; 
+  }
+}
+
+
+// ----------------------------------------------------------------------
+vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
+  vector<pair<string, double> > rocRb; 
+
+  // -- read in file
+  vector<string> lines; 
+  char  buffer[5000];
+  LOG(logINFO) << "      reading " << fname;
+  ifstream is(fname.c_str());
+  while (is.getline(buffer, 200, '\n')) {
+    lines.push_back(string(buffer));
+  }
+  is.close();
+
+  // -- parse lines
+  double ival(0); 
+  double uval(0); 
+  //  unsigned char uval(0); 
+  
+  string::size_type s1; 
+  string str1, str2;
+  for (unsigned int i = 0; i < lines.size(); ++i) {
+        cout << lines[i] << endl;   
+    // -- remove tabs, adjacent spaces, leading and trailing spaces
+    cleanupString(lines[i]);
+    if (lines[i].length() < 2) continue;
+    s1 = lines[i].find(" "); 
+    str1 = lines[i].substr(0, s1); 
+    str2 = lines[i].substr(s1+1); 
+
+    std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+    ival = atof(str2.c_str()); 
+    
+    uval = ival;
+    rocRb.push_back(make_pair(str1, uval)); 
+
+  }
+
+  return rocRb; 
+}
+
+
+vector<vector<pair<string, double> > > ConfigParameters::getReadbackCal() {
+  if (!fReadReadbackCal) {
+    readReadbackCal();
+  }
+  return  fReadbackCal;
+}
+
+////////////*********
+
+bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> > v) {
+
+  std::stringstream fname;
+  fname << fDirectory << "/" << fReadbackCalFileName << "_C" << iroc << ".dat";
+
+  ofstream OutputFile;
+  OutputFile.open((fname.str()).c_str());
+  if (!OutputFile.is_open()) {
+    return false; 
+  } else {
+    LOG(logDEBUG) << "write readback calibration parameters into " << fname.str(); 
+  }
+  
+  //  RegisterDictionary *a = RegisterDictionary::getInstance();
+  for (std::vector<std::pair<std::string,double> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+    //    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
+    OutputFile << left << setw(3) << idac->first << " " << setw(3) << static_cast<double>(idac->second) 
+	       << endl;
+  }
+
+  OutputFile.close();
+  return true;
 }
