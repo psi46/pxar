@@ -1065,9 +1065,7 @@ void ConfigParameters::readNrocs(string line) {
   }
 }
 
-
-/////////////////////////////////
-
+// ----------------------------------------------------------------------
 void ConfigParameters::readReadbackCal() {
   if (!fReadReadbackCal) {
     for (unsigned int i = 0; i < fnRocs; ++i) {
@@ -1079,7 +1077,6 @@ void ConfigParameters::readReadbackCal() {
     fReadReadbackCal = true; 
   }
 }
-
 
 // ----------------------------------------------------------------------
 vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
@@ -1122,7 +1119,7 @@ vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
   return rocRb; 
 }
 
-
+// ----------------------------------------------------------------------
 vector<vector<pair<string, double> > > ConfigParameters::getReadbackCal() {
   if (!fReadReadbackCal) {
     readReadbackCal();
@@ -1130,8 +1127,7 @@ vector<vector<pair<string, double> > > ConfigParameters::getReadbackCal() {
   return  fReadbackCal;
 }
 
-////////////*********
-
+// ----------------------------------------------------------------------
 bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> > v) {
 
   std::stringstream fname;
@@ -1147,7 +1143,6 @@ bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> >
   
   //  RegisterDictionary *a = RegisterDictionary::getInstance();
   for (std::vector<std::pair<std::string,double> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    //    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
     OutputFile << left << setw(3) << idac->first << " " << setw(3) << static_cast<double>(idac->second) 
 	       << endl;
   }
