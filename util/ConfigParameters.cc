@@ -1100,7 +1100,7 @@ vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
   string::size_type s1; 
   string str1, str2;
   for (unsigned int i = 0; i < lines.size(); ++i) {
-        cout << lines[i] << endl;   
+    //cout << lines[i] << endl;   
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     cleanupString(lines[i]);
     if (lines[i].length() < 2) continue;
