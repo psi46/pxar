@@ -22,7 +22,6 @@ typedef char int8_t;
 #include <TGTextEntry.h>
 #include <TGTextEdit.h>
 #include <TGTextBuffer.h>
-#include <TGComboBox.h>
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TSystem.h>
@@ -91,7 +90,6 @@ private:
   };
 
   TTimer        	*fTimer;
-  TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
   //  TGCompositeFrame     	*fParTab;
   TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer;

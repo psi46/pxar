@@ -1517,7 +1517,6 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
     }
     done = (cnt>2) || done;
   }
-  LOG(logDEBUG) << " eff result size = " << results.size() << " (should be 4160-#dead pixels + #unexpected hits)"; 
 
   fDirectory->cd(); 
   vector<TH2D*> maps;
@@ -1568,7 +1567,7 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
       LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc() << " not found"; 
     }
   }
-  LOG(logDEBUG) << "Size of results from : PixTestHighRate::xEfficiencyMaps" << results.size();
+  LOG(logDEBUG) << "Size of results from : PixTestHighRate::xEfficiencyMaps: " << results.size();
   return make_pair(maps, xMaps); 
 }
 
