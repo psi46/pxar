@@ -205,7 +205,8 @@ PixTestHighRate::~PixTestHighRate() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doTest() {
   bigBanner(Form("PixTestHighRate::doTest()"));
-  //  maskHotPixels();
+  doRunMaskHotPixels();
+  doCalDelScan();
   doXPixelAlive();
   doRunDaq();
   LOG(logINFO) << "PixTestHighRate::doTest() done ";
@@ -285,17 +286,16 @@ void PixTestHighRate::doCalDelScan() {
       
   vector<int> calDelLo(rocIds.size(), -1); 
   vector<int> calDelHi(rocIds.size(), -1); 
-  int DeltaCalDelMax(-1); 
+  int DeltaCalDelMax(-1), reserve(1); 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     double cdMax   = maps[iroc]->GetMaximum();
-    calDelLo[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindFirstBinAbove(0.5*cdMax))); 
-    calDelHi[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindLastBinAbove(0.5*cdMax)));
+    calDelLo[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindFirstBinAbove(0.8*cdMax) + reserve)); 
+    calDelHi[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindLastBinAbove(0.8*cdMax) - reserve));
     if (calDelHi[iroc] - calDelLo[iroc] > DeltaCalDelMax) {
       DeltaCalDelMax = calDelHi[iroc] - calDelLo[iroc]; 
     }
-    cout << "ROC " << iroc << " sets calddel from " << calDelLo[iroc] << " .. " << calDelHi[iroc] <<  " difference: " << calDelHi[iroc] - calDelLo[iroc] << endl;
   }
-  cout << DeltaCalDelMax << endl;
+
 
   // -- now to xEfficiencyMap vs CalDel
   // ----------------------------------
@@ -322,36 +322,63 @@ void PixTestHighRate::doCalDelScan() {
   fApi->setPatternGenerator(fPg_setup);
 
 
-  vector<int> calDelMax(rocIds.size(), -1); 
-  vector<int> calDelVal(rocIds.size(), -1); 
-  int nsteps(3); 
-  for (int i = 0; i < nsteps; ++i) {
-    // -- set CalDel per ROC 
-    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-      int caldel = calDelLo[iroc] + i*(calDelHi[iroc]-calDelLo[iroc])/(nsteps-1);
-      fApi->setDAC("CalDel", caldel, rocIds[iroc]);
-      cout << "setting ROC " << iroc << " to caldel: " << caldel << endl;
-    }
-
-
-    pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("HRcaldelScan", ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-    vector<TH2D*> test2 = tests.first;
-    for (unsigned int i = 0; i < test2.size(); ++i) {
-      fHistOptions.insert(make_pair(test2[i], "colz"));
-      h1 = bookTH1D(Form("HR_CalDelScan_C%d", getIdFromIdx(i)),  Form("HR_CalDelScan_C%d", getIdFromIdx(i)),  201, 0., 1.005);
-      fHistList.push_back(h1); 
-      for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
-	for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
-	  h1->Fill(test2[i]->GetBinContent(ix+1, iy+1)/ntrig);
-	}
-      }
-
-//       if (h1->GetMean() > calDelVal[i]) {
-// 	calDelMax[i] = 
-    }
+  vector<pair<int, double> > calDelMax(rocIds.size(), make_pair(-1, -1)); // (CalDel,meanEff)
+  vector<TH1D*> calDelEffHist;
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+    h1 = bookTH1D(Form("HR_CalDelScan_eff_C%d", getIdFromIdx(iroc)),  
+		  Form("HR_CalDelScan_eff_C%d", getIdFromIdx(iroc)), 256, 0., 256);
+    calDelEffHist.push_back(h1); 
   }
 
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  int nsteps(10); 
+  for (int istep = 0; istep < nsteps; ++istep) {
+    // -- set CalDel per ROC 
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      int caldel = calDelLo[iroc] + istep*(calDelHi[iroc]-calDelLo[iroc])/(nsteps-1);
+      fApi->setDAC("CalDel", caldel, rocIds[iroc]);
+    }
+    
+    
+    pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), 
+							       ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+    vector<TH2D*> test2 = tests.first;
+    for (unsigned int iroc = 0; iroc < test2.size(); ++iroc) {
+      fHistOptions.insert(make_pair(test2[iroc], "colz"));
+      h1 = bookTH1D(Form("HR_CalDelScan_step%d_C%d", istep, getIdFromIdx(iroc)),  
+		    Form("HR_CalDelScan_step%d_C%d", istep, getIdFromIdx(iroc)),  201, 0., 1.005);
+      fHistList.push_back(h1); 
+      for (int ix = 0; ix < test2[iroc]->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < test2[iroc]->GetNbinsY(); ++iy) {
+	  h1->Fill(test2[iroc]->GetBinContent(ix+1, iy+1)/ntrig);
+	}
+      }
+      int caldel = fApi->_dut->getDAC(rocIds[iroc], "CalDel");
+      calDelEffHist[iroc]->SetBinContent(caldel, h1->GetMean()); 
+
+      if (h1->GetMean() > calDelMax[iroc].second) {
+ 	calDelMax[iroc].first  = caldel; 
+ 	calDelMax[iroc].second = h1->GetMean();
+      }
+    }
+
+    for (unsigned int i = 0; i < tests.first.size(); ++i) {
+      delete tests.first[i]; 
+      delete tests.second[i]; 
+    }
+    tests.first.clear();
+    tests.second.clear();
+  }
+
+  restoreDacs();
+  for (unsigned int i = 0; i < calDelMax.size(); ++i) {
+    LOG(logDEBUG) << "roc " << Form("%2d", i) << ": caldel = " << calDelMax[i].first << " eff = " << calDelMax[i].second;
+    fApi->setDAC("CalDel", calDelMax[i].first, rocIds[i]);
+  }
+
+  copy(calDelEffHist.begin(), calDelEffHist.end(), back_inserter(fHistList));
+
+  calDelEffHist[0]->Draw();  
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), calDelEffHist[0]);
   PixTest::update(); 
 
 
