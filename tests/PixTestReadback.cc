@@ -777,13 +777,13 @@ vector<double> PixTestReadback::getCalibratedVbg(){
   vector<double> calVbg(fRbVbg.size(), 0.);
   //0.5 needed because Vbg rb has twice the sensitivity Vd and Va have
   if(fCalwVd){
-    LOG(logDEBUG)<<"Vbg will be calibrated using Vd calibration";
+    LOG(logINFO)<<"Vbg will be calibrated using Vd calibration";
     for(unsigned int iroc=0; iroc < calVbg.size(); iroc++){
       calVbg[iroc]=0.5*(fRbVbg[iroc]-fPar0VdCal[iroc])/fPar1VdCal[iroc];
     }
   }
   else if(fCalwVa){
-    LOG(logDEBUG)<<"Vbg will be calibrated using Va calibration";
+    LOG(logINFO)<<"Vbg will be calibrated using Va calibration";
     for(unsigned int iroc=0; iroc < calVbg.size(); iroc++){
       calVbg[iroc]=0.5*(fRbVbg[iroc]-fPar0VaCal[iroc])/fPar1VaCal[iroc];
     }
@@ -793,7 +793,7 @@ vector<double> PixTestReadback::getCalibratedVbg(){
     return calVbg;
   }
    for(unsigned int iroc=0; iroc < calVbg.size(); iroc++){
-     LOG(logDEBUG)<<"/*/*/*/*::: ROC "<<iroc<<": calibrated Vbg = "<<calVbg[iroc]<<" :::*/*/*/*/";
+     LOG(logINFO)<<"/*/*/*/*::: ROC "<<iroc<<": calibrated Vbg = "<<calVbg[iroc]<<" :::*/*/*/*/";
    }
   return calVbg;
 }
