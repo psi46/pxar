@@ -56,12 +56,9 @@ HVSupply::HVSupply(const string &portname, double timeout)
 
 HVSupply::~HVSupply()
 {
-  LOG(logDEBUG) << "Turning Power Supply OFF";
-  serial.writeData(":OUTP:STAT OFF");
-  string answer;
-  serial.writeReadBack(":OUTP:STAT?", answer);
-  LOG(logDEBUG) <<"State of Keithley after shut down: " <<  answer;
-
+  if(hvIsOn){
+    hvOff();
+  }
   // Switch back to local mode:
   serial.writeData(":SYST:LOC");
   serial.closePort();
@@ -75,9 +72,11 @@ bool HVSupply::hvOn()
   
   string answer;
   serial.writeReadBack(":OUTP:STAT?",answer);
-  LOG(logDEBUG) <<"State of Keithley: " <<  answer;
   int a; 
   sscanf(answer.c_str(), "%d", &a);
+  if (a != 1){
+    LOG(logWARNING) <<"Keithley output still off after attempted turn-on!!!";
+  }
   return (a == 1) ? true : false;
 }
 
@@ -89,9 +88,11 @@ bool HVSupply::hvOff()
   
   string answer;
   serial.writeReadBack(":OUTP:STAT?", answer);
-  LOG(logDEBUG) <<"State of Keithley: " <<  answer;
   int a; 
   sscanf(answer.c_str(), "%d", &a);
+  if (a != 0){
+    LOG(logWARNING) << "Keithley output still on after attempted shutdown!!!";
+  }
   return (a == 0) ? true : false;
 }
 
@@ -158,26 +159,11 @@ void HVSupply::sweepStart(double voltStart, double voltStop, double voltStep, do
   this->currentSweepRead = 0;
   
   string command;
-  serial.writeData(":SOUR:VOLT:MODE LIST");             //Enable sweep mode
-  
-  command = ":SOUR:LIST:VOLT ";
-  for(int i = 0; i < (sweepReads-1); i++){
-    command += to_string(voltStart + voltStep*i);
-    command += ",";
-  }
-  command += to_string(voltStart + voltStep*(sweepReads-1));
+  command = ":SOUR:DEL " + to_string(delay);
   serial.writeData(command);
   
-  serial.writeData(":SOUR:SWE:RANG AUTO");             //Set range to auto
-  command = ":TRIG:COUNT " + to_string(sweepReads);
-  serial.writeData(command);                           //Number of measurements
-  command = ":SOUR:DEL " + to_string(delay);
-  serial.writeData(command);                           //Delay between source and measure
-  serial.writeData(":SOUR:SWE:CAB LATE");              //Enable Sweep abort
-  serial.writeData(":OUTP:STAT ON");
-  serial.writeData(":TRIG:CLE");
-  serial.writeData(":READ?");
-  serial.setReadSuffix(",");
+  setVolts(0);
+  hvOn();
   sweepIsRunning = true;
 }
 
@@ -190,24 +176,17 @@ bool HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
   string voltStr;
   string ampsStr;
   
-  bool quit = false;
-  quit = serial.readData(voltStr);
-  sscanf(voltStr.c_str(), "%le", &voltRead);
-  if(!quit){
-    quit = serial.readData(ampsStr);
-    sscanf(ampsStr.c_str(), "%le", &amps);
-  } 
   voltSet = voltStart + voltStep*currentSweepRead;
+  setVolts(voltSet);
+  getVoltsAmps(voltRead, amps);
+  bool tripped = isTripped();
+  bool final_ = currentSweepRead==sweepReads;
   
   currentSweepRead++;
-  if(quit){ //Final Reading or sweep was aborted
+  if (tripped or final_){
     sweepIsRunning = false;
-    serial.setReadSuffix("");
-    serial.writeData(":OUTP:STAT OFF");
-    serial.writeData(":SOUR:VOLT:MODE FIXED");
-    bool aborted = currentSweepRead != sweepReads;
-    return aborted;
+    hvOff();
+    return tripped;
   }
   return false;
 }
-
