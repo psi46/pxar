@@ -266,11 +266,12 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       map<string, TGTextEntry*>  rocTextEntries;
       amap = cmap[iroc];
       // ROC ID
-      cFrame->AddFrame(tcb = new TGCheckButton(cFrame, Form("%d", iroc)), 
-		       new TGTableLayoutHints(iroc+1, iroc+2, 0, 1, kLHintsCenterX|kLHintsExpandX|kLHintsShrinkX|kLHintsFillX));
+      cFrame->AddFrame(tcb = new TGCheckButton(cFrame, "XX"), 
+		       new TGTableLayoutHints(iroc+1, iroc+2, 0, 1, kFixedWidth));
+      tcb->SetText(Form((iroc>10?"%d":" %d"), iroc)); 
       tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");      
       fSelectRoc.push_back(tcb);
-
+      
 
       // DACs
       for (unsigned int idac = 0; idac < amap.size(); ++idac) {
