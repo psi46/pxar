@@ -11,6 +11,7 @@
 #include <TGTab.h>
 #include <TGLabel.h>
 #include <TGButtonGroup.h>
+#include <TGTableLayout.h>
 #include <cstdlib>
 
 #include "PixParTab.hh"
@@ -210,26 +211,32 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   TGHorizontalFrame *h1Frame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
   vFrame->AddFrame(h1Frame);
 
-  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Select all", B_SELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Select all", B_SELECTALL), 
+		    new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText("Select all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
-  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Deselect all", B_DESELECTALL), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Deselect all", B_DESELECTALL), 
+		    new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText("Deselect all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "handleButtons()");
 
-  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Set DAC for ROC"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Set DAC for ROC"), 
+		    new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText("Change a DAC for one ROC and set this value for this ROC");
   tset->Connect("Clicked()", "PixParTab", this, "setOneRocParameter()");
-  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Set DAC for all ROCs"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Set DAC for all ROCs"), 
+		    new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText("Change a DAC for one ROC and set this value for all ROCs");
   tset->Connect("Clicked()", "PixParTab", this, "setAllRocParameter()");
 
-  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Save DAC"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Save DAC"), 
+		    new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText(Form("Write the DAC parameters of all selected ROCs to file\n(also the DACs of the righthand box will be written).\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveDacParameters()");
 
   
-  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Save Trim"), new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+  h1Frame->AddFrame(tset = new TGTextButton(h1Frame, "Save Trim"), 
+		    new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
   tset->SetToolTipText(Form("Write the trim parameters of all selected ROCs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveTrimParameters()");
 
@@ -242,9 +249,61 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   updateSelection();
 
   if (cmap.size() > 0) {
+
+    TGCompositeFrame *cFrame = new TGCompositeFrame(vFrame, 300, 30, kLHintsExpandX);
+    vFrame->AddFrame(cFrame);
+    cFrame->SetLayoutManager(new TGTableLayout(cFrame, cmap[0].size()+1, cmap.size()+1, 0, 0));
+
+    // leftmost column with DAC names
+    amap = cmap[0];
+    for (unsigned int idac = 0; idac < amap.size(); ++idac) {
+      cFrame->AddFrame(tl = new TGLabel(cFrame, amap[idac].first.c_str()), 
+		       new TGTableLayoutHints(0, 1, idac+1, idac+2, kLHintsCenterX|kLHintsExpandX|kLHintsShrinkX|kLHintsFillX));
+    }
+
+
+    for (unsigned int iroc = 0; iroc < fGui->getApi()->_dut->getNRocs(); ++iroc) {
+      map<string, TGTextEntry*>  rocTextEntries;
+      amap = cmap[iroc];
+      // ROC ID
+      cFrame->AddFrame(tcb = new TGCheckButton(cFrame, Form("%d", iroc)), 
+		       new TGTableLayoutHints(iroc+1, iroc+2, 0, 1, kLHintsCenterX|kLHintsExpandX|kLHintsShrinkX|kLHintsFillX));
+      tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");      
+      fSelectRoc.push_back(tcb);
+
+
+      // DACs
+      for (unsigned int idac = 0; idac < amap.size(); ++idac) {
+	cFrame->AddFrame(te  = new TGTextEntry(cFrame, tb = new TGTextBuffer(3), idac),
+			 new TGTableLayoutHints(iroc+1, iroc+2, idac+1, idac+2, kLHintsExpandX|kLHintsShrinkX|kLHintsFillX));
+	te->SetAlignment(kTextRight);
+	te->SetName(amap[idac].first.c_str()); 
+	te->SetWidth(30);
+	te->SetText(Form("%3d", int(amap[idac].second)));
+	te->Connect("ReturnPressed()", "PixParTab", this, "setOneRocParameter()");
+	te->Connect("TextChanged(const char *)", "PixParTab", this, "rocYellow()");
+	
+	rocTextEntries.insert(make_pair(amap[idac].first, te));
+      }
+      fRocTextEntries.push_back(rocTextEntries);
+    }
+
+
+    // -- by default enable all present
+    if (fSelectRoc.size() > 0) {
+      for (unsigned iroc = 0; iroc < fSelectRoc.size(); ++iroc) {
+	fSelectRoc[iroc]->SetState(kButtonDown);
+      }
+    }
+
+  
+
+
+
+    /*    
     h1Frame = new TGHorizontalFrame(vFrame, 300, 30, kLHintsExpandX);
     vFrame->AddFrame(h1Frame, new TGLayoutHints(kLHintsBottom, fBorderL, fBorderR, fBorderT, fBorderB));
-    
+
     TGVerticalFrame *v1Frame(0); 
     h1Frame->AddFrame(v1Frame = new TGVerticalFrame(h1Frame), 
 		      new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
@@ -304,7 +363,9 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     }
 
 
+    */
   }
+
 
   fTabFrame->Layout();
   fTabFrame->MapSubwindows();
