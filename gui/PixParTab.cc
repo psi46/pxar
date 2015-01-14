@@ -141,6 +141,12 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       fSelectTbm[itbm]->SetState(kButtonDown);
     }
   }
+
+  tset = new TGTextButton(bGroup, "Save");
+  bGroup->AddFrame(tset, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY, fBorderL, fBorderR, fBorderT, fBorderB));
+  tset->SetToolTipText(Form("Write the TBM parameters of all selected TBMs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
+  tset->Connect("Clicked()", "PixParTab", this, "saveTbmParameters()");
+  
   updateSelection();
 
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
@@ -192,11 +198,6 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       g2Frame->SetWidth(g2Frame->GetDefaultWidth());
     }
 
-
-    tset = new TGTextButton(g2Frame, "Save Parameters");
-    g2Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
-    tset->SetToolTipText(Form("Write the TBM parameters of all selected TBMs to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
-    tset->Connect("Clicked()", "PixParTab", this, "saveTbmParameters()");
   }
 
   // -----------------
