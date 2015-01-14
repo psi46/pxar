@@ -13,6 +13,7 @@
 #include <TApplication.h> 
 #include <TFile.h> 
 #include <TROOT.h> 
+#include <TEnv.h> 
 #include <TRint.h> 
 #include <TSystem.h>
 #include <TDatime.h>
@@ -319,6 +320,14 @@ int main(int argc, char *argv[]){
 
 // ----------------------------------------------------------------------
 void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
+  gEnv->SetValue("Gui.DefaultFont", "-*-helvetica-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
+  gEnv->SetValue("Gui.NormalFont", "-*-helvetica-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
+// # GUI specific settings
+// Gui.NormalFont:        -adobe-helvetica-medium-r-*-*-12-*-*-*-*-*-iso8859-1
+// Gui.BoldFont:          -adobe-helvetica-bold-r-*-*-12-*-*-*-*-*-iso8859-1
+// Gui.SmallFont:         -adobe-helvetica-medium-r-*-*-10-*-*-*-*-*-iso8859-1
+// Gui.ProportionalFont:  -adobe-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1
+
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);
