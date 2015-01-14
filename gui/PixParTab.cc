@@ -669,17 +669,15 @@ void PixParTab::setAllRocParameter() {
   }
 
   fRocChanges.clear();
-
   updateParameters();
 }
 
 // ----------------------------------------------------------------------
 void PixParTab::setOneRocParameter() {
   if (!fGui->getTabs()) return;
-  set<TGTextEntry*>::iterator irc = fRocChanges.begin(); 
-  set<TGTextEntry*>::iterator ircE = fRocChanges.end(); 
-
-  for (; irc != ircE; ++irc) {
+  cout << "fRocChanges.size() = " << fRocChanges.size() << endl;
+  set<TGTextEntry*>::iterator irc; 
+  for (irc = fRocChanges.begin(); irc != fRocChanges.end(); ++irc) {
     string sdac = (*irc)->GetName();
     string sval = (*irc)->GetText();
     uint8_t udac = atoi(sval.c_str());
@@ -696,17 +694,17 @@ void PixParTab::setOneRocParameter() {
   found:
     if (iroc < 0) {
       LOG(logDEBUG) << "did not find ROC for TGTextEntry"; 
-      break;
+      continue;
     }
     LOG(logDEBUG)<< "roc = " << iroc << " -> " << sdac << " set to  int(udac) = " << int(udac);
     fGui->getApi()->setDAC(sdac, udac, iroc);
-    fRocChanges.erase(*irc); 
     (*irc)->SetFocus();
     (*irc)->SetBackgroundColor(fGui->fWhite);
     (*irc)->SetAlignment(kTextRight);
   }
 
   fRocChanges.clear();
+  updateParameters();
 }
 
 // ----------------------------------------------------------------------
