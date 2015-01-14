@@ -467,6 +467,7 @@ Ntrig               50
 DAC                 VthrComp
 DacLo               0
 DacHi               200
+Dacs/Step           10
 scurves             button
 
 -- Trim
