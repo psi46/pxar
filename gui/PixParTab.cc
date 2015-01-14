@@ -73,11 +73,11 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
     tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
-    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
 
     tb = new TGTextBuffer(5);
     te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100);
-    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
+    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, 0));
     fTbParIds.push_back(amap[i].first);
     fTbTextEntries.insert(make_pair(amap[i].first, te));
 
@@ -89,7 +89,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
     tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
     tset->Connect("Clicked()", "PixParTab", this, "setTbParameter()");
-    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
   }
 
   vector<pair<string, double> > dmap = fConfigParameters->getTbPowerSettings();
@@ -98,11 +98,11 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     g1Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
     tb = new TGTextBuffer(5);
     tl = new TGLabel(hFrame, dmap[i].first.c_str());
-    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
     tl->SetWidth(100);
 
     te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(100);
-    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
+    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, 0));
     fPowerParIds.push_back(dmap[i].first);
     fPowerTextEntries.insert(make_pair(dmap[i].first, te));
 
@@ -111,14 +111,14 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     te->Connect("TextChanged(const char *)", "PixParTab", this, "powerYellow()");
 
     tset = new TGTextButton(hFrame, "Set", i);
-    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
     tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
     tset->Connect("Clicked()", "PixParTab", this, "setPowerSettings()");
   }
 
   tset = new TGTextButton(g1Frame, "Save Parameters");
-  g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
+  g1Frame->AddFrame(tset, new TGLayoutHints(kLHintsBottom|kLHintsRight, fBorderL, fBorderR, fBorderT, 0));
   tset->SetToolTipText(Form("Write the testboard parameters to file.\nThe output file will overwrite whatever is in the directory \"%s\"\n(change this in the top right part of the GUI)", fConfigParameters->getDirectory().c_str()));
   tset->Connect("Clicked()", "PixParTab", this, "saveTbParameters()");
 
@@ -129,7 +129,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   for (unsigned int i = 0; i < fGui->getApi()->_dut->getNTbms(); ++i) {
     tcb = new TGCheckButton(bGroup, Form("%d", i), i);
     tcb->Connect("Clicked()", "PixParTab", this, "selectTbm()");
-    bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+    bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
     fSelectTbm.push_back(tcb);
     vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getTbmDACs(i);
     cmap.push_back(smap);
@@ -144,7 +144,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
   updateSelection();
 
   g2Frame = new TGGroupFrame(vFrame, "DAC of first selected TBM");
-  vFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, fBorderL, fBorderR, fBorderT, fBorderB));
+  vFrame->AddFrame(g2Frame, new TGLayoutHints(kLHintsRight, fBorderL, fBorderR, fBorderT, 0));
 
   if (cmap.size() > 0) {
     unsigned int firsttbm(0);
@@ -165,12 +165,12 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  g2Frame->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
 	  tb = new TGTextBuffer(5);
 	  tl = new TGLabel(hFrame, amap[i].first.c_str());
-	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+	  hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
 	  tl->SetWidth(100);
 
 	  te  = new TGTextEntry(hFrame, tb, i); te->SetWidth(70);
 	  te->SetToolTipText("note that the numbers are in binary format (in case this is not obvious)");
-	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, fBorderB));
+	  hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderL, fBorderR, fBorderT, 0));
 	  std::bitset<8> bits(amap[i].second);
 	  te->SetText(Form("%s", bits.to_string().c_str()));
 	  te->Connect("ReturnPressed()", "PixParTab", this, "setTbmParameter()");
@@ -180,7 +180,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
 	  tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
 	  tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 	  tset->Connect("Clicked()", "PixParTab", this, "setTbmParameter()");
-	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, fBorderB));
+	  hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
 	}
 	parids.insert(make_pair(amap[i].first, amap[i].second));
 	fTbmTextEntries.insert(make_pair(amap[i].first, te));
