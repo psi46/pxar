@@ -174,7 +174,8 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 }
 
 // ----------------------------------------------------------------------
-vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int result, int ihit, int flag) {
+vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int dacsperstep,
+				 int result, int ihit, int flag) {
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string type("hits"); 
@@ -201,7 +202,27 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     }
   }
 
-  dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
+  if (dacsperstep > 0) {
+    int stepsize(dacsperstep); 
+    int dacminAdj = dacmin; 
+    int dacmaxAdj = dacmin + stepsize - 1;
+    bool finalRun(false);
+    while (dacmaxAdj <= dacmax) {
+      LOG(logINFO) << "  dacScan step  from " << dacminAdj << " .. " << dacmaxAdj; 
+      dacScan(dac, ntrig, dacminAdj, dacmaxAdj, maps, ihit, flag); 
+      if (finalRun) break;
+      dacminAdj = dacminAdj + stepsize; 
+      dacmaxAdj = dacminAdj + stepsize - 1;
+      if (dacmaxAdj >= dacmax) {
+	dacmaxAdj = dacmax; 
+	finalRun = true;
+      }
+    }
+  } else {
+    dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
+  }
+
+
   if (fNDaqErrors > 666000) return resultMaps;
   if (1 == ihit) {
     scurveAna(dac, name, maps, resultMaps, result); 
@@ -1168,6 +1189,121 @@ void PixTest::banner(string what, TLogLevel log) {
 // ----------------------------------------------------------------------
 void PixTest::print(string what, TLogLevel log) {
   LOG(log) << "---> " << what; 
+}
+
+
+// ----------------------------------------------------------------------
+void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int &dacmax) {
+  PixTest::update(); 
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+
+  bool done(false);
+  int ntrig(3), cnt(0); 
+  vector<pair<uint8_t, vector<pixel> > > results;
+
+  while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
+    try{
+      results = fApi->getEfficiencyVsDAC(dac, 1, 200, FLAGS, ntrig); 
+      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      done = true;
+    } catch(pxarException &e) {
+      fNDaqErrors = 666667;
+      ++cnt;
+    }
+    done = (cnt>2) || done;
+  }
+
+  if (666667 == fNDaqErrors) {
+    LOG(logDEBUG) << "fNDaqErrors = " << fNDaqErrors; 
+    return;
+  }
+
+  int idx(0), roc(0), ic(0), ir(0); 
+  double val(0.);
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
+    int dac = results[idac].first; 
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+      ic =   results[idac].second[ipix].column(); 
+      ir =   results[idac].second[ipix].row(); 
+      roc = results[idac].second[ipix].roc(); 
+      if (ic > 51 || ir > 79) {
+	LOG(logDEBUG) << "bad pixel address encountered: ROC/col/row = " << roc << "/" << ic << "/" << ir;
+	continue;
+      }
+      val =  results[idac].second[ipix].value();
+      idx = PixUtil::rcr2idx(getIdxFromId(roc), ic, ir);
+      if (idx > -1) maps[idx]->fill(dac, val);
+    }
+  }
+
+  
+  // -- analyze results
+  bool ok(false);
+  TH1D *hT = new TH1D("hT", "hT", 256, 0., 256.); hT->Sumw2(); 
+  TH1D *h1 = new TH1D("h1", "h1", 256, 0., 256.); h1->Sumw2(); 
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    LOG(logDEBUG) << "analyzing ROC " << static_cast<int>(rocIds[iroc]);
+    for (unsigned int i = iroc*4160; i < (iroc+1)*4160; ++i) {
+      if (maps[i]->getSumOfWeights() < 1) continue;
+      
+      h1->Reset();
+      for (int ib = 1; ib <= 256; ++ib) {
+	h1->SetBinContent(ib, maps[i]->get(ib));
+	h1->SetBinError(ib, ntrig*PixUtil::dBinomial(static_cast<int>(maps[i]->get(ib)), ntrig)); 
+      }
+      
+      ok = threshold(h1); 
+      if (fThreshold > 0) {
+	hT->Fill(fThreshold);
+// 	TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));
+// 	h->SetTitle(Form("OK i = %d, thr = %4.3f, thrn = %4.3f", i, fThreshold, fThresholdN)); 
+// 	fHistList.push_back(h); 
+      } else {
+	hT->Fill(0.);
+// 	TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));
+// 	h->SetTitle(Form("i = %d, thr = %4.3f, thrn = %4.3f", i, fThreshold, fThresholdN)); 
+// 	fHistList.push_back(h); 
+      }
+
+//       if (fThreshold > 80.) {
+// 	TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));
+// 	h->SetTitle(Form("i = %d, thr = %4.3f, thrn = %4.3f", i, fThreshold, fThresholdN)); 
+// 	fHistList.push_back(h); 
+//       }
+    }
+  }
+
+  int lo(-1), hi(-1); 
+  for (int i = 1; i < 256; ++i) {
+    if (hT->Integral(i, i+5) > 5) {
+      lo = i; 
+      break;
+    }
+  }
+
+  for (int i = lo; i < 255; ++i) {
+    if (0 == hT->Integral(i, i+5)) {
+      hi = i; 
+      break;
+    }
+  }
+
+  if (lo > hi) {
+    lo = 1; 
+    hi = 255; 
+  }
+  
+  dacmin = lo; 
+  dacmax = hi;
+
+  fHistList.push_back(hT); 
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hT);
+  hT->Draw();
+  PixTest::update(); 
+  
 }
 
 

@@ -18,7 +18,8 @@ using namespace pxar;
 ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
-PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fAdjustVcal(1) {
+PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1) {
   PixTest::init();
   init(); 
 }
@@ -51,6 +52,9 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       }
       if (!parName.compare("dachi")) {
 	fParDacHi = atoi(sval.c_str()); 
+      }
+      if (!parName.compare("dacs/step")) {
+	fParDacsPerStep = atoi(sval.c_str()); 
       }
 
       if (!parName.compare("adjustvcal")) {
@@ -186,15 +190,21 @@ void PixTestScurves::scurves() {
   if (fDumpProblematic) results |= 0x10;
 
   int FLAG = FLAG_FORCE_MASKED;
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1, FLAG); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, results, 1, FLAG); 
+  if (thr0.size() < 1) {
+    LOG(logERROR) << "no scurve result histograms received?!"; 
+    return;
+
+  }
   TH1 *h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
+  if (h1) h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
 
   string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
   for (unsigned int i = 0; i < thr0.size(); ++i) {
     hname = thr0[i]->GetName();
+    if (!thr0[i]) continue;
     // -- skip sig_ and thn_ histograms
     if (string::npos == hname.find("dist_thr_")) continue;
     scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean()); 
