@@ -149,6 +149,11 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
+  findWorkingPixel();
+  h1 = (*fDisplayedHist); 
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update(); 
+
   setVthrCompCalDel();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
@@ -177,6 +182,10 @@ void PixTestPretest::runCommand(std::string command) {
   }
   if (!command.compare("setvana")) {
     setVana(); 
+    return;
+  }
+  if (!command.compare("findworkingpixel")) {
+    findWorkingPixel(); 
     return;
   }
   if (!command.compare("setvthrcompcaldel")) {
@@ -797,4 +806,154 @@ void PixTestPretest::programROC() {
   PixTest::update(); 
 
   restoreDacs();
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestPretest::findWorkingPixel() {
+
+  cacheDacs();
+  fDirectory->cd();
+  PixTest::update(); 
+  banner(Form("PixTestPretest::findWorkingPixel()")); 
+
+
+  vector<pair<int, int> > pixelList; 
+  pixelList.push_back(make_pair(20,48)); 
+  pixelList.push_back(make_pair(12,22)); 
+  pixelList.push_back(make_pair(5,5)); 
+  pixelList.push_back(make_pair(15,26)); 
+  pixelList.push_back(make_pair(20,32)); 
+  pixelList.push_back(make_pair(25,36)); 
+  pixelList.push_back(make_pair(30,42)); 
+  pixelList.push_back(make_pair(35,50)); 
+  pixelList.push_back(make_pair(40,60)); 
+  pixelList.push_back(make_pair(45,70)); 
+  pixelList.push_back(make_pair(50,75)); 
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  TH2D *h2(0);
+  map<string, TH2D*> maps;
+
+  bool gofishing(false);
+  vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults;
+  int ic(-1), ir(-1); 
+  for (unsigned int ifwp = 0; ifwp < pixelList.size(); ++ifwp) {
+    gofishing = false;
+    ic = pixelList[ifwp].first; 
+    ir = pixelList[ifwp].second; 
+    fApi->_dut->testPixel(ic, ir, true);
+    fApi->_dut->maskPixel(ic, ir, false);
+    
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+      h2 = bookTH2D(Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[iroc]), 
+		    Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[iroc]), 
+		    256, 0., 256., 256, 0., 256.);
+      h2->SetMinimum(0.); 
+      h2->SetDirectory(fDirectory); 
+      fHistOptions.insert(make_pair(h2, "colz"));
+      maps.insert(make_pair(Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[iroc]), h2)); 
+    }
+	
+    rresults.clear();
+    try{
+      rresults = fApi->getEfficiencyVsDACDAC("caldel", 0, 255, "vthrcomp", 0, 180, FLAGS, 5);
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      gofishing = true;
+    }
+
+    fApi->_dut->testPixel(ic, ir, false);
+    fApi->_dut->maskPixel(ic, ir, true);
+    if (gofishing) continue;
+    
+    string hname; 
+    for (unsigned i = 0; i < rresults.size(); ++i) {
+      pair<uint8_t, pair<uint8_t, vector<pixel> > > v = rresults[i];
+      int idac1 = v.first; 
+      pair<uint8_t, vector<pixel> > w = v.second;      
+      int idac2 = w.first;
+      vector<pixel> wpix = w.second;
+      for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
+	hname = Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[wpix[ipix].roc()]);
+	if (maps.count(hname) > 0) {
+	  maps[hname]->Fill(idac1, idac2, wpix[ipix].value()); 
+	} else {
+	  LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping"; 
+	}
+      }
+    }
+    
+    
+    bool okVthrComp(false), okCalDel(false); 
+    bool okAllRocs(true); 
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+      okVthrComp = okCalDel = false;
+      hname = Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[iroc]); 
+      h2 = maps[hname]; 
+
+      h2->Draw("colz"); 
+      PixTest::update();
+      
+      TH1D *hy = h2->ProjectionY("_py", 5, h2->GetNbinsX()); 
+      double vcthrMax = hy->GetMaximum();
+      double bottom   = hy->FindFirstBinAbove(0.5*vcthrMax); 
+      double top      = hy->FindLastBinAbove(0.5*vcthrMax); 
+      double vthrComp = top - 50; 
+      delete hy;
+      if (vthrComp > bottom) {
+	okVthrComp = true; 
+      }
+      
+      TH1D *hx = h2->ProjectionX("_px", vthrComp, vthrComp); 
+      double cdMax   = hx->GetMaximum();
+      double cdFirst = hx->GetBinLowEdge(hx->FindFirstBinAbove(0.5*cdMax)); 
+      double cdLast  = hx->GetBinLowEdge(hx->FindLastBinAbove(0.5*cdMax)); 
+      delete hx; 
+      if (cdLast - cdFirst > 30) {
+	okCalDel = true; 
+      }
+
+      if (!okVthrComp || !okCalDel) {
+	okAllRocs = false;
+	LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp << " Delta(CalDel) = " << cdLast - cdFirst << ", trying another"; 
+	break;
+      } else{
+	LOG(logDEBUG) << hname << " OK, with vthrComp = " << vthrComp << " and Delta(CalDel) = " << cdLast - cdFirst; 
+      }
+    }
+    if (okAllRocs) {
+      for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+	string name = Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[iroc]); 
+	TH2D *h = maps[name]; 
+	fHistList.push_back(h); 
+	h->Draw(getHistOption(h).c_str());
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+	PixTest::update(); 
+      }
+      break;
+    } else {
+      for (map<string, TH2D*>::iterator il = maps.begin(); il != maps.end(); ++il) {
+	delete (*il).second;
+      }
+      maps.clear();
+    }
+  }
+
+  LOG(logINFO) << "Found working pixel in all ROCs: col/row = " << ic << "/" << ir; 
+  clearSelectedPixels();
+  fPIX.push_back(make_pair(ic, ir));
+  addSelectedPixels(Form("%d,%d", ic, ir)); 
+
+  
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  
+  restoreDacs();
+
 }
