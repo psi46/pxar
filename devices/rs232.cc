@@ -260,9 +260,7 @@ int RS232Conn::writeBuf(const char *buf, int len){
 
 void RS232Conn::writeData(const string &data)
 {
-#ifdef DEBUG_RS232
-    LOG(logINFO) << "[RS232] Sending Data : \""<<data<<"\"";
-#endif
+  LOG(logDEBUG) << "[RS232] Sending Data : \""<<data<<"\"";
   unsigned int bytesWritten = 0;
   string dataTerm = data + terminator;
   bytesWritten += writeBuf(dataTerm.c_str(), dataTerm.size());
@@ -293,7 +291,7 @@ int RS232Conn::readStatus(const string &data){
   unsigned int suffixSize = readSuffix.size();
   unsigned int termSize = terminator.size();
   
-  if(suffixSize > 0){
+  if(suffixSize > 0){ //suffix is ignored if it is unset. i.e. if readSuffix==""
     if(dataSize > suffixSize && data.substr(dataSize-suffixSize,suffixSize) == readSuffix)
       return MATCH_SUFFIX; //Indicates a match on the readSuffix
   }
@@ -339,10 +337,7 @@ bool RS232Conn::readData(string &data){
   }else{ //TIMEOUT
     endLine = false; 
   }
-    
-#ifdef DEBUG_RS232
-  LOG(logINFO) << "[RS232] Received Data : \""<<data<<"\"";
-#endif
+  LOG(logDEBUG) << "[RS232] Received Data : \""<<data<<"\"";
   return endLine;
 }
 
@@ -364,82 +359,3 @@ void RS232Conn::writeReadBack(const string &dataOut, string &dataIn){
   readData(dataIn);
 }
 
-
-/*
-  Constant  Description
-  TIOCM_LE  DSR (data set ready/line enable)
-  TIOCM_DTR DTR (data terminal ready)
-  TIOCM_RTS RTS (request to send)
-  TIOCM_ST  Secondary TXD (transmit)
-  TIOCM_SR  Secondary RXD (receive)
-  TIOCM_CTS CTS (clear to send)
-  TIOCM_CAR DCD (data carrier detect)
-  TIOCM_CD  Synonym for TIOCM_CAR
-  TIOCM_RNG RNG (ring)
-  TIOCM_RI  Synonym for TIOCM_RNG
-  TIOCM_DSR DSR (data set ready)
-
-  http://linux.die.net/man/4/tty_ioctl
-*/
-
-bool RS232Conn::isDCDEnabled(){
-  int status;
-  ioctl(port, TIOCMGET, &status);
-  return status & TIOCM_CAR;
-}
-
-bool RS232Conn::isCTSEnabled(){
-  int status;
-  ioctl(port, TIOCMGET, &status);
-  return status & TIOCM_CTS;
-}
-
-bool RS232Conn::isDSREnabled(){
-  int status;
-  ioctl(port, TIOCMGET, &status);
-  return status & TIOCM_DSR;
-}
-
-void RS232Conn::enableDTR(){
-  int status;
-  if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
-  }
-  status |= TIOCM_DTR;    /* turn on DTR */
-  if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
-  }
-}
-
-void RS232Conn::disableDTR(){
-  int status;
-  if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
-  }
-  status &= ~TIOCM_DTR;    /* turn off DTR */
-  if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
-  }
-}
-
-void RS232Conn::enableRTS(){
-  int status;
-  if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
-  }
-  status |= TIOCM_RTS;    /* turn on RTS */
-  if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
-  }
-}
-
-void RS232Conn::disableRTS(){
-  int status;
-  if(ioctl(port, TIOCMGET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
-  }
-  status &= ~TIOCM_RTS;    /* turn off RTS */
-  if(ioctl(port, TIOCMSET, &status) == -1){
-    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
-  }
-}

@@ -467,6 +467,7 @@ Ntrig               50
 DAC                 VthrComp
 DacLo               0
 DacHi               200
+Dacs/Step           10
 scurves             button
 
 -- Trim
@@ -476,10 +477,10 @@ Vcal                40
 TrimBits            button
 
 -- GainPedestal
-showFits            checkbox
+showFits            checkbox(0)
+extended            checkbox(0)
+dumpHists           checkbox(0)
 Ntrig               10
-NpointsLo           10
-NpointsHi           5
 measure             button
 fit                 button
 save                button

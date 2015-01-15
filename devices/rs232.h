@@ -84,14 +84,5 @@ class RS232Conn{
     //returns true if this read reached the end of an input line(ie did not match on readSuffix)
     bool readData(std::string &data);
     void writeReadBack(const std::string &dataOut, std::string &dataIn);
-
-    bool isDCDEnabled();
-    bool isCTSEnabled();
-    bool isDSREnabled();
-
-    void enableDTR();
-    void disableDTR();
-    void enableRTS();
-    void disableRTS();
 };
 #endif
