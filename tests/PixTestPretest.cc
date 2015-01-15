@@ -819,7 +819,6 @@ void PixTestPretest::findWorkingPixel() {
 
 
   vector<pair<int, int> > pixelList; 
-  pixelList.push_back(make_pair(20,48)); 
   pixelList.push_back(make_pair(12,22)); 
   pixelList.push_back(make_pair(5,5)); 
   pixelList.push_back(make_pair(15,26)); 
