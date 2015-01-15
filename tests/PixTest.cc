@@ -1532,19 +1532,53 @@ void PixTest::saveTbParameters() {
 }
 
 // ----------------------------------------------------------------------
-vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
+vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel) {
   vector<vector<pair<int, int> > > deadPixels;
   vector<pair<int, int> > deadPixelsRoc;
   
-  vector<uint8_t> vVcal = getDacs("vcal"); 
-  vector<uint8_t> vCreg = getDacs("ctrlreg"); 
+  // -- local DAC caches
+  vector<uint8_t> vVcal     = getDacs("vcal"); 
+  vector<uint8_t> vVthrComp = getDacs("vthrcomp"); 
+  vector<uint8_t> vCreg     = getDacs("ctrlreg"); 
+  vector<uint8_t> vCalDel   = getDacs("caldel"); 
 
   fApi->setDAC("vcal", 200); 
   fApi->setDAC("ctrlreg", 4); 
+  fApi->setDAC("vthrcomp", 50); 
   
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  vector<TH2D*> testEff = efficiencyMaps("deadPixels", ntrig);
+  vector<TH2D*> testEff;
+
+  if (scanCalDel) {
+    // -- initialize testEff with zero-contents TH2D
+    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+    for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
+      TH2D *h2 = bookTH2D(Form("dp0_C%d", rocIds[iroc]), Form("dp0_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
+      testEff.push_back(h2);
+    }
+    
+    // -- scan CalDel
+    vector<TH2D*> tEff;
+    for (int icaldel = 10; icaldel < 250; icaldel += 30) {
+      fApi->setDAC("caldel", icaldel);
+      tEff = efficiencyMaps(Form("dp_caldel%d", icaldel), ntrig);
+      for (int i = 0; i < static_cast<int>(tEff.size()); ++i) {
+	if (tEff[i]->Integral() > testEff[i]->Integral()) {
+	  // cout << " tEff->Integral: " << tEff[i]->Integral() << " >  testEff[i]->Integral(): " << testEff[i]->Integral() << endl;
+	  delete testEff[i];
+	  testEff[i] = tEff[i]; 
+	} else {
+	  // cout << " tEff->Integral: " << tEff[i]->Integral() << " <  testEff[i]->Integral(): " << testEff[i]->Integral() << endl;
+	  delete tEff[i]; 
+	}
+      }
+      tEff.clear();
+    }
+  } else {
+    testEff = efficiencyMaps("deadPixels", ntrig);
+  }
+
   std::pair<int, int> badPix;
   Double_t eff(0.);
   
@@ -1554,7 +1588,7 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
       for(int c=0; c<52; c++){
 	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
 	if (eff<ntrig){
-	  LOG(logDEBUG) << "ROC idx = " << i << " pixel "<<c<<", "<<r<<" has eff "<<eff<<"/"<<ntrig << ";  blacklisting";
+	  LOG(logDEBUG) << Form("ROC %2d", i) << " col/row = " << c << "/" << r << " with eff " << eff << "/" << ntrig << ";  blacklisting";
 	  badPix.first = c;
 	  badPix.second = r;
 	  deadPixelsRoc.push_back(badPix);
@@ -1566,6 +1600,8 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig) {
 
   setDacs("vcal", vVcal); 
   setDacs("ctrlreg", vCreg); 
+  setDacs("caldel", vCalDel); 
+  setDacs("vthrcomp", vVthrComp); 
   
   return deadPixels;
 }
