@@ -410,10 +410,11 @@ sub printTestParameters {
 programroc          button
 targetIa            24
 setVana             button
+findWorkingPixel    button
+setVthrCompCalDel   button
 PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
-setVthrCompCalDel   button
 fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
