@@ -1207,7 +1207,7 @@ void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int 
     LOG(logDEBUG) << "      attempt #" << cnt;
     try{
       results = fApi->getEfficiencyVsDAC(dac, 1, 200, FLAGS, ntrig); 
-      fNDaqErrors = fApi->daqGetNDecoderErrors();
+      fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true;
     } catch(pxarException &e) {
       fNDaqErrors = 666667;
