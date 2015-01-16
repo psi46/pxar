@@ -83,7 +83,6 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
-  //  fPixSetup->setMoreWebCloning(true);
 
   vector<string> suite;
   suite.push_back("alive"); 
@@ -110,7 +109,6 @@ void PixTestFullTest::doTest() {
     delete t; 
   }
 
-  //  fPixSetup->setMoreWebCloning(false);
 }
 
 
