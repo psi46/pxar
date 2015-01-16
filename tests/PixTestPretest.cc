@@ -130,6 +130,8 @@ PixTestPretest::~PixTestPretest() {
 // ----------------------------------------------------------------------
 void PixTestPretest::doTest() {
 
+  TStopwatch t;
+
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestPretest::doTest()"));
@@ -161,7 +163,9 @@ void PixTestPretest::doTest() {
 
   // -- save DACs!
   saveDacs();
-  LOG(logINFO) << "PixTestPretest::doTest() done";
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestPretest::doTest() done, duration: " << seconds << " seconds";
 }
 
 // ----------------------------------------------------------------------
