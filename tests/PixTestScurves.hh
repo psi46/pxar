@@ -20,6 +20,7 @@ public:
   void adjustVcal();
 
   void doTest(); 
+  void fullTest(); 
 
 private:
 

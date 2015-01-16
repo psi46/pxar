@@ -19,7 +19,7 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1) {
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init(); 
 }
@@ -132,8 +132,35 @@ void PixTestScurves::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
+
+  bigBanner(Form("PixTestScurves::doTest() ntrig = %d", fParNtrig));
+  scurves();
+
+  /*
   fParNtrig = 20; 
   bigBanner(Form("PixTestScurves::doTest() ntrig = %d (warning: this overrides the GUI values!)", fParNtrig));
+
+  fParDac = "VthrComp"; 
+  fParDacLo = 0; 
+  fParDacHi = 139;
+  scurves();
+
+  fParDac = "Vcal"; 
+  fParDacLo = 0; 
+  fParDacHi = 169;
+  scurves();
+  */
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::fullTest() {
+
+  fDirectory->cd();
+  PixTest::update(); 
+  fParNtrig = 20; 
+  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
 
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
