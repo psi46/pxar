@@ -446,6 +446,8 @@ DAC2HI              255
 PIX                 11,20
 
 -- BumpBonding
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
 Ntrig               5
 vcals               250
 
