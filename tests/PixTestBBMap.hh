@@ -21,7 +21,7 @@ public:
 private:
   int          fParNtrig; 
   int          fParVcalS; 
-  
+  int          fDumpAll, fDumpProblematic;
   ClassDef(PixTestBBMap, 1); 
 
 };

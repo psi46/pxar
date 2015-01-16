@@ -5,6 +5,7 @@
 #include <algorithm>  // std::find
 
 #include <TSpectrum.h>
+#include "TStopwatch.h"
 
 #include "PixTestBBMap.hh"
 #include "PixUtil.hh"
@@ -17,7 +18,8 @@ using namespace pxar;
 ClassImp(PixTestBBMap)
 
 //------------------------------------------------------------------------------
-PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), fParNtrig(-1), fParVcalS(200) {
+PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), 
+  fParNtrig(-1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBBMap ctor(PixSetup &a, string, TGTab *)";
@@ -50,6 +52,21 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
 	setToolTips();
 	return true;
       }
+
+      if (!parName.compare("dumpall")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpAll = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
+      if (!parName.compare("dumpallproblematic")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpProblematic = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
     }
   }
   return false;
@@ -81,6 +98,8 @@ PixTestBBMap::~PixTestBBMap() {
 //------------------------------------------------------------------------------
 void PixTestBBMap::doTest() {
 
+  TStopwatch t;
+
   cacheDacs();
   PixTest::update();
   bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d (high range)", fParNtrig, fParVcalS));
@@ -95,9 +114,11 @@ void PixTestBBMap::doTest() {
   fApi->setDAC("vcal", fParVcalS);    
 
   int result(1);
+  if (fDumpAll) result |= 0x20;
+  if (fDumpProblematic) result |= 0x10;
 
   fNDaqErrors = 0; 
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 170, -1, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 50, result, 1, flag);
 
   // -- relabel negative thresholds as 255 and create distribution list
   vector<TH1D*> dlist; 
@@ -137,8 +158,10 @@ void PixTestBBMap::doTest() {
   }
   PixTest::update(); 
   
+  int seconds = t.RealTime();
   LOG(logINFO) << "PixTestBBMap::doTest() done"
-	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"");
+	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"") 
+	       << ", duration: " << seconds << " seconds";
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
 
