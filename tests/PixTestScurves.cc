@@ -132,16 +132,17 @@ void PixTestScurves::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
-  bigBanner(Form("PixTestScurves::doTest() ntrig = %d", fParNtrig));
+  fParNtrig = 20; 
+  bigBanner(Form("PixTestScurves::doTest() ntrig = %d (warning: this overrides the GUI values!)", fParNtrig));
 
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
-  fParDacHi = 179;
+  fParDacHi = 139;
   scurves();
 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
-  fParDacHi = 179;
+  fParDacHi = 169;
   scurves();
 
 
