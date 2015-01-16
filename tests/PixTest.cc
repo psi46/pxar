@@ -603,6 +603,11 @@ void PixTest::doTest() {
   //  LOG(logINFO) << "PixTest::doTest()";
 }
 
+// ----------------------------------------------------------------------
+void PixTest::fullTest() {
+  doTest();
+}
+
 
 // ----------------------------------------------------------------------
 void PixTest::doAnalysis() {

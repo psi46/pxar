@@ -104,7 +104,7 @@ void PixTestFullTest::doTest() {
       fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal); 
     }
 
-    t->doTest(); 
+    t->fullTest(); 
 
     delete t; 
   }
