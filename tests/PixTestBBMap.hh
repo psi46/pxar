@@ -16,7 +16,6 @@ public:
   void setToolTips();
 
   void doTest(); 
-  void output4moreweb();
   int  fitPeaks(TH1D *h, TSpectrum &s, int npeaks);
 
 private:

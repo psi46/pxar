@@ -27,14 +27,11 @@ public:
   bool               useRootLogon() {return fUseRootLogon;} 
   void               setUseRootLogon(bool x) {fUseRootLogon = x;} 
   void               killApi(); 
-  void               setMoreWebCloning(bool x) {fMoreWebCloning = x;}
-  bool               doMoreWebCloning() {return fMoreWebCloning;}
   void               setRootFileUpdate(bool x) {fDoUpdateRootFile = x;}
   bool               doRootFileUpdate() {return fDoUpdateRootFile;}
 
   void              *fPxarMemory, *fPxarMemHi;
 private: 
-  bool              fMoreWebCloning;
   bool              fDoUpdateRootFile; 
   bool              fDoAnalysisOnly; 
   bool              fUseRootLogon;

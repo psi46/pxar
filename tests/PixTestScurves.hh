@@ -20,7 +20,6 @@ public:
   void adjustVcal();
 
   void doTest(); 
-  void output4moreweb();
 
 private:
 

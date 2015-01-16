@@ -100,7 +100,6 @@ void PixTestTrim::bookHist(string name) {
 //----------------------------------------------------------
 PixTestTrim::~PixTestTrim() {
   LOG(logDEBUG) << "PixTestTrim dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -636,81 +635,5 @@ void PixTestTrim::setTrimBits(int itrim) {
       fApi->_dut->updateTrimBits(pix[ipix].column(), pix[ipix].row(), fTrimBits[ir][pix[ipix].column()][pix[ipix].row()], rocIds[ir]);
     }
   }
-}
-
-
-// ----------------------------------------------------------------------
-void PixTestTrim::output4moreweb() {
-  print("PixTestTrim::output4moreweb()"); 
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-  
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-
-    if (string::npos != name.find("TrimBit7")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimBit11")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimBit13")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimBit14")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimMap")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    //dist_thr_TrimThrFinal_vcal_C0_V0;1
-    //VcalThresholdMap_C0Distribution
-    if (string::npos != name.find("dist_thr_TrimThrFinal_vcal")) {
-      PixUtil::replaceAll(name, "dist_thr_", ""); 
-      PixUtil::replaceAll(name, "TrimThrFinal_vcal", "VcalThresholdTrimmedMap"); 
-      PixUtil::replaceAll(name, "_V0", "Distribution"); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("thr_TrimThrFinal_vcal")) {
-      PixUtil::replaceAll(name, "thr_TrimThrFinal_vcal", "VcalThresholdTrimmedMap"); 
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-  }
-  pDir->cd(); 
 }
 

@@ -80,8 +80,6 @@ public:
   virtual void doTest(); 
   /// allow execution of any button in the test 
   virtual void runCommand(std::string command); 
-  /// create output suitable for moreweb
-  virtual void output4moreweb();
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file

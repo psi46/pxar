@@ -16,7 +16,6 @@ PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
   fConfigParameters  = cp; 
   fPixMonitor        = new PixMonitor(a);
   fDoAnalysisOnly    = false; 
-  fMoreWebCloning    = false; 
   fDoUpdateRootFile  = false;
   init(); 
 }
@@ -27,7 +26,6 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
-  fMoreWebCloning    = false; 
   init(); 
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs(); 
@@ -58,7 +56,6 @@ PixSetup::PixSetup() {
   fConfigParameters  = 0; 
   fPixMonitor        = 0;
   fDoAnalysisOnly    = false; 
-  fMoreWebCloning    = false; 
   init(); 
   LOG(logDEBUG) << "PixSetup ctor()";
 }

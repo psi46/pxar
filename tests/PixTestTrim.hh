@@ -22,7 +22,6 @@ public:
   void setTrimBits(int itrim = -1); 
 
   void doTest(); 
-  void output4moreweb();
 
 private:
 

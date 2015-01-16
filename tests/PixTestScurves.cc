@@ -124,7 +124,6 @@ void PixTestScurves::bookHist(string name) {
 //----------------------------------------------------------
 PixTestScurves::~PixTestScurves() {
   LOG(logDEBUG) << "PixTestScurves dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -376,37 +375,3 @@ void PixTestScurves::adjustVcal() {
   fApi->_dut->maskAllPixels(false);
   
 }
-
-
-
-// ----------------------------------------------------------------------
-void PixTestScurves::output4moreweb() {
-  print("PixTestScurves::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    if (string::npos == name.find("_V0"))  continue;
-    if (string::npos != name.find("dist_"))  continue;
-    if (string::npos == name.find("thr_scurve"))  continue;
-    if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
-      PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
-    }
-    if (string::npos != name.find("thr_scurveVcal_Vcal")) {
-      PixUtil::replaceAll(name, "thr_scurveVcal_Vcal", "VcalThresholdMap"); 
-    }
-    PixUtil::replaceAll(name, "_V0", ""); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
-
-
-}
-
-

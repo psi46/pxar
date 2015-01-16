@@ -1124,10 +1124,6 @@ int PixTest::getIdxFromId(int id) {
 }
 
 
-// ----------------------------------------------------------------------
-void PixTest::output4moreweb() {
-
-}
 
 // ----------------------------------------------------------------------
 vector<TH1*> PixTest::mapsWithString(vector<TH1*>maps, string name) {

@@ -83,7 +83,6 @@ void PixTestBareBBMap::setToolTips() {
 //------------------------------------------------------------------------------
 PixTestBareBBMap::~PixTestBareBBMap() {
   LOG(logDEBUG) << "PixTestBareBBMap dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 //------------------------------------------------------------------------------
@@ -256,21 +255,3 @@ void PixTestBareBBMap::doTest() {
 }
 
 
-// ----------------------------------------------------------------------
-void PixTestBareBBMap::output4moreweb() {
-  print("PixTestBareBBMap::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
-
-}

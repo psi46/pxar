@@ -76,7 +76,6 @@ void PixTestBBMap::setToolTips() {
 //------------------------------------------------------------------------------
 PixTestBBMap::~PixTestBBMap() {
   LOG(logDEBUG) << "PixTestBBMap dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 //------------------------------------------------------------------------------
@@ -142,33 +141,6 @@ void PixTestBBMap::doTest() {
 	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
-
-}
-
-
-// ----------------------------------------------------------------------
-void PixTestBBMap::output4moreweb() {
-  print("PixTestBBMap::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    if (string::npos == name.find("_V0"))  continue;
-    if (string::npos != name.find("dist_"))  continue;
-    if (string::npos == name.find("thr_calSMap_VthrComp")) continue;
-    if (string::npos != name.find("calSMap")) {
-      PixUtil::replaceAll(name, "thr_calSMap_VthrComp", "BumpBondMap"); 
-    }
-    PixUtil::replaceAll(name, "_V0", ""); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
 
 }
 

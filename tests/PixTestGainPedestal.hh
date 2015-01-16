@@ -22,7 +22,6 @@ public:
   void saveGainPedestalParameters(); 
 
   void doTest(); 
-  void output4moreweb();
 
 private:
 

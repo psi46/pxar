@@ -14,7 +14,6 @@ public:
   void setToolTips();
 
   void doTest(); 
-  void output4moreweb();
 
 private:
   int          fParNtrig; 

@@ -396,11 +396,6 @@ void PixTestGainPedestal::saveGainPedestalParameters() {
   fPixSetup->getConfigParameters()->writeGainPedestalParameters();
 }
 
-// ----------------------------------------------------------------------
-void PixTestGainPedestal::output4moreweb() {
-  // -- nothing required here
-}
-
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::printHistograms() {
