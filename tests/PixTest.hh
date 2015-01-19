@@ -78,10 +78,10 @@ public:
   virtual void doAnalysis();
   /// function connected to "DoTest" button of PixTab
   virtual void doTest(); 
+  /// function called when FullTest is running; most often this is simply calling doTest()
+  virtual void fullTest(); 
   /// allow execution of any button in the test 
   virtual void runCommand(std::string command); 
-  /// create output suitable for moreweb
-  virtual void output4moreweb();
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file
@@ -89,7 +89,7 @@ public:
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
-  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
+  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig, bool scanCalDel = false);
   /// mask all pixels mentioned in the mask file
   void maskPixels();     
   /// query whether test 'failed'
@@ -128,8 +128,9 @@ public:
   /// result & 0x1: thr        maps
   /// result & 0x2: sig        maps
   /// result & 0x4: noise edge maps
-  /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 3
+  /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 4
   /// result &0x10: dump 'problematic' threshold histogram fits
+  /// result &0x20: dump all threshold histogram fits
   std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int dacsperstep = -1, 
 			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags

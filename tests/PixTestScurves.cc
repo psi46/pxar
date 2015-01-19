@@ -19,7 +19,7 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1) {
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init(); 
 }
@@ -124,7 +124,6 @@ void PixTestScurves::bookHist(string name) {
 //----------------------------------------------------------
 PixTestScurves::~PixTestScurves() {
   LOG(logDEBUG) << "PixTestScurves dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -133,16 +132,44 @@ void PixTestScurves::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
+
   bigBanner(Form("PixTestScurves::doTest() ntrig = %d", fParNtrig));
+  scurves();
+
+  /*
+  fParNtrig = 20; 
+  bigBanner(Form("PixTestScurves::doTest() ntrig = %d (warning: this overrides the GUI values!)", fParNtrig));
 
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
-  fParDacHi = 250;
+  fParDacHi = 139;
   scurves();
 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
-  fParDacHi = 250;
+  fParDacHi = 169;
+  scurves();
+  */
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::fullTest() {
+
+  fDirectory->cd();
+  PixTest::update(); 
+  fParNtrig = 20; 
+  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
+
+  fParDac = "VthrComp"; 
+  fParDacLo = 0; 
+  fParDacHi = 139;
+  scurves();
+
+  fParDac = "Vcal"; 
+  fParDacLo = 0; 
+  fParDacHi = 169;
   scurves();
 
 
@@ -376,37 +403,3 @@ void PixTestScurves::adjustVcal() {
   fApi->_dut->maskAllPixels(false);
   
 }
-
-
-
-// ----------------------------------------------------------------------
-void PixTestScurves::output4moreweb() {
-  print("PixTestScurves::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    if (string::npos == name.find("_V0"))  continue;
-    if (string::npos != name.find("dist_"))  continue;
-    if (string::npos == name.find("thr_scurve"))  continue;
-    if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
-      PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
-    }
-    if (string::npos != name.find("thr_scurveVcal_Vcal")) {
-      PixUtil::replaceAll(name, "thr_scurveVcal_Vcal", "VcalThresholdMap"); 
-    }
-    PixUtil::replaceAll(name, "_V0", ""); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
-
-
-}
-
-

@@ -17,6 +17,7 @@ public:
   void doTest();
   void setVana();
   void programROC();
+  void findWorkingPixel();  
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
