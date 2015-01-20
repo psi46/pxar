@@ -552,6 +552,63 @@ namespace pxar {
     void operator=(PatternGeneratorDictionary const&); // Don't implement
   };
 
+  /** Map for trigger signal name lookup
+   *  All signal names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class TriggerDictionary {
+  public:
+    static TriggerDictionary * getInstance() {
+      static TriggerDictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint16_t getSignal(std::string name) {
+      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      else { return PG_ERR; }
+    }
+
+    // Return the signal name for the probe signal in question:
+    inline std::string getName(uint16_t signal) {
+      for(std::map<std::string, uint16_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if((*iter).second == signal) { return (*iter).first; }
+      }
+      return "";
+    }
+
+  private:
+    TriggerDictionary() {
+      // Asynchronous external triggers:
+      _signals["async"]            = TRG_SEL_ASYNC;
+      _signals["extern"]           = TRG_SEL_ASYNC;
+
+      // Synchronous external triggers:
+      _signals["sync"]             = TRG_SEL_SYNC;
+
+      // Single event injection:
+      _signals["single"]           = TRG_SEL_SINGLE;
+
+      // Internal Trigger Generator
+      _signals["gen"]              = TRG_SEL_GEN;
+      _signals["generator"]        = TRG_SEL_GEN;
+
+      // Pattern Generator
+      _signals["pg"]               = TRG_SEL_PG;
+      _signals["patterngenerator"] = TRG_SEL_PG;
+
+      _signals["single_dir"]       = TRG_SEL_SINGLE_DIR;
+      _signals["pg_dir"]           = TRG_SEL_PG_DIR;
+      _signals["chain"]            = TRG_SEL_CHAIN;
+      _signals["sync_out"]         = TRG_SEL_SYNC_OUT;
+    }
+
+    std::map<std::string, uint16_t> _signals;
+    TriggerDictionary(TriggerDictionary const&); // Don't Implement
+    void operator=(TriggerDictionary const&); // Don't implement
+  };
+
 } //namespace pxar
 
 #endif /* PXAR_DICTIONARIES_H */
