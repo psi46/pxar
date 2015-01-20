@@ -509,6 +509,9 @@ cdef class PyPxarCore:
     def daqStatus(self):
         return self.thisptr.daqStatus()
 
+    def daqTriggerSource(self, string source):
+        return self.thisptr.daqTriggerSource(source)
+
     def daqTrigger(self, uint32_t nTrig, uint16_t period = 0):
         self.thisptr.daqTrigger(nTrig,period)
 
