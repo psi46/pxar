@@ -26,6 +26,7 @@ typedef unsigned char uint8_t;
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
 #define PG_ERR  0xFF00
+#define TRG_ERR 0x00
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
@@ -567,7 +568,7 @@ namespace pxar {
     // Return the register id for the name in question:
     inline uint16_t getSignal(std::string name) {
       if(_signals.find(name) != _signals.end()) { return _signals[name]; }
-      else { return PG_ERR; }
+      else { return TRG_ERR; }
     }
 
     // Return the signal name for the probe signal in question:
