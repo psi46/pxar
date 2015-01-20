@@ -318,6 +318,14 @@ public:
 	RPC_EXPORT void Pg_Triggers(uint32_t triggers, uint16_t period);
 	RPC_EXPORT void Pg_Loop(uint16_t period);
 
+	// --- trigger ----------------------------------------------------------
+	RPC_EXPORT void Trigger_Select(uint16_t mask);
+	RPC_EXPORT void Trigger_Delay(uint8_t delay);
+	RPC_EXPORT void Trigger_Timeout(uint16_t timeout);
+	RPC_EXPORT void Trigger_SetGenPeriodic(uint32_t periode);
+	RPC_EXPORT void Trigger_SetGenRandom(uint32_t rate);
+	RPC_EXPORT void Trigger_Send( uint8_t send);
+
 	// --- data aquisition --------------------------------------------------
 	RPC_EXPORT uint32_t Daq_Open(uint32_t buffersize, uint8_t channel); // max # of samples
 	RPC_EXPORT void Daq_Close(uint8_t channel);

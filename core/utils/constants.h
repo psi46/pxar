@@ -118,6 +118,23 @@ namespace pxar {
 #define MHZ_20     1
 #define MHZ_40     0
 
+// --- Trigger settings -------------------------------------------------------
+#define TRG_SEL_ASYNC      0x100
+#define TRG_SEL_SYNC       0x080
+#define TRG_SEL_SINGLE     0x040
+#define TRG_SEL_GEN        0x020
+#define TRG_SEL_PG         0x010
+#define TRG_SEL_SINGLE_DIR 0x008
+#define TRG_SEL_PG_DIR     0x004
+#define TRG_SEL_CHAIN      0x002
+#define TRG_SEL_SYNC_OUT   0x001
+
+#define TRG_SEND_SYN   1
+#define TRG_SEND_TRG   2
+#define TRG_SEND_RSR   4
+#define TRG_SEND_RST   8
+#define TRG_SEND_CAL  16
+
 
 // --- Testboard digital signal probe -----------------------------------------
 #define PROBE_OFF 0
