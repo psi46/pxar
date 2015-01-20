@@ -1185,6 +1185,38 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   return true;
 }
 
+bool pxarCore::daqTriggerSource(std::string triggerSource) {
+
+  if(daqStatus()) {
+    LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
+    return false;
+  }
+
+  // Get singleton Trigger dictionary object:
+  TriggerDictionary * _dict = TriggerDictionary::getInstance();
+
+  // Convert the trigger source name to lower case for comparison:
+  std::transform(triggerSource.begin(), triggerSource.end(), triggerSource.begin(), ::tolower);
+
+  std::istringstream identifiers(triggerSource);
+  std::string s;
+  uint16_t signal = 0;
+  // Tokenize the signal string into single PG signals, separated by ";":
+  while (std::getline(identifiers, s, ';')) {
+    // Get the signal from the dictionary object:
+    uint16_t sig = _dict->getSignal(s);
+    if(sig != TRG_ERR) {
+      signal |= sig;
+      LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig;
+    }
+    else {
+      LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
+      throw InvalidConfig("Wrong trigger source identifier provided.");
+    }
+  }
+  return true;
+}
+
 bool pxarCore::daqStatus()
 {
 
