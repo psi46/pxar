@@ -282,6 +282,10 @@ namespace pxar {
      */
     void daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
+    /** Select the trigger source as given in "source":
+     */
+    void daqTriggerSource(uint16_t source);
+
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
     void daqTrigger(uint32_t nTrig, uint16_t period);

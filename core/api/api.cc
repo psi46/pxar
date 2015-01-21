@@ -1207,13 +1207,16 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
     uint16_t sig = _dict->getSignal(s);
     if(sig != TRG_ERR) {
       signal |= sig;
-      LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig;
+      LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
     }
     else {
       LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
       throw InvalidConfig("Wrong trigger source identifier provided.");
     }
   }
+
+  LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
+  _hal->daqTriggerSource(signal);
   return true;
 }
 

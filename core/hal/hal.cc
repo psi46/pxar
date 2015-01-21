@@ -1827,6 +1827,12 @@ std::vector<uint16_t> hal::daqBuffer() {
   return raw;
 }
 
+void hal::daqTriggerSource(uint16_t source) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger source " << std::hex << source << std::dec;
+  _testboard->Trigger_Select(source);
+}
+
 void hal::daqTrigger(uint32_t nTrig, uint16_t period) {
 
   LOG(logDEBUGHAL) << "Triggering " << nTrig << "x";
