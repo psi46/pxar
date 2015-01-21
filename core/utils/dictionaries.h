@@ -116,13 +116,15 @@ namespace pxar {
   private:
     RegisterDictionary() {
       //------- DTB registers -----------------------------
-      _registers["clk"]           = dacConfig(SIG_CLK,255,DTB_REG);
-      _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
-      _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
-      _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
-      _registers["level"]         = dacConfig(SIG_LEVEL,15,DTB_REG);
-      _registers["triggerdelay"]  = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
-      _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+      _registers["clk"]            = dacConfig(SIG_CLK,255,DTB_REG);
+      _registers["ctr"]            = dacConfig(SIG_CTR,255,DTB_REG);
+      _registers["sda"]            = dacConfig(SIG_SDA,255,DTB_REG);
+      _registers["tin"]            = dacConfig(SIG_TIN,255,DTB_REG);
+      _registers["level"]          = dacConfig(SIG_LEVEL,15,DTB_REG);
+      _registers["triggerdelay"]   = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
+      _registers["deser160phase"]  = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+      _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
+      _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
 
       _registers["tout"]          = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
       _registers["rda"]           = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
@@ -590,6 +592,8 @@ namespace pxar {
 
       // Single event injection:
       _signals["single"]           = TRG_SEL_SINGLE;
+      _signals["single_dir"]       = TRG_SEL_SINGLE_DIR;
+      _signals["single_direct"]    = TRG_SEL_SINGLE_DIR;
 
       // Internal Trigger Generator
       _signals["gen"]              = TRG_SEL_GEN;
@@ -598,9 +602,9 @@ namespace pxar {
       // Pattern Generator
       _signals["pg"]               = TRG_SEL_PG;
       _signals["patterngenerator"] = TRG_SEL_PG;
-
-      _signals["single_dir"]       = TRG_SEL_SINGLE_DIR;
       _signals["pg_dir"]           = TRG_SEL_PG_DIR;
+      _signals["pg_direct"]        = TRG_SEL_PG_DIR;
+
       _signals["chain"]            = TRG_SEL_CHAIN;
       _signals["sync_out"]         = TRG_SEL_SYNC_OUT;
     }

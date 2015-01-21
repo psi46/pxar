@@ -153,6 +153,14 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
+    else if(sigIt->first == SIG_TRIGGER_LATENCY) {
+      LOG(logDEBUGHAL) << "Set latency for external triggers to " << static_cast<int>(sigIt->second) <<" clk";
+      _testboard->Trigger_Delay(sigIt->second);
+    }
+    else if(sigIt->first == SIG_TRIGGER_TIMEOUT) {
+      LOG(logDEBUGHAL) << "Set token out timeout for external triggers to " << static_cast<int>(sigIt->second) <<" clk";
+      _testboard->Trigger_Timeout(sigIt->second);
+    }
     else if(sigIt->first == SIG_RDA_TOUT) {
       LOG(logDEBUGHAL) << "set TOUT / RDA delay to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetRdaToutDelay(sigIt->second);
