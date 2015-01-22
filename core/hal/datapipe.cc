@@ -111,38 +111,38 @@ namespace pxar {
   rawEvent* dtbEventSplitter::SplitSoftTBM() {*/
    record.Clear();
 
-    // If last one had Event end marker, get a new sample:
-    if (!nextStartDetected) { Get(); }
+   // If last one had Event end marker, get a new sample:
+   if (!nextStartDetected) { Get(); }
 
-    // If new sample does not have start marker keep on reading until we find it:
-    if ((GetLast() & 0xe000) != 0xa000) {
-      record.SetStartError();
-      Get();
-    }
-    record.Add(GetLast());
+   // If new sample does not have start marker keep on reading until we find it:
+   while ((GetLast() & 0xe000) != 0xa000) {
+     record.SetStartError();
+     Get();
+   }
+   Get();
+   //record.Add(GetLast());
 
-    // Else keep reading and adding samples until we find any marker.
-    while ((Get() & 0xe000) != 0xc000) {
-      // Check if it's the weird split softTBM header:
-      //if ((GetLast() & 0xe000) == 0xe000) { Get(); }
+   // Else keep reading and adding samples until we find any marker.
+   while ((Get() & 0xef00) != 0xc000) {
+     // Check if it's the weird split softTBM header:
+     if ((GetLast() & 0xe000) == 0xe000) { Get(); }
  
      // Check if the last read sample has Event end marker:
-      if ((GetLast() & 0xe000) == 0xa000) {
-	record.SetEndError();
-	nextStartDetected = true;
-	return &record;
-      }
+     if ((GetLast() & 0xe000) == 0xa000) {
+       record.SetEndError();
+       nextStartDetected = true;
+       return &record;
+     }
 
-      // If total Event size is too big, break:
-      if (record.GetSize() < 40000) record.Add(GetLast());
-      else record.SetOverflow();
-    }
-    record.Add(GetLast());
+     // If total Event size is too big, break:
+     if (record.GetSize() < 40000) record.Add(GetLast());
+     else record.SetOverflow();
+   }
 
-    LOG(logDEBUGPIPES) << "-------------------------";
-    LOG(logDEBUGPIPES) << listVector(record.data,true);
+   LOG(logDEBUGPIPES) << "-------------------------";
+   LOG(logDEBUGPIPES) << listVector(record.data,true);
 
-    return &record;
+   return &record;
   }
 
   Event* dtbEventDecoder::DecodeDeser400() {
