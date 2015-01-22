@@ -35,11 +35,11 @@ if ($opt_h) {
 my $dir = "roc";
 if ($opt_d) {
     $dir = $opt_d;
-    if (!-d "$dir") {
-	mkdir($dir);
-    } else {
-	&cleanFiles;
-    }
+}
+if (!-d "$dir") {
+    mkdir($dir);
+} else {
+    &cleanFiles;
 }
 
 # -- number of rocs and tbms
@@ -61,6 +61,9 @@ if ($opt_r) {
     }
 }
 &setDacs;
+
+my $rbCals = "";
+&setRbCals;
 
 # -- TBM type from either command line or by default
 my $tbms = "";
@@ -99,6 +102,7 @@ if ($opt_f) {
 &printTbParameters;
 &printMaskFile;
 &printTestPatterns;
+&printRbCal;
 if ($opt_m) {
     &setTbms;
     &printTbmParameters;
@@ -241,6 +245,20 @@ sub setDacs {
 
 }
 
+# ----------------------------------------------------------------------
+sub setRbCals {
+    $rbCals = "";
+	$rbCals .= "par0vd   1.\n";
+	$rbCals .= "par1vd   1.\n";
+	$rbCals .= "par0va   1.\n";
+	$rbCals .= "par1va   1.\n";
+	$rbCals .= "par0rbia 1.\n";
+	$rbCals .= "par1rbia 1.\n";
+	$rbCals .= "par0tbia 1.\n";
+	$rbCals .= "par1tbia 1.\n";
+	$rbCals .= "par2tbia 1.\n";
+}
+
 
 
 # ----------------------------------------------------------------------
@@ -252,6 +270,10 @@ sub cleanFiles {
 	    unlink($file);
 	}
 	$file = "$dir/dacParameters_C$i.dat";
+	if (-e "$file") {
+	    unlink($file);
+	}
+	$file = "$dir/readbackCal_C$i.dat";
 	if (-e "$file") {
 	    unlink($file);
 	}
@@ -388,10 +410,11 @@ sub printTestParameters {
 programroc          button
 targetIa            24
 setVana             button
+findWorkingPixel    button
+setVthrCompCalDel   button
 PIX                 11,20
 Vcal                250
 DeltaVthrComp       50
-setVthrCompCalDel   button
 fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
@@ -423,6 +446,8 @@ DAC2HI              255
 PIX                 11,20
 
 -- BumpBonding
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
 Ntrig               5
 vcals               250
 
@@ -441,10 +466,11 @@ setVana             button
 adjustvcal          checkbox(1)
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
-Ntrig               5
+Ntrig               50
 DAC                 VthrComp
 DacLo               0
 DacHi               200
+Dacs/Step           10
 scurves             button
 
 -- Trim
@@ -454,10 +480,10 @@ Vcal                40
 TrimBits            button
 
 -- GainPedestal
-showFits            checkbox
+showFits            checkbox(0)
+extended            checkbox(0)
+dumpHists           checkbox(0)
 Ntrig               10
-NpointsLo           10
-NpointsHi           5
 measure             button
 fit                 button
 save                button
@@ -482,6 +508,8 @@ DelayTBM            checkbox
 FillTree            checkbox
 
 -- HighRate
+PIX                 11,20
+CalDelScan          button
 maskHotPixels       button
 xPixelAlive         button
 trgfrequency(khz)   20
@@ -515,7 +543,7 @@ EOF
     print FH <<"EOF";
 -- Timing
 fastscan            checkbox(0)
-targetclk           5
+targetclk           4
 ntrig               10
 clocksdascan        button
 phasescan           button
@@ -619,6 +647,18 @@ sub printDacParameters {
 	my $file = "$dir/dacParameters_C$iroc.dat";
 	open(FH, ">$file") || die "cannot open $file\n";
 	print FH $dacs;
+	close(FH);
+    }
+
+
+}
+
+# ----------------------------------------------------------------------
+sub printRbCal {
+    for ($iroc = 0; $iroc < $nrocs; $iroc++) {
+	my $file = "$dir/readbackCal_C$iroc.dat";
+	open(FH, ">$file") || die "cannot open $file\n";
+	print FH $rbCals;
 	close(FH);
     }
 

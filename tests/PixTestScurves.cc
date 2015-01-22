@@ -18,7 +18,8 @@ using namespace pxar;
 ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
-PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fAdjustVcal(1) {
+PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init(); 
 }
@@ -51,6 +52,9 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       }
       if (!parName.compare("dachi")) {
 	fParDacHi = atoi(sval.c_str()); 
+      }
+      if (!parName.compare("dacs/step")) {
+	fParDacsPerStep = atoi(sval.c_str()); 
       }
 
       if (!parName.compare("adjustvcal")) {
@@ -120,7 +124,6 @@ void PixTestScurves::bookHist(string name) {
 //----------------------------------------------------------
 PixTestScurves::~PixTestScurves() {
   LOG(logDEBUG) << "PixTestScurves dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -129,16 +132,44 @@ void PixTestScurves::doTest() {
 
   fDirectory->cd();
   PixTest::update(); 
+
   bigBanner(Form("PixTestScurves::doTest() ntrig = %d", fParNtrig));
+  scurves();
+
+  /*
+  fParNtrig = 20; 
+  bigBanner(Form("PixTestScurves::doTest() ntrig = %d (warning: this overrides the GUI values!)", fParNtrig));
 
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
-  fParDacHi = 250;
+  fParDacHi = 139;
   scurves();
 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
-  fParDacHi = 250;
+  fParDacHi = 169;
+  scurves();
+  */
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestScurves::fullTest() {
+
+  fDirectory->cd();
+  PixTest::update(); 
+  fParNtrig = 20; 
+  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
+
+  fParDac = "VthrComp"; 
+  fParDacLo = 0; 
+  fParDacHi = 139;
+  scurves();
+
+  fParDac = "Vcal"; 
+  fParDacLo = 0; 
+  fParDacHi = 169;
   scurves();
 
 
@@ -186,15 +217,21 @@ void PixTestScurves::scurves() {
   if (fDumpProblematic) results |= 0x10;
 
   int FLAG = FLAG_FORCE_MASKED;
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, results, 1, FLAG); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, results, 1, FLAG); 
+  if (thr0.size() < 1) {
+    LOG(logERROR) << "no scurve result histograms received?!"; 
+    return;
+
+  }
   TH1 *h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
+  if (h1) h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
   restoreDacs();
 
   string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
   for (unsigned int i = 0; i < thr0.size(); ++i) {
     hname = thr0[i]->GetName();
+    if (!thr0[i]) continue;
     // -- skip sig_ and thn_ histograms
     if (string::npos == hname.find("dist_thr_")) continue;
     scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean()); 
@@ -366,37 +403,3 @@ void PixTestScurves::adjustVcal() {
   fApi->_dut->maskAllPixels(false);
   
 }
-
-
-
-// ----------------------------------------------------------------------
-void PixTestScurves::output4moreweb() {
-  print("PixTestScurves::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    if (string::npos == name.find("_V0"))  continue;
-    if (string::npos != name.find("dist_"))  continue;
-    if (string::npos == name.find("thr_scurve"))  continue;
-    if (string::npos != name.find("thr_scurveVthrComp_VthrComp")) {
-      PixUtil::replaceAll(name, "thr_scurveVthrComp_VthrComp", "CalThresholdMap"); 
-    }
-    if (string::npos != name.find("thr_scurveVcal_Vcal")) {
-      PixUtil::replaceAll(name, "thr_scurveVcal_Vcal", "VcalThresholdMap"); 
-    }
-    PixUtil::replaceAll(name, "_V0", ""); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
-
-
-}
-
-

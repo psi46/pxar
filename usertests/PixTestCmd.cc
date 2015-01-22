@@ -410,41 +410,20 @@ vector<int> IntList::getVect(const int imin, const int imax){
         int i2 = ranges[j].second;
         
         if( i1 == IMIN ){ i1=imin;}
+        else if (i1 == IVAR ){ i1=Arg::varvalue;}
+        
         if( i2 == IMAX ){ i2=imax;}
+        else if(i2 == IVAR){ i2=Arg::varvalue;}
+        
         for(int i=i1; i<i2+1; i++){
             IntList.push_back(i);
         }
     }
     return IntList;
 }
-/*
-vector<int> IntList::get(const vector<int> valuelist){
-    vector<int> IntList;
-    for(unsigned int j=0; j<ranges.size(); j++){
-        int k1, k2;
-        if (ranges[j].first==IMIN) {
-            k1 = 0;
-        }else{
-            for(unsigned int k=0; k<valuelist.size(); k++){
-                if (ranges[j].first==valuelist[k]) k1==k;
-            }
-        }
- 
-        if (ranges[j].second==IMAX) {
-            k2 = valuelist.size();
-        }else{
-            for(k=0; k<valuelist.size(); k++){
-                if (ranges[j].second==valuelist[k]) k2==k;
-            }
-        }
 
-        for(int k=k1; k<k2; k++){
-            IntList.push_back(valuelist[k]);
-        }
-    }
-    return IntList;
-}
-*/
+
+
 
 bool is_whitespace(unsigned int  i, const string & s){
   if ( i<s.size() ){
@@ -828,6 +807,7 @@ bool Statement::exec(CmdProc * proc, Target & target){
                 useTarget.expand(0, 100);
                 for(unsigned int i=0; i< useTarget.size();  i++){
                     Target t = useTarget.get(i);
+                    Arg::varvalue = t.value();
                     if (!(proc->process(keyword, t, false) )) return false;
                 }
                 stat = true;
@@ -838,7 +818,7 @@ bool Statement::exec(CmdProc * proc, Target & target){
         }else if (!(block==NULL) ){
 
             // block
-            if(target.name=="roc"){
+            if(useTarget.name=="roc"){
                 useTarget.expand( 0, 15 );
                 for(unsigned int i=0; i< useTarget.size();  i++){
                     Target t = useTarget.get(i);
@@ -849,6 +829,7 @@ bool Statement::exec(CmdProc * proc, Target & target){
                 useTarget.expand(0, 100);
                 for(unsigned int i=0; i< useTarget.size();  i++){
                     Target t = useTarget.get(i);
+                    Arg::varvalue = t.value();
                     if (!(block->exec(proc, t) )) return false;
                 }
                 stat =  true;
@@ -968,7 +949,7 @@ int CmdProc::tbmset(int address, int  value){
     else {out << "bad tbm register address "<< hex << address << dec << "\n"; return 1;};
    
     uint8_t idx = (address & 0x0F) >> 1;  
-    const char* apinames[] = {"base0", "base2", "base4","base8","basea","basec","basee"};
+    const char* apinames[] = {"base0", "base2", "base4","invalid","base8","basea","basec","basee"};
     fApi->setTbmReg( apinames[ idx], value, core );
 
     return 0; // nonzero values for errors
@@ -1193,6 +1174,56 @@ int CmdProc::tbmscan(){
     return 0;
 }
 
+
+
+
+int CmdProc::rawscan(int level){
+    uint8_t phasereg;
+    int stat = tbmget("basee", 0, phasereg);
+    if(stat>0){
+        out << "error getting tbm delays from api \n";
+    }
+    
+    uint8_t ntpreg;
+    stat = tbmget("base0", 0, ntpreg);
+    if(stat>0){
+        out << "error getting base0 register from api \n";
+    }
+   
+    out << "400\\160 0  1  2  3  4  5  6  7\n";
+    for(uint8_t p400=0; p400<8; p400++){
+        out << "  " << (int) p400 << " :  ";
+        for(uint8_t p160=0; p160<8; p160++){
+            stat = tbmset("basee", 0, ((p160&7)<<5)+((p400&7)<<2));
+            if(stat>0){
+                out << "error setting delay  base E " << hex << ((p160<<5)+(p400<<2)) << dec << "\n";
+            }
+            tbmset("base4", 2, 0x80);// reset once after changing phases
+            
+            int stat = runDaq(fBuf, 100, 10, 0, true);
+            
+            int n=0;
+            if (stat==0){
+                if (level==0){
+                    n = fBuf.size();
+                }else{
+                    for(unsigned int i=0; i<fBuf.size(); i++){
+                        if ((fBuf[i]&0xE000)==0xA000){
+                            n+=1;
+                        }
+                    }
+                }
+            }
+            
+            out << (dec) << setw(5) << n ;
+        }
+        
+
+        out << "\n";
+    }
+    tbmset("basee",0,phasereg);
+    return 0;
+}
 
 
 int CmdProc::rocscan(){
@@ -1784,7 +1815,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
     int XOR1=0;
     int XOR2=0;
     fHeaderCount=0;
-    int lastHeaderErrorCount=0;
+    unsigned int lastHeaderErrorCount=0;
     fHeadersWithErrors.clear();  // a list of headers) with errors
     
     unsigned int i=0;
@@ -2353,7 +2384,6 @@ int CmdProc::tb(Keyword kw){
         return 0;
     }
     if( kw.match("raw") ){
-        //int stat = getBuffer( fBuf, 1, 0 );
         int stat = runDaq( fBuf, 1,0, 0 );
         if(stat==0){
             printData( fBuf, 0 );
@@ -2364,7 +2394,6 @@ int CmdProc::tb(Keyword kw){
         return 0;
     }
     if( kw.match("adc")){
-        //int stat = getBuffer( fBuf, 1, 1 );
         int stat = runDaq( fBuf, 1, 0, 1 );
         if(stat==0){
             printData( fBuf, 1 );
@@ -2391,6 +2420,7 @@ int CmdProc::tb(Keyword kw){
     
     if( kw.match("daq", ntrig, ftrigkhz) ){
         
+        if(fPrerun>0) runDaq(ntrig, ftrigkhz);
         runDaq(fBuf, ntrig, ftrigkhz);
         
         vector<DRecord > data;
@@ -2575,6 +2605,8 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("scan","tbm")){ return  tbmscan();}
     if (kw.match("scan","rocs")){ return  rocscan();}
     if (kw.match("scan","level")){ return levelscan();}
+    if (kw.match("scan","raw", value)){return rawscan(value);}
+    
     return -1; // nothing done
 }
 

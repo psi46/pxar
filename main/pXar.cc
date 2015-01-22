@@ -51,7 +51,6 @@ int main(int argc, char *argv[]){
     doRunSingleTest(false), 
     doUpdateFlash(false),
     doUpdateRootFile(false),
-    doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
   for (int i = 0; i < argc; i++){
@@ -61,7 +60,6 @@ int main(int argc, char *argv[]){
       cout << "-c filename           read in commands from filename" << endl;
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
-      cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-p \"p1=v1[;p2=v2]\"  set parameters for test" << endl;
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
@@ -73,7 +71,6 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
-    if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-p"))                                {testParameters  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
@@ -211,7 +208,6 @@ int main(int argc, char *argv[]){
 						 , true); 
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
-  a.setMoreWebCloning(doMoreWebCloning); 
   a.setRootFileUpdate(doUpdateRootFile);
 
   if (doRunGui) {
@@ -319,6 +315,7 @@ int main(int argc, char *argv[]){
 
 // ----------------------------------------------------------------------
 void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
+
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);

@@ -4,6 +4,7 @@
 
 #include "log.h"
 
+#include <TGComboBox.h>
 #include "PixTab.hh"
 #include "PixParTab.hh"
 #include "PixTestFactory.hh"
@@ -64,35 +65,37 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   TGVerticalFrame *h1v2 = new TGVerticalFrame(fH1);
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
+  // ---------------
   // -- left frame
-  TGGroupFrame *tabControl = new TGGroupFrame(h1v1, "Open test tabs");
+  // ---------------
+  TGGroupFrame *pStuff = new TGGroupFrame(h1v1, "lost in space");
+  h1v1->AddFrame(pStuff);
+  pStuff->SetWidth(500); 
+  TGVerticalFrame *FpStuff = new TGVerticalFrame(pStuff); 
+  pStuff->AddFrame(FpStuff); 
 
-  TGHorizontalFrame *testChooser = new TGHorizontalFrame(tabControl);
-  testChooser->SetName("testChooser");
-  testChooser->AddFrame(new TGLabel(testChooser, "Choose "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  fcmbTests = new TGComboBox(testChooser);
-  fcmbTests->SetWidth(150);
-  fcmbTests->SetHeight(20);
-  fcmbTests->Connect("Selected(char*)", "PixGui", this, "selectedTab(int)");
 
-  tabControl->AddFrame(testChooser);
-  testChooser->AddFrame(fcmbTests, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-  testChooser->SetWidth(tabControl->GetWidth());
-
-  h1v1->AddFrame(tabControl, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v1->SetWidth(testChooser->GetWidth());
-
+  // ---------------
   // -- middle frame
+  // ---------------
   TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
+  h1v2->AddFrame(hwControl);
+  TGHorizontalFrame *FhwControl = new TGHorizontalFrame(hwControl); 
+  hwControl->AddFrame(FhwControl);
+  TGVerticalFrame *h1v2l = new TGVerticalFrame(FhwControl); 
+  FhwControl->AddFrame(h1v2l);
+  TGVerticalFrame *h1v2r = new TGVerticalFrame(FhwControl);
+  FhwControl->AddFrame(h1v2r);
 
-  // power
-  TGHorizontalFrame *powerFrame = new TGHorizontalFrame(hwControl, 150, 75);
+  // left: power
+  TGHorizontalFrame *powerFrame = new TGHorizontalFrame(h1v2l, 150, 75);
+  h1v2l->AddFrame(powerFrame);
   powerFrame->SetName("powerFrame");
   powerFrame->AddFrame(new TGLabel(powerFrame, "Power: "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
   fbtnPower = new TGTextButton(powerFrame, "Off", B_POWER);
-  fbtnPower->SetToolTipText("Turn on/off power of DTB");
+  fbtnPower->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off module low voltage":"Turn on/off ROC low voltage");
   fbtnPower->Resize(70,35);
   fbtnPower->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fPower) {
@@ -103,15 +106,16 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fbtnPower->SetText("Off");
   }
   powerFrame->AddFrame(fbtnPower, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-  hwControl->AddFrame(powerFrame);
   
-  // HV
-  TGHorizontalFrame *hvFrame = new TGHorizontalFrame(hwControl, 150,75);
+  // left: HV
+  TGHorizontalFrame *hvFrame = new TGHorizontalFrame(h1v2l, 150,75);
+  h1v2l->AddFrame(hvFrame);
   hvFrame->SetName("hvFrame");
   hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
-  fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off HV for module":"Turn on/off HV for ROC");
+  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+  fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off module bias voltage":"Turn on/off ROC bias voltage");
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fHV) {
@@ -120,113 +124,49 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     hvOff();
   }
 
-  // allow tests (bare module test in particular) to switch off HV
   Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()"); 
   Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()"); 
-
-  // allow tests (bare module test in particular) to switch off DTB power
   Connect("PixTest", "powerOn()", "PixGui", this, "powerOn()"); 
   Connect("PixTest", "powerOff()", "PixGui", this, "powerOff()"); 
 
-  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  hwControl->AddFrame(hvFrame);
-
-  // h/w monitoring 
-  fMonitor = new PixMonitorFrame(hwControl, this);
+  // Left: h/w monitoring 
+  fMonitor = new PixMonitorFrame(h1v2l, this);
   fTimer = new TTimer(1000);
   fTimer->Connect("Timeout()", "PixMonitorFrame", fMonitor, "Update()");
   fTimer->TurnOn();
-    
-  h1v2->AddFrame(hwControl, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v1->SetWidth(400);
-
-  // -- right frame
-  TGHorizontalFrame *bFrame = new TGHorizontalFrame(h1v3); 
-  h1v3->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN)); 
-  TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
-  exitButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
-  exitButton->ChangeOptions(exitButton->GetOptions() );
-  exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  exitButton->Resize(70,35);
-  exitButton->ChangeBackground(fRed);
-  bFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
-  TGTextButton *writeButton = new TGTextButton(bFrame, "write cfg files", B_WRITEALLFILES);
-  writeButton->SetToolTipText("write all config files (ROC/TBM DAC, trim bits, DTB setup, config file)");
-  writeButton->ChangeOptions(writeButton->GetOptions() );
-  writeButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  writeButton->Resize(70,35);
-  writeButton->ChangeBackground(fYellow);
-  bFrame->AddFrame(writeButton, new TGLayoutHints(kLHintsBottom | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-
-  TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(h1v3, 150,75);
-  rootfileFrame->SetName("rootfileFrame");
-
-  TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
-  rootfileButton->SetToolTipText("change the rootfile name");
-  rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
-  output->SetText(fConfigParameters->getRootFileName().c_str());
-  output->MoveResize(100, 60, 120, output->GetDefaultHeight());
-  output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
-  rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
- 
-  h1v3->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-
-  TGHorizontalFrame *dirFrame = new TGHorizontalFrame(h1v3, 150,75);
-  dirFrame->SetName("dirFrame");
-
-  TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
-  dirButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  dirButton->SetToolTipText("change the output directory; will move the rootfile as well");
-  dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
-  doutput->SetText(fConfigParameters->getDirectory().c_str());
-  doutput->MoveResize(100, 60, 120, output->GetDefaultHeight());
-  doutput->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
-  dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
- 
-  h1v3->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-
-  TGHorizontalFrame *sigFrameA = new TGHorizontalFrame(h1v3,0,0);
-  TGHorizontalFrame *sigFrameD = new TGHorizontalFrame(h1v3,0,0);
-
+  // Right: scope probes
   TGComboBox *signalBoxA[2];
   TGComboBox *signalBoxD[2];
 
-  signalBoxA[0] = new TGComboBox(sigFrameA);
-  signalBoxA[0]->SetName("a1");
+  TGHorizontalFrame *sigFrame(0); 
 
-  sigFrameA->AddFrame(new TGLabel(sigFrameA, "A1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameA->AddFrame(signalBoxA[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "A1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxA[0] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  signalBoxA[0]->SetName("a1");
    
-  signalBoxA[1] = new TGComboBox(sigFrameA);
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxA[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   signalBoxA[1]->SetName("a2");
 
-  sigFrameA->AddFrame(new TGLabel(sigFrameA, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameA->AddFrame(signalBoxA[1], new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  signalBoxD[0] = new TGComboBox(sigFrameD);
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "D1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxD[0] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   signalBoxD[0]->SetName("d1");
 
-  sigFrameD->AddFrame(new TGLabel(sigFrameD, "D1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameD->AddFrame(signalBoxD[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  signalBoxD[1] = new TGComboBox(sigFrameD);
+  sigFrame = new TGHorizontalFrame(h1v2r);
+  h1v2r->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(new TGLabel(sigFrame, "D2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  sigFrame->AddFrame(signalBoxD[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   signalBoxD[1]->SetName("d2");
 
-  sigFrameD->AddFrame(new TGLabel(sigFrameD, "D2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrameD->AddFrame(signalBoxD[1], new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-
- 
   signalBoxA[0]->SetWidth(75);
   signalBoxA[0]->SetHeight(20);
   signalBoxA[1]->SetWidth(75);
@@ -253,23 +193,79 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     signalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
   }
 
-   for(int i = 0 ; i <= 1 ; i++) {
-     signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-     signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-   }
-
-   
-  h1v3->AddFrame(sigFrameA, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  h1v3->AddFrame(sigFrameD, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-
-
-  //Load saved values
-
+  for(int i = 0 ; i <= 1 ; i++) {
+    signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+    signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+  }
+  
   signalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
   signalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
   signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
   signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
 
+
+
+  // --------------
+  // -- right frame
+  // --------------
+  TGGroupFrame *pControl = new TGGroupFrame(h1v3, "pXar control");
+  h1v3->AddFrame(pControl);
+  TGVerticalFrame *FpControl = new TGVerticalFrame(pControl); 
+  pControl->AddFrame(FpControl); 
+
+  TGHorizontalFrame *bFrame = new TGHorizontalFrame(FpControl); 
+  FpControl->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN)); 
+
+  TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
+  bFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+  exitButton->SetToolTipText("exit pxar,\nwrite rootfile,\ndo *not* write config files");
+  exitButton->ChangeOptions(exitButton->GetOptions() );
+  exitButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  exitButton->Resize(70,35);
+  exitButton->ChangeBackground(fRed);
+
+
+  TGTextButton *writeButton = new TGTextButton(bFrame, "write cfg files", B_WRITEALLFILES);
+  bFrame->AddFrame(writeButton, new TGLayoutHints(kLHintsBottom | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  writeButton->SetToolTipText("write all config files (ROC/TBM DAC, trim bits, DTB setup, config file)");
+  writeButton->ChangeOptions(writeButton->GetOptions() );
+  writeButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  writeButton->Resize(70,35);
+  writeButton->ChangeBackground(fYellow);
+
+
+  TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(FpControl, 150,75);
+  FpControl->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  rootfileFrame->SetName("rootfileFrame");
+
+  TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
+  rootfileButton->SetToolTipText("change the rootfile name");
+  rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
+  output->SetText(fConfigParameters->getRootFileName().c_str());
+  output->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
+  rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+ 
+
+
+  TGHorizontalFrame *dirFrame = new TGHorizontalFrame(FpControl, 150,75);
+  FpControl->AddFrame(dirFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  dirFrame->SetName("dirFrame");
+
+  TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
+  dirButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  dirButton->SetToolTipText("change the output directory; will move the rootfile as well");
+  dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
+  doutput->SetText(fConfigParameters->getDirectory().c_str());
+  doutput->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  doutput->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
+  dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+ 
 
   h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
 
@@ -283,16 +279,14 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   if(fApi) fParTab = new PixParTab(this, fConfigParameters, "h/w"); 
+  fTabs->SetTab(0);
 
-  fcmbTests->AddEntry("Ignore this ...", 0);
   vector<string> tests = fTestParameters->getTests();
   for (unsigned int i = 0; i < tests.size(); ++i) {
-    fcmbTests->AddEntry(tests[i].c_str(), i+1);
     createTab(tests[i].c_str()); 
   }
 
-  fcmbTests->Select(0);
-  if(fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
+  if (fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , fBorderN, fBorderN, fBorderN, fBorderN));
@@ -312,7 +306,6 @@ PixGui::~PixGui() {
   LOG(logDEBUG) << "PixGui::destructor";
   delete fTimer;
   delete fMonitor; 
-  delete fcmbTests;
   delete fTabs;
   delete fParTab;
   delete fRootFileNameBuffer;

@@ -125,6 +125,17 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.enable()
         def __set__(self, enable): self.thisptr.setEnable(enable)
 
+cdef class Statistics:
+    cdef statistics thisobj      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisobj = statistics()
+    def __dealloc__(self):
+        pass
+    def __str__(self):
+        return "Decoding statistics..."
+    cdef c_clone(self, statistics s):
+        self.thisobj = s
+
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
     def __cinit__(self):
@@ -224,7 +235,7 @@ cdef class PyPxarCore:
         for item in enumerate(pg_setup):
             pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         self.thisptr.setPatternGenerator(pgs)
-    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
+    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2C = None):
         """ Initializer method for the DUT (attached devices)
         Parameters:
 	hubId (int)
@@ -233,11 +244,14 @@ cdef class PyPxarCore:
         roctype (string)
         rocDACs (list of dictionaries (string,int), one for each ROC)
         rocPixels (list of list of pixelConfigs, one list for each ROC)
+        rocI2C (list of I2C addresses of the ROCs)
         """
         cdef vector[vector[pair[string,uint8_t]]] td
         cdef vector[vector[pair[string,uint8_t]]] rd
         cdef vector[vector[pixelConfig]] rpcs
         cdef PixelConfig pc
+        cdef vector[uint8_t] i2c
+
         for idx, tbmDAC in enumerate(tbmDACs):
             td.push_back(vector[pair[string,uint8_t]]())
             for key, value in tbmDAC.items():
@@ -250,7 +264,14 @@ cdef class PyPxarCore:
             rpcs.push_back(vector[pixelConfig]())
             for pc in rocPixel:
                 rpcs.at(idx).push_back(<pixelConfig> pc.thisptr[0])
-        return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
+
+        if rocI2C is not None:
+            for i in rocI2C:
+                i2c.push_back(i)
+            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs,i2c)
+        else:
+            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
+
     def getVersion(self):
         return self.thisptr.getVersion()
     def testAllPixels(self, bool enable, rocid = None):
@@ -550,6 +571,14 @@ cdef class PyPxarCore:
 
     def daqStop(self):
         return self.thisptr.daqStop()
+
+    def getStatistics(self):
+        cdef statistics r
+        r = self.thisptr.getStatistics()
+        r.dump()
+        s = Statistics()
+        s.c_clone(r)
+        return s
 
 cimport regdict
 cdef class PyRegisterDictionary:

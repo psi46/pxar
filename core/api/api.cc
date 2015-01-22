@@ -19,7 +19,6 @@ using namespace pxar;
 pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
-  _ndecode_errors_lastdaq(0),
   _daq_startstop_warning(false)
 {
 
@@ -369,8 +368,8 @@ bool pxarCore::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uin
     value = static_cast<uint8_t>(regLimit);
   }
 
-  LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
-		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
+  // LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
+  //		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
   return true;
 }
 
@@ -536,11 +535,15 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
     return data;
 }
 
+statistics pxarCore::getStatistics() {
+  // Return the accumulated number of decoding errors:
+  return _hal->daqStatistics();
+}
 
   
 // TEST functions
 
-bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
+bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocID) {
   
   if(!status()) {return false;}
 
@@ -549,25 +552,36 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid) {
   if(!verifyRegister(dacName, dacRegister, dacValue, ROC_REG)) return false;
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
-  if(_dut->roc.size() > rocid) {
+  std::vector<rocConfig>::iterator rocit;
+  for (rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
     // Set the DAC only in the given ROC (even if that is disabled!)
+    // WE ARE NOT USING the I2C address to identify the ROC currently:
+    //if(rocit->i2c_address == rocI2C) {
+    // But its ROC ID being just counted up from the first:
+    if(static_cast<int>(rocit - _dut->roc.begin()) == rocID) {
 
-    // Update the DUT DAC Value:
-    ret = _dut->roc.at(rocid).dacs.insert( std::make_pair(dacRegister,dacValue) );
-    if(ret.second == true) {
-      LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
-    }
-    else {
-      _dut->roc.at(rocid).dacs[dacRegister] = dacValue;
-      LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
-    }
+      // Update the DUT DAC Value:
+      ret = rocit->dacs.insert(std::make_pair(dacRegister,dacValue));
+      if(ret.second == true) {
+	LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
+      }
+      else {
+	rocit->dacs[dacRegister] = dacValue;
+	LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
+      }
 
-    _hal->rocSetDAC(_dut->roc.at(rocid).i2c_address,dacRegister,dacValue);
+      _hal->rocSetDAC(rocit->i2c_address,dacRegister,dacValue);
+      break;
+    }
   }
-  else {
-    LOG(logERROR) << "ROC " << static_cast<int>(rocid) << " does not exist in the DUT!";
+
+  // We might not have found this ROC:
+  if(rocit == _dut->roc.end()) {
+    LOG(logERROR) << "ROC@I2C " << static_cast<int>(rocID) << " does not exist in the DUT!";
     return false;
   }
+
   return true;
 }
 
@@ -581,20 +595,22 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue) {
 
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
   // Set the DAC for all active ROCs:
-  std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
-  for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit) {
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+
+    // Check if this ROC is marked active:
+    if(!rocit->enable()) { continue; }
 
     // Update the DUT DAC Value:
-    ret = _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs.insert( std::make_pair(dacRegister,dacValue) );
+    ret = rocit->dacs.insert(std::make_pair(dacRegister,dacValue));
     if(ret.second == true) {
       LOG(logWARNING) << "DAC \"" << dacName << "\" was not initialized. Created with value " << static_cast<int>(dacValue);
     }
     else {
-      _dut->roc.at(static_cast<uint8_t>(rocit - enabledRocs.begin())).dacs[dacRegister] = dacValue;
+      rocit->dacs[dacRegister] = dacValue;
       LOG(logDEBUGAPI) << "DAC \"" << dacName << "\" updated with value " << static_cast<int>(dacValue);
     }
 
-    _hal->rocSetDAC(static_cast<uint8_t>(rocit - enabledRocs.begin()),dacRegister,dacValue);
+    _hal->rocSetDAC(rocit->i2c_address,dacRegister,dacValue);
   }
 
   return true;
@@ -1272,9 +1288,6 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   std::vector<Event> data = std::vector<Event>();
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
-  // check the data for decoder errors and update our internal counter
-  getDecoderErrorCount();
-
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
@@ -1299,13 +1312,6 @@ rawEvent pxarCore::daqGetRawEvent() {
   // Return the next raw data record from the FIFO buffer:
   return (*_hal->daqRawEvent());
 }
-
-uint32_t pxarCore::daqGetNDecoderErrors() {
-
-  // Return the accumulated number of decoding errors:
-  return _ndecode_errors_lastdaq;
-}
-
 
 bool pxarCore::daqStop() {
   return daqStop(true);
@@ -1509,9 +1515,6 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     return data;
   }
   
-  // update the internal decoder error count for this data sample
-  getDecoderErrorCount();
-
   // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);
   SetCalibrateBits(false);
@@ -2172,14 +2175,6 @@ uint32_t pxarCore::getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,ui
   delay_sum++;
   LOG(logDEBUGAPI) << "Sum of Pattern generator delays: " << delay_sum << " clk";
   return delay_sum;
-}
-
-void pxarCore::getDecoderErrorCount(){
-  // check the data for any decoding errors (stored in the events as counters)
-  _ndecode_errors_lastdaq = _hal->daqErrorCount();
-  if (_ndecode_errors_lastdaq){
-    LOG(logCRITICAL) << "A total of " << _ndecode_errors_lastdaq << " pixels could not be decoded in this DAQ readout.";
-  }
 }
 
 bool pxarCore::setExternalClock(bool enable) {

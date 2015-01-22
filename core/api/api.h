@@ -339,12 +339,13 @@ namespace pxar {
 
     /** Set a DAC value on the DUT for one specific ROC
      *
-     *  The "rocid" parameter can be used to select a specific ROC to program.
+     *  The "rocID" parameter can be used to select a specific ROC to program.
+     *  The ROC is identified by its ID (counting all ROCs up from 0).
      *
      *  This function will both update the bookkeeping value in the pxar::dut
      *  struct and program the actual device.
      */
-    bool setDAC(std::string dacName, uint8_t dacValue, uint8_t rocid);
+    bool setDAC(std::string dacName, uint8_t dacValue, uint8_t rocI2C);
 
     /** Set a DAC value on the DUT for all enabled ROC
      *
@@ -651,6 +652,9 @@ namespace pxar {
     /** Function to read out the earliest pxar::Event in buffer from the current
      *  data acquisition session. If no Event is buffered, the function will 
      *  wait for the next Event to arrive and then return it.
+     *
+     *  This function can throw a pxar::DataDecodingError exception in case severe
+     *  problems were encountered during the readout.
      */
     Event daqGetEvent();
 
@@ -700,6 +704,9 @@ namespace pxar {
     /** Function to return the full currently available pxar::Event buffer from the 
      *  testboard RAM. All data is decoded and the function returns decoded pixels 
      *  separated in pxar::Events with additional header information available.
+     *
+     *  This function can throw a pxar::DataDecodingError exception in case severe
+     *  problems were encountered during the readout.
      */
     std::vector<Event> daqGetEventBuffer();
 
@@ -710,10 +717,11 @@ namespace pxar {
      */
     std::vector<std::vector<uint16_t> > daqGetReadback();
 
-    /** Function that returns the number of pixel decoding errors found in the
-     *  last (non-raw) DAQ readout or API test call.
+    /** Function that returns a class object of the type pxar::statistics containing
+     *  all collected error statistics from the last (non-raw) DAQ readout or API test 
+     *  call. Statistics can be fetched once and are then reset.
      */
-    uint32_t daqGetNDecoderErrors();
+    statistics getStatistics();
 
     /** DUT object for book keeping of settings
      */
@@ -854,11 +862,6 @@ namespace pxar {
      */
     uint32_t getPatternGeneratorDelaySum(std::vector<std::pair<uint16_t,uint8_t> > &pg_setup);
 
-    /** Helper function to update the internaly cached number of decoder errors
-     *  with the number found in the data sample passed to the function
-     */
-    void getDecoderErrorCount();
-
     /** Status of the DAQ
      */
     bool _daq_running;
@@ -866,9 +869,6 @@ namespace pxar {
     /** Allocated memory size on the DTB for the currently running DAQ session
      */
     uint32_t _daq_buffersize;
-
-    /** Number of pixel decoding errors in last DAQ readout */
-    uint32_t _ndecode_errors_lastdaq;
 
     /** Warned the user about not initializing the DUT */
     bool _daq_startstop_warning;

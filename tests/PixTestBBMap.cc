@@ -5,6 +5,7 @@
 #include <algorithm>  // std::find
 
 #include <TSpectrum.h>
+#include "TStopwatch.h"
 
 #include "PixTestBBMap.hh"
 #include "PixUtil.hh"
@@ -17,7 +18,8 @@ using namespace pxar;
 ClassImp(PixTestBBMap)
 
 //------------------------------------------------------------------------------
-PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), fParNtrig(-1), fParVcalS(200) {
+PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), 
+  fParNtrig(-1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBBMap ctor(PixSetup &a, string, TGTab *)";
@@ -50,6 +52,21 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
 	setToolTips();
 	return true;
       }
+
+      if (!parName.compare("dumpall")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpAll = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
+      if (!parName.compare("dumpallproblematic")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpProblematic = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
     }
   }
   return false;
@@ -76,11 +93,12 @@ void PixTestBBMap::setToolTips() {
 //------------------------------------------------------------------------------
 PixTestBBMap::~PixTestBBMap() {
   LOG(logDEBUG) << "PixTestBBMap dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 //------------------------------------------------------------------------------
 void PixTestBBMap::doTest() {
+
+  TStopwatch t;
 
   cacheDacs();
   PixTest::update();
@@ -96,9 +114,11 @@ void PixTestBBMap::doTest() {
   fApi->setDAC("vcal", fParVcalS);    
 
   int result(1);
+  if (fDumpAll) result |= 0x20;
+  if (fDumpProblematic) result |= 0x10;
 
   fNDaqErrors = 0; 
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 170, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 50, result, 1, flag);
 
   // -- relabel negative thresholds as 255 and create distribution list
   vector<TH1D*> dlist; 
@@ -138,37 +158,12 @@ void PixTestBBMap::doTest() {
   }
   PixTest::update(); 
   
+  int seconds = t.RealTime();
   LOG(logINFO) << "PixTestBBMap::doTest() done"
-	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"");
+	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"") 
+	       << ", duration: " << seconds << " seconds";
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
-
-}
-
-
-// ----------------------------------------------------------------------
-void PixTestBBMap::output4moreweb() {
-  print("PixTestBBMap::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    if (string::npos == name.find("_V0"))  continue;
-    if (string::npos != name.find("dist_"))  continue;
-    if (string::npos == name.find("thr_calSMap_VthrComp")) continue;
-    if (string::npos != name.find("calSMap")) {
-      PixUtil::replaceAll(name, "thr_calSMap_VthrComp", "BumpBondMap"); 
-    }
-    PixUtil::replaceAll(name, "_V0", ""); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
 
 }
 

@@ -178,7 +178,10 @@ bool hal::rocSetDACs(uint8_t /*rocId*/, std::map< uint8_t, uint8_t > /*dacPairs*
   return true;
 }
 
-bool hal::rocSetDAC(uint8_t /*rocId*/, uint8_t /*dacId*/, uint8_t /*dacValue*/) {
+bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
+  LOG(logDEBUGHAL) << "Setting DAC " << static_cast<int>(dacId) 
+		   << " to " <<  static_cast<int>(dacValue)
+		   << " on ROC@I2C " << static_cast<int>(rocId);
   return true;
 }
 
@@ -732,8 +735,8 @@ void hal::setHubId(unsigned char) {}
 
 void hal::SigSetLCDS() {}
 
-uint32_t hal::daqErrorCount() {
-  return 0;
+statistics hal::daqStatistics() {
+  return statistics();
 }
 
 uint16_t hal::GetADC(uint8_t rpc_par1) {

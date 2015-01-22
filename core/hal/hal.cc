@@ -677,9 +677,16 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
 
     done = _testboard->LoopMultiRocAllPixelsCalibrate(roci2cs, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -729,9 +736,16 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 
     done = _testboard->LoopMultiRocOnePixelCalibrate(roci2cs, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -780,9 +794,16 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
 
     done = _testboard->LoopSingleRocAllPixelsCalibrate(roci2c, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -830,9 +851,16 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 
     done = _testboard->LoopSingleRocOnePixelCalibrate(roci2c, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -892,9 +920,16 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 
     done = _testboard->LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -955,9 +990,16 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 
     done = _testboard->LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1014,9 +1056,16 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 
     done = _testboard->LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1073,9 +1122,16 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 
     done = _testboard->LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1142,9 +1198,16 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 
     done = _testboard->LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1214,9 +1277,16 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 
     done = _testboard->LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1282,9 +1352,16 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 
     done = _testboard->LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1350,9 +1427,16 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 
     done = _testboard->LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1854,12 +1938,12 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
-uint32_t hal::daqErrorCount() {
-  // Check the active channels for decoding errors:
-  uint32_t errors = decoder0.getErrorCount();
-  if(src1.isConnected()) { errors += decoder1.getErrorCount(); }
-  if(src2.isConnected()) { errors += decoder2.getErrorCount(); }
-  if(src3.isConnected()) { errors += decoder3.getErrorCount(); }
+statistics hal::daqStatistics() {
+  // Read statistics from the active channels:
+  statistics errors = decoder0.getStatistics();
+  if(src1.isConnected()) { errors += decoder1.getStatistics(); }
+  if(src2.isConnected()) { errors += decoder2.getStatistics(); }
+  if(src3.isConnected()) { errors += decoder3.getStatistics(); }
   return errors;
 }
 

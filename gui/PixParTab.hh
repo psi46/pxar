@@ -2,6 +2,7 @@
 #define PIXPARTAB_H
 
 #include <string>
+#include <set>
 
 #include <TQObject.h> 
 #include <TGFrame.h>
@@ -39,7 +40,8 @@ public:
   virtual void setPowerSettings(); 
   virtual void setPgSettings();
   virtual void setTbmParameter(); 
-  virtual void setRocParameter(); 
+  virtual void setOneRocParameter(); 
+  virtual void setAllRocParameter(); 
   virtual void setLemo(); 
   virtual void initTestboard(); 
 
@@ -59,6 +61,8 @@ public:
   void tbmYellow();
   void tbYellow();
   void powerYellow();
+
+  void lockClk(); 
 
 //   void rocDown(); 
 //   void rocUp(); 
@@ -94,11 +98,9 @@ protected:
   std::vector<TGCheckButton*>                  fSelectTbm;
   int                                          fSelectedTbm;
 
-  std::map<std::string, TGTextEntry*>          fRocTextEntries;
-  std::map<int, std::string>                   fRocTextMap;
-  std::vector<std::map<std::string, uint8_t> > fRocParIds;
-  std::vector<TGCheckButton*>                  fSelectRoc;
-  int                                          fSelectedRoc;
+  std::set<TGTextEntry*>                            fRocChanges; 
+  std::vector<std::map<std::string, TGTextEntry*> > fRocTextEntries;
+  std::vector<TGCheckButton*>                       fSelectRoc;
 
   PixGui                *fGui; 
   ConfigParameters      *fConfigParameters; 
@@ -111,6 +113,7 @@ protected:
 
   int                   fBorderR, fBorderL, fBorderT, fBorderB;
 
+  bool fLockClk;
 
   ClassDef(PixParTab, 1)
 

@@ -39,12 +39,12 @@ typedef struct {
   uint16_t header; 
   uint16_t trailer; 
   uint16_t numDecoderErrors;
-  uint8_t  npix;
-  uint8_t  proc[2000];
-  uint8_t  pcol[2000];
-  uint8_t  prow[2000];
-  double   pval[2000];
-  double   pq[2000];
+  uint16_t npix;
+  uint8_t  proc[20000];
+  uint8_t  pcol[20000];
+  uint8_t  prow[20000];
+  double   pval[20000];
+  double   pq[20000];
 } TreeEvent;
 
 
@@ -78,10 +78,10 @@ public:
   virtual void doAnalysis();
   /// function connected to "DoTest" button of PixTab
   virtual void doTest(); 
+  /// function called when FullTest is running; most often this is simply calling doTest()
+  virtual void fullTest(); 
   /// allow execution of any button in the test 
   virtual void runCommand(std::string command); 
-  /// create output suitable for moreweb
-  virtual void output4moreweb();
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file
@@ -89,7 +89,7 @@ public:
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
-  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig);
+  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig, bool scanCalDel = false);
   /// mask all pixels mentioned in the mask file
   void maskPixels();     
   /// query whether test 'failed'
@@ -108,8 +108,10 @@ public:
 
   /// work-around to cope with suboptimal pxar/core
   int pixelThreshold(std::string dac, int ntrig, int dacmin, int dacmax);
-  /// kind of another work-around (splitting the range, adjusting ntrig, etc)
+  /// scan a dac range. Will call preScan to protect against r/o problems. 
   void dacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int flag = 0);
+  /// kind of another work-around (splitting the range, adjusting ntrig, etc)
+  void preScan(std::string dac, std::vector<shist256*> maps, int &dacmin, int &dacmax);
   /// do the scurve analysis
   void scurveAna(std::string dac, std::string name, std::vector<shist256*> maps, std::vector<TH1*> &resultMaps, int result);
   /// determine PH error interpolation
@@ -119,15 +121,17 @@ public:
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
+  /// dacsperstep: if positive determines the maximum range of DACs to be looped over by pxarCore
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
   /// flag allows to pass in other flags
   /// result controls the amount of information (histograms) returned:
   /// result & 0x1: thr        maps
   /// result & 0x2: sig        maps
   /// result & 0x4: noise edge maps
-  /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 3
+  /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 4
   /// result &0x10: dump 'problematic' threshold histogram fits
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
+  /// result &0x20: dump all threshold histogram fits
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int dacsperstep = -1, 
 			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);

@@ -149,7 +149,7 @@ void PixTestDaq::runCommand(std::string command) {
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::bookHist(string name) {
+void PixTestDaq::bookHist(string /*name*/) {
 
 	if (fParFillTree) bookTree();
 	fHitMap.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();
@@ -221,10 +221,10 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 		pixCnt += it->pixels.size();
 
 		if (fParFillTree) {
+		        bookTree();  
 			fTreeEvent.header = it->header;
 			fTreeEvent.dac = 0;
 			fTreeEvent.trailer = it->trailer;
-			fTreeEvent.npix = it->pixels.size();
 		}
 
 		for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
@@ -246,13 +246,14 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 			}
 			fQ[idx]->Fill(q);
 			fQmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), q);
-				if (fParFillTree) {
-				fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
-				fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
-				fTreeEvent.prow[ipix] = it->pixels[ipix].row();
-				fTreeEvent.pval[ipix] = it->pixels[ipix].value();
-				fTreeEvent.pq[ipix] = q;
-			}
+				if (fParFillTree && ipix < 20000) {
+				  ++fTreeEvent.npix;
+				  fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+				  fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+				  fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+				  fTreeEvent.pval[ipix] = it->pixels[ipix].value();
+				  fTreeEvent.pq[ipix] = q;
+				}
 		}
 		if (fParFillTree) fTree->Fill();
 	}

@@ -288,5 +288,119 @@ namespace pxar {
     bool enable;
   };
 
+  /** Class for storing decoded pixel readout data
+   */
+  class DLLEXPORT statistics {
+    /** Allow the dtbEventDecoder to directly alter private members of the statistics
+     */
+    friend class dtbEventDecoder;
+
+  public:
+  statistics() :
+    m_errors_event_start(0),
+      m_errors_event_stop(0),
+      m_errors_event_overflow(0),
+      m_errors_event_invalid_words(0),
+      m_errors_event_invalid_xor(0),
+      m_errors_tbm_header(0),
+      m_errors_tbm_trailer(0),
+      m_errors_tbm_eventid_mismatch(0),
+      m_errors_roc_missing(0),
+      m_errors_roc_readback(0),
+      m_errors_pixel_address(0),
+      m_errors_pixel_pulseheight(0),
+      m_errors_pixel_buffer_corrupt(0)
+	{};
+    // Print all statistics to stdout:
+    void dump();
+    friend statistics& operator+=(statistics &lhs, const statistics &rhs);
+
+    uint32_t info_words_read() {return m_info_words_read; }
+    uint32_t info_pixels_valid() {return m_info_pixels_valid; }
+
+    uint32_t errors() {
+      return (errors_pixel() + errors_tbm() + errors_roc() + errors_event());
+    };
+    uint32_t errors_event() {
+      return (errors_event_start()
+	      + errors_event_stop()
+	      + errors_event_overflow()
+	      + errors_event_invalid_words()
+	      + errors_event_invalid_xor());
+    };
+    uint32_t errors_tbm() {
+      return (errors_tbm_header()
+	      + errors_tbm_trailer()
+	      + errors_tbm_eventid_mismatch());
+    };
+    uint32_t errors_roc() {
+      return (errors_roc_missing()
+	      + errors_roc_readback());
+    };
+    uint32_t errors_pixel() { 
+      return (errors_pixel_incomplete()
+	      + errors_pixel_address()
+	      + errors_pixel_pulseheight()
+	      + errors_pixel_buffer_corrupt());
+    };
+    uint32_t errors_event_start() { return m_errors_event_start; }
+    uint32_t errors_event_stop() { return m_errors_event_stop; }
+    uint32_t errors_event_overflow() { return m_errors_event_overflow; }
+    uint32_t errors_event_invalid_words() { return m_errors_event_invalid_words; }
+    uint32_t errors_event_invalid_xor() { return m_errors_event_invalid_xor; }
+    uint32_t errors_tbm_header() { return m_errors_tbm_header; }
+    uint32_t errors_tbm_eventid_mismatch() { return m_errors_tbm_eventid_mismatch; }
+    uint32_t errors_tbm_trailer() { return m_errors_tbm_trailer; }
+    uint32_t errors_roc_missing() { return m_errors_roc_missing; }
+    uint32_t errors_roc_readback() { return m_errors_roc_readback; }
+    uint32_t errors_pixel_incomplete() { return m_errors_pixel_incomplete; }
+    uint32_t errors_pixel_address() { return m_errors_pixel_address; };
+    uint32_t errors_pixel_pulseheight() { return m_errors_pixel_pulseheight; };
+    uint32_t errors_pixel_buffer_corrupt() { return m_errors_pixel_buffer_corrupt; };
+  private:
+    // Clear all statistics:
+    void clear();
+
+    // Total number of words read:
+    uint32_t m_info_words_read;
+    // Total number of empty events (no pixel hit):
+    //uint32_t m_info_events_empty;
+    // Total number of valid events (with pixel hits):
+    //uint32_t m_info_events_valid;
+    // Total number of pixel hits:
+    uint32_t m_info_pixels_valid;
+
+    // Total number of events with misplaced start
+    uint32_t m_errors_event_start;
+    // Total number of events with misplaced stop:
+    uint32_t m_errors_event_stop;
+    // Total number of events with data overflow:
+    uint32_t m_errors_event_overflow;
+    // Total number of invalid 5bit words detected by DESER400:
+    uint32_t m_errors_event_invalid_words;
+    // Total number of events with invalid XOR eye diagram:
+    uint32_t m_errors_event_invalid_xor;
+
+    // Total number of events with flawed TBM header:
+    uint32_t m_errors_tbm_header;
+    // Total number of events with flawed TBM trailer:
+    uint32_t m_errors_tbm_trailer;
+    // Total number of event ID mismatches in the datastream:
+    uint32_t m_errors_tbm_eventid_mismatch;
+
+    // Total number of events with missing ROC header(s):
+    uint32_t m_errors_roc_missing;
+    // Total number of misplaced ROC readback start markers:
+    uint32_t m_errors_roc_readback;
+
+    // Total number of undecodable pixels (data missing)
+    uint32_t m_errors_pixel_incomplete;
+    // Total number of undecodable pixels (by address)
+    uint32_t m_errors_pixel_address;
+    // Total number of undecodable pixels (by pulse height fill bit)
+    uint32_t m_errors_pixel_pulseheight;
+    // Total number of pixels with row 80:
+    uint32_t m_errors_pixel_buffer_corrupt;
+  };
 }
 #endif

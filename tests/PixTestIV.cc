@@ -94,7 +94,6 @@ void PixTestIV::stop() {
 // ----------------------------------------------------------------------
 PixTestIV::~PixTestIV() {
   LOG(logDEBUG) << "PixTestIV dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 // ----------------------------------------------------------------------

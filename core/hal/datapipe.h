@@ -178,7 +178,8 @@ namespace pxar {
 
     bool nextStartDetected;
   public:
-    dtbEventSplitter() {}
+  dtbEventSplitter() :
+    nextStartDetected(false) {}
   };
 
   // DTB data decoding class
@@ -196,7 +197,7 @@ namespace pxar {
 
     Event* DecodeDeser160();
     Event* DecodeDeser400();
-    uint32_t decodingErrors;
+    statistics decodingStats;
 
     // Readback decoding:
     void evalReadback(uint8_t roc, uint16_t val);
@@ -204,10 +205,15 @@ namespace pxar {
     std::vector<uint16_t> shiftReg;
     std::vector<std::vector<uint16_t> > readback;
 
+    // Error checking:
+    void CheckInvalidWord(uint16_t v);
+    void CheckEventID(uint16_t v);
+    int16_t eventID;
+
   public:
-  dtbEventDecoder() : decodingErrors(0), readback() {};
-    void Clear() { decodingErrors = 0; readback.clear(); count.clear(); shiftReg.clear(); };
-    uint32_t getErrorCount();
+  dtbEventDecoder() : decodingStats(), readback(), eventID(-1) {};
+    void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
+    statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();
   };
 }

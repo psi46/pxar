@@ -100,7 +100,6 @@ void PixTestTrim::bookHist(string name) {
 //----------------------------------------------------------
 PixTestTrim::~PixTestTrim() {
   LOG(logDEBUG) << "PixTestTrim dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
@@ -158,7 +157,7 @@ void PixTestTrim::trimTest() {
   int NTRIG(5);
   map<int, int> rocVthrComp;
   print("VthrComp thr map (minimal VthrComp)"); 
-  vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", NTRIG, 0, 150, 7); 
+  vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", NTRIG, 0, 159, 40, 7); 
   PixTest::update(); 
   if (thr0.size()/3 != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr0.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
@@ -176,7 +175,7 @@ void PixTestTrim::trimTest() {
 
   // -- determine pixel with largest VCAL threshold
   print("Vcal thr map (pixel with maximum Vcal thr)"); 
-  vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 0, 150, 1); 
+  vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 0, 159, 40, 1); 
   PixTest::update(); 
   if (thr1.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr1.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
@@ -324,7 +323,7 @@ void PixTestTrim::trimTest() {
 
   // -- set trim bits
   int correction = 4;
-  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 200, 1); 
+  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 199, 50, 1); 
   if (thr2.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map thr2 size " << thr2.size() << " does not agree with number of enabled ROCs " << rocIds.size();
     fProblem = true;
@@ -405,7 +404,7 @@ void PixTestTrim::trimTest() {
   }
 
   print(Form("TrimThrFinal extremal thresholds: %d .. %d", fParVcal-20,  fParVcal+20));
-  vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", fParNtrig, fParVcal-20, fParVcal+20, 9); 
+  vector<TH1*> thrF = scurveMaps("vcal", "TrimThrFinal", fParNtrig, fParVcal-20, fParVcal+20, -1, 9); 
   PixTest::update(); 
   string trimMeanString, trimRmsString; 
   for (unsigned int i = 0; i < thrF.size(); ++i) {
@@ -494,7 +493,7 @@ void PixTestTrim::trimBitTest() {
   fApi->setDAC("CtrlReg", 0); 
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
-  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 200, 7), "thr");
+  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 199, 50, 7), "thr");
   
   // -- now loop over all trim bits
   vector<TH1*> thr;
@@ -515,7 +514,7 @@ void PixTestTrim::trimBitTest() {
 
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
-    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, static_cast<int>(maxThr)+10, 7), "thr");
+    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, static_cast<int>(maxThr)+10, -1, 7), "thr");
     maxThr = getMaximumThreshold(thr); 
     if (maxThr > 245.) maxThr = 245.; 
     steps.push_back(thr); 
@@ -597,7 +596,7 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
   } 	
 
   setTrimBits(); 
-  vector<TH1*> calNew = scurveMaps("vcal", name, NTRIG, vcalMin, vcalMax, 1); 
+  vector<TH1*> calNew = scurveMaps("vcal", name, NTRIG, vcalMin, vcalMax, -1, 1); 
   if (calNew.size() != calOld.size()) {
     LOG(logERROR) << "scurve map size " << calNew.size() << " does not agree with previous number " << calOld.size();
     fProblem = true;
@@ -636,81 +635,5 @@ void PixTestTrim::setTrimBits(int itrim) {
       fApi->_dut->updateTrimBits(pix[ipix].column(), pix[ipix].row(), fTrimBits[ir][pix[ipix].column()][pix[ipix].row()], rocIds[ir]);
     }
   }
-}
-
-
-// ----------------------------------------------------------------------
-void PixTestTrim::output4moreweb() {
-  print("PixTestTrim::output4moreweb()"); 
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-  
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-
-    if (string::npos != name.find("TrimBit7")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimBit11")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimBit13")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimBit14")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("TrimMap")) {
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    //dist_thr_TrimThrFinal_vcal_C0_V0;1
-    //VcalThresholdMap_C0Distribution
-    if (string::npos != name.find("dist_thr_TrimThrFinal_vcal")) {
-      PixUtil::replaceAll(name, "dist_thr_", ""); 
-      PixUtil::replaceAll(name, "TrimThrFinal_vcal", "VcalThresholdTrimmedMap"); 
-      PixUtil::replaceAll(name, "_V0", "Distribution"); 
-      TH1D *h = (TH1D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-
-    if (string::npos != name.find("thr_TrimThrFinal_vcal")) {
-      PixUtil::replaceAll(name, "thr_TrimThrFinal_vcal", "VcalThresholdTrimmedMap"); 
-      PixUtil::replaceAll(name, "_V0", ""); 
-      TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-      h->SetDirectory(gDirectory); 
-      h->Write(); 
-      continue;
-    }
-  }
-  pDir->cd(); 
 }
 

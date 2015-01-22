@@ -83,7 +83,6 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
-  //  fPixSetup->setMoreWebCloning(true);
 
   vector<string> suite;
   suite.push_back("alive"); 
@@ -105,12 +104,11 @@ void PixTestFullTest::doTest() {
       fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal); 
     }
 
-    t->doTest(); 
+    t->fullTest(); 
 
     delete t; 
   }
 
-  //  fPixSetup->setMoreWebCloning(false);
 }
 
 

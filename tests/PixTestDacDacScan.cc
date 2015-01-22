@@ -191,12 +191,12 @@ void PixTestDacDacScan::doTest() {
 	  if (0 == fParPHmap) {
 	    rresults = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 						   fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
-	    fNDaqErrors = fApi->daqGetNDecoderErrors();
+	    fNDaqErrors = fApi->getStatistics().errors_pixel();
 	    done = true;
 	  } else {
 	    rresults = fApi->getPulseheightVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 						    fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
-	    fNDaqErrors = fApi->daqGetNDecoderErrors();
+	    fNDaqErrors = fApi->getStatistics().errors_pixel();
 	    done = true;
 	  }
 	} catch(DataMissingEvent &e){

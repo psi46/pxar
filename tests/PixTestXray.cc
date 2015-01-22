@@ -5,7 +5,7 @@
 
 #include "PixTestXray.hh"
 #include "log.h"
-#include "timer.h"
+#include "TStopwatch.h"
 
 #include "PixUtil.hh"
 
@@ -250,6 +250,15 @@ void PixTestXray::doPhRun() {
   
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
+
+  if (fParDelayTBM) {
+    LOG(logINFO) << "set TBM register delays = 0x40";
+    fApi->setTbmReg("delays", 0x40);
+  }
+
+  fEventsMax = 1000 * fParTriggerFrequency * fParRunSeconds; 
+
   if (0 == fQ.size()) {
     if (fParFillTree) bookTree(); 
     TH1D *h1(0); 
@@ -300,49 +309,80 @@ void PixTestXray::doPhRun() {
       h1->SetDirectory(fDirectory);
       setTitles(h1, "PH [ADC]", "Entries/bin");
       fPH.push_back(h1);
+
+      h1 = bookTH1D(Form("hitsVsEvents_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+		    Form("hitsVsEvents_%s_C%d", fParSource.c_str(), rocIds[iroc]), 1000, 0., fEventsMax);
+      h1->SetMinimum(0.);
+      h1->SetDirectory(fDirectory);
+      setTitles(h1, "events", "hits/bin");
+      fHitsVsEvents.push_back(h1);
+
+      h1 = bookTH1D(Form("hitsVsColumn_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    Form("hitsVsColumn_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    52, 0., 52.);
+      h1->SetMinimum(0.);
+      h1->SetDirectory(fDirectory);
+      setTitles(h1, "col", "hits/bin");
+      fHitsVsColumn.push_back(h1);
+
+      h2 = bookTH2D(Form("hitsVsEvtCol_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    Form("hitsVsEvtCol_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+		    1000, 0., fEventsMax, 52, 0., 52.);
+      h2->SetMinimum(0.);
+      h2->SetDirectory(fDirectory);
+      setTitles(h2, "events", "col");
+      fHistOptions.insert(make_pair(h2,"colz"));
+      fHitsVsEvtCol.push_back(h2);
+
     }
     h3 = bookTH1D(Form("ntrig_%s", fParSource.c_str()),
-	Form("ntrig_%s", fParSource.c_str()),1,0,1);
+		  Form("ntrig_%s", fParSource.c_str()), 1, 0., 1.);
     h3->SetDirectory(fDirectory);
     fTriggers.push_back(h3);
-
+    
+ 
     copy(fHmap.begin(), fHmap.end(), back_inserter(fHistList));
     copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
     copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
     copy(fPHmap.begin(), fPHmap.end(), back_inserter(fHistList));
     copy(fPH.begin(), fPH.end(), back_inserter(fHistList));
     copy(fTriggers.begin(), fTriggers.end(), back_inserter(fHistList));
+    copy(fHitsVsEvents.begin(), fHitsVsEvents.end(), back_inserter(fHistList));
+    copy(fHitsVsColumn.begin(), fHitsVsColumn.end(), back_inserter(fHistList));
+    copy(fHitsVsEvtCol.begin(), fHitsVsEvtCol.end(), back_inserter(fHistList));
   }
 
-  int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
+  uint8_t perFull;
+  TStopwatch t;
   fApi->daqStart();
-
-  if (fParDelayTBM) {
-    LOG(logINFO) << "set TBM register delays = 0x40";
-    fApi->setTbmReg("delays", 0x40);
-  }
-
   int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with trigger frequency " << fParTriggerFrequency 
-	       << ", period "  << finalPeriod 
-	       << " and duration " << fParRunSeconds << " seconds";
+	       << " kHz, period "  << finalPeriod 
+	       << " and duration " << fParRunSeconds << " seconds, "
+	       << " fEventsMax = " <<   fEventsMax ;
   
-  uint8_t perFull;
-  timer t;
+  t.Start(kTRUE);
   fDaq_loop = true;
+  int seconds(0); 
+    
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
-      LOG(logINFO) << "run duration " << t.get()/1000 << " seconds, buffer almost full (" 
+      seconds = t.RealTime(); 
+      LOG(logINFO) << "run duration " << seconds << " seconds, buffer almost full (" 
 		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
       processData(0);
       LOG(logINFO) << "Resuming triggers.";
-	  fApi->daqTriggerLoop(finalPeriod);
+      t.Start(kFALSE);
+      fApi->daqTriggerLoop(finalPeriod);
     }
 
-    if (static_cast<int>(t.get())/1000 >= fParRunSeconds)	{
-      LOG(logINFO) << "data taking finished, elapsed time: " << t.get()/1000 << " seconds."; 
+    
+    seconds = t.RealTime(); 
+    t.Start(kFALSE);
+    if (static_cast<int>(seconds >= fParRunSeconds)) {
+      LOG(logINFO) << "data taking finished, elapsed time: " << seconds << " seconds."; 
       fDaq_loop = false;
       break;
     }
@@ -391,15 +431,16 @@ void PixTestXray::doRateScan() {
     for (unsigned i = 0; i < fHitMap.size(); ++i) {
       fHitMap[i]->Reset();
     }
-    timer t;
+    TStopwatch t;
     uint8_t perFull;
     fApi->setDAC("vthrcomp", fVthrComp);
     fDaq_loop = true;
     
     LOG(logINFO)<< "Starting Loop with VthrComp = " << fVthrComp;
+    t.Start(kTRUE);
     fApi->daqStart();
 
-	int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
+    int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
     LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParStepSeconds << " seconds";
     
     while (fApi->daqStatus(perFull) && fDaq_loop) {
@@ -412,8 +453,8 @@ void PixTestXray::doRateScan() {
 	fApi->daqTriggerLoop(finalPeriod);
       }
       
-      if (static_cast<int>(t.get()/1000) >= fParStepSeconds)	{
-	LOG(logINFO) << "Elapsed time: " << t.get()/1000 << " seconds.";
+      if (static_cast<int>(t.RealTime()) >= fParStepSeconds)	{
+	LOG(logINFO) << "Elapsed time: " << t.RealTime() << " seconds.";
 	fDaq_loop = false;
 	break;
       }
@@ -474,7 +515,7 @@ void PixTestXray::doRateScan() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, 9); 
+  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, -1, 9); 
 
   fHits[0]->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
@@ -619,10 +660,10 @@ void PixTestXray::readData() {
     pixCnt += it->pixels.size();
 
     if (fParFillTree) {
+      bookTree();  
       fTreeEvent.header           = it->header; 
       fTreeEvent.dac              = 0;
       fTreeEvent.trailer          = it->trailer; 
-      fTreeEvent.npix             = it->pixels.size();
     }
 
     int idx(0); 
@@ -644,7 +685,8 @@ void PixTestXray::readData() {
       fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
       fPH[idx]->Fill(it->pixels[ipix].value());
 	
-      if (fParFillTree) {
+      if (fParFillTree && ipix < 20000) {
+	++fTreeEvent.npix;
 	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
 	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
 	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
@@ -664,7 +706,8 @@ void PixTestXray::readData() {
 void PixTestXray::processData(uint16_t numevents) {
   fDirectory->cd();
   PixTest::update();
-  
+
+  static long int evtCnt(-1); 
   int pixCnt(0);
   LOG(logDEBUG) << "Getting Event Buffer";
   vector<pxar::Event> daqdat;
@@ -686,17 +729,23 @@ void PixTestXray::processData(uint16_t numevents) {
   int idx(-1); 
   uint16_t q; 
   for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+    ++evtCnt;
     pixCnt += it->pixels.size(); 
     
+    
     if (fParFillTree) {
+      bookTree();  
       fTreeEvent.header           = it->header; 
       fTreeEvent.dac              = 0;
       fTreeEvent.trailer          = it->trailer; 
-      fTreeEvent.npix             = it->pixels.size();
     }
 
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
       idx = getIdxFromId(it->pixels[ipix].roc());
+
+      fHitsVsEvents[idx]->Fill(evtCnt); 
+      fHitsVsColumn[idx]->Fill(it->pixels[ipix].column()); 
+      fHitsVsEvtCol[idx]->Fill(evtCnt, it->pixels[ipix].column()); 
 
       if (fPhCalOK) {
 	q = fPhCal.vcal(it->pixels[ipix].roc(), 
@@ -713,7 +762,8 @@ void PixTestXray::processData(uint16_t numevents) {
       fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
       fPH[idx]->Fill(it->pixels[ipix].value());
 	
-      if (fParFillTree) {
+      if (fParFillTree && ipix < 20000) {
+	++fTreeEvent.npix;
 	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
 	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
 	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
