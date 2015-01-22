@@ -1572,6 +1572,7 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 Event* hal::daqEvent() {
 
   Event* current_Event = new Event();
+  bool content = false;
 
   dataSink<Event*> Eventpump0, Eventpump1, Eventpump2, Eventpump3;
   splitter0 >> decoder0 >> Eventpump0;
@@ -1581,13 +1582,13 @@ Event* hal::daqEvent() {
   if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
 
   // Read the next Event from each of the pipes, copy the data:
-  try { *current_Event = *Eventpump0.Get(); }
+  try { *current_Event = *Eventpump0.Get(); content = true; }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
 
   if(src1.isConnected()) {
     try {
-      Event* tmp = Eventpump1.Get(); 
+      Event* tmp = Eventpump1.Get(); content = true;
       current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
@@ -1596,7 +1597,7 @@ Event* hal::daqEvent() {
   
   if(src2.isConnected()) {
     try {
-      Event* tmp = Eventpump2.Get(); 
+      Event* tmp = Eventpump2.Get(); content = true;
       current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
@@ -1605,13 +1606,13 @@ Event* hal::daqEvent() {
 
   if(src3.isConnected()) {
     try {
-      Event* tmp = Eventpump3.Get(); 
+      Event* tmp = Eventpump3.Get(); content = true;
       current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
     }
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
-
+  if(!content) throw pxarException("No event available");
   return current_Event;
 }
 
@@ -1688,18 +1689,20 @@ rawEvent* hal::daqRawEvent() {
   dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
   splitter0 >> rawpump0;
 
+  bool content = false;
+
   if(src1.isConnected()) { splitter1 >> rawpump1; }
   if(src2.isConnected()) { splitter2 >> rawpump2; }
   if(src3.isConnected()) { splitter3 >> rawpump3; }
 
   // Read the next Event from each of the pipes, copy the data:
-  try { *current_Event = *rawpump0.Get(); }
+  try { *current_Event = *rawpump0.Get(); content = true; }
   catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
   catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
 
   if(src1.isConnected()) {
     try {
-      rawEvent tmp = *rawpump1.Get();
+      rawEvent tmp = *rawpump1.Get(); content = true; 
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
     }
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
@@ -1707,7 +1710,7 @@ rawEvent* hal::daqRawEvent() {
   }
   if(src2.isConnected()) {
     try {
-      rawEvent tmp = *rawpump2.Get();
+      rawEvent tmp = *rawpump2.Get(); content = true; 
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
     }
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
@@ -1715,13 +1718,13 @@ rawEvent* hal::daqRawEvent() {
   }
   if(src3.isConnected()) {
     try {
-      rawEvent tmp = *rawpump3.Get();
+      rawEvent tmp = *rawpump3.Get(); content = true; 
       for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
     }
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
-
+  if(!content) throw pxarException("No event available");
   return current_Event;
 }
 
