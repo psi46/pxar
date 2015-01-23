@@ -2,9 +2,9 @@
 #include <stdlib.h>  
 #include <algorithm> 
 
-#include <TStopwatch.h>
 #include <TStyle.h>
 #include <TMarker.h>
+#include <TStopwatch.h>
 
 #include "PixTestPretest.hh"
 #include "log.h"

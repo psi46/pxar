@@ -5,6 +5,7 @@
 #include "PixTestAlive.hh"
 #include "log.h"
 
+#include <TStopwatch.h>
 #include <TH2.h>
 
 using namespace std;
@@ -111,6 +112,8 @@ PixTestAlive::~PixTestAlive() {
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
 
+  TStopwatch t;
+
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestAlive::doTest()"));
@@ -130,7 +133,8 @@ void PixTestAlive::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  LOG(logINFO) << "PixTestAlive::doTest() done ";
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestAlive::doTest() done, duration: " << seconds << " seconds";
 
 }
 

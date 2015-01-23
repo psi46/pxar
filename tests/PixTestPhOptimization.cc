@@ -2,6 +2,8 @@
 #include <algorithm> // std::find
 #include <sstream>   // parsing
 
+#include <TStopwatch.h>
+
 #include "PixTestPhOptimization.hh"
 #include "log.h"
 
@@ -96,6 +98,9 @@ void PixTestPhOptimization::bookHist(string /*name*/) {}
 PixTestPhOptimization::~PixTestPhOptimization() {}
 
 void PixTestPhOptimization::doTest() {
+
+  TStopwatch t;
+
   cacheDacs();
   bigBanner(Form("PixTestPhOptimization::doTest() Ntrig = %d, singlePix = %d", fParNtrig, (fFlagSinglePix?1:0)));
   fDirectory->cd();
@@ -206,7 +211,9 @@ void PixTestPhOptimization::doTest() {
     psString += Form(" %3d", fApi->_dut->getDAC(rocIds[i], "phscale"));
     poString += Form(" %3d", fApi->_dut->getDAC(rocIds[i], "phoffset"));
   }
-  LOG(logINFO) << "PixTestPhOptimization::doTest() done";
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestPhOptimization::doTest() done, duration: " << seconds << " seconds";
   LOG(logINFO) << "PH scale (per ROC):  " << psString;
   LOG(logINFO) << "PH offset (per ROC): " << poString;
   
