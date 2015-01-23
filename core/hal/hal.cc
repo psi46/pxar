@@ -16,7 +16,8 @@ hal::hal(std::string name) :
   _compatible(false),
   tbmtype(0x00),
   deser160phase(4),
-  rocType(0)
+  rocType(0),
+  _currentTrgSrc(TRG_SEL_PG_DIR)
 {
 
   // Get a new CTestboard class instance:
@@ -1832,8 +1833,28 @@ std::vector<uint16_t> hal::daqBuffer() {
 
 void hal::daqTriggerSource(uint16_t source) {
 
+  // Update the locally cached setting for trigger source:
+  _currentTrgSrc = source;
+
   LOG(logDEBUGHAL) << "Configuring trigger source " << std::hex << source << std::dec;
+
+  // Write new trigger source to DTB:
   _testboard->Trigger_Select(source);
+}
+
+void hal::daqTriggerSingleSignal(uint8_t signal) {
+
+  // Select the single signal direct source for triggers:
+  _testboard->Trigger_Select(TRG_SEL_SINGLE_DIR);
+  _testboard->Flush();
+
+  // Send the requested signal:
+  _testboard->Trigger_Send(signal);
+  _testboard->Flush();
+  
+  // Reset the trigger source to cached setting:
+  _testboard->Trigger_Select(_currentTrgSrc);
+  _testboard->Flush();
 }
 
 void hal::daqTrigger(uint32_t nTrig, uint16_t period) {

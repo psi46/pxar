@@ -286,6 +286,14 @@ namespace pxar {
      */
     void daqTriggerSource(uint16_t source);
 
+    /** Send a single signal via the DTB to the DUT. This function
+     *  first configures the trigger source TRG_SEL_SINGLE_DIR 
+     *  (direct sending of signals, no softTBM), then sends the 
+     *  signal and finally resets the trigger source to the previous
+     *  setting (from hal::_currentTrgSrc)
+     */
+    void daqTriggerSingleSignal(uint8_t signal);
+
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
     void daqTrigger(uint32_t nTrig, uint16_t period);
@@ -396,6 +404,8 @@ namespace pxar {
     uint8_t deser160phase;
     uint8_t rocType;
     uint8_t hubId;
+
+    uint16_t _currentTrgSrc;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
