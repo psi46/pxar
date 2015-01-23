@@ -146,8 +146,8 @@ sub setTbms {
 	$tbms .= "1    counters   0x81\n";
 	$tbms .= "2        mode   0xC0\n";
 	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0xE4\n";
-	$tbms .= "5       basee   0x20\n";
+	$tbms .= "4      delays   0x64\n";
+	$tbms .= "5       basee   0x2c\n";
 	$tbms .= "6 temperature   0x00\n";
     } elsif ($tbmtype eq "TBM08B_FPIX") {
 	$tbms .= "0       clear   0xF0\n";
@@ -393,7 +393,7 @@ probeD2 ctr
 ia 1.190
 id 1.100
 va 1.900
-vd 2.600
+vd 2.800
 
 EOF
 
@@ -675,7 +675,7 @@ sub printTbmParameters {
 
 	my $file = "$dir/tbmParameters_C${itbm}b.dat";
 	open(FH, ">$file") || die "cannot open $file\n";
-    $tbms =~ s/basee[ ]?.*/basee   0x00/;
+	$tbms =~ s/basee[ ]?.*/basee   0x00/;
 	print FH $tbms;
 	close(FH);
     }
