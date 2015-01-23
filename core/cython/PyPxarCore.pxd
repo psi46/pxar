@@ -207,6 +207,7 @@ cdef extern from "api.h" namespace "pxar":
         bool daqStart() except +
         bool daqStatus() except +
         bool daqTriggerSource(string triggerSource) except +
+        bool daqSingleSignal(string triggerSignal) except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +
         void daqTriggerLoopHalt() except +
