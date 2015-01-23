@@ -611,6 +611,14 @@ void PixParTab::setTbmParameter() {
       LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
       fGui->getApi()->setTbmReg(sdac, udac, itbm);
+      //      if (sdac == "basee") {
+	//	LOG(logDEBUG)<< "send reset to TBM because of phase adjustment"; 
+	//	fGui->getApi()->setTbmReg("base4", 0x80, itbm);
+      //      }
+      //PixTestCmd:       tbmset("base4", 2, 0x80);// reset once after changing phases
+      //int CmdProc::tbmset(string name, uint8_t cores, int value, uint8_t valueMask)
+      //                  fApi->setTbmReg( name, update, core );
+
       fTbmTextEntries[sdac]->SetBackgroundColor(fGui->fWhite);
     }
   }
