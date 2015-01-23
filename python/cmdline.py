@@ -341,6 +341,18 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqTriggerSource.__doc__, '']
 
+    @arity(1,1,[str])
+    def do_daqSingleSignal(self, signal):
+        """daqSingleSignal [signal]: send a single signal to the DUT"""
+        if self.api.daqSingleSignal(signal):
+            print "Trigger signal \"" + signal + "\" sent to DUT."
+        else:
+            print "Trigger signal lookup failed."
+
+    def complete_daqSingleSignal(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqSingleSignal.__doc__, '']
+
     @arity(0,0,[])
     def do_daqStop(self):
         """daqStop: stops the running DAQ session"""
