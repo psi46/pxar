@@ -2138,7 +2138,7 @@ void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t>
   std::vector<std::pair<uint16_t,uint8_t> > patterns;
 
   // Get the Pattern Generator dictionary for lookup:
-  PatternGeneratorDictionary * _dict = PatternGeneratorDictionary::getInstance();
+  PatternDictionary * _dict = PatternDictionary::getInstance();
 
   // Check total length of the pattern generator:
   if(pg_setup.size() > 256) {
@@ -2177,8 +2177,8 @@ void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t>
     // Tokenize the signal string into single PG signals, separated by ";":
     while (std::getline(signals, s, ';')) {
       // Get the signal from the dictionary object:
-      uint16_t sig = _dict->getSignal(s);
-      if(sig != PG_ERR) signal += sig;
+      uint16_t sig = _dict->getSignal(s,PATTERN_PG);
+      if(sig != PATTERN_ERR) signal += sig;
       else {
 	LOG(logCRITICAL) << "Could not find pattern generator signal \"" << s << "\" in the dictionary!";
 	throw InvalidConfig("Wrong pattern generator signal provided.");
