@@ -184,6 +184,9 @@ int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
     if (xp > 200) {
       continue;
     }
+    if (xp < 15) {
+      continue;
+    }
     name = Form("gauss_%d", p); 
     f = new TF1(name.c_str(), "gaus(0)", 0., 256.);
     int bin = h->GetXaxis()->FindBin(xp);
