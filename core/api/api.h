@@ -658,6 +658,15 @@ namespace pxar {
      */
     bool daqTriggerSource(std::string triggerSource);
 
+    /** Function to send a single (direct) signal to the DUT.
+     *
+     *  This first configures the trigger source for direct sending of single
+     *  signals, routes the signal to the DUT and then resets the trigger source
+     *  to the one previously configured. The possible trigger signals are matched
+     *  against the pattern dictionary.
+     */
+    bool daqSingleSignal(std::string triggerSignal);
+
     /** Function to read out the earliest pxar::Event in buffer from the current
      *  data acquisition session. If no Event is buffered, the function will 
      *  wait for the next Event to arrive and then return it.

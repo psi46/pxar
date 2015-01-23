@@ -1185,6 +1185,28 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   return true;
 }
 
+bool pxarCore::daqSingleSignal(std::string triggerSignal) {
+  
+  // We do NOT require a running DAQ session here!
+
+  // Get singleton Trigger dictionary object:
+  PatternDictionary * _dict = PatternDictionary::getInstance();
+
+  // Convert the trigger source name to lower case for comparison:
+  std::transform(triggerSignal.begin(), triggerSignal.end(), triggerSignal.begin(), ::tolower);
+
+  // Get the signal from the dictionary object:
+  uint16_t sig = _dict->getSignal(triggerSignal,PATTERN_TRG);
+  if(sig == PATTERN_ERR) {
+    LOG(logCRITICAL) << "Could not find trigger signal \"" << triggerSignal << "\" in the dictionary!";
+    throw InvalidConfig("Wrong trigger signal provided.");
+  }
+
+  LOG(logDEBUGAPI) << "Found TRG signal " << triggerSignal << " (" << std::hex << sig << std::dec << ")";
+  _hal->daqTriggerSingleSignal(static_cast<uint8_t>(sig));
+  return true;
+}
+
 bool pxarCore::daqTriggerSource(std::string triggerSource) {
 
   if(daqStatus()) {
