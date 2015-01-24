@@ -122,11 +122,8 @@ namespace pxar {
    Get();
    //record.Add(GetLast());
 
-   // Else keep reading and adding samples until we find any marker.
-   while ((Get() & 0xef00) != 0xc000) {
-     // Check if it's the weird split softTBM header:
-     if ((GetLast() & 0xe000) == 0xe000) { Get(); }
- 
+   // Else keep reading and adding samples until we find any trailer marker.
+   while ((Get() & 0xe000) != 0xe000) {
      // Check if the last read sample has Event end marker:
      if ((GetLast() & 0xe000) == 0xa000) {
        record.SetEndError();
