@@ -506,11 +506,11 @@ namespace pxar {
     // Return the register id for the name in question:
     inline uint16_t getSignal(std::string name, uint8_t type) {
       // Looking for pattern generator signal:
-      if(type == PATTERN_PG && _signals.find(name)->second._signal_pg != PATTERN_NONE) {
+      if(type == PATTERN_PG && _signals.find(name)->second._signal_pg != PATTERN_ERR) {
 	return _signals.find(name)->second._signal_pg;
       }
       // Looking for single trigger signal:
-      else if(type == PATTERN_TRG && _signals.find(name)->second._signal_trg != PATTERN_NONE) {
+      else if(type == PATTERN_TRG && _signals.find(name)->second._signal_trg != PATTERN_ERR) {
 	return _signals.find(name)->second._signal_trg;
       }
       // Couldn't find any matching signal:
@@ -550,9 +550,9 @@ namespace pxar {
       _signals["delay"]     = patternConfig(PATTERN_NONE,PATTERN_NONE,false);
       
       // Token:
-      _signals["pg_tok"]    = patternConfig(PG_TOK,PATTERN_NONE);
-      _signals["tok"]       = patternConfig(PG_TOK,PATTERN_NONE,false);
-      _signals["token"]     = patternConfig(PG_TOK,PATTERN_NONE,false);
+      _signals["pg_tok"]    = patternConfig(PG_TOK,PATTERN_ERR);
+      _signals["tok"]       = patternConfig(PG_TOK,PATTERN_ERR,false);
+      _signals["token"]     = patternConfig(PG_TOK,PATTERN_ERR,false);
 
       // Trigger:
       _signals["pg_trg"]    = patternConfig(PG_TRG,TRG_SEND_TRG,false);
