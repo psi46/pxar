@@ -76,9 +76,9 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
 void PixTestBBMap::init() {
   LOG(logDEBUG) << "PixTestBBMap::init()";
   
-  fDirectory = gFile->GetDirectory(fName.c_str());
+  fDirectory = gFile->GetDirectory("BumpBonding");
   if (!fDirectory) {
-    fDirectory = gFile->mkdir(fName.c_str());
+    fDirectory = gFile->mkdir("BumpBonding");
   }
   fDirectory->cd();
 }
