@@ -1,5 +1,6 @@
 pXar
 ====
+[![Build Status](https://travis-ci.org/psi46/pxar.svg?branch=master)](https://travis-ci.org/psi46/pxar)
 
 pixel Xpert analysis &amp; readout
 
