@@ -8,6 +8,8 @@
 #include <sstream>   // parsing
 #include <algorithm>  // std::find
 
+#include "TStopwatch.h"
+
 #include "PixTestBB2Map.hh"
 #include "PixUtil.hh"
 #include "log.h"
@@ -87,6 +89,8 @@ PixTestBB2Map::~PixTestBB2Map() {
 
 //------------------------------------------------------------------------------
 void PixTestBB2Map::doTest() {
+
+  TStopwatch t;
 
   cacheDacs();
   PixTest::update();
@@ -250,7 +254,11 @@ void PixTestBB2Map::doTest() {
   restoreDacs();
   PixTest::update(); 
   
-  LOG(logINFO) << "PixTestBB2Map::doTest() done";
+  int seconds = t.RealTime();
+  LOG(logINFO) << "PixTestBB2Map::doTest() done"
+	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"") 
+	       << ", duration: " << seconds << " seconds";
+
 
 }
 
