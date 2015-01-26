@@ -8,7 +8,7 @@
 #include <sstream>   // parsing
 #include <algorithm>  // std::find
 
-#include "PixTestBareBBMap.hh"
+#include "PixTestBB2Map.hh"
 #include "PixUtil.hh"
 #include "log.h"
 #include "constants.h"   // roctypes
@@ -16,25 +16,25 @@
 using namespace std;
 using namespace pxar;
 
-ClassImp(PixTestBareBBMap)
+ClassImp(PixTestBB2Map)
 
 //------------------------------------------------------------------------------
-PixTestBareBBMap::PixTestBareBBMap(PixSetup *a, std::string name): PixTest(a, name), fParNtrig(10), fParVcalS(222), fParPlWidth(35) {
+PixTestBB2Map::PixTestBB2Map(PixSetup *a, std::string name): PixTest(a, name), fParNtrig(10), fParVcalS(222), fParPlWidth(35) {
   PixTest::init();
   init();
-  LOG(logDEBUG) << "PixTestBareBBMap ctor(PixSetup &a, string, TGTab *)";
+  LOG(logDEBUG) << "PixTestBB2Map ctor(PixSetup &a, string, TGTab *)";
 }
 
 
 //------------------------------------------------------------------------------
-PixTestBareBBMap::PixTestBareBBMap(): PixTest() {
-  LOG(logDEBUG) << "PixTestBareBBMap ctor()";
+PixTestBB2Map::PixTestBB2Map(): PixTest() {
+  LOG(logDEBUG) << "PixTestBB2Map ctor()";
 }
 
 
 
 //------------------------------------------------------------------------------
-bool PixTestBareBBMap::setParameter(string parName, string sval) {
+bool PixTestBB2Map::setParameter(string parName, string sval) {
 
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (uint32_t i = 0; i < fParameters.size(); ++i) {
@@ -63,8 +63,8 @@ bool PixTestBareBBMap::setParameter(string parName, string sval) {
 }
 
 //------------------------------------------------------------------------------
-void PixTestBareBBMap::init() {
-  LOG(logDEBUG) << "PixTestBareBBMap::init()";
+void PixTestBB2Map::init() {
+  LOG(logDEBUG) << "PixTestBB2Map::init()";
   
   fDirectory = gFile->GetDirectory( fName.c_str() );
   if( !fDirectory ) {
@@ -74,23 +74,23 @@ void PixTestBareBBMap::init() {
 }
 
 // ----------------------------------------------------------------------
-void PixTestBareBBMap::setToolTips() {
+void PixTestBB2Map::setToolTips() {
   fTestTip = string( "Bump Bonding Test = threshold map for CalS");
   fSummaryTip = string("module summary");
 }
 
 
 //------------------------------------------------------------------------------
-PixTestBareBBMap::~PixTestBareBBMap() {
-  LOG(logDEBUG) << "PixTestBareBBMap dtor";
+PixTestBB2Map::~PixTestBB2Map() {
+  LOG(logDEBUG) << "PixTestBB2Map dtor";
 }
 
 //------------------------------------------------------------------------------
-void PixTestBareBBMap::doTest() {
+void PixTestBB2Map::doTest() {
 
   cacheDacs();
   PixTest::update();
-  bigBanner(Form("PixTestBareBBMap::doTest() Ntrig = %d, VcalS = %d, PlWidth = %d", fParNtrig, fParVcalS, fParPlWidth));
+  bigBanner(Form("PixTestBB2Map::doTest() Ntrig = %d, VcalS = %d, PlWidth = %d", fParNtrig, fParVcalS, fParPlWidth));
 
   fDirectory->cd();
 
@@ -250,7 +250,7 @@ void PixTestBareBBMap::doTest() {
   restoreDacs();
   PixTest::update(); 
   
-  LOG(logINFO) << "PixTestBareBBMap::doTest() done";
+  LOG(logINFO) << "PixTestBB2Map::doTest() done";
 
 }
 

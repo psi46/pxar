@@ -24,6 +24,7 @@
 #include "PixTestPhOptimization.hh"
 #include "PixTestReadback.hh"
 #include "PixTestBBMap.hh"
+#include "PixTestBB2Map.hh"
 #include "PixTestBareModule.hh"
 #include "PixTestFullTest.hh"
 
@@ -78,7 +79,8 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
   if (!name.compare("phoptimization")) return new PixTestPhOptimization(a, "PhOptimization");
   if (!name.compare("readback")) return new PixTestReadback(a, "Readback");
-  if (!name.compare("bumpbonding")) return new PixTestBBMap(a, "BumpBonding");
+  if (!name.compare("bb")) return new PixTestBBMap(a, "BB");
+  if (!name.compare("bb2")) return new PixTestBB2Map(a, "BB2");
   if (!name.compare("baremodule")) return new PixTestBareModule(a, "BareModule");
   if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");
   return 0;

@@ -448,11 +448,16 @@ DAC2LO              0
 DAC2HI              255
 PIX                 11,20
 
--- BumpBonding
+-- BB
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
 Ntrig               5
 vcals               250
+
+-- BB2
+Ntrig               10
+vcals               222
+Plwidth             35
 
 -- Readback
 calibrateVd         button
