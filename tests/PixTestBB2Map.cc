@@ -105,7 +105,7 @@ void PixTestBB2Map::doTest() {
 
   // enable roc
 
-  uint16_t FLAGS0 = flag | FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS0 = flag | FLAG_FORCE_MASKED;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
