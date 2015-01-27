@@ -443,7 +443,7 @@ void PixTestTrim::trimTest() {
   saveTrimBits();
   
   // -- summary printout
-  LOG(logINFO) << "PixTestAlive::trimTest() done";
+  LOG(logINFO) << "PixTestTrim::trimTest() done";
   LOG(logINFO) << "vtrim:     " << vtrimString; 
   LOG(logINFO) << "vthrcomp:  " << vthrcompString; 
   LOG(logINFO) << "vcal mean: " << trimMeanString; 
