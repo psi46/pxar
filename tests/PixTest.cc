@@ -1400,7 +1400,7 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
     if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
       dumpFile = true; 
       OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
-      OutputFile << "Mode 1 " << "Ntrig " << getParameter("ntrig") << endl;
+      OutputFile << "Mode 1 " << "Ntrig " << fNtrig << endl;
     }
 
 
