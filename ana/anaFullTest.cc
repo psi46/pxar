@@ -301,7 +301,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
   char buffer[1000];
   string sline; 
   string::size_type s1;
-  int val(0); 
+  vector<double> x;
   IN.open(Form("%s/pxar.log", dir.c_str())); 
   while (IN.getline(buffer, 1000, '\n')) {
     sline = buffer; 
@@ -309,6 +309,12 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
     break;
+  }
+
+  x = splitIntoRocs(sline);
+  for (unsigned int i = 0; i < x.size(); ++i) {
+    //     cout << "Filling into " << hist->GetName() << " x = " << x[i] << endl;
+    hists[i]->Fill(x[i]); 
   }
 
   IN.close(); 
@@ -322,7 +328,6 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
   char buffer[1000];
   string sline; 
   string::size_type s1;
-  int val(0); 
   vector<double> x;
   IN.open(Form("%s/pxar.log", dir.c_str())); 
   while (IN.getline(buffer, 1000, '\n')) {
@@ -377,9 +382,9 @@ vector<string> anaFullTest::glob(string basename) {
   vector<string> lof; 
   TString fname;
   const char *file;
-  TSystem *unix = gSystem; //new TUnixSystem();
-  void *pDir = unix->OpenDirectory(".");
-  while ((file = unix->GetDirEntry(pDir))) {
+  TSystem *lunix = gSystem; //new TUnixSystem();
+  void *pDir = lunix->OpenDirectory(".");
+  while ((file = lunix->GetDirEntry(pDir))) {
     fname = file;
     if (fname.Contains(basename.c_str())) {
       lof.push_back(string(fname));
