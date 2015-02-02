@@ -1697,7 +1697,7 @@ Event* hal::daqEvent() {
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
-  if(!content) throw pxarException("No event available");
+  if(!content) throw DataNoEvent("No event available");
   return current_Event;
 }
 
@@ -1763,7 +1763,7 @@ std::vector<Event*> hal::daqAllEvents() {
     }
     else { evt.push_back(current_Event); }
   }
-
+  if(evt.empty()) throw DataNoEvent("No event available");
   return evt;
 }
 
@@ -1809,7 +1809,7 @@ rawEvent* hal::daqRawEvent() {
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
-  if(!content) throw pxarException("No event available");
+  if(!content) throw DataNoEvent("No event available");
   return current_Event;
 }
 
@@ -1876,7 +1876,7 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
     }
     else { raw.push_back(current_Event); }
   }
-
+  if(raw.empty()) throw DataNoEvent("No event available");
   return raw;
 }
 
@@ -1911,7 +1911,7 @@ std::vector<uint16_t> hal::daqBuffer() {
     catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
     catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
   }
-
+  if(raw.empty()) throw DataNoEvent("No data available");
   return raw;
 }
 

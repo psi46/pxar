@@ -1,3 +1,4 @@
+
 /**
  * pxar API class implementation
  */
@@ -1320,6 +1321,8 @@ void pxarCore::daqTriggerLoopHalt() {
 std::vector<uint16_t> pxarCore::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
+  // The HAL function throws pxar::DataNoEvent if nothing to be 
+  // returned
   std::vector<uint16_t> buffer = _hal->daqBuffer();
   return buffer;
 }
@@ -1328,6 +1331,8 @@ std::vector<rawEvent> pxarCore::daqGetRawEventBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs
+  // The HAL function throws pxar::DataNoEvent if nothing to be 
+  // returned
   std::vector<rawEvent> data = std::vector<rawEvent>();
   std::vector<rawEvent*> buffer = _hal->daqAllRawEvents();
 
@@ -1342,6 +1347,8 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
 
   // Reading out all data from the DTB and returning the decoded Event buffer.
   // Select the right readout channels depending on the number of TBMs
+  // The HAL function throws pxar::DataNoEvent if nothing to be 
+  // returned
   std::vector<Event> data = std::vector<Event>();
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
@@ -1357,7 +1364,8 @@ Event pxarCore::daqGetEvent() {
   // Check DAQ status:
   if(!daqStatus()) { return Event(); }
 
-  // Return the next decoded Event from the FIFO buffer:
+  // Return the next decoded Event from the FIFO buffer.
+  // The HAL function throws pxar::DataNoEvent if no event is available
   return (*_hal->daqEvent());
 }
 
@@ -1367,6 +1375,7 @@ rawEvent pxarCore::daqGetRawEvent() {
   if(!daqStatus()) { return rawEvent(); }
 
   // Return the next raw data record from the FIFO buffer:
+  // The HAL function throws pxar::DataNoEvent if no event is available
   return (*_hal->daqRawEvent());
 }
 
