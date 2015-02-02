@@ -8,6 +8,7 @@
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TMath.h>
+#include <TStopwatch.h>
 
 #include "PixTestGainPedestal.hh"
 #include "PixUtil.hh"
@@ -105,6 +106,8 @@ PixTestGainPedestal::~PixTestGainPedestal() {
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::doTest() {
 
+  TStopwatch t;
+
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestGainPedestal::doTest() ntrig = %d", fParNtrig));
@@ -112,6 +115,9 @@ void PixTestGainPedestal::doTest() {
   measure();
   fit();
   saveGainPedestalParameters();
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestGainPedestal::doTest() done, duration: " << seconds << " seconds";
 }
 
 

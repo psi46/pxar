@@ -146,8 +146,8 @@ sub setTbms {
 	$tbms .= "1    counters   0x81\n";
 	$tbms .= "2        mode   0xC0\n";
 	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0xE4\n";
-	$tbms .= "5       basee   0x20\n";
+	$tbms .= "4      delays   0x64\n";
+	$tbms .= "5       basee   0x2c\n";
 	$tbms .= "6 temperature   0x00\n";
     } elsif ($tbmtype eq "TBM08B_FPIX") {
 	$tbms .= "0       clear   0xF0\n";
@@ -169,8 +169,8 @@ sub setTbms {
 	$tbms .= "1    counters   0x81\n";
 	$tbms .= "2        mode   0xC0\n";
 	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0xE4\n";
-	$tbms .= "5       basee   0x24\n";
+	$tbms .= "4      delays   0x64\n";
+	$tbms .= "5       basee   0x34\n";
 	$tbms .= "6 temperature   0x00\n";
     }
 
@@ -319,6 +319,7 @@ sub cleanFiles {
 # ----------------------------------------------------------------------
 sub printConfigParameters {
     my $file = "$dir/configParameters.dat";
+    my $VD = "2.600"; 
     open(FH, ">$file") || die "cannot open $file\n";
     print FH <<"EOF";
 testboardName *
@@ -367,10 +368,12 @@ if ($opt_m) {
     if ($tbmtype eq "TBM08") {
 	print FH "tbmType tbm08\n";
     } elsif ($tbmtype eq "TBM08B") {
+	$VD = "2.800";
 	print FH "tbmType tbm08b\n";
     } elsif ($tbmtype eq "TBM08B_FPIX") {
 	print FH "tbmType tbm08b\n"; #sic!
     } elsif ($tbmtype eq "TBM09") {
+	$VD = "2.900";
 	print FH "tbmType tbm09\n";
     } else {
 	print FH "tbmType tbm08\n";
@@ -393,7 +396,7 @@ probeD2 ctr
 ia 1.190
 id 1.100
 va 1.900
-vd 2.600
+vd $VD
 
 EOF
 
@@ -445,11 +448,16 @@ DAC2LO              0
 DAC2HI              255
 PIX                 11,20
 
--- BumpBonding
+-- BB
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
 Ntrig               5
 vcals               250
+
+-- BB2
+Ntrig               10
+vcals               222
+Plwidth             35
 
 -- Readback
 calibrateVd         button
@@ -675,7 +683,7 @@ sub printTbmParameters {
 
 	my $file = "$dir/tbmParameters_C${itbm}b.dat";
 	open(FH, ">$file") || die "cannot open $file\n";
-    $tbms =~ s/basee[ ]?.*/basee   0x00/;
+	$tbms =~ s/basee[ ]?.*/basee   0x00/;
 	print FH $tbms;
 	close(FH);
     }

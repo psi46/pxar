@@ -125,6 +125,17 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.enable()
         def __set__(self, enable): self.thisptr.setEnable(enable)
 
+cdef class Statistics:
+    cdef statistics thisobj      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisobj = statistics()
+    def __dealloc__(self):
+        pass
+    def __str__(self):
+        return "Decoding statistics..."
+    cdef c_clone(self, statistics s):
+        self.thisobj = s
+
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
     def __cinit__(self):
@@ -566,6 +577,14 @@ cdef class PyPxarCore:
 
     def daqStop(self):
         return self.thisptr.daqStop()
+
+    def getStatistics(self):
+        cdef statistics r
+        r = self.thisptr.getStatistics()
+        r.dump()
+        s = Statistics()
+        s.c_clone(r)
+        return s
 
 cimport regdict
 cdef class PyRegisterDictionary:

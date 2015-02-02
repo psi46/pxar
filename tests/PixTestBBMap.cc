@@ -4,6 +4,7 @@
 #include <sstream>   // parsing
 #include <algorithm>  // std::find
 
+#include <TArrow.h>
 #include <TSpectrum.h>
 #include "TStopwatch.h"
 
@@ -76,9 +77,9 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
 void PixTestBBMap::init() {
   LOG(logDEBUG) << "PixTestBBMap::init()";
   
-  fDirectory = gFile->GetDirectory(fName.c_str());
+  fDirectory = gFile->GetDirectory("BumpBonding");
   if (!fDirectory) {
-    fDirectory = gFile->mkdir(fName.c_str());
+    fDirectory = gFile->mkdir("BumpBonding");
   }
   fDirectory->cd();
 }
@@ -130,6 +131,7 @@ void PixTestBBMap::doTest() {
       }
     }
     h = distribution((TH2D*)thrmapsCals[i], 256, 0., 256.);
+
     dlist.push_back(h); 
     fHistList.push_back(h); 
   }
@@ -150,6 +152,13 @@ void PixTestBBMap::doTest() {
     bbprob = static_cast<int>(h->Integral(cutDead, h->FindBin(255)));
     bbString += Form(" %4d", bbprob); 
     bbCuts   += Form(" %4d", cutDead); 
+
+    TArrow *pa = new TArrow(cutDead, 0.5*h->GetMaximum(), cutDead, 0., 0.06, "|>"); 
+    pa->SetArrowSize(0.1);
+    pa->SetAngle(40);
+    pa->SetLineWidth(2);
+    h->GetListOfFunctions()->Add(pa); 
+
   }
 
   if (h) {
@@ -182,6 +191,9 @@ int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
     double xp = xpeaks[p];
     if (p > 1) continue;
     if (xp > 200) {
+      continue;
+    }
+    if (xp < 15) {
       continue;
     }
     name = Form("gauss_%d", p); 

@@ -735,8 +735,8 @@ void hal::setHubId(unsigned char) {}
 
 void hal::SigSetLCDS() {}
 
-uint32_t hal::daqErrorCount() {
-  return 0;
+statistics hal::daqStatistics() {
+  return statistics();
 }
 
 uint16_t hal::GetADC(uint8_t rpc_par1) {

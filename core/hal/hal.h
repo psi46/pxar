@@ -335,9 +335,9 @@ namespace pxar {
      */
     std::vector<Event*> daqAllEvents();
 
-    /** Return the current total decoding error number for all channels:
+    /** Return the current decoding statistics for all channels:
      */
-    uint32_t daqErrorCount();
+    statistics daqStatistics();
 
     /** Return all readback values for the last readout. Return format is a vector containing
      *  one vector of uint16_t radback values for every ROC in the readout chain.

@@ -6,6 +6,7 @@
 #include <TH1.h>
 #include <TRandom.h>
 #include <TMath.h>
+#include <TStopwatch.h>
 
 #include "PixTestScurves.hh"
 #include "PixUtil.hh"
@@ -157,6 +158,8 @@ void PixTestScurves::doTest() {
 // ----------------------------------------------------------------------
 void PixTestScurves::fullTest() {
 
+  TStopwatch t;
+
   fDirectory->cd();
   PixTest::update(); 
   fParNtrig = 20; 
@@ -164,13 +167,18 @@ void PixTestScurves::fullTest() {
 
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
-  fParDacHi = 139;
+  fParDacHi = 119;
+  fParDacsPerStep = 40;   
   scurves();
 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
-  fParDacHi = 169;
+  fParDacHi = 159;
+  fParDacsPerStep = 40;   
   scurves();
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestScurves::fullTest() done, duration: " << seconds << " seconds";
 
 
 }

@@ -126,7 +126,7 @@ def PxarStartup(directory, verbosity):
             ("PG_TOK",0))
     else:
         pg_setup = (
-            ("PG_REST",15),
+            ("PG_RESR",15),
             ("PG_CAL",106),
             ("PG_TRG",0))
 

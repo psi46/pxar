@@ -5,6 +5,7 @@
 
 #include <TH1.h>
 #include <TRandom.h>
+#include <TStopwatch.h>
 
 #include "PixTestTrim.hh"
 #include "PixUtil.hh"
@@ -106,6 +107,8 @@ PixTestTrim::~PixTestTrim() {
 // ----------------------------------------------------------------------
 void PixTestTrim::doTest() {
 
+  TStopwatch t;
+
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestTrim::doTest()"));
@@ -130,7 +133,8 @@ void PixTestTrim::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  LOG(logINFO) << "PixTestTrim::doTest() done ";
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestTrim::doTest() done, duration: " << seconds << " seconds";
 }
 
 // ----------------------------------------------------------------------
@@ -160,7 +164,7 @@ void PixTestTrim::trimTest() {
   vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", NTRIG, 0, 159, 40, 7); 
   PixTest::update(); 
   if (thr0.size()/3 != rocIds.size()) {
-    LOG(logERROR) << "scurve map size " << thr0.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
+    LOG(logERROR) << "scurve map size " << thr0.size() << " does not agree with number of enabled ROCs " << rocIds.size();
     fProblem = true;
     return;
   }
@@ -175,7 +179,7 @@ void PixTestTrim::trimTest() {
 
   // -- determine pixel with largest VCAL threshold
   print("Vcal thr map (pixel with maximum Vcal thr)"); 
-  vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 0, 159, 40, 1); 
+  vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 0, 159, -1, 1); 
   PixTest::update(); 
   if (thr1.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr1.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
@@ -323,7 +327,7 @@ void PixTestTrim::trimTest() {
 
   // -- set trim bits
   int correction = 4;
-  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 199, 50, 1); 
+  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 199, -1, 1); 
   if (thr2.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map thr2 size " << thr2.size() << " does not agree with number of enabled ROCs " << rocIds.size();
     fProblem = true;
@@ -386,6 +390,7 @@ void PixTestTrim::trimTest() {
   }
 
   // -- create trimMap
+  string trimbitsMeanString(""), trimbitsRmsString(""); 
   for (unsigned int i = 0; i < thr5a.size(); ++i) {
     h2 = bookTH2D(Form("TrimMap_C%d", i), 
 		  Form("TrimMap_C%d", i), 
@@ -400,6 +405,10 @@ void PixTestTrim::trimTest() {
     fHistOptions.insert(make_pair(h2, "colz"));
 
     TH1* d1 = distribution(h2, 16, 0., 16.); 
+
+    trimbitsMeanString += Form("%6.2f ", d1->GetMean()); 
+    trimbitsRmsString += Form("%6.2f ", d1->GetRMS()); 
+
     fHistList.push_back(d1); 
   }
 
@@ -414,6 +423,7 @@ void PixTestTrim::trimTest() {
     trimMeanString += Form("%6.2f ", thrF[i]->GetMean()); 
     trimRmsString += Form("%6.2f ", thrF[i]->GetRMS()); 
   }
+
 
   TH1 *h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
@@ -433,11 +443,13 @@ void PixTestTrim::trimTest() {
   saveTrimBits();
   
   // -- summary printout
-  LOG(logINFO) << "PixTestAlive::trimTest() done";
+  LOG(logINFO) << "PixTestTrim::trimTest() done";
   LOG(logINFO) << "vtrim:     " << vtrimString; 
   LOG(logINFO) << "vthrcomp:  " << vthrcompString; 
   LOG(logINFO) << "vcal mean: " << trimMeanString; 
   LOG(logINFO) << "vcal RMS:  " << trimRmsString; 
+  LOG(logINFO) << "bits mean: " << trimbitsMeanString; 
+  LOG(logINFO) << "bits RMS:  " << trimbitsRmsString; 
 }
 
 
@@ -493,7 +505,7 @@ void PixTestTrim::trimBitTest() {
   fApi->setDAC("CtrlReg", 0); 
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
-  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 199, 50, 7), "thr");
+  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 199, -1, 7), "thr");
   
   // -- now loop over all trim bits
   vector<TH1*> thr;
