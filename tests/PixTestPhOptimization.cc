@@ -367,14 +367,18 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   while(minph<1 && flag_minPh<52){
     result.clear();
     fApi->setDAC("phscale", init_phScale);
-    fApi->setDAC("vcal",fMinThr*1.2);
-    fApi->setDAC("ctrlreg",4);
+    fApi->setDAC("ctrlreg",0);
+    //    fApi->setDAC("vcal",fMinThr*1.2);
+    fApi->setDAC("vcal",150);
     fApi->setDAC("phoffset",200);  
     int cnt(0); 
     bool done(false);
-    while (!done) {
+    int size = 0;
+    while (!(done && size !=0)) {
       try {
 	result = fApi->getPulseheightMap(0, 10);
+	size = result.size();
+	++cnt;
 	done = true;
       } catch(pxarException &e) {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
@@ -484,6 +488,13 @@ map<uint8_t, int> PixTestPhOptimization::InsideRangePH(map<uint8_t,int> &po_opt,
   }
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
+  for(dacit_max = dacdac_max.begin(); dacit_max != dacdac_max.end(); dacit_max++){
+    for(int pixit = 0; pixit < dacit_max->second.second.size(); pixit++){
+      LOG(logDEBUG)<<"dacit_max: pixel "<<(int)dacit_max->second.second[pixit].roc()<<", "<<(int)dacit_max->second.second[pixit].column()<<", "<<(int)dacit_max->second.second[pixit].row()<<", ph offset "<<(int)dacit_max->first<<", ph scale "<<(int)dacit_max->second.first<<", max ph "<<(int)dacit_max->second.second[pixit].value();
+      LOG(logDEBUG)<<"dacit_min: pixel "<<(int)dacit_min->second.second[pixit].roc()<<", "<<(int)dacit_min->second.second[pixit].column()<<", "<<(int)dacit_min->second.second[pixit].row()<<", ph offset "<<(int)dacit_min->first<<", ph scale "<<(int)dacit_min->second.first<<", min ph "<<(int)dacit_min->second.second[pixit].value();
+    }
+    dacit_min++;
+  }
   int pixsize_max=0;
   int pixsize_min=0;
   LOG(logDEBUG)<<"InsideRange() subtest";
@@ -653,7 +664,7 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
     
     //PH map for lower vcal sampling point
     for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
-      fApi->setDAC("ctrlreg",4);
+      fApi->setDAC("ctrlreg",0);
       fApi->setDAC("vcal",minVcal[rocIds[roc_it]]+10, rocIds[roc_it] );
     }
     map<int, TH2D* > h2_PhMapsMin;
@@ -692,12 +703,15 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   string name, title;
   TH1D *h1(0); 
+    for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
+      fApi->setDAC("ctrlreg",4);
+    }
   vector<pair<uint8_t, vector<pixel> > > results;
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
   //draw PH curve for max and min pixel on every ROC
     results.clear();
-    name  = Form("PH_ROC%d_c%d_r%d_C%d", rocIds[roc_it], maxpixels[rocIds[roc_it]].column(), maxpixels[rocIds[roc_it]].row(), 0);
-    title = Form("PH_ROC%d_c%d_r%d_C%d, phscale = %d, phoffset = %d, maxpixel", rocIds[roc_it], maxpixels[rocIds[roc_it]].column(), maxpixels[rocIds[roc_it]].row(), 0, ps_opt[rocIds[roc_it]], po_opt[rocIds[roc_it]]);
+    name  = Form("PH_c%d_r%d_C%d", maxpixels[rocIds[roc_it]].column(), maxpixels[rocIds[roc_it]].row(), rocIds[roc_it]);
+    title = Form("PH_c%d_r%d_C%d, phscale = %d, phoffset = %d, maxpixel", maxpixels[rocIds[roc_it]].column(), maxpixels[rocIds[roc_it]].row(), rocIds[roc_it], ps_opt[rocIds[roc_it]], po_opt[rocIds[roc_it]]);
     h1 = bookTH1D(name, name, 256, 0., 256.);
     fApi->_dut->testAllPixels(false);
     fApi->_dut->maskAllPixels(true);
@@ -730,8 +744,8 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
     
     results.clear();
     
-    name  = Form("PH_ROC%d_c%d_r%d_C%d", rocIds[roc_it], minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), 0);
-    title = Form("PH_ROC%d_c%d_r%d_C%d, phscale = %d, phoffset = %d, minpixel", rocIds[roc_it], minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), 0, ps_opt[rocIds[roc_it]], po_opt[rocIds[roc_it]]);
+    name  = Form("PH_c%d_r%d_C%d", minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), rocIds[roc_it]);
+    title = Form("PH_c%d_r%d_C%d, phscale = %d, phoffset = %d, minpixel", minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), rocIds[roc_it], ps_opt[rocIds[roc_it]], po_opt[rocIds[roc_it]]);
     h1 = bookTH1D(name, name, 256, 0., 256.);
     fApi->_dut->testAllPixels(false);
     fApi->_dut->maskAllPixels(true);
@@ -798,9 +812,9 @@ void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::p
     fApi->_dut->testPixel(minp_it->second.column(),minp_it->second.row(),true, minp_it->first);
     fApi->_dut->maskPixel(minp_it->second.column(),minp_it->second.row(),false, minp_it->first);
   }
-  fApi->setDAC("ctrlreg",4);
+  fApi->setDAC("ctrlreg",0);
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
-    fApi->setDAC("ctrlreg",4);
+    fApi->setDAC("ctrlreg",0);
     fApi->setDAC("vcal",minVcal[rocIds[roc_it]]+10, rocIds[roc_it] );
   }
   //scanning through offset and scale for min pixel (or same randpixel)
