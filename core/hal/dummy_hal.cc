@@ -707,6 +707,10 @@ std::vector<uint16_t> hal::daqBuffer() {
   return raw;
 }
 
+void hal::daqTriggerSource(uint16_t /*source*/) {}
+
+void hal::daqTriggerSingleSignal(uint8_t /*signal*/) {}
+
 void hal::daqTrigger(uint32_t /*nTrig*/, uint16_t /*period*/) {}
 
 void hal::daqTriggerLoop(uint16_t /*period*/) {}
