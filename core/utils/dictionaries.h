@@ -598,47 +598,72 @@ namespace pxar {
 
     // Return the register id for the name in question:
     inline uint16_t getSignal(std::string name) {
-      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
+      if(_signals.find(name) != _signals.end()) { return _signals.find(name)->second._trigger_type; }
       else { return TRG_ERR; }
     }
 
-    // Return the signal name for the probe signal in question:
+    // Return the emulation status for the name in question:
+    inline bool getEmulationState(std::string name) {
+      if(_signals.find(name) != _signals.end()) { return _signals.find(name)->second._tbm_emulation; }
+      else { return 0; }
+    }
+
+    // Return the emulation status for the trigger register in question:
+    inline bool getEmulationState(uint16_t signal) {
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._trigger_type == signal) { return iter->second._tbm_emulation; }
+      }
+      return 0;
+    }
+
+    // Return the signal name for the trigger type in question:
     inline std::string getName(uint16_t signal) {
-      for(std::map<std::string, uint16_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
-	if((*iter).second == signal) { return (*iter).first; }
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._trigger_type == signal && iter->second._preferred == true) { return iter->first; }
       }
       return "";
     }
 
   private:
+    /** class to store a trigger config
+     */
+    class triggerConfig {
+    public:
+      triggerConfig() {};
+    triggerConfig(uint16_t trigger_type, bool tbm_emulation = false, bool preferred = true) : _trigger_type(trigger_type), _tbm_emulation(tbm_emulation), _preferred(preferred) {};
+      uint16_t _trigger_type;  // Register for trigger type
+      bool _tbm_emulation; // Store if this trigger is routed via the soft TBM and adds its header/trailer
+      bool _preferred;
+    };
+
     TriggerDictionary() {
       // Asynchronous external triggers:
-      _signals["async"]            = TRG_SEL_ASYNC;
-      _signals["extern"]           = TRG_SEL_ASYNC;
+      _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
+      _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
 
       // Synchronous external triggers:
-      _signals["sync"]             = TRG_SEL_SYNC;
+      _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
 
       // Single event injection:
-      _signals["single"]           = TRG_SEL_SINGLE;
-      _signals["single_dir"]       = TRG_SEL_SINGLE_DIR;
-      _signals["single_direct"]    = TRG_SEL_SINGLE_DIR;
+      _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);
+      _signals["single_dir"]       = triggerConfig(TRG_SEL_SINGLE_DIR,false);
+      _signals["single_direct"]    = triggerConfig(TRG_SEL_SINGLE_DIR,false,false);
 
       // Internal Trigger Generator
-      _signals["gen"]              = TRG_SEL_GEN;
-      _signals["generator"]        = TRG_SEL_GEN;
+      _signals["gen"]              = triggerConfig(TRG_SEL_GEN,true);
+      _signals["generator"]        = triggerConfig(TRG_SEL_GEN,true,false);
 
       // Pattern Generator
-      _signals["pg"]               = TRG_SEL_PG;
-      _signals["patterngenerator"] = TRG_SEL_PG;
-      _signals["pg_dir"]           = TRG_SEL_PG_DIR;
-      _signals["pg_direct"]        = TRG_SEL_PG_DIR;
+      _signals["pg"]               = triggerConfig(TRG_SEL_PG,true);
+      _signals["patterngenerator"] = triggerConfig(TRG_SEL_PG,true,false);
+      _signals["pg_dir"]           = triggerConfig(TRG_SEL_PG_DIR,false);
+      _signals["pg_direct"]        = triggerConfig(TRG_SEL_PG_DIR,false,false);
 
-      _signals["chain"]            = TRG_SEL_CHAIN;
-      _signals["sync_out"]         = TRG_SEL_SYNC_OUT;
+      _signals["chain"]            = triggerConfig(TRG_SEL_CHAIN,false);
+      _signals["sync_out"]         = triggerConfig(TRG_SEL_SYNC_OUT,false);
     }
 
-    std::map<std::string, uint16_t> _signals;
+    std::map<std::string, triggerConfig> _signals;
     TriggerDictionary(TriggerDictionary const&); // Don't Implement
     void operator=(TriggerDictionary const&); // Don't implement
   };
