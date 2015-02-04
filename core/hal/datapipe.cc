@@ -10,14 +10,6 @@ namespace pxar {
     pos = 0;
     do {
       dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
-      /*
-	if (dtbRemainingSize < 100000) {
-	if      (dtbRemainingSize > 1000) mDelay(  1);
-	else if (dtbRemainingSize >    0) mDelay( 10);
-	else                              mDelay(100);
-	}
-	LOG(logDEBUGPIPES) << "Buffer size: " << buffer.size();
-      */
     
       if (buffer.size() == 0) {
 	if (stopAtEmptyData) throw dsBufferEmpty();
