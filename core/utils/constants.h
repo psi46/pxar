@@ -18,10 +18,12 @@ namespace pxar {
 
 
 // --- TBM Types ---------------------------------------------------------------
-#define TBM_08             0x11
-#define TBM_08A            0x12
-#define TBM_08B            0x13
-#define TBM_09             0x14
+#define TBM_NONE           0x20
+#define TBM_EMU            0x21
+#define TBM_08             0x22
+#define TBM_08A            0x23
+#define TBM_08B            0x24
+#define TBM_09             0x25
 
 
 // --- TBM Register -----------------------------------------------------------
