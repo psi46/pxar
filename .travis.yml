@@ -10,7 +10,7 @@ before_install:
 before_script:
   - sudo wget http://downloads.sourceforge.net/project/cernrootdebs/latest-recommended/root_5.34.07-1_amd64.deb
   - sudo dpkg --install root_5.34.07-1_amd64.deb
-  - echo $ROOTSYS
+  - source /usr/local/bin/thisroot.sh
 script: 
   - mkdir build && cd build/
   - cmake ..
