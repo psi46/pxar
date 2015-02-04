@@ -175,6 +175,7 @@ namespace pxar {
     // The splitter routines:
     rawEvent* SplitDeser160();
     rawEvent* SplitDeser400();
+    rawEvent* SplitSoftTBM();
 
     bool nextStartDetected;
   public:

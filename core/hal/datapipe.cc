@@ -74,7 +74,7 @@ namespace pxar {
   }
 
   rawEvent* dtbEventSplitter::SplitDeser160() {
-    /*  record.Clear();
+    record.Clear();
 
     // If last one had Event end marker, get a new sample:
     if (GetLast() & 0x4000) { Get(); }
@@ -112,7 +112,7 @@ namespace pxar {
     return &record;
   }
 
-  rawEvent* dtbEventSplitter::SplitSoftTBM() {*/
+  rawEvent* dtbEventSplitter::SplitSoftTBM() {
    record.Clear();
 
    // If last one had Event end marker, get a new sample:
