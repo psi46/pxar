@@ -24,6 +24,8 @@ private:
 
 	int  fParMaxSteps;
 	bool fStop;
+	bool fBBMap;
+	bool fBB2Map;
 
 	ClassDef(PixTestBareModule, 1)
 

@@ -585,12 +585,14 @@ outputfile          defaultPattern
 resettodefault      button
 
 -- BareModule
+stepmax(1-3)        3
+bbmap               checkbox(1)
+bb2map(desy)        checkbox
 checkcontact        button
 pretest             button
 alive               button
 bumpbonding         button
 dofullsequence      button
-stepmax(1-3)        3
 
 -- DAQ
 delayTBM            checkbox
