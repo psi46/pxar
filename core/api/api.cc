@@ -1277,6 +1277,7 @@ std::vector<rawEvent> pxarCore::daqGetRawEventBuffer() {
   // Dereference all vector entries and give data back:
   for(std::vector<rawEvent*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
+    delete *it;
   }
   return data;
 }
@@ -1291,6 +1292,7 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   // Dereference all vector entries and give data back:
   for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
     data.push_back(**it);
+    delete *it;
   }
   return data;
 }
@@ -1301,7 +1303,10 @@ Event pxarCore::daqGetEvent() {
   if(!daqStatus()) { return Event(); }
 
   // Return the next decoded Event from the FIFO buffer:
-  return (*_hal->daqEvent());
+  Event * evt = _hal->daqEvent();
+  Event ret = *evt;
+  delete evt;
+  return ret;
 }
 
 rawEvent pxarCore::daqGetRawEvent() {
@@ -1310,7 +1315,10 @@ rawEvent pxarCore::daqGetRawEvent() {
   if(!daqStatus()) { return rawEvent(); }
 
   // Return the next raw data record from the FIFO buffer:
-  return (*_hal->daqRawEvent());
+  rawEvent * evt = _hal->daqRawEvent();
+  rawEvent ret = *evt;
+  delete evt;
+  return ret;
 }
 
 bool pxarCore::daqStop() {
