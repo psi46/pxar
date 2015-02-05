@@ -330,7 +330,7 @@ void PixTestHighRate::doCalDelScan() {
     calDelEffHist.push_back(h1); 
   }
 
-  int nsteps(10); 
+  int nsteps(20); 
   for (int istep = 0; istep < nsteps; ++istep) {
     // -- set CalDel per ROC 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
