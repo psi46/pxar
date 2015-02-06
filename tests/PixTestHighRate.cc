@@ -330,7 +330,7 @@ void PixTestHighRate::doCalDelScan() {
     calDelEffHist.push_back(h1); 
   }
 
-  int nsteps(10); 
+  int nsteps(20); 
   for (int istep = 0; istep < nsteps; ++istep) {
     // -- set CalDel per ROC 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
@@ -391,10 +391,38 @@ void PixTestHighRate::doXPixelAlive() {
   banner(Form("PixTestHighRate::xPixelAlive() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
   cacheDacs();
 
+
+  // -- cache triggerdelay
+  vector<pair<string, uint8_t> > oldDelays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  bool foundIt(false);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    if (oldDelays[i].first == "triggerdelay") {
+      foundIt = true;
+    }
+    LOG(logDEBUG) << " old set: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
+
+  vector<pair<string, uint8_t> > delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  if (!foundIt) {
+    delays.push_back(make_pair("triggerdelay", fParTriggerDelay));
+    oldDelays.push_back(make_pair("triggerdelay", 0));
+  } else {
+    for (unsigned int i = 0; i < delays.size(); ++i) {
+      if (delays[i].first == "triggerdelay") {
+	delays[i].second = fParTriggerDelay;
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < delays.size(); ++i) {
+    LOG(logDEBUG) << " setting: " << delays[i].first << ": " << (int)delays[i].second;
+  }
+  fApi->setTestboardDelays(delays);
+
+
   fDirectory->cd();
   PixTest::update();
 
-  //??  fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
@@ -502,6 +530,12 @@ void PixTestHighRate::doXPixelAlive() {
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
   LOG(logINFO) << "PixTestHighRate::doXPixelAlive() done";
   restoreDacs();
+
+  // -- reset sig delays
+  fApi->setTestboardDelays(oldDelays);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    LOG(logDEBUG) << " resetting: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
 
   finalCleanup();
 }
