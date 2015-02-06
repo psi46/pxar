@@ -1578,29 +1578,30 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
   // Length of a token chain (number of ROCs per data stream):
   uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
-  // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-  if(tbmtype != TBM_NONE) { tokenChainLength *= (tbmtype >= TBM_09 ? 4 : 8); }
+  if(tbmtype != TBM_NONE && tbmtype != TBM_EMU) { 
+    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
+    tokenChainLength *= (tbmtype >= TBM_09 ? 4 : 8);
+    // Split the total buffer size when having more than one channel
+    buffersize /= (tbmtype >= TBM_09 ? 4 : 2);
+  }
   LOG(logDEBUGHAL) << "Determined Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
-
-  // Split the total buffer size when having more than one channel
-  if(tbmtype != TBM_NONE) { buffersize /= (tbmtype >= TBM_09 ? 4 : 2); }
 
   // Clear all decoder instances:
   decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,tokenChainLength,(tbmtype != TBM_NONE),rocType,true);
+  src0 = dtbSource(_testboard,0,tokenChainLength,tbmtype,rocType,true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
 
-  if(tbmtype != TBM_NONE) {
+  if(tbmtype != TBM_NONE && tbmtype != TBM_EMU) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,tokenChainLength,(tbmtype != TBM_NONE),rocType,true);
+    src1 = dtbSource(_testboard,1,tokenChainLength,tbmtype,rocType,true);
     src1 >> splitter1;
 
     // Reset the Deserializer 400, re-synchronize:
@@ -1630,12 +1631,12 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,tokenChainLength,(tbmtype != TBM_NONE),rocType,true);
+      src2 = dtbSource(_testboard,2,tokenChainLength,tbmtype,rocType,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,tokenChainLength,(tbmtype != TBM_NONE),rocType,true);
+      src3 = dtbSource(_testboard,3,tokenChainLength,tbmtype,rocType,true);
       src3 >> splitter3;
 
       // Start the DAQ also for channel 2 and 3:
