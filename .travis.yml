@@ -12,7 +12,7 @@ before_script:
 script: 
   - mkdir build && cd build/
   - if [ $TRAVIS_OS_NAME == linux ]; then cmake ..; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then cmake -DBUILD_pxarui=OFF -DBUILD_dummydtb=ON ..; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then cmake -DBUILD_pxarui=OFF ..; fi
   - make install
 branches:
   only:
