@@ -20,7 +20,7 @@ namespace pxar {
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
 		       << " (" << static_cast<int>(chainlength) << " ROCs)"
-		       << (tbm_present ? " DESER400 " : " DESER160 ");
+		       << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
