@@ -667,21 +667,12 @@ void PixTestPattern::doTest()
 	//::::::::::::::::::::::::::::::::
 
 	//first send only a RES:
-	fPg_setup.push_back(make_pair("resetroc", 0));
-	fPeriod = 28;
-
-	// Set the pattern generator:
-	fApi->setPatternGenerator(fPg_setup);
-
-	fApi->daqStart();
-
-	// Send only one trigger to reset:
-	fApi->daqTrigger(1, fPeriod);
+	// FIXME - issuing a ROC reset should not be necessary anymore since
+	// pxarCore automatically resets the ROC when WBC is changed.
+	fApi->daqSingleSignal("resetroc");
 	LOG(logINFO) << "PixTestPattern:: RES sent once ";
 
-	fPg_setup.clear();
-	LOG(logINFO) << "PixTestPattern:: pg_setup clean";
-
+	fApi->DaqStart();
 	//select the pattern:
 	if (fPatternFromFile)
 	{

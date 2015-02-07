@@ -1778,29 +1778,16 @@ void PixTest::finalCleanup() {
 // ----------------------------------------------------------------------
 void PixTest::resetROC() {
   // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  LOG(logINFO) << "IGNORE THE WARNING ABOVE (resetROC sent)!";
-  fApi->daqStop();
-  fPg_setup.clear();
+  // FIXME - issuing a ROC reset should not be necessary anymore since
+  // pxarCore automatically resets the ROC when WBC is changed.
+  fApi->daqSingleSignal("resetroc");
 }
 
 // ----------------------------------------------------------------------
 void PixTest::resetTBM() {
   // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resettbm", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  LOG(logINFO) << "IGNORE THE WARNING ABOVE  (resetTBM sent)!";
-  fApi->daqStop();
-  fPg_setup.clear();
+  // Issue a TBM reset:
+  fApi->daqSingleSignal("resettbm");
 }
 
 // ----------------------------------------------------------------------
