@@ -33,6 +33,25 @@ namespace pxar {
     }
   }
 
+  uint32_t pixel::encode() {
+    uint32_t raw = 0;
+    // Set the pulse height:
+    raw = ((static_cast<int>(value()) & 0xf0) << 1) + (static_cast<int>(value()) & 0xf);
+
+    // Encode the pixel address
+    int r = 2*(80 - _row);
+    raw |= ((r/36) << 15);
+    raw |= (((r%36)/6) << 12);
+    raw |= (((r%36)%6 + _column%2) << 9);
+
+    int dcol = _column/2;
+    raw |= ((dcol)/6 << 21);
+    raw |= (((dcol%6)) << 18);
+
+    // Return the 24 bits belonging to the pixel:
+    return (raw & 0x00ffffff);
+  }
+
   void statistics::dump() {
     // Print out the full statistics:
     LOG(logINFO) << "Decoding statistics:";

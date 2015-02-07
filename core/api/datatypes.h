@@ -86,6 +86,10 @@ namespace pxar {
       _mean = static_cast<int16_t>(val);
     };
 
+    /** Member function to re-encode pixel into raw data
+     */
+    uint32_t encode();
+
     /** Overloaded comparison operator
      */
     bool operator == (const pixel& px) {
