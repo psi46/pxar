@@ -1177,12 +1177,8 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
     _daq_startstop_warning = true;
   }
 
-  // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
-  uint8_t type = 0x0;
-  if(!_dut->tbm.empty()) { type = _dut->tbm.at(0).type; }
-
   // And start the DAQ session:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type,buffersize);
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
   _daq_running = true;
   return true;

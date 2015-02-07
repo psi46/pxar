@@ -56,6 +56,10 @@ namespace pxar {
      */
     void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector);
 
+    /** Change the type of the TBM type member in HAL
+     */
+    void setTBMType(uint8_t type);
+
     /** Initialize attached ROCs with their settings and configuration
      *  This is the startup-routine for single ROCs. It first powers up the
      *  testboard output if necessary, sets the ROC's I2C address and then
@@ -280,7 +284,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    void daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint8_t deser160phase, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
     /** Select the trigger source as given in "source":
      */
@@ -400,7 +404,7 @@ namespace pxar {
     bool _compatible;
 
     // FIXME can't we find a smarter solution to this?!
-    uint8_t tbmtype;
+    uint8_t m_tbmtype;
     uint8_t deser160phase;
     uint8_t rocType;
     uint8_t hubId;

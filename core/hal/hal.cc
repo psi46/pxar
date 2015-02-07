@@ -14,7 +14,7 @@ using namespace pxar;
 hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
-  tbmtype(TBM_NONE),
+  m_tbmtype(TBM_NONE),
   deser160phase(4),
   rocType(0),
   _currentTrgSrc(TRG_SEL_PG_DIR)
@@ -270,7 +270,7 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector) {
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
   // FIXME
-  tbmtype = type;
+  m_tbmtype = type;
 
   // FIXME Beat: 31 is default hub address for the new modules:
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
@@ -282,6 +282,10 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector) {
   LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
 		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
   tbmSetRegs(regVector);
+}
+
+void hal::setTBMType(uint8_t type) {
+  m_tbmtype = type;
 }
 
 void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacVector) {
@@ -642,11 +646,11 @@ void hal::RocClearCalibrate(uint8_t roci2c) {
  _testboard->roc_ClrCal();
 }
 
-void hal::estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t tbmtype) {
+void hal::estimateDataVolume(uint32_t events, uint8_t nROCs) {
 
   uint32_t nSamples = 0;
   // DESER400: header 3 words, pixel 6 words
-  if(tbmtype != TBM_NONE) { nSamples = events*nROCs*(3+6); }
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { nSamples = events*nROCs*(3+6); }
   // DESER160: header 1 word, pixel 2 words
   else { nSamples = events*nROCs*(1+2); }
 
@@ -670,10 +674,10 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -729,10 +733,10 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 		   << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
-  estimateDataVolume(nTriggers, roci2cs.size(), tbmtype);
+  estimateDataVolume(nTriggers, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -787,10 +791,10 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(roci2c) << ".";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -844,10 +848,10 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 		   << static_cast<int>(row) << " with flags " << listFlags(flags) << ", running "
 		   << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
-  estimateDataVolume(nTriggers, 1, tbmtype);
+  estimateDataVolume(nTriggers, 1);
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -913,10 +917,10 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -983,10 +987,10 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1049,10 +1053,10 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1115,10 +1119,10 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1191,10 +1195,10 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1270,10 +1274,10 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1345,10 +1349,10 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1420,10 +1424,10 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1572,17 +1576,17 @@ void hal::SigSetLVDS(){
 
 
 
-void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) {
+void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
   // Length of a token chain (number of ROCs per data stream):
   uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
-  if(tbmtype != TBM_NONE && tbmtype != TBM_EMU) { 
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { 
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    tokenChainLength *= (tbmtype >= TBM_09 ? 4 : 8);
+    tokenChainLength *= (m_tbmtype >= TBM_09 ? 4 : 8);
     // Split the total buffer size when having more than one channel
-    buffersize /= (tbmtype >= TBM_09 ? 4 : 2);
+    buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
   }
   LOG(logDEBUGHAL) << "Determined Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
 
@@ -1591,17 +1595,17 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,tokenChainLength,tbmtype,rocType,true);
+  src0 = dtbSource(_testboard,0,tokenChainLength,m_tbmtype,rocType,true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
 
-  if(tbmtype != TBM_NONE && tbmtype != TBM_EMU) {
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,tokenChainLength,tbmtype,rocType,true);
+    src1 = dtbSource(_testboard,1,tokenChainLength,m_tbmtype,rocType,true);
     src1 >> splitter1;
 
     // Reset the Deserializer 400, re-synchronize:
@@ -1609,7 +1613,7 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     // If we have an old TBM version set up the DESER400 to read old data format:
     // "old" is everything before TBM08B (so: TBM08, TBM08A)
-    if(tbmtype < TBM_08B) { 
+    if(m_tbmtype < TBM_08B) { 
       LOG(logDEBUGHAL) << "Pre-series TBM with outdated trailer format. Configuring DESER400 accordingly.";
       _testboard->Daq_Deser400_OldFormat(true);
     }
@@ -1626,17 +1630,17 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
     _testboard->Daq_Start(1);
 
     // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(tbmtype >= TBM_09) {
+    if(m_tbmtype >= TBM_09) {
       LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,tokenChainLength,tbmtype,rocType,true);
+      src2 = dtbSource(_testboard,2,tokenChainLength,m_tbmtype,rocType,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,tokenChainLength,tbmtype,rocType,true);
+      src3 = dtbSource(_testboard,3,tokenChainLength,m_tbmtype,rocType,true);
       src3 >> splitter3;
 
       // Start the DAQ also for channel 2 and 3:
