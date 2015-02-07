@@ -493,10 +493,18 @@ bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {
   // Make sure we are writing to the correct ROC by setting the I2C address:
   _testboard->roc_I2cAddr(roci2c);
 
+  bool is_wbc = false;
   // Iterate over all DAC id/value pairs and set the DAC
   for(std::map< uint8_t,uint8_t >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
     LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(it->first) << " to " << static_cast<int>(it->second);
     _testboard->roc_SetDAC(it->first,it->second);
+    if(it->first == ROC_DAC_WBC) { is_wbc = true; }
+  }
+
+  // Make sure to issue a ROC Reset after WBC has been programmed:
+  if(is_wbc) {
+    LOG(logDEBUGHAL) << "WBC has been programmed - sending a ROC Reset command.";
+    daqTriggerSingleSignal(TRG_SEND_RSR);
   }
 
   // Send all queued commands to the testboard:
@@ -514,6 +522,12 @@ bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
 		   << ": Set DAC" << static_cast<int>(dacId) << " to " << static_cast<int>(dacValue);
   _testboard->roc_SetDAC(dacId,dacValue);
   _testboard->Flush();
+
+  // Make sure to issue a ROC Reset after the DAc WBC has been programmed:
+  if(dacId == ROC_DAC_WBC) {
+    LOG(logDEBUGHAL) << "WBC has been programmed - sending a ROC Reset command.";
+    daqTriggerSingleSignal(TRG_SEND_RSR);
+  }
   return true;
 }
 
