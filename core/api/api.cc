@@ -1222,7 +1222,7 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
   std::istringstream identifiers(triggerSource);
   std::string s;
   uint16_t signal = 0;
-  // Tokenize the signal string into single PG signals, separated by ";":
+  // Tokenize the signal string into single trigger sources, separated by ";":
   while (std::getline(identifiers, s, ';')) {
     // Get the signal from the dictionary object:
     uint16_t sig = _dict->getSignal(s);
@@ -1238,6 +1238,27 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
 
   LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
   _hal->daqTriggerSource(signal);
+
+  // Check if we need to change the tbmtype for HAL:
+  uint8_t newtype = 0x0;
+  if(_dict->getEmulationState(signal)) {
+    // If no TBM is configured in the DUT, we run a single ROC and everyting will be okay:
+    if(_dut->getTbmType() == "") { _hal->setTBMType(TBM_EMU); newtype = TBM_EMU; }
+    // FIXME: I don't know how the DTB behaves with a DESER400 request plus TBM emulation!
+    else {
+      throw InvalidConfig("Do not use SoftTBM (emulated) and DESER400 with real TBM together!");
+    }
+  }
+  else {
+    // If no TBM is configured in the DUT, we run a single ROC and everyting will be okay:
+    if(_dut->getTbmType() == "") { _hal->setTBMType(TBM_NONE); newtype = TBM_NONE; }
+    // TBM is programmed, pass type to HAL:
+    else  { _hal->setTBMType(_dut->tbm.front().type); newtype = _dut->tbm.front().type; }
+  }
+
+  // Get singleton Trigger dictionary object:
+  DeviceDictionary * _devdict = DeviceDictionary::getInstance();
+  LOG(logDEBUGAPI) << "Updated TBM type to \"" << _devdict->getName(newtype) << "\".";
   return true;
 }
 
