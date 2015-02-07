@@ -126,7 +126,18 @@ void hal::setTBMType(uint8_t type) {
   m_tbmtype = type;
 }
 
-void hal::initROC(uint8_t /*rocId*/, uint8_t /*roctype*/, std::map< uint8_t,uint8_t > /*dacVector*/) {
+void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacVector) {
+  // Set the pixel address inverted flag if we have the PSI46digV1 chip
+  if(type == ROC_PSI46DIG || type == ROC_PSI46DIG_TRIG) {
+    LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
+  }
+  // FIXME
+  rocType = type;
+
+  // Programm all DAC registers according to the configuration data:
+  LOG(logDEBUGHAL) << "Setting DAC vector for ROC@I2C " << static_cast<int>(roci2c) << ".";
+  rocSetDACs(roci2c,dacVector);
+
 }
 
 void hal::PrintInfo() {
@@ -179,15 +190,35 @@ void hal::setTBvd(double /*VD*/) {
 }
 
 
-bool hal::rocSetDACs(uint8_t /*rocId*/, std::map< uint8_t, uint8_t > /*dacPairs*/) {
+bool hal::rocSetDACs(uint8_t /*rocId*/, std::map< uint8_t, uint8_t > dacPairs) {
+
+  bool is_wbc = false;
+  // Iterate over all DAC id/value pairs and set the DAC
+  for(std::map< uint8_t,uint8_t >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
+    LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(it->first) << " to " << static_cast<int>(it->second);
+    if(it->first == ROC_DAC_WBC) { is_wbc = true; }
+  }
+
+  // Make sure to issue a ROC Reset after WBC has been programmed:
+  if(is_wbc) {
+    LOG(logDEBUGHAL) << "WBC has been programmed - sending a ROC Reset command.";
+    daqTriggerSingleSignal(TRG_SEND_RSR);
+  }
+
   // Everything went all right:
   return true;
 }
 
-bool hal::rocSetDAC(uint8_t rocId, uint8_t dacId, uint8_t dacValue) {
-  LOG(logDEBUGHAL) << "Setting DAC " << static_cast<int>(dacId) 
-		   << " to " <<  static_cast<int>(dacValue)
-		   << " on ROC@I2C " << static_cast<int>(rocId);
+bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
+
+  LOG(logDEBUGHAL) << "ROC@I2C " << static_cast<size_t>(roci2c) 
+		   << ": Set DAC" << static_cast<int>(dacId) << " to " << static_cast<int>(dacValue);
+
+  // Make sure to issue a ROC Reset after the DAc WBC has been programmed:
+  if(dacId == ROC_DAC_WBC) {
+    LOG(logDEBUGHAL) << "WBC has been programmed - sending a ROC Reset command.";
+    daqTriggerSingleSignal(TRG_SEND_RSR);
+  }
   return true;
 }
 
