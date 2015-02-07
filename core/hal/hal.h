@@ -432,7 +432,7 @@ namespace pxar {
      *  expected for the upcoming test. This function only supplies debug output
      *  and has no further effect on the data transmission or similar.
      */
-    void estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t nTBMs);
+    void estimateDataVolume(uint32_t events, uint8_t nROCs);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit
