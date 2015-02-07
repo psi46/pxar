@@ -672,13 +672,11 @@ void PixTestPattern::doTest()
 	fApi->daqSingleSignal("resetroc");
 	LOG(logINFO) << "PixTestPattern:: RES sent once ";
 
-	fApi->DaqStart();
 	//select the pattern:
 	if (fPatternFromFile)
 	{
 		LOG(logINFO) << "PixTestPattern:: Set pattern from file: " << fname;
 		if (!setPattern(fname)){   //READ FROM FILE	
-			fApi->daqStop();
 			FinalCleaning();
 			return;
 		}
@@ -691,6 +689,7 @@ void PixTestPattern::doTest()
 	fApi->setPatternGenerator(fPg_setup);
 	fPeriod = 0;
 
+	fApi->daqStart();
 	//send Triggers (loop or single) wrt parameters selection:
 	if (!fParTrigLoop) {
 		//pg_cycles times the pg_Single() == pg_cycles times pattern sequence):
