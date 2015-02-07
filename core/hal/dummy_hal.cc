@@ -59,7 +59,7 @@ void fillEvent(pxar::Event * evt, uint8_t rocid, size_t col, size_t row, uint32_
 hal::hal(std::string /*name*/) :
   _initialized(false),
   _compatible(false),
-  tbmtype(0),
+  m_tbmtype(TBM_NONE),
   deser160phase(4)
 {
   // Print the useful SW/FW versioning info:
@@ -117,7 +117,12 @@ bool hal::flashTestboard(std::ifstream& /*flashFile*/) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t /*tbmId*/, std::map< uint8_t,uint8_t > /*regVector*/) {
+void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > /*regVector*/) {
+  m_tbmtype = type;
+}
+
+void hal::setTBMType(uint8_t type) {
+  m_tbmtype = type;
 }
 
 void hal::initROC(uint8_t /*rocId*/, uint8_t /*roctype*/, std::map< uint8_t,uint8_t > /*dacVector*/) {
@@ -674,51 +679,51 @@ bool hal::IsClockPresent() {
 void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*/) {
 }
 
-void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) {
+void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
   // Length of a token chain (number of ROCs per data stream):
   uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
-  if(tbmtype != TBM_NONE && tbmtype != TBM_EMU) {
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    tokenChainLength *= (tbmtype >= TBM_09 ? 4 : 8);
+    tokenChainLength *= (m_tbmtype >= TBM_09 ? 4 : 8);
     // Split the total buffer size when having more than one channel
-    buffersize /= (tbmtype >= TBM_09 ? 4 : 2);
+    buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
   }
   LOG(logDEBUGHAL) << "Determined Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
 
   uint32_t allocated_buffer_ch0 = buffersize;
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(NULL,0,tokenChainLength,tbmtype,rocType,true);
+  src0 = dtbSource(NULL,0,tokenChainLength,m_tbmtype,rocType,true);
   src0 >> splitter0;
 
-  if(tbmtype != TBM_NONE && tbmtype != TBM_EMU) {
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch1 = buffersize;
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(NULL,1,tokenChainLength,tbmtype,rocType,true);
+    src1 = dtbSource(NULL,1,tokenChainLength,m_tbmtype,rocType,true);
     src1 >> splitter1;
 
     // If we have an old TBM version set up the DESER400 to read old data format:
     // "old" is everything before TBM08B (so: TBM08, TBM08A)
-    if(tbmtype < TBM_08B) { 
+    if(m_tbmtype < TBM_08B) { 
       LOG(logDEBUGHAL) << "Pre-series TBM with outdated trailer format. Configuring DESER400 accordingly.";
     }
 
     // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(tbmtype >= TBM_09) {
+    if(m_tbmtype >= TBM_09) {
       LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
 
       uint32_t allocated_buffer_ch2 = buffersize;
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(NULL,2,tokenChainLength,tbmtype,rocType,true);
+      src2 = dtbSource(NULL,2,tokenChainLength,m_tbmtype,rocType,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = buffersize;
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(NULL,3,tokenChainLength,tbmtype,rocType,true);
+      src3 = dtbSource(NULL,3,tokenChainLength,m_tbmtype,rocType,true);
       src3 >> splitter3;
     }
   }
