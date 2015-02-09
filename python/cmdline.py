@@ -188,8 +188,8 @@ class PxarCoreCmd(cmd.Cmd):
         return get_possible_filename_completions(extract_full_argument(line,end_index))
 
     @arity(1,1,[str])
-    def do_loadscript(self, filename):
-        """loadscript [filename]: loads a list of commands to be executed on the pxar cmdline"""
+    def do_run(self, filename):
+        """run [filename]: loads a list of commands to be executed on the pxar cmdline"""
         try:
             f = open(filename)
         except IOError:
@@ -202,7 +202,7 @@ class PxarCoreCmd(cmd.Cmd):
         finally:
             f.close()
         
-    def complete_loadscript(self, text, line, start_index, end_index):
+    def complete_run(self, text, line, start_index, end_index):
         # tab-completion for the file path:
         try:
             # remove specific delimeters from the readline parser
@@ -845,7 +845,7 @@ def main(argv=None):
     parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
     parser.add_argument('--gui', '-g', action="store_true", help="The output verbosity set in the pxar API.")
-    parser.add_argument('--load', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
+    parser.add_argument('--run', '-r', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
     args = parser.parse_args(argv)
 
     api = PxarStartup(args.dir,args.verbosity)
@@ -853,8 +853,8 @@ def main(argv=None):
     # start the cmd line
     prompt = PxarCoreCmd(api,args.gui)
     # run the startup script if requested
-    if args.load:
-        prompt.do_loadscript(args.load)
+    if args.run:
+        prompt.do_run(args.run)
     # start user interaction
     prompt.cmdloop()
 
