@@ -16,7 +16,7 @@ using namespace pxar;
 ClassImp(PixTestBareModule)
 
 // ----------------------------------------------------------------------
-PixTestBareModule::PixTestBareModule(PixSetup *a, std::string name) : PixTest(a, name), fParMaxSteps(1), fStop(false), fBBMap(false), fBB2Map(false) {
+PixTestBareModule::PixTestBareModule(PixSetup *a, std::string name) : PixTest(a, name), fParMaxSteps(1), fStop(false), fBBMap(false), fBB2Map(false), fminIa(10.){
 	PixTest::init();
 	init();
 	LOG(logDEBUG) << "PixTestBareModule ctor(PixSetup &a, string, TGTab *)";
@@ -52,6 +52,12 @@ bool PixTestBareModule::setParameter(string parName, string sval) {  //debug - a
 				fBB2Map = atoi(sval.c_str());
 				setToolTips();
 			}
+			if (!parName.compare("mincurrent(ma)")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fminIa = atof(sval.c_str());
+				setToolTips();
+			}
 			break;
 		}		
 	}
@@ -73,7 +79,7 @@ void PixTestBareModule::init() {
 // ----------------------------------------------------------------------
 void PixTestBareModule::setToolTips() {
 	fTestTip = string("run the test sequence for one ROC up to 'stepmax'.\n")
-		+ string("To be run after that probes are in contact with ROC.");
+		+ string("stepmax: 1=pretest, 2=alive, 3=BB.");
 	fSummaryTip = string("to be implemented");
 	fStopTip = string("stop the BareModuleTest after that \n")
 		+ string("the current step is finished.");
@@ -104,29 +110,14 @@ void PixTestBareModule::runCommand(std::string command) {
 		checkIfInContact(0);
 		mDelay(1000);
 		PixTest::update();
-		LOG(logINFO) << "PixTestBareModule:: step finished.";
-		LOG(logINFO) << "PixTestBareModule:: Warning, HV and Power could be still ON.";
-	}
-	else if (!command.compare("pretest")) {
-		doStdTest("pretest");
+
+		PixTest::hvOff();
+		mDelay(2000);
+		PixTest::powerOff();
 		mDelay(1000);
 		PixTest::update();
-		LOG(logINFO) << "PixTestBareModule:: step finished.";
-		LOG(logINFO) << "PixTestBareModule:: Warning, HV and Power could be still ON.";
-	}
-	else if (!command.compare("alive")) {
-		doStdTest("alive");
-		mDelay(1000);
-		PixTest::update();
-		LOG(logINFO) << "PixTestBareModule:: step finished.";
-		LOG(logINFO) << "PixTestBareModule:: Warning, HV and Power could be still ON.";
-	}
-	else if (!command.compare("bumpbonding")) {
-		doStdTest("bumpbonding");
-		mDelay(1000);
-		PixTest::update();
-		LOG(logINFO) << "PixTestBareModule:: step finished.";
-		LOG(logINFO) << "PixTestBareModule:: Warning, HV and Power could be still ON.";
+
+		LOG(logINFO) << "PixTestBareModule:: HV and Power are off.";
 	}
 	else if (!command.compare("dofullsequence")) {
 		fParMaxSteps = 3;
@@ -142,9 +133,8 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 	PixTest::hvOff();
 	LOG(logINFO) << "PixTestBareModule:: HV off for safety.";
 	mDelay(2000);
-
+	
 	//check if probes are in contact
-	double minIa = 10; // [mA]   loose limit  10
 	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
 	PixTest::powerOn();
 	LOG(logINFO) << "PixTestBareModule:: Power on.";
@@ -152,12 +142,12 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 	double ia = fApi->getTBia()*1E3; // [mA]
 	bool checkgood = false;
 
-	if (ia > minIa) {
+	if (ia > fminIa) {
 		LOG(logINFO) << "PixTestBareModule:: contact OK, ia = " << ia << " mA";
 		checkgood = true;
 	}
 	else {
-		LOG(logWARNING) << "PixTestBareModule:: ia < " << minIa << " mA - PLEASE CHECK THE PROBES CONTACT.";
+		LOG(logWARNING) << "PixTestBareModule:: ia < " << fminIa << " mA - PLEASE CHECK THE PROBES CONTACT.";
 		if (fullSeq){
 			LOG(logWARNING) << "PixTestBareModule:: enter 'c' to continue OR 's' to stop.";
 			bool goodIn = false;
@@ -190,9 +180,11 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 		else checkgood = false;
 	}
 	if (checkgood){
-		PixTest::hvOn();
-		LOG(logINFO) << "PixTestBareModule:: HV on.";
-		mDelay(2000);
+		if (fullSeq){
+			PixTest::hvOn();
+			LOG(logINFO) << "PixTestBareModule:: HV on.";
+			mDelay(2000);
+		}
 		LOG(logINFO) << "PixTestBareModule:: checkIfInContact done.";
 		return true;
 	}
@@ -203,7 +195,7 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 }
 
 //----------------------------------------------------------
-void PixTestBareModule::doStdTest(std::string test) {
+bool PixTestBareModule::doStdTest(std::string test) {
 	
 	PixTestFactory *factory = PixTestFactory::instance();
 	PixTest *t(0);
@@ -226,8 +218,11 @@ void PixTestBareModule::doStdTest(std::string test) {
 			PixTest::update();
 		}
 	}
+
 	PixTest::update();
 	delete t;
+	cout << fProblem << endl; //debug
+	return fProblem;
 }
 
 // ----------------------------------------------------------------------
@@ -241,9 +236,7 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 
 	//Pretest
 	if (MaxStep >= 1 && !fStop) { 
-		doStdTest(suite[0]); 
-		cout << fProblem << endl; //debug
-		if (fProblem) {
+		if (!doStdTest(suite[0])) {
 			LOG(logWARNING) << "PixTestBareModule:: Pretest failed. Sequence stopped.";
 			return false;
 		}
@@ -253,7 +246,10 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 
 	//Alive
 	if (MaxStep >= 2 && !fStop) {
-		doStdTest(suite[1]); 
+		if (!doStdTest(suite[1])) { 
+			LOG(logWARNING) << "PixTestBareModule:: Alive failed. Sequence stopped.";
+			return false; 
+		}
 	}
 	mDelay(1000);
 	PixTest::update();
@@ -261,8 +257,18 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 	//BumpBonding
 	if (MaxStep >= 3 && !fStop) {
 		cout << fBBMap << fBB2Map << endl;
-		if (fBBMap && !fBB2Map) { doStdTest(suite[2]); }
-		else if (fBB2Map && !fBBMap) { doStdTest(suite[3]); }
+		if (fBBMap && !fBB2Map) { 
+			if (!doStdTest(suite[2])) { 
+				LOG(logWARNING) << "PixTestBareModule:: BBMap failed. Sequence stopped.";
+				return false; 
+			}
+		}
+		else if (fBB2Map && !fBBMap) { 
+			if (!doStdTest(suite[3])) { 
+				LOG(logWARNING) << "PixTestBareModule:: BB2Map failed. Sequence stopped.";
+				return false; 
+			}
+		}
 		else {
 			LOG(logWARNING) << "PixTestBareModule:: Please select the BB test mode.";
 			LOG(logINFO) << "PixTestBareModule:: Test stopped.";
