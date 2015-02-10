@@ -20,7 +20,7 @@ ClassImp(PixTestXray)
 // ----------------------------------------------------------------------
 PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), 
   fParSource("nada"), fParMaskFileName("default"), fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
-  fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false), fParSaveMaskedPixels(0) {
+  fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false), fParSaveMaskedPixels(0), fSourceChanged(false) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestXray ctor(PixSetup &a, string, TGTab *)";
@@ -58,6 +58,7 @@ bool PixTestXray::setParameter(string parName, string sval) {
       }
       if (!parName.compare("source")) {
 	fParSource = sval; 
+	fSourceChanged = true; 
 	setToolTips();
       }
       if (!parName.compare("vthrcompmin")) {
@@ -135,7 +136,8 @@ void PixTestXray::init() {
     fDirectory = gFile->mkdir(fName.c_str()); 
   } 
   fDirectory->cd(); 
-
+  fSourceChanged = false; 
+	
 }
 
 // ----------------------------------------------------------------------
@@ -259,6 +261,18 @@ void PixTestXray::doPhRun() {
   }
 
   fEventsMax = 1000 * fParTriggerFrequency * fParRunSeconds; 
+
+  if (fQ.size() > 0 && fSourceChanged) {
+    fQ.clear(); 
+    fQmap.clear(); 
+    fHmap.clear(); 
+    fPHmap.clear(); 
+    fPH.clear();
+    fHitsVsEvents.clear(); 
+    fHitsVsColumn.clear(); 
+    fHitsVsEvtCol.clear();
+    fSourceChanged = false; 
+  }
 
   if (0 == fQ.size()) {
     if (fParFillTree) bookTree(); 
