@@ -19,7 +19,7 @@ ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
 PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParSource("nada"), fParMaskFileName("defaultMaskFile.dat"), fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
+  fParSource("nada"), fParMaskFileName("default"), fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
   fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false), fParSaveMaskedPixels(0) {
   PixTest::init();
   init(); 
