@@ -22,7 +22,8 @@ ClassImp(PixTestHighRate)
 // ----------------------------------------------------------------------
 PixTestHighRate::PixTestHighRate(PixSetup *a, std::string name) : PixTest(a, name),
   fParTriggerFrequency(0), fParRunSeconds(0), fParTriggerDelay(20),
-  fParFillTree(false), fParDelayTBM(false) {
+  fParFillTree(false), fParDelayTBM(false), fParNtrig(5), fParVcal(200), 
+  fParMaskFileName("default"), fParSaveMaskedPixels(0)   {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestHighRate ctor(PixSetup &a, string, TGTab *)";
@@ -50,46 +51,49 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true;
+      if (!parName.compare("savemaskfile")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParSaveMaskedPixels = !(atoi(sval.c_str())==0);
+	setToolTips();
+      }
+      if (!parName.compare("maskfilename")) {
+	fParMaskFileName = sval; 
+	setToolTips();
+      }
       if (!parName.compare("trgfrequency(khz)")) {
 	fParTriggerFrequency = atoi(sval.c_str());
 	LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
 	setToolTips();
       }
-
       if (!parName.compare("runseconds")) {
 	fParRunSeconds = atoi(sval.c_str());
 	setToolTips();
       }
-
       if (!parName.compare("triggerdelay")) {
 	fParTriggerDelay = atoi(sval.c_str());
 	setToolTips();
       }
-
       if (!parName.compare("delaytbm")) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
 	fParDelayTBM = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
-
       if (!parName.compare("filltree")) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
 	fParFillTree = !(atoi(sval.c_str())==0);
 	setToolTips();
       }
-
       if (!parName.compare("ntrig")) {
 	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str()));
 	setToolTips();
       }
-
       if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str());
 	setToolTips();
       }
-
       if (!parName.compare("pix") || !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if (string::npos != s1) {
@@ -330,7 +334,7 @@ void PixTestHighRate::doCalDelScan() {
     calDelEffHist.push_back(h1); 
   }
 
-  int nsteps(10); 
+  int nsteps(20); 
   for (int istep = 0; istep < nsteps; ++istep) {
     // -- set CalDel per ROC 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
@@ -391,10 +395,38 @@ void PixTestHighRate::doXPixelAlive() {
   banner(Form("PixTestHighRate::xPixelAlive() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
   cacheDacs();
 
+
+  // -- cache triggerdelay
+  vector<pair<string, uint8_t> > oldDelays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  bool foundIt(false);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    if (oldDelays[i].first == "triggerdelay") {
+      foundIt = true;
+    }
+    LOG(logDEBUG) << " old set: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
+
+  vector<pair<string, uint8_t> > delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  if (!foundIt) {
+    delays.push_back(make_pair("triggerdelay", fParTriggerDelay));
+    oldDelays.push_back(make_pair("triggerdelay", 0));
+  } else {
+    for (unsigned int i = 0; i < delays.size(); ++i) {
+      if (delays[i].first == "triggerdelay") {
+	delays[i].second = fParTriggerDelay;
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < delays.size(); ++i) {
+    LOG(logDEBUG) << " setting: " << delays[i].first << ": " << (int)delays[i].second;
+  }
+  fApi->setTestboardDelays(delays);
+
+
   fDirectory->cd();
   PixTest::update();
 
-  //??  fApi->setDAC("ctrlreg", 4);
   fApi->setDAC("vcal", fParVcal);
 
   fApi->_dut->testAllPixels(true);
@@ -502,6 +534,12 @@ void PixTestHighRate::doXPixelAlive() {
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
   LOG(logINFO) << "PixTestHighRate::doXPixelAlive() done";
   restoreDacs();
+
+  // -- reset sig delays
+  fApi->setTestboardDelays(oldDelays);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    LOG(logDEBUG) << " resetting: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
 
   finalCleanup();
 }
@@ -672,6 +710,15 @@ void PixTestHighRate::doRunMaskHotPixels() {
   }
   for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
   maskHotPixels(v);
+
+  if (fParSaveMaskedPixels) {
+    if (fParMaskFileName == "default") {
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels); 
+    } else {
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName); 
+    }
+  }
+
   // -- display
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
   v[0]->Draw("colz");

@@ -6,7 +6,10 @@
 
 #include <TROOT.h>
 #include <TSystem.h>
+#if defined(WIN32)
+#else
 #include <TUnixSystem.h>
+#endif
 
 using namespace std;
 
@@ -380,6 +383,8 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
 // ----------------------------------------------------------------------
 vector<string> anaFullTest::glob(string basename) {
   vector<string> lof; 
+#if defined(WIN32)
+#else
   TString fname;
   const char *file;
   TSystem *lunix = gSystem; //new TUnixSystem();
@@ -390,6 +395,7 @@ vector<string> anaFullTest::glob(string basename) {
       lof.push_back(string(fname));
     }
   }  
+#endif
   return lof; 
 }
 

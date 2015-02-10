@@ -41,7 +41,7 @@ public:
 
 private:
 
-  std::string   fParSource;
+  std::string   fParSource, fParMaskFileName;
   int           fParTriggerFrequency;
   int           fParRunSeconds; 
   int           fParStepSeconds; 
@@ -53,6 +53,8 @@ private:
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
+
+  int           fParSaveMaskedPixels; 
 
   bool    fDaq_loop;
   
