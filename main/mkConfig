@@ -537,7 +537,7 @@ safetymarginup      10
 
 -- Xray
 maskHotPixels       button
-saveMaskedHotPixels checkbox(0)
+saveMaskFile        checkbox(0)
 maskFilName         default
 source              Ag
 phrun               button
@@ -552,8 +552,10 @@ FillTree            checkbox
 
 -- HighRate
 PIX                 11,20
-CalDelScan          button
 maskHotPixels       button
+saveMaskFile        checkbox(0)
+maskFilName         default
+CalDelScan          button
 xPixelAlive         button
 trgfrequency(khz)   20
 Ntrig               5
