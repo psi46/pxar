@@ -493,10 +493,8 @@ if ($opt_b) {
 stepmax(1-3)        3
 bbmap               checkbox(1)
 bb2map(desy)        checkbox
+mincurrent(ma)      10
 checkcontact        button
-pretest             button
-alive               button
-bumpbonding         button
 dofullsequence      button
 
 EOF
