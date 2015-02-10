@@ -26,7 +26,7 @@ private:
 	bool fStop;
 	bool fBBMap;
 	bool fBB2Map;
-	float fminIa;
+	double fminIa;
 
 	ClassDef(PixTestBareModule, 1)
 

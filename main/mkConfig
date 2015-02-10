@@ -9,6 +9,7 @@
 #           -r digv21                 the ROC type; mkConfig -h will list all known types
 #           -f                        for FPIX type HDI (with temperature sensor)
 #           -m                        whether a module config directory should be set up (impacts nrocs, TBM setup, number of parameter files, etc)
+#           -b                        whether a bare module config directory should be set up (still single ROC folder; impacts hvOn, testParameters)
 #           -h                        list all known ROC and TBM types and print help message
 #           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
 #
@@ -493,7 +494,7 @@ if ($opt_b) {
 stepmax(1-3)        3
 bbmap               checkbox(1)
 bb2map(desy)        checkbox
-mincurrent(ma)      10
+mincurrent(ma)      5
 checkcontact        button
 dofullsequence      button
 
