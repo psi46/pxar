@@ -7,7 +7,6 @@
 #include <TROOT.h>
 #include <TSystem.h>
 #if defined(WIN32)
-#include <Windows4Root.h>
 #else
 #include <TUnixSystem.h>
 #endif
