@@ -30,18 +30,21 @@ public:
  
 private:
 
-  int      fParTriggerFrequency;
-  int      fParRunSeconds; 
-  int      fParTriggerDelay; 
-  bool     fParFillTree;
-  bool	   fParDelayTBM;
-  uint16_t fParNtrig; 
-  int      fParVcal; 
+  int           fParTriggerFrequency;
+  int           fParRunSeconds; 
+  int           fParTriggerDelay; 
+  bool          fParFillTree;
+  bool	        fParDelayTBM;
+  uint16_t      fParNtrig; 
+  int           fParVcal; 
+
+  std::string   fParMaskFileName; 
+  int           fParSaveMaskedPixels; 
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
 
-  bool    fDaq_loop;
+  bool          fDaq_loop;
   
   std::vector<TH2D*> fHitMap;
   
