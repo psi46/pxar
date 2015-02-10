@@ -537,6 +537,8 @@ safetymarginup      10
 
 -- Xray
 maskHotPixels       button
+saveMaskedHotPixels checkbox(0)
+maskFilName         default
 source              Ag
 phrun               button
 runseconds          100

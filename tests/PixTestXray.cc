@@ -19,8 +19,8 @@ ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
 PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParSource("nada"), fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
-  fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false) {
+  fParSource("nada"), fParMaskFileName("defaultMaskFile.dat"), fParTriggerFrequency(0), fParRunSeconds(0), fParStepSeconds(0), 
+  fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false), fParSaveMaskedPixels(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestXray ctor(PixSetup &a, string, TGTab *)";
@@ -46,6 +46,16 @@ bool PixTestXray::setParameter(string parName, string sval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
+      if (!parName.compare("savemaskfile")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParSaveMaskedPixels = !(atoi(sval.c_str())==0);
+	setToolTips();
+      }
+      if (!parName.compare("maskfilename")) {
+	fParMaskFileName = sval; 
+	setToolTips();
+      }
       if (!parName.compare("source")) {
 	fParSource = sval; 
 	setToolTips();
@@ -80,15 +90,6 @@ bool PixTestXray::setParameter(string parName, string sval) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
 	fParFillTree = !(atoi(sval.c_str())==0);
-	setToolTips();
-      }
-      
-      if (!parName.compare("ntrig")) {
-	fParNtrig = static_cast<uint16_t>(atoi(sval.c_str())); 
-	setToolTips();
-      }
-      if (!parName.compare("vcal")) {
-	fParVcal = atoi(sval.c_str()); 
 	setToolTips();
       }
       break;
@@ -793,6 +794,16 @@ void PixTestXray::doRunMaskHotPixels() {
   }
   for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
   maskHotPixels(v); 
+
+  if (fParSaveMaskedPixels) {
+    if (fParMaskFileName == "default") {
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels); 
+    } else {
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName); 
+    }
+  }
+
+
   // -- display
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
   v[0]->Draw("colz");
