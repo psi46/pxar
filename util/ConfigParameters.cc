@@ -1192,7 +1192,12 @@ bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> >
 
 
 // ----------------------------------------------------------------------
-void ConfigParameters::setTrimVcalSuffix(string name) {
+void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
+
+  if (nocheck) {
+    fTrimVcalSuffix = name;
+    return;
+  }
 
   std::stringstream fname;
   

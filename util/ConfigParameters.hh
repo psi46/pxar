@@ -109,7 +109,7 @@ public:
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
   void setTbmParameterFileName(std::string filename) {fTbmParametersFileName = filename;}
   void setTrimParameterFileName(std::string filename) {fTrimParametersFileName = filename;}
-  void setTrimVcalSuffix(std::string name);
+  void setTrimVcalSuffix(std::string name, bool nocheck = false);
   void setTestParameterFileName(std::string filename) {fTestParametersFileName = filename;}
   void setRootFileName(std::string filename) {fRootFileName = filename;}
   void setLogFileName(std::string filename) {fLogFileName = filename;}
