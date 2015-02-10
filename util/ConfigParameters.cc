@@ -1204,7 +1204,7 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
   fname << fDirectory << "/" << fTrimParametersFileName << name << "_C0.dat"; 
   ifstream InputFile;
   InputFile.open((fname.str()).c_str());
-  cout << "check for " << fname.str() << endl;
+  //  cout << "check for " << fname.str() << endl;
 
   if (!InputFile.is_open()) {
     LOG(logERROR) << "Did not find file " << fname.str() << ", no trim VCAL value used";
