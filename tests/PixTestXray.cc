@@ -263,6 +263,7 @@ void PixTestXray::doPhRun() {
   fEventsMax = 1000 * fParTriggerFrequency * fParRunSeconds; 
 
   if (fQ.size() > 0 && fSourceChanged) {
+    LOG(logDEBUG) << "booking new histograms as source name has changed";
     fQ.clear(); 
     fQmap.clear(); 
     fHmap.clear(); 
@@ -271,10 +272,10 @@ void PixTestXray::doPhRun() {
     fHitsVsEvents.clear(); 
     fHitsVsColumn.clear(); 
     fHitsVsEvtCol.clear();
-    fSourceChanged = false; 
   }
 
   if (0 == fQ.size()) {
+    fSourceChanged = false; 
     if (fParFillTree) bookTree(); 
     TH1D *h1(0); 
     TH2D *h2(0);
