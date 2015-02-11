@@ -101,7 +101,7 @@ void PixTestFullTest::doTest() {
 
     if (!suite[i].compare("trim")) {
       trimvcal = t->getParameter("vcal"); 
-      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal); 
+      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal, true); 
     }
 
     t->fullTest(); 
