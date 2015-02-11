@@ -55,6 +55,7 @@ private:
   PHCalibration fPhCal;
 
   int           fParSaveMaskedPixels; 
+  bool          fSourceChanged;
 
   bool    fDaq_loop;
   
