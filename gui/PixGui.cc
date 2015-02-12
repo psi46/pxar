@@ -281,12 +281,12 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   if(fApi) fParTab = new PixParTab(this, fConfigParameters, "h/w"); 
   fTabs->SetTab(0);
 
+  if (fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
+
   vector<string> tests = fTestParameters->getTests();
   for (unsigned int i = 0; i < tests.size(); ++i) {
     createTab(tests[i].c_str()); 
   }
-
-  if (fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
 
   fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , fBorderN, fBorderN, fBorderN, fBorderN));
