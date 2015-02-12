@@ -392,8 +392,11 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEvent(self):
         """daqGetEvent: read one event from the event buffer"""
-        data = self.api.daqGetEvent()
-        self.plot_eventdisplay(data)
+        try:
+            data = self.api.daqGetEvent()
+            self.plot_eventdisplay(data)
+        except RuntimeError:
+            pass
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -402,8 +405,11 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEventBuffer(self):
         """daqGetEventBuffer: read all decoded events from the DTB buffer"""
-        data = self.api.daqGetEventBuffer()
-        self.plot_eventdisplay(data)
+        try:
+            data = self.api.daqGetEventBuffer()
+            self.plot_eventdisplay(data)
+        except RuntimeError:
+            pass
 
     def complete_daqGetEventBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -412,11 +418,14 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetRawEvent(self):
         """daqGetRawEvent: read one raw event from the event buffer"""
-        dat = self.api.daqGetRawEvent()
-        s = ""
-        for i in dat:
-            s += '{:03x}'.format(i) + " "
-        print s
+        try:
+            dat = self.api.daqGetRawEvent()
+            s = ""
+            for i in dat:
+                s += '{:03x}'.format(i) + " "
+                print s
+        except RuntimeError:
+            pass
 
     def complete_daqGetRawEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -435,13 +444,16 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetBuffer(self):
         """daqGetBuffer: read full raw data DTB buffer"""
-        dat = self.api.daqGetBuffer()
-        s = ""
-        for i in dat:
-            if i & 0x0FF0 == 0x07f0:
-                s += "\n"
-            s += '{:04x}'.format(i) + " "
-        print s
+        try:
+            dat = self.api.daqGetBuffer()
+            s = ""
+            for i in dat:
+                if i & 0x0FF0 == 0x07f0:
+                    s += "\n"
+                    s += '{:04x}'.format(i) + " "
+                    print s
+        except RuntimeError:
+            pass
 
     def complete_daqGetBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
