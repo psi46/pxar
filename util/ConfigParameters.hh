@@ -57,6 +57,7 @@ public:
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
   bool writeReadbackFile(int iroc, std::vector<std::pair<std::string, double> > v);
+  bool writeMaskFile(std::vector<std::vector<std::pair<int, int> > > v, std::string name = ""); 
 
   static ConfigParameters* Singleton();
 
@@ -108,7 +109,7 @@ public:
   void setDACParameterFileName(std::string filename) {fDACParametersFileName = filename;}
   void setTbmParameterFileName(std::string filename) {fTbmParametersFileName = filename;}
   void setTrimParameterFileName(std::string filename) {fTrimParametersFileName = filename;}
-  void setTrimVcalSuffix(std::string name) {fTrimVcalSuffix = name;}
+  void setTrimVcalSuffix(std::string name, bool nocheck = false);
   void setTestParameterFileName(std::string filename) {fTestParametersFileName = filename;}
   void setRootFileName(std::string filename) {fRootFileName = filename;}
   void setLogFileName(std::string filename) {fLogFileName = filename;}

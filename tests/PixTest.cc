@@ -1509,20 +1509,12 @@ void PixTest::getPhError(std::string /*dac*/, int /*dacmin*/, int /*dacmax*/, in
 
 // ----------------------------------------------------------------------
 void PixTest::saveDacs() {
-
-  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    fPixSetup->getConfigParameters()->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
-  }
-
+  fPixSetup->writeDacParameterFiles();
 }
 
 // ----------------------------------------------------------------------
 void PixTest::saveTrimBits() {
-  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    fPixSetup->getConfigParameters()->writeTrimFile(rocs[iroc], fApi->_dut->getEnabledPixels(rocs[iroc])); 
-  }
+  fPixSetup->writeTrimFiles();
   
 }
 

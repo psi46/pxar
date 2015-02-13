@@ -438,7 +438,7 @@ void PixTestTrim::trimTest() {
   }
 
   // -- save into files
-  fPixSetup->getConfigParameters()->setTrimVcalSuffix(Form("%d", fParVcal)); 
+  fPixSetup->getConfigParameters()->setTrimVcalSuffix(Form("%d", fParVcal), true); 
   saveDacs();
   saveTrimBits();
   

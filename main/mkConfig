@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ----------------------------------------------------------------------
-# Usage     ../main/mkConfig -d directory [-f] [-t TBM08] [-r digv21] [-m] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
+# Usage     ../main/mkConfig -d directory [-f] [-t TBM08] [-r digv21] [-m] [-b] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
 # -----
 #
 # Options   -d directory              the directory into which all config files will be put
@@ -9,6 +9,7 @@
 #           -r digv21                 the ROC type; mkConfig -h will list all known types
 #           -f                        for FPIX type HDI (with temperature sensor)
 #           -m                        whether a module config directory should be set up (impacts nrocs, TBM setup, number of parameter files, etc)
+#           -b                        whether a bare module config directory should be set up (still single ROC folder; impacts hvOn, testParameters)
 #           -h                        list all known ROC and TBM types and print help message
 #           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
 #
@@ -20,7 +21,7 @@
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('d:fhmp:r:t:');
+getopts('bd:fhmp:r:t:');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
@@ -49,6 +50,13 @@ if ($opt_m) {
     $nrocs = 16;
     $ntbms = 1;
 }
+
+# -- do not turn on HV when running a baremodule test
+my $hvon = 1; 
+if ($opt_b) {
+    $hvon = 0; 
+}
+
 
 # -- ROC type from either command line or by default
 my $dacs = "";
@@ -351,7 +359,7 @@ EOF
 
     print FH <<"EOF";
 tbmEmulator 0
-hvOn 1
+hvOn $hvon
 tbmChannel 0
 EOF
 
@@ -470,6 +478,30 @@ useCalVa            checkbox(0)
 getCalibratedIa     button
 setVana             button
 
+-- IV
+port                /dev/FIXME
+voltageStart        0
+voltageStop         600
+voltageStep         5
+delay               1
+compliance(ua)      100
+
+EOF
+
+if ($opt_b) {
+    print FH <<"EOF";
+-- BareModule
+stepmax(1-3)        3
+bbmap               checkbox(1)
+bb2map(desy)        checkbox
+mincurrent(ma)      5
+checkcontact        button
+dofullsequence      button
+
+EOF
+
+} else {
+    print FH <<"EOF";
 -- Scurves
 adjustvcal          checkbox(1)
 dumpAll             checkbox(0)
@@ -504,6 +536,8 @@ safetymarginup      10
 
 -- Xray
 maskHotPixels       button
+saveMaskFile        checkbox(0)
+maskFileName        default
 source              Ag
 phrun               button
 runseconds          100
@@ -517,27 +551,22 @@ FillTree            checkbox
 
 -- HighRate
 PIX                 11,20
-CalDelScan          button
 maskHotPixels       button
+saveMaskFile        checkbox(0)
+maskFileName        default
+CalDelScan          button
 xPixelAlive         button
-trgfrequency(khz)   20
 Ntrig               5
 Vcal                200
 runDaq              button
+trgfrequency(khz)   20
 runseconds          2
 triggerdelay        20
 DelayTBM            checkbox
 FillTree            checkbox
 
--- IV
-port                /dev/FIXME
-voltageStart        0
-voltageStop         600
-voltageStep         5
-delay               1
-compliance(ua)      100
-
 EOF
+}
 
 if (!$opt_m) {
     print FH <<"EOF";
@@ -585,12 +614,14 @@ outputfile          defaultPattern
 resettodefault      button
 
 -- BareModule
+stepmax(1-3)        3
+bbmap               checkbox(1)
+bb2map(desy)        checkbox
 checkcontact        button
 pretest             button
 alive               button
 bumpbonding         button
 dofullsequence      button
-stepmax(1-3)        3
 
 -- DAQ
 delayTBM            checkbox
@@ -768,7 +799,7 @@ sub printHelp {
     print "TBM types known: ",  join(", " , @tbmok), "\n";
     print <<"EOF";
 
-Usage     ../main/mkConfig -d directory [-t TBM08] [-r digv21] [-m] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
+Usage     ../main/mkConfig -d directory [-t TBM08] [-r digv21] [-b] [-m] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
 -----
 
 Options   -d directory              the directory into which all config files will be put
@@ -776,6 +807,7 @@ Options   -d directory              the directory into which all config files wi
           -r digv21                 the ROC type; mkConfig -h will list all known types
           -f                        for FPIX type HDI (with temperature sensor)
           -m                        whether a module config directory should be set up (impacts nrocs, TBM setup, number of parameter files, etc)
+          -b                        whether a bare module config directory should be set up (still single ROC folder; impacts hvOn, testParameters)
           -h                        list all known ROC and TBM types and print help message
           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
 

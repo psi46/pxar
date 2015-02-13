@@ -16,7 +16,7 @@ public:
 	
 	void runCommand(std::string );
 	bool checkIfInContact(bool );
-	void doStdTest(std::string );
+	bool doStdTest(std::string );
 	bool doRocTests(int );
 	void doTest();
 
@@ -24,6 +24,9 @@ private:
 
 	int  fParMaxSteps;
 	bool fStop;
+	bool fBBMap;
+	bool fBB2Map;
+	double fminIa;
 
 	ClassDef(PixTestBareModule, 1)
 
