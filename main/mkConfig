@@ -556,10 +556,10 @@ saveMaskFile        checkbox(0)
 maskFileName        default
 CalDelScan          button
 xPixelAlive         button
-trgfrequency(khz)   20
 Ntrig               5
 Vcal                200
 runDaq              button
+trgfrequency(khz)   20
 runseconds          2
 triggerdelay        20
 DelayTBM            checkbox

@@ -30,6 +30,11 @@ public:
   void               setRootFileUpdate(bool x) {fDoUpdateRootFile = x;}
   bool               doRootFileUpdate() {return fDoUpdateRootFile;}
 
+  void               writeDacParameterFiles();
+  void               writeTrimFiles();
+  void               writeTbmParameterFiles();
+  
+
   void              *fPxarMemory, *fPxarMemHi;
 private: 
   bool              fDoUpdateRootFile; 
