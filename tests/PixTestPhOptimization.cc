@@ -831,7 +831,8 @@ void PixTestPhOptimization::MaxPhVsDacDac(std::vector< std::pair<uint8_t, std::p
     fApi->_dut->testPixel(maxp_it->second.column(),maxp_it->second.row(),true, getIdxFromId(maxp_it->second.roc()));
     fApi->_dut->maskPixel(maxp_it->second.column(),maxp_it->second.row(),false, getIdxFromId(maxp_it->second.roc()));
   } 
-  fApi->setDAC("vcal",255);
+  //sample pulseheight at 35k e-
+  fApi->setDAC("vcal",100);
   fApi->setDAC("ctrlreg",4);
   
   //scanning through offset and scale for max pixel (or randpixel)
@@ -1004,3 +1005,51 @@ void PixTestPhOptimization::SetMinThr(){
   }
   return ps_opt;
 }*/
+
+
+
+void PixTestPhOptimization::optimiseOnMaps(map<uint8_t, int> &po_opt, map<uint8_t, int> &ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
+  //stretching PH curve to exploit the full ADC range, adjusting phscale             
+  int maxPh(0);
+  int minPh(0);
+  bool lowEd=false, upEd=false;
+  int upEd_dist=255, lowEd_dist=255;
+  int safetyMarginUp = fSafetyMarginUp;
+  int safetyMarginLow = fSafetyMarginLow;
+  LOG(logDEBUG)<<"safety margin for stretching set to "<<fSafetyMarginLow<<" (lower edge) and "<<fSafetyMarginUp<<"(upper edge)";
+  int dist = 255;
+  map<uint8_t, int> bestDist;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
+    bestDist[rocIds[roc_it]] = 255;
+  }
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
+  while(dacit_max != dacdac_max.end() || dacit_min != dacdac_min.end()){
+    for(unsigned int pix=0; pix < dacit_min->second.second.size() && pix < dacit_max->second.second.size(); pix++){
+      //      if(dacit_max->first == po_opt[dacit_max->second.second[pix].roc()] && dacit_min->first == po_opt[dacit_min->second.second[pix].roc()]){
+	maxPh=dacit_max->second.second[pix].value();
+	minPh=dacit_min->second.second[pix].value();
+	if(dacit_max->second.second[pix].roc() != dacit_min->second.second[pix].roc()){
+	  LOG(logDEBUG) << "CentrePhRange: ROC ids do not correspond";
+	}
+	lowEd = (minPh > safetyMarginLow);
+	upEd = (maxPh > 255 - safetyMarginUp);
+	upEd_dist = abs(maxPh - (255 - safetyMarginUp));
+	lowEd_dist = abs(minPh - safetyMarginLow);
+	dist = (upEd_dist > lowEd_dist ) ? (upEd_dist) : (lowEd_dist);
+	if(dist < bestDist[dacit_max->second.second[pix].roc()] && lowEd && upEd){
+	  ps_opt[dacit_max->second.second[pix].roc()] = dacit_max->second.first;
+	  po_opt[dacit_max->second.second[pix].roc()] = dacit_max->first;
+	  bestDist[dacit_max->second.second[pix].roc()]=dist;
+	}
+	//}
+    }
+    dacit_max++;
+    dacit_min++;
+  }
+  for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
+    LOG(logDEBUG)<<"opt final step: po fixed to"<<po_opt[rocIds[roc_it]]<<" and scale adjusted to "<<ps_opt[rocIds[roc_it]]<<", with distance "<<bestDist[rocIds[roc_it]]<<" on ROC "<<(int)rocIds[roc_it];
+  }
+  return ps_opt;
+}
