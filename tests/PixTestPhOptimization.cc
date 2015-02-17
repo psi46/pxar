@@ -364,6 +364,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   pair<int, pxar::pixel> minpixel;
   minpixel.second.setValue(0);
   std::vector<pxar::pixel> result;
+  std::vector<TH2D*> phmaps;
   while(minph<1 && flag_minPh<52){
     result.clear();
     fApi->setDAC("phscale", init_phScale);
@@ -371,7 +372,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     //    fApi->setDAC("vcal",fMinThr*1.2);
     fApi->setDAC("vcal",130);
     fApi->setDAC("phoffset",150);  
-    int cnt(0); 
+    /*    int cnt(0); 
     bool done(false);
     int size = 0;
     while (!(done && size !=0)) {
@@ -385,26 +386,37 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	++cnt;
 	}
       done = (cnt>5) || done;
-    }
+      }*/
+    phmaps = phMaps("phmaps_minpix", 10, 0);
+
     minph=255;
-    LOG(logDEBUG) << "result size "<<result.size()<<endl;
-    //check that the pixel showing lowest PH above 0 on the module
-    for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
-      isPixGood=true;
-      for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
-	  isPixGood=false;
-	  break;
-	  }
-      }
-      if(isPixGood && px->value() < minph){
-	minph = px->value();
+//    LOG(logDEBUG) << "result size "<<result.size()<<endl;
+//    //check that the pixel showing lowest PH above 0 on the module
+//    for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+//      isPixGood=true;
+//      for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+//	if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
+//	  isPixGood=false;
+//	  break;
+//	  }
+//      }
+//      if(isPixGood && px->value() < minph){
+//	minph = px->value();
+//      }
+//    }
+
+    for(int imap=0; imap<phmaps.size(); imap++){
+      //how to avoid blacklisted pixels?
+      if(phmaps[imap]->GetMinimum()<minph){
+	minph=phmaps[imap]->GetMinimum();
       }
     }
     //should have flag for v2 or v2.1
     init_phScale+=5;
     flag_minPh++;
   }
+
+
   // Look for pixel with min pulse height on every ROC:
   for(unsigned int iroc=0; iroc< rocIds.size(); iroc++){
     minph=255;
