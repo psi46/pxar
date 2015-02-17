@@ -1214,3 +1214,4 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
   }
   InputFile.close();
 }
+

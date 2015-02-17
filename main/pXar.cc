@@ -278,6 +278,19 @@ int main(int argc, char *argv[]){
       std::transform(subtest.begin(), subtest.end(), subtest.begin(), ::tolower);
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       
+      if (!input.compare("savedacs")) {
+	a.writeDacParameterFiles();
+	continue;
+      }
+      if (!input.compare("savetrims")) {
+	a.writeTrimFiles();
+	continue;
+      }
+      if (!input.compare("savetbm")) {
+	a.writeTbmParameterFiles();
+	continue;
+      }
+  
       if (!input.compare("gui"))  runGui(a, argc, argv); 
       if (!input.compare("exit")) stop = true; 
       if (!input.compare("quit")) stop = true; 

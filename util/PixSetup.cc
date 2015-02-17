@@ -103,3 +103,27 @@ void PixSetup::init() {
   LOG(logDEBUG) << "PixSetup init done;  getCurrentRSS() = " << rss.getCurrentRSS() << " fPxarMemory = " << fPxarMemory;
 }
 
+
+
+// ----------------------------------------------------------------------
+void PixSetup::writeDacParameterFiles() {
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fConfigParameters->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixSetup::writeTrimFiles() {
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
+    fConfigParameters->writeTrimFile(rocs[iroc], fApi->_dut->getEnabledPixels(rocs[iroc])); 
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixSetup::writeTbmParameterFiles() {
+  for (unsigned int itbm = 0; itbm < fApi->_dut->getNTbms(); itbm += 2) {
+    fConfigParameters->writeTbmParameterFile(itbm, fApi->_dut->getTbmDACs(itbm), fApi->_dut->getTbmDACs(itbm+1));
+  }
+}
