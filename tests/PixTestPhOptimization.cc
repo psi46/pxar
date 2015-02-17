@@ -863,36 +863,31 @@ void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::p
   }
   
     fApi->setDAC("ctrlreg",0);
-    fApi->setDAC("vcal",minVcal[minp_it->first]+10, rocIds[minp_it->first]);
+    for(std::map<int, int>::iterator ivcal = minVcal.begin(); ivcal != minVcal.end(); ivcal++){
+      fApi->setDAC("vcal",minVcal[ivcal->first]+10, getIdxFromId(ivcal->first));
+    }
     
   //scanning through offset and scale for min pixel (or same randpixel)
-    int cnt = 0; 
-    int done = false;
-    while (!done) {
-      try {
-	dacdac_min_part = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
-	done = true;
-      } catch(pxarException &e) {
-	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-	++cnt;
+  int cnt = 0; 
+  bool done = false;
+  while (!done) {
+    try {
+      dacdac_min = fApi->getPulseheightVsDACDAC("phoffset",0,255,"phscale",0,255,0,10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      ++cnt;
     }
-      done = (cnt>5) || done;
-    }
-    int dacdacsize_old = dacdac_min.size();
-    dacdac_min.resize(dacdac_min.size() + dacdac_min_part.size());
-    for(int idacdacpart = 0; idacdacpart< dacdac_min_part.size(); idacdacpart++){
-      dacdac_min[dacdacsize_old + idacdacpart] = dacdac_min_part[idacdacpart];
-    }
-    dacdac_min_part.clear();
+    done = (cnt>5) || done;
   }
 
   //  std::map<uint8_t, std::map<std::pair<uint8_t, uint8_t>, pxar::pixel > >  dacdacmin_map;
   //std::map<std::pair<uint8_t ,uint8_t >, pxar::pixel > tempMap;
-  for(  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin(); dacit_min < dacdac_min.end(); dacit_min+=1000){
-    LOG(logDEBUG)<<"dacdac_min: size "<<(int)(dacdac_min.end() - dacdac_min.begin())<<"pos "<<(int)(dacdac_min.end() - dacit_min)<<" sizepix "<<(int)dacit_min->second.second.size();
-    for(int ipix=0; ipix < dacit_min->second.second.size(); ipix++ ){
-      LOG(logDEBUG)<<"roc "<< (int)dacit_min->second.second[ipix].roc() <<" col "<<(int)dacit_min->second.second[ipix].column() << " row "<<(int)dacit_min->second.second[ipix].row();
-    }
+//  for(  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin(); dacit_min < dacdac_min.end(); dacit_min+=1000){
+//    LOG(logDEBUG)<<"dacdac_min: size "<<(int)(dacdac_min.end() - dacdac_min.begin())<<"pos "<<(int)(dacdac_min.end() - dacit_min)<<" sizepix "<<(int)dacit_min->second.second.size();
+//    for(int ipix=0; ipix < dacit_min->second.second.size(); ipix++ ){
+//      LOG(logDEBUG)<<"roc "<< (int)dacit_min->second.second[ipix].roc() <<" col "<<(int)dacit_min->second.second[ipix].column() << " row "<<(int)dacit_min->second.second[ipix].row();
+//    }
 //   for(int ipix=0; ipix < dacit_min->second.second.size(); ipix++ ){
 //     tempMap[ make_pair(dacit_min->first, dacit_min->second.first) ] = dacit_min->second.second.at(ipix);
 //     dacdacmin_map[dacit_min->second.second[ipix].roc()] = tempMap;
@@ -900,7 +895,7 @@ void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::p
 //    }
   }
 
-}
+
 
 void PixTestPhOptimization::SetMinThr(){
   fMinThr=0;
