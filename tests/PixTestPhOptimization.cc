@@ -853,19 +853,14 @@ void PixTestPhOptimization::MaxPhVsDacDac(std::vector< std::pair<uint8_t, std::p
 }
 
 void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min, map<int, pxar::pixel> minpixels, std::map<int, int> &minVcal){
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+
+
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
-  unsigned int NRocs = rocIds.size();
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > dacdac_min_part;
-
   for(std::map<int, pxar::pixel>::iterator minp_it = minpixels.begin(); minp_it != minpixels.end(); minp_it++){
-    for(unsigned int roc_kt = 0; roc_kt < NRocs; roc_kt++){
-      fApi->_dut->setROCEnable(roc_kt, false);
-    }
-    fApi->_dut->setROCEnable(minp_it->first, true);
-    fApi->_dut->testPixel(minp_it->second.column(),minp_it->second.row(),true);
-    fApi->_dut->maskPixel(minp_it->second.column(),minp_it->second.row(),false);
+    fApi->_dut->testPixel(minp_it->second.column(),minp_it->second.row(),true, getIdxFromId(minp_it->second.roc()));
+    fApi->_dut->maskPixel(minp_it->second.column(),minp_it->second.row(),false, getIdxFromId(minp_it->second.roc()));
+  }
   
     fApi->setDAC("ctrlreg",0);
     fApi->setDAC("vcal",minVcal[minp_it->first]+10, rocIds[minp_it->first]);
