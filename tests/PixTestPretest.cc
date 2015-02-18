@@ -7,6 +7,7 @@
 #include <TStopwatch.h>
 
 #include "PixTestPretest.hh"
+#include "timer.h"
 #include "log.h"
 #include "helper.h"
 
@@ -59,6 +60,10 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 
       if (!parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
+      }
+
+      if (!parName.compare("iterations") ) {
+    fIterations = atoi(sval.c_str() );
       }
 
       if (!parName.compare("vcal") ) {
@@ -151,6 +156,11 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
+  setTimings();
+  h1 = (*fDisplayedHist);
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update();
+    
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
@@ -186,6 +196,10 @@ void PixTestPretest::runCommand(std::string command) {
   }
   if (!command.compare("setvana")) {
     setVana(); 
+    return;
+  }
+  if (!command.compare("settimings")) {
+    setTimings();
     return;
   }
   if (!command.compare("findworkingpixel")) {
@@ -351,6 +365,84 @@ void PixTestPretest::setVana() {
 
 }
 
+
+// ----------------------------------------------------------------------
+void PixTestPretest::setTimings() {
+
+  // Start test timer
+  timer t;
+  
+  banner(Form("PixTestPreTest::setTimings()"));
+  cacheDacs();
+  fDirectory->cd();
+  PixTest::update();
+
+  //Make a histogram
+  TH1D *h1(0);
+  h1 = bookTH1D("pllscan","400 MHz PLL Scan", 8, -0.5, 7.5);
+  h1->SetDirectory(fDirectory);
+  h1->SetMinimum(0);
+  setTitles(h1, "400 MHz PLL Setting", "N Events");
+  fHistOptions.insert(make_pair(h1, "colz"));
+  
+  int TrigBuffer = 3;
+  uint16_t period = 300;
+
+  // Setup a new pattern with only res and token:
+  vector<pair<string, uint8_t> > pg_setup;
+  pg_setup.push_back(make_pair("resetroc", 25));
+  pg_setup.push_back(make_pair("trigger", 0));
+  fApi->setPatternGenerator(pg_setup);
+  vector<rawEvent> daqRawEv;
+
+  // Loop through all possible 160MHz PLL settings.
+  int magicROCPhase = 91; //01011011 - Enable the header trailer delay and set each ROC delay to 3
+  int magic400PLLPhase = 3; //Any number between 0-7 should work 
+
+  int nTBMs = fApi->_dut->getNTbms();
+  for (int itbm=0; itbm < nTBMs; itbm++) fApi->setTbmReg("basea", magicROCPhase, itbm);
+
+  bool goodtimingfound = false;
+  for (int ipll = 0; ipll < 8; ipll++) {
+    LOG(logINFO) << "Testing 160 MHz PLL Phase: " << ipll;
+    uint8_t delaysetting = ipll<<5 | magic400PLLPhase<<2;
+    fApi->setTbmReg("basee", delaysetting, 0); //Set TBM PLL Phases
+    fApi->daqStart();
+    fApi->daqTrigger(TrigBuffer, period); //Read in TrigBuffer events and throw them away, first event is generally bad.
+    daqRawEv = fApi->daqGetRawEventBuffer();
+    statistics results = fApi->getStatistics(); //Ignore the first three events
+    for (int interation=0; interation < fIterations; interation++) {
+      fApi->daqTrigger(fParNtrig, period);
+      daqRawEv = fApi->daqGetRawEventBuffer();
+    }
+    fApi->daqStop();
+    results = fApi->getStatistics();
+    LOG(logDEBUG) << "Number of errors: " << results.errors();
+    if (results.errors()==0) {
+      h1->Fill(ipll, results.info_words_read());
+      goodtimingfound = true;
+    }
+    if (Log::ReportingLevel() >= logDEBUG) results.dump();
+  }
+
+  if (goodtimingfound && h1->GetMaximum()==fIterations*fParNtrig) {
+    int Best160PLLPhase = h1->GetMaximumBin()-1;
+    LOG(logINFO) << "Setting 160 MHz PLL Phase to " << Best160PLLPhase;
+    uint8_t delaysetting = Best160PLLPhase<<5 | magic400PLLPhase<<2;
+    fApi->setTbmReg("basee", delaysetting, 0);
+    fPixSetup->getConfigParameters()->setTbmDac("basee", delaysetting, 0);
+  } else LOG(logERROR) << "No good timings found! Try running the Phase Scan in the Timing tab.";
+  
+  //Draw Histogram
+  h1->Draw();
+  fHistList.push_back(h1);
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  PixTest::update();
+
+  // Reset the pattern generator to the configured default:
+  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
+
+}
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompCalDel() {
