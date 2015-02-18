@@ -147,6 +147,8 @@ int main(int argc, char *argv[]){
     SetLogOutput::Duplicate() = true;
   }
 
+  LOG(logINFO) << "*** Welcome to pxar ***";
+
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
