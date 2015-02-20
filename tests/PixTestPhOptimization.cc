@@ -172,18 +172,21 @@ void PixTestPhOptimization::doTest() {
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     po_opt[rocIds[roc_it]] = 120;
   }
-  ps_opt = InsideRangePH(po_opt, dacdac_max, dacdac_min);
-  //check for opt failure
-  for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
-    if(ps_opt[rocIds[roc_it]]==999){
-      LOG(logDEBUG)<<"PH optimization failed on ROC "<<(int)rocIds[roc_it]<<endl<<"Please run PreTest or try PhOptimization on a random pixel";
-    }
-  }
-  //2. centring PH curve adjusting phoffset
-  po_opt = CentrePhRange(po_opt, ps_opt, dacdac_max, dacdac_min);
-  
-  //3. stretching curve adjusting phscale
-  ps_opt = StretchPH(po_opt, ps_opt, dacdac_max, dacdac_min);
+//  ps_opt = InsideRangePH(po_opt, dacdac_max, dacdac_min);
+//  //check for opt failure
+//  for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
+//    if(ps_opt[rocIds[roc_it]]==999){
+//      LOG(logDEBUG)<<"PH optimization failed on ROC "<<(int)rocIds[roc_it]<<endl<<"Please run PreTest or try PhOptimization on a random pixel";
+//    }
+//  }
+//  //2. centring PH curve adjusting phoffset
+//  po_opt = CentrePhRange(po_opt, ps_opt, dacdac_max, dacdac_min);
+//  
+//  //3. stretching curve adjusting phscale
+//  ps_opt = StretchPH(po_opt, ps_opt, dacdac_max, dacdac_min);
+
+   //new approach
+  optimiseOnMaps(po_opt, ps_opt, dacdac_max, dacdac_min);
   
   //set optimized dacs and save
   restoreDacs();
@@ -291,32 +294,25 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     pair<int, pxar::pixel> maxpixel;
     maxpixel.second.setValue(0);
     std::vector<pxar::pixel> result;
+    std::vector<TH2D*> maxphmap;
+    int binmax=0, xbinmax=0, ybinmax=0;
+    int colmax=0, rowmax=0;
     while((maxph>254 || maxph==0) && flag_maxPh<52){
-      result.clear();
       fApi->setDAC("phscale", init_phScale);
       fApi->setDAC("vcal",255);
       fApi->setDAC("ctrlreg",4);
       fApi->setDAC("phoffset",200);  
-      int cnt(0); 
-      bool done(false);
-      while (!done) {
-	try {
-	  result = fApi->getPulseheightMap(0, 10);
-	  done = true;
-	} catch(pxarException &e) {
-	  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-	  ++cnt;
-	}
-	done = (cnt>5) || done;
-      }
+      maxphmap = phMaps("maxphmap", 10, 0);
       
       maxph=0;
-      LOG(logDEBUG) << "result size "<<result.size()<<endl;
       //check that the pixel showing highest PH on the module is not reaching 255
-      for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+      for( ith2 = 0; ith2 < maxphmap.size(); ith2++) {
 	isPixGood=true;
+	maxphmap[ith2]->GetBinXYZ(maxphmap[ith2]->GetMaximumBin(), xbinmax, ybinmax);
+	colmax = maxphmap[ith2]->GetXaxis()->GetBinCenter(xbinmax);
+	rowmax = maxphmap[ith2]->GetYaxis()->GetBinCenter(ybinmax);
 	for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	  if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
+	  if(bad_it->second.first == colmax && bad_it->second.second == rowmax && bad_it->first == getIdFromIdx(ith2)){////CHECK IT
 	    isPixGood=false;
 	  }
 	}
