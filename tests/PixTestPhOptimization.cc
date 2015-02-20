@@ -295,7 +295,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     maxpixel.second.setValue(0);
     std::vector<pxar::pixel> result;
     std::vector<TH2D*> maxphmap;
-    int binmax=0, xbinmax=0, ybinmax=0;
+    int binmax=0, xbinmax=0, ybinmax=0, zbinmax=0;
     int colmax=0, rowmax=0;
     while((maxph>254 || maxph==0) && flag_maxPh<52){
       fApi->setDAC("phscale", init_phScale);
@@ -306,45 +306,83 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
       
       maxph=0;
       //check that the pixel showing highest PH on the module is not reaching 255
-      for( ith2 = 0; ith2 < maxphmap.size(); ith2++) {
+      for( int ith2 = 0; ith2 < maxphmap.size(); ith2++) {
 	isPixGood=true;
-	maxphmap[ith2]->GetBinXYZ(maxphmap[ith2]->GetMaximumBin(), xbinmax, ybinmax);
+	maxphmap[ith2]->GetBinXYZ(maxphmap[ith2]->GetMaximumBin(), xbinmax, ybinmax, zbinmax);
 	colmax = maxphmap[ith2]->GetXaxis()->GetBinCenter(xbinmax);
 	rowmax = maxphmap[ith2]->GetYaxis()->GetBinCenter(ybinmax);
 	for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	  if(bad_it->second.first == colmax && bad_it->second.second == rowmax && bad_it->first == getIdFromIdx(ith2)){////CHECK IT
+	  if(bad_it->second.first == colmax && bad_it->second.second == rowmax && bad_it->first == getIdFromIdx(ith2)){
 	    isPixGood=false;
 	  }
 	}
-	if(isPixGood && px->value() > maxph){
-	  maxph = px->value();
+	if(isPixGood && maxphmap[ith2]->GetBinContent(xbinmax, ybinmax) > maxph){
+	  maxph = maxphmap[ith2]->GetBinContent(xbinmax, ybinmax);
 	}
       }
       //should have flag for v2 or v2.1
       init_phScale+=5;
       flag_maxPh++;
     }
+    
+    
+    //    std::map<uint8_t, int> maxph;
+    std::map<uint8_t, std::pair<uint8_t, uint8_t> > maxpixs;
+    pxar::pixel temp_pix;
+    Double_t xq[1];  // position where to compute the quantiles in [0,1]
+    xq[0]=0.98;
+    Double_t yq[1];  // array to contain the quantiles
     // Look for pixel with max. pulse height on every ROC:
-    for(unsigned int iroc=0; iroc< rocIds.size(); iroc++){
-      maxph=0;
-      for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
-	isPixGood=true;
-	if(px->value() > maxph && px->roc() == rocIds[iroc]){
-	  for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-	    if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
-	      isPixGood=false;
-	      break;
-	    }
+    for(int ith2 = 0; ith2 < maxphmap.size(); ith2++) {
+      TH1D* h_quant = distribution(maxphmap[ith2], 256, 0., 255.);
+      h_quant->GetQuantiles(1, xq, yq);
+      //      maxph.push_back(make_pair(getIdFromIdx(ith2), yq[0]));
+      for(int ibinx = 1; ibinx < maxphmap[ith2]->GetNbinsX()+1; ibinx++){
+	for(int ibiny = 1; ibiny < maxphmap[ith2]->GetNbinsY()+1; ibiny++){
+	  if(maxphmap[ith2]->GetBinContent(ibinx, ibiny) >= yq[0]){
+	    temp_pix.setRoc( getIdFromIdx(ith2) );
+	    //	    maxphmap[ith2]->GetBinXYZ(ibin, xbinmax, ybinmax, zbinmax);
+	    temp_pix.setRow( maxphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
+	    temp_pix.setColumn( maxphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
+	    temp_pix.setValue( maxphmap[ith2]->GetBinContent(ibinx,ibiny) );
+	    maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
+	    break;
 	  }
-	  if(isPixGood){
-	    maxpixel = make_pair(iroc,*px);
-	    maxph = px->value();
-	    }
+	  else if(ibinx == maxphmap[ith2]->GetNbinsX()+1 && ibiny == maxphmap[ith2]->GetNbinsY()+1){
+	    LOG(logDEBUG)<<"max ph pixel determination failed on roc "<<getIdFromIdx(ith2)<<", setting pixel 0,0";
+	    temp_pix.setRoc( getIdFromIdx(ith2) ); 
+	    temp_pix.setRow( 0 );
+	    temp_pix.setColumn( 0 );
+	    temp_pix.setValue( -1 );
+	    maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));   
+	  }
 	}
       }
-      maxpixels.insert(maxpixel);
-      LOG(logDEBUG) << "maxPh " << maxph <<" for ROC "<<maxpixel.first<<" on pixel "<<maxpixel.second << endl ;      
     }
+    
+    
+//
+//    // Look for pixel with max. pulse height on every ROC:
+//    for(unsigned int iroc=0; iroc< rocIds.size(); iroc++){
+//      maxph=0;
+//      for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+//	isPixGood=true;
+//	if(px->value() > maxph && px->roc() == rocIds[iroc]){
+//	  for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+//	    if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
+//	      isPixGood=false;
+//	      break;
+//	    }
+//	  }
+//	  if(isPixGood){
+//	    maxpixel = make_pair(iroc,*px);
+//	    maxph = px->value();
+//	    }
+//	}
+//      }
+//      maxpixels.insert(maxpixel);
+//      LOG(logDEBUG) << "maxPh " << maxph <<" for ROC "<<maxpixel.first<<" on pixel "<<maxpixel.second << endl ;      
+//    }
 }
 
 void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map<int, int> &minVcal, std::vector<std::pair<uint8_t, pair<int,int> > >  &badPixels){
@@ -368,7 +406,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     //    fApi->setDAC("vcal",fMinThr*1.2);
     fApi->setDAC("vcal",130);
     fApi->setDAC("phoffset",150);  
-    /*    int cnt(0); 
+    int cnt(0); 
     bool done(false);
     int size = 0;
     while (!(done && size !=0)) {
@@ -382,31 +420,31 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	++cnt;
 	}
       done = (cnt>5) || done;
-      }*/
+    }
     phmaps = phMaps("phmaps_minpix", 10, 0);
 
     minph=255;
-//    LOG(logDEBUG) << "result size "<<result.size()<<endl;
-//    //check that the pixel showing lowest PH above 0 on the module
-//    for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
-//      isPixGood=true;
-//      for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-//	if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
-//	  isPixGood=false;
-//	  break;
-//	  }
-//      }
-//      if(isPixGood && px->value() < minph){
-//	minph = px->value();
-//      }
-//    }
-
-    for(int imap=0; imap<phmaps.size(); imap++){
-      //how to avoid blacklisted pixels?
-      if(phmaps[imap]->GetMinimum()<minph){
-	minph=phmaps[imap]->GetMinimum();
+    LOG(logDEBUG) << "result size "<<result.size()<<endl;
+    //check that the pixel showing lowest PH above 0 on the module
+    for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
+      isPixGood=true;
+      for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
+	  isPixGood=false;
+	  break;
+	  }
+      }
+      if(isPixGood && px->value() < minph){
+	minph = px->value();
       }
     }
+
+//    for(int imap=0; imap<phmaps.size(); imap++){
+//      //how to avoid blacklisted pixels?
+//      if(phmaps[imap]->GetMinimum()<minph){
+//	minph=phmaps[imap]->GetMinimum();
+//      }
+//    }
     //should have flag for v2 or v2.1
     init_phScale+=5;
     flag_minPh++;
