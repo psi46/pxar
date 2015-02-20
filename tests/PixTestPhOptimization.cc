@@ -1008,7 +1008,7 @@ void PixTestPhOptimization::SetMinThr(){
 
 
 
-void PixTestPhOptimization::optimiseOnMaps(map<uint8_t, int> &po_opt, map<uint8_t, int> &ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
+void PixTestPhOptimization::optimiseOnMaps(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min){
   //stretching PH curve to exploit the full ADC range, adjusting phscale             
   int maxPh(0);
   int minPh(0);
@@ -1051,5 +1051,4 @@ void PixTestPhOptimization::optimiseOnMaps(map<uint8_t, int> &po_opt, map<uint8_
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     LOG(logDEBUG)<<"opt final step: po fixed to"<<po_opt[rocIds[roc_it]]<<" and scale adjusted to "<<ps_opt[rocIds[roc_it]]<<", with distance "<<bestDist[rocIds[roc_it]]<<" on ROC "<<(int)rocIds[roc_it];
   }
-  return ps_opt;
 }
