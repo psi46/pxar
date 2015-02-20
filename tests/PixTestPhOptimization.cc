@@ -325,8 +325,6 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
       flag_maxPh++;
     }
     
-    
-    //    std::map<uint8_t, int> maxph;
     std::map<uint8_t, std::pair<uint8_t, uint8_t> > maxpixs;
     pxar::pixel temp_pix;
     Double_t xq[1];  // position where to compute the quantiles in [0,1]
@@ -336,12 +334,10 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     for(int ith2 = 0; ith2 < maxphmap.size(); ith2++) {
       TH1D* h_quant = distribution(maxphmap[ith2], 256, 0., 255.);
       h_quant->GetQuantiles(1, xq, yq);
-      //      maxph.push_back(make_pair(getIdFromIdx(ith2), yq[0]));
       for(int ibinx = 1; ibinx < maxphmap[ith2]->GetNbinsX()+1; ibinx++){
 	for(int ibiny = 1; ibiny < maxphmap[ith2]->GetNbinsY()+1; ibiny++){
 	  if(maxphmap[ith2]->GetBinContent(ibinx, ibiny) >= yq[0]){
 	    temp_pix.setRoc( getIdFromIdx(ith2) );
-	    //	    maxphmap[ith2]->GetBinXYZ(ibin, xbinmax, ybinmax, zbinmax);
 	    temp_pix.setRow( maxphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
 	    temp_pix.setColumn( maxphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
 	    temp_pix.setValue( maxphmap[ith2]->GetBinContent(ibinx,ibiny) );
@@ -359,30 +355,6 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
 	}
       }
     }
-    
-    
-//
-//    // Look for pixel with max. pulse height on every ROC:
-//    for(unsigned int iroc=0; iroc< rocIds.size(); iroc++){
-//      maxph=0;
-//      for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
-//	isPixGood=true;
-//	if(px->value() > maxph && px->roc() == rocIds[iroc]){
-//	  for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-//	    if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
-//	      isPixGood=false;
-//	      break;
-//	    }
-//	  }
-//	  if(isPixGood){
-//	    maxpixel = make_pair(iroc,*px);
-//	    maxph = px->value();
-//	    }
-//	}
-//      }
-//      maxpixels.insert(maxpixel);
-//      LOG(logDEBUG) << "maxPh " << maxph <<" for ROC "<<maxpixel.first<<" on pixel "<<maxpixel.second << endl ;      
-//    }
 }
 
 void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map<int, int> &minVcal, std::vector<std::pair<uint8_t, pair<int,int> > >  &badPixels){
@@ -427,13 +399,6 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	  minph = minphmap[ith2]->GetBinContent(xbinmin, ybinmin);
 	}
       }
-
-//    for(int imap=0; imap<phmaps.size(); imap++){
-//      //how to avoid blacklisted pixels?
-//      if(phmaps[imap]->GetMinimum()<minph){
-//	minph=phmaps[imap]->GetMinimum();
-//      }
-//    }
     //should have flag for v2 or v2.1
     init_phScale+=5;
     flag_minPh++;
@@ -450,12 +415,10 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     for(int ith2 = 0; ith2 < minphmap.size(); ith2++) {
       TH1D* h_quant = distribution(minphmap[ith2], 256, 0., 255.);
       h_quant->GetQuantiles(1, xq, yq);
-      //      minph.push_back(make_pair(getIdFromIdx(ith2), yq[0]));
       for(int ibinx = 1; ibinx < minphmap[ith2]->GetNbinsX()+1; ibinx++){
 	for(int ibiny = 1; ibiny < minphmap[ith2]->GetNbinsY()+1; ibiny++){
 	  if(minphmap[ith2]->GetBinContent(ibinx, ibiny) >= yq[0]){
 	    temp_pix.setRoc( getIdFromIdx(ith2) );
-	    //	    minphmap[ith2]->GetBinXYZ(ibin, xbinmin, ybinmin, zbinmin);
 	    temp_pix.setRow( minphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
 	    temp_pix.setColumn( minphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
 	    temp_pix.setValue( minphmap[ith2]->GetBinContent(ibinx,ibiny) );
@@ -473,27 +436,6 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	}
       }
     }
-
-//  for(unsigned int iroc=0; iroc< rocIds.size(); iroc++){
-//    minph=255;
-//    for(std::vector<pxar::pixel>::iterator px = result.begin(); px != result.end(); px++) {
-//      isPixGood=true;
-//      if(px->value() < minph && px->roc() == rocIds[iroc]){
-//	for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-//	  if(bad_it->second.first == px->column() && bad_it->second.second == px->row() && bad_it->first == px->roc()){
-//	    isPixGood=false;
-//	    break;
-//	  }
-//	}
-//	if(isPixGood){
-//	  minpixel = make_pair(iroc,*px);
-//	  minph = px->value();
-//	}
-//      }
-//    }
-//    minpixels.insert(minpixel);
-//    LOG(logDEBUG) << "minPh " << minph <<" for ROC "<<minpixel.first<<" on pixel "<<minpixel.second << endl ;      
-//  }
   
   //finds min vcal
   int cnt(0); 
@@ -510,9 +452,6 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     }
     fApi->_dut->testAllPixels(false);
     fApi->_dut->maskAllPixels(true);
-    //    fApi->_dut->setROCEnable(roc_it, true);
-    //    fApi->_dut->testPixel(minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), true, rocIds[roc_it]);
-    //    fApi->_dut->maskPixel(minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), false, rocIds[roc_it]);
     fApi->_dut->testPixel(minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), true);
     fApi->_dut->maskPixel(minpixels[rocIds[roc_it]].column(), minpixels[rocIds[roc_it]].row(), false);
     LOG(logDEBUG)<<"enabling pixels "<<(int)minpixels[roc_it].column()<<", "<<(int)minpixels[roc_it].row()<<", "<<(int)minpixels[roc_it].roc()<<" "<<(int)roc_it;
@@ -521,16 +460,12 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	fApi->_dut->setROCEnable(roc_jt, false);
       }
     }
-    //    fApi->_dut->testPixel(minpixels[roc_it].column(), minpixels[roc_it].row(), true, getIdFromIdx((int)roc_it));
-    //fApi->_dut->maskPixel(minpixels[roc_it].column(), minpixels[roc_it].row(), false, getIdFromIdx((int)roc_it));
     fApi->_dut->info();
     cnt = 0; 
     done = false;
     while (!done) {
       try {
-	//	LOG(logDEBUG)<<"trying phVsDAC for roc "<<(int)roc_it<<" "<<(int)rocIds[roc_it];
 	results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
-	//LOG(logDEBUG)<<"worked? phVsDAC for roc "<<(int)roc_it<<" "<<(int)rocIds[roc_it];
 	done = true;
       } catch(pxarException &e) {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
@@ -541,14 +476,10 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     
     LOG(logDEBUG)<<"size of results "<<results.size();
     for (unsigned int i = 0; i < results.size(); ++i) {
-      //      LOG(logDEBUG)<<"analyzing postion "<<int(i)<<" of results";
       pair<uint8_t, vector<pixel> > v = results[i];
       int idac = v.first; 
-      // LOG(logDEBUG)<<"idac is "<<(int)idac;
       vector<pixel> vpix = v.second;
-      //LOG(logDEBUG)<<"vpix size is "<<vpix.size();
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-	//	LOG(logDEBUG)<<"vcalmin loop: ipix = "<<ipix<<", dac = "<<idac<<", ph = "<<vpix[ipix].value();
 	h1->Fill(idac, vpix[ipix].value());
       }
     }
