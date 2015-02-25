@@ -59,6 +59,7 @@ public:
   void hvOff();
   void powerOn();
   void powerOff();
+  bool isPowerOff() {return !fPower;}
 
   PixTest* createTest(std::string); 
 
