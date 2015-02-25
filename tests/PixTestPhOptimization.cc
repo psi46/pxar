@@ -836,7 +836,8 @@ void PixTestPhOptimization::MaxPhVsDacDac(std::vector< std::pair<uint8_t, std::p
     fApi->_dut->testPixel(maxp_it->second.column(),maxp_it->second.row(),true, getIdxFromId(maxp_it->second.roc()));
     fApi->_dut->maskPixel(maxp_it->second.column(),maxp_it->second.row(),false, getIdxFromId(maxp_it->second.roc()));
   } 
-  fApi->setDAC("vcal",255);
+  //sample pulseheight at 35k e-
+  fApi->setDAC("vcal",100);
   fApi->setDAC("ctrlreg",4);
   
   //scanning through offset and scale for max pixel (or randpixel)
