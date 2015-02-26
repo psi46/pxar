@@ -67,13 +67,7 @@ void PixMonitor::dumpSummaries() {
 void PixMonitor::update() {
   int NBINS(10); 
   fIana = fApi->getTBia();
-  if (fIana < 1e-4) {
-    LOG(logERROR) << "analog current reading unphysical";
-  }
   fIdig = fApi->getTBid();
-  if (fIdig < 1e-4) {
-    LOG(logERROR) << "digital current reading unphysical";
-  }
   
   TTimeStamp ts; 
   ULong_t seconds  = ts.GetSec();

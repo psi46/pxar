@@ -116,6 +116,14 @@ void PixMonitorFrame::Update() {
 //     id = static_cast<float>(fGui->getApi()->getTBid());
     ia = static_cast<float>(a->getIana());
     id = static_cast<float>(a->getIdig());
+    if (!fGui->isPowerOff()) {
+      if (ia < 1e-4) {
+	LOG(logERROR) << "analog current reading unphysical";
+      }
+      if (id < 1e-4) {
+	LOG(logERROR) << "digital current reading unphysical";
+      }
+    }
   } else {
     ia += 1.0; 
     id += 1.0; 
