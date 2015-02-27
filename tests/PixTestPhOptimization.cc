@@ -166,6 +166,9 @@ void PixTestPhOptimization::doTest() {
   MaxPhVsDacDac(dacdac_max, maxpixels);
   MinPhVsDacDac(dacdac_min, minpixels, minVcal);
 
+  
+
+
   //search for optimal dac values in 3 steps
   //1. shrinking the PH to be completely inside the ADC range, adjusting phscale
   map<uint8_t, int> ps_opt, po_opt;
@@ -1102,4 +1105,30 @@ void PixTestPhOptimization::optimiseOnMaps(std::map<uint8_t, int> &po_opt, std::
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     LOG(logDEBUG)<<"opt final step: po fixed to"<<po_opt[rocIds[roc_it]]<<" and scale adjusted to "<<ps_opt[rocIds[roc_it]]<<", with distance "<<bestDist[rocIds[roc_it]]<<" on ROC "<<(int)rocIds[roc_it];
   }
+}
+
+
+void PixTestPhOptimization::getTH2fromMaps(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min, std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min){
+
+    TH2D* h2 = new TH2D("h2", "h2", 256, 0., 255., 256, 0., 255.);
+    for(int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
+      th2_max[i] = (TH2D*)h2->Clone(Form("maxphmap_C%d", getIdFromIdx(i)));
+      th2_min[i] = (TH2D*)h2->Clone(Form("minphmap_C%d", getIdFromIdx(i)));
+    }
+    
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
+    for(dacit_max = dacdac_max.begin(); dacit_max != dacdac_max.end(); dacit_max++){
+      for(int ipix = 0; ipix< dacit_max->second.second.size(); ipix++){
+	th2_max[getIdxFromId(dacit_max->second.second[ipix].roc())]->Fill(dacit_max->first, dacit_max->second.first, dacit_max->second.second[ipix].value());
+      }
+    } 
+
+
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_min = dacdac_min.begin();
+    for(dacit_min = dacdac_min.begin(); dacit_min != dacdac_min.end(); dacit_min++){
+      for(int ipix = 0; ipix< dacit_min->second.second.size(); ipix++){
+	th2_min[getIdxFromId(dacit_min->second.second[ipix].roc())]->Fill(dacit_min->first, dacit_min->second.first, dacit_min->second.second[ipix].value());
+      }
+    } 
+
 }
