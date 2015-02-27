@@ -189,7 +189,28 @@ void PixTestPhOptimization::doTest() {
 //  ps_opt = StretchPH(po_opt, ps_opt, dacdac_max, dacdac_min);
 
    //new approach
-  optimiseOnMaps(po_opt, ps_opt, dacdac_max, dacdac_min);
+  std::vector<TH2D* > th2_max;
+  std::vector<TH2D* > th2_min;
+  TH2D* h2(0);
+  for(int iroc=0; iroc< fApi->_dut->getNRocs(); iroc++){
+    th2_max.push_back(h2);
+    th2_min.push_back(h2);
+  }
+
+  getTH2fromMaps(dacdac_max, dacdac_min, th2_max, th2_min);
+  
+  for(int ih2 = 0; ih2 < th2_max.size(); ih2++){
+    fHistList.push_back(th2_max[ih2]);
+    fHistOptions.insert( make_pair(th2_max[ih2], "colz" ) ); 
+  }
+
+  for(int ih2 = 0; ih2 < th2_min.size(); ih2++){
+    fHistList.push_back(th2_min[ih2]);
+    fHistOptions.insert( make_pair(th2_min[ih2], "colz" ) ); 
+  }
+
+  //optimiseOnMaps(po_opt, ps_opt, dacdac_max, dacdac_min);
+  optimiseOnMapsNew(po_opt, ps_opt, th2_max, th2_min);
   
   //set optimized dacs and save
   restoreDacs();
@@ -1130,5 +1151,52 @@ void PixTestPhOptimization::getTH2fromMaps(std::vector< std::pair<uint8_t, std::
 	th2_min[getIdxFromId(dacit_min->second.second[ipix].roc())]->Fill(dacit_min->first, dacit_min->second.first, dacit_min->second.second[ipix].value());
       }
     } 
+
+}
+
+
+void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min){
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  TH2D* hmin(0);
+  TH2D* hmax(0);
+  TH2D* hsol = new TH2D("hsol", "hsol", 256, 0., 255., 256, 0., 255.);
+  int goodbinx = 0, goodbiny = 0, goodbinz=0;
+  for(int iroc = 0; iroc < rocIds.size(); iroc++){
+    hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
+    hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
+
+    for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
+      for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
+	if(abs(hmax->GetBinContent(ibinx, ibiny) - 249) > 5 ){
+	  hmax->SetBinContent(ibinx, ibiny, 0);
+	}
+      }
+    }
+    
+    for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+      for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	if(abs(hmin->GetBinContent(ibinx, ibiny) - 15) > 5 ){
+	  hmin->SetBinContent(ibinx, ibiny, 0);
+	}
+    }
+    }
+    
+    for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+      for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
+	  hsol->SetBinContent(ibinx, ibiny, 1);
+	}
+      }
+    }
+    
+    hsol->GetBinXYZ(hsol->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
+    po_opt[rocIds[iroc]] = (int)hsol->GetXaxis()->GetBinCenter(goodbinx);
+    ps_opt[rocIds[iroc]] = (int)hsol->GetYaxis()->GetBinCenter(goodbiny);
+  }
+
+  
+  delete hmin;
+  delete hmax;
+  delete hsol;
 
 }
