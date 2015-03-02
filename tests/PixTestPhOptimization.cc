@@ -470,7 +470,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     fApi->setDAC("phscale", init_phScale);
     fApi->setDAC("ctrlreg",0);
     //    fApi->setDAC("vcal",fMinThr*1.2);
-    fApi->setDAC("vcal",200);
+    fApi->setDAC("vcal",60);
     fApi->setDAC("phoffset",150);  
 
     minphmap = phMaps("minphmap", 10, 0);
@@ -1221,7 +1221,7 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
   }
   int goodbinx = 0, goodbiny = 0, goodbinz=0;
   double maxsol=0.;
-  
+  double maxPH=0.;
 
   for(int iroc = 0; iroc < rocIds.size(); iroc++){
     maxsol=0.;
@@ -1230,10 +1230,11 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
       // hsol->Reset("M");
       hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
       hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
-      
+      maxPH = hmax->GetMaximum();
+
       for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
 	for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
-	  if(abs(hmax->GetBinContent(ibinx, ibiny) - hmax->GetMaximum() + 2) > 1 ){
+	  if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
 	    hmax->SetBinContent(ibinx, ibiny, 0);
 	  }
 	}
