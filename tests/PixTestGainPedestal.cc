@@ -122,6 +122,26 @@ void PixTestGainPedestal::doTest() {
 
 
 // ----------------------------------------------------------------------
+void PixTestGainPedestal::fullTest() {
+
+  TStopwatch t;
+
+  fDirectory->cd();
+  PixTest::update(); 
+  bigBanner(Form("PixTestGainPedestal::fullTest() ntrig = %d", fParNtrig));
+
+  fParDumpHists = 1; 
+
+  measure();
+  fit();
+  saveGainPedestalParameters();
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestGainPedestal::doTest() done, duration: " << seconds << " seconds";
+}
+
+
+// ----------------------------------------------------------------------
 void PixTestGainPedestal::runCommand(string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
