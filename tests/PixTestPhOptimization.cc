@@ -1200,7 +1200,7 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
     
     for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
       for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-	if(abs(hmin->GetBinContent(ibinx, ibiny) - 15) > 5 ){
+	if(abs(hmin->GetBinContent(ibinx, ibiny) - 20) > 5 ){
 	  hmin->SetBinContent(ibinx, ibiny, 0);
 	}
     }
