@@ -130,7 +130,7 @@ void PixTestGainPedestal::fullTest() {
   PixTest::update(); 
   bigBanner(Form("PixTestGainPedestal::fullTest() ntrig = %d", fParNtrig));
 
-  fParDumpHists = 1; 
+  //  fParDumpHists = 1; 
 
   measure();
   fit();
