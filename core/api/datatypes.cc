@@ -57,6 +57,8 @@ namespace pxar {
     LOG(logINFO) << "Decoding statistics:";
     LOG(logINFO) << "  General information:";
     LOG(logINFO) << "\t 16bit words read:         " << this->info_words_read();
+    LOG(logINFO) << "\t empty events:             " << this->info_events_empty();
+    LOG(logINFO) << "\t valid events with pixels: " << this->info_events_valid();
     LOG(logINFO) << "\t valid pixel hits:         " << this->info_pixels_valid();
     LOG(logINFO) << "  Event errors: \t           " << this->errors_event();
     LOG(logINFO) << "\t start marker:             " << this->errors_event_start();
@@ -80,6 +82,8 @@ namespace pxar {
 
   void statistics::clear() {
     m_info_words_read = 0;
+    m_info_events_empty = 0;
+    m_info_events_valid = 0;
     m_info_pixels_valid = 0;
 
     m_errors_event_start = 0;
@@ -104,6 +108,8 @@ namespace pxar {
   statistics& operator+=(statistics &lhs, const statistics &rhs) {
     // Informational bits:
     lhs.m_info_words_read += rhs.m_info_words_read;
+    lhs.m_info_events_empty += rhs.m_info_events_empty;
+    lhs.m_info_events_valid += rhs.m_info_events_valid;
     lhs.m_info_pixels_valid += rhs.m_info_pixels_valid;
 
     // Event errors:

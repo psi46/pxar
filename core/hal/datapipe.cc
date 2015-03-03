@@ -174,6 +174,8 @@ namespace pxar {
     unsigned int raw = 0;
     unsigned int pos = 0;
     unsigned int size = sample->GetSize();
+    decodingStats.m_info_words_read += size;
+
     uint16_t v;
     bool tmpError = false;
 
@@ -319,7 +321,13 @@ namespace pxar {
       LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
 		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
       decodingStats.m_errors_roc_missing++;
+      // Clearing event content:
+      roc_Event.Clear();
     }
+    // Count empty events
+    else if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
+    // Count valid events
+    else { decodingStats.m_info_events_valid++; }
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
@@ -340,6 +348,8 @@ namespace pxar {
     if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
 
     unsigned int n = sample->GetSize();
+    decodingStats.m_info_words_read += n;
+
     if (n > 0) {
       if (n > 1) roc_Event.pixels.reserve((n-1)/2);
       roc_Event.header = (*sample)[0] & 0x0fff;
@@ -370,6 +380,11 @@ namespace pxar {
 	}
       }
     }
+
+    // Count empty events
+    if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
+    // Count valid events
+    else { decodingStats.m_info_events_valid++; }
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
