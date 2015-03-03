@@ -292,7 +292,11 @@ namespace pxar {
     bool enable;
   };
 
-  /** Class for storing decoded pixel readout data
+  /** Class for statistics on event and pixel decoding
+   *
+   *  The class collects all decoding statistics gathered during one DAQ 
+   *  session (i.e. one test command from pxarCore or one session started 
+   *  with daqStart() and ended with daqStop().
    */
   class DLLEXPORT statistics {
     /** Allow the dtbEventDecoder to directly alter private members of the statistics
