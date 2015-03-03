@@ -153,7 +153,7 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
       results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig);
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true;
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       ++cnt;
     }
     done = (cnt>2) || done;
@@ -248,7 +248,7 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
       results = fApi->getPulseheightMap(FLAGS, ntrig);
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true; 
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       fNDaqErrors = 666667;
       ++cnt;
     }
@@ -304,7 +304,7 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true; 
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       fNDaqErrors = 666667;
       ++cnt;
     }
@@ -966,7 +966,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
       scans = fApi->getEfficiencyVsDAC("vthrcomp", 0, 255, FLAGS, ntrig);
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true; 
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       fNDaqErrors = 666667;
       ++cnt;
     }
@@ -1210,7 +1210,7 @@ void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int 
       results = fApi->getEfficiencyVsDAC(dac, 1, 200, FLAGS, ntrig); 
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true;
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       fNDaqErrors = 666667;
       ++cnt;
     }
@@ -1338,7 +1338,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 	fNDaqErrors = fApi->getStatistics().errors_pixel();
       }
       done = true;
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       fNDaqErrors = 666667;
       ++cnt;
     }
@@ -1676,7 +1676,7 @@ pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_
       results = fApi->getEfficiencyMap(FLAGS, ntrig);
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true; 
-    } catch(pxarException &e) {
+    } catch(pxarException &/*e*/) {
       fNDaqErrors = 666667;
       ++cnt;
     }

@@ -147,6 +147,12 @@ int main(int argc, char *argv[]){
     SetLogOutput::Duplicate() = true;
   }
 
+  TDatime today;
+  string tstamp = Form("%d/%02d/%02d", today.GetYear(), today.GetMonth(), today.GetDay()); 
+
+  LOG(logINFO) << "*** Welcome to pxar ***";
+  LOG(logINFO) << Form("*** Today: %s", tstamp.c_str());
+
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
@@ -278,6 +284,19 @@ int main(int argc, char *argv[]){
       std::transform(subtest.begin(), subtest.end(), subtest.begin(), ::tolower);
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       
+      if (!input.compare("savedacs")) {
+	a.writeDacParameterFiles();
+	continue;
+      }
+      if (!input.compare("savetrims")) {
+	a.writeTrimFiles();
+	continue;
+      }
+      if (!input.compare("savetbm")) {
+	a.writeTbmParameterFiles();
+	continue;
+      }
+  
       if (!input.compare("gui"))  runGui(a, argc, argv); 
       if (!input.compare("exit")) stop = true; 
       if (!input.compare("quit")) stop = true; 
