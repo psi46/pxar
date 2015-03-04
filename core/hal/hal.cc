@@ -15,6 +15,8 @@ hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
   m_tbmtype(TBM_NONE),
+  m_tindelay(13),
+  m_toutdelay(8),
   deser160phase(4),
   rocType(0),
   _currentTrgSrc(TRG_SEL_PG_DIR)
@@ -165,6 +167,14 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
     else if(sigIt->first == SIG_RDA_TOUT) {
       LOG(logDEBUGHAL) << "set TOUT / RDA delay to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetRdaToutDelay(sigIt->second);
+    }
+    else if(sigIt->first == SIG_ADC_TINDELAY) {
+      LOG(logDEBUGHAL) << "caching ADC Token In delay as " << static_cast<int>(sigIt->second);
+      m_tindelay = sigIt->second;
+    }
+    else if(sigIt->first == SIG_ADC_TOUTDELAY) {
+      LOG(logDEBUGHAL) << "caching ADC Token Out delay as " << static_cast<int>(sigIt->second);
+      m_toutdelay = sigIt->second;
     }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
@@ -1663,6 +1673,22 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       _testboard->Daq_Start(3);
     }
   }
+  // Single analog PSI46 chip:
+  else if(rocType < ROC_PSI46DIG) {
+    // FIXME Beat's magic number:
+    uint16_t timeout = 300;
+    LOG(logDEBUGHAL) << "Enabling ADC for analog ROC data acquisition."
+		     << " Timout: " << timeout
+		     << " Delay Tin/Tout: " << static_cast<int>(m_tindelay) 
+		     << "/" << static_cast<int>(m_toutdelay);
+    _testboard->Daq_Select_ADC(timeout, // 1..65535
+			       0,  // source: tin/tout
+			       m_tindelay,  // tin delay 0..63
+			       m_toutdelay); // tout delay 0..63
+    _testboard->SignalProbeADC(PROBEA_SDATA1, GAIN_4);
+    _testboard->uDelay(800); // to stabilize ADC input signal
+  }
+  // Single digital PSI46 chip:
   else {
     LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
 		     << " Phase: " << static_cast<int>(deser160phase);
