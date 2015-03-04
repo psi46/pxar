@@ -423,7 +423,7 @@ class PxarCoreCmd(cmd.Cmd):
             s = ""
             for i in dat:
                 s += '{:03x}'.format(i) + " "
-                print s
+            print s
         except RuntimeError:
             pass
 
