@@ -620,6 +620,40 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all DACS
                 return dacdict.getAllROCNames()
 
+    @arity(0,0,[])
+    def do_analogLevelScan(self):
+        """analogLevelScan: scan the ADC levels of an analog ROC"""
+        self.api.daqStart()
+        self.api.daqTrigger(5000,500)
+        plotdata = zeros(1024)
+
+        try:
+            while True:
+                s = ""
+                p = ""
+                pos = -3
+                dat = self.api.daqGetRawEvent()
+                for i in dat:
+                    i = i & 0x0fff
+                    # Remove PH from hits:
+                    if pos == 5:
+                        pos = 0
+                        continue
+                    if i & 0x0800:
+                        i -= 4096
+                    plotdata[500+i] += 1
+                    pos += 1
+        except RuntimeError:
+            pass
+
+        plot = Plotter.create_th1(plotdata, -512, +512, "Address Levels", "ADC", "#")
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def complete_analogLevelScan(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_analogLevelScan.__doc__, '']
+
     @arity(2,2,[str, int])
     def do_setSignalMode(self, signal, mode):
         """setSignalMode [signal] [mode]: Set the DTB signal to given mode"""
