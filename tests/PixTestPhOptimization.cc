@@ -796,7 +796,7 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
   for(int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
     LOG(logDEBUG)<<"before assigning th2_sol to vector component";
     th2_sol[i] = (TH2D*)hsol->Clone(Form("solphvsdacdac_th2_C%d", getIdFromIdx(i)));
-    th2_sol[i]->SetTitle(Form("Solution phscaleVSphoffset C%d"), getIdFromIdx(i));
+    th2_sol[i]->SetTitle(Form("Solution phscaleVSphoffset C%d", getIdFromIdx(i)));
     th2_sol[i]->GetXaxis()->SetTitle("phscale");
     th2_sol[i]->GetYaxis()->SetTitle("phoffset");
     LOG(logDEBUG)<<"after assigning th2_sol to vector component, chip"<<getIdFromIdx(i);
