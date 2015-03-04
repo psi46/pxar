@@ -762,7 +762,13 @@ void PixTestPhOptimization::getTH2fromMaps(std::vector< std::pair<uint8_t, std::
   TH2D* h2 = new TH2D("h2", "h2", 256, 0., 255., 256, 0., 255.);
   for(int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
     th2_max[i] = (TH2D*)h2->Clone(Form("maxphvsdacdac_th2_C%d", getIdFromIdx(i)));
+    th2_max[i]->SetTitle(Form("max PH phscaleVSphoffset, C%d",  getIdFromIdx(i)));
+    th2_max[i]->GetXaxis()->SetTitle("phscale");
+    th2_max[i]->GetYaxis()->SetTitle("phoffset");
     th2_min[i] = (TH2D*)h2->Clone(Form("minphvsdacdac_th2_C%d", getIdFromIdx(i)));
+    th2_min[i]->SetTitle(Form("min PH phscaleVSphoffset, C%d",  getIdFromIdx(i)));
+    th2_min[i]->GetXaxis()->SetTitle("phscale");
+    th2_min[i]->GetYaxis()->SetTitle("phoffset");
   }
   
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > >::iterator dacit_max = dacdac_max.begin();
@@ -790,6 +796,9 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
   for(int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
     LOG(logDEBUG)<<"before assigning th2_sol to vector component";
     th2_sol[i] = (TH2D*)hsol->Clone(Form("solphvsdacdac_th2_C%d", getIdFromIdx(i)));
+    th2_sol[i]->SetTitle(Form("Solution phscaleVSphoffset C%d"), getIdFromIdx(i));
+    th2_sol[i]->GetXaxis()->SetTitle("phscale");
+    th2_sol[i]->GetYaxis()->SetTitle("phoffset");
     LOG(logDEBUG)<<"after assigning th2_sol to vector component, chip"<<getIdFromIdx(i);
   }
   int goodbinx = 0, goodbiny = 0, goodbinz=0;
