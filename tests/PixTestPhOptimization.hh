@@ -36,10 +36,6 @@ public:
 private:
 
   int         fParNtrig; 
-  std::string fParDAC; 
-  int         fParDacVal;
-  bool        fFlagSinglePix;
-  int         fSafetyMarginUp;
   int         fSafetyMarginLow;
   int         fMinThr;
 
