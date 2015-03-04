@@ -13,7 +13,7 @@ class Plotter(object):
         th1.SetDrawOption('HIST')
         th1.SetLineWidth(2)
         for ix, x in enumerate(data):
-            th1.Fill(ix,x)
+            th1.SetBinContent(ix,x)
         return th1
 
     @staticmethod
