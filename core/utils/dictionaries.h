@@ -130,6 +130,9 @@ namespace pxar {
       _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
       _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
 
+      _registers["tindelay"]       = dacConfig(SIG_ADC_TINDELAY,63,DTB_REG);
+      _registers["toutdelay"]      = dacConfig(SIG_ADC_TOUTDELAY,63,DTB_REG);
+
       _registers["tout"]          = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
       _registers["rda"]           = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
 
