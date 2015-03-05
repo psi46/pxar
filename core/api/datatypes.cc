@@ -48,6 +48,12 @@ namespace pxar {
     raw |= ((dcol)/6 << 21);
     raw |= (((dcol%6)) << 18);
 
+    LOG(logDEBUGPIPES) << "Pix  " << static_cast<int>(_column) << "|" 
+		       << static_cast<int>(_row) << " = "
+		       << dcol << "/" << r << " = "
+		       << dcol/6 << " " << dcol%6 << " "
+		       << r/36 << " " << (r%36)/6 << " " << (r%36)%6;
+
     // Return the 24 bits belonging to the pixel:
     return (raw & 0x00ffffff);
   }
