@@ -98,7 +98,8 @@ namespace pxar {
     else record.SetEndError();
 
     LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
-    LOG(logDEBUGPIPES) << listVector(record.data,true);
+    if(GetDeviceType() < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(record.data); }
+    else { LOG(logDEBUGPIPES) << listVector(record.data,true); }
     LOG(logDEBUGPIPES) << "-------------------------";
 
     return &record;
