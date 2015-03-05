@@ -52,6 +52,15 @@ namespace pxar {
     pxarLog();
     virtual ~pxarLog();
     std::ostringstream& Get(TLogLevel level = logINFO, std::string file = "", std::string function = "", uint32_t line = 0);
+    static std::string& logName(std::string setLogName = "") {
+        static std::string logName("");
+        static bool is_initialized = false;
+        if (!is_initialized && setLogName.size() > 0) {
+          is_initialized = true;
+          logName = setLogName;
+        }
+        return logName;
+    }; 
   public:
     static TLogLevel& ReportingLevel();
     static std::string ToString(TLogLevel level);
@@ -105,6 +114,9 @@ namespace pxar {
   template <typename T>
     std::ostringstream& pxarLog<T>::Get(TLogLevel level, std::string file, std::string function, uint32_t line) {
     os << "[" << NowTime() << "] ";
+    if (logName().size() > 0) {
+      os << "<" << logName() << "> ";
+    }
     os << std::setw(8) << ToString(level) << ": ";
     
     // For debug levels we want also function name and line number printed:

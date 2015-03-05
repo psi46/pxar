@@ -76,7 +76,8 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
     if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
     if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;} 
-    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }   
+    if (!strcmp(argv[i],"-L"))                                {Log::logName(string(argv[++i]));}             
   }
 
   struct stat buffer;   
