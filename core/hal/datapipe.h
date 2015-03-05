@@ -189,7 +189,12 @@ namespace pxar {
   class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
     Event roc_Event;
     Event* Read() {
-      if(GetEnvelopeType() == TBM_NONE) return DecodeDeser160();
+      if(GetEnvelopeType() == TBM_NONE) {
+	// Decode analog ROC data:
+	if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(); }
+	// Decode digital ROC data:
+	else { return DecodeDeser160(); }
+      }
       //else if(GetEnvelopeType() == TBM_EMU) return DecodeSoftTBM();
       else return DecodeDeser400();
     }
@@ -199,6 +204,7 @@ namespace pxar {
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
+    Event* DecodeAnalog();
     Event* DecodeDeser160();
     Event* DecodeDeser400();
     statistics decodingStats;
@@ -214,8 +220,12 @@ namespace pxar {
     void CheckEventID(uint16_t v);
     int16_t eventID;
 
+    // Analog level averaging:
+    int32_t ultrablack;
+    int32_t black;
+
   public:
-  dtbEventDecoder() : decodingStats(), readback(), eventID(-1) {};
+  dtbEventDecoder() : decodingStats(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();

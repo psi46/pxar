@@ -333,6 +333,71 @@ namespace pxar {
     return &roc_Event;
   }
 
+  Event* dtbEventDecoder::DecodeAnalog() {
+
+    roc_Event.Clear();
+    rawEvent *sample = Get();
+
+    // Count possibe error states:
+    if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
+    if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
+    if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
+
+    unsigned int n = sample->GetSize();
+    decodingStats.m_info_words_read += n;
+
+    // FIXME this currently only handles single ROCs!
+    if (n >= 3) {
+      // FIXME do we need to reserve?
+      if (n > 15) roc_Event.pixels.reserve((n-3)/6);
+      // Save the lastDAC value:
+      roc_Event.header = (*sample)[2];
+
+      // Iterate to improve ultrablack and black measurement:
+      if(ultrablack > 0xff) { ultrablack = (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)); }
+      else { ultrablack = (ultrablack + (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)))/2; }
+
+      if(black > 0xff) { black = (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)); }
+      else { black = (black + (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)))/2; }
+
+      LOG(logDEBUGPIPES) << "ROC Header: "
+			 << (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)) << " (avg. " << ultrablack << ") (UB) "
+			 << (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)) << " (avg. " << black << ") (B) "
+			 << (((*sample)[2] & 0x0800) ? static_cast<int>((*sample)[2] & 0x0fff) - 4096 : static_cast<int>((*sample)[2] & 0x0fff)) << " (lastDAC) ";
+
+      unsigned int pos = 3;
+      while (pos+6 <= n) {
+	std::vector<uint16_t> data;
+	data.push_back((*sample)[pos]);
+	data.push_back((*sample)[pos+1]);
+	data.push_back((*sample)[pos+2]);
+	data.push_back((*sample)[pos+3]);
+	data.push_back((*sample)[pos+4]);
+	data.push_back((*sample)[pos+5]);
+
+	try{
+	  pixel pix(data,0,ultrablack,black);
+	  roc_Event.pixels.push_back(pix);
+	  decodingStats.m_info_pixels_valid++;
+	}
+	catch(DataInvalidAddressError /*&e*/){
+	  // decoding of raw address lead to invalid address
+	  decodingStats.m_errors_pixel_address++;
+	}
+	// Advance read pointer by one pixel:
+	pos += 6;
+      }
+    }
+
+    // Count empty events
+    if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
+    // Count valid events
+    else { decodingStats.m_info_events_valid++; }
+
+    LOG(logDEBUGPIPES) << roc_Event;
+    return &roc_Event;
+  }
+
   Event* dtbEventDecoder::DecodeDeser160() {
 
     roc_Event.Clear();
