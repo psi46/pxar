@@ -1,4 +1,5 @@
 #include "datatypes.h"
+#include "helper.h"
 #include "log.h"
 #include "exceptions.h"
 #include "constants.h"
@@ -28,6 +29,48 @@ namespace pxar {
     // Perform range checks:
     if(_row >= ROC_NUMROWS || _column >= ROC_NUMCOLS) {
       LOG(logDEBUGAPI) << "Invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      if(_row == ROC_NUMROWS) throw DataCorruptBufferError("Error decoding pixel raw value");
+      else throw DataInvalidAddressError("Error decoding pixel raw value");
+    }
+  }
+
+  uint8_t pixel::translateLevel(uint16_t x, int16_t level0, int16_t level1, int16_t levelS) {
+    int16_t y = expandSign(x) - level0;
+    if (y >= 0) y += levelS; else y -= levelS;
+    return level1 ? y/level1 + 1: 0;
+  }
+
+  void pixel::decodeAnalog(std::vector<uint16_t> analog, int16_t ultrablack, int16_t black) {
+    // Check pixel data length:
+    if(analog.size() != 6) {
+      LOG(logDEBUGAPI) << "Received wrong number of data words for a pixel: " << analog.size();
+      throw DataInvalidAddressError("Received wrong number of data words for a pixel: " + analog.size());
+    }
+
+    // Calculate the levels:
+    int16_t level0 = black;
+    int16_t level1 = (black - ultrablack)/4;
+    int16_t levelS = level1/2;
+
+    // Get the pulse height:
+    setValue(static_cast<double>(expandSign(analog.back() & 0x0fff) - level0));
+
+    // Decode the pixel address
+    int c1 = translateLevel(analog.at(0),level0,level1,levelS);
+    int c0 = translateLevel(analog.at(1),level0,level1,levelS);
+    int c  = c1*6 + c0;
+
+    int r2 = translateLevel(analog.at(2),level0,level1,levelS);
+    int r1 = translateLevel(analog.at(3),level0,level1,levelS);
+    int r0 = translateLevel(analog.at(4),level0,level1,levelS);
+    int r  = (r2*6 + r1)*6 + r0;
+
+    _row = 80 - r/2;
+    _column = 2*c + (r&1);
+
+    // Perform range checks:
+    if(_row >= ROC_NUMROWS || _column >= ROC_NUMCOLS) {
+      LOG(logDEBUGAPI) << "Invalid pixel from levels "<< listVector(analog) << ": " << *this;
       if(_row == ROC_NUMROWS) throw DataCorruptBufferError("Error decoding pixel raw value");
       else throw DataInvalidAddressError("Error decoding pixel raw value");
     }
