@@ -1897,7 +1897,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
 
 
   // -- analysis of hit map
-  double THR = 1.e-4*NSECONDS*TRGFREQ*1000; 
+  double THR = 1.e-5*NSECONDS*TRGFREQ*1000; 
   LOG(logDEBUG) << "hot pixel determination with THR = " << THR; 
   int cntHot(0); 
   TH2D *h(0); 
