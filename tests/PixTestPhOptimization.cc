@@ -14,7 +14,7 @@ ClassImp(PixTestPhOptimization)
 
 PixTestPhOptimization::PixTestPhOptimization() {}
 
-PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fSafetyMarginLow(15) {
+PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fSafetyMarginLow(15), fQuantMax(0.98), fVcalMax(100) {
   PixTest::init();
   init();
 }
@@ -38,6 +38,17 @@ bool PixTestPhOptimization::setParameter(string parName, string sval) {
       if (!parName.compare("safetymarginlow")) {
 	fSafetyMarginLow = atoi( sval.c_str() );
 	LOG(logDEBUG) << "  setting fSafetyMarginLow  ->" << fSafetyMarginLow
+		      << "<- from sval = " << sval;
+      }
+
+      if (!parName.compare("saturationvcal")) {
+	fVcalMax = atoi(sval.c_str());
+	LOG(logDEBUG) << "  setting fVcalMax  ->" << fVcalMax
+		      << "<- from sval = " << sval;
+      }
+      if (!parName.compare("quantilesaturation")) {
+	fQuantMax = atof(sval.c_str());
+	LOG(logDEBUG) << "  setting fQuantMax  ->" << fQuantMax
 		      << "<- from sval = " << sval;
       }
       
@@ -295,7 +306,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     std::map<uint8_t, std::pair<uint8_t, uint8_t> > maxpixs;
     pxar::pixel temp_pix;
     Double_t xq[1]={0};  // position where to compute the quantiles in [0,1]
-    xq[0]=0.98;
+    xq[0]=fQuantMax;
     Double_t yq[1]={0};  // array to contain the quantiles
     // Look for pixel with max. pulse height on every ROC:
     for(int ith2 = 0; ith2 < maxphmap.size(); ith2++) {
@@ -549,7 +560,7 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
     TH2D* h2_PhMap(0);
     TH1D* h1_PhMap(0);
     fApi->setDAC("ctrlreg",4);
-    fApi->setDAC("vcal",100);
+    fApi->setDAC("vcal",fVcalMax);
     //pulseheight map at vcal=100
     result_map = fApi->getPulseheightMap(0,10);
     //unpacking data from map and filling one histo per ROC
@@ -696,7 +707,7 @@ void PixTestPhOptimization::MaxPhVsDacDac(std::vector< std::pair<uint8_t, std::p
     fApi->_dut->maskPixel(maxp_it->second.column(),maxp_it->second.row(),false, getIdxFromId(maxp_it->second.roc()));
   } 
   //sample pulseheight at 35k e-
-  fApi->setDAC("vcal",100);
+  fApi->setDAC("vcal",fVcalMax);
   fApi->setDAC("ctrlreg",4);
   
   //scanning through offset and scale for max pixel (or randpixel)

@@ -34,6 +34,8 @@ private:
   int         fParNtrig; 
   int         fSafetyMarginLow;
   int         fMinThr;
+  double      fQuantMax;
+  int         fVcalMax;
 
   ClassDef(PixTestPhOptimization, 1)
 
