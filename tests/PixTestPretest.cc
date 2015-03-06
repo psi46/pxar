@@ -157,9 +157,6 @@ void PixTestPretest::doTest() {
   PixTest::update(); 
 
   setTimings();
-  h1 = (*fDisplayedHist);
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update();
     
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
@@ -365,7 +362,6 @@ void PixTestPretest::setVana() {
 
 }
 
-
 // ----------------------------------------------------------------------
 void PixTestPretest::setTimings() {
 
@@ -373,19 +369,8 @@ void PixTestPretest::setTimings() {
   timer t;
   
   banner(Form("PixTestPreTest::setTimings()"));
-  cacheDacs();
-  fDirectory->cd();
-  PixTest::update();
 
-  //Make a histogram
-  TH1D *h1(0);
-  h1 = bookTH1D("pllscan","400 MHz PLL Scan", 8, -0.5, 7.5);
-  h1->SetDirectory(fDirectory);
-  h1->SetMinimum(0);
-  setTitles(h1, "400 MHz PLL Setting", "N Events");
-  fHistOptions.insert(make_pair(h1, "colz"));
-  
-  int TrigBuffer = 3;
+  int nTBMs = fApi->_dut->getNTbms();
   uint16_t period = 300;
 
   // Setup a new pattern with only res and token:
@@ -393,54 +378,60 @@ void PixTestPretest::setTimings() {
   pg_setup.push_back(make_pair("resetroc", 25));
   pg_setup.push_back(make_pair("trigger", 0));
   fApi->setPatternGenerator(pg_setup);
-  vector<rawEvent> daqRawEv;
+  
+  // Loop through all possible TBM Phases settings.
+  bool GoodDelaySettings = false;
+  for (int pll160 = 0; pll160 < 8 && !GoodDelaySettings; pll160++) {
+    for (int pll400 = 0; pll400 < 8 && !GoodDelaySettings; pll400++) {
+      //Apply TBM Phase Settings
+      uint8_t TBMPhase = pll160<<5 | pll400<<2;
+      LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+      fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
 
-  // Loop through all possible 160MHz PLL settings.
-  int magicROCPhase = 91; //01011011 - Enable the header trailer delay and set each ROC delay to 3
-  int magic400PLLPhase = 3; //Any number between 0-7 should work 
+      //Loop through the different ROC delays (4, 3, 2, 1, 0, 7, 6, 5)
+      for (int ROCDelay = 0; ROCDelay < 8 && !GoodDelaySettings; ROCDelay++) {
+        //Apply ROC Delays
+        int iROCDelay = 4-ROCDelay;
+        if (iROCDelay<0) iROCDelay += 8;
+        uint8_t ROCPhase = (1<<6) | (iROCDelay<<3) | iROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
+        for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
 
-  int nTBMs = fApi->_dut->getNTbms();
-  for (int itbm=0; itbm < nTBMs; itbm++) fApi->setTbmReg("basea", magicROCPhase, itbm);
-
-  bool goodtimingfound = false;
-  for (int ipll = 0; ipll < 8; ipll++) {
-    LOG(logINFO) << "Testing 160 MHz PLL Phase: " << ipll;
-    uint8_t delaysetting = ipll<<5 | magic400PLLPhase<<2;
-    fApi->setTbmReg("basee", delaysetting, 0); //Set TBM PLL Phases
-    fApi->daqStart();
-    fApi->daqTrigger(TrigBuffer, period); //Read in TrigBuffer events and throw them away, first event is generally bad.
-    daqRawEv = fApi->daqGetRawEventBuffer();
-    statistics results = fApi->getStatistics(); //Ignore the first three events
-    for (int interation=0; interation < fIterations; interation++) {
-      fApi->daqTrigger(fParNtrig, period);
-      daqRawEv = fApi->daqGetRawEventBuffer();
+        //Test Delay Settings
+        fApi->daqStart();
+        fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
+        vector<rawEvent> daqRawEv = fApi->daqGetRawEventBuffer();
+        for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
+        vector<Event> daqEv;
+        for (int interation=0; interation < fIterations; interation++) {
+          fApi->daqTrigger(fParNtrig, period);
+          daqEv = fApi->daqGetEventBuffer();
+        }
+        fApi->daqStop();
+        statistics results = fApi->getStatistics();
+        LOG(logDEBUG) << "Number of Errors: " << results.errors();
+        LOG(logDEBUG) << "Number of Empty_Events/nTBMs : " << results.info_events_empty()/nTBMs;
+        if (Log::ReportingLevel() >= logDEBUG) results.dump();
+        if (results.errors()==0 && int(results.info_events_empty())/nTBMs==fIterations*fParNtrig) {
+          GoodDelaySettings=true;
+          banner("Good Timings Found!!!");
+          LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+          LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCDelay).to_string();
+          fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
+          for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCDelay, itbm);
+        }
+      }
     }
-    fApi->daqStop();
-    results = fApi->getStatistics();
-    LOG(logDEBUG) << "Number of errors: " << results.errors();
-    if (results.errors()==0) {
-      h1->Fill(ipll, results.info_words_read());
-      goodtimingfound = true;
-    }
-    if (Log::ReportingLevel() >= logDEBUG) results.dump();
   }
 
-  if (goodtimingfound && h1->GetMaximum()==fIterations*fParNtrig) {
-    int Best160PLLPhase = h1->GetMaximumBin()-1;
-    LOG(logINFO) << "Setting 160 MHz PLL Phase to " << Best160PLLPhase;
-    uint8_t delaysetting = Best160PLLPhase<<5 | magic400PLLPhase<<2;
-    fApi->setTbmReg("basee", delaysetting, 0);
-    fPixSetup->getConfigParameters()->setTbmDac("basee", delaysetting, 0);
-  } else LOG(logERROR) << "No good timings found! Try running the Phase Scan in the Timing tab.";
+  if (!GoodDelaySettings) { LOG(logERROR) << "No good timings found! Try running the Phase Scan in the Timing tab."; }
   
-  //Draw Histogram
-  h1->Draw();
-  fHistList.push_back(h1);
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  PixTest::update();
-
   // Reset the pattern generator to the configured default:
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
+
+  // Print timer value:
+  LOG(logINFO) << "Test took " << t << " ms.";
+  LOG(logINFO) << "PixTestPretest::setTimings() done.";
 
 }
 
