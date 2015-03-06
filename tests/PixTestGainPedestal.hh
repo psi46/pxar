@@ -22,6 +22,7 @@ public:
   void saveGainPedestalParameters(); 
 
   void doTest(); 
+  void fullTest(); 
 
 private:
 

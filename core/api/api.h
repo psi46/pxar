@@ -717,9 +717,30 @@ namespace pxar {
      */
     std::vector<std::vector<uint16_t> > daqGetReadback();
 
-    /** Function that returns a class object of the type pxar::statistics containing
-     *  all collected error statistics from the last (non-raw) DAQ readout or API test 
-     *  call. Statistics can be fetched once and are then reset.
+    /** Function that returns a class object of the type pxar::statistics
+     *  containing all collected error statistics from the last (non-raw)
+     *  DAQ readout or API test call. Statistics can be fetched once and
+     *  are then reset.
+     *
+     *  It is meant for one-time-reading which means after calling 
+     *  pxarCore::getStatistics() the object will be returned and the internal
+     *  statistics reset. Calling getStatistics() a second time will yield an
+     *  empty object. This implies that if you want to check different values
+     *  of the struct you have to fetch it and store it locally before
+     *  accessing class members such as statistics::pixel_errors() instead of
+     *  calling pxarCore::getStatistics().pixel_errors().
+     *
+     *  Note that the statistics class object gets filled by the decoder
+     *  pipeworks. This has an implication for people running their own DAQ
+     *  sessions using pxarCore::daqStart() and pxarCore::daqStop().
+     *  If you fetch your data via pxarCore::daqGetRawEvent() or
+     *  pxarCore::daqGetRawEventBuffer() the statistics object will remain empty
+     *  because the data has not been passed through the decoder. If you run
+     *  pxarCore::daqGetEvent() or pxarCore::daqGetEventBuffer() the statistics
+     *  object will be properly filled. Events will continue to be added to
+     *  these numbers until you either read them out (reading statistics resets
+     *  the counters) or you re-started a new DAQ session (pxarCore::daqStart()
+     *  initialises the counters to zero).
      */
     statistics getStatistics();
 

@@ -19,13 +19,9 @@ public:
   void GetMinPhPixel(std::map<int, pxar::pixel> &minpixel, std::map<int, int> &minVcal, std::vector<std::pair<uint8_t, std::pair<int, int> > > &badPixels);
   void MaxPhVsDacDac(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max, std::map<int, pxar::pixel> maxpixels);
   void MinPhVsDacDac(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min, std::map<int, pxar::pixel> minpixels, std::map<int, int> &minVcal);
-  std::map<uint8_t, int> InsideRangePH(std::map<uint8_t,int> &po_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
-  std::map<uint8_t, int> CentrePhRange(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
-  std::map<uint8_t, int> StretchPH(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
   void DrawPhMaps(std::map<int, int> &minVcal, std::vector<std::pair<uint8_t, std::pair<int, int> > > &badPixels);
   void DrawPhCurves(std::map<int, pxar::pixel > &maxpixels, std::map<int, pxar::pixel > &minpixels, std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt);
 
-  void optimiseOnMaps(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min);
   void optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min, std::vector<TH2D* > &th2_sol);
 
   void getTH2fromMaps(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min, std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min);
@@ -36,10 +32,6 @@ public:
 private:
 
   int         fParNtrig; 
-  std::string fParDAC; 
-  int         fParDacVal;
-  bool        fFlagSinglePix;
-  int         fSafetyMarginUp;
   int         fSafetyMarginLow;
   int         fMinThr;
   double      fQuantMax;
