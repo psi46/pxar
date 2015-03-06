@@ -833,54 +833,123 @@ void PixTestPhOptimization::getTH2fromMaps(std::vector< std::pair<uint8_t, std::
 }
 
 
+//void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min, std::vector<TH2D* > &th2_sol){
+//  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+//  TH2D* hmin(0);
+//  TH2D* hmax(0);
+//  TH2D* hsol = new TH2D("hsol", "hsol", 256, 0., 255., 256, 0., 255.);
+//  for(unsigned int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
+//    LOG(logDEBUG)<<"before assigning th2_sol to vector component";
+//    th2_sol[i] = (TH2D*)hsol->Clone(Form("solphvsdacdac_th2_C%d", getIdFromIdx(i)));
+//    th2_sol[i]->SetTitle(Form("Solution phscaleVSphoffset C%d", getIdFromIdx(i)));
+//    th2_sol[i]->GetXaxis()->SetTitle("phscale");
+//    th2_sol[i]->GetYaxis()->SetTitle("phoffset");
+//    LOG(logDEBUG)<<"after assigning th2_sol to vector component, chip"<<getIdFromIdx(i);
+//  }
+//  int goodbinx = 0, goodbiny = 0, goodbinz=0;
+//  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+//    // hsol->Reset("M");
+//    
+//    hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
+//    hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
+//
+//    for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
+//      for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
+//	if(abs(hmax->GetBinContent(ibinx, ibiny) - 249) > 5 ){
+//	  hmax->SetBinContent(ibinx, ibiny, 0);
+//	}
+//      }
+//    }
+//    
+//    for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+//      for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+//	if(abs(hmin->GetBinContent(ibinx, ibiny) - 20) > 5 ){
+//	  hmin->SetBinContent(ibinx, ibiny, 0);
+//	}
+//    }
+//    }
+//    
+//    for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+//      for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+//	if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
+//	  th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+//	}
+//      }
+//    }
+//    
+//    th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
+//
+//    po_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetXaxis()->GetBinCenter(goodbinx);
+//    ps_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetYaxis()->GetBinCenter(goodbiny);
+//  }
+//  
+//  delete hmin;
+//  delete hmax;
+//  delete hsol;
+//
+//}
+
 void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, std::map<uint8_t, int> &ps_opt,  std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min, std::vector<TH2D* > &th2_sol){
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   TH2D* hmin(0);
   TH2D* hmax(0);
   TH2D* hsol = new TH2D("hsol", "hsol", 256, 0., 255., 256, 0., 255.);
-  for(unsigned int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
+  for(int i=0; i< fApi->_dut->getNEnabledRocs() ; i++){
     LOG(logDEBUG)<<"before assigning th2_sol to vector component";
     th2_sol[i] = (TH2D*)hsol->Clone(Form("solphvsdacdac_th2_C%d", getIdFromIdx(i)));
     th2_sol[i]->SetTitle(Form("Solution phscaleVSphoffset C%d", getIdFromIdx(i)));
     th2_sol[i]->GetXaxis()->SetTitle("phscale");
     th2_sol[i]->GetYaxis()->SetTitle("phoffset");
+    fHistList.push_back(th2_sol[i]);
+    fHistOptions.insert( make_pair(th2_sol[i], "colz" ) ); 
     LOG(logDEBUG)<<"after assigning th2_sol to vector component, chip"<<getIdFromIdx(i);
   }
   int goodbinx = 0, goodbiny = 0, goodbinz=0;
-  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
-    // hsol->Reset("M");
-    hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
-    hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
-
-    for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
-      for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
-	if(abs(hmax->GetBinContent(ibinx, ibiny) - 249) > 5 ){
-	  hmax->SetBinContent(ibinx, ibiny, 0);
+  double maxsol=0.;
+  double maxPH=0.;
+  
+  for(int iroc = 0; iroc < rocIds.size(); iroc++){
+    maxsol=0.;
+    for(int safetyCorrection = 0; maxsol<1. && safetyCorrection+fSafetyMarginLow<256; safetyCorrection++){
+      LOG(logINFO)<<"safety margin for low PH: adding "<<safetyCorrection<<", margin is now "<<safetyCorrection+fSafetyMarginLow;
+      // hsol->Reset("M");
+      hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
+      hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
+      maxPH = hmax->GetMaximum();
+      
+      for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
+	for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
+	  if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
+	    hmax->SetBinContent(ibinx, ibiny, 0);
+	  }
 	}
       }
-    }
-    
-    for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
-      for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-	if(abs(hmin->GetBinContent(ibinx, ibiny) - 20) > 5 ){
-	  hmin->SetBinContent(ibinx, ibiny, 0);
-	}
-    }
-    }
-    
-    for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
-      for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-	if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
-	  th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+      
+      for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+	for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	  if(abs(hmin->GetBinContent(ibinx, ibiny) - (fSafetyMarginLow+safetyCorrection)) > 1 ){
+	    hmin->SetBinContent(ibinx, ibiny, 0);
+	  }
 	}
       }
+      
+      for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+	for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	  if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
+	    th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+	  }
+	}
+      }
+      maxsol = th2_sol[rocIds[iroc]]->GetMaximum();
+      th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
+      
     }
-    
-    th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
-
-    po_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetXaxis()->GetBinCenter(goodbinx);
-    ps_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetYaxis()->GetBinCenter(goodbiny);
+    //po_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetXaxis()->GetBinCenter(goodbinx);
+    //ps_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetYaxis()->GetBinCenter(goodbiny);
+    po_opt[rocIds[iroc]] = goodbiny;
+    ps_opt[rocIds[iroc]] = goodbinx;
   }
+
   
   delete hmin;
   delete hmax;
