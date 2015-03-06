@@ -30,42 +30,42 @@ bool PixTestPhOptimization::setParameter(string parName, string sval) {
       found = true;
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("ntrig")) {
-  setTestParameter("ntrig", sval); 
-  fParNtrig = atoi( sval.c_str() );
-  LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
-          << "<- from sval = " << sval;
+	setTestParameter("ntrig", sval); 
+	fParNtrig = atoi( sval.c_str() );
+	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
+		      << "<- from sval = " << sval;
       }
       if (!parName.compare("safetymarginlow")) {
-  fSafetyMarginLow = atoi( sval.c_str() );
-  LOG(logDEBUG) << "  setting fSafetyMarginLow  ->" << fSafetyMarginLow
-          << "<- from sval = " << sval;
+	fSafetyMarginLow = atoi( sval.c_str() );
+	LOG(logDEBUG) << "  setting fSafetyMarginLow  ->" << fSafetyMarginLow
+		      << "<- from sval = " << sval;
       }
 
       if (!parName.compare("saturationvcal")) {
-  fVcalMax = atoi(sval.c_str());
-  LOG(logDEBUG) << "  setting fVcalMax  ->" << fVcalMax
-          << "<- from sval = " << sval;
+	fVcalMax = atoi(sval.c_str());
+	LOG(logDEBUG) << "  setting fVcalMax  ->" << fVcalMax
+		      << "<- from sval = " << sval;
       }
       if (!parName.compare("quantilesaturation")) {
-  fQuantMax = atof(sval.c_str());
-  LOG(logDEBUG) << "  setting fQuantMax  ->" << fQuantMax
-          << "<- from sval = " << sval;
+	fQuantMax = atof(sval.c_str());
+	LOG(logDEBUG) << "  setting fQuantMax  ->" << fQuantMax
+		      << "<- from sval = " << sval;
       }
       
       if (!parName.compare("pix")) {
         s1 = sval.find(",");
         if (string::npos != s1) {
-    str1 = sval.substr(0, s1);
-    pixc = atoi(str1.c_str());
-    str2 = sval.substr(s1+1);
-    pixr = atoi(str2.c_str());
-    fPIX.push_back(make_pair(pixc, pixr));
-    addSelectedPixels(sval); 
-    LOG(logDEBUG) << "  adding to FPIX ->" << pixc << "/" << pixr << " fPIX.size() = " << fPIX.size() ;
-  } else {
-    clearSelectedPixels();
-    LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
-  }
+	  str1 = sval.substr(0, s1);
+	  pixc = atoi(str1.c_str());
+	  str2 = sval.substr(s1+1);
+	  pixr = atoi(str2.c_str());
+	  fPIX.push_back(make_pair(pixc, pixr));
+	  addSelectedPixels(sval); 
+	  LOG(logDEBUG) << "  adding to FPIX ->" << pixc << "/" << pixr << " fPIX.size() = " << fPIX.size() ;
+	} else {
+	  clearSelectedPixels();
+	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
+	}
       }
       break;
     }
@@ -149,8 +149,8 @@ void PixTestPhOptimization::doTest() {
   std::vector<TH2D* > th2_sol;
   TH2D* h2(0);
   for(unsigned int iroc=0; iroc< fApi->_dut->getNRocs(); iroc++){
-    th2_max.push_back(h2);     
-    th2_min.push_back(h2);  
+    th2_max.push_back(h2);	   
+    th2_min.push_back(h2);	
     th2_sol.push_back(h2);    
   }
     
@@ -210,15 +210,15 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<uint8_t, pair<
   for(uint8_t rocid = 0; rocid<rocIds.size(); rocid++){
     for(int r=0; r<80; r++){
       for(int c=0; c<52; c++){
-  eff = testEff[rocid]->GetBinContent( testEff[rocid]->FindFixBin((double)c + 0.5, (double)r+0.5) );
-  if(eff<aliveTrig){
-    LOG(logDEBUG)<<"Pixel ["<<(int)rocIds[rocid]<<", "<<(int)c<<", "<<(int)r<<"] has eff "<<eff<<"/"<<aliveTrig;
-    badPix.first = rocIds[rocid];
-    badPix.second.first = c;
-    badPix.second.second = r;
-    LOG(logDEBUG)<<"bad Pixel found and blacklisted: ["<<(int)badPix.first<<", "<<(int)badPix.second.first<<", "<<(int)badPix.second.second<<"]";
-    (badPixels).push_back(badPix);
-  }
+	eff = testEff[rocid]->GetBinContent( testEff[rocid]->FindFixBin((double)c + 0.5, (double)r+0.5) );
+	if(eff<aliveTrig){
+	  LOG(logDEBUG)<<"Pixel ["<<(int)rocIds[rocid]<<", "<<(int)c<<", "<<(int)r<<"] has eff "<<eff<<"/"<<aliveTrig;
+	  badPix.first = rocIds[rocid];
+	  badPix.second.first = c;
+	  badPix.second.second = r;
+	  LOG(logDEBUG)<<"bad Pixel found and blacklisted: ["<<(int)badPix.first<<", "<<(int)badPix.second.first<<", "<<(int)badPix.second.second<<"]";
+	  (badPixels).push_back(badPix);
+	}
       }
     }
   }
@@ -242,7 +242,7 @@ pxar::pixel* PixTestPhOptimization::RandomPixel(std::vector<std::pair<uint8_t, p
     isPixGood=true;
     for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
       if(bad_it->first == iroc && bad_it->second.first == random_col && bad_it->second.second == random_row){
-  isPixGood=false;
+	isPixGood=false;
       }
     }
     LOG(logDEBUG)<<"is the random pixel good? "<<isPixGood;
@@ -280,18 +280,18 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
       maxph=0;
       //check that the pixel showing highest PH on the module is not reaching 255
       for( unsigned int ith2 = 0; ith2 < maxphmap.size(); ith2++) {
-  isPixGood=true;
-  maxphmap[ith2]->GetBinXYZ(maxphmap[ith2]->GetMaximumBin(), xbinmax, ybinmax, zbinmax);
-  colmax = maxphmap[ith2]->GetXaxis()->GetBinCenter(xbinmax);
-  rowmax = maxphmap[ith2]->GetYaxis()->GetBinCenter(ybinmax);
-  for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-    if(bad_it->second.first == colmax && bad_it->second.second == rowmax && bad_it->first == getIdFromIdx(ith2)){
-      isPixGood=false;
-    }
-  }
-  if(isPixGood && maxphmap[ith2]->GetBinContent(xbinmax, ybinmax) > maxph){
-    maxph = maxphmap[ith2]->GetBinContent(xbinmax, ybinmax);
-  }
+	isPixGood=true;
+	maxphmap[ith2]->GetBinXYZ(maxphmap[ith2]->GetMaximumBin(), xbinmax, ybinmax, zbinmax);
+	colmax = maxphmap[ith2]->GetXaxis()->GetBinCenter(xbinmax);
+	rowmax = maxphmap[ith2]->GetYaxis()->GetBinCenter(ybinmax);
+	for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	  if(bad_it->second.first == colmax && bad_it->second.second == rowmax && bad_it->first == getIdFromIdx(ith2)){
+	    isPixGood=false;
+	  }
+	}
+	if(isPixGood && maxphmap[ith2]->GetBinContent(xbinmax, ybinmax) > maxph){
+	  maxph = maxphmap[ith2]->GetBinContent(xbinmax, ybinmax);
+	}
       }
       //should have flag for v2 or v2.1
       init_phScale+=5;
@@ -319,52 +319,52 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
       bool pix_found = false;
       //first, pixel search excludes edges (col(row)Margin cols (rows) per side)
       for(int ibinx = 1 + colMargin; ibinx < maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx++){
-  if(pix_found) break;
-  for(int ibiny = 1 + rowMargin; ibiny < maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny++){
-    //try to avoid picking edge pixels
-    ibinx = (ibinx+5)%maxphmap[ith2]->GetNbinsX();
-    ibiny = (ibiny+5)%maxphmap[ith2]->GetNbinsY();
-    if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
-      temp_pix.setRoc( getIdFromIdx(ith2) );
-      temp_pix.setRow( maxphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
-      temp_pix.setColumn( maxphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
-      temp_pix.setValue( maxphmap[ith2]->GetBinContent(ibinx,ibiny) );
-      LOG(logDEBUG)<<"Max pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<maxphmap[ith2]->GetBinContent(ibinx, ibiny);
-      maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
-      pix_found=true;
-      break;
-    }
-  }
+	if(pix_found) break;
+	for(int ibiny = 1 + rowMargin; ibiny < maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny++){
+	  //try to avoid picking edge pixels
+	  ibinx = (ibinx+5)%maxphmap[ith2]->GetNbinsX();
+	  ibiny = (ibiny+5)%maxphmap[ith2]->GetNbinsY();
+	  if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	    temp_pix.setRoc( getIdFromIdx(ith2) );
+	    temp_pix.setRow( maxphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
+	    temp_pix.setColumn( maxphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
+	    temp_pix.setValue( maxphmap[ith2]->GetBinContent(ibinx,ibiny) );
+	    LOG(logDEBUG)<<"Max pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<maxphmap[ith2]->GetBinContent(ibinx, ibiny);
+	    maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
+	    pix_found=true;
+	    break;
+	  }
+	}
       }
       //if not found, look outside fiducial region
       if(!pix_found){
-  LOG(logDEBUG)<<"Search for maxph pixel failed in the fiducial region on chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
-  for(int ibinx = maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < maxphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
-    if(pix_found) break;
-    for(int ibiny = maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < maxphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
-      //try to avoid picking edge pixels
-      ibinx = (ibinx+5)%maxphmap[ith2]->GetNbinsX();
-      ibiny = (ibiny+5)%maxphmap[ith2]->GetNbinsY();
-      if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
-        temp_pix.setRoc( getIdFromIdx(ith2) );
-        temp_pix.setRow( maxphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
-        temp_pix.setColumn( maxphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
-        temp_pix.setValue( maxphmap[ith2]->GetBinContent(ibinx,ibiny) );
-        LOG(logDEBUG)<<"Max pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<maxphmap[ith2]->GetBinContent(ibinx, ibiny);
-        maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
-        pix_found=true;
-        break;
-      }
-      else if(ibinx+1 == maxphmap[ith2]->GetNbinsX()+1+colMargin  && ibiny == maxphmap[ith2]->GetNbinsY()+1 + rowMargin){
-        LOG(logDEBUG)<<"max ph pixel determination failed on roc "<<getIdFromIdx(ith2)<<", setting pixel 0,0";
-        temp_pix.setRoc( getIdFromIdx(ith2) ); 
-        temp_pix.setRow( 0 );
-        temp_pix.setColumn( 0 );
-        temp_pix.setValue( -1 );
-        maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));   
-      }
-    }
-  }
+	LOG(logDEBUG)<<"Search for maxph pixel failed in the fiducial region on chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
+	for(int ibinx = maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < maxphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
+	  if(pix_found) break;
+	  for(int ibiny = maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < maxphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
+	    //try to avoid picking edge pixels
+	    ibinx = (ibinx+5)%maxphmap[ith2]->GetNbinsX();
+	    ibiny = (ibiny+5)%maxphmap[ith2]->GetNbinsY();
+	    if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	      temp_pix.setRoc( getIdFromIdx(ith2) );
+	      temp_pix.setRow( maxphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
+	      temp_pix.setColumn( maxphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
+	      temp_pix.setValue( maxphmap[ith2]->GetBinContent(ibinx,ibiny) );
+	      LOG(logDEBUG)<<"Max pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<maxphmap[ith2]->GetBinContent(ibinx, ibiny);
+	      maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
+	      pix_found=true;
+	      break;
+	    }
+	    else if(ibinx+1 == maxphmap[ith2]->GetNbinsX()+1+colMargin  && ibiny == maxphmap[ith2]->GetNbinsY()+1 + rowMargin){
+	      LOG(logDEBUG)<<"max ph pixel determination failed on roc "<<getIdFromIdx(ith2)<<", setting pixel 0,0";
+	      temp_pix.setRoc( getIdFromIdx(ith2) ); 
+	      temp_pix.setRow( 0 );
+	      temp_pix.setColumn( 0 );
+	      temp_pix.setValue( -1 );
+	      maxpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));   
+	    }
+	  }
+	}
       }
     }
 }
@@ -398,18 +398,18 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     LOG(logDEBUG) << "result size "<<result.size()<<endl;
     //check that the pixel showing lowest PH above 0 on the module
       for(unsigned int ith2 = 0; ith2 < minphmap.size(); ith2++) {
-  isPixGood=true;
-  minphmap[ith2]->GetBinXYZ(minphmap[ith2]->GetMinimumBin(), xbinmin, ybinmin, zbinmin);
-  colmin = minphmap[ith2]->GetXaxis()->GetBinCenter(xbinmin);
-  rowmin = minphmap[ith2]->GetYaxis()->GetBinCenter(ybinmin);
-  for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
-    if(bad_it->second.first == colmin && bad_it->second.second == rowmin && bad_it->first == getIdFromIdx(ith2)){
-      isPixGood=false;
-    }
-  }
-  if(isPixGood && minphmap[ith2]->GetBinContent(xbinmin, ybinmin) < minph){
-    minph = minphmap[ith2]->GetBinContent(xbinmin, ybinmin);
-  }
+	isPixGood=true;
+	minphmap[ith2]->GetBinXYZ(minphmap[ith2]->GetMinimumBin(), xbinmin, ybinmin, zbinmin);
+	colmin = minphmap[ith2]->GetXaxis()->GetBinCenter(xbinmin);
+	rowmin = minphmap[ith2]->GetYaxis()->GetBinCenter(ybinmin);
+	for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
+	  if(bad_it->second.first == colmin && bad_it->second.second == rowmin && bad_it->first == getIdFromIdx(ith2)){
+	    isPixGood=false;
+	  }
+	}
+	if(isPixGood && minphmap[ith2]->GetBinContent(xbinmin, ybinmin) < minph){
+	  minph = minphmap[ith2]->GetBinContent(xbinmin, ybinmin);
+	}
       }
     //should have flag for v2 or v2.1
     init_phScale+=5;
@@ -436,53 +436,53 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
       bool pix_found = false;
       //first, pixel search excludes edges (col(row)Margin cols (rows) per side)
       for(int ibinx = 1 + colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx++){
-  if(pix_found) break;
-  for(int ibiny = 1 + rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny++){
-    //try to avoid picking edge pixels
-    ibinx = (ibinx+5)%minphmap[ith2]->GetNbinsX();
-    ibiny = (ibiny+5)%minphmap[ith2]->GetNbinsY();    
-    if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
-      temp_pix.setRoc( getIdFromIdx(ith2) );
-      temp_pix.setRow( minphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
-      temp_pix.setColumn( minphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
-      LOG(logDEBUG)<<"Min pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<minphmap[ith2]->GetBinContent(ibinx, ibiny);
-      temp_pix.setValue( minphmap[ith2]->GetBinContent(ibinx,ibiny) );
-      minpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
-      pix_found = true;
-      break;
-    }
-  }
+	if(pix_found) break;
+	for(int ibiny = 1 + rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny++){
+	  //try to avoid picking edge pixels
+	  ibinx = (ibinx+5)%minphmap[ith2]->GetNbinsX();
+	  ibiny = (ibiny+5)%minphmap[ith2]->GetNbinsY();	  
+	  if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	    temp_pix.setRoc( getIdFromIdx(ith2) );
+	    temp_pix.setRow( minphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
+	    temp_pix.setColumn( minphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
+	    LOG(logDEBUG)<<"Min pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<minphmap[ith2]->GetBinContent(ibinx, ibiny);
+	    temp_pix.setValue( minphmap[ith2]->GetBinContent(ibinx,ibiny) );
+	    minpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
+	    pix_found = true;
+	    break;
+	  }
+	}
       }
 
       //if not found, look outside fiducial region
       if(!pix_found){
-  LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
-  for(int ibinx = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
-    if(pix_found) break;
-    for(int ibiny = minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
-      //try to avoid picking edge pixels
-      ibinx = (ibinx+5)%minphmap[ith2]->GetNbinsX();
-      ibiny = (ibiny+5)%minphmap[ith2]->GetNbinsY();    
-      if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
-        temp_pix.setRoc( getIdFromIdx(ith2) );
-        temp_pix.setRow( minphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
-        temp_pix.setColumn( minphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
-        LOG(logDEBUG)<<"Min pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<minphmap[ith2]->GetBinContent(ibinx, ibiny);
-        temp_pix.setValue( minphmap[ith2]->GetBinContent(ibinx,ibiny) );
-        minpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
-        pix_found = true;
-      break;
-      }
-      else if(ibinx+1 == minphmap[ith2]->GetNbinsX()+1+colMargin  && ibiny == minphmap[ith2]->GetNbinsY()+1 + rowMargin){
-        LOG(logDEBUG)<<"min ph pixel determination failed on roc "<<getIdFromIdx(ith2)<<", setting pixel 0,0";
-        temp_pix.setRoc( getIdFromIdx(ith2) ); 
-        temp_pix.setRow( 0 );
-        temp_pix.setColumn( 0 );
-        temp_pix.setValue( -1 );
-        minpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));   
-      }
-    }
-  }
+	LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
+	for(int ibinx = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
+	  if(pix_found) break;
+	  for(int ibiny = minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
+	    //try to avoid picking edge pixels
+	    ibinx = (ibinx+5)%minphmap[ith2]->GetNbinsX();
+	    ibiny = (ibiny+5)%minphmap[ith2]->GetNbinsY();	  
+	    if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	      temp_pix.setRoc( getIdFromIdx(ith2) );
+	      temp_pix.setRow( minphmap[ith2]->GetYaxis()->GetBinCenter(ibiny) );
+	      temp_pix.setColumn( minphmap[ith2]->GetXaxis()->GetBinCenter(ibinx) );
+	      LOG(logDEBUG)<<"Min pixel is ["<<(int)temp_pix.column()<<" ,"<<(int)temp_pix.row()<<"]"<<" phvalue "<<minphmap[ith2]->GetBinContent(ibinx, ibiny);
+	      temp_pix.setValue( minphmap[ith2]->GetBinContent(ibinx,ibiny) );
+	      minpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));
+	      pix_found = true;
+	    break;
+	    }
+	    else if(ibinx+1 == minphmap[ith2]->GetNbinsX()+1+colMargin  && ibiny == minphmap[ith2]->GetNbinsY()+1 + rowMargin){
+	      LOG(logDEBUG)<<"min ph pixel determination failed on roc "<<getIdFromIdx(ith2)<<", setting pixel 0,0";
+	      temp_pix.setRoc( getIdFromIdx(ith2) ); 
+	      temp_pix.setRow( 0 );
+	      temp_pix.setColumn( 0 );
+	      temp_pix.setValue( -1 );
+	      minpixels.insert(make_pair(getIdFromIdx(ith2), temp_pix));   
+	    }
+	  }
+	}
       }
 
     }
@@ -507,7 +507,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     LOG(logDEBUG)<<"enabling pixels "<<(int)minpixels[roc_it].column()<<", "<<(int)minpixels[roc_it].row()<<", "<<(int)minpixels[roc_it].roc()<<" "<<(int)roc_it;
     for(unsigned int roc_jt = 0; roc_jt < NRocs; roc_jt++){
       if(roc_jt!= roc_it){
-  fApi->_dut->setROCEnable(roc_jt, false);
+	fApi->_dut->setROCEnable(roc_jt, false);
       }
     }
     fApi->_dut->info();
@@ -515,11 +515,11 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     done = false;
     while (!done) {
       try {
-  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
-  done = true;
+	results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+	done = true;
       } catch(pxarException &e) {
-  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-  ++cnt;
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -530,7 +530,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
       int idac = v.first; 
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-  h1->Fill(idac, vpix[ipix].value());
+	h1->Fill(idac, vpix[ipix].value());
       }
     }
     vcalthr = static_cast<int>( h1->GetBinCenter( h1->FindFirstBinAbove(1.) ) );
@@ -676,11 +676,11 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
     bool done = false;
     while (!done) {
       try {
-  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
-  done = true;
+	results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+	done = true;
       } catch(pxarException &e) {
-  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-  ++cnt;
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -690,7 +690,7 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
       int idac = v.first; 
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-  h1->Fill(idac, vpix[ipix].value());
+	h1->Fill(idac, vpix[ipix].value());
       }
     }
     h1->SetMinimum(0);
@@ -710,11 +710,11 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
     done = false;
     while (!done) {
       try {
-  results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
-  done = true;
+	results = fApi->getPulseheightVsDAC("vcal", 0, 255, FLAG_FORCE_MASKED, 10);
+	done = true;
       } catch(pxarException &e) {
-  LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
-  ++cnt;
+	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+	++cnt;
       }
       done = (cnt>5) || done;
     }
@@ -724,7 +724,7 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
       int idac = v.first; 
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-  h1->Fill(idac, vpix[ipix].value());
+	h1->Fill(idac, vpix[ipix].value());
       }
     }
     h1->SetMinimum(0);
@@ -854,25 +854,25 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
 
     for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
       for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
-  if(abs(hmax->GetBinContent(ibinx, ibiny) - 249) > 5 ){
-    hmax->SetBinContent(ibinx, ibiny, 0);
-  }
+	if(abs(hmax->GetBinContent(ibinx, ibiny) - 249) > 5 ){
+	  hmax->SetBinContent(ibinx, ibiny, 0);
+	}
       }
     }
     
     for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
       for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-  if(abs(hmin->GetBinContent(ibinx, ibiny) - 20) > 5 ){
-    hmin->SetBinContent(ibinx, ibiny, 0);
-  }
+	if(abs(hmin->GetBinContent(ibinx, ibiny) - 20) > 5 ){
+	  hmin->SetBinContent(ibinx, ibiny, 0);
+	}
     }
     }
     
     for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
       for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-  if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
-    th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
-  }
+	if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
+	  th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+	}
       }
     }
     
