@@ -651,12 +651,10 @@ TH1* PixTest::nextHistV() {
   if (fHistList.size() == 0) return 0; 
   TH1* h0 = (*fDisplayedHist); 
   std::string histName(h0->GetName());
-  LOG(logINFO) << "name:" << histName;
   int pos = histName.rfind("_V");
   if (pos != std::string::npos) {
     int currentV = atoi(histName.substr(pos+2).c_str());
     std::string histBaseName = histName.substr(0, pos);
-    LOG(logINFO) << "V:" << currentV << " base: ->" << histBaseName << "<-";
     for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
       TH1* h1 = (*il); 
       std::string histName2 = h1->GetName();
@@ -677,12 +675,10 @@ TH1* PixTest::previousHistV() {
   if (fHistList.size() == 0) return 0; 
   TH1* h0 = (*fDisplayedHist); 
   std::string histName(h0->GetName());
-  LOG(logINFO) << "name:" << histName;
   int pos = histName.rfind("_V");
   if (pos != std::string::npos) {
     int currentV = atoi(histName.substr(pos+2).c_str());
     std::string histBaseName = histName.substr(0, pos);
-    LOG(logINFO) << "V:" << currentV << " base: ->" << histBaseName << "<-";
     for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
       TH1* h1 = (*il); 
       std::string histName2 = h1->GetName();

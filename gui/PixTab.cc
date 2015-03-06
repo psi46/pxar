@@ -451,15 +451,10 @@ void PixTab::nextHistogramV() {
   if (h) {
     string option = fTest->getHistOption(h);
     if (string::npos == option.find("same")) clearCanvas();
-    if (h->InheritsFrom(TH2::Class())) {
-      h->Draw(option.c_str());
-    } else {
-      //      cout << "h: " << h->GetName() << " option: " << option << endl;
-      h->Draw(option.c_str());
-    }
+    h->Draw(option.c_str());    
     update(); 
   } else {
-    LOG(logDEBUG) << "no previous histogram found ";
+    LOG(logDEBUG) << "no next histogram found ";
   }
 
 }
@@ -471,12 +466,7 @@ void PixTab::previousHistogramV() {
   if (h) {
     string option = fTest->getHistOption(h);
     if (string::npos == option.find("same")) clearCanvas();
-    if (h->InheritsFrom(TH2::Class())) {
-      h->Draw(option.c_str());
-    } else {
-      //      cout << "h: " << h->GetName() << " option: " << option << endl;
-      h->Draw(option.c_str());
-    }
+    h->Draw(option.c_str());
     update(); 
   } else {
     LOG(logDEBUG)  << "no previous histogram found ";
