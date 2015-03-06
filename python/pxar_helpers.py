@@ -61,7 +61,7 @@ class PxarConfigFile:
         thisf = open(f)
         try:
             for line in thisf:
-                if not line.startswith("--"):
+                if not line.startswith("--") and not line.startswith("#"):
                     parts = shlex.split(line)
                     if len(parts) == 2:
                         self.config[parts[0].lower()] = parts[1]
@@ -83,7 +83,7 @@ class PxarParametersFile:
         thisf = open(f)
         try:
             for line in thisf:
-                if not line.startswith("--"):
+                if not line.startswith("--") and not line.startswith("#"):
                     parts = shlex.split(line)
                     if len(parts) == 3:
                         # ignore the first part (index/line number)
