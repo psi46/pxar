@@ -220,9 +220,10 @@ bool PixTestBareModule::doStdTest(std::string test) {
 	}
 
 	PixTest::update();
+	bool problem = !(t->testProblem());
 	delete t;
-	cout << fProblem << endl; //debug
-	return fProblem;
+	cout << problem << endl; //debug
+	return problem;
 }
 
 // ----------------------------------------------------------------------

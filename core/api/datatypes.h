@@ -288,7 +288,11 @@ namespace pxar {
     bool enable;
   };
 
-  /** Class for storing decoded pixel readout data
+  /** Class for statistics on event and pixel decoding
+   *
+   *  The class collects all decoding statistics gathered during one DAQ 
+   *  session (i.e. one test command from pxarCore or one session started 
+   *  with daqStart() and ended with daqStop().
    */
   class DLLEXPORT statistics {
     /** Allow the dtbEventDecoder to directly alter private members of the statistics
@@ -297,7 +301,11 @@ namespace pxar {
 
   public:
   statistics() :
-    m_errors_event_start(0),
+    m_info_words_read(0),
+      m_info_events_empty(0),
+      m_info_events_valid(0),
+      m_info_pixels_valid(0),
+      m_errors_event_start(0),
       m_errors_event_stop(0),
       m_errors_event_overflow(0),
       m_errors_event_invalid_words(0),
@@ -316,6 +324,8 @@ namespace pxar {
     friend statistics& operator+=(statistics &lhs, const statistics &rhs);
 
     uint32_t info_words_read() {return m_info_words_read; }
+    uint32_t info_events_empty() {return m_info_events_empty; }
+    uint32_t info_events_valid() {return m_info_events_valid; }
     uint32_t info_pixels_valid() {return m_info_pixels_valid; }
 
     uint32_t errors() {
@@ -364,9 +374,9 @@ namespace pxar {
     // Total number of words read:
     uint32_t m_info_words_read;
     // Total number of empty events (no pixel hit):
-    //uint32_t m_info_events_empty;
+    uint32_t m_info_events_empty;
     // Total number of valid events (with pixel hits):
-    //uint32_t m_info_events_valid;
+    uint32_t m_info_events_valid;
     // Total number of pixel hits:
     uint32_t m_info_pixels_valid;
 

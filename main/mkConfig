@@ -532,9 +532,9 @@ save                button
 
 -- PhOptimization
 ntrig               10
-singlePix           0
 safetymarginlow     15
-safetymarginup      10
+saturationvcal      100
+quantilesaturation  0.98
 
 -- Xray
 maskHotPixels       button
