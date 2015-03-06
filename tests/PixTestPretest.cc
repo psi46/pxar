@@ -373,6 +373,11 @@ void PixTestPretest::setTimings() {
   int nTBMs = fApi->_dut->getNTbms();
   uint16_t period = 300;
 
+  if (nTBMs==0) {
+    LOG(logINFO) << "Timing test not needed for single ROC.";
+    return;
+  }
+  
   // Setup a new pattern with only res and token:
   vector<pair<string, uint8_t> > pg_setup;
   pg_setup.push_back(make_pair("resetroc", 25));
@@ -416,9 +421,9 @@ void PixTestPretest::setTimings() {
           GoodDelaySettings=true;
           banner("Good Timings Found!!!");
           LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
-          LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCDelay).to_string();
+          LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
           fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
-          for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCDelay, itbm);
+          for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
         }
       }
     }
