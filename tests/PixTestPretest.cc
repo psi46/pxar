@@ -390,7 +390,7 @@ void PixTestPretest::setTimings() {
     for (int pll400 = 0; pll400 < 8 && !GoodDelaySettings; pll400++) {
       //Apply TBM Phase Settings
       uint8_t TBMPhase = pll160<<5 | pll400<<2;
-      LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+      LOG(logDEBUG) << "Testing TBM Phase: " << (bitset<8>(TBMPhase)).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
       fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
 
       //Loop through the different ROC delays (4, 3, 2, 1, 0, 7, 6, 5)
@@ -398,8 +398,8 @@ void PixTestPretest::setTimings() {
         //Apply ROC Delays
         int iROCDelay = 4-ROCDelay;
         if (iROCDelay<0) iROCDelay += 8;
-        uint8_t ROCPhase = (1<<6) | (iROCDelay<<3) | iROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
-        LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
+        unsigned char ROCPhase = (1<<6) | (iROCDelay<<3) | iROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        LOG(logDEBUG) << "Testing ROC Phase: " << (bitset<8>(ROCPhase)).to_string();
         for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
 
         //Test Delay Settings
@@ -420,8 +420,8 @@ void PixTestPretest::setTimings() {
         if (results.errors()==0 && int(results.info_events_empty())/nTBMs==fIterations*fParNtrig) {
           GoodDelaySettings=true;
           banner("Good Timings Found!!!");
-          LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
-          LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
+          LOG(logINFO) << "Setting TBM Phases to " << (bitset<8>(TBMPhase)).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+          LOG(logINFO) << "Setting ROC Phases to " << (bitset<8>(ROCPhase)).to_string();
           fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
           for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
         }
