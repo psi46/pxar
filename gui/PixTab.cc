@@ -150,6 +150,16 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
+  TGTextButton * previousV = new TGTextButton(hFrame, "Previous V");
+  previousV->SetToolTipText("go to previous version of same histogram");
+  previousV->Connect("Clicked()", "PixTab", this, "previousHistogramV()");
+  hFrame->AddFrame(previousV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  TGTextButton * nextV = new TGTextButton(hFrame, "Next V");
+  nextV->SetToolTipText("go to next version of same histogram");
+  nextV->Connect("Clicked()", "PixTab", this, "nextHistogramV()");
+  hFrame->AddFrame(nextV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
+
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
@@ -419,6 +429,45 @@ void PixTab::nextHistogram() {
 // ----------------------------------------------------------------------
 void PixTab::previousHistogram() {
   TH1 *h = fTest->previousHist(); 
+  if (h) {
+    string option = fTest->getHistOption(h);
+    if (string::npos == option.find("same")) clearCanvas();
+    if (h->InheritsFrom(TH2::Class())) {
+      h->Draw(option.c_str());
+    } else {
+      //      cout << "h: " << h->GetName() << " option: " << option << endl;
+      h->Draw(option.c_str());
+    }
+    update(); 
+  } else {
+    LOG(logDEBUG)  << "no previous histogram found ";
+  }
+}
+
+
+// ----------------------------------------------------------------------
+void PixTab::nextHistogramV() {
+  TH1 *h = fTest->nextHistV(); 
+  if (h) {
+    string option = fTest->getHistOption(h);
+    if (string::npos == option.find("same")) clearCanvas();
+    if (h->InheritsFrom(TH2::Class())) {
+      h->Draw(option.c_str());
+    } else {
+      //      cout << "h: " << h->GetName() << " option: " << option << endl;
+      h->Draw(option.c_str());
+    }
+    update(); 
+  } else {
+    LOG(logDEBUG) << "no previous histogram found ";
+  }
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTab::previousHistogramV() {
+  TH1 *h = fTest->previousHistV(); 
   if (h) {
     string option = fTest->getHistOption(h);
     if (string::npos == option.find("same")) clearCanvas();

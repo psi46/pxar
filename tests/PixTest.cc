@@ -645,6 +645,59 @@ TH1* PixTest::previousHist() {
 
 }
 
+
+// ----------------------------------------------------------------------
+TH1* PixTest::nextHistV() {
+  if (fHistList.size() == 0) return 0; 
+  TH1* h0 = (*fDisplayedHist); 
+  std::string histName(h0->GetName());
+  LOG(logINFO) << "name:" << histName;
+  int pos = histName.rfind("_V");
+  if (pos != std::string::npos) {
+    int currentV = atoi(histName.substr(pos+2).c_str());
+    std::string histBaseName = histName.substr(0, pos);
+    LOG(logINFO) << "V:" << currentV << " base: ->" << histBaseName << "<-";
+    for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+      TH1* h1 = (*il); 
+      std::string histName2 = h1->GetName();
+      int pos2 = histName2.rfind("_V");
+      std::string histBaseName2 = histName2.substr(0, pos2);
+      int checkV = atoi(histName2.substr(pos+2).c_str());
+      if (histBaseName == histBaseName2 && checkV == currentV+1) {
+        fDisplayedHist = il;
+        return *il;
+      }
+    }
+  }
+  return 0;
+}
+
+// ----------------------------------------------------------------------
+TH1* PixTest::previousHistV() {
+  if (fHistList.size() == 0) return 0; 
+  TH1* h0 = (*fDisplayedHist); 
+  std::string histName(h0->GetName());
+  LOG(logINFO) << "name:" << histName;
+  int pos = histName.rfind("_V");
+  if (pos != std::string::npos) {
+    int currentV = atoi(histName.substr(pos+2).c_str());
+    std::string histBaseName = histName.substr(0, pos);
+    LOG(logINFO) << "V:" << currentV << " base: ->" << histBaseName << "<-";
+    for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+      TH1* h1 = (*il); 
+      std::string histName2 = h1->GetName();
+      int pos2 = histName2.rfind("_V");
+      std::string histBaseName2 = histName2.substr(0, pos2);
+      int checkV = atoi(histName2.substr(pos+2).c_str());
+      if (histBaseName == histBaseName2 && checkV == currentV-1) {
+        fDisplayedHist = il;
+        return *il;
+      }
+    }
+  }
+  return 0;
+}
+
 // ----------------------------------------------------------------------
 void PixTest::setTitles(TH1 *h, const char *sx, const char *sy, float size, 
 			float xoff, float yoff, float lsize, int font) {
