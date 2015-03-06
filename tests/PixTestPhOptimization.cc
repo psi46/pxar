@@ -377,7 +377,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   bool isPixGood=true;
   int minph = 0;
-  int init_phScale = 100;
+  int init_phScale = 150;
   int flag_minPh=0;
   pair<int, pxar::pixel> minpixel;
   minpixel.second.setValue(0);
