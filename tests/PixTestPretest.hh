@@ -17,6 +17,7 @@ public:
   void doTest();
   void setVana();
   void programROC();
+  void setTimings();
   void findWorkingPixel();  
   void setVthrCompCalDel();
   void setVthrCompId();
@@ -28,6 +29,7 @@ private:
   int     fTargetIa;
   int     fNoiseWidth;
   int     fNoiseMargin;
+  int     fIterations;
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
   double  fParFracCalDel;

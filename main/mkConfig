@@ -421,6 +421,8 @@ sub printTestParameters {
 programroc          button
 targetIa            24
 setVana             button
+iterations          100
+setTimings          button
 findWorkingPixel    button
 setVthrCompCalDel   button
 PIX                 11,20
