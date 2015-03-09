@@ -140,6 +140,16 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   next->Connect("Clicked()", "PixTab", this, "nextHistogram()");
   hFrame->AddFrame(next, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
+  TGTextButton * previousV = new TGTextButton(hFrame, "--V");
+  previousV->SetToolTipText("go to previous version of same histogram");
+  previousV->Connect("Clicked()", "PixTab", this, "previousHistogramV()");
+  hFrame->AddFrame(previousV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  TGTextButton * nextV = new TGTextButton(hFrame, "++V");
+  nextV->SetToolTipText("go to next version of same histogram");
+  nextV->Connect("Clicked()", "PixTab", this, "nextHistogramV()");
+  hFrame->AddFrame(nextV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
+
   TGTextButton * update = new TGTextButton(hFrame, "Update");
   update->SetToolTipText("update canvas");
   update->Connect("Clicked()", "PixTab", this, "update()");
@@ -149,16 +159,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   clear->SetToolTipText("clear canvas and resest histogram list");
   clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  TGTextButton * previousV = new TGTextButton(hFrame, "Previous V");
-  previousV->SetToolTipText("go to previous version of same histogram");
-  previousV->Connect("Clicked()", "PixTab", this, "previousHistogramV()");
-  hFrame->AddFrame(previousV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
-
-  TGTextButton * nextV = new TGTextButton(hFrame, "Next V");
-  nextV->SetToolTipText("go to next version of same histogram");
-  nextV->Connect("Clicked()", "PixTab", this, "nextHistogramV()");
-  hFrame->AddFrame(nextV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
