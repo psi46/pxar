@@ -41,6 +41,8 @@ public:
   void clearCanvas();
   void nextHistogram();
   void previousHistogram();
+  void nextHistogramV();
+  void previousHistogramV();
   void clearHistList();
   
 protected: 
