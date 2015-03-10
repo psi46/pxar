@@ -316,19 +316,8 @@ namespace pxar {
 
     roc_Event.trailer = raw;
 
-    // If the number of ROCs does not correspond to what we expect
-    // clear the event and return:
-    if(roc_n+1 != GetTokenChainLength()) {
-      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
-		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
-      decodingStats.m_errors_roc_missing++;
-      // Clearing event content:
-      roc_Event.Clear();
-    }
-    // Count empty events
-    else if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
-    // Count valid events
-    else { decodingStats.m_info_events_valid++; }
+    // Check event validity (empty, missing ROCs...):
+    CheckEventValidity(roc_n);
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
@@ -398,10 +387,30 @@ namespace pxar {
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
+  void dtbEventDecoder::CheckEventValidity(int16_t roc_n) {
+
+    // Check that we found all expected ROC headers:
+    // If the number of ROCs does not correspond to what we expect
+    // clear the event and return:
+    if(roc_n+1 != GetTokenChainLength()) {
+      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
+		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
+      decodingStats.m_errors_roc_missing++;
+      // Clearing event content:
+      roc_Event.Clear();
+    }
+    // Count empty events
+    else if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
+    // Count valid events
+    else { decodingStats.m_info_events_valid++; }
+  }
 
   Event* dtbEventDecoder::DecodeDeser160() {
 
     roc_Event.Clear();
+
+    // Count the ROC headers:
+    int16_t roc_n = -1;
 
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
@@ -447,10 +456,8 @@ namespace pxar {
       }
     }
 
-    // Count empty events
-    if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
-    // Count valid events
-    else { decodingStats.m_info_events_valid++; }
+    // Check if empty or missing ROCs:
+    CheckEventValidity(roc_n);
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;

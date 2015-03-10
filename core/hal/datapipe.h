@@ -216,6 +216,7 @@ namespace pxar {
     std::vector<std::vector<uint16_t> > readback;
 
     // Error checking:
+    void CheckEventValidity(int16_t roc_n);
     void CheckInvalidWord(uint16_t v);
     void CheckEventID(uint16_t v);
     int16_t eventID;
