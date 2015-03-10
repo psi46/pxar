@@ -327,6 +327,7 @@ namespace pxar {
 
     roc_Event.Clear();
     rawEvent *sample = Get();
+    int16_t roc_n = -1;
 
     // Count possibe error states:
     if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
@@ -338,8 +339,9 @@ namespace pxar {
 
     // FIXME this currently only handles single ROCs!
     if (n >= 3) {
-      // FIXME do we need to reserve?
-      if (n > 15) roc_Event.pixels.reserve((n-3)/6);
+      // Reserve expected number of pixels from data length (subtract ROC headers):
+      if (n > 15) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
+
       // Save the lastDAC value:
       roc_Event.header = (*sample)[2];
 
@@ -424,7 +426,8 @@ namespace pxar {
     decodingStats.m_info_words_read += n;
 
     if (n > 0) {
-      if (n > 1) roc_Event.pixels.reserve((n-1)/2);
+      // Reserve expected number of pixels from data length (subtract ROC headers):
+      if (n > 1) roc_Event.pixels.reserve((n-GetTokenChainLength())/2);
       roc_Event.header = (*sample)[0] & 0x0fff;
 
       // Decode the readback bits in the ROC header:
