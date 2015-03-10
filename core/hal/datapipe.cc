@@ -340,10 +340,11 @@ namespace pxar {
     // FIXME this currently only handles single ROCs!
     if (n >= 3) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
-      if (n > 15) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
+      if (n - 3*GetTokenChainLength() > 0) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
 
       // Save the lastDAC value:
       roc_Event.header = (*sample)[2];
+      roc_n++;
 
       // Iterate to improve ultrablack and black measurement:
       if(ultrablack > 0xff) { ultrablack = (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)); }
@@ -368,7 +369,7 @@ namespace pxar {
 	data.push_back((*sample)[pos+5]);
 
 	try{
-	  pixel pix(data,0,ultrablack,black);
+	  pixel pix(data,roc_n,ultrablack,black);
 	  roc_Event.pixels.push_back(pix);
 	  decodingStats.m_info_pixels_valid++;
 	}
@@ -427,7 +428,8 @@ namespace pxar {
 
     if (n > 0) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
-      if (n > 1) roc_Event.pixels.reserve((n-GetTokenChainLength())/2);
+      if (n-GetTokenChainLength() > 0) roc_Event.pixels.reserve((n-GetTokenChainLength())/2);
+
       roc_Event.header = (*sample)[0] & 0x0fff;
 
       // Decode the readback bits in the ROC header:
