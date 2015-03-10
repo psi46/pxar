@@ -430,31 +430,43 @@ namespace pxar {
       // Reserve expected number of pixels from data length (subtract ROC headers):
       if (n-GetTokenChainLength() > 0) roc_Event.pixels.reserve((n-GetTokenChainLength())/2);
 
-      roc_Event.header = (*sample)[0] & 0x0fff;
+      unsigned int pos = 0;
 
-      // Decode the readback bits in the ROC header:
-      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,roc_Event.header); }
+      // Loop over the full data:
+      while (pos < n) {
+	// Check if we have a ROC header:
+	if((*sample)[pos] & 0x0ffc == 0x07f8) {
+	  roc_Event.header = (*sample)[pos] & 0x0fff;
+	  roc_n++;
+	  pos++;
 
-      unsigned int pos = 1;
-      while (pos < n-1) {
-	uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
-	raw += (*sample)[pos++] & 0x0fff;
-	try {
-	  pixel pix(raw,roc_n,invertedAddress);
-	  roc_Event.pixels.push_back(pix);
-	  decodingStats.m_info_pixels_valid++;
+	  // Decode the readback bits in the ROC header:
+	  if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,roc_Event.header); }
 	}
-	catch(DataInvalidAddressError /*&e*/) {
-	  // decoding of raw address lead to invalid address
-	  decodingStats.m_errors_pixel_address++;
-	}
-	catch(DataInvalidPulseheightError /*&e*/) {
-	  // decoding of pulse height featured non-zero fill bit
-	  decodingStats.m_errors_pixel_pulseheight++;
-	}
-	catch(DataCorruptBufferError /*&e*/) {
-	  // decoding returned row 80 - corrupt data buffer
-	  decodingStats.m_errors_pixel_buffer_corrupt++;
+	// We have a pixel:
+	else {
+	  // Not enough data for a new pixel hit (two words):
+	  if(pos >= n-1) break;
+
+	  uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
+	  raw += (*sample)[pos++] & 0x0fff;
+	  try {
+	    pixel pix(raw,roc_n,invertedAddress);
+	    roc_Event.pixels.push_back(pix);
+	    decodingStats.m_info_pixels_valid++;
+	  }
+	  catch(DataInvalidAddressError /*&e*/) {
+	    // decoding of raw address lead to invalid address
+	    decodingStats.m_errors_pixel_address++;
+	  }
+	  catch(DataInvalidPulseheightError /*&e*/) {
+	    // decoding of pulse height featured non-zero fill bit
+	    decodingStats.m_errors_pixel_pulseheight++;
+	  }
+	  catch(DataCorruptBufferError /*&e*/) {
+	    // decoding returned row 80 - corrupt data buffer
+	    decodingStats.m_errors_pixel_buffer_corrupt++;
+	  }
 	}
       }
     }
