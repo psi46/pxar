@@ -431,26 +431,26 @@ namespace pxar {
       roc_Event.header = (*sample)[0] & 0x0fff;
 
       // Decode the readback bits in the ROC header:
-      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(0,roc_Event.header); }
+      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,roc_Event.header); }
 
       unsigned int pos = 1;
       while (pos < n-1) {
 	uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
 	raw += (*sample)[pos++] & 0x0fff;
-	try{
-	  pixel pix(raw,0,invertedAddress);
+	try {
+	  pixel pix(raw,roc_n,invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	  decodingStats.m_info_pixels_valid++;
 	}
-	catch(DataInvalidAddressError /*&e*/){
+	catch(DataInvalidAddressError /*&e*/) {
 	  // decoding of raw address lead to invalid address
 	  decodingStats.m_errors_pixel_address++;
 	}
-	catch(DataInvalidPulseheightError /*&e*/){
+	catch(DataInvalidPulseheightError /*&e*/) {
 	  // decoding of pulse height featured non-zero fill bit
 	  decodingStats.m_errors_pixel_pulseheight++;
 	}
-	catch(DataCorruptBufferError /*&e*/){
+	catch(DataCorruptBufferError /*&e*/) {
 	  // decoding returned row 80 - corrupt data buffer
 	  decodingStats.m_errors_pixel_buffer_corrupt++;
 	}
