@@ -47,4 +47,11 @@ namespace pxar {
     roc_Event.Clear();
     return &roc_Event;
   }
+
+  Event* dtbEventDecoder::DecodeAnalog() {
+
+    roc_Event.Clear();
+    return &roc_Event;
+  }
+
 }
