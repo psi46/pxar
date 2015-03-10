@@ -379,10 +379,8 @@ namespace pxar {
       }
     }
 
-    // Count empty events
-    if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
-    // Count valid events
-    else { decodingStats.m_info_events_valid++; }
+    // Check if empty or missing ROCs:
+    CheckEventValidity(roc_n);
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
