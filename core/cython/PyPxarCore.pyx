@@ -359,6 +359,23 @@ cdef class PyPxarCore:
         return self.thisptr._dut.getNEnabledTbms()
     def getNEnabledRocs(self):
         return self.thisptr._dut.getNEnabledRocs()
+
+    def getEnabledRocI2Caddr(self):
+        cdef vector[uint8_t] rpcs
+        rpcs = self.thisptr._dut.getEnabledRocI2Caddr()
+        roci2c = list()
+        for r in rpcs:
+            roci2c.append(r)
+        return roci2c
+
+    def getEnabledRocIDs(self):
+        cdef vector[uint8_t] rpcs
+        rpcs = self.thisptr._dut.getEnabledRocIDs()
+        rocids = list()
+        for r in rpcs:
+            rocids.append(r)
+        return rocids
+
     def getNTbms(self):
         return self.thisptr._dut.getNTbms()
     def getNRocs(self):

@@ -713,6 +713,26 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_info.__doc__, '']
 
+    @arity(0,0,[])
+    def do_getEnabledRocIDs(self):
+        """info: print ROC IDs of all enabled ROCs"""
+        data = self.api.getEnabledRocIDs()
+        print data
+
+    def complete_getEnabledRocIDs(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getEnabledRocIDs.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getEnabledRocI2Caddr(self):
+        """info: print ROC IDs of all enabled ROCs"""
+        data = self.api.getEnabledRocI2Caddr()
+        print data
+
+    def complete_getEnabledRocI2Caddr(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getEnabledRocI2Caddr.__doc__, '']
+
     @arity(2,2,[int, int])
     def do_setROCEnable(self, rocid, enable):
         """setROCEnable [ROC id] [enable]: enable/disable the ROC with given ID"""
