@@ -484,12 +484,12 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
       if(!pix_found){
 	badpix = false;
        LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
-	for(int ibinx = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
+	for(int ibinx_ex = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx_ex < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx_ex++){
 	  if(pix_found) break;
-	  for(int ibiny = minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
-	    //try to avoid picking edge pixels
-	    //ibinx = (ibinx)%minphmap[ith2]->GetNbinsX();
-	    //ibiny = (ibiny)%minphmap[ith2]->GetNbinsY();	  
+	  for(int ibiny_ex = minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny_ex < minphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny_ex++){
+      //ibinx_ex, ibiny_ex extend beyond the range so wrap around 
+	    int ibinx = (ibinx_ex)%minphmap[ith2]->GetNbinsX();
+	    int ibiny = (ibiny_ex)%minphmap[ith2]->GetNbinsY();
 	    if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
 	      temp_pix.setRoc( getIdFromIdx(ith2) );
 	      temp_pix.setRow( ibiny - 1 );
