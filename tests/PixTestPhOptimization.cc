@@ -483,13 +483,13 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
       //if not found, look outside fiducial region
       if(!pix_found){
 	badpix = false;
-	LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
+       LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
 	for(int ibinx = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
 	  if(pix_found) break;
 	  for(int ibiny = minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
 	    //try to avoid picking edge pixels
-	    ibinx = (ibinx)%minphmap[ith2]->GetNbinsX();
-	    ibiny = (ibiny)%minphmap[ith2]->GetNbinsY();	  
+	    //ibinx = (ibinx)%minphmap[ith2]->GetNbinsX();
+	    //ibiny = (ibiny)%minphmap[ith2]->GetNbinsY();	  
 	    if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
 	      temp_pix.setRoc( getIdFromIdx(ith2) );
 	      temp_pix.setRow( ibiny - 1 );
@@ -517,10 +517,9 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	    }
 	  }
 	}
-      }
-
     }
   
+    }
   //finds min vcal
     fApi->setDAC("ctrlreg",0);
     int cnt(0); 
