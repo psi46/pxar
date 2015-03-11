@@ -348,12 +348,12 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
       if(!pix_found){
 	badpix=false;
 	LOG(logDEBUG)<<"Search for maxph pixel failed in the fiducial region on chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
-	for(int ibinx = maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx < maxphmap[ith2]->GetNbinsX()+1+colMargin; ibinx++){
+	for(int ibinx_ex = maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx_ex < maxphmap[ith2]->GetNbinsX()+1+colMargin; ibinx_ex++){
 	  if(pix_found) break;
-	  for(int ibiny = maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny < maxphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny++){
+	  for(int ibiny_ex = maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny_ex < maxphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny_ex++){
 	    //try to avoid picking edge pixels
-	    ibinx = (ibinx)%maxphmap[ith2]->GetNbinsX();
-	    ibiny = (ibiny)%maxphmap[ith2]->GetNbinsY();
+	    int ibinx = (ibinx_ex)%maxphmap[ith2]->GetNbinsX();
+	    int ibiny = (ibiny_ex)%maxphmap[ith2]->GetNbinsY();
 	    if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
 	      temp_pix.setRoc( getIdFromIdx(ith2) );
 	      temp_pix.setRow( ibiny - 1 );
@@ -401,7 +401,9 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   std::vector<TH2D*> minphmap;
   int xbinmin=0, ybinmin=0, zbinmin=0;
   int colmin=0, rowmin=0;
+  int minph_roc = -1;
   while(minph<10 && flag_minPh<52){
+    LOG(logDEBUG) << "init_phScale=" << init_phScale << ", flag_minPh = " << flag_minPh << ", minph = " << minph;
     fApi->setDAC("phscale", init_phScale);
     fApi->setDAC("ctrlreg",0);
     //    fApi->setDAC("vcal",fMinThr*1.2);
@@ -425,12 +427,14 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	}
 	if(isPixGood && minphmap[ith2]->GetBinContent(xbinmin, ybinmin) < minph){
 	  minph = minphmap[ith2]->GetBinContent(xbinmin, ybinmin);
+    minph_roc = ith2;
 	}
       }
     //should have flag for v2 or v2.1
     init_phScale+=5;
     flag_minPh++;
   }
+  LOG(logDEBUG) << "done. init_phScale=" << init_phScale << ", flag_minPh = " << flag_minPh << ", minph = " << minph << "minph_roc = " << minph_roc;
 
   for(unsigned int ith2 = 0; ith2 < minphmap.size(); ith2++) {
       fHistList.push_back(minphmap[ith2]);  
