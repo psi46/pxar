@@ -379,12 +379,6 @@ void PixTestPretest::setTimings() {
     return;
   }
   
-  // Setup a new pattern with only res and token:
-  vector<pair<string, uint8_t> > pg_setup;
-  pg_setup.push_back(make_pair("resetroc", 25));
-  pg_setup.push_back(make_pair("trigger", 0));
-  fApi->setPatternGenerator(pg_setup);
-  
   // Loop through all possible TBM Phases settings.
   bool GoodDelaySettings = false;
   for (int pll160 = 0; pll160 < 8 && !GoodDelaySettings; pll160++) {
@@ -394,12 +388,13 @@ void PixTestPretest::setTimings() {
       LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
       fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
 
-      //Loop through the different ROC delays (4, 3, 2, 1, 0, 7, 6, 5)
-      for (int ROCDelay = 0; ROCDelay < 8 && !GoodDelaySettings; ROCDelay++) {
+      //Loop through the different ROC delays (4, 3, 5, 2, 6, 1)
+      //int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
+      int ROCDelays[2] = {4, 3};
+      for (int iROCDelay = 0; iROCDelay < 2 && !GoodDelaySettings; iROCDelay++) {
         //Apply ROC Delays
-        int iROCDelay = 4-ROCDelay;
-        if (iROCDelay<0) iROCDelay += 8;
-        unsigned char ROCPhase = (1<<6) | (iROCDelay<<3) | iROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        int ROCDelay = ROCDelays[iROCDelay];
+        unsigned char ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
         LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
         for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
 
@@ -415,10 +410,11 @@ void PixTestPretest::setTimings() {
         }
         fApi->daqStop();
         statistics results = fApi->getStatistics();
+        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
         LOG(logDEBUG) << "Number of Errors: " << results.errors();
-        LOG(logDEBUG) << "Number of Empty_Events/nTBMs : " << results.info_events_empty()/nTBMs;
+        LOG(logDEBUG) << "Number of Events: " << NEvents;
         if (Log::ReportingLevel() >= logDEBUG) results.dump();
-        if (results.errors()==0 && int(results.info_events_empty())/nTBMs==fIterations*fParNtrig) {
+        if (results.errors()==0 && NEvents==fIterations*fParNtrig) {
           GoodDelaySettings=true;
           banner("Good Timings Found!!!");
           LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
@@ -432,9 +428,6 @@ void PixTestPretest::setTimings() {
 
   if (!GoodDelaySettings) { LOG(logERROR) << "No good timings found! Try running the Phase Scan in the Timing tab."; }
   
-  // Reset the pattern generator to the configured default:
-  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
-
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestPretest::setTimings() done.";
