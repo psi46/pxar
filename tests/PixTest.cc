@@ -655,16 +655,30 @@ TH1* PixTest::nextHistV() {
   if (pos != std::string::npos) {
     int currentV = atoi(histName.substr(pos+2).c_str());
     std::string histBaseName = histName.substr(0, pos);
+
+    int maxV = 0;
     for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
       TH1* h1 = (*il); 
       std::string histName2 = h1->GetName();
       int pos2 = histName2.rfind("_V");
-      std::string histBaseName2 = histName2.substr(0, pos2);
-      int checkV = atoi(histName2.substr(pos+2).c_str());
-      if (histBaseName == histBaseName2 && checkV == currentV+1) {
-        fDisplayedHist = il;
-        return *il;
+      if (pos2 != std::string::npos) {
+        int checkV = atoi(histName2.substr(pos+2).c_str());
+        if (checkV > maxV) maxV = checkV;
       }
+    }
+
+    for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+      TH1* h1 = (*il); 
+      std::string histName2 = h1->GetName();
+      int pos2 = histName2.rfind("_V");
+      if (pos2 != std::string::npos) {
+        std::string histBaseName2 = histName2.substr(0, pos2);
+        int checkV = atoi(histName2.substr(pos+2).c_str());
+        if (histBaseName == histBaseName2 && (checkV == currentV+1 || (currentV == maxV && checkV == 0))) {
+          fDisplayedHist = il;
+          return *il;
+        }
+      }  
     }
   }
   return 0;
@@ -679,15 +693,29 @@ TH1* PixTest::previousHistV() {
   if (pos != std::string::npos) {
     int currentV = atoi(histName.substr(pos+2).c_str());
     std::string histBaseName = histName.substr(0, pos);
+
+    int maxV = 0;
     for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
       TH1* h1 = (*il); 
       std::string histName2 = h1->GetName();
       int pos2 = histName2.rfind("_V");
-      std::string histBaseName2 = histName2.substr(0, pos2);
-      int checkV = atoi(histName2.substr(pos+2).c_str());
-      if (histBaseName == histBaseName2 && checkV == currentV-1) {
-        fDisplayedHist = il;
-        return *il;
+      if (pos2 != std::string::npos) {
+        int checkV = atoi(histName2.substr(pos+2).c_str());
+        if (checkV > maxV) maxV = checkV;
+      }
+    }
+
+    for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+      TH1* h1 = (*il); 
+      std::string histName2 = h1->GetName();
+      int pos2 = histName2.rfind("_V");
+      if (pos2 != std::string::npos) {
+        std::string histBaseName2 = histName2.substr(0, pos2);
+        int checkV = atoi(histName2.substr(pos+2).c_str());
+        if (histBaseName == histBaseName2 && (checkV == currentV-1 || (currentV == 0 && checkV == maxV))) {
+          fDisplayedHist = il;
+          return *il;
+        }
       }
     }
   }
