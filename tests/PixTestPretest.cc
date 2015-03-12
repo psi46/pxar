@@ -389,9 +389,8 @@ void PixTestPretest::setTimings() {
       fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
 
       //Loop through the different ROC delays (4, 3, 5, 2, 6, 1)
-      //int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
-      int ROCDelays[2] = {4, 3};
-      for (int iROCDelay = 0; iROCDelay < 2 && !GoodDelaySettings; iROCDelay++) {
+      int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
+      for (int iROCDelay = 0; iROCDelay < 6 && !GoodDelaySettings; iROCDelay++) {
         //Apply ROC Delays
         int ROCDelay = ROCDelays[iROCDelay];
         unsigned char ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
