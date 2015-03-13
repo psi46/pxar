@@ -262,8 +262,12 @@ void PixTestXray::doPhRun() {
 
   fEventsMax = 1000 * fParTriggerFrequency * fParRunSeconds; 
 
-  if (fQ.size() > 0 && fSourceChanged) {
-    LOG(logDEBUG) << "booking new histograms as source name has changed";
+  if (fQ.size() > 0 && (fSourceChanged || fHistList.size() == 0)) {
+    if (fSourceChanged) {
+      LOG(logDEBUG) << "booking new histograms as source name has changed";
+    } else {
+      LOG(logDEBUG) << "booking new histograms";
+    }
     fQ.clear(); 
     fQmap.clear(); 
     fHmap.clear(); 
@@ -272,6 +276,7 @@ void PixTestXray::doPhRun() {
     fHitsVsEvents.clear(); 
     fHitsVsColumn.clear(); 
     fHitsVsEvtCol.clear();
+    fTriggers.clear();
   }
 
   if (0 == fQ.size()) {
