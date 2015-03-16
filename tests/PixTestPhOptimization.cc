@@ -14,7 +14,7 @@ ClassImp(PixTestPhOptimization)
 
 PixTestPhOptimization::PixTestPhOptimization() {}
 
-PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fSafetyMarginLow(15), fQuantMax(0.98), fVcalMax(100) {
+PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fSafetyMarginLow(20), fQuantMax(0.98), fVcalMax(100) {
   PixTest::init();
   init();
 }
@@ -458,7 +458,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     TH1D* h_quant = distribution(minphmap[ith2], 256, 0., 255.);
     fHistList.push_back(h_quant);
     h_quant->GetQuantiles(1, yq, xq);
-    yq[0] = h_quant->FindFirstBinAbove(1.) + 1;
+    //    yq[0] = h_quant->FindFirstBinAbove(1.) + 1;
     LOG(logDEBUG)<<"minph quantile "<<xq[0]<<" "<<yq[0];
     int colMargin = 3;
     int rowMargin = 5; 
@@ -623,7 +623,7 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   //PH map for lower vcal sampling point
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     fApi->setDAC("ctrlreg",0);
-    fApi->setDAC("vcal",minVcal[roc_it]+3, rocIds[roc_it] );
+    fApi->setDAC("vcal",minVcal[roc_it]+10, rocIds[roc_it] );
   }
   map<int, TH2D* > h2_PhMapsMin;
   map<int, TH1D* > h1_PhMapsMin;
@@ -814,7 +814,7 @@ void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::p
 
   fApi->setDAC("ctrlreg",0);
   for(std::map<int, int>::iterator ivcal = minVcal.begin(); ivcal != minVcal.end(); ivcal++){
-    fApi->setDAC("vcal",minVcal[ivcal->first]+3, getIdxFromId(ivcal->first));
+    fApi->setDAC("vcal",minVcal[ivcal->first]+10, getIdxFromId(ivcal->first));
   }
     
   //scanning through offset and scale for min pixel (or same randpixel)

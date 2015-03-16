@@ -532,7 +532,7 @@ save                button
 
 -- PhOptimization
 ntrig               10
-safetymarginlow     15
+safetymarginlow     20
 saturationvcal      100
 quantilesaturation  0.98
 
