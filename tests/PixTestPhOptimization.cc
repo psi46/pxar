@@ -471,7 +471,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	  //try to avoid picking edge pixels
 	  ibinx = (ibinx)%minphmap[ith2]->GetNbinsX();
 	  ibiny = (ibiny)%minphmap[ith2]->GetNbinsY();	  
-	  if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	  if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) <= 1){
 	    temp_pix.setRoc( getIdFromIdx(ith2) );
 	    temp_pix.setRow( ibiny - 1 );
 	    temp_pix.setColumn( ibinx - 1 );
@@ -501,7 +501,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
       //ibinx_ex, ibiny_ex extend beyond the range so wrap around 
 	    int ibinx = (ibinx_ex)%minphmap[ith2]->GetNbinsX();
 	    int ibiny = (ibiny_ex)%minphmap[ith2]->GetNbinsY();
-	    if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	    if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) <= 1){
 	      temp_pix.setRoc( getIdFromIdx(ith2) );
 	      temp_pix.setRow( ibiny - 1 );
 	      temp_pix.setColumn( ibinx - 1 );
