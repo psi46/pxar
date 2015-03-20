@@ -65,6 +65,7 @@ int main(int argc, char *argv[]){
       cout << "-t test               run test" << endl;
       cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
+      cout << "-L logID              add additional <logID> to log output after the timestamp. ex: pxar -L TB1" << endl;
       return 0;
     }
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
@@ -76,7 +77,8 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
     if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
     if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;} 
-    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }   
+    if (!strcmp(argv[i],"-L"))                                {Log::logName(string(argv[++i]));}             
   }
 
   struct stat buffer;   
