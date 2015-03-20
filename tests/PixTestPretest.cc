@@ -5,8 +5,10 @@
 #include <TStyle.h>
 #include <TMarker.h>
 #include <TStopwatch.h>
+#include <bitset>
 
 #include "PixTestPretest.hh"
+#include "timer.h"
 #include "log.h"
 #include "helper.h"
 
@@ -59,6 +61,10 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 
       if (!parName.compare("ntrig") ) {
 	fParNtrig = atoi(sval.c_str() );
+      }
+
+      if (!parName.compare("iterations") ) {
+    fIterations = atoi(sval.c_str() );
       }
 
       if (!parName.compare("vcal") ) {
@@ -151,6 +157,8 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
+  setTimings();
+    
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
@@ -186,6 +194,10 @@ void PixTestPretest::runCommand(std::string command) {
   }
   if (!command.compare("setvana")) {
     setVana(); 
+    return;
+  }
+  if (!command.compare("settimings")) {
+    setTimings();
     return;
   }
   if (!command.compare("findworkingpixel")) {
@@ -351,6 +363,75 @@ void PixTestPretest::setVana() {
 
 }
 
+// ----------------------------------------------------------------------
+void PixTestPretest::setTimings() {
+
+  // Start test timer
+  timer t;
+  
+  banner(Form("PixTestPreTest::setTimings()"));
+
+  int nTBMs = fApi->_dut->getNTbms();
+  uint16_t period = 300;
+
+  if (nTBMs==0) {
+    LOG(logINFO) << "Timing test not needed for single ROC.";
+    return;
+  }
+  
+  // Loop through all possible TBM Phases settings.
+  bool GoodDelaySettings = false;
+  for (int pll160 = 0; pll160 < 8 && !GoodDelaySettings; pll160++) {
+    for (int pll400 = 0; pll400 < 8 && !GoodDelaySettings; pll400++) {
+      //Apply TBM Phase Settings
+      uint8_t TBMPhase = pll160<<5 | pll400<<2;
+      LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+      fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
+
+      //Loop through the different ROC delays (4, 3, 5, 2, 6, 1)
+      int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
+      for (int iROCDelay = 0; iROCDelay < 6 && !GoodDelaySettings; iROCDelay++) {
+        //Apply ROC Delays
+        int ROCDelay = ROCDelays[iROCDelay];
+        unsigned char ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
+        for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
+
+        //Test Delay Settings
+        fApi->daqStart();
+        fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
+        vector<rawEvent> daqRawEv = fApi->daqGetRawEventBuffer();
+        for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
+        vector<Event> daqEv;
+        for (int interation=0; interation < fIterations; interation++) {
+          fApi->daqTrigger(fParNtrig, period);
+          daqEv = fApi->daqGetEventBuffer();
+        }
+        fApi->daqStop();
+        statistics results = fApi->getStatistics();
+        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+        LOG(logDEBUG) << "Number of Errors: " << results.errors();
+        LOG(logDEBUG) << "Number of Events: " << NEvents;
+        if (Log::ReportingLevel() >= logDEBUG) results.dump();
+        if (results.errors()==0 && NEvents==fIterations*fParNtrig) {
+          GoodDelaySettings=true;
+          banner("Good Timings Found!!!");
+          LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+          LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
+          fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
+          for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
+        }
+      }
+    }
+  }
+
+  if (!GoodDelaySettings) { LOG(logERROR) << "No good timings found! Try running the Phase Scan in the Timing tab."; }
+  
+  // Print timer value:
+  LOG(logINFO) << "Test took " << t << " ms.";
+  LOG(logINFO) << "PixTestPretest::setTimings() done.";
+
+}
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompCalDel() {

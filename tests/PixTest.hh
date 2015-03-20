@@ -278,7 +278,11 @@ public:
   /// allow forward iteration through list of histograms
   TH1* nextHist(); 
   /// allow backward iteration through list of histograms
-  TH1* previousHist(); 
+  TH1* previousHist();
+  /// allow forward iteration through list of histograms
+  TH1* nextHistV(); 
+  /// allow backward iteration through list of histograms
+  TH1* previousHistV();  
   
 
 protected: 
