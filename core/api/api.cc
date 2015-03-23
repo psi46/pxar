@@ -2326,6 +2326,26 @@ void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
   _hal->SigSetMode(sigRegister, mode);
 }
 
+void pxarCore::setSignalMode(std::string signal, std::string mode) {
+ 
+  uint8_t modeValue = 0xff;
+
+  // Convert the name to lower case for comparison:
+  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+
+  if(mode == "normal")      modeValue = 0;
+  else if(mode == "low")    modeValue = 1;
+  else if(mode == "high")   modeValue = 2;
+  else if(mode == "random") modeValue = 3;
+  else {
+    LOG(logERROR) << "Unknown signal mode \"" << mode << "\"";
+    return;
+  }
+
+  // Set the signal mode:
+  setSignalMode(signal, modeValue);
+}
+
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
 {
   LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 

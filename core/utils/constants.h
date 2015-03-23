@@ -106,6 +106,7 @@ namespace pxar {
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
 #define SIG_MODE_HI      2
+#define SIG_MODE_RNDM    3
 
 
 // --- Testboard Clock / Timing -----------------------------------------------
