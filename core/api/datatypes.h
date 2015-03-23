@@ -154,10 +154,6 @@ namespace pxar {
      */
     void decodeAnalog(std::vector<uint16_t> analog, int16_t ultrablack, int16_t black);
 
-    /** Helper function to recover the ADC sign of analog data words
-     */
-    static int16_t expandSign(uint16_t x) { return (x & 0x0800) ? static_cast<int16_t>(x) - 4096 : static_cast<int16_t>(x); }
-
     /** Helper function to translate ADC values into address levels
      */
     uint8_t translateLevel(uint16_t x, int16_t level0, int16_t level1, int16_t levelS);
