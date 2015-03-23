@@ -405,6 +405,7 @@ namespace pxar {
 
     // FIXME can't we find a smarter solution to this?!
     uint8_t m_tbmtype;
+    uint16_t m_adctimeout;
     uint8_t m_tindelay;
     uint8_t m_toutdelay;
     uint8_t deser160phase;

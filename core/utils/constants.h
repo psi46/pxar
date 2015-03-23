@@ -94,8 +94,9 @@ namespace pxar {
 #define SIG_TIN 3
 #define SIG_RDA_TOUT 4
 
-#define SIG_ADC_TINDELAY 0xF8
-#define SIG_ADC_TOUTDELAY 0xF9
+#define SIG_ADC_TINDELAY 0xF7
+#define SIG_ADC_TOUTDELAY 0xF8
+#define SIG_ADC_TIMEOUT 0xF9
 #define SIG_TRIGGER_TIMEOUT 0xFA
 #define SIG_TRIGGER_LATENCY 0xFB
 #define SIG_LEVEL 0xFC
@@ -105,6 +106,7 @@ namespace pxar {
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
 #define SIG_MODE_HI      2
+#define SIG_MODE_RNDM    3
 
 
 // --- Testboard Clock / Timing -----------------------------------------------

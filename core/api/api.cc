@@ -1457,8 +1457,8 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     // Compare the configuration of the first ROC with all others:
     if(!comparePixelConfiguration(_dut->getEnabledPixels(enabledRocs.at(0)),_dut->getEnabledPixels(*rc))) {
       flags |= FLAG_FORCE_SERIAL;
-      LOG(logDEBUGAPI) << "Not all ROCs have their pixels configured the same way. "
-		       << "Running in FLAG_FORCE_SERIAL mode.";
+      LOG(logINFO) << "Not all ROCs have their pixels configured the same way. "
+		   << "Running in FLAG_FORCE_SERIAL mode.";
       break;
     }
   }
@@ -1684,7 +1684,7 @@ std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_
   return packed;
 }
 
-std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
+std::vector<pixel> pxarCore::repackMapData(std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
 
   // Keep track of the pixel to be expected:
   uint8_t expected_column = 0, expected_row = 0;
@@ -1739,7 +1739,10 @@ std::vector<pixel> pxarCore::repackMapData (std::vector<Event*> data, uint16_t n
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency){
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency){
+
+  // Keep track of the pixel to be expected:
+  uint8_t expected_column = 0, expected_row = 0;
 
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result;
 
@@ -1762,12 +1765,40 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
   size_t currentDAC = dacMin;
   // Loop over the packed data and separate into DAC ranges, potentially several rounds:
   for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
+
     if(currentDAC > dacMax) { currentDAC = dacMin; }
-    result.at((currentDAC-dacMin)/dacStep).second.insert(result.at((currentDAC-dacMin)/dacStep).second.end(),
-					       (*Eventit)->pixels.begin(),
-					       (*Eventit)->pixels.end());
+
+    // For every Event, loop over all contained pixels:
+    for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
+      // Check for pulsed pixels being present:
+      if((flags&FLAG_CHECK_ORDER) != 0) {
+	if(pixit->column() != expected_column || pixit->row() != expected_row) {
+
+	  // With the full chip unmasked we want to know if the pixel in question was amongst the ones recorded:
+	  if((flags&FLAG_FORCE_UNMASKED) != 0) { LOG(logDEBUGPIPES) << "This is a background hit: " << (*pixit); }
+	  else {
+	    // With only the pixel in question unmasked we want to warn about other appeareances:
+	    LOG(logERROR) << "This pixel doesn't belong here: " << (*pixit) << ". Expected [" << static_cast<int>(expected_column) << "," << static_cast<int>(expected_row) << ",x]";
+	  }
+
+	  // Convention: set a negative pixel value for out-of-order pixel hits:
+	  pixit->setValue(-1*pixit->value());
+	}
+      }
+
+      // Add the pixel to the list:
+      result.at((currentDAC-dacMin)/dacStep).second.push_back(*pixit);
+
+      if((flags&FLAG_CHECK_ORDER) != 0) {
+	expected_row++;
+	if(expected_row >= ROC_NUMROWS) { expected_row = 0; expected_column++; }
+	if(expected_column >= ROC_NUMCOLS) { expected_row = 0; expected_column = 0; }
+      }
+    } // loop over all pixels
+
+    // Move to next DAC setting:
     currentDAC += dacStep;
-  }
+  } // loop over events
   
   // Cleanup temporary data:
   for(std::vector<Event*>::iterator it = packed.begin(); it != packed.end(); ++it) { delete *it; }
@@ -2293,6 +2324,26 @@ void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
 		   << static_cast<int>(sigRegister) << ")  to mode "
 		   << static_cast<int>(mode) << ".";
   _hal->SigSetMode(sigRegister, mode);
+}
+
+void pxarCore::setSignalMode(std::string signal, std::string mode) {
+ 
+  uint8_t modeValue = 0xff;
+
+  // Convert the name to lower case for comparison:
+  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+
+  if(mode == "normal")      modeValue = 0;
+  else if(mode == "low")    modeValue = 1;
+  else if(mode == "high")   modeValue = 2;
+  else if(mode == "random") modeValue = 3;
+  else {
+    LOG(logERROR) << "Unknown signal mode \"" << mode << "\"";
+    return;
+  }
+
+  // Set the signal mode:
+  setSignalMode(signal, modeValue);
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)

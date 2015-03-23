@@ -132,6 +132,7 @@ namespace pxar {
 
       _registers["tindelay"]       = dacConfig(SIG_ADC_TINDELAY,63,DTB_REG);
       _registers["toutdelay"]      = dacConfig(SIG_ADC_TOUTDELAY,63,DTB_REG);
+      _registers["adctimeout"]     = dacConfig(SIG_ADC_TIMEOUT,255,DTB_REG);
 
       _registers["tout"]          = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
       _registers["rda"]           = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
