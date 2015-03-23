@@ -504,12 +504,25 @@ bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {
   // Make sure we are writing to the correct ROC by setting the I2C address:
   _testboard->roc_I2cAddr(roci2c);
 
+  // Check if WBC has been updated:
   bool is_wbc = false;
+
+  // Check if one of the DACs to be set is RangeTemp and shift it to the end:
+  std::map<uint8_t,uint8_t>::iterator rangetemp = dacPairs.end();
+
   // Iterate over all DAC id/value pairs and set the DAC
   for(std::map< uint8_t,uint8_t >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
+    if(it->first == ROC_DAC_RangeTemp) { rangetemp = it; continue; }
+
     LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(it->first) << " to " << static_cast<int>(it->second);
     _testboard->roc_SetDAC(it->first,it->second);
     if(it->first == ROC_DAC_WBC) { is_wbc = true; }
+  }
+
+  // Check if RangeTemp has been omitted and set it now - this allows to read its value via lastDAC:
+  if(rangetemp != dacPairs.end()) {
+    LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(rangetemp->first) << " to " << static_cast<int>(rangetemp->second);
+    _testboard->roc_SetDAC(rangetemp->first,rangetemp->second);
   }
 
   // Make sure to issue a ROC Reset after WBC has been programmed:
