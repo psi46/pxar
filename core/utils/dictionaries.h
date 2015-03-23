@@ -238,9 +238,13 @@ namespace pxar {
       _registers["vibiasop"]   = dacConfig(ROC_DAC_VIbiasOp,255,ROC_REG);
       _registers["vbias_op"]   = dacConfig(ROC_DAC_VIbiasOp,255,ROC_REG,false);
 
-      _registers["vibias_roc"]   = dacConfig(ROC_DAC_VIbias_roc,255,ROC_REG);
-      _registers["vnpix"]   = dacConfig(ROC_DAC_Vnpix,255,ROC_REG);
-      _registers["vsumcol"]   = dacConfig(ROC_DAC_VsumCol,255,ROC_REG);
+      _registers["vibias_roc"] = dacConfig(ROC_DAC_VIbias_roc,255,ROC_REG);
+
+      // DACs only relevant for analog chips:
+      _registers["vnpix"]      = dacConfig(ROC_DAC_Vnpix,255,ROC_REG);
+      _registers["vsumcol"]    = dacConfig(ROC_DAC_VsumCol,255,ROC_REG);
+
+      _registers["rangetemp"]  = dacConfig(ROC_DAC_RangeTemp,255,ROC_REG);
     }
 
     std::map<std::string, dacConfig> _registers;
