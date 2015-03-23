@@ -191,10 +191,17 @@ bool pxarCore::initDUT(uint8_t hubid,
     
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
-
+     
       // Fill the register pairs with the register id from the dictionary:
       uint8_t tbmregister, value = dacIt->second;
       if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
+
+      // Check if this is a special setting:
+      if(tbmregister == 0xFF) { // Token Chain length
+	LOG(logDEBUGAPI) << "This TBM Core is configured to have a token chain of "
+			 << static_cast<int>(value) << " ROCs.";
+	continue;
+      }
 
       // Check if this is fore core alpha or beta:
       if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
@@ -368,8 +375,6 @@ bool pxarCore::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uin
     value = static_cast<uint8_t>(regLimit);
   }
 
-  // LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
-  //		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
   return true;
 }
 
