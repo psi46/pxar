@@ -485,6 +485,16 @@ namespace pxar {
     return &roc_Event;
   }
 
+  void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
+    // Check if we have seen this ROC already:
+    if(readback.size() <= roc) readback.resize(roc+1);
+    readback.at(roc).push_back(val);
+
+    LOG(logDEBUGPIPES) << "Readback ROC "
+		       << static_cast<int>(roc+GetChannel()*GetTokenChainLength())
+		       << " " << static_cast<int>(expandSign(val & 0x0fff));
+  }
+
   void dtbEventDecoder::evalReadback(uint8_t roc, uint16_t val) {
     // Check if we have seen this ROC already:
     if(shiftReg.size() <= roc) shiftReg.resize(roc+1,0);
