@@ -348,44 +348,55 @@ namespace pxar {
     if (n >= 3) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
       if (n - 3*GetTokenChainLength() > 0) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
-      
-      // Here we have to assume the first two words are a ROC header because we rely on its
-      // Ultrablack and Black level as initial values for auto-calibration:
 
-      // Save the lastDAC value:
-      roc_Event.header = (*sample)[2];
-      roc_n++;
+      unsigned int pos = 0;
+      while (pos+3 <= n) {
+	// Check if we have another ROC header (UB and B levels):
+	// FIXME don't check for equality but allow jitter!
+	// Here we have to assume the first two words are a ROC header because we rely on its
+	// Ultrablack and Black level as initial values for auto-calibration:
+	if(roc_n < 0 || (expandSign((*sample)[pos]) == ultrablack && expandSign((*sample)[pos+1]) == black)) {
+	  roc_n++;
+	  // Save the lastDAC value:
+	  evalLastDAC(roc_n, (*sample)[pos+2]);
+	  roc_Event.header = (*sample)[pos+2];
 
-      // Iterate to improve ultrablack and black measurement:
-      AverageAnalogLevel(ultrablack, (*sample)[0]);
-      AverageAnalogLevel(black, (*sample)[1]);
+	  // Iterate to improve ultrablack and black measurement:
+	  AverageAnalogLevel(ultrablack, (*sample)[pos]);
+	  AverageAnalogLevel(black, (*sample)[pos+1]);
 
-      LOG(logDEBUGPIPES) << "ROC Header: "
-			 << (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)) << " (avg. " << ultrablack << ") (UB) "
-			 << (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)) << " (avg. " << black << ") (B) "
-			 << (((*sample)[2] & 0x0800) ? static_cast<int>((*sample)[2] & 0x0fff) - 4096 : static_cast<int>((*sample)[2] & 0x0fff)) << " (lastDAC) ";
-
-      unsigned int pos = 3;
-      while (pos+6 <= n) {
-	std::vector<uint16_t> data;
-	data.push_back((*sample)[pos]);
-	data.push_back((*sample)[pos+1]);
-	data.push_back((*sample)[pos+2]);
-	data.push_back((*sample)[pos+3]);
-	data.push_back((*sample)[pos+4]);
-	data.push_back((*sample)[pos+5]);
-
-	try{
-	  pixel pix(data,roc_n,ultrablack,black);
-	  roc_Event.pixels.push_back(pix);
-	  decodingStats.m_info_pixels_valid++;
+	  LOG(logDEBUGPIPES) << "ROC Header: "
+			     << expandSign((*sample)[pos] & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
+			     << expandSign((*sample)[pos+1] & 0x0fff) << " (avg. " << black << ") (B) "
+			     << expandSign((*sample)[pos+2] & 0x0fff) << " (lastDAC) ";
+	  pos += 3;
 	}
-	catch(DataInvalidAddressError /*&e*/){
-	  // decoding of raw address lead to invalid address
-	  decodingStats.m_errors_pixel_address++;
+	// We have a pixel hit:
+	else {
+	  // Not enough data for a new pixel hit (six words):
+	  if(pos > n-6) break;
+
+	  std::vector<uint16_t> data;
+	  data.push_back((*sample)[pos]);
+	  data.push_back((*sample)[pos+1]);
+	  data.push_back((*sample)[pos+2]);
+	  data.push_back((*sample)[pos+3]);
+	  data.push_back((*sample)[pos+4]);
+	  data.push_back((*sample)[pos+5]);
+ 
+	  try{
+	    LOG(logDEBUGPIPES) << "Trying to decode pixel: " << listVector(data,false,true);
+	    pixel pix(data,roc_n,ultrablack,black);
+	    roc_Event.pixels.push_back(pix);
+	    decodingStats.m_info_pixels_valid++;
+	  }
+	  catch(DataInvalidAddressError /*&e*/){
+	    // decoding of raw address lead to invalid address
+	    decodingStats.m_errors_pixel_address++;
+	  }
+	  // Advance read pointer by one pixel:
+	  pos += 6;
 	}
-	// Advance read pointer by one pixel:
-	pos += 6;
       }
     }
 
