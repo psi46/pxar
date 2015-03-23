@@ -584,9 +584,9 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all DACS
                 return dacdict.getAllROCNames()
 
-    @arity(2,2,[str, int])
+    @arity(2,2,[str, str])
     def do_setSignalMode(self, signal, mode):
-        """setSignalMode [signal] [mode]: Set the DTB signal to given mode"""
+        """setSignalMode [signal] [mode]: Set the DTB signal to given mode (normal, low, high, random)"""
         self.api.setSignalMode(signal, mode)
 
     def complete_setSignalMode(self, text, line, start_index, end_index):
