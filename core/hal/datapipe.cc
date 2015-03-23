@@ -325,13 +325,9 @@ namespace pxar {
 
   void dtbEventDecoder::AverageAnalogLevel(int32_t &variable, int16_t dataword) {
     // Check if this is the initial measurement:
-    if(variable > 0xff) { 
-      variable = ((dataword & 0x0800) ? static_cast<int>(dataword & 0x0fff) - 4096 : static_cast<int>(dataword & 0x0fff));
-    }
+    if(variable > 0xff) { variable = expandSign(dataword & 0x0fff); }
     // Average the variable:
-    else { 
-      variable = (variable + ((dataword & 0x0800) ? static_cast<int>(dataword & 0x0fff) - 4096 : static_cast<int>(dataword & 0x0fff)))/2;
-    }
+    else { variable = (variable + expandSign(dataword & 0x0fff))/2; }
   }
 
   Event* dtbEventDecoder::DecodeAnalog() {
