@@ -1607,6 +1607,9 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
   // Length of a token chain (number of ROCs per data stream):
+  // FIXME this should correctly state the number of ROCs we expect!
+  // FIXME: get this from the DUT object somehow....
+
   uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { 
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:

@@ -323,6 +323,17 @@ namespace pxar {
     return &roc_Event;
   }
 
+  void dtbEventDecoder::AverageAnalogLevel(int32_t &variable, int16_t dataword) {
+    // Check if this is the initial measurement:
+    if(variable > 0xff) { 
+      variable = ((dataword & 0x0800) ? static_cast<int>(dataword & 0x0fff) - 4096 : static_cast<int>(dataword & 0x0fff));
+    }
+    // Average the variable:
+    else { 
+      variable = (variable + ((dataword & 0x0800) ? static_cast<int>(dataword & 0x0fff) - 4096 : static_cast<int>(dataword & 0x0fff)))/2;
+    }
+  }
+
   Event* dtbEventDecoder::DecodeAnalog() {
 
     roc_Event.Clear();
@@ -341,17 +352,17 @@ namespace pxar {
     if (n >= 3) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
       if (n - 3*GetTokenChainLength() > 0) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
+      
+      // Here we have to assume the first two words are a ROC header because we rely on its
+      // Ultrablack and Black level as initial values for auto-calibration:
 
       // Save the lastDAC value:
       roc_Event.header = (*sample)[2];
       roc_n++;
 
       // Iterate to improve ultrablack and black measurement:
-      if(ultrablack > 0xff) { ultrablack = (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)); }
-      else { ultrablack = (ultrablack + (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)))/2; }
-
-      if(black > 0xff) { black = (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)); }
-      else { black = (black + (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)))/2; }
+      AverageAnalogLevel(ultrablack, (*sample)[0]);
+      AverageAnalogLevel(black, (*sample)[1]);
 
       LOG(logDEBUGPIPES) << "ROC Header: "
 			 << (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)) << " (avg. " << ultrablack << ") (UB) "

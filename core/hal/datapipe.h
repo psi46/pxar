@@ -222,6 +222,7 @@ namespace pxar {
     int16_t eventID;
 
     // Analog level averaging:
+    void AverageAnalogLevel(int32_t &variable, int16_t dataword);
     int32_t ultrablack;
     int32_t black;
 
