@@ -188,8 +188,8 @@ class PxarCoreCmd(cmd.Cmd):
         return get_possible_filename_completions(extract_full_argument(line,end_index))
 
     @arity(1,1,[str])
-    def do_loadscript(self, filename):
-        """loadscript [filename]: loads a list of commands to be executed on the pxar cmdline"""
+    def do_run(self, filename):
+        """run [filename]: loads a list of commands to be executed on the pxar cmdline"""
         try:
             f = open(filename)
         except IOError:
@@ -202,7 +202,7 @@ class PxarCoreCmd(cmd.Cmd):
         finally:
             f.close()
         
-    def complete_loadscript(self, text, line, start_index, end_index):
+    def complete_run(self, text, line, start_index, end_index):
         # tab-completion for the file path:
         try:
             # remove specific delimeters from the readline parser
@@ -329,6 +329,30 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqStatus.__doc__, '']
 
+    @arity(1,1,[str])
+    def do_daqTriggerSource(self, source):
+        """daqTriggerSource: select the trigger source to be used for the DAQ session"""
+        if self.api.daqTriggerSource(source): 
+            print "Trigger source \"" + source + "\" selected."
+        else:
+            print "DAQ returns faulty state."
+
+    def complete_daqTriggerSource(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqTriggerSource.__doc__, '']
+
+    @arity(1,1,[str])
+    def do_daqSingleSignal(self, signal):
+        """daqSingleSignal [signal]: send a single signal to the DUT"""
+        if self.api.daqSingleSignal(signal):
+            print "Trigger signal \"" + signal + "\" sent to DUT."
+        else:
+            print "Trigger signal lookup failed."
+
+    def complete_daqSingleSignal(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqSingleSignal.__doc__, '']
+
     @arity(0,0,[])
     def do_daqStop(self):
         """daqStop: stops the running DAQ session"""
@@ -368,8 +392,11 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEvent(self):
         """daqGetEvent: read one event from the event buffer"""
-        data = self.api.daqGetEvent()
-        self.plot_eventdisplay(data)
+        try:
+            data = self.api.daqGetEvent()
+            self.plot_eventdisplay(data)
+        except RuntimeError:
+            pass
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -378,8 +405,11 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEventBuffer(self):
         """daqGetEventBuffer: read all decoded events from the DTB buffer"""
-        data = self.api.daqGetEventBuffer()
-        self.plot_eventdisplay(data)
+        try:
+            data = self.api.daqGetEventBuffer()
+            self.plot_eventdisplay(data)
+        except RuntimeError:
+            pass
 
     def complete_daqGetEventBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -388,11 +418,14 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetRawEvent(self):
         """daqGetRawEvent: read one raw event from the event buffer"""
-        dat = self.api.daqGetRawEvent()
-        s = ""
-        for i in dat:
-            s += '{:03x}'.format(i) + " "
-        print s
+        try:
+            dat = self.api.daqGetRawEvent()
+            s = ""
+            for i in dat:
+                s += '{:03x}'.format(i) + " "
+            print s
+        except RuntimeError:
+            pass
 
     def complete_daqGetRawEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -411,13 +444,16 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetBuffer(self):
         """daqGetBuffer: read full raw data DTB buffer"""
-        dat = self.api.daqGetBuffer()
-        s = ""
-        for i in dat:
-            if i & 0x0FF0 == 0x07f0:
-                s += "\n"
-            s += '{:04x}'.format(i) + " "
-        print s
+        try:
+            dat = self.api.daqGetBuffer()
+            s = ""
+            for i in dat:
+                if i & 0x0FF0 == 0x07f0:
+                    s += "\n"
+                    s += '{:04x}'.format(i) + " "
+                    print s
+        except RuntimeError:
+            pass
 
     def complete_daqGetBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -583,6 +619,40 @@ class PxarCoreCmd(cmd.Cmd):
             else:
                 # return all DACS
                 return dacdict.getAllROCNames()
+
+    @arity(0,0,[])
+    def do_analogLevelScan(self):
+        """analogLevelScan: scan the ADC levels of an analog ROC"""
+        self.api.daqStart()
+        self.api.daqTrigger(5000,500)
+        plotdata = zeros(1024)
+
+        try:
+            while True:
+                s = ""
+                p = ""
+                pos = -3
+                dat = self.api.daqGetRawEvent()
+                for i in dat:
+                    i = i & 0x0fff
+                    # Remove PH from hits:
+                    if pos == 5:
+                        pos = 0
+                        continue
+                    if i & 0x0800:
+                        i -= 4096
+                    plotdata[500+i] += 1
+                    pos += 1
+        except RuntimeError:
+            pass
+
+        plot = Plotter.create_th1(plotdata, -512, +512, "Address Levels", "ADC", "#")
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def complete_analogLevelScan(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_analogLevelScan.__doc__, '']
 
     @arity(2,2,[str, str])
     def do_setSignalMode(self, signal, mode):
@@ -841,7 +911,7 @@ def main(argv=None):
     parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
     parser.add_argument('--gui', '-g', action="store_true", help="The output verbosity set in the pxar API.")
-    parser.add_argument('--load', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
+    parser.add_argument('--run', '-r', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
     args = parser.parse_args(argv)
 
     api = PxarStartup(args.dir,args.verbosity)
@@ -849,8 +919,8 @@ def main(argv=None):
     # start the cmd line
     prompt = PxarCoreCmd(api,args.gui)
     # run the startup script if requested
-    if args.load:
-        prompt.do_loadscript(args.load)
+    if args.run:
+        prompt.do_run(args.run)
     # start user interaction
     prompt.cmdloop()
 

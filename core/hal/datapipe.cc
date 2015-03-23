@@ -10,14 +10,6 @@ namespace pxar {
     pos = 0;
     do {
       dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
-      /*
-	if (dtbRemainingSize < 100000) {
-	if      (dtbRemainingSize > 1000) mDelay(  1);
-	else if (dtbRemainingSize >    0) mDelay( 10);
-	else                              mDelay(100);
-	}
-	LOG(logDEBUGPIPES) << "Buffer size: " << buffer.size();
-      */
     
       if (buffer.size() == 0) {
 	if (stopAtEmptyData) throw dsBufferEmpty();
@@ -28,7 +20,7 @@ namespace pxar {
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
 		       << " (" << static_cast<int>(chainlength) << " ROCs)"
-		       << (tbm_present ? " DESER400 " : " DESER160 ");
+		       << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
     LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
@@ -106,10 +98,45 @@ namespace pxar {
     else record.SetEndError();
 
     LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
-    LOG(logDEBUGPIPES) << listVector(record.data,true);
+    if(GetDeviceType() < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(record.data); }
+    else { LOG(logDEBUGPIPES) << listVector(record.data,true); }
     LOG(logDEBUGPIPES) << "-------------------------";
 
     return &record;
+  }
+
+  rawEvent* dtbEventSplitter::SplitSoftTBM() {
+   record.Clear();
+
+   // If last one had Event end marker, get a new sample:
+   if (!nextStartDetected) { Get(); }
+
+   // If new sample does not have start marker keep on reading until we find it:
+   while ((GetLast() & 0xe000) != 0xa000) {
+     record.SetStartError();
+     Get();
+   }
+   Get();
+   //record.Add(GetLast());
+
+   // Else keep reading and adding samples until we find any trailer marker.
+   while ((Get() & 0xe000) != 0xe000) {
+     // Check if the last read sample has Event end marker:
+     if ((GetLast() & 0xe000) == 0xa000) {
+       record.SetEndError();
+       nextStartDetected = true;
+       return &record;
+     }
+
+     // If total Event size is too big, break:
+     if (record.GetSize() < 40000) record.Add(GetLast());
+     else record.SetOverflow();
+   }
+
+   LOG(logDEBUGPIPES) << "-------------------------";
+   LOG(logDEBUGPIPES) << listVector(record.data,true);
+
+   return &record;
   }
 
   void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
@@ -192,6 +219,7 @@ namespace pxar {
     CheckInvalidWord(v);
 
     while ((v & 0xe000) == 0x4000) { // ROC Header
+
       // Count ROC Headers up:
       roc_n++;
 
@@ -299,6 +327,71 @@ namespace pxar {
     }
     // Count empty events
     else if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
+    // Count valid events
+    else { decodingStats.m_info_events_valid++; }
+
+    LOG(logDEBUGPIPES) << roc_Event;
+    return &roc_Event;
+  }
+
+  Event* dtbEventDecoder::DecodeAnalog() {
+
+    roc_Event.Clear();
+    rawEvent *sample = Get();
+
+    // Count possibe error states:
+    if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
+    if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
+    if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
+
+    unsigned int n = sample->GetSize();
+    decodingStats.m_info_words_read += n;
+
+    // FIXME this currently only handles single ROCs!
+    if (n >= 3) {
+      // FIXME do we need to reserve?
+      if (n > 15) roc_Event.pixels.reserve((n-3)/6);
+      // Save the lastDAC value:
+      roc_Event.header = (*sample)[2];
+
+      // Iterate to improve ultrablack and black measurement:
+      if(ultrablack > 0xff) { ultrablack = (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)); }
+      else { ultrablack = (ultrablack + (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)))/2; }
+
+      if(black > 0xff) { black = (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)); }
+      else { black = (black + (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)))/2; }
+
+      LOG(logDEBUGPIPES) << "ROC Header: "
+			 << (((*sample)[0] & 0x0800) ? static_cast<int>((*sample)[0] & 0x0fff) - 4096 : static_cast<int>((*sample)[0] & 0x0fff)) << " (avg. " << ultrablack << ") (UB) "
+			 << (((*sample)[1] & 0x0800) ? static_cast<int>((*sample)[1] & 0x0fff) - 4096 : static_cast<int>((*sample)[1] & 0x0fff)) << " (avg. " << black << ") (B) "
+			 << (((*sample)[2] & 0x0800) ? static_cast<int>((*sample)[2] & 0x0fff) - 4096 : static_cast<int>((*sample)[2] & 0x0fff)) << " (lastDAC) ";
+
+      unsigned int pos = 3;
+      while (pos+6 <= n) {
+	std::vector<uint16_t> data;
+	data.push_back((*sample)[pos]);
+	data.push_back((*sample)[pos+1]);
+	data.push_back((*sample)[pos+2]);
+	data.push_back((*sample)[pos+3]);
+	data.push_back((*sample)[pos+4]);
+	data.push_back((*sample)[pos+5]);
+
+	try{
+	  pixel pix(data,0,ultrablack,black);
+	  roc_Event.pixels.push_back(pix);
+	  decodingStats.m_info_pixels_valid++;
+	}
+	catch(DataInvalidAddressError /*&e*/){
+	  // decoding of raw address lead to invalid address
+	  decodingStats.m_errors_pixel_address++;
+	}
+	// Advance read pointer by one pixel:
+	pos += 6;
+      }
+    }
+
+    // Count empty events
+    if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
     // Count valid events
     else { decodingStats.m_info_events_valid++; }
 

@@ -25,11 +25,16 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
-#define PG_ERR  0xFF00
+#define TRG_ERR 0x00
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
 #define PROBE_NONE    0xFF
+
+#define PATTERN_NONE 0x00
+#define PATTERN_PG   0x01
+#define PATTERN_TRG  0x02
+#define PATTERN_ERR  0xFF00
 
 namespace pxar {
 
@@ -115,13 +120,19 @@ namespace pxar {
   private:
     RegisterDictionary() {
       //------- DTB registers -----------------------------
-      _registers["clk"]           = dacConfig(SIG_CLK,255,DTB_REG);
-      _registers["ctr"]           = dacConfig(SIG_CTR,255,DTB_REG);
-      _registers["sda"]           = dacConfig(SIG_SDA,255,DTB_REG);
-      _registers["tin"]           = dacConfig(SIG_TIN,255,DTB_REG);
-      _registers["level"]         = dacConfig(SIG_LEVEL,15,DTB_REG);
-      _registers["triggerdelay"]  = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
-      _registers["deser160phase"] = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+      _registers["clk"]            = dacConfig(SIG_CLK,255,DTB_REG);
+      _registers["ctr"]            = dacConfig(SIG_CTR,255,DTB_REG);
+      _registers["sda"]            = dacConfig(SIG_SDA,255,DTB_REG);
+      _registers["tin"]            = dacConfig(SIG_TIN,255,DTB_REG);
+      _registers["level"]          = dacConfig(SIG_LEVEL,15,DTB_REG);
+      _registers["triggerdelay"]   = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
+      _registers["deser160phase"]  = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+      _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
+      _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
+
+      _registers["tindelay"]       = dacConfig(SIG_ADC_TINDELAY,63,DTB_REG);
+      _registers["toutdelay"]      = dacConfig(SIG_ADC_TOUTDELAY,63,DTB_REG);
+      _registers["adctimeout"]     = dacConfig(SIG_ADC_TIMEOUT,255,DTB_REG);
 
       _registers["tout"]          = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
       _registers["rda"]           = dacConfig(SIG_RDA_TOUT,19,DTB_REG);
@@ -285,6 +296,7 @@ namespace pxar {
       _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 
       // TBM flavors:
+      _devices["tbmemulator"]   = TBM_EMU;
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
       _devices["tbm08b"]        = TBM_08B;
@@ -484,72 +496,181 @@ namespace pxar {
   };
 
 
-  /** Map for pattern generator signal name lookup
+  /** Map for pattern generator and direct trigger signal name lookup
    *  All signal names are lower case, check is case-insensitive.
    *  Singleton class, only one object of this floating around.
    */
-  class PatternGeneratorDictionary {
+  class PatternDictionary {
   public:
-    static PatternGeneratorDictionary * getInstance() {
-      static PatternGeneratorDictionary instance; // Guaranteed to be destroyed.
+    static PatternDictionary * getInstance() {
+      static PatternDictionary instance; // Guaranteed to be destroyed.
+      // Instantiated on first use.
+      return &instance;
+    }
+
+    // Return the register id for the name in question:
+    inline uint16_t getSignal(std::string name, uint8_t type) {
+      // Looking for pattern generator signal:
+      if(type == PATTERN_PG && _signals.find(name)->second._signal_pg != PATTERN_ERR) {
+	return _signals.find(name)->second._signal_pg;
+      }
+      // Looking for single trigger signal:
+      else if(type == PATTERN_TRG && _signals.find(name)->second._signal_trg != PATTERN_ERR) {
+	return _signals.find(name)->second._signal_trg;
+      }
+      // Couldn't find any matching signal:
+      else { return PATTERN_ERR; }
+    }
+
+    // Return the signal name for the signal in question:
+    inline std::string getName(uint16_t signal, uint8_t type) {
+      for(std::map<std::string, patternConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(type == PATTERN_PG && iter->second._signal_pg == signal && iter->second._preferred == true) {
+	  return (*iter).first;
+	}
+	else if(type == PATTERN_TRG && iter->second._signal_trg == signal && iter->second._preferred == true) {
+	  return (*iter).first;
+	}
+      }
+      return "";
+    }
+
+  private:
+
+    /** class to store a probe signal config
+     */
+    class patternConfig {
+    public:
+      patternConfig() {}
+    patternConfig(uint16_t signal_pg, uint16_t signal_trg, bool preferred = true) : _signal_pg(signal_pg), _signal_trg(signal_trg), _preferred(preferred) {}
+      uint16_t _signal_pg;  // Register for Pattern Generator
+      uint16_t _signal_trg; // Register for Single Signal Direct
+      bool _preferred;
+    };
+
+    PatternDictionary() {
+      // None (empty cycle):
+      _signals["none"]      = patternConfig(PATTERN_NONE,PATTERN_NONE);
+      _signals["empty"]     = patternConfig(PATTERN_NONE,PATTERN_NONE,false);
+      _signals["delay"]     = patternConfig(PATTERN_NONE,PATTERN_NONE,false);
+      
+      // Token:
+      _signals["pg_tok"]    = patternConfig(PG_TOK,PATTERN_ERR);
+      _signals["tok"]       = patternConfig(PG_TOK,PATTERN_ERR,false);
+      _signals["token"]     = patternConfig(PG_TOK,PATTERN_ERR,false);
+
+      // Trigger:
+      _signals["pg_trg"]    = patternConfig(PG_TRG,TRG_SEND_TRG,false);
+      _signals["trg"]       = patternConfig(PG_TRG,TRG_SEND_TRG,false);
+      _signals["trigger"]   = patternConfig(PG_TRG,TRG_SEND_TRG);
+
+      // Calibrate signal
+      _signals["pg_cal"]    = patternConfig(PG_CAL,TRG_SEND_CAL,false);
+      _signals["cal"]       = patternConfig(PG_CAL,TRG_SEND_CAL,false);
+      _signals["calibrate"] = patternConfig(PG_CAL,TRG_SEND_CAL);
+
+      // ROC Reset Signal
+      _signals["pg_resr"]   = patternConfig(PG_RESR,TRG_SEND_RSR,false);
+      _signals["resr"]      = patternConfig(PG_RESR,TRG_SEND_RSR,false);
+      _signals["resetroc"]  = patternConfig(PG_RESR,TRG_SEND_RSR);
+
+      // TBM Reset Signal
+      _signals["pg_rest"]   = patternConfig(PG_REST,TRG_SEND_RST,false);
+      _signals["rest"]      = patternConfig(PG_REST,TRG_SEND_RST,false);
+      _signals["resettbm"]  = patternConfig(PG_REST,TRG_SEND_RST);
+
+      // PG Sync Signal
+      _signals["pg_sync"]   = patternConfig(PG_SYNC,TRG_SEND_SYN,false);
+      _signals["sync"]      = patternConfig(PG_SYNC,TRG_SEND_SYN);
+    }
+
+    std::map<std::string, patternConfig> _signals;
+    PatternDictionary(PatternDictionary const&); // Don't Implement
+    void operator=(PatternDictionary const&); // Don't implement
+  };
+
+  /** Map for trigger signal name lookup
+   *  All signal names are lower case, check is case-insensitive.
+   *  Singleton class, only one object of this floating around.
+   */
+  class TriggerDictionary {
+  public:
+    static TriggerDictionary * getInstance() {
+      static TriggerDictionary instance; // Guaranteed to be destroyed.
       // Instantiated on first use.
       return &instance;
     }
 
     // Return the register id for the name in question:
     inline uint16_t getSignal(std::string name) {
-      if(_signals.find(name) != _signals.end()) { return _signals[name]; }
-      else { return PG_ERR; }
+      if(_signals.find(name) != _signals.end()) { return _signals.find(name)->second._trigger_type; }
+      else { return TRG_ERR; }
     }
 
-    // Return the signal name for the probe signal in question:
+    // Return the emulation status for the name in question:
+    inline bool getEmulationState(std::string name) {
+      if(_signals.find(name) != _signals.end()) { return _signals.find(name)->second._tbm_emulation; }
+      else { return 0; }
+    }
+
+    // Return the emulation status for the trigger register in question:
+    inline bool getEmulationState(uint16_t signal) {
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._trigger_type == signal) { return iter->second._tbm_emulation; }
+      }
+      return 0;
+    }
+
+    // Return the signal name for the trigger type in question:
     inline std::string getName(uint16_t signal) {
-      for(std::map<std::string, uint16_t>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
-	if((*iter).second == signal) { return (*iter).first; }
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._trigger_type == signal && iter->second._preferred == true) { return iter->first; }
       }
       return "";
     }
 
   private:
-    PatternGeneratorDictionary() {
-      // None (empty cycle):
-      _signals["none"]      = PG_NONE;
-      _signals["empty"]     = PG_NONE;
-      _signals["delay"]     = PG_NONE;
-      
-      // Token:
-      _signals["pg_tok"]    = PG_TOK;
-      _signals["tok"]       = PG_TOK;
-      _signals["token"]     = PG_TOK;
+    /** class to store a trigger config
+     */
+    class triggerConfig {
+    public:
+      triggerConfig() {};
+    triggerConfig(uint16_t trigger_type, bool tbm_emulation = false, bool preferred = true) : _trigger_type(trigger_type), _tbm_emulation(tbm_emulation), _preferred(preferred) {};
+      uint16_t _trigger_type;  // Register for trigger type
+      bool _tbm_emulation; // Store if this trigger is routed via the soft TBM and adds its header/trailer
+      bool _preferred;
+    };
 
-      // Trigger:
-      _signals["pg_trg"]    = PG_TRG;
-      _signals["trg"]       = PG_TRG;
-      _signals["trigger"]   = PG_TRG;
+    TriggerDictionary() {
+      // Asynchronous external triggers:
+      _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
+      _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
 
-      // Calibrate signal
-      _signals["pg_cal"]    = PG_CAL;
-      _signals["cal"]       = PG_CAL;
-      _signals["calibrate"] = PG_CAL;
+      // Synchronous external triggers:
+      _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
 
-      // ROC Reset Signal
-      _signals["pg_resr"]   = PG_RESR;
-      _signals["resr"]      = PG_RESR;
-      _signals["resetroc"]  = PG_RESR;
+      // Single event injection:
+      _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);
+      _signals["single_dir"]       = triggerConfig(TRG_SEL_SINGLE_DIR,false);
+      _signals["single_direct"]    = triggerConfig(TRG_SEL_SINGLE_DIR,false,false);
 
-      // TBM Reset Signal
-      _signals["pg_rest"]   = PG_REST;
-      _signals["rest"]      = PG_REST;
-      _signals["resettbm"]  = PG_REST;
+      // Internal Trigger Generator
+      _signals["gen"]              = triggerConfig(TRG_SEL_GEN,true);
+      _signals["generator"]        = triggerConfig(TRG_SEL_GEN,true,false);
 
-      // PG Sync Signal
-      _signals["pg_sync"]   = PG_SYNC;
-      _signals["sync"]      = PG_SYNC;
+      // Pattern Generator
+      _signals["pg"]               = triggerConfig(TRG_SEL_PG,true);
+      _signals["patterngenerator"] = triggerConfig(TRG_SEL_PG,true,false);
+      _signals["pg_dir"]           = triggerConfig(TRG_SEL_PG_DIR,false);
+      _signals["pg_direct"]        = triggerConfig(TRG_SEL_PG_DIR,false,false);
+
+      _signals["chain"]            = triggerConfig(TRG_SEL_CHAIN,false);
+      _signals["sync_out"]         = triggerConfig(TRG_SEL_SYNC_OUT,false);
     }
 
-    std::map<std::string, uint16_t> _signals;
-    PatternGeneratorDictionary(PatternGeneratorDictionary const&); // Don't Implement
-    void operator=(PatternGeneratorDictionary const&); // Don't implement
+    std::map<std::string, triggerConfig> _signals;
+    TriggerDictionary(TriggerDictionary const&); // Don't Implement
+    void operator=(TriggerDictionary const&); // Don't implement
   };
 
 } //namespace pxar
