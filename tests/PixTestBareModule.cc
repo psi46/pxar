@@ -112,10 +112,11 @@ void PixTestBareModule::runCommand(std::string command) {
 		PixTest::update();
 
 		PixTest::hvOff();
+		PixTest::update();
 		mDelay(2000);
 		PixTest::powerOff();
-		mDelay(1000);
 		PixTest::update();
+		mDelay(1000);
 
 		LOG(logINFO) << "PixTestBareModule:: HV and Power are off.";
 	}
@@ -131,12 +132,14 @@ void PixTestBareModule::runCommand(std::string command) {
 bool PixTestBareModule::checkIfInContact(bool fullSeq) {	
 
 	PixTest::hvOff();
+	PixTest::update();
 	LOG(logINFO) << "PixTestBareModule:: HV off for safety.";
 	mDelay(2000);
 	
 	//check if probes are in contact
 	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
 	PixTest::powerOn();
+	PixTest::update();
 	LOG(logINFO) << "PixTestBareModule:: Power on.";
 	mDelay(1000);
 	double ia = fApi->getTBia()*1E3; // [mA]
@@ -182,6 +185,7 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 	if (checkgood){
 		if (fullSeq){
 			PixTest::hvOn();
+			PixTest::update();
 			LOG(logINFO) << "PixTestBareModule:: HV on.";
 			mDelay(2000);
 		}
@@ -298,8 +302,10 @@ void PixTestBareModule::doTest() {
 	}
 
 	PixTest::hvOff();
+	PixTest::update();
 	mDelay(2000);
 	PixTest::powerOff();
+	PixTest::update();
 	mDelay(1000);
 
 	//separation

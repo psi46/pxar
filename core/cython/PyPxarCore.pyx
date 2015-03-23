@@ -528,7 +528,7 @@ cdef class PyPxarCore:
     def setClockStretch(self, uint8_t src, uint16_t delay, uint16_t width):
         self.thisptr.setClockStretch(src, delay, width)
 
-    def setSignalMode(self, string signal, uint8_t mode):
+    def setSignalMode(self, string signal, string mode):
         self.thisptr.setSignalMode(signal, mode)
 
     def daqStart(self):
