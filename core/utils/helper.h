@@ -154,12 +154,17 @@ namespace pxar {
    *  debug code from being executed if debug level is not sufficient
    */
   template <typename T>
-    std::string listVector(std::vector<T> vec, bool hex = false) {
+    std::string listVector(std::vector<T> vec, bool hex = false, bool sign = false) {
     std::stringstream os;
     if(hex) { os << std::hex; }
     for(typename std::vector<T>::iterator it = vec.begin(); it != vec.end(); ++it) {
-      if(hex) os << std::setw(4) << std::setfill('0');
-      os << static_cast<int>(*it) << " ";
+      if(sign) {
+	os << ((*it & 0x0800) ? static_cast<int>(*it & 0x0fff) - 4096 : static_cast<int>(*it & 0x0fff)) << " ";
+      }
+      else {
+	if(hex) os << std::setw(4) << std::setfill('0');
+	os << static_cast<int>(*it) << " ";
+      }
     }
     if(hex) { os << std::dec; }
     return os.str();
