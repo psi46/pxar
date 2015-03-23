@@ -10,7 +10,7 @@ namespace pxar {
     pos = 0;
     do {
       dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
-    
+
       if (buffer.size() == 0) {
 	if (stopAtEmptyData) throw dsBufferEmpty();
 	if (dtbState) throw dsBufferOverflow();
@@ -446,7 +446,7 @@ namespace pxar {
       // Loop over the full data:
       while (pos < n) {
 	// Check if we have a ROC header:
-	if((*sample)[pos] & 0x0ffc == 0x07f8) {
+	if(((*sample)[pos] & 0x0ffc) == 0x07f8) {
 	  roc_Event.header = (*sample)[pos] & 0x0fff;
 	  roc_n++;
 	  pos++;
