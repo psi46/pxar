@@ -142,7 +142,8 @@ void PixTestSetup::doTest()
 
       // Send the triggers and read out the events:    
 	  fApi->daqTrigger(Ntrig,period);	  	       
-	  daqRawEv = fApi->daqGetRawEventBuffer();
+	  try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
 
       unsigned int head_good = 0;
       unsigned int head_bad = 0;

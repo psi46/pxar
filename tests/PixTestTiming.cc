@@ -297,7 +297,8 @@ void PixTestTiming::PhaseScan() {
       LOG(logINFO) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
       fApi->daqStart();
       fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-      daqRawEv = fApi->daqGetRawEventBuffer();
+      try { daqRawEv = fApi->daqGetRawEventBuffer();}
+      catch(pxar::DataNoEvent &) {}
       for (int itbm = 0; itbm < nTBMs; itbm++) fApi->setTbmReg("basea", 0, itbm); //Reset the ROC delays
       //Loop through each TBM core and count the number of ROC headers on the core for all 256 delay settings
       vector<int> GoodROCDelays;
@@ -320,7 +321,8 @@ void PixTestTiming::PhaseScan() {
               LOG(logDEBUG) << "Testing ROC Delay: " << bitset<8>(ROCDelay).to_string() << " For TBM Core: " << itbm;
               fApi->setTbmReg("basea", ROCDelay, itbm);
               fApi->daqTrigger(fNTrig,period);
-              daqRawEv = fApi->daqGetRawEventBuffer();
+              try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+	      catch(pxar::DataNoEvent &) {}
               LOG(logDEBUG) << "Events in Data Buffer: " << daqRawEv.size();
               if (int(daqRawEv.size()) < fNTrig) continue; //Grab fNTrig triggers
               for (int ievent = 0; ievent<fNTrig; ievent++) {
@@ -458,9 +460,11 @@ void PixTestTiming::TimingTest() {
   vector<rawEvent> daqRawEv;
   fApi->daqStart();
   fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-  daqRawEv = fApi->daqGetRawEventBuffer();
+  try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   fApi->daqTrigger(fNTrig,period);
-  daqRawEv = fApi->daqGetRawEventBuffer();
+  try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   fApi->daqStop();
   LOG(logINFO) << daqRawEv.size() << " events found. " << fNTrig << " events expected.";
   int ngoodevents = 0;
@@ -523,16 +527,19 @@ void PixTestTiming::LevelScan() {
 
   vector<uint8_t> GoodLevels;
   vector<rawEvent> daqRawEv;
-  daqRawEv = fApi->daqGetRawEventBuffer();
+  try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   for (uint8_t ilevel=15; ilevel>3; ilevel--){
     LOG(logDEBUG) << "Testing Level: " << int(ilevel);
     fPixSetup->getConfigParameters()->setTbParameter("level", ilevel);
     fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
     fApi->daqStart();
     fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-    daqRawEv = fApi->daqGetRawEventBuffer();
+    try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqTrigger(fNTrig,period);
-    daqRawEv = fApi->daqGetRawEventBuffer();
+    try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqStop();
     int ngoodevents = 0;
     for (size_t ievent=0; ievent<daqRawEv.size(); ievent++) {

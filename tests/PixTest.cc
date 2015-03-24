@@ -1928,7 +1928,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
       fApi->daqTriggerLoopHalt();
 
       // fillMap(v):
-      vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+      vector<pxar::Event> daqdat;
+      try { daqdat = fApi->daqGetEventBuffer(); }
+      catch(pxar::DataNoEvent &) {}
       for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
 	for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
 	  v[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
@@ -1950,7 +1952,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   fApi->daqStop();
 
   // fillMap(v):
-  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  vector<pxar::Event> daqdat;
+  try { daqdat = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       v[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());

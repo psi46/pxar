@@ -202,14 +202,17 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 
 	if (numevents > 0) {
 		for (unsigned int i = 0; i < numevents; i++) {
-			pxar::Event evt = fApi->daqGetEvent();
+		  pxar::Event evt;
+		  try { evt = fApi->daqGetEvent(); }
+		  catch(pxar::DataNoEvent &) {}
 			//Check if event is empty?
 			if (evt.pixels.size() > 0)
 				daqdat.push_back(evt);
 		}
 	}
 	else
-		daqdat = fApi->daqGetEventBuffer();
+	  try { daqdat = fApi->daqGetEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
 
 	LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
 
