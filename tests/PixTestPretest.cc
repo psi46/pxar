@@ -400,12 +400,15 @@ void PixTestPretest::setTimings() {
         //Test Delay Settings
         fApi->daqStart();
         fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
-        vector<rawEvent> daqRawEv = fApi->daqGetRawEventBuffer();
+        vector<rawEvent> daqRawEv;
+	try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+	catch(pxar::DataNoEvent &) {}
         for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
         vector<Event> daqEv;
         for (int interation=0; interation < fIterations; interation++) {
           fApi->daqTrigger(fParNtrig, period);
-          daqEv = fApi->daqGetEventBuffer();
+          try { daqEv = fApi->daqGetEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
         }
         fApi->daqStop();
         statistics results = fApi->getStatistics();
