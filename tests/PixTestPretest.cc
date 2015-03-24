@@ -157,7 +157,7 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  setTimings();
+  //setTimings();
     
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
