@@ -27,7 +27,7 @@ ClassImp(PixGui)
 // ----------------------------------------------------------------------
 PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) : 
 TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
-  
+
   fBorderN = 2; 
   fBorderL = 10; 
   fBorderT = 1;
@@ -49,6 +49,8 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fApi = fPixSetup->getApi();
   fConfigParameters = fPixSetup->getConfigParameters();
   fTestParameters = fPixSetup->getPixTestParameters(); 
+
+  fPixSetup->setGuiActive(true);
 
   fPower = true;
   if (fConfigParameters->getHvOn()) {
@@ -114,7 +116,6 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
-  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
   fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off module bias voltage":"Turn on/off ROC bias voltage");
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
@@ -123,6 +124,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   } else {
     hvOff();
   }
+  hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
   Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()"); 
   Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()"); 
@@ -426,6 +428,7 @@ void PixGui::powerOn() {
     fbtnPower->ChangeBackground(fGreen);
     fbtnPower->SetText("On");
     fApi->Pon(); 
+    gSystem->ProcessEvents();
     LOG(logDEBUG) << "Power set On";
   }
 }
@@ -437,6 +440,7 @@ void PixGui::powerOff() {
     fbtnPower->ChangeBackground(fRed);
     fbtnPower->SetText("Off");
     fApi->Poff(); 
+    gSystem->ProcessEvents();
     LOG(logDEBUG) << "Power set Off";
   }
 }
@@ -447,9 +451,10 @@ void PixGui::hvOn() {
   if (fApi) {
     fHV = true;
     fbtnHV->ChangeBackground(fGreen);
-    fbtnHV->SetText("On");
+    fbtnHV->ChangeText("On");
     fApi->HVon(); 
-    LOG(logDEBUG) << "HV set On";
+    gSystem->ProcessEvents();
+    LOG(logDEBUG) << "HV set On: " << fbtnHV->GetText();
   }
 }
 
@@ -459,8 +464,9 @@ void PixGui::hvOff() {
   if (fApi) {
     fHV = false;
     fbtnHV->ChangeBackground(fRed);
-    fbtnHV->SetText("Off");
+    fbtnHV->ChangeText("Off");
     fApi->HVoff(); 
+    gSystem->ProcessEvents();
     LOG(logDEBUG) << "HV set Off";
   }
 }
