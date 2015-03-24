@@ -184,16 +184,17 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 	}
 	if (checkgood){
 		if (fullSeq){
+			LOG(logINFO) << "PixTestBareModule::checkIfInContact() HV on.";
 			PixTest::hvOn();
 			PixTest::update();
-			LOG(logINFO) << "PixTestBareModule:: HV on.";
 			mDelay(2000);
 		}
-		LOG(logINFO) << "PixTestBareModule:: checkIfInContact done.";
+		LOG(logINFO) << "PixTestBareModule:: checkIfInContact successfully done.";
 		return true;
 	}
 	else {
 		mDelay(2000);
+		LOG(logINFO) << "PixTestBareModule:: checkIfInContact failed.";
 		return false;
 	}
 }
@@ -226,7 +227,7 @@ bool PixTestBareModule::doStdTest(std::string test) {
 	PixTest::update();
 	bool problem = !(t->testProblem());
 	delete t;
-	cout << problem << endl; //debug
+	//	cout << problem << endl; //debug
 	return problem;
 }
 
@@ -261,7 +262,7 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 
 	//BumpBonding
 	if (MaxStep >= 3 && !fStop) {
-		cout << fBBMap << fBB2Map << endl;
+	  //	  cout << fBBMap << fBB2Map << endl;
 		if (fBBMap && !fBB2Map) { 
 			if (!doStdTest(suite[2])) { 
 				LOG(logWARNING) << "PixTestBareModule:: BBMap failed. Sequence stopped.";
