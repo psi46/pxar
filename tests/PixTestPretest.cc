@@ -157,7 +157,7 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  //setTimings();
+  setTimings();
     
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
@@ -371,6 +371,7 @@ void PixTestPretest::setTimings() {
   
   banner(Form("PixTestPreTest::setTimings()"));
 
+  TLogLevel UserReportingLevel = Log::ReportingLevel();
   int nTBMs = fApi->_dut->getNTbms();
   uint16_t period = 300;
 
@@ -378,9 +379,23 @@ void PixTestPretest::setTimings() {
     LOG(logINFO) << "Timing test not needed for single ROC.";
     return;
   }
+
+  bool GoodDelaySettings = false;
+  for (int itry = 0; itry < 3 && !GoodDelaySettings; itry++) {
+    LOG(logDEBUG) << "Testing Timing: Attempt #" << itry+1;
+    fApi->daqStart();
+    fApi->daqTrigger(fParNtrig, period);
+    vector<Event> daqEv = fApi->daqGetEventBuffer();
+    fApi->daqStop();
+    statistics results = fApi->getStatistics();
+    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+    if (results.errors()==0 && NEvents==fParNtrig) GoodDelaySettings = true;
+    if (Log::ReportingLevel() >= logDEBUG) results.dump();
+  }
+
+  if (GoodDelaySettings) banner("Default timings are good. No timing scan needed.");
   
   // Loop through all possible TBM Phases settings.
-  bool GoodDelaySettings = false;
   for (int pll160 = 0; pll160 < 8 && !GoodDelaySettings; pll160++) {
     for (int pll400 = 0; pll400 < 8 && !GoodDelaySettings; pll400++) {
       //Apply TBM Phase Settings
@@ -393,7 +408,7 @@ void PixTestPretest::setTimings() {
       for (int iROCDelay = 0; iROCDelay < 6 && !GoodDelaySettings; iROCDelay++) {
         //Apply ROC Delays
         int ROCDelay = ROCDelays[iROCDelay];
-        unsigned char ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        uint8_t ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
         LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
         for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
 
@@ -402,6 +417,7 @@ void PixTestPretest::setTimings() {
         fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
         vector<rawEvent> daqRawEv = fApi->daqGetRawEventBuffer();
         for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
+        Log::ReportingLevel() = Log::FromString("QUIET");
         vector<Event> daqEv;
         for (int interation=0; interation < fIterations; interation++) {
           fApi->daqTrigger(fParNtrig, period);
@@ -410,6 +426,7 @@ void PixTestPretest::setTimings() {
         fApi->daqStop();
         statistics results = fApi->getStatistics();
         int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+        Log::ReportingLevel() = UserReportingLevel;
         LOG(logDEBUG) << "Number of Errors: " << results.errors();
         LOG(logDEBUG) << "Number of Events: " << NEvents;
         if (Log::ReportingLevel() >= logDEBUG) results.dump();
