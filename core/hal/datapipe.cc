@@ -467,7 +467,8 @@ namespace pxar {
 	  if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,roc_Event.header); }
 	}
 	// We have a pixel:
-	else {
+	// Require that we found at least one ROC header:
+	else if(roc_n >= 0) {
 	  // Not enough data for a new pixel hit (two words):
 	  if(pos >= n-1) break;
 
@@ -490,6 +491,10 @@ namespace pxar {
 	    // decoding returned row 80 - corrupt data buffer
 	    decodingStats.m_errors_pixel_buffer_corrupt++;
 	  }
+	}
+	// No ROC header present, try with next word:
+	else {
+	  pos++;
 	}
       }
     }
