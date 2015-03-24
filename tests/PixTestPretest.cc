@@ -385,7 +385,9 @@ void PixTestPretest::setTimings() {
     LOG(logDEBUG) << "Testing Timing: Attempt #" << itry+1;
     fApi->daqStart();
     fApi->daqTrigger(fParNtrig, period);
-    vector<Event> daqEv = fApi->daqGetEventBuffer();
+    vector<Event> daqEv;
+    try { daqEv = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqStop();
     statistics results = fApi->getStatistics();
     int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
