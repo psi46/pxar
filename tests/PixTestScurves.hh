@@ -20,12 +20,12 @@ public:
   void adjustVcal();
 
   void doTest(); 
-  void output4moreweb();
+  void fullTest(); 
 
 private:
 
   std::string fParDac;
-  int         fParNtrig, fParNpix, fParDacLo, fParDacHi, fAdjustVcal;
+  int         fParNtrig, fParNpix, fParDacLo, fParDacHi, fParDacsPerStep, fAdjustVcal, fDumpAll, fDumpProblematic;
 
   ClassDef(PixTestScurves, 1)
 

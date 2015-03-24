@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 #include <sys/stat.h>
 
 #if (defined WIN32)
@@ -21,6 +22,7 @@
 
 #include "PixTest.hh"
 #include "PixTestFactory.hh"
+#include "PixUserTestFactory.hh"
 #include "PixGui.hh"
 #include "PixSetup.hh"
 #include "PixUtil.hh"
@@ -49,7 +51,6 @@ int main(int argc, char *argv[]){
     doRunSingleTest(false), 
     doUpdateFlash(false),
     doUpdateRootFile(false),
-    doMoreWebCloning(false), 
     doUseRootLogon(false)
     ;
   for (int i = 0; i < argc; i++){
@@ -59,25 +60,25 @@ int main(int argc, char *argv[]){
       cout << "-c filename           read in commands from filename" << endl;
       cout << "-d [--dir] path       directory with config files" << endl;
       cout << "-g                    start with GUI" << endl;
-      cout << "-m                    clone pxar histograms into the histograms expected by moreweb" << endl;
       cout << "-p \"p1=v1[;p2=v2]\"  set parameters for test" << endl;
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
       cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
+      cout << "-L logID              add additional <logID> to log output after the timestamp. ex: pxar -L TB1" << endl;
       return 0;
     }
     if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
     if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
     if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
-    if (!strcmp(argv[i],"-m"))                                {doMoreWebCloning = true; } 
     if (!strcmp(argv[i],"-p"))                                {testParameters  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
     if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
     if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;} 
-    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }   
+    if (!strcmp(argv[i],"-L"))                                {Log::logName(string(argv[++i]));}             
   }
 
   struct stat buffer;   
@@ -148,31 +149,51 @@ int main(int argc, char *argv[]){
     SetLogOutput::Duplicate() = true;
   }
 
+  TDatime today;
+  string tstamp = Form("%d/%02d/%02d", today.GetYear(), today.GetMonth(), today.GetDay()); 
+
+  LOG(logINFO) << "*** Welcome to pxar ***";
+  LOG(logINFO) << Form("*** Today: %s", tstamp.c_str());
+
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
   vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
-  vector<pair<std::string, uint8_t> >             pg_setup = configParameters->getTbPgSettings();
+  vector<pair<std::string, uint8_t> >          pg_setup = configParameters->getTbPgSettings();
+  string tbname = "*";
+  if (configParameters->getTbName() != "")
+    tbname = configParameters->getTbName();
 
   try {
-    api = new pxar::pxarCore("*", verbosity);
+    api = new pxar::pxarCore(tbname, verbosity);
     
     api->initTestboard(sig_delays, power_settings, pg_setup);
-    api->initDUT(configParameters->getHubId(),
-		 configParameters->getTbmType(), tbmDACs, 
-		 configParameters->getRocType(), rocDACs, 
-		 rocPixels);
+    if (configParameters->customI2cAddresses()) {
+      string i2cstring("");
+      vector<uint8_t> i2cAddr = configParameters->getI2cAddresses(); 
+      for (unsigned int i = 0; i < i2cAddr.size(); ++i) i2cstring += Form(" %d", (int)i2cAddr[i]); 
+      LOG(logINFO) << "custom i2c addresses: " << i2cstring; 
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels, 
+		   i2cAddr);
+    } else {
+      api->initDUT(configParameters->getHubId(),
+		   configParameters->getTbmType(), tbmDACs, 
+		   configParameters->getRocType(), rocDACs, 
+		   rocPixels);
+    }
 
-    // Set up the four signal probe outputs:
-    api->SignalProbe("a1",configParameters->getProbe("a1"));
-    api->SignalProbe("a2",configParameters->getProbe("a2"));
-    api->SignalProbe("d1",configParameters->getProbe("d1"));
-    api->SignalProbe("d2",configParameters->getProbe("d2"));
+    // -- Set up the four signal probe outputs:
+    api->SignalProbe("a1", configParameters->getProbe("a1"));
+    api->SignalProbe("a2", configParameters->getProbe("a2"));
+    api->SignalProbe("d1", configParameters->getProbe("d1"));
+    api->SignalProbe("d2", configParameters->getProbe("d2"));
 
     LOG(logINFO) << "DUT info: ";
     api->_dut->info(); 
-    
   } 
   catch (pxar::InvalidConfig &e){
     std::cout << "pxar caught an exception due to invalid configuration settings: " << e.what() << std::endl;
@@ -192,27 +213,44 @@ int main(int argc, char *argv[]){
 
   PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" 
 						 + configParameters->getTestParameterFileName()
-						 ); 
+						 , true); 
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
-  a.setMoreWebCloning(doMoreWebCloning); 
   a.setRootFileUpdate(doUpdateRootFile);
 
   if (doRunGui) {
     runGui(a, argc, argv); 
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
+    PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
     if (configParameters->getHvOn()) api->HVon(); 
+
+    // -- search for subtest 
+    string::size_type m0 = runtest.find(":"); 
+    string subtest("nada"); 
+    if (m0 != string::npos) {
+      subtest = runtest.substr(m0+1); 
+      runtest = runtest.substr(0, m0); 
+    }
+    
     if (testParameters.compare("nada")) {
       ptp->setTestParameters(runtest, testParameters); 
     }
     PixTest *t = factory->createTest(runtest, &a);
-    t->doTest();
-    delete t; 
+    if (0 == t) t = userfactory->createTest(runtest, &a);
+    if (t) {
+      if (subtest.compare("nada")) {
+	t->runCommand(subtest); 
+      } else {
+	t->doTest();
+      }
+      delete t; 
+    }
   } else {
     string input; 
     bool stop(false);
     PixTestFactory *factory = PixTestFactory::instance(); 
+    PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
     if (configParameters->getHvOn()) api->HVon(); 
     LOG(logINFO) << "enter 'restricted' command line mode";
     do {
@@ -221,15 +259,46 @@ int main(int argc, char *argv[]){
       string input;
       std::getline(cin, input);
       if (input.size() == 0) stop = true;
+      string parameters("nada"), subtest("nada");
+      // -- split input with space into testname(s) and parameters
       string::size_type m1 = input.find(" "); 
       if (m1 != string::npos) {
-	string parameters = input.substr(m1); 
+	parameters = input.substr(m1+1); 
 	input = input.substr(0, m1);
+	cout << "parameters: ->" << parameters << "<- input: ->" << input << "<-" << endl;
+      }
+      // -- find subtest
+      string::size_type m0 = input.find(":"); 
+      if (m0 != string::npos) {
+	subtest = input.substr(m0+1); 
+	input = input.substr(0, m0); 
+	cout << "subtest: ->" << subtest << "<- input: ->" << input << "<-" << endl;
+      }
+
+
+      if (!parameters.compare("nada")) {
+	LOG(logINFO) << "  test: " << input << " no parameter change"; 
+      } else {
 	LOG(logINFO) << "  test: " << input << " setting parameters: ->" << parameters << "<-"; 
 	ptp->setTestParameters(input, parameters); 
       }
+
+      std::transform(subtest.begin(), subtest.end(), subtest.begin(), ::tolower);
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
       
+      if (!input.compare("savedacs")) {
+	a.writeDacParameterFiles();
+	continue;
+      }
+      if (!input.compare("savetrims")) {
+	a.writeTrimFiles();
+	continue;
+      }
+      if (!input.compare("savetbm")) {
+	a.writeTbmParameterFiles();
+	continue;
+      }
+  
       if (!input.compare("gui"))  runGui(a, argc, argv); 
       if (!input.compare("exit")) stop = true; 
       if (!input.compare("quit")) stop = true; 
@@ -238,8 +307,13 @@ int main(int argc, char *argv[]){
       if (stop) break;
       LOG(logINFO) << "  running: " << input; 
       PixTest *t = factory->createTest(input, &a);
+      if (0 == t) t = userfactory->createTest(input, &a);
       if (t) {
-	t->doTest();
+	if (subtest.compare("nada")) {
+	  t->runCommand(subtest); 
+	} else {
+	  t->doTest();
+	}
 	delete t;
       } else {
 	LOG(logINFO) << "command ->" << input << "<- not known, ignored";
@@ -250,6 +324,7 @@ int main(int argc, char *argv[]){
   }
   
   // -- clean exit (however, you should not get here when running with the GUI)
+  a.getPixMonitor()->dumpSummaries();
   rfile->Close();
   if (api) delete api;
 
@@ -261,6 +336,7 @@ int main(int argc, char *argv[]){
 
 // ----------------------------------------------------------------------
 void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
+
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
   PixGui gui(gClient->GetRoot(), 1300, 800, &a);

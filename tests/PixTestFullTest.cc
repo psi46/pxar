@@ -83,11 +83,10 @@ PixTestFullTest::~PixTestFullTest() {
 void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
-  //  fPixSetup->setMoreWebCloning(true);
 
   vector<string> suite;
   suite.push_back("alive"); 
-  suite.push_back("bumpbonding"); 
+  suite.push_back("bb"); 
   suite.push_back("scurves");
   suite.push_back("trim"); 
   suite.push_back("phoptimization"); 
@@ -102,15 +101,14 @@ void PixTestFullTest::doTest() {
 
     if (!suite[i].compare("trim")) {
       trimvcal = t->getParameter("vcal"); 
-      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal); 
+      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal, true); 
     }
 
-    t->doTest(); 
+    t->fullTest(); 
 
     delete t; 
   }
 
-  //  fPixSetup->setMoreWebCloning(false);
 }
 
 

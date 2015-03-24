@@ -36,35 +36,93 @@
 #include "rs232.h"
 #include "log.h"
 
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <limits.h>
+
+#include <cstdio>
+
+#include <ctime>
+
 using namespace pxar;
-#define NUMPORTS 31
+using namespace std;
 
-int Cport[NUMPORTS],
-  rs_error;
+#define NULL_FD -1
+//#define DEBUG_RS232
 
-struct termios new_port_settings,
-  old_port_settings[NUMPORTS];
+RS232Conn::RS232Conn(){
+  portName = "";
+  baudRate = 0;
+  timeout = 1;
+  port = NULL_FD;
+  terminator = "\r\n";
+  readSuffix = "";
+}
 
-char comports[NUMPORTS][30]={"/dev/ttyS0","/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4","/dev/ttyS5",
-                       "/dev/ttyS6","/dev/ttyS7","/dev/ttyS8","/dev/ttyS9","/dev/ttyS10","/dev/ttyS11",
-                       "/dev/ttyS12","/dev/ttyS13","/dev/ttyS14","/dev/ttyS15","/dev/ttyUSB0",
-                       "/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3","/dev/ttyUSB4","/dev/ttyUSB5",
-                       "/dev/ttyAMA0","/dev/ttyAMA1","/dev/ttyACM0","/dev/ttyACM1",
-                       "/dev/rfcomm0","/dev/rfcomm1","/dev/ircomm0","/dev/ircomm1","/dev/tty.KeySerial1"};
+RS232Conn::~RS232Conn(){
+  if(port != NULL_FD){
+    closePort();
+  }
+}
 
-int comport_number=16; // "/dev/ttyUSB0"
+void RS232Conn::setPortName(const string &portName){
+  if (port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot change port name while port is open";
+    return;
+  }
+  this->portName = portName;
+}
 
-int RS232_OpenComport(int comport_number, int baudrate)
-{
-  int baudr, status;
+void RS232Conn::setBaudRate(int baudRate){
+  if (this->port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot change baud rate while port is open";
+    return;
+  }
+  this->baudRate = baudRate;
+}
 
-  if((comport_number>=NUMPORTS)||(comport_number<0))
-    {
-      LOG(logCRITICAL) << "Illegal comport number " << comport_number << "!";
-      return(1);
-    }
+void RS232Conn::setFlowControl(bool flowControl){
+  if (port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot change flow control while port is open";
+    return;
+  }
+  this->flowControl = flowControl;
+}
 
-  switch(baudrate)
+void RS232Conn::setParity(bool parity){
+  if (port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot change parity while port is open";
+    return;
+  }
+  this->parity = parity;
+}
+
+void RS232Conn::setReadSuffix(const std::string &suffix){
+  readSuffix = suffix;
+}
+
+void RS232Conn::setTerminator(const std::string &term){
+  terminator = term;
+}
+
+void RS232Conn::setRemoveEcho(bool removeEcho){
+  this->removeEcho = removeEcho;
+}
+
+void RS232Conn::setTimeout(double timeout){
+  this->timeout = timeout;
+}
+
+bool RS232Conn::openPort(){
+  if(port != NULL_FD){
+    LOG(logCRITICAL) << "[RS232] CCannot Open Port.\"" << portName << "\"Port already Open ";
+    return false;
+  }
+  int baudr;
+  switch(baudRate)
     {
     case      50 : baudr = B50;
       break;
@@ -102,417 +160,202 @@ int RS232_OpenComport(int comport_number, int baudrate)
       break;
     case  230400 : baudr = B230400;
       break;
-    default      : LOG(logCRITICAL) << "Invalid baud rate " << baudrate << "!";
+    default      : LOG(logCRITICAL) << "[RS232] Invalid baud rate " << baudRate << "!";
       return(1);
       break;
     }
 
-
-  printf("Opening com port: %s\n", comports[comport_number]);
-  rs_error = 0;
-  Cport[comport_number] = open(comports[comport_number], O_RDWR | O_NOCTTY | O_NDELAY);
-  if(Cport[comport_number]==-1)
-    {
-      perror("unable to open comport ");
-      return(1);
-    }
-
-  rs_error = tcgetattr(Cport[comport_number], old_port_settings + comport_number);
-  if(rs_error==-1)
-    {
-      close(Cport[comport_number]);
-      perror("unable to read portsettings ");
-      return(1);
-    }
-  new_port_settings = old_port_settings[comport_number];
-
-  memset(&new_port_settings, 0, sizeof(new_port_settings));  /* clear the new struct */
-
-  new_port_settings.c_cflag = baudr | CS8 | CLOCAL | CREAD;
-  new_port_settings.c_iflag = IGNPAR;
-
-  cfsetospeed(&new_port_settings,baudr);
-  cfsetispeed(&new_port_settings,baudr);
+  LOG(logINFO) << "[RS232] Opening com port: "<< portName<<" with baud: "<<baudRate;
+  this->port = open(portName.c_str(), O_RDWR | O_NOCTTY);
+  if(port==-1)
+  {
+    port = NULL_FD;
+    LOG(logCRITICAL) << "[RS232] unable to open comport ";
+    return false;
+  }
   
-  rs_error = tcsetattr(Cport[comport_number], TCSANOW, &new_port_settings);
+  int rsError;
+  rsError = tcgetattr(port, &oldPortSettings);
+  if(rsError==-1){
+    closePort();
+    LOG(logCRITICAL) << "[RS232] unable to read portsettings ";
+    return false;
+  }
   
+  struct termios newPortSettings;
+  memset(&newPortSettings, 0, sizeof(newPortSettings));
+  newPortSettings.c_cflag = CS8 | CLOCAL | CREAD;
+  if(parity){
+    newPortSettings.c_cflag |= PARENB | PARODD;
+  } else{
+    newPortSettings.c_iflag |= IGNPAR;
+  }
+  if(flowControl){
+    newPortSettings.c_iflag = IXON | IXOFF;
+  }
+  cfsetspeed(&newPortSettings,baudr);
   
-  if(rs_error==-1)
-    {
-      close(Cport[comport_number]);
-      perror("unable to adjust portsettings ");
-      return(1);
-    }
-
-  if(ioctl(Cport[comport_number], TIOCMGET, &status) == -1)
-    {
-      perror("unable to get portstatus");
-      return(1);
-    }
+  rsError = tcsetattr(port, TCSANOW, &newPortSettings);
+  if(rsError==-1){
+    closePort();
+    LOG(logCRITICAL) << "[RS232] unable to adjust portsettings ";
+    return false;
+  }
+  
+  int status = 0;
+  rsError = ioctl(port, TIOCMGET, &status);
+  if(rsError == -1){
+    closePort();
+    LOG(logCRITICAL) << "[RS232] unable to get portstatus";
+    return false;
+  }
 
   status |= TIOCM_DTR;    /* turn on DTR */
   status |= TIOCM_RTS;    /* turn on RTS */
 
-  if(ioctl(Cport[comport_number], TIOCMSET, &status) == -1)
-    {
-      perror("unable to set portstatus");
-      return(1);
-    }
+  rsError = ioctl(port, TIOCMSET, &status);
+  if(rsError == -1){
+    closePort();
+    LOG(logCRITICAL) << "[RS232] unable to set portstatus";
+    return false;
+  }
 
-  return(0);
+  tcflush(port, TCIOFLUSH); //drop any old data on port
+
+  return true;
 }
 
-int RS232_PollComport(int comport_number, char *buf, int size)
-{
-  int n;
-
-  n = read(Cport[comport_number], buf, size);
-
-  return(n);
-}
-
-
-int RS232_SendByte(int comport_number, unsigned char byte)
-{
-  int n;
-
-  n = write(Cport[comport_number], &byte, 1);
-  if(n<0)  return(1);
-
-  return(0);
-}
-
-
-int RS232_SendBuf(int comport_number, unsigned char *buf, int size)
-{
-  return(write(Cport[comport_number], buf, size));
-}
-
-// Need this function to talk to the Keithlez 2410
-int RS232_SendBufString(int comport_number, char *buf, int size)
-{
-  return(write(Cport[comport_number], buf, size));
-}
-
-
-void RS232_CloseComport(int comport_number)
-{
+void RS232Conn::closePort(){
+  if(port == NULL_FD) return;
   int status;
-
-  if(ioctl(Cport[comport_number], TIOCMGET, &status) == -1)
-    {
-      perror("unable to get portstatus");
-    }
+  if(ioctl(port, TIOCMGET, &status) == -1){
+    LOG(logCRITICAL) << "[RS232] Unable to get portstatus";
+  }
 
   status &= ~TIOCM_DTR;    /* turn off DTR */
   status &= ~TIOCM_RTS;    /* turn off RTS */
 
-  if(ioctl(Cport[comport_number], TIOCMSET, &status) == -1)
-    {
-      perror("unable to set portstatus");
-    }
-
-  tcsetattr(Cport[comport_number], TCSANOW, old_port_settings + comport_number);
-  close(Cport[comport_number]);
-}
-
-/*
-  Constant  Description
-  TIOCM_LE  DSR (data set ready/line enable)
-  TIOCM_DTR DTR (data terminal ready)
-  TIOCM_RTS RTS (request to send)
-  TIOCM_ST  Secondary TXD (transmit)
-  TIOCM_SR  Secondary RXD (receive)
-  TIOCM_CTS CTS (clear to send)
-  TIOCM_CAR DCD (data carrier detect)
-  TIOCM_CD  Synonym for TIOCM_CAR
-  TIOCM_RNG RNG (ring)
-  TIOCM_RI  Synonym for TIOCM_RNG
-  TIOCM_DSR DSR (data set ready)
-
-  http://linux.die.net/man/4/tty_ioctl
-*/
-
-int RS232_IsDCDEnabled(int comport_number)
-{
-  int status;
-
-  ioctl(Cport[comport_number], TIOCMGET, &status);
-
-  if(status&TIOCM_CAR) return(1);
-  else return(0);
-}
-
-int RS232_IsCTSEnabled(int comport_number)
-{
-  int status;
-
-  ioctl(Cport[comport_number], TIOCMGET, &status);
-
-  if(status&TIOCM_CTS) return(1);
-  else return(0);
-}
-
-int RS232_IsDSREnabled(int comport_number)
-{
-  int status;
-
-  ioctl(Cport[comport_number], TIOCMGET, &status);
-
-  if(status&TIOCM_DSR) return(1);
-  else return(0);
-}
-
-void RS232_enableDTR(int comport_number)
-{
-  int status;
-
-  if(ioctl(Cport[comport_number], TIOCMGET, &status) == -1)
-    {
-      perror("unable to get portstatus");
-    }
-
-  status |= TIOCM_DTR;    /* turn on DTR */
-
-  if(ioctl(Cport[comport_number], TIOCMSET, &status) == -1)
-    {
-      perror("unable to set portstatus");
-    }
-}
-
-void RS232_disableDTR(int comport_number)
-{
-  int status;
-
-  if(ioctl(Cport[comport_number], TIOCMGET, &status) == -1)
-    {
-      perror("unable to get portstatus");
-    }
-
-  status &= ~TIOCM_DTR;    /* turn off DTR */
-
-  if(ioctl(Cport[comport_number], TIOCMSET, &status) == -1)
-    {
-      perror("unable to set portstatus");
-    }
-}
-
-void RS232_enableRTS(int comport_number)
-{
-  int status;
-
-  if(ioctl(Cport[comport_number], TIOCMGET, &status) == -1)
-    {
-      perror("unable to get portstatus");
-    }
-
-  status |= TIOCM_RTS;    /* turn on RTS */
-
-  if(ioctl(Cport[comport_number], TIOCMSET, &status) == -1)
-    {
-      perror("unable to set portstatus");
-    }
-}
-
-void RS232_disableRTS(int comport_number)
-{
-  int status;
-
-  if(ioctl(Cport[comport_number], TIOCMGET, &status) == -1)
-    {
-      perror("unable to get portstatus");
-    }
-
-  status &= ~TIOCM_RTS;    /* turn off RTS */
-
-  if(ioctl(Cport[comport_number], TIOCMSET, &status) == -1)
-    {
-      perror("unable to set portstatus");
-    }
-}
-
-
-void RS232_cputs(int comport_number, const char *text)  /* sends a string to serial port */
-{
-  while(*text != 0)   RS232_SendByte(comport_number, *(text++));
-}
-
-//---------------------------------------------------------------------------
-int openComPort(const int comPortNumber,const int baud, const char *name)
-{
-  comport_number=comPortNumber;
-  if (strcmp(name, "")) {
-    sprintf(comports[0], "%s", name); 
-    comport_number = 0; 
+  if(ioctl(port, TIOCMSET, &status) == -1){
+    LOG(logCRITICAL) << "[RS232] Unable to set portstatus";
   }
 
-  if(RS232_OpenComport(comport_number, baud))
-    {
-      LOG(logCRITICAL) << "Cannot open COM port!";
-      return 0;
-    }
-  return 1;
-}
-
-//---------------------------------------------------------------------------
-void closeComPort()
-{
-  RS232_CloseComport(comport_number);
-}
-
-//---------------------------------------------------------------------------
-int writeCommand(const char *command)
-{
-  char cmd[256];
-  char buf[10] = { 0 };
-  int  timeout;
-  int  rb;
-  int  len;
-
-  strncpy(cmd, command, 250);
-  cmd[250] = 0;
-
-  // terminate command with CR LF
-  if (!strstr(cmd, "\r\n")) {
-    strcat(cmd, "\r\n");
-  }
-
-  len = strlen(cmd);
-
-  int i;
-  for (i = 0; i < len; i++) {
-    RS232_SendByte(comport_number, cmd[i]);
-
-    // read echo
-    timeout = 10;
-    do {
-      rb = RS232_PollComport(comport_number, buf, 1);
-      usleep(10000);
-      timeout--;
-    } while ( (rb == 0) && (timeout > 0) );
-
-    if (cmd[i] != buf[0]) {
-      return 0;
-    }
-  }
-
-  usleep(20000);
-
-  return 1;
-}
-
-//---------------------------------------------------------------------------
-// Allows writing commands to the Keithley 2410
-int writeCommandString(const char *command) {
-  int  len;
-  char cmd[256];  
-
-  strncpy(cmd, command, 250);
-  cmd[250] = 0;
-
-  // terminate command with CR+ LF
-  if (!strstr(cmd, "\r\n")) {
-    strcat(cmd, "\r\n");
-  }
-
-  len = strlen(cmd);
-  RS232_SendBufString(comport_number, cmd, len);
-
-  usleep(20000);
-
-  return 1;
+  tcsetattr(port, TCSANOW, &oldPortSettings);
+  close(port);
+  port = NULL_FD;
 }
 
 
-//---------------------------------------------------------------------------
-int writeCommandAndReadAnswer(const char *command, char *answer) {
-  LOG(logDEBUGRPC) << "RS232 Command: " << command;
-        
-  int  bytesRead;
-  char inbuf[256];
-  int  to = 0;
-  char *p;
-
-  if (!answer) {
+int RS232Conn::writeBuf(const char *buf, int len){
+  if (port == NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot write to non-open port";
     return 0;
   }
-
-  // write command to HV device
-  if (!writeCommand(command)) {
+  int status = write(port, buf, len);
+  if (status == -1){
+    LOG(logCRITICAL) << "[RS232] Error writing to RS232 Port";
     return 0;
   }
-
-  // init buffer
-  *answer = 0;
-
-  // read answer (terminated with CR + LF)
-  to = 0;
-  do {
-    bytesRead = RS232_PollComport(comport_number, inbuf, sizeof(inbuf));
-
-    if (bytesRead > 0) {
-      inbuf[bytesRead] = 0;
-      strcat(answer, inbuf);
-      to = 0;
-    }
-    usleep(10000);
-  } while ( (strstr(answer, "\r\n") == 0) && (++to < 80) ); // wait for CR+LF or timeout
-
-  //         // clear trailing CR + LF
-  if ( (p  = strstr(answer, "\r\n")) ) {
-    *p = 0;
-  }
-
-  usleep(100000);  
-  LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
-  return 1;
+  return status;
 }
 
-//---------------------------------------------------------------------------
-// Allows writing commands to the Keithley 2410
-int writeCommandStringAndReadAnswer(const char *command, char *answer, int delay) {
-  LOG(logDEBUGRPC) << "RS232 Command: " << command;
-
-  int  bytesRead;
-  char inbuf[256];
-  int  to = 0;
-  char *p;
-
-  if (!answer) {
-    return 0;
+void RS232Conn::writeData(const string &data)
+{
+  LOG(logDEBUG) << "[RS232] Sending Data : \""<<data<<"\"";
+  unsigned int bytesWritten = 0;
+  string dataTerm = data + terminator;
+  bytesWritten += writeBuf(dataTerm.c_str(), dataTerm.size());
+  usleep(1E6*.02);
+  if(removeEcho) {
+    readEcho(data);
   }
-
-  // write command to HV device
-  if (!writeCommandString(command)) {  
-    return 0;
+  if(bytesWritten != (dataTerm.size())){
+    LOG(logWARNING) << "[RS232] Missing Data on Write";
   }
-   
-  usleep(delay*1000000);
+}
 
-  // init buffer
-  *answer = 0;   
+int RS232Conn::pollPort(char &buf){
+  if(port == NULL_FD){
+    LOG(logCRITICAL) << "[RS232] Cannot poll non-open port!";
+    return -1;
+  }
+  int status = read(port, &buf, 1);
+  if(buf >= 0x11 && buf <= 0x14){
+    return 0; //Filter out XON-XOFF Characters that
+              //somehow make it to this point.
+  }
+  return status;
+}
 
-  // read answer (terminated with CR)
-  to = 0;
-  do {
-    bytesRead = RS232_PollComport(comport_number, inbuf, sizeof(inbuf));
+int RS232Conn::readStatus(const string &data){
+  unsigned int dataSize = data.size();
+  unsigned int suffixSize = readSuffix.size();
+  unsigned int termSize = terminator.size();
   
-    if (bytesRead > 0) {
-      inbuf[bytesRead] = 0;
-      strcat(answer, inbuf);
-      to = 0;
-    }
-    usleep(10000);
-  } while ( (strstr(answer, "\r\n") == 0) && (++to < 80) ); // wait for CR or t$
-  
-  //         // clear trailing CR
-  if ( (p  = strstr(answer, "\r\n")) ) {
-    *p = 0;
+  if(suffixSize > 0){ //suffix is ignored if it is unset. i.e. if readSuffix==""
+    if(dataSize > suffixSize && data.substr(dataSize-suffixSize,suffixSize) == readSuffix)
+      return MATCH_SUFFIX; //Indicates a match on the readSuffix
   }
-
-  usleep(100000);
-  LOG(logDEBUGRPC) << "RS232 Answer: " << answer;
-  return 1;
+  if(dataSize > termSize && data.substr(dataSize-termSize,termSize) == terminator){
+    return MATCH_TERMINATOR; //Indicates a match on the line terminator
+  } else{
+    return CONTINUE; //Indicates no match no terminator or readSuffix
+  }
 }
 
+bool RS232Conn::readData(string &data){
+  data.clear();
+  unsigned int dataSize = 0;
+  time_t tStart;
+  time_t tCurr;
+  tStart = time(NULL);
+  
+  int readingStatus;
+  do{
+    char buf;
+    int status = pollPort(buf);
+    if(status == 1) {
+      data.append(1,buf);
+      dataSize++;
+      tStart = time(NULL);
+    }
+    tCurr = time(NULL);
+    if (difftime(tCurr,tStart) > timeout){
+      LOG(logCRITICAL) << "[RS232] Serial Timeout";
+      readingStatus = TIMEOUT;
+      break;
+    }
+    readingStatus = readStatus(data);
+  } while(readingStatus == CONTINUE);
+  
+  bool endLine;
+  if(readingStatus == MATCH_SUFFIX){
+    data = data.substr(0,dataSize-readSuffix.size());
+    endLine = false;
+  }else if(readingStatus == MATCH_TERMINATOR){
+    data = data.substr(0,dataSize-terminator.size());
+    endLine = true;
+  }else{ //TIMEOUT
+    endLine = false; 
+  }
+  LOG(logDEBUG) << "[RS232] Received Data : \""<<data<<"\"";
+  return endLine;
+}
+
+bool RS232Conn::readEcho(const string &data){
+  string readSuffixStore = readSuffix;
+  setReadSuffix("");
+  string echo;
+  readData(echo);
+  setReadSuffix(readSuffixStore);
+  if( echo != data){
+    LOG(logWARNING) << "[RS232] Echo \""<<echo<<"\" does not match write \""<<data<<"\"";
+    return false;
+  }
+  return true;
+}
+
+void RS232Conn::writeReadBack(const string &dataOut, string &dataIn){
+  writeData(dataOut);
+  readData(dataIn);
+}
 

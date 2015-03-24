@@ -1,3 +1,4 @@
+
 #include <stdlib.h>     /* atof, atoi */
 #include <algorithm>    // std::find
 #include <iostream>
@@ -6,6 +7,7 @@
 #include "helper.h"
 #include "timer.h"
 
+#include "PixUtil.hh"
 
 using namespace std;
 using namespace pxar;
@@ -13,16 +15,15 @@ using namespace pxar;
 ClassImp(PixTestDaq)
 
 // ----------------------------------------------------------------------
-PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParStretch(0), fParFillTree(0), fParSeconds(0), fParTriggerFrequency(0), fParIter(0), fParDelayTBM(0), fParResetROC(0) {
+PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParDelayTBM(0), fParFillTree(0), fParStretch(0), fParTriggerFrequency(0), fParNtrig(0), fParIter(0), fRunDaqTrigger(0), fParSeconds(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
+  
   fTree = 0; 
-
   fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
   fPhCalOK = fPhCal.initialized();
 }
-
 
 //----------------------------------------------------------
 PixTestDaq::PixTestDaq() : PixTest() {
@@ -32,7 +33,7 @@ PixTestDaq::PixTestDaq() : PixTest() {
 
 //----------------------------------------------------------
 PixTestDaq::~PixTestDaq() {
-	LOG(logDEBUG) << "PixTestDaq dtor, saving tree ... ";
+	LOG(logDEBUG) << "PixTestDaq dtor";
 	fDirectory->cd();
 	if (fTree && fParFillTree) fTree->Write();
 }
@@ -40,7 +41,6 @@ PixTestDaq::~PixTestDaq() {
 // ----------------------------------------------------------------------
 void PixTestDaq::init() {
   LOG(logDEBUG) << "PixTestDaq::init()";
-
   setToolTips();
   fDirectory = gFile->GetDirectory(fName.c_str()); 
   if (!fDirectory) {
@@ -51,31 +51,9 @@ void PixTestDaq::init() {
 
 // ----------------------------------------------------------------------
 void PixTestDaq::setToolTips() {
-  fTestTip    = string("Run DAQ - data from each run will be added to the same histogram.") ;
+  fTestTip    = string("Run DAQ seconds - data from each run will be added to the same histogram.") ;
   fSummaryTip = string("to be implemented") ;
   fStopTip    = string("Stop DAQ and save data.");
-}
-
-// ----------------------------------------------------------------------
-void PixTestDaq::bookHist(string name) {
-	fDirectory->cd();
-	LOG(logDEBUG) << "nothing done with " << name;
-}
-
-// ----------------------------------------------------------------------
-void PixTestDaq::stop(){
-	// Interrupt the test 
-	fDaq_loop = false;
-	LOG(logINFO) << "Stop pressed. Ending test.";
-}
-
-// ----------------------------------------------------------------------
-void PixTestDaq::runCommand(std::string command) {
-
-	if (command == "stop")
-		stop();
-	else
-		LOG(logINFO) << "Command " << command << " not implemented.";
 }
 
 // ----------------------------------------------------------------------
@@ -86,7 +64,30 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 	for (unsigned int i = 0; i < fParameters.size(); ++i) {
 		if (fParameters[i].first == parName) {
 			found = true;
-			if (!parName.compare("ntrig")) {
+			if (!parName.compare("delaytbm")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fParDelayTBM = !(atoi(sval.c_str()) == 0);
+				setToolTips();
+			}
+			if (!parName.compare("filltree")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fParFillTree = !(atoi(sval.c_str()) == 0);
+				setToolTips();
+			}
+			if (!parName.compare("clockstretch")) {  //debug - useful?
+				fParStretch = atoi(sval.c_str());
+				setToolTips();
+			}
+			if (!parName.compare("trgfrequency(khz)")){     // trigger frequency in kHz.
+				fParTriggerFrequency = atoi(sval.c_str());
+				if (fParTriggerFrequency == 0) {
+					LOG(logWARNING) << "PixTestDaq::setParameter() trgfrequency must be different from zero";
+					found = false; fParOutOfRange = true;
+				}
+			}
+			if (!parName.compare("trgnumber")) {
 				fParNtrig = atoi(sval.c_str());
 				setToolTips();
 			}
@@ -94,77 +95,64 @@ bool PixTestDaq::setParameter(string parName, string sval) {
 				fParIter = atoi(sval.c_str());
 				setToolTips();
 			}
-			if (!parName.compare("clockstretch")) {
-				fParStretch = atoi(sval.c_str());
-				setToolTips();
-			}
-			if (!parName.compare("delaytbm")) {
-				fParDelayTBM = !(atoi(sval.c_str()) == 0);
-				setToolTips();
-			}
-			if (!parName.compare("filltree")) {
-				fParFillTree = !(atoi(sval.c_str()) == 0);
-				setToolTips();
-			}
-			if (!parName.compare("trgfrequency(khz)")){   // trigger frequency in kHz.
-				fParTriggerFrequency = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fParTriggerFrequency -> " << fParTriggerFrequency;
-				if (fParTriggerFrequency == 0) {
-					LOG(logWARNING) << "PixTestDaq::setParameter() trgfrequency must be different from zero";
-					found = false; fParOutOfRange = true;
-				}
-			}
-			if (!parName.compare("seconds")){
+			if (!parName.compare("daqseconds")){
 				fParSeconds = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting Seconds -> " << fParSeconds;
 			}
 		}
 	}
 	return found;
 }
 
-//----------------------------------------------------------
-bool PixTestDaq::setTrgFrequency(uint8_t TrgTkDel){
-
-	uint8_t trgtkdel = TrgTkDel;
-	double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
-	double fClkDelays = period_ns / 25 - trgtkdel;
-	uint16_t ClkDelays = (uint16_t)fClkDelays;  //debug -- aprox to def
-	uint16_t i = ClkDelays;
-
-	//add right delay between triggers:
-	if (fParResetROC) {
-		fPg_setup.push_back(make_pair("resetroc", 15));
-		ClkDelays -= 15;
-	}
-	while (i>255){
-		fPg_setup.push_back(make_pair("delay", 255));
-		i = i - 255;
-	}
-	fPg_setup.push_back(make_pair("delay", i));
-
-	//then send trigger and token:
-	fPg_setup.push_back(make_pair("trg", trgtkdel));
-	fPg_setup.push_back(make_pair("tok", 0));
-
-	return true;
+// ----------------------------------------------------------------------
+void PixTestDaq::doStop(){
+	// Interrupt the test 
+	fDaq_loop = false;
+	LOG(logINFO) << "Stop pressed. Ending test.";
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::pgToDefault() {
-  fPg_setup.clear();
-  LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
-  
-  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
-  fApi->setPatternGenerator(fPg_setup);
-  LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
+void PixTestDaq::doRunMaskHotPixels() {
+	PixTest::update();
+	vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels");
+	if (0 == v.size()) {
+		bookHist("hotpixels");
+		v = mapsWithString(fHitMap, "hotpixels");
+	}
+	for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
+	maskHotPixels(v);
+	// -- display
+	fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
+	v[0]->Draw("colz");
+	PixTest::update();
+	return;
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::setHistos(){
-	
+void PixTestDaq::runCommand(std::string command) {
+		
+	if (command == "stop")
+		doStop();
+	else if (!command.compare("maskhotpixels")) {
+		doRunMaskHotPixels();
+		return;
+	}
+	else if (!command.compare("rundaqtrg")) {
+		fRunDaqTrigger = true;
+		doDaqRun();
+	}
+	else if (!command.compare("rundaqseconds")) {
+		fRunDaqTrigger = false;
+		doDaqRun();
+	}
+	else
+		LOG(logINFO) << "Command " << command << " not implemented.";
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::bookHist(string /*name*/) {
+
 	if (fParFillTree) bookTree();
-	fHits.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();
+	fHitMap.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();
 
 	std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 	TH1D *h1(0);
@@ -176,7 +164,7 @@ void PixTestDaq::setHistos(){
 		h2->SetDirectory(fDirectory);
 		setTitles(h2, "col", "row");
 		fHistOptions.insert(make_pair(h2, "colz"));
-		fHits.push_back(h2);
+		fHitMap.push_back(h2);
 
 		p2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
 		p2->SetMinimum(0.);
@@ -214,14 +202,17 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 
 	if (numevents > 0) {
 		for (unsigned int i = 0; i < numevents; i++) {
-			pxar::Event evt = fApi->daqGetEvent();
+		  pxar::Event evt;
+		  try { evt = fApi->daqGetEvent(); }
+		  catch(pxar::DataNoEvent &) {}
 			//Check if event is empty?
 			if (evt.pixels.size() > 0)
 				daqdat.push_back(evt);
 		}
 	}
 	else
-		daqdat = fApi->daqGetEventBuffer();
+	  try { daqdat = fApi->daqGetEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
 
 	LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
 
@@ -233,133 +224,111 @@ void PixTestDaq::ProcessData(uint16_t numevents){
 		pixCnt += it->pixels.size();
 
 		if (fParFillTree) {
+		        bookTree();  
 			fTreeEvent.header = it->header;
 			fTreeEvent.dac = 0;
 			fTreeEvent.trailer = it->trailer;
-			fTreeEvent.numDecoderErrors = it->numDecoderErrors;
-			fTreeEvent.npix = it->pixels.size();
 		}
 
 		for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-			idx = getIdxFromId(it->pixels[ipix].roc_id);
+			idx = getIdxFromId(it->pixels[ipix].roc());
 			if(idx == -1) {
 				LOG(logWARNING) << "PixTestDaq::ProcessData() wrong 'idx' value --> return";
 				return;    			
 			}
-			fHits[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row);
-			fPhmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, it->pixels[ipix].getValue());
-			fPh[idx]->Fill(it->pixels[ipix].getValue());
+			fHitMap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+			fPhmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
+			fPh[idx]->Fill(it->pixels[ipix].value());
 
 			if (fPhCalOK) {
-				q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc_id, it->pixels[ipix].column,	
-								      it->pixels[ipix].row, it->pixels[ipix].getValue()));
+				q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), it->pixels[ipix].column(),	
+								      it->pixels[ipix].row(), it->pixels[ipix].value()));
 			}
 			else {
 				q = 0;
 			}
 			fQ[idx]->Fill(q);
-			fQmap[idx]->Fill(it->pixels[ipix].column, it->pixels[ipix].row, q);
-				if (fParFillTree) {
-				fTreeEvent.proc[ipix] = it->pixels[ipix].roc_id;
-				fTreeEvent.pcol[ipix] = it->pixels[ipix].column;
-				fTreeEvent.prow[ipix] = it->pixels[ipix].row;
-				fTreeEvent.pval[ipix] = it->pixels[ipix].getValue();
-				fTreeEvent.pq[ipix] = q;
-			}
+			fQmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), q);
+				if (fParFillTree && ipix < 20000) {
+				  ++fTreeEvent.npix;
+				  fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+				  fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+				  fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+				  fTreeEvent.pval[ipix] = it->pixels[ipix].value();
+				  fTreeEvent.pq[ipix] = q;
+				}
 		}
+		if (fParFillTree) fTree->Fill();
 	}
-	if (fParFillTree) fTree->Fill();
-	
+
   	//to draw the hitsmap as 'online' check.
-	TH2D* h2 = (TH2D*)(fHits.back());
+	TH2D* h2 = (TH2D*)(fHitMap.back());
 	h2->Draw(getHistOption(h2).c_str());
 	fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
 	PixTest::update();
 
-	LOG(logINFO) << Form("events read: %6ld, pixels seen: %3d, hist entries: %4d",
-	                 daqdat.size(), pixCnt,	static_cast<int>(fHits[0]->GetEntries()));	
+	LOG(logINFO) << Form("events read:%5ld, pixels seen:%3d, hist entries: %4d",
+		daqdat.size(), pixCnt, static_cast<int>(fHitMap[0]->GetEntries()));
 }
 
 // ----------------------------------------------------------------------
-void PixTestDaq::FinalCleaning() {
-
-	// Reset the pg_setup to default value.
-	pgToDefault();
-	//clean local variables:
-	fPg_setup.clear();
-}
-
-// ----------------------------------------------------------------------
-void PixTestDaq::doTest() {
+void PixTestDaq::doDaqRun() {
 
   PixTest::update();
   fDirectory->cd();
-  fPg_setup.clear();
 
   //Immediately stop if parameters not in range	
   if (fParOutOfRange) return;
-  
-  LOG(logINFO) << "PixTestDaq::doTest() start.";
+
+  banner(Form("PixTestDaq::doDaqRun() start.") );
 
   //Set the ClockStretch
-  fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay
+  fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay   //debug - needed?
    
   //Set the histograms:
-  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
+  if(fHistList.size() == 0) bookHist("daq");  //to book histo only for the first 'doTest' (or after Clear).
 
-  //To print on shell the number of masked pixels per ROC:
+  // -- unmask entire chip and then mask hot pixels
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(false);
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+	  vector<pair<int, int> > hot = fHotPixels[i];
+	  for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+		  LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second;
+		  fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i));
+	  }
+  }
+  maskPixels();
+  
+  //To print summary of the number of masked pixels per ROC:
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  LOG(logINFO) << "PixTestDaq::Number of masked pixels:";
+  LOG(logINFO) << "PixTestDaq:: Number of masked pixels:";
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-	  LOG(logINFO) << "PixTestDaq::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
+	  LOG(logINFO) << "PixTestDaq::    " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc)) << " - ROC " << static_cast<int>(iroc);
   }  
 
   // Start the DAQ:
   //::::::::::::::::::::::::::::::::
 
-  //First send only a RES:
-  fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
-  uint16_t period = 28;
-
-  //Set the pattern generator:
-  fApi->setPatternGenerator(fPg_setup);
-
-  fApi->daqStart();
-
-  //Send only one trigger to reset:
-  fApi->daqTrigger(1, period);
-  LOG(logINFO) << "PixTestDaq::RES sent once ";
-
-  fApi->daqStop();
-  //fApi->daqClear();
-
-  fPg_setup.clear();
-  LOG(logINFO) << "PixTestDaq::PG_Setup clean";
-
-  if(fParDelayTBM)
-  	fApi->setTbmReg("delays",0x40); //FPix timing
+  int totalPeriod = prepareDaq(fParTriggerFrequency, 50); //new common function defined in PixTest.cc
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-  if (!setTrgFrequency(20)){
-	  FinalCleaning();
-	  return;
+  
+  if (fParDelayTBM) {
+	  LOG(logINFO) << "set TBM register delays = 0x40";
+	  fApi->setTbmReg("delays", 0x40);
   }
 
-  //Set pattern generator:
-  fApi->setPatternGenerator(fPg_setup);
-
-  fDaq_loop = true;
-
   //Start the DAQ:
+  fDaq_loop = true;
   fApi->daqStart();
 
-  //If using number of triggers
-  if(fParNtrig > 0) {
-
-	for (int i = 0; i < fParIter && fDaq_loop; i++) {
-		//Send the triggers:
-    	fApi->daqTrigger(fParNtrig);
+  //Using number of triggers
+  if (fRunDaqTrigger) {
+	LOG(logINFO) << "Sending " << fParNtrig << " triggers for " << fParIter << " iterations.";
+	for (int i = 0; i < fParIter && fDaq_loop; i++) {		//Send fParNtrig for fParIter
+		fApi->daqTrigger(fParNtrig, totalPeriod);
 		gSystem->ProcessEvents();
 		ProcessData(0);
 	}
@@ -368,9 +337,9 @@ void PixTestDaq::doTest() {
   } else {  //Use seconds
 
 	//Start trigger loop + buffer fill management:
-	int finalPeriod = fApi->daqTriggerLoop(0);  //Period is automatically set to the minimum by Api function
+	int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
 	LOG(logINFO) << "PixTestDaq:: start TriggerLoop with period " << finalPeriod << " and duration " << fParSeconds << " seconds";
-
+	
 	  //To control the buffer filling
 	uint8_t perFull;
 	uint64_t diff = 0, timepaused = 0, timeff = 0;
@@ -380,17 +349,16 @@ void PixTestDaq::doTest() {
 	while (fDaq_loop){    //Check every n seconds if buffer is full less then 80%
 	  while (fApi->daqStatus(perFull) && perFull < 80 && fDaq_loop) {     //Pause and drain the buffer if almost full.
 		  timeff = t.get() - timepaused;
-		  LOG(logINFO) << "Elapsed time: " << timeff / 1000 << " seconds.";
 		  if (timeff / 1000 >= fParSeconds) {
 			  fDaq_loop = false;
 			  TotalTime = true;
 			  break;
 		  }
-		  LOG(logINFO) << "buffer not full, at " << (int)perFull << "%";
+		  LOG(logDEBUG) << "buffer not full, at " << (int)perFull << "%";
 		  gSystem->ProcessEvents();
-		  ProcessData();
 	  }
 	  if (fDaq_loop){
+		  LOG(logINFO) << "Elapsed time: " << timeff / 1000 << " seconds.";
 		  LOG(logINFO) << "Buffer almost full, pausing triggers.";
 		  fApi->daqTriggerLoopHalt();
 		  diff = t.get();
@@ -399,7 +367,7 @@ void PixTestDaq::doTest() {
 		  timepaused += diff;
 		  LOG(logDEBUG) << "Readout time: " << timepaused / 1000 << " seconds.";
 		  LOG(logINFO) << "Resuming triggers for " << fParSeconds - (timeff/1000) << " seconds.";
-		  fApi->daqTriggerLoop(0);
+		  fApi->daqTriggerLoop(finalPeriod);
 	  }
 	  else {
 		  if (TotalTime) { LOG(logINFO) << "PixTestDaq:: total time reached - DAQ stopped."; }
@@ -411,7 +379,7 @@ void PixTestDaq::doTest() {
   //::::::::::::::::::::::::::::::
   //DAQ - THE END.
 
-  //to draw and save histograms
+  //to draw and save histograms  //debug - needed all?
   TH1D *h1(0);
   TH2D *h2(0);
   TProfile2D *p2(0);
@@ -419,7 +387,7 @@ void PixTestDaq::doTest() {
   copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
   copy(fPh.begin(), fPh.end(), back_inserter(fHistList));
   copy(fPhmap.begin(), fPhmap.end(), back_inserter(fHistList));
-  copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
+  copy(fHitMap.begin(), fHitMap.end(), back_inserter(fHistList));
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
    	(*il)->Draw((getHistOption(*il)).c_str()); 
   }
@@ -430,7 +398,15 @@ void PixTestDaq::doTest() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
   PixTest::update();
 
-  FinalCleaning();
+  finalCleanup();
   fApi->setClockStretch(0, 0, 0); //No Stretch after trigger, 0 delay
-  LOG(logINFO) << "PixTestDaq::doTest() done";
+  LOG(logINFO) << "PixTestDaq::doDaqRun() done";
+}
+
+// ----------------------------------------------------------------------
+void PixTestDaq::doTest() {
+	LOG(logINFO) << "PixTestDaq::doTest() start.";
+	fRunDaqTrigger = false;   //use daqTriggerLoop() as default for doTest
+	doDaqRun();
+	LOG(logINFO) << "PixTestDaq::doTest() done";
 }

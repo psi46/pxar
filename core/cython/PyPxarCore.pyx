@@ -9,6 +9,15 @@ import numpy
 
 cimport PyPxarCore
 
+FLAG_FORCE_SERIAL   = int(_flag_force_serial)
+FLAG_CALS           = int(_flag_cals)
+FLAG_XTALK          = int(_flag_xtalk)
+FLAG_RISING_EDGE    = int(_flag_rising_edge)
+FLAG_DISABLE_DACCAL = int(_flag_disable_daccal)
+FLAG_NOSORT         = int(_flag_nosort)
+FLAG_CHECK_ORDER    = int(_flag_check_order)
+FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
+
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
     def __cinit__(self, address = None, data = None): # default to None to mimick overloading of constructor
@@ -19,30 +28,29 @@ cdef class Pixel:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "ROC " + str(self.roc_id)
-        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.getValue()) + "] "
+        s = "ROC " + str(self.roc)
+        s += " [" + str(self.column) + "," + str(self.row) + "," + str(self.value) + "] "
         return s
     cdef fill(self, pixel p):
-        self.thisptr.roc_id = p.roc_id
-        self.thisptr.column = p.column
-        self.thisptr.row = p.row
-        self.thisptr.setValue(p.getValue())
+        self.thisptr.setRoc(p.roc())
+        self.thisptr.setColumn(p.column())
+        self.thisptr.setRow(p.row())
+        self.thisptr.setValue(p.value())
     cdef c_clone(self, pixel* p):
         del self.thisptr
         self.thisptr = p
-    property roc_id:
-        def __get__(self): return self.thisptr.roc_id
-        def __set__(self, roc_id): self.thisptr.roc_id = roc_id
+    property roc:
+        def __get__(self): return self.thisptr.roc()
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
-        def __get__(self): return self.thisptr.column
-        def __set__(self, column): self.thisptr.column = column
+        def __get__(self): return self.thisptr.column()
+        def __set__(self, column): self.thisptr.setColumn(column)
     property row:
-        def __get__(self): return self.thisptr.row
-        def __set__(self, row): self.thisptr.row = row
-    def setValue(self, double value):
-        self.thisptr.setValue(value)
-    def getValue(self):
-        return self.thisptr.getValue()
+        def __get__(self): return self.thisptr.row()
+        def __set__(self, row): self.thisptr.setRow(row)
+    property value:
+        def __get__(self): return self.thisptr.value()
+        def __set__(self, value): self.thisptr.setValue(value)
 
 cdef class PixelConfig:
     cdef pixelConfig *thisptr      # hold a C++ instance which we're wrapping
@@ -53,24 +61,34 @@ cdef class PixelConfig:
             self.thisptr = new pixelConfig()
     def __dealloc__(self):
         del self.thisptr
+    cdef fill(self, pixelConfig p):
+        self.thisptr.setRoc(p.roc())
+        self.thisptr.setColumn(p.column())
+        self.thisptr.setRow(p.row())
+        self.thisptr.setTrim(p.trim())
+        self.thisptr.setEnable(p.enable())
+        self.thisptr.setMask(p.mask())
     cdef c_clone(self, pixelConfig* p):
         del self.thisptr
         thisptr = p
+    property roc:
+        def __get__(self): return self.thisptr.roc()
+        def __set__(self, roc): self.thisptr.setRoc(roc)
     property column:
-        def __get__(self): return self.thisptr.column
-        def __set__(self, column): self.thisptr.column = column
+        def __get__(self): return self.thisptr.column()
+        def __set__(self, column): self.thisptr.setColumn(column)
     property row:
-        def __get__(self): return self.thisptr.row
-        def __set__(self, row): self.thisptr.row = row
+        def __get__(self): return self.thisptr.row()
+        def __set__(self, row): self.thisptr.setRow(row)
     property trim:
-        def __get__(self): return self.thisptr.trim
-        def __set__(self, trim): self.thisptr.trim = trim
+        def __get__(self): return self.thisptr.trim()
+        def __set__(self, trim): self.thisptr.setTrim(trim)
     property enable:
-        def __get__(self): return self.thisptr.enable
-        def __set__(self, enable): self.thisptr.enable = enable
+        def __get__(self): return self.thisptr.enable()
+        def __set__(self, enable): self.thisptr.setEnable(enable)
     property mask:
-        def __get__(self): return self.thisptr.mask
-        def __set__(self, mask): self.thisptr.mask = mask
+        def __get__(self): return self.thisptr.mask()
+        def __set__(self, mask): self.thisptr.setMask(mask)
 
 
 cdef class RocConfig:
@@ -104,8 +122,19 @@ cdef class RocConfig:
         def __get__(self): return self.thisptr.type
         def __set__(self, value): self.thisptr.type = value
     property enable:
-        def __get__(self): return self.thisptr.enable
-        def __set__(self, enable): self.thisptr.enable = enable
+        def __get__(self): return self.thisptr.enable()
+        def __set__(self, enable): self.thisptr.setEnable(enable)
+
+cdef class Statistics:
+    cdef statistics thisobj      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisobj = statistics()
+    def __dealloc__(self):
+        pass
+    def __str__(self):
+        return "Decoding statistics..."
+    cdef c_clone(self, statistics s):
+        self.thisobj = s
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
@@ -114,10 +143,10 @@ cdef class PxEvent:
     def __dealloc__(self):
         del self.thisptr
     def __str__(self):
-        s = "====== " + hex(self.header) + " ======\n"
+        s = "====== " + hex(self.header) + " ====== "
         for px in self.pixels:
             s += str(px)
-        s += "\n====== " + hex(self.trailer) + " ======"
+        s += " ====== " + hex(self.trailer) + " ======\n"
         return str(s)
     cdef c_clone(self, Event* p):
         del self.thisptr
@@ -125,7 +154,6 @@ cdef class PxEvent:
     cdef fill(self, Event ev):
         self.thisptr.header = ev.header
         self.thisptr.trailer = ev.trailer
-        self.thisptr.numDecoderErrors = ev.numDecoderErrors
         for px in ev.pixels:
             self.thisptr.pixels.push_back(px)
     property pixels:
@@ -148,9 +176,6 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
-    property numDecoderErrors:
-        def __get__(self): return self.thisptr.numDecoderErrors
-        def __set__(self, errors): self.thisptr.numDecoderErrors = errors
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -210,7 +235,7 @@ cdef class PyPxarCore:
         for item in enumerate(pg_setup):
             pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         self.thisptr.setPatternGenerator(pgs)
-    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels):
+    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2C = None):
         """ Initializer method for the DUT (attached devices)
         Parameters:
 	hubId (int)
@@ -219,11 +244,14 @@ cdef class PyPxarCore:
         roctype (string)
         rocDACs (list of dictionaries (string,int), one for each ROC)
         rocPixels (list of list of pixelConfigs, one list for each ROC)
+        rocI2C (list of I2C addresses of the ROCs)
         """
         cdef vector[vector[pair[string,uint8_t]]] td
         cdef vector[vector[pair[string,uint8_t]]] rd
         cdef vector[vector[pixelConfig]] rpcs
         cdef PixelConfig pc
+        cdef vector[uint8_t] i2c
+
         for idx, tbmDAC in enumerate(tbmDACs):
             td.push_back(vector[pair[string,uint8_t]]())
             for key, value in tbmDAC.items():
@@ -236,7 +264,14 @@ cdef class PyPxarCore:
             rpcs.push_back(vector[pixelConfig]())
             for pc in rocPixel:
                 rpcs.at(idx).push_back(<pixelConfig> pc.thisptr[0])
-        return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
+
+        if rocI2C is not None:
+            for i in rocI2C:
+                i2c.push_back(i)
+            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs,i2c)
+        else:
+            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
+
     def getVersion(self):
         return self.thisptr.getVersion()
     def testAllPixels(self, bool enable, rocid = None):
@@ -257,6 +292,15 @@ cdef class PyPxarCore:
             v.push_back(pc)
         self.thisptr._dut.updateTrimBits(v, rocid)
     
+    def info(self):
+        self.thisptr._dut.info()
+
+    def setROCEnable(self, int rocid, bool enable):
+        self.thisptr._dut.setROCEnable(rocid, enable)
+
+    def setTBMEnable(self, int tbmid, bool enable):
+        self.thisptr._dut.setTBMEnable(tbmid, enable)
+
     def testPixel(self, int col, int row, bool enable, rocid = None):
         if rocid is not None:
             self.thisptr._dut.testPixel(col, row, enable,rocid)
@@ -272,6 +316,57 @@ cdef class PyPxarCore:
             self.thisptr._dut.maskPixel(col, row, enable,rocid)
         else:
             self.thisptr._dut.maskPixel(col, row, enable)
+
+    def getNMaskedPixels(self, rocid = None):
+        if rocid is not None:
+            return self.thisptr._dut.getNMaskedPixels(rocid)
+        else:
+            return self.thisptr._dut.getNMaskedPixels()
+
+    def getMaskedPixels(self, rocid = None):
+        cdef vector[pixelConfig] rpcs
+        if rocid is not None:
+            rpcs = self.thisptr._dut.getMaskedPixels(rocid)
+        else:
+            rpcs = self.thisptr._dut.getMaskedPixels()
+        pixelconfigs = list()
+        for p in rpcs:
+            pxc = PixelConfig()
+            pxc.fill(p)
+            pixelconfigs.append(pxc)
+        return pixelconfigs
+
+    def getNEnabledPixels(self, rocid = None):
+        if rocid is not None:
+            return self.thisptr._dut.getNEnabledPixels(rocid)
+        else:
+            return self.thisptr._dut.getNEnabledPixels()
+
+    def getEnabledPixels(self, rocid = None):
+        cdef vector[pixelConfig] rpcs
+        if rocid is not None:
+            rpcs = self.thisptr._dut.getEnabledPixels(rocid)
+        else:
+            rpcs = self.thisptr._dut.getEnabledPixels()
+        pixelconfigs = list()
+        for p in rpcs:
+            pxc = PixelConfig()
+            pxc.fill(p)
+            pixelconfigs.append(pxc)
+        return pixelconfigs
+
+    def getNEnabledTbms(self):
+        return self.thisptr._dut.getNEnabledTbms()
+    def getNEnabledRocs(self):
+        return self.thisptr._dut.getNEnabledRocs()
+    def getNTbms(self):
+        return self.thisptr._dut.getNTbms()
+    def getNRocs(self):
+        return self.thisptr._dut.getNRocs()
+    def getTbmType(self):
+        return self.thisptr._dut.getTbmType()
+    def getRocType(self):
+        return self.thisptr._dut.getRocType()
     #def programDUT(self):
         #return self.thisptr.programDUT()
     def status(self):
@@ -311,111 +406,125 @@ cdef class PyPxarCore:
     def getPulseheightVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
         r = self.thisptr.getPulseheightVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row
-        #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, (dacMax-dacMin)/dacStep+1)
-        for i in range(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros(s))
+        dac_steps = list()
         for d in xrange(r.size()):
+            pixels = list()
             for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
-        return numpy.array(hits)
+                p = r[d].second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
 
     def getEfficiencyVsDAC(self, string dacName, int dacStep, int dacMin, int dacMax, int flags = 0, int nTriggers = 16):
         cdef vector[pair[uint8_t, vector[pixel]]] r
         r = self.thisptr.getEfficiencyVsDAC(dacName, dacStep, dacMin, dacMax, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row
-        #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, (dacMax-dacMin)/dacStep+1)
-        for i in range(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros(s))
+        dac_steps = list()
         for d in xrange(r.size()):
+            pixels = list()
             for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
-        return numpy.array(hits)
-
-    def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, threshold, uint16_t flags = 0, uint32_t nTriggers=16):
-        cdef vector[pair[uint8_t, vector[pixel]]] r
-        r = self.thisptr.getThresholdVsDAC(dac1Name, dac1Step, dac1Min, dac1Max, dac2Name, dac2Step, dac2Min, dac2Max, threshold, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row
-        #PYXAR expects a list for each from dacMin to dacMax for each activated pixel in DUT
-        s = (52, 80, (dac2Max-dac2Min)/dac2Step+1)
-        for i in range(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros(s))
-        for d in xrange(r.size()):
-            for pix in range(r[d].second.size()):
-                hits[r[d].second[pix].roc_id][r[d].second[pix].column][r[d].second[pix].row][d] = r[d].second[pix].getValue()
-        return numpy.array(hits)
+                p = r[d].second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
 
     def getEfficiencyVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
         r = self.thisptr.getEfficiencyVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row, check if indices make sense, currently not running!
-        #This currently only returns one single pixel! The rest is lost...
+        # Return the linearized matrix with all pixels:
+        dac_steps = list()
         for d in xrange(r.size()):
-            if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].getValue())
-            else:
-                hits.append(0)
-        return numpy.array(hits)
+            pixels = list()
+            for pix in xrange(r[d].second.second.size()):
+                p = r[d].second.second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
+
+    def getThresholdVsDAC(self, string dac1Name, uint8_t dac1Step, uint8_t dac1Min, uint8_t dac1Max, string dac2Name, uint8_t dac2Step, uint8_t dac2Min, uint8_t dac2Max, threshold, uint16_t flags = 0, uint32_t nTriggers=16):
+        cdef vector[pair[uint8_t, vector[pixel]]] r
+        r = self.thisptr.getThresholdVsDAC(dac1Name, dac1Step, dac1Min, dac1Max, dac2Name, dac2Step, dac2Min, dac2Max, threshold, flags, nTriggers)
+        dac_steps = list()
+        for d in xrange(r.size()):
+            pixels = list()
+            for pix in range(r[d].second.size()):
+                p = r[d].second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
 
     def getPulseheightVsDACDAC(self, string dac1name, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, string dac2name, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags = 0, uint32_t nTriggers=16):
         cdef vector[pair[uint8_t, pair[uint8_t, vector[pixel]]]] r
         r = self.thisptr.getPulseheightVsDACDAC(dac1name, dac1step, dac1min, dac1max, dac2name, dac2step, dac2min, dac2max, flags, nTriggers)
-        hits = []
-        #TODO not hardcode col, row, check if indices make sense, currently not running!
-        #This currently only returns one single pixel! The rest is lost...
+        # Return the linearized matrix with all pixels:
+        dac_steps = list()
         for d in xrange(r.size()):
-            if r[d].second.second.size() > 0:
-                hits.append(r[d].second.second[0].getValue())
-            else:
-                hits.append(0)
-        return numpy.array(hits)
+            pixels = list()
+            for pix in xrange(r[d].second.second.size()):
+                p = r[d].second.second[pix]
+                px = Pixel()
+                px.fill(p)
+                pixels.append(px)
+            dac_steps.append(pixels)
+        return numpy.array(dac_steps)
 
     def getPulseheightMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getPulseheightMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getEfficiencyMap(self, int flags, int nTriggers):
         cdef vector[pixel] r
         r = self.thisptr.getEfficiencyMap(flags, nTriggers)
-        #TODO wrap data refilling into single function, rather than copy paste
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
     def getThresholdMap(self, string dacName, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t threshold, int flags, int nTriggers):
         cdef vector[pixel] r
-        #TODO wrap data refilling into single function, rather than copy paste
         r = self.thisptr.getThresholdMap(dacName, dacStep, dacMin, dacMax, threshold, flags, nTriggers)
-        hits = []
-        for i in xrange(self.thisptr._dut.getNRocs()):
-            hits.append(numpy.zeros((52,80)))
-        for d in xrange(r.size()):
-            hits[r[d].roc_id][r[d].column][r[d].row] = r[d].getValue()
-        return numpy.array(hits)
+        pixels = list()
+        for p in r:
+            px = Pixel()
+            px.fill(p)
+            pixels.append(px)
+        return pixels
 
-#    def int32_t getReadbackValue(self, string parameterName):
+    def setExternalClock(self, bool enable):
+        return self.thisptr.setExternalClock(enable)
+
+    def setClockStretch(self, uint8_t src, uint16_t delay, uint16_t width):
+        self.thisptr.setClockStretch(src, delay, width)
+
+    def setSignalMode(self, string signal, string mode):
+        self.thisptr.setSignalMode(signal, mode)
 
     def daqStart(self):
         return self.thisptr.daqStart()
 
     def daqStatus(self):
         return self.thisptr.daqStatus()
+
+    def daqTriggerSource(self, string source):
+        return self.thisptr.daqTriggerSource(source)
+
+    def daqSingleSignal(self, string signal):
+        return self.thisptr.daqSingleSignal(signal)
 
     def daqTrigger(self, uint32_t nTrig, uint16_t period = 0):
         self.thisptr.daqTrigger(nTrig,period)
@@ -443,13 +552,39 @@ cdef class PyPxarCore:
             pixelevents.append(p)
         return pixelevents
 
+    def daqGetRawEvent(self):
+        cdef rawEvent r
+        hits = []
+        r = self.thisptr.daqGetRawEvent()
+        for i in range(r.data.size()):
+            hits.append(r.data[i])
+        return hits
+
     def daqGetBuffer(self):
         cdef vector[uint16_t] r
         r = self.thisptr.daqGetBuffer()
         return r
 
+    def daqGetRawEventBuffer(self):
+        # Since we're just returning the 16bit ints as rawEvent in python,
+        # this is the same as dqGetBuffer:
+        return self.thisptr.daqGetBuffer()
+
+    def daqGetReadback(self):
+        cdef vector[vector[uint16_t]] r
+        r = self.thisptr.daqGetReadback()
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
+
+    def getStatistics(self):
+        cdef statistics r
+        r = self.thisptr.getStatistics()
+        r.dump()
+        s = Statistics()
+        s.c_clone(r)
+        return s
 
 cimport regdict
 cdef class PyRegisterDictionary:
@@ -505,4 +640,5 @@ cdef class PyProbeDictionary:
         for i in xrange(v.size()):
             names.append(v.at(i))
         return names
-        
+
+

@@ -17,6 +17,8 @@ public:
   void doTest();
   void setVana();
   void programROC();
+  void setTimings();
+  void findWorkingPixel();  
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
@@ -27,11 +29,10 @@ private:
   int     fTargetIa;
   int     fNoiseWidth;
   int     fNoiseMargin;
+  int     fIterations;
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
-  bool    fProblem;
-   
-
+  double  fParFracCalDel;
 
   ClassDef(PixTestPretest, 1)
 

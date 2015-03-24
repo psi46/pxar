@@ -16,17 +16,21 @@ public:
   void init(); 
   void setToolTips();
   void bookHist(std::string); 
+  std::vector<TH2D*> bookHotPixelMap();
 
   void runCommand(std::string command); 
+  void doStop();
   void doPhRun(); 
   void doRateScan();
+  void doRunMaskHotPixels();
   void doTest();
  
-  bool setTrgFrequency(uint8_t TrgTkDel);
-  void finalCleanup();
-  void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
+  //   bool setTrgFrequency(uint8_t TrgTkDel);
+  //   void finalCleanup();
+  //   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
 
   void readData();
+  void readDataOld();
   void analyzeData();
 
   double meanHit(TH2D*); 
@@ -37,7 +41,7 @@ public:
 
 private:
 
-  std::string   fParSource;
+  std::string   fParSource, fParMaskFileName;
   int           fParTriggerFrequency;
   int           fParRunSeconds; 
   int           fParStepSeconds; 
@@ -50,9 +54,13 @@ private:
   bool          fPhCalOK;
   PHCalibration fPhCal;
 
+  int           fParSaveMaskedPixels; 
+  bool          fSourceChanged;
+
   bool    fDaq_loop;
   
   int     fVthrComp;
+  long int fEventsMax;
 
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
 
@@ -67,8 +75,11 @@ private:
   std::vector<TH1D*> fPH;
   std::vector<TProfile2D*> fPHmap;
   std::vector<TH2D*> fHmap;
+  std::vector<TH2D*> fHotPixelMap;
 
-
+  std::vector<TH1D*> fTriggers;
+  std::vector<TH1D*> fHitsVsEvents, fHitsVsColumn;
+  std::vector<TH2D*> fHitsVsEvtCol;
   
   ClassDef(PixTestXray, 1)
 

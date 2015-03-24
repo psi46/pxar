@@ -16,7 +16,7 @@ using namespace pxar;
 ClassImp(PixTestBareModule)
 
 // ----------------------------------------------------------------------
-PixTestBareModule::PixTestBareModule(PixSetup *a, std::string name) : PixTest(a, name), fParNSteps(1), fStop(false) {	
+PixTestBareModule::PixTestBareModule(PixSetup *a, std::string name) : PixTest(a, name), fParMaxSteps(1), fStop(false), fBBMap(false), fBB2Map(false), fminIa(10.){
 	PixTest::init();
 	init();
 	LOG(logDEBUG) << "PixTestBareModule ctor(PixSetup &a, string, TGTab *)";
@@ -29,19 +29,37 @@ PixTestBareModule::PixTestBareModule() : PixTest() {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestBareModule::setParameter(string parName, string sval) {
+bool PixTestBareModule::setParameter(string parName, string sval) {  //debug - add roc num
 	bool found(false);
 	string stripParName;
 	for (unsigned int i = 0; i < fParameters.size(); ++i) {
 		if (fParameters[i].first == parName) {
 			found = true;
-			if (!parName.compare("ntests")) {
-				fParNSteps = atoi(sval.c_str());
-				LOG(logDEBUG) << "  setting fParNSteps -> " << fParNSteps;
+			if (!parName.compare("stepmax(1-3)")) {
+				fParMaxSteps = atoi(sval.c_str());
+				LOG(logDEBUG) << "  setting fParNSteps -> " << fParMaxSteps;
+				setToolTips();
+			}
+			if (!parName.compare("bbmap")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fBBMap = atoi(sval.c_str());
+				setToolTips();
+			}
+			if (!parName.compare("bb2map(desy)")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fBB2Map = atoi(sval.c_str());
+				setToolTips();
+			}
+			if (!parName.compare("mincurrent(ma)")) {
+				PixUtil::replaceAll(sval, "checkbox(", "");
+				PixUtil::replaceAll(sval, ")", "");
+				fminIa = atof(sval.c_str());
 				setToolTips();
 			}
 			break;
-		}
+		}		
 	}
 	return found;
 }
@@ -60,9 +78,11 @@ void PixTestBareModule::init() {
 
 // ----------------------------------------------------------------------
 void PixTestBareModule::setToolTips() {
-	fTestTip = string("run the BareModuleTest for one ROC. To be run after that probes are in contact with ROC.");
+	fTestTip = string("run the test sequence for one ROC up to 'stepmax'.\n")
+		+ string("stepmax: 1=pretest, 2=alive, 3=BB.");
 	fSummaryTip = string("to be implemented");
-	fStopTip = string("stop the BareModuleTest after that one step is finished.");
+	fStopTip = string("stop the BareModuleTest after that \n")
+		+ string("the current step is finished.");
 }
 
 
@@ -82,119 +102,215 @@ void PixTestBareModule::runCommand(std::string command) {
 	std::transform(command.begin(), command.end(), command.begin(), ::tolower);
 	LOG(logDEBUG) << "running command: " << command;
 
-	if (!command.compare("stop")){ 
-		// Interrupt the test 
+	if (!command.compare("stop")){     // Interrupt the test 
 		fStop = true;
 		LOG(logINFO) << "PixTestBareModule:: STOP PRESSED. Ending test.";
 	}
-	else	LOG(logDEBUG) << "did not find command ->" << command << "<-";
-}
+	else if (!command.compare("checkcontact")) {
+		checkIfInContact(0);
+		mDelay(1000);
+		PixTest::update();
 
-//----------------------------------------------------------
-void PixTestBareModule::doStdTest(std::string test) {
-	
-	PixTestFactory *factory = PixTestFactory::instance();
-	PixTest *t(0);
-	t = factory->createTest(test, fPixSetup);		
-	t->doTest();
-	delete t;
+		PixTest::hvOff();
+		PixTest::update();
+		mDelay(2000);
+		PixTest::powerOff();
+		PixTest::update();
+		mDelay(1000);
+
+		LOG(logINFO) << "PixTestBareModule:: HV and Power are off.";
+	}
+	else if (!command.compare("dofullsequence")) {
+		fParMaxSteps = 3;
+		doTest();
+	}
+	else
+		LOG(logINFO) << "Command " << command << " not implemented.";
 }
 
 // ----------------------------------------------------------------------
-void PixTestBareModule::doTestRoc(int step) {
+bool PixTestBareModule::checkIfInContact(bool fullSeq) {	
 
+	PixTest::hvOff();
+	PixTest::update();
+	LOG(logINFO) << "PixTestBareModule:: HV off for safety.";
+	mDelay(2000);
+	
+	//check if probes are in contact
+	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
+	PixTest::powerOn();
+	PixTest::update();
+	LOG(logINFO) << "PixTestBareModule:: Power on.";
+	mDelay(1000);
+	double ia = fApi->getTBia()*1E3; // [mA]
+	bool checkgood = false;
+
+	if (ia > fminIa) {
+		LOG(logINFO) << "PixTestBareModule:: contact OK, ia = " << ia << " mA";
+		checkgood = true;
+	}
+	else {
+		LOG(logWARNING) << "PixTestBareModule:: ia < " << fminIa << " mA - PLEASE CHECK THE PROBES CONTACT.";
+		if (fullSeq){
+			LOG(logWARNING) << "PixTestBareModule:: enter 'c' to continue OR 's' to stop.";
+			bool goodIn = false;
+			do{
+				string input;
+				std::getline(cin, input);
+				string::size_type m1 = input.find(" ");
+				if (m1 != string::npos) {
+					string parameters = input.substr(m1);
+					input = input.substr(0, m1);
+				}
+				std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+
+				if (!input.compare("c") || !input.compare("C")) {
+					LOG(logINFO) << "PixTestBareModule:: test will continue.";
+					checkgood = true;
+					goodIn = true;
+				}
+				else if (!input.compare("s") || !input.compare("S")) {
+					LOG(logINFO) << "PixTestBareModule:: bare module test will be stopped.";
+					checkgood = false;
+					goodIn = true;
+				}
+				else {
+					LOG(logINFO) << "PixTestBareModule:: unvalid input. Please retry.";
+					checkgood = false;
+				}
+			} while (!goodIn);
+		}
+		else checkgood = false;
+	}
+	if (checkgood){
+		if (fullSeq){
+			PixTest::hvOn();
+			PixTest::update();
+			LOG(logINFO) << "PixTestBareModule:: HV on.";
+			mDelay(2000);
+		}
+		LOG(logINFO) << "PixTestBareModule:: checkIfInContact done.";
+		return true;
+	}
+	else {
+		mDelay(2000);
+		return false;
+	}
+}
+
+//----------------------------------------------------------
+bool PixTestBareModule::doStdTest(std::string test) {
+	
+	PixTestFactory *factory = PixTestFactory::instance();
+	PixTest *t(0);
+	t = factory->createTest(test, fPixSetup);
+	t->doTest();
+
+	//to copy 'locally' the test histos
+	bool newHist = true;
+	string firstname, name;
+	while (newHist){		
+		TH1* h = t->nextHist();
+		if (firstname == "") firstname = h->GetName();
+		else name = h->GetName();
+		if (firstname == name) newHist = false;
+		else {
+			fHistList.push_back(h);
+			fHistOptions.insert(make_pair(h, t->getHistOption(h)));
+			h->Draw(t->getHistOption(h).c_str());
+			fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+			PixTest::update();
+		}
+	}
+
+	PixTest::update();
+	bool problem = !(t->testProblem());
+	delete t;
+	cout << problem << endl; //debug
+	return problem;
+}
+
+// ----------------------------------------------------------------------
+bool PixTestBareModule::doRocTests(int MaxStep) {	
+	
 	vector<string> suite;
 	suite.push_back("pretest");
 	suite.push_back("alive");
-	suite.push_back("bumpbonding");
-	
-	fApi->Pon();
-	mDelay(500);
+	suite.push_back("bb");
+	suite.push_back("bb2");
 
-	fApi->HVon();
-	LOG(logDEBUG) << "PixTestBareModule::doTestRoc() set HV on";
-	mDelay(500);
-
-	//Pretest - vana + tornado
-	if (step >= 1 && !fStop) { doStdTest(suite[0]); }
+	//Pretest
+	if (MaxStep >= 1 && !fStop) { 
+		if (!doStdTest(suite[0])) {
+			LOG(logWARNING) << "PixTestBareModule:: Pretest failed. Sequence stopped.";
+			return false;
+		}
+	}
 	mDelay(1000);
 	PixTest::update();
-	
+
 	//Alive
-	if (step >= 2 && !fStop) { doStdTest(suite[1]); }
+	if (MaxStep >= 2 && !fStop) {
+		if (!doStdTest(suite[1])) { 
+			LOG(logWARNING) << "PixTestBareModule:: Alive failed. Sequence stopped.";
+			return false; 
+		}
+	}
 	mDelay(1000);
 	PixTest::update();
 
-	//BBMap - test
-	if (step >= 3 && !fStop) { doStdTest(suite[2]); }
+	//BumpBonding
+	if (MaxStep >= 3 && !fStop) {
+		cout << fBBMap << fBB2Map << endl;
+		if (fBBMap && !fBB2Map) { 
+			if (!doStdTest(suite[2])) { 
+				LOG(logWARNING) << "PixTestBareModule:: BBMap failed. Sequence stopped.";
+				return false; 
+			}
+		}
+		else if (fBB2Map && !fBBMap) { 
+			if (!doStdTest(suite[3])) { 
+				LOG(logWARNING) << "PixTestBareModule:: BB2Map failed. Sequence stopped.";
+				return false; 
+			}
+		}
+		else {
+			LOG(logWARNING) << "PixTestBareModule:: Please select the BB test mode.";
+			LOG(logINFO) << "PixTestBareModule:: Test stopped.";
+			return false;
+		}
+	}
 	mDelay(1000);
 	PixTest::update();
-
-	//HVOFF
-	fApi->HVoff();
-	LOG(logDEBUG) << "PixTestBareModule::doTestRoc() set HV off";
-
-	//POFF
-	fApi->Poff();
-	LOG(logDEBUG) << "PixTestBareModule::doTestRoc() ROC power off";
+	return true;
 }
 
 // ----------------------------------------------------------------------
 void PixTestBareModule::doTest() {
 	
 	LOG(logINFO) << "PixTestBareModule:: *******************************";
-	LOG(logINFO) << "PixTestBareModule::doTest() start with " << fParNSteps << " test steps.";
+	LOG(logINFO) << "PixTestBareModule::doTest() start with " << fParMaxSteps << " test steps.";
 
-	//HVOFF
-	fApi->HVoff();
-	LOG(logDEBUG) << "PixTestBareModule:: HV off for safety.";
+	fDirectory->cd();
+	bool sequenceEnded = false; //to handle pretest exception
 
-	//check if probes are in contact
-	double minIa = 10; // [mA]
-	bool inContact;
-	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
-	fApi->Pon();
+	//ROC test (only if iA > 10 mA)
+	if (checkIfInContact(1)) {
+		//to do test sequence:
+		sequenceEnded = doRocTests(fParMaxSteps);
+		PixTest::update();
+	}
+
+	PixTest::hvOff();
+	PixTest::update();
+	mDelay(2000);
+	PixTest::powerOff();
+	PixTest::update();
 	mDelay(1000);
-	double ia = fApi->getTBia()*1E3; // [mA]
-	if (ia > minIa) { 
-		LOG(logINFO) << "PixTestBareModule:: contact OK, ia = " << ia << " mA"; 
-		inContact = true;
-	}
-	else {   // loose limit
-		fApi->Poff();
-		LOG(logWARNING) << "PixTestBareModule:: ia < " << minIa << " mA - CHECK PROBES CONTACT.";
-		LOG(logWARNING) << "PixTestBareModule:: ENTER continue OR stop.";
-		bool goodIn = false;
-		inContact = false;
-		do{
-			string input;
-			std::getline(cin, input);
-			string::size_type m1 = input.find(" ");
-			if (m1 != string::npos) {
-				string parameters = input.substr(m1);
-				input = input.substr(0, m1);
-			}
-			std::transform(input.begin(), input.end(), input.begin(), ::tolower);
-			if (!input.compare("continue")) {
-				goodIn = true; 
-				inContact = true;
-				LOG(logINFO) << "PixTestBareModule:: test will continue.";
-				break;
-			}
-			else if (!input.compare("stop")) {
-				goodIn = true;
-				LOG(logINFO) << "PixTestBareModule:: bare module test will be stopped.";
-			}
-			else LOG(logINFO) << "PixTestBareModule:: unvalid input.";
-		} while (!goodIn);
-	}
-	
-	//ROC test
-	if (inContact) { doTestRoc(fParNSteps); }
-		
+
 	//separation
-	LOG(logINFO) << "PixTestBareModule:: HV and LV are off.";
-	LOG(logINFO) << "PixTestBareModule:: tests finished, you can separate.";
+	LOG(logINFO) << "PixTestBareModule:: HV and Power are off.";
+	if(sequenceEnded) LOG(logINFO) << "PixTestBareModule:: Tests finished, now you can separate.";
 
 	LOG(logINFO) << "PixTestBareModule::doTest() done for.";
 }

@@ -32,6 +32,16 @@ def arity(n, m, cs=[]): # n = min number of args, m = max number of args, cs = t
         return __temp2
     return __temp1
 
+def print_data(fullOutput,data,stepsize=1):
+    for idac, dac in enumerate(data):
+        s = "DAC " + str(idac*stepsize) + ": "
+        if fullOutput:
+            for px in dac:
+                s += str(px)
+        else:
+            s += str(len(dac)) + " pixels"
+        print s
+
 def get_possible_filename_completions(text):
     head, tail = os.path.split(text.strip())
     if head == "": #no head
@@ -51,7 +61,7 @@ class PxarConfigFile:
         thisf = open(f)
         try:
             for line in thisf:
-                if not line.startswith("--"):
+                if not line.startswith("--") and not line.startswith("#"):
                     parts = shlex.split(line)
                     if len(parts) == 2:
                         self.config[parts[0].lower()] = parts[1]
@@ -73,7 +83,7 @@ class PxarParametersFile:
         thisf = open(f)
         try:
             for line in thisf:
-                if not line.startswith("--"):
+                if not line.startswith("--") and not line.startswith("#"):
                     parts = shlex.split(line)
                     if len(parts) == 3:
                         # ignore the first part (index/line number)
@@ -116,7 +126,7 @@ def PxarStartup(directory, verbosity):
             ("PG_TOK",0))
     else:
         pg_setup = (
-            ("PG_REST",15),
+            ("PG_RESR",15),
             ("PG_CAL",106),
             ("PG_TRG",0))
 
@@ -159,7 +169,7 @@ def PxarStartup(directory, verbosity):
 
     print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
 
-    api.initDUT(0,config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
+    api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
 
     api.testAllPixels(True)
     print "Now enabled all pixels"

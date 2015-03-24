@@ -8,6 +8,7 @@
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TMath.h>
+#include <TStopwatch.h>
 
 #include "PixTestGainPedestal.hh"
 #include "PixUtil.hh"
@@ -20,7 +21,8 @@ using namespace pxar;
 ClassImp(PixTestGainPedestal)
 
 // ----------------------------------------------------------------------
-PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), fParShowFits(0), fParNtrig(-1)  {
+PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), 
+  fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0)  {
   PixTest::init();
   init(); 
 }
@@ -39,13 +41,23 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
     if (fParameters[i].first == parName) {
       found = true; 
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
-      if (!parName.compare("showfits")) {
-	fParShowFits = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParShowFits  ->" << fParShowFits << "<- from sval = " << sval;
-      }
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig << "<- from sval = " << sval;
+      }
+      if (!parName.compare("showfits")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParShowFits = atoi(sval.c_str()); 
+      }
+      if (!parName.compare("extended")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParExtended = atoi(sval.c_str()); 
+      }
+      if (!parName.compare("dumphists")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParDumpHists = atoi(sval.c_str()); 
       }
       setToolTips();
       break;
@@ -66,20 +78,6 @@ void PixTestGainPedestal::setToolTips() {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::init() {
-
-  fLpoints.clear();
-  fLpoints.push_back(50); 
-  fLpoints.push_back(100); 
-  fLpoints.push_back(150); 
-  fLpoints.push_back(200); 
-  fLpoints.push_back(250); 
-
-  fHpoints.clear();
-  fHpoints.push_back(30); 
-  fHpoints.push_back(50); 
-  fHpoints.push_back(70); 
-  fHpoints.push_back(90); 
-  fHpoints.push_back(200); 
 
   setToolTips(); 
 
@@ -108,6 +106,8 @@ PixTestGainPedestal::~PixTestGainPedestal() {
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::doTest() {
 
+  TStopwatch t;
+
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestGainPedestal::doTest() ntrig = %d", fParNtrig));
@@ -115,6 +115,29 @@ void PixTestGainPedestal::doTest() {
   measure();
   fit();
   saveGainPedestalParameters();
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestGainPedestal::doTest() done, duration: " << seconds << " seconds";
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestGainPedestal::fullTest() {
+
+  TStopwatch t;
+
+  fDirectory->cd();
+  PixTest::update(); 
+  bigBanner(Form("PixTestGainPedestal::fullTest() ntrig = %d", fParNtrig));
+
+  //  fParDumpHists = 1; 
+
+  measure();
+  fit();
+  saveGainPedestalParameters();
+
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestGainPedestal::doTest() done, duration: " << seconds << " seconds";
 }
 
 
@@ -141,28 +164,48 @@ void PixTestGainPedestal::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::measure() {
-  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
+  uint16_t FLAGS = FLAG_FORCE_MASKED;
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
+
+
+  fLpoints.clear();
+  fLpoints.push_back(50); 
+  fLpoints.push_back(100); 
+  fLpoints.push_back(150); 
+  fLpoints.push_back(200); 
+  fLpoints.push_back(250); 
+
+  fHpoints.clear();
+  if (1 == fParExtended) {
+    fHpoints.push_back(10); //new:  70
+    fHpoints.push_back(17); //new: 119
+    fHpoints.push_back(24); //new: 168
+  }
+  fHpoints.push_back(30); 
+  fHpoints.push_back(50); 
+  fHpoints.push_back(70); 
+  fHpoints.push_back(90); 
+  if (1 == fParExtended) {
+    fHpoints.push_back(120); //new
+  }
+  fHpoints.push_back(200); 
+
 
   cacheDacs();
  
-  TH1D *h1(0); 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  string name; 
+
+  shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
+  shist256 *ph;
+  
+  int idx(0);
   fHists.clear();
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    for (unsigned int ix = 0; ix < 52; ++ix) {
-      for (unsigned int iy = 0; iy < 80; ++iy) {
-	name = Form("gainPedestal_c%d_r%d_C%d", ix, iy, rocIds[iroc]); 
-	h1 = bookTH1D(name, name, 1800, 0., 1800.);
-	h1->SetMinimum(0);
-	h1->SetMaximum(260.); 
-	h1->SetNdivisions(506);
-	h1->SetMarkerStyle(20);
-	h1->SetMarkerSize(1.);
-	setTitles(h1, "Vcal [low range]", "PH [ADC]"); 
-	fHists.insert(make_pair(name, h1)); 
-	fHistList.push_back(h1);
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    for (unsigned int ic = 0; ic < 52; ++ic) {
+      for (unsigned int ir = 0; ir < 80; ++ir) {
+	idx = PixUtil::rcr2idx(iroc, ic, ir); 
+	ph = pshistBlock + idx;
+	fHists.push_back(ph); 
       }
     }
   }
@@ -172,9 +215,6 @@ void PixTestGainPedestal::measure() {
 
   // -- first low range 
   fApi->setDAC("ctrlreg", 0);
-
-  //    OutputFile << "Low range:  50 100 150 200 250 " << endl;
-  //    OutputFile << "High range:  30  50  70  90 200 " << endl;
 
   vector<pair<uint8_t, vector<pixel> > > rresult, lresult, hresult; 
   for (unsigned int i = 0; i < fLpoints.size(); ++i) {
@@ -195,7 +235,7 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 
@@ -219,53 +259,52 @@ void PixTestGainPedestal::measure() {
 	LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
 	++cnt;
       }
-      done = (cnt>5) || done;
+      done = (cnt>2) || done;
     }
   }
 
-  double sf(2.), err(0.);
   for (unsigned int i = 0; i < lresult.size(); ++i) {
     int dac = lresult[i].first; 
+    int dacbin(-1); 
+    for (unsigned int v = 0; v < fLpoints.size(); ++v) {
+      if (fLpoints[v] == dac) {
+	dacbin = v; 
+	break;
+      }
+    }
     vector<pixel> vpix = lresult[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
-      int roc = vpix[ipx].roc_id;
-      int ic = vpix[ipx].column;
-      int ir = vpix[ipx].row;
-      name = Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc); 
-      h1 = fHists[name];
-      if (h1) {
-	h1->SetBinContent(dac+1, vpix[ipx].getValue());
-	h1->SetBinError(dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
-      } else {
-	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
-      }
+      int roc = vpix[ipx].roc();
+      int ic = vpix[ipx].column();
+      int ir = vpix[ipx].row();
+
+      double val = vpix[ipx].value();
+      int idx = PixUtil::rcr2idx(getIdxFromId(roc), ic, ir);
+      if (idx > -1) fHists[idx]->fill(dacbin+1, val);
+
     } 
   } 
 
-  int scaleLo(7); 
   for (unsigned int i = 0; i < hresult.size(); ++i) {
     int dac = hresult[i].first; 
+    int dacbin(-1); 
+    for (unsigned int v = 0; v < fHpoints.size(); ++v) {
+      if (fHpoints[v] == dac) {
+	dacbin = 100 + v; 
+	break;
+      }
+    }
     vector<pixel> vpix = hresult[i].second;
     for (unsigned int ipx = 0; ipx < vpix.size(); ++ipx) {
-      int roc = vpix[ipx].roc_id;
-      int ic = vpix[ipx].column;
-      int ir = vpix[ipx].row;
-      name = Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc); 
-      h1 = fHists[name];
-      if (h1) {
-	h1->SetBinContent(scaleLo*dac+1, vpix[ipx].getValue());
-	err = vpix[ipx].getVariance();
-	h1->SetBinError(scaleLo*dac+1, (err>1?sf*err:sf)); //FIXME using variance as error
-      } else {
-	LOG(logDEBUG) << " histogram " << Form("gainPedestal_c%d_r%d_C%d", ic, ir, roc) << " not found";
-      }
+      int roc = vpix[ipx].roc();
+      int ic = vpix[ipx].column();
+      int ir = vpix[ipx].row();
+      double val = vpix[ipx].value();
+      int idx = PixUtil::rcr2idx(getIdxFromId(roc), ic, ir);
+      if (idx > -1) fHists[idx]->fill(dacbin+1, val);
+
     } 
   } 
-
-  gStyle->SetOptStat(0); 
-  gROOT->ForceStyle();
-  h1->Draw(); 
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
 
   printHistograms();
 
@@ -282,15 +321,23 @@ void PixTestGainPedestal::fit() {
   PixTest::update(); 
   fDirectory->cd();
 
+  string name = Form("gainPedestal_c%d_r%d_C%d", 0, 0, 0); 
+  TH1D *h1 = bookTH1D(name, name, 1800, 0., 1800.);
+  h1->SetMinimum(0);
+  h1->SetMaximum(260.); 
+  h1->SetNdivisions(506);
+  h1->SetMarkerStyle(20);
+  h1->SetMarkerSize(1.);
 
-  TH1D *h1 = (*fHists.begin()).second; 
-  TF1 *f = fPIF->gpTanH(h1); 
+  TF1 *f(0); 
 
   vector<vector<gainPedestalParameters> > v;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  gainPedestalParameters a; a.p0 = a.p1 = a.p2 = a.p3 = 0.;
+  gainPedestalParameters a; 
+  a.p0 = a.p1 = a.p2 = a.p3 = 0.;
   TH1D* h(0);
   vector<TH1D*> p1list; 
+  double fracErr(0.05); 
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
     LOG(logDEBUG) << "Create hist " << Form("gainPedestalP1_C%d", rocIds[i]); 
     h = bookTH1D(Form("gainPedestalP1_C%d", i), Form("gainPedestalP1_C%d", rocIds[i]), 100, 0., 2.); 
@@ -303,21 +350,43 @@ void PixTestGainPedestal::fit() {
     v.push_back(vroc); 
   }
   
-  map<string, TH1D*>::iterator hend = fHists.end(); 
-  int ic, ir, iroc, idx; 
-  for (map<string, TH1D*>::iterator i = fHists.begin(); i != hend; ++i) {
-    h1 = (*i).second; 
-    if (h1->GetEntries() < 1) continue;
-    string h1name = h1->GetName();
+  int iroc(0), ic(0), ir(0); 
+  for (unsigned int i = 0; i < fHists.size(); ++i) {
+
+    h1->Reset();
+    for (int ib = 0; ib < static_cast<int>(fLpoints.size()); ++ib) {
+      h1->SetBinContent(fLpoints[ib]+1, fHists[i]->get(ib+1));
+      h1->SetBinError(fLpoints[ib]+1, fracErr*fHists[i]->get(ib+1)); 
+    }
+    for (int ib = 0; ib < static_cast<int>(fHpoints.size()); ++ib) {
+      h1->SetBinContent(7*fHpoints[ib]+1, fHists[i]->get(100+ib+1));
+      h1->SetBinError(7*fHpoints[ib]+1, fracErr*fHists[i]->get(100+ib+1)); 
+    }
+    
+    f = fPIF->gpTanH(h1); 
+    if (h1->Integral() < 1) continue;
+    PixUtil::idx2rcr(i, iroc, ic, ir);
     if (fParShowFits) {
-      LOG(logDEBUG) << h1name; 
-      h1->Fit(f, "r");
+      TH1D *hc = (TH1D*)h1->Clone(Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc));
+      hc->SetTitle(Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)); 
+      string hcname = hc->GetName();
+      LOG(logDEBUG) << hcname; 
+      hc->Fit(f, "r");
+      fHistList.push_back(hc); 
       PixTest::update(); 
     } else {
+      //      cout << Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc) << endl;
+      if (fParDumpHists) {
+	h1->SetTitle(Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)); 
+	h1->SetName(Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)); 
+      }
       h1->Fit(f, "rq");
+      if (fParDumpHists) {
+	h1->SetDirectory(fDirectory); 
+	h1->Write();
+      }
     }
-    sscanf(h1name.c_str(), "gainPedestal_c%d_r%d_C%d", &ic, &ir, &iroc); 
-    idx = ic*80 + ir; 
+    int idx = ic*80 + ir; 
     v[iroc][idx].p0 = f->GetParameter(0); 
     v[iroc][idx].p1 = f->GetParameter(1); 
     v[iroc][idx].p2 = f->GetParameter(2); 
@@ -353,20 +422,15 @@ void PixTestGainPedestal::saveGainPedestalParameters() {
   fPixSetup->getConfigParameters()->writeGainPedestalParameters();
 }
 
-// ----------------------------------------------------------------------
-void PixTestGainPedestal::output4moreweb() {
-  // -- nothing required here
-}
-
 
 // ----------------------------------------------------------------------
 void PixTestGainPedestal::printHistograms() {
 
   ofstream OutputFile;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  unsigned nRocs = rocIds.size(); 
+  int nRocs = static_cast<int>(rocIds.size()); 
 
-  for (unsigned int iroc = 0; iroc < nRocs; ++iroc) {
+  for (int iroc = 0; iroc < nRocs; ++iroc) {
 
     OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), 
 			 fPixSetup->getConfigParameters()->getGainPedestalFileName().c_str(), 
@@ -381,25 +445,27 @@ void PixTestGainPedestal::printHistograms() {
     OutputFile << endl;
     OutputFile << endl;
 
-    TH1D *h1(0); 
-    for (int ic = 0; ic < 52; ++ic) {
-      for (int ir = 0; ir < 80; ++ir) {
-	h1 = fHists[Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)];
-
-	string h1name(h1->GetName()), line(""); 
-
-	for (unsigned int i = 0; i < fLpoints.size(); ++i) {
-	  line += Form(" %3d", static_cast<int>(h1->GetBinContent(fLpoints[i]+1))); 
-	}
-	
-	for (unsigned int i = 0; i < fHpoints.size(); ++i) {
-	  line += Form(" %3d", static_cast<int>(h1->GetBinContent(7*fHpoints[i]+1))); 
-	}
-	
-	line += Form("    Pix %2d %2d", ic, ir); 
-	OutputFile << line << endl;
+    int roc(0), ic(0), ir(0); 
+    string line(""); 
+    for (int i = iroc*4160; i < (iroc+1)*4160; ++i) {
+      PixUtil::idx2rcr(i, roc, ic, ir);
+      if (roc != iroc) {
+	LOG(logDEBUG) << "BIG CONFUSION?! iroc = " << iroc << " roc = " << roc;
       }
+
+      line.clear();
+      for (int ib = 0; ib < static_cast<int>(fLpoints.size()); ++ib) {
+	line += Form(" %3d", static_cast<int>(fHists[i]->get(ib+1))); 
+      }
+      
+      for (int ib = 0; ib < static_cast<int>(fHpoints.size()); ++ib) {
+	line += Form(" %3d", static_cast<int>(fHists[i]->get(100+ib+1))); 
+      }
+      
+      line += Form("    Pix %2d %2d", ic, ir); 
+      OutputFile << line << endl;
     }
+
     OutputFile.close();
   }
 }

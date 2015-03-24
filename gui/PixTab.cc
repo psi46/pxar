@@ -117,7 +117,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
     te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
-    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); // FIXME does not work?
+    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); 
     te->Connect("TabPressed()", "PixTab", this, "moveDown()"); 
 
     tset = new TGTextButton(hFrame, "Set", cnt);
@@ -139,6 +139,16 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   next->SetToolTipText("display next histogram in this test's list");
   next->Connect("Clicked()", "PixTab", this, "nextHistogram()");
   hFrame->AddFrame(next, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  TGTextButton * previousV = new TGTextButton(hFrame, "--V");
+  previousV->SetToolTipText("go to previous version of same histogram");
+  previousV->Connect("Clicked()", "PixTab", this, "previousHistogramV()");
+  hFrame->AddFrame(previousV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
+
+  TGTextButton * nextV = new TGTextButton(hFrame, "++V");
+  nextV->SetToolTipText("go to next version of same histogram");
+  nextV->Connect("Clicked()", "PixTab", this, "nextHistogramV()");
+  hFrame->AddFrame(nextV, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextButton * update = new TGTextButton(hFrame, "Update");
   update->SetToolTipText("update canvas");
@@ -428,6 +438,35 @@ void PixTab::previousHistogram() {
       //      cout << "h: " << h->GetName() << " option: " << option << endl;
       h->Draw(option.c_str());
     }
+    update(); 
+  } else {
+    LOG(logDEBUG)  << "no previous histogram found ";
+  }
+}
+
+
+// ----------------------------------------------------------------------
+void PixTab::nextHistogramV() {
+  TH1 *h = fTest->nextHistV(); 
+  if (h) {
+    string option = fTest->getHistOption(h);
+    if (string::npos == option.find("same")) clearCanvas();
+    h->Draw(option.c_str());    
+    update(); 
+  } else {
+    LOG(logDEBUG) << "no next histogram found ";
+  }
+
+}
+
+
+// ----------------------------------------------------------------------
+void PixTab::previousHistogramV() {
+  TH1 *h = fTest->previousHistV(); 
+  if (h) {
+    string option = fTest->getHistOption(h);
+    if (string::npos == option.find("same")) clearCanvas();
+    h->Draw(option.c_str());
     update(); 
   } else {
     LOG(logDEBUG)  << "no previous histogram found ";

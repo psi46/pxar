@@ -19,39 +19,35 @@ public:
 
   void runCommand(std::string command); 
   void doTest();
+  void doCalDelScan();
   void doXPixelAlive();
   void doRunDaq(); 
-  void maskHotPixels(); 
+  void doRunMaskHotPixels();
+  void doStop();
+
+  void doHitMap(int nseconds, std::vector<TH2D*>);
+  void fillMap(std::vector<TH2D*>);
  
-  bool setTrgFrequency(uint8_t TrgTkDel);
-  void finalCleanup();
-  void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
-
-  void readData();
-  void doHitMap(int nseconds = 1);
-
-  double meanHit(TH2D*); 
-  double noiseLevel(TH2D*); 
-  int    countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
-
 private:
 
-  int      fParTriggerFrequency;
-  int      fParRunSeconds; 
-  bool     fParFillTree;
-  bool	   fParDelayTBM;
-  uint16_t fParNtrig; 
-  int      fParVcal; 
+  int           fParTriggerFrequency;
+  int           fParRunSeconds; 
+  int           fParTriggerDelay; 
+  bool          fParFillTree;
+  bool	        fParDelayTBM;
+  uint16_t      fParNtrig; 
+  int           fParVcal; 
+
+  std::string   fParMaskFileName; 
+  int           fParSaveMaskedPixels; 
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
 
-  bool    fDaq_loop;
+  bool          fDaq_loop;
   
-  std::vector<std::pair<std::string, uint8_t> > fPg_setup;
-
   std::vector<TH2D*> fHitMap;
-
+  
   ClassDef(PixTestHighRate, 1)
 
 };

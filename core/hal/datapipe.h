@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "datatypes.h"
+#include "constants.h"
 #include "rpc_calls.h"
 
 namespace pxar {
@@ -24,8 +25,9 @@ namespace pxar {
     // The inheritor must define ReadLast and Read:
     virtual T ReadLast() = 0;
     virtual T Read() = 0;
-    virtual bool ReadState() = 0;
     virtual uint8_t ReadChannel() = 0;
+    virtual uint8_t ReadTokenChainLength() = 0;
+    virtual uint8_t ReadEnvelopeType() = 0;
     virtual uint8_t ReadDeviceType() = 0;
   public:
     virtual ~dataSource() {}
@@ -41,8 +43,9 @@ namespace pxar {
     ~nullSource() {}
     T ReadLast() { throw dpNotConnected(); }
     T Read()     { return ReadLast();     }
-    bool ReadState() { return false; }
     uint8_t ReadChannel() { throw dpNotConnected(); }
+    uint8_t ReadTokenChainLength() { throw dpNotConnected(); }
+    uint8_t ReadEnvelopeType() { throw dpNotConnected(); }
     uint8_t ReadDeviceType() { throw dpNotConnected(); }
     template <class TO> friend class dataSink;
   };
@@ -59,8 +62,9 @@ namespace pxar {
   dataSink() : src(&null) {}
     T GetLast() { return src->ReadLast(); }
     T Get() { return src->Read(); }
-    bool GetState() { return src->ReadState(); }
     uint8_t GetChannel() { return src->ReadChannel(); }
+    uint8_t GetTokenChainLength() { return src->ReadTokenChainLength(); }
+    uint8_t GetEnvelopeType() { return src->ReadEnvelopeType(); }
     uint8_t GetDeviceType() { return src->ReadDeviceType(); }
     void GetAll() { while (true) Get(); }
     template <class TI, class TO> friend void operator >> (dataSource<TI> &, dataSink<TO> &); 
@@ -106,10 +110,11 @@ namespace pxar {
     // --- DTB control/state
     CTestboard * tb;
     uint8_t channel;
+    uint8_t chainlength;
     uint32_t dtbRemainingSize;
     uint8_t  dtbState;
     bool connected;
-    bool tbm_present;
+    uint8_t envelopetype;
     uint8_t devicetype;
 
     // --- data buffer
@@ -127,21 +132,25 @@ namespace pxar {
       if(!connected) throw dpNotConnected();
       return lastSample;
     }
-    bool ReadState() {
-      if(!connected) throw dpNotConnected();
-      return tbm_present;
-    }
     uint8_t ReadChannel() {
       if(!connected) throw dpNotConnected();
       return channel;
+    }
+    uint8_t ReadTokenChainLength() {
+      if(!connected) throw dpNotConnected();
+      return chainlength;
+    }
+    uint8_t ReadEnvelopeType() {
+      if(!connected) throw dpNotConnected();
+      return envelopetype;
     }
     uint8_t ReadDeviceType() {
       if(!connected) throw dpNotConnected();
       return devicetype;
     }
   public:
-  dtbSource(CTestboard * src, uint8_t daqchannel, bool module, uint8_t roctype, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), connected(true), tbm_present(module), devicetype(roctype), lastSample(0x4000), pos(0) {}
+  dtbSource(CTestboard * src, uint8_t daqchannel, uint8_t tokenChainLength, uint8_t tbmtype, uint8_t roctype, bool endlessStream)
+    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), chainlength(tokenChainLength), connected(true), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0) {}
   dtbSource() : connected(false) {}
     bool isConnected() { return connected; }
 
@@ -155,37 +164,71 @@ namespace pxar {
   class dtbEventSplitter : public dataPipe<uint16_t, rawEvent*> {
     rawEvent record;
     rawEvent* Read() {
-      if(GetState()) return SplitDeser400();
-      else return SplitDeser160();
+      if(GetEnvelopeType() == TBM_NONE) return SplitDeser160();
+      else if(GetEnvelopeType() == TBM_EMU) return SplitSoftTBM();
+      else return SplitDeser400();
     }
     rawEvent* ReadLast() { return &record; }
-    bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
+    uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
+    uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
     // The splitter routines:
     rawEvent* SplitDeser160();
     rawEvent* SplitDeser400();
+    rawEvent* SplitSoftTBM();
 
     bool nextStartDetected;
   public:
-    dtbEventSplitter() {}
+  dtbEventSplitter() :
+    nextStartDetected(false) {}
   };
 
   // DTB data decoding class
   class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
     Event roc_Event;
     Event* Read() {
-      if(GetState()) return DecodeDeser400();
-      else return DecodeDeser160();
+      if(GetEnvelopeType() == TBM_NONE) {
+	// Decode analog ROC data:
+	if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(); }
+	// Decode digital ROC data:
+	else { return DecodeDeser160(); }
+      }
+      //else if(GetEnvelopeType() == TBM_EMU) return DecodeSoftTBM();
+      else return DecodeDeser400();
     }
     Event* ReadLast() { return &roc_Event; }
-    bool ReadState() { return GetState(); }
     uint8_t ReadChannel() { return GetChannel(); }
+    uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
+    uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
+    Event* DecodeAnalog();
     Event* DecodeDeser160();
     Event* DecodeDeser400();
+    statistics decodingStats;
+
+    // Readback decoding:
+    void evalReadback(uint8_t roc, uint16_t val);
+    std::vector<uint16_t> count;
+    std::vector<uint16_t> shiftReg;
+    std::vector<std::vector<uint16_t> > readback;
+
+    // Error checking:
+    void CheckInvalidWord(uint16_t v);
+    void CheckEventID(uint16_t v);
+    int16_t eventID;
+
+    // Analog level averaging:
+    int32_t ultrablack;
+    int32_t black;
+
+  public:
+  dtbEventDecoder() : decodingStats(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff) {};
+    void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
+    statistics getStatistics();
+    std::vector<std::vector<uint16_t> > getReadback();
   };
 }
 #endif

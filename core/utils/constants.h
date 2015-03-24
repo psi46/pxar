@@ -18,11 +18,12 @@ namespace pxar {
 
 
 // --- TBM Types ---------------------------------------------------------------
-// FIXME just an example...
-#define TBM_08             0x01
-#define TBM_08A            0x02
-#define TBM_08B            0x03
-#define TBM_09             0x04
+#define TBM_NONE           0x20
+#define TBM_EMU            0x21
+#define TBM_08             0x22
+#define TBM_08A            0x23
+#define TBM_08B            0x24
+#define TBM_09             0x25
 
 
 // --- TBM Register -----------------------------------------------------------
@@ -44,13 +45,14 @@ namespace pxar {
 #define MOD_NUMROCS 16
 
 // --- ROC Types ---------------------------------------------------------------
-#define ROC_PSI46V2        0x01
-#define ROC_PSI46XDB       0x02
-#define ROC_PSI46DIG       0x03
-#define ROC_PSI46DIG_TRIG  0x04
-#define ROC_PSI46DIGV2_B   0x05
-#define ROC_PSI46DIGV2     0x06
-#define ROC_PSI46DIGV21    0x07
+#define ROC_PSI46V2           0x01
+#define ROC_PSI46XDB          0x02
+#define ROC_PSI46DIG          0x03
+#define ROC_PSI46DIG_TRIG     0x04
+#define ROC_PSI46DIGV2_B      0x05
+#define ROC_PSI46DIGV2        0x06
+#define ROC_PSI46DIGV21       0x07
+#define ROC_PSI46DIGV21RESPIN 0x08
 
 
 // --- ROC DACs ---------------------------------------------------------------
@@ -80,6 +82,7 @@ namespace pxar {
 #define ROC_DAC_VsumCol    0x18
 #define ROC_DAC_Vcal       0x19
 #define ROC_DAC_CalDel     0x1A
+#define ROC_DAC_RangeTemp  0x1B
 #define ROC_DAC_CtrlReg    0xFD
 #define ROC_DAC_WBC        0xFE
 #define ROC_DAC_Readback   0xFF
@@ -90,13 +93,21 @@ namespace pxar {
 #define SIG_CTR 1
 #define SIG_SDA 2
 #define SIG_TIN 3
+#define SIG_RDA_TOUT 4
 
+#define SIG_ADC_TINDELAY 0xF7
+#define SIG_ADC_TOUTDELAY 0xF8
+#define SIG_ADC_TIMEOUT 0xF9
+#define SIG_TRIGGER_TIMEOUT 0xFA
+#define SIG_TRIGGER_LATENCY 0xFB
+#define SIG_LEVEL 0xFC
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
 #define SIG_DESER160PHASE 0xFE
 
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
 #define SIG_MODE_HI      2
+#define SIG_MODE_RNDM    3
 
 
 // --- Testboard Clock / Timing -----------------------------------------------
@@ -115,6 +126,23 @@ namespace pxar {
 #define MHZ_10     2
 #define MHZ_20     1
 #define MHZ_40     0
+
+// --- Trigger settings -------------------------------------------------------
+#define TRG_SEL_ASYNC      0x100
+#define TRG_SEL_SYNC       0x080
+#define TRG_SEL_SINGLE     0x040
+#define TRG_SEL_GEN        0x020
+#define TRG_SEL_PG         0x010
+#define TRG_SEL_SINGLE_DIR 0x008
+#define TRG_SEL_PG_DIR     0x004
+#define TRG_SEL_CHAIN      0x002
+#define TRG_SEL_SYNC_OUT   0x001
+
+#define TRG_SEND_SYN   1
+#define TRG_SEND_TRG   2
+#define TRG_SEND_RSR   4
+#define TRG_SEND_RST   8
+#define TRG_SEND_CAL  16
 
 
 // --- Testboard digital signal probe -----------------------------------------
@@ -142,6 +170,42 @@ namespace pxar {
 #define PROBE_ADC_SGATE 23
 #define PROBE_ADC_S 24
 
+#define PROBE_TBM0_GATE 100
+#define PROBE_TBM0_DATA 101
+#define PROBE_TBM0_TBMHDR 102
+#define PROBE_TBM0_ROCHDR 103
+#define PROBE_TBM0_TBMTRL 104
+
+#define PROBE_TBM1_GATE 105
+#define PROBE_TBM1_DATA 106
+#define PROBE_TBM1_TBMHDR 107
+#define PROBE_TBM1_ROCHDR 108
+#define PROBE_TBM1_TBMTRL 109
+
+#define PROBE_TBM2_GATE 110
+#define PROBE_TBM2_DATA 111
+#define PROBE_TBM2_TBMHDR 112
+#define PROBE_TBM2_ROCHDR 113
+#define PROBE_TBM2_TBMTRL 114
+
+#define PROBE_TBM3_GATE 115
+#define PROBE_TBM3_DATA 116
+#define PROBE_TBM3_TBMHDR 117
+#define PROBE_TBM3_ROCHDR 118
+#define PROBE_TBM3_TBMTRL 119
+
+#define PROBE_TBM4_GATE 120
+#define PROBE_TBM4_DATA 121
+#define PROBE_TBM4_TBMHDR 122
+#define PROBE_TBM4_ROCHDR 123
+#define PROBE_TBM4_TBMTRL 124
+
+#define PROBE_TBM5_GATE 125
+#define PROBE_TBM5_DATA 126
+#define PROBE_TBM5_TBMHDR 127
+#define PROBE_TBM5_ROCHDR 128
+#define PROBE_TBM5_TBMTRL 129
+
 
 // --- Testboard analog signal probe ------------------------------------------
 #define PROBEA_TIN     0
@@ -160,7 +224,6 @@ namespace pxar {
 
 
 // --- Testboard pulse pattern generator --------------------------------------
-#define PG_NONE  0x0000
 #define PG_TOK   0x0100
 #define PG_TRG   0x0200
 #define PG_CAL   0x0400

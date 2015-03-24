@@ -14,9 +14,13 @@ using namespace pxar;
 hal::hal(std::string name) :
   _initialized(false),
   _compatible(false),
-  tbmtype(0x00),
+  m_tbmtype(TBM_NONE),
+  m_adctimeout(300),
+  m_tindelay(13),
+  m_toutdelay(8),
   deser160phase(4),
-  rocType(0)
+  rocType(0),
+  _currentTrgSrc(TRG_SEL_PG_DIR)
 {
 
   // Get a new CTestboard class instance:
@@ -130,6 +134,16 @@ void hal::setTestboardPower(double va, double vd, double ia, double id) {
 
 void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
 
+  // Default signal level: 15 (highest)
+  uint8_t signal_level = 15;
+  // Find the signal level entry (if one):
+  std::map<uint8_t,uint8_t>::iterator lvl = sig_delays.find(SIG_LEVEL);
+  if(lvl != sig_delays.end()) {
+    signal_level = lvl->second;
+    sig_delays.erase(lvl);
+  }
+  LOG(logDEBUGHAL) << "Setting all DTB signal levels to " << static_cast<int>(signal_level);
+
   // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
@@ -143,11 +157,31 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
+    else if(sigIt->first == SIG_TRIGGER_LATENCY) {
+      LOG(logDEBUGHAL) << "Set latency for external triggers to " << static_cast<int>(sigIt->second) <<" clk";
+      _testboard->Trigger_Delay(sigIt->second);
+    }
+    else if(sigIt->first == SIG_TRIGGER_TIMEOUT) {
+      LOG(logDEBUGHAL) << "Set token out timeout for external triggers to " << static_cast<int>(sigIt->second) <<" clk";
+      _testboard->Trigger_Timeout(sigIt->second);
+    }
+    else if(sigIt->first == SIG_RDA_TOUT) {
+      LOG(logDEBUGHAL) << "set TOUT / RDA delay to value " << static_cast<int>(sigIt->second);
+      _testboard->Sig_SetRdaToutDelay(sigIt->second);
+    }
+    else if(sigIt->first == SIG_ADC_TINDELAY) {
+      LOG(logDEBUGHAL) << "caching ADC Token In delay as " << static_cast<int>(sigIt->second);
+      m_tindelay = sigIt->second;
+    }
+    else if(sigIt->first == SIG_ADC_TOUTDELAY) {
+      LOG(logDEBUGHAL) << "caching ADC Token Out delay as " << static_cast<int>(sigIt->second);
+      m_toutdelay = sigIt->second;
+    }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
-      // Also set the signal level, all levels default to 15 (highest) for now:
-      _testboard->Sig_SetLevel(sigIt->first, 15);
+      // Also set the signal level:
+      _testboard->Sig_SetLevel(sigIt->first, signal_level);
     }
   }
   _testboard->Flush();
@@ -247,7 +281,7 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector) {
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
   // FIXME
-  tbmtype = type;
+  m_tbmtype = type;
 
   // FIXME Beat: 31 is default hub address for the new modules:
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
@@ -259,6 +293,11 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector) {
   LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
 		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
   tbmSetRegs(regVector);
+}
+
+void hal::setTBMType(uint8_t type) {
+  LOG(logDEBUGHAL) << "Updating TBM type to 0x" << std::hex << type << std::dec << ".";
+  m_tbmtype = type;
 }
 
 void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacVector) {
@@ -331,75 +370,82 @@ bool hal::CheckCompatibility() {
   return true;
 }
 
-bool hal::FindDTB(std::string &usbId) {
+bool hal::FindDTB(std::string &rpcId) {
 
-  // Find attached USB devices that match the DTB naming scheme:
-  std::string name;
-  std::vector<std::string> devList;
-  unsigned int nDev;
-  unsigned int nr;
+  // Try to access interfaces:
+  uint32_t interfaceList = _testboard->GetInterfaceListSize();
+  if(interfaceList == 0) {
+    LOG(logCRITICAL) << "Could not find any interface.";
+    throw UsbConnectionError("Could not find any interface.");
+  }
+  else { LOG(logDEBUGHAL) << "Found " << interfaceList << " interfaces."; }
 
-  try {
-    if (!_testboard->EnumFirst(nDev)) throw int(1);
-    for (nr=0; nr<nDev; nr++)	{
-      if (!_testboard->EnumNext(name)) continue;
-      if (name.size() < 4) continue;
-      if (name.compare(0, 4, "DTB_") == 0) devList.push_back(name);
+  // Find attached USB and/or ETH devices that match the DTB naming scheme:
+  std::vector<std::pair<std::string, std::string> > deviceList = _testboard->GetDeviceList();
+
+  // We have no DTBs at all:
+  if(deviceList.empty()) {
+    LOG(logCRITICAL) << "Could not find any connected DTB.";
+    throw UsbConnectionError("Could not find any connected DTB.");
+  }
+  else { LOG(logDEBUGHAL) << "Found " << deviceList.size() << " connected DTBs."; }
+
+  // We have one DTB, check if we can use it:
+  if (deviceList.size() == 1) {
+    if(rpcId == "*") { rpcId = deviceList.front().second; }
+    else if(rpcId != deviceList.front().second) {
+      LOG(logCRITICAL) << "Could not find DTB \"" << rpcId << "\".";
+      throw UsbConnectionError("Could not find DTB " + rpcId);
     }
-  }
-  catch (int e) {
-    std::stringstream estr;
-    estr << e;
-    switch (e) {
-    case 1: 
-      LOG(logCRITICAL) << "Cannot access the USB driver"; 
-      throw UsbConnectionError("Cannot access the USB driver");
-      break;
-    default:
-      throw UsbConnectionError("Couldn't open connection, received error number " + estr.str());
-      break;
-    }
-  }
-
-  if (devList.size() == 0) {
-    LOG(logCRITICAL) << "No DTB connected.";
-    throw UsbConnectionError("No DTB connected.");
-  }
-
-  if (devList.size() == 1) {
-    usbId = devList[0];
+    _testboard->SelectInterface(deviceList.front().first);
     return true;
   }
 
+  // We have more than one DTB - check if selected DTB is among connected:
+  if(rpcId != "*") {
+    for(std::vector<std::pair<std::string,std::string> >::iterator dev = deviceList.begin(); dev != deviceList.end(); dev++) {
+      if(rpcId == dev->second) {
+	LOG(logINFO) << "Found DTB " << rpcId;
+	_testboard->SelectInterface(dev->first);
+	return true;
+      }
+    }
+  }
+
   // If more than 1 connected device list them
-  LOG(logINFO) << "\nConnected DTBs:\n";
-  for (nr=0; nr<devList.size(); nr++) {
-    LOG(logINFO) << nr << ":" << devList[nr];
-    if (_testboard->Open(devList[nr], false)) {
-      try {
-	unsigned int bid = _testboard->GetBoardId();
-	LOG(logINFO) << "  BID=" << bid;
+  LOG(logINFO) << "Connected DTBs:";
+  for(std::vector<std::pair<std::string,std::string> >::iterator dev = deviceList.begin(); dev != deviceList.end(); dev++) {
+    LOG(logINFO) << (dev-deviceList.begin()) << ": " << dev->second << " on " << dev->first;
+    _testboard->SelectInterface(dev->first);
+    if(_testboard->Open(dev->second, false)) {
+      try { LOG(logINFO) << "BID = " << _testboard->GetBoardId(); }
+      catch (CRpcError &e) {
+	LOG(logERROR) << "Problem: ";
+	e.What();
       }
       catch (...) {
-	LOG(logERROR) << "  Not identifiable\n";
+	LOG(logERROR) << "Not identifiable";
       }
       _testboard->Close();
     }
-    else LOG(logWARNING) << " - in use\n";
+    else LOG(logWARNING) << "-- in use";
+    _testboard->ClearInterface();
   }
 
-  LOG(logINFO) << "Please choose DTB (0-" << (nDev-1) << "): ";
+  LOG(logINFO) << "Please choose DTB (0-" << (deviceList.size()-1) << "): ";
+  uint32_t nr = 0;
   char choice[8];
   if(fgets(choice, 8, stdin) == NULL) return false;
   sscanf (choice, "%ud", &nr);
-  if (nr >= devList.size()) {
+  if (nr >= deviceList.size()) {
     nr = 0;
     LOG(logCRITICAL) << "No DTB opened";
     throw UsbConnectionError("No DTB opened.");
   }
 
   // Return the selected DTB's USB id as reference string:
-  usbId = devList[nr];
+  rpcId = deviceList.at(nr).second;
+  _testboard->SelectInterface(deviceList.at(nr).first);
   return true;
 }
 
@@ -448,16 +494,41 @@ void hal::setTBvd(double VD) {
   _testboard->_SetVD(uint16_t(VD*1000));
 }
 
+void hal::setHubId(uint8_t hubid) {
+  LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
+  hubId = hubid;
+}
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {
 
   // Make sure we are writing to the correct ROC by setting the I2C address:
   _testboard->roc_I2cAddr(roci2c);
 
+  // Check if WBC has been updated:
+  bool is_wbc = false;
+
+  // Check if one of the DACs to be set is RangeTemp and shift it to the end:
+  std::map<uint8_t,uint8_t>::iterator rangetemp = dacPairs.end();
+
   // Iterate over all DAC id/value pairs and set the DAC
   for(std::map< uint8_t,uint8_t >::iterator it = dacPairs.begin(); it != dacPairs.end(); ++it) {
+    if(it->first == ROC_DAC_RangeTemp) { rangetemp = it; continue; }
+
     LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(it->first) << " to " << static_cast<int>(it->second);
     _testboard->roc_SetDAC(it->first,it->second);
+    if(it->first == ROC_DAC_WBC) { is_wbc = true; }
+  }
+
+  // Check if RangeTemp has been omitted and set it now - this allows to read its value via lastDAC:
+  if(rangetemp != dacPairs.end()) {
+    LOG(logDEBUGHAL) << "Set DAC" << static_cast<int>(rangetemp->first) << " to " << static_cast<int>(rangetemp->second);
+    _testboard->roc_SetDAC(rangetemp->first,rangetemp->second);
+  }
+
+  // Make sure to issue a ROC Reset after WBC has been programmed:
+  if(is_wbc) {
+    LOG(logDEBUGHAL) << "WBC has been programmed - sending a ROC Reset command.";
+    daqTriggerSingleSignal(TRG_SEND_RSR);
   }
 
   // Send all queued commands to the testboard:
@@ -475,6 +546,12 @@ bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
 		   << ": Set DAC" << static_cast<int>(dacId) << " to " << static_cast<int>(dacValue);
   _testboard->roc_SetDAC(dacId,dacValue);
   _testboard->Flush();
+
+  // Make sure to issue a ROC Reset after the DAc WBC has been programmed:
+  if(dacId == ROC_DAC_WBC) {
+    LOG(logDEBUGHAL) << "WBC has been programmed - sending a ROC Reset command.";
+    daqTriggerSingleSignal(TRG_SEND_RSR);
+  }
   return true;
 }
 
@@ -527,10 +604,10 @@ void hal::SetupTrimValues(uint8_t roci2c, std::vector<pixelConfig> pixels) {
 
   // Write the information from the pixel configs:
   for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-    size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
+    size_t position = pxIt->column()*ROC_NUMROWS + pxIt->row();
     // trim values larger than 15 are interpreted as masked:
-    if(pxIt->mask) trim[position] = 20;
-    else trim[position] = pxIt->trim;
+    if(pxIt->mask()) trim[position] = 20;
+    else trim[position] = pxIt->trim();
   }
 
   LOG(logDEBUGHAL) << "Updating NIOS trimming & masking configuration for ROC with I2C address " 
@@ -560,9 +637,9 @@ void hal::RocSetMask(uint8_t roci2c, bool mask, std::vector<pixelConfig> pixels)
     
     // Write the information from the pixel configs:
     for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
-      size_t position = pxIt->column*ROC_NUMROWS + pxIt->row;
-      if(pxIt->mask) trim[position] = -1;
-      else trim[position] = pxIt->trim;
+      size_t position = pxIt->column()*ROC_NUMROWS + pxIt->row();
+      if(pxIt->mask()) trim[position] = -1;
+      else trim[position] = pxIt->trim();
     }
 
     // We really want to program that full thing with correct mask/trim bits:
@@ -608,11 +685,11 @@ void hal::RocClearCalibrate(uint8_t roci2c) {
  _testboard->roc_ClrCal();
 }
 
-void hal::estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t tbmtype) {
+void hal::estimateDataVolume(uint32_t events, uint8_t nROCs) {
 
   uint32_t nSamples = 0;
   // DESER400: header 3 words, pixel 6 words
-  if(tbmtype != 0x00) { nSamples = events*nROCs*(3+6); }
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { nSamples = events*nROCs*(3+6); }
   // DESER160: header 1 word, pixel 2 words
   else { nSamples = events*nROCs*(1+2); }
 
@@ -636,10 +713,10 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -652,9 +729,16 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
 
     done = _testboard->LoopMultiRocAllPixelsCalibrate(roci2cs, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -688,10 +772,10 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 		   << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
-  estimateDataVolume(nTriggers, roci2cs.size(), tbmtype);
+  estimateDataVolume(nTriggers, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -704,9 +788,16 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 
     done = _testboard->LoopMultiRocOnePixelCalibrate(roci2cs, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -739,10 +830,10 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(roci2c) << ".";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -754,13 +845,17 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
     tmpdata.clear();
 
     done = _testboard->LoopSingleRocAllPixelsCalibrate(roci2c, nTriggers, flags);
-    uint32_t words = daqBufferStatus();
-    LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << words << " words...";
-    timer t2;
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << "USB transfer speed: " << static_cast<double>(words)*2000/(1024*1024)/t2.get() << "MB/s";
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -792,10 +887,10 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 		   << static_cast<int>(row) << " with flags " << listFlags(flags) << ", running "
 		   << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
-  estimateDataVolume(nTriggers, 1, tbmtype);
+  estimateDataVolume(nTriggers, 1);
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -808,9 +903,16 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 
     done = _testboard->LoopSingleRocOnePixelCalibrate(roci2c, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -854,10 +956,10 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -870,9 +972,16 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 
     done = _testboard->LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -917,10 +1026,10 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -933,9 +1042,16 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 
     done = _testboard->LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -976,10 +1092,10 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
  // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -992,9 +1108,16 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 
     done = _testboard->LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1035,10 +1158,10 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1051,9 +1174,16 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 
     done = _testboard->LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1104,10 +1234,10 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1120,9 +1250,16 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 
     done = _testboard->LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1176,10 +1313,10 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, roci2cs.size(), tbmtype);
+  estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1192,9 +1329,16 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 
     done = _testboard->LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1244,10 +1388,10 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1260,9 +1404,16 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 
     done = _testboard->LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1312,10 +1463,10 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
   LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
-  estimateDataVolume(expected, 1, tbmtype);
+  estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase,tbmtype);
+  daqStart(deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1328,9 +1479,16 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 
     done = _testboard->LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-    tmpdata = daqAllEvents();
-    LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+
+    try {
+      tmpdata = daqAllEvents();
+      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
+      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    }
+    catch(DataDecodingError /*&e*/) {
+      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
+      break;
+    }
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1388,7 +1546,6 @@ void hal::Poff() {
 }
 
 
-
 // Testboard probe channel selectors:
 
 void hal::SignalProbeD1(uint8_t signal) {
@@ -1415,6 +1572,12 @@ void hal::SignalProbeA2(uint8_t signal) {
   _testboard->Flush();
 }
 
+void hal::SignalProbeADC(uint8_t signal, uint8_t gain) {
+  _testboard->SignalProbeADC(signal, gain);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
 void hal::SetClockSource(uint8_t src) {
 	_testboard->SetClockSource(src);
 	_testboard->uDelay(100);
@@ -1432,50 +1595,64 @@ void hal::SetClockStretch(uint8_t src, uint16_t delay, uint16_t width) {
   _testboard->Flush();
 }
 
+void hal::SigSetMode(uint8_t signal, uint8_t mode) {
+    _testboard->Sig_SetMode(signal, mode);
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
 
-void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) {
+void hal::SigSetLCDS(){
+    _testboard->Sig_SetLCDS();
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
+
+void hal::SigSetLVDS(){
+    _testboard->Sig_SetLVDS();
+    _testboard->uDelay(100);
+    _testboard->Flush();
+}
+
+
+
+void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
-  // Split the total buffer size when having more than one channel
-  if(tbmtype != 0x00) { buffersize /= (tbmtype == TBM_09 ? 4 : 2); }
+  // Length of a token chain (number of ROCs per data stream):
+  uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { 
+    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
+    tokenChainLength *= (m_tbmtype >= TBM_09 ? 4 : 8);
+    // Split the total buffer size when having more than one channel
+    buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
+  }
+  LOG(logDEBUGHAL) << "Determined Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
+
+  // Clear all decoder instances:
+  decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,(tbmtype != 0x00),rocType,true);
+  src0 = dtbSource(_testboard,0,tokenChainLength,m_tbmtype,rocType,true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
 
-  if(tbmtype != 0x00) {
+  if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,(tbmtype != 0x00),rocType,true);
+    src1 = dtbSource(_testboard,1,tokenChainLength,m_tbmtype,rocType,true);
     src1 >> splitter1;
-
-    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(tbmtype >= TBM_09) {
-      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
-
-      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,(tbmtype != 0x00),rocType,true);
-      src2 >> splitter2;
-
-      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,(tbmtype != 0x00),rocType,true);
-      src3 >> splitter3;
-    }
 
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 
     // If we have an old TBM version set up the DESER400 to read old data format:
     // "old" is everything before TBM08B (so: TBM08, TBM08A)
-    if(tbmtype < TBM_08B) { 
+    if(m_tbmtype < TBM_08B) { 
       LOG(logDEBUGHAL) << "Pre-series TBM with outdated trailer format. Configuring DESER400 accordingly.";
       _testboard->Daq_Deser400_OldFormat(true);
     }
@@ -1483,8 +1660,47 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
+    
+    // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
+    _testboard->Flush();  
+    mDelay(150); 
+
+    // And start the DAQ:
     _testboard->Daq_Start(1);
+
+    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
+    if(m_tbmtype >= TBM_09) {
+      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
+
+      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
+      src2 = dtbSource(_testboard,2,tokenChainLength,m_tbmtype,rocType,true);
+      src2 >> splitter2;
+
+      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
+      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
+      src3 = dtbSource(_testboard,3,tokenChainLength,m_tbmtype,rocType,true);
+      src3 >> splitter3;
+
+      // Start the DAQ also for channel 2 and 3:
+      _testboard->Daq_Start(2);
+      _testboard->Daq_Start(3);
+    }
   }
+  // Single analog PSI46 chip:
+  else if(rocType < ROC_PSI46DIG) {
+    LOG(logDEBUGHAL) << "Enabling ADC for analog ROC data acquisition."
+		     << " Timout: " << static_cast<int>(m_adctimeout)
+		     << " Delay Tin/Tout: " << static_cast<int>(m_tindelay) 
+		     << "/" << static_cast<int>(m_toutdelay);
+    _testboard->Daq_Select_ADC(m_adctimeout, // 1..65535
+			       0,  // source: tin/tout
+			       m_tindelay,  // tin delay 0..63
+			       m_toutdelay); // tout delay 0..63
+    _testboard->SignalProbeADC(PROBEA_SDATA1, GAIN_4);
+    _testboard->uDelay(800); // to stabilize ADC input signal
+  }
+  // Single digital PSI46 chip:
   else {
     LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
 		     << " Phase: " << static_cast<int>(deser160phase);
@@ -1499,6 +1715,7 @@ void hal::daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize) 
 Event* hal::daqEvent() {
 
   Event* current_Event = new Event();
+  bool content = false;
 
   dataSink<Event*> Eventpump0, Eventpump1, Eventpump2, Eventpump3;
   splitter0 >> decoder0 >> Eventpump0;
@@ -1507,27 +1724,38 @@ Event* hal::daqEvent() {
   if(src2.isConnected()) { splitter2 >> decoder2 >> Eventpump2; }
   if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    // Read the next Event from each of the pipes, copy the data:
-    *current_Event = *Eventpump0.Get();
-    if(src1.isConnected()) {
-      Event* tmp = Eventpump1.Get(); 
-      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
-    }
-    if(src2.isConnected()) {
-      Event* tmp = Eventpump2.Get(); 
-      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
-    }
-    if(src3.isConnected()) {
-      Event* tmp = Eventpump3.Get(); 
-      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
-    }
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+  // Read the next Event from each of the pipes, copy the data:
+  try { *current_Event = *Eventpump0.Get(); content = true; }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
 
+  if(src1.isConnected()) {
+    try {
+      Event* tmp = Eventpump1.Get(); content = true;
+      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  
+  if(src2.isConnected()) {
+    try {
+      Event* tmp = Eventpump2.Get(); content = true;
+      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+
+  if(src3.isConnected()) {
+    try {
+      Event* tmp = Eventpump3.Get(); content = true;
+      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(!content) throw DataNoEvent("No event available");
   return current_Event;
 }
 
@@ -1542,30 +1770,58 @@ std::vector<Event*> hal::daqAllEvents() {
   if(src2.isConnected()) { splitter2 >> decoder2 >> Eventpump2; }
   if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    while(1) {
-      // Read the next Event from each of the pipes:
-      Event* current_Event = new Event(*Eventpump0.Get());
-      if(src1.isConnected()) {
+  // Prepare channel flags:
+  bool done_ch0, done_ch1, done_ch2, done_ch3;
+  done_ch0 = done_ch1 = done_ch2 = done_ch3 = false;
+
+  while(1) {
+    // Read the next Event from each of the pipes:
+    Event* current_Event;
+    try { current_Event = new Event(*Eventpump0.Get()); }
+    catch (dsBufferEmpty &) {
+      LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true;
+      current_Event = new Event();
+    }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
+
+    if(src1.isConnected()) {
+      try {
 	Event* tmp = Eventpump1.Get(); 
 	current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
-      if(src2.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; done_ch1 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
+    }
+    else { done_ch1 = true; }
+
+    if(src2.isConnected()) {
+      try {
 	Event* tmp = Eventpump2.Get(); 
 	current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
-      if(src3.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; done_ch2 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
+    }
+    else { done_ch2 = true; }
+
+    if(src3.isConnected()) {
+      try {
 	Event* tmp = Eventpump3.Get(); 
 	current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
       }
-      evt.push_back(current_Event);
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; done_ch3 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
     }
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+    else { done_ch3 = true; }
 
+    // If all readout is finished, return:
+    if(done_ch0 && done_ch1 && done_ch2 && done_ch3) {
+      LOG(logDEBUGHAL) << "Drained all DAQ channels.";
+      break;
+    }
+    else { evt.push_back(current_Event); }
+  }
+  if(evt.empty()) throw DataNoEvent("No event available");
   return evt;
 }
 
@@ -1576,31 +1832,42 @@ rawEvent* hal::daqRawEvent() {
   dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
   splitter0 >> rawpump0;
 
+  bool content = false;
+
   if(src1.isConnected()) { splitter1 >> rawpump1; }
   if(src2.isConnected()) { splitter2 >> rawpump2; }
   if(src3.isConnected()) { splitter3 >> rawpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    // Read the next Event from each of the pipes, copy the data:
-    *current_Event = *rawpump0.Get();
-    if(src1.isConnected()) {
-      rawEvent tmp = *rawpump1.Get();
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
-    }
-    if(src2.isConnected()) {
-      rawEvent tmp = *rawpump2.Get();
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
-    }
-    if(src3.isConnected()) {
-      rawEvent tmp = *rawpump3.Get();
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
-    }
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+  // Read the next Event from each of the pipes, copy the data:
+  try { *current_Event = *rawpump0.Get(); content = true; }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
 
+  if(src1.isConnected()) {
+    try {
+      rawEvent tmp = *rawpump1.Get(); content = true; 
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(src2.isConnected()) {
+    try {
+      rawEvent tmp = *rawpump2.Get(); content = true; 
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(src3.isConnected()) {
+    try {
+      rawEvent tmp = *rawpump3.Get(); content = true; 
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(!content) throw DataNoEvent("No event available");
   return current_Event;
 }
 
@@ -1615,30 +1882,59 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
   if(src2.isConnected()) { splitter2 >> rawpump2; }
   if(src3.isConnected()) { splitter3 >> rawpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    while(1) {
-      // Read the next Event from each of the pipes:
-      rawEvent* current_Event = new rawEvent(*rawpump0.Get());
-      if(src1.isConnected()) {
+  // Prepare channel flags:
+  bool done_ch0, done_ch1, done_ch2, done_ch3;
+  done_ch0 = done_ch1 = done_ch2 = done_ch3 = false;
+
+  while(1) {
+    // Read the next Event from each of the pipes:
+    rawEvent* current_Event;
+
+    try { current_Event = new rawEvent(*rawpump0.Get()); }
+    catch (dsBufferEmpty &) {
+      LOG(logDEBUGHAL) << "Finished readout Channel 0."; done_ch0 = true;
+      current_Event = new rawEvent();
+    }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+
+    if(src1.isConnected()) {
+      try {
 	rawEvent tmp = *rawpump1.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
-      if(src2.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; done_ch1 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+    }
+    else { done_ch1 = true; }
+
+    if(src2.isConnected()) {
+      try {
 	rawEvent tmp = *rawpump2.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
-      if(src3.isConnected()) {
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; done_ch2 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+    }
+    else { done_ch2 = true; }
+
+    if(src3.isConnected()) {
+      try {
 	rawEvent tmp = *rawpump3.Get();
 	for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
       }
-      raw.push_back(current_Event);
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; done_ch3 = true; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
     }
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+    else { done_ch3 = true; }
 
+    // If all readout is finished, return:
+    if(done_ch0 && done_ch1 && done_ch2 && done_ch3) {
+      LOG(logDEBUGHAL) << "Drained all DAQ channels.";
+      break;
+    }
+    else { raw.push_back(current_Event); }
+  }
+  if(raw.empty()) throw DataNoEvent("No event available");
   return raw;
 }
 
@@ -1653,21 +1949,54 @@ std::vector<uint16_t> hal::daqBuffer() {
   if(src2.isConnected()) { src2 >> rawpump2; }
   if(src3.isConnected()) { src3 >> rawpump3; }
 
-  // FIXME check carefully: in principle we expect the same number of triggers
-  // (==Events) on each pipe. Throw a critical if difference is found?
-  try {
-    while(1) {
-      // Read the next Event from each of the pipes:
-      raw.push_back(rawpump0.Get());
-      if(src1.isConnected()) { raw.push_back(rawpump1.Get()); }
-      if(src2.isConnected()) { raw.push_back(rawpump2.Get()); }
-      if(src3.isConnected()) { raw.push_back(rawpump3.Get()); }
-    }
-  }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); }
+  // Read the full data blob from each of the pipes:
+  try { while(1) { raw.push_back(rawpump0.Get()); } }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
 
+  if(src1.isConnected()) {
+    try { while(1) { raw.push_back(rawpump1.Get()); } }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+  }
+  if(src2.isConnected()) {
+    try { while(1) { raw.push_back(rawpump2.Get()); } }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+  }
+  if(src3.isConnected()) {
+    try { while(1) { raw.push_back(rawpump3.Get()); } }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
+  }
+  if(raw.empty()) throw DataNoEvent("No data available");
   return raw;
+}
+
+void hal::daqTriggerSource(uint16_t source) {
+
+  // Update the locally cached setting for trigger source:
+  _currentTrgSrc = source;
+
+  LOG(logDEBUGHAL) << "Configuring trigger source " << std::hex << source << std::dec;
+
+  // Write new trigger source to DTB:
+  _testboard->Trigger_Select(source);
+}
+
+void hal::daqTriggerSingleSignal(uint8_t signal) {
+
+  // Select the single signal direct source for triggers:
+  _testboard->Trigger_Select(TRG_SEL_SINGLE_DIR);
+  _testboard->Flush();
+
+  // Send the requested signal:
+  _testboard->Trigger_Send(signal);
+  _testboard->Flush();
+  
+  // Reset the trigger source to cached setting:
+  _testboard->Trigger_Select(_currentTrgSrc);
+  _testboard->Flush();
 }
 
 void hal::daqTrigger(uint32_t nTrig, uint16_t period) {
@@ -1705,6 +2034,30 @@ uint32_t hal::daqBufferStatus() {
   return buffered_data;
 }
 
+statistics hal::daqStatistics() {
+  // Read statistics from the active channels:
+  statistics errors = decoder0.getStatistics();
+  if(src1.isConnected()) { errors += decoder1.getStatistics(); }
+  if(src2.isConnected()) { errors += decoder2.getStatistics(); }
+  if(src3.isConnected()) { errors += decoder3.getStatistics(); }
+  return errors;
+}
+
+std::vector<std::vector<uint16_t> > hal::daqReadback() {
+
+  // Collect readback values from all decoder instances:
+  std::vector<std::vector<uint16_t> > rb0 = decoder0.getReadback();
+  std::vector<std::vector<uint16_t> > rb1 = decoder1.getReadback();
+  std::vector<std::vector<uint16_t> > rb2 = decoder2.getReadback();
+  std::vector<std::vector<uint16_t> > rb3 = decoder3.getReadback();
+
+  // Append them:
+  rb0.insert(rb0.end(),rb1.begin(),rb1.end());
+  rb0.insert(rb0.end(),rb2.begin(),rb2.end());
+  rb0.insert(rb0.end(),rb3.begin(),rb3.end());
+  return rb0;
+}
+
 void hal::daqStop() {
 
   // Stop the Pattern Generator, just in case (also stops Pg_Loop())
@@ -1733,4 +2086,38 @@ void hal::daqClear() {
   // Running Daq_Close() to delete all data and free allocated RAM:
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
+}
+
+std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
+    
+  std::vector<uint16_t> data;
+  _testboard->SignalProbeADC(analog_probe, gain);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+  _testboard->Daq_Select_ADC(nSample, source, start, stop);
+  _testboard->uDelay(1000);
+  _testboard->Flush();
+  _testboard->Daq_Open(nSample, 0);
+  _testboard->uDelay(10);
+  if( source == 1){
+    _testboard->Daq_Start(0);
+    _testboard->Pg_Single();
+  }else if (source==2){
+    _testboard->roc_SetDAC(250, 195);
+    _testboard->roc_SetDAC(250,  61);
+    _testboard->Daq_Start(0);
+    _testboard->roc_SetDAC(250, 195);
+    _testboard->roc_SetDAC(250,  61);
+  }
+  _testboard->uDelay(1000);
+  _testboard->Daq_Stop(0);
+  _testboard->Daq_Read(data, nSample);
+  _testboard->Daq_Close(0);
+  _testboard->Flush();
+
+  return data;
+}
+
+uint16_t hal::GetADC(uint8_t rpc_par1){
+  return _testboard->GetADC(rpc_par1);
 }

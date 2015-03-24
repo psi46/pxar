@@ -22,7 +22,6 @@ typedef char int8_t;
 #include <TGTextEntry.h>
 #include <TGTextEdit.h>
 #include <TGTextBuffer.h>
-#include <TGComboBox.h>
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TSystem.h>
@@ -35,7 +34,8 @@ typedef char int8_t;
 
 class ConfigParameters;
 class PixParTab;
-class PixMonitor;
+class PixTab;
+class PixMonitorFrame;
 class PixSetup;
 class PixTest; 
 class PixTestParameters;
@@ -57,11 +57,15 @@ public:
   bool isHvOn() {return fHV;}
   void hvOn();
   void hvOff();
+  void powerOn();
+  void powerOff();
+  bool isPowerOff() {return !fPower;}
 
   PixTest* createTest(std::string); 
 
   TGCompositeFrame	*fhFrame;
   TGTab               	*getTabs() {return fTabs;}
+  PixTab                *getPixTab() {return fPixTab;}
 
   int getWidth() {return fWidth;}
   int getHeight() {return fHeight;}
@@ -72,6 +76,7 @@ public:
 
   ULong_t   fRed, fGreen, fYellow, fWhite, fDarkSeaGreen, fDarkOrange, fLavender, fDarkGray, fDarkSalmon; 
 
+  std::string getHdiType();
   
 private: 
 
@@ -86,7 +91,6 @@ private:
   };
 
   TTimer        	*fTimer;
-  TGComboBox 	        *fcmbTests;
   TGTab               	*fTabs;
   //  TGCompositeFrame     	*fParTab;
   TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer;
@@ -105,8 +109,11 @@ private:
   pxar::pxarCore         *fApi;
   ConfigParameters       *fConfigParameters;  
   PixTestParameters      *fTestParameters;
-  PixMonitor             *fMonitor; 
+  PixMonitorFrame        *fMonitor; 
   PixParTab              *fParTab;
+
+  std::vector<PixTab*>   fPixTabList; 
+  PixTab                 *fPixTab;
 
   int                    fWidth, fHeight; 
   std::string            fOldDirectory;

@@ -19,7 +19,6 @@ public:
   void addressDecodingTest();
 
   void doTest(); 
-  void output4moreweb();
 
 private:
 

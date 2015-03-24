@@ -5,6 +5,7 @@
 #include "PixTestAlive.hh"
 #include "log.h"
 
+#include <TStopwatch.h>
 #include <TH2.h>
 
 using namespace std;
@@ -105,12 +106,13 @@ void PixTestAlive::bookHist(string name) {
 //----------------------------------------------------------
 PixTestAlive::~PixTestAlive() {
   LOG(logDEBUG) << "PixTestAlive dtor";
-  if (fPixSetup->doMoreWebCloning()) output4moreweb();
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestAlive::doTest() {
+
+  TStopwatch t;
 
   fDirectory->cd();
   PixTest::update(); 
@@ -131,7 +133,8 @@ void PixTestAlive::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  LOG(logINFO) << "PixTestAlive::doTest() done ";
+  int seconds = t.RealTime(); 
+  LOG(logINFO) << "PixTestAlive::doTest() done, duration: " << seconds << " seconds";
 
 }
 
@@ -173,9 +176,11 @@ void PixTestAlive::aliveTest() {
   
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
+  if (h) {
+    h->Draw(getHistOption(h).c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
   restoreDacs();
 
   // -- summary printout
@@ -188,7 +193,9 @@ void PixTestAlive::aliveTest() {
 	       << (fNDaqErrors>0? Form(" with %d decoding errors", static_cast<int>(fNDaqErrors)):"");
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
-  
+
+  //  PixTest::hvOff();
+  //  PixTest::powerOff(); 
 }
 
 
@@ -308,47 +315,3 @@ void PixTestAlive::addressDecodingTest() {
   LOG(logINFO) << "number of address-decoding pixels (per ROC): " << addrPixelString;
 }
 
-// ----------------------------------------------------------------------
-void PixTestAlive::output4moreweb() {
-  print("PixTestAlive::output4moreweb()"); 
-
-  list<TH1*>::iterator begin = fHistList.begin();
-  list<TH1*>::iterator end = fHistList.end();
-
-  // -- merge mask test into pixelalive map
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-  for (unsigned int i = 0; i < rocIds.size(); ++i) {
-    TH2D *h0(0), *h1(0); 
-    for (list<TH1*>::iterator il = begin; il != end; ++il) {
-      string name = (*il)->GetName(); 
-      if (string::npos != name.find(Form("MaskTest_C%d", rocIds[i]))) h0 = (TH2D*)(*il); 
-      if (string::npos != name.find(Form("PixelAlive_C%d", rocIds[i]))) h1 = (TH2D*)(*il); 
-      if (h0 && h1) break;
-    }
-    LOG(logDEBUG) << "merge " << h0->GetName() << " into " << h1->GetName(); 
-    for (int ix = 0; ix < h0->GetNbinsX(); ++ix) {
-      for (int iy = 0; iy < h0->GetNbinsY(); ++iy) {
-	if (0 == h0->GetBinContent(ix+1, iy+1)) h1->SetBinContent(ix+1, iy+1, -1.*h1->GetBinContent(ix+1, iy+1));
-      }
-    }
-  }
-
-  TDirectory *pDir = gDirectory; 
-  gFile->cd(); 
-  for (list<TH1*>::iterator il = begin; il != end; ++il) {
-    string name = (*il)->GetName(); 
-    if (string::npos == name.find("_V0"))  continue;
-    if (string::npos != name.find("MaskTest"))  continue;
-    if (string::npos != name.find("AddressDecodingTest")) {
-      PixUtil::replaceAll(name, "AddressDecodingTest", "AddressDecoding"); 
-    }
-    if (string::npos != name.find("PixelAlive")) {
-      PixUtil::replaceAll(name, "PixelAlive", "PixelMap"); 
-    }
-    PixUtil::replaceAll(name, "_V0", ""); 
-    TH2D *h = (TH2D*)((*il)->Clone(name.c_str()));
-    h->SetDirectory(gDirectory); 
-    h->Write(); 
-  }
-  pDir->cd(); 
-}

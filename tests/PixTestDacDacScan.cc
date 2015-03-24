@@ -79,22 +79,14 @@ bool PixTestDacDacScan::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str()); 
 	  str2 = sval.substr(s1+1); 
 	  pixr = atoi(str2.c_str()); 
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr)); 
+	  addSelectedPixels(sval); 
 	} else {
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(-1, -1)); 
+	  addSelectedPixels("-1,-1"); 
 	}
-      }
-      if (!parName.compare("pix1")) {
-	LOG(logWARNING) << "please change parameter name from PIX1 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix2")) {
-	LOG(logWARNING) << "please change parameter name from PIX2 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix3")) {
-	LOG(logWARNING) << "please change parameter name from PIX3 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix4")) {
-	LOG(logWARNING) << "please change parameter name from PIX4 to PIX (can appear multiple times)"; 
       }
 
       break;
@@ -146,7 +138,8 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::doTest() {
-  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  //  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  uint16_t FLAGS = FLAG_FORCE_MASKED; // required for manual loop over ROCs
   fDirectory->cd();
   PixTest::update(); 
 
@@ -198,12 +191,12 @@ void PixTestDacDacScan::doTest() {
 	  if (0 == fParPHmap) {
 	    rresults = fApi->getEfficiencyVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 						   fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
-	    fNDaqErrors = fApi->daqGetNDecoderErrors();
+	    fNDaqErrors = fApi->getStatistics().errors_pixel();
 	    done = true;
 	  } else {
 	    rresults = fApi->getPulseheightVsDACDAC(fParDAC1, fParLoDAC1, fParHiDAC1, 
 						    fParDAC2, fParLoDAC2, fParHiDAC2, FLAGS, fParNtrig);
-	    fNDaqErrors = fApi->daqGetNDecoderErrors();
+	    fNDaqErrors = fApi->getStatistics().errors_pixel();
 	    done = true;
 	  }
 	} catch(DataMissingEvent &e){
@@ -237,15 +230,15 @@ void PixTestDacDacScan::doTest() {
       vector<pixel> wpix = w.second;
 
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	if (wpix[ipix].roc_id == rocIds[iroc]) {
+	if (wpix[ipix].roc() == rocIds[iroc]) {
 	  h = maps[Form("%s_%s_%s_c%d_r%d_C%d", 
-			name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc])];
+			name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc])];
 	  if (h) {
-	    h->Fill(idac1, idac2, wpix[ipix].getValue()); 
+	    h->Fill(idac1, idac2, wpix[ipix].value()); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find " 
 			  << Form("%s_%s_%s_c%d_r%d_C%d", 
-				  name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column, wpix[ipix].row, rocIds[iroc]);
+				  name.c_str(), fParDAC1.c_str(), fParDAC2.c_str(), wpix[ipix].column(), wpix[ipix].row(), rocIds[iroc]);
 	  }
 
 	}

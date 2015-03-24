@@ -43,7 +43,7 @@ namespace pxar {
     logDEBUGHAL,
     logDEBUGRPC,
     logDEBUGPIPES,
-    logDEBUGUSB
+    logINTERFACE
   };
 
   template <typename T>
@@ -52,6 +52,15 @@ namespace pxar {
     pxarLog();
     virtual ~pxarLog();
     std::ostringstream& Get(TLogLevel level = logINFO, std::string file = "", std::string function = "", uint32_t line = 0);
+    static std::string& logName(std::string setLogName = "") {
+        static std::string logName("");
+        static bool is_initialized = false;
+        if (!is_initialized && setLogName.size() > 0) {
+          is_initialized = true;
+          logName = setLogName;
+        }
+        return logName;
+    }; 
   public:
     static TLogLevel& ReportingLevel();
     static std::string ToString(TLogLevel level);
@@ -105,6 +114,9 @@ namespace pxar {
   template <typename T>
     std::ostringstream& pxarLog<T>::Get(TLogLevel level, std::string file, std::string function, uint32_t line) {
     os << "[" << NowTime() << "] ";
+    if (logName().size() > 0) {
+      os << "<" << logName() << "> ";
+    }
     os << std::setw(8) << ToString(level) << ": ";
     
     // For debug levels we want also function name and line number printed:
@@ -130,14 +142,14 @@ namespace pxar {
 
   template <typename T>
     std::string pxarLog<T>::ToString(TLogLevel level) {
-    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGPIPES", "DEBUGUSB"};
+    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGPIPES", "INTERFACE"};
     return buffer[level];
   }
 
   template <typename T>
     TLogLevel pxarLog<T>::FromString(const std::string& level) {
-    if (level == "DEBUGUSB")
-      return logDEBUGUSB;
+    if (level == "INTERFACE")
+      return logINTERFACE;
     if( level == "DEBUGPIPES")
       return logDEBUGPIPES;
     if (level == "DEBUGRPC")
@@ -198,6 +210,9 @@ namespace pxar {
 typedef pxarLog<SetLogOutput> Log;
 
 #define __FILE_NAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define IFLOG(level) \
+  if (level > pxar::Log::ReportingLevel())
 
 #define LOG(level)				\
   if (level > pxar::Log::ReportingLevel() || !pxar::SetLogOutput::Stream()) ; \

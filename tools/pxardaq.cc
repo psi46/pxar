@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
   uint32_t triggers = 0;
   bool testpulses = false;
   bool spills = false;
+  bool oos = false;
 
   uint8_t hubid = 31;
 
@@ -61,24 +62,36 @@ int main(int argc, char* argv[]) {
       std::cout << "-f filename    file to store DAQ data in" << std::endl;
       std::cout << "-n triggers    number of triggers to be sent" << std::endl;
       std::cout << "-v verbosity   verbosity level, default INFO" << std::endl;
+      std::cout << "-sp            lock on accelerator spills" << std::endl;
+      std::cout << "-tp            activate test pulses" << std::endl;
+      std::cout << "-oos           test OutOfSync problem w/ 100 triggers & 1 token" << std::endl;
       return 0;
     }
     else if (!strcmp(argv[i],"-f")) {
       filename = std::string(argv[++i]);
       std::cout << "Writing to file " << filename << std::endl;
+      continue;
     }
     else if (!strcmp(argv[i],"-n")) {
       triggers = atoi(argv[++i]);
       std::cout << "Sending " << triggers << " triggers" << std::endl;
+      continue;
     }
     else if (!strcmp(argv[i],"-v")) {
       verbosity = std::string(argv[++i]);
+      continue;
     }               
     else if (!strcmp(argv[i],"-tp")) {
       testpulses = true;
+      continue;
     }
     else if (!strcmp(argv[i],"-sp")) {
       spills = true;
+      continue;
+    }
+    else if (!strcmp(argv[i],"-oos")) {
+      oos = true;
+      continue;
     }
     else {
       std::cout << "Unrecognized command line option " << argv[i] << std::endl;
@@ -89,6 +102,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
   std::vector<std::pair<std::string,uint8_t> > pg_setup;
+  std::vector<std::pair<std::string,uint8_t> > pg_setup2;
 
   // DTB delays
   sig_delays.push_back(std::make_pair("clk",2));
@@ -105,7 +119,31 @@ int main(int argc, char* argv[]) {
 
   // Pattern Generator:
   int pattern_delay = 0;
-  if(testpulses) {
+  if(oos) {
+    std::cout << "Pattern generator preparation for OOS tests." << std::endl;
+    // No ROC reset
+    // 99x no CAL, only TRG and TOK for Xray background
+    for(int i = 0; i < 99; i++) {
+      pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
+      // Delay adjusted fro trigger rate of 90kHz
+      pg_setup.push_back(std::make_pair("token",426));     // PG_TOK    
+    }
+    // One additional cycle w/ CAL TRG TOK
+    pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
+    pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
+    pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
+
+    // Second PG for the first reset and one trigger:
+    pg_setup2.push_back(std::make_pair("resetroc",25));    // PG_RESR
+    pg_setup2.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
+    pg_setup2.push_back(std::make_pair("trigger",16));    // PG_TRG
+    pg_setup2.push_back(std::make_pair("token",0));     // PG_TOK
+    
+    // And done.
+    pattern_delay = 1000000;
+  }
+  else if(testpulses) {
+    std::cout << "Pattern generator preparation for testpulse patterns." << std::endl;
      pg_setup.push_back(std::make_pair("resetroc",25));    // PG_RESR
      pg_setup.push_back(std::make_pair("calibrate",101+5)); // PG_CAL
      pg_setup.push_back(std::make_pair("trigger",16));    // PG_TRG
@@ -197,7 +235,7 @@ int main(int argc, char* argv[]) {
     _api->_dut->maskAllPixels(false);
 
     // Set some pixels up for getting calibrate signals:
-    if(testpulses) {
+    if(testpulses || oos) {
        std::cout << "Setting up pixels for calibrate pulses..." << std::endl;
       for(int i = 0; i < 3; i++) {
          _api->_dut->testPixel(i,5,true);
@@ -227,6 +265,14 @@ int main(int argc, char* argv[]) {
       std::cout << std::endl << "Starting DAQ at spill " << getspill() << std::endl;
     }
 
+    // Sent one PG cycle with a reset:
+    if(oos) {
+      _api->daqStart();
+      _api->daqTrigger(1);
+      _api->daqStop();
+      std::vector<uint16_t> garbage = _api->daqGetBuffer();
+    }
+
     //Start the main DAQ loop:
     while(daq_loop) {
 
@@ -247,6 +293,7 @@ int main(int argc, char* argv[]) {
 
       // Send the triggers:
       if(triggers != 0) {
+	std::cout << "Start sending " << triggers << " triggers..." << std::endl;
 	_api->daqTrigger(triggers);
 	daq_loop = false;
       }

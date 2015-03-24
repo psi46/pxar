@@ -18,10 +18,6 @@ ClassImp(PixTestDacScan)
 PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
   PixTest::init();
   init(); 
-  //  LOG(logINFO) << "PixTestDacScan ctor(PixSetup &a, string, TGTab *)";
-  for (unsigned int i = 0; i < fPIX.size(); ++i) {
-    LOG(logDEBUG) << "  setting fPIX" << i <<  " ->" << fPIX[i].first << "/" << fPIX[i].second;
-  }
 }
 
 
@@ -70,24 +66,15 @@ bool PixTestDacScan::setParameter(string parName, string sval) {
 	  pixc = atoi(str1.c_str()); 
 	  str2 = sval.substr(s1+1); 
 	  pixr = atoi(str2.c_str()); 
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(pixc, pixr)); 
+	  addSelectedPixels(sval); 
 	} else {
+	  clearSelectedPixels();
 	  fPIX.push_back(make_pair(-1, -1)); 
+	  addSelectedPixels("-1,-1"); 
 	}
       }
-      if (!parName.compare("pix1")) {
-	LOG(logWARNING) << "please change parameter name from PIX1 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix2")) {
-	LOG(logWARNING) << "please change parameter name from PIX2 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix3")) {
-	LOG(logWARNING) << "please change parameter name from PIX3 to PIX (can appear multiple times)"; 
-      }
-      if (!parName.compare("pix4")) {
-	LOG(logWARNING) << "please change parameter name from PIX4 to PIX (can appear multiple times)"; 
-      }
-
       break;
     }
   }
@@ -145,7 +132,6 @@ void PixTestDacScan::doTest() {
       h1 = bookTH1D(hname.c_str(), hname.c_str(), 256, 0., 256.); 
       h1->SetMinimum(0.); 
       setTitles(h1, Form("%s [DAC]", fParDAC.c_str()), (fParPHmap?"average PH":"readouts"));
-      if (ip > 0) fHistOptions.insert(make_pair(h1, "same"));
       hmap[hname] = h1;
       fHistList.push_back(h1); 
     }
@@ -175,11 +161,11 @@ void PixTestDacScan::doTest() {
 	try{
 	  if (0 == fParPHmap) {
 	    rresults = fApi->getEfficiencyVsDAC(fParDAC, fParLoDAC, fParHiDAC, FLAGS, fParNtrig);
-	    fNDaqErrors = fApi->daqGetNDecoderErrors();
+	    fNDaqErrors = fApi->getStatistics().errors_pixel();
 	    done = true;
 	  } else {
 	    rresults = fApi->getPulseheightVsDAC(fParDAC, fParLoDAC, fParHiDAC, FLAGS, fParNtrig);
-	    fNDaqErrors = fApi->daqGetNDecoderErrors();
+	    fNDaqErrors = fApi->getStatistics().errors_pixel();
 	    done = true;
 	  }
 	} catch(DataMissingEvent &e){
@@ -211,11 +197,11 @@ void PixTestDacScan::doTest() {
       
       vector<pixel> vpix = v.second;
       for (unsigned int ipix = 0; ipix < vpix.size(); ++ipix) {
-	if (vpix[ipix].roc_id == rocIds[iroc]) {
-	  hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column, vpix[ipix].row, rocIds[iroc]);
+	if (vpix[ipix].roc() == rocIds[iroc]) {
+	  hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column(), vpix[ipix].row(), rocIds[iroc]);
 	  h = hmap[hname];
 	  if (h) {
-	    h->Fill(idac, vpix[ipix].getValue()); 
+	    h->Fill(idac, vpix[ipix].value()); 
 	  } else {
 	    LOG(logDEBUG) << "XX did not find "  << hname; 
 	  }

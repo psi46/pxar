@@ -1,6 +1,10 @@
 #ifndef PIXTESTIV_H
 #define PIXTESTIV_H
 
+#include <vector>
+
+#include "TTimeStamp.h"
+
 #include "PixTest.hh"
 
 class DLLEXPORT PixTestIV: public PixTest {
@@ -15,12 +19,17 @@ public:
   void stop(); 
 
 private:
-
-  int fParVoltageMin;
-  int fParVoltageMax;
-  int fParVoltageStep;
-  int fParDelay;
-  bool fStop; 
+  void writeOutput(std::vector<double>        &voltageMeasurements,
+                   std::vector<double>        &currentMeasurements,
+                   std::vector<TTimeStamp>    &timeStamps,
+                   bool aborted);
+  
+  double fParVoltageStart;      //volts
+  double fParVoltageStop;       //volts
+  double fParVoltageStep;       //volts
+  double fParDelay;             //seconds
+  double fParCompliance;        //uA
+  bool fStop;
   std::string fParPort; 
 
   ClassDef(PixTestIV, 1)

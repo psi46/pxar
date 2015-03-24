@@ -151,9 +151,9 @@ void PixTestSetCalDel::doTest() {
 
     for( unsigned int ipx = 0; ipx < vpix.size(); ++ipx ) {
 
-      int roc = vpix.at(ipx).roc_id;
+      int roc = vpix.at(ipx).roc();
 
-      int nn = vpix.at(ipx).getValue();
+      int nn = (int)vpix.at(ipx).value();
 
       if( nn > nm[roc] ) {
 	nm[roc] = nn;
@@ -163,7 +163,7 @@ void PixTestSetCalDel::doTest() {
 	i9[roc] = caldel; // end of plateau
 
       h = (TH1D*)fDirectory->Get( Form( "NhitsVs%s_c%d_r%d_C%d",
-					DacName.c_str(), vpix.at(ipx).column, vpix.at(ipx).row, roc ) );
+					DacName.c_str(), vpix.at(ipx).column(), vpix.at(ipx).row(), roc ) );
 
       if( h ) {
 	h->Fill( caldel, nn );
@@ -171,7 +171,7 @@ void PixTestSetCalDel::doTest() {
       else {
 	LOG(logDEBUG) << "XX did not find "
 		      << Form( "NhitsVs%s_c%d_r%d_C%d",
-			       DacName.c_str(), vpix.at(ipx).column, vpix.at(ipx).row, roc );
+			       DacName.c_str(), vpix.at(ipx).column(), vpix.at(ipx).row(), roc );
       }
     } // pixels and rocs
   } // caldel vals

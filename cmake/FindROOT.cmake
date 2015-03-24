@@ -47,7 +47,7 @@ IF (WIN32)
     set(ROOT_INCLUDE_DIR ${ROOTSYS}/include)
     set(ROOT_LIBRARY_DIR ${ROOTSYS}/lib)
     SET(ROOT_BINARY_DIR ${ROOTSYS}/bin)
-    set(ROOT_LIBRARIES -LIBPATH:${ROOT_LIBRARY_DIR} libGpad.lib libHist.lib libGraf.lib libGraf3d.lib libTree.lib libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libMathCore.lib libRIO.lib libNet.lib libThread.lib libCore.lib libCint.lib libMinuit.lib libGui.lib)
+    set(ROOT_LIBRARIES -LIBPATH:${ROOT_LIBRARY_DIR} libGpad.lib libHist.lib libGraf.lib libGraf3d.lib libTree.lib libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libMathCore.lib libRIO.lib libNet.lib libThread.lib libCore.lib libCint.lib libMinuit.lib libGui.lib libSpectrum.lib)
     FIND_PROGRAM(ROOT_CINT_EXECUTABLE
       NAMES rootcint
       PATHS ${ROOT_BINARY_DIR}
@@ -138,7 +138,7 @@ ELSE(WIN32)
     #  STRING(REGEX MATCHALL "-L([^ ])+"  root_library ${root_flags})
     #  REMOVE_FROM_LIST(root_flags "${root_libs_all}" "${root_library}")
 
-    SET(ROOT_LIBRARIES "${root_flags} -lMinuit")
+    SET(ROOT_LIBRARIES "${root_flags} -lMinuit -lSpectrum")
 
     # Make variables changeble to the advanced user
     MARK_AS_ADVANCED( ROOT_LIBRARY_DIR ROOT_INCLUDE_DIR ROOT_DEFINITIONS)

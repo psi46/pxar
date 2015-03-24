@@ -56,6 +56,10 @@ namespace pxar {
      */
     void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector);
 
+    /** Change the type of the TBM type member in HAL
+     */
+    void setTBMType(uint8_t type);
+
     /** Initialize attached ROCs with their settings and configuration
      *  This is the startup-routine for single ROCs. It first powers up the
      *  testboard output if necessary, sets the ROC's I2C address and then
@@ -79,9 +83,22 @@ namespace pxar {
      */
     void Poff();
 
+    /** select signal mode
+     */
+    void SigSetMode(uint8_t signal, uint8_t mode);
+    
+    
+    /** select termination for RDA/TOUT to LCDS (for modules)
+     */
+    void SigSetLCDS();
+
+    /** select termination for RDA/TOUT to LVDS (for single ROCs)
+     */
+    void SigSetLVDS();
+
     /** Set HubID
      */
-    void setHubId(uint8_t hubid) {hubId = hubid;}
+    void setHubId(uint8_t hubid);
 
     /** Set a DAC on a specific ROC with I2C address roci2c
      */
@@ -153,7 +170,24 @@ namespace pxar {
      */
     void SignalProbeA2(uint8_t signal);
 
-
+    /** Selects input for the ADC 
+     */
+    void SignalProbeADC(uint8_t signal, uint8_t gain);
+    
+    /** Record data using the DTB ADC. The following parameters are available:
+	analog_probe = signal to be sampled
+	gain = adc gain  (higher values = higher gain but also slower)
+	nSample = max. number of samples to be taken
+	source  = start signal
+	      0 = none (off)
+	      1 = pg_sync
+	      2 = i2c
+	      3 = token in
+	start   = delay after start signal
+	stop    = not sure, takes nSample samples when stop is 0
+      */
+    std::vector<uint16_t> daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop = 0);
+    
     // TEST COMMANDS
 
     /** Function to return Module maps of calibration pulses
@@ -250,7 +284,19 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    void daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint8_t deser160phase, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+
+    /** Select the trigger source as given in "source":
+     */
+    void daqTriggerSource(uint16_t source);
+
+    /** Send a single signal via the DTB to the DUT. This function
+     *  first configures the trigger source TRG_SEL_SINGLE_DIR 
+     *  (direct sending of signals, no softTBM), then sends the 
+     *  signal and finally resets the trigger source to the previous
+     *  setting (from hal::_currentTrgSrc)
+     */
+    void daqTriggerSingleSignal(uint8_t signal);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -293,6 +339,15 @@ namespace pxar {
      */
     std::vector<Event*> daqAllEvents();
 
+    /** Return the current decoding statistics for all channels:
+     */
+    statistics daqStatistics();
+
+    /** Return all readback values for the last readout. Return format is a vector containing
+     *  one vector of uint16_t radback values for every ROC in the readout chain.
+     */
+    std::vector<std::vector<uint16_t> > daqReadback();
+
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
     void daqClear();
@@ -327,6 +382,10 @@ namespace pxar {
      */
     void AllColumnsSetEnable(uint8_t roci2c, bool enable);
 
+    /** Get ADC value
+     */
+    uint16_t GetADC(uint8_t rpc_par1);
+
   private:
 
     /** Private instance of the testboard RPC interface, routes all
@@ -345,10 +404,15 @@ namespace pxar {
     bool _compatible;
 
     // FIXME can't we find a smarter solution to this?!
-    uint8_t tbmtype;
+    uint8_t m_tbmtype;
+    uint16_t m_adctimeout;
+    uint8_t m_tindelay;
+    uint8_t m_toutdelay;
     uint8_t deser160phase;
     uint8_t rocType;
     uint8_t hubId;
+
+    uint16_t _currentTrgSrc;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
@@ -371,7 +435,7 @@ namespace pxar {
      *  expected for the upcoming test. This function only supplies debug output
      *  and has no further effect on the data transmission or similar.
      */
-    void estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t nTBMs);
+    void estimateDataVolume(uint32_t events, uint8_t nROCs);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit

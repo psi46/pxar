@@ -220,7 +220,7 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   double hmax(h->GetMaximum()); 
   for (int i = STARTBIN; i <= h->GetNbinsX(); ++i) {
     if (h->GetBinContent(i) > 0) {
-      ibin = i; 
+      ibin = i; // first bin above zero
       break;
     }
   }
@@ -228,22 +228,28 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
   // require 2 consecutive bins on plateau
   for (int i = STARTBIN; i < h->GetNbinsX(); ++i) {
     if (h->GetBinContent(i) > 0.9*hmax && h->GetBinContent(i+1) > 0.9*hmax) {
-      jbin = i; 
+      jbin = i; // first bin "really" on plateau
       break;
     }
   }
+
+  int plateauWidth = h->FindLastBinAbove(0.9*hmax) - jbin;
+  double hi = h->GetBinLowEdge(jbin + 0.7*plateauWidth);
 
   double lo = h->GetBinLowEdge(1); 
   // require 3 consecutive bins at zero
+  int foundLo(-1);
   for (int i = 3; i < h->GetNbinsX(); ++i) {
+    if (h->GetBinLowEdge(i-2) > hi) break;
     if (h->GetBinContent(i-2) < 1 && h->GetBinContent(i-1) < 1 && h->GetBinContent(i) < 1) {
       lo = h->GetBinLowEdge(i-2);
+      foundLo = i-2;
       break;
     }
   }
-
-  double hi = h->FindLastBinAbove(0.9*h->GetMaximum());
-
+  if (foundLo > -1) {
+    lo = lo + 0.6*(h->GetBinLowEdge(ibin) - lo);
+  }
 
   // -- setup function
   TF1* f = (TF1*)gROOT->FindObject("PIF_err");
@@ -260,8 +266,13 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
     f->SetRange(lo, hi); 
   }
   
-  f->SetParameter(0, h->GetBinCenter((ibin+jbin)/2)); 
-  f->SetParameter(1, 0.2); 
+  f->SetParameter(0, h->GetBinCenter(0.5*(ibin+jbin))); 
+  f->SetParameter(1, 2.0/(h->GetBinLowEdge(jbin) - h->GetBinLowEdge(ibin))); 
+  //   cout << "init parameters 0: " << f->GetParameter(0) << " 1: " << f->GetParameter(1) 
+  //        << " ibin: " << ibin << " jbin: " << jbin
+  //        << " lo: " << lo << " hi: " << hi 
+  //        << " foundLo: " << foundLo
+  //        << endl;
   if (jbin == ibin) {
     //    cout << "XXXXXXXXXXX PixInitFunc: STEP FUNCTION " << h->GetTitle() << " ibin = " << ibin << " jbin = " << jbin << endl;
     f->FixParameter(0, h->GetBinCenter(jbin)); 

@@ -57,7 +57,7 @@ static void *reader (void *arg) {
   // there is no non-blocking read command implemented in libftdi ->
   // therefore we use multithreading and a static buffer to emulate
   // non-blocking calls
-    struct ftdi_context *handle = (struct ftdi_context *)(arg);
+    struct ftdi_context *handle = reinterpret_cast<struct ftdi_context *>(arg);
     unsigned char buf[0x1000];
     int32_t br, i;
 
@@ -82,7 +82,7 @@ static void *reader (void *arg) {
 static void *usbclose (void *arg) {
   // on some circumstances, the ftdi_usb_close() call hangs;
   // this is a workaround to implement a timeout
-    struct ftdi_context *handle = (struct ftdi_context *)(arg);
+    struct ftdi_context *handle = reinterpret_cast<struct ftdi_context *>(arg);
     ftdi_usb_close(handle);
     pthread_mutex_lock(&cleanup_mutex); usbclose_done = true; pthread_mutex_unlock(&cleanup_mutex);
     return NULL;
@@ -91,7 +91,7 @@ static void *usbclose (void *arg) {
 static void *usbdeinit (void *arg) {
   // on some circumstances, the ftdi_deinit() call hangs;
   // this is a workaround to implement a timeout
-    struct ftdi_context *handle = (struct ftdi_context *)(arg);
+    struct ftdi_context *handle = reinterpret_cast<struct ftdi_context *>(arg);
     ftdi_deinit(handle);
     pthread_mutex_lock(&cleanup_mutex); usbdeinit_done = true; pthread_mutex_unlock(&cleanup_mutex);
     return NULL;
@@ -260,7 +260,7 @@ bool CUSB::Open(char serialNumber[])
     return false; 
   }
   
-  LOG(logDEBUGUSB) << " USBInterface::Open(): searching for device with serial number: '" << serialNumber << "'";
+  LOG(logINTERFACE) << " USBInterface::Open(): searching for device with serial number: '" << serialNumber << "'";
 
   // reset buffer index positions
   m_posR = m_sizeR = m_posW = 0;
@@ -282,18 +282,18 @@ bool CUSB::Open(char serialNumber[])
     if ((ftdiStatus = 
 	 ftdi_usb_get_strings(&ftdic,devlist->dev, manufacturer, 
 			      128, description, 128, serial, 128)) < 0){
-      LOG(logDEBUGUSB) << " USBInterface::Open(): Error polling USB device number " << i;
+      LOG(logINTERFACE) << " USBInterface::Open(): Error polling USB device number " << i;
       devlist = devlist->next;
       continue;
     }    
     if (strcmp(serialNumber,serial)!=0 && strcmp(serialNumber,"*")!=0){
       // not found, next device
-      LOG(logDEBUGUSB) << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'";
+      LOG(logINTERFACE) << " USBInterface::Open(): found non-matching device with serial number: '" << serial << "'";
 
       devlist = devlist->next;
     } else {
       // found the device
-      LOG(logDEBUGUSB) << " USBInterface::Open(): found device with serial " << serial;
+      LOG(logINTERFACE) << " USBInterface::Open(): found device with serial " << serial;
       // now open it
       ftdiStatus = ftdi_usb_open_dev(&ftdic, devlist->dev);
       if( ftdiStatus < 0) {
@@ -302,7 +302,7 @@ bool CUSB::Open(char serialNumber[])
 	LOG(logWARNING) << " Warning: FTDI returned status code " << ftdiStatus << ", will try to detach ftdi_sio and usbserial kernel modules ";
 	libusb_device_handle *handle;
 	/* open the device */
-	int32_t ok = libusb_open((libusb_device*)devlist->dev, &handle);
+	int32_t ok = libusb_open(reinterpret_cast<libusb_device*>(devlist->dev), &handle);
 	if( ok != 0){
 	  LOG(logCRITICAL) << "libusb returned status code " << ok << ", could not get USB device handle ";
 	  ftdi_list_free(&devlist);
@@ -313,9 +313,9 @@ bool CUSB::Open(char serialNumber[])
 	/* Detach the kernel module from the device */
         ok = libusb_detach_kernel_driver(handle, 0);
         if( ok == 0){
-	  LOG(logDEBUGUSB) << " Detached kernel driver from selected testboard. ";
+	  LOG(logINTERFACE) << " Detached kernel driver from selected testboard. ";
         } else {
-          LOG(logDEBUGUSB) << "Unable to detach kernel driver from selected testboard.";
+          LOG(logINTERFACE) << "Unable to detach kernel driver from selected testboard.";
 	}
 	libusb_close(handle);
 
@@ -329,7 +329,7 @@ bool CUSB::Open(char serialNumber[])
 	}
       }
       isUSB_open = true;
-      LOG(logDEBUGUSB) << " FTDI successfully opened connection to device ";
+      LOG(logINTERFACE) << " FTDI successfully opened connection to device ";
 
     } // strcmp serial
   } // device loop
@@ -414,7 +414,7 @@ void CUSB::Write(uint32_t bytesToWrite, const void *buffer)
   uint32_t k=0;
   for( k=0; k < bytesToWrite; k++ ) {
     if( m_posW >= USBWRITEBUFFERSIZE) {Flush();}
-    m_bufferW[m_posW++] = ((unsigned char*)buffer)[k];
+    m_bufferW[m_posW++] = (reinterpret_cast<unsigned char*>(const_cast<void*>(buffer)))[k];
   }
   return;
 }
@@ -468,7 +468,7 @@ void CUSB::Read(uint32_t bytesToRead, void *buffer, uint32_t &bytesRead)
 	}
 	if (bufferready){
 	  sem_wait (&buf_data);	
-	  ((unsigned char*)buffer)[i] = read_buffer[tail];
+	  (reinterpret_cast<unsigned char*>(const_cast<void*>(buffer)))[i] = read_buffer[tail];
 	  if (tail == (BUFSIZE -1)) tail = 0;
 	  else                      tail++;
 	  sem_post (&buf_space);
@@ -519,7 +519,7 @@ bool CUSB::Show()
   LOG(logINFO) << "  - max timeout for read calls set to " << m_timeout << "ms";
 
   unsigned char latency;
-  if (ftdi_get_latency_timer(&ftdic,&latency)==0){ LOG(logINFO) << "  - FTDI latency timer set to " << (int) latency;}
+  if (ftdi_get_latency_timer(&ftdic,&latency)==0){ LOG(logINFO) << "  - FTDI latency timer set to " << static_cast<int>(latency); }
   LOG(logINFO) << "  - data waiting in local read buffer: " << !(tail == head);
  
   return true;
