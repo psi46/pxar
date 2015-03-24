@@ -344,7 +344,6 @@ namespace pxar {
     unsigned int n = sample->GetSize();
     decodingStats.m_info_words_read += n;
 
-    // FIXME this currently only handles single ROCs!
     if (n >= 3) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
       if (n - 3*GetTokenChainLength() > 0) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
@@ -352,10 +351,16 @@ namespace pxar {
       unsigned int pos = 0;
       while (pos+3 <= n) {
 	// Check if we have another ROC header (UB and B levels):
-	// FIXME don't check for equality but allow jitter!
-	// Here we have to assume the first two words are a ROC header because we rely on its
-	// Ultrablack and Black level as initial values for auto-calibration:
-	if(roc_n < 0 || (expandSign((*sample)[pos]) == ultrablack && expandSign((*sample)[pos+1]) == black)) {
+	// Here we have to assume the first two words are a ROC header because we rely on
+	// its Ultrablack and Black level as initial values for auto-calibration:
+	int16_t levelS = (black - ultrablack)/8;
+
+	if(roc_n < 0 || 
+	   // Ultrablack level:
+	   ((ultrablack-levelS < expandSign((*sample)[pos]) && ultrablack+levelS > expandSign((*sample)[pos]))
+	   // Black level:
+	    && (black-levelS < expandSign((*sample)[pos+1]) && black+levelS > expandSign((*sample)[pos+1])))) {
+
 	  roc_n++;
 	  // Save the lastDAC value:
 	  evalLastDAC(roc_n, (*sample)[pos+2]);
