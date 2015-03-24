@@ -37,7 +37,8 @@ namespace pxar {
 #define TBM_REG_SET_DELAYS          0x0A
 #define TBM_REG_TEMPERATURE_CONTROL 0x0C
 #define TBM_REG_CORES_A_B           0x0E
-
+// Special TBM settings, only for pxar internal use:
+#define TBM_TOKENCHAIN              0xFF
 
 // --- ROC Size ---------------------------------------------------------------
 #define ROC_NUMROWS 80
