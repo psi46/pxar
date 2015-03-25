@@ -234,6 +234,64 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 }
 
 
+// ----------------------------------------------------------------------
+pair<vector<TH2D*>, vector<TH2D*> > PixTest::xNoiseMaps(std::string name, uint16_t ntrig, 
+							int dacmin, int dacmax, int dacsperstep, 
+							int result, uint16_t flag) {
+
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  string type("hits"); 
+  print(Form("xNoiseMap name: %s ntrig: %d dacrange: %d .. %d %s flags = %d (plus default)",  
+	     name.c_str(), ntrig, dacmin, dacmax, type.c_str(), flag)); 
+
+  vector<shist256*>  maps; 
+  vector<TH1*>       resultMaps; 
+  resultMaps.clear();
+  
+  shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
+  shist256 *ph;
+  rsstools rss;
+  
+  int idx(0);
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    for (unsigned int ic = 0; ic < 52; ++ic) {
+      for (unsigned int ir = 0; ir < 80; ++ir) {
+	idx = PixUtil::rcr2idx(iroc, ic, ir); 
+	ph = pshistBlock + idx;
+	maps.push_back(ph); 
+      }
+    }
+  }
+  
+  if (dacsperstep > 0) {
+    int stepsize(dacsperstep); 
+    int dacminAdj = dacmin; 
+    int dacmaxAdj = dacmin + stepsize - 1;
+    bool finalRun(false);
+    while (dacmaxAdj <= dacmax) {
+      LOG(logINFO) << "  dacScan step  from " << dacminAdj << " .. " << dacmaxAdj; 
+      xDacScan("vcal", ntrig, dacminAdj, dacmaxAdj, maps, flag); 
+      if (finalRun) break;
+      dacminAdj = dacminAdj + stepsize; 
+      dacmaxAdj = dacminAdj + stepsize - 1;
+      if (dacmaxAdj >= dacmax) {
+	dacmaxAdj = dacmax; 
+	finalRun = true;
+      }
+    }
+  } else {
+    xDacScan("vcal", ntrig, dacmin, dacmax, maps, flag); 
+  }
+
+
+
+  pair<vector<TH2D*>, vector<TH2D*> >  results;
+  return results;
+
+}
+
+
 
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
@@ -575,26 +633,46 @@ void PixTest::update() {
 
 // ----------------------------------------------------------------------
 void PixTest::hvOn() {
-  //  cout << "PixTest::hvOn()" << endl;
-  Emit("hvOn()"); 
+  if (fPixSetup->guiActive()) {
+    LOG(logDEBUG) << "PixTest::hvOn() emit hvOn()";
+    Emit("hvOn()"); 
+  } else {
+    LOG(logDEBUG) << "PixTest::hvOn() api::HVon()";
+    fApi->HVon(); 
+  }
 }
 
 // ----------------------------------------------------------------------
 void PixTest::hvOff() {
-  //  cout << "PixTest::hvOff()" << endl;
-  Emit("hvOff()"); 
+  if (fPixSetup->guiActive()) {
+    LOG(logDEBUG) << "PixTest::hvOff() emit hvOff()";
+    Emit("hvOff()"); 
+  } else {
+    LOG(logDEBUG) << "PixTest::hvOff() api::HVoff()";
+    fApi->HVoff(); 
+  }
 }
 
 // ----------------------------------------------------------------------
 void PixTest::powerOn() {
-  //  cout << "PixTest::powerOn()" << endl;
-  Emit("powerOn()"); 
+  if (fPixSetup->guiActive()) {
+    LOG(logDEBUG) << "PixTest::powerOn() emit powerOn()";
+    Emit("powerOn()");
+  } else {
+    LOG(logDEBUG) << "PixTest::hvOff() api::Pon()";
+    fApi->Pon(); 
+  }
 }
 
 // ----------------------------------------------------------------------
 void PixTest::powerOff() {
-  //  cout << "PixTest::powerOff()" << endl;
-  Emit("powerOff()"); 
+  if (fPixSetup->guiActive()) {
+    LOG(logDEBUG) << "PixTest::powerOff() emit powerOff()";
+    Emit("powerOff()"); 
+  } else {
+    LOG(logDEBUG) << "PixTest::hvOff() api::Poff()";
+    fApi->Poff(); 
+  }
 }
 
 
@@ -1441,6 +1519,52 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
   
 }
 
+// ----------------------------------------------------------------------
+void PixTest::xDacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int flag) {
+
+  fNtrig = ntrig; 
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+
+  int ic, ir, iroc; 
+  double val;
+  bool done = false;
+  int cnt(0); 
+  vector<pair<uint8_t, vector<pixel> > > results;
+  
+  while (!done){
+    LOG(logDEBUG) << "      attempt #" << cnt;
+    try{
+      results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, flag, fNtrig); 
+      fNDaqErrors = fApi->getStatistics().errors_pixel();
+      done = true;
+    } catch(pxarException &/*e*/) {
+      fNDaqErrors = 666667;
+      ++cnt;
+    }
+    done = (cnt>2) || done;
+  }
+  
+  int idx(0); 
+  for (unsigned int idac = 0; idac < results.size(); ++idac) {
+    int dac = results[idac].first; 
+    for (unsigned int ipix = 0; ipix < results[idac].second.size(); ++ipix) {
+      ic =   results[idac].second[ipix].column(); 
+      ir =   results[idac].second[ipix].row(); 
+      iroc = results[idac].second[ipix].roc(); 
+      if (ic > 51 || ir > 79) {
+	LOG(logDEBUG) << "bad pixel address encountered: ROC/col/row = " << iroc << "/" << ic << "/" << ir;
+	continue;
+      }
+      val =  results[idac].second[ipix].value();
+      if (val < 0) continue;
+      idx = PixUtil::rcr2idx(getIdxFromId(iroc), ic, ir);
+      if (idx > -1) maps[idx]->fill(dac, val);
+    }
+  }
+  
+}
+
 
 // ----------------------------------------------------------------------
 void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<TH1*> &resultMaps, int result) {
@@ -1928,7 +2052,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
       fApi->daqTriggerLoopHalt();
 
       // fillMap(v):
-      vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+      vector<pxar::Event> daqdat;
+      try { daqdat = fApi->daqGetEventBuffer(); }
+      catch(pxar::DataNoEvent &) {}
       for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
 	for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
 	  v[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
@@ -1950,7 +2076,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   fApi->daqStop();
 
   // fillMap(v):
-  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  vector<pxar::Event> daqdat;
+  try { daqdat = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       v[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());

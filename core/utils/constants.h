@@ -82,6 +82,7 @@ namespace pxar {
 #define ROC_DAC_VsumCol    0x18
 #define ROC_DAC_Vcal       0x19
 #define ROC_DAC_CalDel     0x1A
+#define ROC_DAC_RangeTemp  0x1B
 #define ROC_DAC_CtrlReg    0xFD
 #define ROC_DAC_WBC        0xFE
 #define ROC_DAC_Readback   0xFF

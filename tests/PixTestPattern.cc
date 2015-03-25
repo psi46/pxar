@@ -401,7 +401,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 
 	if (!fResultsOnFile)
 	{
-		daqEvBuffer = fApi->daqGetEventBuffer();
+	  try { daqEvBuffer = fApi->daqGetEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
 		daqEvBuffsiz = daqEvBuffer.size();
 
 		FillHistos(daqEvBuffer, hits, phmap, ph); //fill&print histos on the gui
@@ -444,7 +445,9 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 
 		if (fBinOut)
 		{
-			std::vector<uint16_t> daqdat = fApi->daqGetBuffer();
+		  std::vector<uint16_t> daqdat;
+		  try { daqdat = fApi->daqGetBuffer(); }
+		  catch(pxar::DataNoEvent &) {}
 			if (daqdat.size() > 550000) sdata << (daqdat.size() / 524288) << "MB";
 			else sdata << (daqdat.size() / 512) << "kB";
 			LOG(logINFO) << "PixTestPattern:: " << daqdat.size() << " words of data read : " << sdata.str();
@@ -456,7 +459,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 
 		else
 		{
-			daqEvBuffer = fApi->daqGetEventBuffer();
+		  try { daqEvBuffer = fApi->daqGetEventBuffer(); }
+		  catch(pxar::DataNoEvent &) {}
 			daqEvBuffsiz = daqEvBuffer.size();
 			LOG(logINFO) << "PixTestPattern:: " << daqEvBuffsiz << " events read";
 

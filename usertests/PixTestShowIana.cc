@@ -76,7 +76,9 @@ uint8_t PixTestShowIana::readRocADC(uint8_t adc)
 
     //read 32 events
     fApi->daqTrigger(32);
-    vector<pxar::Event> events = fApi->daqGetEventBuffer();
+    vector<pxar::Event> events;
+    try { events = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     
     if ( events.size()<32 ){
         cout << "only got " << events.size() << endl;
