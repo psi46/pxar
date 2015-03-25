@@ -130,8 +130,7 @@ class PxarCoreCmd(cmd.Cmd):
         self.window.update()
 
     def varyDelays(self,tindelay,toutdelay,verbose=False):
-        self.api.setTestboardDelays({"tindelay":tindelay})
-        self.api.setTestboardDelays({"toutdelay":toutdelay})
+        self.api.setTestboardDelays({"tindelay":tindelay,"toutdelay":toutdelay})
         self.api.daqStart()
         self.api.daqTrigger(1, 500)
 
@@ -140,15 +139,15 @@ class PxarCoreCmd(cmd.Cmd):
         except RuntimeError:
             pass
 
-            if verbose: print "raw Event:\t\t",rawEvent
-            nCount = 0
-            for i in rawEvent:
-                i = i & 0x0fff
-                if i & 0x0800:
-                    i -= 4096
-                rawEvent[nCount] = i
-                nCount += 1
-            if verbose: print "converted Event:\t",rawEvent
+        if verbose: print "raw Event:\t\t",rawEvent
+        nCount = 0
+        for i in rawEvent:
+            i = i & 0x0fff
+            if i & 0x0800:
+                i -= 4096
+            rawEvent[nCount] = i
+            nCount += 1
+        if verbose: print "converted Event:\t",rawEvent
         self.api.daqStop()
         return rawEvent
 
@@ -923,8 +922,7 @@ class PxarCoreCmd(cmd.Cmd):
                 break
             tout -= 1
         print ""
-        self.api.setTestboardDelays({"tindelay":bestTin})
-        self.api.setTestboardDelays({"toutdelay":bestTout})
+        self.api.setTestboardDelays({"tindelay":bestTin,"toutdelay":bestTout})
         print "set tindelay to:  ", bestTin
         print "set toutdelay to: ", bestTout
 
