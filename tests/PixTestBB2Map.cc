@@ -118,13 +118,23 @@ PixTestBB2Map::~PixTestBB2Map() {
 void PixTestBB2Map::doTest() {
 
   TStopwatch t;
-
   cacheDacs();
+  
+  // Save initial Dac values 
+
+  vector<uint8_t> v_iniVana     = getDacs("vana");
+  vector<uint8_t> v_iniVcal     = getDacs("vcal"); 
+  vector<uint8_t> v_iniVthrComp = getDacs("vthrcomp"); 
+  vector<uint8_t> v_iniCreg     = getDacs("ctrlreg"); 
+  vector<uint8_t> v_iniCalDel   = getDacs("caldel"); 
+  
+  // Begin now the Test
+
   PixTest::update();
   bigBanner(Form("PixTestBB2Map::doTest() Ntrig = %d, VcalS = %d, PlWidth = %d", fParNtrig, fParVcalS, fParPlWidth));
 
   fDirectory->cd();
-
+ 
   // set setVana
 
   std::cout << "Setting Vana " << std::endl;
@@ -326,7 +336,15 @@ void PixTestBB2Map::doTest() {
   }
   
   fDisplayedHist = find(fHistList.begin(), fHistList.end(),result_h22[0]);
-  
+
+  // Restore initial DAC values 
+
+  setDacs("vana",v_iniVana);
+  setDacs("vcal", v_iniVcal); 
+  setDacs("ctrlreg", v_iniCreg); 
+  setDacs("caldel", v_iniCalDel); 
+  setDacs("vthrcomp", v_iniVthrComp); 
+
   PixTest::update(); 
 
   int seconds = t.RealTime();
@@ -501,7 +519,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
   string name1("pretestVthrCompCalDel");
 
   fApi->setDAC("CtrlReg", 4);   
-  fApi->setDAC("Vcal", 222); 
+  fApi->setDAC("Vcal", 250); 
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
