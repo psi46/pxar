@@ -134,16 +134,21 @@ class PxarCoreCmd(cmd.Cmd):
         self.api.setTestboardDelays({"toutdelay":toutdelay})
         self.api.daqStart()
         self.api.daqTrigger(1, 500)
-        rawEvent = self.api.daqGetRawEvent()
-        if verbose: print "raw Event:\t\t",rawEvent
-        nCount = 0
-        for i in rawEvent:
-            i = i & 0x0fff
-            if i & 0x0800:
-                i -= 4096
-            rawEvent[nCount] = i
-            nCount += 1
-        if verbose: print "converted Event:\t",rawEvent
+
+        try:
+            rawEvent = self.api.daqGetRawEvent()
+        except RuntimeError:
+            pass
+
+            if verbose: print "raw Event:\t\t",rawEvent
+            nCount = 0
+            for i in rawEvent:
+                i = i & 0x0fff
+                if i & 0x0800:
+                    i -= 4096
+                rawEvent[nCount] = i
+                nCount += 1
+            if verbose: print "converted Event:\t",rawEvent
         self.api.daqStop()
         return rawEvent
 
@@ -784,7 +789,6 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all registers
                 return dacdict.getAllTBMNames()
 
-
     @arity(1,1,[int])
     def do_getTbmDACs(self, tbmid):
         """getTbmDACs [id]: get the currently programmed register settings for TBM #id"""
@@ -894,8 +898,8 @@ class PxarCoreCmd(cmd.Cmd):
         return [self.do_getNMaskedPixels.__doc__, '']
 
     @arity(0,0,[])
-    def do_FindTBDelays(self):
-        """FindTBDelays: configures tindelay and toutdelay"""
+    def do_findAnalogueTBDelays(self):
+        """findAnalogueTBDelays: configures tindelay and toutdelay"""
         print ""
         bestTin = 10    #default value if algorithm should fail
         print "scan tindelay:"
@@ -924,9 +928,9 @@ class PxarCoreCmd(cmd.Cmd):
         print "set tindelay to:  ", bestTin
         print "set toutdelay to: ", bestTout
 
-    def complete_FindTBDelays(self, text, line, start_index, end_index):
+    def complete_findAnalogueTBDelays(self, text, line, start_index, end_index):
         # return help for the cmd
-        return [self.do_FindTBDelays.__doc__, '']
+        return [self.do_findAnalogueTBDelays.__doc__, '']
 
     def do_quit(self, arg):
         """quit: terminates the application"""
