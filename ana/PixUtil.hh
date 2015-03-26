@@ -12,6 +12,8 @@ public:
   static double dEff(int in, int iN); 
   static double dBinomial(int in, int iN);
 
+  /// convert a string into ROC/COL/ROW
+  static void str2rcr(std::string, int &iroc, int &icol, int &irow);
   /// convert ROC/COL/ROW into idx
   static int rcr2idx(int iroc, int icol, int irow);
   /// and back again
