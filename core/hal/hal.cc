@@ -19,7 +19,8 @@ hal::hal(std::string name) :
   m_tindelay(13),
   m_toutdelay(8),
   deser160phase(4),
-  rocType(0),
+  m_roctype(0),
+  m_roccount(0),
   _currentTrgSrc(TRG_SEL_PG_DIR)
 {
 
@@ -306,8 +307,10 @@ void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacV
   if(type == ROC_PSI46DIG || type == ROC_PSI46DIG_TRIG) {
     LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
   }
-  // FIXME
-  rocType = type;
+  // Store ROC type for later HAL usage:
+  m_roctype = type;
+  m_roccount++;
+  LOG(logDEBUGHAL) << "Currently have " << static_cast<int>(m_roccount) << " ROCs in HAL";
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC@I2C " << static_cast<int>(roci2c) << ".";
@@ -1620,24 +1623,21 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
 
   // Length of a token chain (number of ROCs per data stream):
-  // FIXME this should correctly state the number of ROCs we expect!
-  // FIXME: get this from the DUT object somehow....
-
-  uint8_t tokenChainLength = 1; // One ROC for DESER160 readout.
+  uint8_t tokenChainLength = m_roccount; // N ROCs for DESER160 readout.
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { 
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    tokenChainLength *= (m_tbmtype >= TBM_09 ? 4 : 8);
+    tokenChainLength = (m_tbmtype >= TBM_09 ? 4 : 8);
     // Split the total buffer size when having more than one channel
     buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
   }
-  LOG(logDEBUGHAL) << "Determined Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
+  LOG(logDEBUGHAL) << "Determined total Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
 
   // Clear all decoder instances:
   decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
-  LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(_testboard,0,tokenChainLength,m_tbmtype,rocType,true);
+  LOG(logDEBUGHAL) << "Channel 0: token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch0;
+  src0 = dtbSource(_testboard,0,tokenChainLength,m_tbmtype,m_roctype,true);
   src0 >> splitter0;
 
   _testboard->uDelay(100);
@@ -1646,8 +1646,8 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
-    LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(_testboard,1,tokenChainLength,m_tbmtype,rocType,true);
+    LOG(logDEBUGHAL) << "Channel 1: token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch1;
+    src1 = dtbSource(_testboard,1,tokenChainLength,m_tbmtype,m_roctype,true);
     src1 >> splitter1;
 
     // Reset the Deserializer 400, re-synchronize:
@@ -1676,13 +1676,13 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(_testboard,2,tokenChainLength,m_tbmtype,rocType,true);
+      LOG(logDEBUGHAL) << "Channel 2 token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch2;
+      src2 = dtbSource(_testboard,2,tokenChainLength,m_tbmtype,m_roctype,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(_testboard,3,tokenChainLength,m_tbmtype,rocType,true);
+      LOG(logDEBUGHAL) << "Channel 3 token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch3;
+      src3 = dtbSource(_testboard,3,tokenChainLength,m_tbmtype,m_roctype,true);
       src3 >> splitter3;
 
       // Start the DAQ also for channel 2 and 3:
@@ -1691,7 +1691,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     }
   }
   // Single analog PSI46 chip:
-  else if(rocType < ROC_PSI46DIG) {
+  else if(m_roctype < ROC_PSI46DIG) {
     LOG(logDEBUGHAL) << "Enabling ADC for analog ROC data acquisition."
 		     << " Timout: " << static_cast<int>(m_adctimeout)
 		     << " Delay Tin/Tout: " << static_cast<int>(m_tindelay) 
