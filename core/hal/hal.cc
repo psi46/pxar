@@ -1624,19 +1624,19 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   // Length of a token chain (number of ROCs per data stream):
   uint8_t tokenChainLength = m_roccount; // N ROCs for DESER160 readout.
+  LOG(logDEBUGHAL) << "Determined total Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) { 
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
     tokenChainLength = (m_tbmtype >= TBM_09 ? 4 : 8);
     // Split the total buffer size when having more than one channel
     buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
   }
-  LOG(logDEBUGHAL) << "Determined total Token Chain Length: " << static_cast<int>(tokenChainLength) << " ROCs.";
 
   // Clear all decoder instances:
   decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
 
   uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
-  LOG(logDEBUGHAL) << "Channel 0: token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch0;
+  LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
   src0 = dtbSource(_testboard,0,tokenChainLength,m_tbmtype,m_roctype,true);
   src0 >> splitter0;
 
@@ -1646,7 +1646,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
-    LOG(logDEBUGHAL) << "Channel 1: token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch1;
+    LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
     src1 = dtbSource(_testboard,1,tokenChainLength,m_tbmtype,m_roctype,true);
     src1 >> splitter1;
 
@@ -1676,12 +1676,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Channel 2 token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch2;
+      LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
       src2 = dtbSource(_testboard,2,tokenChainLength,m_tbmtype,m_roctype,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Channel 3 token chain: " << tokenChainLength << " offset " << 0 << " buffer " << allocated_buffer_ch3;
+      LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
       src3 = dtbSource(_testboard,3,tokenChainLength,m_tbmtype,m_roctype,true);
       src3 >> splitter3;
 
