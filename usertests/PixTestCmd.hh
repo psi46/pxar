@@ -332,6 +332,7 @@ class CmdProc {
   static bool fFW35;
   
   bool verbose;
+  bool fEchoExecs;  // echo command from executed files
   Target defaultTarget;
   map<string, deque <string> > macros;
   
