@@ -77,6 +77,9 @@ void PixInitFunc::limitPar(int ipar, double lo, double hi) {
 }
 
 
+
+
+
 // ----------------------------------------------------------------------
 TF1* PixInitFunc::gpTanPol(TH1 *h) {
 
@@ -160,8 +163,8 @@ TF1* PixInitFunc::gpTanH(TH1 *h) {
   f->SetParameter(1, 0.8);
   f->SetParLimits(1, 0., 20.);
 
-  double middle = h->GetMaximum() - h->GetMinimum();
-  double step = h->GetMaximum() - middle; 
+  double middle = (h?h->GetMaximum() - h->GetMinimum() : 120.); 
+  double step = (h?h->GetMaximum() - middle : 100.); 
 
   f->SetParameter(2, middle);
   f->SetParLimits(2, 0., 2*middle);
@@ -205,6 +208,36 @@ TF1* PixInitFunc::weibullCdf(TH1 *h) {
   f->SetParameter(1, h->GetBinCenter(h->FindFirstBinAbove(0.5*h->GetMaximum()))); 
   f->SetParameter(2, 1.5); 
   
+  return f; 
+}
+
+
+// ----------------------------------------------------------------------
+TF1* PixInitFunc::gpErr(TH1 *h) {
+
+  fDoNotFit = false;
+
+  // -- setup function
+  TF1* f = (TF1*)gROOT->FindObject("PIF_err");
+  if (0 == f) {
+    f = new TF1("PIF_err", PIF_err, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 4);
+    f->SetParNames("step", "slope", "floor", "plateau");                       
+    f->SetNpx(1000);
+  } else {
+    f->ReleaseParameter(0);     
+    f->ReleaseParameter(1);     
+    f->ReleaseParameter(2);     
+    f->ReleaseParameter(3); 
+  }
+  
+  double p0 = h->GetBinLowEdge(h->FindFirstBinAbove(0.5*h->GetMaximum())); // half-point
+  double p1 = 250.; // slope
+  double p2 = 1.;
+  double p3 = 0.5*h->GetMaximum(); // half plateau
+
+  f->SetParameters(p0, p1, p2, p3); 
+  f->SetParLimits(1, 50, 1000.); // keep!
+
   return f; 
 }
 
