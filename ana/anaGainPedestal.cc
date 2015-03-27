@@ -20,8 +20,8 @@
 using namespace std;
 
 // ----------------------------------------------------------------------
-anaGainPedestal::anaGainPedestal(int nrocs): fNrocs(nrocs) {
-  cout << "anaGainPedestal ctor, nrocs = " << nrocs << endl;
+anaGainPedestal::anaGainPedestal(string dir, int nrocs): fDirectory(dir), fNrocs(nrocs) {
+  cout << "anaGainPedestal ctor, nrocs = " << fNrocs << " directory = " << fDirectory << endl;
   c0 = (TCanvas*)gROOT->FindObject("c0"); 
   if (!c0) c0 = new TCanvas("c0","--c0--",0,0,656,700);
 
@@ -103,6 +103,18 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
   for (int i = 0; i < fNrocs; ++i) {
     h = new TH1D(Form("cd_C%d", i), Form("chi2/dof for ROC %d, errf ", i), 100, 0., 5.);
     hsummary.insert(make_pair(Form("cd_C%d", i), h)); 
+
+    h = new TH1D(Form("p0_C%d", i), Form("p0 ROC %d, errf ", i), 100, 0., 1000.);
+    hsummary.insert(make_pair(Form("p0_C%d", i), h)); 
+
+    h = new TH1D(Form("p1_C%d", i), Form("p1 ROC %d, errf ", i), 100, 0., 1000.);
+    hsummary.insert(make_pair(Form("p1_C%d", i), h)); 
+
+    h = new TH1D(Form("p2_C%d", i), Form("p2 ROC %d, errf ", i), 100, 0., 10.);
+    hsummary.insert(make_pair(Form("p2_C%d", i), h)); 
+
+    h = new TH1D(Form("p3_C%d", i), Form("p3 ROC %d, errf ", i), 100, 0., 200.);
+    hsummary.insert(make_pair(Form("p3_C%d", i), h)); 
   }
 
   vector<TH1D*> hproblems; 
@@ -115,14 +127,18 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
 
     h = il->second;
     f = pif.gpErr(h);
-    cout << "fitting " <<  h->GetName() << endl;
-    h->Fit(f);
+    if (draw) cout << "fitting " <<  h->GetName() << endl;
+    h->Fit(f, (draw?"":"q"));
     hsummary[Form("cd_C%d", lroc)]->Fill(f->GetChisquare()/f->GetNDF()); 
+    hsummary[Form("p0_C%d", lroc)]->Fill(f->GetParameter(0)); 
+    hsummary[Form("p1_C%d", lroc)]->Fill(f->GetParameter(1)); 
+    hsummary[Form("p2_C%d", lroc)]->Fill(f->GetParameter(2)); 
+    hsummary[Form("p3_C%d", lroc)]->Fill(f->GetParameter(3)); 
     if (draw) {
       c0->Modified();
       c0->Update();
     }
-    if (f->GetChisquare()/f->GetNDF() > 2) {
+    if (f->GetChisquare()/f->GetNDF() > 3) {
       cout << "problem: " << h->GetName() << endl;
       hproblems.push_back(h); 
     }
@@ -130,26 +146,19 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
 
   int ipad(1); 
   c0->Clear();
-  c0->Divide(2,2);
 
   // -- plot summary
   end = hsummary.end(); 
   for (map<string, TH1D*>::iterator il = hsummary.begin(); il != end; ++il) {
     if (il->second->GetEntries() < 1) continue;
-    c0->cd(ipad); 
     il->second->Draw();
-    c0->Modified();
-    c0->Update();
-    ++ipad;
+    c0->SaveAs(Form("%s/gpErr-%s.pdf", fDirectory.c_str(), il->second->GetName()));
   }
 
   gStyle->SetOptFit(1);
   for (unsigned int i = 0; i < hproblems.size(); ++i) {
-    c0->cd(ipad); 
     hproblems[i]->Draw();
-    c0->Modified();
-    c0->Update();
-    ++ipad;
+    c0->SaveAs(Form("%s/gpErr-problem-%s.pdf", fDirectory.c_str(), hproblems[i]->GetName())); 
   }
 }
 
@@ -236,26 +245,18 @@ void anaGainPedestal::readRootFile(string filename) {
 
   TH1D* h(0); 
   string hname, sname; 
-  TObject *key;
-  TIter next(gDirectory->GetListOfKeys());                           
   int cnt(0), roc(0), row(0), col(0); 
-  while ((key = (TObject*)next())) {
-    sname = key->GetName();
-    if (string::npos == sname.find("gainPedestal_c")) continue;
-    hname = sname; 
-    PixUtil::str2rcr(hname, roc, col, row); 
-    if (roc == 1) break;
-    //     PixUtil::replaceAll(hname, "gainPedestal", "gp"); 
-    //     PixUtil::replaceAll(hname, "_V0", ""); 
-    h = (TH1D*)gDirectory->Get(sname.c_str()); 
-    //    cout << sname << endl;
-    //    h = (TH1D*)h->Clone(hname.c_str()); 
-    //     h->SetName(hname.c_str()); 
-    //    h->Draw();
-    fHists.insert(make_pair(hname, h)); 
+  for (int roc = 0; roc < 16; ++roc) {
+    for (int col = 0; col < 52; ++col) {
+      for (int row = 0; row < 80; ++row) {
+	hname = Form("gainPedestal_c%d_r%d_C%d_V0", col, row, roc); 
+	h = 0; 
+	h = (TH1D*)gDirectory->Get(hname.c_str()); 
+	if (h) fHists.insert(make_pair(hname, h)); 
+      }
+    }
   }
 }
-
 
 
 

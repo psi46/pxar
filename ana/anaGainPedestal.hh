@@ -16,7 +16,7 @@
 class DLLEXPORT anaGainPedestal {
   
  public: 
-  anaGainPedestal(int nrocs = 16); 
+  anaGainPedestal(std::string dir, int nrocs = 16); 
   ~anaGainPedestal(); 
   
   void makeAll(std::string directory, int mode = 0 );
@@ -29,9 +29,9 @@ class DLLEXPORT anaGainPedestal {
   std::vector<std::string> glob(std::string directory, std::string basename = "phCalibration_");
   
 private: 
-  TCanvas *c0;
-  int fNrocs; 
-
+  TCanvas                     *c0;
+  int                          fNrocs; 
+  std::string                  fDirectory;
   std::map<std::string, TH1D*> fHists; 
 
   ClassDef(anaGainPedestal, 1); // testing anaGainPedestal
