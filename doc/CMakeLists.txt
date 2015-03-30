@@ -23,6 +23,7 @@ FIND_PACKAGE(LATEX)
 IF(LATEX_COMPILER)
   MESSAGE(STATUS "Found LaTeX compiler.")
   INCLUDE(${CMAKE_SOURCE_DIR}/cmake/UseLATEX.cmake)
+  SET(LATEX_OUTPUT_PATH ${CMAKE_BINARY_DIR})
   ADD_LATEX_DOCUMENT(usermanual/pxar-manual.tex 
     INPUTS 
     usermanual/glossary.tex
