@@ -246,49 +246,8 @@ IF(BUILD_tools)
   ADD_SUBDIRECTORY(tools)
 ENDIF(BUILD_tools)
 
-
-#############################################
-# Doxygen target to generate API reference  #
-#############################################
-FIND_PACKAGE(Doxygen)
-IF(DOXYGEN_FOUND)
-  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/reference/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/reference/Doxyfile @ONLY)
-  ADD_CUSTOM_TARGET(ref
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/reference/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/reference
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
-    )
-ENDIF(DOXYGEN_FOUND)
-
-###############################################
-# LaTeX target to compile the PDF user manual #
-###############################################
-# Information and the manual on the UseLATEX.cmake package can be found here
-# http://www.cmake.org/Wiki/CMakeUserUseLATEX
-# The code resides here:
-# https://github.com/kmorel/UseLATEX
-
-FIND_PACKAGE(LATEX)
-IF(LATEX_COMPILER)
-  MESSAGE(STATUS "Found LaTeX compiler.")
-  INCLUDE(cmake/UseLATEX.cmake)
-  ADD_LATEX_DOCUMENT(doc/usermanual/pxar-manual.tex 
-    INPUTS 
-    doc/usermanual/glossary.tex
-    doc/usermanual/symbols.tex 
-    doc/usermanual/introduction.tex
-    doc/usermanual/installation.tex
-    doc/usermanual/hwOverview.tex 
-    doc/usermanual/swOverview.tex
-    doc/usermanual/tutorial.tex
-    doc/usermanual/tests.tex
-    doc/usermanual/usertests.tex
-    doc/usermanual/references.tex
-    NO_DEFAULT
-    )
-ELSE(LATEX_COMPILER)
-  MESSAGE(STATUS "No LaTeX found, cannot compile user manual.")
-ENDIF(LATEX_COMPILER)
+# Add targets for Doxygen code reference and LaTeX User manual
+ADD_SUBDIRECTORY(doc)
 
 #######################################################
 # Print out system information useful for bug reports #
