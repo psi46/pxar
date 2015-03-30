@@ -17,6 +17,7 @@ PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
   fPixMonitor        = new PixMonitor(a);
   fDoAnalysisOnly    = false; 
   fDoUpdateRootFile  = false;
+  fGuiActive         = false;
   init(); 
 }
 
@@ -26,6 +27,8 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
   fPixTestParameters = tp; 
   fConfigParameters  = cp; 
   fDoAnalysisOnly    = false; 
+  fDoUpdateRootFile  = false;
+  fGuiActive         = false;
   init(); 
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs(); 

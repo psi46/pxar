@@ -878,6 +878,7 @@ void CmdProc::init()
 {
     /* note: fApi may not be defined yet !*/
     verbose=false;
+    fEchoExecs = true;
     defaultTarget = Target("roc",0);
     _dict = RegisterDictionary::getInstance();
     _probeDict = ProbeDictionary::getInstance();
@@ -892,7 +893,6 @@ void CmdProc::init()
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
-    //fSignalLevel=255;
     macros["start"] = getWords("[roc * mask; roc * cald; reset tbm; seq 14]");
     macros["startroc"] = getWords("[mask; seq 15; arm 20 20; tct 106; vcal 200; adc]");
     macros["tbmonly"] = getWords("[reset tbm; tbm disable triggers; seq 10; adc]");
@@ -917,6 +917,7 @@ CmdProc::CmdProc(CmdProc * p)
 {
     init();
     verbose = p->verbose;
+    fEchoExecs = p->fEchoExecs;
     defaultTarget = p->defaultTarget;
     fSeq = p->fSeq;
     fPeriod = p->fPeriod;
@@ -924,13 +925,11 @@ CmdProc::CmdProc(CmdProc * p)
     fTCT = p->fTCT;
     fTRC = p->fTRC;
     fTTK = p->fTTK;
-    //fSignalLevel = p->fSignalLevel;
     fBufsize=p->fBufsize;
     macros = p->macros;
     fSigdelaysSetup = p->fSigdelaysSetup;
+    fSigdelays = p->fSigdelays; // what'ts the difference ?
     setApi( p->fApi, p->fPixSetup);
-    //fApi = p->fApi;
-    //fPixSetup = p->fPixSetup;
 }
 
 CmdProc::~CmdProc(){
@@ -1319,22 +1318,21 @@ int CmdProc::setTestboardPower(string name, uint16_t value){
 
 int CmdProc::setTestboardDelay(string name, uint8_t value){
     
-    ConfigParameters *p = fPixSetup->getConfigParameters();
-    if (fSigdelaysSetup.size()==0){
+    if (fSigdelays.size()==0){
+		// maybe never initialized
+		ConfigParameters *p = fPixSetup->getConfigParameters();
         fSigdelaysSetup = p->getTbSigDelays();
         fSigdelays = p->getTbSigDelays();
-    }else{
-        // FIXME check whether gui values have changed
-        vector<pair<string,uint8_t> > sigdelays;
-        sigdelays = p->getTbSigDelays();
-    }
-    
+   }else{
+        // FIXME check whether gui values have changed ?????
+   }
+ 
 
     for(size_t i=0; i<fSigdelays.size(); i++){
         if (fSigdelays[i].first==name){
             fSigdelays[i] =  std::make_pair(name, value);
         }
-        //cout << fSigdelays[i].first << " : " << (int) fSigdelays[i].second << endl; 
+        if(verbose) cout << fSigdelays[i].first << " : " << (int) fSigdelays[i].second << endl; 
     }
     fApi->setTestboardDelays( fSigdelays );
 
@@ -1365,7 +1363,8 @@ int CmdProc::bursttest(int ntrig, int trigsep, int nburst){
 
 
 int CmdProc::adctest(const string signalName){
-    
+
+
     // part 1 , acquire data : delay scan
    
    
@@ -1408,27 +1407,18 @@ int CmdProc::adctest(const string signalName){
     int ymin=0xffff;
     int ymax=-ymin;
     vector<int> yhist(2048);
-    vector<pair<string,uint8_t> > sigdelays;
+
     for(unsigned int dly=0; dly<nDly; dly++){
         
-        sigdelays.clear();
+        //sigdelays.clear();
         if(source==1){
             setTestboardDelay("clk", dly);
             setTestboardDelay("ctr", dly);
             setTestboardDelay("sda", dly+15);
             setTestboardDelay("tin", dly+5);
-            /*
-            sigdelays.push_back(std::make_pair("clk", dly));
-            sigdelays.push_back(std::make_pair("ctr", dly));
-            sigdelays.push_back(std::make_pair("sda", dly + 15));
-            sigdelays.push_back(std::make_pair("tin", dly + 5));
-            * */
         }else if(source==2){
-            //sigdelays.push_back(std::make_pair("sda", dly ));
             setTestboardDelay("sda", dly);
         }
-        //sigdelays.push_back(std::make_pair("level",fSignalLevel));
-        //fApi->setTestboardDelays(sigdelays);
             
         vector<uint16_t> data = fApi->daqADC(signalName, gain, nSample, source, start);
         
@@ -1448,16 +1438,8 @@ int CmdProc::adctest(const string signalName){
    }
 
     // restore delays, signals (modified by daqADC) and pg
-    /*
-    ConfigParameters *p = fPixSetup->getConfigParameters();
-    sigdelays = p->getTbSigDelays();
-    fApi->setTestboardDelays(sigdelays);
-    * */
     setTestboardDelay("all");
-    
-  
-     pg_restore();
-     
+	pg_restore();
      
     if (ymin<ymax){
         int ylo=ymin/2;  for(; yhist[ylo+1024]<yhist[ylo+1+1024]; ylo++){}
@@ -1646,14 +1628,14 @@ int CmdProc::setupDaq(int ntrig, int ftrigkhz, int verbosity){
      */
     
     // warn user when no data expected
-    if( (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
+    if( (ntrig>0) && (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
         out << "The current sequence does not contain a trigger!\n";
     }else if( (fApi->_dut->getNTbms()==0) && ((fSeq & 0x01 ) ==0 ) ){
         out <<"The current sequence does not contain a token!\n";
     }
     
     int length=0;
-    if((ntrig==1) || (ftrigkhz==0)){
+    if((ntrig==0) || (ntrig==1) || (ftrigkhz==0)){
         length=fBufsize;
     }else{
         length = 40000 / ftrigkhz;
@@ -1695,7 +1677,9 @@ int CmdProc::runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosi
     
     if(setup) setupDaq(ntrig, ftrigkhz, verbosity);
  
-    fApi->daqTrigger(ntrig, fPeriod);
+	if(ntrig>0){
+		fApi->daqTrigger(ntrig, fPeriod);
+	}
 
     getBuffer( buf );
     if(buf.size()==0){
@@ -1839,7 +1823,6 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
         unsigned int nevent=0;
 
         
-        //cout << "getData maxTBM=" << dec<< (int) maxTBM << "  rocs/token=" << (int) nRocPerToken << endl;
         unsigned int nloop=0;
         int fffCounter=0;
         
@@ -2245,13 +2228,13 @@ int CmdProc::pg_loop(int value){
     uint16_t delay = pg_sequence( fSeq );
     fApi->daqStart(fBufsize, false); // otherwise daqTriggerLoop does nothing (status())
     if(value==0){
-        cout << "calling api->daqTriggerLoop " << fBufsize << endl;
+        if(verbose) cout << "calling api->daqTriggerLoop " << fBufsize << endl;
         uint16_t retval = fApi->daqTriggerLoop( delay );
-        cout << "return value " << retval << endl;
+        if(verbose) cout << "return value " << retval << endl;
     }else{
-        cout << "calling api->daqTriggerLoop " << value << endl;
+        if(verbose) cout << "calling api->daqTriggerLoop " << value << endl;
         uint16_t retval = fApi->daqTriggerLoop( value );
-        cout << "return value " << retval << endl;
+        if(verbose) cout << "return value " << retval << endl;
     }        
     fPgRunning = true;
     return 0;
@@ -2316,17 +2299,25 @@ int CmdProc::tb(Keyword kw){
 
     int step, pattern, delay, value;
     string s, comment, filename;
-    if( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia()<<"\n"; return 0;}
-    if( kw.match("id")    ){  out <<  "id=" << fApi->getTBid()<<"\n"; return 0;}
-    if( kw.match("va")    ){  out <<  "va=" << fApi->getTBva()<<"\n"; return 0;}
-    if( kw.match("vd")    ){  out <<  "vd=" << fApi->getTBvd()<<"\n"; return 0;}
+    if( kw.match("ia")    ){  out <<  "ia=" << setw(6)<< setprecision(3)<<fApi->getTBia()<<"\n"; return 0;}
+    if( kw.match("id")    ){  out <<  "id=" << setw(6)<< setprecision(3)<<fApi->getTBid()<<"\n"; return 0;}
+    if( kw.match("va")    ){  out <<  "va=" << setw(6)<< setprecision(3)<<fApi->getTBva()<<"\n"; return 0;}
+    if( kw.match("vd")    ){  out <<  "vd=" << setw(6)<< setprecision(3)<<fApi->getTBvd()<<"\n"; return 0;}
     if( kw.match("set","vd", value)){ return setTestboardPower("vd", value);  }
-    if( kw.match("getia") ){  out <<  "ia=" << fApi->getTBia() <<"mA\n"; return 0;}
-    if( kw.match("getid") ){  out <<  "id=" << fApi->getTBid() <<"mA\n"; return 0;}
+    if( kw.match("getia") ){  out <<  "ia=" << setw(6)<< setprecision(3)<<fApi->getTBia() <<"mA\n"; return 0;}
+    if( kw.match("getid") ){  out <<  "id=" << setw(6)<< setprecision(3)<<fApi->getTBid() <<"mA\n"; return 0;}
     if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
     if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
     if( kw.match("pon")   ){ fApi->Pon(); return 0; }
     if( kw.match("poff")  ){ fApi->Poff(); return 0; }
+    if( kw.match("d1") || kw.match("d2") ){
+        for(unsigned int i=0; i<fD_names.size(); i++){ out << " " <<fD_names[i]; }
+		return 0;
+	};
+	if( kw.match("a1") || kw.match("a2") ){// "adc" w/o arg has a different meaning
+        for(unsigned int i=0; i<fA_names.size(); i++){ out << " " <<fA_names[i]; }
+		return 0;
+	};
     if( kw.match("d1", s, fD_names, out ) ){ fApi->SignalProbe("D1",s); return 0;}
     if( kw.match("d2", s, fD_names, out ) ){ fApi->SignalProbe("D2",s); return 0;}
     if( kw.match("a1", s, fA_names, out ) ){ fApi->SignalProbe("A1",s); return 0;}
@@ -2391,6 +2382,41 @@ int CmdProc::tb(Keyword kw){
         fPixelConfigNeeded = false;
         return 0;
     }
+    
+    
+    if( kw.match("tbmtest") ){
+		// inject a tbm generated trigger and read out the data
+		// inject the trigger, both cores
+		pg_sequence( 0 ); // no trigger
+		fApi->daqStart(fBufsize, fPixelConfigNeeded);
+		fPixelConfigNeeded = false;
+		out <<"TBM trigger test \n";
+		out << "\ncore A:";
+		tbmset("base4",0,      1);
+		fApi->daqTrigger(1, fPeriod);
+		tbmset("base4",0, (1<<6));// clear token, just in case
+		getBuffer(fBuf);
+		printData( fBuf, 0 );
+
+		out << "\ncore B:";
+		tbmset("base4",1,      1);
+		fApi->daqTrigger(1, fPeriod);
+		tbmset("base4",1, (1<<6));// clear token, just in case
+
+		getBuffer(fBuf);
+		printData( fBuf, 0 );
+
+		out << "\nboth cores:";  
+		tbmset("base4",2,      1); // inject trigger
+ 		fApi->daqTrigger(1, fPeriod);
+		tbmset("base4",2, (1<<6));// clear token, just in case
+		getBuffer(fBuf);
+		printData( fBuf, 0 );
+
+		fApi->daqStop(false);
+        return 0;
+    }
+	
     if( kw.match("raw") ){
         int stat = runDaq( fBuf, 1,0, 0 );
         if(stat==0){
@@ -2675,6 +2701,7 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
         if ( inputFile.is_open()) {
             string line;
             while( getline( inputFile, line ) ){
+				if(fEchoExecs) out << ">" << line << "\n"; 
                 p->exec(line);  
                 out << p->out.str();
             }
@@ -2695,6 +2722,9 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
     if (keyword.match("prerun",value)){ fPrerun=value; return true;}
    
     string message;
+    if ( keyword.match("echo","on")){ fEchoExecs = true; return true;}
+    if ( keyword.match("echo","off")){ fEchoExecs = false; return true;}
+   
     if ( keyword.match("echo","roc")){ out << "roc " << target.value() << "\n"; return true;}
     if ( keyword.match("echo","%")){ out << "%" << target.value() << "\n"; return true;}
     if ( keyword.greedy_match("echo", message) || keyword.greedy_match("log",message) ){
