@@ -366,7 +366,7 @@ void PixTestGainPedestal::fit() {
   vector<TH1D*> p0list, p1list, p2list, p3list; 
   vector<TH1D*> e0list, e1list, e2list, e3list; 
   double fracErr(0.05); 
-  double p0max = (0 == mode? 1000: 0.2);
+  double p0max = (0 == mode? 1000: 0.01);
   double p1max = (0 == mode? 1000: 2.);
   double p2max = (0 == mode? 10: 200.);
   double p3max = (0 == mode? 200: 200.);
