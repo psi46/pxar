@@ -61,14 +61,14 @@ void anaGainPedestal::fitTanH(int roc, int col, int row, bool draw) {
     hsummary.insert(make_pair(Form("cd_C%d", i), h)); 
   }
 
-  map<string, TH1D*>::iterator end = fHists.end(); 
-  for (map<string, TH1D*>::iterator il = fHists.begin(); il != end; ++il) {
-    PixUtil::str2rcr(il->first, lroc, lcol, lrow); 
+  for (unsigned int ihist = 0; ihist < fHists.size(); ++ihist) {
+    PixUtil::str2rcr(fHists[ihist].first, lroc, lcol, lrow); 
     if (roc > -1 && lroc != roc) continue;
     if (col > -1 && lcol != col) continue;
     if (row > -1 && lrow != row) continue;
 
-    h = il->second;
+    h = fHists[ihist].second;
+    if (0 == h) break;
     f = pif.gpTanH(h);
     h->Fit(f);
 
@@ -80,7 +80,7 @@ void anaGainPedestal::fitTanH(int roc, int col, int row, bool draw) {
   }
 
   // -- plot summary
-  end = hsummary.end(); 
+  map<string, TH1D*>::iterator end = hsummary.end(); 
   for (map<string, TH1D*>::iterator il = hsummary.begin(); il != end; ++il) {
     if (il->second->GetEntries() < 1) continue;
     il->second->Draw();
@@ -118,14 +118,14 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
   }
 
   vector<TH1D*> hproblems; 
-  map<string, TH1D*>::iterator end = fHists.end(); 
-  for (map<string, TH1D*>::iterator il = fHists.begin(); il != end; ++il) {
-    PixUtil::str2rcr(il->first, lroc, lcol, lrow); 
+  for (unsigned int ihist = 0; ihist < fHists.size(); ++ihist) {
+    PixUtil::str2rcr(fHists[ihist].first, lroc, lcol, lrow); 
     if (roc > -1 && lroc != roc) continue;
     if (col > -1 && lcol != col) continue;
     if (row > -1 && lrow != row) continue;
 
-    h = il->second;
+    h = fHists[ihist].second;
+    if (0 == h) break;
     f = pif.gpErr(h);
     if (draw) cout << "fitting " <<  h->GetName() << endl;
     h->Fit(f, (draw?"":"q"));
@@ -138,7 +138,7 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
       c0->Modified();
       c0->Update();
     }
-    if (f->GetChisquare()/f->GetNDF() > 3) {
+    if ((f->GetNDF() > 0) && f->GetChisquare()/f->GetNDF() > 3) {
       cout << "problem: " << h->GetName() << endl;
       hproblems.push_back(h); 
     }
@@ -148,7 +148,7 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
   c0->Clear();
 
   // -- plot summary
-  end = hsummary.end(); 
+  map<string, TH1D*>::iterator end = hsummary.end(); 
   for (map<string, TH1D*>::iterator il = hsummary.begin(); il != end; ++il) {
     if (il->second->GetEntries() < 1) continue;
     il->second->Draw();
@@ -166,6 +166,8 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
 void anaGainPedestal::readAsciiFiles(string directory) {
   vector<string> files = glob(directory); 
 
+  fHists.reserve(fNrocs*4160); 
+
   TH1D *h1(0); 
   
   ifstream IN; 
@@ -182,7 +184,6 @@ void anaGainPedestal::readAsciiFiles(string directory) {
     s1 = files[ifile].rfind(".dat");
     sval = files[ifile].substr(s0+2, s1-s0-2); 
     iroc = atoi(sval.c_str()); 
-    cout << files[ifile] << ": " << sval << " -> " << iroc << endl;
     IN.open(Form("%s/%s", directory.c_str(), files[ifile].c_str())); 
     while (IN.getline(buffer, 1000, '\n')) {
       sline = buffer; 
@@ -230,7 +231,7 @@ void anaGainPedestal::readAsciiFiles(string directory) {
 	h1->SetBinContent(x[i]+1, atoi(sval.c_str())); 
 	h1->SetBinError(x[i]+1, 0.02*atoi(sval.c_str())); 
       }
-      fHists.insert(make_pair(hname, h1)); 
+      fHists.push_back(make_pair(hname, h1)); 
     }
     IN.close(); 
   }
@@ -243,6 +244,8 @@ void anaGainPedestal::readRootFile(string filename) {
   TFile *f = TFile::Open(filename.c_str()); 
   f->cd("GainPedestal");
 
+  fHists.reserve(fNrocs*4160); 
+
   TH1D* h(0); 
   string hname, sname; 
   int cnt(0), roc(0), row(0), col(0); 
@@ -252,7 +255,7 @@ void anaGainPedestal::readRootFile(string filename) {
 	hname = Form("gainPedestal_c%d_r%d_C%d_V0", col, row, roc); 
 	h = 0; 
 	h = (TH1D*)gDirectory->Get(hname.c_str()); 
-	if (h) fHists.insert(make_pair(hname, h)); 
+	if (h) fHists.push_back(make_pair(hname, h)); 
       }
     }
   }

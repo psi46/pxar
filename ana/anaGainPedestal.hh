@@ -32,7 +32,7 @@ private:
   TCanvas                     *c0;
   int                          fNrocs; 
   std::string                  fDirectory;
-  std::map<std::string, TH1D*> fHists; 
+  std::vector<std::pair<std::string, TH1D*> > fHists; 
 
   ClassDef(anaGainPedestal, 1); // testing anaGainPedestal
 
