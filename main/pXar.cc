@@ -29,7 +29,7 @@
 
 #include "api.h"
 #include "log.h"
-
+#include <time.h> // needed for usleep function
 
 using namespace std;
 using namespace pxar; 
@@ -305,18 +305,25 @@ int main(int argc, char *argv[]){
       if (!input.compare("q")) stop = true; 
 
       if (stop) break;
-      LOG(logINFO) << "  running: " << input; 
-      PixTest *t = factory->createTest(input, &a);
-      if (0 == t) t = userfactory->createTest(input, &a);
-      if (t) {
-	if (subtest.compare("nada")) {
-	  t->runCommand(subtest); 
-	} else {
-	  t->doTest();
-	}
-	delete t;
+
+      if (!input.compare("delay")) {
+          int delaySeconds = atoi(parameters.c_str());
+          LOG(logINFO) << "delay test by " << delaySeconds << " seconds...";
+          usleep(delaySeconds * 1000000);
       } else {
-	LOG(logINFO) << "command ->" << input << "<- not known, ignored";
+        LOG(logINFO) << "  running: " << input; 
+        PixTest *t = factory->createTest(input, &a);
+        if (0 == t) t = userfactory->createTest(input, &a);
+        if (t) {
+        	if (subtest.compare("nada")) {
+        	  t->runCommand(subtest); 
+        	} else {
+        	  t->doTest();
+        	}
+  	     delete t;
+        } else {
+  	LOG(logINFO) << "command ->" << input << "<- not known, ignored";
+        }
       }
     } while (!stop);
     
