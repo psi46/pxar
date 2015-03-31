@@ -1,4 +1,5 @@
 #include "PixUtil.hh"
+#include <iostream>
 
 #include "TMath.h"
 #include "TStyle.h"
@@ -62,6 +63,24 @@ void PixUtil::idx2rcr(int idx, int &iroc, int &icol, int &irow) {
   icol = r/80;
   irow = r%80;
 }
+
+
+// ----------------------------------------------------------------------
+void PixUtil::str2rcr(std::string s, int &iroc, int &icol, int &irow) {
+  string::size_type s0 = s.rfind("_C");
+  string::size_type s1 = s.rfind("_r");
+  string::size_type s2 = s.rfind("_c");
+  
+  string sroc = s.substr(s0+2, 2); 
+  iroc = atoi(sroc.c_str()); 
+  string srow = s.substr(s1+2, s0-s1-2); 
+  irow = atoi(srow.c_str()); 
+  string scol = s.substr(s2+2, s1-s2-2); 
+  icol = atoi(scol.c_str()); 
+  //   cout << "name: " << s << ": sroc ->" << sroc << "<-, srow ->" << srow << "<- scol ->" << scol << "<-" << endl;
+  //   cout << "iroc: " << iroc << " icol: " << icol << " irow: " << irow << endl;
+}
+
 
 // ----------------------------------------------------------------------
 void PixUtil::cleanupString(string &s) {

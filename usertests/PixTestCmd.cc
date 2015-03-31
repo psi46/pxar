@@ -878,6 +878,7 @@ void CmdProc::init()
 {
     /* note: fApi may not be defined yet !*/
     verbose=false;
+    fEchoExecs = true;
     defaultTarget = Target("roc",0);
     _dict = RegisterDictionary::getInstance();
     _probeDict = ProbeDictionary::getInstance();
@@ -892,7 +893,6 @@ void CmdProc::init()
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
-    //fSignalLevel=255;
     macros["start"] = getWords("[roc * mask; roc * cald; reset tbm; seq 14]");
     macros["startroc"] = getWords("[mask; seq 15; arm 20 20; tct 106; vcal 200; adc]");
     macros["tbmonly"] = getWords("[reset tbm; tbm disable triggers; seq 10; adc]");
@@ -917,6 +917,7 @@ CmdProc::CmdProc(CmdProc * p)
 {
     init();
     verbose = p->verbose;
+    fEchoExecs = p->fEchoExecs;
     defaultTarget = p->defaultTarget;
     fSeq = p->fSeq;
     fPeriod = p->fPeriod;
@@ -924,13 +925,11 @@ CmdProc::CmdProc(CmdProc * p)
     fTCT = p->fTCT;
     fTRC = p->fTRC;
     fTTK = p->fTTK;
-    //fSignalLevel = p->fSignalLevel;
     fBufsize=p->fBufsize;
     macros = p->macros;
     fSigdelaysSetup = p->fSigdelaysSetup;
+    fSigdelays = p->fSigdelays; // what'ts the difference ?
     setApi( p->fApi, p->fPixSetup);
-    //fApi = p->fApi;
-    //fPixSetup = p->fPixSetup;
 }
 
 CmdProc::~CmdProc(){
@@ -1319,22 +1318,21 @@ int CmdProc::setTestboardPower(string name, uint16_t value){
 
 int CmdProc::setTestboardDelay(string name, uint8_t value){
     
-    ConfigParameters *p = fPixSetup->getConfigParameters();
-    if (fSigdelaysSetup.size()==0){
+    if (fSigdelays.size()==0){
+		// maybe never initialized
+		ConfigParameters *p = fPixSetup->getConfigParameters();
         fSigdelaysSetup = p->getTbSigDelays();
         fSigdelays = p->getTbSigDelays();
-    }else{
-        // FIXME check whether gui values have changed
-        vector<pair<string,uint8_t> > sigdelays;
-        sigdelays = p->getTbSigDelays();
-    }
-    
+   }else{
+        // FIXME check whether gui values have changed ?????
+   }
+ 
 
     for(size_t i=0; i<fSigdelays.size(); i++){
         if (fSigdelays[i].first==name){
             fSigdelays[i] =  std::make_pair(name, value);
         }
-        //cout << fSigdelays[i].first << " : " << (int) fSigdelays[i].second << endl; 
+        if(verbose) cout << fSigdelays[i].first << " : " << (int) fSigdelays[i].second << endl; 
     }
     fApi->setTestboardDelays( fSigdelays );
 
@@ -1365,9 +1363,8 @@ int CmdProc::bursttest(int ntrig, int trigsep, int nburst){
 
 
 int CmdProc::adctest(const string signalName){
-    
+
     // part 1 , acquire data : delay scan
-   
    
     uint8_t gain = GAIN_1;
     uint8_t source = 1; // pg_sync
@@ -1378,7 +1375,7 @@ int CmdProc::adctest(const string signalName){
         source = 2;        // trigger on sda
         start  = 7;
     }else if ( signalName=="rda"){
-        source = 2;        // trigger on sda
+        source = 2;        // trigger on sda, hal generates some dummy i2c traffic
         start  = 17;
     }else if ( signalName=="ctr"){
         vector< pair<string, uint8_t> > pgsetup;
@@ -1408,27 +1405,18 @@ int CmdProc::adctest(const string signalName){
     int ymin=0xffff;
     int ymax=-ymin;
     vector<int> yhist(2048);
-    vector<pair<string,uint8_t> > sigdelays;
+
     for(unsigned int dly=0; dly<nDly; dly++){
         
-        sigdelays.clear();
+        //sigdelays.clear();
         if(source==1){
             setTestboardDelay("clk", dly);
             setTestboardDelay("ctr", dly);
             setTestboardDelay("sda", dly+15);
             setTestboardDelay("tin", dly+5);
-            /*
-            sigdelays.push_back(std::make_pair("clk", dly));
-            sigdelays.push_back(std::make_pair("ctr", dly));
-            sigdelays.push_back(std::make_pair("sda", dly + 15));
-            sigdelays.push_back(std::make_pair("tin", dly + 5));
-            * */
         }else if(source==2){
-            //sigdelays.push_back(std::make_pair("sda", dly ));
             setTestboardDelay("sda", dly);
         }
-        //sigdelays.push_back(std::make_pair("level",fSignalLevel));
-        //fApi->setTestboardDelays(sigdelays);
             
         vector<uint16_t> data = fApi->daqADC(signalName, gain, nSample, source, start);
         
@@ -1448,16 +1436,8 @@ int CmdProc::adctest(const string signalName){
    }
 
     // restore delays, signals (modified by daqADC) and pg
-    /*
-    ConfigParameters *p = fPixSetup->getConfigParameters();
-    sigdelays = p->getTbSigDelays();
-    fApi->setTestboardDelays(sigdelays);
-    * */
     setTestboardDelay("all");
-    
-  
-     pg_restore();
-     
+	pg_restore();
      
     if (ymin<ymax){
         int ylo=ymin/2;  for(; yhist[ylo+1024]<yhist[ylo+1+1024]; ylo++){}
@@ -1473,6 +1453,103 @@ int CmdProc::adctest(const string signalName){
     return 0;
 }
 
+
+int CmdProc::tbmread(uint8_t regId){
+
+    // part 1 , acquire data : delay scan
+   
+    uint8_t gain = GAIN_1;
+    uint8_t start  = 17;  // wait after sda
+    uint8_t hubId = 31; // FIXME allow configurable values later, get from api?
+    
+    uint16_t nSample = 100;
+    unsigned int nDly = 20; // stepsize 1.25 ns
+
+	int value=-1;
+	
+    for(unsigned int dly=0; dly<nDly; dly++){
+        setTestboardDelay("sda", dly);
+        vector<uint16_t> data = fApi->daqADC("rda", gain, nSample, regId, start);
+        
+        if (data.size()<nSample) {
+            cout << "Warning, data size = " << data.size() << endl;
+        }else{
+			vector< int > b;
+            for(unsigned int i=0; i<nSample; i++){
+                int raw = data[i] & 0x0fff;
+                if (raw & 0x0800) raw |= 0xfffff000;  // sign
+                if (raw>0){ b.push_back(1);}else{b.push_back(0);}
+                //if(raw>0) {cout << "1";} else {cout << "_";}
+            }
+            for(unsigned int istart=0; istart<b.size()-30; istart++){
+			   uint8_t S=0;	 // reflected address, lowest bit should be 1
+			   S  = (b[istart+1])<<7;
+			   S |= (b[istart+2])<<6;
+			   S |= (b[istart+3])<<5;
+			   S |= (b[istart+4])<<4;
+			   bool compS3 = (b[istart+4] == b[istart+5]);
+			   S |= (b[istart+6])<<3;
+			   S |= (b[istart+7])<<2;
+			   S |= (b[istart+8])<<1;
+			   S |= (b[istart+9]); // called RW  in the tbm doc
+			   bool compRW = (b[istart+9] == b[istart+10]); 
+			
+			   uint8_t D=0;  // readback data
+			   D  = (b[istart+11])<<7;
+			   D |= (b[istart+12])<<6;
+			   D |= (b[istart+13])<<5;
+			   D |= (b[istart+14])<<4;
+			   //bool compD4 = (b[istart+14] == b[istart+15]);
+			   bool compD4 = (b[istart+15]==1);
+			   D |= (b[istart+16])<<3;
+			   D |= (b[istart+17])<<2;
+			   D |= (b[istart+18])<<1;
+			   D |= (b[istart+19]);
+			   //bool compD0 = (b[istart+19] == b[istart+20]);
+			   bool compD0 = (b[istart+20]==1);
+			   
+			   uint8_t H=0;  // hubId
+			   H  = b[istart+22] << 4;
+			   H |= b[istart+23] << 3;
+			   H |= b[istart+24] << 2;
+			   H |= b[istart+25] << 1;
+			   H |= b[istart+26];
+			   
+			   uint8_t P=0; // port, =4 for tbm readback
+			   P  = b[istart+27] <<2;
+			   P |= b[istart+28] <<1;
+			   P |= b[istart+29];
+
+
+			   bool valid = (S==(regId | 1))  && (H==hubId) && (P==4)
+				&& !compS3 && !compRW && !compD4 && !compD0;
+		
+				if (valid){ 
+					value = (int) D;
+					break;
+				}
+		
+		   }	
+       }
+
+   }
+
+    // restore delays, signals (modified by daqADC) and pg
+    setTestboardDelay("all");
+
+    return value;
+}
+
+string CmdProc::tbmprint(uint8_t regId){
+	stringstream s;
+	int value = tbmread(regId);
+	if (value>0){
+		s<< "      0x" << (hex) << setw(2) << value;
+	}else{
+		s<< "       err";
+	}
+	return s.str();
+}
 
 
 int CmdProc::pixDecodeRaw(int raw, int level){
@@ -1640,14 +1717,14 @@ int CmdProc::setupDaq(int ntrig, int ftrigkhz, int verbosity){
      */
     
     // warn user when no data expected
-    if( (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
+    if( (ntrig>0) && (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
         out << "The current sequence does not contain a trigger!\n";
     }else if( (fApi->_dut->getNTbms()==0) && ((fSeq & 0x01 ) ==0 ) ){
         out <<"The current sequence does not contain a token!\n";
     }
     
     int length=0;
-    if((ntrig==1) || (ftrigkhz==0)){
+    if((ntrig==0) || (ntrig==1) || (ftrigkhz==0)){
         length=fBufsize;
     }else{
         length = 40000 / ftrigkhz;
@@ -1689,7 +1766,9 @@ int CmdProc::runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosi
     
     if(setup) setupDaq(ntrig, ftrigkhz, verbosity);
  
-    fApi->daqTrigger(ntrig, fPeriod);
+	if(ntrig>0){
+		fApi->daqTrigger(ntrig, fPeriod);
+	}
 
     getBuffer( buf );
     if(buf.size()==0){
@@ -1833,7 +1912,6 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
         unsigned int nevent=0;
 
         
-        //cout << "getData maxTBM=" << dec<< (int) maxTBM << "  rocs/token=" << (int) nRocPerToken << endl;
         unsigned int nloop=0;
         int fffCounter=0;
         
@@ -2239,13 +2317,13 @@ int CmdProc::pg_loop(int value){
     uint16_t delay = pg_sequence( fSeq );
     fApi->daqStart(fBufsize, false); // otherwise daqTriggerLoop does nothing (status())
     if(value==0){
-        cout << "calling api->daqTriggerLoop " << fBufsize << endl;
+        if(verbose) cout << "calling api->daqTriggerLoop " << fBufsize << endl;
         uint16_t retval = fApi->daqTriggerLoop( delay );
-        cout << "return value " << retval << endl;
+        if(verbose) cout << "return value " << retval << endl;
     }else{
-        cout << "calling api->daqTriggerLoop " << value << endl;
+        if(verbose) cout << "calling api->daqTriggerLoop " << value << endl;
         uint16_t retval = fApi->daqTriggerLoop( value );
-        cout << "return value " << retval << endl;
+        if(verbose) cout << "return value " << retval << endl;
     }        
     fPgRunning = true;
     return 0;
@@ -2310,17 +2388,25 @@ int CmdProc::tb(Keyword kw){
 
     int step, pattern, delay, value;
     string s, comment, filename;
-    if( kw.match("ia")    ){  out <<  "ia=" << fApi->getTBia()<<"\n"; return 0;}
-    if( kw.match("id")    ){  out <<  "id=" << fApi->getTBid()<<"\n"; return 0;}
-    if( kw.match("va")    ){  out <<  "va=" << fApi->getTBva()<<"\n"; return 0;}
-    if( kw.match("vd")    ){  out <<  "vd=" << fApi->getTBvd()<<"\n"; return 0;}
+    if( kw.match("ia")    ){  out <<  "ia=" << setw(6)<< setprecision(3)<<fApi->getTBia()<<"\n"; return 0;}
+    if( kw.match("id")    ){  out <<  "id=" << setw(6)<< setprecision(3)<<fApi->getTBid()<<"\n"; return 0;}
+    if( kw.match("va")    ){  out <<  "va=" << setw(6)<< setprecision(3)<<fApi->getTBva()<<"\n"; return 0;}
+    if( kw.match("vd")    ){  out <<  "vd=" << setw(6)<< setprecision(3)<<fApi->getTBvd()<<"\n"; return 0;}
     if( kw.match("set","vd", value)){ return setTestboardPower("vd", value);  }
-    if( kw.match("getia") ){  out <<  "ia=" << fApi->getTBia() <<"mA\n"; return 0;}
-    if( kw.match("getid") ){  out <<  "id=" << fApi->getTBid() <<"mA\n"; return 0;}
+    if( kw.match("getia") ){  out <<  "ia=" << setw(6)<< setprecision(3)<<fApi->getTBia() <<"mA\n"; return 0;}
+    if( kw.match("getid") ){  out <<  "id=" << setw(6)<< setprecision(3)<<fApi->getTBid() <<"mA\n"; return 0;}
     if( kw.match("hvon")  ){ fApi->HVon(); return 0; }
     if( kw.match("hvoff") ){ fApi->HVoff(); return 0; }
     if( kw.match("pon")   ){ fApi->Pon(); return 0; }
     if( kw.match("poff")  ){ fApi->Poff(); return 0; }
+    if( kw.match("d1") || kw.match("d2") ){
+        for(unsigned int i=0; i<fD_names.size(); i++){ out << " " <<fD_names[i]; }
+		return 0;
+	};
+	if( kw.match("a1") || kw.match("a2") ){// "adc" w/o arg has a different meaning
+        for(unsigned int i=0; i<fA_names.size(); i++){ out << " " <<fA_names[i]; }
+		return 0;
+	};
     if( kw.match("d1", s, fD_names, out ) ){ fApi->SignalProbe("D1",s); return 0;}
     if( kw.match("d2", s, fD_names, out ) ){ fApi->SignalProbe("D2",s); return 0;}
     if( kw.match("a1", s, fA_names, out ) ){ fApi->SignalProbe("A1",s); return 0;}
@@ -2357,6 +2443,15 @@ int CmdProc::tb(Keyword kw){
         }
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;} 
     if( kw.match("adctest") ){ adctest("clk"); adctest("ctr"); adctest("sda"); adctest("rda"); adctest("sdata1"); adctest("sdata2"); return 0;} 
+	if( kw.match("tbmread")){
+		out <<"               core A      core B \n";
+		out << "Base + 1/0 " << tbmprint(0xe1)  << "  " << tbmprint(0xf1) << "\n";
+		out << "Base + 9/8 " << tbmprint(0xe9)  << "  " << tbmprint(0xf9) << "\n";
+		out << "Base + B/A " << tbmprint(0xeb)  << "  " << tbmprint(0xfb) << "\n";
+		//out << "Base + D/C " << tbmprint(0xed)  << "  " << tbmprint(0xfd) << "\n"; // FIXME, should this work?
+		out << "Base + F   " << tbmprint(0xef) << "\n";
+		return 0;
+	}
     if( kw.match("readrocs", value)){ return readRocs(value); }
     if( kw.match("readback")) { return readRocs();}
     if( kw.match("readback", "vd")  ) { return readRocs(8, 0.016,"V");  }
@@ -2383,6 +2478,64 @@ int CmdProc::tb(Keyword kw){
         fPixelConfigNeeded = false;
         return 0;
     }
+    
+    if( kw.match("tbmtest","rda")){
+		uint8_t value;
+		for(int core=0; core<2; core++){
+			int stat = tbmget("base0", core, value);
+			uint8_t addr= (core==0) ? 0xe1 : 0xf1;
+			string name= (core==0) ? "A" : "B";
+			if(stat==0){
+				uint8_t testvalue= (~value) | 0x02; // don't shut down the clock
+				tbmset("base0", core, testvalue);
+
+				int readvalue = tbmread(addr);
+				tbmset("base0",core, value);
+				if( readvalue == (int) testvalue){
+					out << "core " << name << " write/read ok\n";
+				}else{
+					out << "core "<<name <<" write/read failed\n";
+				}
+			}else{
+				out << "Error retrieving base0 from api\n";
+			}
+		}
+		return 0;
+	}
+	
+    if( kw.match("tbmtest","trigger") ){
+		// inject a tbm generated trigger and read out the data
+		// inject the trigger, both cores
+		pg_sequence( 0 ); // no trigger
+		fApi->daqStart(fBufsize, fPixelConfigNeeded);
+		fPixelConfigNeeded = false;
+		out <<"TBM trigger test \n";
+		out << "\ncore A:";
+		tbmset("base4",0,      1);
+		fApi->daqTrigger(1, fPeriod);
+		tbmset("base4",0, (1<<6));// clear token, just in case
+		getBuffer(fBuf);
+		printData( fBuf, 0 );
+
+		out << "\ncore B:";
+		tbmset("base4",1,      1);
+		fApi->daqTrigger(1, fPeriod);
+		tbmset("base4",1, (1<<6));// clear token, just in case
+
+		getBuffer(fBuf);
+		printData( fBuf, 0 );
+
+		out << "\nboth cores:";  
+		tbmset("base4",2,      1); // inject trigger
+ 		fApi->daqTrigger(1, fPeriod);
+		tbmset("base4",2, (1<<6));// clear token, just in case
+		getBuffer(fBuf);
+		printData( fBuf, 0 );
+
+		fApi->daqStop(false);
+        return 0;
+    }
+	
     if( kw.match("raw") ){
         int stat = runDaq( fBuf, 1,0, 0 );
         if(stat==0){
@@ -2667,6 +2820,7 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
         if ( inputFile.is_open()) {
             string line;
             while( getline( inputFile, line ) ){
+				if(fEchoExecs) out << ">" << line << "\n"; 
                 p->exec(line);  
                 out << p->out.str();
             }
@@ -2687,6 +2841,9 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
     if (keyword.match("prerun",value)){ fPrerun=value; return true;}
    
     string message;
+    if ( keyword.match("echo","on")){ fEchoExecs = true; return true;}
+    if ( keyword.match("echo","off")){ fEchoExecs = false; return true;}
+   
     if ( keyword.match("echo","roc")){ out << "roc " << target.value() << "\n"; return true;}
     if ( keyword.match("echo","%")){ out << "%" << target.value() << "\n"; return true;}
     if ( keyword.greedy_match("echo", message) || keyword.greedy_match("log",message) ){

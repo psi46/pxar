@@ -3,6 +3,7 @@
 #include <sstream>   // parsing
 
 #include <TStopwatch.h>
+#include "constants.h"
 
 #include "PixTestPhOptimization.hh"
 #include "log.h"
@@ -263,6 +264,13 @@ pxar::pixel* PixTestPhOptimization::RandomPixel(std::vector<std::pair<uint8_t, p
 
 void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   std::vector<std::pair<uint8_t, pair<int,int> > >  &badPixels){
   //looks for the pixel with the highest Ph at vcal = 255, taking care the pixels are not already saturating (ph=255)
+  std::string rocType = fPixSetup->getConfigParameters()->getRocType();
+  bool isRoc21 = true;
+  if(!(rocType > "psi46digv2")){
+    isRoc21 = false;
+  }
+  if(isRoc21){LOG(logDEBUG)<<"ROC type is newer than digv2";}
+  LOG(logDEBUG)<<"ROC type is "<<rocType;
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
@@ -270,6 +278,11 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
   int maxph = 255;
   fApi->setDAC("phoffset", 200);
   int init_phScale =200;
+  int init_phOffset = 150;
+  if(!isRoc21){
+    init_phScale = 110;
+    init_phOffset = 220;
+  }
   int flag_maxPh=0;
   pair<int, pxar::pixel> maxpixel;
   maxpixel.second.setValue(0);
@@ -278,10 +291,10 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
   int xbinmax=0, ybinmax=0, zbinmax=0;
   int colmax=0, rowmax=0;
   while((maxph>254 || maxph==0) && flag_maxPh<52){
-    fApi->setDAC("phscale", init_phScale);
+    fApi->setDAC("phscale", abs(init_phScale)%255);
+    fApi->setDAC("phoffset",init_phOffset);  
     fApi->setDAC("vcal",255);
     fApi->setDAC("ctrlreg",4);
-    fApi->setDAC("phoffset",150);  
     maxphmap = phMaps("maxphmap", 10, 0);
     
     maxph=0;
@@ -301,7 +314,13 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
 	}
     }
     //should have flag for v2 or v2.1
-    init_phScale+=5;
+//    if(!isRoc21){
+//      init_phScale-=5;
+//    }
+//    else{
+      init_phScale+=5;
+      //    }
+     
     flag_maxPh++;
   }
   
@@ -395,12 +414,24 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
 void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map<int, int> &minVcal, std::vector<std::pair<uint8_t, pair<int,int> > >  &badPixels){
   //looks for the pixel with the lowest Ph at vcal = 60 low range, taking care the pixels are correclty responding (ph>0)
   //finds the min vcal at which the minphpixel can be sampled
+  std::string rocType = fPixSetup->getConfigParameters()->getRocType();
+  bool isRoc21 = true;
+  if(!(rocType > "psi46digv2")){
+    isRoc21 = false;
+  }
+  if(isRoc21){LOG(logDEBUG)<<"ROC type is newer than digv2";}
+  LOG(logDEBUG)<<"ROC type is "<<rocType;
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   bool isPixGood=true;
   int minph = 0;
-  int init_phScale = 125;
+  int init_phScale = 150;
+  int init_phOffset = 175;
+  if(!isRoc21){
+    init_phScale = 90;
+    init_phOffset = 220;
+  } 
   int flag_minPh=0;
   pair<int, pxar::pixel> minpixel;
   minpixel.second.setValue(0);
@@ -412,13 +443,10 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   while(minph<12 && flag_minPh<52){
     LOG(logDEBUG) << "init_phScale=" << init_phScale << ", flag_minPh = " << flag_minPh << ", minph = " << minph;
     fApi->setDAC("phscale", init_phScale%255);
+    fApi->setDAC("phoffset",init_phOffset);  
     fApi->setDAC("ctrlreg",0);
-    //    fApi->setDAC("vcal",fMinThr*1.2);
     fApi->setDAC("vcal",60);
-    fApi->setDAC("phoffset",180);  
-    
     minphmap = phMaps("minphmap", 10, 0);
-
     minph=255;
     LOG(logDEBUG) << "result size "<<result.size()<<endl;
     //check that the pixel showing lowest PH above 0 on the module
@@ -438,7 +466,13 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
       }
     }
     //should have flag for v2 or v2.1
-    init_phScale+=5;
+//    if(!isRoc21){
+//      init_phScale-=5;
+//    }
+//    else{
+      init_phScale+=5;
+      //    }
+    
     flag_minPh++;
   }
   LOG(logDEBUG) << "done. init_phScale=" << init_phScale << ", flag_minPh = " << flag_minPh << ", minph = " << minph << "minph_roc = " << minph_roc;

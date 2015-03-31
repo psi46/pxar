@@ -619,10 +619,17 @@ namespace pxar {
 	Define any testboard signal (e.g. clk) to the state constant high, constant low,
 	or normal oscillation.
 	signal: "clk", "ctr", "sda", or "tin"
-	mode: 0 (normal), 1 (low) or 2 (high)
+	mode: 0 (normal), 1 (low), 2 (high) or 3 (random)
      */
     void setSignalMode(std::string signal, uint8_t mode);
 
+    /** Set Signal Mode.
+	Define any testboard signal (e.g. clk) to the state constant high, constant low,
+	or normal oscillation.
+	signal: "clk", "ctr", "sda", or "tin"
+	mode: "normal", "low", "high" or "random"
+     */
+    void setSignalMode(std::string signal, std::string mode);
 
     // DAQ functions
 

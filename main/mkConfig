@@ -341,6 +341,9 @@ trimParameters trimParameters
 testParameters testParameters.dat
 maskFile defaultMaskFile.dat
 rootFileName pxar.root
+#gainPedestalParameters phCalibrationFitTanH
+#gainPedestalParameters phCalibrationFitPol2
+gainPedestalParameters phCalibrationFitErr
 
 -- configuration
 
