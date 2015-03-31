@@ -29,7 +29,7 @@
 
 #include "api.h"
 #include "log.h"
-#include <time.h> // needed for usleep function
+#include "helper.h"
 
 using namespace std;
 using namespace pxar; 
@@ -309,7 +309,7 @@ int main(int argc, char *argv[]){
       if (!input.compare("delay")) {
           int delaySeconds = atoi(parameters.c_str());
           LOG(logINFO) << "delay test by " << delaySeconds << " seconds...";
-          usleep(delaySeconds * 1000000);
+          pxar::mDelay(delaySeconds * 1000); // milliseconds
       } else {
         LOG(logINFO) << "  running: " << input; 
         PixTest *t = factory->createTest(input, &a);
