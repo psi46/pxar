@@ -230,10 +230,11 @@ TF1* PixInitFunc::gpErr(TH1 *h) {
     f->ReleaseParameter(3); 
   }
   
-  double p0 = h->GetBinLowEdge(h->FindFirstBinAbove(0.5*h->GetMaximum())); // half-point
+  double hmax = h->GetBinContent(h->GetMaximumBin()); 
+  double p0 = h->GetBinLowEdge(h->FindFirstBinAbove(0.5*hmax)); // half-point
   double p1 = 250.; // slope
   double p2 = 1.;
-  double p3 = 0.5*h->GetMaximum(); // half plateau
+  double p3 = 0.5*hmax; // half plateau
 
   f->SetParameters(p0, p1, p2, p3); 
   f->SetParLimits(1, 50, 1000.); // keep!
