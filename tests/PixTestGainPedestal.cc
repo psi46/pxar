@@ -11,6 +11,7 @@
 #include <TStopwatch.h>
 
 #include "PixTestGainPedestal.hh"
+#include "PHCalibration.hh"
 #include "PixUtil.hh"
 #include "log.h"
 
@@ -25,6 +26,24 @@ PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTes
   fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0)  {
   PixTest::init();
   init(); 
+
+//   PHCalibration phc; 
+//   phc.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
+//   phc.setMode(0); 
+//   double ph = phc.phErr(0, 0, 0, 100);
+//   double result = phc.vcalErr(0, 0, 0, ph); 
+//   int iroc, icol, irow; 
+//   for (int i = 0; i < 20; ++i) {
+//     iroc = 15.*gRandom->Rndm();
+//     icol = 52.*gRandom->Rndm();
+//     irow = 80.*gRandom->Rndm();
+//     cout << iroc << "/" << icol << "/" << irow << endl;
+//     for (int iv = 100; iv < 1000; iv += 200) {
+//       ph =  phc.phErr(iroc, icol, irow, iv);
+//       result = phc.vcalErr(iroc, icol, irow, ph); 
+//       cout << iv << " " << result << " " << ph << endl;
+//     }
+//   }
 }
 
 
@@ -331,18 +350,55 @@ void PixTestGainPedestal::fit() {
 
   TF1 *f(0); 
 
+  int mode(0); 
+  if (string::npos != fPixSetup->getConfigParameters()->getGainPedestalParameterFileName().find("TanH")) {
+    LOG(logDEBUG) << "choosing TanH for PH gain/pedestal fitting"; 
+    mode = 1; 
+  }
+
+
   vector<vector<gainPedestalParameters> > v;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   gainPedestalParameters a; 
   a.p0 = a.p1 = a.p2 = a.p3 = 0.;
   TH1D* h(0);
-  vector<TH1D*> p1list; 
+  vector<TH1D*> nllist;
+  vector<TH1D*> p0list, p1list, p2list, p3list; 
+  vector<TH1D*> e0list, e1list, e2list, e3list; 
   double fracErr(0.05); 
+  double p0max = (0 == mode? 1000: 0.01);
+  double p1max = (0 == mode? 1000: 2.);
+  double p2max = (0 == mode? 10: 200.);
+  double p3max = (0 == mode? 200: 200.);
   for (unsigned int i = 0; i < rocIds.size(); ++i) {
     LOG(logDEBUG) << "Create hist " << Form("gainPedestalP1_C%d", rocIds[i]); 
-    h = bookTH1D(Form("gainPedestalP1_C%d", i), Form("gainPedestalP1_C%d", rocIds[i]), 100, 0., 2.); 
+    h = bookTH1D(Form("gainPedestalP0_C%d", i), Form("gainPedestalP0_C%d", rocIds[i]), 100, 0., p0max); 
+    setTitles(h, "p0", "Entries / Bin"); 
+    p0list.push_back(h); 
+    h = bookTH1D(Form("gainPedestalP1_C%d", i), Form("gainPedestalP1_C%d", rocIds[i]), 100, 0., p1max); 
     setTitles(h, "p1", "Entries / Bin"); 
     p1list.push_back(h); 
+    h = bookTH1D(Form("gainPedestalP2_C%d", i), Form("gainPedestalP2_C%d", rocIds[i]), 100, 0., p2max); 
+    setTitles(h, "p2", "Entries / Bin"); 
+    p2list.push_back(h); 
+    h = bookTH1D(Form("gainPedestalP3_C%d", i), Form("gainPedestalP3_C%d", rocIds[i]), 100, 0., p3max); 
+    setTitles(h, "p3", "Entries / Bin"); 
+    p3list.push_back(h); 
+
+    h = bookTH1D(Form("P0_relErr_C%d", i), Form("P0_relErr_C%d", rocIds[i]), 100, 0., 1.); 
+    e0list.push_back(h); 
+    h = bookTH1D(Form("P1_relErr_C%d", i), Form("P1_relErr_C%d", rocIds[i]), 100, 0., 1.); 
+    e1list.push_back(h); 
+    h = bookTH1D(Form("P2_relErr_C%d", i), Form("P2_relErr_C%d", rocIds[i]), 100, 0., 1.); 
+    e2list.push_back(h); 
+    h = bookTH1D(Form("P3_relErr_C%d", i), Form("P3_relErr_C%d", rocIds[i]), 100, 0., 1.); 
+    e3list.push_back(h); 
+
+    h = bookTH1D(Form("gainPedestalNonLinearity_C%d", i), Form("gainPedestalNonLinearity_C%d", rocIds[i]), 200, 0.5, 1.5); 
+    setTitles(h, "non linearity", "Entries / Bin"); 
+    nllist.push_back(h); 
+    
+
     vector<gainPedestalParameters> vroc;
     for (unsigned j = 0; j < 4160; ++j) {
       vroc.push_back(a); 
@@ -350,9 +406,10 @@ void PixTestGainPedestal::fit() {
     v.push_back(vroc); 
   }
   
+  double nl(0.), ifunction(0.), ipol1(0.), x0(0.), y0(0.), x1(200.), y1(0.); 
   int iroc(0), ic(0), ir(0); 
-  for (unsigned int i = 0; i < fHists.size(); ++i) {
 
+  for (unsigned int i = 0; i < fHists.size(); ++i) {
     h1->Reset();
     for (int ib = 0; ib < static_cast<int>(fLpoints.size()); ++ib) {
       h1->SetBinContent(fLpoints[ib]+1, fHists[i]->get(ib+1));
@@ -362,8 +419,11 @@ void PixTestGainPedestal::fit() {
       h1->SetBinContent(7*fHpoints[ib]+1, fHists[i]->get(100+ib+1));
       h1->SetBinError(7*fHpoints[ib]+1, fracErr*fHists[i]->get(100+ib+1)); 
     }
-    
-    f = fPIF->gpTanH(h1); 
+    if (0 == mode) {
+      f = fPIF->gpErr(h1); 
+    } else if (1 == mode) {
+      f = fPIF->gpTanH(h1); 
+    }
     if (h1->Integral() < 1) continue;
     PixUtil::idx2rcr(i, iroc, ic, ir);
     if (fParShowFits) {
@@ -375,44 +435,89 @@ void PixTestGainPedestal::fit() {
       fHistList.push_back(hc); 
       PixTest::update(); 
     } else {
-      //      cout << Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc) << endl;
       if (fParDumpHists) {
 	h1->SetTitle(Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)); 
 	h1->SetName(Form("gainPedestal_c%d_r%d_C%d", ic, ir, iroc)); 
       }
       h1->Fit(f, "rq");
       if (fParDumpHists) {
+	ifunction = f->Integral(0., 200.);
+	y0 = f->Eval(x0);
+	y1 = f->Eval(x1);
+	ipol1 = y0*x1 + 0.5*x1*(y1-y0);
+	nl = ifunction/ipol1;
+	nllist[getIdxFromId(iroc)]->Fill(nl); 
+	h1->SetTitle(Form("%s, if = %6.4f, ip = %6.4f, nl = %6.4f", h1->GetTitle(), ifunction, ipol1, nl)); 
+
 	h1->SetDirectory(fDirectory); 
 	h1->Write();
       }
     }
+
+    ifunction = f->Integral(0., 200.);
+    y0 = f->Eval(x0);
+    y1 = f->Eval(x1);
+    ipol1 = y0*x1 + 0.5*x1*(y1-y0);
+    nllist[getIdxFromId(iroc)]->Fill(ifunction/ipol1); 
+
+
+
     int idx = ic*80 + ir; 
     v[iroc][idx].p0 = f->GetParameter(0); 
     v[iroc][idx].p1 = f->GetParameter(1); 
     v[iroc][idx].p2 = f->GetParameter(2); 
     v[iroc][idx].p3 = f->GetParameter(3); 
 
+    p0list[getIdxFromId(iroc)]->Fill(f->GetParameter(0)); 
     p1list[getIdxFromId(iroc)]->Fill(f->GetParameter(1)); 
+    p2list[getIdxFromId(iroc)]->Fill(f->GetParameter(2)); 
+    p3list[getIdxFromId(iroc)]->Fill(f->GetParameter(3)); 
+
+    e0list[getIdxFromId(iroc)]->Fill(f->GetParError(0)/f->GetParameter(0)); 
+    e1list[getIdxFromId(iroc)]->Fill(f->GetParError(1)/f->GetParameter(1)); 
+    e2list[getIdxFromId(iroc)]->Fill(f->GetParError(2)/f->GetParameter(2)); 
+    e3list[getIdxFromId(iroc)]->Fill(f->GetParError(3)/f->GetParameter(3)); 
+
   }
 
   fPixSetup->getConfigParameters()->setGainPedestalParameters(v);
 
+  copy(p0list.begin(), p0list.end(), back_inserter(fHistList));
   copy(p1list.begin(), p1list.end(), back_inserter(fHistList));
+  copy(p2list.begin(), p2list.end(), back_inserter(fHistList));
+  copy(p3list.begin(), p3list.end(), back_inserter(fHistList));
+
+  copy(e0list.begin(), e0list.end(), back_inserter(fHistList));
+  copy(e1list.begin(), e1list.end(), back_inserter(fHistList));
+  copy(e2list.begin(), e2list.end(), back_inserter(fHistList));
+  copy(e3list.begin(), e3list.end(), back_inserter(fHistList));
+
+  copy(nllist.begin(), nllist.end(), back_inserter(fHistList));
+
   h = (TH1D*)(fHistList.back());
   h->Draw();
 
+  string nlMeanString(""), nlRmsString(""); 
   string p1MeanString(""), p1RmsString(""); 
   for (unsigned int i = 0; i < p1list.size(); ++i) {
+    nlMeanString += Form(" %5.3f", nllist[i]->GetMean()); 
+    nlRmsString += Form(" %5.3f", nllist[i]->GetRMS()); 
+    
     p1MeanString += Form(" %5.3f", p1list[i]->GetMean()); 
     p1RmsString += Form(" %5.3f", p1list[i]->GetRMS()); 
   }
-
+  
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   PixTest::update(); 
 
   LOG(logINFO) << "PixTestGainPedestal::fit() done"; 
-  LOG(logINFO) << "p1 mean: " << p1MeanString; 
-  LOG(logINFO) << "p1 RMS:  " << p1RmsString; 
+  if (0 == mode) {
+    LOG(logINFO) << "non-linearity mean: " << nlMeanString; 
+    LOG(logINFO) << "non-linearity RMS:  " << nlRmsString; 
+  }  else if (1 == mode) {
+    LOG(logINFO) << "p1 mean: " << p1MeanString; 
+    LOG(logINFO) << "p1 RMS:  " << p1RmsString; 
+  } 
 }
 
 

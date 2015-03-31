@@ -112,10 +112,11 @@ void PixTestBareModule::runCommand(std::string command) {
 		PixTest::update();
 
 		PixTest::hvOff();
+		PixTest::update();
 		mDelay(2000);
 		PixTest::powerOff();
-		mDelay(1000);
 		PixTest::update();
+		mDelay(1000);
 
 		LOG(logINFO) << "PixTestBareModule:: HV and Power are off.";
 	}
@@ -131,12 +132,14 @@ void PixTestBareModule::runCommand(std::string command) {
 bool PixTestBareModule::checkIfInContact(bool fullSeq) {	
 
 	PixTest::hvOff();
+	PixTest::update();
 	LOG(logINFO) << "PixTestBareModule:: HV off for safety.";
 	mDelay(2000);
 	
 	//check if probes are in contact
 	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
 	PixTest::powerOn();
+	PixTest::update();
 	LOG(logINFO) << "PixTestBareModule:: Power on.";
 	mDelay(1000);
 	double ia = fApi->getTBia()*1E3; // [mA]
@@ -181,15 +184,17 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 	}
 	if (checkgood){
 		if (fullSeq){
+			LOG(logINFO) << "PixTestBareModule::checkIfInContact() HV on.";
 			PixTest::hvOn();
-			LOG(logINFO) << "PixTestBareModule:: HV on.";
+			PixTest::update();
 			mDelay(2000);
 		}
-		LOG(logINFO) << "PixTestBareModule:: checkIfInContact done.";
+		LOG(logINFO) << "PixTestBareModule:: checkIfInContact successfully done.";
 		return true;
 	}
 	else {
 		mDelay(2000);
+		LOG(logINFO) << "PixTestBareModule:: checkIfInContact failed.";
 		return false;
 	}
 }
@@ -222,7 +227,7 @@ bool PixTestBareModule::doStdTest(std::string test) {
 	PixTest::update();
 	bool problem = !(t->testProblem());
 	delete t;
-	cout << problem << endl; //debug
+	//	cout << problem << endl; //debug
 	return problem;
 }
 
@@ -257,7 +262,7 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 
 	//BumpBonding
 	if (MaxStep >= 3 && !fStop) {
-		cout << fBBMap << fBB2Map << endl;
+	  //	  cout << fBBMap << fBB2Map << endl;
 		if (fBBMap && !fBB2Map) { 
 			if (!doStdTest(suite[2])) { 
 				LOG(logWARNING) << "PixTestBareModule:: BBMap failed. Sequence stopped.";
@@ -298,8 +303,10 @@ void PixTestBareModule::doTest() {
 	}
 
 	PixTest::hvOff();
+	PixTest::update();
 	mDelay(2000);
 	PixTest::powerOff();
+	PixTest::update();
 	mDelay(1000);
 
 	//separation
