@@ -471,6 +471,8 @@ vcals               250
 Ntrig               10
 vcals               222
 Plwidth             35
+PIX                 11,20
+targetIa            24
 
 -- Readback
 calibrateVd         button
