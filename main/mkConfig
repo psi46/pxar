@@ -523,7 +523,7 @@ scurves             button
 -- Trim
 trim                button
 Ntrig               10
-Vcal                40
+Vcal                35
 TrimBits            button
 
 -- GainPedestal
