@@ -471,8 +471,6 @@ vcals               250
 Ntrig               10
 vcals               222
 Plwidth             35
-PIX                 11,20
-targetIa            24
 
 -- Readback
 calibrateVd         button
@@ -523,7 +521,7 @@ scurves             button
 -- Trim
 trim                button
 Ntrig               10
-Vcal                35
+Vcal                40
 TrimBits            button
 
 -- GainPedestal
@@ -592,8 +590,10 @@ ntrig               10
 clocksdascan        button
 phasescan           button
 levelscan           button
-saveparameters      button
+tbmphasescan        button
+rocdelayscan        button
 timingtest          button
+saveparameters      button
 EOF
 } 
 
