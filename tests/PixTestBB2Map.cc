@@ -516,7 +516,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
   PixTest::update(); 
   banner(Form("PixTestBB2Map::setVthrCompCalDel()")); 
 
-  string name1("pretestVthrCompCalDel");
+  string name1("bb2VthrCompCalDel");
 
   fApi->setDAC("CtrlReg", 4);   
   fApi->setDAC("Vcal", 250); 
@@ -530,7 +530,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults;
 
   TH1D *h1(0); 
-  h1 = bookTH1D(Form("pretestCalDel"), Form("pretestCalDel"), rocIds.size(), 0., rocIds.size()); 
+  h1 = bookTH1D(Form("bb2CalDel"), Form("bb2CalDel"), rocIds.size(), 0., rocIds.size()); 
   h1->SetMinimum(0.); 
   h1->SetDirectory(fDirectory); 
   setTitles(h1, "ROC", "CalDel DAC"); 
