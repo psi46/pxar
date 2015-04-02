@@ -137,17 +137,17 @@ void PixTestBB2Map::doTest() {
  
   // set setVana
 
-  std::cout << "Setting Vana " << std::endl;
+  //  std::cout << "Setting Vana " << std::endl;
   setVana();
 
   // find working point for tornado distribution but pulsing with cals!
   
-  std::cout << "Setting caldel & vthrcomp for cals" << std::endl;
+  //  std::cout << "Setting caldel & vthrcomp for cals" << std::endl;
 
   setVthrCompCalDelForCals();
 
   // BB Threshold maps
-  std::cout << "Pulsing cals for Bump Bonding Tests " << std::endl;
+  //  std::cout << "Pulsing cals for Bump Bonding Tests " << std::endl;
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
@@ -225,7 +225,7 @@ void PixTestBB2Map::doTest() {
   for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
 
     unsigned int rocId = idx;
-    cout << idx << " rocId: " << rocId << endl;
+    //    cout << idx << " rocId: " << rocId << endl;
     fHistList.push_back(result_h22[rocId]);
 
     // correct binning
@@ -270,8 +270,8 @@ void PixTestBB2Map::doTest() {
       
       if( imax <  fParNtrig / 2 ) {
 	++nIneff;
-	cout << "Dead pixel at raw col: " << ibinCenter % 80
-	     << " " << ibinCenter / 80 << endl;
+	// 	cout << "Dead pixel at raw col: " << ibinCenter % 80
+	// 	     << " " << ibinCenter / 80 << endl;
       }
       else {
 	
@@ -305,7 +305,7 @@ void PixTestBB2Map::doTest() {
 	if( endCont- beginCont < fParPlWidth ) {
 	
 	  nMissing++;
-	  cout << "[Missing Bump at raw col:] " << ibinCenter% 80 << " " << ibinCenter / 80 << endl;
+	  //	  cout << "[Missing Bump at raw col:] " << ibinCenter% 80 << " " << ibinCenter / 80 << endl;
 	  // with weight 2 to draw it as red
 	  h24->Fill( ibinCenter / 80, ibinCenter % 80, 2 );
 	  nMissingPerRoc[rocId]++;
@@ -524,7 +524,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
 
-  std::cout << "at the beginning the trigger: " <<  fParNtrig << std::endl;
+  //   std::cout << "at the beginning the trigger: " <<  fParNtrig << std::endl;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults;
@@ -609,7 +609,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
     int dac1Mean = int ( h2->GetMean( 1 ) );
     int i1 = h2->GetXaxis()->FindBin( dac1Mean);
 
-    cout << "Mean ist at Bin: " << i1 << endl;
+    //     cout << "Mean ist at Bin: " << i1 << endl;
 
     // Optimize for Vthrcomp
 
@@ -634,17 +634,17 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
     }
 
     fHistList.push_back(h_optimize);    
-    std::cout << "Number of bins x- " 
-	      << h2->GetXaxis()->GetNbins() 
-	      << " mean: " 
-	      << h2->GetMean(1) 
-	      << " at bin: " << i1 << endl; 
-    std::cout << "Number of bins y- " 
-	      << h2->GetYaxis()->GetNbins() 
-	      << "mean: "
-	      << h2->GetMean(2) << endl;
+    //     std::cout << "Number of bins x- " 
+    // 	      << h2->GetXaxis()->GetNbins() 
+    // 	      << " mean: " 
+    // 	      << h2->GetMean(1) 
+    // 	      << " at bin: " << i1 << endl; 
+    //     std::cout << "Number of bins y- " 
+    // 	      << h2->GetYaxis()->GetNbins() 
+    // 	      << "mean: "
+    // 	      << h2->GetMean(2) << endl;
     
-    cout << " plateau from " << i0 << " to " << i9 << endl;
+    //    cout << " plateau from " << i0 << " to " << i9 << endl;
 
     int dac2Best = i0 + ( i9 - i0 ) / 4;
 
