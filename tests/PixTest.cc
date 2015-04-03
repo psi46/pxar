@@ -936,6 +936,33 @@ void PixTest::restoreDacs(bool verbose) {
   fDacCache.clear();
 }
 
+// ----------------------------------------------------------------------
+void PixTest::cacheTBMDacs(bool verbose) {
+  fDacTBMCache.clear();
+  for (size_t itbm=0; itbm<fApi->_dut->getNTbms(); itbm++) {
+    fDacTBMCache.push_back(fApi->_dut->getTbmDACs(itbm));
+    if (verbose) {
+      LOG(logINFO) << "Printing current DAC settings for TBM " << itbm << ":";
+      for (vector<pair<string,uint8_t> >::iterator itbmdac = fDacTBMCache[itbm].begin(); itbmdac != fDacTBMCache[itbm].end(); ++itbmdac) {
+        LOG(logINFO) << "TBM DAC: " << itbmdac->first << " = " << bitset<8>(itbmdac->second).to_string();
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixTest::restoreTBMDacs(bool verbose) {
+  for (size_t itbm=0; itbm<fApi->_dut->getNTbms(); itbm++) {
+    if (verbose) { LOG(logINFO) << "Printing current DAC settings for TBM " << itbm << ":"; }
+    for ( vector<pair<string,uint8_t> >::iterator itbmdac = fDacTBMCache[itbm].begin(); itbmdac != fDacTBMCache[itbm].end(); ++itbmdac) {
+      fApi->setTbmReg(itbmdac->first, itbmdac->second, itbm);
+      if (verbose) {
+        LOG(logINFO) << "TBM DAC: " << itbmdac->first << " = " << bitset<8>(itbmdac->second).to_string();
+      }
+    }
+  }
+  fDacTBMCache.clear();
+}
 
 // ----------------------------------------------------------------------
 TH1* PixTest::moduleMap(string histname) {

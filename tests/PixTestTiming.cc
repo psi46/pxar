@@ -226,6 +226,7 @@ void PixTestTiming::PhaseScan() {
   timer t;
 
   banner(Form("PixTestTiming::PhaseScan()"));
+  cacheTBMDacs();
   fDirectory->cd();
   PixTest::update();
 
@@ -387,7 +388,7 @@ void PixTestTiming::PhaseScan() {
 
   banner(Form("PixTestTiming::Phase Scan Completed"));
 
-  if (!fFastScan) {
+  if (!fFastScan && goodTBMPhase) {
     int MaxBinSum = 0;
     pair<int, int> BestBin(0,0);
     for (int xbin=1; xbin<=phasehists[0]->GetNbinsX(); xbin++) {
@@ -415,6 +416,7 @@ void PixTestTiming::PhaseScan() {
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
 
   if (!goodTBMPhase) {
+    restoreTBMDacs();
     LOG(logERROR) << "No working TBM-ROC Phase found. Verify you have disabled bypassed ROCs in pXar on the h/w tab.";
     for (int itbm = 0; itbm < nTBMs; itbm++) LOG(logERROR) << "PhaseScan searched for " << nROCs[itbm] << " ROCs on TBM Core " << itbm << ".";
   }
@@ -439,6 +441,7 @@ void PixTestTiming::TBMPhaseScan() {
   timer t;
 
   banner(Form("PixTestTiming::TBMPhaseScan()"));
+  cacheTBMDacs();
 
   //Make histograms
   TH2D *h1(0);
@@ -454,14 +457,11 @@ void PixTestTiming::TBMPhaseScan() {
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
-  vector<vector<pair<string,uint8_t> > > tbmDACs;
-  for (size_t itbm=0; itbm<nTBMs; itbm++) tbmDACs.push_back(fApi->_dut->getTbmDACs(itbm));
-                                            
   fApi->daqStart();
   for (int iclk160 = 0; iclk160 < 8; iclk160++) {
     for (int iclk400 = 0; iclk400 < 8; iclk400++) {
       uint8_t delaysetting = iclk160<<5 | iclk400<<2;
-      LOG(logINFO) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
+      LOG(logDEBUG) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
       fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
       fApi->daqStart();
       fApi->daqTrigger(fTrigBuffer, period);
@@ -485,8 +485,7 @@ void PixTestTiming::TBMPhaseScan() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   PixTest::update();
 
-  // Reset the TBM parameters to the default values
-  for (size_t itbm=0; itbm<nTBMs; itbm++) for ( vector<pair<string,uint8_t> >::iterator itbmdac = tbmDACs[itbm].begin(); itbmdac != tbmDACs[itbm].end(); ++itbmdac) fApi->setTbmReg(itbmdac->first, itbmdac->second, itbm);
+  restoreTBMDacs();
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
@@ -500,6 +499,7 @@ void PixTestTiming::ROCDelayScan() {
   timer t;
 
   banner(Form("PixTestTiming::ROCDelayScan()"));
+  cacheTBMDacs();
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   size_t nTBMs = fApi->_dut->getNTbms();
@@ -510,9 +510,6 @@ void PixTestTiming::ROCDelayScan() {
   //Make histograms
   TH2D *h1(0);
   vector<TH2D*> rocdelayhists;
-
-  vector<vector<pair<string,uint8_t> > > tbmDACs;
-  for (size_t itbm=0; itbm<nTBMs; itbm++) tbmDACs.push_back(fApi->_dut->getTbmDACs(itbm));
 
   fApi->daqStart();
   for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
@@ -525,7 +522,7 @@ void PixTestTiming::ROCDelayScan() {
     for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
       for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
         int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
-        LOG(logINFO) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << bitset<3>(irocphaseport1).to_string() << " ROC Port0: " << bitset<3>(irocphaseport0).to_string() << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
+        LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << bitset<3>(irocphaseport1).to_string() << " ROC Port0: " << bitset<3>(irocphaseport0).to_string() << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
         for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
         //fApi->daqStart();
         fApi->daqTrigger(fTrigBuffer, period);
@@ -555,7 +552,7 @@ void PixTestTiming::ROCDelayScan() {
     PixTest::update();
   }
 
-  for (size_t itbm=0; itbm<nTBMs; itbm++) for (vector<pair<string,uint8_t> >::iterator itbmdac = tbmDACs[itbm].begin(); itbmdac != tbmDACs[itbm].end(); ++itbmdac) fApi->setTbmReg(itbmdac->first, itbmdac->second, itbm);
+  restoreTBMDacs();
   
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
