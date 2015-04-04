@@ -16,6 +16,8 @@ public:
 
     void ClkSdaScan();
     void PhaseScan();
+    void TBMPhaseScan();
+    void ROCDelayScan();
 	void doTest();
     void LevelScan();
     void TimingTest();
