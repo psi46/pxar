@@ -1,4 +1,5 @@
 #include <iostream>
+#include <bitset>
 #include <fstream>
 #include <stdlib.h>     /* atof, atoi */
 
