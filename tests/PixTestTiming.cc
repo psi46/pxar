@@ -244,7 +244,7 @@ void PixTestTiming::PhaseScan() {
   pg_setup.push_back(make_pair("resettbm", 25));
   pg_setup.push_back(make_pair("trigger", 0));
   fApi->setPatternGenerator(pg_setup);
-  uint16_t period = 300;
+  uint16_t period = 200;
   vector<rawEvent> daqRawEv;
 
   //Get the number of TBMs, Total ROCs, and ROCs per TBM
@@ -453,7 +453,7 @@ void PixTestTiming::TBMPhaseScan() {
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   size_t nTBMs = fApi->_dut->getNTbms();
-  uint16_t period = 300;
+  uint16_t period = 200;
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
@@ -498,7 +498,7 @@ void PixTestTiming::ROCDelayScan() {
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   size_t nTBMs = fApi->_dut->getNTbms();
-  uint16_t period = 300;
+  uint16_t period = 200;
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
@@ -585,7 +585,7 @@ void PixTestTiming::LevelScan() {
   banner(Form("PixTestTiming::LevelScan()"));
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  uint16_t period = 300;
+  uint16_t period = 200;
 
   //Make a histogram
   TH1D *h1(0);
