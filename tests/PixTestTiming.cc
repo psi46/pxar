@@ -464,16 +464,11 @@ void PixTestTiming::TBMPhaseScan() {
       LOG(logDEBUG) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
       fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
       fApi->daqStart();
-      fApi->daqTrigger(fTrigBuffer, period);
-      daqRawEv = fApi->daqGetRawEventBuffer();
-      for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
       Log::ReportingLevel() = Log::FromString("QUIET");
-      fApi->daqTrigger(fNTrig, period);
-      daqEv = fApi->daqGetEventBuffer();
-      fApi->daqStop();
-      statistics results = fApi->getStatistics();
-      int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+      statistics results = getEvents(fNTrig, period, fTrigBuffer);
       Log::ReportingLevel() = UserReportingLevel;
+      fApi->daqStop();
+      int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
       if (NEvents==fNTrig) h1->Fill(iclk160,iclk400);
       if (Log::ReportingLevel() >= logDEBUG) results.dump();
     }
@@ -524,17 +519,10 @@ void PixTestTiming::ROCDelayScan() {
         int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
         LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << bitset<3>(irocphaseport1).to_string() << " ROC Port0: " << bitset<3>(irocphaseport0).to_string() << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
         for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
-        //fApi->daqStart();
-        fApi->daqTrigger(fTrigBuffer, period);
-        daqRawEv = fApi->daqGetRawEventBuffer();
-        for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
         Log::ReportingLevel() = Log::FromString("QUIET");
-        fApi->daqTrigger(fNTrig, period);
-        daqEv = fApi->daqGetEventBuffer();
-        //fApi->daqStop();
-        statistics results = fApi->getStatistics();
-        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+        statistics results = getEvents(fNTrig, period, fTrigBuffer);
         Log::ReportingLevel() = UserReportingLevel;
+        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
         if (NEvents==fNTrig) h1->Fill(irocphaseport0,irocphaseport1);
         if (Log::ReportingLevel() >= logDEBUG) results.dump();
       }
@@ -568,22 +556,19 @@ void PixTestTiming::TimingTest() {
   banner(Form("PixTestTiming::TimingTest()"));
 
   int nTBMs = fApi->_dut->getNTbms();
-  uint16_t period = 300;
+  uint16_t period = 200;
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
   fApi->daqStart();
-  fApi->daqTrigger(fTrigBuffer, period); //Read in fParNtrig events and throw them away, first event is generally bad.
-  daqRawEv = fApi->daqGetRawEventBuffer();
-  for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
-  fApi->daqTrigger(fNTrig, period);
-  daqEv = fApi->daqGetEventBuffer();
+  statistics results = getEvents(fNTrig, period, fTrigBuffer);
   fApi->daqStop();
-  statistics results = fApi->getStatistics();
   int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
   if (Log::ReportingLevel() >= logDEBUG) results.dump();
 
-  LOG(logINFO) << Form("The fraction of properly decoded events is %4.2f%%: ", float(NEvents)/fNTrig*100) << NEvents << "/" << fNTrig;
+  banner(Form("The fraction of properly decoded events is %4.2f%%: %d/%d", float(NEvents)/fNTrig*100, NEvents, fNTrig));
+  if (NEvents==fNTrig) banner("Timings are good!");
+  else banner("Timings are not good :(", logERROR);
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TimingTest() done.";
 
@@ -599,6 +584,7 @@ void PixTestTiming::LevelScan() {
   PixTest::update();
   banner(Form("PixTestTiming::LevelScan()"));
 
+  TLogLevel UserReportingLevel = Log::ReportingLevel();
   uint16_t period = 300;
 
   //Make a histogram
@@ -622,10 +608,10 @@ void PixTestTiming::LevelScan() {
     fPixSetup->getConfigParameters()->setTbParameter("level", ilevel);
     fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
     fApi->daqStart();
-    fApi->daqTrigger(fNTrig,period);
-    daqEv = fApi->daqGetEventBuffer();
+    Log::ReportingLevel() = Log::FromString("QUIET");
+    statistics results = getEvents(fNTrig, period, fTrigBuffer);
+    Log::ReportingLevel() = UserReportingLevel;
     fApi->daqStop();
-    statistics results = fApi->getStatistics();
     int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
     if (NEvents) h1->Fill(int(ilevel), NEvents);
     if (NEvents==fNTrig) GoodLevels.push_back(ilevel);
@@ -653,6 +639,39 @@ void PixTestTiming::LevelScan() {
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 
+}
+
+//------------------------------------------------------------------------------
+statistics PixTestTiming::getEvents(int NEvents, int period, int buffer) {
+
+  int NStep = 1000000;
+  int NLoops = floor((NEvents-1)/NStep);
+  int NRemainder = NEvents%NStep;
+  if (NRemainder==0) NRemainder=NStep;
+
+  statistics results;
+  vector<Event> daqEv;
+
+  if (buffer > 0) {
+    vector<rawEvent> daqRawEv;
+    fApi->daqTrigger(buffer, period);
+    daqRawEv = fApi->daqGetRawEventBuffer();
+    for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
+  }
+  
+  for (int iloop=0; iloop<NLoops; iloop++) {
+    LOG(logDEBUG) << "Collecting " << (iloop+1)*NStep << "/" << NEvents << " Triggers";
+    fApi->daqTrigger(NStep, period);
+    daqEv = fApi->daqGetEventBuffer();
+    results += fApi->getStatistics();
+  }
+
+  LOG(logDEBUG) << "Collecting " << (NLoops*NStep)+NRemainder << "/" << NEvents << " Triggers";
+  fApi->daqTrigger(NRemainder, period);
+  daqEv = fApi->daqGetEventBuffer();
+  results += fApi->getStatistics();
+  
+  return results;
 }
 
 //------------------------------------------------------------------------------
