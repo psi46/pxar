@@ -189,7 +189,7 @@ namespace pxar {
   class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
     Event roc_Event;
     Event* Read() {
-      if(GetEnvelopeType() == TBM_NONE) {
+      if(GetEnvelopeType() == TBM_NONE || GetEnvelopeType() == TBM_EMU) {
 	// Decode analog ROC data:
 	if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(); }
 	// Decode digital ROC data:
