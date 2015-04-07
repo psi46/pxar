@@ -297,7 +297,7 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector) {
 }
 
 void hal::setTBMType(uint8_t type) {
-  LOG(logDEBUGHAL) << "Updating TBM type to 0x" << std::hex << type << std::dec << ".";
+  LOG(logDEBUGHAL) << "Updating TBM type to 0x" << std::hex << static_cast<int>(type) << std::dec << ".";
   m_tbmtype = type;
 }
 
