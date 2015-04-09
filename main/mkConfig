@@ -592,8 +592,10 @@ ntrig               10
 clocksdascan        button
 phasescan           button
 levelscan           button
-saveparameters      button
+tbmphasescan        button
+rocdelayscan        button
 timingtest          button
+saveparameters      button
 EOF
 } 
 

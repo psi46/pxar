@@ -27,6 +27,7 @@ PixTestTiming::PixTestTiming(PixSetup *a, std::string name) : PixTest(a, name)
 {
   PixTest::init();
   init();
+  fTrigBuffer=3;
 }
 
 //------------------------------------------------------------------------------
@@ -112,11 +113,6 @@ void PixTestTiming::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
 
-  LevelScan();
-  h1 = (*fDisplayedHist);
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update();
- 
   // -- save DACs!
   saveParameters();
   TimingTest();
@@ -162,8 +158,8 @@ void PixTestTiming::ClkSdaScan() {
       fApi->setDAC("vana", 70);
       pxar::mDelay(10);
       double NewIA = fApi->getTBia();
-      if (TMath::Abs(NewIA-IA) > 0.005) {
-        h1->Fill(iclk,isda); //Need 5mA change in current to see if ROCs are programmable
+      if (TMath::Abs(NewIA-IA) > 0.02) {
+        h1->Fill(iclk,isda); //Need 20mA change in current to see if ROCs are programmable
         GoodClk=iclk;
         GoodSDA=isda;
         goodsdalist.push_back(isda);
@@ -230,6 +226,7 @@ void PixTestTiming::PhaseScan() {
   timer t;
 
   banner(Form("PixTestTiming::PhaseScan()"));
+  cacheTBMDacs();
   fDirectory->cd();
   PixTest::update();
 
@@ -247,8 +244,7 @@ void PixTestTiming::PhaseScan() {
   pg_setup.push_back(make_pair("resettbm", 25));
   pg_setup.push_back(make_pair("trigger", 0));
   fApi->setPatternGenerator(pg_setup);
-  fTrigBuffer = 3;
-  uint16_t period = 300;
+  uint16_t period = 200;
   vector<rawEvent> daqRawEv;
 
   //Get the number of TBMs, Total ROCs, and ROCs per TBM
@@ -392,7 +388,7 @@ void PixTestTiming::PhaseScan() {
 
   banner(Form("PixTestTiming::Phase Scan Completed"));
 
-  if (!fFastScan) {
+  if (!fFastScan && goodTBMPhase) {
     int MaxBinSum = 0;
     pair<int, int> BestBin(0,0);
     for (int xbin=1; xbin<=phasehists[0]->GetNbinsX(); xbin++) {
@@ -420,6 +416,7 @@ void PixTestTiming::PhaseScan() {
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
 
   if (!goodTBMPhase) {
+    restoreTBMDacs();
     LOG(logERROR) << "No working TBM-ROC Phase found. Verify you have disabled bypassed ROCs in pXar on the h/w tab.";
     for (int itbm = 0; itbm < nTBMs; itbm++) LOG(logERROR) << "PhaseScan searched for " << nROCs[itbm] << " ROCs on TBM Core " << itbm << ".";
   }
@@ -438,6 +435,119 @@ void PixTestTiming::PhaseScan() {
 }
 
 //------------------------------------------------------------------------------
+void PixTestTiming::TBMPhaseScan() {
+
+  // Start test timer
+  timer t;
+
+  banner(Form("PixTestTiming::TBMPhaseScan()"));
+  cacheTBMDacs();
+
+  //Make histograms
+  TH2D *h1(0);
+  h1 = bookTH2D("TBMPhaseScan","TBM Phase Scan", 8, -0.5, 7.5, 8, -0.5, 7.5);
+  h1->SetDirectory(fDirectory);
+  setTitles(h1, "160MHz Phase", "400 MHz Phase");
+  fHistOptions.insert(make_pair(h1, "colz"));
+  h1->SetMinimum(0);
+
+  TLogLevel UserReportingLevel = Log::ReportingLevel();
+  size_t nTBMs = fApi->_dut->getNTbms();
+  uint16_t period = 200;
+  vector<rawEvent> daqRawEv;
+  vector<Event> daqEv;
+
+  fApi->daqStart();
+  for (int iclk160 = 0; iclk160 < 8; iclk160++) {
+    for (int iclk400 = 0; iclk400 < 8; iclk400++) {
+      uint8_t delaysetting = iclk160<<5 | iclk400<<2;
+      LOG(logDEBUG) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
+      fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
+      fApi->daqStart();
+      Log::ReportingLevel() = Log::FromString("QUIET");
+      statistics results = getEvents(fNTrig, period, fTrigBuffer);
+      Log::ReportingLevel() = UserReportingLevel;
+      fApi->daqStop();
+      int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+      if (NEvents==fNTrig) h1->Fill(iclk160,iclk400);
+      if (Log::ReportingLevel() >= logDEBUG) results.dump();
+    }
+  }
+  
+  //Draw the plot
+  h1->Draw("colz");
+  fHistList.push_back(h1);
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+  PixTest::update();
+
+  restoreTBMDacs();
+
+  // Print timer value:
+  LOG(logINFO) << "Test took " << t << " ms.";
+  LOG(logINFO) << "PixTestTiming::TBMPhaseScan() done.";
+}
+
+//------------------------------------------------------------------------------
+void PixTestTiming::ROCDelayScan() {
+
+  // Start test timer
+  timer t;
+
+  banner(Form("PixTestTiming::ROCDelayScan()"));
+  cacheTBMDacs();
+
+  TLogLevel UserReportingLevel = Log::ReportingLevel();
+  size_t nTBMs = fApi->_dut->getNTbms();
+  uint16_t period = 200;
+  vector<rawEvent> daqRawEv;
+  vector<Event> daqEv;
+
+  //Make histograms
+  TH2D *h1(0);
+  vector<TH2D*> rocdelayhists;
+
+  fApi->daqStart();
+  for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
+    if (ithtdelay==2) continue;
+    h1 = bookTH2D(Form("ROCDelayScan%d",ithtdelay),Form("ROC Delay Scan: THT Delay = %d",ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
+    h1->SetDirectory(fDirectory);
+    setTitles(h1, "ROC Port 0 Delay", "ROC Port 1 Delay");
+    fHistOptions.insert(make_pair(h1, "colz"));
+    h1->SetMinimum(0);
+    for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+      for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
+        int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
+        LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << bitset<3>(irocphaseport1).to_string() << " ROC Port0: " << bitset<3>(irocphaseport0).to_string() << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
+        for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
+        Log::ReportingLevel() = Log::FromString("QUIET");
+        statistics results = getEvents(fNTrig, period, fTrigBuffer);
+        Log::ReportingLevel() = UserReportingLevel;
+        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+        if (NEvents==fNTrig) h1->Fill(irocphaseport0,irocphaseport1);
+        if (Log::ReportingLevel() >= logDEBUG) results.dump();
+      }
+    }
+    rocdelayhists.push_back(h1);
+  }
+  fApi->daqStop();
+  
+  //Draw plots
+  for (size_t ihist = 0; ihist < rocdelayhists.size(); ihist++) {
+    h1 = rocdelayhists[ihist];
+    h1->Draw("colz");
+    fHistList.push_back(h1);
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+    PixTest::update();
+  }
+
+  restoreTBMDacs();
+  
+  // Print timer value:
+  LOG(logINFO) << "Test took " << t << " ms.";
+  LOG(logINFO) << "PixTestTiming::ROCDelayScan() done.";
+}
+
+//------------------------------------------------------------------------------
 void PixTestTiming::TimingTest() {
 
   // Start test timer
@@ -445,44 +555,20 @@ void PixTestTiming::TimingTest() {
 
   banner(Form("PixTestTiming::TimingTest()"));
 
-  size_t nTBMs = fApi->_dut->getNTbms();
-  size_t nROCs = fApi->_dut->getEnabledRocI2Caddr().size();
-
-  // Setup a new pattern with only res and token:
-  vector<pair<string, uint8_t> > pg_setup;
-  pg_setup.push_back(make_pair("resetroc", 25));
-  pg_setup.push_back(make_pair("trigger", 0));
-  fApi->setPatternGenerator(pg_setup);
-  fTrigBuffer = 3;
-  uint16_t period = 300;
+  int nTBMs = fApi->_dut->getNTbms();
+  uint16_t period = 200;
   vector<rawEvent> daqRawEv;
+  vector<Event> daqEv;
+
   fApi->daqStart();
-  fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-  daqRawEv = fApi->daqGetRawEventBuffer();
-  fApi->daqTrigger(fNTrig,period);
-  daqRawEv = fApi->daqGetRawEventBuffer();
+  statistics results = getEvents(fNTrig, period, fTrigBuffer);
   fApi->daqStop();
-  LOG(logINFO) << daqRawEv.size() << " events found. " << fNTrig << " events expected.";
-  int ngoodevents = 0;
-  for (size_t ievent=0; ievent<daqRawEv.size(); ievent++) {
-    banner(Form("Decoding Event Number %d", int(ievent)),logDEBUG);
-    rawEvent event = daqRawEv.at(ievent);
-    LOG(logDEBUG) << "Event: " << event;
-    vector<int> tbmheaders;
-    vector<int> tbmtrailers;
-    vector<int> rocheaders;
-    for (int idata=0; idata < int(event.data.size()); idata++) {
-      if (event.data.at(idata) >> 8 == 160) tbmheaders.push_back(idata);
-      if (event.data.at(idata) >> 8 == 192) tbmtrailers.push_back(idata); //192 is c0, maybe it shoud be 49152 (c0000)
-      if (event.data.at(idata) >> 12 == 4) rocheaders.push_back(idata);
-    }
-    LOG(logDEBUG) << tbmheaders.size() << " TBM Headers found. " << nTBMs << " TBM Headers expected.";
-    LOG(logDEBUG) << tbmtrailers.size() << " TBM Trailers found. " << nTBMs << " TBM Trailers expected.";
-    LOG(logDEBUG) << rocheaders.size() << " ROC Headers found. " << nROCs << " ROC Headers expected." << endl;
-    if (tbmheaders.size()==nTBMs && tbmtrailers.size()==nTBMs && rocheaders.size()==nROCs) ngoodevents++; //Number of ROC Headers and TBM Headers and Trailer must be correct
-  }
-  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
-  LOG(logINFO) << Form("The fraction of properly decoded events is %4.2f%%: ", float(ngoodevents)/fNTrig*100) << ngoodevents << "/" << fNTrig;
+  int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+  if (Log::ReportingLevel() >= logDEBUG) results.dump();
+
+  banner(Form("The fraction of properly decoded events is %4.2f%%: %d/%d", float(NEvents)/fNTrig*100, NEvents, fNTrig));
+  if (NEvents==fNTrig) banner("Timings are good!");
+  else banner("Timings are not good :(", logERROR);
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TimingTest() done.";
 
@@ -498,9 +584,8 @@ void PixTestTiming::LevelScan() {
   PixTest::update();
   banner(Form("PixTestTiming::LevelScan()"));
 
-  //The Buffer and Period
-  fTrigBuffer = 3;
-  uint16_t period = 300;
+  TLogLevel UserReportingLevel = Log::ReportingLevel();
+  uint16_t period = 200;
 
   //Make a histogram
   TH1D *h1(0);
@@ -510,46 +595,26 @@ void PixTestTiming::LevelScan() {
 
   //Get the normal info
   size_t nTBMs = fApi->_dut->getNTbms();
-  size_t nROCs = fApi->_dut->getEnabledRocI2Caddr().size();
-
-  // Setup a new pattern with only res and token:
-  vector<pair<string, uint8_t> > pg_setup;
-  pg_setup.push_back(make_pair("resetroc", 25));
-  pg_setup.push_back(make_pair("trigger", 0));
-  fApi->setPatternGenerator(pg_setup);
 
   //Get Intial TBM Parameters
   vector<pair<string, uint8_t> > InitTBMParameters = fPixSetup->getConfigParameters()->getTbParameters();
 
   vector<uint8_t> GoodLevels;
   vector<rawEvent> daqRawEv;
-  daqRawEv = fApi->daqGetRawEventBuffer();
+  vector<Event> daqEv;
+
   for (uint8_t ilevel=15; ilevel>3; ilevel--){
     LOG(logDEBUG) << "Testing Level: " << int(ilevel);
     fPixSetup->getConfigParameters()->setTbParameter("level", ilevel);
     fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
     fApi->daqStart();
-    fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-    daqRawEv = fApi->daqGetRawEventBuffer();
-    fApi->daqTrigger(fNTrig,period);
-    daqRawEv = fApi->daqGetRawEventBuffer();
+    Log::ReportingLevel() = Log::FromString("QUIET");
+    statistics results = getEvents(fNTrig, period, fTrigBuffer);
+    Log::ReportingLevel() = UserReportingLevel;
     fApi->daqStop();
-    int ngoodevents = 0;
-    for (size_t ievent=0; ievent<daqRawEv.size(); ievent++) {
-      rawEvent event = daqRawEv.at(ievent);
-      LOG(logDEBUG) << "Event: " << event;
-      vector<int> tbmheaders;
-      vector<int> tbmtrailers;
-      vector<int> rocheaders;
-      for (int idata=0; idata < int(event.data.size()); idata++) {
-        if (event.data.at(idata) >> 8 == 160) tbmheaders.push_back(idata);
-        if (event.data.at(idata) >> 8 == 192) tbmtrailers.push_back(idata); //192 is c0, maybe it shoud be 49152 (c0000)
-        if (event.data.at(idata) >> 12 == 4) rocheaders.push_back(idata);
-      }
-      if (tbmheaders.size()==nTBMs && tbmtrailers.size()==nTBMs && rocheaders.size()==nROCs) ngoodevents++; //Number of ROC Headers and TBM Headers and Trailer must be correct
-    }
-    if (ngoodevents) h1->Fill(int(ilevel), ngoodevents);
-    if (ngoodevents==fNTrig) GoodLevels.push_back(ilevel);
+    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+    if (NEvents) h1->Fill(int(ilevel), NEvents);
+    if (NEvents==fNTrig) GoodLevels.push_back(ilevel);
   }
 
   if (GoodLevels.size()) {
@@ -558,10 +623,9 @@ void PixTestTiming::LevelScan() {
     else MeanLevel = GoodLevels[GoodLevels.size()/2]; //Pick the median functional level (hope there's no gaps)
     fPixSetup->getConfigParameters()->setTbParameter("level", MeanLevel);
     fApi->setTestboardDelays(fPixSetup->getConfigParameters()->getTbParameters());
-    LOG(logINFO) << "DTB Level set to " << int(MeanLevel);
+    LOG(logINFO) << "DTB level set to " << int(MeanLevel);
   } else {
-    LOG(logERROR) << "No working level found! Verify you have disabled bypassed ROCs in pXar on the h/w tab.";
-    LOG(logERROR) << "Level scan searched for " << nROCs << " total ROCs and " << nTBMs << " TBM Headers and Trailers.";
+    LOG(logERROR) << "No working level found!";
     fApi->setTestboardDelays(InitTBMParameters);
   }
 
@@ -575,6 +639,39 @@ void PixTestTiming::LevelScan() {
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 
+}
+
+//------------------------------------------------------------------------------
+statistics PixTestTiming::getEvents(int NEvents, int period, int buffer) {
+
+  int NStep = 1000000;
+  int NLoops = floor((NEvents-1)/NStep);
+  int NRemainder = NEvents%NStep;
+  if (NRemainder==0) NRemainder=NStep;
+
+  statistics results;
+  vector<Event> daqEv;
+
+  if (buffer > 0) {
+    vector<rawEvent> daqRawEv;
+    fApi->daqTrigger(buffer, period);
+    daqRawEv = fApi->daqGetRawEventBuffer();
+    for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
+  }
+  
+  for (int iloop=0; iloop<NLoops; iloop++) {
+    LOG(logDEBUG) << "Collecting " << (iloop+1)*NStep << "/" << NEvents << " Triggers";
+    fApi->daqTrigger(NStep, period);
+    daqEv = fApi->daqGetEventBuffer();
+    results += fApi->getStatistics();
+  }
+
+  LOG(logDEBUG) << "Collecting " << (NLoops*NStep)+NRemainder << "/" << NEvents << " Triggers";
+  fApi->daqTrigger(NRemainder, period);
+  daqEv = fApi->daqGetEventBuffer();
+  results += fApi->getStatistics();
+  
+  return results;
 }
 
 //------------------------------------------------------------------------------
@@ -639,16 +736,24 @@ void PixTestTiming::runCommand(string command) {
     PhaseScan();
     return;
   }
-  if (!command.compare("saveparameters")) {
-    saveParameters();
+  if (!command.compare("levelscan")) {
+    LevelScan();
+    return;
+  }
+  if (!command.compare("tbmphasescan")) {
+    TBMPhaseScan();
+    return;
+  }
+  if (!command.compare("rocdelayscan")) {
+    ROCDelayScan();
     return;
   }
   if (!command.compare("timingtest")) {
     TimingTest();
     return;
   }
-  if (!command.compare("levelscan")) {
-    LevelScan();
+  if (!command.compare("saveparameters")) {
+    saveParameters();
     return;
   }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
