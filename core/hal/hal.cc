@@ -1989,8 +1989,9 @@ void hal::daqTriggerSource(uint16_t source) {
 
 void hal::daqTriggerSingleSignal(uint8_t signal) {
 
-  // Select the single signal direct source for triggers:
-  _testboard->Trigger_Select(TRG_SEL_SINGLE_DIR);
+  // Attach the single signal direct source for triggers
+  // in addition to the currently active source:
+  _testboard->Trigger_Select(TRG_SEL_SINGLE_DIR | _currentTrgSrc);
   _testboard->Flush();
 
   // Send the requested signal:

@@ -60,7 +60,8 @@ hal::hal(std::string /*name*/) :
   _initialized(false),
   _compatible(false),
   m_tbmtype(TBM_NONE),
-  deser160phase(4)
+  deser160phase(4),
+  _currentTrgSrc(TRG_SEL_PG_DIR)
 {
   // Print the useful SW/FW versioning info:
   PrintInfo();
@@ -798,7 +799,14 @@ std::vector<uint16_t> hal::daqBuffer() {
 
 void hal::daqTriggerSource(uint16_t /*source*/) {}
 
-void hal::daqTriggerSingleSignal(uint8_t /*signal*/) {}
+void hal::daqTriggerSingleSignal(uint8_t /*signal*/) {
+
+  // Attach the single signal direct source for triggers
+  // in addition to the currently active source:
+  LOG(logDEBUGHAL) << std::hex << TRG_SEL_SINGLE_DIR << " " << _currentTrgSrc
+		   << " - " << (TRG_SEL_SINGLE_DIR | _currentTrgSrc) << std::dec;
+
+}
 
 void hal::daqTrigger(uint32_t /*nTrig*/, uint16_t /*period*/) {}
 
