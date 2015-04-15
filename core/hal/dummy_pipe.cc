@@ -6,6 +6,18 @@
 namespace pxar {
 
   uint16_t dtbSource::FillBuffer() {
+
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
+		       << " (" << static_cast<int>(chainlength) << " ROCs)"
+		       << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
+    LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
+    LOG(logDEBUGPIPES) << "-------------------------";
+    LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
+    LOG(logDEBUGPIPES) << listVector(buffer,true);
+    LOG(logDEBUGPIPES) << "-------------------------";
+
+    throw dsBufferEmpty();
     return 0;
   }
 
@@ -15,6 +27,11 @@ namespace pxar {
   }
 
   rawEvent* dtbEventSplitter::SplitDeser160() {
+    record.Clear();
+    return &record;
+  }
+
+  rawEvent* dtbEventSplitter::SplitSoftTBM() {
     record.Clear();
     return &record;
   }
@@ -30,4 +47,11 @@ namespace pxar {
     roc_Event.Clear();
     return &roc_Event;
   }
+
+  Event* dtbEventDecoder::DecodeAnalog() {
+
+    roc_Event.Clear();
+    return &roc_Event;
+  }
+
 }

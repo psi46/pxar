@@ -655,19 +655,41 @@ namespace pxar {
      *  DAQ buffer in percent.
      */
     bool daqStatus(uint8_t & perFull);
-    
+
+    /** Function to select the trigger source for the DAQ
+     *
+     *  Select Pattern Generator, internal random/cyclic trigger or external
+     *  synchronous or asynchronous trigger sources. The trigger source is
+     *  looked up from the dictionary, and the corresponding decoding module
+     *  is automatically selected.
+     */
+    bool daqTriggerSource(std::string triggerSource);
+
+    /** Function to send a single (direct) signal to the DUT.
+     *
+     *  This first configures the trigger source for direct sending of single
+     *  signals, routes the signal to the DUT and then resets the trigger source
+     *  to the one previously configured. The possible trigger signals are matched
+     *  against the pattern dictionary.
+     */
+    bool daqSingleSignal(std::string triggerSignal);
+
     /** Function to read out the earliest pxar::Event in buffer from the current
-     *  data acquisition session. If no Event is buffered, the function will 
-     *  wait for the next Event to arrive and then return it.
+     *  data acquisition session.
      *
      *  This function can throw a pxar::DataDecodingError exception in case severe
      *  problems were encountered during the readout.
+     *
+     *  If no event is available the function will throw a pxar::DataNoEvent
+     *  exception. Catching this allows constant polling for new events.
      */
     Event daqGetEvent();
 
     /** Function to read out the earliest raw data record in buffer from the 
-     *  current data acquisition session. If no Event is buffered, the function 
-     *  will wait for the next Event to arrive and then return it.
+     *  current data acquisition session.
+     *
+     *  If no event is available the function will throw a pxar::DataNoEvent
+     *  exception. Catching this allows constant polling for new events.
      */
     rawEvent daqGetRawEvent();
 
@@ -699,12 +721,18 @@ namespace pxar {
      *  the testboard RAM. No decoding is performed, the data stream is just
      *  split into single pxar::rawEvent objects. This function returns the
      *  raw events from either of the deserializer modules.
+     *
+     *  If no raw events are available the function will throw a pxar::DataNoEvent
+     *  exception. Catching this allows constant polling for new events.
      */
     std::vector<rawEvent> daqGetRawEventBuffer();
 
     /** Function to return the full currently available raw data buffer from the
      *  testboard RAM. Neither decoding nor splitting is performed, this function
      *  returns the raw data blob from either of the deserializer modules.
+     *
+     *  If no data is available the function will throw a pxar::DataNoEvent
+     *  exception. Catching this allows constant polling for new data.
      */
     std::vector<uint16_t> daqGetBuffer();
 
@@ -714,6 +742,9 @@ namespace pxar {
      *
      *  This function can throw a pxar::DataDecodingError exception in case severe
      *  problems were encountered during the readout.
+     *
+     *  If no events are available the function will throw a pxar::DataNoEvent
+     *  exception. Catching this allows constant polling for new events.
      */
     std::vector<Event> daqGetEventBuffer();
 

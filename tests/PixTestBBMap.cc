@@ -181,7 +181,12 @@ void PixTestBBMap::doTest() {
 // ----------------------------------------------------------------------
 int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
 
+#if defined ROOT_MAJOR_VER && ROOT_MAJOR_VER > 5
+  Double_t *xpeaks = s.GetPositionX();
+#else
   Float_t *xpeaks = s.GetPositionX();
+#endif
+
   string name; 
   double lcuts[3]; lcuts[0] = lcuts[1] = lcuts[2] = 255.;
   TF1 *f(0); 

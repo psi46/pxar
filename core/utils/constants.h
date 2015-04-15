@@ -18,10 +18,12 @@ namespace pxar {
 
 
 // --- TBM Types ---------------------------------------------------------------
-#define TBM_08             0x11
-#define TBM_08A            0x12
-#define TBM_08B            0x13
-#define TBM_09             0x14
+#define TBM_NONE           0x20
+#define TBM_EMU            0x21
+#define TBM_08             0x22
+#define TBM_08A            0x23
+#define TBM_08B            0x24
+#define TBM_09             0x25
 
 
 // --- TBM Register -----------------------------------------------------------
@@ -35,7 +37,8 @@ namespace pxar {
 #define TBM_REG_SET_DELAYS          0x0A
 #define TBM_REG_TEMPERATURE_CONTROL 0x0C
 #define TBM_REG_CORES_A_B           0x0E
-
+// Special TBM settings, only for pxar internal use:
+#define TBM_TOKENCHAIN              0xFF
 
 // --- ROC Size ---------------------------------------------------------------
 #define ROC_NUMROWS 80
@@ -80,6 +83,7 @@ namespace pxar {
 #define ROC_DAC_VsumCol    0x18
 #define ROC_DAC_Vcal       0x19
 #define ROC_DAC_CalDel     0x1A
+#define ROC_DAC_RangeTemp  0x1B
 #define ROC_DAC_CtrlReg    0xFD
 #define ROC_DAC_WBC        0xFE
 #define ROC_DAC_Readback   0xFF
@@ -92,6 +96,11 @@ namespace pxar {
 #define SIG_TIN 3
 #define SIG_RDA_TOUT 4
 
+#define SIG_ADC_TINDELAY 0xF7
+#define SIG_ADC_TOUTDELAY 0xF8
+#define SIG_ADC_TIMEOUT 0xF9
+#define SIG_TRIGGER_TIMEOUT 0xFA
+#define SIG_TRIGGER_LATENCY 0xFB
 #define SIG_LEVEL 0xFC
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
 #define SIG_DESER160PHASE 0xFE
@@ -118,6 +127,23 @@ namespace pxar {
 #define MHZ_10     2
 #define MHZ_20     1
 #define MHZ_40     0
+
+// --- Trigger settings -------------------------------------------------------
+#define TRG_SEL_ASYNC      0x100
+#define TRG_SEL_SYNC       0x080
+#define TRG_SEL_SINGLE     0x040
+#define TRG_SEL_GEN        0x020
+#define TRG_SEL_PG         0x010
+#define TRG_SEL_SINGLE_DIR 0x008
+#define TRG_SEL_PG_DIR     0x004
+#define TRG_SEL_CHAIN      0x002
+#define TRG_SEL_SYNC_OUT   0x001
+
+#define TRG_SEND_SYN   1
+#define TRG_SEND_TRG   2
+#define TRG_SEND_RSR   4
+#define TRG_SEND_RST   8
+#define TRG_SEND_CAL  16
 
 
 // --- Testboard digital signal probe -----------------------------------------
@@ -199,7 +225,6 @@ namespace pxar {
 
 
 // --- Testboard pulse pattern generator --------------------------------------
-#define PG_NONE  0x0000
 #define PG_TOK   0x0100
 #define PG_TRG   0x0200
 #define PG_CAL   0x0400

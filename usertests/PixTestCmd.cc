@@ -1601,9 +1601,12 @@ int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
     pg_sequence( 3 ); // token+trigger
     fApi->daqStart(fBufsize, fPixelConfigNeeded);
     fApi->daqTrigger(100, fPeriod);
-    fApi->daqGetRawEventBuffer();
+    try { fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqTrigger(16, fPeriod);
-    std::vector<pxar::rawEvent> buf = fApi->daqGetRawEventBuffer();
+    std::vector<pxar::rawEvent> buf;
+    try { buf = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqStop(false);
     if(buf.size()<16){
         out << "only got " << buf.size() << " events instead of 16 !\n";
@@ -1696,7 +1699,9 @@ int CmdProc::getBuffer(vector<uint16_t> & buf){
     
     if (fGetBufMethod==1){
         buf.clear();
-        vector<rawEvent> vre = fApi->daqGetRawEventBuffer();
+        vector<rawEvent> vre;
+	try { vre = fApi->daqGetRawEventBuffer(); }
+	catch(pxar::DataNoEvent &) {}
         for(unsigned int i=0; i<vre.size(); i++){
             for(unsigned int j=0; j<vre.at(i).GetSize(); j++){
                 buf.push_back( vre.at(i)[j] );
@@ -1704,7 +1709,8 @@ int CmdProc::getBuffer(vector<uint16_t> & buf){
         }
     }else{
         buf.clear();
-        buf  = fApi->daqGetBuffer();
+        try { buf  = fApi->daqGetBuffer(); }
+	catch(pxar::DataNoEvent &) {}
     }
     return 0;
 }
@@ -2469,7 +2475,9 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("dread") ){
         fApi->daqStart(fBufsize, fPixelConfigNeeded);
         fApi->daqTrigger(1, fPeriod);
-        std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
+        std::vector<pxar::Event> buf;
+	try { buf = fApi->daqGetEventBuffer(); }
+	catch(pxar::DataNoEvent &) {}
         fApi->daqStop(false);
         for(unsigned int i=0; i<buf.size(); i++){
             out  << buf[i];

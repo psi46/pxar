@@ -42,6 +42,10 @@ namespace pxar {
      */
   pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : _roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
 
+    /** Constructor for pixel objects with analog levels data, ultrablack & black levels and ROC id initialization.
+     */
+  pixel(std::vector<uint16_t> analogdata, uint8_t rocid, int16_t ultrablack, int16_t black) : _roc_id(rocid) { decodeAnalog(analogdata,ultrablack,black); }
+
     /** Getter function to return ROC ID
      */
     uint8_t roc() const { return _roc_id; };
@@ -85,6 +89,10 @@ namespace pxar {
     void setValue(double val) { 
       _mean = static_cast<int16_t>(val);
     };
+
+    /** Member function to re-encode pixel into raw data
+     */
+    uint32_t encode();
 
     /** Overloaded comparison operator
      */
@@ -137,6 +145,18 @@ namespace pxar {
      *  case of a failed decoding attempts.
      */
     void decodeRaw(uint32_t raw, bool invert);
+
+    /** Decoding function for PSI46 analog levels ROC data. Parameters "black"
+     *  and "ultrablack" refer to the ROC identifier levels and are used to calculate
+     *  all other address levels.
+     *  This function throws a pxar::DataDecodingError exception in
+     *  case of a failed decoding attempts.
+     */
+    void decodeAnalog(std::vector<uint16_t> analog, int16_t ultrablack, int16_t black);
+
+    /** Helper function to translate ADC values into address levels
+     */
+    uint8_t translateLevel(uint16_t x, int16_t level0, int16_t level1, int16_t levelS);
 
     /** Helper function to compress double input value into
      *  a 16bit fixed-width integer for storage

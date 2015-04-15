@@ -56,19 +56,36 @@ namespace pxar {
     UsbConnectionTimeout(const std::string& what_arg) : pxarException(what_arg) {}
   };
 
-  /**  This exception class is used when the DAQ readout is incomplete (i.e. missing events).
+  /** This exception class is the base class for all pxar data exceptions
    */
-  class DataMissingEvent : public pxarException {
+  class DataException : public pxarException {
+  public:
+  DataException(const std::string& what_arg) : pxarException(what_arg) {}
+  };
+
+  /** This exception class is used in case a new event is requested but nothing available. Usually
+   *  this is not critical and should be caught by the caller. E.g. when runninng a DAQ with
+   *  external triggering and constant event polling from the DTB it can not be ensured that data
+   *  is always available, but returning an empty event will mess up trigger sync.
+   */
+  class DataNoEvent : public DataException {
+  public:
+  DataNoEvent(const std::string& what_arg) : DataException(what_arg) {}
+  };
+
+  /**  This exception class is used when the DAQ readout is incomplete (missing events).
+   */
+  class DataMissingEvent : public DataException {
   public:
     uint32_t numberMissing;
-    DataMissingEvent(const std::string& what_arg, uint32_t nmiss) : pxarException(what_arg), numberMissing(nmiss) {}
+    DataMissingEvent(const std::string& what_arg, uint32_t nmiss) : DataException(what_arg), numberMissing(nmiss) {}
   };
 
   /**  This exception class is used when raw pixel values could not be decoded
    */
-  class DataDecodingError : public pxarException {
+  class DataDecodingError : public DataException {
   public:
-    DataDecodingError(const std::string& what_arg) : pxarException(what_arg) {}
+    DataDecodingError(const std::string& what_arg) : DataException(what_arg) {}
   };
 
   /** This exception class is used when out-of-range pixel addresses

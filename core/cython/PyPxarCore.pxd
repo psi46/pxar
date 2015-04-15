@@ -89,12 +89,12 @@ cdef extern from "api.h" namespace "pxar":
         int32_t getNEnabledRocs()
         int32_t getNRocs()
         string getRocType()
-        vector[ uint8_t ] getEnabledRocI2Caddr()
         vector[pixelConfig] getEnabledPixels(size_t rocid)
         vector[pixelConfig] getEnabledPixels()
         vector[pixelConfig] getMaskedPixels(size_t rocid)
         vector[pixelConfig] getMaskedPixels()
         vector[rocConfig] getEnabledRocs()
+        vector[uint8_t] getEnabledRocI2Caddr()
         vector[uint8_t] getEnabledRocIDs()
         vector[tbmConfig] getEnabledTbms()
         bool getPixelEnabled(uint8_t column, uint8_t row)
@@ -213,6 +213,8 @@ cdef extern from "api.h" namespace "pxar":
         void setSignalMode(string signal, string mode) except +
         bool daqStart() except +
         bool daqStatus() except +
+        bool daqTriggerSource(string triggerSource) except +
+        bool daqSingleSignal(string triggerSignal) except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +
         void daqTriggerLoopHalt() except +

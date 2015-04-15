@@ -232,7 +232,7 @@ bool HVSupply::sweepRunning(){
 }
 
 bool HVSupply::sweepRead(double &voltSet, double &voltRead, double &amps){
-  if(currentSweepRead >= sweepReads) return;
+  if(currentSweepRead >= sweepReads) return false;
   voltSet = voltStart + voltStep*currentSweepRead;
   setVolts(voltSet);
   usleep(delay * 1E6);

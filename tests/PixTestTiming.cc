@@ -293,7 +293,8 @@ void PixTestTiming::PhaseScan() {
       LOG(logINFO) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
       fApi->daqStart();
       fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-      daqRawEv = fApi->daqGetRawEventBuffer();
+      try { daqRawEv = fApi->daqGetRawEventBuffer();}
+      catch(pxar::DataNoEvent &) {}
       for (int itbm = 0; itbm < nTBMs; itbm++) fApi->setTbmReg("basea", 0, itbm); //Reset the ROC delays
       //Loop through each TBM core and count the number of ROC headers on the core for all 256 delay settings
       vector<int> GoodROCDelays;
@@ -316,7 +317,8 @@ void PixTestTiming::PhaseScan() {
               LOG(logDEBUG) << "Testing ROC Delay: " << bitset<8>(ROCDelay).to_string() << " For TBM Core: " << itbm;
               fApi->setTbmReg("basea", ROCDelay, itbm);
               fApi->daqTrigger(fNTrig,period);
-              daqRawEv = fApi->daqGetRawEventBuffer();
+              try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+	      catch(pxar::DataNoEvent &) {}
               LOG(logDEBUG) << "Events in Data Buffer: " << daqRawEv.size();
               if (int(daqRawEv.size()) < fNTrig) continue; //Grab fNTrig triggers
               for (int ievent = 0; ievent<fNTrig; ievent++) {
@@ -655,20 +657,23 @@ statistics PixTestTiming::getEvents(int NEvents, int period, int buffer) {
   if (buffer > 0) {
     vector<rawEvent> daqRawEv;
     fApi->daqTrigger(buffer, period);
-    daqRawEv = fApi->daqGetRawEventBuffer();
+    try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
   }
   
   for (int iloop=0; iloop<NLoops; iloop++) {
     LOG(logDEBUG) << "Collecting " << (iloop+1)*NStep << "/" << NEvents << " Triggers";
     fApi->daqTrigger(NStep, period);
-    daqEv = fApi->daqGetEventBuffer();
+    try { daqEv = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     results += fApi->getStatistics();
   }
 
   LOG(logDEBUG) << "Collecting " << (NLoops*NStep)+NRemainder << "/" << NEvents << " Triggers";
   fApi->daqTrigger(NRemainder, period);
-  daqEv = fApi->daqGetEventBuffer();
+  try { daqEv = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   results += fApi->getStatistics();
   
   return results;

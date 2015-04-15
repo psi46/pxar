@@ -565,7 +565,8 @@ void PixTestXray::readDataOld() {
   int pixCnt(0);  
   vector<pxar::Event> daqdat;
   
-  daqdat = fApi->daqGetEventBuffer();
+  try { daqdat = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
@@ -675,7 +676,9 @@ int PixTestXray::countHitsAndMaskPixels(TH2D *h2, double noiseLevel, int iroc) {
 void PixTestXray::readData() {
 
   int pixCnt(0);  
-  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  vector<pxar::Event> daqdat;
+  try { daqdat = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   
   for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
@@ -735,14 +738,17 @@ void PixTestXray::processData(uint16_t numevents) {
    
   if (numevents > 0) {
     for (unsigned int i = 0; i < numevents ; i++) {
-      pxar::Event evt = fApi->daqGetEvent();
+      pxar::Event evt;
+      try { evt = fApi->daqGetEvent(); }
+      catch(pxar::DataNoEvent &) {}
       //Check if event is empty?
       if(evt.pixels.size() > 0)
 	daqdat.push_back(evt);
     }
   }
   else {
-    daqdat = fApi->daqGetEventBuffer();
+    try { daqdat = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
   }
 
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";

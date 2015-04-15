@@ -687,7 +687,9 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 void PixTestHighRate::fillMap(vector<TH2D*> hist) {
 
   int pixCnt(0);
-  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  vector<pxar::Event> daqdat;
+  try { daqdat = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
 
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
