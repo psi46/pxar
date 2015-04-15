@@ -13,8 +13,12 @@ public:
   void setToolTips();
 
   void doTest(); 
+  void setVana();
+  void setVthrCompCalDelForCals();
 
 private:
+
+  int          fTargetIa;
   int          fParNtrig; 
   int          fParVcalS; 
   int          fParPlWidth; 

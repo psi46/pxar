@@ -212,6 +212,11 @@ public:
   /// restore all DACs
   void restoreDacs(bool verbose = false); 
 
+  /// cache all DACs
+  void cacheTBMDacs(bool verbose = false);
+  /// restore all DACs
+  void restoreTBMDacs(bool verbose = false);
+
   /// return from all ROCs the DAC dacName
   std::vector<uint8_t> getDacs(std::string dacName); 
   /// set on all ROCs the DAC dacName
@@ -313,6 +318,7 @@ protected:
   std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
   std::vector<std::vector<std::pair<std::string,uint8_t> > >  fDacCache; ///< vector for all ROCs 
+  std::vector<std::vector<std::pair<std::string,uint8_t> > >  fDacTBMCache; ///< vector for all TBMs
 
   TDirectory            *fDirectory; ///< where the root histograms will end up
   std::list<TH1*>       fHistList; ///< list of histograms available in PixTab::next and PixTab::previous

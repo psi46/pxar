@@ -66,7 +66,7 @@ void ConfigParameters::initialize() {
   fLogFileName                   = "log.txt";
   fDebugFileName                 = "debug.log";
   fRootFileName                  = "expert.root";
-  fGainPedestalParameterFileName = "phCalibrationFitTanH";
+  fGainPedestalParameterFileName = "phCalibrationFitErr";
   fGainPedestalFileName          = "phCalibration";
   fReadbackCalFileName           = "readbackCal";
 
@@ -164,6 +164,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("rootFileName")) { setRootFileName(_value); }
       else if (0 == _name.compare("trimParameters")) { setTrimParameterFileName(_value); }
       else if (0 == _name.compare("maskFile")) { setMaskFileName(_value); }
+      else if (0 == _name.compare("gainPedestalParameters")) {fGainPedestalParameterFileName = _value;}
 
       else if (0 == _name.compare("nModules")) { fnModules                  = _ivalue; }
       else if (0 == _name.compare("nRocs")) { readNrocs(_istring.str()); }
@@ -991,7 +992,8 @@ void ConfigParameters::writeGainPedestalParameters() {
     }
     
     OutputFile << "Parameters of the vcal vs. pulse height fits" << endl;
-    OutputFile << "par[3] + par[2] * TMath::TanH(par[0]*x[0] - par[1])" << endl << endl;
+    //    OutputFile << "par[3] + par[2] * TMath::TanH(par[0]*x[0] - par[1])" << endl << endl;
+    OutputFile << "par[3]*(TMath::Erf((x[0]-par[0])/par[1])+par[2])" << endl << endl;
     
     vector<gainPedestalParameters> pars = fGainPedestalParameters[iroc]; 
     for (unsigned ipix = 0; ipix < pars.size(); ++ipix) {	

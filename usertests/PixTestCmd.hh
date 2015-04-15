@@ -364,8 +364,10 @@ class CmdProc {
   int setTestboardPower(string name, uint16_t value);
   
   int bursttest(int ntrig, int trigsep=6, int nburst=1);
-  //int adctest0(const string s);
   int adctest(const string s);
+  int tbmread(uint8_t regId);
+  string tbmprint(uint8_t regId);
+  
   int sequence(int seq);
   int pg_sequence(int seq, int length=0);
   int pg_restore();

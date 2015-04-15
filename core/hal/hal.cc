@@ -2098,7 +2098,11 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
   _testboard->SignalProbeADC(analog_probe, gain);
   _testboard->uDelay(100);
   _testboard->Flush();
-  _testboard->Daq_Select_ADC(nSample, source, start, stop);
+  if(source==1){
+	_testboard->Daq_Select_ADC(nSample, 1, start, stop);
+   }else{
+	_testboard->Daq_Select_ADC(nSample, 2, start, stop);
+  }	   
   _testboard->uDelay(1000);
   _testboard->Flush();
   _testboard->Daq_Open(nSample, 0);
@@ -2112,13 +2116,18 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
     _testboard->Daq_Start(0);
     _testboard->roc_SetDAC(250, 195);
     _testboard->roc_SetDAC(250,  61);
+  }else if ( ((source & 0xf0)== 0xe0) || ((source & 0xf0)==0xf0) ){
+ 	// tbm readback, notes:
+    // readable registers have odd numbers: reg -> reg | 1
+    // "When READING data from the TBM, a data byte of all 255 must be sent out. "
+    _testboard->Daq_Start(0);
+	_testboard->tbm_Set(source | 1, 0xff); 
   }
   _testboard->uDelay(1000);
   _testboard->Daq_Stop(0);
   _testboard->Daq_Read(data, nSample);
   _testboard->Daq_Close(0);
   _testboard->Flush();
-
   return data;
 }
 
