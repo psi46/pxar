@@ -409,7 +409,8 @@ namespace pxar {
     uint8_t m_tindelay;
     uint8_t m_toutdelay;
     uint8_t deser160phase;
-    uint8_t rocType;
+    uint8_t m_roctype;
+    uint8_t m_roccount;
     uint8_t hubId;
 
     uint16_t _currentTrgSrc;

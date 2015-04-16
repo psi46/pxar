@@ -60,7 +60,8 @@ hal::hal(std::string /*name*/) :
   _initialized(false),
   _compatible(false),
   m_tbmtype(TBM_NONE),
-  deser160phase(4)
+  deser160phase(4),
+  _currentTrgSrc(TRG_SEL_PG_DIR)
 {
   // Print the useful SW/FW versioning info:
   PrintInfo();
@@ -132,7 +133,7 @@ void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacV
     LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
   }
   // FIXME
-  rocType = type;
+  m_roctype = type;
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC@I2C " << static_cast<int>(roci2c) << ".";
@@ -727,7 +728,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   uint32_t allocated_buffer_ch0 = buffersize;
   LOG(logDEBUGHAL) << "Allocated buffer size, Channel 0: " << allocated_buffer_ch0;
-  src0 = dtbSource(NULL,0,tokenChainLength,m_tbmtype,rocType,true);
+  src0 = dtbSource(NULL,0,tokenChainLength,m_tbmtype,m_roctype,true);
   src0 >> splitter0;
 
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
@@ -735,7 +736,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch1 = buffersize;
     LOG(logDEBUGHAL) << "Allocated buffer size, Channel 1: " << allocated_buffer_ch1;
-    src1 = dtbSource(NULL,1,tokenChainLength,m_tbmtype,rocType,true);
+    src1 = dtbSource(NULL,1,tokenChainLength,m_tbmtype,m_roctype,true);
     src1 >> splitter1;
 
     // If we have an old TBM version set up the DESER400 to read old data format:
@@ -750,12 +751,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
       uint32_t allocated_buffer_ch2 = buffersize;
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 2: " << allocated_buffer_ch2;
-      src2 = dtbSource(NULL,2,tokenChainLength,m_tbmtype,rocType,true);
+      src2 = dtbSource(NULL,2,tokenChainLength,m_tbmtype,m_roctype,true);
       src2 >> splitter2;
 
       uint32_t allocated_buffer_ch3 = buffersize;
       LOG(logDEBUGHAL) << "Allocated buffer size, Channel 3: " << allocated_buffer_ch3;
-      src3 = dtbSource(NULL,3,tokenChainLength,m_tbmtype,rocType,true);
+      src3 = dtbSource(NULL,3,tokenChainLength,m_tbmtype,m_roctype,true);
       src3 >> splitter3;
     }
   }
@@ -798,7 +799,14 @@ std::vector<uint16_t> hal::daqBuffer() {
 
 void hal::daqTriggerSource(uint16_t /*source*/) {}
 
-void hal::daqTriggerSingleSignal(uint8_t /*signal*/) {}
+void hal::daqTriggerSingleSignal(uint8_t /*signal*/) {
+
+  // Attach the single signal direct source for triggers
+  // in addition to the currently active source:
+  LOG(logDEBUGHAL) << std::hex << TRG_SEL_SINGLE_DIR << " " << _currentTrgSrc
+		   << " - " << (TRG_SEL_SINGLE_DIR | _currentTrgSrc) << std::dec;
+
+}
 
 void hal::daqTrigger(uint32_t /*nTrig*/, uint16_t /*period*/) {}
 

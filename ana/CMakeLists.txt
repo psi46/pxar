@@ -7,6 +7,7 @@ PixUtil.cc
 PixInitFunc.cc
 PHCalibration.cc
 anaFullTest.cc
+anaGainPedestal.cc
 )
 
 # fill list of header files 
@@ -15,6 +16,7 @@ PixUtil.hh
 PixInitFunc.hh
 PHCalibration.hh
 anaFullTest.hh
+anaGainPedestal.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/ana ${PROJECT_SOURCE_DIR}/util ${ROOT_INCLUDE_DIR} )

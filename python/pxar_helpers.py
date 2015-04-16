@@ -162,14 +162,17 @@ def PxarStartup(directory, verbosity):
 
     rocDacs = []
     rocPixels = list()
+    rocI2C = []
+    print config.get("nrocs")
     for roc in xrange(int(config.get("nrocs"))):
         dacconfig = PxarParametersFile('%s%s_C%i.dat'%(os.path.join(directory,""),config.get("dacParameters"),roc))
         rocDacs.append(dacconfig.getAll())
         rocPixels.append(pixels)
+        rocI2C.append(roc)
 
     print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
 
-    api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels)
+    api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
 
     api.testAllPixels(True)
     print "Now enabled all pixels"

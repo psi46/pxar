@@ -214,9 +214,9 @@ void PixTestDacScan::doTest() {
 
   LOG(logINFO) << "dac scan done" << (problems > 0? Form(" problems observed: %d", problems): " no problems seen"); 
 
-  fDisplayedHist = fHistList.begin();
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
     (*il)->Draw((getHistOption(*il)).c_str()); 
+    fDisplayedHist = (il);
   }
   PixTest::update(); 
 
