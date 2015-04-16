@@ -64,9 +64,18 @@ void anaGainPedestal::test(double y0, double y1) {
   h->SetBinContent(1400+1, 225.); h->SetBinError(1400+1, 3.); 
   
   PixInitFunc pif; 
-  TF1 *f = pif.gpErr(h);
-  cout << "fitting " <<  h->GetName() << endl;
-  h->Fit(f, "");
+  if (1) {
+    TF1 *f = pif.gpErr(h);
+    cout << "fitting " <<  h->GetName() << " with error function" << endl;
+    h->Fit(f, "");
+  }
+
+  if (0) {
+    TF1 *f = pif.weibullCdf(h);
+    cout << "fitting " <<  h->GetName() << " with weibull cdf" << endl;
+    h->Fit(f, "");
+  }
+
 
 }
 
