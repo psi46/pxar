@@ -8,6 +8,7 @@ obj/
 *.root
 *.pdf
 *.png
+*.log
 
 # ignore backup files of any sort of editor:
 ~*
@@ -21,3 +22,5 @@ usertests/PixUserTestFactory.cc
 # ignore python byte code
 *.pyc
 
+# Ignore Doxygen's SQlite3 databases:
+*.db

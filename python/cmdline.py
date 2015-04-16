@@ -25,7 +25,7 @@ import sys
 # set up the DAC and probe dictionaries
 dacdict = PyRegisterDictionary()
 probedict = PyProbeDictionary()
-    
+
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
 
@@ -113,7 +113,7 @@ class PxarCoreCmd(cmd.Cmd):
                     s += str(px)
                 print s
             return
-        
+
         # Prepare new numpy matrix:
         bins1 = (max1-min1)/step1+1
         bins2 = (max2-min2)/step2+1
@@ -128,6 +128,30 @@ class PxarCoreCmd(cmd.Cmd):
         plot = Plotter.create_th2(d, min1, max1, min2, max2, name, dac1, dac2, name)
         self.window.histos.append(plot)
         self.window.update()
+
+    def varyDelays(self,tindelay,toutdelay,verbose=False):
+        self.api.setTestboardDelays({"tindelay":tindelay,"toutdelay":toutdelay})
+        self.api.daqStart()
+        self.api.daqTrigger(1, 500)
+
+        try:
+            rawEvent = self.api.daqGetRawEvent()
+        except RuntimeError:
+            pass
+
+        if verbose: print "raw Event:\t\t",rawEvent
+        nCount = 0
+        for i in rawEvent:
+            i = i & 0x0fff
+            if i & 0x0800:
+                i -= 4096
+            rawEvent[nCount] = i
+            nCount += 1
+        if verbose: print "converted Event:\t",rawEvent
+        self.api.daqStop()
+        return rawEvent
+
+##########################################################################################################################
 
     def do_EOF(self, line):
         """ clean exit when receiving EOF (Ctrl-D) """
@@ -155,7 +179,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getVersion(self):
         """getVersion: returns the pxarcore library version"""
         print self.api.getVersion()
-        
+
     def complete_getVersion(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getVersion.__doc__, '']
@@ -164,7 +188,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_status(self):
         """status: returns the pxarcore library status"""
         print self.api.status()
-        
+
     def complete_status(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_status.__doc__, '']
@@ -173,7 +197,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_flashTB(self, filename):
         """flashTB [filename]: flash the DTB with new firmware"""
         self.api.flashTB(filename)
-        
+
     def complete_flashTB(self, text, line, start_index, end_index):
         # tab-completion for the file path:
         try:
@@ -188,8 +212,8 @@ class PxarCoreCmd(cmd.Cmd):
         return get_possible_filename_completions(extract_full_argument(line,end_index))
 
     @arity(1,1,[str])
-    def do_loadscript(self, filename):
-        """loadscript [filename]: loads a list of commands to be executed on the pxar cmdline"""
+    def do_run(self, filename):
+        """run [filename]: loads a list of commands to be executed on the pxar cmdline"""
         try:
             f = open(filename)
         except IOError:
@@ -201,8 +225,8 @@ class PxarCoreCmd(cmd.Cmd):
                     self.onecmd(line)
         finally:
             f.close()
-        
-    def complete_loadscript(self, text, line, start_index, end_index):
+
+    def complete_run(self, text, line, start_index, end_index):
         # tab-completion for the file path:
         try:
             # remove specific delimeters from the readline parser
@@ -219,7 +243,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_HVon(self):
         """HVon: switch High voltage for sensor bias on"""
         self.api.HVon()
-        
+
     def complete_HVon(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_HVon.__doc__, '']
@@ -228,7 +252,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_Poff(self):
         """Pon: switch DTB power output off"""
         self.api.Poff()
-        
+
     def complete_Poff(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_Poff.__doc__, '']
@@ -237,7 +261,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_Pon(self):
         """Pon: switch DTB power output on"""
         self.api.Pon()
-        
+
     def complete_Pon(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_Pon.__doc__, '']
@@ -246,7 +270,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_HVoff(self):
         """HVoff: switch High voltage for sensor bias off"""
         self.api.HVoff()
-        
+
     def complete_HVoff(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_HVoff.__doc__, '']
@@ -255,7 +279,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getTBia(self):
         """getTBia: returns analog DTB current"""
         print "Analog Current: ", (self.api.getTBia()*1000), " mA"
-        
+
     def complete_getTBia(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getTBia.__doc__, '']
@@ -264,7 +288,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getTBva(self):
         """getTBva: returns analog DTB voltage"""
         print "Analog Voltage: ", self.api.getTBva(), " V"
-        
+
     def complete_getTBva(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getTBva.__doc__, '']
@@ -273,7 +297,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getTBid(self):
         """getTBid: returns digital DTB current"""
         print "Digital Current: ", (self.api.getTBid()*1000), " mA"
-        
+
     def complete_getTBid(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getTBid.__doc__, '']
@@ -282,7 +306,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getTBvd(self):
         """getTBvd: returns digital DTB voltage"""
         print "Digital Voltage: ", self.api.getTBvd(), " V"
-        
+
     def complete_getTBvd(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getTBvd.__doc__, '']
@@ -320,7 +344,7 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqStatus(self):
         """daqStatus: reports status of the running DAQ session"""
-        if self.api.daqStatus(): 
+        if self.api.daqStatus():
             print "DAQ session is fine"
         else:
             print "DAQ session returns faulty state"
@@ -328,6 +352,30 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_daqStatus(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqStatus.__doc__, '']
+
+    @arity(1,1,[str])
+    def do_daqTriggerSource(self, source):
+        """daqTriggerSource: select the trigger source to be used for the DAQ session"""
+        if self.api.daqTriggerSource(source):
+            print "Trigger source \"" + source + "\" selected."
+        else:
+            print "DAQ returns faulty state."
+
+    def complete_daqTriggerSource(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqTriggerSource.__doc__, '']
+
+    @arity(1,1,[str])
+    def do_daqSingleSignal(self, signal):
+        """daqSingleSignal [signal]: send a single signal to the DUT"""
+        if self.api.daqSingleSignal(signal):
+            print "Trigger signal \"" + signal + "\" sent to DUT."
+        else:
+            print "Trigger signal lookup failed."
+
+    def complete_daqSingleSignal(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqSingleSignal.__doc__, '']
 
     @arity(0,0,[])
     def do_daqStop(self):
@@ -368,8 +416,11 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEvent(self):
         """daqGetEvent: read one event from the event buffer"""
-        data = self.api.daqGetEvent()
-        self.plot_eventdisplay(data)
+        try:
+            data = self.api.daqGetEvent()
+            self.plot_eventdisplay(data)
+        except RuntimeError:
+            pass
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -378,8 +429,11 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetEventBuffer(self):
         """daqGetEventBuffer: read all decoded events from the DTB buffer"""
-        data = self.api.daqGetEventBuffer()
-        self.plot_eventdisplay(data)
+        try:
+            data = self.api.daqGetEventBuffer()
+            self.plot_eventdisplay(data)
+        except RuntimeError:
+            pass
 
     def complete_daqGetEventBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -388,11 +442,14 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetRawEvent(self):
         """daqGetRawEvent: read one raw event from the event buffer"""
-        dat = self.api.daqGetRawEvent()
-        s = ""
-        for i in dat:
-            s += '{:03x}'.format(i) + " "
-        print s
+        try:
+            dat = self.api.daqGetRawEvent()
+            s = ""
+            for i in dat:
+                s += '{0:03x}'.format(i) + " "
+            print s
+        except RuntimeError:
+            pass
 
     def complete_daqGetRawEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -411,13 +468,16 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,0,[])
     def do_daqGetBuffer(self):
         """daqGetBuffer: read full raw data DTB buffer"""
-        dat = self.api.daqGetBuffer()
-        s = ""
-        for i in dat:
-            if i & 0x0FF0 == 0x07f0:
-                s += "\n"
-            s += '{:04x}'.format(i) + " "
-        print s
+        try:
+            dat = self.api.daqGetBuffer()
+            s = ""
+            for i in dat:
+                if i & 0x0FF0 == 0x07f0:
+                    s += "\n"
+                    s += '{:04x}'.format(i) + " "
+                    print s
+        except RuntimeError:
+            pass
 
     def complete_daqGetBuffer(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -443,7 +503,7 @@ class PxarCoreCmd(cmd.Cmd):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
         data = self.api.getEfficiencyMap(flags,nTriggers)
         self.plot_map(data,"Efficiency")
-        
+
     def complete_getEfficiencyMap(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getEfficiencyMap.__doc__, '']
@@ -453,7 +513,7 @@ class PxarCoreCmd(cmd.Cmd):
         """getPulseheightMap [flags = 0] [nTriggers = 10]: returns the pulseheight map"""
         data = self.api.getPulseheightMap(flags,nTriggers)
         self.plot_map(data,"Pulseheight")
-        
+
     def complete_getPulseheightMap(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getPulseheightMap.__doc__, '']
@@ -463,7 +523,7 @@ class PxarCoreCmd(cmd.Cmd):
         """getThresholdMap [DAC name] [step size] [min] [max] [threshold] [flags = 0] [nTriggers = 10]: returns the threshold map for the given DAC"""
         data = self.api.getThresholdMap(dacname,dacstep,dacmin,dacmax,threshold,flags,nTriggers)
         self.plot_map(data,"Threshold " + dacname)
-        
+
     def complete_getThresholdMap(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
             # list matching entries
@@ -584,6 +644,40 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all DACS
                 return dacdict.getAllROCNames()
 
+    @arity(0,0,[])
+    def do_analogLevelScan(self):
+        """analogLevelScan: scan the ADC levels of an analog ROC"""
+        self.api.daqStart()
+        self.api.daqTrigger(5000,500)
+        plotdata = zeros(1024)
+
+        try:
+            while True:
+                s = ""
+                p = ""
+                pos = -3
+                dat = self.api.daqGetRawEvent()
+                for i in dat:
+                    i = i & 0x0fff
+                    # Remove PH from hits:
+                    if pos == 5:
+                        pos = 0
+                        continue
+                    if i & 0x0800:
+                        i -= 4096
+                    plotdata[500+i] += 1
+                    pos += 1
+        except RuntimeError:
+            pass
+
+        plot = Plotter.create_th1(plotdata, -512, +512, "Address Levels", "ADC", "#")
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def complete_analogLevelScan(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_analogLevelScan.__doc__, '']
+
     @arity(2,2,[str, str])
     def do_setSignalMode(self, signal, mode):
         """setSignalMode [signal] [mode]: Set the DTB signal to given mode (normal, low, high, random)"""
@@ -694,7 +788,6 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all registers
                 return dacdict.getAllTBMNames()
 
-
     @arity(1,1,[int])
     def do_getTbmDACs(self, tbmid):
         """getTbmDACs [id]: get the currently programmed register settings for TBM #id"""
@@ -712,6 +805,26 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_info(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_info.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getEnabledRocIDs(self):
+        """info: print ROC IDs of all enabled ROCs"""
+        data = self.api.getEnabledRocIDs()
+        print data
+
+    def complete_getEnabledRocIDs(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getEnabledRocIDs.__doc__, '']
+
+    @arity(0,0,[])
+    def do_getEnabledRocI2Caddr(self):
+        """info: print ROC IDs of all enabled ROCs"""
+        data = self.api.getEnabledRocI2Caddr()
+        print data
+
+    def complete_getEnabledRocI2Caddr(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getEnabledRocI2Caddr.__doc__, '']
 
     @arity(2,2,[int, int])
     def do_setROCEnable(self, rocid, enable):
@@ -753,7 +866,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_maskPixel(self, col, row, enable, rocid = None):
         """maskPixel [column] [row] [enable] [ROC id]: mask/unmask pixel"""
         self.api.maskPixel(col,row,enable,rocid)
-        
+
     def complete_maskPixel(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_maskPixel.__doc__, '']
@@ -762,7 +875,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_maskAllPixels(self, enable, rocid = None):
         """maskAllPixels [enable] [rocid]: mask/unmask all pixels on given ROC"""
         self.api.maskAllPixels(enable,rocid)
-        
+
     def complete_maskAllPixels(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_maskAllPixels.__doc__, '']
@@ -803,6 +916,40 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getNMaskedPixels.__doc__, '']
 
+    @arity(0,0,[])
+    def do_findAnalogueTBDelays(self):
+        """findAnalogueTBDelays: configures tindelay and toutdelay"""
+        print ""
+        bestTin = 10    #default value if algorithm should fail
+        print "scan tindelay:"
+        print "tindelay\ttoutdelay\trawEvent[0]"
+        for tin in range(5,20):
+            rawEvent = self.varyDelays(tin, 20,verbose=False)
+            print str(tin)+"\t\t20\t\t"+str(rawEvent[0])
+            if (rawEvent[0] < -100):    #triggers for UB, the first one should always be UB
+                bestTin = tin
+                break
+        print ""
+        bestTout = 20   #default value if algorithm should fail
+        tout = bestTin+5
+        print "scan toutdelay"
+        print "tindelay\ttoutdelay\trawEvent[-1]"
+        for i in range (15):
+            rawEvent = self.varyDelays(bestTin, tout,verbose=False)
+            print str(bestTin)+"\t\t"+str(tout)+"\t\t"+str(rawEvent[-1])
+            if rawEvent[-1] > 20:   #triggers for PH, the last one should always be a pos PH
+                bestTout = tout
+                break
+            tout -= 1
+        print ""
+        self.api.setTestboardDelays({"tindelay":bestTin,"toutdelay":bestTout})
+        print "set tindelay to:  ", bestTin
+        print "set toutdelay to: ", bestTout
+
+    def complete_findAnalogueTBDelays(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_findAnalogueTBDelays.__doc__, '']
+
     def do_quit(self, arg):
         """quit: terminates the application"""
         sys.exit(1)
@@ -821,7 +968,7 @@ def main(argv=None):
     parser.add_argument('--dir', '-d', metavar="DIR", help="The directory with all required config files.")
     parser.add_argument('--verbosity', '-v', metavar="LEVEL", default="INFO", help="The output verbosity set in the pxar API.")
     parser.add_argument('--gui', '-g', action="store_true", help="The output verbosity set in the pxar API.")
-    parser.add_argument('--load', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
+    parser.add_argument('--run', '-r', metavar="FILE", help="Load a cmdline script to be executed before entering the prompt.")
     args = parser.parse_args(argv)
 
     api = PxarStartup(args.dir,args.verbosity)
@@ -829,8 +976,8 @@ def main(argv=None):
     # start the cmd line
     prompt = PxarCoreCmd(api,args.gui)
     # run the startup script if requested
-    if args.load:
-        prompt.do_loadscript(args.load)
+    if args.run:
+        prompt.do_run(args.run)
     # start user interaction
     prompt.cmdloop()
 

@@ -119,7 +119,7 @@ void PixTestBBMap::doTest() {
   if (fDumpProblematic) result |= 0x10;
 
   fNDaqErrors = 0; 
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 50, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, result, 1, flag);
 
   // -- relabel negative thresholds as 255 and create distribution list
   vector<TH1D*> dlist; 
@@ -181,7 +181,12 @@ void PixTestBBMap::doTest() {
 // ----------------------------------------------------------------------
 int PixTestBBMap::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
 
+#if defined ROOT_MAJOR_VER && ROOT_MAJOR_VER > 5
+  Double_t *xpeaks = s.GetPositionX();
+#else
   Float_t *xpeaks = s.GetPositionX();
+#endif
+
   string name; 
   double lcuts[3]; lcuts[0] = lcuts[1] = lcuts[2] = 255.;
   TF1 *f(0); 

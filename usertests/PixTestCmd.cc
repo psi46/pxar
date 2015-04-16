@@ -1465,7 +1465,6 @@ int CmdProc::tbmread(uint8_t regId){
     uint16_t nSample = 100;
     unsigned int nDly = 20; // stepsize 1.25 ns
 
-	int value=-1;
 	
     for(unsigned int dly=0; dly<nDly; dly++){
         setTestboardDelay("sda", dly);
@@ -1523,28 +1522,29 @@ int CmdProc::tbmread(uint8_t regId){
 
 			   bool valid = (S==(regId | 1))  && (H==hubId) && (P==4)
 				&& !compS3 && !compRW && !compD4 && !compD0;
-		
+						
 				if (valid){ 
-					value = (int) D;
-					break;
+					setTestboardDelay("all");
+					return (int) D;
 				}
-		
-		   }	
-       }
+				
+
+			}
+		}
 
    }
 
     // restore delays, signals (modified by daqADC) and pg
     setTestboardDelay("all");
 
-    return value;
+    return -1;
 }
 
 string CmdProc::tbmprint(uint8_t regId){
 	stringstream s;
 	int value = tbmread(regId);
-	if (value>0){
-		s<< "      0x" << (hex) << setw(2) << value;
+	if (value>=0){
+		s<< "      0x" << (hex) << setfill('0') << setw(2) << value << setfill(' ');
 	}else{
 		s<< "       err";
 	}
@@ -1601,9 +1601,12 @@ int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
     pg_sequence( 3 ); // token+trigger
     fApi->daqStart(fBufsize, fPixelConfigNeeded);
     fApi->daqTrigger(100, fPeriod);
-    fApi->daqGetRawEventBuffer();
+    try { fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqTrigger(16, fPeriod);
-    std::vector<pxar::rawEvent> buf = fApi->daqGetRawEventBuffer();
+    std::vector<pxar::rawEvent> buf;
+    try { buf = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqStop(false);
     if(buf.size()<16){
         out << "only got " << buf.size() << " events instead of 16 !\n";
@@ -1696,7 +1699,9 @@ int CmdProc::getBuffer(vector<uint16_t> & buf){
     
     if (fGetBufMethod==1){
         buf.clear();
-        vector<rawEvent> vre = fApi->daqGetRawEventBuffer();
+        vector<rawEvent> vre;
+	try { vre = fApi->daqGetRawEventBuffer(); }
+	catch(pxar::DataNoEvent &) {}
         for(unsigned int i=0; i<vre.size(); i++){
             for(unsigned int j=0; j<vre.at(i).GetSize(); j++){
                 buf.push_back( vre.at(i)[j] );
@@ -1704,7 +1709,8 @@ int CmdProc::getBuffer(vector<uint16_t> & buf){
         }
     }else{
         buf.clear();
-        buf  = fApi->daqGetBuffer();
+        try { buf  = fApi->daqGetBuffer(); }
+	catch(pxar::DataNoEvent &) {}
     }
     return 0;
 }
@@ -2443,12 +2449,12 @@ int CmdProc::tb(Keyword kw){
         }
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;} 
     if( kw.match("adctest") ){ adctest("clk"); adctest("ctr"); adctest("sda"); adctest("rda"); adctest("sdata1"); adctest("sdata2"); return 0;} 
-	if( kw.match("tbmread")){
+	if( kw.match("tbmread") || kw.match("readback","tbm") ){
 		out <<"               core A      core B \n";
 		out << "Base + 1/0 " << tbmprint(0xe1)  << "  " << tbmprint(0xf1) << "\n";
 		out << "Base + 9/8 " << tbmprint(0xe9)  << "  " << tbmprint(0xf9) << "\n";
 		out << "Base + B/A " << tbmprint(0xeb)  << "  " << tbmprint(0xfb) << "\n";
-		//out << "Base + D/C " << tbmprint(0xed)  << "  " << tbmprint(0xfd) << "\n"; // FIXME, should this work?
+		out << "Base + D/C " << tbmprint(0xed)  << "  " << tbmprint(0xfd) << "\n";
 		out << "Base + F   " << tbmprint(0xef) << "\n";
 		return 0;
 	}
@@ -2469,7 +2475,9 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("dread") ){
         fApi->daqStart(fBufsize, fPixelConfigNeeded);
         fApi->daqTrigger(1, fPeriod);
-        std::vector<pxar::Event> buf = fApi->daqGetEventBuffer();
+        std::vector<pxar::Event> buf;
+	try { buf = fApi->daqGetEventBuffer(); }
+	catch(pxar::DataNoEvent &) {}
         fApi->daqStop(false);
         for(unsigned int i=0; i<buf.size(); i++){
             out  << buf[i];

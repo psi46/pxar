@@ -168,13 +168,14 @@ void PixTestScurves::fullTest() {
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
   fParDacHi = 119;
-  fParDacsPerStep = 40;   
+  fParDacsPerStep = 10;   
   scurves();
 
+  fParNtrig = 50; 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
-  fParDacHi = 159;
-  fParDacsPerStep = 40;   
+  fParDacHi = 149;
+  fParDacsPerStep = 10;   
   scurves();
 
   int seconds = t.RealTime(); 
@@ -208,6 +209,7 @@ void PixTestScurves::runCommand(string command) {
 void PixTestScurves::scurves() {
   fDirectory->cd();
   cacheDacs();
+  banner(Form("PixTestScurves::scurves(%s), ntrig = %d", fParDac.c_str(), fParNtrig));
 
   string command(fParDac);
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);

@@ -56,6 +56,10 @@ namespace pxar {
      */
     void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector);
 
+    /** Change the type of the TBM type member in HAL
+     */
+    void setTBMType(uint8_t type);
+
     /** Initialize attached ROCs with their settings and configuration
      *  This is the startup-routine for single ROCs. It first powers up the
      *  testboard output if necessary, sets the ROC's I2C address and then
@@ -280,7 +284,19 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    void daqStart(uint8_t deser160phase, uint8_t tbmtype, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint8_t deser160phase, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+
+    /** Select the trigger source as given in "source":
+     */
+    void daqTriggerSource(uint16_t source);
+
+    /** Send a single signal via the DTB to the DUT. This function
+     *  first configures the trigger source TRG_SEL_SINGLE_DIR 
+     *  (direct sending of signals, no softTBM), then sends the 
+     *  signal and finally resets the trigger source to the previous
+     *  setting (from hal::_currentTrgSrc)
+     */
+    void daqTriggerSingleSignal(uint8_t signal);
 
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
@@ -388,10 +404,16 @@ namespace pxar {
     bool _compatible;
 
     // FIXME can't we find a smarter solution to this?!
-    uint8_t tbmtype;
+    uint8_t m_tbmtype;
+    uint16_t m_adctimeout;
+    uint8_t m_tindelay;
+    uint8_t m_toutdelay;
     uint8_t deser160phase;
-    uint8_t rocType;
+    uint8_t m_roctype;
+    uint8_t m_roccount;
     uint8_t hubId;
+
+    uint16_t _currentTrgSrc;
 
     /** Print the info block with software and firmware versions,
      *  MAC and USB ids etc. read from the connected testboard
@@ -414,7 +436,7 @@ namespace pxar {
      *  expected for the upcoming test. This function only supplies debug output
      *  and has no further effect on the data transmission or similar.
      */
-    void estimateDataVolume(uint32_t events, uint8_t nROCs, uint8_t nTBMs);
+    void estimateDataVolume(uint32_t events, uint8_t nROCs);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit

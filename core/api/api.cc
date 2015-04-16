@@ -191,10 +191,17 @@ bool pxarCore::initDUT(uint8_t hubid,
     
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
-
+     
       // Fill the register pairs with the register id from the dictionary:
       uint8_t tbmregister, value = dacIt->second;
       if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
+
+      // Check if this is a special setting:
+      if(tbmregister == 0xFF) { // Token Chain length
+	LOG(logDEBUGAPI) << "This TBM Core is configured to have a token chain of "
+			 << static_cast<int>(value) << " ROCs.";
+	continue;
+      }
 
       // Check if this is fore core alpha or beta:
       if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
@@ -368,8 +375,6 @@ bool pxarCore::verifyRegister(std::string name, uint8_t &id, uint8_t &value, uin
     value = static_cast<uint8_t>(regLimit);
   }
 
-  // LOG(logDEBUGAPI) << "Verified register \"" << name << "\" (" << static_cast<int>(id) << "): " 
-  //		   << static_cast<int>(value) << " (max " << static_cast<int>(regLimit) << ")"; 
   return true;
 }
 
@@ -1178,14 +1183,88 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
     _daq_startstop_warning = true;
   }
 
-  // Check the DUT if we have TBMs enabled or not and choose the right deserializer:
-  uint8_t type = 0x0;
-  if(!_dut->tbm.empty()) { type = _dut->tbm.at(0).type; }
-
   // And start the DAQ session:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],type,buffersize);
+  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
   _daq_running = true;
+  return true;
+}
+
+bool pxarCore::daqSingleSignal(std::string triggerSignal) {
+  
+  // We do NOT require a running DAQ session here!
+
+  // Get singleton Trigger dictionary object:
+  PatternDictionary * _dict = PatternDictionary::getInstance();
+
+  // Convert the trigger source name to lower case for comparison:
+  std::transform(triggerSignal.begin(), triggerSignal.end(), triggerSignal.begin(), ::tolower);
+
+  // Get the signal from the dictionary object:
+  uint16_t sig = _dict->getSignal(triggerSignal,PATTERN_TRG);
+  if(sig == PATTERN_ERR) {
+    LOG(logCRITICAL) << "Could not find trigger signal \"" << triggerSignal << "\" in the dictionary!";
+    throw InvalidConfig("Wrong trigger signal provided.");
+  }
+
+  LOG(logDEBUGAPI) << "Found TRG signal " << triggerSignal << " (" << std::hex << sig << std::dec << ")";
+  _hal->daqTriggerSingleSignal(static_cast<uint8_t>(sig));
+  return true;
+}
+
+bool pxarCore::daqTriggerSource(std::string triggerSource) {
+
+  if(daqStatus()) {
+    LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
+    return false;
+  }
+
+  // Get singleton Trigger dictionary object:
+  TriggerDictionary * _dict = TriggerDictionary::getInstance();
+
+  // Convert the trigger source name to lower case for comparison:
+  std::transform(triggerSource.begin(), triggerSource.end(), triggerSource.begin(), ::tolower);
+
+  std::istringstream identifiers(triggerSource);
+  std::string s;
+  uint16_t signal = 0;
+  // Tokenize the signal string into single trigger sources, separated by ";":
+  while (std::getline(identifiers, s, ';')) {
+    // Get the signal from the dictionary object:
+    uint16_t sig = _dict->getSignal(s);
+    if(sig != TRG_ERR) {
+      signal |= sig;
+      LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
+    }
+    else {
+      LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
+      throw InvalidConfig("Wrong trigger source identifier provided.");
+    }
+  }
+
+  LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
+  _hal->daqTriggerSource(signal);
+
+  // Check if we need to change the tbmtype for HAL:
+  uint8_t newtype = 0x0;
+  if(_dict->getEmulationState(signal)) {
+    // If no TBM is configured in the DUT, we run a single ROC and everyting will be okay:
+    if(_dut->getTbmType() == "") { _hal->setTBMType(TBM_EMU); newtype = TBM_EMU; }
+    // FIXME: I don't know how the DTB behaves with a DESER400 request plus TBM emulation!
+    else {
+      throw InvalidConfig("Do not use SoftTBM (emulated) and DESER400 with real TBM together!");
+    }
+  }
+  else {
+    // If no TBM is configured in the DUT, we run a single ROC and everyting will be okay:
+    if(_dut->getTbmType() == "") { _hal->setTBMType(TBM_NONE); newtype = TBM_NONE; }
+    // TBM is programmed, pass type to HAL:
+    else  { _hal->setTBMType(_dut->tbm.front().type); newtype = _dut->tbm.front().type; }
+  }
+
+  // Get singleton Trigger dictionary object:
+  DeviceDictionary * _devdict = DeviceDictionary::getInstance();
+  LOG(logDEBUGAPI) << "Updated TBM type to \"" << _devdict->getName(newtype) << "\".";
   return true;
 }
 
@@ -1264,6 +1343,8 @@ void pxarCore::daqTriggerLoopHalt() {
 std::vector<uint16_t> pxarCore::daqGetBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
+  // The HAL function throws pxar::DataNoEvent if nothing to be 
+  // returned
   std::vector<uint16_t> buffer = _hal->daqBuffer();
   return buffer;
 }
@@ -1272,6 +1353,8 @@ std::vector<rawEvent> pxarCore::daqGetRawEventBuffer() {
 
   // Reading out all data from the DTB and returning the raw blob.
   // Select the right readout channels depending on the number of TBMs
+  // The HAL function throws pxar::DataNoEvent if nothing to be 
+  // returned
   std::vector<rawEvent> data = std::vector<rawEvent>();
   std::vector<rawEvent*> buffer = _hal->daqAllRawEvents();
 
@@ -1287,6 +1370,8 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
 
   // Reading out all data from the DTB and returning the decoded Event buffer.
   // Select the right readout channels depending on the number of TBMs
+  // The HAL function throws pxar::DataNoEvent if nothing to be 
+  // returned
   std::vector<Event> data = std::vector<Event>();
   std::vector<Event*> buffer = _hal->daqAllEvents();
 
@@ -1303,7 +1388,8 @@ Event pxarCore::daqGetEvent() {
   // Check DAQ status:
   if(!daqStatus()) { return Event(); }
 
-  // Return the next decoded Event from the FIFO buffer:
+  // Return the next decoded Event from the FIFO buffer.
+  // The HAL function throws pxar::DataNoEvent if no event is available
   Event * evt = _hal->daqEvent();
   Event ret = *evt;
   delete evt;
@@ -1316,6 +1402,7 @@ rawEvent pxarCore::daqGetRawEvent() {
   if(!daqStatus()) { return rawEvent(); }
 
   // Return the next raw data record from the FIFO buffer:
+  // The HAL function throws pxar::DataNoEvent if no event is available
   rawEvent * evt = _hal->daqRawEvent();
   rawEvent ret = *evt;
   delete evt;
@@ -2133,7 +2220,7 @@ void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t>
   std::vector<std::pair<uint16_t,uint8_t> > patterns;
 
   // Get the Pattern Generator dictionary for lookup:
-  PatternGeneratorDictionary * _dict = PatternGeneratorDictionary::getInstance();
+  PatternDictionary * _dict = PatternDictionary::getInstance();
 
   // Check total length of the pattern generator:
   if(pg_setup.size() > 256) {
@@ -2172,8 +2259,8 @@ void pxarCore::verifyPatternGenerator(std::vector<std::pair<std::string,uint8_t>
     // Tokenize the signal string into single PG signals, separated by ";":
     while (std::getline(signals, s, ';')) {
       // Get the signal from the dictionary object:
-      uint16_t sig = _dict->getSignal(s);
-      if(sig != PG_ERR) signal += sig;
+      uint16_t sig = _dict->getSignal(s,PATTERN_PG);
+      if(sig != PATTERN_ERR) signal += sig;
       else {
 	LOG(logCRITICAL) << "Could not find pattern generator signal \"" << s << "\" in the dictionary!";
 	throw InvalidConfig("Wrong pattern generator signal provided.");

@@ -385,7 +385,9 @@ void PixTestPretest::setTimings() {
     LOG(logDEBUG) << "Testing Timing: Attempt #" << itry+1;
     fApi->daqStart();
     fApi->daqTrigger(fParNtrig, period);
-    vector<Event> daqEv = fApi->daqGetEventBuffer();
+    vector<Event> daqEv;
+    try { daqEv = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
     fApi->daqStop();
     statistics results = fApi->getStatistics();
     int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
@@ -415,13 +417,16 @@ void PixTestPretest::setTimings() {
         //Test Delay Settings
         fApi->daqStart();
         fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
-        vector<rawEvent> daqRawEv = fApi->daqGetRawEventBuffer();
+        vector<rawEvent> daqRawEv;
+	try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+	catch(pxar::DataNoEvent &) {}
         for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
         Log::ReportingLevel() = Log::FromString("QUIET");
         vector<Event> daqEv;
         for (int interation=0; interation < fIterations; interation++) {
           fApi->daqTrigger(fParNtrig, period);
-          daqEv = fApi->daqGetEventBuffer();
+          try { daqEv = fApi->daqGetEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
         }
         fApi->daqStop();
         statistics results = fApi->getStatistics();

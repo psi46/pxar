@@ -401,7 +401,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 
 	if (!fResultsOnFile)
 	{
-		daqEvBuffer = fApi->daqGetEventBuffer();
+	  try { daqEvBuffer = fApi->daqGetEventBuffer(); }
+	  catch(pxar::DataNoEvent &) {}
 		daqEvBuffsiz = daqEvBuffer.size();
 
 		FillHistos(daqEvBuffer, hits, phmap, ph); //fill&print histos on the gui
@@ -444,7 +445,9 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 
 		if (fBinOut)
 		{
-			std::vector<uint16_t> daqdat = fApi->daqGetBuffer();
+		  std::vector<uint16_t> daqdat;
+		  try { daqdat = fApi->daqGetBuffer(); }
+		  catch(pxar::DataNoEvent &) {}
 			if (daqdat.size() > 550000) sdata << (daqdat.size() / 524288) << "MB";
 			else sdata << (daqdat.size() / 512) << "kB";
 			LOG(logINFO) << "PixTestPattern:: " << daqdat.size() << " words of data read : " << sdata.str();
@@ -456,7 +459,8 @@ void PixTestPattern::PrintEvents(int par1, int par2, string flag, std::vector<TH
 
 		else
 		{
-			daqEvBuffer = fApi->daqGetEventBuffer();
+		  try { daqEvBuffer = fApi->daqGetEventBuffer(); }
+		  catch(pxar::DataNoEvent &) {}
 			daqEvBuffsiz = daqEvBuffer.size();
 			LOG(logINFO) << "PixTestPattern:: " << daqEvBuffsiz << " events read";
 
@@ -667,27 +671,16 @@ void PixTestPattern::doTest()
 	//::::::::::::::::::::::::::::::::
 
 	//first send only a RES:
-	fPg_setup.push_back(make_pair("resetroc", 0));
-	fPeriod = 28;
-
-	// Set the pattern generator:
-	fApi->setPatternGenerator(fPg_setup);
-
-	fApi->daqStart();
-
-	// Send only one trigger to reset:
-	fApi->daqTrigger(1, fPeriod);
+	// FIXME - issuing a ROC reset should not be necessary anymore since
+	// pxarCore automatically resets the ROC when WBC is changed.
+	fApi->daqSingleSignal("resetroc");
 	LOG(logINFO) << "PixTestPattern:: RES sent once ";
-
-	fPg_setup.clear();
-	LOG(logINFO) << "PixTestPattern:: pg_setup clean";
 
 	//select the pattern:
 	if (fPatternFromFile)
 	{
 		LOG(logINFO) << "PixTestPattern:: Set pattern from file: " << fname;
 		if (!setPattern(fname)){   //READ FROM FILE	
-			fApi->daqStop();
 			FinalCleaning();
 			return;
 		}
@@ -700,6 +693,7 @@ void PixTestPattern::doTest()
 	fApi->setPatternGenerator(fPg_setup);
 	fPeriod = 0;
 
+	fApi->daqStart();
 	//send Triggers (loop or single) wrt parameters selection:
 	if (!fParTrigLoop) {
 		//pg_cycles times the pg_Single() == pg_cycles times pattern sequence):

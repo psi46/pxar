@@ -1,4 +1,5 @@
 #include <iostream>
+#include <bitset>
 #include <fstream>
 #include <stdlib.h>     /* atof, atoi */
 
@@ -936,6 +937,33 @@ void PixTest::restoreDacs(bool verbose) {
   fDacCache.clear();
 }
 
+// ----------------------------------------------------------------------
+void PixTest::cacheTBMDacs(bool verbose) {
+  fDacTBMCache.clear();
+  for (size_t itbm=0; itbm<fApi->_dut->getNTbms(); itbm++) {
+    fDacTBMCache.push_back(fApi->_dut->getTbmDACs(itbm));
+    if (verbose) {
+      LOG(logINFO) << "Printing current DAC settings for TBM " << itbm << ":";
+      for (vector<pair<string,uint8_t> >::iterator itbmdac = fDacTBMCache[itbm].begin(); itbmdac != fDacTBMCache[itbm].end(); ++itbmdac) {
+        LOG(logINFO) << "TBM DAC: " << itbmdac->first << " = " << bitset<8>(itbmdac->second).to_string();
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+void PixTest::restoreTBMDacs(bool verbose) {
+  for (size_t itbm=0; itbm<fApi->_dut->getNTbms(); itbm++) {
+    if (verbose) { LOG(logINFO) << "Printing current DAC settings for TBM " << itbm << ":"; }
+    for ( vector<pair<string,uint8_t> >::iterator itbmdac = fDacTBMCache[itbm].begin(); itbmdac != fDacTBMCache[itbm].end(); ++itbmdac) {
+      fApi->setTbmReg(itbmdac->first, itbmdac->second, itbm);
+      if (verbose) {
+        LOG(logINFO) << "TBM DAC: " << itbmdac->first << " = " << bitset<8>(itbmdac->second).to_string();
+      }
+    }
+  }
+  fDacTBMCache.clear();
+}
 
 // ----------------------------------------------------------------------
 TH1* PixTest::moduleMap(string histname) {
@@ -1971,29 +1999,16 @@ void PixTest::finalCleanup() {
 // ----------------------------------------------------------------------
 void PixTest::resetROC() {
   // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resetroc", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  LOG(logINFO) << "IGNORE THE WARNING ABOVE (resetROC sent)!";
-  fApi->daqStop();
-  fPg_setup.clear();
+  // FIXME - issuing a ROC reset should not be necessary anymore since
+  // pxarCore automatically resets the ROC when WBC is changed.
+  fApi->daqSingleSignal("resetroc");
 }
 
 // ----------------------------------------------------------------------
 void PixTest::resetTBM() {
   // -- setup DAQ for data taking
-  fPg_setup.clear();
-  fPg_setup.push_back(make_pair("resettbm", 0)); // PG_RESR b001000
-  uint16_t period = 28;
-  fApi->setPatternGenerator(fPg_setup);
-  fApi->daqStart();
-  fApi->daqTrigger(1, period);
-  LOG(logINFO) << "IGNORE THE WARNING ABOVE  (resetTBM sent)!";
-  fApi->daqStop();
-  fPg_setup.clear();
+  // Issue a TBM reset:
+  fApi->daqSingleSignal("resettbm");
 }
 
 // ----------------------------------------------------------------------
@@ -2065,7 +2080,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
       fApi->daqTriggerLoopHalt();
 
       // fillMap(v):
-      vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+      vector<pxar::Event> daqdat;
+      try { daqdat = fApi->daqGetEventBuffer(); }
+      catch(pxar::DataNoEvent &) {}
       for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
 	for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
 	  v[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
@@ -2087,7 +2104,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   fApi->daqStop();
 
   // fillMap(v):
-  vector<pxar::Event> daqdat = fApi->daqGetEventBuffer();
+  vector<pxar::Event> daqdat;
+  try { daqdat = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       v[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());

@@ -1,0 +1,14 @@
+% !TEX root = pxar-manual.tex
+\renewcommand\newacronym[3]{
+  \newglossaryentry{#1}{
+    type=\acronymtype,
+    name={#1},
+    description={#2#3},
+    text={#1},
+    first={#2 (#1)},
+    plural={#1\glspluralsuffix},
+    firstplural={#2\glspluralsuffix{} (#1\glspluralsuffix)},
+  }
+}
+\newacronym{DTB}{Digital Test Board}{, FPGA-based custom electronics board for CMS Pixel chip and module readout.}
+\newacronym{DUT}{device under test}{}

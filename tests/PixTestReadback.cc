@@ -304,14 +304,17 @@ void PixTestReadback::ProcessData(uint16_t numevents){
   
   if (numevents > 0) {
     for (unsigned int i = 0; i < numevents; i++) {
-      pxar::Event evt = fApi->daqGetEvent();
+      pxar::Event evt;
+      try { evt = fApi->daqGetEvent(); }
+      catch(pxar::DataNoEvent &) {}
       //Check if event is empty?
       if (evt.pixels.size() > 0)
 	daqdat.push_back(evt);
     }
   }
   else
-    daqdat = fApi->daqGetEventBuffer();
+    try { daqdat = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
   
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
   
@@ -1042,22 +1045,10 @@ std::vector<uint8_t> PixTestReadback::daqReadbackIa(){
   //:::Setting register to read back a given quantity::::://
 
   //First send only a RES:
-  fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
-  uint16_t period = 28;
-
-  //Set the pattern generator:
-  fApi->setPatternGenerator(fPg_setup);
-
-  fApi->daqStart();
-
-  //Send only one trigger to reset:
-  fApi->daqTrigger(1, period);
+  // FIXME - issuing a ROC reset should not be necessary anymore since
+  // pxarCore automatically resets the ROC when WBC is changed.
+  fApi->daqSingleSignal("resetroc");
   LOG(logINFO) << "PixTestReadback::RES sent once ";
-
-  fApi->daqStop();
-
-  fPg_setup.clear();
-  LOG(logINFO) << "PixTestReadback::PG_Setup clean";
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
@@ -1277,22 +1268,10 @@ void PixTestReadback::doDAQ(){
   //:::Setting register to read back a given quantity::::://
 
   //First send only a RES:
-  fPg_setup.push_back(make_pair("resetroc", 0));     // PG_RESR b001000 
-  uint16_t period = 28;
-
-  //Set the pattern generator:
-  fApi->setPatternGenerator(fPg_setup);
-
-  fApi->daqStart();
-
-  //Send only one trigger to reset:
-  fApi->daqTrigger(1, period);
+  // FIXME - issuing a ROC reset should not be necessary anymore since
+  // pxarCore automatically resets the ROC when WBC is changed.
+  fApi->daqSingleSignal("resetroc");
   LOG(logINFO) << "PixTestReadback::RES sent once ";
-
-  fApi->daqStop();
-
-  fPg_setup.clear();
-  LOG(logINFO) << "PixTestReadback::PG_Setup clean";
 
   //Set the pattern wrt the trigger frequency:
   LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";

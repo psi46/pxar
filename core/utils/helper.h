@@ -150,16 +150,23 @@ namespace pxar {
     return true;
   }
 
+  /** Helper function to recover the ADC sign of analog data words
+   */
+  static int16_t expandSign(uint16_t x) { return (x & 0x0800) ? static_cast<int16_t>(x) - 4096 : static_cast<int16_t>(x); }
+
   /** Helper function to return a printed list of an integer vector, used to shield
    *  debug code from being executed if debug level is not sufficient
    */
   template <typename T>
-    std::string listVector(std::vector<T> vec, bool hex = false) {
+    std::string listVector(std::vector<T> vec, bool hex = false, bool sign = false) {
     std::stringstream os;
     if(hex) { os << std::hex; }
     for(typename std::vector<T>::iterator it = vec.begin(); it != vec.end(); ++it) {
-      if(hex) os << std::setw(4) << std::setfill('0');
-      os << static_cast<int>(*it) << " ";
+      if(sign) { os << expandSign(*it & 0x0fff) << " "; }
+      else {
+	if(hex) os << std::setw(4) << std::setfill('0');
+	os << static_cast<int>(*it) << " ";
+      }
     }
     if(hex) { os << std::dec; }
     return os.str();
