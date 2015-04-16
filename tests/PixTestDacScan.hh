@@ -18,7 +18,7 @@ public:
 
 private:
 
-  int     fParPHmap, fParNtrig; 
+  int     fParPHmap, fParAllPixels, fParUnmasked, fParNtrig; 
   std::string fParDAC; 
   int     fParLoDAC, fParHiDAC;
 
