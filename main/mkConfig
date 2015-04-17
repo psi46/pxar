@@ -568,9 +568,9 @@ xPixelAlive         button
 Ntrig               50
 Vcal                200
 xNoiseMaps          button
-DacLo               20
-DacHi               50
-Dacs/Step           -1
+DacLo               0
+DacHi               100
+Dacs/Step           20
 runDaq              button
 trgfrequency(khz)   20
 runseconds          2
