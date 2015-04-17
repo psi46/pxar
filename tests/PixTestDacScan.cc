@@ -187,7 +187,7 @@ void PixTestDacScan::doTest() {
   LOG(logINFO) << "PixTestDacScan: " << fParDAC << "[" << fParLoDAC << ", " << fParHiDAC << "]"
 	       << (fParPHmap?" average PH":" readouts")
 	       << ", ntrig = " << fParNtrig 
-	       << (fParAllPixels>0? ", running on all pixels": Form("npixels = %d", fPIX.size())); 
+	       << (fParAllPixels>0? ", running on all pixels": Form("npixels = %ld", fPIX.size())); 
 
   vector<pair<uint8_t, vector<pixel> > > rresults, results;
   int problems(0); 
@@ -277,10 +277,6 @@ void PixTestDacScan::doTest() {
       hname = Form("%s_%s_c%d_r%d_C%d", name.c_str(), fParDAC.c_str(), vpix[ipix].column(), vpix[ipix].row(), vpix[ipix].roc());
       h = hmap[hname];
       if (h) {
-	cout  << "roc = " << static_cast<int>(vpix[ipix].roc()) 
-	      << " pixel c/r = " << static_cast<int>(vpix[ipix].column()) << "/" << static_cast<int>(vpix[ipix].row()) 
-	      << " value = " << static_cast<float>(vpix[ipix].value())
-	      << endl;
 	if (vpix[ipix].value() > 0) {
 	  h->Fill(idac, static_cast<float>(vpix[ipix].value())); 
 	} else {
