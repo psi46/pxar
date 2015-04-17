@@ -23,6 +23,7 @@ ClassImp(PixTestHighRate)
 PixTestHighRate::PixTestHighRate(PixSetup *a, std::string name) : PixTest(a, name),
   fParTriggerFrequency(0), fParRunSeconds(0), fParTriggerDelay(20),
   fParFillTree(false), fParDelayTBM(false), fParNtrig(5), fParVcal(200), 
+  fParDacLo(0), fParDacHi(100), fParDacsPerStep(20),
   fParMaskFileName("default"), fParSaveMaskedPixels(0)   {
   PixTest::init();
   init();
@@ -94,6 +95,18 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	fParVcal = atoi(sval.c_str());
 	setToolTips();
       }
+      if (!parName.compare("daclo")) {
+	fParDacLo = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("dachi")) {
+	fParDacHi = atoi(sval.c_str()); 
+	setToolTips();
+      }
+      if (!parName.compare("dacs/step")) {
+	fParDacsPerStep = atoi(sval.c_str()); 
+	setToolTips();
+      }
       if (!parName.compare("pix") || !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if (string::npos != s1) {
@@ -140,6 +153,11 @@ void PixTestHighRate::runCommand(std::string command) {
 
   if (!command.compare("xpixelalive")) {
     doXPixelAlive();
+    return;
+  }
+
+  if (!command.compare("xnoisemaps")) {
+    doXNoiseMaps();
     return;
   }
 
@@ -212,6 +230,7 @@ void PixTestHighRate::doTest() {
   doRunMaskHotPixels();
   doCalDelScan();
   doXPixelAlive();
+  doXNoiseMaps();
   doRunDaq();
   LOG(logINFO) << "PixTestHighRate::doTest() done ";
 }
@@ -343,9 +362,11 @@ void PixTestHighRate::doCalDelScan() {
     }
     
     
-    pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), 
-							       ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-    vector<TH2D*> test2 = tests.first;
+//     pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), 
+// 							       ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+
+    vector<TH2D*>  test2 = efficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+
     for (unsigned int iroc = 0; iroc < test2.size(); ++iroc) {
       fHistOptions.insert(make_pair(test2[iroc], "colz"));
       h1 = bookTH1D(Form("HR_CalDelScan_step%d_C%d", istep, getIdFromIdx(iroc)),  
@@ -365,12 +386,10 @@ void PixTestHighRate::doCalDelScan() {
       }
     }
 
-    for (unsigned int i = 0; i < tests.first.size(); ++i) {
-      delete tests.first[i]; 
-      delete tests.second[i]; 
+    for (unsigned int i = 0; i < test2.size(); ++i) {
+      delete test2[i]; 
     }
-    tests.first.clear();
-    tests.second.clear();
+    test2.clear();
   }
 
   restoreDacs();
@@ -453,11 +472,11 @@ void PixTestHighRate::doXPixelAlive() {
 
   fApi->setPatternGenerator(fPg_setup);
 
-
-
-  pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("highRate", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-  vector<TH2D*> test2 = tests.first;
-  vector<TH2D*> test3 = tests.second;
+  //  pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps("highRate", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+  //   vector<TH2D*> test2 = tests.first;
+  //   vector<TH2D*> test3 = tests.second;
+  vector<TH2D*> test2 = efficiencyMaps("highRate", fParNtrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+  vector<TH2D*> test3 = getXrayMaps();
   vector<int> deadPixel(test2.size(), 0);
   vector<int> probPixel(test2.size(), 0);
   vector<int> xHits(test3.size(),0);
@@ -543,6 +562,144 @@ void PixTestHighRate::doXPixelAlive() {
 
   finalCleanup();
 }
+
+
+// ----------------------------------------------------------------------
+void PixTestHighRate::doXNoiseMaps() {
+
+  banner(Form("PixTestHighRate::xNoiseMaps() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
+  cacheDacs();
+
+  // -- cache triggerdelay
+  vector<pair<string, uint8_t> > oldDelays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  bool foundIt(false);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    if (oldDelays[i].first == "triggerdelay") {
+      foundIt = true;
+    }
+    LOG(logDEBUG) << " old set: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
+
+  vector<pair<string, uint8_t> > delays = fPixSetup->getConfigParameters()->getTbSigDelays();
+  if (!foundIt) {
+    delays.push_back(make_pair("triggerdelay", fParTriggerDelay));
+    oldDelays.push_back(make_pair("triggerdelay", 0));
+  } else {
+    for (unsigned int i = 0; i < delays.size(); ++i) {
+      if (delays[i].first == "triggerdelay") {
+	delays[i].second = fParTriggerDelay;
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < delays.size(); ++i) {
+    LOG(logDEBUG) << " setting: " << delays[i].first << ": " << (int)delays[i].second;
+  }
+  fApi->setTestboardDelays(delays);
+
+
+  fDirectory->cd();
+  PixTest::update();
+
+  fApi->setDAC("vcal", fParVcal);
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
+    vector<pair<int, int> > hot = fHotPixels[i];
+    for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second;
+      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i));
+    }
+  }
+  maskPixels();
+
+  // -- pattern generator setup without resets
+  resetROC();
+  fPg_setup.clear();
+  vector<pair<string, uint8_t> > pgtmp = fPixSetup->getConfigParameters()->getTbPgSettings();
+  for (unsigned i = 0; i < pgtmp.size(); ++i) {
+    if (string::npos != pgtmp[i].first.find("resetroc")) continue;
+    if (string::npos != pgtmp[i].first.find("resettbm")) continue;
+    fPg_setup.push_back(pgtmp[i]);
+  }
+  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
+
+  fApi->setPatternGenerator(fPg_setup);
+
+  int results(0xf); 
+  int FLAG = FLAG_FORCE_UNMASKED | FLAG_CHECK_ORDER;
+  vector<TH1*> test2 = scurveMaps("vcal", "xNoiseMap", fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, results, 1, FLAG); 
+  vector<TH2D*> test3 = getXrayMaps();
+  copy(test3.begin(), test3.end(), back_inserter(fHistList));
+
+  TH2D *h = (TH2D*)(fHistList.back());
+  h->Draw(getHistOption(h).c_str());
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+  PixTest::update();
+
+  // -- reset sig delays
+  fApi->setTestboardDelays(oldDelays);
+  for (unsigned int i = 0; i < oldDelays.size(); ++i) {
+    LOG(logDEBUG) << " resetting: " << oldDelays[i].first << ": " << (int)oldDelays[i].second;
+  }
+  finalCleanup();
+
+  if (test2.size() < 1) {
+    LOG(logERROR) << "no scurve result histograms received?!"; 
+    return;
+
+  }
+
+  vector<int> xHits(test3.size(),0);
+  string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
+  for (unsigned int i = 0; i < test2.size(); ++i) {
+    if (!test2[i]) continue;
+    hname = test2[i]->GetName();
+
+    // -- skip sig_ and thn_ histograms
+    if (string::npos == hname.find("dist_thr_")) continue;
+    scurvesMeanString += Form("%6.2f ", test2[i]->GetMean()); 
+    scurvesRmsString += Form("%6.2f ", test2[i]->GetRMS()); 
+
+  }
+
+  for (unsigned int i = 0; i < test3.size(); ++i) {
+    for (int ix = 0; ix < test3[i]->GetNbinsX(); ++ix) {
+      for (int iy = 0; iy < test3[i]->GetNbinsY(); ++iy) {
+	// -- Count X-ray hits detected
+	if (test3[i]->GetBinContent(ix+1,iy+1)>0){
+	  xHits[i] += static_cast<int> (test3[i]->GetBinContent(ix+1,iy+1));
+	}
+      }
+    }
+  }
+
+
+
+  // -- summary printout
+  //  int nrocs = fApi->_dut->getNEnabledRocs();
+  double sensorArea = 0.015 * 0.010 * 54 * 81; // in cm^2, accounting for larger edge pixels (J. Hoss 2014/10/21)
+  string xHitsString, numTrigsString, xRayRateString;
+  for (unsigned int i = 0; i < test3.size(); ++i) {
+    int numTrigs = fParNtrig * 4160;
+    xHitsString     += Form(" %4d", xHits[i]);
+    numTrigsString += Form(" %4d", numTrigs );
+    xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./sensorArea*1000.);
+  }
+
+  LOG(logINFO) << "vcal mean: " << scurvesMeanString; 
+  LOG(logINFO) << "vcal RMS:  " << scurvesRmsString; 
+  LOG(logINFO) << "number of X-ray hits detected:   " << xHitsString;
+  LOG(logINFO) << "number of triggers sent (total per ROC): " << numTrigsString;
+  LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
+  LOG(logINFO) << "PixTestHighRate::doXNoiseMaps() done";
+
+
+
+
+}
+
 
 
 // ----------------------------------------------------------------------
