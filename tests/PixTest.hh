@@ -120,6 +120,7 @@ public:
   std::vector<TH2D*> phMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
   /// returns TH2D's with hit maps
   std::vector<TH2D*> efficiencyMaps(std::string name, uint16_t ntrig = 10, uint16_t FLAGS = FLAG_FORCE_MASKED); 
+
   /// returns (mostly) TH2D's with maps of thresholds (plus additional histograms if "result" is set so)
   /// dacsperstep: if positive determines the maximum range of DACs to be looped over by pxarCore
   /// ihit controls whether a hitmap (ihit == 1) or PH map (ihit == 2) is returned
@@ -144,16 +145,17 @@ public:
   /// list.
   std::vector<std::pair<int,int> > checkHotPixels(TH2D* h);
 
-  /// Return pixelAlive map and additional hit map when running with external source
-  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
-								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
-  std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xNoiseMaps(std::string name, uint16_t ntrig, 
-							       int daclo = 0, int dachi = 255, int dacsperstep = -1, 
-							       int result = 15, uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+//   /// Return pixelAlive map and additional hit map when running with external source
+//   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
+// 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
-  void xDacScan(std::string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int flag);
+//   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xNoiseMaps(std::string name, uint16_t ntrig, 
+// 							       int daclo = 0, int dachi = 255, int dacsperstep = -1, 
+// 							       int result = 15, uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
+  /// provide access to noiseMaps when (FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED) was set
+  std::vector<TH2D*> getXrayMaps() {return fXrayMaps;}
   
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
@@ -333,6 +335,8 @@ protected:
 
   bool                  fProblem;
   
+
+  std::vector<TH2D*>    fXrayMaps; 
 
   // -- data members for DAQ purposes
   std::vector<std::pair<std::string, uint8_t> > fPg_setup;
