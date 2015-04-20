@@ -444,6 +444,8 @@ addressDecodingTest button
 
 -- DacScan
 PHmap               checkbox(1)
+AllPixels           checkbox(0)
+Unmasked            checkbox(0)
 Ntrig               10
 DAC                 vcal
 DACLO               0

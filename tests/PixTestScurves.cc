@@ -168,14 +168,14 @@ void PixTestScurves::fullTest() {
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
   fParDacHi = 119;
-  fParDacsPerStep = 40;   
+  fParDacsPerStep = 10;   
   scurves();
 
   fParNtrig = 50; 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
   fParDacHi = 149;
-  fParDacsPerStep = 30;   
+  fParDacsPerStep = 10;   
   scurves();
 
   int seconds = t.RealTime(); 
