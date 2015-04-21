@@ -344,18 +344,18 @@ namespace pxar {
 
 	if(roc_n < 0 || 
 	   // Ultrablack level:
-	   ((ultrablack-levelS < expandSign((*sample)[pos]) && ultrablack+levelS > expandSign((*sample)[pos]))
+	   ((ultrablack-levelS < expandSign((*sample)[pos] & 0x0fff) && ultrablack+levelS > expandSign((*sample)[pos] & 0x0fff))
 	   // Black level:
-	    && (black-levelS < expandSign((*sample)[pos+1]) && black+levelS > expandSign((*sample)[pos+1])))) {
+	    && (black-levelS < expandSign((*sample)[pos+1] & 0x0fff) && black+levelS > expandSign((*sample)[pos+1] & 0x0fff)))) {
 
 	  roc_n++;
 	  // Save the lastDAC value:
-	  evalLastDAC(roc_n, (*sample)[pos+2]);
-	  roc_Event.header = (*sample)[pos+2];
+	  evalLastDAC(roc_n, (*sample)[pos+2] & 0x0fff);
+	  roc_Event.header = (*sample)[pos+2] & 0x0fff;
 
 	  // Iterate to improve ultrablack and black measurement:
-	  AverageAnalogLevel(ultrablack, (*sample)[pos]);
-	  AverageAnalogLevel(black, (*sample)[pos+1]);
+	  AverageAnalogLevel(ultrablack, (*sample)[pos] & 0x0fff);
+	  AverageAnalogLevel(black, (*sample)[pos+1] & 0x0fff);
 
 	  LOG(logDEBUGPIPES) << "ROC Header: "
 			     << expandSign((*sample)[pos] & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
@@ -369,12 +369,12 @@ namespace pxar {
 	  if(pos > n-6) break;
 
 	  std::vector<uint16_t> data;
-	  data.push_back((*sample)[pos]);
-	  data.push_back((*sample)[pos+1]);
-	  data.push_back((*sample)[pos+2]);
-	  data.push_back((*sample)[pos+3]);
-	  data.push_back((*sample)[pos+4]);
-	  data.push_back((*sample)[pos+5]);
+	  data.push_back((*sample)[pos] & 0x0fff);
+	  data.push_back((*sample)[pos+1] & 0x0fff);
+	  data.push_back((*sample)[pos+2] & 0x0fff);
+	  data.push_back((*sample)[pos+3] & 0x0fff);
+	  data.push_back((*sample)[pos+4] & 0x0fff);
+	  data.push_back((*sample)[pos+5] & 0x0fff);
  
 	  try{
 	    LOG(logDEBUGPIPES) << "Trying to decode pixel: " << listVector(data,false,true);
