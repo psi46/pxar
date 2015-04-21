@@ -4,6 +4,7 @@
 #include "rpc_calls.h"
 #include "api.h"
 #include "datapipe.h"
+#include "datasource_dtb.h"
 #include "constants.h"
 
 namespace pxar {

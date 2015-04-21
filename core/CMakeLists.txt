@@ -27,6 +27,7 @@ ELSE(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
     # HAL
     "hal/hal.cc"
     "hal/datapipe.cc"
+    "hal/datasource_dtb.cc"
     )
 ENDIF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
 
