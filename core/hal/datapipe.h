@@ -127,6 +127,20 @@ namespace pxar {
     nextStartDetected(false) {}
   };
 
+  // This "splitter" does nothing than passing through all input data as one raw event
+  // this can be used for data which is already split into events
+  class passthroughSplitter : public dataPipe<uint16_t, rawEvent*> {
+    rawEvent record;
+    rawEvent* Read();
+    rawEvent* ReadLast() { return &record; }
+    uint8_t ReadChannel() { return GetChannel(); }
+    uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
+    uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
+    uint8_t ReadDeviceType() { return GetDeviceType(); }
+  public:
+    passthroughSplitter() {}
+  };
+
   // DTB data decoding class
   class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
     Event roc_Event;

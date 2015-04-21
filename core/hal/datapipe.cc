@@ -115,6 +115,17 @@ namespace pxar {
    return &record;
   }
 
+  rawEvent* passthroughSplitter::Read() {
+    record.Clear();
+    try {
+      do {
+	record.Add(Get());
+      } while(1);
+    }
+    catch(dsBufferEmpty) {}
+    return &record;
+  }
+
   void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
     // Check last bit of identifier nibble to be zero:
     if((v & 0x1000) == 0x0000) { return; }
