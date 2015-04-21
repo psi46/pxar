@@ -64,9 +64,8 @@ namespace pxar {
     }
     void AddData(std::vector<uint16_t> data) {
       buffer.insert(buffer.end(), data.begin(), data.end());
-      LOG(logDEBUGPIPES) << buffer.size() << " words buffered.";
       LOG(logDEBUGPIPES) << "-------------------------";
-      LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
+      LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB (" << buffer.size() << " words buffered):";
       LOG(logDEBUGPIPES) << listVector(buffer,true);
       LOG(logDEBUGPIPES) << "-------------------------";
     }
