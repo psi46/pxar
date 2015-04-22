@@ -69,7 +69,6 @@ class PxarConfigFile:
                         parts = [parts[0],' '.join(parts[1:])]
                         if len(parts) == 2:
                             self.config[parts[0].lower()] = parts[1]
-                            print parts[0].lower(), parts[1]
 
         finally:
             thisf.close()
@@ -152,6 +151,7 @@ def PxarStartup(directory, verbosity):
         if config_nrocs[1].startswith('i2c'):
             i2cs = ' '.join(config_nrocs[2:])
             i2cs = [int(i) for i in i2cs.split(',')]
+            print "Number of ROCs:", nrocs, "\b; Configured I2C's:", i2cs
     for roc in xrange(nrocs):
         if len(i2cs)> roc:
             i2c = i2cs[roc]
