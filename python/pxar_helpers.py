@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """
 Helper classes and functions useful when interfacing the pxar API with Python.
 """
@@ -66,7 +67,6 @@ class PxarConfigFile:
                         self.config[parts[0].lower()] = parts[1]
                     elif len(parts) == 4:
                         parts = [parts[0],' '.join(parts[1:])]
-                        print parts
                         if len(parts) == 2:
                             self.config[parts[0].lower()] = parts[1]
                             print parts[0].lower(), parts[1]
@@ -145,15 +145,13 @@ def PxarStartup(directory, verbosity):
     rocDacs = []
     rocPixels = list()
     rocI2C = []
-    config_nrocs = config.get("nrocs")
-    config_nrocs  = config_nrocs.split()
+    config_nrocs = config.get("nrocs").split()
     nrocs = int(config_nrocs[0])
     i2cs = [i for i in range(nrocs)]
     if len(config_nrocs) > 1:
         if config_nrocs[1].startswith('i2c'):
             i2cs = ' '.join(config_nrocs[2:])
             i2cs = [int(i) for i in i2cs.split(',')]
-            print "configure i2cs: ", i2cs
     for roc in xrange(nrocs):
         if len(i2cs)> roc:
             i2c = i2cs[roc]
@@ -177,15 +175,15 @@ def PxarStartup(directory, verbosity):
     else:
         pg_setup = (
             ("PG_RESR",15),
-            ("PG_CAL",106),
+            ("PG_CAL",pgcal),
             ("PG_TRG",0))
 
        # Start an API instance from the core pxar library
     api = PyPxarCore(usbId=config.get("testboardName"),logLevel=verbosity)
     print api.getVersion()
     if not api.initTestboard(pg_setup = pg_setup,
-                             power_settings = power_settings,
-                             sig_delays = tbparameters.getAll()):
+    power_settings = power_settings,
+    sig_delays = tbparameters.getAll()):
         print "WARNING: could not init DTB -- possible firmware mismatch."
         print "Please check if a new FW version is available"
         exit
