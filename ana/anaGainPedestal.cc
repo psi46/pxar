@@ -81,7 +81,7 @@ void anaGainPedestal::test(double y0, double y1) {
 
   if (1) {
     cout << "fitting " <<  h->GetName() << " with pol2 function" << endl;
-    TFitResultPtr fr = h->Fit("pol2", "sr", "", 0., 700.);
+    TFitResultPtr fr = h->Fit("pol2", "srf", "", 0., 350.);
     fr->PrintCovMatrix(cout);
     c0->SaveAs("pol2.pdf");
   }
