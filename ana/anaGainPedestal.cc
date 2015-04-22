@@ -9,6 +9,7 @@
 #include <TKey.h>
 #include <TSystem.h>
 #include <TStyle.h>
+#include <TFitResult.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
@@ -67,14 +68,24 @@ void anaGainPedestal::test(double y0, double y1) {
   if (1) {
     TF1 *f = pif.gpErr(h);
     cout << "fitting " <<  h->GetName() << " with error function" << endl;
-    h->Fit(f, "");
+    TFitResultPtr fr = h->Fit(f, "s");
+    fr->PrintCovMatrix(cout);
+    c0->SaveAs("errf.pdf");
   }
 
   if (0) {
     TF1 *f = pif.weibullCdf(h);
     cout << "fitting " <<  h->GetName() << " with weibull cdf" << endl;
-    h->Fit(f, "");
+    //    TFitResult *fr = h->Fit(f, "");
   }
+
+  if (1) {
+    cout << "fitting " <<  h->GetName() << " with pol2 function" << endl;
+    TFitResultPtr fr = h->Fit("pol2", "sr", "", 0., 700.);
+    fr->PrintCovMatrix(cout);
+    c0->SaveAs("pol2.pdf");
+  }
+
 
 
 }
