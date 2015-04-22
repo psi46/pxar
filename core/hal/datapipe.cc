@@ -382,7 +382,7 @@ namespace pxar {
 	    roc_Event.pixels.push_back(pix);
 	    decodingStats.m_info_pixels_valid++;
 	  }
-	  catch(DataInvalidAddressError /*&e*/){
+	  catch(DataDecodingError /*&e*/){
 	    // decoding of raw address lead to invalid address
 	    decodingStats.m_errors_pixel_address++;
 	  }
