@@ -988,10 +988,11 @@ class PxarCoreCmd(cmd.Cmd):
 
         self.api.daqStop()
 
-        self.window = PxarGui( ROOT.gClient.GetRoot(), 1000, 800 )
-        plot = Plotter.create_tgraph(wbcScan, "wbc scan", "wbc", "evt/trig [%]", minWBC)
-        self.window.histos.append(plot)
-        self.window.update()
+        if(self.window):
+            self.window = PxarGui( ROOT.gClient.GetRoot(), 1000, 800 )
+            plot = Plotter.create_tgraph(wbcScan, "wbc scan", "wbc", "evt/trig [%]", minWBC)
+            self.window.histos.append(plot)
+            self.window.update()
 
     def complete_wbcScan(self, text, line, start_index, end_index):
         # return help for the cmd
