@@ -654,7 +654,7 @@ void PixTestReadback::CalibrateVd(){
 
   //dry run to avoid spikes
   while(readback.size()<1){
-    readback=daqReadback("vd", 2.1, fParReadback);
+    readback=daqReadback("vd", 2.7, fParReadback);
   }
   //book histos
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
@@ -669,9 +669,9 @@ void PixTestReadback::CalibrateVd(){
   }
   readback.clear();
 
-  for(int iVd=0; iVd<18; iVd++){
+  for(int iVd=0; iVd<13; iVd++){
     LOG(logDEBUG)<<"/****:::::: CALIBRATE VD :::::****/";
-    Vd = 2.1 + iVd*0.05;
+    Vd = 2.7 + iVd*0.025;
     LOG(logDEBUG)<<"Digital voltage will be set to: "<<Vd;
     do{
       readback=daqReadback("vd", Vd, fParReadback);
@@ -817,7 +817,7 @@ void PixTestReadback::CalibrateVa(){
   
   //dry run to avoid spikes
   while(readback.size()<1){
-    readback=daqReadback("va", 1.5, fParReadback);
+    readback=daqReadback("va", 1.8, fParReadback);
   }
   //book histos
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
@@ -832,9 +832,9 @@ void PixTestReadback::CalibrateVa(){
   }
   readback.clear();
 
-  for(int iVa=0; iVa<18; iVa++){
+  for(int iVa=0; iVa<13; iVa++){
     LOG(logDEBUG)<<"/****:::::: CALIBRATE VA FUNCTION :::::****/";
-    Va = 1.5 + iVa*0.05;
+    Va = 1.8 + iVa*0.025;
     LOG(logDEBUG)<<"Analog voltage will be set to: "<<Va;
     do{readback=daqReadback("va", Va, fParReadback);
     }  while(readback.size()<1);
