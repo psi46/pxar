@@ -403,31 +403,44 @@ void PixTestReadback::CalibrateIa(){
   cacheDacs();
   //readback DAC set to 12 (i.e. Ia)
   fParReadback=12;
+  int npoints = 12;
+  int pace = 20;
+
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
   vector<uint8_t> readback;
+  vector<uint8_t> readback_allRocs;
+  for(int i=0; i<16; i++){
+    readback_allRocs.push_back(0);
+  }
 
   string name, title;
   TH1D* hrb(0);
   vector<TH1D*> hs_rbIa, hs_tbIa;
   double tbIa = 0.;
   map<uint8_t, vector<uint8_t > > rbIa;
+  uint8_t vana=0;
+  for(int ivana=0; ivana<npoints; ivana++){
+    vana = (uint8_t)ivana*pace;
+    rbIa.insert(make_pair(vana, readback_allRocs));   
+  }
   int count=0;
   while(readback.size()<1){
     readback=daqReadback("vana", (uint8_t)80, fParReadback);  
     LOG(logDEBUG)<<"CalibrateIa: daqReadback attempt #"<<count++;
   }
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    name = Form("rbIa_C%d", iroc);
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    name = Form("rbIa_C%d", getIdFromIdx(iroc));
     title=name;
     hrb = bookTH1D(name, title, 256, 0., 256);
     hs_rbIa.push_back(hrb);
-    name = Form("tbIa_C%d", iroc);
+    name = Form("tbIa_C%d", getIdFromIdx(iroc));
     title=name;
     hrb = bookTH1D(name, title, 256, 0., 256);
     hs_tbIa.push_back(hrb);
   }
 
-  uint8_t vana=0;
+  vana=0;
   //measuring average current offset from other ROCs
   //  vector<uint8_t> readback_offset;
   double ioff16=0.;
@@ -437,38 +450,52 @@ void PixTestReadback::CalibrateIa(){
   do {
     sw.Start(kFALSE); // continue
     ioff16 = fApi->getTBia()*1E3; // [mA]
-  } while (sw.RealTime() < 0.2);
+  } while (sw.RealTime() < 0.5);
   //  ioff16 = fApi->getTBia()*1E3;
   LOG(logDEBUG)<<"I offset on 16 ROCs is "<<ioff16;
   double avIoff=0;
   avIoff = ioff16*(readback.size()-1)/(readback.size());
   LOG(logDEBUG)<<"Average current offset is "<<avIoff<<", readbacksize "<<(int)readback.size();
 
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){ 
-    LOG(logDEBUG)<<"Vana scan for ROC "<<iroc;
-    fApi->setDAC("vana", 0);
-    for(int ivana=0; ivana<11; ivana++){
+
+
+  for(int ivana=0; ivana<npoints; ivana++){
+    vana = (uint8_t)ivana*pace;
+    for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+      LOG(logDEBUG)<<"Vana scan for ROC "<<getIdFromIdx(iroc);
+      fApi->setDAC("vana", 0);
+//      sw.Start(kTRUE); // reset
+//      do {
+//	sw.Start(kFALSE); // continue
+	tbIa = fApi->getTBia()*1E3; // [mA]
+	//	LOG(logDEBUG)<<"CalibrateIa: daqReadback attempt #"<<count++<<", iana"<<tbIa<<", vana "<<(int)vana;
+	//      } while (sw.RealTime() < 0.3);
+      LOG(logDEBUG)<<"Iana is (vana should be 0) "<<tbIa;
       count=0;
-      vana = (uint8_t)ivana*25;
       do{
-	readback=daqReadback("vana", vana, iroc, fParReadback);
-	LOG(logDEBUG)<<"CalibrateIa: daqReadback attempt #"<<count++<<", ROC "<<iroc<<", vana "<<(int)vana;
+	readback=daqReadback("vana", vana, getIdFromIdx(iroc), fParReadback);
+	LOG(logDEBUG)<<"CalibrateIa: daqReadback attempt #"<<count++<<", ROC "<<iroc<<", vana "<<(int)vana<<", readback "<<(int)readback[getIdFromIdx(iroc)];
       }  while(readback.size()<1);
-      rbIa.insert(make_pair(vana, readback));   
-      fApi->setDAC("vana", vana, iroc);
+      //      rbIa.insert(make_pair(vana, readback));   
+      rbIa[vana][getIdFromIdx(iroc)]=readback[getIdFromIdx(iroc)];
+      //readback_allRocs[iroc]=readback[iroc];
+      fApi->setDAC("vana", vana, getIdFromIdx(iroc));
       sw.Start(kTRUE); // reset
+      count=0;
       do {
 	sw.Start(kFALSE); // continue
 	tbIa = fApi->getTBia()*1E3; // [mA]
-      } while (sw.RealTime() < 0.2);
+	//	LOG(logDEBUG)<<"CalibrateIa: daqReadback attempt #"<<count++<<", iana"<<tbIa<<", vana "<<(int)vana;
+      } while (sw.RealTime() < 0.3);
       //      tbIa = fApi->getTBia()*1E3;
-      hs_rbIa[iroc]->Fill(vana, readback[iroc]);//should this be corrected as well?
+      hs_rbIa[iroc]->Fill(vana, readback[getIdFromIdx(iroc)]);//should this be corrected as well?
       hs_tbIa[iroc]->Fill(vana, tbIa-avIoff);//tbIa corrected for offset
-      LOG(logDEBUG)<<"vana "<<(int)vana<<", rbIa "<<(int)readback[iroc]<<", tbIa "<<(int)(tbIa-avIoff);
+      LOG(logDEBUG)<<"vana "<<(int)vana<<", rbIa "<<(int)readback[getIdFromIdx(iroc)]<<", tbIa "<<(int)(tbIa-avIoff);
     }
+    //   rbIa.insert(make_pair(vana, readback_allRocs));   
   }
 
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
     hs_rbIa[iroc]->GetXaxis()->SetTitle("Vana [DAC]");
     hs_rbIa[iroc]->GetYaxis()->SetTitle("Ia_rb [ADC]");
     hs_tbIa[iroc]->GetXaxis()->SetTitle("Vana [DAC]");
@@ -480,10 +507,10 @@ void PixTestReadback::CalibrateIa(){
   vector<double> tb_vanaMax(readback.size(), 0.);
    
   //protection to exclude plateu from fit
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    rb_vanaMax[iroc] = hs_rbIa[iroc]->GetBinCenter(hs_rbIa[iroc]->FindFirstBinAbove(254));
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    rb_vanaMax[getIdFromIdx(iroc)] = hs_rbIa[iroc]->GetBinCenter(hs_rbIa[iroc]->FindFirstBinAbove(254));
 
-    LOG(logDEBUG)<<"Vana max for fit:"<<endl<<"rb: "<<rb_vanaMax[iroc]<<endl<<"tb :"<<tb_vanaMax[iroc];
+    LOG(logDEBUG)<<"Vana max for fit:"<<endl<<"rb: "<<rb_vanaMax[getIdFromIdx(iroc)]<<endl<<"tb :"<<tb_vanaMax[getIdFromIdx(iroc)];
   }
 
 
@@ -491,73 +518,73 @@ void PixTestReadback::CalibrateIa(){
   TF1* ftb;
   vector<TF1*> v_frb, v_ftb;
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    name = Form("lin_rb_C%d", iroc);
-    frb = new TF1(name.c_str(), "[0] + x*[1]", 0, rb_vanaMax[iroc]);
+    name = Form("lin_rb_C%d", getIdFromIdx(iroc));
+    frb = new TF1(name.c_str(), "[0] + x*[1]", 0, rb_vanaMax[getIdFromIdx(iroc)]);
     v_frb.push_back(frb);
-    name = Form("pol2_ftb_C%d", iroc);
+    name = Form("pol2_ftb_C%d", getIdFromIdx(iroc));
     ftb = new TF1(name.c_str(), "[0] + x*[1] + x*x*[2] ", 0, 255);
     v_ftb.push_back(ftb);
   }
 
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    hs_rbIa[iroc]->Fit(v_frb[iroc], "WS", "", 0., rb_vanaMax[iroc]);
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    hs_rbIa[iroc]->Fit(v_frb[iroc], "WS", "", 0., rb_vanaMax[getIdFromIdx(iroc)]);
     hs_tbIa[iroc]->Fit(v_ftb[iroc], "WS");
 
     //  LOG(logDEBUG)<<"Number of points for rb fit "<<frb->GetNumberFitPoints();
 
-    fPar0RbIaCal[iroc]=v_frb[iroc]->GetParameter(0);
-    fPar1RbIaCal[iroc]=v_frb[iroc]->GetParameter(1);
-    fPar0TbIaCal[iroc]=v_ftb[iroc]->GetParameter(0);
-    fPar1TbIaCal[iroc]=v_ftb[iroc]->GetParameter(1);
-    fPar2TbIaCal[iroc]=v_ftb[iroc]->GetParameter(2);
+    fPar0RbIaCal[getIdFromIdx(iroc)]=v_frb[iroc]->GetParameter(0);
+    fPar1RbIaCal[getIdFromIdx(iroc)]=v_frb[iroc]->GetParameter(1);
+    fPar0TbIaCal[getIdFromIdx(iroc)]=v_ftb[iroc]->GetParameter(0);
+    fPar1TbIaCal[getIdFromIdx(iroc)]=v_ftb[iroc]->GetParameter(1);
+    fPar2TbIaCal[getIdFromIdx(iroc)]=v_ftb[iroc]->GetParameter(2);
   }
 
 
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[getIdFromIdx(iroc)].begin(); ical != fRbCal[getIdFromIdx(iroc)].end(); ical++){
       if(!(ical->first.compare("par0rbia"))){
-	ical->second = fPar0RbIaCal[iroc];
+	ical->second = fPar0RbIaCal[getIdFromIdx(iroc)];
       }
       else if(!(ical->first.compare("par1rbia"))){
-	ical->second = fPar1RbIaCal[iroc];
+	ical->second = fPar1RbIaCal[getIdFromIdx(iroc)];
       }
       else if(!(ical->first.compare("par0tbia"))){
-	ical->second = fPar0TbIaCal[iroc];
+	ical->second = fPar0TbIaCal[getIdFromIdx(iroc)];
       }
       else if(!(ical->first.compare("par1tbia"))){
-	ical->second = fPar1TbIaCal[iroc];
+	ical->second = fPar1TbIaCal[getIdFromIdx(iroc)];
       }
       else if(!(ical->first.compare("par2tbia"))){
-	ical->second = fPar2TbIaCal[iroc];
+	ical->second = fPar2TbIaCal[getIdFromIdx(iroc)];
       }
     }
   }
-
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[getIdFromIdx(iroc)].begin(); ical != fRbCal[getIdFromIdx(iroc)].end(); ical++){
       LOG(logDEBUG)<<"debug: "<<ical->first<<" "<<ical->second;
     }
   }
 
   TH1D* h_rbIaCal (0);
   vector<TH1D*> hs_rbIaCal;
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    name = Form("rbIaCal_C%d", iroc);
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    name = Form("rbIaCal_C%d", getIdFromIdx(iroc));
     title = name;
     h_rbIaCal = bookTH1D(name,title, 256, 0., 256.);
     hs_rbIaCal.push_back(h_rbIaCal);
   }
 
-  for(int ivana=0; ivana<11; ivana++){
-    vana = (uint8_t)ivana*25;
-    for(unsigned int iroc=0; iroc < rbIa[vana].size(); iroc++){
+  for(int ivana=0; ivana<npoints; ivana++){
+    vana = (uint8_t)ivana*pace;
+    for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
       LOG(logDEBUG)<<"step ivana = "<<ivana;
       //    h_rbIaCal->Fill(vana, ((tbpar1/rbpar1)*(rbIa[vana]-rbpar0)+tbpar0));
-      hs_rbIaCal[iroc]->Fill(vana, (rbIa[vana][iroc]*rbIa[vana][iroc]*fPar2TbIaCal[iroc]/fPar1RbIaCal[iroc]/fPar1RbIaCal[iroc] + rbIa[vana][iroc]/fPar1RbIaCal[iroc]/fPar1RbIaCal[iroc]*(fPar1RbIaCal[iroc]*fPar1TbIaCal[iroc]-2*fPar0RbIaCal[iroc]*fPar2TbIaCal[iroc]) + (fPar0RbIaCal[iroc]*fPar0RbIaCal[iroc]*fPar2TbIaCal[iroc] - fPar0RbIaCal[iroc]*fPar1TbIaCal[iroc])/fPar1RbIaCal[iroc] + fPar0TbIaCal[iroc]));
+      LOG(logDEBUG)<<"Vana"<<(int)vana<<" Rbiana "<<(int)rbIa[vana][getIdFromIdx(iroc)]<<" Calibrated ia_rb = "<<(double)(rbIa[vana][getIdFromIdx(iroc)]*rbIa[vana][getIdFromIdx(iroc)]*fPar2TbIaCal[getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)] + rbIa[vana][getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)]*(fPar1RbIaCal[getIdFromIdx(iroc)]*fPar1TbIaCal[getIdFromIdx(iroc)]-2*fPar0RbIaCal[getIdFromIdx(iroc)]*fPar2TbIaCal[getIdFromIdx(iroc)]) + (fPar0RbIaCal[getIdFromIdx(iroc)]*fPar0RbIaCal[getIdFromIdx(iroc)]*fPar2TbIaCal[getIdFromIdx(iroc)] - fPar0RbIaCal[getIdFromIdx(iroc)]*fPar1TbIaCal[getIdFromIdx(iroc)])/fPar1RbIaCal[getIdFromIdx(iroc)] + fPar0TbIaCal[getIdFromIdx(iroc)]);
+      hs_rbIaCal[iroc]->Fill(vana, (rbIa[vana][getIdFromIdx(iroc)]*rbIa[vana][getIdFromIdx(iroc)]*fPar2TbIaCal[getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)] + rbIa[vana][getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)]/fPar1RbIaCal[getIdFromIdx(iroc)]*(fPar1RbIaCal[getIdFromIdx(iroc)]*fPar1TbIaCal[getIdFromIdx(iroc)]-2*fPar0RbIaCal[getIdFromIdx(iroc)]*fPar2TbIaCal[getIdFromIdx(iroc)]) + (fPar0RbIaCal[getIdFromIdx(iroc)]*fPar0RbIaCal[getIdFromIdx(iroc)]*fPar2TbIaCal[getIdFromIdx(iroc)] - fPar0RbIaCal[getIdFromIdx(iroc)]*fPar1TbIaCal[getIdFromIdx(iroc)])/fPar1RbIaCal[getIdFromIdx(iroc)] + fPar0TbIaCal[getIdFromIdx(iroc)]));
     }
   }
 
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
     hs_rbIaCal[iroc]->GetXaxis()->SetTitle("Vana [DAC]");
     hs_rbIaCal[iroc]->GetYaxis()->SetTitle("Ia_rb_cal [mA]");
     hs_rbIaCal[iroc]->SetLineColor(kBlue);
@@ -565,8 +592,8 @@ void PixTestReadback::CalibrateIa(){
     fHistList.push_back(hs_rbIaCal[iroc]);
     fHistList.push_back(hs_tbIa[iroc]);
   }
-  for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-    fPixSetup->getConfigParameters()->writeReadbackFile(iroc, fRbCal[iroc]);    
+  for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
+    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[getIdFromIdx(iroc)]);    
   }
   
   restoreDacs();
