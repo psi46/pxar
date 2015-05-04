@@ -41,6 +41,9 @@ public:
   void setVana();
   void doDAQ();
 
+  void cachePowerSettings();
+  void restorePowerSettings();
+
 private:
 
   void stop();
@@ -84,6 +87,8 @@ private:
   std::vector<TH1D*> fPh;
   std::vector<TH1D*> fQ;
   std::vector<TProfile2D*> fQmap;
+ 
+  std::vector<std::pair<std::string, double> > fPowerSet; 
 
   ClassDef(PixTestReadback, 1)
 
