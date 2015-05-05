@@ -699,6 +699,7 @@ void PixTestReadback::CalibrateVd(){
   vector<TH1D*> hs_rbVd, hs_dacVd;
   vector<double > rbVd;
   double Vd;
+  double Vd_mod;
 
   //dry run to avoid spikes
   while(readback.size()<1){
@@ -727,7 +728,9 @@ void PixTestReadback::CalibrateVd(){
     for(unsigned int iroc=0; iroc < readback.size(); iroc++){
       LOG(logDEBUG)<<"Voltage "<<Vd<<", readback "<<(int)readback[iroc];
     //    rbVd.push_back(readback);
-      hs_rbVd[iroc]->Fill(Vd, readback[iroc]);
+      ///****TO BE DONE: Vd -> Vd - 0.338*Id - 0.1815
+      Vd_mod = Vd - 0.338*fApi->getTBid() - 0.1815;
+      hs_rbVd[iroc]->Fill(Vd_mod, readback[iroc]);
       hs_dacVd[iroc]->Fill(Vd, fApi->getTBvd());
     }
   }
@@ -892,7 +895,8 @@ void PixTestReadback::CalibrateVa(){
     do{readback=daqReadback("va", Va, fParReadback);
     }  while(readback.size()<1);
     for(unsigned int iroc=0; iroc < readback.size(); iroc++){
-      hs_rbVa[iroc]->Fill(Va, readback[iroc]);
+      //      hs_rbVa[iroc]->Fill(Va, readback[iroc]);
+      hs_rbVa[iroc]->Fill(Va - 0.6082*fApi->getTBia() - 0.1815 , readback[iroc]);
       hs_dacVa[iroc]->Fill(Va, fApi->getTBva());
     }
   }
