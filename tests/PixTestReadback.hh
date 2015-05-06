@@ -39,6 +39,8 @@ public:
   std::vector<double> getCalibratedIa();
   double getCalibratedIa(unsigned int roc);
   void setVana();
+  void prepareDAQ();
+  void PreparePG(uint8_t TrgTkDel);
   void doDAQ();
 
   void cachePowerSettings();

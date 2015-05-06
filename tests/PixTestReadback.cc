@@ -232,6 +232,7 @@ bool PixTestReadback::setTrgFrequency(uint8_t TrgTkDel){
   fPg_setup.push_back(make_pair("delay", ClkDelays));
   
   //then send trigger and token:
+  fPg_setup.push_back(make_pair("cal", 106));
   fPg_setup.push_back(make_pair("trg", trgtkdel));
   fPg_setup.push_back(make_pair("tok", 0));
   
@@ -400,6 +401,7 @@ void PixTestReadback::doTest() {
 
 
 void PixTestReadback::CalibrateIa(){
+  fApi->daqStart(); prepareDAQ(); fApi->daqStop();
   cacheDacs();
   //readback DAC set to 12 (i.e. Ia)
   fParReadback=12;
@@ -601,6 +603,7 @@ void PixTestReadback::CalibrateIa(){
 
 std::vector<double> PixTestReadback::getCalibratedIa(){
   //readback DAC set to 12 (i.e. Ia)
+  fApi->daqStart(); prepareDAQ(); fApi->daqStop();
   fParReadback=12;
 
   vector<uint8_t> readback;
@@ -621,6 +624,7 @@ double PixTestReadback::getCalibratedIa(unsigned int iroc){
   //readback DAC set to 12 (i.e. Ia)
   fParReadback=12;
 
+  fApi->daqStart(); prepareDAQ(); fApi->daqStop();
   vector<uint8_t> readback;
   
   while(readback.size()<1){
@@ -686,6 +690,9 @@ void PixTestReadback::CalibrateVana(){
 }
 
 void PixTestReadback::CalibrateVd(){
+  //  fApi->daqStart(); prepareDAQ(); fApi->daqStop();
+  
+  prepareDAQ();
   cacheDacs();
   cachePowerSettings();
 
@@ -704,6 +711,7 @@ void PixTestReadback::CalibrateVd(){
   //dry run to avoid spikes
   while(readback.size()<1){
     readback=daqReadback("vd", 2.7, fParReadback);
+    LOG(logDEBUG)<<"readback size is "<<readback.size();
   }
   //book histos
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
@@ -717,6 +725,7 @@ void PixTestReadback::CalibrateVd(){
     hs_dacVd.push_back(hrb);
   }
   readback.clear();
+
 
   for(int iVd=0; iVd<13; iVd++){
     LOG(logDEBUG)<<"/****:::::: CALIBRATE VD :::::****/";
@@ -784,6 +793,7 @@ void PixTestReadback::CalibrateVd(){
 
 
 void PixTestReadback::readbackVbg(){
+  fApi->daqStart(); prepareDAQ(); fApi->daqStop();
   cacheDacs();
   cachePowerSettings();
   //readback DAC set to 11 (i.e. Vbg)
@@ -857,6 +867,7 @@ vector<double> PixTestReadback::getCalibratedVbg(){
 }
 
 void PixTestReadback::CalibrateVa(){
+  fApi->daqStart(); prepareDAQ(); fApi->daqStop();
   cacheDacs();
   cachePowerSettings();
 
@@ -998,7 +1009,9 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
 
   fApi->setDAC("readback", parReadback);
   
+  //fApi->daqStart();doDAQ();fApi->daqStop();
   doDAQ();
+
 
   std::vector<std::vector<uint16_t> > rb;
   rb = fApi->daqGetReadback();
@@ -1011,8 +1024,8 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   //::::::::::::::::::::::::::::::
   //DAQ - THE END.
 
-  FinalCleaning();
-  fApi->setClockStretch(0, 0, 0); //No Stretch after trigger, 0 delay
+  //  FinalCleaning();
+  // fApi->setClockStretch(0, 0, 0); //No Stretch after trigger, 0 delay
   return rb_val;
  }
 
@@ -1032,7 +1045,7 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, int8
   }
 
   fApi->setDAC("readback", parReadback);
-  doDAQ();
+  fApi->daqStart();doDAQ();fApi->daqStop();
 
   std::vector<std::vector<uint16_t> > rb;
   rb = fApi->daqGetReadback();
@@ -1065,7 +1078,7 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, unsi
   }
 
   fApi->setDAC("readback", parReadback);
-  doDAQ();
+  fApi->daqStart();doDAQ();fApi->daqStop();
 
   std::vector<std::vector<uint16_t> > rb;
   rb = fApi->daqGetReadback();
@@ -1315,54 +1328,121 @@ void PixTestReadback::setVana() {
 }
 
 
-void PixTestReadback::doDAQ(){
-  //Immediately stop if parameters not in range	
-  if (fParOutOfRange) return;
+void PixTestReadback::prepareDAQ(){
+
+  LOG(logDEBUG)<<"preparing DAQ";
 
   //Set the ClockStretch
   fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay
-   
-  //Set the histograms:
-  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
 
-  //To print on shell the number of masked pixels per ROC:
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  LOG(logINFO) << "PixTestReadback::Number of masked pixels:";
-  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-	  LOG(logINFO) << "PixTestReadback::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
-  }  
-  
-  // Start the DAQ:
-  //::::::::::::::::::::::::::::::::
 
-  //:::Setting register to read back a given quantity::::://
-
-  //First send only a RES:
   // FIXME - issuing a ROC reset should not be necessary anymore since
   // pxarCore automatically resets the ROC when WBC is changed.
   fApi->daqSingleSignal("resetroc");
   LOG(logINFO) << "PixTestReadback::RES sent once ";
 
-  //Set the pattern wrt the trigger frequency:
-  LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
-  if (!setTrgFrequency(20)){
-	  FinalCleaning();
-	  return;
-  }
+  PreparePG(20);
 
   //Set pattern generator:
   fApi->setPatternGenerator(fPg_setup);
+ 
+}
 
-  fDaq_loop = true;
+void PixTestReadback::doDAQ(){
+  LOG(logDEBUG)<<"doDAQ";
 
-  //Start the DAQ:
-  fApi->daqStart();
+  //Set the histograms:
+  if(fHistList.size() == 0) setHistos();  //to book histo only for the first 'doTest' (or after Clear).
 
   int  Ntrig=32;
   //Send the triggers:
+  fApi->daqStart(); 
   fApi->daqTrigger(Ntrig, fParPeriod);
+  fApi->daqStop(); 
+  LOG(logDEBUG)<<Ntrig<<" triggers sent";
   gSystem->ProcessEvents();
   ProcessData(0);
  
-  fApi->daqStop(); 
+  
+}
+
+
+
+//void PixTestReadback::doDAQ1(){
+//
+//
+//  //Set the ClockStretch
+//  fApi->setClockStretch(0, 0, fParStretch); //Stretch after trigger, 0 delay
+//   
+//
+//  //To print on shell the number of masked pixels per ROC:
+//  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+//  LOG(logINFO) << "PixTestReadback::Number of masked pixels:";
+//  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+//	  LOG(logINFO) << "PixTestReadback::    ROC " << static_cast<int>(iroc) << ": " << fApi->_dut->getNMaskedPixels(static_cast<int>(iroc));
+//  }  
+//  
+//  // Start the DAQ:
+//  //::::::::::::::::::::::::::::::::
+//
+//  //:::Setting register to read back a given quantity::::://
+//
+//  //First send only a RES:
+//  // FIXME - issuing a ROC reset should not be necessary anymore since
+//  // pxarCore automatically resets the ROC when WBC is changed.
+//  fApi->daqSingleSignal("resetroc");
+//  LOG(logINFO) << "PixTestReadback::RES sent once ";
+//
+//  //Set the pattern wrt the trigger frequency:
+//  LOG(logINFO) << "PG set to have trigger frequency = " << fParTriggerFrequency << " kHz";
+//  if (!setTrgFrequency(20)){
+//    FinalCleaning();
+//    return;
+//  }
+//
+//  //Set pattern generator:
+//  //  fApi->setPatternGenerator(fPg_setup);
+// 
+//  fDaq_loop = true;
+//
+//
+//  int  Ntrig=32;
+//  //Send the triggers:
+//  fApi->daqTrigger(Ntrig, fParPeriod);
+//  gSystem->ProcessEvents();
+//  ProcessData(0);
+// 
+//  // fApi->daqStop(); 
+//}
+
+
+void PixTestReadback::PreparePG(uint8_t TrgTkDel){
+  LOG(logDEBUG)<<"Preparing PG with trgtkdel "<<(int)TrgTkDel;
+  int nDel = 0;
+  uint8_t trgtkdel= TrgTkDel;
+  double period_ns = 1 / (double)fParTriggerFrequency * 1000000; // trigger frequency in kHz.
+  fParPeriod = (uint16_t)period_ns / 25;
+  uint16_t ClkDelays = fParPeriod - trgtkdel;
+  
+//  //add right delay between triggers:
+//  if (fParResetROC) {       //by default not reset (already done before daqstart)
+//    fPg_setup.push_back(make_pair("resetroc", 15));
+//    ClkDelays -= 15;
+//    nDel++;
+//  }
+//  while (ClkDelays>255){
+//    fPg_setup.push_back(make_pair("delay", 255));
+//    ClkDelays = ClkDelays - 255;
+//    nDel ++;
+//  }
+//  fPg_setup.push_back(make_pair("delay", ClkDelays));
+  
+  //then send trigger and token:
+  //  fPg_setup.push_back(make_pair("calibrate", 106));
+  fPg_setup.push_back(make_pair("trg", trgtkdel));
+  fPg_setup.push_back(make_pair("tok", 0));
+  
+  fParPeriod = fParPeriod + 4 + nDel; //to align to the new pg minimum (1 additional clk cycle per PG call);
+  
+
 }
