@@ -425,6 +425,7 @@ namespace pxar {
       m_errors_tbm_eventid_mismatch(0),
       m_errors_roc_missing(0),
       m_errors_roc_readback(0),
+      m_errors_pixel_incomplete(0),
       m_errors_pixel_address(0),
       m_errors_pixel_pulseheight(0),
       m_errors_pixel_buffer_corrupt(0)
@@ -436,7 +437,7 @@ namespace pxar {
     uint32_t info_words_read() {return m_info_words_read; }
     uint32_t info_events_empty() {return m_info_events_empty; }
     uint32_t info_events_valid() {return m_info_events_valid; }
-    uint32_t info_events_total() {return m_info_events_empty + m_info_events_empty; }
+    uint32_t info_events_total() {return (m_info_events_valid + m_info_events_empty); }
     uint32_t info_pixels_valid() {return m_info_pixels_valid; }
 
     uint32_t errors() {
