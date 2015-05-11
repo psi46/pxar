@@ -172,6 +172,10 @@ namespace pxar {
     return os.str();
   }
 
+  /** Helper function to output bool variables as TRUE or FALSE text
+   */
+  inline std::string textBool(bool in) { return (in ? "TRUE" : "FALSE"); }
+
   /** Helper function to return a printed list of flags
    */
   std::string inline listFlags(uint32_t flags) {
