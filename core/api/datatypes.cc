@@ -105,6 +105,7 @@ namespace pxar {
     LOG(logINFO) << "Decoding statistics:";
     LOG(logINFO) << "  General information:";
     LOG(logINFO) << "\t 16bit words read:         " << this->info_words_read();
+    LOG(logINFO) << "\t valid events total:       " << this->info_events_total();
     LOG(logINFO) << "\t empty events:             " << this->info_events_empty();
     LOG(logINFO) << "\t valid events with pixels: " << this->info_events_valid();
     LOG(logINFO) << "\t valid pixel hits:         " << this->info_pixels_valid();

@@ -211,8 +211,14 @@ namespace pxar {
     uint8_t dataValue()    { return (header & 0x003f); };
 
     /** TBM Trailer Information: reports if no token out has been received
+     *  returns true if the token was not passed successfully
      */
     bool hasNoTokenPass() { return ((trailer & 0x8000) != 0); };
+
+    /** TBM Trailer Information: reports if no token out has been received
+     *  returns true if the token out has been rceived correctly
+     */
+    bool hasTokenPass() { return !hasNoTokenPass(); };
 
     /** TBM Trailer Information: reports if a TBM reset has been sent
      */
@@ -422,6 +428,7 @@ namespace pxar {
     uint32_t info_words_read() {return m_info_words_read; }
     uint32_t info_events_empty() {return m_info_events_empty; }
     uint32_t info_events_valid() {return m_info_events_valid; }
+    uint32_t info_events_total() {return m_info_events_empty + m_info_events_empty; }
     uint32_t info_pixels_valid() {return m_info_pixels_valid; }
 
     uint32_t errors() {
