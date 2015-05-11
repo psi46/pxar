@@ -264,9 +264,17 @@ namespace pxar {
      */
     uint16_t header;
 
+    /** Helper function to print the TBM Header
+     */
+    void printHeader();
+
     /** TBM Trailer
      */
     uint16_t trailer;
+
+    /** Helper function to print the TBM Trailer
+     */
+    void printTrailer();
 
     /** Vector of successfully decoded pxar::pixel objects
      */

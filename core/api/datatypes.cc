@@ -100,6 +100,28 @@ namespace pxar {
     return (raw & 0x00ffffff);
   }
 
+  void Event::printHeader() {
+    LOG(logDEBUGPIPES) << " Evt ID " << static_cast<int>(this->triggerCount());
+    LOG(logDEBUGPIPES) << "\t Data ID " << static_cast<int>(this->dataID()) 
+		       << " Value " << static_cast<int>(this->dataValue());
+  }
+
+  void Event::printTrailer() {
+    LOG(logDEBUGPIPES) << "Trailer content: " << std::hex << trailer << std::dec;
+    LOG(logDEBUGPIPES) << "\t Token Pass " << textBool(this->hasTokenPass());
+    LOG(logDEBUGPIPES) << "\t REST " << textBool(this->hasResetTBM());
+    LOG(logDEBUGPIPES) << "\t RESR " << textBool(this->hasResetROC());
+    LOG(logDEBUGPIPES) << "\t Sync Err " << textBool(this->hasSyncError());
+    LOG(logDEBUGPIPES) << "\t Sync Trigger " << textBool(this->hasSyncTrigger());
+    LOG(logDEBUGPIPES) << "\t Clear Trig Count " << textBool(this->hasClearTriggerCount());
+    LOG(logDEBUGPIPES) << "\t Cal Trigger " << textBool(this->hasCalTrigger());
+    LOG(logDEBUGPIPES) << "\t Stack Full " << textBool(this->stackFull());
+
+    LOG(logDEBUGPIPES) << "\t Stack Full Now/Auto Reset " << textBool(this->hasAutoReset());
+    LOG(logDEBUGPIPES) << "\t PKAM Reset " << textBool(this->hasPkamReset());
+    LOG(logDEBUGPIPES) << "\t Stack Count " << static_cast<int>(this->stackCount());
+  }
+
   void statistics::dump() {
     // Print out the full statistics:
     LOG(logINFO) << "Decoding statistics:";
