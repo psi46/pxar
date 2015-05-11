@@ -187,11 +187,87 @@ namespace pxar {
   class DLLEXPORT Event {
   public:
     Event() : header(0), trailer(0), pixels() {}
+
+    /** Helper function to clear the event content
+     */
     void Clear() { header = 0; trailer = 0; pixels.clear();}
+
+    /** TBM Header Information: returns the 8 bit event counter of the TBM
+     */
+    uint8_t triggerCount() { return ((header >> 8) & 0xff); };
+
+    /** TBM Emulator Header: returns the phase of the trigger relative to the clock.
+     *  These are the "data" bits stored by the SoftTBM and is equivalent to
+     *  Event::dataValue()
+     */
+    uint8_t triggerPhase() { return dataValue(); };
+
+    /** TBM Header Information: returns the Data ID bits
+     */
+    uint8_t dataID()       { return ((header & 0x00c0) >> 6); };
+
+    /** TBM Header Information: returns the value for the data bits
+     */
+    uint8_t dataValue()    { return (header & 0x003f); };
+
+    /** TBM Trailer Information: reports if no token out has been received
+     */
+    bool hasNoTokenPass() { return ((trailer & 0x8000) != 0); };
+
+    /** TBM Trailer Information: reports if a TBM reset has been sent
+     */
+    bool hasResetTBM()    { return ((trailer & 0x4000) != 0); };
+
+    /** TBM Trailer Information: reports if a ROC reset has been sent
+     */
+    bool hasResetROC()    { return ((trailer & 0x2000) != 0); };
+
+    /** TBM Trailer Information: reports if a sync error occured
+     */
+    bool hasSyncError()   { return ((trailer & 0x1000) != 0); };
+
+    /** TBM Trailer Information: reports if event contains a sync trigger
+     */
+    bool hasSyncTrigger() { return ((trailer & 0x0800) != 0); };
+
+    /** TBM Trailer Information: reports if the trigger count has been reset
+     */
+    bool hasClearTriggerCount() { return ((trailer & 0x0400) != 0); };
+
+    /** TBM Trailer Information: reports if the event had a calibrate signal
+     */
+    bool hasCalTrigger()  { return ((trailer & 0x0200) != 0); };
+
+    /** TBM Trailer Information: reports if the TBM stack is full
+     */
+    bool stackFull()      { return ((trailer & 0x0100) != 0); };
+
+    /** TBM Trailer Information: reports if a auto reset has been sent
+     */
+    bool hasAutoReset() { return ((trailer & 0x0080) != 0); };
+
+    /** TBM Trailer Information: reports if a PKAM counter reset has been sent
+     */
+    bool hasPkamReset() { return ((trailer & 0x0040) != 0); };
+
+    /** TBM Trailer Information: reports the current 6 bit trigger stack count
+     */
+    uint8_t stackCount() { return (trailer & 0x003f); };
+
+    /** TBM Header
+     */
     uint16_t header;
+
+    /** TBM Trailer
+     */
     uint16_t trailer;
+
+    /** Vector of successfully decoded pxar::pixel objects
+     */
     std::vector<pixel> pixels;
+
   private:
+
     /** Overloaded ostream operator for simple printing of Event data
      */
     friend std::ostream & operator<<(std::ostream &out, Event& evt) {
