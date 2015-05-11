@@ -484,7 +484,6 @@ readbackVbg         button
 getCalibratedVbg    button
 useCalVd            checkbox(1)
 useCalVa            checkbox(0)
-getCalibratedIa     button
 setVana             button
 
 -- IV

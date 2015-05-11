@@ -40,7 +40,7 @@ public:
   double getCalibratedIa(unsigned int roc);
   void setVana();
   void prepareDAQ();
-  void PreparePG(uint8_t TrgTkDel);
+  void PreparePG();
   void doDAQ();
 
   void cachePowerSettings();
@@ -48,20 +48,17 @@ public:
 
 private:
 
-  void stop();
-
-
   uint8_t  fParReadback;
   uint16_t fParPeriod;
-  uint16_t fParStretch; 
-  bool     fParFillTree;
-  uint16_t fParTriggerFrequency;
-  bool	   fParResetROC;
+  //  uint16_t fParStretch; 
+  //  bool     fParFillTree;
+  //  uint16_t fParTriggerFrequency;
+  //bool	   fParResetROC;
   
   bool     fPhCalOK;
   PHCalibration fPhCal;
   bool	   fParOutOfRange;
-  bool     fDaq_loop;
+  //  bool     fDaq_loop;
 
   std::vector<double> fPar0VdCal;  
   std::vector<double> fPar1VdCal;  
