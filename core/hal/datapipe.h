@@ -146,11 +146,10 @@ namespace pxar {
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
-    Event* DecodeAnalog(rawEvent * sample);
-    Event* DecodeDeser160(rawEvent * sample);
-    Event* DecodeSoftTBMDigital(rawEvent * sample);
-    Event* DecodeSoftTBMAnalog(rawEvent * sample);
-    Event* DecodeDeser400(rawEvent * sample);
+    void DecodeAnalog(rawEvent * sample);
+    void DecodeDeser160(rawEvent * sample);
+    void DecodeDeser400(rawEvent * sample);
+    void ProcessTBM(rawEvent * sample);
     statistics decodingStats;
 
     // Readback decoding:

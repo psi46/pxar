@@ -100,59 +100,85 @@ namespace pxar {
     if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
     if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
     if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
+    decodingStats.m_info_words_read += sample->GetSize();
 
-    if(GetEnvelopeType() == TBM_NONE) {
-      // Decode analog ROC data:
-      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(sample); }
-      // Decode digital ROC data:
-      else { return DecodeDeser160(sample); }
-    }
-    else if(GetEnvelopeType() == TBM_EMU) { 
-      // Decode analog ROC data:
-      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeSoftTBMAnalog(sample); }
-      // Decode digital ROC data:
-      else { return DecodeSoftTBMDigital(sample); }
-    }
-    else return DecodeDeser400(sample);
+    // If a TBM header and trailer should be available, process them first:
+    if(GetEnvelopeType() != TBM_NONE) { ProcessTBM(sample); }
+
+    // Decode ADC Data for analog devices:
+    if(GetDeviceType() < ROC_PSI46DIG) { DecodeAnalog(sample); }
+    // Decode DESER400 Data for digital devices and TBMs:
+    else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
+    // Decode DESER160 Data for digital devices without real TBM
+    else { DecodeDeser160(sample); }
+
+    LOG(logDEBUGPIPES) << roc_Event;
+    return &roc_Event;
   }
 
-  Event* dtbEventDecoder::DecodeDeser400(rawEvent * sample) {
+  void dtbEventDecoder::ProcessTBM(rawEvent * sample) {
+    LOG(logDEBUGPIPES) << "Processing TBM header and trailer...";
 
-    unsigned int raw = 0;
-    unsigned int pos = 0;
+    // Check if the data is long enough to hold header and trailer:
+    if(sample->GetSize() < 4) {
+      decodingStats.m_errors_tbm_header++;
+      decodingStats.m_errors_tbm_trailer++;
+      return;
+    }
     unsigned int size = sample->GetSize();
-    decodingStats.m_info_words_read += size;
 
-    uint16_t v;
-    bool tmpError = false;
+    // TBM Header:
 
-    // Count the ROC headers:
-    int16_t roc_n = -1;
+    // Check the validity of the data words:
+    CheckInvalidWord(sample->data.at(0));
+    CheckInvalidWord(sample->data.at(1));
+    // Check the alignment markers to be correct:
+    if((sample->data.at(0) & 0xe000) != 0xa000
+       || (sample->data.at(1) & 0xe000) != 0x8000) { decodingStats.m_errors_tbm_header++; }
+    // Store the two header words:
+    roc_Event.header = ((sample->data.at(0) & 0x00ff) << 8) + (sample->data.at(1) & 0x00ff);
 
-    // Check if ROC has inverted pixel address (ROC_PSI46DIG):
-    bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
-    
-    // Store the two TBM header words:
-    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-    CheckInvalidWord(v);
-    if ((v & 0xe000) != 0xa000) tmpError = true;
-    raw = (v & 0x00ff) << 8;
-
-    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-    CheckInvalidWord(v);
-    if ((v & 0xe000) != 0x8000) tmpError = true;
-    raw += v & 0x00ff;
-
-    roc_Event.header = raw;
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
     IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
 
     // Check for correct TBM event ID:
     CheckEventID();
 
-    if(tmpError) { decodingStats.m_errors_tbm_header++; }
-    tmpError = false;
 
+    // TBM Trailer:
+
+    // Check the validity of the data words:
+    CheckInvalidWord(sample->data.at(size-2));
+    CheckInvalidWord(sample->data.at(size-1));
+    // Check the alignment markers to be correct:
+    if((sample->data.at(size-2) & 0xe000) != 0xe000
+       || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
+    // Store the two trailer words:
+    roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
+      + (sample->data.at(size-1) & 0x00ff);
+
+    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
+    IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
+
+    // Remove header and trailer:
+    sample->data.erase(sample->data.begin(), sample->data.begin() + 2);
+    sample->data.erase(sample->data.end() - 2, sample->data.end());
+  }
+
+  void dtbEventDecoder::DecodeDeser400(rawEvent * sample) {
+    LOG(logDEBUGPIPES) << "Decoding ROC data from DESER400...";
+
+    unsigned int raw = 0;
+    unsigned int pos = 0;
+    unsigned int size = sample->GetSize();
+
+    uint16_t v;
+
+    // Count the ROC headers:
+    int16_t roc_n = -1;
+
+    // Check if ROC has inverted pixel address (ROC_PSI46DIG):
+    bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
 
     // --- decode ROC data -----------------------------------
 
@@ -226,28 +252,9 @@ namespace pxar {
       }
     }
 
-    // Store the two TBM trailer words:
   trailer:
-    raw = 0;
-
-    if ((v & 0xe000) != 0xe000) tmpError = true;
-    raw = (v & 0x00ff) << 8;
-    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-    CheckInvalidWord(v);
-    if ((v & 0xe000) != 0xc000) tmpError = true;
-    raw += v & 0x00ff;
-
-    roc_Event.trailer = raw;
-    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
-    IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
-
-    if(tmpError) { decodingStats.m_errors_tbm_trailer++; }
-
     // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
-
-    LOG(logDEBUGPIPES) << roc_Event;
-    return &roc_Event;
   }
 
   void dtbEventDecoder::AverageAnalogLevel(int32_t &variable, int16_t dataword) {
@@ -257,19 +264,12 @@ namespace pxar {
     else { variable = (variable + expandSign(dataword & 0x0fff))/2; }
   }
 
-  Event* dtbEventDecoder::DecodeAnalog() {
+  void dtbEventDecoder::DecodeAnalog(rawEvent * sample) {
+    LOG(logDEBUGPIPES) << "Decoding ROC data from ADC...";
 
-    roc_Event.Clear();
-    rawEvent *sample = Get();
     int16_t roc_n = -1;
 
-    // Count possibe error states:
-    if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
-    if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
-    if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
-
     unsigned int n = sample->GetSize();
-    decodingStats.m_info_words_read += n;
 
     if (n >= 3) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
@@ -332,14 +332,12 @@ namespace pxar {
       }
     }
 
-    // Check if empty or missing ROCs:
+    // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
-
-    LOG(logDEBUGPIPES) << roc_Event;
-    return &roc_Event;
   }
 
-  Event* dtbEventDecoder::DecodeDeser160(rawEvent * sample) {
+  void dtbEventDecoder::DecodeDeser160(rawEvent * sample) {
+    LOG(logDEBUGPIPES) << "Decoding ROC data from DESER160...";
 
     // Count the ROC headers:
     int16_t roc_n = -1;
@@ -348,7 +346,6 @@ namespace pxar {
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
 
     unsigned int n = sample->GetSize();
-    decodingStats.m_info_words_read += n;
 
     if (n > 0) {
       // Reserve expected number of pixels from data length (subtract ROC headers):
@@ -403,11 +400,8 @@ namespace pxar {
       }
     }
 
-    // Check if empty or missing ROCs:
+    // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
-
-    LOG(logDEBUGPIPES) << roc_Event;
-    return &roc_Event;
   }
 
   void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
