@@ -262,64 +262,66 @@ namespace pxar {
 
     int16_t roc_n = -1;
 
-    unsigned int n = sample->GetSize();
+    // Reserve expected number of pixels from data length (subtract ROC headers):
+    if (sample->GetSize() - 3*GetTokenChainLength() > 0) {
+      roc_Event.pixels.reserve((sample->GetSize() - 3*GetTokenChainLength())/6);
+    }
 
-    if (n >= 3) {
-      // Reserve expected number of pixels from data length (subtract ROC headers):
-      if (n - 3*GetTokenChainLength() > 0) roc_Event.pixels.reserve((n - 3*GetTokenChainLength())/6);
+    // Loop over the full data:
+    for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
 
-      unsigned int pos = 0;
-      while (pos+3 <= n) {
-	// Check if we have another ROC header (UB and B levels):
-	// Here we have to assume the first two words are a ROC header because we rely on
-	// its Ultrablack and Black level as initial values for auto-calibration:
-	int16_t levelS = (black - ultrablack)/8;
+      std::cout << "Left: " << (sample->data.end() - word) << std::endl;
+      // Not enough data for anything, stop here - and assume it was half a pixel hit:
+      if((sample->data.end() - word < 2)) { 
+	decodingStats.m_errors_pixel_incomplete++;
+	break;
+      }
 
-	if(roc_n < 0 || 
-	   // Ultrablack level:
-	   ((ultrablack-levelS < expandSign((*sample)[pos] & 0x0fff) && ultrablack+levelS > expandSign((*sample)[pos] & 0x0fff))
-	   // Black level:
-	    && (black-levelS < expandSign((*sample)[pos+1] & 0x0fff) && black+levelS > expandSign((*sample)[pos+1] & 0x0fff)))) {
+      // Check if we have another ROC header (UB and B levels):
+      // Here we have to assume the first two words are a ROC header because we rely on
+      // its Ultrablack and Black level as initial values for auto-calibration:
+      int16_t levelS = (black - ultrablack)/8;
 
-	  roc_n++;
-	  // Save the lastDAC value:
-	  evalLastDAC(roc_n, (*sample)[pos+2] & 0x0fff);
+      if(roc_n < 0 || 
+	 // Ultrablack level:
+	 ((ultrablack-levelS < expandSign((*word) & 0x0fff) && ultrablack+levelS > expandSign((*word) & 0x0fff))
+	  // Black level:
+	  && (black-levelS < expandSign((*(word+1)) & 0x0fff) && black+levelS > expandSign((*(word+1)) & 0x0fff)))) {
 
-	  // Iterate to improve ultrablack and black measurement:
-	  AverageAnalogLevel(ultrablack, (*sample)[pos] & 0x0fff);
-	  AverageAnalogLevel(black, (*sample)[pos+1] & 0x0fff);
+	roc_n++;
+	// Save the lastDAC value:
+	evalLastDAC(roc_n, (*(word+2)) & 0x0fff);
 
-	  LOG(logDEBUGPIPES) << "ROC Header: "
-			     << expandSign((*sample)[pos] & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
-			     << expandSign((*sample)[pos+1] & 0x0fff) << " (avg. " << black << ") (B) "
-			     << expandSign((*sample)[pos+2] & 0x0fff) << " (lastDAC) ";
-	  pos += 3;
+	// Iterate to improve ultrablack and black measurement:
+	AverageAnalogLevel(ultrablack, (*word) & 0x0fff);
+	AverageAnalogLevel(black, (*(word+1)) & 0x0fff);
+
+	LOG(logDEBUGPIPES) << "ROC Header: "
+			   << expandSign((*word) & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
+			   << expandSign((*(++word)) & 0x0fff) << " (avg. " << black << ") (B) "
+			   << expandSign((*(++word)) & 0x0fff) << " (lastDAC) ";
+      }
+      // We have a pixel hit:
+      else {
+	// Not enough data for a new pixel hit (six words):
+	if(sample->data.end() - word < 6) {
+	  decodingStats.m_errors_pixel_incomplete++;
+	  break;
 	}
-	// We have a pixel hit:
-	else {
-	  // Not enough data for a new pixel hit (six words):
-	  if(pos > n-6) break;
 
-	  std::vector<uint16_t> data;
-	  data.push_back((*sample)[pos] & 0x0fff);
-	  data.push_back((*sample)[pos+1] & 0x0fff);
-	  data.push_back((*sample)[pos+2] & 0x0fff);
-	  data.push_back((*sample)[pos+3] & 0x0fff);
-	  data.push_back((*sample)[pos+4] & 0x0fff);
-	  data.push_back((*sample)[pos+5] & 0x0fff);
+	std::vector<uint16_t> data;
+	data.push_back((*word) & 0x0fff);
+	for(size_t i = 0; i < 5; i++) { data.push_back((*(++word)) & 0x0fff); }
  
-	  try{
-	    LOG(logDEBUGPIPES) << "Trying to decode pixel: " << listVector(data,false,true);
-	    pixel pix(data,roc_n,ultrablack,black);
-	    roc_Event.pixels.push_back(pix);
-	    decodingStats.m_info_pixels_valid++;
-	  }
-	  catch(DataDecodingError /*&e*/){
-	    // decoding of raw address lead to invalid address
-	    decodingStats.m_errors_pixel_address++;
-	  }
-	  // Advance read pointer by one pixel:
-	  pos += 6;
+	try{
+	  LOG(logDEBUGPIPES) << "Trying to decode pixel: " << listVector(data,false,true);
+	  pixel pix(data,roc_n,ultrablack,black);
+	  roc_Event.pixels.push_back(pix);
+	  decodingStats.m_info_pixels_valid++;
+	}
+	catch(DataDecodingError /*&e*/){
+	  // decoding of raw address lead to invalid address
+	  decodingStats.m_errors_pixel_address++;
 	}
       }
     }
