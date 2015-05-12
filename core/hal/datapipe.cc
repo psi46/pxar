@@ -291,7 +291,6 @@ namespace pxar {
 	  roc_n++;
 	  // Save the lastDAC value:
 	  evalLastDAC(roc_n, (*sample)[pos+2] & 0x0fff);
-	  roc_Event.header = (*sample)[pos+2] & 0x0fff;
 
 	  // Iterate to improve ultrablack and black measurement:
 	  AverageAnalogLevel(ultrablack, (*sample)[pos] & 0x0fff);
