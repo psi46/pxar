@@ -93,22 +93,6 @@ namespace pxar {
   }
 
   Event* dtbEventDecoder::Read() {
-    if(GetEnvelopeType() == TBM_NONE) {
-      // Decode analog ROC data:
-      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(); }
-      // Decode digital ROC data:
-      else { return DecodeDeser160(); }
-    }
-    else if(GetEnvelopeType() == TBM_EMU) { 
-      // Decode analog ROC data:
-      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeSoftTBMAnalog(); }
-      // Decode digital ROC data:
-      else { return DecodeSoftTBMDigital(); }
-    }
-    else return DecodeDeser400();
-  }
-
-  Event* dtbEventDecoder::DecodeDeser400() {
 
     roc_Event.Clear();
     rawEvent *sample = Get();
@@ -117,6 +101,23 @@ namespace pxar {
     if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
     if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
     if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
+
+    if(GetEnvelopeType() == TBM_NONE) {
+      // Decode analog ROC data:
+      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(sample); }
+      // Decode digital ROC data:
+      else { return DecodeDeser160(sample); }
+    }
+    else if(GetEnvelopeType() == TBM_EMU) { 
+      // Decode analog ROC data:
+      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeSoftTBMAnalog(sample); }
+      // Decode digital ROC data:
+      else { return DecodeSoftTBMDigital(sample); }
+    }
+    else return DecodeDeser400(sample);
+  }
+
+  Event* dtbEventDecoder::DecodeDeser400(rawEvent * sample) {
 
     unsigned int raw = 0;
     unsigned int pos = 0;
@@ -339,22 +340,13 @@ namespace pxar {
     return &roc_Event;
   }
 
-  Event* dtbEventDecoder::DecodeDeser160() {
-
-    roc_Event.Clear();
+  Event* dtbEventDecoder::DecodeDeser160(rawEvent * sample) {
 
     // Count the ROC headers:
     int16_t roc_n = -1;
 
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
-
-    rawEvent *sample = Get();
-
-    // Count possibe error states:
-    if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
-    if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
-    if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
 
     unsigned int n = sample->GetSize();
     decodingStats.m_info_words_read += n;
