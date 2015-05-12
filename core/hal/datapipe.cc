@@ -168,60 +168,48 @@ namespace pxar {
   void dtbEventDecoder::DecodeDeser400(rawEvent * sample) {
     LOG(logDEBUGPIPES) << "Decoding ROC data from DESER400...";
 
-    unsigned int raw = 0;
-    unsigned int pos = 0;
-    unsigned int size = sample->GetSize();
-
-    uint16_t v;
-
     // Count the ROC headers:
     int16_t roc_n = -1;
 
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
 
-    // --- decode ROC data -----------------------------------
+    // Loop over the full data:
+    for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
+      CheckInvalidWord(*word);
 
-    // while ROC header
-    v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-    CheckInvalidWord(v);
+      // Check if we have a ROC header:
+      if(((*word) & 0xe000) == 0x4000) {
 
-    while ((v & 0xe000) == 0x4000) { // ROC Header
+	// Count ROC Headers up:
+	roc_n++;
 
-      // Count ROC Headers up:
-      roc_n++;
-
-      // Check for DESER400 failure:
-      if((v&0x0ff0) == 0x0ff0) {
-	LOG(logCRITICAL) << "TBM " << static_cast<int>(GetChannel())
-			 << " ROC " << static_cast<int>(roc_n)
-			 << " header reports DESER400 failure!";
-	decodingStats.m_errors_event_invalid_xor++;
-	throw DataDecodingError("Invalid XOR eye diagram encountered.");
-      }
-
-      // Decode the readback bits in the ROC header:
-      if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),v); }
-
-      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-      CheckInvalidWord(v);
-      while ((v & 0xe000) <= 0x2000) { // R0 ... R1
-
-	for (int i = 0; i <= 1; i++) {
-	  if ((v >> 13) != i) { // R<i>
-	    if (v & 0x8000) { // TBM header/trailer
-	      // Unexpected arrival of TBM marker - pixel data is incomplete:
-	      decodingStats.m_errors_pixel_incomplete++;
-	      v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-	      CheckInvalidWord(v);
-	      goto trailer;
-	    }
-	  }
-	  raw = (raw << 12) + (v & 0x0fff);
-	  v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
-	  CheckInvalidWord(v);
+	// Check for DESER400 failure:
+	if(((*word) & 0x0ff0) == 0x0ff0) {
+	  LOG(logCRITICAL) << "TBM " << static_cast<int>(GetChannel())
+			   << " ROC " << static_cast<int>(roc_n)
+			   << " header reports DESER400 failure!";
+	  decodingStats.m_errors_event_invalid_xor++;
+	  throw DataDecodingError("Invalid XOR eye diagram encountered.");
 	}
 
+	// Decode the readback bits in the ROC header:
+	if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),(*word)); }
+      }
+      // We have a pixel hit:
+      else if(((*word) & 0xe000) <= 0x2000) {
+
+	// Only one word left or unexpected alignment marker:
+	if(sample->data.end() - word < 2 || ((*word) & 0x8000)) {
+	  decodingStats.m_errors_pixel_incomplete++;
+	  break;
+	}
+	
+	// FIXME optional check:
+	// (*word) >> 13 == 0
+	// (*(word+1) >> 13 == 1
+
+	uint32_t raw = (((*word) & 0x0fff) << 12) + ((*(++word)) & 0x0fff);
 	try {
 	  // Check if this is just fill bits of the TBM09 data stream 
 	  // accounting for the other channel:
@@ -252,7 +240,6 @@ namespace pxar {
       }
     }
 
-  trailer:
     // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
   }
