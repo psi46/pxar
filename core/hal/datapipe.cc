@@ -92,11 +92,10 @@ namespace pxar {
      record.SetStartError();
      Get();
    }
-   Get();
-   //record.Add(GetLast());
+   record.Add(GetLast());
 
    // Else keep reading and adding samples until we find any trailer marker.
-   while ((Get() & 0xe000) != 0xe000) {
+   while ((Get() & 0xe000) != 0xc000) {
      // Check if the last read sample has Event end marker:
      if ((GetLast() & 0xe000) == 0xa000) {
        record.SetEndError();
@@ -108,6 +107,8 @@ namespace pxar {
      if (record.GetSize() < 40000) record.Add(GetLast());
      else record.SetOverflow();
    }
+   record.Add(GetLast());
+   nextStartDetected = false;
 
    LOG(logDEBUGPIPES) << "-------------------------";
    LOG(logDEBUGPIPES) << listVector(record.data,true);
