@@ -344,57 +344,47 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
 
-    unsigned int n = sample->GetSize();
+    // Reserve expected number of pixels from data length (subtract ROC headers):
+    if(sample->GetSize()-GetTokenChainLength() > 0) {
+      roc_Event.pixels.reserve((sample->GetSize()-GetTokenChainLength())/2);
+    }
 
-    if (n > 0) {
-      // Reserve expected number of pixels from data length (subtract ROC headers):
-      if (n-GetTokenChainLength() > 0) roc_Event.pixels.reserve((n-GetTokenChainLength())/2);
+    // Loop over the full data:
+    for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
 
-      unsigned int pos = 0;
+      // Check if we have a ROC header:
+      if(((*word) & 0x0ffc) == 0x07f8) {
+	roc_n++;
 
-      // Loop over the full data:
-      while (pos < n) {
-	// Check if we have a ROC header:
-	if(((*sample)[pos] & 0x0ffc) == 0x07f8) {
-	  roc_Event.header = (*sample)[pos] & 0x0fff;
-	  roc_n++;
-	  pos++;
-
-	  // Decode the readback bits in the ROC header:
-	  if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,roc_Event.header); }
+	// Decode the readback bits in the ROC header:
+	if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(roc_n,(*word) & 0x0fff); }
+      }
+      // We might have a pixel:
+      // Require that we found at least one ROC header and have two or more words left:
+      else if(roc_n >= 0) {
+	// It's not a ROC header but the last word:
+	if(sample->data.end() - word < 2) {
+	  decodingStats.m_errors_pixel_incomplete++;
+	  continue;
 	}
-	// We have a pixel:
-	// Require that we found at least one ROC header:
-	else if(roc_n >= 0) {
-	  // Not enough data for a new pixel hit (two words):
-	  if(pos >= n-1) {
-	    decodingStats.m_errors_pixel_incomplete++;
-	    break;
-	  }
 
-	  uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
-	  raw += (*sample)[pos++] & 0x0fff;
-	  try {
-	    pixel pix(raw,roc_n,invertedAddress);
-	    roc_Event.pixels.push_back(pix);
-	    decodingStats.m_info_pixels_valid++;
-	  }
-	  catch(DataInvalidAddressError /*&e*/) {
-	    // decoding of raw address lead to invalid address
-	    decodingStats.m_errors_pixel_address++;
-	  }
-	  catch(DataInvalidPulseheightError /*&e*/) {
-	    // decoding of pulse height featured non-zero fill bit
-	    decodingStats.m_errors_pixel_pulseheight++;
-	  }
-	  catch(DataCorruptBufferError /*&e*/) {
-	    // decoding returned row 80 - corrupt data buffer
-	    decodingStats.m_errors_pixel_buffer_corrupt++;
-	  }
+	uint32_t raw = (((*word) & 0x0fff) << 12) + ((*(++word)) & 0x0fff);
+	try {
+	  pixel pix(raw,roc_n,invertedAddress);
+	  roc_Event.pixels.push_back(pix);
+	  decodingStats.m_info_pixels_valid++;
 	}
-	// No ROC header present, try with next word:
-	else {
-	  pos++;
+	catch(DataInvalidAddressError /*&e*/) {
+	  // decoding of raw address lead to invalid address
+	  decodingStats.m_errors_pixel_address++;
+	}
+	catch(DataInvalidPulseheightError /*&e*/) {
+	  // decoding of pulse height featured non-zero fill bit
+	  decodingStats.m_errors_pixel_pulseheight++;
+	}
+	catch(DataCorruptBufferError /*&e*/) {
+	  // decoding returned row 80 - corrupt data buffer
+	  decodingStats.m_errors_pixel_buffer_corrupt++;
 	}
       }
     }
