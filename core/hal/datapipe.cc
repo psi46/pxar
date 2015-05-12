@@ -257,13 +257,6 @@ namespace pxar {
     CheckEventValidity(roc_n);
   }
 
-  void dtbEventDecoder::AverageAnalogLevel(int32_t &variable, int16_t dataword) {
-    // Check if this is the initial measurement:
-    if(variable > 0xff) { variable = expandSign(dataword & 0x0fff); }
-    // Average the variable:
-    else { variable = (variable + expandSign(dataword & 0x0fff))/2; }
-  }
-
   void dtbEventDecoder::DecodeADC(rawEvent * sample) {
     LOG(logDEBUGPIPES) << "Decoding ROC data from ADC...";
 
@@ -438,6 +431,13 @@ namespace pxar {
       decodingStats.m_info_events_valid++;
       LOG(logDEBUGPIPES) << "Event is valid.";
     }
+  }
+
+  void dtbEventDecoder::AverageAnalogLevel(int32_t &variable, int16_t dataword) {
+    // Check if this is the initial measurement:
+    if(variable > 0xff) { variable = expandSign(dataword & 0x0fff); }
+    // Average the variable:
+    else { variable = (variable + expandSign(dataword & 0x0fff))/2; }
   }
 
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
