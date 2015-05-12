@@ -139,31 +139,27 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     
-
-    // --- decode TBM header ---------------------------------
-
-    // TBM Header 1:
+    // Store the two TBM header words:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0xa000) tmpError = true;
     raw = (v & 0x00ff) << 8;
-    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Evt ID " << static_cast<int>(v&0x00ff);
 
-    // Check for correct TBM event ID:
-    CheckEventID(v);
-
-    // TBM Header 2:
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0x8000) tmpError = true;
     raw += v & 0x00ff;
-    LOG(logDEBUGPIPES) << "\t Data ID " << static_cast<int>(((v & 0x00c0) >> 6)) 
-		       << " Value " << static_cast<int>((v & 0x003f));
+
+    roc_Event.header = raw;
+    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
+    IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
+
+    // Check for correct TBM event ID:
+    CheckEventID();
 
     if(tmpError) { decodingStats.m_errors_tbm_header++; }
     tmpError = false;
 
-    roc_Event.header = raw;
 
     // --- decode ROC data -----------------------------------
 
@@ -235,39 +231,24 @@ namespace pxar {
 	  decodingStats.m_errors_pixel_buffer_corrupt++;
 	}
       }
-      //if (roc.error) x.error |= 0x0001;
-      //x.roc.push_back(roc);
     }
 
-    // --- decode TBM trailer --------------------------------
+    // Store the two TBM trailer words:
   trailer:
     raw = 0;
 
-    // T1
     if ((v & 0xe000) != 0xe000) tmpError = true;
     raw = (v & 0x00ff) << 8;
-    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " trailer content: " << std::hex << (v&0x00ff) << std::dec;
-    LOG(logDEBUGPIPES) << "\t Token Pass " << ((v&0x0080) == 0x0080 ? "FALSE" : "TRUE");
-    LOG(logDEBUGPIPES) << "\t REST " << static_cast<int>(v&0x0040);
-    LOG(logDEBUGPIPES) << "\t RESR " << static_cast<int>(v&0x0020);
-    LOG(logDEBUGPIPES) << "\t Sync Err " << static_cast<int>(v&00010);
-    LOG(logDEBUGPIPES) << "\t Sync Trigger " << static_cast<int>(v&0x0008);
-    LOG(logDEBUGPIPES) << "\t Clear Trig Count " << static_cast<int>(v&0x0004);
-    LOG(logDEBUGPIPES) << "\t Cal Trigger " << static_cast<int>(v&0x0002);
-    LOG(logDEBUGPIPES) << "\t Stack Full " << static_cast<int>(v&0x0001);
-
-    // T2
     v = (pos < size) ? (*sample)[pos++] : 0x6000; //MDD_ERROR_MARKER;
     CheckInvalidWord(v);
     if ((v & 0xe000) != 0xc000) tmpError = true;
     raw += v & 0x00ff;
-    LOG(logDEBUGPIPES) << "\t Stack Full Now " << static_cast<int>(v&0x0080);
-    LOG(logDEBUGPIPES) << "\t PKAM Reset " << static_cast<int>(v&0x0040);
-    LOG(logDEBUGPIPES) << "\t Stack Count " << static_cast<int>(v&0x003f);
-
-    if(tmpError) { decodingStats.m_errors_tbm_trailer++; }
 
     roc_Event.trailer = raw;
+    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
+    IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
+
+    if(tmpError) { decodingStats.m_errors_tbm_trailer++; }
 
     // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
