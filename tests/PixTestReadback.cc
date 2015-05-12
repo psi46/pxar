@@ -203,7 +203,12 @@ bool PixTestReadback::setTrgFrequency(uint8_t TrgTkDel){
     ClkDelays = ClkDelays - 255;
     nDel ++;
   }
+//  fPg_setup.push_back(make_pair("delay", 255));
+//  fPg_setup.push_back(make_pair("delay", 255));
+//  fPg_setup.push_back(make_pair("delay", 255));
+//  fPg_setup.push_back(make_pair("delay", 255));
   fPg_setup.push_back(make_pair("delay", ClkDelays));
+
   
 //  //then send trigger and token:
 //  fPg_setup.push_back(make_pair("cal", 106));
@@ -927,6 +932,16 @@ void PixTestReadback::readbackVbg(){
 
 vector<double> PixTestReadback::getCalibratedVbg(){
   vector<double> calVbg(fRbVbg.size(), 0.);
+  string name="";
+  if(fCalwVd){
+    name = "Vbg_readback_VdCal";
+  }
+  if(fCalwVa){
+    name = "Vbg_readback_VaCal";
+  }
+  TH1D* h_vbg = bookTH1D(name.c_str(), name.c_str(), 16, 0., 16.);
+  name = "Vbg_readback";
+  TH1D* h_vbg_rb = bookTH1D(name.c_str(), name.c_str(), 16, 0., 16.);
   //0.5 needed because Vbg rb has twice the sensitivity Vd and Va have
   if(fCalwVd){
     LOG(logINFO)<<"Vbg will be calibrated using Vd calibration";
@@ -944,9 +959,24 @@ vector<double> PixTestReadback::getCalibratedVbg(){
     LOG(logDEBUG)<<"No calibration option specified. Please select one and retry.";
     return calVbg;
   }
-   for(unsigned int iroc=0; iroc < calVbg.size(); iroc++){
-     LOG(logINFO)<<"/*/*/*/*::: ROC "<<iroc<<": uncalibrated Vbg = "<<fRbVbg[iroc]<<"calibrated Vbg = "<<calVbg[iroc]<<" :::*/*/*/*/";
-   }
+  for(unsigned int iroc=0; iroc < calVbg.size(); iroc++){
+    LOG(logINFO)<<"/*/*/*/*::: ROC "<<iroc<<": uncalibrated Vbg = "<<fRbVbg[iroc]<<"calibrated Vbg = "<<calVbg[iroc]<<" :::*/*/*/*/";
+    h_vbg->Fill(getIdFromIdx(iroc), calVbg[getIdFromIdx(iroc)]);
+    h_vbg_rb->Fill(getIdFromIdx(iroc), fRbVbg[getIdFromIdx(iroc)]);
+  }
+  h_vbg->GetXaxis()->SetTitle("#roc");
+  h_vbg->GetYaxis()->SetTitle("Vbg [V]");
+  h_vbg_rb->GetXaxis()->SetTitle("#roc");
+  h_vbg_rb->GetYaxis()->SetTitle("Vbg [ADC]");
+  fHistList.push_back(h_vbg);
+  fHistList.push_back(h_vbg_rb);
+  for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
+    LOG(logDEBUG)<<"Drawing histo "<<(*il)->GetName();
+    (*il)->Draw((getHistOption(*il)).c_str()); 
+  }
+  
+  fDisplayedHist = fHistList.begin();
+  PixTest::update();
   return calVbg;
 }
 
@@ -1361,19 +1391,19 @@ void PixTestReadback::setVana() {
     hcurr->Fill(roc, rocIana[roc]); 
   }
   
-  vector<double> v_ia16 = getCalibratedIa(); // [mA]
-
-  sw.Start(kTRUE); // reset
-  do {
-    sw.Start(kFALSE); // continue
-    v_ia16 = getCalibratedIa(); // [mA]
-  }
-  while( sw.RealTime() < 0.1 );
-
+//  vector<double> v_ia16 = getCalibratedIa(); // [mA]
+//
+//  sw.Start(kTRUE); // reset
+//  do {
+//    sw.Start(kFALSE); // continue
+//    v_ia16 = getCalibratedIa(); // [mA]
+//  }
+//  while( sw.RealTime() < 0.1 );
+//
   double ia16=0.;
-  for(unsigned int iroc = 0; iroc<v_ia16.size(); iroc++){
-    ia16 += v_ia16[iroc];
-  }
+//  for(unsigned int iroc = 0; iroc<v_ia16.size(); iroc++){
+//    ia16 += v_ia16[iroc];
+//  }
 
   hsum->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
@@ -1402,6 +1432,9 @@ void PixTestReadback::prepareDAQ(){
   //adding triggers to pg
   PreparePG();
 
+  for(std::vector<std::pair<std::string, uint8_t> >::iterator ipg = fPg_setup.begin(); ipg != fPg_setup.end(); ipg++){
+    LOG(logDEBUG)<<"pg settings "<<ipg->first<<" "<<(int)ipg->second;
+  }
   //Set pattern generator:
   fApi->setPatternGenerator(fPg_setup);
  
