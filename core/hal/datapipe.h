@@ -105,12 +105,7 @@ namespace pxar {
   // DTB data Event splitter
   class dtbEventSplitter : public dataPipe<uint16_t, rawEvent*> {
     rawEvent record;
-    rawEvent* Read() {
-      // Split the data stream according to DESER160 alignment markers:
-      if(GetEnvelopeType() == TBM_NONE) return SplitDeser160();
-      // Split the data stream according to DESER400 / TBMEMU alignment markers:
-      else return SplitDeser400();
-    }
+    rawEvent* Read();
     rawEvent* ReadLast() { return &record; }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
@@ -118,8 +113,8 @@ namespace pxar {
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
     // The splitter routines:
-    rawEvent* SplitDeser160();
-    rawEvent* SplitDeser400();
+    void SplitDeser160();
+    void SplitDeser400();
 
     bool nextStartDetected;
   public:

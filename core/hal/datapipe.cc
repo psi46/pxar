@@ -6,9 +6,23 @@
 
 namespace pxar {
 
-  rawEvent* dtbEventSplitter::SplitDeser400() {
+  rawEvent* dtbEventSplitter::Read() {
     record.Clear();
 
+    // Split the data stream according to DESER160 alignment markers:
+    if(GetEnvelopeType() == TBM_NONE) { SplitDeser160(); }
+    // Split the data stream according to DESER400 / TBMEMU alignment markers:
+    else { SplitDeser400(); }
+
+    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
+    if(GetDeviceType() < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(record.data,false,true); }
+    else { LOG(logDEBUGPIPES) << listVector(record.data,true); }
+    LOG(logDEBUGPIPES) << "-------------------------";
+
+    return &record;
+  }
+
+  void dtbEventSplitter::SplitDeser400() {
     // If last one had Event end marker, get a new sample:
     if (!nextStartDetected) { Get(); }
 
@@ -25,7 +39,7 @@ namespace pxar {
       if ((GetLast() & 0xe000) == 0xa000) {
 	record.SetEndError();
 	nextStartDetected = true;
-	return &record;
+	return;
       }
       // If total Event size is too big, break:
       if (record.GetSize() < 40000) record.Add(GetLast());
@@ -33,17 +47,9 @@ namespace pxar {
     }
     record.Add(GetLast());
     nextStartDetected = false;
-
-    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
-    LOG(logDEBUGPIPES) << listVector(record.data,true);
-    LOG(logDEBUGPIPES) << "-------------------------";
-
-    return &record;
   }
 
-  rawEvent* dtbEventSplitter::SplitDeser160() {
-    record.Clear();
-
+  void dtbEventSplitter::SplitDeser160() {
     // If last one had Event end marker, get a new sample:
     if (GetLast() & 0x4000) { Get(); }
 
@@ -72,13 +78,6 @@ namespace pxar {
     if (GetLast() & 0x4000) record.Add(GetLast());
     // Else set Event end error:
     else record.SetEndError();
-
-    LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
-    if(GetDeviceType() < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(record.data,false,true); }
-    else { LOG(logDEBUGPIPES) << listVector(record.data,true); }
-    LOG(logDEBUGPIPES) << "-------------------------";
-
-    return &record;
   }
 
   rawEvent* passthroughSplitter::Read() {
