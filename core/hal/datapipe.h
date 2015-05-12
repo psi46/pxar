@@ -144,16 +144,7 @@ namespace pxar {
   // DTB data decoding class
   class dtbEventDecoder : public dataPipe<rawEvent*, Event*> {
     Event roc_Event;
-    Event* Read() {
-      if(GetEnvelopeType() == TBM_NONE || GetEnvelopeType() == TBM_EMU) {
-	// Decode analog ROC data:
-	if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(); }
-	// Decode digital ROC data:
-	else { return DecodeDeser160(); }
-      }
-      //else if(GetEnvelopeType() == TBM_EMU) return DecodeSoftTBM();
-      else return DecodeDeser400();
-    }
+    Event* Read();
     Event* ReadLast() { return &roc_Event; }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }

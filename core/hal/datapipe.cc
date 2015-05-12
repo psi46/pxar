@@ -92,27 +92,20 @@ namespace pxar {
     return &record;
   }
 
-  void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
-    // Check last bit of identifier nibble to be zero:
-    if((v & 0x1000) == 0x0000) { return; }
-    decodingStats.m_errors_event_invalid_words++;
-  }
-
-  void dtbEventDecoder::CheckEventID() {
-    // After startup, register the first event ID:
-    if(eventID == -1) { eventID = roc_Event.triggerCount(); }
-
-    // Check if TBM event ID matches with expectation:
-    if(roc_Event.triggerCount() != (eventID%256)) {
-      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
-		    << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
-      decodingStats.m_errors_tbm_eventid_mismatch++;
-      // To continue readout, set event ID to the currently decoded one:
-      eventID = roc_Event.triggerCount();
+  Event* dtbEventDecoder::Read() {
+    if(GetEnvelopeType() == TBM_NONE) {
+      // Decode analog ROC data:
+      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeAnalog(); }
+      // Decode digital ROC data:
+      else { return DecodeDeser160(); }
     }
-
-    // Increment event counter:
-    eventID = (eventID%256) + 1;
+    else if(GetEnvelopeType() == TBM_EMU) { 
+      // Decode analog ROC data:
+      if(GetDeviceType() < ROC_PSI46DIG) { return DecodeSoftTBMAnalog(); }
+      // Decode digital ROC data:
+      else { return DecodeSoftTBMDigital(); }
+    }
+    else return DecodeDeser400();
   }
 
   Event* dtbEventDecoder::DecodeDeser400() {
@@ -345,29 +338,6 @@ namespace pxar {
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
   }
-  void dtbEventDecoder::CheckEventValidity(int16_t roc_n) {
-
-    // Check that we found all expected ROC headers:
-    // If the number of ROCs does not correspond to what we expect
-    // clear the event and return:
-    if(roc_n+1 != GetTokenChainLength()) {
-      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
-		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
-      decodingStats.m_errors_roc_missing++;
-      // Clearing event content:
-      roc_Event.Clear();
-    }
-    // Count empty events
-    else if(roc_Event.pixels.empty()) { 
-      decodingStats.m_info_events_empty++;
-      LOG(logDEBUGPIPES) << "Event is empty.";
-    }
-    // Count valid events
-    else {
-      decodingStats.m_info_events_valid++;
-      LOG(logDEBUGPIPES) << "Event is valid.";
-    }
-  }
 
   Event* dtbEventDecoder::DecodeDeser160() {
 
@@ -447,6 +417,53 @@ namespace pxar {
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
+  }
+
+  void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
+    // Check last bit of identifier nibble to be zero:
+    if((v & 0x1000) == 0x0000) { return; }
+    decodingStats.m_errors_event_invalid_words++;
+  }
+
+  void dtbEventDecoder::CheckEventID() {
+    // After startup, register the first event ID:
+    if(eventID == -1) { eventID = roc_Event.triggerCount(); }
+
+    // Check if TBM event ID matches with expectation:
+    if(roc_Event.triggerCount() != (eventID%256)) {
+      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
+		    << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
+      decodingStats.m_errors_tbm_eventid_mismatch++;
+      // To continue readout, set event ID to the currently decoded one:
+      eventID = roc_Event.triggerCount();
+    }
+
+    // Increment event counter:
+    eventID = (eventID%256) + 1;
+  }
+
+  void dtbEventDecoder::CheckEventValidity(int16_t roc_n) {
+
+    // Check that we found all expected ROC headers:
+    // If the number of ROCs does not correspond to what we expect
+    // clear the event and return:
+    if(roc_n+1 != GetTokenChainLength()) {
+      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
+		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
+      decodingStats.m_errors_roc_missing++;
+      // Clearing event content:
+      roc_Event.Clear();
+    }
+    // Count empty events
+    else if(roc_Event.pixels.empty()) { 
+      decodingStats.m_info_events_empty++;
+      LOG(logDEBUGPIPES) << "Event is empty.";
+    }
+    // Count valid events
+    else {
+      decodingStats.m_info_events_valid++;
+      LOG(logDEBUGPIPES) << "Event is valid.";
+    }
   }
 
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
