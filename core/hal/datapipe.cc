@@ -81,41 +81,6 @@ namespace pxar {
     return &record;
   }
 
-  rawEvent* dtbEventSplitter::SplitSoftTBM() {
-   record.Clear();
-
-   // If last one had Event end marker, get a new sample:
-   if (!nextStartDetected) { Get(); }
-
-   // If new sample does not have start marker keep on reading until we find it:
-   while ((GetLast() & 0xe000) != 0xa000) {
-     record.SetStartError();
-     Get();
-   }
-   record.Add(GetLast());
-
-   // Else keep reading and adding samples until we find any trailer marker.
-   while ((Get() & 0xe000) != 0xc000) {
-     // Check if the last read sample has Event end marker:
-     if ((GetLast() & 0xe000) == 0xa000) {
-       record.SetEndError();
-       nextStartDetected = true;
-       return &record;
-     }
-
-     // If total Event size is too big, break:
-     if (record.GetSize() < 40000) record.Add(GetLast());
-     else record.SetOverflow();
-   }
-   record.Add(GetLast());
-   nextStartDetected = false;
-
-   LOG(logDEBUGPIPES) << "-------------------------";
-   LOG(logDEBUGPIPES) << listVector(record.data,true);
-
-   return &record;
-  }
-
   rawEvent* passthroughSplitter::Read() {
     record.Clear();
     try {

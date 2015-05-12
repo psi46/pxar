@@ -106,8 +106,9 @@ namespace pxar {
   class dtbEventSplitter : public dataPipe<uint16_t, rawEvent*> {
     rawEvent record;
     rawEvent* Read() {
+      // Split the data stream according to DESER160 alignment markers:
       if(GetEnvelopeType() == TBM_NONE) return SplitDeser160();
-      else if(GetEnvelopeType() == TBM_EMU) return SplitSoftTBM();
+      // Split the data stream according to DESER400 / TBMEMU alignment markers:
       else return SplitDeser400();
     }
     rawEvent* ReadLast() { return &record; }
@@ -119,7 +120,6 @@ namespace pxar {
     // The splitter routines:
     rawEvent* SplitDeser160();
     rawEvent* SplitDeser400();
-    rawEvent* SplitSoftTBM();
 
     bool nextStartDetected;
   public:
