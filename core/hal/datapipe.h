@@ -146,7 +146,7 @@ namespace pxar {
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
-    void DecodeAnalog(rawEvent * sample);
+    void DecodeADC(rawEvent * sample);
     void DecodeDeser160(rawEvent * sample);
     void DecodeDeser400(rawEvent * sample);
     void ProcessTBM(rawEvent * sample);

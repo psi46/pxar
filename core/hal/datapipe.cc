@@ -106,7 +106,7 @@ namespace pxar {
     if(GetEnvelopeType() != TBM_NONE) { ProcessTBM(sample); }
 
     // Decode ADC Data for analog devices:
-    if(GetDeviceType() < ROC_PSI46DIG) { DecodeAnalog(sample); }
+    if(GetDeviceType() < ROC_PSI46DIG) { DecodeADC(sample); }
     // Decode DESER400 Data for digital devices and TBMs:
     else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
     // Decode DESER160 Data for digital devices without real TBM
@@ -264,7 +264,7 @@ namespace pxar {
     else { variable = (variable + expandSign(dataword & 0x0fff))/2; }
   }
 
-  void dtbEventDecoder::DecodeAnalog(rawEvent * sample) {
+  void dtbEventDecoder::DecodeADC(rawEvent * sample) {
     LOG(logDEBUGPIPES) << "Decoding ROC data from ADC...";
 
     int16_t roc_n = -1;
