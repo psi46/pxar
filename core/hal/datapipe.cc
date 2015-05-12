@@ -377,9 +377,15 @@ namespace pxar {
       roc_Event.Clear();
     }
     // Count empty events
-    else if(roc_Event.pixels.empty()) { decodingStats.m_info_events_empty++; }
+    else if(roc_Event.pixels.empty()) { 
+      decodingStats.m_info_events_empty++;
+      LOG(logDEBUGPIPES) << "Event is empty.";
+    }
     // Count valid events
-    else { decodingStats.m_info_events_valid++; }
+    else {
+      decodingStats.m_info_events_valid++;
+      LOG(logDEBUGPIPES) << "Event is valid.";
+    }
   }
 
   Event* dtbEventDecoder::DecodeDeser160() {
