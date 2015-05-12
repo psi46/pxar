@@ -174,7 +174,7 @@ namespace pxar {
     // Error checking:
     void CheckEventValidity(int16_t roc_n);
     void CheckInvalidWord(uint16_t v);
-    void CheckEventID(uint16_t v);
+    void CheckEventID();
     int16_t eventID;
 
     // Analog level averaging:

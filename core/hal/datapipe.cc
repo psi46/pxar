@@ -98,17 +98,17 @@ namespace pxar {
     decodingStats.m_errors_event_invalid_words++;
   }
 
-  void dtbEventDecoder::CheckEventID(uint16_t v) {
+  void dtbEventDecoder::CheckEventID() {
     // After startup, register the first event ID:
-    if(eventID == -1) { eventID = (v&0x00ff); }
+    if(eventID == -1) { eventID = roc_Event.triggerCount(); }
 
     // Check if TBM event ID matches with expectation:
-    if((v&0x00ff) != (eventID%256)) {
+    if(roc_Event.triggerCount() != (eventID%256)) {
       LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
-		    << ") !=  TBM ID (" << static_cast<int>(v&0x00ff) << ")";
+		    << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
       decodingStats.m_errors_tbm_eventid_mismatch++;
       // To continue readout, set event ID to the currently decoded one:
-      eventID = (v&0x00ff);
+      eventID = roc_Event.triggerCount();
     }
 
     // Increment event counter:
