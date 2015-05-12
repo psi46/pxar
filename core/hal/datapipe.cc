@@ -410,7 +410,10 @@ namespace pxar {
 	// Require that we found at least one ROC header:
 	else if(roc_n >= 0) {
 	  // Not enough data for a new pixel hit (two words):
-	  if(pos >= n-1) break;
+	  if(pos >= n-1) {
+	    decodingStats.m_errors_pixel_incomplete++;
+	    break;
+	  }
 
 	  uint32_t raw = ((*sample)[pos++] & 0x0fff) << 12;
 	  raw += (*sample)[pos++] & 0x0fff;
