@@ -101,25 +101,26 @@ namespace pxar {
   }
 
   void Event::printHeader() {
-    LOG(logINFO) << " Evt ID " << static_cast<int>(this->triggerCount());
+    LOG(logINFO) << "Header content: 0x" << std::hex << header << std::dec;
+    LOG(logINFO) << "\t Event ID \t" << static_cast<int>(this->triggerCount());
     LOG(logINFO) << "\t Data ID " << static_cast<int>(this->dataID()) 
 		       << " Value " << static_cast<int>(this->dataValue());
   }
 
   void Event::printTrailer() {
-    LOG(logINFO) << "Trailer content: " << std::hex << trailer << std::dec;
-    LOG(logINFO) << "\t Token Pass " << textBool(this->hasTokenPass());
-    LOG(logINFO) << "\t REST " << textBool(this->hasResetTBM());
-    LOG(logINFO) << "\t RESR " << textBool(this->hasResetROC());
-    LOG(logINFO) << "\t Sync Err " << textBool(this->hasSyncError());
-    LOG(logINFO) << "\t Sync Trigger " << textBool(this->hasSyncTrigger());
-    LOG(logINFO) << "\t Clear Trig Count " << textBool(this->hasClearTriggerCount());
-    LOG(logINFO) << "\t Cal Trigger " << textBool(this->hasCalTrigger());
-    LOG(logINFO) << "\t Stack Full " << textBool(this->stackFull());
+    LOG(logINFO) << "Trailer content: 0x" << std::hex << trailer << std::dec;
+    LOG(logINFO) << "\t Token Pass \t" << textBool(this->hasTokenPass());
+    LOG(logINFO) << "\t Reset TBM \t" << textBool(this->hasResetTBM());
+    LOG(logINFO) << "\t Reset ROC \t" << textBool(this->hasResetROC());
+    LOG(logINFO) << "\t Sync Err \t" << textBool(this->hasSyncError());
+    LOG(logINFO) << "\t Sync Trigger \t" << textBool(this->hasSyncTrigger());
+    LOG(logINFO) << "\t ClearTrig Cnt \t" << textBool(this->hasClearTriggerCount());
+    LOG(logINFO) << "\t Cal Trigger \t" << textBool(this->hasCalTrigger());
+    LOG(logINFO) << "\t Stack Full \t" << textBool(this->stackFull());
 
-    LOG(logINFO) << "\t Stack Full Now/Auto Reset " << textBool(this->hasAutoReset());
-    LOG(logINFO) << "\t PKAM Reset " << textBool(this->hasPkamReset());
-    LOG(logINFO) << "\t Stack Count " << static_cast<int>(this->stackCount());
+    LOG(logINFO) << "\t Auto Reset \t" << textBool(this->hasAutoReset());
+    LOG(logINFO) << "\t PKAM Reset \t" << textBool(this->hasPkamReset());
+    LOG(logINFO) << "\t Stack Count \t" << static_cast<int>(this->stackCount());
   }
 
   void statistics::dump() {
