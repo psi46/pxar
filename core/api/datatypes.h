@@ -392,9 +392,10 @@ namespace pxar {
    */
   class DLLEXPORT tbmConfig {
   public:
-  tbmConfig() : dacs(), type(0), enable(true) {}
+  tbmConfig() : dacs(), type(0), tokenchains(), enable(true) {}
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
+    std::vector<uint8_t> tokenchains;
     bool enable;
   };
 

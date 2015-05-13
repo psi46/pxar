@@ -188,7 +188,10 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Set the TBM type (get value from dictionary)
     newtbm.type = stringToDeviceCode(tbmtype);
     if(newtbm.type == 0x0) return false;
-    
+    // Standard setup for token chain lengths:
+    else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
+    else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
+
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
      
@@ -196,9 +199,18 @@ bool pxarCore::initDUT(uint8_t hubid,
       uint8_t tbmregister, value = dacIt->second;
       if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
 
-      // Check if this is a special setting:
-      if(tbmregister == 0xFF) { // Token Chain length
-	LOG(logDEBUGAPI) << "This TBM Core is configured to have a token chain of "
+      // Check if this is a token chain length and store it:
+      if(newtbm.tokenchains.size() > 0 && tbmregister == TBM_TOKENCHAIN_0) {
+	newtbm.tokenchains.at(0) = value;
+	LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin()) 
+			 << " data stream 1 configured to have a token chain with "
+			 << static_cast<int>(value) << " ROCs.";
+	continue;
+      }
+      if(newtbm.tokenchains.size() > 1 && tbmregister == TBM_TOKENCHAIN_1) {
+	newtbm.tokenchains.at(1) = value;
+	LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin()) 
+			 << " data stream 2 configured to have a token chain with "
 			 << static_cast<int>(value) << " ROCs.";
 	continue;
       }
@@ -227,6 +239,7 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Prepare a new TBM configuration and copy over all settings:
     tbmConfig newtbm;
     newtbm.type = _dut->tbm.at(0).type;
+    newtbm.tokenchains = _dut->tbm.at(0).tokenchains;
     
     for(std::map<uint8_t,uint8_t>::iterator reg = _dut->tbm.at(0).dacs.begin(); reg != _dut->tbm.at(0).dacs.end(); ++reg) {
       uint8_t tbmregister = reg->first;
@@ -247,6 +260,14 @@ bool pxarCore::initDUT(uint8_t hubid,
     // We expect the direct TokenOut signal from a ROC which needs LVDS termination:
     _hal->SigSetLVDS();
     LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LVDS.";
+  }
+
+  // Printout for final token chain lengths selected for each TBM channel and calculate the sum:
+  uint16_t nrocs_total = 0;
+  for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
+    LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbm - _dut->tbm.begin()) 
+		     << " Token Chains: " << listVector(tbm->tokenchains);
+    for(size_t i = 0; i < tbm->tokenchains.size(); i++) { nrocs_total += tbm->tokenchains.at(i); }
   }
 
   // Initialize ROCs:
@@ -297,6 +318,14 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Done. Enable bit is already set by rocConfig constructor.
     _dut->roc.push_back(newroc);
   }
+
+  // Check number of ROCs agains total token chain length:
+  if(!_dut->tbm.empty() && _dut->roc.size() != nrocs_total) {
+    LOG(logCRITICAL) << "Hm, we have " << _dut->roc.size() << " ROC configurations but a total token chain length of " << nrocs_total << " ROCs.";
+    LOG(logCRITICAL) << "This cannot end well...";
+    throw InvalidConfig("Mismatch between number of ROC configurations and total token chain length.");
+  }
+
 
   // All data is stored in the DUT struct, now programming it.
   _dut->_initialized = true;
