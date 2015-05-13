@@ -189,6 +189,7 @@ bool pxarCore::initDUT(uint8_t hubid,
     newtbm.type = stringToDeviceCode(tbmtype);
     if(newtbm.type == 0x0) return false;
     // Standard setup for token chain lengths:
+    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
     else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
     else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
 
