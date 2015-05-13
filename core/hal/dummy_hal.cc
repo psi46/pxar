@@ -60,7 +60,13 @@ hal::hal(std::string /*name*/) :
   _initialized(false),
   _compatible(false),
   m_tbmtype(TBM_NONE),
+  m_adctimeout(300),
+  m_tindelay(13),
+  m_toutdelay(8),
   deser160phase(4),
+  m_roctype(0),
+  m_roccount(0),
+  m_tokenchains(),
   _currentTrgSrc(TRG_SEL_PG_DIR)
 {
   // Print the useful SW/FW versioning info:
@@ -118,8 +124,19 @@ bool hal::flashTestboard(std::ifstream& /*flashFile*/) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > /*regVector*/) {
+void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
+  // Store the token chain lengths:
   m_tbmtype = type;
+  for(std::vector<uint8_t>::iterator i = tokenchains.begin(); i != tokenchains.end(); i++) {
+    m_tokenchains.push_back(*i);
+  }
+
+  // Set the hub address for the modules (BPIX default is 31)
+  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
+
+  // Program all registers according to the configuration data:
+  LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
+		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
 }
 
 void hal::setTBMType(uint8_t type) {
@@ -132,8 +149,10 @@ void hal::initROC(uint8_t roci2c, uint8_t type, std::map< uint8_t,uint8_t > dacV
   if(type == ROC_PSI46DIG || type == ROC_PSI46DIG_TRIG) {
     LOG(logDEBUGHAL) << "Pixel address is inverted in this ROC type.";
   }
-  // FIXME
+  // Store ROC type for later HAL usage:
   m_roctype = type;
+  m_roccount++;
+  LOG(logDEBUGHAL) << "Currently have " << static_cast<int>(m_roccount) << " ROCs in HAL";
 
   // Programm all DAC registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting DAC vector for ROC@I2C " << static_cast<int>(roci2c) << ".";

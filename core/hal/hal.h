@@ -55,7 +55,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector);
+    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains);
 
     /** Change the type of the TBM type member in HAL
      */
@@ -412,6 +412,7 @@ namespace pxar {
     uint8_t deser160phase;
     uint8_t m_roctype;
     uint8_t m_roccount;
+    std::vector<uint8_t> m_tokenchains;
     uint8_t hubId;
 
     uint16_t _currentTrgSrc;

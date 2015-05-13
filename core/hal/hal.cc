@@ -21,6 +21,7 @@ hal::hal(std::string name) :
   deser160phase(4),
   m_roctype(0),
   m_roccount(0),
+  m_tokenchains(),
   _currentTrgSrc(TRG_SEL_PG_DIR)
 {
 
@@ -277,16 +278,18 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector) {
+void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
-  // FIXME
+  // Store the token chain lengths:
   m_tbmtype = type;
+  for(std::vector<uint8_t>::iterator i = tokenchains.begin(); i != tokenchains.end(); i++) {
+    m_tokenchains.push_back(*i);
+  }
 
-  // FIXME Beat: 31 is default hub address for the new modules:
+  // Set the hub address for the modules (BPIX default is 31)
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
-
   _testboard->mod_Addr(hubId);
   _testboard->Flush();
 
