@@ -164,7 +164,9 @@ namespace pxar {
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
 
       // Special TBM settings:
-      _registers["tokenchain"]    = dacConfig(TBM_TOKENCHAIN,8,TBM_REG);
+      _registers["nrocs"]         = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
+      _registers["nrocs1"]        = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
+      _registers["nrocs2"]        = dacConfig(TBM_TOKENCHAIN_1,8,TBM_REG);
 
       //------- ROC registers -----------------------------
       // DAC name, register and size reference:
