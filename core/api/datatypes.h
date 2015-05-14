@@ -342,10 +342,13 @@ namespace pxar {
   class DLLEXPORT pixelConfig {
   public:
   pixelConfig() : 
-    _column(0), _row(0), 
+    _column(0), _row(0), _roc_id(0),
       _trim(15), _mask(true), _enable(false) {}
   pixelConfig(uint8_t column, uint8_t row, uint8_t trim, bool mask = true, bool enable = false) : 
-    _column(column), _row(row), _trim(trim),
+    _column(column), _row(row), _roc_id(0), _trim(trim),
+      _mask(mask), _enable(enable) {}
+  pixelConfig(uint8_t roc, uint8_t column, uint8_t row, uint8_t trim, bool mask = true, bool enable = false) : 
+    _column(column), _row(row), _roc_id(roc), _trim(trim),
       _mask(mask), _enable(enable) {}
     uint8_t column() const { return _column; }
     void setColumn(uint8_t column) { _column = column; }
