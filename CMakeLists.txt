@@ -200,7 +200,7 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 ##################################################
 
 # Include directories
-INCLUDE_DIRECTORIES(core/api core/utils)
+INCLUDE_DIRECTORIES(core/api core/utils core/decoder)
 
 # Always build main pxar API library;
 ADD_SUBDIRECTORY(core)

@@ -8,7 +8,7 @@ SET(LIB_SOURCE_FILES
   "api/datatypes.cc"
   "api/dut.cc"
   # Decoder modules
-  "hal/datapipe.cc"
+  "decoder/datapipe.cc"
   )
 
 # If both interfaces are disabled, build a Dummy DTB responding to API calls:
