@@ -363,6 +363,7 @@ bool pxarCore::programDUT() {
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->AllColumnsSetEnable(rocit->i2c_address,true);
   }
+
   // Also clear all calibrate signals:
   SetCalibrateBits(false);
 
@@ -1197,16 +1198,17 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   
   // Check if we want to program the DUT or just leave it:
   if(init) {
+    // Attaching all columns to the readout:
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+    }
+
     // Setup the configured mask and trim state of the DUT:
     MaskAndTrim(true);
 
     // Set Calibrate bits in the PUCs (we use the testrange for that):
     SetCalibrateBits(true);
 
-    // Attaching all columns to the readout:
-    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
-    }
   }
   else if(!_daq_startstop_warning){
     LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; 
