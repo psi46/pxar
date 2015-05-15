@@ -22,6 +22,7 @@ hal::hal(std::string name) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
+  m_daqstatus(),
   _currentTrgSrc(TRG_SEL_PG_DIR)
 {
 
@@ -1624,6 +1625,7 @@ void hal::SigSetLVDS(){
 void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
+  for(uint8_t channel = 0; channel < 8; channel++) { m_daqstatus.push_back(false); }
 
   // Clear all decoder instances:
   decoder0.Clear(); decoder1.Clear(); decoder2.Clear(); decoder3.Clear();
@@ -1668,6 +1670,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     // And start the DAQ:
     _testboard->Daq_Start(1);
+    m_daqstatus.at(1) = true;
 
     // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
     if(m_tbmtype >= TBM_09) {
@@ -1685,7 +1688,9 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
       // Start the DAQ also for channel 2 and 3:
       _testboard->Daq_Start(2);
+      m_daqstatus.at(2) = true;
       _testboard->Daq_Start(3);
+      m_daqstatus.at(3) = true;
     }
   }
   // Data acquisition without real TBM:
@@ -1717,6 +1722,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     // Start DAQ in channel 0:
   _testboard->Daq_Start(0);
+  m_daqstatus.at(0) = true;
   _testboard->uDelay(100);
   _testboard->Flush();
 }
@@ -2037,9 +2043,11 @@ void hal::daqTriggerLoopHalt() {
 uint32_t hal::daqBufferStatus() {
 
   uint32_t buffered_data = 0;
-  // Summing up data words in all DAQ channels:
+  // Summing up data words in all active DAQ channels:
   for(uint8_t channel = 0; channel < 8; channel++) {
-    buffered_data += _testboard->Daq_GetSize(channel);
+    if(m_daqstatus.size() > channel && m_daqstatus.at(channel)) {
+      buffered_data += _testboard->Daq_GetSize(channel);
+    }
   }
   return buffered_data;
 }
@@ -2096,6 +2104,7 @@ void hal::daqClear() {
   // Running Daq_Close() to delete all data and free allocated RAM:
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
   for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
+  m_daqstatus.clear();
 }
 
 std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start, uint8_t stop){
