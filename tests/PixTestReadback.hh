@@ -30,7 +30,6 @@ public:
   std::vector<uint8_t> daqReadback(std::string dac, double vana, int8_t parReadback);
   std::vector<uint8_t> daqReadbackIa();
   void CalibrateIa();
-  void CalibrateVana();
   void CalibrateVd();
   void CalibrateVa();
   std::vector<double> getCalibratedVbg();
@@ -50,15 +49,10 @@ private:
 
   uint8_t  fParReadback;
   uint16_t fParPeriod;
-  //  uint16_t fParStretch; 
-  //  bool     fParFillTree;
-  //  uint16_t fParTriggerFrequency;
-  //bool	   fParResetROC;
   
   bool     fPhCalOK;
   PHCalibration fPhCal;
   bool	   fParOutOfRange;
-  //  bool     fDaq_loop;
 
   std::vector<double> fPar0VdCal;  
   std::vector<double> fPar1VdCal;  
