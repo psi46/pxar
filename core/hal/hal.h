@@ -413,6 +413,8 @@ namespace pxar {
     uint8_t m_roctype;
     uint8_t m_roccount;
     std::vector<uint8_t> m_tokenchains;
+    // Store which channels are active:
+    std::vector<bool> m_daqstatus;
     uint8_t hubId;
 
     uint16_t _currentTrgSrc;

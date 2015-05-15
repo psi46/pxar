@@ -11,7 +11,9 @@ namespace pxar {
 
     // Split the data stream according to DESER160 alignment markers:
     if(GetEnvelopeType() == TBM_NONE) { SplitDeser160(); }
-    // Split the data stream according to DESER400 / TBMEMU alignment markers:
+    // Split the data stream according to TBMEMU alignment markers:
+    else if(GetEnvelopeType() == TBM_EMU) { SplitSoftTBM(); }
+    // Split the data stream according to DESER400 alignment markers:
     else { SplitDeser400(); }
 
     LOG(logDEBUGPIPES) << "SINGLE SPLIT EVENT:";
@@ -35,6 +37,34 @@ namespace pxar {
 
     // Else keep reading and adding samples until we find any marker.
     while ((Get() & 0xe000) != 0xc000) {
+      // Check if the last read sample has Event end marker:
+      if ((GetLast() & 0xe000) == 0xa000) {
+	record.SetEndError();
+	nextStartDetected = true;
+	return;
+      }
+      // If total Event size is too big, break:
+      if (record.GetSize() < 40000) record.Add(GetLast());
+      else record.SetOverflow();
+    }
+    record.Add(GetLast());
+    nextStartDetected = false;
+  }
+
+  void dtbEventSplitter::SplitSoftTBM() {
+    // If last one had Event end marker, get a new sample:
+    if (!nextStartDetected) { Get(); }
+
+    // If new sample does not have start marker keep on reading until we find it:
+    if ((GetLast() & 0xe000) != 0xa000) {
+      record.SetStartError();
+      Get();
+    }
+    record.Add(GetLast());
+
+    // Else keep reading and adding samples until we find the last trailer marker.
+    // Make sure to look for "c0" and not "c" - the latter one is also the DESER160 end marker!
+    while ((Get() & 0xef00) != 0xc000) {
       // Check if the last read sample has Event end marker:
       if ((GetLast() & 0xe000) == 0xa000) {
 	record.SetEndError();
