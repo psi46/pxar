@@ -26,6 +26,7 @@ namespace pxar {
     virtual T Read() = 0;
     virtual uint8_t ReadChannel() = 0;
     virtual uint8_t ReadTokenChainLength() = 0;
+    virtual uint8_t ReadPrecedingTokenChainLength() = 0;
     virtual uint8_t ReadEnvelopeType() = 0;
     virtual uint8_t ReadDeviceType() = 0;
   public:
@@ -44,6 +45,7 @@ namespace pxar {
     T Read()     { return ReadLast();     }
     uint8_t ReadChannel() { throw dpNotConnected(); }
     uint8_t ReadTokenChainLength() { throw dpNotConnected(); }
+    uint8_t ReadPrecedingTokenChainLength() { throw dpNotConnected(); }
     uint8_t ReadEnvelopeType() { throw dpNotConnected(); }
     uint8_t ReadDeviceType() { throw dpNotConnected(); }
     template <class TO> friend class dataSink;
@@ -63,6 +65,7 @@ namespace pxar {
     T Get() { return src->Read(); }
     uint8_t GetChannel() { return src->ReadChannel(); }
     uint8_t GetTokenChainLength() { return src->ReadTokenChainLength(); }
+    uint8_t GetPrecedingTokenChainLength() { return src->ReadPrecedingTokenChainLength(); }
     uint8_t GetEnvelopeType() { return src->ReadEnvelopeType(); }
     uint8_t GetDeviceType() { return src->ReadDeviceType(); }
     void GetAll() { while (true) Get(); }
@@ -109,6 +112,7 @@ namespace pxar {
     rawEvent* ReadLast() { return &record; }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
+    uint8_t ReadPrecedingTokenChainLength() { return GetPrecedingTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
@@ -130,6 +134,7 @@ namespace pxar {
     rawEvent* ReadLast() { return &record; }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
+    uint8_t ReadPrecedingTokenChainLength() { return GetPrecedingTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
   public:
@@ -143,6 +148,7 @@ namespace pxar {
     Event* ReadLast() { return &roc_Event; }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
+    uint8_t ReadPrecedingTokenChainLength() { return GetPrecedingTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
