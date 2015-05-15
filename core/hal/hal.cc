@@ -1608,6 +1608,12 @@ void hal::SigSetMode(uint8_t signal, uint8_t mode) {
     _testboard->Flush();
 }
 
+void hal::SigSetPRBS(uint8_t signal, uint8_t speed) {
+  _testboard->Sig_SetPRBS(signal, speed);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
 void hal::SigSetLCDS(){
     _testboard->Sig_SetLCDS();
     _testboard->uDelay(100);

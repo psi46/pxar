@@ -2355,18 +2355,20 @@ bool pxarCore::setExternalClock(bool enable) {
   }
 }
 
-void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
- 
+void pxarCore::setSignalMode(std::string signal, uint8_t mode, uint8_t speed) {
+
   uint8_t sigRegister, value = 0;
   if(!verifyRegister(signal, sigRegister, value, DTB_REG)) return;
   
   LOG(logDEBUGAPI) << "Setting signal " << signal << " (" 
 		   << static_cast<int>(sigRegister) << ")  to mode "
 		   << static_cast<int>(mode) << ".";
-  _hal->SigSetMode(sigRegister, mode);
+
+  if(mode == 3) { _hal->SigSetPRBS(sigRegister, speed); }
+  else { _hal->SigSetMode(sigRegister, mode); }
 }
 
-void pxarCore::setSignalMode(std::string signal, std::string mode) {
+void pxarCore::setSignalMode(std::string signal, std::string mode, uint8_t speed) {
  
   uint8_t modeValue = 0xff;
 
@@ -2383,7 +2385,7 @@ void pxarCore::setSignalMode(std::string signal, std::string mode) {
   }
 
   // Set the signal mode:
-  setSignalMode(signal, modeValue);
+  setSignalMode(signal, modeValue, speed);
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)

@@ -857,6 +857,8 @@ std::vector<uint16_t> hal::daqADC(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, 
 
 void hal::SigSetMode(unsigned char, unsigned char) {}
 
+void hal::SigSetPRBS(unsigned char, unsigned char) {}
+
 std::vector<std::vector<uint16_t> > hal::daqReadback() {
   return std::vector<std::vector<uint16_t> >();
 }

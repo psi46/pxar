@@ -87,7 +87,10 @@ namespace pxar {
     /** select signal mode
      */
     void SigSetMode(uint8_t signal, uint8_t mode);
-    
+
+    /** set signal to random output PRBS
+     */
+    void SigSetPRBS(uint8_t signal, uint8_t speed);
     
     /** select termination for RDA/TOUT to LCDS (for modules)
      */
