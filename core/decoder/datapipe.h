@@ -115,6 +115,7 @@ namespace pxar {
     // The splitter routines:
     void SplitDeser160();
     void SplitDeser400();
+    void SplitSoftTBM();
 
     bool nextStartDetected;
   public:
