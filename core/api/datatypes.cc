@@ -44,7 +44,7 @@ namespace pxar {
     // Check pixel data length:
     if(analog.size() != 6) {
       LOG(logDEBUGAPI) << "Received wrong number of data words for a pixel: " << analog.size();
-      throw DataInvalidAddressError("Received wrong number of data words for a pixel: " + analog.size());
+      throw DataInvalidAddressError("Received wrong number of data words for a pixel");
     }
 
     // Calculate the levels:
