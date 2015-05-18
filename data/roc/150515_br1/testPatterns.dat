@@ -1,0 +1,41 @@
+
+-- Pattern
+
+delay , 255
+delay , 219
+cal   , 106
+
+trg   , 20
+tok   , 219
+delay , 255
+cal   , 106
+
+trg   , 20
+tok   , 219
+delay , 255
+cal   , 106
+
+trg   , 20
+tok   , 219
+delay , 255
+cal   , 106
+
+trg   , 20
+tok   , 70
+delay , 255
+delay , 255
+
+trg   , 20
+tok   , 0
+
+
+-- Test Pixels (col,row)
+pix  15 , 40
+pix  25 , 40
+pix  51 , 40
+
+-- Unmask Pixels (col,row)
+pix  8 , 46
+pix  10 , 21
+pix  11 , 36
+

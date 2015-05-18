@@ -1,0 +1,40 @@
+testboardName *
+
+-- parameter files
+
+tbParameters tbParameters.dat
+dacParameters dacParameters
+tbmParameters tbmParameters
+trimParameters trimParameters
+testParameters testParameters.dat
+maskFile defaultMaskFile.dat
+rootFileName pxar.root
+#gainPedestalParameters phCalibrationFitTanH
+#gainPedestalParameters phCalibrationFitPol2
+gainPedestalParameters phCalibrationFitErr
+
+-- configuration
+
+nModules 1
+#nRocs 1 i2c: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+nRocs 1
+nTbms 0
+hubId 0
+tbmEnable 0
+tbmEmulator 0
+hvOn 1
+tbmChannel 0
+rocType psi46digv21respin
+
+probeA1 sdata1
+probeA2 sdata2
+probeD1 clk
+probeD2 ctr
+
+-- voltages and current limits
+
+ia 1.190
+id 1.100
+va 1.900
+vd 2.600
+

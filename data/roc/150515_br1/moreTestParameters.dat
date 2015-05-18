@@ -1,0 +1,37 @@
+-- Pattern
+externalclk         checkbox(0)
+triggerloop         checkbox(0)
+seconds             5
+period              1000
+pgcycles            100
+patternfromfile     checkbox(0)
+unmaskall           checkbox(0)
+inputfile           testPatterns
+filltree            checkbox(0)
+resultsonfile       checkbox(0)
+binaryoutput        checkbox(0)
+outputfile          defaultPattern
+resettodefault      button
+
+-- BareModule
+stepmax(1-3)        3
+bbmap               checkbox(1)
+bb2map(desy)        checkbox
+checkcontact        button
+pretest             button
+alive               button
+bumpbonding         button
+dofullsequence      button
+
+-- DAQ
+delayTBM            checkbox
+filltree            checkbox
+trgfrequency(khz)   100
+maskHotPixels       button
+trgnumber           5
+iterations          10
+rundaqtrg           button
+daqseconds          5
+rundaqseconds       button
+
+

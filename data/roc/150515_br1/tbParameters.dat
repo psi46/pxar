@@ -1,0 +1,6 @@
+  0             clk    4
+  1             ctr    4
+  2             sda   19
+  3             tin    9
+  4           level   15
+254   deser160phase    4
