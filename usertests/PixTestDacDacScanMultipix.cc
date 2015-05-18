@@ -203,7 +203,7 @@ void PixTestDacDacScanMultipix::doTest() {
     std::cout << "filling fPix:" << std::endl;
     fPIX.clear();
     for(int ic = 0; ic < 52; ic++){
-      for(int ir = 0; ir < 80; ir+=5){
+      for(int ir = 0; ir < 80; ir+=39){
         fPIX.push_back(make_pair(ic,ir));
       }
     }
@@ -246,7 +246,7 @@ void PixTestDacDacScanMultipix::doTest() {
     bool done = false;
     int cnt(0); 
     pxlnumber = pxlnumber +1;
-    percentdone = 100*pxlnumber/832;
+    percentdone = 100*pxlnumber/156;
     LOG(logINFO) << "testing pixel number "<<pxlnumber<<"; c" << fPIX[i].first << " r" << fPIX[i].second;
     LOG(logINFO) << percentdone<<" percent done. ";
 
