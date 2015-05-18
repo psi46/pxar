@@ -130,15 +130,23 @@ namespace pxar {
 #define MHZ_40     0
 
 // --- Trigger settings -------------------------------------------------------
-#define TRG_SEL_ASYNC      0x100
-#define TRG_SEL_SYNC       0x080
-#define TRG_SEL_SINGLE     0x040
-#define TRG_SEL_GEN        0x020
-#define TRG_SEL_PG         0x010
-#define TRG_SEL_SINGLE_DIR 0x008
-#define TRG_SEL_PG_DIR     0x004
-#define TRG_SEL_CHAIN      0x002
-#define TRG_SEL_SYNC_OUT   0x001
+// Via TBM Emulator:
+#define TRG_SEL_ASYNC      0x0100
+#define TRG_SEL_SYNC       0x0080
+#define TRG_SEL_SINGLE     0x0040
+#define TRG_SEL_GEN        0x0020
+#define TRG_SEL_PG         0x0010
+
+// Direct signals:
+#define TRG_SEL_ASYNC_DIR  0x0800
+#define TRG_SEL_SYNC_DIR   0x0400
+#define TRG_SEL_SINGLE_DIR 0x0008
+#define TRG_SEL_GEN_DIR    0x0200
+#define TRG_SEL_PG_DIR     0x0004
+
+// Sync signals:
+#define TRG_SEL_CHAIN      0x0002
+#define TRG_SEL_SYNC_OUT   0x0001
 
 #define TRG_SEND_SYN   1
 #define TRG_SEND_TRG   2
