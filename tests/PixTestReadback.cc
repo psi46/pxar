@@ -321,7 +321,7 @@ void PixTestReadback::CalibrateIa(){
 
   vector<uint8_t> readback;
   vector<uint8_t> readback_allRocs;
-  for(int i=0; i< fApi->_dut->getNRocs(); i++){
+  for(unsigned int i=0; i< fApi->_dut->getNRocs(); i++){
     readback_allRocs.push_back(0);
   }
 
