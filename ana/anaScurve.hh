@@ -17,7 +17,7 @@ class DLLEXPORT anaScurve {
   
  public: 
   anaScurve(std::string dir, int nrocs = 16); 
-  ~anaScurve(); 
+  virtual ~anaScurve(); 
   
   void makeAll(std::string directory, int mode = 0 );
   void readAsciiFiles(std::string directory);
