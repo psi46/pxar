@@ -363,6 +363,7 @@ bool pxarCore::programDUT() {
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->AllColumnsSetEnable(rocit->i2c_address,true);
   }
+
   // Also clear all calibrate signals:
   SetCalibrateBits(false);
 
@@ -1197,16 +1198,17 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   
   // Check if we want to program the DUT or just leave it:
   if(init) {
+    // Attaching all columns to the readout:
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+    }
+
     // Setup the configured mask and trim state of the DUT:
     MaskAndTrim(true);
 
     // Set Calibrate bits in the PUCs (we use the testrange for that):
     SetCalibrateBits(true);
 
-    // Attaching all columns to the readout:
-    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
-    }
   }
   else if(!_daq_startstop_warning){
     LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; 
@@ -2353,18 +2355,20 @@ bool pxarCore::setExternalClock(bool enable) {
   }
 }
 
-void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
- 
+void pxarCore::setSignalMode(std::string signal, uint8_t mode, uint8_t speed) {
+
   uint8_t sigRegister, value = 0;
   if(!verifyRegister(signal, sigRegister, value, DTB_REG)) return;
   
   LOG(logDEBUGAPI) << "Setting signal " << signal << " (" 
 		   << static_cast<int>(sigRegister) << ")  to mode "
 		   << static_cast<int>(mode) << ".";
-  _hal->SigSetMode(sigRegister, mode);
+
+  if(mode == 3) { _hal->SigSetPRBS(sigRegister, speed); }
+  else { _hal->SigSetMode(sigRegister, mode); }
 }
 
-void pxarCore::setSignalMode(std::string signal, std::string mode) {
+void pxarCore::setSignalMode(std::string signal, std::string mode, uint8_t speed) {
  
   uint8_t modeValue = 0xff;
 
@@ -2381,7 +2385,7 @@ void pxarCore::setSignalMode(std::string signal, std::string mode) {
   }
 
   // Set the signal mode:
-  setSignalMode(signal, modeValue);
+  setSignalMode(signal, modeValue, speed);
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)

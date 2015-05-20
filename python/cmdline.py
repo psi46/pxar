@@ -678,10 +678,10 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_analogLevelScan.__doc__, '']
 
-    @arity(2,2,[str, str])
-    def do_setSignalMode(self, signal, mode):
-        """setSignalMode [signal] [mode]: Set the DTB signal to given mode (normal, low, high, random)"""
-        self.api.setSignalMode(signal, mode)
+    @arity(2,3,[str, str, int])
+    def do_setSignalMode(self, signal, mode, speed = 0):
+        """setSignalMode [signal] [mode] [speed]: Set the DTB signal to given mode (normal, low, high, random). The [speed] parameter is only necessary for random signal mode."""
+        self.api.setSignalMode(signal, mode, speed)
 
     def complete_setSignalMode(self, text, line, start_index, end_index):
         if text and len(line.split(" ")) <= 2: # first argument and started to type
