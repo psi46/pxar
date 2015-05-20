@@ -34,7 +34,7 @@ class DLLEXPORT anaFullTest {
   
  public: 
   anaFullTest(); 
-  ~anaFullTest(); 
+  virtual ~anaFullTest(); 
 
   void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
   void validateFullTests();

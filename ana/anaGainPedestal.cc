@@ -76,7 +76,7 @@ void anaGainPedestal::test(double y0, double y1) {
   if (0) {
     TF1 *f = pif.weibullCdf(h);
     cout << "fitting " <<  h->GetName() << " with weibull cdf" << endl;
-    //    TFitResult *fr = h->Fit(f, "");
+    TFitResultPtr fr = h->Fit(f, "");
   }
 
   if (1) {
