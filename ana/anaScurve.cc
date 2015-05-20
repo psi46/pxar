@@ -38,14 +38,14 @@ anaScurve::~anaScurve() {
 
 
 // ----------------------------------------------------------------------
-void anaScurve::makeAll(string directory, int mode) {
+void anaScurve::makeAll(string directory, int /*mode*/) {
   readAsciiFiles(directory); 
   fitErr();
 }
 
 
 // ----------------------------------------------------------------------
-void anaScurve::test(double y0, double y1) {
+void anaScurve::test(double /*y0*/, double /*y1*/) {
   TH1D *h = new TH1D("h", "h", 50, 20., 70.); 
   h->SetMarkerStyle(20); 
 

@@ -950,6 +950,54 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_findAnalogueTBDelays.__doc__, '']
 
+    @arity(0,3,[int, int, int])
+    def do_wbcScan(self, minWBC = 90, maxTriggers = 10, maxWBC = 255):
+        """ do_wbcScan [minWBC] [maxTriggers]: sets the values of wbc from minWBC until it finds the wbc which has more than 90% filled events or it reaches 255 (default minWBC 90)"""
+
+        self.api.daqTriggerSource("extern")
+        wbcScan = []
+        print "wbc \tyield"
+
+        # loop over wbc
+        for wbc in range (minWBC,maxWBC):
+            self.api.setDAC("wbc", wbc)
+            self.api.daqStart()
+            nHits       = 0
+            nTriggers   = 0
+
+            #loop until you find maxTriggers
+            while nTriggers < maxTriggers:
+                try:
+                    data = self.api.daqGetEvent()
+                    if len(data.pixels) > 0:
+                       nHits += 1
+                    nTriggers += 1
+                except RuntimeError:
+                    pass
+
+            hitYield = 100*nHits/maxTriggers
+            wbcScan.append(hitYield)
+            print '{0:03d}'.format(wbc),"\t", '{0:3.0f}%'.format(hitYield)
+
+            # stopping criterion
+            if wbc>3+minWBC:
+                if wbcScan[-4] > 90:
+                    print "Set DAC wbc to", wbc-3
+                    self.api.setDAC("wbc", wbc-3)
+                    break
+
+        self.api.daqStop()
+
+        if(self.window):
+            self.window = PxarGui( ROOT.gClient.GetRoot(), 1000, 800 )
+            plot = Plotter.create_tgraph(wbcScan, "wbc scan", "wbc", "evt/trig [%]", minWBC)
+            self.window.histos.append(plot)
+            self.window.update()
+
+    def complete_wbcScan(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_wbcScan.__doc__, '']
+
     def do_quit(self, arg):
         """quit: terminates the application"""
         sys.exit(1)
