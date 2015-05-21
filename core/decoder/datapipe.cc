@@ -287,7 +287,6 @@ namespace pxar {
     // Loop over the full data:
     for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
 
-      std::cout << "Left: " << (sample->data.end() - word) << std::endl;
       // Not enough data for anything, stop here - and assume it was half a pixel hit:
       if((sample->data.end() - word < 2)) { 
 	decodingStats.m_errors_pixel_incomplete++;
