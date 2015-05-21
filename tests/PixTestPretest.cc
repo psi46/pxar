@@ -372,7 +372,7 @@ void PixTestPretest::setTimings() {
   banner(Form("PixTestPreTest::setTimings()"));
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  int nTBMs = fApi->_dut->getNTbms();
+  int nTBMs = (fApi->_dut->getTbmType() == "tbm09") ? 4 : 2;
   uint16_t period = 300;
 
   if (nTBMs==0) {
