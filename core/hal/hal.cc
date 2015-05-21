@@ -1645,6 +1645,20 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
+	// This is new code for handling layer one modules, i.e. multiple TBMs (basically rewriting existing code)
+	uint8_t tbmspresent = 4; // This should become a variable storing the number of TBMs installed on the module, wherever the information comes from. Set to four for testing
+	std::vector<uint32_t> allocated_buffer;
+	for (uint8_t tbmcount = 0; tbmcount < tbmspresent; ++ tbmcount) {
+		allocated_buffer.push_back(_testboard->Daq_Open(buffersize, tbmcount));
+		LOG(logDEBUGHAL) << "Channel " << tbmcount << ": token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer[tbmcount];
+		srce.push_back(dtbSource(_testboard, tbmcount, tokenChainLength, m_tbmtype, m_roctype, true));
+		dtbEventSplitter split;
+		splitter.push_back(split);
+		srce[tbmcount] >> splitter[tbmcount];
+	}
+
+	/* end of new code */
+
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
     src1 = dtbSource(_testboard,1,tokenChainLength,m_tbmtype,m_roctype,true);

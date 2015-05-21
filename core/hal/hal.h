@@ -484,6 +484,10 @@ namespace pxar {
     dtbEventDecoder decoder2;
     dtbEventDecoder decoder3;
 
+    std::vector<dtbSource> srce; // give it a unique name
+    std::vector<dtbEventSplitter> splitter;
+    std::vector<dtbEventDecoder> decoder;
+
   };
 }
 #endif
