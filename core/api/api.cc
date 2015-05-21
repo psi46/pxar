@@ -116,7 +116,7 @@ bool pxarCore::initDUT(uint8_t hubid,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // Verification/sanitry checks of supplied DUT configuration values
+  // Verification/sanity checks of supplied DUT configuration values
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
   if(!rocI2Cs.empty()) {
@@ -203,7 +203,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 	continue;
       }
 
-      // Check if this is fore core alpha or beta:
+      // Check if this is for core alpha or beta:
       if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
       else { tbmregister = 0xF0 | tbmregister; } // beta core
       
