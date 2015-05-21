@@ -369,7 +369,7 @@ bool hal::CheckCompatibility() {
   }
   else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
 
-  // We are though all checks, testboard is successfully connected:
+  // We are through all checks, testboard is successfully connected:
   return true;
 }
 
