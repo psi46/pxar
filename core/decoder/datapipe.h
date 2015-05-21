@@ -166,14 +166,17 @@ namespace pxar {
     int16_t eventID;
 
     // Analog level averaging:
-    void AverageAnalogLevel(int32_t &variable, int16_t dataword);
-    // Last DAC storage for analog ROCs:
-    void evalLastDAC(uint8_t roc, uint16_t val);
+    void AverageAnalogLevel(int16_t word1, int16_t word2);
     int32_t ultrablack;
     int32_t black;
+    int32_t sumUB, sumB;
+    size_t slidingWindow;
+    
+    // Last DAC storage for analog ROCs:
+    void evalLastDAC(uint8_t roc, uint16_t val);
 
   public:
-  dtbEventDecoder() : decodingStats(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff) {};
+  dtbEventDecoder() : decodingStats(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), sumUB(0), sumB(0), slidingWindow(0) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();
