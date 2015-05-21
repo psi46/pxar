@@ -314,8 +314,10 @@ namespace pxar {
 
 	LOG(logDEBUGPIPES) << "ROC Header: "
 			   << expandSign((*word) & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
-			   << expandSign((*(++word)) & 0x0fff) << " (avg. " << black << ") (B) "
-			   << expandSign((*(++word)) & 0x0fff) << " (lastDAC) ";
+			   << expandSign((*(word+1)) & 0x0fff) << " (avg. " << black << ") (B) "
+			   << expandSign((*(word+2)) & 0x0fff) << " (lastDAC) ";
+	// Advance iterator:
+	word +=  2;
       }
       // We have a pixel hit:
       else {
