@@ -71,8 +71,7 @@ namespace pxar {
     // Perform range checks:
     if(_row >= ROC_NUMROWS || _column >= ROC_NUMCOLS) {
       LOG(logDEBUGAPI) << "Invalid pixel from levels "<< listVector(analog) << ": " << *this;
-      if(_row == ROC_NUMROWS) throw DataCorruptBufferError("Error decoding pixel raw value");
-      else throw DataInvalidAddressError("Error decoding pixel raw value");
+      throw DataInvalidAddressError("Error decoding pixel address");
     }
   }
 

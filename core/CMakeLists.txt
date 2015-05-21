@@ -7,6 +7,8 @@ SET(LIB_SOURCE_FILES
   "api/api.cc"
   "api/datatypes.cc"
   "api/dut.cc"
+  # Decoder modules
+  "hal/datapipe.cc"
   )
 
 # If both interfaces are disabled, build a Dummy DTB responding to API calls:
@@ -14,7 +16,7 @@ IF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
   # We only need the dummy HAL implementation for this:
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES}
     "hal/dummy_hal.cc"
-    "hal/dummy_pipe.cc"
+    "hal/datasource_dummy.cc"
     )
   MESSAGE(STATUS "Building Dummy DTB (software DTB emulation for testing purposes)")
 # We want to build a real interface, so add RPC and the HAL:
@@ -26,7 +28,7 @@ ELSE(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
     "rpc/rpc_error.cpp"
     # HAL
     "hal/hal.cc"
-    "hal/datapipe.cc"
+    "hal/datasource_dtb.cc"
     )
 ENDIF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
 

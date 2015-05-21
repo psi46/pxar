@@ -9,6 +9,7 @@
 #include <TKey.h>
 #include <TSystem.h>
 #include <TStyle.h>
+#include <TFitResult.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
@@ -20,7 +21,7 @@
 using namespace std;
 
 // ----------------------------------------------------------------------
-anaGainPedestal::anaGainPedestal(string dir, int nrocs): fDirectory(dir), fNrocs(nrocs) {
+anaGainPedestal::anaGainPedestal(string dir, int nrocs): fNrocs(nrocs), fDirectory(dir) {
   cout << "anaGainPedestal ctor, nrocs = " << fNrocs << " directory = " << fDirectory << endl;
   c0 = (TCanvas*)gROOT->FindObject("c0"); 
   if (!c0) c0 = new TCanvas("c0","--c0--",0,0,656,700);
@@ -45,6 +46,50 @@ void anaGainPedestal::makeAll(string directory, int mode) {
     fitTanH();
   }
 }
+
+
+// ----------------------------------------------------------------------
+void anaGainPedestal::test(double y0, double y1) {
+  TH1D *h = new TH1D("h", "h", 1800, 0., 1800.); 
+  h->SetMarkerStyle(20); 
+
+  h->SetBinContent(  50+1,  y0); h->SetBinError(  50+1, 3.); 
+  h->SetBinContent( 100+1,  y1); h->SetBinError( 100+1, 3.); 
+  h->SetBinContent( 150+1,  61.); h->SetBinError( 150+1, 3.); 
+  h->SetBinContent( 200+1,  74.); h->SetBinError( 200+1, 3.); 
+  h->SetBinContent( 210+1,  78.); h->SetBinError( 210+1, 3.); 
+  h->SetBinContent( 250+1,  89.); h->SetBinError( 250+1, 3.); 
+  h->SetBinContent( 350+1, 120.); h->SetBinError( 350+1, 3.); 
+  h->SetBinContent( 490+1, 158.); h->SetBinError( 490+1, 3.); 
+  h->SetBinContent( 630+1, 192.); h->SetBinError( 630+1, 3.); 
+  h->SetBinContent(1400+1, 225.); h->SetBinError(1400+1, 3.); 
+  
+  PixInitFunc pif; 
+  if (1) {
+    TF1 *f = pif.gpErr(h);
+    cout << "fitting " <<  h->GetName() << " with error function" << endl;
+    TFitResultPtr fr = h->Fit(f, "s");
+    fr->PrintCovMatrix(cout);
+    c0->SaveAs("errf.pdf");
+  }
+
+  if (0) {
+    TF1 *f = pif.weibullCdf(h);
+    cout << "fitting " <<  h->GetName() << " with weibull cdf" << endl;
+    TFitResultPtr fr = h->Fit(f, "");
+  }
+
+  if (1) {
+    cout << "fitting " <<  h->GetName() << " with pol2 function" << endl;
+    TFitResultPtr fr = h->Fit("pol2", "srf", "", 0., 350.);
+    fr->PrintCovMatrix(cout);
+    c0->SaveAs("pol2.pdf");
+  }
+
+
+
+}
+
 
 
 // ----------------------------------------------------------------------
@@ -144,7 +189,6 @@ void anaGainPedestal::fitErr(int roc, int col, int row, bool draw) {
     }
   }
 
-  int ipad(1); 
   c0->Clear();
 
   // -- plot summary
@@ -225,7 +269,6 @@ void anaGainPedestal::readAsciiFiles(string directory) {
       h1 = new TH1D(hname.c_str(), hname.c_str(), 2000, 0., 2000.); 
       h1->Sumw2(); 
       
-      int i(0); 
       for (unsigned int i = 0; i < x.size(); ++i) {
 	jstring >> sval;
 	h1->SetBinContent(x[i]+1, atoi(sval.c_str())); 
@@ -248,7 +291,6 @@ void anaGainPedestal::readRootFile(string filename) {
 
   TH1D* h(0); 
   string hname, sname; 
-  int cnt(0), roc(0), row(0), col(0); 
   for (int roc = 0; roc < 16; ++roc) {
     for (int col = 0; col < 52; ++col) {
       for (int row = 0; row < 80; ++row) {

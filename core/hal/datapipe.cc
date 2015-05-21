@@ -6,30 +6,6 @@
 
 namespace pxar {
 
-  uint16_t dtbSource::FillBuffer() {
-    pos = 0;
-    do {
-      dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
-
-      if (buffer.size() == 0) {
-	if (stopAtEmptyData) throw dsBufferEmpty();
-	if (dtbState) throw dsBufferOverflow();
-      }
-    } while (buffer.size() == 0);
-
-    LOG(logDEBUGPIPES) << "-------------------------";
-    LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
-		       << " (" << static_cast<int>(chainlength) << " ROCs)"
-		       << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
-    LOG(logDEBUGPIPES) << "Remaining " << static_cast<int>(dtbRemainingSize);
-    LOG(logDEBUGPIPES) << "-------------------------";
-    LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB:";
-    LOG(logDEBUGPIPES) << listVector(buffer,true);
-    LOG(logDEBUGPIPES) << "-------------------------";
-
-    return lastSample = buffer[pos++];
-  }
-
   rawEvent* dtbEventSplitter::SplitDeser400() {
     record.Clear();
 
@@ -137,6 +113,17 @@ namespace pxar {
    LOG(logDEBUGPIPES) << listVector(record.data,true);
 
    return &record;
+  }
+
+  rawEvent* passthroughSplitter::Read() {
+    record.Clear();
+    try {
+      do {
+	record.Add(Get());
+      } while(1);
+    }
+    catch(dsBufferEmpty) {}
+    return &record;
   }
 
   void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
@@ -357,18 +344,18 @@ namespace pxar {
 
 	if(roc_n < 0 || 
 	   // Ultrablack level:
-	   ((ultrablack-levelS < expandSign((*sample)[pos]) && ultrablack+levelS > expandSign((*sample)[pos]))
+	   ((ultrablack-levelS < expandSign((*sample)[pos] & 0x0fff) && ultrablack+levelS > expandSign((*sample)[pos] & 0x0fff))
 	   // Black level:
-	    && (black-levelS < expandSign((*sample)[pos+1]) && black+levelS > expandSign((*sample)[pos+1])))) {
+	    && (black-levelS < expandSign((*sample)[pos+1] & 0x0fff) && black+levelS > expandSign((*sample)[pos+1] & 0x0fff)))) {
 
 	  roc_n++;
 	  // Save the lastDAC value:
-	  evalLastDAC(roc_n, (*sample)[pos+2]);
-	  roc_Event.header = (*sample)[pos+2];
+	  evalLastDAC(roc_n, (*sample)[pos+2] & 0x0fff);
+	  roc_Event.header = (*sample)[pos+2] & 0x0fff;
 
 	  // Iterate to improve ultrablack and black measurement:
-	  AverageAnalogLevel(ultrablack, (*sample)[pos]);
-	  AverageAnalogLevel(black, (*sample)[pos+1]);
+	  AverageAnalogLevel(ultrablack, (*sample)[pos] & 0x0fff);
+	  AverageAnalogLevel(black, (*sample)[pos+1] & 0x0fff);
 
 	  LOG(logDEBUGPIPES) << "ROC Header: "
 			     << expandSign((*sample)[pos] & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
@@ -382,12 +369,12 @@ namespace pxar {
 	  if(pos > n-6) break;
 
 	  std::vector<uint16_t> data;
-	  data.push_back((*sample)[pos]);
-	  data.push_back((*sample)[pos+1]);
-	  data.push_back((*sample)[pos+2]);
-	  data.push_back((*sample)[pos+3]);
-	  data.push_back((*sample)[pos+4]);
-	  data.push_back((*sample)[pos+5]);
+	  data.push_back((*sample)[pos] & 0x0fff);
+	  data.push_back((*sample)[pos+1] & 0x0fff);
+	  data.push_back((*sample)[pos+2] & 0x0fff);
+	  data.push_back((*sample)[pos+3] & 0x0fff);
+	  data.push_back((*sample)[pos+4] & 0x0fff);
+	  data.push_back((*sample)[pos+5] & 0x0fff);
  
 	  try{
 	    LOG(logDEBUGPIPES) << "Trying to decode pixel: " << listVector(data,false,true);
@@ -395,7 +382,7 @@ namespace pxar {
 	    roc_Event.pixels.push_back(pix);
 	    decodingStats.m_info_pixels_valid++;
 	  }
-	  catch(DataInvalidAddressError /*&e*/){
+	  catch(DataDecodingError /*&e*/){
 	    // decoding of raw address lead to invalid address
 	    decodingStats.m_errors_pixel_address++;
 	  }

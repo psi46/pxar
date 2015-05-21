@@ -18,7 +18,10 @@ class Plotter(object):
 
     @staticmethod
     def create_tgraph(data, name, x_title, y_title, minimum = None, maximum = None):
-        xdata = list(xrange(len(data)))
+#        xdata = list(xrange(len(data)))
+        xdata = []
+        for i in range(len(data)):
+            xdata.append(minimum+i)
         x = array.array('d', xdata)
         y = array.array('d', data)
         gr = ROOT.TGraph(len(x),x,y)
@@ -46,7 +49,7 @@ class Plotter(object):
             for iy, y in enumerate(x):
                 th2.SetBinContent(ix, iy, y)
         return th2
-    
+
     def matrix_to_th2(self, matrix, name, x_title, y_title):
         dim = matrix.shape
         return self.create_th2(matrix, dim[0], dim[1], name, x_title, y_title)

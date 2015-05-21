@@ -1794,15 +1794,18 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
       // Add the pixel to the list:
       result.at((currentDAC-dacMin)/dacStep).second.push_back(*pixit);
 
-      if((flags&FLAG_CHECK_ORDER) != 0) {
-	expected_row++;
-	if(expected_row >= ROC_NUMROWS) { expected_row = 0; expected_column++; }
-	if(expected_column >= ROC_NUMCOLS) { expected_row = 0; expected_column = 0; }
-      }
     } // loop over all pixels
+
+    // Advance the expected pixel address if we reached the upper DAC scan boundary:
+    if((flags&FLAG_CHECK_ORDER) != 0 && currentDAC == dacMax) {
+      expected_row++;
+      if(expected_row >= ROC_NUMROWS) { expected_row = 0; expected_column++; }
+      if(expected_column >= ROC_NUMCOLS) { expected_row = 0; expected_column = 0; }
+    }
 
     // Move to next DAC setting:
     currentDAC += dacStep;
+
   } // loop over events
   
   // Cleanup temporary data:

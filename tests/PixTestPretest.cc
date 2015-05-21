@@ -372,7 +372,7 @@ void PixTestPretest::setTimings() {
   banner(Form("PixTestPreTest::setTimings()"));
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  int nTBMs = fApi->_dut->getNTbms();
+  int nTBMs = (fApi->_dut->getTbmType() == "tbm09") ? 4 : 2;
   uint16_t period = 300;
 
   if (nTBMs==0) {
@@ -407,6 +407,7 @@ void PixTestPretest::setTimings() {
 
       //Loop through the different ROC delays (4, 3, 5, 2, 6, 1)
       int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
+      fApi->daqStart();
       for (int iROCDelay = 0; iROCDelay < 6 && !GoodDelaySettings; iROCDelay++) {
         //Apply ROC Delays
         int ROCDelay = ROCDelays[iROCDelay];
@@ -415,7 +416,6 @@ void PixTestPretest::setTimings() {
         for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
 
         //Test Delay Settings
-        fApi->daqStart();
         fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
         vector<rawEvent> daqRawEv;
 	try { daqRawEv = fApi->daqGetRawEventBuffer(); }
@@ -428,7 +428,6 @@ void PixTestPretest::setTimings() {
           try { daqEv = fApi->daqGetEventBuffer(); }
 	  catch(pxar::DataNoEvent &) {}
         }
-        fApi->daqStop();
         statistics results = fApi->getStatistics();
         int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
         Log::ReportingLevel() = UserReportingLevel;
@@ -444,6 +443,7 @@ void PixTestPretest::setTimings() {
           for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
         }
       }
+      fApi->daqStop();
     }
   }
 

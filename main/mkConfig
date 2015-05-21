@@ -444,6 +444,8 @@ addressDecodingTest button
 
 -- DacScan
 PHmap               checkbox(1)
+AllPixels           checkbox(0)
+Unmasked            checkbox(0)
 Ntrig               10
 DAC                 vcal
 DACLO               0
@@ -482,7 +484,6 @@ readbackVbg         button
 getCalibratedVbg    button
 useCalVd            checkbox(1)
 useCalVa            checkbox(0)
-getCalibratedIa     button
 setVana             button
 
 -- IV
@@ -563,8 +564,12 @@ saveMaskFile        checkbox(0)
 maskFileName        default
 CalDelScan          button
 xPixelAlive         button
-Ntrig               5
+Ntrig               50
 Vcal                200
+xNoiseMaps          button
+DacLo               0
+DacHi               100
+Dacs/Step           20
 runDaq              button
 trgfrequency(khz)   20
 runseconds          2
