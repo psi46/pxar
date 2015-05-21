@@ -287,7 +287,6 @@ namespace pxar {
     // Loop over the full data:
     for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
 
-      std::cout << "Left: " << (sample->data.end() - word) << std::endl;
       // Not enough data for anything, stop here - and assume it was half a pixel hit:
       if((sample->data.end() - word < 2)) { 
 	decodingStats.m_errors_pixel_incomplete++;
@@ -310,13 +309,14 @@ namespace pxar {
 	evalLastDAC(roc_n, (*(word+2)) & 0x0fff);
 
 	// Iterate to improve ultrablack and black measurement:
-	AverageAnalogLevel(ultrablack, (*word) & 0x0fff);
-	AverageAnalogLevel(black, (*(word+1)) & 0x0fff);
+	AverageAnalogLevel((*word) & 0x0fff, (*(word+1)) & 0x0fff);
 
 	LOG(logDEBUGPIPES) << "ROC Header: "
 			   << expandSign((*word) & 0x0fff) << " (avg. " << ultrablack << ") (UB) "
-			   << expandSign((*(++word)) & 0x0fff) << " (avg. " << black << ") (B) "
-			   << expandSign((*(++word)) & 0x0fff) << " (lastDAC) ";
+			   << expandSign((*(word+1)) & 0x0fff) << " (avg. " << black << ") (B) "
+			   << expandSign((*(word+2)) & 0x0fff) << " (lastDAC) ";
+	// Advance iterator:
+	word +=  2;
       }
       // We have a pixel hit:
       else {
@@ -452,11 +452,21 @@ namespace pxar {
     }
   }
 
-  void dtbEventDecoder::AverageAnalogLevel(int32_t &variable, int16_t dataword) {
-    // Check if this is the initial measurement:
-    if(variable > 0xff) { variable = expandSign(dataword & 0x0fff); }
-    // Average the variable:
-    else { variable = (variable + expandSign(dataword & 0x0fff))/2; }
+  void dtbEventDecoder::AverageAnalogLevel(int16_t word1, int16_t word2) {
+
+    // Take the mean for a window of 1000 samples, initial measurement included
+    if(slidingWindow < 1000) {
+      sumUB += expandSign(word1 & 0x0fff);
+      ultrablack = static_cast<float>(sumUB)/slidingWindow;
+      sumB += expandSign(word2 & 0x0fff);
+      black = static_cast<float>(sumB)/slidingWindow;
+      slidingWindow++;
+    }
+    // Sliding window:
+    else {
+      ultrablack = static_cast<float>(999)/1000*ultrablack + static_cast<float>(1)/1000*expandSign(word1 & 0x0fff);
+      black = static_cast<float>(999)/1000*black + static_cast<float>(1)/1000*expandSign(word2 & 0x0fff);
+    }
   }
 
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
