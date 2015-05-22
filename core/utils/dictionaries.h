@@ -654,9 +654,12 @@ namespace pxar {
       // Asynchronous external triggers:
       _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
       _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
+      _signals["async_dir"]        = triggerConfig(TRG_SEL_ASYNC_DIR,false);
+      _signals["extern_dir"]       = triggerConfig(TRG_SEL_ASYNC_DIR,false,false);
 
       // Synchronous external triggers:
       _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
+      _signals["sync_dir"]         = triggerConfig(TRG_SEL_SYNC_DIR,false);
 
       // Single event injection:
       _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);
