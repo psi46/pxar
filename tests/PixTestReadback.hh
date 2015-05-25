@@ -30,7 +30,6 @@ public:
   std::vector<uint8_t> daqReadback(std::string dac, double vana, int8_t parReadback);
   std::vector<uint8_t> daqReadbackIa();
   void CalibrateIa();
-  void CalibrateVana();
   void CalibrateVd();
   void CalibrateVa();
   std::vector<double> getCalibratedVbg();
@@ -39,24 +38,21 @@ public:
   std::vector<double> getCalibratedIa();
   double getCalibratedIa(unsigned int roc);
   void setVana();
+  void prepareDAQ();
+  void PreparePG();
   void doDAQ();
+
+  void cachePowerSettings();
+  void restorePowerSettings();
 
 private:
 
-  void stop();
-
-
   uint8_t  fParReadback;
   uint16_t fParPeriod;
-  uint16_t fParStretch; 
-  bool     fParFillTree;
-  uint16_t fParTriggerFrequency;
-  bool	   fParResetROC;
   
   bool     fPhCalOK;
   PHCalibration fPhCal;
   bool	   fParOutOfRange;
-  bool     fDaq_loop;
 
   std::vector<double> fPar0VdCal;  
   std::vector<double> fPar1VdCal;  
@@ -84,6 +80,8 @@ private:
   std::vector<TH1D*> fPh;
   std::vector<TH1D*> fQ;
   std::vector<TProfile2D*> fQmap;
+ 
+  std::vector<std::pair<std::string, double> > fPowerSet; 
 
   ClassDef(PixTestReadback, 1)
 

@@ -380,6 +380,8 @@ void PixTestPretest::setTimings() {
     return;
   }
 
+  if (fApi->_dut->getTbmType() == "tbm09") nTBMs = 4;
+
   bool GoodDelaySettings = false;
   for (int itry = 0; itry < 3 && !GoodDelaySettings; itry++) {
     LOG(logDEBUG) << "Testing Timing: Attempt #" << itry+1;

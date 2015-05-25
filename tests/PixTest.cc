@@ -1469,6 +1469,9 @@ void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int 
       }
       
       ok = threshold(h1); 
+      if (!ok) {
+	LOG(logDEBUG) << "problem with threshold determination"; 
+      }
       if (fThreshold > 0) {
 	hT->Fill(fThreshold);
 // 	TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));

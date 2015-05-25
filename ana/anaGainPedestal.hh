@@ -17,7 +17,7 @@ class DLLEXPORT anaGainPedestal {
   
  public: 
   anaGainPedestal(std::string dir, int nrocs = 16); 
-  ~anaGainPedestal(); 
+  virtual ~anaGainPedestal(); 
   
   void makeAll(std::string directory, int mode = 0 );
   void readAsciiFiles(std::string directory);

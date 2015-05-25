@@ -311,7 +311,7 @@ void PixTestBareModule::doTest() {
 
 	//separation
 	LOG(logINFO) << "PixTestBareModule:: HV and Power are off.";
-	if(sequenceEnded) LOG(logINFO) << "PixTestBareModule:: Tests finished, now you can separate.";
+	if(sequenceEnded) {LOG(logINFO) << "PixTestBareModule:: Tests finished, now you can separate.";}
 
 	LOG(logINFO) << "PixTestBareModule::doTest() done for.";
 }
