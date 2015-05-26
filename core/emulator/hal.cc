@@ -911,7 +911,12 @@ void hal::setHubId(unsigned char) {}
 void hal::SigSetLCDS() {}
 
 statistics hal::daqStatistics() {
-  return statistics();
+  // Read statistics from the active channels:
+  statistics errors;
+  for(size_t ch = 0; ch < m_decoder.size(); ch++) {
+    errors += m_decoder.at(ch).getStatistics();
+  }
+  return errors;
 }
 
 uint16_t hal::GetADC(uint8_t rpc_par1) {
