@@ -15,8 +15,9 @@ SET(LIB_SOURCE_FILES
 IF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
   # We only need the dummy HAL implementation for this:
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES}
-    "hal/dummy_hal.cc"
-    "hal/datasource_dummy.cc"
+    "emulator/hal.cc"
+    "emulator/generator.cc"
+    "emulator/datasource_dtb.cc"
     )
   MESSAGE(STATUS "Building Dummy DTB (software DTB emulation for testing purposes)")
 # We want to build a real interface, so add RPC and the HAL:
