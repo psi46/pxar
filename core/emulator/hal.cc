@@ -19,7 +19,10 @@ hal::hal(std::string /*name*/) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
-  _currentTrgSrc(TRG_SEL_PG_DIR)
+  _currentTrgSrc(TRG_SEL_PG_DIR),
+  m_src(),
+  m_splitter(),
+  m_decoder()
 {
   // Print the useful SW/FW versioning info:
   PrintInfo();
@@ -32,6 +35,14 @@ hal::hal(std::string /*name*/) :
     // Set compatibility flag
     _compatible = true;
   }
+
+  // We connected to a DTB, now let's initialize the pipe works:
+  for(size_t channel = 0; channel < 8; channel++) {
+    m_src.push_back(dtbSource());
+    m_splitter.push_back(dtbEventSplitter());
+    m_decoder.push_back(dtbEventDecoder());
+  }
+
 }
 
 hal::~hal() {
@@ -686,7 +697,12 @@ void hal::SetClockStretch(uint8_t /*src*/, uint16_t /*delay*/, uint16_t /*width*
 void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
+  for(uint8_t channel = 0; channel < 8; channel++) { m_daqstatus.push_back(false); }
 
+  // Clear all decoder instances:
+  for(size_t ch = 0; ch < m_decoder.size(); ch++) { m_decoder.at(ch).Clear(); }
+
+  // Data acquisition with real TBM:
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     // Split the total buffer size when having more than one channel
     buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
@@ -697,14 +713,14 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch0 = buffersize;
-       LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    src0 = dtbSource(NULL,0,m_tokenchains.at(0),m_tbmtype,m_roctype,true);
-    src0 >> splitter0;
+    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
+    m_src.at(0) = dtbSource(NULL,0,m_tokenchains.at(0),m_tbmtype,m_roctype,true);
+    m_src.at(0) >> m_splitter.at(0);
 
     uint32_t allocated_buffer_ch1 = buffersize;
     LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(m_tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
-    src1 = dtbSource(NULL,1,m_tokenchains.at(1),m_tbmtype,m_roctype,true);
-    src1 >> splitter1;
+    m_src.at(1) = dtbSource(NULL,1,m_tokenchains.at(1),m_tbmtype,m_roctype,true);
+    m_src.at(1) >> m_splitter.at(1);
 
     // If we have an old TBM version set up the DESER400 to read old data format:
     // "old" is everything before TBM08B (so: TBM08, TBM08A)
@@ -712,24 +728,37 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       LOG(logDEBUGHAL) << "Pre-series TBM with outdated trailer format. Configuring DESER400 accordingly.";
     }
 
+    // And start the DAQ:
+    m_daqstatus.at(1) = true;
+
     // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
     if(m_tbmtype >= TBM_09) {
       LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
 
       uint32_t allocated_buffer_ch2 = buffersize;
       LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(m_tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
-      src2 = dtbSource(NULL,2,m_tokenchains.at(2),m_tbmtype,m_roctype,true);
-      src2 >> splitter2;
+      m_src.at(2) = dtbSource(NULL,2,m_tokenchains.at(2),m_tbmtype,m_roctype,true);
+      m_src.at(2) >> m_splitter.at(2);
 
       uint32_t allocated_buffer_ch3 = buffersize;
       LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(m_tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
-      src3 = dtbSource(NULL,3,m_tokenchains.at(3),m_tbmtype,m_roctype,true);
-      src3 >> splitter3;
+      m_src.at(3) = dtbSource(NULL,3,m_tokenchains.at(3),m_tbmtype,m_roctype,true);
+      m_src.at(3) >> m_splitter.at(3);
+
+      // Start the DAQ also for channel 2 and 3:
+      m_daqstatus.at(2) = true;
+      m_daqstatus.at(3) = true;
     }
   }
+  // Data acquisition without real TBM:
   else {
     // Token chain length: N ROCs for ADC or DESER160 readout.
     LOG(logDEBUGHAL) << "Determined total Token Chain Length: " << static_cast<int>(m_roccount) << " ROCs.";
+
+    uint32_t allocated_buffer_ch0 = buffersize;
+    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_roccount) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
+    m_src.at(0) = dtbSource(NULL,0,m_roccount,m_tbmtype,m_roctype,true);
+    m_src.at(0) >> m_splitter.at(0);
 
     if(m_roctype < ROC_PSI46DIG) {
       LOG(logDEBUGHAL) << "Enabling ADC for analog ROC data acquisition."
@@ -741,12 +770,10 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       LOG(logDEBUGHAL) << "Enabling Deserializer160 for data acquisition."
 		       << " Phase: " << static_cast<int>(deser160phase);
     }
-
-    uint32_t allocated_buffer_ch0 = buffersize;
-    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_roccount) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    src0 = dtbSource(NULL,0,m_roccount,m_tbmtype,m_roctype,true);
-    src0 >> splitter0;
   }
+  
+  // Start DAQ in channel 0:
+  m_daqstatus.at(0) = true;
 }
 
 Event* hal::daqEvent() {
@@ -754,43 +781,16 @@ Event* hal::daqEvent() {
   Event* current_Event = new Event();
   bool content = false;
 
-  dataSink<Event*> Eventpump0, Eventpump1, Eventpump2, Eventpump3;
-  splitter0 >> decoder0 >> Eventpump0;
-
-  if(src1.isConnected()) { splitter1 >> decoder1 >> Eventpump1; }
-  if(src2.isConnected()) { splitter2 >> decoder2 >> Eventpump2; }
-  if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
-
   // Read the next Event from each of the pipes, copy the data:
-  try { *current_Event = *Eventpump0.Get(); content = true; }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  for(size_t ch = 0; ch < m_src.size(); ch++) {
+    if(m_src.at(ch).isConnected()) {
+      dataSink<Event*> Eventpump;
+      m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
-  if(src1.isConnected()) {
-    try {
-      Event* tmp = Eventpump1.Get(); content = true;
-      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+      try { *current_Event += *Eventpump.Get();	content = true; }
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel " << ch << "."; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
     }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
-    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
-  }
-  
-  if(src2.isConnected()) {
-    try {
-      Event* tmp = Eventpump2.Get(); content = true;
-      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
-    }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
-    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
-  }
-
-  if(src3.isConnected()) {
-    try {
-      Event* tmp = Eventpump3.Get(); content = true;
-      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
-    }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
-    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
 
   // Throttle the readout a bit:
@@ -809,44 +809,18 @@ std::vector<Event*> hal::daqAllEvents() {
 rawEvent* hal::daqRawEvent() {
 
   rawEvent* current_Event = new rawEvent();
-
-  dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
-  splitter0 >> rawpump0;
-
   bool content = false;
-
-  if(src1.isConnected()) { splitter1 >> rawpump1; }
-  if(src2.isConnected()) { splitter2 >> rawpump2; }
-  if(src3.isConnected()) { splitter3 >> rawpump3; }
-
+  
   // Read the next Event from each of the pipes, copy the data:
-  try { *current_Event = *rawpump0.Get(); content = true; }
-  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
-  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  for(size_t ch = 0; ch < m_src.size(); ch++) {
+    if(m_src.at(ch).isConnected()) {
+      dataSink<rawEvent*> rawpump;
+      m_splitter.at(ch) >> rawpump;
 
-  if(src1.isConnected()) {
-    try {
-      rawEvent tmp = *rawpump1.Get(); content = true; 
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+      try { *current_Event += *rawpump.Get(); content = true; }
+      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel " << ch << "."; }
+      catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
     }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
-    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
-  }
-  if(src2.isConnected()) {
-    try {
-      rawEvent tmp = *rawpump2.Get(); content = true; 
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
-    }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
-    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
-  }
-  if(src3.isConnected()) {
-    try {
-      rawEvent tmp = *rawpump3.Get(); content = true; 
-      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
-    }
-    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
-    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
   }
 
   // Throttle the readout a bit:

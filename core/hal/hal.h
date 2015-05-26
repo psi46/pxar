@@ -475,21 +475,9 @@ namespace pxar {
     std::vector<uint16_t> * daqReadChannel(uint8_t channel);
 
     // Our default pipe work buffers:
-    dtbSource src0;
-    dtbSource src1;
-    dtbSource src2;
-    dtbSource src3;
-
-    dtbEventSplitter splitter0;
-    dtbEventSplitter splitter1;
-    dtbEventSplitter splitter2;
-    dtbEventSplitter splitter3;
-
-    dtbEventDecoder decoder0;
-    dtbEventDecoder decoder1;
-    dtbEventDecoder decoder2;
-    dtbEventDecoder decoder3;
-
+    std::vector<dtbSource> m_src;
+    std::vector<dtbEventSplitter> m_splitter;
+    std::vector<dtbEventDecoder> m_decoder;
   };
 }
 #endif
