@@ -831,12 +831,12 @@ rawEvent* hal::daqRawEvent() {
   // For every ROC configured, add one noise hit:
   for(size_t roc = 0; roc < m_roccount; roc++) {
     // Add a ROC header:
-    current_Event->Add(0x87f8);
+    current_Event->Add(0x47f8);
 
     // Add one pixel hit:
-    pxar::pixel px = getNoiseHit(0,0,0);
-    current_Event->Add((px.encode() >> 12) & 0x0fff);
-    current_Event->Add(px.encode() & 0x0fff);
+    pxar::pixel px = getNoiseHit(roc,0,0);
+    current_Event->Add(0x2000 | ((px.encode() >> 12) & 0x0fff));
+    current_Event->Add(0x1000 | (px.encode() & 0x0fff));
   }
 
   // Add a TBM trailer if necessary:
