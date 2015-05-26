@@ -27,6 +27,7 @@ namespace pxar {
     virtual uint8_t ReadChannel() = 0;
     virtual uint8_t ReadTokenChainLength() = 0;
     virtual uint8_t ReadPrecedingTokenChainLength() = 0;
+    virtual uint8_t ReadDefaultTokenChainLength() = 0;
     virtual uint8_t ReadEnvelopeType() = 0;
     virtual uint8_t ReadDeviceType() = 0;
   public:
@@ -46,6 +47,7 @@ namespace pxar {
     uint8_t ReadChannel() { throw dpNotConnected(); }
     uint8_t ReadTokenChainLength() { throw dpNotConnected(); }
     uint8_t ReadPrecedingTokenChainLength() { throw dpNotConnected(); }
+    uint8_t ReadDefaultTokenChainLength() { throw dpNotConnected(); }
     uint8_t ReadEnvelopeType() { throw dpNotConnected(); }
     uint8_t ReadDeviceType() { throw dpNotConnected(); }
     template <class TO> friend class dataSink;
@@ -66,6 +68,7 @@ namespace pxar {
     uint8_t GetChannel() { return src->ReadChannel(); }
     uint8_t GetTokenChainLength() { return src->ReadTokenChainLength(); }
     uint8_t GetPrecedingTokenChainLength() { return src->ReadPrecedingTokenChainLength(); }
+    uint8_t GetDefaultTokenChainLength() { return src->ReadDefaultTokenChainLength(); }
     uint8_t GetEnvelopeType() { return src->ReadEnvelopeType(); }
     uint8_t GetDeviceType() { return src->ReadDeviceType(); }
     void GetAll() { while (true) Get(); }
@@ -113,6 +116,7 @@ namespace pxar {
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadPrecedingTokenChainLength() { return GetPrecedingTokenChainLength(); }
+    uint8_t ReadDefaultTokenChainLength() { return GetDefaultTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
@@ -136,6 +140,7 @@ namespace pxar {
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadPrecedingTokenChainLength() { return GetPrecedingTokenChainLength(); }
+    uint8_t ReadDefaultTokenChainLength() { return GetDefaultTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
   public:
@@ -150,6 +155,7 @@ namespace pxar {
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadPrecedingTokenChainLength() { return GetPrecedingTokenChainLength(); }
+    uint8_t ReadDefaultTokenChainLength() { return GetDefaultTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 

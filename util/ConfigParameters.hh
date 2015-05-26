@@ -53,7 +53,9 @@ public:
   bool writeTrimFile(int iroc, std::vector<pxar::pixelConfig> );
   bool writeTbmParameterFile(int itbm, 
 			     std::vector<std::pair<std::string, uint8_t> > , 
-			     std::vector<std::pair<std::string, uint8_t> > );
+			     std::vector<uint8_t> , 
+			     std::vector<std::pair<std::string, uint8_t> > , 
+			     std::vector<uint8_t> );
   bool writeTbParameterFile();
   bool writeTestParameterFile(std::string test="all");
   bool writeReadbackFile(int iroc, std::vector<std::pair<std::string, double> > v);
