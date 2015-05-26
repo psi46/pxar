@@ -282,6 +282,14 @@ namespace pxar {
 
   private:
 
+    /** Overloaded sum operator for adding up data from different events
+     */
+    friend Event& operator+=(Event &lhs, const Event &rhs) {
+      // FIXME this currently only transports pixels, no header information:
+      lhs.pixels.insert(lhs.pixels.end(), rhs.pixels.begin(), rhs.pixels.end());
+      return lhs;
+    };
+
     /** Overloaded ostream operator for simple printing of Event data
      */
     friend std::ostream & operator<<(std::ostream &out, Event& evt) {
@@ -325,6 +333,16 @@ namespace pxar {
     */
     unsigned int flags;
 
+    /** Overloaded sum operator for adding up data from different events
+     */
+    friend rawEvent& operator+=(rawEvent &lhs, const rawEvent &rhs) {
+      // Add the raw data:
+      lhs.data.insert(lhs.data.end(), rhs.data.begin(), rhs.data.end());
+      // Also carry over event flags:
+      lhs.flags |= rhs.flags;
+      return lhs;
+    };
+    
     /** Overloaded ostream operator for simple printing of raw data blobs
      */
     friend std::ostream & operator<<(std::ostream &out, rawEvent& record) {
