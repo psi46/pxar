@@ -2,59 +2,11 @@
 #include "log.h"
 #include "timer.h"
 #include "helper.h"
+#include "generator.h"
 #include "constants.h"
 #include <fstream>
-#include <stdlib.h>
 
 using namespace pxar;
-
-pxar::pixel getNoiseHit(uint8_t rocid, size_t i, size_t j) {
-
-  // Generate a slightly random pulse height between 80 and 100:
-  uint16_t pulseheight = rand()%20 + 80;
-
-  // We can't pulse the same pixel twice in one trigger:
-  size_t col = rand()%52;
-  while(col == i) col = rand()%52;
-  size_t row = rand()%80;
-  while(row == j) row = rand()%80;
-
-  pixel px = pixel(rocid,col,row,pulseheight);
-  LOG(logDEBUGPIPES) << "Adding noise hit: " << px;
-  return px;
-}
-
-bool isInTornadoRegion(size_t dac1min, size_t dac1max, size_t dac1, size_t dac2min, size_t dac2max, size_t dac2) {
-
-  size_t epsilon = 5;
-  double tornadowidth = 40;
-  double ymax = dac2max / (1 + exp(0.05*((dac1max-dac1min+1)/2 - tornadowidth - dac1))) + dac2min;
-  double ymin = dac2max / (1 + exp(0.05*((dac1max-dac1min+1)/2 + tornadowidth - dac1))) + dac2min;
-  if(dac2 < ymax && dac2 > ymin) {
-    size_t dymax = ymax - dac2;
-    size_t dymin = dac2 - ymin;
-    if(dymax < epsilon) return (rand()%(epsilon-dymax) == 0);
-    else if(dymin < epsilon) return (rand()%(epsilon-dymin) == 0);
-    else return true;
-  }
-  else return false;
-}
-
-void fillEvent(pxar::Event * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags) {
-
-  // Generate a slightly random pulse height between 90 and 100:
-  uint16_t pulseheight = rand() % 2 + 90;
-
-  // Introduce some address encoding issues:
-  if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 1) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,1 answers as PX 0,2
-  else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 2) { } // PX 0,2 is dead
-  else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 6) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,6 answers as PX 0,7
-  else { evt->pixels.push_back(pixel(rocid,col,row,pulseheight)); }
-
-  // If the full chip is unmasked, add some noise hits:
-  if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) { evt->pixels.push_back(getNoiseHit(rocid,col,row)); }
-
-}
 
 hal::hal(std::string /*name*/) :
   _initialized(false),
@@ -799,6 +751,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
 Event* hal::daqEvent() {
 
+  /*
   Event* current_Event = new Event();
 
   // For every ROC configured, add one noise hit:
@@ -806,9 +759,55 @@ Event* hal::daqEvent() {
     pxar::pixel px = getNoiseHit(roc,0,0);
     current_Event->pixels.push_back(px);
   }
+*/
+
+
+  Event* current_Event = new Event();
+  bool content = false;
+
+  dataSink<Event*> Eventpump0, Eventpump1, Eventpump2, Eventpump3;
+  splitter0 >> decoder0 >> Eventpump0;
+
+  if(src1.isConnected()) { splitter1 >> decoder1 >> Eventpump1; }
+  if(src2.isConnected()) { splitter2 >> decoder2 >> Eventpump2; }
+  if(src3.isConnected()) { splitter3 >> decoder3 >> Eventpump3; }
+
+  // Read the next Event from each of the pipes, copy the data:
+  try { *current_Event = *Eventpump0.Get(); content = true; }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+
+  if(src1.isConnected()) {
+    try {
+      Event* tmp = Eventpump1.Get(); content = true;
+      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  
+  if(src2.isConnected()) {
+    try {
+      Event* tmp = Eventpump2.Get(); content = true;
+      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+
+  if(src3.isConnected()) {
+    try {
+      Event* tmp = Eventpump3.Get(); content = true;
+      current_Event->pixels.insert(current_Event->pixels.end(), tmp->pixels.begin(), tmp->pixels.end());
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
 
   // Throttle the readout a bit:
   mDelay(10);
+
+  if(!content) throw DataNoEvent("No event available");
   return current_Event;
 }
 
@@ -819,7 +818,7 @@ std::vector<Event*> hal::daqAllEvents() {
 }
 
 rawEvent* hal::daqRawEvent() {
-
+  /*
   rawEvent* current_Event = new rawEvent();
 
   // Add a TBM header if necessary:
@@ -848,7 +847,56 @@ rawEvent* hal::daqRawEvent() {
   // Throttle the readout a bit:
   mDelay(10);
   return current_Event;
+  }*/
+
+  rawEvent* current_Event = new rawEvent();
+
+  dataSink<rawEvent*> rawpump0, rawpump1, rawpump2, rawpump3;
+  splitter0 >> rawpump0;
+
+  bool content = false;
+
+  if(src1.isConnected()) { splitter1 >> rawpump1; }
+  if(src2.isConnected()) { splitter2 >> rawpump2; }
+  if(src3.isConnected()) { splitter3 >> rawpump3; }
+
+  // Read the next Event from each of the pipes, copy the data:
+  try { *current_Event = *rawpump0.Get(); content = true; }
+  catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 0."; }
+  catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+
+  if(src1.isConnected()) {
+    try {
+      rawEvent tmp = *rawpump1.Get(); content = true; 
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 1."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(src2.isConnected()) {
+    try {
+      rawEvent tmp = *rawpump2.Get(); content = true; 
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 2."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+  if(src3.isConnected()) {
+    try {
+      rawEvent tmp = *rawpump3.Get(); content = true; 
+      for(size_t record = 0; record < tmp.GetSize(); record++) { current_Event->Add(tmp[record]); }
+    }
+    catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel 3."; }
+    catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
+  }
+
+  // Throttle the readout a bit:
+  mDelay(10);
+
+  if(!content) throw DataNoEvent("No event available");
+  return current_Event;
 }
+
 
 std::vector<rawEvent*> hal::daqAllRawEvents() {
 
