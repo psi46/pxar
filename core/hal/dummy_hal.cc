@@ -801,6 +801,14 @@ Event* hal::daqEvent() {
 
   Event* current_Event = new Event();
 
+  // For every ROC configured, add one noise hit:
+  for(size_t roc = 0; roc < m_roccount; roc++) {
+    pxar::pixel px = getNoiseHit(roc,0,0);
+    current_Event->pixels.push_back(px);
+  }
+
+  // Throttle the readout a bit:
+  mDelay(10);
   return current_Event;
 }
 
@@ -813,6 +821,32 @@ std::vector<Event*> hal::daqAllEvents() {
 rawEvent* hal::daqRawEvent() {
 
   rawEvent* current_Event = new rawEvent();
+
+  // Add a TBM header if necessary:
+  if(m_tbmtype != TBM_NONE) {
+    current_Event->Add(0xa019);
+    current_Event->Add(0x8007);
+  }
+
+  // For every ROC configured, add one noise hit:
+  for(size_t roc = 0; roc < m_roccount; roc++) {
+    // Add a ROC header:
+    current_Event->Add(0x87f8);
+
+    // Add one pixel hit:
+    pxar::pixel px = getNoiseHit(0,0,0);
+    current_Event->Add((px.encode() >> 12) & 0x0fff);
+    current_Event->Add(px.encode() & 0x0fff);
+  }
+
+  // Add a TBM trailer if necessary:
+  if(m_tbmtype != TBM_NONE) {
+    current_Event->Add(0xe000);
+    current_Event->Add(0xc002);
+  }
+
+  // Throttle the readout a bit:
+  mDelay(10);
   return current_Event;
 }
 
