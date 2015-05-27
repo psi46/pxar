@@ -296,6 +296,7 @@ namespace pxar {
       out << "====== " << std::hex << static_cast<uint16_t>(evt.header) << std::dec << " ====== ";
       for (std::vector<pixel>::iterator it = evt.pixels.begin(); it != evt.pixels.end(); ++it)
 	out << (*it) << " ";
+      out << "====== " << std::hex << static_cast<uint16_t>(evt.trailer) << std::dec << " ====== ";
       return out;
     }
   };
