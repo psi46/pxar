@@ -22,6 +22,21 @@ namespace pxar {
     return px;
   }
 
+  pxar::pixel getTriggeredHit(uint8_t rocid, size_t col, size_t row, uint32_t flags) {
+
+    pixel px;
+
+    // Generate a slightly random pulse height between 90 and 100:
+    uint16_t pulseheight = rand() % 2 + 90;
+
+    // Introduce some address encoding issues:
+    if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 1) { px = pixel(rocid,col,row+1,pulseheight); } // PX 0,1 answers as PX 0,2
+    else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 6) { px = pixel(rocid,col,row+1,pulseheight); } // PX 0,6 answers as PX 0,7
+    else { px = pixel(rocid,col,row,pulseheight); }
+
+    return px;
+  }
+  
   bool isInTornadoRegion(size_t dac1min, size_t dac1max, size_t dac1, size_t dac2min, size_t dac2max, size_t dac2) {
 
     size_t epsilon = 5;
@@ -70,13 +85,13 @@ namespace pxar {
 */
   }
 
-  void fillRawData(std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, size_t col, size_t row, uint32_t flags) {
+  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool noise, size_t col, size_t row, uint32_t flags) {
 
     size_t pos = data.size();
     
     // Add a TBM header if necessary:
     if(tbm != TBM_NONE) {
-      data.push_back(0xa019);
+      data.push_back(0xa000 | (event%256 & 0x00ff));
       data.push_back(0x8007);
     }
 
@@ -86,10 +101,20 @@ namespace pxar {
       if(tbm != TBM_NONE) data.push_back(0x47f8);
       else data.push_back(0x07f8);
 
-      // Add one pixel hit:
-      pxar::pixel px = getNoiseHit(roc,0,0);
+      // Add pixel hit:
+      pxar::pixel px;
+      if(noise) px = getNoiseHit(roc,col,row);
+      else px = getTriggeredHit(roc,col,row,flags);
+      
       data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
       data.push_back(0x1000 | (px.encode() & 0x0fff));
+
+      // If the full chip is unmasked, add some noise hits:
+      if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) {
+	px = getNoiseHit(roc,col,row);
+	data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
+	data.push_back(0x1000 | (px.encode() & 0x0fff));
+      }
     }
 
     // Add a TBM trailer if necessary:
