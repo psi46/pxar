@@ -19,7 +19,7 @@ class CRpcError {
 class CTestboard {
 
   uint16_t vd, va, id, ia;
-  size_t nrocs;
+  size_t nrocs_loops;
   std::vector<uint8_t> roci2c;
   uint8_t tbmtype;
   
@@ -28,7 +28,7 @@ class CTestboard {
   
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
-    nrocs(0), roci2c(),
+    nrocs_loops(0), roci2c(),
     daq_buffer(), daq_status(), tbmtype(TBM_NONE)
   {
     // Initialize all available DAQ channels:

@@ -278,7 +278,7 @@ void CTestboard::Pg_Triggers(uint32_t nTriggers, uint16_t) {
 
   for(size_t i = 0; i < nTriggers; i++) {
     for(size_t ch = 0; ch < channels; ch++) {
-      fillRawData(daq_buffer.at(ch),tbmtype,roc_per_ch,0,0);
+      fillRawData(i,daq_buffer.at(ch),tbmtype,roc_per_ch,true,0,0);
     }
   }
 }
@@ -292,8 +292,10 @@ void CTestboard::Pg_Loop(uint16_t) {
 // Trigger selection
 void CTestboard::Trigger_Select(uint16_t src) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  LOG(pxar::logDEBUGRPC) << "called, updated TBM to 0x" << std::hex << (int)tbmtype << std::dec;
   // Triggers via TBM Emulator:
-  if((src & 0x00f0) != 0 || src == 0x01000) tbmtype = TBM_EMU;
+  if((src & 0x00f0) != 0 || src == 0x0100) tbmtype = TBM_EMU;
+  LOG(pxar::logDEBUGRPC) << "called, updated TBM to 0x" << std::hex << (int)tbmtype << std::dec;
 }
 
 void CTestboard::Trigger_Delay(uint8_t) {
@@ -510,12 +512,14 @@ void CTestboard::SetLoopTriggerDelay(uint16_t) {
 
 bool CTestboard::SetI2CAddresses(std::vector<uint8_t> &rpc_par1) {
   LOG(pxar::logDEBUGRPC) << "called.";
-  nrocs = rpc_par1.size();
+  nrocs_loops = rpc_par1.size();
+  return true;
 }
 
 // FIXME here we could implement masked pixels
 bool CTestboard::SetTrimValues(uint8_t, std::vector<uint8_t> &) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  return true;
 }
 
 bool CTestboard::LoopMultiRocAllPixelsCalibrate(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags) {
@@ -525,13 +529,15 @@ bool CTestboard::LoopMultiRocAllPixelsCalibrate(std::vector<uint8_t> &roci2cs, u
   size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
   // Distribute the ROCs evenly:
   size_t roc_per_ch = roci2cs.size()/channels;
-  
+
+  uint32_t event = 0;
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
 	for(size_t ch = 0; ch < channels; ch++) {
-	  fillRawData(daq_buffer.at(ch),tbmtype,roc_per_ch,i,j,flags);
+	  fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,i,j,flags);
 	}
+	event++;
       }
     }
   }
