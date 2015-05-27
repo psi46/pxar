@@ -1,6 +1,6 @@
 # Add source files for the library
 
-INCLUDE_DIRECTORIES(rpc usb ethernet hal utils)
+INCLUDE_DIRECTORIES(hal utils)
 
 SET(LIB_SOURCE_FILES
   # API
@@ -9,27 +9,28 @@ SET(LIB_SOURCE_FILES
   "api/dut.cc"
   # Decoder modules
   "decoder/datapipe.cc"
+  # HAL
+  "hal/hal.cc"
+  "hal/datasource_dtb.cc"
   )
 
 # If both interfaces are disabled, build a Dummy DTB responding to API calls:
 IF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
-  # We only need the dummy HAL implementation for this:
+  # We only need the emulator testboard implementation for this:
+  INCLUDE_DIRECTORIES(emulator)
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES}
-    "emulator/hal.cc"
+    "emulator/rpc_calls.cpp"
     "emulator/generator.cc"
-    "emulator/datasource_dtb.cc"
     )
   MESSAGE(STATUS "Building Dummy DTB (software DTB emulation for testing purposes)")
 # We want to build a real interface, so add RPC and the HAL:
 ELSE(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
+  INCLUDE_DIRECTORIES(rpc usb ethernet)
   SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} 
     # RPC
     "rpc/rpc_calls.cpp"
     "rpc/rpc.cpp"
     "rpc/rpc_error.cpp"
-    # HAL
-    "hal/hal.cc"
-    "hal/datasource_dtb.cc"
     )
 ENDIF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
 
