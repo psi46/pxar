@@ -40,12 +40,12 @@ uint16_t CTestboard::UpgradeGetVersion() {
   return 0x0100;
 }
 
-uint8_t CTestboard::UpgradeStart(uint16_t rpc_par1) {
+uint8_t CTestboard::UpgradeStart(uint16_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
   return 0;
 }
 
-uint8_t CTestboard::UpgradeData(std::string &rpc_par1) {
+uint8_t CTestboard::UpgradeData(std::string &) {
   LOG(pxar::logDEBUGRPC) << "called.";
   return 0;
 }
@@ -236,6 +236,7 @@ void CTestboard::ResetOff() {
 
 uint8_t CTestboard::GetStatus() {
   LOG(pxar::logDEBUGRPC) << "called.";
+  return 0;
 }
 
 void CTestboard::SetRocAddress(uint8_t) {
@@ -278,7 +279,7 @@ void CTestboard::Pg_Triggers(uint32_t nTriggers, uint16_t) {
 
   for(size_t i = 0; i < nTriggers; i++) {
     for(size_t ch = 0; ch < channels; ch++) {
-      fillRawData(i,daq_buffer.at(ch),tbmtype,roc_per_ch,true,0,0);
+      fillRawData(i,daq_buffer.at(ch),tbmtype,roc_per_ch,false,true,0,0);
     }
   }
 }
@@ -342,7 +343,7 @@ void CTestboard::Daq_Start(uint8_t channel) {
   daq_status.at(channel) = true;
 }
 
-void CTestboard::Daq_Stop(uint8_t rpc_par1) {
+void CTestboard::Daq_Stop(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
@@ -352,7 +353,7 @@ uint32_t CTestboard::Daq_GetSize(uint8_t channel) {
   else return 0;
 }
 
-uint8_t CTestboard::Daq_FillLevel(uint8_t rpc_par1) {
+uint8_t CTestboard::Daq_FillLevel(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
   // We are always on 30%:
   return 30;
@@ -388,11 +389,11 @@ uint8_t CTestboard::Daq_Read(std::vector<uint16_t> &data, uint32_t blocksize, ui
   return 0;
 }
 
-void CTestboard::Daq_Select_ADC(uint16_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint8_t rpc_par4) {
+void CTestboard::Daq_Select_ADC(uint16_t, uint8_t, uint8_t, uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-void CTestboard::Daq_Select_Deser160(uint8_t rpc_par1) {
+void CTestboard::Daq_Select_Deser160(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
@@ -466,6 +467,7 @@ void CTestboard::roc_Chip_Mask() {
 
 bool CTestboard::TBM_Present() {
   LOG(pxar::logDEBUGRPC) << "called.";
+  return (tbmtype != TBM_NONE);
 }
 
 void CTestboard::tbm_Enable(bool tbm) {
@@ -535,7 +537,7 @@ bool CTestboard::LoopMultiRocAllPixelsCalibrate(std::vector<uint8_t> &roci2cs, u
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
 	for(size_t ch = 0; ch < channels; ch++) {
-	  fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,i,j,flags);
+	  fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,i,j,flags);
 	}
 	event++;
       }
@@ -545,80 +547,291 @@ bool CTestboard::LoopMultiRocAllPixelsCalibrate(std::vector<uint8_t> &roci2cs, u
   return 1;
 }
 
-bool CTestboard::LoopMultiRocOnePixelCalibrate(std::vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5) {
+bool CTestboard::LoopMultiRocOnePixelCalibrate(std::vector<uint8_t> &roci2cs, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2cs.size()/channels;
+
+  uint32_t event = 0;
+  for(size_t k = 0; k < nTriggers; k++) {
+    for(size_t ch = 0; ch < channels; ch++) {
+      fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,column,row,flags);
+    }
+    event++;
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopSingleRocAllPixelsCalibrate(uint8_t rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3) {
+bool CTestboard::LoopSingleRocAllPixelsCalibrate(uint8_t, uint16_t nTriggers, uint16_t flags) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  
+  uint32_t event = 0;
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	fillRawData(event,daq_buffer.at(0),tbmtype,1,false,false,i,j,flags);
+	event++;
+      }
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopSingleRocOnePixelCalibrate(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5) {
+bool CTestboard::LoopSingleRocOnePixelCalibrate(uint8_t, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  uint32_t event = 0;
+  for(size_t k = 0; k < nTriggers; k++) {
+    fillRawData(event,daq_buffer.at(0),tbmtype,1,false,false,column,row,flags);
+    event++;
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopMultiRocAllPixelsDacScan(std::vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopMultiRocAllPixelsDacScan(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags, uint8_t dacreg, uint8_t dacmin, uint8_t dacmax) {
+  return LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, 1, dacmin, dacmax);
 }
 
-bool CTestboard::LoopMultiRocAllPixelsDacScan(std::vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7) {
+bool CTestboard::LoopMultiRocAllPixelsDacScan(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dacstep, uint8_t dacmin, uint8_t dacmax) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2cs.size()/channels;
+
+  uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
+  uint32_t event = 0;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
+	for(size_t k = 0; k < nTriggers; k++) {
+	  for(size_t ch = 0; ch < channels; ch++) {
+	    // Mimic some edge at 50% of the DAC range:
+	    if(((flags&FLAG_RISING_EDGE) && dac > dachalf) || (!(flags&FLAG_RISING_EDGE) && dac < dachalf)) {
+	      fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,i,j,flags);
+	    }
+	    else { fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,true, false,i,j,flags); }
+	  }
+	  event++;
+	}
+      }
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopMultiRocOnePixelDacScan(std::vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopMultiRocOnePixelDacScan(std::vector<uint8_t> &roci2cs, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dacreg, uint8_t dacmin, uint8_t dacmax) {
+  return LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, 1, dacmin, dacmax);
 }
 
-bool CTestboard::LoopMultiRocOnePixelDacScan(std::vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9) {
+bool CTestboard::LoopMultiRocOnePixelDacScan(std::vector<uint8_t> &roci2cs, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dacstep, uint8_t dacmin, uint8_t dacmax) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2cs.size()/channels;
+
+  uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
+  uint32_t event = 0;
+
+  for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
+    for(size_t k = 0; k < nTriggers; k++) {
+      for(size_t ch = 0; ch < channels; ch++) {
+	// Mimic some edge at 50% of the DAC range:
+	if(((flags&FLAG_RISING_EDGE) && dac > dachalf) || (!(flags&FLAG_RISING_EDGE) && dac < dachalf)) {
+	  fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,column,row,flags);
+	}
+	else { fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,true, false,column,row,flags); }
+      }
+      event++;
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopSingleRocAllPixelsDacScan(uint8_t rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopSingleRocAllPixelsDacScan(uint8_t roci2c, uint16_t nTriggers, uint16_t flags, uint8_t dacreg, uint8_t dacmin, uint8_t dacmax) {
+  return LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, 1, dacmin, dacmax);
 }
 
-bool CTestboard::LoopSingleRocAllPixelsDacScan(uint8_t rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7) {
+bool CTestboard::LoopSingleRocAllPixelsDacScan(uint8_t, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dacstep, uint8_t dacmin, uint8_t dacmax) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
+  uint32_t event = 0;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
+	for(size_t k = 0; k < nTriggers; k++) {
+	  // Mimic some edge at 50% of the DAC range:
+	  if(((flags&FLAG_RISING_EDGE) && dac > dachalf) || (!(flags&FLAG_RISING_EDGE) && dac < dachalf)) {
+	    fillRawData(event,daq_buffer.at(0),tbmtype,1,false,false,i,j,flags);
+	  }
+	  else { fillRawData(event,daq_buffer.at(0),tbmtype,1,true, false,i,j,flags); }
+	  event++;
+	}
+      }
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopSingleRocOnePixelDacScan(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopSingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dacreg, uint8_t dacmin, uint8_t dacmax) {
+  return LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, 1, dacmin, dacmax);
 }
 
-bool CTestboard::LoopSingleRocOnePixelDacScan(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9) {
+bool CTestboard::LoopSingleRocOnePixelDacScan(uint8_t, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dacstep, uint8_t dacmin, uint8_t dacmax) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  
+  uint8_t dachalf = static_cast<uint8_t>(dacmax-dacmin)/2;
+  uint32_t event = 0;
+
+  for(size_t dac = 0; dac < static_cast<size_t>(dacmax-dacmin+1); dac += dacstep) {
+    for(size_t k = 0; k < nTriggers; k++) {
+      // Mimic some edge at 50% of the DAC range:
+      if(((flags&FLAG_RISING_EDGE) && dac > dachalf) || (!(flags&FLAG_RISING_EDGE) && dac < dachalf)) {
+	fillRawData(event,daq_buffer.at(0),tbmtype,1,false,false,column,row,flags);
+      }
+      else { fillRawData(event,daq_buffer.at(0),tbmtype,1,true, false,column,row,flags); }
+    }
+    event++;
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopMultiRocAllPixelsDacDacScan(std::vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopMultiRocAllPixelsDacDacScan(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags, uint8_t dac1reg, uint8_t dac1min, uint8_t dac1max, uint8_t dac2reg, uint8_t dac2min, uint8_t dac2max) {
+  return LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, 1, dac1min, dac1max, dac2reg, 1, dac2min, dac2max);
 }
 
-bool CTestboard::LoopMultiRocAllPixelsDacDacScan(std::vector<uint8_t> &rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11) {
+bool CTestboard::LoopMultiRocAllPixelsDacDacScan(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2cs.size()/channels;
+
+  uint32_t event = 0;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
+	  for(size_t k = 0; k < nTriggers; k++) {
+	    for(size_t ch = 0; ch < channels; ch++) {
+	      // Mimic some working band of the two DACs:
+	      if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+		fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,i,j,flags);
+	      }
+	      else { fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,true, false,i,j,flags); }
+	    }
+	    event++;
+	  }
+	}
+      }
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopMultiRocOnePixelDacDacScan(std::vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopMultiRocOnePixelDacDacScan(std::vector<uint8_t> &roci2cs, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1reg, uint8_t dac1min, uint8_t dac1max, uint8_t dac2reg, uint8_t dac2min, uint8_t dac2max) {
+  return LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, 1, dac1min, dac1max, dac2reg, 1, dac2min, dac2max);
 }
 
-bool CTestboard::LoopMultiRocOnePixelDacDacScan(std::vector<uint8_t> &rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11, uint8_t rpc_par12, uint8_t rpc_par13) {
+bool CTestboard::LoopMultiRocOnePixelDacDacScan(std::vector<uint8_t> &roci2cs, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2cs.size()/channels;
+
+  uint32_t event = 0;
+
+  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	for(size_t ch = 0; ch < channels; ch++) {
+	  // Mimic some working band of the two DACs:
+	  if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+	    fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,column,row,flags);
+	  }
+	  else { fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,true, false,column,row,flags); }
+	}
+	event++;
+      }
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopSingleRocAllPixelsDacDacScan(uint8_t rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopSingleRocAllPixelsDacDacScan(uint8_t roci2c, uint16_t nTriggers, uint16_t flags, uint8_t dac1reg, uint8_t dac1min, uint8_t dac1max, uint8_t dac2reg, uint8_t dac2min, uint8_t dac2max) {
+  return LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, 1, dac1min, dac1max, dac2reg, 1, dac2min, dac2max);
 }
 
-bool CTestboard::LoopSingleRocAllPixelsDacDacScan(uint8_t rpc_par1, uint16_t rpc_par2, uint16_t rpc_par3, uint8_t rpc_par4, uint8_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11) {
+bool CTestboard::LoopSingleRocAllPixelsDacDacScan(uint8_t, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  uint32_t event = 0;
+
+  for(size_t i = 0; i < ROC_NUMCOLS; i++) {
+    for(size_t j = 0; j < ROC_NUMROWS; j++) {
+      for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+	for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
+	  for(size_t k = 0; k < nTriggers; k++) {
+	    // Mimic some working band of the two DACs:
+	    if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+	      fillRawData(event,daq_buffer.at(0),tbmtype,1,false,false,i,j,flags);
+	    }
+	    else { fillRawData(event,daq_buffer.at(0),tbmtype,1,true, false,i,j,flags); }
+	  }
+	  event++;
+	}
+      }
+    }
+  }
+  
+  return 1;
 }
 
-bool CTestboard::LoopSingleRocOnePixelDacDacScan(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11) {
-  LOG(pxar::logDEBUGRPC) << "called.";
+bool CTestboard::LoopSingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1reg, uint8_t dac1min, uint8_t dac1max, uint8_t dac2reg, uint8_t dac2min, uint8_t dac2max) {
+  return LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, 1, dac1min, dac1max, dac2reg, 1, dac2min, dac2max);
 }
 
-bool CTestboard::LoopSingleRocOnePixelDacDacScan(uint8_t rpc_par1, uint8_t rpc_par2, uint8_t rpc_par3, uint16_t rpc_par4, uint16_t rpc_par5, uint8_t rpc_par6, uint8_t rpc_par7, uint8_t rpc_par8, uint8_t rpc_par9, uint8_t rpc_par10, uint8_t rpc_par11, uint8_t rpc_par12, uint8_t rpc_par13) {
+bool CTestboard::LoopSingleRocOnePixelDacDacScan(uint8_t, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  uint32_t event = 0;
+
+  for(size_t dac1 = 0; dac1 < static_cast<size_t>(dac1max-dac1min+1); dac1 += dac1step) {
+    for(size_t dac2 = 0; dac2 < static_cast<size_t>(dac2max-dac2min+1); dac2 += dac2step) {
+      for(size_t k = 0; k < nTriggers; k++) {
+	// Mimic some working band of the two DACs:
+	if(isInTornadoRegion(dac1min, dac1max, dac1, dac2min, dac2max, dac2)) {
+	  fillRawData(event,daq_buffer.at(0),tbmtype,1,false,false,column,row,flags);
+	}
+	else { fillRawData(event,daq_buffer.at(0),tbmtype,1,true, false,column,row,flags); }
+      }
+      event++;
+    }
+  }
+  
+  return 1;
 }
 
 uint16_t CTestboard::GetADC(uint8_t) {

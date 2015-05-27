@@ -28,8 +28,8 @@ class CTestboard {
   
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
-    nrocs_loops(0), roci2c(),
-    daq_buffer(), daq_status(), tbmtype(TBM_NONE)
+    nrocs_loops(0), roci2c(), tbmtype(TBM_NONE),
+    daq_buffer(), daq_status()
   {
     // Initialize all available DAQ channels:
     for(size_t i = 0; i < DTB_DAQ_CHANNELS; i++) {
@@ -51,14 +51,14 @@ class CTestboard {
 
   // === DTB connection ====================================================
   
-  inline bool Open(std::string &name, bool init=true) {
+  inline bool Open(std::string &, bool init=true) {
     if (init) Init();
     return true;
   }
 
   void Close() {}
 
-  bool SelectInterface(std::string ifaceName) {
+  bool SelectInterface(std::string) {
     bool ifaceFound = false;
     return ifaceFound;
   }
