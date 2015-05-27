@@ -1,6 +1,7 @@
 #include "api.h"
 #include "datatypes.h"
 #include "log.h"
+#include "constants.h"
 #include <stdlib.h>
 
 namespace pxar {
@@ -53,4 +54,54 @@ namespace pxar {
 
   }
 
+  void fillRawEvent(pxar::rawEvent * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags) {
+
+    // Generate a slightly random pulse height between 90 and 100:
+    uint16_t pulseheight = rand() % 2 + 90;
+    /*
+    // Introduce some address encoding issues:
+    if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 1) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,1 answers as PX 0,2
+    else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 2) { } // PX 0,2 is dead
+    else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 6) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,6 answers as PX 0,7
+    else { evt->pixels.push_back(pixel(rocid,col,row,pulseheight)); }
+
+    // If the full chip is unmasked, add some noise hits:
+    if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) { evt->pixels.push_back(getNoiseHit(rocid,col,row)); }
+*/
+  }
+
+  void fillRawData(std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, size_t col, size_t row, uint32_t flags) {
+
+    size_t pos = data.size();
+    
+    // Add a TBM header if necessary:
+    if(tbm != TBM_NONE) {
+      data.push_back(0xa019);
+      data.push_back(0x8007);
+    }
+
+    // For every ROC configured, add one noise hit:
+    for(size_t roc = 0; roc < nroc; roc++) {
+      // Add a ROC header:
+      if(tbm != TBM_NONE) data.push_back(0x47f8);
+      else data.push_back(0x07f8);
+
+      // Add one pixel hit:
+      pxar::pixel px = getNoiseHit(roc,0,0);
+      data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
+      data.push_back(0x1000 | (px.encode() & 0x0fff));
+    }
+
+    // Add a TBM trailer if necessary:
+    if(tbm != TBM_NONE) {
+      data.push_back(0xe000);
+      data.push_back(0xc002);
+    }
+    // Adjust event start and end marker:
+    else {
+      data.at(pos) = 0x8000 | (data.at(pos) & 0x0fff);
+      data.at(data.size()-1) = 0x4000 | (data.back() & 0x0fff);
+    }
+    
+  }
 }
