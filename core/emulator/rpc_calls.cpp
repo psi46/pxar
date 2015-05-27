@@ -6,6 +6,8 @@
 #include "constants.h"
 #include <vector>
 
+using namespace pxar;
+
 void CTestboard::GetInfo(std::string &message) {
   LOG(pxar::logDEBUGRPC) << "called.";
   message = " pxarCore DTB Emulator \n "
@@ -265,9 +267,20 @@ void CTestboard::Pg_Trigger() {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-//FIXME Receiving triggers for PG:
-void CTestboard::Pg_Triggers(uint32_t rpc_par1, uint16_t rpc_par2) {
+// Receiving triggers for PG:
+void CTestboard::Pg_Triggers(uint32_t nTriggers, uint16_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2c.size()/channels;
+
+  for(size_t i = 0; i < nTriggers; i++) {
+    for(size_t ch = 0; ch < channels; ch++) {
+      fillRawData(daq_buffer.at(ch),tbmtype,roc_per_ch,0,0);
+    }
+  }
 }
 
 // FIXME Receiving loop command
@@ -276,9 +289,11 @@ void CTestboard::Pg_Loop(uint16_t) {
   // Set DAQ into state where it always returns events.
 }
 
-// FIXME Trigger selection
-void CTestboard::Trigger_Select(uint16_t rpc_par1) {
+// Trigger selection
+void CTestboard::Trigger_Select(uint16_t src) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  // Triggers via TBM Emulator:
+  if((src & 0x00f0) != 0 || src == 0x01000) tbmtype = TBM_EMU;
 }
 
 void CTestboard::Trigger_Delay(uint8_t) {
@@ -301,9 +316,16 @@ void CTestboard::Trigger_Send(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-// FIXME DAQ:
-uint32_t CTestboard::Daq_Open(uint32_t rpc_par1, uint8_t rpc_par2) {
+// DAQ Open
+uint32_t CTestboard::Daq_Open(uint32_t buffersize, uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  if(channel > daq_buffer.size()) return 0;
+  
+  // Reserve some memory (not necessary but nice...)
+  daq_buffer.at(channel).reserve(buffersize/2);
+
+  return daq_buffer.at(channel).capacity();
 }
 
 void CTestboard::Daq_Close(uint8_t channel) {
@@ -393,8 +415,11 @@ void CTestboard::Daq_DeselectAll() {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-void CTestboard::roc_I2cAddr(uint8_t rpc_par1) {
+// Collect all ROCs that have ever been programmed:
+void CTestboard::roc_I2cAddr(uint8_t i2c) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  std::vector<uint8_t>::iterator thisroc = std::find(roci2c.begin(),roci2c.end(),i2c);
+  if(thisroc == roci2c.end()) roci2c.push_back(i2c);
 }
 
 void CTestboard::roc_ClrCal() {
@@ -441,9 +466,10 @@ bool CTestboard::TBM_Present() {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-void CTestboard::tbm_Enable(bool rpc_par1) {
+void CTestboard::tbm_Enable(bool tbm) {
   LOG(pxar::logDEBUGRPC) << "called.";
-  // FIXME select TBM!
+  if(tbm) tbmtype = TBM_08;
+  else tbmtype = TBM_NONE;
 }
 
 void CTestboard::tbm_Addr(uint8_t, uint8_t) {
@@ -495,20 +521,17 @@ bool CTestboard::SetTrimValues(uint8_t, std::vector<uint8_t> &) {
 bool CTestboard::LoopMultiRocAllPixelsCalibrate(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags) {
   LOG(pxar::logDEBUGRPC) << "called.";
 
+  // Check how many open DAQ channels we have:
+  size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
+  // Distribute the ROCs evenly:
+  size_t roc_per_ch = roci2cs.size()/channels;
   
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
-	// New raw event:
-	rawEvent* evt = new rawEvent();
-	for(std::vector<uint8_t>::iterator roc = rocids.begin(); roc != rocids.end(); ++roc) {
-	  // Fill the event with some pixels from the current ROC:
-	  fillRawEvent(evt,*roc,i,j,flags);
+	for(size_t ch = 0; ch < channels; ch++) {
+	  fillRawData(daq_buffer.at(ch),tbmtype,roc_per_ch,i,j,flags);
 	}
-	// Count pixels:
-	total_pixel += evt->pixels.size();
-	data.push_back(evt);
-	LOG(logDEBUGPIPES) << *evt;
       }
     }
   }

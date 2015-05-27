@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "log.h"
+#include "constants.h"
 
 class CRpcError {
  public:
@@ -19,13 +20,23 @@ class CTestboard {
 
   uint16_t vd, va, id, ia;
   size_t nrocs;
+  std::vector<uint8_t> roci2c;
+  uint8_t tbmtype;
+  
   std::vector<std::vector<uint16_t> > daq_buffer;
   std::vector<bool> daq_status;
   
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
-    nrocs(0), daq_buffer(), daq_status()
-    {}
+    nrocs(0), roci2c(),
+    daq_buffer(), daq_status(), tbmtype(TBM_NONE)
+  {
+    // Initialize all available DAQ channels:
+    for(size_t i = 0; i < DTB_DAQ_CHANNELS; i++) {
+      daq_buffer.push_back(std::vector<uint16_t>());
+      daq_status.push_back(false);
+    }
+  }
   ~CTestboard() { }
 
   int32_t GetHostRpcCallCount() { return 999; }
