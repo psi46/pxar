@@ -1980,7 +1980,7 @@ void hal::daqStop() {
 
   // Stopping DAQ for all 8 possible channels
   // FIXME provide daq_stop_all NIOS funktion?
-  for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Stop(channel); }
+  for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) { _testboard->Daq_Stop(channel); }
   _testboard->uDelay(100);
   _testboard->Flush();
 
