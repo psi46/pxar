@@ -85,7 +85,7 @@ namespace pxar {
 */
   }
 
-  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool noise, size_t col, size_t row, uint32_t flags) {
+  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool empty, bool noise, size_t col, size_t row, uint32_t flags) {
 
     size_t pos = data.size();
     
@@ -101,19 +101,21 @@ namespace pxar {
       if(tbm != TBM_NONE) data.push_back(0x47f8);
       else data.push_back(0x07f8);
 
-      // Add pixel hit:
-      pxar::pixel px;
-      if(noise) px = getNoiseHit(roc,col,row);
-      else px = getTriggeredHit(roc,col,row,flags);
+      if(!empty) {
+	// Add pixel hit:
+	pxar::pixel px;
+	if(noise) px = getNoiseHit(roc,col,row);
+	else px = getTriggeredHit(roc,col,row,flags);
       
-      data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
-      data.push_back(0x1000 | (px.encode() & 0x0fff));
-
-      // If the full chip is unmasked, add some noise hits:
-      if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) {
-	px = getNoiseHit(roc,col,row);
 	data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
 	data.push_back(0x1000 | (px.encode() & 0x0fff));
+
+	// If the full chip is unmasked, add some noise hits:
+	if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) {
+	  px = getNoiseHit(roc,col,row);
+	  data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
+	  data.push_back(0x1000 | (px.encode() & 0x0fff));
+	}
       }
     }
 
@@ -125,8 +127,7 @@ namespace pxar {
     // Adjust event start and end marker:
     else {
       data.at(pos) = 0x8000 | (data.at(pos) & 0x0fff);
-      data.at(data.size()-1) = 0x4000 | (data.back() & 0x0fff);
+      data.at(data.size()-1) = 0x4000 | (data.back() & 0x8fff);
     }
-    
   }
 }
