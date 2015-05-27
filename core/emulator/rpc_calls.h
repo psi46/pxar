@@ -22,19 +22,22 @@ class CTestboard {
   size_t nrocs_loops;
   std::vector<uint8_t> roci2c;
   uint8_t tbmtype;
+  uint16_t trigger;
   
-  std::vector<std::vector<uint16_t> > daq_buffer;
-  std::vector<bool> daq_status;
+  std::vector<std::vector<uint16_t> > daq_buffer; // Data buffers
+  std::vector<bool> daq_status; // Channel status
+  std::vector<size_t> daq_event; // Event counters
   
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
-    nrocs_loops(0), roci2c(), tbmtype(TBM_NONE),
-    daq_buffer(), daq_status()
+    nrocs_loops(0), roci2c(), tbmtype(TBM_NONE),trigger(TRG_SEL_PG_DIR),
+    daq_buffer(), daq_status(), daq_event()
   {
     // Initialize all available DAQ channels:
     for(size_t i = 0; i < DTB_DAQ_CHANNELS; i++) {
       daq_buffer.push_back(std::vector<uint16_t>());
       daq_status.push_back(false);
+      daq_event.push_back(0);
     }
   }
   ~CTestboard() { }

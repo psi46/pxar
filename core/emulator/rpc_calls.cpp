@@ -293,10 +293,10 @@ void CTestboard::Pg_Loop(uint16_t) {
 // Trigger selection
 void CTestboard::Trigger_Select(uint16_t src) {
   LOG(pxar::logDEBUGRPC) << "called.";
-  LOG(pxar::logDEBUGRPC) << "called, updated TBM to 0x" << std::hex << (int)tbmtype << std::dec;
+  // Store trigger:
+  trigger = src;
   // Triggers via TBM Emulator:
   if((src & 0x00f0) != 0 || src == 0x0100) tbmtype = TBM_EMU;
-  LOG(pxar::logDEBUGRPC) << "called, updated TBM to 0x" << std::hex << (int)tbmtype << std::dec;
 }
 
 void CTestboard::Trigger_Delay(uint8_t) {
@@ -335,16 +335,17 @@ void CTestboard::Daq_Close(uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
   // Clear DAQ buffer
   daq_buffer.at(channel).clear();
-  daq_status.at(channel) = false;
 }
 
 void CTestboard::Daq_Start(uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
   daq_status.at(channel) = true;
+  daq_event.at(channel) = 0;
 }
 
-void CTestboard::Daq_Stop(uint8_t) {
+void CTestboard::Daq_Stop(uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
+  daq_status.at(channel) = false;
 }
 
 uint32_t CTestboard::Daq_GetSize(uint8_t channel) {
@@ -375,8 +376,13 @@ uint8_t CTestboard::Daq_Read(std::vector<uint16_t> &data, uint32_t blocksize, ui
   LOG(pxar::logDEBUGRPC) << "called.";
   data.clear();
 
-  if(!daq_status.at(channel)) { available = 0; return 0; }
-
+  // If we are on external triggers, just deliver one event per channel:
+  if(trigger == TRG_SEL_ASYNC | trigger == TRG_SEL_ASYNC_DIR) {
+    if(!daq_status.at(channel)) { available = 0; return 0; }
+    fillRawData(daq_event.at(channel)++,daq_buffer.at(channel),tbmtype,roci2c.size(),false,true,0,0);
+    mDelay(10);
+  }
+  
   // Return correct blocksize. Since this is given in Bytes,
   // we deliver blocksize/2 16bit words:
 
