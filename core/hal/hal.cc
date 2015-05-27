@@ -75,7 +75,7 @@ hal::hal(std::string name) :
   }
 
   // We connected to a DTB, now let's initialize the pipe works:
-  for(size_t channel = 0; channel < 8; channel++) {
+  for(size_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) {
     m_src.push_back(dtbSource());
     m_splitter.push_back(dtbEventSplitter());
     m_decoder.push_back(dtbEventDecoder());
@@ -1994,7 +1994,7 @@ void hal::daqClear() {
 
   // Running Daq_Close() to delete all data and free allocated RAM:
   LOG(logDEBUGHAL) << "Closing DAQ session, deleting data buffers.";
-  for(uint8_t channel = 0; channel < 8; channel++) { _testboard->Daq_Close(channel); }
+  for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) { _testboard->Daq_Close(channel); }
   m_daqstatus.clear();
 }
 
