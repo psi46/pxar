@@ -230,6 +230,9 @@ void PixTestTiming::PhaseScan() {
   fDirectory->cd();
   PixTest::update();
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  
   //Make histograms
   TH2D *h1(0);
   TH2D *h2(0);
@@ -442,6 +445,9 @@ void PixTestTiming::TBMPhaseScan() {
   // Start test timer
   timer t;
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
   banner(Form("PixTestTiming::TBMPhaseScan()"));
   cacheTBMDacs();
 
@@ -494,6 +500,9 @@ void PixTestTiming::ROCDelayScan() {
 
   // Start test timer
   timer t;
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
   banner(Form("PixTestTiming::ROCDelayScan()"));
   cacheTBMDacs();
@@ -555,6 +564,9 @@ void PixTestTiming::TimingTest() {
   // Start test timer
   timer t;
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
   banner(Form("PixTestTiming::TimingTest()"));
 
   int nTBMs = fApi->_dut->getNTbms();
@@ -581,6 +593,9 @@ void PixTestTiming::LevelScan() {
 
   // Start test timer
   timer t;
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
   fDirectory->cd();
   PixTest::update();

@@ -370,6 +370,8 @@ void PixTestPretest::setTimings() {
   timer t;
   
   banner(Form("PixTestPreTest::setTimings()"));
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   int nTBMs = fApi->_dut->getNTbms();
