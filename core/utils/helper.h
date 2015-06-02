@@ -152,7 +152,7 @@ namespace pxar {
 
   /** Helper function to recover the ADC sign of analog data words
    */
-  static int16_t expandSign(uint16_t x) { return (x & 0x0800) ? static_cast<int16_t>(x) - 4096 : static_cast<int16_t>(x); }
+  inline int16_t expandSign(uint16_t x) { return (x & 0x0800) ? static_cast<int16_t>(x) - 4096 : static_cast<int16_t>(x); }
 
   /** Helper function to return a printed list of an integer vector, used to shield
    *  debug code from being executed if debug level is not sufficient
@@ -171,6 +171,10 @@ namespace pxar {
     if(hex) { os << std::dec; }
     return os.str();
   }
+
+  /** Helper function to output bool variables as TRUE or FALSE text
+   */
+  inline std::string textBool(bool in) { return (in ? "TRUE" : "FALSE"); }
 
   /** Helper function to return a printed list of flags
    */

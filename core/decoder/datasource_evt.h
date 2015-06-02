@@ -12,7 +12,6 @@ namespace pxar {
   class evtSource : public dataSource<uint16_t> {
     // --- Control/state
     uint8_t channel;
-    bool connected;
     uint8_t chainlength;
     uint8_t envelopetype;
     uint8_t devicetype;
@@ -20,6 +19,7 @@ namespace pxar {
     // --- data buffer
     uint16_t lastSample;
     unsigned int pos;
+    bool connected;
     std::vector<uint16_t> buffer;
 
     // --- virtual data access methods
