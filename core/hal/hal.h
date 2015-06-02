@@ -479,6 +479,11 @@ namespace pxar {
     std::vector<dtbSource> m_src;
     std::vector<dtbEventSplitter> m_splitter;
     std::vector<dtbEventDecoder> m_decoder;
+
+    // My test buffers
+    std::vector<dtbSource> srce; // give it a unique name
+    std::vector<dtbEventSplitter> splitter;
+    std::vector<dtbEventDecoder> decoder;
   };
 }
 #endif
