@@ -560,15 +560,15 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
 
 std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start){
     
-    vector<uint16_t> data;
-    if(!_hal->status()) {return data;}
-    
-    ProbeDictionary * _dict = ProbeDictionary::getInstance();
-    std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
-    uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
- 
-    data = _hal->daqADC(signal, gain, nSample, source, start);
-    return data;
+  std::vector<uint16_t> data;
+  if(!_hal->status()) {return data;}
+
+  ProbeDictionary * _dict = ProbeDictionary::getInstance();
+  std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
+  uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
+
+  data = _hal->daqADC(signal, gain, nSample, source, start);
+  return data;
 }
 
 statistics pxarCore::getStatistics() {
