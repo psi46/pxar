@@ -446,7 +446,6 @@ namespace pxar {
       m_errors_tbm_header(0),
       m_errors_tbm_trailer(0),
       m_errors_tbm_eventid_mismatch(0),
-      m_errors_roc_invalid(0),
       m_errors_roc_missing(0),
       m_errors_roc_readback(0),
       m_errors_pixel_incomplete(0),
@@ -480,8 +479,7 @@ namespace pxar {
 	      + errors_tbm_eventid_mismatch());
     };
     uint32_t errors_roc() {
-      return (errors_roc_invalid()
-	      + errors_roc_missing()
+      return (errors_roc_missing()
 	      + errors_roc_readback());
     };
     uint32_t errors_pixel() { 
@@ -498,7 +496,6 @@ namespace pxar {
     uint32_t errors_tbm_header() { return m_errors_tbm_header; }
     uint32_t errors_tbm_eventid_mismatch() { return m_errors_tbm_eventid_mismatch; }
     uint32_t errors_tbm_trailer() { return m_errors_tbm_trailer; }
-    uint32_t errors_roc_invalid() { return m_errors_roc_invalid; }
     uint32_t errors_roc_missing() { return m_errors_roc_missing; }
     uint32_t errors_roc_readback() { return m_errors_roc_readback; }
     uint32_t errors_pixel_incomplete() { return m_errors_pixel_incomplete; }
@@ -536,8 +533,6 @@ namespace pxar {
     // Total number of event ID mismatches in the datastream:
     uint32_t m_errors_tbm_eventid_mismatch;
 
-    // Total number of invalid ROC headers (not featuring 0x7f):
-    uint32_t m_errors_roc_invalid;
     // Total number of events with missing ROC header(s):
     uint32_t m_errors_roc_missing;
     // Total number of misplaced ROC readback start markers:
