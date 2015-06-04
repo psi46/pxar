@@ -188,7 +188,11 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Set the TBM type (get value from dictionary)
     newtbm.type = stringToDeviceCode(tbmtype);
     if(newtbm.type == 0x0) return false;
-    
+    // Standard setup for token chain lengths:
+    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
+    else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
+    else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
+
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
      
@@ -196,9 +200,18 @@ bool pxarCore::initDUT(uint8_t hubid,
       uint8_t tbmregister, value = dacIt->second;
       if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
 
-      // Check if this is a special setting:
-      if(tbmregister == 0xFF) { // Token Chain length
-	LOG(logDEBUGAPI) << "This TBM Core is configured to have a token chain of "
+      // Check if this is a token chain length and store it:
+      if(newtbm.tokenchains.size() > 0 && tbmregister == TBM_TOKENCHAIN_0) {
+	newtbm.tokenchains.at(0) = value;
+	LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin()) 
+			 << " data stream 1 configured to have a token chain with "
+			 << static_cast<int>(value) << " ROCs.";
+	continue;
+      }
+      if(newtbm.tokenchains.size() > 1 && tbmregister == TBM_TOKENCHAIN_1) {
+	newtbm.tokenchains.at(1) = value;
+	LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin()) 
+			 << " data stream 2 configured to have a token chain with "
 			 << static_cast<int>(value) << " ROCs.";
 	continue;
       }
@@ -227,6 +240,7 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Prepare a new TBM configuration and copy over all settings:
     tbmConfig newtbm;
     newtbm.type = _dut->tbm.at(0).type;
+    newtbm.tokenchains = _dut->tbm.at(0).tokenchains;
     
     for(std::map<uint8_t,uint8_t>::iterator reg = _dut->tbm.at(0).dacs.begin(); reg != _dut->tbm.at(0).dacs.end(); ++reg) {
       uint8_t tbmregister = reg->first;
@@ -247,6 +261,14 @@ bool pxarCore::initDUT(uint8_t hubid,
     // We expect the direct TokenOut signal from a ROC which needs LVDS termination:
     _hal->SigSetLVDS();
     LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LVDS.";
+  }
+
+  // Printout for final token chain lengths selected for each TBM channel and calculate the sum:
+  uint16_t nrocs_total = 0;
+  for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
+    LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbm - _dut->tbm.begin()) 
+		     << " Token Chains: " << listVector(tbm->tokenchains);
+    for(size_t i = 0; i < tbm->tokenchains.size(); i++) { nrocs_total += tbm->tokenchains.at(i); }
   }
 
   // Initialize ROCs:
@@ -298,6 +320,14 @@ bool pxarCore::initDUT(uint8_t hubid,
     _dut->roc.push_back(newroc);
   }
 
+  // Check number of ROCs agains total token chain length:
+  if(!_dut->tbm.empty() && _dut->roc.size() != nrocs_total) {
+    LOG(logCRITICAL) << "Hm, we have " << _dut->roc.size() << " ROC configurations but a total token chain length of " << nrocs_total << " ROCs.";
+    LOG(logCRITICAL) << "This cannot end well...";
+    throw InvalidConfig("Mismatch between number of ROC configurations and total token chain length.");
+  }
+
+
   // All data is stored in the DUT struct, now programming it.
   _dut->_initialized = true;
   return programDUT();
@@ -319,7 +349,7 @@ bool pxarCore::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs);
+    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -333,6 +363,7 @@ bool pxarCore::programDUT() {
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->AllColumnsSetEnable(rocit->i2c_address,true);
   }
+
   // Also clear all calibrate signals:
   SetCalibrateBits(false);
 
@@ -529,15 +560,15 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
 
 std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start){
     
-    vector<uint16_t> data;
-    if(!_hal->status()) {return data;}
-    
-    ProbeDictionary * _dict = ProbeDictionary::getInstance();
-    std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
-    uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
- 
-    data = _hal->daqADC(signal, gain, nSample, source, start);
-    return data;
+  std::vector<uint16_t> data;
+  if(!_hal->status()) {return data;}
+
+  ProbeDictionary * _dict = ProbeDictionary::getInstance();
+  std::transform(signalName.begin(), signalName.end(), signalName.begin(), ::tolower);
+  uint8_t signal = _dict->getSignal(signalName, PROBE_ANALOG);
+
+  data = _hal->daqADC(signal, gain, nSample, source, start);
+  return data;
 }
 
 statistics pxarCore::getStatistics() {
@@ -1167,16 +1198,17 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   
   // Check if we want to program the DUT or just leave it:
   if(init) {
+    // Attaching all columns to the readout:
+    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
+    }
+
     // Setup the configured mask and trim state of the DUT:
     MaskAndTrim(true);
 
     // Set Calibrate bits in the PUCs (we use the testrange for that):
     SetCalibrateBits(true);
 
-    // Attaching all columns to the readout:
-    for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-      _hal->AllColumnsSetEnable(rocit->i2c_address,true);
-    }
   }
   else if(!_daq_startstop_warning){
     LOG(logWARNING) << "Not unmasking DUT, not setting Calibrate bits!"; 
@@ -1385,9 +1417,6 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
 
 Event pxarCore::daqGetEvent() {
 
-  // Check DAQ status:
-  if(!daqStatus()) { return Event(); }
-
   // Return the next decoded Event from the FIFO buffer.
   // The HAL function throws pxar::DataNoEvent if no event is available
   Event * evt = _hal->daqEvent();
@@ -1397,9 +1426,6 @@ Event pxarCore::daqGetEvent() {
 }
 
 rawEvent pxarCore::daqGetRawEvent() {
-
-  // Check DAQ status:
-  if(!daqStatus()) { return rawEvent(); }
 
   // Return the next raw data record from the FIFO buffer:
   // The HAL function throws pxar::DataNoEvent if no event is available
@@ -2323,18 +2349,20 @@ bool pxarCore::setExternalClock(bool enable) {
   }
 }
 
-void pxarCore::setSignalMode(std::string signal, uint8_t mode) {
- 
+void pxarCore::setSignalMode(std::string signal, uint8_t mode, uint8_t speed) {
+
   uint8_t sigRegister, value = 0;
   if(!verifyRegister(signal, sigRegister, value, DTB_REG)) return;
   
   LOG(logDEBUGAPI) << "Setting signal " << signal << " (" 
 		   << static_cast<int>(sigRegister) << ")  to mode "
 		   << static_cast<int>(mode) << ".";
-  _hal->SigSetMode(sigRegister, mode);
+
+  if(mode == 3) { _hal->SigSetPRBS(sigRegister, speed); }
+  else { _hal->SigSetMode(sigRegister, mode); }
 }
 
-void pxarCore::setSignalMode(std::string signal, std::string mode) {
+void pxarCore::setSignalMode(std::string signal, std::string mode, uint8_t speed) {
  
   uint8_t modeValue = 0xff;
 
@@ -2351,7 +2379,7 @@ void pxarCore::setSignalMode(std::string signal, std::string mode) {
   }
 
   // Set the signal mode:
-  setSignalMode(signal, modeValue);
+  setSignalMode(signal, modeValue, speed);
 }
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
