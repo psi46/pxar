@@ -2166,15 +2166,18 @@ void pxarCore::SetCalibrateBits(bool enable) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
 
-    LOG(logDEBUGAPI) << "Configuring calibrate bits in all enabled PUCs of ROC@I2C " << static_cast<int>(rocit->i2c_address);
     // Check if the signal has to be turned on or off:
     if(enable) {
       std::vector<pixelConfig> cal_pixels = _dut->getEnabledPixels(rocit - _dut->roc.begin());
-      LOG(logDEBUGAPI) << "Got " << cal_pixels.size() << " enabled pixels on ROC " << rocit->i2c_address;
+      LOG(logDEBUGAPI) << "Configuring calibrate bits in " << cal_pixels.size() << " enabled PUCs of ROC@I2C " 
+		       << static_cast<int>(rocit->i2c_address);
       _hal->RocSetCalibrate(rocit->i2c_address,cal_pixels,0); 
     }
     // Clear the signal for the full ROC:
-    else {_hal->RocClearCalibrate(rocit->i2c_address);}
+    else {
+      LOG(logDEBUGAPI) << "Clearing Calibrate for ROC@I2C " << static_cast<int>(rocit->i2c_address);
+      _hal->RocClearCalibrate(rocit->i2c_address);
+    }
   }
 
 }
