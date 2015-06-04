@@ -679,9 +679,8 @@ void hal::AllColumnsSetEnable(uint8_t roci2c, bool enable) {
 		   << (enable ? "to" : "from")
 		   << " periphery for ROC@I2C " << static_cast<int>(roci2c);
 
-  for(size_t column = 0; column < ROC_NUMCOLS; column++ ) {
-    _testboard->roc_Col_Enable(static_cast<uint8_t>(column),enable);
-  }
+  _testboard->roc_AllCol_Enable(enable);
+  _testboard->Flush();
 }
 
 void hal::PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t flags) {
@@ -692,6 +691,20 @@ void hal::PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_
   // Set the calibrate bit and the CALS setting:
   bool useSensorPadForCalibration  = (flags & FLAG_CALS) != 0;
   _testboard->roc_Pix_Cal(column,row,useSensorPadForCalibration);
+}
+
+void hal::RocSetCalibrate(uint8_t roci2c, std::vector<pixelConfig> pixels, uint16_t flags) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(roci2c);
+
+  // Set the calibrate bit and the CALS setting:
+  bool useSensorPadForCalibration  = (flags & FLAG_CALS) != 0;
+
+  // Write the information from the pixel configs:
+  for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
+    _testboard->roc_Pix_Cal(pxIt->column(),pxIt->row(),useSensorPadForCalibration);
+  }
 }
 
 void hal::RocClearCalibrate(uint8_t roci2c) {
