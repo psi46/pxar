@@ -223,9 +223,6 @@ namespace pxar {
 	  throw DataDecodingError("Invalid XOR eye diagram encountered.");
 	}
 
-	// Check if we see the correct 0x7f pattern:
-	if(((*word) & 0x0ffc) != 0x07f8) decodingStats.m_errors_roc_invalid++;
-
 	// Decode the readback bits in the ROC header:
 	if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),(*word)); }
       }
