@@ -1667,6 +1667,9 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     m_src.at(1) = dtbSource(_testboard,1,m_tokenchains.at(1),m_tbmtype,m_roctype,true);
     m_src.at(1) >> m_splitter.at(1);
 
+    // Select the Deser400 as DAQ source:
+    _testboard->Daq_Select_Deser400();
+    
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 
@@ -1678,9 +1681,6 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     }
     else { _testboard->Daq_Deser400_OldFormat(false); }
 
-    // Select the Deser400 as DAQ source:
-    _testboard->Daq_Select_Deser400();
-    
     // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
     _testboard->Flush();  
     mDelay(150); 
