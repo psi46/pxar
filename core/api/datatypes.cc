@@ -143,6 +143,7 @@ namespace pxar {
     LOG(logINFO) << "\t flawed TBM trailers:      " << this->errors_tbm_trailer();
     LOG(logINFO) << "\t event ID mismatches:      " << this->errors_tbm_eventid_mismatch();
     LOG(logINFO) << "  ROC errors: \t\t           " << this->errors_roc();
+    LOG(logINFO) << "\t invalid ROC header(s):    " << this->errors_roc_invalid();
     LOG(logINFO) << "\t missing ROC header(s):    " << this->errors_roc_missing();
     LOG(logINFO) << "\t misplaced readback start: " << this->errors_roc_readback();
     LOG(logINFO) << "  Pixel decoding errors:\t   " << this->errors_pixel();
@@ -168,6 +169,7 @@ namespace pxar {
     m_errors_tbm_trailer = 0;
     m_errors_tbm_eventid_mismatch = 0;
 
+    m_errors_roc_invalid = 0;
     m_errors_roc_missing = 0;
     m_errors_roc_readback = 0;
 
@@ -197,6 +199,7 @@ namespace pxar {
     lhs.m_errors_tbm_eventid_mismatch += rhs.m_errors_tbm_eventid_mismatch;
 
     // ROC errors:
+    lhs.m_errors_roc_invalid += rhs.m_errors_roc_invalid;
     lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
     lhs.m_errors_roc_readback += rhs.m_errors_roc_readback;
 
