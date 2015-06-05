@@ -73,6 +73,15 @@ namespace pxar {
   DataNoEvent(const std::string& what_arg) : DataException(what_arg) {}
   };
 
+  /** This exception class is used whenever multiple DAQ channels are active and
+   *  there is a mismatch in event number across the channels (i.e. channel 0
+   *  still returns one event but channel 1 is already drained
+   */
+  class DataChannelMismatch : public DataException {
+  public:
+  DataChannelMismatch(const std::string& what_arg) : DataException(what_arg) {}
+  };
+
   /**  This exception class is used when the DAQ readout is incomplete (missing events).
    */
   class DataMissingEvent : public DataException {
