@@ -251,7 +251,7 @@ namespace pxar {
 	  // Get the correct ROC id: Channel number x ROC offset (= token chain length)
 	  // TBM08x: channel 0: 0-7, channel 1: 8-15
 	  // TBM09x: channel 0: 0-3, channel 1: 4-7, channel 2: 8-11, channel 3: 12-15
-	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetPrecedingTokenChainLength()),invertedAddress);
+	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetTokenChainOffset()),invertedAddress);
 	  roc_Event.pixels.push_back(pix);
 	  decodingStats.m_info_pixels_valid++;
 	}
