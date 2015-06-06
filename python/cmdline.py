@@ -752,6 +752,24 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all DACS
                 return dacdict.getAllROCNames()
 
+    @arity(2,3,[str, int, int])
+    def do_setTbmReg(self, regname, value, tbmid = None):
+        """setTbmReg [Reg. name] [value] [TBMID]: Set the register to given value for given TBM ID"""
+        self.api.setTbmReg(regname, value, tbmid)
+
+    def complete_setTbmReg(self, text, line, start_index, end_index):
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [dac for dac in dacdict.getAllTBMNames()
+                        if dac.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_setTbmReg.__doc__, '']
+            else:
+                # return all DACS
+                return dacdict.getAllTBMNames()
+
     @arity(1,1,[str])
     def do_getDACRange(self, dacname):
         """getDACRange [DAC name]: Get the valid value range for the given DAC"""

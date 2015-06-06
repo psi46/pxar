@@ -155,14 +155,12 @@ namespace pxar {
       _registers["delays"]        = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG,false);
       _registers["basea"]         = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
 
-      _registers["autoreset"]     = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG,false);
-      _registers["basec"]         = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
-      // In the old TBM these were the temperature registers:
-      _registers["temperature"]   = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG,false);
+      _registers["autoreset"]     = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
+      _registers["basec"]         = dacConfig(TBM_REG_AUTORESET,255,TBM_REG);
 
       _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
-
+      _registers["temperature"]   = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       // Special TBM settings:
       _registers["nrocs"]         = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
       _registers["nrocs1"]        = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);

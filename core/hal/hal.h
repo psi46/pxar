@@ -378,6 +378,10 @@ namespace pxar {
      */
     void PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t flags);
 
+    /** Set the Calibrate bit and CALS setting of a full ROC, read from avector of pxar::pixelConfig
+     */
+    void RocSetCalibrate(uint8_t roci2c, std::vector<pixelConfig> pixels, uint16_t flags);
+
     /** Reset all Calibrate bits and clear the ROC I2C address:
      */
     void RocClearCalibrate(uint8_t roci2c);

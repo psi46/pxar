@@ -1061,6 +1061,10 @@ namespace pxar {
      */
     std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
+    /** Function returning the token chain length:
+     */
+    std::vector<uint8_t> getTbmChainLengths(size_t tbmId);
+
     /** Helper function to print current values from all DAC on ROC rocId
      *  to stdout
      */

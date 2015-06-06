@@ -679,9 +679,8 @@ void hal::AllColumnsSetEnable(uint8_t roci2c, bool enable) {
 		   << (enable ? "to" : "from")
 		   << " periphery for ROC@I2C " << static_cast<int>(roci2c);
 
-  for(size_t column = 0; column < ROC_NUMCOLS; column++ ) {
-    _testboard->roc_Col_Enable(static_cast<uint8_t>(column),enable);
-  }
+  _testboard->roc_AllCol_Enable(enable);
+  _testboard->Flush();
 }
 
 void hal::PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t flags) {
@@ -692,6 +691,20 @@ void hal::PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_
   // Set the calibrate bit and the CALS setting:
   bool useSensorPadForCalibration  = (flags & FLAG_CALS) != 0;
   _testboard->roc_Pix_Cal(column,row,useSensorPadForCalibration);
+}
+
+void hal::RocSetCalibrate(uint8_t roci2c, std::vector<pixelConfig> pixels, uint16_t flags) {
+
+  // Set the correct ROC I2C address:
+  _testboard->roc_I2cAddr(roci2c);
+
+  // Set the calibrate bit and the CALS setting:
+  bool useSensorPadForCalibration  = (flags & FLAG_CALS) != 0;
+
+  // Write the information from the pixel configs:
+  for(std::vector<pixelConfig>::iterator pxIt = pixels.begin(); pxIt != pixels.end(); ++pxIt) {
+    _testboard->roc_Pix_Cal(pxIt->column(),pxIt->row(),useSensorPadForCalibration);
+  }
 }
 
 void hal::RocClearCalibrate(uint8_t roci2c) {
@@ -1659,7 +1672,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
     LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains.at(0),m_tbmtype,m_roctype,true);
+    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains,m_tbmtype,m_roctype,true);
     m_src.at(0) >> m_splitter.at(0);
 
 	// This is new code for handling layer one modules, i.e. multiple TBMs (basically rewriting existing code)
@@ -1680,9 +1693,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(m_tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
-    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains.at(1),m_tbmtype,m_roctype,true);
+    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains,m_tbmtype,m_roctype,true);
     m_src.at(1) >> m_splitter.at(1);
 
+    // Select the Deser400 as DAQ source:
+    _testboard->Daq_Select_Deser400();
+    
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 
@@ -1694,9 +1710,6 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     }
     else { _testboard->Daq_Deser400_OldFormat(false); }
 
-    // Select the Deser400 as DAQ source:
-    _testboard->Daq_Select_Deser400();
-    
     // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
     _testboard->Flush();  
     mDelay(150); 
@@ -1711,12 +1724,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
       LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(m_tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
-      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains.at(2),m_tbmtype,m_roctype,true);
+      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains,m_tbmtype,m_roctype,true);
       m_src.at(2) >> m_splitter.at(2);
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
       LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(m_tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
-      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains.at(3),m_tbmtype,m_roctype,true);
+      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains,m_tbmtype,m_roctype,true);
       m_src.at(3) >> m_splitter.at(3);
 
       // Start the DAQ also for channel 2 and 3:
@@ -1733,7 +1746,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
     LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_roccount) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_roccount,m_tbmtype,m_roctype,true);
+    m_src.at(0) = dtbSource(_testboard,0,std::vector<uint8_t>(1,m_roccount),m_tbmtype,m_roctype,true);
     m_src.at(0) >> m_splitter.at(0);
     _testboard->uDelay(100);
 
