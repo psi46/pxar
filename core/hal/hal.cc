@@ -1676,17 +1676,20 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     m_src.at(0) >> m_splitter.at(0);
 
 	// This is new code for handling layer one modules, i.e. multiple TBMs (basically rewriting existing code)
-	uint8_t channels = 4; // This should become a variable storing the number of channels four for testing (twice the number of tbms)
+	// uint8_t channels = 4; // This should become a variable storing the number of channels four for testing (twice the number of tbms)
 	std::vector<uint32_t> allocated_buffer;
-	tokenChainLength = m_tokenchains.at(0);
 
-	for (uint8_t ch = 0; ch < channels; ++ ch) {
+	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
 		allocated_buffer.push_back(_testboard->Daq_Open(buffersize, ch));
 
-		LOG(logDEBUGHAL) << "Channel " << ch << ": token chain: " << static_cast<int>(tokenChainLength) << " offset " << 0 << " buffer " << allocated_buffer.at(ch);
-		srce.at(ch) = (dtbSource(_testboard, ch, tokenChainLength, m_tbmtype, m_roctype, true));
+		LOG(logDEBUGHAL) << "Channel " << static_cast<int>(ch) << ": token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer.at(ch);
+		//srce.at(ch) = (dtbSource(_testboard, ch, tokenChainLength, m_tbmtype, m_roctype, true));
+		//srce.at(ch) >> splitter.at(ch);
+		//_testboard->Daq_Start(ch);
+		srce.push_back(dtbSource(_testboard, ch, m_tokenchains, m_tbmtype, m_roctype, true));
+		splitter.push_back(dtbEventSplitter());
 		srce.at(ch) >> splitter.at(ch);
-		_testboard->DaqStart(ch);
+		_testboard->Daq_Start(ch);
 	}
 
 	/* end of new code */
