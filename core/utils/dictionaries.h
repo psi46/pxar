@@ -298,8 +298,6 @@ namespace pxar {
       _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
-      // This name is not correct, but kept for legacy reasons:
-      _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 
       // TBM flavors:
       _devices["tbmemulator"]   = TBM_EMU;
