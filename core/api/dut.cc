@@ -363,6 +363,10 @@ std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
   else return std::vector< std::pair<std::string,uint8_t> >();
 }
 
+std::vector<uint8_t> dut::getTbmChainLengths(size_t tbmId) {
+  return tbm.at(tbmId).tokenchains;
+}
+
 void dut::printDACs(size_t rocId) {
 
   if(status() && rocId < roc.size()) {
