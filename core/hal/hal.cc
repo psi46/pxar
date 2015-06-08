@@ -1670,38 +1670,26 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
-    uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
-    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains,m_tbmtype,m_roctype,true);
-    m_src.at(0) >> m_splitter.at(0);
-
 	// This is new code for handling layer one modules, i.e. multiple TBMs (basically rewriting existing code)
 	// uint8_t channels = 4; // This should become a variable storing the number of channels four for testing (twice the number of tbms)
 	std::vector<uint32_t> allocated_buffer;
 
 	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
 		allocated_buffer.push_back(_testboard->Daq_Open(buffersize, ch));
+		srce.push_back(dtbSource());
+		splitter.push_back(dtbEventSplitter());
 
 		LOG(logDEBUGHAL) << "Channel " << static_cast<int>(ch) << ": token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer.at(ch);
-		//srce.at(ch) = (dtbSource(_testboard, ch, tokenChainLength, m_tbmtype, m_roctype, true));
-		//srce.at(ch) >> splitter.at(ch);
-		//_testboard->Daq_Start(ch);
-		srce.push_back(dtbSource(_testboard, ch, m_tokenchains, m_tbmtype, m_roctype, true));
-		splitter.push_back(dtbEventSplitter());
+		srce.at(ch) = dtbSource(_testboard, ch, m_tokenchains, m_tbmtype, m_roctype, true);
 		srce.at(ch) >> splitter.at(ch);
-		_testboard->Daq_Start(ch);
+
 	}
 
 	/* end of new code */
 
-    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
-    LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(m_tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
-    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains,m_tbmtype,m_roctype,true);
-    m_src.at(1) >> m_splitter.at(1);
-
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
-    
+
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 
@@ -1715,32 +1703,17 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
     _testboard->Flush();  
-    mDelay(150); 
+    mDelay(150);
+
+	m_src = srce;
+	m_splitter = splitter;
 
     // And start the DAQ:
-    _testboard->Daq_Start(1);
-    m_daqstatus.at(1) = true;
+	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
+		_testboard->Daq_Start(ch);
+		m_daqstatus.at(ch) = true;
+	}
 
-    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(m_tbmtype >= TBM_09) {
-      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
-
-      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(m_tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
-      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains,m_tbmtype,m_roctype,true);
-      m_src.at(2) >> m_splitter.at(2);
-
-      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(m_tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
-      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains,m_tbmtype,m_roctype,true);
-      m_src.at(3) >> m_splitter.at(3);
-
-      // Start the DAQ also for channel 2 and 3:
-      _testboard->Daq_Start(2);
-      m_daqstatus.at(2) = true;
-      _testboard->Daq_Start(3);
-      m_daqstatus.at(3) = true;
-    }
   }
   // Data acquisition without real TBM:
   else {
@@ -1769,9 +1742,6 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     }
   }
 
-    // Start DAQ in channel 0:
-  _testboard->Daq_Start(0);
-  m_daqstatus.at(0) = true;
   _testboard->uDelay(100);
   _testboard->Flush();
 }
