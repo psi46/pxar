@@ -1670,22 +1670,19 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
-	// This is new code for handling layer one modules, i.e. multiple TBMs (basically rewriting existing code)
-	// uint8_t channels = 4; // This should become a variable storing the number of channels four for testing (twice the number of tbms)
 	std::vector<uint32_t> allocated_buffer;
+
+    // Enabling necessary amount of DAQ channels:
+    LOG(logDEBUGHAL) << "TBM "<< m_tbmtype <<" detected, enabling " << static_cast<int>(m_tokenchains.size()) <<" DAQ channels.";
 
 	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
 		allocated_buffer.push_back(_testboard->Daq_Open(buffersize, ch));
-		srce.push_back(dtbSource());
-		splitter.push_back(dtbEventSplitter());
 
 		LOG(logDEBUGHAL) << "Channel " << static_cast<int>(ch) << ": token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer.at(ch);
-		srce.at(ch) = dtbSource(_testboard, ch, m_tokenchains, m_tbmtype, m_roctype, true);
-		srce.at(ch) >> splitter.at(ch);
+		m_src.at(ch) = dtbSource(_testboard,ch,m_tokenchains,m_tbmtype,m_roctype,true);
+		m_src.at(ch) >> m_splitter.at(ch);
 
 	}
-
-	/* end of new code */
 
     // Select the Deser400 as DAQ source:
     _testboard->Daq_Select_Deser400();
@@ -1704,9 +1701,6 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
     _testboard->Flush();  
     mDelay(150);
-
-	m_src = srce;
-	m_splitter = splitter;
 
     // And start the DAQ:
 	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
@@ -1740,6 +1734,9 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 		       << " Phase: " << static_cast<int>(deser160phase);
       _testboard->Daq_Select_Deser160(deser160phase);
     }
+    // Start DAQ in channel 0:
+    _testboard->Daq_Start(0);
+    m_daqstatus.at(0) = true;
   }
 
   _testboard->uDelay(100);
