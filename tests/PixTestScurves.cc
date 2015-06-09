@@ -20,7 +20,7 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1) {
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1), fDumpOutputFile(-1) {
   PixTest::init();
   init(); 
 }
@@ -76,6 +76,19 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 	PixUtil::replaceAll(sval, "checkbox(", ""); 
 	PixUtil::replaceAll(sval, ")", ""); 
 	fDumpProblematic = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
+      if (!parName.compare("dumpoutputfile")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpOutputFile = atoi(sval.c_str()); 
+	if (fDumpOutputFile)  {
+	  fOutputFilename = "SCurveData";
+	} else {
+	  fOutputFilename = "";
+	}
+	LOG(logDEBUG) << "set fOutputFilename = "  << fOutputFilename; 
 	setToolTips();
       }
 
