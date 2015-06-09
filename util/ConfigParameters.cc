@@ -383,7 +383,8 @@ void ConfigParameters::readRocPixelConfig() {
     vector<pxar::pixelConfig> v;
     for (uint8_t ic = 0; ic < fnCol; ++ic) {
       for (uint8_t ir = 0; ir < fnRow; ++ir) {
-	pxar::pixelConfig a(ic,ir,0,false,true); 
+	//	pxar::pixelConfig a(ic,ir,0,false,true); 
+	pxar::pixelConfig a(ic,ir,0,false,false); 
 	if (rocmasked[i]) {
 	  vector<pair<int, int> > v = vmask[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
