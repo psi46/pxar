@@ -165,18 +165,23 @@ void PixTestScurves::fullTest() {
   fParNtrig = 20; 
   bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
 
+  fOutputFilename = "";
   fParDac = "VthrComp"; 
   fParDacLo = 0; 
   fParDacHi = 119;
   fParDacsPerStep = 10;   
   scurves();
 
+  fOutputFilename = "SCurveData";
   fParNtrig = 50; 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
   fParDacHi = 149;
   fParDacsPerStep = 10;   
   scurves();
+
+  // -- reset to no output
+  fOutputFilename = "";
 
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestScurves::fullTest() done, duration: " << seconds << " seconds";

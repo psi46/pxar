@@ -316,6 +316,7 @@ protected:
   uint32_t             fNDaqErrors; 
 
   std::string           fName, fTestTip, fSummaryTip, fStopTip; ///< information for this test
+  std::string           fOutputFilename; 
 
   std::vector<std::pair<std::string, std::string> > fParameters; ///< the parameters of this test
 
@@ -334,7 +335,6 @@ protected:
   TTimeStamp           *fTimeStamp; 
 
   bool                  fProblem;
-  
 
   std::vector<TH2D*>    fXrayMaps; 
 
