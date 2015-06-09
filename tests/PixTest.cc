@@ -1644,6 +1644,7 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
     //    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
     if (fOutputFilename != "") {
       dumpFile = true; 
+      LOG(logINFO) << "dumping ASCII scurve output file: " << fOutputFilename; 
       OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fOutputFilename.c_str(), iroc));
       OutputFile << "Mode 1 " << "Ntrig " << fNtrig << endl;
     }
