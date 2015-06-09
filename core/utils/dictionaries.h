@@ -308,6 +308,7 @@ namespace pxar {
       _devices["tbm08a"]        = TBM_08A;
       _devices["tbm08b"]        = TBM_08B;
       _devices["tbm09"]         = TBM_09;
+      _devices["tbm09x2"]		= TBM_09X2; // for layer one modules with 2 TBM09
     }
 
     std::map<std::string, uint8_t> _devices;

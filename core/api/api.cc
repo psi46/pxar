@@ -179,6 +179,13 @@ bool pxarCore::initDUT(uint8_t hubid,
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
 
+  // If we have TBM_09X2, we need DACs for every core, i.e. four:
+  if (stringToDeviceCode(tbmtype) == TBM_09X2 && tbmDACs.size() != 4) {
+    LOG(logCRITICAL) << "We have " << tbmDACs.size() << " TBM configurations, but two TBM_09s installed.";
+    LOG(logCRITICAL) << "Please provide four TBM configurations.";
+    throw InvalidConfig("Two TBM_09 installed need four configurations.");
+  }
+
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
 
     LOG(logDEBUGAPI) << "Processing TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin());
@@ -190,7 +197,8 @@ bool pxarCore::initDUT(uint8_t hubid,
     if(newtbm.type == 0x0) return false;
     // Standard setup for token chain lengths:
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
+    else if(newtbm.type == TBM_09X2) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(2); }
+    else if(newtbm.type == TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
     else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
 
     // Loop over all the DAC settings supplied and fill them into the TBM dacs

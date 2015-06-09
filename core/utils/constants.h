@@ -15,7 +15,7 @@ namespace pxar {
 #define DTB_DAQ_FIFO_OVFL 4 // bit 2 = DAQ fast HW FIFO overflow
 #define DTB_DAQ_MEM_OVFL  2 // bit 1 = DAQ RAM FIFO overflow
 #define DTB_DAQ_STOPPED   1 // bit 0 = DAQ stopped (because of overflow)
-#define DTB_DAQ_CHANNELS  6 // Number of DAQ channels implemented in the DTB
+#define DTB_DAQ_CHANNELS  8 // Number of DAQ channels implemented in the DTB
 
 // --- TBM Types ---------------------------------------------------------------
 #define TBM_NONE           0x20
@@ -24,6 +24,7 @@ namespace pxar {
 #define TBM_08A            0x23
 #define TBM_08B            0x24
 #define TBM_09             0x25
+#define TBM_09X2		   0x26 // for layer one modules with 2 TBM09
 
 
 // --- TBM Register -----------------------------------------------------------

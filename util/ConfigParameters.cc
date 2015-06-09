@@ -170,6 +170,8 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("nRocs")) { readNrocs(_istring.str()); }
       else if (0 == _name.compare("nTbms")) { fnTbms                     = _ivalue; }
       else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
+      else if (0 == _name.compare("hubId0")) { fHubId0                     = _ivalue; }
+      else if (0 == _name.compare("hubId1")) { fHubId1                     = _ivalue; }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }

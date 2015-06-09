@@ -140,6 +140,8 @@ public:
   bool   getHvOn() {return fHvOn;}
 
   uint8_t getHubId() {return fHubId;}
+  uint8_t getHubId0() {return fHubId0;}
+  uint8_t getHubId1() {return fHubId1;}
   
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
@@ -159,7 +161,7 @@ private:
 
   std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
-  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
+  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fHubId0, fHubId1;
   int fHalfModule;
   std::vector<uint8_t> fI2cAddresses; 
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
