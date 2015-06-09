@@ -33,6 +33,7 @@ PixTest::PixTest(PixSetup *a, string name) {
   fTimeStamp      = new TTimeStamp(); 
 
   fProblem        = false; 
+  fOutputFilename = string(""); 
 
   fName = name;
   setToolTips();
@@ -1612,7 +1613,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<TH1*> &resultMaps, int result) {
   fDirectory->cd(); 
   TH1* h2(0), *h3(0), *h4(0); 
-  string fname("SCurveData");
+  //  string fname("SCurveData");
   ofstream OutputFile;
   string line; 
   string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
@@ -1640,9 +1641,11 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
     string lname(name); 
     std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
-    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
+    //    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
+    if (fOutputFilename != "") {
       dumpFile = true; 
-      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+      LOG(logINFO) << "dumping ASCII scurve output file: " << fOutputFilename; 
+      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fOutputFilename.c_str(), iroc));
       OutputFile << "Mode 1 " << "Ntrig " << fNtrig << endl;
     }
 

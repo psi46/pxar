@@ -514,6 +514,7 @@ EOF
 adjustvcal          checkbox(1)
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
+dumpOutputFile      checkbox(0)
 Ntrig               50
 DAC                 VthrComp
 DacLo               0
