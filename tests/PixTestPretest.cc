@@ -373,6 +373,8 @@ void PixTestPretest::setTimings() {
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   int nTBMs = (fApi->_dut->getTbmType() == "tbm09") ? 4 : 2;
+  if (fApi->_dut->getNTbms() == 0) nTBMs = 0; // reset the above if no TBM is present
+
   uint16_t period = 300;
 
   if (nTBMs==0) {
