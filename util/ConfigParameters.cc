@@ -234,7 +234,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
     //    cout << lines[i] << endl;   
-    // -- remove tabs, adjacent spaces, leading and trailing spaces
+    // -- remove tabs, adjacent spaces, leading and trailing spaces, and everything after (and including) a #
     cleanupString(lines[i]);
     if (lines[i].length() < 2) continue;
     s1 = lines[i].find(" "); 
