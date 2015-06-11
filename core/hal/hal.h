@@ -55,7 +55,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector);
+    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains);
 
     /** Change the type of the TBM type member in HAL
      */
@@ -87,7 +87,10 @@ namespace pxar {
     /** select signal mode
      */
     void SigSetMode(uint8_t signal, uint8_t mode);
-    
+
+    /** set signal to random output PRBS
+     */
+    void SigSetPRBS(uint8_t signal, uint8_t speed);
     
     /** select termination for RDA/TOUT to LCDS (for modules)
      */
@@ -375,6 +378,10 @@ namespace pxar {
      */
     void PixelSetCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, uint16_t flags);
 
+    /** Set the Calibrate bit and CALS setting of a full ROC, read from avector of pxar::pixelConfig
+     */
+    void RocSetCalibrate(uint8_t roci2c, std::vector<pixelConfig> pixels, uint16_t flags);
+
     /** Reset all Calibrate bits and clear the ROC I2C address:
      */
     void RocClearCalibrate(uint8_t roci2c);
@@ -412,6 +419,9 @@ namespace pxar {
     uint8_t deser160phase;
     uint8_t m_roctype;
     uint8_t m_roccount;
+    std::vector<uint8_t> m_tokenchains;
+    // Store which channels are active:
+    std::vector<bool> m_daqstatus;
     uint8_t hubId;
 
     uint16_t _currentTrgSrc;
@@ -469,21 +479,9 @@ namespace pxar {
     std::vector<uint16_t> * daqReadChannel(uint8_t channel);
 
     // Our default pipe work buffers:
-    dtbSource src0;
-    dtbSource src1;
-    dtbSource src2;
-    dtbSource src3;
-
-    dtbEventSplitter splitter0;
-    dtbEventSplitter splitter1;
-    dtbEventSplitter splitter2;
-    dtbEventSplitter splitter3;
-
-    dtbEventDecoder decoder0;
-    dtbEventDecoder decoder1;
-    dtbEventDecoder decoder2;
-    dtbEventDecoder decoder3;
-
+    std::vector<dtbSource> m_src;
+    std::vector<dtbEventSplitter> m_splitter;
+    std::vector<dtbEventDecoder> m_decoder;
   };
 }
 #endif
