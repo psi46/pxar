@@ -155,16 +155,19 @@ namespace pxar {
       _registers["delays"]        = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG,false);
       _registers["basea"]         = dacConfig(TBM_REG_SET_DELAYS,255,TBM_REG);
 
-      _registers["autoreset"]     = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG,false);
-      _registers["basec"]         = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG);
-      // In the old TBM these were the temperature registers:
-      _registers["temperature"]   = dacConfig(TBM_REG_TEMPERATURE_CONTROL,255,TBM_REG,false);
-
+      _registers["autoreset"]     = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
+      _registers["basec"]         = dacConfig(TBM_REG_AUTORESET,255,TBM_REG);
+      // Outdated name, since temperature register has moved to 0x0E
+      // name kept for legacy reasons so old configuration files still work:
+      _registers["temperature"]   = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
+      
       _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
 
       // Special TBM settings:
-      _registers["tokenchain"]    = dacConfig(TBM_TOKENCHAIN,8,TBM_REG);
+      _registers["nrocs"]         = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
+      _registers["nrocs1"]        = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
+      _registers["nrocs2"]        = dacConfig(TBM_TOKENCHAIN_1,8,TBM_REG);
 
       //------- ROC registers -----------------------------
       // DAC name, register and size reference:
@@ -298,10 +301,9 @@ namespace pxar {
       _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
-      // This name is not correct, but kept for legacy reasons:
-      _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 
       // TBM flavors:
+      _devices["notbm"]         = TBM_NONE;
       _devices["tbmemulator"]   = TBM_EMU;
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
@@ -653,9 +655,12 @@ namespace pxar {
       // Asynchronous external triggers:
       _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
       _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
+      _signals["async_dir"]        = triggerConfig(TRG_SEL_ASYNC_DIR,false);
+      _signals["extern_dir"]       = triggerConfig(TRG_SEL_ASYNC_DIR,false,false);
 
       // Synchronous external triggers:
       _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
+      _signals["sync_dir"]         = triggerConfig(TRG_SEL_SYNC_DIR,false);
 
       // Single event injection:
       _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);

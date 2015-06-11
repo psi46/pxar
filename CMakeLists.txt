@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "2.1.0")
-SET(PXAR_FW_VERSION "4.0")
+SET(PXAR_VERSION "2.2.3")
+SET(PXAR_FW_VERSION "4.2")
 
 
 #########################################
@@ -200,7 +200,7 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 ##################################################
 
 # Include directories
-INCLUDE_DIRECTORIES(core/api core/utils)
+INCLUDE_DIRECTORIES(core/api core/utils core/decoder)
 
 # Always build main pxar API library;
 ADD_SUBDIRECTORY(core)

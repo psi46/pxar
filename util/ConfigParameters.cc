@@ -860,9 +860,10 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > vA, vector<pair<string, uint8_t> > vB) {
+bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > vA, vector<uint8_t> tcA, vector<pair<string, uint8_t> > vB, vector<uint8_t> tcB) {
 
   vector<pair<string, uint8_t> > v;
+  vector<uint8_t> tc;
   for (unsigned int ic = 0; ic < 2; ++ic) {
     stringstream fname;
     fname << fDirectory << "/" << fTbmParametersFileName << "_C" << itbm << (ic==0?"a":"b") << ".dat"; 
@@ -877,8 +878,10 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
   
     if (0 == ic) {
       v = vA;
+      tc = tcA;
     } else {
       v = vB; 
+      tc = tcB;
     }
 
     RegisterDictionary *a = RegisterDictionary::getInstance();
@@ -888,6 +891,16 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
 		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
 		 << endl;
     }
+    if (tc.size() > 0)
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs1", TBM_REG)) << " " 
+                 << "nrocs1"  
+                 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(tc.at(0))
+                 << endl;
+    if (tc.size() > 1)
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs2", TBM_REG)) << " " 
+                 << "nrocs2"  
+                 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(tc.at(1))
+                 << endl;
     
     OutputFile.close();
   }

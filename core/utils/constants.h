@@ -15,7 +15,7 @@ namespace pxar {
 #define DTB_DAQ_FIFO_OVFL 4 // bit 2 = DAQ fast HW FIFO overflow
 #define DTB_DAQ_MEM_OVFL  2 // bit 1 = DAQ RAM FIFO overflow
 #define DTB_DAQ_STOPPED   1 // bit 0 = DAQ stopped (because of overflow)
-
+#define DTB_DAQ_CHANNELS  6 // Number of DAQ channels implemented in the DTB
 
 // --- TBM Types ---------------------------------------------------------------
 #define TBM_NONE           0x20
@@ -37,10 +37,11 @@ namespace pxar {
 #define TBM_REG_CLEAR_INJECT        0x04
 #define TBM_REG_SET_PKAM_COUNTER    0x08
 #define TBM_REG_SET_DELAYS          0x0A
-#define TBM_REG_TEMPERATURE_CONTROL 0x0C
+#define TBM_REG_AUTORESET           0x0C
 #define TBM_REG_CORES_A_B           0x0E
 // Special TBM settings, only for pxar internal use:
-#define TBM_TOKENCHAIN              0xFF
+#define TBM_TOKENCHAIN_0            0xFE
+#define TBM_TOKENCHAIN_1            0xFF
 
 // --- ROC Size ---------------------------------------------------------------
 #define ROC_NUMROWS 80
@@ -131,15 +132,23 @@ namespace pxar {
 #define MHZ_40     0
 
 // --- Trigger settings -------------------------------------------------------
-#define TRG_SEL_ASYNC      0x100
-#define TRG_SEL_SYNC       0x080
-#define TRG_SEL_SINGLE     0x040
-#define TRG_SEL_GEN        0x020
-#define TRG_SEL_PG         0x010
-#define TRG_SEL_SINGLE_DIR 0x008
-#define TRG_SEL_PG_DIR     0x004
-#define TRG_SEL_CHAIN      0x002
-#define TRG_SEL_SYNC_OUT   0x001
+// Via TBM Emulator:
+#define TRG_SEL_ASYNC      0x0100
+#define TRG_SEL_SYNC       0x0080
+#define TRG_SEL_SINGLE     0x0040
+#define TRG_SEL_GEN        0x0020
+#define TRG_SEL_PG         0x0010
+
+// Direct signals:
+#define TRG_SEL_ASYNC_DIR  0x0800
+#define TRG_SEL_SYNC_DIR   0x0400
+#define TRG_SEL_SINGLE_DIR 0x0008
+#define TRG_SEL_GEN_DIR    0x0200
+#define TRG_SEL_PG_DIR     0x0004
+
+// Sync signals:
+#define TRG_SEL_CHAIN      0x0002
+#define TRG_SEL_SYNC_OUT   0x0001
 
 #define TRG_SEND_SYN   1
 #define TRG_SEND_TRG   2

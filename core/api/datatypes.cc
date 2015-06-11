@@ -44,7 +44,7 @@ namespace pxar {
     // Check pixel data length:
     if(analog.size() != 6) {
       LOG(logDEBUGAPI) << "Received wrong number of data words for a pixel: " << analog.size();
-      throw DataInvalidAddressError("Received wrong number of data words for a pixel: " + analog.size());
+      throw DataInvalidAddressError("Received wrong number of data words for a pixel");
     }
 
     // Calculate the levels:
@@ -100,11 +100,35 @@ namespace pxar {
     return (raw & 0x00ffffff);
   }
 
+  void Event::printHeader() {
+    LOG(logINFO) << "Header content: 0x" << std::hex << header << std::dec;
+    LOG(logINFO) << "\t Event ID \t" << static_cast<int>(this->triggerCount());
+    LOG(logINFO) << "\t Data ID " << static_cast<int>(this->dataID()) 
+		       << " Value " << static_cast<int>(this->dataValue());
+  }
+
+  void Event::printTrailer() {
+    LOG(logINFO) << "Trailer content: 0x" << std::hex << trailer << std::dec;
+    LOG(logINFO) << "\t Token Pass \t" << textBool(this->hasTokenPass());
+    LOG(logINFO) << "\t Reset TBM \t" << textBool(this->hasResetTBM());
+    LOG(logINFO) << "\t Reset ROC \t" << textBool(this->hasResetROC());
+    LOG(logINFO) << "\t Sync Err \t" << textBool(this->hasSyncError());
+    LOG(logINFO) << "\t Sync Trigger \t" << textBool(this->hasSyncTrigger());
+    LOG(logINFO) << "\t ClearTrig Cnt \t" << textBool(this->hasClearTriggerCount());
+    LOG(logINFO) << "\t Cal Trigger \t" << textBool(this->hasCalTrigger());
+    LOG(logINFO) << "\t Stack Full \t" << textBool(this->stackFull());
+
+    LOG(logINFO) << "\t Auto Reset \t" << textBool(this->hasAutoReset());
+    LOG(logINFO) << "\t PKAM Reset \t" << textBool(this->hasPkamReset());
+    LOG(logINFO) << "\t Stack Count \t" << static_cast<int>(this->stackCount());
+  }
+
   void statistics::dump() {
     // Print out the full statistics:
     LOG(logINFO) << "Decoding statistics:";
     LOG(logINFO) << "  General information:";
     LOG(logINFO) << "\t 16bit words read:         " << this->info_words_read();
+    LOG(logINFO) << "\t valid events total:       " << this->info_events_total();
     LOG(logINFO) << "\t empty events:             " << this->info_events_empty();
     LOG(logINFO) << "\t valid events with pixels: " << this->info_events_valid();
     LOG(logINFO) << "\t valid pixel hits:         " << this->info_pixels_valid();
