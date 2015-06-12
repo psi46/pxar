@@ -157,10 +157,13 @@ namespace pxar {
 
       _registers["autoreset"]     = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
       _registers["basec"]         = dacConfig(TBM_REG_AUTORESET,255,TBM_REG);
-
+      // Outdated name, since temperature register has moved to 0x0E
+      // name kept for legacy reasons so old configuration files still work:
+      _registers["temperature"]   = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
+      
       _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
-      _registers["temperature"]   = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
+
       // Special TBM settings:
       _registers["nrocs"]         = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
       _registers["nrocs1"]        = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
@@ -298,8 +301,6 @@ namespace pxar {
       _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
-      // This name is not correct, but kept for legacy reasons:
-      _devices["psi46digv3"]    = ROC_PSI46DIGV21;
 
       // TBM flavors:
       _devices["notbm"]         = TBM_NONE;
@@ -307,7 +308,9 @@ namespace pxar {
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
       _devices["tbm08b"]        = TBM_08B;
+      _devices["tbm08c"]        = TBM_08C;
       _devices["tbm09"]         = TBM_09;
+      _devices["tbm09c"]        = TBM_09C;
     }
 
     std::map<std::string, uint8_t> _devices;

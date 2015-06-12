@@ -1672,12 +1672,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
     LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains.at(0),m_tbmtype,m_roctype,true);
+    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains,m_tbmtype,m_roctype,true);
     m_src.at(0) >> m_splitter.at(0);
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
     LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(m_tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
-    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains.at(1),m_tbmtype,m_roctype,true);
+    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains,m_tbmtype,m_roctype,true);
     m_src.at(1) >> m_splitter.at(1);
 
     // Select the Deser400 as DAQ source:
@@ -1708,12 +1708,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
       LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(m_tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
-      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains.at(2),m_tbmtype,m_roctype,true);
+      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains,m_tbmtype,m_roctype,true);
       m_src.at(2) >> m_splitter.at(2);
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
       LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(m_tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
-      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains.at(3),m_tbmtype,m_roctype,true);
+      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains,m_tbmtype,m_roctype,true);
       m_src.at(3) >> m_splitter.at(3);
 
       // Start the DAQ also for channel 2 and 3:
@@ -1730,7 +1730,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
     LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_roccount) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_roccount,m_tbmtype,m_roctype,true);
+    m_src.at(0) = dtbSource(_testboard,0,std::vector<uint8_t>(1,m_roccount),m_tbmtype,m_roctype,true);
     m_src.at(0) >> m_splitter.at(0);
     _testboard->uDelay(100);
 

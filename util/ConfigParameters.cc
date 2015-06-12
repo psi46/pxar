@@ -234,7 +234,7 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
     //    cout << lines[i] << endl;   
-    // -- remove tabs, adjacent spaces, leading and trailing spaces
+    // -- remove tabs, adjacent spaces, leading and trailing spaces, and everything after (and including) a #
     cleanupString(lines[i]);
     if (lines[i].length() < 2) continue;
     s1 = lines[i].find(" "); 
@@ -383,7 +383,8 @@ void ConfigParameters::readRocPixelConfig() {
     vector<pxar::pixelConfig> v;
     for (uint8_t ic = 0; ic < fnCol; ++ic) {
       for (uint8_t ir = 0; ir < fnRow; ++ir) {
-	pxar::pixelConfig a(ic,ir,0,false,true); 
+	//	pxar::pixelConfig a(ic,ir,0,false,true); 
+	pxar::pixelConfig a(ic,ir,0,false,false); 
 	if (rocmasked[i]) {
 	  vector<pair<int, int> > v = vmask[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
@@ -859,9 +860,10 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > vA, vector<pair<string, uint8_t> > vB) {
+bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8_t> > vA, vector<uint8_t> tcA, vector<pair<string, uint8_t> > vB, vector<uint8_t> tcB) {
 
   vector<pair<string, uint8_t> > v;
+  vector<uint8_t> tc;
   for (unsigned int ic = 0; ic < 2; ++ic) {
     stringstream fname;
     fname << fDirectory << "/" << fTbmParametersFileName << "_C" << itbm << (ic==0?"a":"b") << ".dat"; 
@@ -876,8 +878,10 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
   
     if (0 == ic) {
       v = vA;
+      tc = tcA;
     } else {
       v = vB; 
+      tc = tcB;
     }
 
     RegisterDictionary *a = RegisterDictionary::getInstance();
@@ -887,6 +891,16 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
 		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
 		 << endl;
     }
+    if (tc.size() > 0)
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs1", TBM_REG)) << " " 
+                 << "nrocs1"  
+                 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(tc.at(0))
+                 << endl;
+    if (tc.size() > 1)
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs2", TBM_REG)) << " " 
+                 << "nrocs2"  
+                 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(tc.at(1))
+                 << endl;
     
     OutputFile.close();
   }

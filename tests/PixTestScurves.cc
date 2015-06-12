@@ -20,7 +20,7 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1) {
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1), fDumpOutputFile(-1) {
   PixTest::init();
   init(); 
 }
@@ -76,6 +76,19 @@ bool PixTestScurves::setParameter(string parName, string sval) {
 	PixUtil::replaceAll(sval, "checkbox(", ""); 
 	PixUtil::replaceAll(sval, ")", ""); 
 	fDumpProblematic = atoi(sval.c_str()); 
+	setToolTips();
+      }
+
+      if (!parName.compare("dumpoutputfile")) {
+	PixUtil::replaceAll(sval, "checkbox(", ""); 
+	PixUtil::replaceAll(sval, ")", ""); 
+	fDumpOutputFile = atoi(sval.c_str()); 
+	if (fDumpOutputFile)  {
+	  fOutputFilename = "SCurveData";
+	} else {
+	  fOutputFilename = "";
+	}
+	LOG(logDEBUG) << "set fOutputFilename = "  << fOutputFilename; 
 	setToolTips();
       }
 
@@ -162,21 +175,26 @@ void PixTestScurves::fullTest() {
 
   fDirectory->cd();
   PixTest::update(); 
-  fParNtrig = 20; 
-  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
 
-  fParDac = "VthrComp"; 
-  fParDacLo = 0; 
-  fParDacHi = 119;
-  fParDacsPerStep = 10;   
-  scurves();
+  //   fParNtrig = 20; 
+  //   fOutputFilename = "";
+  //   fParDac = "VthrComp"; 
+  //   fParDacLo = 0; 
+  //   fParDacHi = 119;
+  //   fParDacsPerStep = 10;   
+  //   scurves();
 
+  fOutputFilename = "SCurveData";
   fParNtrig = 50; 
   fParDac = "Vcal"; 
   fParDacLo = 0; 
   fParDacHi = 149;
   fParDacsPerStep = 10;   
+  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
   scurves();
+
+  // -- reset to no output
+  fOutputFilename = "";
 
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestScurves::fullTest() done, duration: " << seconds << " seconds";

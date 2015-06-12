@@ -12,7 +12,9 @@ namespace pxar {
   class evtSource : public dataSource<uint16_t> {
     // --- Control/state
     uint8_t channel;
-    uint8_t chainlength;
+    std::vector<uint8_t> chainlength;
+    uint8_t chainlengthOffset;
+    uint8_t defaultChainlength;
     uint8_t envelopetype;
     uint8_t devicetype;
 
@@ -38,7 +40,15 @@ namespace pxar {
     }
     uint8_t ReadTokenChainLength() {
       if(!connected) throw dpNotConnected();
-      return chainlength;
+      return chainlength.at(channel);
+    }
+    uint8_t ReadTokenChainOffset() {
+      if(!connected) throw dpNotConnected();
+      return chainlengthOffset;
+    }
+    uint8_t ReadDefaultTokenChainLength() {
+      if(!connected) throw dpNotConnected();
+      return defaultChainlength;
     }
     uint8_t ReadEnvelopeType() {
       if(!connected) throw dpNotConnected();
@@ -49,12 +59,12 @@ namespace pxar {
       return devicetype;
     }
   public:
-  evtSource(uint8_t daqchannel, uint8_t tokenChainLength, uint8_t tbmtype, uint8_t roctype)
-    : channel(daqchannel), chainlength(tokenChainLength), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
+  evtSource(uint8_t daqchannel, const std::vector<uint8_t> &tokenChainLength, uint8_t tbmtype, uint8_t roctype)
+    : channel(daqchannel), chainlength(tokenChainLength), chainlengthOffset(0), defaultChainlength(8), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
       LOG(logDEBUGPIPES) << "New evtSource instantiated with properties:";
       LOG(logDEBUGPIPES) << "-------------------------";
       LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
-			 << " (" << static_cast<int>(chainlength) << " ROCs)"
+			 << " (" << static_cast<int>(chainlength.at(channel)) << " ROCs)"
 			 << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
     }
   evtSource() : connected(false) {};

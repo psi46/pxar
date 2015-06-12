@@ -629,6 +629,7 @@ void PixTestHighRate::doXNoiseMaps() {
 
   int results(0xf); 
   int FLAG = FLAG_FORCE_UNMASKED | FLAG_CHECK_ORDER;
+  fOutputFilename = "XSCurveData";
   vector<TH1*> test2 = scurveMaps("vcal", "xNoiseMap", fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, results, 1, FLAG); 
   vector<TH2D*> test3 = getXrayMaps();
   copy(test3.begin(), test3.end(), back_inserter(fHistList));

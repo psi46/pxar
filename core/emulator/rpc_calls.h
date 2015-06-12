@@ -23,6 +23,8 @@ class CTestboard {
   std::vector<uint8_t> roci2c;
   uint8_t tbmtype;
   uint16_t trigger;
+
+  uint32_t eventcounter;
   
   std::vector<std::vector<uint16_t> > daq_buffer; // Data buffers
   std::vector<bool> daq_status; // Channel status
@@ -31,6 +33,7 @@ class CTestboard {
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
     nrocs_loops(0), roci2c(), tbmtype(TBM_NONE),trigger(TRG_SEL_PG_DIR),
+    eventcounter(0),
     daq_buffer(), daq_status(), daq_event()
   {
     // Initialize all available DAQ channels:

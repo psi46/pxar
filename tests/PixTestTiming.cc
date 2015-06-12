@@ -725,7 +725,7 @@ void PixTestTiming::saveParameters() {
   LOG(logINFO) << "PixTestTiming:: Write Tbm parameters to file.";
   fPixSetup->getConfigParameters()->writeTbParameterFile();
   for (unsigned int itbm = 0; itbm < fApi->_dut->getNTbms(); itbm += 2) {
-    fPixSetup->getConfigParameters()->writeTbmParameterFile(itbm, fApi->_dut->getTbmDACs(itbm), fApi->_dut->getTbmDACs(itbm+1));
+    fPixSetup->getConfigParameters()->writeTbmParameterFile(itbm, fApi->_dut->getTbmDACs(itbm), fApi->_dut->getTbmChainLengths(itbm), fApi->_dut->getTbmDACs(itbm+1), fApi->_dut->getTbmChainLengths(itbm+1));
   }
 }
 

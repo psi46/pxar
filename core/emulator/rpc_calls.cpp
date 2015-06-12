@@ -376,13 +376,21 @@ uint8_t CTestboard::Daq_Read(std::vector<uint16_t> &data, uint32_t blocksize, ui
   LOG(pxar::logDEBUGRPC) << "called.";
   data.clear();
 
+  // Fake buffer empty after 1k events:
+  if(eventcounter >= 1000) {
+    eventcounter = 0;
+    return 0;
+  }
+  
   // If we are on external triggers, just deliver one event per channel:
-  if(trigger == TRG_SEL_ASYNC | trigger == TRG_SEL_ASYNC_DIR) {
+  if(trigger == TRG_SEL_ASYNC || trigger == TRG_SEL_ASYNC_DIR) {
+    eventcounter++;
+    LOG(logDEBUGRPC) << "Event counter: " << eventcounter;
     if(!daq_status.at(channel)) { available = 0; return 0; }
     fillRawData(daq_event.at(channel)++,daq_buffer.at(channel),tbmtype,roci2c.size(),false,true,0,0);
     mDelay(10);
   }
-  
+
   // Return correct blocksize. Since this is given in Bytes,
   // we deliver blocksize/2 16bit words:
 
