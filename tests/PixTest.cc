@@ -33,6 +33,7 @@ PixTest::PixTest(PixSetup *a, string name) {
   fTimeStamp      = new TTimeStamp(); 
 
   fProblem        = false; 
+  fOutputFilename = string(""); 
 
   fName = name;
   setToolTips();
@@ -323,8 +324,11 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
   TH2D *h2(0); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  LOG(logDEBUG) << "Create hists " 
+		<< Form("%s_C%d", name.c_str(), rocIds[0]) 
+		<< " .. " 
+		<<  Form("%s_C%d", name.c_str(), rocIds[rocIds.size()-1]);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), rocIds[iroc]);
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -382,8 +386,11 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   fDirectory->cd(); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  LOG(logDEBUG) << "Create hists " 
+		<< Form("%s_C%d", name.c_str(), rocIds[0]) 
+		<< " .. " 
+		<<  Form("%s_C%d", name.c_str(), rocIds[rocIds.size()-1]);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), rocIds[iroc]);
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -1612,7 +1619,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<TH1*> &resultMaps, int result) {
   fDirectory->cd(); 
   TH1* h2(0), *h3(0), *h4(0); 
-  string fname("SCurveData");
+  //  string fname("SCurveData");
   ofstream OutputFile;
   string line; 
   string empty("32  93   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 ");
@@ -1640,9 +1647,11 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
 
     string lname(name); 
     std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
-    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
+    //    if (!name.compare("scurveVcal") || !lname.compare("scurvevcal")) {
+    if (fOutputFilename != "") {
       dumpFile = true; 
-      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fname.c_str(), iroc));
+      LOG(logINFO) << "dumping ASCII scurve output file: " << fOutputFilename; 
+      OutputFile.open(Form("%s/%s_C%d.dat", fPixSetup->getConfigParameters()->getDirectory().c_str(), fOutputFilename.c_str(), iroc));
       OutputFile << "Mode 1 " << "Ntrig " << fNtrig << endl;
     }
 

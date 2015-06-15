@@ -370,17 +370,19 @@ void PixTestPretest::setTimings() {
   timer t;
   
   banner(Form("PixTestPreTest::setTimings()"));
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  int nTBMs = fApi->_dut->getNTbms();
+  int nTBMs = (fApi->_dut->getTbmType() == "tbm09") ? 4 : 2;
+  if (fApi->_dut->getNTbms() == 0) nTBMs = 0; // reset the above if no TBM is present
+
   uint16_t period = 300;
 
   if (nTBMs==0) {
     LOG(logINFO) << "Timing test not needed for single ROC.";
     return;
   }
-
-  if (fApi->_dut->getTbmType() == "tbm09") nTBMs = 4;
 
   bool GoodDelaySettings = false;
   for (int itry = 0; itry < 3 && !GoodDelaySettings; itry++) {

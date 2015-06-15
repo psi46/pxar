@@ -17,7 +17,7 @@ void dut::info() {
   if (status()) {
     LOG(logINFO) << "The DUT currently contains the following objects:";
 
-    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores (" << getNEnabledTbms() 
+    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores " << getTbmType() << " (" << getNEnabledTbms() 
 		 << " ON)";
 
     for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
@@ -29,7 +29,7 @@ void dut::info() {
 
     // We currently hide the possibility to enable pixels on some ROCs only,
     // so looking at ROC 0 as default is safe:
-    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs (" << getNEnabledRocs() 
+    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs " << getRocType() << " (" << getNEnabledRocs() 
 		 << " ON) with " << roc.at(0).pixels.size() << " pixelConfigs";
 
     for(std::vector<rocConfig>::iterator rocIt = roc.begin(); rocIt != roc.end(); rocIt++) {
@@ -361,6 +361,10 @@ std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
     return vec;
   }
   else return std::vector< std::pair<std::string,uint8_t> >();
+}
+
+std::vector<uint8_t> dut::getTbmChainLengths(size_t tbmId) {
+  return tbm.at(tbmId).tokenchains;
 }
 
 void dut::printDACs(size_t rocId) {

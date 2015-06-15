@@ -209,8 +209,8 @@ cdef extern from "api.h" namespace "pxar":
         int32_t getReadbackValue(string parameterName) except +
         bool setExternalClock(bool enable) except +
         void setClockStretch(uint8_t src, uint16_t delay, uint16_t width) except +
-        void setSignalMode(string signal, uint8_t mode) except +
-        void setSignalMode(string signal, string mode) except +
+        void setSignalMode(string signal, uint8_t mode, uint8_t speed) except +
+        void setSignalMode(string signal, string mode, uint8_t speed) except +
         bool daqStart() except +
         bool daqStatus() except +
         bool daqTriggerSource(string triggerSource) except +

@@ -149,37 +149,82 @@ exit(0);
 # ----------------------------------------------------------------------
 sub setTbms {
     $tbms = "";
+    $oldStyle = 0; 
     if ($tbmtype eq "TBM08B") {
-	$tbms .= "0       clear   0xF0\n";
-	$tbms .= "1    counters   0x81\n";
-	$tbms .= "2        mode   0xC0\n";
-	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0x64\n";
-	$tbms .= "5       basee   0x2c\n";
-	$tbms .= "6 temperature   0x00\n";
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+#	    $tbms .= "4      delays   0x64\n";
+#	    $tbms .= "5       basee   0x2c\n";
+	    # -- WE's parameters
+	    $tbms .= "4      delays   0x49\n";
+	    $tbms .= "5       basee   0x84\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+#	    $tbms .= "basea   0x64\n";
+#	    $tbms .= "basee   0x2c\n";
+	    $tbms .= "basea   0x49\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x84\n";
+	}
     } elsif ($tbmtype eq "TBM08B_FPIX") {
-	$tbms .= "0       clear   0xF0\n";
-	$tbms .= "1    counters   0x81\n";
-	$tbms .= "2        mode   0xC0\n";
-	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0x00\n";
-	$tbms .= "5       basee   0x20\n";
-	$tbms .= "6 temperature   0x00\n";
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+	    $tbms .= "4      delays   0x00\n";
+	    $tbms .= "5       basee   0x20\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+	    $tbms .= "basea   0x00\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x20\n";
+	}
     } elsif ($tbmtype eq "TBM08") {
-	$tbms .= "0       clear   0xF0\n";
-	$tbms .= "1    counters   0x01\n";
-	$tbms .= "2        mode   0xC0\n";
-	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0x00\n";
-	$tbms .= "5 temperature   0x00\n";
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x01\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+	    $tbms .= "4      delays   0x00\n";
+	    $tbms .= "5 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x01\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+	    $tbms .= "basea   0x00\n";
+	    $tbms .= "basec   0x00\n";
+	}
     } elsif ($tbmtype eq "TBM09") {
-	$tbms .= "0       clear   0xF0\n";
-	$tbms .= "1    counters   0x81\n";
-	$tbms .= "2        mode   0xC0\n";
-	$tbms .= "3    pkam_set   0x10\n";
-	$tbms .= "4      delays   0x64\n";
-	$tbms .= "5       basee   0x34\n";
-	$tbms .= "6 temperature   0x00\n";
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+	    $tbms .= "4      delays   0x64\n";
+	    $tbms .= "5       basee   0x34\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+	    $tbms .= "basea   0x64\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x34\n";
+	}
     }
 
 }
@@ -514,6 +559,7 @@ EOF
 adjustvcal          checkbox(1)
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
+dumpOutputFile      checkbox(0)
 Ntrig               50
 DAC                 VthrComp
 DacLo               0
