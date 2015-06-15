@@ -35,7 +35,6 @@ namespace pxar {
   
   bool isInTornadoRegion(size_t dac1min, size_t dac1max, size_t dac1, size_t dac2min, size_t dac2max, size_t dac2);
   void fillEvent(pxar::Event * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags);
-  void fillRawEvent(pxar::rawEvent * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags);
   void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nrocs, bool empty, bool noise, size_t col, size_t row, uint32_t flags = 0);
   
 }

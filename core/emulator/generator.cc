@@ -69,22 +69,6 @@ namespace pxar {
 
   }
 
-  void fillRawEvent(pxar::rawEvent * evt, uint8_t rocid, size_t col, size_t row, uint32_t flags) {
-
-    // Generate a slightly random pulse height between 90 and 100:
-    uint16_t pulseheight = rand() % 2 + 90;
-    /*
-    // Introduce some address encoding issues:
-    if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 1) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,1 answers as PX 0,2
-    else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 2) { } // PX 0,2 is dead
-    else if((flags&FLAG_CHECK_ORDER) != 0 && col == 0 && row == 6) { evt->pixels.push_back(pixel(rocid,col,row+1,pulseheight));} // PX 0,6 answers as PX 0,7
-    else { evt->pixels.push_back(pixel(rocid,col,row,pulseheight)); }
-
-    // If the full chip is unmasked, add some noise hits:
-    if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) { evt->pixels.push_back(getNoiseHit(rocid,col,row)); }
-*/
-  }
-
   void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool empty, bool noise, size_t col, size_t row, uint32_t flags) {
 
     size_t pos = data.size();
