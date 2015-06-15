@@ -2162,10 +2162,13 @@ void PixTest::trimHotPixels(int hit_thr) {
     catch(pxar::DataNoEvent &) {}
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-        LOG(logDEBUG) << "ipix = " << (int)ipix;
-        LOG(logDEBUG) << "it->pixels[ipix].roc() = " << (int)it->pixels[ipix].roc();
-        LOG(logDEBUG) << "getIdxFromId(it->pixels[ipix].roc()) = " << getIdxFromId(it->pixels[ipix].roc());
-        hotpixel_map[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+        int rocIdx = getIdxFromId(it->pixels[ipix].roc());
+        if (rocIdx > 0 && rocIdx < hotpixel_map.size()) {
+          hotpixel_map[rocIdx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+        } else {
+          LOG(logERROR) << "found hit from disabled ROC " << (int)it->pixels[ipix].roc() << ", col " << (int)it->pixels[ipix].column() << " row " << (int)it->pixels[ipix].row(); 
+          break;
+        }
       }
     }
     finalCleanup();
