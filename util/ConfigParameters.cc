@@ -42,6 +42,9 @@ void ConfigParameters::initialize() {
   fnTbms = 1; 
   fnModules = 1;
   fHubId = 31;
+  fHubId0 = -1;
+  fHubId1 = -1;
+  fLayer1Enable = false;
   fI2cAddresses.clear(); 
   
   fHvOn = true;
@@ -172,6 +175,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
       else if (0 == _name.compare("hubId0")) { fHubId0                     = _ivalue; }
       else if (0 == _name.compare("hubId1")) { fHubId1                     = _ivalue; }
+      else if (0 == _name.compare("layer1")) { fLayer1Enable				= (_ivalue>0); }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }

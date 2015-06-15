@@ -179,6 +179,14 @@ int main(int argc, char *argv[]){
 		   configParameters->getRocType(), rocDACs, 
 		   rocPixels, 
 		   i2cAddr);
+    } else if (configParameters->getLayer1Enable()) {
+      api->initDUT(true,
+	       configParameters->getHubId0(),
+	       configParameters->getHubId1(),
+		   configParameters->getTbmType(), tbmDACs,
+		   configParameters->getRocType(), rocDACs,
+		   rocPixels);
+
     } else {
       api->initDUT(configParameters->getHubId(),
 		   configParameters->getTbmType(), tbmDACs, 
