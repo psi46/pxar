@@ -23,6 +23,7 @@ public:
   void doXPixelAlive();
   void doXNoiseMaps();
   void doRunDaq(); 
+  void doRunTrimHotPixels();
   void doRunMaskHotPixels();
   void doStop();
 
@@ -38,7 +39,9 @@ private:
   bool	        fParDelayTBM;
   uint16_t      fParNtrig; 
   int           fParVcal, fParDacLo, fParDacHi, fParDacsPerStep; 
-
+  int           fParTrimHotPixelThr;
+  bool          fParSaveTrimbits;
+  
   std::string   fParMaskFileName; 
   int           fParSaveMaskedPixels; 
 

@@ -605,6 +605,9 @@ FillTree            checkbox
 
 -- HighRate
 PIX                 11,20
+trimhotpixels       button
+trimhotpixelthr     100
+savetrimbits        checkbox(0)
 maskHotPixels       button
 saveMaskFile        checkbox(0)
 maskFileName        default

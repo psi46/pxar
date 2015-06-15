@@ -157,6 +157,8 @@ public:
   /// provide access to noiseMaps when (FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED) was set
   std::vector<TH2D*> getXrayMaps() {return fXrayMaps;}
   
+  /// determine hot pixels with high occupancy and increase their threshold with trim bit
+  void trimHotPixels(int hit_threshold = -1);  
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
   /// send reset to ROC(s)
