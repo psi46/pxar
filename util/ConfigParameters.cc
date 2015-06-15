@@ -218,7 +218,6 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "      reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -379,6 +378,11 @@ void ConfigParameters::readRocPixelConfig() {
   }
   
   // -- read all trim files and create pixelconfig vector
+  stringstream firstFile, lastFile;
+  firstFile << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << 0 << ".dat"; 
+  lastFile << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat"; 
+  LOG(logINFO) << "readTrimFile: " << firstFile.str() << " .. " << lastFile.str();
+
   for (unsigned int i = 0; i < fnRocs; ++i) {
     vector<pxar::pixelConfig> v;
     for (uint8_t ic = 0; ic < fnCol; ++ic) {
@@ -413,7 +417,6 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "      reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -473,7 +476,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "      reading " << fname;
+  LOG(logINFO) << "readMaskFile: " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
@@ -631,6 +634,12 @@ vector<string> ConfigParameters::getDacs() {
 // ----------------------------------------------------------------------
 void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
+
+    stringstream firstFile, lastFile;
+    firstFile << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << 0 << ".dat"; 
+    lastFile << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat"; 
+    LOG(logINFO) << "readRocDacs: " << firstFile.str() << " .. " << lastFile.str();
+
     for (unsigned int i = 0; i < fnRocs; ++i) {
       stringstream filename;
       filename << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
@@ -653,6 +662,11 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
 // ----------------------------------------------------------------------
 void ConfigParameters::readTbmDacs() {
   if (!fReadTbmParameters) {
+    stringstream firstFile, lastFile;
+    firstFile << fDirectory << "/" << fTbmParametersFileName << "_C" << "0a" << ".dat"; 
+    lastFile << fDirectory << "/" << fTbmParametersFileName << "_C" << fnTbms-1 << "b" << ".dat"; 
+    LOG(logINFO) << "readTbmDacs: " << firstFile.str() << " .. " << lastFile.str();
+
     string filename; 
     for (unsigned int i = 0; i < fnTbms; ++i) {
       for (unsigned int ic = 0; ic < 2; ++ic) {
@@ -955,13 +969,18 @@ void ConfigParameters::readGainPedestalParameters() {
   char  buffer[5000];
   ifstream is;
   vector<gainPedestalParameters> rocPar; 
+  
+  stringstream firstFile, lastFile;
+  firstFile << fDirectory << "/" << bname << fTrimVcalSuffix << "_C0" << ".dat"; 
+  lastFile << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat"; 
+  LOG(logINFO) << "readGainPedestalParameters " << firstFile.str() << " .. " << lastFile.str();
+
   for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
     lines.clear();
     rocPar.clear();
     std::stringstream fname;
     fname.str(std::string());
     fname << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
-    LOG(logINFO) << "      reading " << (fname.str());
     is.open((fname.str()).c_str());
     if (!is.is_open()) {
       LOG(logERROR) << "cannot open " << (fname.str()) << " for reading PH calibration constants"; 
@@ -1123,6 +1142,11 @@ void ConfigParameters::readNrocs(string line) {
 // ----------------------------------------------------------------------
 void ConfigParameters::readReadbackCal() {
   if (!fReadReadbackCal) {
+    stringstream firstFile, lastFile;
+    firstFile << fDirectory << "/" << fReadbackCalFileName << "_C" << 0 << ".dat"; 
+    lastFile << fDirectory << "/" << fReadbackCalFileName << "_C" << fnRocs-1 << ".dat"; 
+    LOG(logINFO) << "readReadbackCal: " << firstFile.str() << " .. " << lastFile.str();
+
     for (unsigned int i = 0; i < fnRocs; ++i) {
       stringstream filename;
       filename << fDirectory << "/" << fReadbackCalFileName << "_C" << i << ".dat"; 
@@ -1140,7 +1164,6 @@ vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
   // -- read in file
   vector<string> lines; 
   char  buffer[5000];
-  LOG(logINFO) << "      reading " << fname;
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
