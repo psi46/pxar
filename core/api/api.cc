@@ -96,41 +96,17 @@ void pxarCore::setTestboardPower(std::vector<std::pair<std::string,double> > pow
 }
 
 bool pxarCore::initDUT(uint8_t hubid,
-		       std::string tbmtype,
+		       std::string tbmtype, 
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
   std::vector<uint8_t> rocI2Cs;
-  uint8_t hubid1;
-  return initDUT(hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
-}
-
-bool pxarCore::initDUT(uint8_t hubid0,
-               uint8_t hubid1,
-		       std::string tbmtype,
-		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		       std::string roctype,
-		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		       std::vector<std::vector<pixelConfig> > rocPixels) {
-  std::vector<uint8_t> rocI2Cs;
-  return initDUT(hubid0, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+  return initDUT(hubid, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
 bool pxarCore::initDUT(uint8_t hubid,
-		       std::string tbmtype,
-		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		       std::string roctype,
-		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		       std::vector<std::vector<pixelConfig> > rocPixels,
-		       std::vector<uint8_t> rocI2Cs) {
-  uint8_t hubid1;
-  return initDUT(hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
-}
-
-bool pxarCore::initDUT(uint8_t hubid0,
-               uint8_t hubid1,
-		       std::string tbmtype,
+		       std::string tbmtype, 
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
@@ -198,7 +174,7 @@ bool pxarCore::initDUT(uint8_t hubid0,
   // First initialized the API's DUT instance with the information supplied.
 
   // Store the hubId:
-  _dut->hubId = hubid0;
+  _dut->hubId = hubid;
 
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
@@ -221,21 +197,13 @@ bool pxarCore::initDUT(uint8_t hubid0,
     if(newtbm.type == 0x0) return false;
     // Standard setup for token chain lengths:
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    else if(newtbm.type == TBM_09X2) {
-      for(size_t i = 0; i < 2; i++) {
-        newtbm.tokenchains.push_back(2);
-
-        // And set the hubId in this special case
-        if (i == 0) { newtbm.hubid = hubid0;}
-        else if (i == 1) { newtbm.hubid = hubid1;}
-      }
-    }
+    else if(newtbm.type == TBM_09X2) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(2); }
     else if(newtbm.type == TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
     else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
 
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
-
+     
       // Fill the register pairs with the register id from the dictionary:
       uint8_t tbmregister, value = dacIt->second;
       if(!verifyRegister(dacIt->first, tbmregister, value, TBM_REG)) continue;
@@ -389,7 +357,7 @@ bool pxarCore::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-	_hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains, (*tbmit).hubid);
+    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();

@@ -290,7 +290,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains, uint8_t hubid) {
+void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
@@ -302,7 +302,7 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::
 
   // Set the hub address for the modules (BPIX default is 31)
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
-  _testboard->mod_Addr(hubid);
+  _testboard->mod_Addr(hubId);
   _testboard->Flush();
 
   // Program all registers according to the configuration data:

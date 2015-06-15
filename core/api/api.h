@@ -248,18 +248,8 @@ namespace pxar {
      *
      *  In case of USB communication problems, pxar::UsbConnectionError is thrown.
      */
-
-    bool initDUT(uint8_t hubid,
-		 std::string tbmtype,
-		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		 std::string roctype,
-		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		 std::vector<std::vector<pixelConfig> > rocPixels,
-		 std::vector<uint8_t> rocI2Cs);
-
-    bool initDUT(uint8_t hubid0,
-         uint8_t hubid1,
-		 std::string tbmtype,
+    bool initDUT(uint8_t hubId,
+		 std::string tbmtype, 
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
@@ -271,16 +261,8 @@ namespace pxar {
      *  As above, but automatically assumes consecutively numbered I2C addresses for
      *  all attached ROCs, starting from zero.
      */
-    bool initDUT(uint8_t hubid0,
-         uint8_t hubid1,
-		 std::string tbmtype,
-		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		 std::string roctype,
-		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		 std::vector<std::vector<pixelConfig> > rocPixels);
-
     bool initDUT(uint8_t hubid,
-		 std::string tbmtype,
+		 std::string tbmtype, 
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
