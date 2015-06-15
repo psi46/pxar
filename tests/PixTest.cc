@@ -324,8 +324,11 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
   TH2D *h2(0); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  LOG(logDEBUG) << "Create hists " 
+		<< Form("%s_C%d", name.c_str(), rocIds[0]) 
+		<< " .. " 
+		<<  Form("%s_C%d", name.c_str(), rocIds[rocIds.size()-1]);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), rocIds[iroc]);
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
@@ -383,8 +386,11 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   fDirectory->cd(); 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  LOG(logDEBUG) << "Create hists " 
+		<< Form("%s_C%d", name.c_str(), rocIds[0]) 
+		<< " .. " 
+		<<  Form("%s_C%d", name.c_str(), rocIds[rocIds.size()-1]);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    LOG(logDEBUG) << "Create hist " << Form("%s_C%d", name.c_str(), rocIds[iroc]);
     h2 = bookTH2D(Form("%s_C%d", name.c_str(), rocIds[iroc]), Form("%s_C%d", name.c_str(), rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.); 
     h2->SetDirectory(fDirectory); 
