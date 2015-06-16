@@ -515,6 +515,25 @@ void hal::setTBvd(double VD) {
 void hal::setHubId(uint8_t hubid) {
   LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
   hubId = hubid;
+
+  // Set the hub address for the modules (BPIX default is 31)
+  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
+  _testboard->mod_Addr(hubId);
+  _testboard->Flush();
+}
+
+void hal::setHubId(uint8_t hubid0, uint8_t hubid1) {
+  LOG(logDEBUGHAL) << "Settings for layer 1 module ...";
+  LOG(logDEBUGHAL) << "Setting Hub ID 0: " << static_cast<int>(hubid0);
+  LOG(logDEBUGHAL) << "Setting Hub ID 1: " << static_cast<int>(hubid1);
+  hubId = hubid0;
+  hubId1 = hubid1;
+
+  // Set the hub addresses for the modules (no default for layer 1 (yet))
+  LOG(logDEBUGHAL) << "Hub ID 0 is " << static_cast<int>(hubId) << ".";
+  LOG(logDEBUGHAL) << "HUB ID 1: " << static_cast<int>(hubId1) << ".";
+//  _testboard->mod_Addr(hubId, hubId1);
+//  _testboard->Flush();
 }
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {

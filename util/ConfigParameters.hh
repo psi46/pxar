@@ -142,7 +142,7 @@ public:
   uint8_t getHubId() {return fHubId;}
   uint8_t getHubId0() {return fHubId0;}
   uint8_t getHubId1() {return fHubId1;}
-  uint8_t getLayer1Enable() {return fLayer1Enable;}
+  bool getLayer1Enable() {return fLayer1Enable;}
   
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
@@ -171,7 +171,8 @@ private:
   std::string fRocType, fTbmType, fHdiType;
   std::string fDirectory;
   std::string fTBName;
-  bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode, fLayer1Enable;
+  bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;
+  int fLayer;
   std::string fProbeA1,fProbeA2, fProbeD1, fProbeD2;
 
   std::string fTBParametersFileName;

@@ -386,6 +386,7 @@ public:
 	RPC_EXPORT void tbm_Enable(bool on);
 	RPC_EXPORT void tbm_Addr(uint8_t hub, uint8_t port);
 	RPC_EXPORT void mod_Addr(uint8_t hub);
+	RPC_EXPORT void mod_Addr(uint8_t hub0, uint8_t hub1);
 	RPC_EXPORT void tbm_Set(uint8_t reg, uint8_t value);
 	RPC_EXPORT bool tbm_Get(uint8_t reg, uint8_t &value);
 	RPC_EXPORT bool tbm_GetRaw(uint8_t reg, uint32_t &value);

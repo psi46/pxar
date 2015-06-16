@@ -103,7 +103,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<pixelConfig> > rocPixels,
 		       std::vector<uint8_t> rocI2Cs) {
   bool layer1Enable = false;
-  uint8_t hubid1 = -1;
+  uint8_t hubid1 = 50;
   return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
@@ -114,7 +114,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
   bool layer1Enable = false;
-  uint8_t hubid1 = -1;
+  uint8_t hubid1 = 51;
   return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels);
 }
 
@@ -144,6 +144,15 @@ bool pxarCore::initDUT(bool layer1Enable,
   if(!_hal->status()) return false;
 
   // Verification/sanity checks of supplied DUT configuration values
+
+  // Check for valid configuration of layer 1 module
+  if (layer1Enable) {
+	LOG(logINFO) << "layer: " << layer1Enable;
+    if (hubid > 31 or hubid1 > 31) {
+	  LOG(logCRITICAL) << "hubid0 = " << static_cast<int>(hubid) << " and hubid1 = " << static_cast<int>(hubid1) << "provided.";
+	  throw InvalidConfig("Non-valid hubIds for a layer 1 module provided.");
+    }
+  }
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
   if(!rocI2Cs.empty()) {
@@ -200,8 +209,10 @@ bool pxarCore::initDUT(bool layer1Enable,
 
   // First initialized the API's DUT instance with the information supplied.
 
-  // Store the hubId:
+  // Store the hubIds and layer status:
   _dut->hubId = hubid;
+  _dut->hubId1 = hubid1;
+  _dut->_layer1Enable = true; //layer1Enable;
 
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
@@ -217,7 +228,7 @@ bool pxarCore::initDUT(bool layer1Enable,
     if(newtbm.type == 0x0) return false;
     // Standard setup for token chain lengths:
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    else if(layer1Enable) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(2); }
+    else if(_dut->_layer1Enable) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(2); }
     else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
     else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
 
@@ -372,10 +383,15 @@ bool pxarCore::programDUT() {
   _hal->Pon();
 
   // Start programming the devices here!
-  _hal->setHubId(_dut->hubId); 
-
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
+
+  if (!enabledTbms.empty()) {
+	  LOG(logDEBUGAPI) << "Programming TBMs...";
+	  if (!_dut->_layer1Enable) _hal->setHubId(_dut->hubId);
+	  // store two hubids for each tbm (layer 1)
+	  else _hal->setHubId(_dut->hubId, _dut->hubId1);
+  }
+
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
     _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
   }

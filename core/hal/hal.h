@@ -104,6 +104,10 @@ namespace pxar {
      */
     void setHubId(uint8_t hubid);
 
+    /** Set two HubIDs and tell the testboard that we have a layer 1 module
+     */
+    void setHubId(uint8_t hubid0, uint8_t hubid1);
+
     /** Set a DAC on a specific ROC with I2C address roci2c
      */
     bool rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue);
@@ -423,6 +427,8 @@ namespace pxar {
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
     uint8_t hubId;
+    uint8_t hubId1;
+
 
     uint16_t _currentTrgSrc;
 

@@ -20,6 +20,8 @@ void dut::info() {
     LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores (" << getNEnabledTbms() 
 		 << " ON)";
 
+	if (_layer1Enable) {LOG(logINFO) << "... on a Layer 1 module";}
+
     for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
       LOG(logINFO) << "\tTBM Core " 
 		   << ((tbmIt-tbm.begin())%2 == 0 ? "alpha" : "beta " )

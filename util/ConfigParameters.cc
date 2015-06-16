@@ -42,9 +42,9 @@ void ConfigParameters::initialize() {
   fnTbms = 1; 
   fnModules = 1;
   fHubId = 31;
-  fHubId0 = -1;
-  fHubId1 = -1;
-  fLayer1Enable = false;
+  fHubId0 = 25;
+  fHubId1 = 100;
+  fLayer1Enable = true;
   fI2cAddresses.clear(); 
   
   fHvOn = true;
@@ -175,7 +175,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
       else if (0 == _name.compare("hubId0")) { fHubId0                     = _ivalue; }
       else if (0 == _name.compare("hubId1")) { fHubId1                     = _ivalue; }
-      else if (0 == _name.compare("layer1")) { fLayer1Enable				= (_ivalue>0); }
+      else if (0 == _name.compare("layer")) { fLayer 				= _ivalue; }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
@@ -196,7 +196,6 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("rocType")) { fRocType = _value; }
       else if (0 == _name.compare("tbmType")) { fTbmType = _value; }
       else if (0 == _name.compare("hdiType")) { fHdiType = _value; }
-
       else if (0 == _name.compare("probeA1")) { fProbeA1 = _value; }
       else if (0 == _name.compare("probeA2")) { fProbeA2 = _value; }
       else if (0 == _name.compare("probeD1")) { fProbeD1 = _value; }
@@ -786,6 +785,9 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "nRocs %i\n", fnRocs);
   fprintf(file, "nTbms %i\n", fnTbms);
   fprintf(file, "hubId %i\n", fHubId);
+  fprintf(file, "hubId0 %i\n", fHubId0);
+  fprintf(file, "hubId1 %i\n", fHubId1);
+  fprintf(file, "layer1Enable %i\n", fLayer1Enable);
   fprintf(file, "tbmEnable %i\n", fTbmEnable);
   fprintf(file, "tbmEmulator %i\n", fTbmEmulator);
   fprintf(file, "hvOn %i\n", fHvOn);
