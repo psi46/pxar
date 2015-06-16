@@ -171,8 +171,7 @@ private:
   std::string fRocType, fTbmType, fHdiType;
   std::string fDirectory;
   std::string fTBName;
-  bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;
-  int fLayer;
+  bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode, fLayer1Enable;
   std::string fProbeA1,fProbeA2, fProbeD1, fProbeD2;
 
   std::string fTBParametersFileName;

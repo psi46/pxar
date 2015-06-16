@@ -212,7 +212,7 @@ bool pxarCore::initDUT(bool layer1Enable,
   // Store the hubIds and layer status:
   _dut->hubId = hubid;
   _dut->hubId1 = hubid1;
-  _dut->_layer1Enable = true; //layer1Enable;
+  _dut->_layer1Enable = layer1Enable;
 
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
