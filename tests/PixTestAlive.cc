@@ -6,6 +6,7 @@
 #include "log.h"
 
 #include <TStopwatch.h>
+#include <TStyle.h>
 #include <TH2.h>
 
 using namespace std;
@@ -119,20 +120,20 @@ void PixTestAlive::doTest() {
   bigBanner(Form("PixTestAlive::doTest()"));
 
   aliveTest();
-  TH1 *h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
+//   TH1 *h1 = (*fDisplayedHist); 
+//   h1->Draw(getHistOption(h1).c_str());
+//   PixTest::update(); 
 
   maskTest();
-  h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
+//   h1 = (*fDisplayedHist); 
+//   h1->Draw(getHistOption(h1).c_str());
+//   PixTest::update(); 
 
   addressDecodingTest();
-  h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-
+//   h1 = (*fDisplayedHist); 
+//   h1->Draw(getHistOption(h1).c_str());
+//   PixTest::update(); 
+   
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestAlive::doTest() done, duration: " << seconds << " seconds";
 
@@ -143,7 +144,7 @@ void PixTestAlive::doTest() {
 void PixTestAlive::aliveTest() {
   cacheDacs();
   fDirectory->cd();
-  PixTest::update(); 
+  //?  PixTest::update(); 
   string ctrlregstring = getDacsString("ctrlreg"); 
   banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
 	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
@@ -158,7 +159,7 @@ void PixTestAlive::aliveTest() {
   vector<int> deadPixel(test2.size(), 0); 
   vector<int> probPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
+    fHistOptions.insert(make_pair(test2[i], "col"));
     // -- count dead pixels
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
@@ -177,10 +178,12 @@ void PixTestAlive::aliveTest() {
   TH2D *h = (TH2D*)(fHistList.back());
 
   if (h) {
+    gStyle->SetPalette(1);
     h->Draw(getHistOption(h).c_str());
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
     PixTest::update(); 
   }
+
   restoreDacs();
 
   // -- summary printout
@@ -204,7 +207,7 @@ void PixTestAlive::maskTest() {
 
   cacheDacs();
   fDirectory->cd();
-  PixTest::update(); 
+  //?  PixTest::update(); 
 
   string ctrlregstring = getDacsString("ctrlreg"); 
   banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
@@ -217,33 +220,70 @@ void PixTestAlive::maskTest() {
 
   fNDaqErrors = 0; 
   vector<TH2D*> test2 = efficiencyMaps("MaskTest", fParNtrig, FLAG_FORCE_MASKED); 
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
   vector<int> maskPixel(test2.size(), 0); 
+  vector<TH2D*> testPixelAlive = mapsWithString("PixelAlive");
+  if (testPixelAlive.size() > 0) {
+    LOG(logINFO) << "mask vs. old pixelAlive " 
+		 << testPixelAlive[0]->GetName() << " ..  " << testPixelAlive[testPixelAlive.size()-1]->GetName();
+  } else { 
+    testPixelAlive = efficiencyMaps("PixelAlive", fParNtrig, FLAG_FORCE_MASKED); 
+    LOG(logINFO) << "mask vs. new pixelAlive " 
+		 << testPixelAlive[0]->GetName() << " ..  " << testPixelAlive[testPixelAlive.size()-1]->GetName();
+  }
+
+  //  double levels[] = {-1., 0., 1.};
+
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
-    // -- go for binary displays
+    fHistOptions[test2[i]] = "coltristate";
+    test2[i]->SetMinimum(-1.);
+    test2[i]->SetMaximum(1.);
+    //    test2[i]->SetContour((sizeof(levels)/sizeof(Double_t)), levels);
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
 	if (test2[i]->GetBinContent(ix+1, iy+1) > 0) {
 	  ++maskPixel[i];
 	}
-	if (test2[i]->GetBinContent(ix+1, iy+1) == 0) {
-	  test2[i]->SetBinContent(ix+1, iy+1, 1);
+
+	if (test2[i]->GetBinContent(ix+1, iy+1) < 0.5) {
+	  if (testPixelAlive[i]->GetBinContent(ix+1, iy+1) > 0) {
+	    test2[i]->SetBinContent(ix+1, iy+1, 1);
+	  } else {
+	    test2[i]->SetBinContent(ix+1, iy+1, 0);
+	  }
+	} else if (test2[i]->GetBinContent(ix+1, iy+1) > 0.5) {
+	  test2[i]->SetBinContent(ix+1, iy+1, -1);
 	} else {
-	  test2[i]->SetBinContent(ix+1, iy+1, 0);
-	}	  
+	  LOG(logDEBUG) << "how did I get here? Please post an issue to github"; 
+	}
+
+
       }
     }
   }
+
+  // -- TEST TEST
+  test2[0]->SetBinContent(11, 16, -1); 
+  test2[15]->SetBinContent(11, 16, -1); 
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  restoreDacs();
-  PixTest::update(); 
+  // -- draw it
+  if (h) {
+    string lopt = getHistOption(h);     
+    PixUtil::replaceAll(lopt, "tristate", ""); 
+    gStyle->SetPalette(3, fTriStateColors); 
+    h->Draw(lopt.c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
 
+  restoreDacs();
   // -- summary printout
   string maskPixelString; 
   for (unsigned int i = 0; i < maskPixel.size(); ++i) {
@@ -260,7 +300,7 @@ void PixTestAlive::addressDecodingTest() {
 
   cacheDacs();
   fDirectory->cd();
-  PixTest::update(); 
+  //?  PixTest::update(); 
   string ctrlregstring = getDacsString("ctrlreg"); 
   banner(Form("PixTestAlive::addressDecodingTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
 	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
@@ -278,7 +318,9 @@ void PixTestAlive::addressDecodingTest() {
   vector<TH2D*> test2 = efficiencyMaps("AddressDecodingTest", fParNtrig, FLAG_CHECK_ORDER|FLAG_FORCE_MASKED); 
   vector<int> addrPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
+    fHistOptions[test2[i]] = "coltristate";
+    test2[i]->SetMinimum(-1.);
+    test2[i]->SetMaximum(1.);
     // -- binary displays
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
@@ -287,24 +329,36 @@ void PixTestAlive::addressDecodingTest() {
 			<< " address decoding error";
 	  ++addrPixel[i];
 	}
-	if (test2[i]->GetBinContent(ix+1, iy+1) <= 0) {
-	  test2[i]->SetBinContent(ix+1, iy+1, 0);
-	} else {
+	if (test2[i]->GetBinContent(ix+1, iy+1) < -0.5) {
+	  test2[i]->SetBinContent(ix+1, iy+1, -1);
+	} else if (test2[i]->GetBinContent(ix+1, iy+1) > 0.5) {
 	  test2[i]->SetBinContent(ix+1, iy+1, 1);
-	}	  
+	} else {
+	  test2[i]->SetBinContent(ix+1, iy+1, 0);
+	}
       }
     }
   }
+
+  // -- TEST TEST
+  test2[0]->SetBinContent(11, 16, -1); 
+  test2[15]->SetBinContent(11, 16, -1); 
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
 
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
-  restoreDacs();
+  // -- draw it
+  if (h) {
+    string lopt = getHistOption(h);     
+    PixUtil::replaceAll(lopt, "tristate", ""); 
+    gStyle->SetPalette(3, fTriStateColors); 
+    h->Draw(lopt.c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
 
+  restoreDacs();
   // -- summary printout
   string addrPixelString; 
   for (unsigned int i = 0; i < addrPixel.size(); ++i) {
