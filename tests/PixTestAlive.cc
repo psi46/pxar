@@ -120,19 +120,8 @@ void PixTestAlive::doTest() {
   bigBanner(Form("PixTestAlive::doTest()"));
 
   aliveTest();
-//   TH1 *h1 = (*fDisplayedHist); 
-//   h1->Draw(getHistOption(h1).c_str());
-//   PixTest::update(); 
-
   maskTest();
-//   h1 = (*fDisplayedHist); 
-//   h1->Draw(getHistOption(h1).c_str());
-//   PixTest::update(); 
-
   addressDecodingTest();
-//   h1 = (*fDisplayedHist); 
-//   h1->Draw(getHistOption(h1).c_str());
-//   PixTest::update(); 
    
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestAlive::doTest() done, duration: " << seconds << " seconds";
@@ -226,22 +215,21 @@ void PixTestAlive::maskTest() {
 
   vector<int> maskPixel(test2.size(), 0); 
   vector<TH2D*> testPixelAlive = mapsWithString("PixelAlive");
+  bool deleteIt(false);
   if (testPixelAlive.size() > 0) {
     LOG(logINFO) << "mask vs. old pixelAlive " 
 		 << testPixelAlive[0]->GetName() << " ..  " << testPixelAlive[testPixelAlive.size()-1]->GetName();
   } else { 
+    deleteIt = true;
     testPixelAlive = efficiencyMaps("PixelAlive", fParNtrig, FLAG_FORCE_MASKED); 
     LOG(logINFO) << "mask vs. new pixelAlive " 
 		 << testPixelAlive[0]->GetName() << " ..  " << testPixelAlive[testPixelAlive.size()-1]->GetName();
   }
 
-  //  double levels[] = {-1., 0., 1.};
-
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions[test2[i]] = "coltristate";
     test2[i]->SetMinimum(-1.);
     test2[i]->SetMaximum(1.);
-    //    test2[i]->SetContour((sizeof(levels)/sizeof(Double_t)), levels);
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
 	if (test2[i]->GetBinContent(ix+1, iy+1) > 0) {
@@ -265,6 +253,14 @@ void PixTestAlive::maskTest() {
     }
   }
 
+  // -- delete local pixelAlive histograms (but do not touch in case they were taken from fHistList)
+  if (deleteIt) {
+    for (unsigned int i = 0; i < testPixelAlive.size(); ++i) {
+      delete testPixelAlive[i]; 
+    }
+  }
+  testPixelAlive.clear();
+    
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   
   TH2D *h = (TH2D*)(fHistList.back());
