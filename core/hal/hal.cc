@@ -300,11 +300,6 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::
     m_tokenchains.push_back(*i);
   }
 
-  // Set the hub address for the modules (BPIX default is 31)
-  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
-  _testboard->mod_Addr(hubId);
-  _testboard->Flush();
-
   // Program all registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
 		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
@@ -532,8 +527,8 @@ void hal::setHubId(uint8_t hubid0, uint8_t hubid1) {
   // Set the hub addresses for the modules (no default for layer 1 (yet))
   LOG(logDEBUGHAL) << "Hub ID 0 is " << static_cast<int>(hubId) << ".";
   LOG(logDEBUGHAL) << "HUB ID 1: " << static_cast<int>(hubId1) << ".";
-//  _testboard->mod_Addr(hubId, hubId1);
-//  _testboard->Flush();
+  _testboard->mod_Addr(hubId, hubId1);
+  _testboard->Flush();
 }
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {

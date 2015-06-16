@@ -103,7 +103,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<pixelConfig> > rocPixels,
 		       std::vector<uint8_t> rocI2Cs) {
   bool layer1Enable = false;
-  uint8_t hubid1 = 50;
+  uint8_t hubid1 = -1;
   return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
@@ -114,7 +114,7 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
   bool layer1Enable = false;
-  uint8_t hubid1 = 51;
+  uint8_t hubid1 = -1;
   return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels);
 }
 
