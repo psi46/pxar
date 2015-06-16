@@ -265,10 +265,6 @@ void PixTestAlive::maskTest() {
     }
   }
 
-  // -- TEST TEST
-  test2[0]->SetBinContent(11, 16, -1); 
-  test2[15]->SetBinContent(11, 16, -1); 
-
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   
   TH2D *h = (TH2D*)(fHistList.back());
@@ -339,10 +335,6 @@ void PixTestAlive::addressDecodingTest() {
       }
     }
   }
-
-  // -- TEST TEST
-  test2[0]->SetBinContent(11, 16, -1); 
-  test2[15]->SetBinContent(11, 16, -1); 
 
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
 
