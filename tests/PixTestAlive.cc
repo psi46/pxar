@@ -133,7 +133,7 @@ void PixTestAlive::doTest() {
 void PixTestAlive::aliveTest() {
   cacheDacs();
   fDirectory->cd();
-  //?  PixTest::update(); 
+  PixTest::update(); 
   string ctrlregstring = getDacsString("ctrlreg"); 
   banner(Form("PixTestAlive::aliveTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
 	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
@@ -148,7 +148,6 @@ void PixTestAlive::aliveTest() {
   vector<int> deadPixel(test2.size(), 0); 
   vector<int> probPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "col"));
     // -- count dead pixels
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
@@ -173,6 +172,7 @@ void PixTestAlive::aliveTest() {
     PixTest::update(); 
   }
 
+
   restoreDacs();
 
   // -- summary printout
@@ -186,8 +186,6 @@ void PixTestAlive::aliveTest() {
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
 
-  //  PixTest::hvOff();
-  //  PixTest::powerOff(); 
 }
 
 
@@ -196,7 +194,7 @@ void PixTestAlive::maskTest() {
 
   cacheDacs();
   fDirectory->cd();
-  //?  PixTest::update(); 
+  PixTest::update(); 
 
   string ctrlregstring = getDacsString("ctrlreg"); 
   banner(Form("PixTestAlive::maskTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
@@ -292,7 +290,7 @@ void PixTestAlive::addressDecodingTest() {
 
   cacheDacs();
   fDirectory->cd();
-  //?  PixTest::update(); 
+  PixTest::update(); 
   string ctrlregstring = getDacsString("ctrlreg"); 
   banner(Form("PixTestAlive::addressDecodingTest() ntrig = %d, vcal = %d (ctrlreg = %s)", 
 	      static_cast<int>(fParNtrig), static_cast<int>(fParVcal), ctrlregstring.c_str()));
