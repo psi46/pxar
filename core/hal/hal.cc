@@ -1655,36 +1655,37 @@ void hal::SigSetLVDS(){
 void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
-  for(uint8_t channel = 0; channel < 8; channel++) { m_daqstatus.push_back(false); }
+  for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) { m_daqstatus.push_back(false); }
 
   // Clear all decoder instances:
   for(size_t ch = 0; ch < m_decoder.size(); ch++) { m_decoder.at(ch).Clear(); }
 
+  // Figure out the number of DAQ channels we need:
+  if(m_tokenchains.empty()) { m_tokenchains.push_back(m_roccount); }
+  LOG(logDEBUGHAL) << "Number of token chains: " << m_tokenchains.size();
+  if(m_tokenchains.size() > DTB_DAQ_CHANNELS) {
+    LOG(logCRITICAL) << "Cannot serve " << m_tokenchains.size() << " DAQ channels, only " << DTB_DAQ_CHANNELS << " available.";
+    throw InvalidConfig("Number of requested DAQ channels too high");
+  }
+  
   // Data acquisition with real TBM:
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
-    // Split the total buffer size when having more than one channel
-    buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
-
     // Check if we have all information needed concerning the token chains:
-    if(m_tokenchains.size() < 2 || (m_tbmtype >= TBM_09 && m_tokenchains.size() < 4)) throw 1;
-
-    LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
-
-    uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
-    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains,m_tbmtype,m_roctype,true);
-    m_src.at(0) >> m_splitter.at(0);
-
-    uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
-    LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(m_tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
-    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains,m_tbmtype,m_roctype,true);
-    m_src.at(1) >> m_splitter.at(1);
+    if(m_tokenchains.size() < 2 || (m_tbmtype >= TBM_09 && m_tokenchains.size() < 4)) {
+      LOG(logCRITICAL) << "Invalid number of token chains for TBM type " << std::hex << m_tbmtype << std::dec << ": " << m_tokenchains.size();
+      throw InvalidConfig("Invalid token chain setting for selected TBM type");
+    }
 
     // Select the Deser400 as DAQ source:
+    LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
     _testboard->Daq_Select_Deser400();
     
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
+
+    // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
+    _testboard->Flush();
+    mDelay(150);
 
     // If we have an old TBM version set up the DESER400 to read old data format:
     // "old" is everything before TBM08B (so: TBM08, TBM08A)
@@ -1693,51 +1694,16 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       _testboard->Daq_Deser400_OldFormat(true);
     }
     else { _testboard->Daq_Deser400_OldFormat(false); }
-
-    // Daq_Select_Deser400() resets the phase selection, allow 150 ms to find a new phase
-    _testboard->Flush();  
-    mDelay(150); 
-
-    // And start the DAQ:
-    _testboard->Daq_Start(1);
-    m_daqstatus.at(1) = true;
-
-    // For Dual-link TBMs (2x400MHz) we need even more DAQ channels:
-    if(m_tbmtype >= TBM_09) {
-      LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
-
-      uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(m_tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
-      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains,m_tbmtype,m_roctype,true);
-      m_src.at(2) >> m_splitter.at(2);
-
-      uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(m_tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
-      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains,m_tbmtype,m_roctype,true);
-      m_src.at(3) >> m_splitter.at(3);
-
-      // Start the DAQ also for channel 2 and 3:
-      _testboard->Daq_Start(2);
-      m_daqstatus.at(2) = true;
-      _testboard->Daq_Start(3);
-      m_daqstatus.at(3) = true;
-    }
   }
   // Data acquisition without real TBM:
   else {
     // Token chain length: N ROCs for ADC or DESER160 readout.
     LOG(logDEBUGHAL) << "Determined total Token Chain Length: " << static_cast<int>(m_roccount) << " ROCs.";
 
-    uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
-    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_roccount) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,std::vector<uint8_t>(1,m_roccount),m_tbmtype,m_roctype,true);
-    m_src.at(0) >> m_splitter.at(0);
-    _testboard->uDelay(100);
-
     if(m_roctype < ROC_PSI46DIG) {
       LOG(logDEBUGHAL) << "Enabling ADC for analog ROC data acquisition."
 		       << " Timout: " << static_cast<int>(m_adctimeout)
-		       << " Delay Tin/Tout: " << static_cast<int>(m_tindelay) 
+		       << " Delay Tin/Tout: " << static_cast<int>(m_tindelay)
 		       << "/" << static_cast<int>(m_toutdelay);
       _testboard->Daq_Select_ADC(m_adctimeout, 0, m_tindelay, m_toutdelay);
       _testboard->SignalProbeADC(PROBEA_SDATA1, GAIN_4);
@@ -1749,10 +1715,22 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       _testboard->Daq_Select_Deser160(deser160phase);
     }
   }
+  
+  // Split the total buffer size when having more than one channel
+  buffersize /= m_tokenchains.size();
 
-    // Start DAQ in channel 0:
-  _testboard->Daq_Start(0);
-  m_daqstatus.at(0) = true;
+  // Start all DAQ channels we need:
+  for(size_t i = 0; i < m_tokenchains.size(); i++) {
+    // Start DAQ in channel i:
+    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
+    LOG(logDEBUGHAL) << "Channel " << i << ": token chain: " << static_cast<int>(m_tokenchains.at(i)) << " offset " << 0 << " buffer " << allocated_buffer;
+    m_src.at(i) = dtbSource(_testboard,i,m_tokenchains,m_tbmtype,m_roctype,true);
+    m_src.at(i) >> m_splitter.at(i);
+    _testboard->uDelay(100);
+    _testboard->Daq_Start(i);
+    m_daqstatus.at(i) = true;
+  }
+  
   _testboard->uDelay(100);
   _testboard->Flush();
 }
@@ -1971,7 +1949,7 @@ uint32_t hal::daqBufferStatus() {
 
   uint32_t buffered_data = 0;
   // Summing up data words in all active DAQ channels:
-  for(uint8_t channel = 0; channel < 8; channel++) {
+  for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) {
     if(m_daqstatus.size() > channel && m_daqstatus.at(channel)) {
       buffered_data += _testboard->Daq_GetSize(channel);
     }
