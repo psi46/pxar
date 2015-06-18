@@ -1628,14 +1628,8 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     }
   } // single roc fnc
 
-  // check that we ended up with data
-  if (data.empty()){
-    LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
-    // Mask device, clear leftover calibrate signals:
-    MaskAndTrim(false);
-    SetCalibrateBits(false);
-    return data;
-  }
+  // check that we ended up with data, otherwise print an error:
+  if (data.empty()){ LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!"; }
   
   // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);
