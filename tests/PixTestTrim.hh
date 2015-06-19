@@ -29,7 +29,7 @@ private:
   int     fParVcal, fParNtrig; 
   int     fParTrimHotPixelThr;
   bool    fParSaveTrimbits;
-  bool    fParRunSeconds;
+  int     fParRunSeconds;
   std::vector<std::pair<int, int> > fPIX; 
   int fTrimBits[16][52][80]; 
   
