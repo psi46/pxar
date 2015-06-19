@@ -17,6 +17,7 @@
 #include "log.h"
 #include "helper.h"
 #include "rsstools.hh"
+#include "TStopwatch.h"
 
 using namespace std;
 using namespace pxar;
@@ -2071,20 +2072,21 @@ uint16_t PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
 }
 
 // ----------------------------------------------------------------------
-void PixTest::trimHotPixels(int hit_thr) {
+void PixTest::trimHotPixels(int hitThr, int runSeconds) {
 
-  int NSECONDS(10); 
+  int NSECONDS(runSeconds); 
   int TRGFREQ(100); // in kiloHertz
 
   double THR = 1.e-5*NSECONDS*TRGFREQ*1000;
 
-  if (hit_thr > 0) {
-    THR = (double)hit_thr;
+  if (hitThr > 0) {
+    THR = (double)hitThr;
   }
 
   banner(Form("PixTest::trimHotPixels() running for %d seconds with %d kHz trigger rate", NSECONDS, TRGFREQ));
 
-  LOG(logINFO) << "THR = " << THR << ", corresponding to ~ " << THR/(NSECONDS*TRGFREQ*1000*2.5e-8*150*100*1.e-8)*1.e-6 << " MHz/cm2 for fiducial pixels";
+  LOG(logINFO) << "THR = " << THR << ", corresponding to ~ " << THR/(NSECONDS*TRGFREQ*1000*2.5e-8*150*100*1.e-8)*1.e-6 << " MHz/cm2";
+  LOG(logINFO) << "edge/corner pixel THR is adjusted";
 
   bool finished = false;
   int step = 0;
@@ -2099,6 +2101,8 @@ void PixTest::trimHotPixels(int hit_thr) {
   vector<vector<pxar::pixelConfig> > rocPixelConfig = cp->getRocPixelConfig();
 
   std::vector<TH2D*> hotpixel_map(rocIds.size());
+  std::vector<std::pair<int, std::pair<int,int> > > hotPixelList;
+
   for (size_t i = 0; i < rocIds.size(); ++i) { 
     hotpixel_map[i] = bookTH2D(Form("hits_C%d", rocIds[i]), Form("hits_C%d", rocIds[i]), 52, 0., 52., 80, 0., 80.);
   }
@@ -2120,7 +2124,8 @@ void PixTest::trimHotPixels(int hit_thr) {
 
     int totalPeriod = prepareDaq(TRGFREQ, (uint8_t)500);
     
-    timer t;
+    TStopwatch t;
+    int seconds(0);
     uint8_t perFull;
     bool daq_loop = true;
       
@@ -2129,25 +2134,29 @@ void PixTest::trimHotPixels(int hit_thr) {
     int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
     LOG(logINFO) << "Collecting data for " << NSECONDS << " seconds...";
     
+    t.Start(kTRUE);
     while (fApi->daqStatus(perFull) && daq_loop) {
       if (perFull > 80) {
         LOG(logINFO) << "Buffer almost full, pausing triggers.";
         fApi->daqTriggerLoopHalt();
-
+        t.Stop();
         vector<pxar::Event> daqdat;
         try { daqdat = fApi->daqGetEventBuffer(); }
         catch(pxar::DataNoEvent &) {}
         for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-      hotpixel_map[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
-    }
+          for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+            hotpixel_map[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+          }
         }
 
         LOG(logINFO) << "Resuming triggers.";
+        t.Start(kFALSE);
       fApi->daqTriggerLoop(finalPeriod);
       }
-      
-      if (static_cast<int>(t.get()/1000) >= NSECONDS) {
+     
+      seconds = t.RealTime(); 
+      t.Start(kFALSE); 
+      if (static_cast<int>(seconds >= NSECONDS)) {
         LOG(logINFO) << "Done with hot pixel readout";
         daq_loop = false;
         break;
@@ -2163,7 +2172,7 @@ void PixTest::trimHotPixels(int hit_thr) {
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
         int rocIdx = getIdxFromId(it->pixels[ipix].roc());
-        if (rocIdx > 0 && rocIdx < hotpixel_map.size()) {
+        if (rocIdx >= 0 && rocIdx < hotpixel_map.size()) {
           hotpixel_map[rocIdx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
         } else {
           LOG(logERROR) << "found hit from disabled ROC " << (int)it->pixels[ipix].roc() << ", col " << (int)it->pixels[ipix].column() << " row " << (int)it->pixels[ipix].row(); 
@@ -2175,14 +2184,23 @@ void PixTest::trimHotPixels(int hit_thr) {
 
     // -- analysis of hit map
     LOG(logDEBUG) << "hot pixel determination with THR = " << THR; 
-    TH2D *h(0); 
+    TH2D *h(0);
+    float pixelAreaFactor = 1.0;
     for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
       h = hotpixel_map[i];
       vector<pair<int, int> > hot; 
       for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
         for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
-          if (h->GetBinContent(ix+1, iy+1) > THR) {
+          pixelAreaFactor = 1.0;
+          if (ix == 0 || ix == 51)
+            pixelAreaFactor*=2;
+          if (iy == 0 || iy == 79)
+            pixelAreaFactor*=2;
+          if (h->GetBinContent(ix+1, iy+1) > THR * pixelAreaFactor) {
             nHotPixels++;
+            if (step == 0) {
+              hotPixelList.push_back(std::make_pair(rocIds[i], std::make_pair(ix, iy)));
+            }
             LOG(logDEBUG) << "ROC " << (int)rocIds[i] << " with hot pixel " << ix << "/" << iy << ",  hits = " << h->GetBinContent(ix+1, iy+1);
             
             // find pixel 
@@ -2215,7 +2233,6 @@ void PixTest::trimHotPixels(int hit_thr) {
           }
         }
       }
-      
     }
     LOG(logINFO) << nHotPixels << " hot pixels found in step " << step;
     step++;
@@ -2223,6 +2240,13 @@ void PixTest::trimHotPixels(int hit_thr) {
       finished = true;
     }
   }
+
+  
+  LOG(logDEBUG) << "list of re-trimmed hot pixels:";         
+  for (size_t i = 0; i< hotPixelList.size(); ++i) {
+    LOG(logDEBUG) << "ROC " << hotPixelList[i].first << " pix " << hotPixelList[i].second.first << "/" << hotPixelList[i].second.second;
+  }
+  
 
   for (size_t i = 0; i < diff_map.size(); ++i) {
     fHistList.push_back(diff_map[i]);

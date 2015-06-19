@@ -123,16 +123,6 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
 	}
       }
-      if (!parName.compare("trimhotpixelthr")) {
-  fParTrimHotPixelThr = atoi(sval.c_str());
-  setToolTips();
-      }
-      if (!parName.compare("savetrimbits")) {
-  PixUtil::replaceAll(sval, "checkbox(", "");
-  PixUtil::replaceAll(sval, ")", "");
-  fParSaveTrimbits = !(atoi(sval.c_str())==0);
-  setToolTips();
-      }
       break;
     }
   }
@@ -149,11 +139,6 @@ void PixTestHighRate::runCommand(std::string command) {
 
   if (!command.compare("stop")){
      doStop();
-  }
-
-  if (!command.compare("trimhotpixels")) {
-    doRunTrimHotPixels();
-    return;
   }
 
   if (!command.compare("maskhotpixels")) {
@@ -872,19 +857,6 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
     }
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
-}
-
-// ----------------------------------------------------------------------
-void PixTestHighRate::doRunTrimHotPixels() {
-  PixTest::update();
-  trimHotPixels(fParTrimHotPixelThr);
-  if (fParSaveTrimbits) {
-    // enable all pixels, otherwise saveTrimBits() saves empty files
-    fApi->_dut->testAllPixels(true);
-    saveTrimBits();
-  }
-  PixTest::update();
-  return;
 }
 
 // ----------------------------------------------------------------------

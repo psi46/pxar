@@ -45,6 +45,20 @@ bool PixTestTrim::setParameter(string parName, string sval) {
       if (!parName.compare("vcal")) {
 	fParVcal = atoi(sval.c_str()); 
       }
+      if (!parName.compare("trimhotpixelthr")) {
+  fParTrimHotPixelThr = atoi(sval.c_str());
+  setToolTips();
+      }
+      if (!parName.compare("runseconds")) {
+  fParRunSeconds = atoi(sval.c_str());
+  setToolTips();
+      }
+      if (!parName.compare("savetrimbits")) {
+  PixUtil::replaceAll(sval, "checkbox(", "");
+  PixUtil::replaceAll(sval, ")", "");
+  fParSaveTrimbits = !(atoi(sval.c_str())==0);
+  setToolTips();
+      }
       break;
     }
   }
@@ -75,6 +89,10 @@ void PixTestTrim::runCommand(std::string command) {
   }
   if (!command.compare("trim")) {
     trimTest(); 
+    return;
+  }
+  if (!command.compare("trimhotpixels")) {
+    doRunTrimHotPixels();
     return;
   }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
@@ -560,6 +578,18 @@ void PixTestTrim::trimBitTest() {
 }
 
 
+// ----------------------------------------------------------------------
+void PixTestTrim::doRunTrimHotPixels() {
+  PixTest::update();
+  trimHotPixels(fParTrimHotPixelThr, fParRunSeconds);  
+  if (fParSaveTrimbits) {
+    // enable all pixels, otherwise saveTrimBits() saves empty files
+    fApi->_dut->testAllPixels(true);
+    saveTrimBits();
+  }
+  PixTest::update();
+  return;
+}
 
 // ----------------------------------------------------------------------
 int PixTestTrim::adjustVtrim() {

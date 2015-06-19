@@ -572,6 +572,10 @@ trim                button
 Ntrig               10
 Vcal                35
 TrimBits            button
+trimhotpixels       button
+trimhotpixelthr     200
+runseconds          10
+savetrimbits        checkbox(0)
 
 -- GainPedestal
 showFits            checkbox(0)
@@ -605,9 +609,6 @@ FillTree            checkbox
 
 -- HighRate
 PIX                 11,20
-trimhotpixels       button
-trimhotpixelthr     100
-savetrimbits        checkbox(0)
 maskHotPixels       button
 saveMaskFile        checkbox(0)
 maskFileName        default
