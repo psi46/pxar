@@ -859,6 +859,7 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
 }
 
+
 // ----------------------------------------------------------------------
 void PixTestHighRate::doRunMaskHotPixels() {
   PixTest::update();
