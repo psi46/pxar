@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <TH1.h>
+#include <TStyle.h>
 
 #include "PixTestDacScan.hh"
 #include "PixUtil.hh"
@@ -138,6 +139,7 @@ void PixTestDacScan::doTest() {
   }
 
   fDirectory->cd();
+  gStyle->SetPalette(1);
   TH1D *h1(0);
   TH2D *h3(0);
   vector<TH1D*> vhist;

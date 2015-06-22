@@ -7,6 +7,7 @@
 #include <TRandom.h>
 #include <TMath.h>
 #include <TStopwatch.h>
+#include <TStyle.h>
 
 #include "PixTestScurves.hh"
 #include "PixUtil.hh"
@@ -225,6 +226,7 @@ void PixTestScurves::runCommand(string command) {
 
 // ----------------------------------------------------------------------
 void PixTestScurves::scurves() {
+  gStyle->SetPalette(1); 
   fDirectory->cd();
   cacheDacs();
   banner(Form("PixTestScurves::scurves(%s), ntrig = %d", fParDac.c_str(), fParNtrig));

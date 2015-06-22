@@ -127,6 +127,7 @@ void PixTestGainPedestal::doTest() {
 
   TStopwatch t;
 
+  gStyle->SetPalette(1);
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestGainPedestal::doTest() ntrig = %d", fParNtrig));

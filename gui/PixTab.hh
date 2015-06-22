@@ -78,6 +78,8 @@ protected:
   PixTest              *fTest; 
 
   int                   fBorderN, fBorderT, fBorderL;  // normal, tiny, large
+
+  int                   fTriStateColors[3]; // copy-paste from PixTest ...
   
   ClassDef(PixTab, 1)
 

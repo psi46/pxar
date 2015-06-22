@@ -40,6 +40,10 @@ PixTest::PixTest(PixSetup *a, string name) {
   fParameters = a->getPixTestParameters()->getTestParameters(name); 
   fTree = 0; 
 
+  fTriStateColors[0] = kRed;
+  fTriStateColors[1] = 0;
+  fTriStateColors[2] = kGreen;
+
   //  TVirtualFitter::SetDefaultFitter("Minuit2");
 
   // -- provide default map when all ROCs are selected
@@ -1371,6 +1375,39 @@ vector<TH2D*> PixTest::mapsWithString(vector<TH2D*>maps, string name) {
   return results; 
 }
 
+
+// ----------------------------------------------------------------------
+vector<TH2D*> PixTest::mapsWithString(string name) {
+  vector<TH2D*> results; 
+  string hname(""); 
+
+  int oldCnt(-1), cnt(-1);
+  char cname[200]; 
+  // get them
+  std::list<TH1*>::iterator il; 
+  for (il = fHistList.begin(); il != fHistList.end(); ++il) {
+    if (!(*il)->InheritsFrom(TH2::Class())) continue;
+    hname = (*il)->GetName(); 
+    if (string::npos == hname.find(name)) continue;
+    
+    size_t posV = hname.rfind("_V");
+    string scnt = hname.substr(posV+2);
+    cnt = atoi(scnt.c_str());
+    // -- if a new cycle is found, restart from scratch
+    if (cnt != oldCnt) {
+      results.clear();
+      oldCnt = cnt; 
+    }
+    results.push_back(static_cast<TH2D*>(*il)); 
+  }    
+
+  // sort them
+  sort(results.begin(), results.end(), sortRocHist); 
+
+  return results; 
+}
+
+
 // ----------------------------------------------------------------------
 void PixTest::fillDacHist(vector<pair<uint8_t, vector<pixel> > > &results, TH1D *h, int icol, int irow, int iroc) {
   h->Reset();
@@ -2161,4 +2198,23 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   }
   LOG(logINFO) << "PixTest::maskHotPixels() done";
 
+}
+
+
+// ----------------------------------------------------------------------
+bool sortRocHist(const TH1* h1, const TH1* h2) {
+  string hname1 = h1->GetName(); 
+  string hname2 = h2->GetName(); 
+
+  size_t pos1 = hname1.rfind("_C");
+  size_t pos2 = hname1.rfind("_V");
+  string sroc1 = hname1.substr(pos1 + 2, pos2 - pos1 - 2); 
+  int roc1 = atoi(sroc1.c_str()); 
+
+  pos1 = hname2.rfind("_C");
+  pos2 = hname2.rfind("_V");
+  string sroc2 = hname2.substr(pos1 + 2, pos2 - pos1 - 2); 
+  int roc2 = atoi(sroc2.c_str()); 
+  
+  return roc1 < roc2;
 }

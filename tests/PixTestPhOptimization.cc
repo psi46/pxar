@@ -3,6 +3,7 @@
 #include <sstream>   // parsing
 
 #include <TStopwatch.h>
+#include <TStyle.h>
 #include "constants.h"
 
 #include "PixTestPhOptimization.hh"
@@ -89,7 +90,8 @@ PixTestPhOptimization::~PixTestPhOptimization() {}
 void PixTestPhOptimization::doTest() {
 
   TStopwatch t;
-
+  
+  gStyle->SetPalette(1);
   cacheDacs();
   bigBanner(Form("PixTestPhOptimization::doTest() Ntrig = %d", fParNtrig ));
   fDirectory->cd();

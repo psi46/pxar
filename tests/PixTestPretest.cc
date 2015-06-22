@@ -138,6 +138,8 @@ void PixTestPretest::doTest() {
 
   TStopwatch t;
 
+  gStyle->SetPalette(1);
+
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestPretest::doTest()"));
@@ -463,6 +465,7 @@ void PixTestPretest::setTimings() {
 void PixTestPretest::setVthrCompCalDel() {
   uint16_t FLAGS = FLAG_FORCE_MASKED;
 
+  gStyle->SetPalette(1);
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
@@ -576,7 +579,6 @@ void PixTestPretest::setVthrCompCalDel() {
     
     h2->Draw(getHistOption(h2).c_str());
     PixTest::update(); 
-    pxar::mDelay(500); 
     
     fHistList.push_back(h2); 
   }
@@ -923,6 +925,7 @@ void PixTestPretest::programROC() {
 // ----------------------------------------------------------------------
 void PixTestPretest::findWorkingPixel() {
 
+  gStyle->SetPalette(1);
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 

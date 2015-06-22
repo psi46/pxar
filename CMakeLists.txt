@@ -26,7 +26,7 @@ OPTION(INTERFACE_ETH "Build DTB Ethernet interface?" OFF)
 # Build flag for USB interface implementation:
 OPTION(INTERFACE_USB "Build DTB USB interface?" ON)
 # Switch off building for all interfaces:
-OPTION(BUILD_emulator "Do not build any interface but simulate DTB?" OFF)
+OPTION(BUILD_dtbemulator "Do not build any interface but simulate DTB?" OFF)
 
 ########################################
 # Setup the build environment for pxar #
@@ -91,11 +91,11 @@ include( cmake/Platform.cmake)
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
-IF(BUILD_emulator)
-  MESSAGE(WARNING "Build flag BUILD_emulator passed. Turning off all interfaces and building DTB emulator class instead.")
+IF(BUILD_dtbemulator)
+  MESSAGE(WARNING "Build flag BUILD_dtbemulator passed. Turning off all interfaces and building DTB emulator class instead.")
   SET(INTERFACE_ETH OFF)
   SET(INTERFACE_USB OFF)
-ENDIF(BUILD_emulator)
+ENDIF(BUILD_dtbemulator)
 
 IF(INTERFACE_ETH)
   # Find the required libraries for the ethernet interface:

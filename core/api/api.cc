@@ -187,7 +187,11 @@ bool pxarCore::initDUT(uint8_t hubid,
 
     // Set the TBM type (get value from dictionary)
     newtbm.type = stringToDeviceCode(tbmtype);
-    if(newtbm.type == 0x0) return false;
+    if(newtbm.type == 0x0) {
+      LOG(logCRITICAL) << "Invalid TBM type \"" << tbmtype << "\"";
+      throw InvalidConfig("Invalid TBM type.");
+    }
+
     // Standard setup for token chain lengths:
     // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
     else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
@@ -278,7 +282,10 @@ bool pxarCore::initDUT(uint8_t hubid,
     rocConfig newroc;
     // Set the ROC type (get value from dictionary)
     newroc.type = stringToDeviceCode(roctype);
-    if(newroc.type == 0x0) return false;
+    if(newroc.type == 0x0) {
+      LOG(logCRITICAL) << "Invalid ROC type \"" << roctype << "\"";
+      throw InvalidConfig("Invalid ROC type.");
+    }
 
     // If no I2C addresses have been supplied, we just assume they are consecutively numbered:
     if(rocI2Cs.empty()) { newroc.i2c_address = static_cast<uint8_t>(rocIt - rocDACs.begin()); }
@@ -1628,14 +1635,8 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
     }
   } // single roc fnc
 
-  // check that we ended up with data
-  if (data.empty()){
-    LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!";
-    // Mask device, clear leftover calibrate signals:
-    MaskAndTrim(false);
-    SetCalibrateBits(false);
-    return data;
-  }
+  // check that we ended up with data, otherwise print an error:
+  if (data.empty()){ LOG(logCRITICAL) << "NO DATA FROM TEST FUNCTION -- are any TBMs/ROCs/PIXs enabled?!"; }
   
   // Test is over, mask the whole device again and clear leftover calibrate signals:
   MaskAndTrim(false);

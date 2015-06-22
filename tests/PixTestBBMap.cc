@@ -7,6 +7,7 @@
 #include <TArrow.h>
 #include <TSpectrum.h>
 #include "TStopwatch.h"
+#include "TStyle.h"
 
 #include "PixTestBBMap.hh"
 #include "PixUtil.hh"
@@ -101,6 +102,7 @@ void PixTestBBMap::doTest() {
 
   TStopwatch t;
 
+  gStyle->SetPalette(1);
   cacheDacs();
   PixTest::update();
   bigBanner(Form("PixTestBBMap::doTest() Ntrig = %d, VcalS = %d (high range)", fParNtrig, fParVcalS));
