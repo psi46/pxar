@@ -131,7 +131,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
     tcb->Connect("Clicked()", "PixParTab", this, "selectTbm()");
     bGroup->AddFrame(tcb, new TGLayoutHints(kLHintsLeft, fBorderL, fBorderR, fBorderT, 0));
     fSelectTbm.push_back(tcb);
-    vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getTbmDACs(i);
+    vector<pair<string, uint8_t> > smap = fGui->getApi()->_dut->getTbmDACsAndChainLengths(i);
     cmap.push_back(smap);
   }
   if (fSelectTbm.size() > 0) {
@@ -610,7 +610,10 @@ void PixParTab::setTbmParameter() {
       fTbmParIds[itbm][sdac] = udac;
       LOG(logDEBUG)<< "xxx: ID = " << id << " TBM = " << itbm
 		  << " -> " << sdac << " set to int(udac) = " << int(udac);
-      fGui->getApi()->setTbmReg(sdac, udac, itbm);
+      if (sdac == "nrocs1" || sdac == "nrocs2")
+        fGui->getApi()->setTbmChainLength(sdac, udac, itbm);
+      else
+        fGui->getApi()->setTbmReg(sdac, udac, itbm);
       //      if (sdac == "basee") {
 	//	LOG(logDEBUG)<< "send reset to TBM because of phase adjustment"; 
 	//	fGui->getApi()->setTbmReg("base4", 0x80, itbm);

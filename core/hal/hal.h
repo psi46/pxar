@@ -122,6 +122,8 @@ namespace pxar {
      */
     bool tbmSetRegs(std::map< uint8_t, uint8_t > regPairs);
 
+    bool tbmSetChainLength(uint8_t tbmId, uint8_t tbmCore, uint8_t regValue);
+
     /** Function to set and update the pattern generator command list on the DTB
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);

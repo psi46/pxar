@@ -709,6 +709,32 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
   return true;
 }
 
+bool pxarCore::setTbmChainLength(std::string regName, uint8_t regValue, uint8_t tbmid) {
+
+  if(!status()) {return 0;}
+  
+  // Get the register number and check the range from dictionary:
+  uint8_t _register;
+  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
+
+  if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
+    // Set the register only in the given TBM (even if that is disabled!)
+    
+    uint8_t core = _register == TBM_TOKENCHAIN_0 ? 0 : 1;
+
+    // Update the DUT register Value:
+    _dut->tbm.at(tbmid).tokenchains.at(core) = regValue;
+    LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
+    
+    _hal->tbmSetChainLength(tbmid,core,regValue);
+  }
+  else {
+    LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
+    return false;
+  }
+  return true;
+}
+
 std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   // No step size provided - scanning all DACs with step size 1:

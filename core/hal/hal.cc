@@ -602,6 +602,14 @@ bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
   return true;
 }
 
+bool hal::tbmSetChainLength(uint8_t tbmId, uint8_t tbmCore, uint8_t regValue) {
+
+  uint8_t offset = m_tbmtype >= TBM_09 ? 2 : 1;
+  m_tokenchains.at(tbmCore + tbmId*offset) = regValue;
+
+  return true;
+}
+
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
 
   LOG(logDEBUGHAL) << "Writing the following available I2C devices into NIOS storage:";

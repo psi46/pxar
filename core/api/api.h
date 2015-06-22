@@ -381,6 +381,8 @@ namespace pxar {
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
+    bool setTbmChainLength(std::string regName, uint8_t regValue, uint8_t tbmid);
+
     /** Method to scan a DAC range and measure the pulse height
      *
      *  Returns a vector of pairs containing set dac value and a pxar::pixel vector,
@@ -1061,9 +1063,13 @@ namespace pxar {
      */
     std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
-    /** Function returning the token chain length:
+    /** Function returning the token chain lengths:
      */
     std::vector<uint8_t> getTbmChainLengths(size_t tbmId);
+
+    /** Function returning the TBM DACs and token chain lengths together:
+     */
+    std::vector< std::pair<std::string,uint8_t> > getTbmDACsAndChainLengths(size_t tbmId);
 
     /** Helper function to print current values from all DAC on ROC rocId
      *  to stdout
