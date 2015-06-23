@@ -6,6 +6,7 @@
 #include <TH1.h>
 #include <TRandom.h>
 #include <TStopwatch.h>
+#include <TStyle.h>
 
 #include "PixTestTrim.hh"
 #include "PixUtil.hh"
@@ -158,6 +159,7 @@ void PixTestTrim::doTest() {
 // ----------------------------------------------------------------------
 void PixTestTrim::trimTest() {
 
+  gStyle->SetPalette(1);
   bool verbose(false);
   cacheDacs(verbose);
   fDirectory->cd();
@@ -550,7 +552,7 @@ void PixTestTrim::trimBitTest() {
     steps.push_back(thr); 
   }
   
-  // -- and now determine threshild difference
+  // -- and now determine threshold difference
   TH1 *h1(0); 
   double dthr(0.);
   for (unsigned int i = 0; i < steps.size(); ++i) {

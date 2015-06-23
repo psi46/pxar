@@ -969,10 +969,12 @@ class PxarCoreCmd(cmd.Cmd):
         return [self.do_findAnalogueTBDelays.__doc__, '']
 
     @arity(0,3,[int, int, int])
-    def do_wbcScan(self, minWBC = 90, maxTriggers = 10, maxWBC = 255):
-        """ do_wbcScan [minWBC] [maxTriggers]: sets the values of wbc from minWBC until it finds the wbc which has more than 90% filled events or it reaches 255 (default minWBC 90)"""
+    def do_wbcScan(self, minWBC = 90, maxWBC = 255, maxTriggers = 10, triggersignal = "extern"):
+        """ do_wbcScan [minWBC] [maxWBC] [maxTriggers] [signal]: sets the values of wbc from minWBC until it finds the wbc which has more than 90% filled events or it reaches 255 (default minWBC 90)"""
 
-        self.api.daqTriggerSource("extern")
+        self.api.daqTriggerSource(triggersignal)
+        self.api.HVon();
+
         wbcScan = []
         print "wbc \tyield"
 
@@ -997,14 +999,7 @@ class PxarCoreCmd(cmd.Cmd):
             wbcScan.append(hitYield)
             print '{0:03d}'.format(wbc),"\t", '{0:3.0f}%'.format(hitYield)
 
-            # stopping criterion
-            if wbc>3+minWBC:
-                if wbcScan[-4] > 90:
-                    print "Set DAC wbc to", wbc-3
-                    self.api.setDAC("wbc", wbc-3)
-                    break
-
-        self.api.daqStop()
+            self.api.daqStop()
 
         if(self.window):
             self.window = PxarGui( ROOT.gClient.GetRoot(), 1000, 800 )
@@ -1015,6 +1010,51 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_wbcScan(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_wbcScan.__doc__, '']
+
+    @arity(0,4,[int, int, int, str])
+    def do_latencyScan(self, minlatency = 50, maxlatency = 100, triggers = 10, triggersignal = "extern"):
+        """ do_latencyScan [min] [max] [triggers] [signal]: scan the trigger latency from min to max with set number of triggers)"""
+
+        self.api.testAllPixels(0,None)
+        self.api.HVon();
+
+        latencyScan = []
+        print "latency \tyield"
+
+        # loop over latency
+        for latency in range (minlatency,maxlatency):
+            delay = {}
+            delay["triggerlatency"] = latency
+            self.api.setTestboardDelays(delay)
+            self.api.daqTriggerSource(triggersignal)
+            self.api.daqStart()
+            nHits       = 0
+            nTriggers   = 0
+
+            #loop until you find maxTriggers
+            while nTriggers < triggers:
+                try:
+                    data = self.api.daqGetEvent()
+                    if len(data.pixels) > 0:
+                       nHits += 1
+                    nTriggers += 1
+                except RuntimeError:
+                    pass
+
+            hitYield = 100*nHits/triggers
+            latencyScan.append(hitYield)
+            print '{0:03d}'.format(latency),"\t", '{0:3.0f}%'.format(hitYield)
+            self.api.daqStop()
+
+        if(self.window):
+            self.window = PxarGui( ROOT.gClient.GetRoot(), 1000, 800 )
+            plot = Plotter.create_tgraph(latencyScan, "latency scan", "trigger latency", "evt/trig [%]", minlatency)
+            self.window.histos.append(plot)
+            self.window.update()
+
+    def complete_latencyScan(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_latencyScan.__doc__, '']
 
     def do_quit(self, arg):
         """quit: terminates the application"""

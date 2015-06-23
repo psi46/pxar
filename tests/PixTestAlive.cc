@@ -6,6 +6,7 @@
 #include "log.h"
 
 #include <TStopwatch.h>
+#include <TStyle.h>
 #include <TH2.h>
 
 using namespace std;
@@ -119,20 +120,9 @@ void PixTestAlive::doTest() {
   bigBanner(Form("PixTestAlive::doTest()"));
 
   aliveTest();
-  TH1 *h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-
   maskTest();
-  h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-
   addressDecodingTest();
-  h1 = (*fDisplayedHist); 
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update(); 
-
+   
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestAlive::doTest() done, duration: " << seconds << " seconds";
 
@@ -158,7 +148,6 @@ void PixTestAlive::aliveTest() {
   vector<int> deadPixel(test2.size(), 0); 
   vector<int> probPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
     // -- count dead pixels
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
@@ -177,10 +166,13 @@ void PixTestAlive::aliveTest() {
   TH2D *h = (TH2D*)(fHistList.back());
 
   if (h) {
+    gStyle->SetPalette(1);
     h->Draw(getHistOption(h).c_str());
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
     PixTest::update(); 
   }
+
+
   restoreDacs();
 
   // -- summary printout
@@ -194,8 +186,6 @@ void PixTestAlive::aliveTest() {
   LOG(logINFO) << "number of dead pixels (per ROC): " << deadPixelString;
   LOG(logDEBUG) << "number of red-efficiency pixels: " << probPixelString;
 
-  //  PixTest::hvOff();
-  //  PixTest::powerOff(); 
 }
 
 
@@ -217,33 +207,73 @@ void PixTestAlive::maskTest() {
 
   fNDaqErrors = 0; 
   vector<TH2D*> test2 = efficiencyMaps("MaskTest", fParNtrig, FLAG_FORCE_MASKED); 
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+
   vector<int> maskPixel(test2.size(), 0); 
+  vector<TH2D*> testPixelAlive = mapsWithString("PixelAlive");
+  bool deleteIt(false);
+  if (testPixelAlive.size() > 0) {
+    LOG(logINFO) << "mask vs. old pixelAlive " 
+		 << testPixelAlive[0]->GetName() << " ..  " << testPixelAlive[testPixelAlive.size()-1]->GetName();
+  } else { 
+    deleteIt = true;
+    testPixelAlive = efficiencyMaps("PixelAlive", fParNtrig, FLAG_FORCE_MASKED); 
+    LOG(logINFO) << "mask vs. new pixelAlive " 
+		 << testPixelAlive[0]->GetName() << " ..  " << testPixelAlive[testPixelAlive.size()-1]->GetName();
+  }
+
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
-    // -- go for binary displays
+    fHistOptions[test2[i]] = "coltristate";
+    test2[i]->SetMinimum(-1.);
+    test2[i]->SetMaximum(1.);
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
 	if (test2[i]->GetBinContent(ix+1, iy+1) > 0) {
 	  ++maskPixel[i];
 	}
-	if (test2[i]->GetBinContent(ix+1, iy+1) == 0) {
-	  test2[i]->SetBinContent(ix+1, iy+1, 1);
+
+	if (test2[i]->GetBinContent(ix+1, iy+1) < 0.5) {
+	  if (testPixelAlive[i]->GetBinContent(ix+1, iy+1) > 0) {
+	    test2[i]->SetBinContent(ix+1, iy+1, 1);
+	  } else {
+	    test2[i]->SetBinContent(ix+1, iy+1, 0);
+	  }
+	} else if (test2[i]->GetBinContent(ix+1, iy+1) > 0.5) {
+	  test2[i]->SetBinContent(ix+1, iy+1, -1);
 	} else {
-	  test2[i]->SetBinContent(ix+1, iy+1, 0);
-	}	  
+	  LOG(logDEBUG) << "how did I get here? Please post an issue to github"; 
+	}
+
+
       }
     }
   }
 
+  // -- delete local pixelAlive histograms (but do not touch in case they were taken from fHistList)
+  if (deleteIt) {
+    for (unsigned int i = 0; i < testPixelAlive.size(); ++i) {
+      delete testPixelAlive[i]; 
+    }
+  }
+  testPixelAlive.clear();
+    
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
   
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  restoreDacs();
-  PixTest::update(); 
+  // -- draw it
+  if (h) {
+    string lopt = getHistOption(h);     
+    PixUtil::replaceAll(lopt, "tristate", ""); 
+    gStyle->SetPalette(3, fTriStateColors); 
+    h->Draw(lopt.c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
 
+  restoreDacs();
   // -- summary printout
   string maskPixelString; 
   for (unsigned int i = 0; i < maskPixel.size(); ++i) {
@@ -278,7 +308,9 @@ void PixTestAlive::addressDecodingTest() {
   vector<TH2D*> test2 = efficiencyMaps("AddressDecodingTest", fParNtrig, FLAG_CHECK_ORDER|FLAG_FORCE_MASKED); 
   vector<int> addrPixel(test2.size(), 0); 
   for (unsigned int i = 0; i < test2.size(); ++i) {
-    fHistOptions.insert(make_pair(test2[i], "colz"));
+    fHistOptions[test2[i]] = "coltristate";
+    test2[i]->SetMinimum(-1.);
+    test2[i]->SetMaximum(1.);
     // -- binary displays
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
@@ -287,11 +319,13 @@ void PixTestAlive::addressDecodingTest() {
 			<< " address decoding error";
 	  ++addrPixel[i];
 	}
-	if (test2[i]->GetBinContent(ix+1, iy+1) <= 0) {
-	  test2[i]->SetBinContent(ix+1, iy+1, 0);
-	} else {
+	if (test2[i]->GetBinContent(ix+1, iy+1) < -0.5) {
+	  test2[i]->SetBinContent(ix+1, iy+1, -1);
+	} else if (test2[i]->GetBinContent(ix+1, iy+1) > 0.5) {
 	  test2[i]->SetBinContent(ix+1, iy+1, 1);
-	}	  
+	} else {
+	  test2[i]->SetBinContent(ix+1, iy+1, 0);
+	}
       }
     }
   }
@@ -300,11 +334,17 @@ void PixTestAlive::addressDecodingTest() {
 
   TH2D *h = (TH2D*)(fHistList.back());
 
-  h->Draw(getHistOption(h).c_str());
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
-  PixTest::update(); 
-  restoreDacs();
+  // -- draw it
+  if (h) {
+    string lopt = getHistOption(h);     
+    PixUtil::replaceAll(lopt, "tristate", ""); 
+    gStyle->SetPalette(3, fTriStateColors); 
+    h->Draw(lopt.c_str());
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
+    PixTest::update(); 
+  }
 
+  restoreDacs();
   // -- summary printout
   string addrPixelString; 
   for (unsigned int i = 0; i < addrPixel.size(); ++i) {

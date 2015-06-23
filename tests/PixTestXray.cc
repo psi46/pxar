@@ -6,11 +6,13 @@
 #include "PixTestXray.hh"
 #include "log.h"
 #include "TStopwatch.h"
+#include <TStyle.h>
 
 #include "PixUtil.hh"
 
 #include <TH2.h>
 #include <TMath.h>
+#include <TStyle.h>
 
 using namespace std;
 using namespace pxar;
@@ -235,6 +237,7 @@ void PixTestXray::doPhRun() {
 
   banner(Form("PixTestXray::doPhRun() fParRunSeconds = %d", fParRunSeconds));
 
+  gStyle->SetPalette(1);
   PixTest::update(); 
   fDirectory->cd();
 

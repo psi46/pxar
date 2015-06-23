@@ -7,6 +7,7 @@
 #include "PixTestHighRate.hh"
 #include "log.h"
 #include "TStopwatch.h"
+#include <TStyle.h>
 
 #include "PixUtil.hh"
 
@@ -244,6 +245,7 @@ void PixTestHighRate::doCalDelScan() {
   banner(Form("PixTestHighRate::calDelScan() ntrig = %d, vcal = %d", ntrig, fParVcal));
   cacheDacs();
 
+  gStyle->SetPalette(1);
   fDirectory->cd();
   PixTest::update();
 
@@ -413,6 +415,7 @@ void PixTestHighRate::doXPixelAlive() {
 
   banner(Form("PixTestHighRate::xPixelAlive() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
   cacheDacs();
+  gStyle->SetPalette(1);
 
 
   // -- cache triggerdelay
@@ -569,6 +572,7 @@ void PixTestHighRate::doXNoiseMaps() {
 
   banner(Form("PixTestHighRate::xNoiseMaps() ntrig = %d, vcal = %d", fParNtrig, fParVcal));
   cacheDacs();
+  gStyle->SetPalette(1);
 
   // -- cache triggerdelay
   vector<pair<string, uint8_t> > oldDelays = fPixSetup->getConfigParameters()->getTbSigDelays();
@@ -717,6 +721,7 @@ void PixTestHighRate::doRunDaq() {
 
   fDirectory->cd();
   PixTest::update();
+  gStyle->SetPalette(1);
 
 
   // -- unmask entire chip and then mask hot pixels
@@ -799,6 +804,7 @@ void PixTestHighRate::doRunDaq() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 
+  gStyle->SetPalette(1);
   int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
   fApi->daqStart();
 
@@ -862,6 +868,7 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
 
 // ----------------------------------------------------------------------
 void PixTestHighRate::doRunMaskHotPixels() {
+  gStyle->SetPalette(1);
   PixTest::update();
   vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels");
   if (0 == v.size()) {

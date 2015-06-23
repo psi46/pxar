@@ -6,6 +6,7 @@
 #include "log.h"
 
 #include <TH2.h>
+#include <TStyle.h>
 
 using namespace std;
 using namespace pxar;
@@ -140,6 +141,7 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 void PixTestDacDacScan::doTest() {
   //  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
   uint16_t FLAGS = FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  gStyle->SetPalette(1);
   fDirectory->cd();
   PixTest::update(); 
 
