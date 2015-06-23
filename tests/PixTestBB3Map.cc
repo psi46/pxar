@@ -179,7 +179,6 @@ void PixTestBB3Map::doTest() {
 
   restoreDacs();
 
-  // -- summary printout
   string bbString("");
   int nBadBumps(0);
   int nPeaksEven(0), nPeaksOdd(0);
@@ -194,34 +193,40 @@ void PixTestBB3Map::doTest() {
     distEven = (TH1D*)dlist[i].first;
     distOdd = (TH1D*)dlist[i].second;
     // search for peaks in the distribution
-    // sigma = 5, threshold = 1%
+    // sigma = 5, threshold = 50%
     // peaks below threshold*max_peak_height are discarded
     // "nobackground" means it doesn't try to subtract a background
     //   from the distribution
-    nPeaksEven = s.Search(distEven, 5, "nobackground", 0.01);
-    LOG(logDEBUG) << "found " << nPeaksEven << " peaks in " << distEven->GetName();
-    nPeaksOdd = s.Search(distOdd, 5, "nobackground", 0.01);
-    LOG(logDEBUG) << "found " << nPeaksOdd << " peaks in " << distOdd->GetName();
+    nPeaksEven = s.Search(distEven, 5, "nobackground", 0.5);
+    nPeaksOdd = s.Search(distOdd, 5, "nobackground", 0.5);
 
     // use fitPeaks algorithm to get the fitted gaussian of good bumps
     fitEven = fitPeaks(distEven, s, nPeaksEven);
     double meanEven = fitEven->GetParameter(1);
-    double sigmaEven = fitEven->GetParameter(2);
+    double sigmaEven = fabs(fitEven->GetParameter(2));
     fitOdd = fitPeaks(distOdd, s, nPeaksOdd);
     double meanOdd = fitOdd->GetParameter(1);
-    double sigmaOdd = fitOdd->GetParameter(2);
+    double sigmaOdd = fabs(fitOdd->GetParameter(2));
 
-
-    // draw an arrow on the plot to denote cutDead
     int cutEven = static_cast<int>(meanEven + NSIGMA*sigmaEven) + 1;
+    int cutOdd = static_cast<int>(meanOdd + NSIGMA*sigmaOdd) + 1;
+
+    LOG(logDEBUG) << "found " << nPeaksEven << " peaks in " << distEven->GetName();
+    LOG(logDEBUG) << "  best peak: mean = " << meanEven << ", RMS = " << sigmaEven;
+    LOG(logDEBUG) << "    cut value = " << cutEven;
+
+    LOG(logDEBUG) << "found " << nPeaksOdd << " peaks in " << distOdd->GetName();
+    LOG(logDEBUG) << "  best peak: mean = " << meanOdd << ", RMS = " << sigmaOdd;
+    LOG(logDEBUG) << "    cut value = " << cutOdd;
+
+    // draw an arrow on the plot to denote cutEven
     TArrow *paEven = new TArrow(cutEven, 0.5*distEven->GetMaximum(), cutEven, 0., 0.06, "|>");
     paEven->SetArrowSize(0.1);
     paEven->SetAngle(40);
     paEven->SetLineWidth(2);
     distEven->GetListOfFunctions()->Add(paEven);
 
-    // draw an arrow on the plot to denote cutDead
-    int cutOdd = static_cast<int>(meanOdd + NSIGMA*sigmaOdd) + 1;
+    // draw an arrow on the plot to denote cutOdd
     TArrow *paOdd = new TArrow(cutOdd, 0.5*distOdd->GetMaximum(), cutOdd, 0., 0.06, "|>");
     paOdd->SetArrowSize(0.1);
     paOdd->SetAngle(40);
@@ -270,13 +275,11 @@ void PixTestBB3Map::doTest() {
     fHistList.push_back(rescaledThrdists[i]);
 
     // bad bumps are those above NSIGMA*sigma above the mean
-    nBadBumps = static_cast<int>(rescaledThrdists[i]->Integral(rescaledThrdists[i]->FindBin(NSIGMA)+1, 
+    nBadBumps = static_cast<int>(rescaledThrdists[i]->Integral(rescaledThrdists[i]->FindBin(NSIGMA), 
 							       rescaledThrdists[i]->GetNbinsX()+1));
     bbString += Form(" %4d", nBadBumps);
 
   }
-
-
   if (rescaledThrdists[15]) {
     rescaledThrdists[15]->Draw();
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), rescaledThrdists[15]);
@@ -304,7 +307,6 @@ TF1* PixTestBB3Map::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
 
   // this function has been simplified wrt the BB test
   // we now only use the highest peak to fit
-  // bumps more than NSIGMA sigma above the peak are called bad
   double bestHeight = 0;
   TF1* f(0);
   TF1* bestFit(0);
@@ -323,7 +325,7 @@ TF1* PixTestBB3Map::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
     }
     string name = Form("gauss_%d", p);
     // fit a gaussian to the peak
-    // (using pixels within +-50 DAC of peak)
+    // (using pixels within +-25 DAC of peak)
     f = new TF1(name.c_str(), "gaus(0)", xp-25., xp+25.);
     int bin = h->GetXaxis()->FindBin(xp);
     double yp = h->GetBinContent(bin);
