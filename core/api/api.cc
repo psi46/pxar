@@ -220,6 +220,9 @@ bool pxarCore::initDUT(uint8_t hubid,
 	continue;
       }
 
+      // Check if no token pass is enabled:
+      newtbm.notokenpass = (dacIt->first == "base0") && (value & 0x40);
+
       // Check if this is fore core alpha or beta:
       if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
       else { tbmregister = 0xF0 | tbmregister; } // beta core
@@ -356,7 +359,7 @@ bool pxarCore::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
+    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains,(*tbmit).notokenpass);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -700,6 +703,10 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
     }
     
     _hal->tbmSetReg(_register,regValue);
+
+    // Set no token pass if it is enabled:
+    _dut->tbm.at(tbmid).notokenpass = (regName == "base0") && (regValue & 0x40);
+    _hal->tbmSetNoTokenPass((regName == "base0") && (regValue & 0x40));
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
@@ -712,32 +719,6 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
 
   for(size_t tbms = 0; tbms < _dut->tbm.size(); ++tbms) {
     if(!setTbmReg(regName, regValue, tbms)) return false;
-  }
-  return true;
-}
-
-bool pxarCore::setTbmChainLength(std::string regName, uint8_t regValue, uint8_t tbmid) {
-
-  if(!status()) {return 0;}
-  
-  // Get the register number and check the range from dictionary:
-  uint8_t _register;
-  if(!verifyRegister(regName, _register, regValue, TBM_REG)) return false;
-
-  if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
-    // Set the register only in the given TBM (even if that is disabled!)
-    
-    uint8_t core = _register == TBM_TOKENCHAIN_0 ? 0 : 1;
-
-    // Update the DUT register Value:
-    _dut->tbm.at(tbmid).tokenchains.at(core) = regValue;
-    LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
-    
-    _hal->tbmSetChainLength(tbmid,core,regValue);
-  }
-  else {
-    LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
-    return false;
   }
   return true;
 }

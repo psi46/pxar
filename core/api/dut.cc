@@ -367,28 +367,6 @@ std::vector<uint8_t> dut::getTbmChainLengths(size_t tbmId) {
   return tbm.at(tbmId).tokenchains;
 }
 
-std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACsAndChainLengths(size_t tbmId) {
-
-  if(status() && tbmId < tbm.size()) {
-    std::vector< std::pair<std::string,uint8_t> > vec;
-
-    // Get singleton DAC dictionary object:
-    RegisterDictionary * _dict = RegisterDictionary::getInstance();
-
-    for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin(); 
-	it != tbm.at(tbmId).dacs.end(); ++it) {
-      // We need to strip the core identifier in order to look up the register name from the dictionary (&0x0F):
-      vec.push_back(std::make_pair(_dict->getName((it->first&0x0F),TBM_REG),it->second));
-    }
-    if (tbm.at(tbmId).tokenchains.size () > 0)
-      vec.push_back(std::make_pair("nrocs1",tbm.at(tbmId).tokenchains.at(0)));
-    if (tbm.at(tbmId).tokenchains.size () > 1)
-      vec.push_back(std::make_pair("nrocs2",tbm.at(tbmId).tokenchains.at(1)));
-    return vec;
-  }
-  else return std::vector< std::pair<std::string,uint8_t> >();
-}
-
 void dut::printDACs(size_t rocId) {
 
   if(status() && rocId < roc.size()) {

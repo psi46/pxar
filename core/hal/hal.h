@@ -55,7 +55,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains);
+    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains, bool notokenpass);
 
     /** Change the type of the TBM type member in HAL
      */
@@ -122,7 +122,9 @@ namespace pxar {
      */
     bool tbmSetRegs(std::map< uint8_t, uint8_t > regPairs);
 
-    bool tbmSetChainLength(uint8_t tbmId, uint8_t tbmCore, uint8_t regValue);
+    /** Set no token pass so that token chain lengths of zero are used
+     */
+    void tbmSetNoTokenPass(bool notokenpass);
 
     /** Function to set and update the pattern generator command list on the DTB
      */
@@ -422,6 +424,7 @@ namespace pxar {
     uint8_t m_roctype;
     uint8_t m_roccount;
     std::vector<uint8_t> m_tokenchains;
+    bool m_notokenpass;
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
     uint8_t hubId;

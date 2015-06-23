@@ -22,6 +22,7 @@ hal::hal(std::string name) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
+  m_notokenpass(false),
   m_daqstatus(),
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
@@ -290,7 +291,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
+void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains, bool notokenpass) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
@@ -299,6 +300,8 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::
   for(std::vector<uint8_t>::iterator i = tokenchains.begin(); i != tokenchains.end(); i++) {
     m_tokenchains.push_back(*i);
   }
+
+  m_notokenpass = notokenpass;
 
   // Set the hub address for the modules (BPIX default is 31)
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
@@ -602,12 +605,8 @@ bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
   return true;
 }
 
-bool hal::tbmSetChainLength(uint8_t tbmId, uint8_t tbmCore, uint8_t regValue) {
-
-  uint8_t offset = m_tbmtype >= TBM_09 ? 2 : 1;
-  m_tokenchains.at(tbmCore + tbmId*offset) = regValue;
-
-  return true;
+void hal::tbmSetNoTokenPass(bool notokenpass) {
+  m_notokenpass = notokenpass;
 }
 
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
@@ -1676,16 +1675,21 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     // Check if we have all information needed concerning the token chains:
     if(m_tokenchains.size() < 2 || (m_tbmtype >= TBM_09 && m_tokenchains.size() < 4)) throw 1;
 
+    // Use token chain lengths of zero if no token pass is enabled:
+    std::vector<uint8_t> tokenchains (m_tokenchains);
+    if(m_notokenpass)
+      tokenchains.assign(tokenchains.size(),0);
+
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 
     uint32_t allocated_buffer_ch0 = _testboard->Daq_Open(buffersize,0);
-    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(m_tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
-    m_src.at(0) = dtbSource(_testboard,0,m_tokenchains,m_tbmtype,m_roctype,true);
+    LOG(logDEBUGHAL) << "Channel 0: token chain: " << static_cast<int>(tokenchains.at(0)) << " offset " << 0 << " buffer " << allocated_buffer_ch0;
+    m_src.at(0) = dtbSource(_testboard,0,tokenchains,m_tbmtype,m_roctype,true);
     m_src.at(0) >> m_splitter.at(0);
 
     uint32_t allocated_buffer_ch1 = _testboard->Daq_Open(buffersize,1);
-    LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(m_tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
-    m_src.at(1) = dtbSource(_testboard,1,m_tokenchains,m_tbmtype,m_roctype,true);
+    LOG(logDEBUGHAL) << "Channel 1: token chain: " << static_cast<int>(tokenchains.at(1)) << " offset " << 0 << " buffer " << allocated_buffer_ch1;
+    m_src.at(1) = dtbSource(_testboard,1,tokenchains,m_tbmtype,m_roctype,true);
     m_src.at(1) >> m_splitter.at(1);
 
     // Select the Deser400 as DAQ source:
@@ -1715,13 +1719,13 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       LOG(logDEBUGHAL) << "Dual-link TBM detected, enabling more DAQ channels.";
 
       uint32_t allocated_buffer_ch2 = _testboard->Daq_Open(buffersize,2);
-      LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(m_tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
-      m_src.at(2) = dtbSource(_testboard,2,m_tokenchains,m_tbmtype,m_roctype,true);
+      LOG(logDEBUGHAL) << "Channel 2 token chain: " << static_cast<int>(tokenchains.at(2)) << " offset " << 0 << " buffer " << allocated_buffer_ch2;
+      m_src.at(2) = dtbSource(_testboard,2,tokenchains,m_tbmtype,m_roctype,true);
       m_src.at(2) >> m_splitter.at(2);
 
       uint32_t allocated_buffer_ch3 = _testboard->Daq_Open(buffersize,3);
-      LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(m_tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
-      m_src.at(3) = dtbSource(_testboard,3,m_tokenchains,m_tbmtype,m_roctype,true);
+      LOG(logDEBUGHAL) << "Channel 3 token chain: " << static_cast<int>(tokenchains.at(3)) << " offset " << 0 << " buffer " << allocated_buffer_ch3;
+      m_src.at(3) = dtbSource(_testboard,3,tokenchains,m_tbmtype,m_roctype,true);
       m_src.at(3) >> m_splitter.at(3);
 
       // Start the DAQ also for channel 2 and 3:
