@@ -186,6 +186,10 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Prepare a new TBM configuration of the given type:
     tbmConfig newtbm(stringToDeviceCode(tbmtype));
 
+    // Check if this is core alpha or beta and store it:
+    if((tbmIt - tbmDACs.begin())%2 == 0) { newtbm.core = 0xE0; } // alpha core
+    else { newtbm.core = 0xF0; } // beta core
+
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
      
@@ -209,10 +213,6 @@ bool pxarCore::initDUT(uint8_t hubid,
 	continue;
       }
 
-      // Check if this is fore core alpha or beta:
-      if((tbmIt - tbmDACs.begin())%2 == 0) { newtbm.core = 0xE0; } // alpha core
-      else { newtbm.core = 0xF0; } // beta core
-      
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
       ret = newtbm.dacs.insert( std::make_pair(tbmregister,value) );
       if(ret.second == false) {
@@ -673,9 +673,6 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
   std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
   if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
-    
-    // Get the core (alpha/beta) from one of the registers:
-    _register |= _dut->tbm.at(tbmid).dacs.begin()->first&0xF0;
     
     // Update the DUT register Value:
     ret = _dut->tbm.at(tbmid).dacs.insert(std::make_pair(_register,regValue));
