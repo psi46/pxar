@@ -14,9 +14,8 @@ namespace pxar {
     // --- DTB control/state
     CTestboard * tb;
     uint8_t channel;
-    std::vector<uint8_t> chainlength;
+    uint8_t chainlength;
     uint8_t chainlengthOffset;
-    uint8_t defaultChainlength;
     uint32_t dtbRemainingSize;
     uint8_t  dtbState;
     bool connected;
@@ -44,15 +43,11 @@ namespace pxar {
     }
     uint8_t ReadTokenChainLength() {
       if(!connected) throw dpNotConnected();
-      return chainlength.at(channel);
+      return chainlength;
     }
     uint8_t ReadTokenChainOffset() {
       if(!connected) throw dpNotConnected();
       return chainlengthOffset;
-    }
-    uint8_t ReadDefaultTokenChainLength() {
-      if(!connected) throw dpNotConnected();
-      return defaultChainlength;
     }
     uint8_t ReadEnvelopeType() {
       if(!connected) throw dpNotConnected();
@@ -63,13 +58,8 @@ namespace pxar {
       return devicetype;
     }
   public:
-  dtbSource(CTestboard * src, uint8_t daqchannel, const std::vector<uint8_t> &tokenChainLength, uint8_t tbmtype, uint8_t roctype, bool endlessStream)
-    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), chainlength(tokenChainLength), chainlengthOffset(0), defaultChainlength(8), connected(true), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0) {
-      for (unsigned i = 0; i < channel; i++)
-        chainlengthOffset += chainlength.at(i);
-      if (tbmtype >= TBM_09)
-        defaultChainlength = 4;
-    }
+  dtbSource(CTestboard * src, uint8_t daqchannel, uint8_t tokenChainLength, uint8_t offset, uint8_t tbmtype, uint8_t roctype, bool endlessStream)
+    : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), chainlength(tokenChainLength), chainlengthOffset(offset), connected(true), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0) {}
   dtbSource() : connected(false) {}
     bool isConnected() { return connected; }
 
