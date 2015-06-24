@@ -498,6 +498,10 @@ void CTestboard::mod_Addr(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
+void CTestboard::mod_Addr(uint8_t, uint8_t) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
 void CTestboard::tbm_Set(uint8_t, uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }

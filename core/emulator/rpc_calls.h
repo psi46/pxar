@@ -257,6 +257,7 @@ class CTestboard {
   void tbm_Enable(bool on);
   void tbm_Addr(uint8_t hub, uint8_t port);
   void mod_Addr(uint8_t hub);
+  void mod_Addr(uint8_t hub0, uint8_t hub1);
   void tbm_Set(uint8_t reg, uint8_t value);
   bool tbm_Get(uint8_t reg, uint8_t &value);
   bool tbm_GetRaw(uint8_t reg, uint32_t &value);
