@@ -351,6 +351,8 @@ public:
 	// --- ROC/module Communication -----------------------------------------
 	// -- set the i2c address for the following commands
 	RPC_EXPORT void roc_I2cAddr(uint8_t id);
+	// -- set the i2c address for a Layer1 module ROC (internally used after calling mod_Addr(uint,uint)
+	RPC_EXPORT void roc_I2cAddr_Layer_1(uint8_t id);
 	// -- sends "ClrCal" command to ROC
 	RPC_EXPORT void roc_ClrCal();
 	// -- sets a single (DAC) register
@@ -386,6 +388,7 @@ public:
 	RPC_EXPORT void tbm_Enable(bool on);
 	RPC_EXPORT void tbm_Addr(uint8_t hub, uint8_t port);
 	RPC_EXPORT void mod_Addr(uint8_t hub);
+	RPC_EXPORT void mod_Addr(uint8_t hub0, uint8_t hub1);
 	RPC_EXPORT void tbm_Set(uint8_t reg, uint8_t value);
 	RPC_EXPORT bool tbm_Get(uint8_t reg, uint8_t &value);
 	RPC_EXPORT bool tbm_GetRaw(uint8_t reg, uint32_t &value);

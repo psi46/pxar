@@ -1170,10 +1170,6 @@ namespace pxar {
      */
     std::vector< bool > getEnabledColumns(size_t roci2c);
 
-    /** DUT hub ID
-     */
-    uint8_t hubId;
-
     /** DUT member to hold all ROC configurations
      */
     std::vector< rocConfig > roc;
