@@ -65,6 +65,9 @@ class PxarConfigFile:
                     parts = shlex.split(line)
                     if len(parts) == 2:
                         self.config[parts[0].lower()] = parts[1]
+                    elif len(parts) == 3:
+                        parts = [parts[0],' '.join(parts[1:])]
+                        self.config[parts[0].lower()] = parts[1]
                     elif len(parts) == 4:
                         parts = [parts[0],' '.join(parts[1:])]
                         if len(parts) == 2:
@@ -191,7 +194,7 @@ def PxarStartup(directory, verbosity):
 
     print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
 
-    api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
+    api.initDUT(map(int,config.get("hubId").split()),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
 
     api.testAllPixels(True)
     print "Now enabled all pixels"
