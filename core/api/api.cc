@@ -102,10 +102,30 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
   std::vector<uint8_t> rocI2Cs;
-  return initDUT(hubid, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+  return initDUT(std::vector<uint8_t>(1,hubid), tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(std::vector<uint8_t> hubids,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels) {
+  std::vector<uint8_t> rocI2Cs;
+  return initDUT(hubids, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
 bool pxarCore::initDUT(uint8_t hubid,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels,
+		       std::vector<uint8_t> rocI2Cs) {
+  return initDUT(std::vector<uint8_t>(1,hubid), tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(std::vector<uint8_t> hubids,
 		       std::string tbmtype, 
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
@@ -116,7 +136,18 @@ bool pxarCore::initDUT(uint8_t hubid,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // Verification/sanitry checks of supplied DUT configuration values
+  // Verification/sanity checks of supplied DUT configuration values
+
+  // Check if the number of hub ids and TBM core settings match:
+  if(tbmDACs.empty()) {
+    // No TBM: store the first hubId, ignore the rest:
+    _dut->hubId = hubids.front();
+  }
+  else if(2*hubids.size() != tbmDACs.size()) {
+    LOG(logCRITICAL) << "Hm, we have " << tbmDACs.size() << " TBM Cores but " << hubids.size() << " HUB ids.";
+    LOG(logCRITICAL) << "This cannot end well...";
+    throw InvalidConfig("Mismatch between number of HUB addresses and TBM Cores");
+  }
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
   if(!rocI2Cs.empty()) {
@@ -173,9 +204,6 @@ bool pxarCore::initDUT(uint8_t hubid,
 
   // First initialized the API's DUT instance with the information supplied.
 
-  // Store the hubId:
-  _dut->hubId = hubid;
-
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
 
@@ -186,6 +214,9 @@ bool pxarCore::initDUT(uint8_t hubid,
     // Prepare a new TBM configuration of the given type:
     tbmConfig newtbm(stringToDeviceCode(tbmtype));
 
+    // Set the hub id for this TBM core (same hub id for two cores):
+    newtbm.hubid = hubids.at((tbmIt - tbmDACs.begin())/2);
+    
     // Check if this is core alpha or beta and store it:
     if((tbmIt - tbmDACs.begin())%2 == 0) { newtbm.core = 0xE0; } // alpha core
     else { newtbm.core = 0xF0; } // beta core
@@ -339,10 +370,14 @@ bool pxarCore::programDUT() {
   _hal->Pon();
 
   // Start programming the devices here!
-  _hal->setHubId(_dut->hubId); 
 
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
+  // No TBM - we need to set the global hub ID once:
+  if(enabledTbms.empty()) {
+    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(_dut->hubId);
+    _hal->setHubId(_dut->hubId);
+  }
+  else { LOG(logDEBUGAPI) << "Programming TBMs..."; }
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
     _hal->initTBMCore((*tbmit));
   }
