@@ -139,7 +139,7 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
   // Verification/sanity checks of supplied DUT configuration values
 
   // Check if the number of hub ids and TBM core settings match:
-  if(tbmDACs.empty()) {
+  if(tbmDACs.size() <= 2) {
     // We need to set the global hub ID once, take the first, ignore the rest:
     LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(hubids.front());
     _hal->setHubId(hubids.front());
