@@ -182,20 +182,16 @@ bool pxarCore::initDUT(uint8_t hubid,
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
 
     LOG(logDEBUGAPI) << "Processing TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin());
-    // Prepare a new TBM configuration
-    tbmConfig newtbm;
 
     // Set the TBM type (get value from dictionary)
-    newtbm.type = stringToDeviceCode(tbmtype);
-    if(newtbm.type == 0x0) {
+    uint8_t type = stringToDeviceCode(tbmtype);
+    if(type == 0x0) {
       LOG(logCRITICAL) << "Invalid TBM type \"" << tbmtype << "\"";
       throw InvalidConfig("Invalid TBM type.");
     }
 
-    // Standard setup for token chain lengths:
-    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
-    else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
+    // Prepare a new TBM configuration of the given type:
+    tbmConfig newtbm(type);
 
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
@@ -220,12 +216,9 @@ bool pxarCore::initDUT(uint8_t hubid,
 	continue;
       }
 
-      // Check if no token pass is enabled:
-      newtbm.notokenpass = (dacIt->first == "base0") && (value & 0x40);
-
       // Check if this is fore core alpha or beta:
-      if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
-      else { tbmregister = 0xF0 | tbmregister; } // beta core
+      if((tbmIt - tbmDACs.begin())%2 == 0) { newtbm.core = 0xE0; } // alpha core
+      else { newtbm.core = 0xF0; } // beta core
       
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
       ret = newtbm.dacs.insert( std::make_pair(tbmregister,value) );
@@ -245,15 +238,14 @@ bool pxarCore::initDUT(uint8_t hubid,
   if(_dut->tbm.size() == 1) {
     LOG(logDEBUGAPI) << "Only register settings for one TBM core supplied. Duplicating to second core.";
     // Prepare a new TBM configuration and copy over all settings:
-    tbmConfig newtbm;
-    newtbm.type = _dut->tbm.at(0).type;
+    tbmConfig newtbm(_dut->tbm.at(0).type);
     newtbm.tokenchains = _dut->tbm.at(0).tokenchains;
-    
+    // Flip the last bit of the TBM core identifier:
+    newtbm.core = _dut->tbm.at(0).core ^ (1u << 4);
+
+    // Copy  the register settings:
     for(std::map<uint8_t,uint8_t>::iterator reg = _dut->tbm.at(0).dacs.begin(); reg != _dut->tbm.at(0).dacs.end(); ++reg) {
-      uint8_t tbmregister = reg->first;
-      // Flip the last bit of the TBM core identifier:
-      tbmregister ^= (1u << 4);
-      newtbm.dacs.insert(std::make_pair(tbmregister,reg->second));
+      newtbm.dacs.insert(std::make_pair(reg->first,reg->second));
     }
     _dut->tbm.push_back(newtbm);
   }
@@ -273,7 +265,7 @@ bool pxarCore::initDUT(uint8_t hubid,
   // Printout for final token chain lengths selected for each TBM channel and calculate the sum:
   uint16_t nrocs_total = 0;
   for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
-    LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbm - _dut->tbm.begin()) 
+    LOG(logDEBUGAPI) << "TBM Core " << tbm->corename() 
 		     << " Token Chains: " << listVector(tbm->tokenchains);
     for(size_t i = 0; i < tbm->tokenchains.size(); i++) { nrocs_total += tbm->tokenchains.at(i); }
   }
