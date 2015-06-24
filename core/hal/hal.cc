@@ -22,7 +22,7 @@ hal::hal(std::string name) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
-  m_notokenpass(false),
+  m_notokenpass(),
   m_daqstatus(),
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
@@ -301,7 +301,7 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::
     m_tokenchains.push_back(*i);
   }
 
-  m_notokenpass = notokenpass;
+  m_notokenpass.push_back(notokenpass);
 
   // Set the hub address for the modules (BPIX default is 31)
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
@@ -605,8 +605,8 @@ bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
   return true;
 }
 
-void hal::tbmSetNoTokenPass(bool notokenpass) {
-  m_notokenpass = notokenpass;
+void hal::tbmSetNoTokenPass(uint8_t tbmid, bool notokenpass) {
+  m_notokenpass.at(tbmid) = notokenpass;
 }
 
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
@@ -1677,8 +1677,12 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
     // Use token chain lengths of zero if no token pass is enabled:
     std::vector<uint8_t> tokenchains (m_tokenchains);
-    if(m_notokenpass)
-      tokenchains.assign(tokenchains.size(),0);
+    if(m_notokenpass.at(0))
+      for(uint8_t itbm = 0; itbm < tokenchains.size()/2; itbm++)
+        tokenchains.at(itbm) = 0;
+    if (m_notokenpass.at(1))
+      for(uint8_t itbm = tokenchains.size()/2; itbm < tokenchains.size(); itbm++)
+        tokenchains.at(itbm) = 0;
 
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
 

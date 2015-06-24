@@ -124,7 +124,7 @@ namespace pxar {
 
     /** Set no token pass so that token chain lengths of zero are used
      */
-    void tbmSetNoTokenPass(bool notokenpass);
+    void tbmSetNoTokenPass(uint8_t tbmid, bool notokenpass);
 
     /** Function to set and update the pattern generator command list on the DTB
      */
@@ -424,7 +424,7 @@ namespace pxar {
     uint8_t m_roctype;
     uint8_t m_roccount;
     std::vector<uint8_t> m_tokenchains;
-    bool m_notokenpass;
+    std::vector<bool> m_notokenpass;
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
     uint8_t hubId;

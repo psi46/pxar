@@ -706,7 +706,7 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
 
     // Set no token pass if it is enabled:
     _dut->tbm.at(tbmid).notokenpass = (regName == "base0") && (regValue & 0x40);
-    _hal->tbmSetNoTokenPass((regName == "base0") && (regValue & 0x40));
+    _hal->tbmSetNoTokenPass(tbmid, (regName == "base0") && (regValue & 0x40));
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
