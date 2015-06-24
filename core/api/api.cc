@@ -359,7 +359,7 @@ bool pxarCore::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains,(*tbmit).notokenpass);
+    _hal->initTBMCore((*tbmit));
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();

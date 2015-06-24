@@ -291,27 +291,31 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains, bool notokenpass) {
+void hal::initTBMCore(tbmConfig tbm) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
+  
   // Store the token chain lengths:
-  m_tbmtype = type;
-  for(std::vector<uint8_t>::iterator i = tokenchains.begin(); i != tokenchains.end(); i++) {
+  m_tbmtype = tbm.type;
+  for(std::vector<uint8_t>::iterator i = tbm.tokenchains.begin(); i != tbm.tokenchains.end(); i++) {
+    // One tokenchain and no-token-pass setting per TBM channel:
     m_tokenchains.push_back(*i);
+    m_notokenpass.push_back(tbm.notokenpass);
   }
-
-  m_notokenpass.push_back(notokenpass);
+  
+  LOG(logDEBUGHAL) << "This TBM core has NoTokenPass enabled: " << static_cast<int>(tbm.notokenpass);
 
   // Set the hub address for the modules (BPIX default is 31)
+  // FIXME add hubid to tbmConfig!
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
   _testboard->mod_Addr(hubId);
   _testboard->Flush();
 
   // Program all registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
-		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
-  tbmSetRegs(regVector);
+		   << ((tbm.dacs.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
+  tbmSetRegs(tbm.dacs);
 }
 
 void hal::setTBMType(uint8_t type) {
