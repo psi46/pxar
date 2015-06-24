@@ -295,27 +295,27 @@ void hal::initTBMCore(tbmConfig tbm) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
-  
-  // Store the token chain lengths:
+
+  // Store TBM type:
   m_tbmtype = tbm.type;
+
+  // Store the token chain lengths:
   for(std::vector<uint8_t>::iterator i = tbm.tokenchains.begin(); i != tbm.tokenchains.end(); i++) {
-    // One tokenchain and no-token-pass setting per TBM channel:
+    // One tokenchain setting per TBM channel:
     m_tokenchains.push_back(*i);
-    m_notokenpass.push_back(tbm.notokenpass);
+    m_notokenpass.push_back(tbm.NoTokenPass());
   }
   
-  LOG(logDEBUGHAL) << "This TBM core has NoTokenPass enabled: " << static_cast<int>(tbm.notokenpass);
-
   // Set the hub address for the modules (BPIX default is 31)
   // FIXME add hubid to tbmConfig!
-  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
-  _testboard->mod_Addr(hubId);
+  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(tbm.hubid) << ".";
+  _testboard->mod_Addr(tbm.hubid);
   _testboard->Flush();
 
   // Program all registers according to the configuration data:
-  LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
-		   << ((tbm.dacs.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
-  tbmSetRegs(tbm.dacs);
+  LOG(logDEBUGHAL) << "Setting register vector for TBM Core " << tbm.corename() << ".";
+  if(tbm.NoTokenPass()) { LOG(logDEBUGHAL) << "This TBM has the NoTokenPass register set!"; }
+  tbmSetRegs(tbm.hubid,tbm.core,tbm.dacs);
 }
 
 void hal::setTBMType(uint8_t type) {
@@ -580,12 +580,12 @@ bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
   return true;
 }
 
-bool hal::tbmSetRegs(std::map< uint8_t, uint8_t > regPairs) {
+bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > regPairs) {
 
   // Iterate over all register id/value pairs and set them
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
-    if(!tbmSetReg(it->first, it->second)) return false;
+    if(!tbmSetReg(hubid, core | it->first, it->second)) return false;
   }
 
   // Send all queued commands to the testboard:
@@ -594,23 +594,26 @@ bool hal::tbmSetRegs(std::map< uint8_t, uint8_t > regPairs) {
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
+
+  LOG(logDEBUGHAL) << "TBM@HUB " << static_cast<int>(hubid)
+		   << ": set register \"0x" << std::hex << static_cast<int>(regId) 
+		   << "\" to 0x" << static_cast<int>(regValue) << std::dec;
 
   // Make sure we are writing to the correct TBM by setting the module's hub id:
-  _testboard->mod_Addr(hubId);
+  _testboard->mod_Addr(hubid);
 
-  LOG(logDEBUGHAL) << "TBM Core "
-		   << ((regId&0xF0) == 0xE0 ? "alpha" : "beta")
-		   << ": set register \"" << std::hex << static_cast<int>(regId) 
-		   << "\" to " << static_cast<int>(regValue) << std::dec;
-
-  // Set this register on the correct TBM core:
+  // Set this register:
   _testboard->tbm_Set(regId,regValue);
   return true;
 }
 
-void hal::tbmSetNoTokenPass(uint8_t tbmid, bool notokenpass) {
-  m_notokenpass.at(tbmid) = notokenpass;
+void hal::tbmSetNoTokenPass(uint8_t tbmid, uint8_t channels, bool notokenpass) {
+  // Set the NoTokenPass flag for all TBM channels of this core:
+  for(size_t i = 0; i < channels; i++) {
+    LOG(logDEBUGHAL) << "Flagging " << (int)channels << " channels on core #" << (int)tbmid << " (at " << (tbmid*channels+i) << ")";
+    if((tbmid*channels+i) < m_notokenpass.size()) { m_notokenpass.at(tbmid*channels+i) = notokenpass; }
+  }
 }
 
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {

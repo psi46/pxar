@@ -694,11 +694,10 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
       LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
     }
     
-    _hal->tbmSetReg(_register,regValue);
-
-    // Set no token pass if it is enabled:
-    _dut->tbm.at(tbmid).notokenpass = (regName == "base0") && (regValue & 0x40);
-    _hal->tbmSetNoTokenPass(tbmid, (regName == "base0") && (regValue & 0x40));
+    _hal->tbmSetReg(_dut->tbm.at(tbmid).hubid,_dut->tbm.at(tbmid).core | _register,regValue);
+    
+    // update HAL no token pass setting:
+    _hal->tbmSetNoTokenPass(tbmid,_dut->tbm.at(tbmid).tokenchains.size(),_dut->tbm.at(tbmid).NoTokenPass());
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
