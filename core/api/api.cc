@@ -183,15 +183,8 @@ bool pxarCore::initDUT(uint8_t hubid,
 
     LOG(logDEBUGAPI) << "Processing TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin());
 
-    // Set the TBM type (get value from dictionary)
-    uint8_t type = stringToDeviceCode(tbmtype);
-    if(type == 0x0) {
-      LOG(logCRITICAL) << "Invalid TBM type \"" << tbmtype << "\"";
-      throw InvalidConfig("Invalid TBM type.");
-    }
-
     // Prepare a new TBM configuration of the given type:
-    tbmConfig newtbm(type);
+    tbmConfig newtbm(stringToDeviceCode(tbmtype));
 
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {

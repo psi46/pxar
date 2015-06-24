@@ -416,13 +416,7 @@ namespace pxar {
    */
   class DLLEXPORT tbmConfig {
   public:
-  tbmConfig(uint8_t tbmtype) : dacs(), type(tbmtype), hubid(31), core(0xE0), tokenchains(), enable(true) {
-      // Standard setup for token chain lengths:
-      // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-      if(type >= TBM_09) { for(size_t i = 0; i < 2; i++) tokenchains.push_back(4); }
-      else if(type >= TBM_08) { tokenchains.push_back(8); }
-    }
-    
+    tbmConfig(uint8_t tbmtype);
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
     uint8_t hubid;
@@ -432,7 +426,6 @@ namespace pxar {
 
     // Check token pass setting:
     bool NoTokenPass() { return (dacs[0x00]&0x40); };
-    
     // Return readable name of the core:
     std::string corename() { return ((core&0x10) ? "Beta" : "Alpha"); };
   };
