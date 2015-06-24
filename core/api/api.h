@@ -1061,7 +1061,7 @@ namespace pxar {
      */
     std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
-    /** Function returning the token chain length:
+    /** Function returning the token chain lengths:
      */
     std::vector<uint8_t> getTbmChainLengths(size_t tbmId);
 

@@ -22,6 +22,7 @@ hal::hal(std::string name) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
+  m_notokenpass(),
   m_daqstatus(),
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
@@ -290,7 +291,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
+void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains, bool notokenpass) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
@@ -299,6 +300,8 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::
   for(std::vector<uint8_t>::iterator i = tokenchains.begin(); i != tokenchains.end(); i++) {
     m_tokenchains.push_back(*i);
   }
+
+  m_notokenpass.push_back(notokenpass);
 
   // Set the hub address for the modules (BPIX default is 31)
   LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(hubId) << ".";
@@ -600,6 +603,10 @@ bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
   // Set this register on the correct TBM core:
   _testboard->tbm_Set(regId,regValue);
   return true;
+}
+
+void hal::tbmSetNoTokenPass(uint8_t tbmid, bool notokenpass) {
+  m_notokenpass.at(tbmid) = notokenpass;
 }
 
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {

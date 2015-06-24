@@ -220,6 +220,9 @@ bool pxarCore::initDUT(uint8_t hubid,
 	continue;
       }
 
+      // Check if no token pass is enabled:
+      newtbm.notokenpass = (dacIt->first == "base0") && (value & 0x40);
+
       // Check if this is fore core alpha or beta:
       if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
       else { tbmregister = 0xF0 | tbmregister; } // beta core
@@ -356,7 +359,7 @@ bool pxarCore::programDUT() {
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
   if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
+    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains,(*tbmit).notokenpass);
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -700,6 +703,10 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
     }
     
     _hal->tbmSetReg(_register,regValue);
+
+    // Set no token pass if it is enabled:
+    _dut->tbm.at(tbmid).notokenpass = (regName == "base0") && (regValue & 0x40);
+    _hal->tbmSetNoTokenPass(tbmid, (regName == "base0") && (regValue & 0x40));
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
