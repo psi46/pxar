@@ -1876,8 +1876,10 @@ void PixTest::dutTestSetupOff() {
 
 // ----------------------------------------------------------------------
 void PixTest::maskPixels() {
-  string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
-  vector<vector<pair<int, int> > > vmask = fPixSetup->getConfigParameters()->readMaskFile(mfile); 
+  //   string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
+  //   vector<vector<pair<int, int> > > vmask = fPixSetup->getConfigParameters()->readMaskFile(mfile); 
+
+  vector<vector<pair<int, int> > > vmask =  fPixSetup->getConfigParameters()->getMaskedPixels();
 
   for (unsigned int i = 0; i < vmask.size(); ++i) {
     vector<pair<int, int> > mask = vmask[i]; 
