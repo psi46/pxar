@@ -2,6 +2,7 @@
 #include <stdlib.h>  
 #include <algorithm> 
 
+#include <TColor.h>
 #include <TStyle.h>
 #include <TMarker.h>
 #include <TStopwatch.h>
@@ -137,8 +138,6 @@ PixTestPretest::~PixTestPretest() {
 void PixTestPretest::doTest() {
 
   TStopwatch t;
-
-  gStyle->SetPalette(1);
 
   fDirectory->cd();
   PixTest::update(); 
