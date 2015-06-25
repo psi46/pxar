@@ -94,6 +94,7 @@ public:
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
   std::vector<std::vector<std::pair<int, int> > > getMaskedPixels() {return fMaskedPixels;} 
+  bool isMaskedPixel(int roc, int col, int row); 
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
   std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
   bool customI2cAddresses() {return fI2cAddresses.size() > 0;} 

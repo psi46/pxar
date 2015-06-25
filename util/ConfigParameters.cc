@@ -1255,3 +1255,15 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
   InputFile.close();
 }
 
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::isMaskedPixel(int roc, int col, int row) {
+  vector<pair<int, int> > v = fMaskedPixels[roc]; 
+  for (unsigned int j = 0; j < v.size(); ++j) {
+    if (v[j].first == col && v[j].second == row) {
+      return true; 
+    }
+  }
+  return false;
+}
+
