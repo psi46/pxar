@@ -203,7 +203,8 @@ void PixTestTrim::trimTest() {
     h2 = (TH2D*)thr1[i]; 
     hname = h2->GetName();
 
-    TH1* d1 = distribution(h2, 256, 0., 256.); 
+    // -- empty bins are ignored (Jamie)
+    TH1* d1 = distribution(h2, 255, 1., 256.); 
     vcalMean = d1->GetMean(); 
     vcalMin = d1->GetMean() - NSIGMA*d1->GetRMS();
     if (vcalMin < 0) vcalMin = 0; 
