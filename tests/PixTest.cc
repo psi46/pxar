@@ -1859,6 +1859,21 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
 }
 
 
+
+// ----------------------------------------------------------------------
+void PixTest::dutTestSetupOn() {
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  maskPixels();
+}
+
+// ----------------------------------------------------------------------
+void PixTest::dutTestSetupOff() {
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(false);
+}
+
+
 // ----------------------------------------------------------------------
 void PixTest::maskPixels() {
   string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
