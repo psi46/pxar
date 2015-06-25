@@ -521,6 +521,12 @@ Plwidth             35
 PIX                 11,20
 targetIa            24
 
+-- BB3
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
+Ntrig               5
+vcals               250
+
 -- Readback
 calibrateVd         button
 calibrateVa         button
