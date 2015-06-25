@@ -147,15 +147,6 @@ public:
   /// list.
   std::vector<std::pair<int,int> > checkHotPixels(TH2D* h);
 
-
-//   /// Return pixelAlive map and additional hit map when running with external source
-//   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
-// 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-
-//   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xNoiseMaps(std::string name, uint16_t ntrig, 
-// 							       int daclo = 0, int dachi = 255, int dacsperstep = -1, 
-// 							       int result = 15, uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-
   /// provide access to noiseMaps when (FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED) was set
   std::vector<TH2D*> getXrayMaps() {return fXrayMaps;}
   
