@@ -1861,26 +1861,23 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
 
 
 // ----------------------------------------------------------------------
-void PixTest::dutTestSetupOn() {
+void PixTest::dutCalibrateOn() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   if (fPixSetup->getConfigParameters()->nMaskedPixels() > 0) maskPixels();
 }
 
 // ----------------------------------------------------------------------
-void PixTest::dutTestSetupOff() {
+void PixTest::dutCalibrateOff() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
+  if (fPixSetup->getConfigParameters()->nMaskedPixels() > 0) maskPixels();
 }
 
 
 // ----------------------------------------------------------------------
 void PixTest::maskPixels() {
-  //   string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
-  //   vector<vector<pair<int, int> > > vmask = fPixSetup->getConfigParameters()->readMaskFile(mfile); 
-
   vector<vector<pair<int, int> > > vmask =  fPixSetup->getConfigParameters()->getMaskedPixels();
-
   for (unsigned int i = 0; i < vmask.size(); ++i) {
     vector<pair<int, int> > mask = vmask[i]; 
     for (unsigned int ipix = 0; ipix < mask.size(); ++ipix) {
@@ -1888,7 +1885,6 @@ void PixTest::maskPixels() {
       fApi->_dut->maskPixel(mask[ipix].first, mask[ipix].second, true, getIdFromIdx(i)); 
     }
   }
-
 }
 
 

@@ -150,11 +150,11 @@ public:
   /// provide access to noiseMaps when (FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED) was set
   std::vector<TH2D*> getXrayMaps() {return fXrayMaps;}
 
-  /// enable all pixels except those mentioned in the mask file
-  void dutTestSetupOn();
+  /// enable cal-injects for all pixels on DUT except those mentioned in the mask file
+  void dutCalibrateOn();
 
-  /// disable all pixels except those mentioned in the mask file
-  void dutTestSetupOff();
+  /// disable cal-injects for all pixels on DUT with subsequent call to maskPixels()
+  void dutCalibrateOff();
   
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
