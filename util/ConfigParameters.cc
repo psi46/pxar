@@ -366,9 +366,10 @@ void ConfigParameters::readRocPixelConfig() {
   vector<bool> rocmasked; 
   for (unsigned int i = 0; i < fnRocs; ++i) rocmasked.push_back(false); 
   
-  vector<vector<pair<int, int> > > vmask = readMaskFile(filename); 
-  for (unsigned int i = 0; i < vmask.size(); ++i) {
-    vector<pair<int, int> > v = vmask[i]; 
+  fMaskedPixels = readMaskFile(filename); 
+
+  for (unsigned int i = 0; i < fMaskedPixels.size(); ++i) {
+    vector<pair<int, int> > v = fMaskedPixels[i]; 
     if (v.size() > 0) {
       rocmasked[i] = true; 
       for (unsigned int j = 0; j < v.size(); ++j) {
@@ -390,7 +391,7 @@ void ConfigParameters::readRocPixelConfig() {
 	//	pxar::pixelConfig a(ic,ir,0,false,true); 
 	pxar::pixelConfig a(ic,ir,0,false,false); 
 	if (rocmasked[i]) {
-	  vector<pair<int, int> > v = vmask[i]; 
+	  vector<pair<int, int> > v = fMaskedPixels[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
 	    if (v[j].first == ic && v[j].second == ir) {
 	      LOG(logINFO) << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
