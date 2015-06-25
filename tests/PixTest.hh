@@ -185,9 +185,6 @@ public:
   void fillDacHist(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > &results, TH1D *h, 
 		   int icol = -1, int irow = -1, int iroc = -1); 
 
-  /// select some pattern of pixels if not enabling the complete ROC. Enables the complete ROC if npix > 999
-  virtual void sparseRoc(int npix = 8);
-
   /// creates a 1D distribution of a map
   TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
   /// fit an s-curve to a distribution. Fills fThreshold, fThresholdE, fSigma, fSigmaE

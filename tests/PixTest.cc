@@ -1068,47 +1068,6 @@ void PixTest::fillMap(TH2D *hmod, TH2D *hroc, int iroc) {
 }
 
 
-
-// ----------------------------------------------------------------------
-void PixTest::sparseRoc(int npix) {
-  
-  if (!fApi) return;
-
-  int cnt(0); 
-  if (npix < 11) {
-    for (int i = 0; i < npix; ++i) {
-      fApi->_dut->testPixel(5*i, 5*i, true);  
-      fApi->_dut->maskPixel(5*i, 5*i, false);  
-    }
-    return;
-  } else if (npix < 101) {
-    for (int i = 0; i < 50; ++i) {
-      fApi->_dut->testPixel(i, 5 + i/2, true);  
-      fApi->_dut->maskPixel(i, 5 + i/2, false);  
-      ++cnt;
-      fApi->_dut->testPixel(i, 15 + i/2, true);  
-      fApi->_dut->maskPixel(i, 15 + i/2, false);  
-      ++cnt;
-      if (cnt == npix) return;
-    }
-  } else if (npix < 1001) {
-    for (int i = 0; i < 50; ++i) {
-      for (int j = 0; j < 10; ++j) {
-	fApi->_dut->testPixel(i, i + 2*j, true);  
-	fApi->_dut->maskPixel(i, i + 2*j, false);  
-	fApi->_dut->testPixel(i, i + 5*j, true);  
-	fApi->_dut->maskPixel(i, i + 5*j, false);  
-	++cnt; 
-	if (cnt == npix) return;
-      }
-    }
-  } else{
-    fApi->_dut->testAllPixels(true);
-    fApi->_dut->maskAllPixels(false);
-  }
-}
-
-
 // ----------------------------------------------------------------------
 bool PixTest::selectedRoc(int iroc) {
   vector<uint8_t> v = fApi->_dut->getEnabledRocIDs();
