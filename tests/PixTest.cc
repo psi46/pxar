@@ -1292,7 +1292,6 @@ vector<TH2D*> PixTest::mapsWithString(string name) {
   string hname(""); 
 
   int oldCnt(-1), cnt(-1);
-  char cname[200]; 
   // get them
   std::list<TH1*>::iterator il; 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
