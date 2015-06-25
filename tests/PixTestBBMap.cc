@@ -111,6 +111,7 @@ void PixTestBBMap::doTest() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   int flag(FLAG_CALS);
   fApi->setDAC("ctrlreg", 4);     // high range
@@ -175,6 +176,7 @@ void PixTestBBMap::doTest() {
 	       << ", duration: " << seconds << " seconds";
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
+  dutCalibrateOff();
 
 }
 

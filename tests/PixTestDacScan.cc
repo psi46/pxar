@@ -198,6 +198,7 @@ void PixTestDacScan::doTest() {
   if (fParAllPixels) {
     fApi->_dut->testAllPixels(true);
     fApi->_dut->maskAllPixels(false);
+    maskPixels();
 
     bool done = false;
     int cnt(0); 
@@ -307,7 +308,7 @@ void PixTestDacScan::doTest() {
     fDisplayedHist = (il);
   }
   PixTest::update(); 
-
+  dutCalibrateOff();
 }
 
 // ----------------------------------------------------------------------

@@ -241,6 +241,7 @@ void PixTestScurves::scurves() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   int results(0xf); 
   if (fDumpAll) results |= 0x20;
@@ -271,7 +272,7 @@ void PixTestScurves::scurves() {
   LOG(logINFO) << "PixTestScurves::scurves() done ";
   LOG(logINFO) << Form("%s mean: ", fParDac.c_str()) << scurvesMeanString; 
   LOG(logINFO) << Form("%s RMS:  ", fParDac.c_str()) << scurvesRmsString; 
-
+  dutCalibrateOff();
 }
 
 
@@ -283,6 +284,8 @@ void PixTestScurves::thrMap() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
+
   LOG(logINFO) << "PixTestScurves::thrMap() start: " 
 	       << fParDac << ": " << fParDacLo << " .. " << fParDacHi
 	       << " ntrig = " << fParNtrig;
@@ -291,6 +294,7 @@ void PixTestScurves::thrMap() {
   PixTest::update(); 
   restoreDacs();
   LOG(logINFO) << "PixTestScurves::thrMap() done ";
+  dutCalibrateOff();
 
 }
 
@@ -431,5 +435,6 @@ void PixTestScurves::adjustVcal() {
   }
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  
+  maskPixels();
+
 }
