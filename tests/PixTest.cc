@@ -1864,7 +1864,7 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
 void PixTest::dutTestSetupOn() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  maskPixels();
+  if (fPixSetup->getConfigParameters()->nMaskedPixels() > 0) maskPixels();
 }
 
 // ----------------------------------------------------------------------
