@@ -1865,7 +1865,7 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
 void PixTest::dutCalibrateOn() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  if (fPixSetup->getConfigParameters()->nMaskedPixels() > 0) maskPixels();
+  maskPixels();
 }
 
 // ----------------------------------------------------------------------
@@ -1878,6 +1878,7 @@ void PixTest::dutCalibrateOff() {
 
 // ----------------------------------------------------------------------
 void PixTest::maskPixels() {
+  if (0 == fPixSetup->getConfigParameters()->nMaskedPixels()) return;
   vector<vector<pair<int, int> > > vmask =  fPixSetup->getConfigParameters()->getMaskedPixels();
   for (unsigned int i = 0; i < vmask.size(); ++i) {
     vector<pair<int, int> > mask = vmask[i]; 
