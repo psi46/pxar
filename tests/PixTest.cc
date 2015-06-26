@@ -2109,7 +2109,7 @@ uint16_t PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
 }
 
 // ----------------------------------------------------------------------
-void PixTest::trimHotPixels(int hitThr, int runSeconds) {
+void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
 
   int NSECONDS(runSeconds); 
   int TRGFREQ(100); // in kiloHertz
@@ -2141,7 +2141,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds) {
   std::vector<std::pair<int, std::pair<int,int> > > hotPixelList;
 
   for (size_t i = 0; i < rocIds.size(); ++i) { 
-    hotpixel_map[i] = bookTH2D(Form("hits_C%d", rocIds[i]), Form("hits_C%d", rocIds[i]), 52, 0., 52., 80, 0., 80.);
+    hotpixel_map[i] = bookTH2D(Form("hitMap_hotpixels_C%d", rocIds[i]), Form("hits_C%d", rocIds[i]), 52, 0., 52., 80, 0., 80.);
   }
 
   std::vector<TH2D*> diff_map(rocIds.size());
@@ -2225,7 +2225,6 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds) {
     float pixelAreaFactor = 1.0;
     for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
       h = hotpixel_map[i];
-      vector<pair<int, int> > hot; 
       for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
         for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
           pixelAreaFactor = 1.0;
@@ -2283,8 +2282,42 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds) {
   for (size_t i = 0; i< hotPixelList.size(); ++i) {
     LOG(logDEBUG) << "ROC " << hotPixelList[i].first << " pix " << hotPixelList[i].second.first << "/" << hotPixelList[i].second.second;
   }
-  
 
+
+  // now mask all remaining pixels
+  if (maskuntrimmable) {
+
+    fHotPixels.clear();
+    int numMaskedHotPixels = 0;
+    TH2D *h(0);
+
+    for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
+      h = hotpixel_map[i];
+      vector<pair<int, int> > hot; 
+      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+
+        
+        for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+          float pixelAreaFactor = 1.0;
+          if (ix == 0 || ix == 51)
+            pixelAreaFactor*=2;
+          if (iy == 0 || iy == 79)
+            pixelAreaFactor*=2;
+          if (h->GetBinContent(ix+1, iy+1) > THR * pixelAreaFactor) {
+            hot.push_back(make_pair(ix, iy));
+            numMaskedHotPixels++;
+          }
+        }
+      }
+      fHotPixels.push_back(hot); 
+    }
+    LOG(logINFO) << numMaskedHotPixels << " hot pixels could not be trimmed and have been masked.";
+  }
+
+  for (size_t i = 0; i < diff_map.size(); ++i) {
+    fHistList.push_back(hotpixel_map[i]);
+    fHistOptions.insert(make_pair(hotpixel_map[i], "colz"));
+  }
   for (size_t i = 0; i < diff_map.size(); ++i) {
     fHistList.push_back(diff_map[i]);
     fHistOptions.insert(make_pair(diff_map[i], "colz"));

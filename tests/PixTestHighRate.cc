@@ -108,6 +108,26 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	fParDacsPerStep = atoi(sval.c_str()); 
 	setToolTips();
       }
+      if (!parName.compare("trimhotpixelthr")) {
+  fParTrimHotPixelThr = atoi(sval.c_str());
+  setToolTips();
+      }
+      if (!parName.compare("runsecondshotpixels")) {
+  fParRunSecondsHotPixels = atoi(sval.c_str());
+  setToolTips();
+      }
+      if (!parName.compare("savetrimbits")) {
+  PixUtil::replaceAll(sval, "checkbox(", "");
+  PixUtil::replaceAll(sval, ")", "");
+  fParSaveTrimbits = !(atoi(sval.c_str())==0);
+  setToolTips();
+      }
+      if (!parName.compare("maskuntrimmable")) {
+  PixUtil::replaceAll(sval, "checkbox(", "");
+  PixUtil::replaceAll(sval, ")", "");
+  fParMaskUntrimmable = !(atoi(sval.c_str())==0);
+  setToolTips();
+      }
       if (!parName.compare("pix") || !parName.compare("pix1") ) {
 	s1 = sval.find(",");
 	if (string::npos != s1) {
@@ -164,6 +184,11 @@ void PixTestHighRate::runCommand(std::string command) {
 
   if (!command.compare("caldelscan")) {
     doCalDelScan();
+    return;
+  }
+
+  if (!command.compare("trimhotpixels")) {
+    doRunTrimHotPixels();
     return;
   }
 
@@ -889,6 +914,27 @@ void PixTestHighRate::doRunMaskHotPixels() {
   // -- display
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
   v[0]->Draw("colz");
+  PixTest::update();
+  return;
+}
+
+
+// ----------------------------------------------------------------------
+void PixTestHighRate::doRunTrimHotPixels() {
+  PixTest::update();
+  trimHotPixels(fParTrimHotPixelThr, fParRunSecondsHotPixels, fParMaskUntrimmable);  
+  if (fParSaveTrimbits) {
+    // enable all pixels, otherwise saveTrimBits() saves empty files
+    fApi->_dut->testAllPixels(true);
+    saveTrimBits();
+  }
+  if (fParMaskUntrimmable) {
+    if (fParMaskFileName == "default") {
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels); 
+    } else {
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName); 
+    }
+  }
   PixTest::update();
   return;
 }
