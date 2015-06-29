@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ----------------------------------------------------------------------
-# Usage     ../main/mkConfig -d directory [-f] [-t TBM08] [-r digv21] [-m] [-b] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
+# Usage     ../main/mkConfig -d directory [-f] [-t TBM08C] [-r digv21] [-m] [-b] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
 # -----
 #
 # Options   -d directory              the directory into which all config files will be put
@@ -25,7 +25,7 @@ getopts('bd:fhmp:r:t:');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
-my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM09");
+my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09");
 
 if ($opt_h) {
     &printHelp;
@@ -62,6 +62,7 @@ if ($opt_b) {
 my $dacs = "";
 my $roctype = "digv21respin";
 if ($opt_r) {
+    $opt_r =~ tr/A-Z/a-z/;
     if (grep(/$opt_r/, @rocok)) {
 	$roctype = $opt_r;
     } else {
@@ -75,7 +76,7 @@ my $rbCals = "";
 
 # -- TBM type from either command line or by default
 my $tbms = "";
-my $tbmtype = "TBM08";
+my $tbmtype = "TBM08C";
 if ($opt_t) {
     $opt_t =~ tr/a-z/A-Z/;
     if (grep(/$opt_t/, @tbmok)) {
@@ -150,7 +151,30 @@ exit(0);
 sub setTbms {
     $tbms = "";
     $oldStyle = 0; 
-    if ($tbmtype eq "TBM08B") {
+    if ($tbmtype eq "TBM08C") {
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+#	    $tbms .= "4      delays   0x64\n";
+#	    $tbms .= "5       basee   0x2c\n";
+	    # -- WE's parameters
+	    $tbms .= "4      delays   0x49\n";
+	    $tbms .= "5       basee   0x84\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+#	    $tbms .= "basea   0x64\n";
+#	    $tbms .= "basee   0x2c\n";
+	    $tbms .= "basea   0x49\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x84\n";
+	}
+    } elsif ($tbmtype eq "TBM08B") {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
 	    $tbms .= "1    counters   0x81\n";
@@ -423,6 +447,9 @@ if ($roctype eq "digv21") {
 if ($opt_m) {
     if ($tbmtype eq "TBM08") {
 	print FH "tbmType tbm08\n";
+    } elsif ($tbmtype eq "TBM08C") {
+	$VD = "2.800";
+	print FH "tbmType tbm08c\n";
     } elsif ($tbmtype eq "TBM08B") {
 	$VD = "2.800";
 	print FH "tbmType tbm08b\n";
@@ -520,6 +547,12 @@ vcals               222
 Plwidth             35
 PIX                 11,20
 targetIa            24
+
+-- BB3
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
+Ntrig               5
+vcals               250
 
 -- Readback
 calibrateVd         button

@@ -4,6 +4,7 @@
 #include <stdlib.h>     /* atof, atoi */
 
 #include <TKey.h>
+#include <TColor.h>
 #include <TClass.h>
 #include <TMinuit.h>
 #include <TMath.h>
@@ -43,6 +44,16 @@ PixTest::PixTest(PixSetup *a, string name) {
   fTriStateColors[0] = kRed;
   fTriStateColors[1] = 0;
   fTriStateColors[2] = kGreen;
+
+//   TColor::InitializeColors();
+//   Double_t stops[9] = { 0.0000, 0.1250, 0.2500, 0.3750, 0.5000, 0.6250, 0.7500, 0.8750, 1.0000};  
+//   Double_t red[9]   = { 0.2082, 0.0592, 0.0780, 0.0232, 0.1802, 0.5301, 0.8186, 0.9956, 0.9764};
+//   Double_t green[9] = { 0.1664, 0.3599, 0.5041, 0.6419, 0.7178, 0.7492, 0.7328, 0.7862, 0.9832};
+//   Double_t blue[9]  = { 0.5293, 0.8684, 0.8385, 0.7914, 0.6425, 0.4662, 0.3499, 0.1968, 0.0539};
+//   float alpha(1.); 
+//   TColor::CreateGradientColorTable(9, stops, red, green, blue, 255, alpha);
+  //  paletteType = ncolors;
+      
 
   //  TVirtualFitter::SetDefaultFitter("Minuit2");
 
@@ -241,66 +252,6 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 
   return resultMaps; 
 }
-
-
-// // ----------------------------------------------------------------------
-// pair<vector<TH2D*>, vector<TH2D*> > PixTest::xNoiseMaps(std::string name, uint16_t ntrig, 
-// 							int dacmin, int dacmax, int dacsperstep, 
-// 							int result, uint16_t flag) {
-
-
-//   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
-//   string type("hits"); 
-//   print(Form("xNoiseMap name: %s ntrig: %d dacrange: %d .. %d %s flags = %d (plus default)",  
-// 	     name.c_str(), ntrig, dacmin, dacmax, type.c_str(), flag)); 
-
-//   vector<shist256*>  maps; 
-//   vector<TH1*>       resultMaps; 
-//   resultMaps.clear();
-  
-//   shist256 *pshistBlock  = new (fPixSetup->fPxarMemory) shist256[16*52*80]; 
-//   shist256 *ph;
-//   rsstools rss;
-  
-//   int idx(0);
-//   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
-//     for (unsigned int ic = 0; ic < 52; ++ic) {
-//       for (unsigned int ir = 0; ir < 80; ++ir) {
-// 	idx = PixUtil::rcr2idx(iroc, ic, ir); 
-// 	ph = pshistBlock + idx;
-// 	maps.push_back(ph); 
-//       }
-//     }
-//   }
-  
-//   if (dacsperstep > 0) {
-//     int stepsize(dacsperstep); 
-//     int dacminAdj = dacmin; 
-//     int dacmaxAdj = dacmin + stepsize - 1;
-//     bool finalRun(false);
-//     while (dacmaxAdj <= dacmax) {
-//       LOG(logINFO) << "  dacScan step  from " << dacminAdj << " .. " << dacmaxAdj; 
-//       dacScan("vcal", ntrig, dacminAdj, dacmaxAdj, maps, flag); 
-//       if (finalRun) break;
-//       dacminAdj = dacminAdj + stepsize; 
-//       dacmaxAdj = dacminAdj + stepsize - 1;
-//       if (dacmaxAdj >= dacmax) {
-// 	dacmaxAdj = dacmax; 
-// 	finalRun = true;
-//       }
-//     }
-//   } else {
-//     dacScan("vcal", ntrig, dacmin, dacmax, maps, flag); 
-//   }
-
-
-
-//   pair<vector<TH2D*>, vector<TH2D*> >  results;
-//   return results;
-
-// }
-
-
 
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
@@ -1057,47 +1008,6 @@ void PixTest::fillMap(TH2D *hmod, TH2D *hroc, int iroc) {
 }
 
 
-
-// ----------------------------------------------------------------------
-void PixTest::sparseRoc(int npix) {
-  
-  if (!fApi) return;
-
-  int cnt(0); 
-  if (npix < 11) {
-    for (int i = 0; i < npix; ++i) {
-      fApi->_dut->testPixel(5*i, 5*i, true);  
-      fApi->_dut->maskPixel(5*i, 5*i, false);  
-    }
-    return;
-  } else if (npix < 101) {
-    for (int i = 0; i < 50; ++i) {
-      fApi->_dut->testPixel(i, 5 + i/2, true);  
-      fApi->_dut->maskPixel(i, 5 + i/2, false);  
-      ++cnt;
-      fApi->_dut->testPixel(i, 15 + i/2, true);  
-      fApi->_dut->maskPixel(i, 15 + i/2, false);  
-      ++cnt;
-      if (cnt == npix) return;
-    }
-  } else if (npix < 1001) {
-    for (int i = 0; i < 50; ++i) {
-      for (int j = 0; j < 10; ++j) {
-	fApi->_dut->testPixel(i, i + 2*j, true);  
-	fApi->_dut->maskPixel(i, i + 2*j, false);  
-	fApi->_dut->testPixel(i, i + 5*j, true);  
-	fApi->_dut->maskPixel(i, i + 5*j, false);  
-	++cnt; 
-	if (cnt == npix) return;
-      }
-    }
-  } else{
-    fApi->_dut->testAllPixels(true);
-    fApi->_dut->maskAllPixels(false);
-  }
-}
-
-
 // ----------------------------------------------------------------------
 bool PixTest::selectedRoc(int iroc) {
   vector<uint8_t> v = fApi->_dut->getEnabledRocIDs();
@@ -1270,8 +1180,9 @@ vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double ns
       LOG(logDEBUG) << "XXX problem in the ordering of the scurveMaps results ThrN map has name " << hn->GetName(); 
       continue;
     }
-    TH1* d1 = distribution(h2, 256, 0., 256.); 
-    TH1* dn = distribution(hn, 256, 0., 256.); 
+    // -- empty bins are ignored (Jamie)
+    TH1* d1 = distribution(h2, 255, 1., 256.); 
+    TH1* dn = distribution(hn, 255, 1., 256.); 
     double minThrLimit = TMath::Max(1., d1->GetMean() - nsigma*d1->GetRMS());
     double minThrNLimit = TMath::Max(1., dn->GetMean() - nsigma*dn->GetRMS());
     delete d1; 
@@ -1382,7 +1293,6 @@ vector<TH2D*> PixTest::mapsWithString(string name) {
   string hname(""); 
 
   int oldCnt(-1), cnt(-1);
-  char cname[200]; 
   // get them
   std::list<TH1*>::iterator il; 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
@@ -1950,85 +1860,25 @@ vector<pair<int,int> > PixTest::checkHotPixels(TH2D* h) {
 }
 
 
-// // ----------------------------------------------------------------------
-// pair<vector<TH2D*>,vector<TH2D*> > PixTest::xEfficiencyMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
 
-//   vector<pixel> results;
-//   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();   
-//   int cnt(0); 
-//   bool done = false;
-//   while (!done){
-//     LOG(logDEBUG) << "      attempt #" << cnt;
-//     try {
-//       results = fApi->getEfficiencyMap(FLAGS, ntrig);
-//       fNDaqErrors = fApi->getStatistics().errors_pixel();
-//       done = true; 
-//     } catch(pxarException &/*e*/) {
-//       fNDaqErrors = 666667;
-//       ++cnt;
-//     }
-//     done = (cnt>2) || done;
-//   }
+// ----------------------------------------------------------------------
+void PixTest::dutCalibrateOn() {
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  if (fPixSetup->getConfigParameters()->nMaskedPixels() > 0) maskPixels();
+}
 
-//   fDirectory->cd(); 
-//   vector<TH2D*> maps;
-//   vector<TH2D*> xMaps;
-//   TH2D *h2(0),*h3(0); 
-//   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-//     h2 = bookTH2D(Form("%s_calmap_C%d", name.c_str(), rocIds[iroc]), 
-// 		  Form("%s_calmap_C%d", name.c_str(), rocIds[iroc]), 
-// 		  52, 0., 52., 80, 0., 80.); 
-//     fHistOptions.insert(make_pair(h2,"colz"));
-//     h3 = bookTH2D(Form("%s_xraymap_C%d", name.c_str(), rocIds[iroc]), 
-// 		  Form("%s_xraymap_C%d", name.c_str(), rocIds[iroc]), 
-// 		  52, 0., 52., 80, 0., 80.); 
-//     fHistOptions.insert(make_pair(h3,"colz"));
-//     h2->SetMinimum(0.);
-//     h3->SetMinimum(0.);
-    
-//     h2->SetDirectory(fDirectory); 
-//     h3->SetDirectory(fDirectory);
-    
-//     setTitles(h2, "col", "row"); 
-//     setTitles(h3, "col", "row"); 
-        
-//     maps.push_back(h2); 
-//     xMaps.push_back(h3);
-//   }
-
-//   int idx(-1);  
-//   for (unsigned int i = 0; i < results.size(); ++i) {
-//     idx = getIdxFromId(results[i].roc());
-//     if (rocIds.end() != find(rocIds.begin(), rocIds.end(), idx)) {
-//       h2 = maps[idx];
-//       h3 = xMaps[idx];
-//       if (FLAGS | FLAG_CHECK_ORDER) {
-// 	if (results[i].value() > 0) {
-// 	  h2->Fill(results[i].column(), results[i].row(), static_cast<float>(results[i].value())); 
-// 	} 
-// 	else { 
-// 	  //add a hit to the X-ray counter if a hit comes in out of order
-// 	  h3->Fill(results[i].column(), results[i].row(), 1);
-//         }
-//       } 
-//       else {
-// 	h2->Fill(results[i].column(), results[i].row(), static_cast<float>(results[i].value())); 
-//       } 
-//     }
-//     else {
-//       LOG(logDEBUG) << "histogram for ROC " << (int)results[i].roc() << " not found"; 
-//     }
-//   }
-//   LOG(logDEBUG) << "Size of results from : PixTestHighRate::xEfficiencyMaps: " << results.size();
-//   return make_pair(maps, xMaps); 
-// }
+// ----------------------------------------------------------------------
+void PixTest::dutCalibrateOff() {
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(false);
+  if (fPixSetup->getConfigParameters()->nMaskedPixels() > 0) maskPixels();
+}
 
 
 // ----------------------------------------------------------------------
 void PixTest::maskPixels() {
-  string mfile = fPixSetup->getConfigParameters()->getDirectory() + "/" + fPixSetup->getConfigParameters()->getMaskFileName();
-  vector<vector<pair<int, int> > > vmask = fPixSetup->getConfigParameters()->readMaskFile(mfile); 
-
+  vector<vector<pair<int, int> > > vmask =  fPixSetup->getConfigParameters()->getMaskedPixels();
   for (unsigned int i = 0; i < vmask.size(); ++i) {
     vector<pair<int, int> > mask = vmask[i]; 
     for (unsigned int ipix = 0; ipix < mask.size(); ++ipix) {
@@ -2036,7 +1886,6 @@ void PixTest::maskPixels() {
       fApi->_dut->maskPixel(mask[ipix].first, mask[ipix].second, true, getIdFromIdx(i)); 
     }
   }
-
 }
 
 
