@@ -13,6 +13,7 @@ public:
   void setToolTips();
 
   void doTest(); 
+  double getBB2MapCut(TH1D *hPlSizePerRoc);
   void setVana();
   void setVthrCompCalDelForCals();
 
