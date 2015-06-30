@@ -85,6 +85,8 @@ void ConfigParameters::initialize() {
   fTbmType = ""; 
   fHdiType = "bpix"; 
   fTBName = "*"; 
+
+  fMaskedPixels.clear(); 
 }
 
 
