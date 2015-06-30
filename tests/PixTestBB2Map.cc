@@ -15,6 +15,7 @@
 #include "PixUtil.hh"
 #include "log.h"
 #include "constants.h"   // roctypes
+#include "TStyle.h"
 
 using namespace std;
 using namespace pxar;
@@ -134,7 +135,9 @@ void PixTestBB2Map::doTest() {
   bigBanner(Form("PixTestBB2Map::doTest() Ntrig = %d, VcalS = %d, PlWidth = %d", fParNtrig, fParVcalS, fParPlWidth));
 
   fDirectory->cd();
- 
+
+  //gStyle->SetDrawOption("colz");
+
   // set setVana
 
   //  std::cout << "Setting Vana " << std::endl;
@@ -185,15 +188,28 @@ void PixTestBB2Map::doTest() {
     result_h22[rocId] = bookTH2D(Form("N_VthrComp_C%d", rocId), Form("N_VthrComp_C%d", rocId), 
 				 4160, -0.5, 4160 - 0.5, nstp, dacMin - 0.5*step, dacMax + 0.5*step);
     setTitles(result_h22[rocId], "Pixel 80*ic+ir", "VthrComp");
+    fHistOptions.insert(make_pair(result_h22[rocId], "colz"));
   }
 
   // get the efficiency map for all available rocs  
 
   vector<pair<uint8_t, vector<pixel> > > results_bbmap;  
   
-  results_bbmap = fApi->getEfficiencyVsDAC("VthrComp",step, dacMin, dacMax, FLAGS0, fParNtrig);
-  //results_bbmap = fApi->getEfficiencyVsDAC("VthrComp",step, 0, 250, FLAGS0, fParNtrig); 
-
+  int cnt(0); 
+  bool done(false);
+  while (!done) {
+    LOG(logDEBUG) << "      attempt #" << cnt;
+    try {
+      LOG(logDEBUG) << "Performing Vthrcomp Scan #";
+      results_bbmap = fApi->getEfficiencyVsDAC("VthrComp",step, dacMin, dacMax, FLAGS0, fParNtrig);
+      done = true;
+    } catch(pxarException &/*e*/){
+      ++cnt;
+      LOG(logDEBUG) << "a problem occurs after calling getEfficiencyVsDAC";
+    }
+    done = (cnt>1) || done;
+  }
+  
   // display the quantities:
   int ic, ir, iroc; 
   double val;
@@ -222,9 +238,11 @@ void PixTestBB2Map::doTest() {
 
   int nMissingPerRoc[16]={16*0};
   string bb2mapString("");
+  string bb2SeparationCut("");
+  
+
   
   for (unsigned int idx = 0; idx < rocIds.size(); ++idx){
-
     unsigned int rocId = idx;
     //    cout << idx << " rocId: " << rocId << endl;
     fHistList.push_back(result_h22[rocId]);
@@ -237,6 +255,8 @@ void PixTestBB2Map::doTest() {
     TH1D* h12 = bookTH1D(Form("CalsVthrPlateauWidth_C%d",rocId),Form("CalsVthrPlateauWidth_C%d",rocId),nstpPlSize, minPlSize - 0.5*step, maxPlSize + 0.5*step );
 
     TH2D* h24 = bookTH2D(Form("BBtestMap_C%d",rocId),Form("BBtestMap_C%d",rocId), 52, -0.5, 51.5, 80, -0.5, 79.5 );
+
+    fHistOptions.insert(make_pair(h24, "colz"));
 
     setTitles(h24, "col", "row");
     
@@ -253,7 +273,78 @@ void PixTestBB2Map::doTest() {
     
     int ibinCenter;
       
-  // Find Plateau
+    //
+
+    for( int ibin = 1; ibin <= nbinx; ibin++ ) {
+    
+      ibinCenter = (result_h22[rocId])->GetXaxis(  )->GetBinCenter( ibin );
+      
+      // Find first the maximum
+      int imax;
+      imax = 0;
+      for( int j = 1; j <= nbiny; ++j ) {
+	int cnt = (result_h22[rocId])->GetBinContent( ibin, j );
+	// Find Maximum
+	if( cnt > imax )
+	  imax = cnt;
+      }
+      
+      if( imax <  fParNtrig / 2 ) {
+	++nIneff;
+	// 	cout << "Dead pixel at raw col: " << ibinCenter % 80
+	// 	     << " " << ibinCenter / 80 << endl;
+      }
+      else {
+	
+	// Search for the Plateau
+	
+	int iEnd = 0;
+	int iBegin = 0;
+	
+	float beginCont = 0.;
+	float endCont = 0.;	
+	
+	// use the maximum response to localize the Plateau
+	for( int jbin = 0; jbin <= nbiny; jbin++ ) {
+	  int cnt = (result_h22[rocId])->GetBinContent( ibin, jbin );
+	  // Find Plateau
+	  if( cnt >= imax / 2 ) {
+	    iEnd = jbin; // end of plateau
+	    if( iBegin == 0 )
+	      iBegin = jbin; // begin of plateau
+	  }
+	}
+
+	endCont = (result_h22[rocId])->GetYaxis()->GetBinUpEdge(iEnd);
+	beginCont = (result_h22[rocId])->GetYaxis()->GetBinUpEdge(iBegin);
+
+	// narrow plateau is from noise
+	
+	//h12->Fill( iEnd - iBegin );
+	h12->Fill( endCont- beginCont );
+      }
+    }
+    // adding h12
+    fHistList.push_back(h12);
+    //cout << "!!!!! Getting Mean from h12 " << h12->GetMean() << endl;
+    // calculate now the separation cut 
+    double plWidthCutRoc;
+    plWidthCutRoc = 0.;
+
+    if (h12){ 
+      plWidthCutRoc = getBB2MapCut(h12);
+      // add a safety margin for low plSize values - use then the default
+      if (plWidthCutRoc < 15){
+	plWidthCutRoc = fParPlWidth;
+      }
+    }
+    else{
+      plWidthCutRoc = fParPlWidth;
+    }
+    bb2SeparationCut+= Form(" %4.2f", plWidthCutRoc);
+    //cout << "Before the second loop: " << plWidthCutRoc << " for RocId " << rocId << endl;
+
+    // Find Plateau
   
     for( int ibin = 1; ibin <= nbinx; ibin++ ) {
     
@@ -301,9 +392,11 @@ void PixTestBB2Map::doTest() {
 	// narrow plateau is from noise
 	
 	//h12->Fill( iEnd - iBegin );
-	h12->Fill( endCont- beginCont );
+	//h12->Fill( endCont- beginCont );
 	// plateau Size
-	if( endCont- beginCont < fParPlWidth ) {
+
+	
+	if( endCont- beginCont <  plWidthCutRoc ) {
 	
 	  nMissing++;
 	  //	  cout << "[Missing Bump at raw col:] " << ibinCenter% 80 << " " << ibinCenter / 80 << endl;
@@ -312,6 +405,7 @@ void PixTestBB2Map::doTest() {
 	  nMissingPerRoc[rocId]++;
 	}
 	else {
+	  //cout << "Used Cut: " << plWidthCutRoc << " for RocId " << rocId << endl;
 	  //h24->Fill( ibinCenter / 80, ibinCenter % 80, imax );
 	  // draw this pixel green
 	  h24->Fill( ibinCenter / 80, ibinCenter % 80, 1 );
@@ -329,9 +423,10 @@ void PixTestBB2Map::doTest() {
     h24->SetMaximum(2);
     h24->SetMinimum(0);
     
-    fHistList.push_back(h12);
+    //fHistList.push_back(h12);
     fHistList.push_back(h24);
-
+    //h24->Draw("colz");
+    //(result_h22[rocId])->Draw("colz");
     (result_h22[rocId])->Draw(getHistOption(result_h22[rocId]).c_str());
 
   }
@@ -351,6 +446,7 @@ void PixTestBB2Map::doTest() {
   int seconds = t.RealTime();
 
   LOG(logINFO) << "Missing Bumps:   " << bb2mapString;
+  LOG(logINFO) << "Separation Cut: " << bb2SeparationCut;
   LOG(logINFO) << "PixTestBB2Map::doTest() done"
 	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"") 
 	       << ", duration: " << seconds << " seconds";
@@ -359,6 +455,66 @@ void PixTestBB2Map::doTest() {
 }
 
 // ----------------------------------------------------------------------
+
+double PixTestBB2Map::getBB2MapCut(TH1D *h10){
+
+  //cout << "Finding separation of the BBMap " << endl;
+
+  //double cutval =0.;
+  double cutmax = 45.;
+  double cut;
+  
+  //cout << "INSIDE " << h10->GetRMS() << endl;
+  int maxbin = h10->GetMaximumBin();
+  double ymax = h10->GetBinContent( maxbin );
+  double xmax = h10->GetBinCenter( maxbin );
+  //cout << "max " << ymax << " at " << xmax << endl;  
+  // go left from main peak:
+  
+  double xi = 0;
+  double xj = 0;
+  double ni = 0;
+  double nj = 0;
+  double y50 = 0.5*ymax;
+  double sigma = h10->GetRMS();
+  
+  for( int ii = maxbin; ii > 1; ii -= 2 ) { // step 2
+    
+    int jj = ii - 2; // step 2
+    
+    if( h10->GetBinContent(jj) < y50 && // jj is below
+	h10->GetBinContent(ii) >= y50 ) { // ii is above
+      
+      ni = h10->GetBinContent(ii);
+      nj = h10->GetBinContent(jj);
+      xi = h10->GetBinCenter(ii);
+      xj = h10->GetBinCenter(jj);
+      double dx = xi - xj;
+      double dn = ni - nj;
+      double x50 = xj + ( y50 - nj ) / dn * dx; // 1.3863 sigma for a Gaussian
+      sigma = ( xmax - x50 ) / 1.3863;
+      break; // end loop
+    }
+    
+  } // ii
+  
+  //cout << "n50 " << nj << " at " << xj << ", sigma " << sigma << endl;
+  
+  // Gaussian: N = nmax*exp(-(xmax-x)^2/2/sigma^2)
+  // expect N = 1 at x1
+  // log(1) = 0 = log(nmax) - (xmax-x1)^2/2/sigma^2
+  // => x1 = xmax - sigma*sqrt(2*log(nmax))
+  
+  double x1 = xmax - sigma*sqrt(2*log(ymax));
+  
+  //cout << "x1 at " << x1 << endl;
+  
+  cut = x1 - sigma; // safety
+  if( cut > cutmax ) cut = cutmax;
+
+  return cut;
+
+}
 
 
 void PixTestBB2Map::setVana() {
@@ -565,7 +721,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
   while (!done) {
     rresults.clear();     
     int cnt(0); 
-    try{
+    try{ 
       rresults = fApi->getEfficiencyVsDACDAC("caldel", 0, 255, "vthrcomp", 0, 255, FLAGS, fParNtrig);
       done = true;
     } catch(DataMissingEvent &e){
@@ -592,7 +748,7 @@ void PixTestBB2Map::setVthrCompCalDelForCals() {
       if (wpix[ipix].value() >= fParNtrig/2){
 	maps[wpix[ipix].roc()]->Fill(idac1, idac2, wpix[ipix].value());
       }
-    }
+    } 
   }
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
