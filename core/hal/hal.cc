@@ -1687,7 +1687,26 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     LOG(logCRITICAL) << "Cannot serve " << m_tokenchains.size() << " DAQ channels, only " << DTB_DAQ_CHANNELS << " available.";
     throw InvalidConfig("Number of requested DAQ channels too high");
   }
-  
+
+    // Split the total buffer size when having more than one channel
+  buffersize /= m_tokenchains.size();
+
+  // Open all DAQ channels we need:
+  uint8_t rocid_offset = 0;
+  for(size_t i = 0; i < m_tokenchains.size(); i++) {
+    // Open DAQ in channel i:
+    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
+    LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
+		     << (m_notokenpass.at(i) ? 0 : static_cast<int>(m_tokenchains.at(i)))
+		     << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
+    // Initialize the data source, set tokenchain length to zero of no token pass is expected:
+    m_src.at(i) = dtbSource(_testboard,i,(m_notokenpass.at(i) ? 0 : m_tokenchains.at(i)),rocid_offset,m_tbmtype,m_roctype,true);
+    m_src.at(i) >> m_splitter.at(i);
+    _testboard->uDelay(100);
+    // Increment the ROC id offset by the amount of ROCs expected:
+    rocid_offset += m_tokenchains.at(i);
+  }
+
   // Data acquisition with real TBM:
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     // Check if we have all information needed concerning the token chains:
@@ -1735,26 +1754,13 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
       _testboard->Daq_Select_Deser160(deser160phase);
     }
   }
-  
-  // Split the total buffer size when having more than one channel
-  buffersize /= m_tokenchains.size();
 
-  // Start all DAQ channels we need:
-  uint8_t rocid_offset = 0;
+  // Start all open DAQ channels:
   for(size_t i = 0; i < m_tokenchains.size(); i++) {
     // Start DAQ in channel i:
-    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
-    LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
-		     << (m_notokenpass.at(i) ? 0 : static_cast<int>(m_tokenchains.at(i)))
-		     << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
-    // Initialize the data source, set tokenchain length to zero of no token pass is expected:
-    m_src.at(i) = dtbSource(_testboard,i,(m_notokenpass.at(i) ? 0 : m_tokenchains.at(i)),rocid_offset,m_tbmtype,m_roctype,true);
-    m_src.at(i) >> m_splitter.at(i);
     _testboard->uDelay(100);
     _testboard->Daq_Start(i);
     m_daqstatus.at(i) = true;
-    // Increment the ROC id offset by the amount of ROCs expected:
-    rocid_offset += m_tokenchains.at(i);
   }
   
   _testboard->uDelay(100);
