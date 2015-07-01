@@ -25,7 +25,7 @@ getopts('bd:fhmp:r:t:');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
-my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09");
+my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
 
 if ($opt_h) {
     &printHelp;
@@ -249,8 +249,25 @@ sub setTbms {
 	    $tbms .= "basec   0x00\n";
 	    $tbms .= "basee   0x34\n";
 	}
+    } elsif ($tbmtype eq "TBM09C") {
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+	    $tbms .= "4      delays   0x64\n";
+	    $tbms .= "5       basee   0x34\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+	    $tbms .= "basea   0x64\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x34\n";
+	}
     }
-
 }
 
 # ----------------------------------------------------------------------
@@ -458,6 +475,9 @@ if ($opt_m) {
     } elsif ($tbmtype eq "TBM09") {
 	$VD = "2.900";
 	print FH "tbmType tbm09\n";
+    } elsif ($tbmtype eq "TBM09C") {
+	$VD = "2.900";
+	print FH "tbmType tbm09c\n";
     } else {
 	print FH "tbmType tbm08\n";
     }
