@@ -254,7 +254,7 @@ void PixTestDacDacScan::doTest() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   if (h) h->Draw(getHistOption(h).c_str());
   PixTest::update(); 
-
+  dutCalibrateOff();
 }
 
 

@@ -118,6 +118,7 @@ void PixTestTiming::doTest() {
   TimingTest();
   
   LOG(logINFO) << "PixTestTiming::doTest() done";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -217,6 +218,8 @@ void PixTestTiming::ClkSdaScan() {
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::ClkSdaScan() done.";
+
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -227,7 +230,7 @@ void PixTestTiming::PhaseScan() {
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
-
+  
   banner(Form("PixTestTiming::PhaseScan()"));
   cacheTBMDacs();
 
@@ -325,6 +328,7 @@ void PixTestTiming::PhaseScan() {
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::PhaseScan() done.";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -381,6 +385,7 @@ void PixTestTiming::TBMPhaseScan() {
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TBMPhaseScan() done.";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -444,6 +449,7 @@ void PixTestTiming::ROCDelayScan() {
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::ROCDelayScan() done.";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -474,6 +480,7 @@ void PixTestTiming::TimingTest() {
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TimingTest() done.";
 
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -544,6 +551,7 @@ void PixTestTiming::LevelScan() {
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
