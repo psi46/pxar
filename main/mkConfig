@@ -676,6 +676,8 @@ triggerdelay        20
 DelayTBM            checkbox
 FillTree            checkbox
 
+-- Cmd
+
 EOF
 }
 

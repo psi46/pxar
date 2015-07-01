@@ -30,6 +30,7 @@ PixTestBB2Map.cc
 PixTestBB3Map.cc
 PixTestBareModule.cc
 PixTestFullTest.cc
+PixTestCmd.cc
 )
 
 # fill list of header files
@@ -60,6 +61,7 @@ PixTestBB2Map.hh
 PixTestBB3Map.hh
 PixTestBareModule.hh
 PixTestFullTest.hh
+PixTestCmd.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/ana ${ROOT_INCLUDE_DIR} )
