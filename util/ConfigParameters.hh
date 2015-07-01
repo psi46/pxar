@@ -92,7 +92,12 @@ public:
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   std::vector<std::pair<std::string, double> > readReadbackFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
+
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
+  std::vector<std::vector<std::pair<int, int> > > getMaskedPixels() {return fMaskedPixels;} 
+  int nMaskedPixels() {return fMaskedPixels.size();} 
+  bool isMaskedPixel(int roc, int col, int row); 
+
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
   std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
   bool customI2cAddresses() {return fI2cAddresses.size() > 0;} 
@@ -158,6 +163,8 @@ private:
   std::vector<int> fSelectedRocs, fSelectedTbms;
 
   std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
+
+  std::vector<std::vector<std::pair<int, int> > > fMaskedPixels;
 
   unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fHalfModule;

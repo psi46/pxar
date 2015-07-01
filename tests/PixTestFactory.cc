@@ -25,8 +25,10 @@
 #include "PixTestReadback.hh"
 #include "PixTestBBMap.hh"
 #include "PixTestBB2Map.hh"
+#include "PixTestBB3Map.hh"
 #include "PixTestBareModule.hh"
 #include "PixTestFullTest.hh"
+#include "PixTestCmd.hh"
 
 using namespace std;
 using namespace pxar;
@@ -81,7 +83,9 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("readback")) return new PixTestReadback(a, "Readback");
   if (!name.compare("bb")) return new PixTestBBMap(a, "BB");
   if (!name.compare("bb2")) return new PixTestBB2Map(a, "BB2");
+  if (!name.compare("bb3")) return new PixTestBB3Map(a, "BB3");
   if (!name.compare("baremodule")) return new PixTestBareModule(a, "BareModule");
   if (!name.compare("fulltest")) return new PixTestFullTest(a, "FullTest");
+  if (!name.compare("cmd")) return new PixTestCmd(a, "Cmd");
   return 0;
 }
