@@ -997,9 +997,13 @@ namespace pxar {
      */
     std::string getRocType();
 
-    /** Function returning the enabled pixels configs for a specific ROC:
+    /** Function returning the enabled pixels configs for a specific ROC ID:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
+
+    /** Function returning the enabled pixels configs for a ROC with given I2C address:
+     */
+    std::vector< pixelConfig > getEnabledPixelsI2C(size_t roci2c);
 
     /** Function returning the enabled pixels configs for all ROCs:
      */
