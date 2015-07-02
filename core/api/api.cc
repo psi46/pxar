@@ -1625,7 +1625,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
 	std::vector<Event*> rocdata = std::vector<Event*>();
-	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels(static_cast<uint8_t>(rocit - enabledRocs.begin()));
+	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixelsI2C(rocit->i2c_address);
 
 
 	LOG(logDEBUGAPI) << "\"The Loop\" for the current ROC contains " \
@@ -2166,7 +2166,10 @@ void pxarCore::MaskAndTrimNIOS() {
 void pxarCore::MaskAndTrim(bool trim) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-    MaskAndTrim(trim,rocit);
+    // If it's enabled, do the requested action:
+    if(rocit->enable()) { MaskAndTrim(trim,rocit); }
+    // Else mask it anyway: it's diabled.
+    else { MaskAndTrim(false,rocit); }
   }
 }
 

@@ -135,6 +135,26 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   return result;
 }
 
+std::vector< pixelConfig > dut::getEnabledPixelsI2C(size_t roci2c) {
+
+  std::vector< pixelConfig > result;
+
+  // Check if DUT is allright:
+  if (!status()) return result;
+
+  // Loop over all ROCs
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    if(rocit->i2c_address == roci2c) {
+      // Search for pixels that have enable set
+      for (std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it){
+	if (it->enable()) result.push_back(*it);
+      }
+    }
+  }
+
+  return result;
+}
+
 std::vector< pixelConfig > dut::getEnabledPixels() {
 
   std::vector< pixelConfig > result;
