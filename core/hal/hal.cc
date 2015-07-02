@@ -1566,6 +1566,12 @@ void hal::Pon() {
   _testboard->Pon();
   _testboard->Flush();
 
+  // Clear HAL internal counters:
+  m_tbmtype = TBM_NONE;
+  m_roctype = ROC_NONE;
+  m_roccount = 0;
+  m_tokenchains.clear();
+
   // Wait a little and let the power switch do its job:
   mDelay(300);
 }
