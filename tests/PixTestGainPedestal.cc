@@ -232,6 +232,7 @@ void PixTestGainPedestal::measure() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   // -- first low range 
   fApi->setDAC("ctrlreg", 0);
@@ -331,6 +332,7 @@ void PixTestGainPedestal::measure() {
   PixTest::update(); 
   restoreDacs();
   LOG(logINFO) << "PixTestGainPedestal::measure() done ";
+  dutCalibrateOff();
 }
 
 

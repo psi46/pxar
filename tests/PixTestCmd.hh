@@ -39,6 +39,7 @@ public:
   void DoTextField();
   void DoUpArrow();
   void DoDnArrow();
+  void flush(std::string s);
 
 private:
 
@@ -177,6 +178,7 @@ class Keyword{
     bool match(const char *, string &);
     bool match(const char * s, vector<int> & , vector<int> &);
     bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
+    bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int, int &);
     bool greedy_match(const char *, string &);
     bool greedy_match(const char *, int &, int&, int&, string &);
     bool concat(unsigned int i, string &s){  s="";  for (;i<argv.size(); i++) s+=argv[i].str(); return true;}
@@ -289,10 +291,13 @@ class CmdProc {
  
  public:
   CmdProc(){init();};
+  CmdProc(PixTestCmd *pixtest){init(); master = pixtest; };
   CmdProc( CmdProc* p);
   ~CmdProc();
   void init();
   void setApi(pxar::pxarCore * api, PixSetup * setup );
+  void flush(stringstream & o);
+  
   int exec(string s);
   int exec(const char* p){ return exec(string(p));}
 
@@ -301,7 +306,8 @@ class CmdProc {
 
   pxar::pxarCore * fApi;
   PixSetup * fPixSetup;
-  
+ 
+  PixTestCmd * master;
   stringstream out; 
   pxar::RegisterDictionary * _dict;
   pxar::ProbeDictionary * _probeDict;
@@ -327,11 +333,13 @@ class CmdProc {
   int fDeser400XOR1;
   int fDeser400XOR2;
   int fDeser400XOR1sum[8];
+  int fDeser400XOR2sum[8];
   int fDeser400err;
   static int fPrerun;
-  static bool fFW35;
+  static bool fFW35;  // for fw<=3.5, to be removed
   
   bool verbose;
+  bool redirected;
   bool fEchoExecs;  // echo command from executed files
   Target defaultTarget;
   map<string, deque <string> > macros;
@@ -342,6 +350,7 @@ class CmdProc {
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
   int tbmscan();
+  
   int rawscan(int level=0);
   int rocscan();
   int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
@@ -350,7 +359,7 @@ class CmdProc {
   int countHits();
   int countErrors(unsigned int ntrig=1, int ftrigkhz=0, int nroc_expected=-1, bool setup=true);
   int countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int nroc);
-  int printData(vector<uint16_t> buf, int level);
+  int printData(vector<uint16_t> buf, int level, unsigned int nheader=0);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
   int getBuffer(vector<uint16_t> & buf);
   int setupDaq(int ntrig, int ftrigkhz, int verbosity=0);

@@ -150,6 +150,7 @@ void PixTestTrim::trimTest() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
@@ -202,7 +203,8 @@ void PixTestTrim::trimTest() {
     h2 = (TH2D*)thr1[i]; 
     hname = h2->GetName();
 
-    TH1* d1 = distribution(h2, 256, 0., 256.); 
+    // -- empty bins are ignored (Jamie)
+    TH1* d1 = distribution(h2, 255, 1., 256.); 
     vcalMean = d1->GetMean(); 
     vcalMin = d1->GetMean() - NSIGMA*d1->GetRMS();
     if (vcalMin < 0) vcalMin = 0; 
@@ -316,6 +318,7 @@ void PixTestTrim::trimTest() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     for (int ix = 0; ix < 52; ++ix) {
@@ -452,6 +455,8 @@ void PixTestTrim::trimTest() {
   LOG(logINFO) << "vcal RMS:  " << trimRmsString; 
   LOG(logINFO) << "bits mean: " << trimbitsMeanString; 
   LOG(logINFO) << "bits RMS:  " << trimbitsRmsString; 
+
+  dutCalibrateOff();
 }
 
 
@@ -493,6 +498,7 @@ void PixTestTrim::trimBitTest() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   vector<vector<TH1*> > steps; 
 
@@ -558,7 +564,7 @@ void PixTestTrim::trimBitTest() {
   restoreDacs();
   setTrimBits(); 
   LOG(logINFO) << "PixTestTrim::trimBitTest() done "; 
-  
+  dutCalibrateOff();  
 }
 
 
