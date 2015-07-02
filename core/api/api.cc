@@ -2138,7 +2138,10 @@ void pxarCore::MaskAndTrimNIOS() {
 void pxarCore::MaskAndTrim(bool trim) {
   // Run over all existing ROCs:
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-    MaskAndTrim(trim,rocit);
+    // If it's enabled, do the requested action:
+    if(rocit->enable()) { MaskAndTrim(trim,rocit); }
+    // Else mask it anyway: it's diabled.
+    else { MaskAndTrim(false,rocit); }
   }
 }
 
