@@ -263,7 +263,6 @@ void PixTestTiming::PhaseScan() {
   int NFunctionalTimings = 0;
   int NFunctionalTBMPhases = 0;
 
-  fApi->daqStart();
   for (int iclk160 = 0; iclk160 < 8; iclk160++) {
     for (int iclk400 = 0; iclk400 < 8; iclk400++) {
       uint8_t delaysetting = iclk160<<5 | iclk400<<2;
@@ -357,7 +356,6 @@ void PixTestTiming::TBMPhaseScan() {
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
-  fApi->daqStart();
   for (int iclk160 = 0; iclk160 < 8; iclk160++) {
     for (int iclk400 = 0; iclk400 < 8; iclk400++) {
       uint8_t delaysetting = iclk160<<5 | iclk400<<2;
@@ -412,7 +410,7 @@ void PixTestTiming::ROCDelayScan() {
 
   fApi->daqStart();
   for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
-    if (ithtdelay==2) continue;
+    //if (ithtdelay==2) continue;
     h1 = bookTH2D(Form("ROCDelayScan%d",ithtdelay),Form("ROC Delay Scan: THT Delay = %d",ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "ROC Port 0 Delay", "ROC Port 1 Delay");
@@ -509,7 +507,7 @@ void PixTestTiming::LevelScan() {
   size_t nTBMs = fApi->_dut->getNTbms();
 
   //Get Intial TBM Parameters
-  vector<pair<string, uint8_t> > InitTBMParameters = fPixSetup->getConfigParameters()->getTbParameters();
+  vector<pair<string, uint8_t> > InitTBParameters = fPixSetup->getConfigParameters()->getTbParameters();
 
   vector<uint8_t> GoodLevels;
   vector<rawEvent> daqRawEv;
@@ -538,7 +536,7 @@ void PixTestTiming::LevelScan() {
     LOG(logINFO) << "DTB level set to " << int(MeanLevel);
   } else {
     LOG(logERROR) << "No working level found!";
-    fApi->setTestboardDelays(InitTBMParameters);
+    fApi->setTestboardDelays(InitTBParameters);
   }
 
   //Draw the plot
