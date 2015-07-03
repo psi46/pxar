@@ -532,7 +532,7 @@ void PixTestTrim::trimBitTest() {
     steps.push_back(thr); 
   }
   
-  // -- and now determine threshild difference
+  // -- and now determine threshold difference
   TH1 *h1(0); 
   double dthr(0.);
   for (unsigned int i = 0; i < steps.size(); ++i) {
