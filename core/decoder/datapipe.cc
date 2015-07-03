@@ -216,7 +216,7 @@ namespace pxar {
 
 	// Check for DESER400 failure:
 	if(((*word) & 0x0ff0) == 0x0ff0) {
-	  LOG(logCRITICAL) << "TBM " << static_cast<int>(GetChannel())
+	  LOG(logCRITICAL) << "Channel " << static_cast<int>(GetChannel())
 			   << " ROC " << static_cast<int>(roc_n)
 			   << " header reports DESER400 failure!";
 	  decodingStats.m_errors_event_invalid_xor++;
@@ -417,7 +417,7 @@ namespace pxar {
 
     // Check if TBM event ID matches with expectation:
     if(roc_Event.triggerCount() != (eventID%256)) {
-      LOG(logERROR) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID) 
+      LOG(logERROR) << "Channel " <<  static_cast<int>(ReadChannel()) << "   Event ID mismatch:  local ID (" << static_cast<int>(eventID)
 		    << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
       decodingStats.m_errors_tbm_eventid_mismatch++;
       // To continue readout, set event ID to the currently decoded one:
@@ -434,7 +434,7 @@ namespace pxar {
     // If the number of ROCs does not correspond to what we expect
     // clear the event and return:
     if(roc_n+1 != GetTokenChainLength()) {
-      LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
+      LOG(logERROR) << "Channel " <<  static_cast<int>(ReadChannel()) << " Number of ROCs (" << static_cast<int>(roc_n+1)
 		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
       decodingStats.m_errors_roc_missing++;
       // Clearing event content:
@@ -506,12 +506,12 @@ namespace pxar {
       else {
 	// If this is the first readback cycle of the ROC, ignore the mismatch:
 	if(readback.size() <= roc || readback.at(roc).empty()) {
-	  LOG(logDEBUGAPI) << "ROC " << static_cast<int>(roc)
+	  LOG(logDEBUGAPI) << "Channel " <<  static_cast<int>(ReadChannel()) << " ROC " << static_cast<int>(roc)
 			   << ": first readback marker after "
 			   << count.at(roc) << " readouts. Ignoring error condition.";
 	}
 	else {
-	  LOG(logWARNING) << "ROC " << static_cast<int>(roc)
+	  LOG(logWARNING) << "Channel " <<  static_cast<int>(ReadChannel()) << " ROC " << static_cast<int>(roc)
 			  << ": Readback start marker after "
 			  << count.at(roc) << " readouts!";
 	  decodingStats.m_errors_roc_readback++;
