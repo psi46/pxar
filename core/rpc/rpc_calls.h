@@ -351,6 +351,7 @@ public:
 	// --- ROC/module Communication -----------------------------------------
 	// -- set the i2c address for the following commands
 	RPC_EXPORT void roc_I2cAddr(uint8_t id);
+	RPC_EXPORT void roc_I2cAddr_Layer_1(uint8_t id);
 	// -- sends "ClrCal" command to ROC
 	RPC_EXPORT void roc_ClrCal();
 	// -- sets a single (DAC) register
