@@ -988,12 +988,12 @@ void PixTestPretest::findWorkingPixel() {
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	hname = Form("fwp_c%d_r%d_C%d", ic, ir, rocIds[wpix[ipix].roc()]);
-	if (maps.count(hname) > 0) {
-	  maps[hname]->Fill(idac1, idac2, wpix[ipix].value()); 
-	} else {
-	  LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping"; 
-	}
+          hname = Form("fwp_c%d_r%d_C%d", ic, ir, wpix[ipix].roc());
+          if (maps.count(hname) > 0) {
+	        maps[hname]->Fill(idac1, idac2, wpix[ipix].value()); 
+	      } else {
+	        LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping";
+	      }
       }
     }
     
