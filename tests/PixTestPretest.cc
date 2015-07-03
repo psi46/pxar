@@ -1029,7 +1029,7 @@ void PixTestPretest::findWorkingPixel() {
 
       if (!okVthrComp || !okCalDel) {
 	okAllRocs = false;
-	LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp << " Delta(CalDel) = " << cdLast - cdFirst << ", trying another"; 
+	if (ifwp != pixelList.size() - 1) {LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp << " Delta(CalDel) = " << cdLast - cdFirst << ", trying another"; }
 	break;
       } else{
 	LOG(logDEBUG) << hname << " OK, with vthrComp = " << vthrComp << " and Delta(CalDel) = " << cdLast - cdFirst; 
@@ -1052,11 +1052,18 @@ void PixTestPretest::findWorkingPixel() {
       maps.clear();
     }
   }
-
-  LOG(logINFO) << "Found working pixel in all ROCs: col/row = " << ic << "/" << ir; 
-  clearSelectedPixels();
-  fPIX.push_back(make_pair(ic, ir));
-  addSelectedPixels(Form("%d,%d", ic, ir)); 
+  
+  if (maps.size()) {
+    LOG(logINFO) << "Found working pixel in all ROCs: col/row = " << ic << "/" << ir; 
+    clearSelectedPixels();
+    fPIX.push_back(make_pair(ic, ir));
+    addSelectedPixels(Form("%d,%d", ic, ir));
+  } else {
+      LOG(logINFO) << "Something went wrong...";
+      LOG(logINFO) << "Didn't find a working pixel in all ROCs.";
+      for (size_t iroc = 0; iroc < rocIds.size(); iroc++)
+        LOG(logINFO) << "our roc list from in the dut: " << static_cast<int>(rocIds[iroc]);
+  }
 
   
   fApi->_dut->testAllPixels(true);
