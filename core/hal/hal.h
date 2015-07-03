@@ -397,6 +397,9 @@ namespace pxar {
     /** Get ADC value
      */
     uint16_t GetADC(uint8_t rpc_par1);
+    
+    
+    void setReadoutChannels(uint8_t start, uint8_t end);
 
   private:
 
@@ -494,6 +497,9 @@ namespace pxar {
     std::vector<dtbSource> srce; // give it a unique name
     std::vector<dtbEventSplitter> splitter;
     std::vector<dtbEventDecoder> decoder;
+
+    uint8_t channel_start;
+    uint8_t channel_end;
   };
 }
 #endif

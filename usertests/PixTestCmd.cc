@@ -1911,9 +1911,11 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
         uint8_t maxTBM=2;
         bool tbm09 =  (fApi->_dut->getTbmType() == "tbm09");
         if(tbm09){
-            nRocPerToken = 4;
-            maxTBM=4;
+            nRocPerToken = 2;
+            maxTBM=1;
         }
+        if(fTbmEnable) {maxTBM = fTbmEnable;}
+        
         bool tbmHeaderSeen=false;
         unsigned int nevent=0;
 
@@ -2767,6 +2769,12 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("scan","rocs")){ return  rocscan();}
     if (kw.match("scan","level")){ return levelscan();}
     if (kw.match("scan","raw", value)){return rawscan(value);}
+    
+    if (kw.match("channel", value1, value2)){
+        fApi->setChannels(value1, value2);
+        fTbmEnable = ((value2 - value1) & 7) +1;
+        return 0;
+    }
     
     return -1; // nothing done
 }

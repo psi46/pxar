@@ -372,6 +372,10 @@ bool pxarCore::initDUT(bool layer1Enable,
   return programDUT();
 }
 
+void pxarCore::setChannels(uint8_t start, uint8_t end){
+    _hal->setReadoutChannels(start, end);
+}
+
 bool pxarCore::programDUT() {
 
   if(!_dut->_initialized) {

@@ -323,6 +323,7 @@ class CmdProc {
   vector<pair<string,uint8_t> > fSigdelays;
   vector<pair<string,uint8_t> > fSigdelaysSetup;
   bool fPgRunning;
+  int fTbmEnable;
   
   int fDeser400XOR1;
   int fDeser400XOR2;

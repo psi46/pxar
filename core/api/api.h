@@ -819,6 +819,11 @@ namespace pxar {
     /** Get ADC value
      */
     uint16_t GetADC( uint8_t rpc_par1 ) ;
+    
+    /** debug function to enable a channel range
+     */
+    
+    void setChannels(uint8_t start, uint8_t end);
 
   private:
 

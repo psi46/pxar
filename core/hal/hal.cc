@@ -1720,6 +1720,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
 		_testboard->Daq_Start(ch);
 		m_daqstatus.at(ch) = true;
+        if ( ch < channel_start || ch > channel_end) _testboard->Daq_Stop(ch);
 	}
 
   }
@@ -1764,6 +1765,7 @@ Event* hal::daqEvent() {
 
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
+      if (ch < channel_start || ch > channel_end) continue;
     if(m_src.at(ch).isConnected()) {
       dataSink<Event*> Eventpump;
       m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
@@ -1790,6 +1792,7 @@ std::vector<Event*> hal::daqAllEvents() {
     // Read the next Event from each of the pipes:
     Event* current_Event = new Event();
     for(size_t ch = 0; ch < m_src.size(); ch++) {
+        if (ch < channel_start || ch > channel_end) {done_ch.at(ch) = true; continue;}
       if(m_src.at(ch).isConnected()) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
@@ -1825,6 +1828,7 @@ rawEvent* hal::daqRawEvent() {
   
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
+      if (ch < channel_start || ch > channel_end) { continue;}
     if(m_src.at(ch).isConnected()) {
       dataSink<rawEvent*> rawpump;
       m_splitter.at(ch) >> rawpump;
@@ -1852,6 +1856,7 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
     rawEvent* current_Event = new rawEvent();
     
     for(size_t ch = 0; ch < m_src.size(); ch++) {
+        if (ch < channel_start || ch > channel_end) {done_ch.at(ch) = true; continue;}
       if(m_src.at(ch).isConnected()) {
 	dataSink<rawEvent*> rawpump;
 	m_splitter.at(ch) >> rawpump;
@@ -1885,6 +1890,7 @@ std::vector<uint16_t> hal::daqBuffer() {
   
   // Read the full data blob from each of the pipes:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
+      if (ch < channel_start || ch > channel_end) {continue;}
     if(m_src.at(ch).isConnected()) {
       dataSink<uint16_t> rawpump;
       m_src.at(ch) >> rawpump;
@@ -2052,4 +2058,9 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
 
 uint16_t hal::GetADC(uint8_t rpc_par1){
   return _testboard->GetADC(rpc_par1);
+}
+
+void hal::setReadoutChannels(uint8_t start, uint8_t end){
+    channel_start = start;
+    channel_end = end;
 }
