@@ -23,6 +23,7 @@ hal::hal(std::string name) :
   m_roccount(0),
   m_tokenchains(),
   m_daqstatus(),
+  hubId1(-1),
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
   m_splitter(),
@@ -1677,7 +1678,8 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
   // Data acquisition with real TBM:
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
     // Split the total buffer size when having more than one channel
-    buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
+    // buffersize /= (m_tbmtype >= TBM_09 ? 4 : 2);
+    buffersize /= 8;
 
     // Check if we have all information needed concerning the token chains:
     if(m_tokenchains.size() < 2 || (m_tbmtype >= TBM_09 && m_tokenchains.size() < 4)) throw 1;

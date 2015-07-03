@@ -1259,8 +1259,8 @@ vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double ns
       LOG(logDEBUG) << "XXX problem in the ordering of the scurveMaps results ThrN map has name " << hn->GetName(); 
       continue;
     }
-    TH1* d1 = distribution(h2, 256, 0., 256.); 
-    TH1* dn = distribution(hn, 256, 0., 256.); 
+    TH1* d1 = distribution(h2, 256, 1., 256.); 
+    TH1* dn = distribution(hn, 256, 1., 256.); 
     double minThrLimit = TMath::Max(1., d1->GetMean() - nsigma*d1->GetRMS());
     double minThrNLimit = TMath::Max(1., dn->GetMean() - nsigma*dn->GetRMS());
     delete d1; 

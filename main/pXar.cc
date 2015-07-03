@@ -174,11 +174,23 @@ int main(int argc, char *argv[]){
       vector<uint8_t> i2cAddr = configParameters->getI2cAddresses(); 
       for (unsigned int i = 0; i < i2cAddr.size(); ++i) i2cstring += Form(" %d", (int)i2cAddr[i]); 
       LOG(logINFO) << "custom i2c addresses: " << i2cstring; 
+      if (configParameters->getLayer1Enable()) {
+          api->initDUT(true,
+          configParameters->getHubId0(),
+          configParameters->getHubId1(),
+          configParameters->getTbmType(), tbmDACs,
+          configParameters->getRocType(), rocDACs,
+          rocPixels,
+          i2cAddr);
+      }
+      else {
+          
       api->initDUT(configParameters->getHubId(),
 		   configParameters->getTbmType(), tbmDACs, 
 		   configParameters->getRocType(), rocDACs, 
 		   rocPixels, 
 		   i2cAddr);
+       }
     } else if (configParameters->getLayer1Enable()) {
       api->initDUT(true,
 	       configParameters->getHubId0(),

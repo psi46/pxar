@@ -67,8 +67,10 @@ namespace pxar {
     : stopAtEmptyData(endlessStream), tb(src), channel(daqchannel), chainlength(tokenChainLength), chainlengthOffset(0), defaultChainlength(8), connected(true), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0) {
       for (unsigned i = 0; i < channel; i++)
         chainlengthOffset += chainlength.at(i);
+      if (2)
+        chainlengthOffset = ((chainlengthOffset + 4 ) % 16);
       if (tbmtype >= TBM_09)
-        defaultChainlength = 4;
+        defaultChainlength = 2;
     }
   dtbSource() : connected(false) {}
     bool isConnected() { return connected; }
