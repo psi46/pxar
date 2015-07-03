@@ -1965,6 +1965,7 @@ uint32_t hal::daqBufferStatus() {
   for(uint8_t channel = 0; channel < 8; channel++) {
     if(m_daqstatus.size() > channel && m_daqstatus.at(channel)) {
       buffered_data += _testboard->Daq_GetSize(channel);
+      LOG(logDEBUGHAL) << "daqbufferstatus" << static_cast<int>(channel) << ": " << _testboard->Daq_GetSize(channel);
     }
   }
   return buffered_data;
