@@ -102,10 +102,30 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
   std::vector<uint8_t> rocI2Cs;
-  return initDUT(hubid, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+  return initDUT(std::vector<uint8_t>(1,hubid), tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(std::vector<uint8_t> hubids,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels) {
+  std::vector<uint8_t> rocI2Cs;
+  return initDUT(hubids, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
 bool pxarCore::initDUT(uint8_t hubid,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels,
+		       std::vector<uint8_t> rocI2Cs) {
+  return initDUT(std::vector<uint8_t>(1,hubid), tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(std::vector<uint8_t> hubids,
 		       std::string tbmtype, 
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
@@ -116,7 +136,18 @@ bool pxarCore::initDUT(uint8_t hubid,
   // Check if the HAL is ready:
   if(!_hal->status()) return false;
 
-  // Verification/sanitry checks of supplied DUT configuration values
+  // Verification/sanity checks of supplied DUT configuration values
+
+  // Check if the number of hub ids and TBM core settings match:
+  if(tbmDACs.empty()) {
+    // No TBM: store the first hubId, ignore the rest:
+    _dut->hubId = hubids.front();
+  }
+  else if(2*hubids.size() != tbmDACs.size()) {
+    LOG(logCRITICAL) << "Hm, we have " << tbmDACs.size() << " TBM Cores but " << hubids.size() << " HUB ids.";
+    LOG(logCRITICAL) << "This cannot end well...";
+    throw InvalidConfig("Mismatch between number of HUB addresses and TBM Cores");
+  }
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
   if(!rocI2Cs.empty()) {
@@ -173,29 +204,22 @@ bool pxarCore::initDUT(uint8_t hubid,
 
   // First initialized the API's DUT instance with the information supplied.
 
-  // Store the hubId:
-  _dut->hubId = hubid;
-
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
 
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
 
     LOG(logDEBUGAPI) << "Processing TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin());
-    // Prepare a new TBM configuration
-    tbmConfig newtbm;
 
-    // Set the TBM type (get value from dictionary)
-    newtbm.type = stringToDeviceCode(tbmtype);
-    if(newtbm.type == 0x0) {
-      LOG(logCRITICAL) << "Invalid TBM type \"" << tbmtype << "\"";
-      throw InvalidConfig("Invalid TBM type.");
-    }
+    // Prepare a new TBM configuration of the given type:
+    tbmConfig newtbm(stringToDeviceCode(tbmtype));
 
-    // Standard setup for token chain lengths:
-    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
-    else if(newtbm.type >= TBM_09) { for(size_t i = 0; i < 2; i++) newtbm.tokenchains.push_back(4); }
-    else if(newtbm.type >= TBM_08) { newtbm.tokenchains.push_back(8); }
+    // Set the hub id for this TBM core (same hub id for two cores):
+    newtbm.hubid = hubids.at((tbmIt - tbmDACs.begin())/2);
+    
+    // Check if this is core alpha or beta and store it:
+    if((tbmIt - tbmDACs.begin())%2 == 0) { newtbm.core = 0xE0; } // alpha core
+    else { newtbm.core = 0xF0; } // beta core
 
     // Loop over all the DAC settings supplied and fill them into the TBM dacs
     for(std::vector<std::pair<std::string,uint8_t> >::iterator dacIt = (*tbmIt).begin(); dacIt != (*tbmIt).end(); ++dacIt) {
@@ -220,10 +244,6 @@ bool pxarCore::initDUT(uint8_t hubid,
 	continue;
       }
 
-      // Check if this is fore core alpha or beta:
-      if((tbmIt - tbmDACs.begin())%2 == 0) { tbmregister = 0xE0 | tbmregister; } // alpha core
-      else { tbmregister = 0xF0 | tbmregister; } // beta core
-      
       std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
       ret = newtbm.dacs.insert( std::make_pair(tbmregister,value) );
       if(ret.second == false) {
@@ -242,15 +262,14 @@ bool pxarCore::initDUT(uint8_t hubid,
   if(_dut->tbm.size() == 1) {
     LOG(logDEBUGAPI) << "Only register settings for one TBM core supplied. Duplicating to second core.";
     // Prepare a new TBM configuration and copy over all settings:
-    tbmConfig newtbm;
-    newtbm.type = _dut->tbm.at(0).type;
+    tbmConfig newtbm(_dut->tbm.at(0).type);
     newtbm.tokenchains = _dut->tbm.at(0).tokenchains;
-    
+    // Flip the last bit of the TBM core identifier:
+    newtbm.core = _dut->tbm.at(0).core ^ (1u << 4);
+
+    // Copy  the register settings:
     for(std::map<uint8_t,uint8_t>::iterator reg = _dut->tbm.at(0).dacs.begin(); reg != _dut->tbm.at(0).dacs.end(); ++reg) {
-      uint8_t tbmregister = reg->first;
-      // Flip the last bit of the TBM core identifier:
-      tbmregister ^= (1u << 4);
-      newtbm.dacs.insert(std::make_pair(tbmregister,reg->second));
+      newtbm.dacs.insert(std::make_pair(reg->first,reg->second));
     }
     _dut->tbm.push_back(newtbm);
   }
@@ -270,7 +289,7 @@ bool pxarCore::initDUT(uint8_t hubid,
   // Printout for final token chain lengths selected for each TBM channel and calculate the sum:
   uint16_t nrocs_total = 0;
   for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
-    LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbm - _dut->tbm.begin()) 
+    LOG(logDEBUGAPI) << "TBM Core " << tbm->corename() 
 		     << " Token Chains: " << listVector(tbm->tokenchains);
     for(size_t i = 0; i < tbm->tokenchains.size(); i++) { nrocs_total += tbm->tokenchains.at(i); }
   }
@@ -351,12 +370,16 @@ bool pxarCore::programDUT() {
   _hal->Pon();
 
   // Start programming the devices here!
-  _hal->setHubId(_dut->hubId); 
 
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  if(!enabledTbms.empty()) {LOG(logDEBUGAPI) << "Programming TBMs...";}
+  // No TBM - we need to set the global hub ID once:
+  if(enabledTbms.empty()) {
+    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(_dut->hubId);
+    _hal->setHubId(_dut->hubId);
+  }
+  else { LOG(logDEBUGAPI) << "Programming TBMs..."; }
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
+    _hal->initTBMCore((*tbmit));
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -686,9 +709,6 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
   if(_dut->tbm.size() > static_cast<size_t>(tbmid)) {
     // Set the register only in the given TBM (even if that is disabled!)
     
-    // Get the core (alpha/beta) from one of the registers:
-    _register |= _dut->tbm.at(tbmid).dacs.begin()->first&0xF0;
-    
     // Update the DUT register Value:
     ret = _dut->tbm.at(tbmid).dacs.insert(std::make_pair(_register,regValue));
     if(ret.second == true) {
@@ -699,7 +719,10 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
       LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
     }
     
-    _hal->tbmSetReg(_register,regValue);
+    _hal->tbmSetReg(_dut->tbm.at(tbmid).hubid,_dut->tbm.at(tbmid).core | _register,regValue);
+    
+    // update HAL no token pass setting:
+    _hal->tbmSetNoTokenPass(tbmid,_dut->tbm.at(tbmid).tokenchains.size(),_dut->tbm.at(tbmid).NoTokenPass());
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
