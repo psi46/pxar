@@ -244,7 +244,7 @@ namespace pxar {
 	try {
 	  // Check if this is just fill bits of the TBM09 data stream 
 	  // accounting for the other channel:
-	  if(GetTokenChainLength() == 4 && (raw&0xffffff) == 0xffffff) {
+	  if(GetEnvelopeType() >= TBM_09 && (raw&0xffffff) == 0xffffff) {
 	    LOG(logDEBUGPIPES) << "Empty hit detected (TBM09 data streams). Skipping.";
 	    continue;
 	  }
