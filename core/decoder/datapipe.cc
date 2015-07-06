@@ -33,7 +33,8 @@ namespace pxar {
       record.SetStartError();
       Get();
     }
-    record.Add(GetLast());
+    // Store the TBM header word and attach the channel ID in unused header bits:
+    record.Add(GetLast() | ((GetChannel() & 0x7) << 8));
 
     // Else keep reading and adding samples until we find any marker.
     while ((Get() & 0xe000) != 0xc000) {
