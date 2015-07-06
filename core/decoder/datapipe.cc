@@ -296,7 +296,6 @@ namespace pxar {
       // Check if we have another ROC header (UB and B levels):
       // Here we have to assume the first two words are a ROC header because we rely on
       // its Ultrablack and Black level as initial values for auto-calibration:
-      int16_t levelS = (black - ultrablack)/8;
 
       if(roc_n < 0 || 
 	 // Ultrablack level:
@@ -456,17 +455,18 @@ namespace pxar {
 
     // Take the mean for a window of 1000 samples, initial measurement included
     if(slidingWindow < 1000) {
+      slidingWindow++;
       sumUB += expandSign(word1 & 0x0fff);
       ultrablack = static_cast<float>(sumUB)/slidingWindow;
       sumB += expandSign(word2 & 0x0fff);
       black = static_cast<float>(sumB)/slidingWindow;
-      slidingWindow++;
     }
     // Sliding window:
     else {
       ultrablack = static_cast<float>(999)/1000*ultrablack + static_cast<float>(1)/1000*expandSign(word1 & 0x0fff);
       black = static_cast<float>(999)/1000*black + static_cast<float>(1)/1000*expandSign(word2 & 0x0fff);
     }
+    levelS = (black - ultrablack)/8;
   }
 
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
