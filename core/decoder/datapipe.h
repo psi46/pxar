@@ -161,6 +161,7 @@ namespace pxar {
 
     // Readback decoding:
     void evalReadback(uint8_t roc, uint16_t val);
+    bool readback_dirty;
     std::vector<uint16_t> count;
     std::vector<uint16_t> shiftReg;
     std::vector<std::vector<uint16_t> > readback;
@@ -182,7 +183,7 @@ namespace pxar {
     void evalLastDAC(uint8_t roc, uint16_t val);
 
   public:
-  dtbEventDecoder() : decodingStats(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), sumUB(0), sumB(0), slidingWindow(0) {};
+  dtbEventDecoder() : decodingStats(), readback_dirty(false), count(), shiftReg(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), sumUB(0), sumB(0), slidingWindow(0) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();

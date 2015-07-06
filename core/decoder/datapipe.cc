@@ -438,6 +438,8 @@ namespace pxar {
       LOG(logERROR) << "Number of ROCs (" << static_cast<int>(roc_n+1)
 		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
       decodingStats.m_errors_roc_missing++;
+      // This breaks the readback for the missing roc, let's ignore this readback cycle:
+      readback_dirty = true;
       // Clearing event content:
       roc_Event.Clear();
     }
@@ -506,10 +508,11 @@ namespace pxar {
       }
       else {
 	// If this is the first readback cycle of the ROC, ignore the mismatch:
-	if(readback.size() <= roc || readback.at(roc).empty()) {
+	if(readback.size() <= roc || readback.at(roc).empty() || readback_dirty) {
 	  LOG(logDEBUGAPI) << "ROC " << static_cast<int>(roc)
 			   << ": first readback marker after "
 			   << count.at(roc) << " readouts. Ignoring error condition.";
+	  readback_dirty = false;
 	}
 	else {
 	  LOG(logWARNING) << "ROC " << static_cast<int>(roc)
