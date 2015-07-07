@@ -176,6 +176,7 @@ namespace pxar {
     void AverageAnalogLevel(int16_t word1, int16_t word2);
     int32_t ultrablack;
     int32_t black;
+    int16_t levelS;
     int32_t sumUB, sumB;
     size_t slidingWindow;
     
@@ -183,7 +184,7 @@ namespace pxar {
     void evalLastDAC(uint8_t roc, uint16_t val);
 
   public:
-  dtbEventDecoder() : decodingStats(), readback_dirty(false), count(), shiftReg(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), sumUB(0), sumB(0), slidingWindow(0) {};
+  dtbEventDecoder() : decodingStats(), readback_dirty(false), count(), shiftReg(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), levelS(0), sumUB(0), sumB(0), slidingWindow(0) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();

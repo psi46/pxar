@@ -72,7 +72,7 @@ namespace pxar {
       buffer.insert(buffer.end(), data.begin(), data.end());
       LOG(logDEBUGPIPES) << "-------------------------";
       LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB (" << buffer.size() << " words buffered):";
-      LOG(logDEBUGPIPES) << listVector(buffer,true);
+      if(devicetype < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(buffer,false,true); }
       LOG(logDEBUGPIPES) << "-------------------------";
     }
 
