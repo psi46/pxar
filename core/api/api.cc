@@ -207,6 +207,9 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
 
+  // Tampered flag for token chains:
+  bool token_chains_tampered = false;
+
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator tbmIt = tbmDACs.begin(); tbmIt != tbmDACs.end(); ++tbmIt) {
 
     LOG(logDEBUGAPI) << "Processing TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin());
@@ -234,6 +237,7 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
 	LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin()) 
 			 << " data stream 1 configured to have a token chain with "
 			 << static_cast<int>(value) << " ROCs.";
+	token_chains_tampered = true;
 	continue;
       }
       if(newtbm.tokenchains.size() > 1 && tbmregister == TBM_TOKENCHAIN_1) {
@@ -241,6 +245,7 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
 	LOG(logDEBUGAPI) << "TBM Core " << static_cast<int>(tbmIt - tbmDACs.begin()) 
 			 << " data stream 2 configured to have a token chain with "
 			 << static_cast<int>(value) << " ROCs.";
+	token_chains_tampered = true;
 	continue;
       }
 
@@ -286,13 +291,6 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
     LOG(logDEBUGAPI) << "RDA/Tout DTB input termination set to LVDS.";
   }
 
-  // Printout for final token chain lengths selected for each TBM channel and calculate the sum:
-  uint16_t nrocs_total = 0;
-  for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
-    LOG(logDEBUGAPI) << "TBM Core " << tbm->corename() 
-		     << " Token Chains: " << listVector(tbm->tokenchains);
-    for(size_t i = 0; i < tbm->tokenchains.size(); i++) { nrocs_total += tbm->tokenchains.at(i); }
-  }
 
   // Initialize ROCs:
   for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator rocIt = rocDACs.begin(); rocIt != rocDACs.end(); ++rocIt){
@@ -346,11 +344,51 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
     _dut->roc.push_back(newroc);
   }
 
+  // Printout for final token chain lengths selected for each TBM channel and calculate the sum:
+  uint16_t nrocs_total = 0;
+  for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
+    for(size_t i = 0; i < tbm->tokenchains.size(); i++) { nrocs_total += tbm->tokenchains.at(i); }
+  }
+
   // Check number of ROCs agains total token chain length:
   if(!_dut->tbm.empty() && _dut->roc.size() != nrocs_total) {
-    LOG(logCRITICAL) << "Hm, we have " << _dut->roc.size() << " ROC configurations but a total token chain length of " << nrocs_total << " ROCs.";
-    LOG(logCRITICAL) << "This cannot end well...";
-    throw InvalidConfig("Mismatch between number of ROC configurations and total token chain length.");
+    // Apparently we have a longer total token chain than we have ROCs.
+    // Let's check if the user has tampered with the token chain lengths:
+    if(!token_chains_tampered) {
+      // No, it's the default token chain lengths.
+      // Let's try to figure out where the ROC is missing using the standard I2C assignment
+
+      // Reset the default token chain lengths:
+      for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
+	for(size_t i = 0; i < tbm->tokenchains.size(); i++) { tbm->tokenchains.at(i) = 0; }
+      }
+
+      // Add every ROC to the token chain where it should belong according to standard module I2C assignment:
+      for(std::vector<uint8_t>::iterator i2c = rocI2Cs.begin(); i2c != rocI2Cs.end(); i2c++) {
+	// TBM 08: two token chains
+	if(_dut->tbm.front().type < TBM_09) {
+	  LOG(logDEBUGAPI) << "ROC@I2C " << static_cast<int>(*i2c) << " belongs to TBM Core " << (*i2c)/8 << ", readout channel " << (*i2c)/8;
+	  _dut->tbm.at((*i2c)/8).tokenchains.at(0)++;
+	}
+	// single TBM 09: four token chains:
+	else if(_dut->tbm.size() < 3) {
+	  LOG(logDEBUGAPI) << "ROC@I2C " << static_cast<int>(*i2c) << " belongs to TBM Core " << (*i2c)/8 << ", readout channel " << (*i2c)%8/4;
+	  _dut->tbm.at((*i2c)/8).tokenchains.at((*i2c)%8/4)++;
+	}
+	else { throw InvalidConfig("Mismatch between number of ROC configurations and total token chain length."); }
+      }
+    }
+    else {
+      // The user has changed the token lengths by hand, this has to be corrected...
+      LOG(logCRITICAL) << "Hm, we have " << _dut->roc.size() << " ROC configurations but a total token chain length of " << nrocs_total << " ROCs.";
+      LOG(logCRITICAL) << "This cannot end well...";
+      throw InvalidConfig("Mismatch between number of ROC configurations and total token chain length.");
+    }
+  }
+
+  for(std::vector<tbmConfig>::iterator tbm = _dut->tbm.begin(); tbm != _dut->tbm.end(); tbm++) {
+    LOG(logDEBUGAPI) << "TBM Core " << tbm->corename() 
+		     << " Token Chains: " << listVector(tbm->tokenchains);
   }
 
 
