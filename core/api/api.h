@@ -248,7 +248,7 @@ namespace pxar {
      *
      *  In case of USB communication problems, pxar::UsbConnectionError is thrown.
      */
-    bool initDUT(uint8_t hubId,
+    bool initDUT(std::vector<uint8_t> hubIds,
 		 std::string tbmtype, 
 		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		 std::string roctype,
@@ -260,6 +260,31 @@ namespace pxar {
      *
      *  As above, but automatically assumes consecutively numbered I2C addresses for
      *  all attached ROCs, starting from zero.
+     */
+    bool initDUT(std::vector<uint8_t> hubids,
+		 std::string tbmtype, 
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		 std::string roctype,
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		 std::vector<std::vector<pixelConfig> > rocPixels);
+
+    /** Alternative initializer method for the DUT (attached devices).
+     *
+     *  As above, but only accepts one hub id for a single physical TBM
+     */
+    bool initDUT(uint8_t hubid,
+		 std::string tbmtype, 
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		 std::string roctype,
+		 std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		 std::vector<std::vector<pixelConfig> > rocPixels,
+		 std::vector<uint8_t> rocI2Cs);
+
+    /** Alternative initializer method for the DUT (attached devices).
+     *
+     *  As above, but automatically assumes consecutively numbered I2C addresses for
+     *  all attached ROCs, starting from zero and only accepts one hub id for a
+     *  single physical TBM.
      */
     bool initDUT(uint8_t hubid,
 		 std::string tbmtype, 
@@ -997,9 +1022,13 @@ namespace pxar {
      */
     std::string getRocType();
 
-    /** Function returning the enabled pixels configs for a specific ROC:
+    /** Function returning the enabled pixels configs for a specific ROC ID:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
+
+    /** Function returning the enabled pixels configs for a ROC with given I2C address:
+     */
+    std::vector< pixelConfig > getEnabledPixelsI2C(size_t roci2c);
 
     /** Function returning the enabled pixels configs for all ROCs:
      */
@@ -1061,7 +1090,7 @@ namespace pxar {
      */
     std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
-    /** Function returning the token chain length:
+    /** Function returning the token chain lengths:
      */
     std::vector<uint8_t> getTbmChainLengths(size_t tbmId);
 

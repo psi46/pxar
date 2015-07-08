@@ -55,7 +55,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains);
+    void initTBMCore(tbmConfig tbm);
 
     /** Change the type of the TBM type member in HAL
      */
@@ -113,15 +113,20 @@ namespace pxar {
      */
     bool rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs);
 
-    /** Set a register on a specific TBM tbmId
+    /** Set a register on a specific TBM at hubid
      */
-    bool tbmSetReg(uint8_t regId, uint8_t regValue);
+    bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue);
 
     /** Set all registers on a specific TBM tbmId
      *  registers are provided as map of uint8_t,uint8_t pairs with Reg Id and value.
      */
-    bool tbmSetRegs(std::map< uint8_t, uint8_t > regPairs);
+    bool tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > regPairs);
 
+    /** Set no token pass so that token chain lengths of zero are used. tbmid is here the number of the
+	TBM core, not the hubid. channels marks, how many channels need to be flagged on this core
+     */
+    void tbmSetNoTokenPass(uint8_t tbmid, uint8_t channels, bool notokenpass);
+    
     /** Function to set and update the pattern generator command list on the DTB
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);
@@ -420,6 +425,7 @@ namespace pxar {
     uint8_t m_roctype;
     uint8_t m_roccount;
     std::vector<uint8_t> m_tokenchains;
+    std::vector<bool> m_notokenpass;
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
     uint8_t hubId;

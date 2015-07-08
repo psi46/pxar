@@ -326,9 +326,9 @@ uint32_t CTestboard::Daq_Open(uint32_t buffersize, uint8_t channel) {
   if(channel > daq_buffer.size()) return 0;
   
   // Reserve some memory (not necessary but nice...)
+  // Dividing by 2 since we're talking abour 16bit words here, not bytes:
   daq_buffer.at(channel).reserve(buffersize/2);
-
-  return daq_buffer.at(channel).capacity();
+  return daq_buffer.at(channel).capacity()*2;
 }
 
 void CTestboard::Daq_Close(uint8_t channel) {

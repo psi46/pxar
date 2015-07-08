@@ -23,6 +23,8 @@ typedef unsigned char uint8_t;
 #include <limits>
 #include <cmath>
 
+#include "constants.h"
+
 namespace pxar {
 
   /** Class for storing decoded pixel readout data
@@ -414,11 +416,18 @@ namespace pxar {
    */
   class DLLEXPORT tbmConfig {
   public:
-  tbmConfig() : dacs(), type(0), tokenchains(), enable(true) {}
+    tbmConfig(uint8_t tbmtype);
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
+    uint8_t hubid;
+    uint8_t core;
     std::vector<uint8_t> tokenchains;
     bool enable;
+
+    // Check token pass setting:
+    bool NoTokenPass() { return (dacs[0x00]&0x40); };
+    // Return readable name of the core:
+    std::string corename() { return ((core&0x10) ? "Beta" : "Alpha"); };
   };
 
   /** Class for statistics on event and pixel decoding

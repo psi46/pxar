@@ -267,7 +267,7 @@ PixParTab::PixParTab(PixGui *p, ConfigParameters *cfg, string tabname) {
       map<string, TGTextEntry*>  rocTextEntries;
       amap = cmap[iroc];
       // ROC ID
-      cFrame->AddFrame(tcb = new TGCheckButton(cFrame, "XX"), 
+      cFrame->AddFrame(tcb = new TGCheckButton(cFrame, "XX", iroc), 
 		       new TGTableLayoutHints(iroc+1, iroc+2, 0, 1, kFixedWidth));
       tcb->SetText(Form((iroc>10?"%d":" %d"), iroc)); 
       tcb->Connect("Clicked()", "PixParTab", this, "selectRoc()");      
@@ -670,27 +670,15 @@ void PixParTab::updateParameters() {
 
 
 // ----------------------------------------------------------------------
-void PixParTab::selectRoc(int iroc) {
+void PixParTab::selectRoc(int /*iroc*/) {
   bool selected(false);
-  if (iroc == -1) {
-    TGButton *btn = (TGButton *) gTQSender;
-    if (kButtonDown == btn->GetState()) {
-      selected = true;
-    }
-    iroc = btn->WidgetId();
+  TGButton *btn = (TGButton *) gTQSender;
+  if (kButtonDown == btn->GetState()) {
+    selected = true;
+  } else {
+    selected = false;
   }
-
-  LOG(logDEBUG) << "selectRoc: iroc = " << iroc << " selected? " << selected;
-
-  if (false == selected) {
-    iroc = 0;
-    for (unsigned int i = 0; i < fSelectRoc.size(); ++i) {
-      if (kButtonDown == fSelectRoc[i]->GetState()) {
-	iroc = i;
-	break;
-      }
-    }
-  }
+  LOG(logDEBUG) << "selectRoc: ROC " << btn->WidgetId() << (selected?" selected": " deselected"); 
 
   updateSelection();
 }
