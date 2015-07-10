@@ -1682,6 +1682,8 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
 
   // Figure out the number of DAQ channels we need:
   if(m_tokenchains.empty()) { m_tokenchains.push_back(m_roccount); }
+  if(m_notokenpass.empty()) { m_notokenpass.push_back(false); }
+  
   LOG(logDEBUGHAL) << "Number of token chains: " << m_tokenchains.size();
   if(m_tokenchains.size() > DTB_DAQ_CHANNELS) {
     LOG(logCRITICAL) << "Cannot serve " << m_tokenchains.size() << " DAQ channels, only " << DTB_DAQ_CHANNELS << " available.";
