@@ -478,12 +478,15 @@ void PixTestTrim::trimBitTest() {
       fTrimBits[i][ix][iy] = pix[ipix].trim();
     }
   }
-  
+
+  fApi->setDAC("Vcal", 250);
+  fApi->setDAC("Vthrcomp", 15);
+
   vector<int>vtrim; 
-  vtrim.push_back(255);
-  vtrim.push_back(240);
-  vtrim.push_back(150);
-  vtrim.push_back(100);
+  vtrim.push_back(254);
+  vtrim.push_back(126);
+  vtrim.push_back(63);
+  vtrim.push_back(32);
 
   vector<int>btrim; 
   btrim.push_back(14);
@@ -553,6 +556,7 @@ void PixTestTrim::trimBitTest() {
 	  h1->Fill(dthr); 
 	}
       }
+      LOG(logDEBUG) << "ROC " << iroc << " step " << i << ": thr difference mean: " << h1->GetMean() << ", thr difference RMS: " << h1->GetRMS();
       fHistList.push_back(h1); 
     }
   }
