@@ -464,7 +464,37 @@ namespace pxar {
 	{};
     // Print all statistics to stdout:
     void dump();
-    friend statistics& operator+=(statistics &lhs, const statistics &rhs);
+    friend statistics& operator+=(statistics &lhs, const statistics &rhs) {
+      // Informational bits:
+      lhs.m_info_words_read += rhs.m_info_words_read;
+      lhs.m_info_events_empty += rhs.m_info_events_empty;
+      lhs.m_info_events_valid += rhs.m_info_events_valid;
+      lhs.m_info_pixels_valid += rhs.m_info_pixels_valid;
+
+      // Event errors:
+      lhs.m_errors_event_start += rhs.m_errors_event_start;
+      lhs.m_errors_event_stop += rhs.m_errors_event_stop;
+      lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
+      lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
+      lhs.m_errors_event_invalid_xor += rhs.m_errors_event_invalid_xor;
+
+      // TBM errors:
+      lhs.m_errors_tbm_header += rhs.m_errors_tbm_header;
+      lhs.m_errors_tbm_trailer += rhs.m_errors_tbm_trailer;
+      lhs.m_errors_tbm_eventid_mismatch += rhs.m_errors_tbm_eventid_mismatch;
+
+      // ROC errors:
+      lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
+      lhs.m_errors_roc_readback += rhs.m_errors_roc_readback;
+
+      // Pixel decoding errors:
+      lhs.m_errors_pixel_incomplete += rhs.m_errors_pixel_incomplete;
+      lhs.m_errors_pixel_address += rhs.m_errors_pixel_address;
+      lhs.m_errors_pixel_pulseheight += rhs.m_errors_pixel_pulseheight;
+      lhs.m_errors_pixel_buffer_corrupt += rhs.m_errors_pixel_buffer_corrupt;
+
+      return lhs;
+    };
 
     uint32_t info_words_read() {return m_info_words_read; }
     uint32_t info_events_empty() {return m_info_events_empty; }
