@@ -23,7 +23,7 @@ ClassImp(PixTestGainPedestal)
 
 // ----------------------------------------------------------------------
 PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0)  {
+  fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0), fVcalStep(-1)  {
   PixTest::init();
   init(); 
 
@@ -77,6 +77,10 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
 	fParDumpHists = atoi(sval.c_str()); 
+      }
+      if (!parName.compare("vcalstep")) {
+        fVcalStep = atoi(sval.c_str());
+        LOG(logDEBUG) << "PixTestGainPedestal::PixTest() fVcalStep = " << fVcalStep;
       }
       setToolTips();
       break;
@@ -189,11 +193,10 @@ void PixTestGainPedestal::measure() {
 
 
   fLpoints.clear();
-  fLpoints.push_back(50); 
-  fLpoints.push_back(100); 
-  fLpoints.push_back(150); 
-  fLpoints.push_back(200); 
-  fLpoints.push_back(250); 
+
+  for( int value = 10; value <= 250; value += fVcalStep ){
+    fLpoints.push_back(value);
+  }
 
   fHpoints.clear();
   if (1 == fParExtended) {
