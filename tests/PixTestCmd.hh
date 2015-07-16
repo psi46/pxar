@@ -170,7 +170,10 @@ class Keyword{
     bool match(const char * s, int & value, const char * s1);
     bool match(const char * s1, const char * s2);
     bool match(const char * s1, const char * s2, string &);
-    bool match(const char * s1 , const char * s2, int & );
+    bool match(const char * s1 ,const char * s2, int & );
+    bool match(const char * s1 ,const char * s2, int &, int & );
+    bool match(const char * s1 ,const char * s2, int &, int &, int& );
+
     bool match(const char * s, string & s1, vector<string> & options, ostream & err);
     bool match(const char *, int &);
     bool match(const char *, int &, int &);
@@ -275,10 +278,12 @@ class Statement{
 
 class DRecord{
     public:
+    uint8_t channel;
     uint8_t type;
     uint32_t w1,w2;
     uint32_t data;
-    DRecord(uint8_t T=0xff, uint32_t D=0x00000000, uint16_t W1=0x000, uint16_t W2=0x0000){
+    DRecord(uint8_t ch=0, uint8_t T=0xff, uint32_t D=0x00000000, uint16_t W1=0x000, uint16_t W2=0x0000){
+        channel = ch;
         type = T;
         data = D;
         w1 = W1;
@@ -332,12 +337,24 @@ class CmdProc {
   
   int fDeser400XOR1;
   int fDeser400XOR2;
-  int fDeser400XOR1sum[8];
+  int fDeser400XOR1sum[8];  // count transitions at the 8 phases
   int fDeser400XOR2sum[8];
   int fDeser400err;
   static int fPrerun;
   static bool fFW35;  // for fw<=3.5, to be removed
+
+   // xor and error counting per daq channel, supposed to replace 
+   // the global counting variables above at some point
+   static const size_t nDaqChannel=8;
+   unsigned int fDeser400XOR[nDaqChannel];
+   unsigned int fDeser400SymbolErrors[nDaqChannel];
+   unsigned int fDeser400PhaseErrors[nDaqChannel];
+   unsigned int fDeser400XORChanges[nDaqChannel];
+   unsigned int fRocReadBackErrors[nDaqChannel];
+   unsigned int fNTBMHeader[nDaqChannel];
+   uint16_t fRocHeaderData[17];
   
+  bool fIgnoreReadbackErrors;
   bool verbose;
   bool redirected;
   bool fEchoExecs;  // echo command from executed files
@@ -349,7 +366,7 @@ class CmdProc {
   int tbmset   (string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
-  int tbmscan();
+  int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
   
   int rawscan(int level=0);
   int rocscan();
@@ -366,6 +383,7 @@ class CmdProc {
   int restoreDaq(int verbosity=0);
   int runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0, bool setup=true);
   int runDaq(int ntrig, int ftrigkhz, int verbosity=0);
+  int daqStatus();
   int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
   int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1);
   int pixDecodeRaw(int, int level=1);
