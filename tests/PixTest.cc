@@ -2253,7 +2253,9 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
               if (trimBits < 15) {
                 LOG(logDEBUG) << " => trim bit: " << trimBits << " => " << (trimBits+1);
                 trimBits++;
-                diff_map[i]->Fill(1+(int)rocPixelConfig[i][foundPixel].column(), 1+ (int)rocPixelConfig[i][foundPixel].row());
+                int col = rocPixelConfig[i][foundPixel].column();
+                int row = rocPixelConfig[i][foundPixel].row();
+                diff_map[i]->SetBinContent(1 + col, 1 + row, diff_map[i]->GetBinContent(1 + col, 1 + row) + 1);
                 rocPixelConfig[i][foundPixel].setTrim(trimBits);
                 bool result = fApi->_dut->updateTrimBits(rocPixelConfig[i][foundPixel].column(), rocPixelConfig[i][foundPixel].row(), trimBits, rocIds[i]);
                 if (!result) {
@@ -2277,10 +2279,34 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
     }
   }
 
-  
-  LOG(logDEBUG) << "list of re-trimmed hot pixels:";         
+  int trimBitMargin = 1;
+  LOG(logDEBUG) << "list of re-trimmed hot pixels:";
   for (size_t i = 0; i< hotPixelList.size(); ++i) {
-    LOG(logDEBUG) << "ROC " << hotPixelList[i].first << " pix " << hotPixelList[i].second.first << "/" << hotPixelList[i].second.second;
+    int rocId = hotPixelList[i].first;
+    int col = hotPixelList[i].second.first;
+    int row = hotPixelList[i].second.second;
+
+    // find pixel config
+    int foundPixel = -1;
+    for(size_t k=0;k<rocPixelConfig[rocId].size();k++) {
+      if (rocPixelConfig[rocId][k].column() == col && rocPixelConfig[rocId][k].row() == row) {
+        foundPixel = k;
+        break;
+      }
+    }
+
+    // increase trim bits by trimBitMargin
+    if(foundPixel > -1){
+      int trimBits = (int)(rocPixelConfig[rocId][foundPixel].trim());
+      int trimBitsOld = trimBits;
+      trimBits+=trimBitMargin;
+      if (trimBits > 15) trimBits = 15;
+      diff_map[rocId]->SetBinContent(1 + col, 1 + row, diff_map[rocId]->GetBinContent(1 + col, 1 + row) + (trimBits - trimBitsOld));
+      rocPixelConfig[rocId][foundPixel].setTrim(trimBits);
+      fApi->_dut->updateTrimBits(col, row, trimBits, rocId);
+      
+    }
+    LOG(logDEBUG) << "ROC " << rocId << " pix " << col << "/" << row;
   }
 
 
