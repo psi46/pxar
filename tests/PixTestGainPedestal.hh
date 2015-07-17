@@ -26,7 +26,7 @@ public:
 
 private:
 
-  int         fParNtrig, fParShowFits, fParExtended, fParDumpHists;
+  int         fParNtrig, fParShowFits, fParExtended, fParDumpHists, fVcalStep;
 
   std::vector<shist256*>  fHists;
   std::vector<int>        fLpoints, fHpoints;

@@ -269,8 +269,8 @@ void PixTestTiming::PhaseScan() {
       LOG(logDEBUG) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
       fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
       int NFunctionalROCPhases = 0;
-      fApi->daqStart();
       for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
+        fApi->daqStart();
         //if (ithtdelay==2) continue;
         h3 = bookTH2D(Form("ROCDelayScan_%d_%d",delaysetting/4,ithtdelay),Form("ROC Delay Scan: 160MHz Phase = %d 400MHz Phase = %d THT Delay = %d",iclk160,iclk400,ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
         h3->SetDirectory(fDirectory);
@@ -295,8 +295,8 @@ void PixTestTiming::PhaseScan() {
           }
         }
         if (h3->GetEntries()>0) rocdelayhists.push_back(h3);
+        fApi->daqStop();
       }
-      fApi->daqStop();
       if (NFunctionalROCPhases>0) {
         NFunctionalTBMPhases++;
         h1->Fill(iclk160,iclk400);
@@ -408,8 +408,8 @@ void PixTestTiming::ROCDelayScan() {
   TH2D *h1(0);
   vector<TH2D*> rocdelayhists;
 
-  fApi->daqStart();
   for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
+    fApi->daqStart();
     //if (ithtdelay==2) continue;
     h1 = bookTH2D(Form("ROCDelayScan%d",ithtdelay),Form("ROC Delay Scan: THT Delay = %d",ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
@@ -430,8 +430,8 @@ void PixTestTiming::ROCDelayScan() {
       }
     }
     rocdelayhists.push_back(h1);
+    fApi->daqStop();
   }
-  fApi->daqStop();
   
   //Draw plots
   for (size_t ihist = 0; ihist < rocdelayhists.size(); ihist++) {

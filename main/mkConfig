@@ -631,6 +631,7 @@ showFits            checkbox(0)
 extended            checkbox(0)
 dumpHists           checkbox(0)
 Ntrig               10
+vcalstep            10
 measure             button
 fit                 button
 save                button
