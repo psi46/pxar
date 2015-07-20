@@ -1261,6 +1261,230 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
 }
 
 
+int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdelay, int tokdelay){
+    int ntrig=100;
+    int ftrigkhz = 10;
+    int nroc=16;
+    uint8_t value=( (d160&0x7)<<5 ) + ( ( d400&0x7 )<<2);
+    int stat = tbmset("basee", 0, value);
+    if(stat>0){
+        out << "error setting delay  base E " << hex << value << dec << "\n";
+    }
+    
+    if (rocdelay>=0){
+        value = ( (tokdelay&0x1)<<7 ) + ( (htdelay&0x1)<<6 ) + ( (rocdelay&0x7)<<3 ) + (rocdelay&0x7);
+        stat = tbmset("basea",2, value);
+        if(stat>0){
+            out << "error setting delay  base E " << hex << value << dec << "\n";
+        }
+    }
+    tbmset("base4", 2, 0x80);// reset once after changing phases
+    
+    // waste a bit of time keeping the daq busy
+    for (unsigned int ne=0; ne<4; ne++){ countGood(2, ntrig, ftrigkhz, nroc); }
+    return countGood(nloop, ntrig, ftrigkhz, nroc);
+}
+
+
+
+bool CmdProc::find_midpoint(int threshold, int data[], uint8_t & position, int & width){
+
+    width=0;
+    for(int i=0; i<8; i++){
+        int w=0;
+        int j=0;
+        while((j<8) && (data[ (i+j) % 8 ]>=threshold) ){
+            w++;
+            j++;
+        }
+        if (w>width){
+            width=w;
+            position = int(i+w/2) % 8;
+        }
+    }
+    
+    return width>0;
+}
+
+
+bool CmdProc::find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width){
+    // indirect sort according to time module range
+    int m[8]={0,1,2,3,4,5,6,7};
+    for(int i=0; i<8; i++){
+        for(int j=0; j<7; j++){
+            if(  fmod(m[j]*step,range) >  fmod(m[j+1]*step,range) ){
+                int tmp=m[j]; m[j]=m[j+1]; m[j+1]=tmp;
+            }
+        }
+    }
+    // now data[m[*]] is time-ordered
+    
+    width=0;
+    for(int i=0; i<8; i++){
+        int w=0;
+        int j=0;
+        while( (j<8) && (data[ m[(i+j) % 8] ]>=threshold) ){
+            w++;
+            j++;
+        }
+        if (w>width){
+            width=w;
+            position = int(i+w/2) % 8;
+        }
+    }
+    
+    return width>0;
+}
+
+
+int CmdProc::find_timing(int npass){
+    // npass is the minimal number of passes
+    
+    string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
+    if (! ((tbmtype=="tbm09c")||(tbmtype=="tbm08c")) ){
+        out << "This only works for TBM08c/09c! \n";
+    }
+
+    uint8_t register_0=0;
+    uint8_t register_e=0;
+    uint8_t register_a=0;
+    tbmget("base0", 0, register_0);
+    tbmget("basee", 0, register_e);
+    tbmget("basea", 0, register_a);
+    uint8_t d400= (register_e >> 2) & 0x7;
+    uint8_t d160= (register_e >> 5) & 0x7;
+    int tokendelay =(register_a >> 7) & 0x1;
+    int htdelay =   (register_a >> 6) & 0x1;
+    int rocdelay =  (register_a)&7;
+    
+
+    int nloop=10;
+    
+    // disable token pass
+    tbmsetbit("base0",2, 6, 1);
+    // diagonal scan to find something that works
+    int nmax=0;
+    for(uint8_t m=0; m<8; m++){
+        int nvalid = test_timing(nloop, m, m);
+        if(verbose) cout << "diag scan" << (int) m << "  valid=" << nvalid << endl;
+        if (nvalid>nmax){
+            d400 = m; 
+            d160 = m; 
+            nmax = nvalid;
+        }
+    }
+    if (nmax==0){
+        out << " no working phases found ";
+        tbmset("base0",2,register_0);
+        tbmset("basee",2,register_e);
+        return 0;
+    }
+    
+    
+    for(int pass=0; pass<3; pass++){
+        
+         // scan 160 MHz @ selected position
+        int test160[8]={0,0,0,0,0,0,0,0};
+        for (uint8_t m=0; m<8; m++){
+            if (pass==0){
+                test160[m] = test_timing(nloop, m, d400);
+            }else{
+                test160[m] = test_timing(nloop, m, d400, rocdelay, htdelay, tokendelay);
+            }
+        }
+        
+        int w160=0;
+        if (! find_midpoint(nloop, 1.0, 6.25, test160, d160, w160)){
+            out << "160 MHz scan failed ";
+            return 0;
+        }
+        if(w160==8){
+            d160=6; // anything goes
+        }
+        out << "160 MHz set to " << dec << (int) d160 << "  width=" << (int) w160 << "\n";
+        flush(out);
+        
+        
+        // scan 400 MHz @ selected position
+        int test400[8]={0,0,0,0,0,0,0,0};
+        for (uint8_t m=0; m<8; m++){
+            if (pass==0){
+                test400[m] = test_timing(nloop, d160, m);
+            }else{
+                test400[m] = test_timing(nloop, d160, m, rocdelay, htdelay, tokendelay);
+            }
+        }
+        
+        int w400=0;
+        if (! find_midpoint(nloop, 0.4, 2.5, test400, d400, w400)){
+            out << "400 MHz scan failed ";
+            for(int m=0; m<8; m++) cout << m << " " << test400[m] << endl;
+            return 0;
+        }
+        out << "400 MHz set to " << dec << (int) d400 <<  "  width="<< (int) w400 << "\n";
+        flush(out);
+        
+     
+        // now enable trigger (again) and scan roc and header trailer delay
+        if(pass==0) tbmsetbit("base0",2, 6,0);
+        
+        
+        int wmax=0;
+        for(uint8_t dtoken=0; dtoken<2; dtoken++){
+            for(uint8_t dheader=0; dheader<2; dheader++){
+                int test[8]={0,0,0,0,0,0,0,0};
+                for(uint8_t dport=0; dport<8; dport++){
+                    test[dport] = test_timing(nloop, d160, d400, dport, dheader, dtoken);
+                    if(verbose) {cout << (int) d160 << "," << (int) d400 << "," << (int)dport << "," << (int)dheader << "," << (int)dtoken << " -> " <<(int)test[dport] << endl;}
+                }
+                int w=0;
+                uint8_t d=0;
+                if(find_midpoint(nloop, 1.0, 6.25, test, d, w)){
+                    if( (w>wmax) || ( (w>0) && (w==wmax) && (dheader==dtoken)) ){
+                        wmax=w; 
+                        tokendelay = dtoken;
+                        htdelay = dheader;
+                        rocdelay = d;
+                    }
+                }
+            }
+        }
+        out << "selecting " << (int) d160 << " " << (int) d400 
+            << " " << (int) rocdelay
+            << " " << (int) htdelay
+            << " " << (int) tokendelay
+            << "   (160 400 rocs h/t token)\n";
+        flush(out);
+
+        
+        int nloop2=100;
+        int result=test_timing(nloop2, d160, d400, rocdelay, htdelay, tokendelay);
+        out << "result =  " <<  result << " / " << nloop2 <<" \n" ;
+        flush(out);
+        
+        if (result==nloop2) {
+             // restore base0 (token pass)
+            tbmset("base0", 2, register_0);
+            if(pass>=npass-1){
+                out << "successful, done. \n";
+               return 0;
+            }else{
+                out << "pass " << pass << " successful, continuing\n";
+            }
+        }else{
+            out << "pass " << pass <<" failed, retrying \n";
+        }
+    }
+
+    
+    out << "failed to find timings, sorry\n";
+    // restore initial state
+    tbmset("base0", 2, register_0);
+    tbmset("basea", 2, register_a);
+    tbmset("basee", 0, register_e);
+
+    return 0;
+}
 
 
 int CmdProc::rawscan(int level){
@@ -3065,7 +3289,10 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("scan","rocs")){ return  rocscan();}
     if (kw.match("scan","level")){ return levelscan();}
     if (kw.match("scan","raw", value)){return rawscan(value);}
-    
+    if (kw.match("timing")){return find_timing();}
+    int npass=0;
+    if (kw.match("timing",npass)){return find_timing(npass);}
+   
     return -1; // nothing done
 }
 

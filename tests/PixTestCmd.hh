@@ -363,11 +363,15 @@ class CmdProc {
   
   
   int tbmset(int address, int value);
-  int tbmset   (string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
+  int tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
   int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
-  
+  int test_timing(int nloop, int d160, int d400, int rocdelay=-1, int htdelay=0, int tokdelay=0);
+  int find_timing(int npass=0);
+  bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
+  bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
+
   int rawscan(int level=0);
   int rocscan();
   int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
