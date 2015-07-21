@@ -1322,17 +1322,14 @@ bool CmdProc::find_midpoint(int threshold, double step, double range,  int data[
     width=0;
     for(int i=0; i<8; i++){
         int w=0;
-        int j=0;
-        while( (j<8) && (data[ m[(i+j) % 8] ]>=threshold) ){
+        while( (w<8) && (data[ m[(i+w) % 8] ]>=threshold) ){
             w++;
-            j++;
         }
         if (w>width){
             width=w;
-            position = int(i+w/2) % 8;
+            position = m[int(i+w/2) % 8];
         }
     }
-    
     return width>0;
 }
 
@@ -1418,7 +1415,6 @@ int CmdProc::find_timing(int npass){
         int w400=0;
         if (! find_midpoint(nloop, 0.4, 2.5, test400, d400, w400)){
             out << "400 MHz scan failed ";
-            for(int m=0; m<8; m++) cout << m << " " << test400[m] << endl;
             return 0;
         }
         out << "400 MHz set to " << dec << (int) d400 <<  "  width="<< (int) w400 << "\n";
@@ -1453,6 +1449,7 @@ int CmdProc::find_timing(int npass){
             << " " << (int) rocdelay
             << " " << (int) htdelay
             << " " << (int) tokendelay
+            << "   width = " << wmax
             << "   (160 400 rocs h/t token)\n";
         flush(out);
 
