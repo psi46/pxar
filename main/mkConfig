@@ -693,10 +693,10 @@ EOF
 } else {
     print FH <<"EOF";
 -- Timing
-fastscan            checkbox(0)
 targetclk           4
 ntrig               10
 clocksdascan        button
+notokenpass         checkbox(0)
 phasescan           button
 levelscan           button
 tbmphasescan        button
