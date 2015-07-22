@@ -23,7 +23,7 @@ ClassImp(PixTestGainPedestal)
 
 // ----------------------------------------------------------------------
 PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0), fVcalStep(-1)  {
+  fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0), fVcalStep(10)  {
   PixTest::init();
   init(); 
 
