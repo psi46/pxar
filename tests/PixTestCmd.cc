@@ -3180,7 +3180,7 @@ int CmdProc::tb(Keyword kw){
         vector<Event> events;
         for(int m=0; m<nchunk; m++){
             fApi->daqTrigger(ntrig, 125);
-            usleep(1000);
+            //usleep(1000); breaks windows, doesn't help anyway
             try{
                 events = fApi->daqGetEventBuffer();   
             }catch(pxar::DataNoEvent){
