@@ -377,9 +377,12 @@ void PixTestPretest::setTimings() {
   fApi->_dut->maskAllPixels(true);
   
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  int nTBMs = (fApi->_dut->getTbmType() == "tbm09") ? 4 : 2;
-  if (fApi->_dut->getNTbms() == 0) nTBMs = 0; // reset the above if no TBM is present
-
+  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 1;
+  if (nTBMs) {
+    nTokenChains = 2;
+    if ((fApi->_dut->getTbmType() == "tbm09") || (fApi->_dut->getTbmType() == "tbm09c")) nTokenChains = 4;
+  }
   uint16_t period = 300;
 
   if (nTBMs==0) {
@@ -397,7 +400,7 @@ void PixTestPretest::setTimings() {
     catch(pxar::DataNoEvent &) {}
     fApi->daqStop();
     statistics results = fApi->getStatistics();
-    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
     if (results.errors()==0 && NEvents==fParNtrig) GoodDelaySettings = true;
     if (Log::ReportingLevel() >= logDEBUG) results.dump();
   }
@@ -411,32 +414,24 @@ void PixTestPretest::setTimings() {
       uint8_t TBMPhase = pll160<<5 | pll400<<2;
       LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
       fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
-
-      //Loop through the different ROC delays (4, 3, 5, 2, 6, 1)
-      int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
       fApi->daqStart();
-      for (int iROCDelay = 0; iROCDelay < 6 && !GoodDelaySettings; iROCDelay++) {
+
+      for (int iROCDelay = 0; iROCDelay < 8 && !GoodDelaySettings; iROCDelay++) {
         //Apply ROC Delays
-        int ROCDelay = ROCDelays[iROCDelay];
-        uint8_t ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        uint8_t ROCPhase = (3<<6) | (iROCDelay<<3) | iROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
         LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
-        for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
+        for (size_t itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
 
         //Test Delay Settings
-        fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
-        vector<rawEvent> daqRawEv;
-	try { daqRawEv = fApi->daqGetRawEventBuffer(); }
-	catch(pxar::DataNoEvent &) {}
-        for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
         Log::ReportingLevel() = Log::FromString("QUIET");
         vector<Event> daqEv;
         for (int interation=0; interation < fIterations; interation++) {
           fApi->daqTrigger(fParNtrig, period);
           try { daqEv = fApi->daqGetEventBuffer(); }
-	  catch(pxar::DataNoEvent &) {}
+          catch(pxar::DataNoEvent &) {}
         }
         statistics results = fApi->getStatistics();
-        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
         Log::ReportingLevel() = UserReportingLevel;
         LOG(logDEBUG) << "Number of Errors: " << results.errors();
         LOG(logDEBUG) << "Number of Events: " << NEvents;
@@ -447,7 +442,7 @@ void PixTestPretest::setTimings() {
           LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
           LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
           fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
-          for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
+          for (size_t itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
         }
       }
       fApi->daqStop();
