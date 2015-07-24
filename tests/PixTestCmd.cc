@@ -18,6 +18,9 @@
 #include <algorithm>
 #include <bitset>
 
+#include "timer.h"
+
+
 // #define DEBUG
 
 using namespace std;
@@ -934,7 +937,7 @@ void CmdProc::init()
     fD_names = _probeDict->getAllDigitalNames();
     fGetBufMethod = 1;
     fPixelConfigNeeded = true;
-    fTCT = 105;
+    fTCT = 106;
     fTRC = 10;
     fTTK = 30;
     fBufsize = 100000;
@@ -1263,7 +1266,7 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
 
 int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdelay, int tokdelay){
     int ntrig=100;
-    int ftrigkhz = 10;
+    int ftrigkhz = 100;
     int nroc=16;
     uint8_t value=( (d160&0x7)<<5 ) + ( ( d400&0x7 )<<2);
     int stat = tbmset("basee", 0, value);
@@ -1275,13 +1278,16 @@ int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdela
         value = ( (tokdelay&0x1)<<7 ) + ( (htdelay&0x1)<<6 ) + ( (rocdelay&0x7)<<3 ) + (rocdelay&0x7);
         stat = tbmset("basea",2, value);
         if(stat>0){
-            out << "error setting delay  base E " << hex << value << dec << "\n";
+            out << "error setting delay  base A " << hex << value << dec << "\n";
         }
     }
     tbmset("base4", 2, 0x80);// reset once after changing phases
     
     // waste a bit of time keeping the daq busy
+    //timer t;
     for (unsigned int ne=0; ne<4; ne++){ countGood(2, ntrig, ftrigkhz, nroc); }
+    //cout << "wasted " << t << " ms " << endl;
+    
     return countGood(nloop, ntrig, ftrigkhz, nroc);
 }
 
@@ -1308,7 +1314,7 @@ bool CmdProc::find_midpoint(int threshold, int data[], uint8_t & position, int &
 
 
 bool CmdProc::find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width){
-    // indirect sort according to time module range
+    // indirect sort according to time modulo range
     int m[8]={0,1,2,3,4,5,6,7};
     for(int i=0; i<8; i++){
         for(int j=0; j<7; j++){
@@ -1396,7 +1402,7 @@ int CmdProc::find_timing(int npass){
             return 0;
         }
         if(w160==8){
-            d160=6; // anything goes
+            d160=0; // anything goes, 0 often seems to be ok
         }
         out << "160 MHz set to " << dec << (int) d160 << "  width=" << (int) w160 << "\n";
         flush(out);
@@ -1445,7 +1451,7 @@ int CmdProc::find_timing(int npass){
                 }
             }
         }
-        out << "selecting " << (int) d160 << " " << (int) d400 
+        out << "selecting " << dec << (int) d160 << " " << (int) d400 
             << " " << (int) rocdelay
             << " " << (int) htdelay
             << " " << (int) tokendelay
@@ -1456,7 +1462,7 @@ int CmdProc::find_timing(int npass){
         
         int nloop2=100;
         int result=test_timing(nloop2, d160, d400, rocdelay, htdelay, tokendelay);
-        out << "result =  " <<  result << " / " << nloop2 <<" \n" ;
+        out << "result =  " << dec<<  result << " / " << nloop2 <<" \n" ;
         flush(out);
         
         if (result==nloop2) {
@@ -1471,6 +1477,7 @@ int CmdProc::find_timing(int npass){
         }else{
             out << "pass " << pass <<" failed, retrying \n";
         }
+        flush(out);
     }
 
     
@@ -3106,27 +3113,98 @@ int CmdProc::tb(Keyword kw){
 
 
 
+    ntrig=1;
     int nchunk=1;
-    if( kw.match("daqtest",nchunk) ){
-
-        unsigned int ntrig=1000000;
+    if( kw.match("daqtest",ntrig,nchunk) ){
 
         fApi->daqStart(50000000, false);
         vector<rawEvent> daqRawEv;
-
-        fApi->daqStart();
         for(int m=0; m<nchunk; m++){
-            out << m+1 <<"M ";
+           int nerr=0;
             fApi->daqTrigger(ntrig, 125);
-            daqRawEv = fApi->daqGetRawEventBuffer();
-            if (  daqRawEv.size()==ntrig ){
-                out << "ok" << endl;
+            try{
+                daqRawEv = fApi->daqGetRawEventBuffer();
+            }catch(pxar::DataNoEvent){
+                out << " caught DataNoEvent exception. \n";
+                break; 
+            }
+            
+            int nword=0;
+            int evtId[8]={-1,-1,-1,-1,-1,-1,-1,-1};
+            if (  daqRawEv.size()==static_cast<unsigned int>(ntrig) ){
+                for(unsigned int i=0; i<daqRawEv.size(); i++){
+                    bool bad=false;
+                    nword += daqRawEv[i].GetSize();
+                    for(unsigned int j=0; j<daqRawEv[i].GetSize(); j++){
+                        uint16_t w=daqRawEv.at(i)[j];
+                        if ( (w&0xf000)==0xa000 ){
+                            uint8_t ch =  (w&0x0700) >>8 ;
+                            uint8_t id = w&0xff;
+                            if ( evtId[ch]==-1 ){
+                                id=evtId[ch];
+                            }
+                            else{
+                                evtId[ch]= (evtId[ch]+1) % 256;
+                                if( !(evtId[ch]==id) ){
+                                    bad = true;
+                                    evtId[ch]=-1;
+                                }
+                            }
+                        }
+                    }
+                    if (bad  ){
+                        nerr++;
+                        out << dec << setw(8) << i;
+                        for(unsigned int j=0; j<daqRawEv[i].GetSize(); j++){
+                            out<< setw(5) << hex << daqRawEv.at(i)[j];
+                        }
+                        out<<endl;
+                    }
+
+                }
+                out << (dec) << m << ") " << nword << " words, " << nerr << " errors" << endl;
             }else{
                 out << "event number error " << daqRawEv.size() << " ntrig=" << ntrig  << "  delta=" << ntrig-daqRawEv.size() << endl;
             }
             flush(out);
         }
         fApi->daqStop(false);
+        return 0;
+    }
+    
+    
+    
+    if( kw.match("daqtest2",ntrig,nchunk) ){
+        //fApi->daqStart(50000000, false);
+        fApi->daqStart();
+        vector<Event> events;
+        for(int m=0; m<nchunk; m++){
+            fApi->daqTrigger(ntrig, 125);
+            usleep(1000);
+            try{
+                events = fApi->daqGetEventBuffer();   
+            }catch(pxar::DataNoEvent){
+                out << " caught DataNoEvent exception. \n";
+                break; 
+            }
+        }
+        //fApi->daqStop(false);
+        fApi->daqStop();
+        return 0;
+    }
+    
+    int ndac;
+    if( kw.match("looptest",ntrig,ndac) ){
+        fApi->_dut->testAllPixels(true);
+        fApi->_dut->maskAllPixels(false);
+        // get daqErrors whenever ndac*ntrig*8*4160>DTB_SOURCE_BUFFER_SIZE / 4 (tbm09)
+        try{
+            fApi->getEfficiencyVsDAC("CalDel", 1, ndac, FLAG_FORCE_MASKED, ntrig);
+            uint32_t nDaqErrors= fApi->getStatistics().errors_pixel();
+            out << nDaqErrors << " errors " << endl;
+        }catch(pxar::DataMissingEvent){
+            out << "DataMissingEvent caught\n";
+        }
         return 0;
     }
     
@@ -3286,7 +3364,7 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("scan","rocs")){ return  rocscan();}
     if (kw.match("scan","level")){ return levelscan();}
     if (kw.match("scan","raw", value)){return rawscan(value);}
-    if (kw.match("timing")){return find_timing();}
+    if (kw.match("timing")){return find_timing(2);}
     int npass=0;
     if (kw.match("timing",npass)){return find_timing(npass);}
    
