@@ -194,7 +194,7 @@ void PixTestGainPedestal::measure() {
 
   fLpoints.clear();
 
-  for( int value = 10; value <= 250; value += fVcalStep ){
+  for( int value = 10; value <= 255; value += fVcalStep ){
     fLpoints.push_back(value);
   }
 
