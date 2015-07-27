@@ -673,6 +673,7 @@ namespace pxar {
      */
     bool daqStart();
     bool daqStart(const uint16_t flags);
+    bool daqStart(const int bufsize, const bool init);
     bool daqStart(const uint16_t flags, const int bufsize, const bool init);
 
     /** Function to get back the DAQ status

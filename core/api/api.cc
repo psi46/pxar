@@ -1249,6 +1249,10 @@ bool pxarCore::daqStart(const uint16_t flags) {
   return daqStart(flags,_daq_buffersize,true);
 }
 
+bool pxarCore::daqStart(const int buffersize, const bool init) {
+  return daqStart(0, buffersize, init);
+}
+
 bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool init) {
 
   if(!status()) {return false;}
