@@ -236,19 +236,24 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     while (dacmaxAdj <= dacmax) {
       LOG(logINFO) << "  dacScan step  from " << dacminAdj << " .. " << dacmaxAdj; 
       if (ntrig < ntrigMax) {
+	gSystem->ProcessEvents();
+	if (fStopTest) break;
 	dacScan(dac, ntrig, dacminAdj, dacmaxAdj, maps, ihit, flag); 
       } else {
 	LOG(logINFO) << "  dacScan split into " << ntrig/ntrigMax << " runs with ntrig = " << ntrigMax << (ntrig%ntrigMax > 0? " plus remainder": "");
 	for (int i = 0; i < ntrig/ntrigMax; ++i) {
+	  gSystem->ProcessEvents();
+	  if (fStopTest) break;
 	  LOG(logDEBUG) << "    run " << i+1 << " of " << ntrig/ntrigMax;
 	  dacScan(dac, ntrigMax, dacminAdj, dacmaxAdj, maps, ihit, flag);
 	}
-	if (ntrig%ntrigMax > 0) {
+	if (ntrig%ntrigMax > 0 && !fStopTest) {
 	  LOG(logDEBUG) << "    remainder ";
 	  dacScan(dac, ntrig%ntrigMax, dacminAdj, dacmaxAdj, maps, ihit, flag);
 	}
 	
       }
+      if (fStopTest) break;
       if (finalRun) break;
       dacminAdj = dacminAdj + stepsize; 
       dacmaxAdj = dacminAdj + stepsize - 1;
@@ -263,10 +268,12 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       } else {
 	LOG(logINFO) << "  dacScan split into " << ntrig/ntrigMax << " runs with ntrig = " << ntrigMax << (ntrig%ntrigMax > 0? " plus remainder": "");
 	for (int i = 0; i < ntrig/ntrigMax; ++i) {
+	  gSystem->ProcessEvents();
+	  if (fStopTest) break;
 	  LOG(logDEBUG) << "    run " << i+1 << " of " << ntrig/ntrigMax;
 	  dacScan(dac, ntrigMax, dacmin, dacmax, maps, ihit, flag);
 	}
-	if (ntrig%ntrigMax > 0) {
+	if (ntrig%ntrigMax > 0 && !fStopTest) {
 	  LOG(logDEBUG) << "    remainder ";
 	  dacScan(dac, ntrig%ntrigMax, dacmin, dacmax, maps, ihit, flag);
 	}
@@ -655,7 +662,7 @@ void PixTest::update() {
   //  cout << "PixTest::update()" << endl;
   Emit("update()"); 
   fPixSetup->getPixMonitor()->update();
-  
+  fStopTest = false;
 }
 
 // ----------------------------------------------------------------------

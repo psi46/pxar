@@ -265,8 +265,7 @@ void PixTab::handleButtons(Int_t id) {
     }
 
     case B_DOSTOP: {
-      fTest->runCommand("stop"); 
-      LOG(logDEBUG) << "stopping...and now what???";
+      fTest->stopTest();
       break;
     }
 

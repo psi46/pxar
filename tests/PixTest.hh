@@ -84,6 +84,8 @@ public:
   virtual void fullTest(); 
   /// allow execution of any button in the test 
   virtual void runCommand(std::string command); 
+  /// allow interrupt of test
+  virtual void stopTest() {fStopTest = true;}
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file
