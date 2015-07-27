@@ -21,7 +21,8 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1), fDumpOutputFile(-1) {
+  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fParNtrigPerStep(-1), 
+  fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1), fDumpOutputFile(-1) {
   PixTest::init();
   init(); 
 }
@@ -57,6 +58,9 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       }
       if (!parName.compare("dacs/step")) {
 	fParDacsPerStep = atoi(sval.c_str()); 
+      }
+      if (!parName.compare("ntrig/step")) {
+	fParNtrigPerStep = atoi(sval.c_str()); 
       }
 
       if (!parName.compare("adjustvcal")) {
@@ -190,8 +194,9 @@ void PixTestScurves::fullTest() {
   fParDac = "Vcal"; 
   fParDacLo = 0; 
   fParDacHi = 149;
-  fParDacsPerStep = 10;   
-  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d", fParNtrig));
+  fParDacsPerStep = -1;   
+  fParNtrigPerStep = 2;   
+  bigBanner(Form("PixTestScurves::fullTest() ntrig = %d, dacs/step = %d, ntrig/step = %d", fParNtrig, fParDacsPerStep, fParNtrigPerStep));
   scurves();
 
   // -- reset to no output
@@ -229,7 +234,17 @@ void PixTestScurves::scurves() {
   gStyle->SetPalette(1); 
   fDirectory->cd();
   cacheDacs();
-  banner(Form("PixTestScurves::scurves(%s), ntrig = %d", fParDac.c_str(), fParNtrig));
+
+  int dacsperstep(0); 
+  if (fParNtrigPerStep > 0) {
+    dacsperstep = 1000*fParNtrigPerStep + TMath::Abs(fParDacsPerStep);
+    if (fParDacsPerStep < 0) dacsperstep *= -1;
+  } else {
+    dacsperstep = fParDacsPerStep;
+  }
+
+  banner(Form("PixTestScurves::scurves(%s), ntrig = %d, dacs/step = %d, ntrig/step = %d, combined = %d", 
+	      fParDac.c_str(), fParNtrig, fParDacsPerStep, fParNtrigPerStep, dacsperstep));
 
   string command(fParDac);
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
@@ -248,7 +263,7 @@ void PixTestScurves::scurves() {
   if (fDumpProblematic) results |= 0x10;
 
   int FLAG = FLAG_FORCE_MASKED;
-  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, results, 1, FLAG); 
+  vector<TH1*> thr0 = scurveMaps(fParDac, "scurve"+fParDac, fParNtrig, fParDacLo, fParDacHi, dacsperstep, results, 1, FLAG); 
   if (thr0.size() < 1) {
     LOG(logERROR) << "no scurve result histograms received?!"; 
     return;

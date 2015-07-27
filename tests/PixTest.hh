@@ -332,7 +332,7 @@ protected:
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
 
-  bool                  fProblem;
+  bool                  fProblem, fStopTest;
 
   std::vector<TH2D*>    fXrayMaps; 
 

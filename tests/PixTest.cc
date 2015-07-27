@@ -34,6 +34,7 @@ PixTest::PixTest(PixSetup *a, string name) {
   fTimeStamp      = new TTimeStamp(); 
 
   fProblem        = false; 
+  fStopTest       = false;
   fOutputFilename = string(""); 
 
   fName = name;
@@ -194,11 +195,15 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int dacsperstep,
 				 int result, int ihit, int flag) {
 
+  // dacsperstep is also used to pass in ntrigmax (if >1000)
+  int ldacsperstep = dacsperstep%1000; 
+  int lntrigmax    = dacsperstep/1000;
+
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string type("hits"); 
   if (2 == ihit) type = string("pulseheight"); 
   print(Form("dac: %s name: %s ntrig: %d dacrange: %d .. %d (%d) %s flags = %d (plus default)",  
-	     dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, dacsperstep, type.c_str(), flag)); 
+	     dac.c_str(), name.c_str(), ntrig, dacmin, dacmax, ldacsperstep, type.c_str(), flag)); 
 
   vector<shist256*>  maps; 
   vector<TH1*>       resultMaps; 
@@ -219,14 +224,31 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
     }
   }
 
-  if (dacsperstep > 0) {
-    int stepsize(dacsperstep); 
+
+  int ntrigMax(1);
+  if (lntrigmax > 0) ntrigMax = lntrigmax; 
+
+  if (ldacsperstep > 0) {
+    int stepsize(ldacsperstep); 
     int dacminAdj = dacmin; 
     int dacmaxAdj = dacmin + stepsize - 1;
     bool finalRun(false);
     while (dacmaxAdj <= dacmax) {
       LOG(logINFO) << "  dacScan step  from " << dacminAdj << " .. " << dacmaxAdj; 
-      dacScan(dac, ntrig, dacminAdj, dacmaxAdj, maps, ihit, flag); 
+      if (ntrig < ntrigMax) {
+	dacScan(dac, ntrig, dacminAdj, dacmaxAdj, maps, ihit, flag); 
+      } else {
+	LOG(logINFO) << "  dacScan split into " << ntrig/ntrigMax << " runs with ntrig = " << ntrigMax << (ntrig%ntrigMax > 0? " plus remainder": "");
+	for (int i = 0; i < ntrig/ntrigMax; ++i) {
+	  LOG(logDEBUG) << "    run " << i+1 << " of " << ntrig/ntrigMax;
+	  dacScan(dac, ntrigMax, dacminAdj, dacmaxAdj, maps, ihit, flag);
+	}
+	if (ntrig%ntrigMax > 0) {
+	  LOG(logDEBUG) << "    remainder ";
+	  dacScan(dac, ntrig%ntrigMax, dacminAdj, dacmaxAdj, maps, ihit, flag);
+	}
+	
+      }
       if (finalRun) break;
       dacminAdj = dacminAdj + stepsize; 
       dacmaxAdj = dacminAdj + stepsize - 1;
@@ -236,7 +258,20 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
       }
     }
   } else {
-    dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
+      if (ntrig < ntrigMax) {
+	dacScan(dac, ntrig, dacmin, dacmax, maps, ihit, flag); 
+      } else {
+	LOG(logINFO) << "  dacScan split into " << ntrig/ntrigMax << " runs with ntrig = " << ntrigMax << (ntrig%ntrigMax > 0? " plus remainder": "");
+	for (int i = 0; i < ntrig/ntrigMax; ++i) {
+	  LOG(logDEBUG) << "    run " << i+1 << " of " << ntrig/ntrigMax;
+	  dacScan(dac, ntrigMax, dacmin, dacmax, maps, ihit, flag);
+	}
+	if (ntrig%ntrigMax > 0) {
+	  LOG(logDEBUG) << "    remainder ";
+	  dacScan(dac, ntrig%ntrigMax, dacmin, dacmax, maps, ihit, flag);
+	}
+	
+      }
   }
 
 
