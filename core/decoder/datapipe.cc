@@ -127,6 +127,14 @@ namespace pxar {
     roc_Event.Clear();
     rawEvent *sample = Get();
 
+    if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
+      // Store the current error count for comparison:
+      // Exclude pixel decoding problems, we are looking for more serious things...
+      error_count = decodingStats.errors_event()
+	+ decodingStats.errors_tbm()
+	+ decodingStats.errors_roc();
+    }
+
     // Count possibe error states:
     if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
     if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
@@ -142,6 +150,23 @@ namespace pxar {
     else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
     // Decode DESER160 Data for digital devices without real TBM
     else { DecodeDeser160(sample); }
+
+    if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
+      std::stringstream thisevent; thisevent << *sample;
+      event_ringbuffer.at(total_event%7) = thisevent.str();
+      total_event++;
+      if(error_count != (decodingStats.errors_event()
+			 + decodingStats.errors_tbm()
+			 + decodingStats.errors_roc())) { flawed_event = total_event; }
+
+      if(total_event == flawed_event+3) {
+	// Dump the ring buffer:
+	LOG(logERROR) << "Dumping the flawed event +- 3 events:";
+	for(size_t i = total_event; i < total_event+event_ringbuffer.size(); i++) {
+	  LOG(logERROR) << event_ringbuffer.at(i%7);
+	}
+      }
+    }
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;
@@ -297,7 +322,6 @@ namespace pxar {
       // Check if we have another ROC header (UB and B levels):
       // Here we have to assume the first two words are a ROC header because we rely on
       // its Ultrablack and Black level as initial values for auto-calibration:
-      int16_t levelS = (black - ultrablack)/8;
 
       if(roc_n < 0 || 
 	 // Ultrablack level:
@@ -459,17 +483,18 @@ namespace pxar {
 
     // Take the mean for a window of 1000 samples, initial measurement included
     if(slidingWindow < 1000) {
+      slidingWindow++;
       sumUB += expandSign(word1 & 0x0fff);
       ultrablack = static_cast<float>(sumUB)/slidingWindow;
       sumB += expandSign(word2 & 0x0fff);
       black = static_cast<float>(sumB)/slidingWindow;
-      slidingWindow++;
     }
     // Sliding window:
     else {
       ultrablack = static_cast<float>(999)/1000*ultrablack + static_cast<float>(1)/1000*expandSign(word1 & 0x0fff);
       black = static_cast<float>(999)/1000*black + static_cast<float>(1)/1000*expandSign(word2 & 0x0fff);
     }
+    levelS = (black - ultrablack)/8;
   }
 
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {

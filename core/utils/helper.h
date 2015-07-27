@@ -193,6 +193,7 @@ namespace pxar {
     if((flags&FLAG_NOSORT) != 0) { os << "FLAG_NOSORT, "; flags -= FLAG_NOSORT; }
     if((flags&FLAG_CHECK_ORDER) != 0) { os << "FLAG_CHECK_ORDER, "; flags -= FLAG_CHECK_ORDER; }
     if((flags&FLAG_FORCE_UNMASKED) != 0) { os << "FLAG_FORCE_UNMASKED, "; flags -= FLAG_FORCE_UNMASKED; }
+    if((flags&FLAG_DUMP_FLAWED_EVENTS) != 0) { os << "FLAG_DUMP_FLAWED_EVENTS, "; flags -= FLAG_DUMP_FLAWED_EVENTS; }
 
     if(flags != 0) os << "Unknown flag: " << flags;
     return os.str();

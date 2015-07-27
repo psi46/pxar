@@ -297,7 +297,7 @@ namespace pxar {
     // DAQ functions:
     /** Starting a new data acquisition session
      */
-    void daqStart(uint8_t deser160phase, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
+    void daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize = DTB_SOURCE_BUFFER_SIZE);
 
     /** Select the trigger source as given in "source":
      */

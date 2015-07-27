@@ -287,7 +287,7 @@ sub setDacs {
 	$dacs .= " 17 phoffset   170\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
 	$dacs .= " 20 phscale    130\n";
-	$dacs .= " 22 vicolor    10\n";
+	$dacs .= " 22 vicolor    100\n";
 	$dacs .= " 25 vcal       200\n";
 	$dacs .= " 26 caldel     96 \n";
 	$dacs .= "253 ctrlreg    0  \n";
@@ -307,7 +307,7 @@ sub setDacs {
 	$dacs .= " 17 phoffset   170\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
 	$dacs .= " 20 phscale    130\n";
-	$dacs .= " 22 vicolor    10\n";
+	$dacs .= " 22 vicolor    100\n";
 	$dacs .= " 25 vcal       200\n";
 	$dacs .= " 26 caldel     96 \n";
 	$dacs .= "253 ctrlreg    0  \n";
@@ -330,7 +330,7 @@ sub setDacs {
 	$dacs .= " 18       vion 128\n";
 	$dacs .= " 19  vcomp_adc 100\n";
 	$dacs .= " 20  phscale    60\n";
-	$dacs .= " 22    vicolor  10\n";
+	$dacs .= " 22    vicolor  20\n";
 	$dacs .= " 25       vcal 200\n";
 	$dacs .= " 26     caldel 100\n";
 	$dacs .= "253    ctrlreg   0\n";
@@ -631,6 +631,7 @@ showFits            checkbox(0)
 extended            checkbox(0)
 dumpHists           checkbox(0)
 Ntrig               10
+vcalstep            10
 measure             button
 fit                 button
 save                button
@@ -692,10 +693,10 @@ EOF
 } else {
     print FH <<"EOF";
 -- Timing
-fastscan            checkbox(0)
 targetclk           4
 ntrig               10
 clocksdascan        button
+notokenpass         checkbox(0)
 phasescan           button
 levelscan           button
 tbmphasescan        button

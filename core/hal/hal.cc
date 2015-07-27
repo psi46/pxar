@@ -766,7 +766,7 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -825,7 +825,7 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
   estimateDataVolume(nTriggers, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -883,7 +883,7 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -940,7 +940,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
   estimateDataVolume(nTriggers, 1);
 
  // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1009,7 +1009,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
   estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1079,7 +1079,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
   estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1145,7 +1145,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
   estimateDataVolume(expected, 1);
 
  // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1211,7 +1211,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1287,7 +1287,7 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1366,7 +1366,7 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1441,7 +1441,7 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1516,7 +1516,7 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
-  daqStart(deser160phase);
+  daqStart(flags,deser160phase);
   timer t;
 
   // Call the RPC command containing the trigger loop:
@@ -1677,7 +1677,7 @@ void hal::SigSetLVDS(){
 
 
 
-void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
+void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
   for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) { m_daqstatus.push_back(false); }
@@ -1688,6 +1688,7 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
   // Figure out the number of DAQ channels we need:
   if(m_tokenchains.empty()) { m_tokenchains.push_back(m_roccount); }
   if(m_notokenpass.empty()) { m_notokenpass.push_back(false); }
+  
   LOG(logDEBUGHAL) << "Number of token chains: " << m_tokenchains.size();
   if(m_tokenchains.size() > DTB_DAQ_CHANNELS) {
     LOG(logCRITICAL) << "Cannot serve " << m_tokenchains.size() << " DAQ channels, only " << DTB_DAQ_CHANNELS << " available.";
@@ -1705,8 +1706,8 @@ void hal::daqStart(uint8_t deser160phase, uint32_t buffersize) {
     LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
 		     << (m_notokenpass.at(i) ? 0 : static_cast<int>(m_tokenchains.at(i)))
 		     << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
-    // Initialize the data source, set tokenchain length to zero of no token pass is expected:
-    m_src.at(i) = dtbSource(_testboard,i,(m_notokenpass.at(i) ? 0 : m_tokenchains.at(i)),rocid_offset,m_tbmtype,m_roctype,true);
+    // Initialize the data source, set tokenchain length to zero if no token pass is expected:
+    m_src.at(i) = dtbSource(_testboard,i,(m_notokenpass.at(i) ? 0 : m_tokenchains.at(i)),rocid_offset,m_tbmtype,m_roctype,true,flags);
     m_src.at(i) >> m_splitter.at(i);
     _testboard->uDelay(100);
     // Increment the ROC id offset by the amount of ROCs expected:
