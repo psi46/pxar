@@ -127,6 +127,14 @@ namespace pxar {
     roc_Event.Clear();
     rawEvent *sample = Get();
 
+    if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
+      // Store the current error count for comparison:
+      // Exclude pixel decoding problems, we are looking for more serious things...
+      error_count = decodingStats.errors_event()
+	+ decodingStats.errors_tbm()
+	+ decodingStats.errors_roc();
+    }
+
     // Count possibe error states:
     if(sample->IsStartError()) { decodingStats.m_errors_event_start++; }
     if(sample->IsEndError()) { decodingStats.m_errors_event_stop++; }
@@ -142,6 +150,23 @@ namespace pxar {
     else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
     // Decode DESER160 Data for digital devices without real TBM
     else { DecodeDeser160(sample); }
+
+    if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
+      std::stringstream thisevent; thisevent << *sample;
+      event_ringbuffer.at(total_event%7) = thisevent.str();
+      total_event++;
+      if(error_count != (decodingStats.errors_event()
+			 + decodingStats.errors_tbm()
+			 + decodingStats.errors_roc())) { flawed_event = total_event; }
+
+      if(total_event == flawed_event+3) {
+	// Dump the ring buffer:
+	LOG(logERROR) << "Dumping the flawed event +- 3 events:";
+	for(size_t i = total_event; i < total_event+event_ringbuffer.size(); i++) {
+	  LOG(logERROR) << event_ringbuffer.at(i%7);
+	}
+      }
+    }
 
     LOG(logDEBUGPIPES) << roc_Event;
     return &roc_Event;

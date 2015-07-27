@@ -82,6 +82,11 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_FORCE_UNMASKED   0x0100
 
+/** Flag to dump all flawed events plus the surrounding ones to the logger on ERROR level.
+ *  Only use this to debug readout since it slows down decoding considerably.
+ */
+#define FLAG_DUMP_FLAWED_EVENTS 0x0200
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).

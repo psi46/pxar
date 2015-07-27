@@ -17,6 +17,7 @@ FLAG_DISABLE_DACCAL = int(_flag_disable_daccal)
 FLAG_NOSORT         = int(_flag_nosort)
 FLAG_CHECK_ORDER    = int(_flag_check_order)
 FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
+FLAG_DUMP_FLAWED_EVENTS = int(_flag_dump_flawed_events)
 
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
