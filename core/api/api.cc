@@ -1390,7 +1390,8 @@ bool pxarCore::daqStatus(uint8_t & perFull) {
   uint32_t filled_buffer = _hal->daqBufferStatus();
   perFull = static_cast<uint8_t>(static_cast<float>(filled_buffer)/_daq_buffersize*100.0);
   if(filled_buffer > 0.9*_daq_buffersize) {
-    LOG(logWARNING) << "DAQ buffer about to overflow!";
+    LOG(logWARNING) << "DAQ buffer about to overflow, buffer size " << filled_buffer
+		    << "/" << _daq_buffersize;
     return false;
   }
 
