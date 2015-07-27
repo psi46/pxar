@@ -1242,13 +1242,19 @@ std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
 // DAQ functions
 
 bool pxarCore::daqStart() {
-  return daqStart(_daq_buffersize,true);
+  return daqStart(0,_daq_buffersize,true);
 }
 
-bool pxarCore::daqStart(const int buffersize, const bool init) {
+bool pxarCore::daqStart(const uint16_t flags) {
+  return daqStart(flags,_daq_buffersize,true);
+}
+
+bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool init) {
 
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
+
+  LOG(logDEBUGAPI) << "Requested to start DAQ with flags: " << listFlags(flags);
 
   // Clearing previously initialized DAQ sessions:
   _hal->daqClear();
@@ -1284,7 +1290,7 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   }
 
   // And start the DAQ session:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],buffersize);
+  _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
   _daq_running = true;
   return true;

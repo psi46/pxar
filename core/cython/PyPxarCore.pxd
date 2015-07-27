@@ -211,7 +211,7 @@ cdef extern from "api.h" namespace "pxar":
         void setClockStretch(uint8_t src, uint16_t delay, uint16_t width) except +
         void setSignalMode(string signal, uint8_t mode, uint8_t speed) except +
         void setSignalMode(string signal, string mode, uint8_t speed) except +
-        bool daqStart() except +
+        bool daqStart(uint16_t flags) except +
         bool daqStatus() except +
         bool daqTriggerSource(string triggerSource) except +
         bool daqSingleSignal(string triggerSignal) except +
