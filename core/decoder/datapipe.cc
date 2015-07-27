@@ -133,6 +133,9 @@ namespace pxar {
       error_count = decodingStats.errors_event()
 	+ decodingStats.errors_tbm()
 	+ decodingStats.errors_roc();
+
+      std::stringstream thisevent; thisevent << *sample;
+      event_ringbuffer.at(total_event%7) = thisevent.str();
     }
 
     // Count possibe error states:
@@ -152,9 +155,6 @@ namespace pxar {
     else { DecodeDeser160(sample); }
 
     if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
-      std::stringstream thisevent; thisevent << *sample;
-      event_ringbuffer.at(total_event%7) = thisevent.str();
-      total_event++;
       if(error_count != (decodingStats.errors_event()
 			 + decodingStats.errors_tbm()
 			 + decodingStats.errors_roc())) { flawed_event = total_event; }
@@ -166,6 +166,7 @@ namespace pxar {
 	  LOG(logERROR) << event_ringbuffer.at(i%7);
 	}
       }
+      total_event++;
     }
 
     LOG(logDEBUGPIPES) << roc_Event;
