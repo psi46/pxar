@@ -1242,13 +1242,23 @@ std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
 // DAQ functions
 
 bool pxarCore::daqStart() {
-  return daqStart(_daq_buffersize,true);
+  return daqStart(0,_daq_buffersize,true);
+}
+
+bool pxarCore::daqStart(const uint16_t flags) {
+  return daqStart(flags,_daq_buffersize,true);
 }
 
 bool pxarCore::daqStart(const int buffersize, const bool init) {
+  return daqStart(0, buffersize, init);
+}
+
+bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool init) {
 
   if(!status()) {return false;}
   if(daqStatus()) {return false;}
+
+  LOG(logDEBUGAPI) << "Requested to start DAQ with flags: " << listFlags(flags);
 
   // Clearing previously initialized DAQ sessions:
   _hal->daqClear();
@@ -1284,7 +1294,7 @@ bool pxarCore::daqStart(const int buffersize, const bool init) {
   }
 
   // And start the DAQ session:
-  _hal->daqStart(_dut->sig_delays[SIG_DESER160PHASE],buffersize);
+  _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
   _daq_running = true;
   return true;
@@ -1390,7 +1400,8 @@ bool pxarCore::daqStatus(uint8_t & perFull) {
   uint32_t filled_buffer = _hal->daqBufferStatus();
   perFull = static_cast<uint8_t>(static_cast<float>(filled_buffer)/_daq_buffersize*100.0);
   if(filled_buffer > 0.9*_daq_buffersize) {
-    LOG(logWARNING) << "DAQ buffer about to overflow!";
+    LOG(logWARNING) << "DAQ buffer about to overflow, buffer size " << filled_buffer
+		    << "/" << _daq_buffersize;
     return false;
   }
 

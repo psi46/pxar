@@ -15,6 +15,7 @@ cdef extern from "api.h" namespace "pxar":
     cdef int _flag_nosort         "FLAG_NOSORT"
     cdef int _flag_check_order    "FLAG_CHECK_ORDER"
     cdef int _flag_force_unmasked "FLAG_FORCE_UNMASKED"
+    cdef int _flag_dump_flawed_events "FLAG_DUMP_FLAWED_EVENTS"
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:
@@ -211,7 +212,7 @@ cdef extern from "api.h" namespace "pxar":
         void setClockStretch(uint8_t src, uint16_t delay, uint16_t width) except +
         void setSignalMode(string signal, uint8_t mode, uint8_t speed) except +
         void setSignalMode(string signal, string mode, uint8_t speed) except +
-        bool daqStart() except +
+        bool daqStart(uint16_t flags) except +
         bool daqStatus() except +
         bool daqTriggerSource(string triggerSource) except +
         bool daqSingleSignal(string triggerSignal) except +
