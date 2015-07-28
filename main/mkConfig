@@ -631,7 +631,7 @@ DAC                 Vcal
 DacLo               0
 DacHi               200
 Dacs/Step           -1
-Ntrig/Step          1
+Ntrig/Step          -1
 scurves             button
 
 -- Trim
