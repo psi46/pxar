@@ -1550,7 +1550,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
   
   if (2 == ihit) {
     LOG(logDEBUG) << "determine PH error: " << dacmin << " .. " << dacmax; 
-    getPhError(dac, dacmin, dacmax, FLAGS, fNtrig); 
+    getPhError(dac, dacmin, dacmax, FLAGS, ntrig); 
   }
 
   while (!done){
@@ -1559,10 +1559,10 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
       gSystem->ProcessEvents();
       if (fStopTest) done = true;
       if (1 == ihit) {
-	results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, fNtrig); 
+	results = fApi->getEfficiencyVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
 	fNDaqErrors = fApi->getStatistics().errors_pixel();
       } else {
-	results = fApi->getPulseheightVsDAC(dac, dacmin, dacmax, FLAGS, fNtrig); 
+	results = fApi->getPulseheightVsDAC(dac, dacmin, dacmax, FLAGS, ntrig); 
 	fNDaqErrors = fApi->getStatistics().errors_pixel();
       }
       done = true;
