@@ -12,16 +12,11 @@
 #           -b                        whether a bare module config directory should be set up (still single ROC folder; impacts hvOn, testParameters)
 #           -h                        list all known ROC and TBM types and print help message
 #           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
-#
-#
-# History    2014/07/15 First shot: static setup (will change, eventually, probably)
-# -------
-#
-#
+#           -s                        short: only produce testParameters.dat
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('bd:fhmp:r:t:');
+getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
@@ -42,6 +37,13 @@ if (!-d "$dir") {
 } else {
     &cleanFiles;
 }
+
+# -- recreate testParameters.dat file
+if ($opt_s) {
+    &printTestParameters;
+    exit(0); 
+}
+
 
 # -- number of rocs and tbms
 my $nrocs = 1;
@@ -357,6 +359,16 @@ sub setRbCals {
 
 # ----------------------------------------------------------------------
 sub cleanFiles {
+
+    # -- clean only testParameters.dat if -s is amongst the cmd line options
+    if ($opt_s) {
+	$file = "$dir/testParameters.dat";
+	if (-e "$file") {
+	    unlink($file);
+	}
+	return;
+    }
+    
     my $file;
     for ($i = 0; $i < 16; $i++) {
 	$file = "$dir/trimParameters_C$i.dat";
@@ -408,6 +420,7 @@ sub cleanFiles {
     if (-e "$file") {
 	unlink($file);
     }
+
 }
 
 # ----------------------------------------------------------------------
@@ -609,15 +622,16 @@ EOF
 } else {
     print FH <<"EOF";
 -- Scurves
-adjustvcal          checkbox(1)
+adjustvcal          checkbox(0)
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
 dumpOutputFile      checkbox(0)
 Ntrig               50
-DAC                 VthrComp
+DAC                 Vcal
 DacLo               0
 DacHi               200
-Dacs/Step           10
+Dacs/Step           -1
+Ntrig/Step          -1
 scurves             button
 
 -- Trim
