@@ -195,8 +195,6 @@ int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
 vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin, int dacmax, int dacsperstep, int ntrigperstep, 
 				 int result, int ihit, int flag) {
 
-  fNtrig = ntrig;
-
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string type("hits"); 
   if (2 == ihit) type = string("pulseheight"); 
@@ -243,11 +241,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	for (int i = 0; i < ntrig/ntrigMax; ++i) {
 	  gSystem->ProcessEvents();
 	  if (fStopTest) break;
-	  LOG(logINFO) << "    run " << i+1 << " of " << ntrig/ntrigMax;
+	  LOG(logDEBUG) << "    run " << i+1 << " of " << ntrig/ntrigMax;
 	  dacScan(dac, ntrigMax, dacminAdj, dacmaxAdj, maps, ihit, flag);
 	}
 	if (ntrig%ntrigMax > 0 && !fStopTest) {
-	  LOG(logINFO) << "    remainder ";
+	  LOG(logDEBUG) << "    remainder ";
 	  dacScan(dac, ntrig%ntrigMax, dacminAdj, dacmaxAdj, maps, ihit, flag);
 	}
 	
@@ -270,11 +268,11 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 	for (int i = 0; i < ntrig/ntrigMax; ++i) {
 	  gSystem->ProcessEvents();
 	  if (fStopTest) break;
-	  LOG(logINFO) << "    run " << i+1 << " of " << ntrig/ntrigMax;
+	  LOG(logDEBUG) << "    run " << i+1 << " of " << ntrig/ntrigMax;
 	  dacScan(dac, ntrigMax, dacmin, dacmax, maps, ihit, flag);
 	}
 	if (ntrig%ntrigMax > 0 && !fStopTest) {
-	  LOG(logINFO) << "    remainder ";
+	  LOG(logDEBUG) << "    remainder ";
 	  dacScan(dac, ntrig%ntrigMax, dacmin, dacmax, maps, ihit, flag);
 	}
 	
