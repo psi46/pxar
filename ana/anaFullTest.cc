@@ -154,7 +154,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
   c0->Clear(); 
   c0->Divide(3, 3);
 
-  TVirtualPad *cx = c0->cd(1); 
+  c0->cd(1); 
   double xpos(0.20);
 
   plotVsRoc(fSMS->vana, xpos, 0.2); 
