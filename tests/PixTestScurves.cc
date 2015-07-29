@@ -199,7 +199,7 @@ void PixTestScurves::fullTest() {
   fParDacLo = 0; 
   fParDacHi = 149;
   fParDacsPerStep = -1;   
-  fParNtrigPerStep = 2;   
+  fParNtrigPerStep = 1;   
   bigBanner(Form("PixTestScurves::fullTest() ntrig = %d, dacs/step = %d, ntrig/step = %d", fParNtrig, fParDacsPerStep, fParNtrigPerStep));
   scurves();
 
