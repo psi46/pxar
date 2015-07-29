@@ -1522,7 +1522,7 @@ void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector
 
   bool unmasked = (0 != (FLAGS & FLAG_CHECK_ORDER))  &&  (0 != (FLAGS & FLAG_FORCE_UNMASKED));
 
-  fNtrig = ntrig; 
+  //  fNtrig = ntrig; 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
