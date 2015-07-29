@@ -56,7 +56,9 @@ class DLLEXPORT anaFullTest {
   void readDacFile(std::string dir, std::string dac, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, TH1D* hist);
+
   void fillRocHist(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
+  void anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
 
   void bookModuleSummary(std::string modulename); 
   void bookSingleModuleSummary(std::string modulename); 

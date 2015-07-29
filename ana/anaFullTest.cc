@@ -8,6 +8,7 @@
 #include <TSystem.h>
 #include <TStyle.h>
 #include <TFile.h>
+#include <TH2.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
@@ -127,23 +128,28 @@ void anaFullTest::showFullTest(string modname, string basename) {
   dumpVector(vh, fSMS->nonlW, "0"); 
 
   clearHistVector(vh); 
-  readLogFile(dirname, "number of dead pixels (per ROC):", vh);
-  dumpVector(vh, fSMS->dead, "0"); 
-
-  clearHistVector(vh); 
   readLogFile(dirname, "number of dead bumps (per ROC):", vh);
   dumpVector(vh, fSMS->bb, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "number of mask-defect pixels (per ROC):", vh);
-  dumpVector(vh, fSMS->mask, "0"); 
+//   clearHistVector(vh); 
+//   readLogFile(dirname, "number of dead pixels (per ROC):", vh);
+//   dumpVector(vh, fSMS->dead, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "number of address-decoding pixels (per ROC):", vh);
-  dumpVector(vh, fSMS->addr, "0"); 
+
+//   clearHistVector(vh); 
+//   readLogFile(dirname, "number of mask-defect pixels (per ROC):", vh);
+//   dumpVector(vh, fSMS->mask, "0"); 
+
+//   clearHistVector(vh); 
+//   readLogFile(dirname, "number of address-decoding pixels (per ROC):", vh);
+//   dumpVector(vh, fSMS->addr, "0"); 
 
 
   // ROOT file 
+  anaRocMap(dirname, "PixelAlive/PixelAlive", fSMS->dead, 0);
+  anaRocMap(dirname, "PixelAlive/MaskTest", fSMS->mask, 0);
+  anaRocMap(dirname, "PixelAlive/AddressDecodingTest", fSMS->addr, 0);
+
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThr, 0);
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThrW, 1);
   fillRocHist(dirname, "Scurves/dist_sig_scurveVcal_Vcal", fSMS->noise, 0);
@@ -589,7 +595,6 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
 
 // ----------------------------------------------------------------------
 void anaFullTest::fillRocHist(string dirname, string hbasename, TH1D* rochist, int mode) {
-  
   TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
   TH1D *h(0); 
   for (int i = 0; i < fNrocs; ++i) {
@@ -602,7 +607,32 @@ void anaFullTest::fillRocHist(string dirname, string hbasename, TH1D* rochist, i
       }
     }
   }
+  f->Close();
 }
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode) {
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+  TH2D *h(0); 
+  int cnt(0); 
+  for (int i = 0; i < fNrocs; ++i) {
+    h = (TH2D*)f->Get(Form("%s_C%d_V0", hbasename.c_str(), i)); 
+    cnt = 0; 
+    if (h) {
+      if (0 == mode) {
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    if (h->GetBinContent(ix+1, iy+1) < -0.1) ++cnt;
+	  }
+	} 
+	rochist->SetBinContent(i+1, cnt); 
+      } 
+    }
+  }
+  f->Close();
+}
+
 
 
 // ----------------------------------------------------------------------
