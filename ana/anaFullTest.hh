@@ -8,6 +8,7 @@
 #include "TObject.h"
 
 #include "TH1.h"
+#include "TH2.h"
 #include "TF1.h"
 #include "TCanvas.h"
 #include "TLatex.h"
@@ -38,6 +39,7 @@ struct singleModuleSummary {
   TH1D *noise, *vcalThr, *vcalThrW, *vcalTrimThr, *vcalTrimThrW, *relGainW, *pedestalW, *nonl, *nonlW; 
   TH1D *dead, *bb, *mask, *addr; 
 
+  TH2D *defectMap;
 };
 
 
@@ -59,9 +61,10 @@ class DLLEXPORT anaFullTest {
 
   void fillRocHist(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
   void anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
+  void fillRocDefects(std::string dirname, TH2D* defectMap);
 
   void bookModuleSummary(std::string modulename); 
-  void bookSingleModuleSummary(std::string modulename); 
+  void bookSingleModuleSummary(std::string modulename, int first); 
 
   std::vector<double> splitIntoRocs(std::string line); 
   std::vector<std::string> glob(std::string basedir, std::string basename);
@@ -75,6 +78,7 @@ class DLLEXPORT anaFullTest {
 
   std::string readLine(std::string dir, std::string pattern, int mode); 
   int countWord(std::string dir, std::string pattern); 
+  int testDuration(std::string startTest, std::string endTest);
 
   void setHist(TH1D *h, std::string xtitle = "", std::string ytitle = "", int color = kBlack, double miny = 0., double maxy = 256.); 
 

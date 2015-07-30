@@ -3,16 +3,19 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <time.h>
 
 #include <TROOT.h>
 #include <TSystem.h>
 #include <TStyle.h>
 #include <TFile.h>
-#include <TH2.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
 #endif
+
+#include "PixUtil.hh"
+
 
 using namespace std;
 
@@ -64,19 +67,36 @@ void anaFullTest::showFullTest(string modname, string basename) {
   string dirname = basename + string("/") + modname; 
 
   tl->SetTextSize(0.05); 
-  bookSingleModuleSummary(modname); 
+  static int first(1); 
+  bookSingleModuleSummary(modname, first); 
+  if (1 == first) {
+    first = 0; 
+  }
 
-  string date = Form("Date: %s", readLine(dirname, "Today:", 1).c_str()); 
-  cout << "DATE: " << date << endl;
+  string date = Form("Date:        %s", readLine(dirname, "Today:", 1).c_str()); 
+  PixUtil::replaceAll(date, "Date:", ""); 
+  PixUtil::cleanupString(date); 
 
-  string criticals = Form("CRITICAL: %d", countWord(dirname, "CRITICAL:")); 
-  cout << "CRITICAL: " << criticals << endl;
+  string criticals = Form("%d", countWord(dirname, "CRITICAL:")); 
 
-  string startTest = Form("Start: %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
+  string startTest = Form("Start:       %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
   string endTest   = Form("End:   %s", readLine(dirname, "INFO: pXar: this is the end, my friend", 2).c_str()); 
-  cout << "startTest: " << startTest << endl;
-  cout << "endTest: "   << endTest << endl;
 
+  PixUtil::replaceAll(startTest, "Start:", ""); 
+  PixUtil::replaceAll(startTest, "[", ""); 
+  PixUtil::replaceAll(startTest, "]", ""); 
+
+  PixUtil::replaceAll(endTest, "End:", ""); 
+  PixUtil::replaceAll(endTest, "[", ""); 
+  PixUtil::replaceAll(endTest, "]", ""); 
+
+  int seconds = testDuration(startTest, endTest); 
+  string duration = Form("%d:%d:%d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+
+  // -- remove the sub-second digits
+  startTest = startTest.substr(0, startTest.rfind(".")); 
+  PixUtil::cleanupString(startTest);
+ 
   vector<TH1D*> vh; 
   TH1D *h(0); 
   for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
@@ -127,6 +147,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
   readLogFile(dirname, "non-linearity RMS:", vh);
   dumpVector(vh, fSMS->nonlW, "0"); 
 
+  // -- note: ideally this should be filled in fillRocDefects?
   clearHistVector(vh); 
   readLogFile(dirname, "number of dead bumps (per ROC):", vh);
   dumpVector(vh, fSMS->bb, "0"); 
@@ -147,14 +168,16 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   // ROOT file 
   anaRocMap(dirname, "PixelAlive/PixelAlive", fSMS->dead, 0);
-  anaRocMap(dirname, "PixelAlive/MaskTest", fSMS->mask, 0);
-  anaRocMap(dirname, "PixelAlive/AddressDecodingTest", fSMS->addr, 0);
+  anaRocMap(dirname, "PixelAlive/MaskTest", fSMS->mask, 1);
+  anaRocMap(dirname, "PixelAlive/AddressDecodingTest", fSMS->addr, 1);
 
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThr, 0);
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThrW, 1);
   fillRocHist(dirname, "Scurves/dist_sig_scurveVcal_Vcal", fSMS->noise, 0);
 
   
+  fillRocDefects(dirname, fSMS->defectMap);
+
 
   gStyle->SetOptStat(0); 
   c0->Clear(); 
@@ -178,13 +201,18 @@ void anaFullTest::showFullTest(string modname, string basename) {
   plotVsRoc(fSMS->vcalThr, xpos, 0.8); 
   plotVsRoc(fSMS->vcalTrimThr, xpos, 0.2, "same"); 
 
+//   c0->cd(5); 
+//   plotVsRoc(fSMS->nonl, xpos, 0.85); 
+//   plotVsRoc(fSMS->nonlW, xpos, 0.2, "same"); 
+
   c0->cd(5); 
-  plotVsRoc(fSMS->nonl, xpos, 0.8); 
-  plotVsRoc(fSMS->nonlW, xpos, 0.2, "same"); 
+  plotVsRoc(fSMS->vcalThrW, xpos, 0.65, ""); 
+  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.30, "same"); 
 
   c0->cd(6); 
-  plotVsRoc(fSMS->vcalThrW, xpos, 0.65, ""); 
-  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.50, "same"); 
+  plotVsRoc(fSMS->noise, xpos, 0.50, ""); 
+  plotVsRoc(fSMS->nonl, xpos, 0.15, "same"); 
+
 
   c0->cd(7); 
   plotVsRoc(fSMS->dead, xpos, 0.80, "", 1); 
@@ -193,18 +221,30 @@ void anaFullTest::showFullTest(string modname, string basename) {
   plotVsRoc(fSMS->addr, xpos, 0.62, "same", 1); 
 
   c0->cd(8); 
-  plotVsRoc(fSMS->noise, xpos, 0.50, ""); 
+  int customPalette[4];
+  customPalette[0] = kBlue;
+  customPalette[1] = kBlack;
+  customPalette[2] = kRed;
+  customPalette[3] = kGreen+2;
+
+  gStyle->SetPalette(4, customPalette); 
+  fSMS->defectMap->Draw("col");
+
+  tl->SetTextSize(0.07); 
+  tl->SetTextColor(kBlack); 
+  tl->DrawLatex(0.18, 0.92, "all modules defects"); 
+
 
   c0->cd(9); 
-  tl->SetTextSize(0.15); 
+  tl->SetTextSize(0.13); 
   tl->SetTextColor(kBlack); 
   tl->DrawLatex(0.0, 0.90, modname.c_str()); 
 
-  tl->SetTextSize(0.09); 
-  tl->DrawLatex(0.0, 0.75, date.c_str()); 
-  tl->DrawLatex(0.0, 0.65, startTest.c_str()); 
-  tl->DrawLatex(0.0, 0.55, endTest.c_str()); 
-  tl->DrawLatex(0.0, 0.45, criticals.c_str()); 
+  tl->SetTextSize(0.08); 
+  tl->DrawLatex(0.0, 0.75, "Date:");           tl->DrawLatex(0.5, 0.75, date.c_str()); 
+  tl->DrawLatex(0.0, 0.65, "Start:");          tl->DrawLatex(0.5, 0.65, startTest.c_str()); 
+  tl->DrawLatex(0.0, 0.55, "Duration:");       tl->DrawLatex(0.5, 0.55, duration.c_str()); 
+  tl->DrawLatex(0.0, 0.35, "# crit. errors:"); tl->DrawLatex(0.5, 0.35, criticals.c_str()); 
 
   
   c0->SaveAs(Form("%s.pdf", modname.c_str())); 
@@ -214,69 +254,76 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::bookSingleModuleSummary(string modulename) {
+void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
   
   fSMS->moduleName = modulename; 
 
   TH1::SetDefaultSumw2(kTRUE);
 
-  if (fSMS->noise) delete fSMS->noise; 
+  if (0 == first) delete fSMS->noise; 
   fSMS->noise = new TH1D("noise", "", 16, 0., 16.);                 setHist(fSMS->noise, "ROC", "noise", kBlack, 0., 10.);
 
-  if (fSMS->vcalThr) delete fSMS->vcalThr; 
+  if (0 == first) delete fSMS->vcalThr; 
   fSMS->vcalThr = new TH1D("vcalThr", "", 16, 0., 16.);             setHist(fSMS->vcalThr, "ROC", "VCAL THR", kBlack, 0., 150.);
 
-  if (fSMS->vcalThrW) delete fSMS->vcalThrW; 
+  if (0 == first) delete fSMS->vcalThrW; 
   fSMS->vcalThrW = new TH1D("vcalThrW", "", 16, 0., 16.);           setHist(fSMS->vcalThrW, "ROC", "VCAL THR width", kBlack, 0., 10.);
 
-  if (fSMS->vcalTrimThrW) delete fSMS->vcalTrimThr; 
-  fSMS->vcalTrimThr = new TH1D("vcalTrimThr", "", 16, 0., 16.);     setHist(fSMS->vcalTrimThr, "ROC", "VCAL THR (trimmed)", kBlack, 0., 40.);
+  if (0 == first) delete fSMS->vcalTrimThr; 
+  fSMS->vcalTrimThr = new TH1D("vcalTrimThr", "", 16, 0., 16.);     setHist(fSMS->vcalTrimThr, "ROC", "VCAL THR (trimmed)", kBlue, 0., 40.);
 
-  if (fSMS->vcalTrimThrW) delete fSMS->vcalTrimThrW; 
-  fSMS->vcalTrimThrW = new TH1D("vcalTrimThrW", "", 16, 0., 16.);   setHist(fSMS->vcalTrimThrW, "ROC", "VCAL THR width (trimmed)", kBlack, 0., 4.);
+  if (0 == first) delete fSMS->vcalTrimThrW; 
+  fSMS->vcalTrimThrW = new TH1D("vcalTrimThrW", "", 16, 0., 16.);   setHist(fSMS->vcalTrimThrW, "ROC", "VCAL THR width (trimmed)", kBlue, 0., 4.);
 
-  if (fSMS->relGainW) delete fSMS->relGainW; 
+  if (0 == first) delete fSMS->relGainW; 
   fSMS->relGainW = new TH1D("relGainW", "", 16, 0., 16.);           setHist(fSMS->relGainW, "ROC", "rel gain width", kBlack, 0., 40.);
 
-  if (fSMS->pedestalW) delete fSMS->pedestalW; 
+  if (0 == first) delete fSMS->pedestalW; 
   fSMS->pedestalW = new TH1D("pedestalW", "", 16, 0., 16.);         setHist(fSMS->pedestalW, "ROC", "pedestal width", kBlack, 0., 40.);
 
-  if (fSMS->nonl) delete fSMS->nonl; 
-  fSMS->nonl = new TH1D("nonl", "", 16, 0., 16.);                   setHist(fSMS->nonl, "ROC", "non-linearity", kBlack, 0., 1.1);
+  if (0 == first) delete fSMS->nonl; 
+  fSMS->nonl = new TH1D("nonl", "", 16, 0., 16.);                   setHist(fSMS->nonl, "ROC", "non-linearity", kBlue, 0., 1.1);
 
-  if (fSMS->nonlW) delete fSMS->nonlW; 
-  fSMS->nonlW = new TH1D("nonlW", "", 16, 0., 16.);                 setHist(fSMS->nonlW, "ROC", "non-linearity width", kBlack, 0., 1.1);
+  if (0 == first) delete fSMS->nonlW; 
+  fSMS->nonlW = new TH1D("nonlW", "", 16, 0., 16.);                 setHist(fSMS->nonlW, "ROC", "non-linearity width", kBlue, 0., 1.1);
 
-  if (fSMS->dead) delete fSMS->dead; 
+  if (0 == first) delete fSMS->dead; 
   fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 10.);
 
-  if (fSMS->bb) delete fSMS->bb; 
+  if (0 == first) delete fSMS->bb; 
   fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue, 0., 40.);
 
-  if (fSMS->mask) delete fSMS->mask; 
+  if (0 == first) delete fSMS->mask; 
   fSMS->mask = new TH1D("mask", "", 16, 0., 16.);                   setHist(fSMS->mask, "ROC", "mask defects", kRed, 0., 40.);
 
-  if (fSMS->addr) delete fSMS->addr; 
-  fSMS->addr = new TH1D("addr", "", 16, 0., 16.);                   setHist(fSMS->addr, "ROC", "address defects", kRed+2, 0., 40.);
+  if (0 == first) delete fSMS->addr; 
+  fSMS->addr = new TH1D("addr", "", 16, 0., 16.);                   setHist(fSMS->addr, "ROC", "address defects", kGreen+2, 0., 40.);
 
-  if (fSMS->vana) delete fSMS->vana; 
+  if (0 == first) delete fSMS->vana; 
   fSMS->vana = new TH1D("vana", "", 16, 0., 16.);                   setHist(fSMS->vana, "ROC", "VANA", kBlack, 0., 256.);
 
-  if (fSMS->caldel) delete fSMS->caldel; 
+  if (0 == first) delete fSMS->caldel; 
   fSMS->caldel = new TH1D("caldel", "", 16, 0., 16.);               setHist(fSMS->caldel, "ROC", "CALDEL", kRed, 0., 256.);
 
-  if (fSMS->vthrcomp) delete fSMS->vthrcomp; 
+  if (0 == first) delete fSMS->vthrcomp; 
   fSMS->vthrcomp = new TH1D("vthrcomp", "", 16, 0., 16.);           setHist(fSMS->vthrcomp, "ROC", "VTHRCOMP", kBlack, 0., 256.);
 
-  if (fSMS->vtrim) delete fSMS->vtrim; 
-  fSMS->vtrim = new TH1D("vtrim", "", 16, 0., 16.);                 setHist(fSMS->vtrim, "ROC", "VTRIM", kBlue, 0., 256.);
+  if (0 == first) delete fSMS->vtrim; 
+  fSMS->vtrim = new TH1D("vtrim", "", 16, 0., 16.);                 setHist(fSMS->vtrim, "ROC", "VTRIM", kRed, 0., 256.);
 
-  if (fSMS->phscale) delete fSMS->phscale; 
+  if (0 == first) delete fSMS->phscale; 
   fSMS->phscale = new TH1D("phscale", "", 16, 0., 16.);             setHist(fSMS->phscale, "ROC", "PHSCALE", kBlack, 0., 256.);
 
-  if (fSMS->phoffset) delete fSMS->phoffset; 
-  fSMS->phoffset = new TH1D("phoffset", "", 16, 0., 16.);           setHist(fSMS->phoffset, "ROC", "PHOFFSET", kBlue, 0., 256.);
+  if (0 == first) delete fSMS->phoffset; 
+  fSMS->phoffset = new TH1D("phoffset", "", 16, 0., 16.);           setHist(fSMS->phoffset, "ROC", "PHOFFSET", kRed, 0., 256.);
 
+  if (0 == first) delete fSMS->defectMap; 
+  fSMS->defectMap = new TH2D("defectMap", "", 52, 0., 52., 80, 0., 80.); 
+  fSMS->defectMap->SetXTitle("column");          
+  fSMS->defectMap->SetYTitle("row"); 
+  fSMS->defectMap->SetMinimum(0.); 
+  fSMS->defectMap->SetMaximum(4.01); 
+  
 }
 
 // ----------------------------------------------------------------------
@@ -621,6 +668,15 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
     cnt = 0; 
     if (h) {
       if (0 == mode) {
+	// -- zero entries are missing
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    if (h->GetBinContent(ix+1, iy+1) < 0.1) ++cnt;
+	  }
+	} 
+	rochist->SetBinContent(i+1, cnt); 
+      } else if (1 == mode) {
+	// -- negative entries are missing (zero are dead pixels)
 	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
 	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
 	    if (h->GetBinContent(ix+1, iy+1) < -0.1) ++cnt;
@@ -632,6 +688,85 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
   }
   f->Close();
 }
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::fillRocDefects(string dirname, TH2D *hmap) {
+
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+
+  vector<TH1D*> vh; 
+  TH1D *h(0); 
+  for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
+    h = (TH1D*)gROOT->Get(Form("h_C%d", iroc)); 
+    if (!h) h = new TH1D(Form("h_C%d", iroc), Form("h_C%d", iroc), 256, 0., 256.); 
+    vh.push_back(h); 
+  }
+
+  // -- dead bumps
+  readLogFile(dirname, "separation cut       (per ROC):", vh);
+  TH2D *h2(0); 
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("BumpBonding/thr_calSMap_VthrComp_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) > vh[i]->GetMean()) {
+	    hmap->SetBinContent(ix+1, iy+1, 1); 
+	  }
+	}
+      } 
+      
+    }
+  }
+
+  // -- dead pixels
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < 1) {
+	    hmap->SetBinContent(ix+1, iy+1, 2); 
+	  }
+	}
+      } 
+      
+    }
+  }
+
+  // -- mask problems
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/MaskTest_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < -0.1) {
+	    hmap->SetBinContent(ix+1, iy+1, 3); 
+	  }
+	}
+      } 
+    }
+  }
+
+  // -- address problems
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/AddressDecodingTest_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < -0.1) {
+	    hmap->SetBinContent(ix+1, iy+1, 4); 
+	  }
+	}
+      } 
+    }
+  }
+
+  
+
+}
+ 
 
 
 
@@ -846,4 +981,35 @@ int anaFullTest::countWord(string dir, string pattern) {
   }
   IN.close();
   return cnt; 
+}
+
+
+// ----------------------------------------------------------------------
+int anaFullTest::testDuration(string startTest, string endTest) {
+  int h0, h1, m0, m1, s0, s1; 
+  string ss0 = startTest.substr(0, startTest.rfind(".")); 
+  string ss1 = endTest.substr(0, endTest.rfind(".")); 
+
+  string::size_type st0, st1;
+
+  string parse = ss0; 
+  st0 = parse.find(":");
+  st1 = parse.find(":", st0+1);
+  
+  h0 = atoi(parse.substr(0, st0).c_str());
+  m0 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
+  s0 = atoi(parse.substr(st1+1).c_str());
+
+  parse = ss1; 
+  st0 = parse.find(":");
+  st1 = parse.find(":", st0+1);
+
+  h1 = atoi(parse.substr(0, st0).c_str());
+  m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
+  s1 = atoi(parse.substr(st1+1).c_str());
+  
+  struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
+  struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
+  
+  return tv1.tv_sec - tv0.tv_sec;
 }
