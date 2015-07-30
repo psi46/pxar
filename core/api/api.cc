@@ -199,6 +199,14 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
       throw InvalidConfig("Found pixels with values for column and row outside of valid address range");
     }
   }
+  // Check the DAC vectors:
+  for(std::vector<std::vector<std::pair<std::string,uint8_t> > >::iterator it = rocDACs.begin(); it != rocDACs.end(); it++) {
+    // check for enough DACs being supplied, set 10 DACs minimum as threshold.
+    if(it->size() < 10) {
+      LOG(logCRITICAL) << "Found only " << it->size() << " DAC settings for ROC "<< static_cast<int>(it - rocDACs.begin()) << "!";
+      throw InvalidConfig("Found not enough DAC settings");
+    }
+  }
 
   LOG(logDEBUGAPI) << "We have " << rocDACs.size() << " DAC configs and " << rocPixels.size() << " pixel configs, with " << rocDACs.at(0).size() << " and " << rocPixels.at(0).size() << " entries for the first ROC, respectively.";
 
