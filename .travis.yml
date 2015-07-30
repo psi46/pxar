@@ -18,6 +18,7 @@ script:
 branches:
   only:
     - master
+    - production
 os:
   - linux
   - osx

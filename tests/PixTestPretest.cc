@@ -158,7 +158,7 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  setTimings();
+  //???  setTimings();
     
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
@@ -220,6 +220,7 @@ void PixTestPretest::runCommand(std::string command) {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setVana() {
+  fStopTest = false; 
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
@@ -260,6 +261,10 @@ void PixTestPretest::setVana() {
   const double slope = 6; // 255 DACs / 40 mA
 
   for (int roc = 0; roc < nRocs; ++roc) {
+
+    gSystem->ProcessEvents();
+    if (fStopTest) break;
+
     if (!selectedRoc(roc)) {
       LOG(logDEBUG) << "skipping ROC idx = " << roc << " (not selected) for Vana tuning"; 
       continue;
@@ -369,6 +374,7 @@ void PixTestPretest::setVana() {
 // ----------------------------------------------------------------------
 void PixTestPretest::setTimings() {
 
+  fStopTest = false; 
   // Start test timer
   timer t;
   
@@ -491,6 +497,7 @@ bool PixTestPretest::checkReadBackBits(uint16_t period, bool restartDAQ) {
 void PixTestPretest::setVthrCompCalDel() {
   uint16_t FLAGS = FLAG_FORCE_MASKED;
 
+  fStopTest = false; 
   gStyle->SetPalette(1);
   cacheDacs();
   fDirectory->cd();
@@ -542,6 +549,9 @@ void PixTestPretest::setVthrCompCalDel() {
   while (!done) {
     rresults.clear(); 
     int cnt(0); 
+    gSystem->ProcessEvents();
+    if (fStopTest) break;
+
     try{
       rresults = fApi->getEfficiencyVsDACDAC("caldel", 0, 255, "vthrcomp", 0, 180, FLAGS, fParNtrig);
       done = true;
@@ -639,6 +649,7 @@ void PixTestPretest::setVthrCompCalDel() {
 // ----------------------------------------------------------------------
 void PixTestPretest::setVthrCompId() {
 
+  fStopTest = false; 
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
@@ -764,6 +775,7 @@ void PixTestPretest::setVthrCompId() {
 void PixTestPretest::setCalDel() {
   uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
 
+  fStopTest = false; 
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
@@ -892,6 +904,7 @@ void PixTestPretest::setCalDel() {
 
 // ----------------------------------------------------------------------
 void PixTestPretest::programROC() {
+  fStopTest = false; 
   cacheDacs();
   fDirectory->cd();
   PixTest::update(); 
@@ -929,6 +942,10 @@ void PixTestPretest::programROC() {
     }
     h1->SetBinContent(iroc+1, dA); 
     fApi->setDAC("vana", 0, rocIds[iroc]);
+
+    gSystem->ProcessEvents();
+    if (fStopTest) break;
+
   }
 
   if (problem) {

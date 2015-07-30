@@ -764,6 +764,11 @@ bool  Keyword::match(const char * s, int & value1, int & value2, int & value3){
   return  (kw(s)) && (narg()==3) && (argv[0].getInt(value1)) && (argv[1].getInt(value2)) && (argv[2].getInt(value3));
 }
 
+bool  Keyword::match(const char * s, int & value1, int & value2, int & value3, int & value4, int & value5){
+  return  (kw(s)) && (narg()==5) && (argv[0].getInt(value1)) && (argv[1].getInt(value2)) 
+    && (argv[2].getInt(value3)) && (argv[3].getInt(value4)) && (argv[4].getInt(value5));
+}
+
 bool  Keyword::greedy_match(const char * s1, int& value1, int& value2, int& value3, string & s2){
     return (kw(s1)) && (narg()>2)  && (argv[0].getInt(value1))
      && (argv[1].getInt(value2))   && (argv[2].getInt(value3))
@@ -928,6 +933,7 @@ void CmdProc::init()
     verbose=false;
     redirected=false;
     fIgnoreReadbackErrors=false;
+    fDumpFlawed=FLAG_DUMP_FLAWED_EVENTS;
     master = NULL;
     fEchoExecs = true;
     defaultTarget = Target("roc",0);
@@ -977,6 +983,7 @@ CmdProc::CmdProc(CmdProc * p)
     init();
     verbose = p->verbose;
     redirected = p->redirected;
+    fDumpFlawed= p->fDumpFlawed;
     fIgnoreReadbackErrors = p->fIgnoreReadbackErrors;
     master = p->master;
     fEchoExecs = p->fEchoExecs;
@@ -1419,7 +1426,7 @@ int CmdProc::find_timing(int npass){
         }
         
         int w400=0;
-        if (! find_midpoint(nloop, 0.4, 2.5, test400, d400, w400)){
+        if (! find_midpoint(nloop, 0.57, 2.5, test400, d400, w400)){
             out << "400 MHz scan failed ";
             return 0;
         }
@@ -3117,11 +3124,11 @@ int CmdProc::tb(Keyword kw){
     int nchunk=1;
     if( kw.match("daqtest",ntrig,nchunk) ){
 
-        fApi->daqStart(50000000, false);
+        fApi->daqStart(fDumpFlawed, 50000000, false);
         vector<rawEvent> daqRawEv;
         for(int m=0; m<nchunk; m++){
            int nerr=0;
-            fApi->daqTrigger(ntrig, 125);
+            fApi->daqTrigger(ntrig, 500);
             try{
                 daqRawEv = fApi->daqGetRawEventBuffer();
             }catch(pxar::DataNoEvent){
@@ -3175,12 +3182,10 @@ int CmdProc::tb(Keyword kw){
     
     
     if( kw.match("daqtest2",ntrig,nchunk) ){
-        //fApi->daqStart(50000000, false);
-        fApi->daqStart();
-        vector<Event> events;
+        fApi->daqStart(fDumpFlawed, DTB_SOURCE_BUFFER_SIZE, false);
+        vector<pxar::Event> events;
         for(int m=0; m<nchunk; m++){
-            fApi->daqTrigger(ntrig, 125);
-            //usleep(1000); breaks windows, doesn't help anyway
+            fApi->daqTrigger(ntrig, 500);
             try{
                 events = fApi->daqGetEventBuffer();   
             }catch(pxar::DataNoEvent){
@@ -3188,8 +3193,7 @@ int CmdProc::tb(Keyword kw){
                 break; 
             }
         }
-        //fApi->daqStop(false);
-        fApi->daqStop();
+        fApi->daqStop(false);
         return 0;
     }
     
@@ -3199,12 +3203,45 @@ int CmdProc::tb(Keyword kw){
         fApi->_dut->maskAllPixels(false);
         // get daqErrors whenever ndac*ntrig*8*4160>DTB_SOURCE_BUFFER_SIZE / 4 (tbm09)
         try{
-            fApi->getEfficiencyVsDAC("CalDel", 1, ndac, FLAG_FORCE_MASKED, ntrig);
+            fApi->getEfficiencyVsDAC("CalDel", 1, ndac, fDumpFlawed |  FLAG_FORCE_MASKED, ntrig);
             uint32_t nDaqErrors= fApi->getStatistics().errors_pixel();
             out << nDaqErrors << " errors " << endl;
         }catch(pxar::DataMissingEvent){
             out << "DataMissingEvent caught\n";
         }
+        return 0;
+    }
+    
+    
+    if( kw.match("daqtest3",ntrig) ){
+        fApi->daqStart( fDumpFlawed, DTB_SOURCE_BUFFER_SIZE, false );
+        int nevent=0;
+        vector<pxar::Event> daqdat;
+        uint8_t perFull;
+        int totalPeriod = master->prepareDaq(100, 50); 
+        int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
+        timer t;
+        while (fApi->daqStatus(perFull) && (t.get()<30000) ) {
+            if (perFull > 80) {
+                out << dec << (int) perFull << "%,  pausing triggers.\n";
+                flush(out);
+                fApi->daqTriggerLoopHalt();
+                try { daqdat = fApi->daqGetEventBuffer(); nevent+=daqdat.size(); }
+                catch(pxar::DataNoEvent &) {}
+                if(nevent<ntrig){
+                    out << (int) nevent <<" events read. Resuming triggers.\n";
+                    flush(out);
+                    fApi->daqTriggerLoop(finalPeriod);
+                    t=timer();
+                }else{
+                    break;
+                }
+                    
+            }
+        }
+        if (t.get()>299999){ out << "time-out \n" ;}
+        out << (int) nevent <<" events read. closings.\n";
+        fApi->daqStop();
         return 0;
     }
     
@@ -3303,7 +3340,7 @@ int CmdProc::tbm(Keyword kw, int cores){
      * return >0 for errors
      */
      if(verbose) { cout << "tbm " << kw.keyword << " ,cores =" << cores << endl;}
-    int address, value, value1, value2, value3;
+    int address, value, value1, value2, value3, value4, value5;
     if (kw.match("tbmset", address, value))  { return tbmset(address, value);  }
     if (kw.match("enable", "pkam")     ){ return tbmsetbit("base0",cores, 0, 0);}
     if (kw.match("disable","pkam")     ){ return tbmsetbit("base0",cores, 0, 1);}
@@ -3351,6 +3388,11 @@ int CmdProc::tbm(Keyword kw, int cores){
     }
     if (kw.match("phases",value1, value2, value3) ){
         tbmset("basea", cores, (value3&0x7) | ((value3&0x7)<<3) , 0x38 | 0x07 );
+        tbmset("basee", 0, ((value1&0x7)<<5) | ((value2&0x7)<<2), 0xfc);
+        return 0;
+    }
+    if (kw.match("phases",value1, value2, value3, value4, value5) ){
+        tbmset("basea", cores, ((value4&1)<<6) | ((value5&0x1)<<7) | (value3&0x7) | ((value3&0x7)<<3) );
         tbmset("basee", 0, ((value1&0x7)<<5) | ((value2&0x7)<<2), 0xfc);
         return 0;
     }
@@ -3449,6 +3491,9 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
     if (keyword.match("prerun",value)){ fPrerun=value; return true;}
     if (keyword.match("ignore","readback")){ fIgnoreReadbackErrors=true; return true;}
     if (keyword.match("verify","readback")){ fIgnoreReadbackErrors=false; return true;}
+  
+    if( keyword.match("dump","on") ){ fDumpFlawed=FLAG_DUMP_FLAWED_EVENTS;return true;}
+    if( keyword.match("dump","off") ){ fDumpFlawed=0;  return true;}
   
     string message;
     if ( keyword.match("echo","on")){ fEchoExecs = true; return true;}

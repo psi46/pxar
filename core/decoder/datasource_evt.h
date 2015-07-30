@@ -12,6 +12,7 @@ namespace pxar {
   class evtSource : public dataSource<uint16_t> {
     // --- Control/state
     uint8_t channel;
+    uint16_t flags;
     uint8_t chainlength;
     uint8_t chainlengthOffset;
     uint8_t envelopetype;
@@ -37,6 +38,10 @@ namespace pxar {
       if(!connected) throw dpNotConnected();
       return channel;
     }
+    uint16_t ReadFlags() {
+      if(!connected) throw dpNotConnected();
+      return flags;
+    }
     uint8_t ReadTokenChainLength() {
       if(!connected) throw dpNotConnected();
       return chainlength;
@@ -54,8 +59,8 @@ namespace pxar {
       return devicetype;
     }
   public:
-  evtSource(uint8_t daqchannel, uint8_t tokenChainLength, uint8_t offset, uint8_t tbmtype, uint8_t roctype)
-    : channel(daqchannel), chainlength(tokenChainLength), chainlengthOffset(offset), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
+  evtSource(uint8_t daqchannel, uint8_t tokenChainLength, uint8_t offset, uint8_t tbmtype, uint8_t roctype, uint16_t daqflags = 0)
+    : channel(daqchannel), flags(daqflags), chainlength(tokenChainLength), chainlengthOffset(offset), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
       LOG(logDEBUGPIPES) << "New evtSource instantiated with properties:";
       LOG(logDEBUGPIPES) << "-------------------------";
       LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)

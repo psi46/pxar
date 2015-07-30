@@ -125,7 +125,7 @@ void PixTestBB3Map::doTest() {
   fNDaqErrors = 0;
   // scurveMaps function is located in pxar/tests/PixTest.cc
   // generate a TH1 s-curve wrt VthrComp for each pixel
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, fParNtrig, result, 1, flag);
  
   // create vectors of plots to hold the rescaled thresholds
   vector<TH2D*>  rescaledThrmaps;

@@ -3,21 +3,33 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <time.h>
 
 #include <TROOT.h>
 #include <TSystem.h>
+#include <TStyle.h>
+#include <TFile.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
 #endif
 
+#include "PixUtil.hh"
+
+
 using namespace std;
 
 // ----------------------------------------------------------------------
-anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(40) {
+anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
   cout << "anaFullTest ctor" << endl;
   c0 = (TCanvas*)gROOT->FindObject("c0"); 
   if (!c0) c0 = new TCanvas("c0","--c0--",0,0,656,700);
+
+  tl = new TLatex(); 
+  tl->SetNDC(kTRUE); 
+  tl->SetTextSize(0.06); 
+
+  fSMS = new singleModuleSummary; 
 
   fDiffMetric = 0;
 
@@ -36,6 +48,284 @@ anaFullTest::~anaFullTest() {
 
 }
 
+
+// ----------------------------------------------------------------------
+void anaFullTest::showAllFullTests(string dir) {
+  vector<string> dirs = glob(dir, "m"); 
+  cout << dirs.size() << endl;
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    cout << dirs[idirs] << endl;
+    showFullTest(dirs[idirs], dir); 
+  }
+  
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::showFullTest(string modname, string basename) {
+
+  string dirname = basename + string("/") + modname; 
+
+  tl->SetTextSize(0.05); 
+  static int first(1); 
+  bookSingleModuleSummary(modname, first); 
+  if (1 == first) {
+    first = 0; 
+  }
+
+  string date = Form("Date:        %s", readLine(dirname, "Today:", 1).c_str()); 
+  PixUtil::replaceAll(date, "Date:", ""); 
+  PixUtil::cleanupString(date); 
+
+  string criticals = Form("%d", countWord(dirname, "CRITICAL:")); 
+
+  string startTest = Form("Start:       %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
+  string endTest   = Form("End:   %s", readLine(dirname, "INFO: pXar: this is the end, my friend", 2).c_str()); 
+
+  PixUtil::replaceAll(startTest, "Start:", ""); 
+  PixUtil::replaceAll(startTest, "[", ""); 
+  PixUtil::replaceAll(startTest, "]", ""); 
+
+  PixUtil::replaceAll(endTest, "End:", ""); 
+  PixUtil::replaceAll(endTest, "[", ""); 
+  PixUtil::replaceAll(endTest, "]", ""); 
+
+  int seconds = testDuration(startTest, endTest); 
+  string duration = Form("%d:%d:%d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+
+  // -- remove the sub-second digits
+  startTest = startTest.substr(0, startTest.rfind(".")); 
+  PixUtil::cleanupString(startTest);
+ 
+  vector<TH1D*> vh; 
+  TH1D *h(0); 
+  for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
+    h = (TH1D*)gROOT->Get(Form("dac_C%d", iroc)); 
+    if (!h) h = new TH1D(Form("dac_C%d", iroc), Form("dac_C%d", iroc), 256, 0., 256.); 
+    vh.push_back(h); 
+  }
+
+  // -- DAC file parsing
+  clearHistVector(vh); 
+  readDacFile(dirname, "vana", vh);
+  dumpVector(vh, fSMS->vana, "0"); 
+  
+  clearHistVector(vh); 
+  readDacFile(dirname, "caldel", vh);
+  dumpVector(vh, fSMS->caldel, "0"); 
+
+  clearHistVector(vh); 
+  readDacFile(dirname, "vthrcomp", vh);
+  dumpVector(vh, fSMS->vthrcomp, "0"); 
+
+  clearHistVector(vh); 
+  readDacFile(dirname, "vtrim", vh);
+  dumpVector(vh, fSMS->vtrim, "0"); 
+
+  clearHistVector(vh); 
+  readDacFile(dirname, "phscale", vh);
+  dumpVector(vh, fSMS->phscale, "0"); 
+
+  clearHistVector(vh); 
+  readDacFile(dirname, "phoffset", vh);
+  dumpVector(vh, fSMS->phoffset, "0"); 
+  
+  // -- log file parsing
+  clearHistVector(vh); 
+  readLogFile(dirname, "vcal mean:", vh);
+  dumpVector(vh, fSMS->vcalTrimThr, "0"); 
+
+  clearHistVector(vh); 
+  readLogFile(dirname, "vcal RMS:", vh);
+  dumpVector(vh, fSMS->vcalTrimThrW, "0"); 
+
+  clearHistVector(vh); 
+  readLogFile(dirname, "non-linearity mean:", vh);
+  dumpVector(vh, fSMS->nonl, "0"); 
+
+  clearHistVector(vh); 
+  readLogFile(dirname, "non-linearity RMS:", vh);
+  dumpVector(vh, fSMS->nonlW, "0"); 
+
+  // -- note: ideally this should be filled in fillRocDefects?
+  clearHistVector(vh); 
+  readLogFile(dirname, "number of dead bumps (per ROC):", vh);
+  dumpVector(vh, fSMS->bb, "0"); 
+
+//   clearHistVector(vh); 
+//   readLogFile(dirname, "number of dead pixels (per ROC):", vh);
+//   dumpVector(vh, fSMS->dead, "0"); 
+
+
+//   clearHistVector(vh); 
+//   readLogFile(dirname, "number of mask-defect pixels (per ROC):", vh);
+//   dumpVector(vh, fSMS->mask, "0"); 
+
+//   clearHistVector(vh); 
+//   readLogFile(dirname, "number of address-decoding pixels (per ROC):", vh);
+//   dumpVector(vh, fSMS->addr, "0"); 
+
+
+  // ROOT file 
+  anaRocMap(dirname, "PixelAlive/PixelAlive", fSMS->dead, 0);
+  anaRocMap(dirname, "PixelAlive/MaskTest", fSMS->mask, 1);
+  anaRocMap(dirname, "PixelAlive/AddressDecodingTest", fSMS->addr, 1);
+
+  fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThr, 0);
+  fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThrW, 1);
+  fillRocHist(dirname, "Scurves/dist_sig_scurveVcal_Vcal", fSMS->noise, 0);
+
+  
+  fillRocDefects(dirname, fSMS->defectMap);
+
+
+  gStyle->SetOptStat(0); 
+  c0->Clear(); 
+  c0->Divide(3, 3);
+
+  c0->cd(1); 
+  double xpos(0.20);
+
+  plotVsRoc(fSMS->vana, xpos, 0.2); 
+  plotVsRoc(fSMS->caldel, xpos, 0.8, "same"); 
+
+  c0->cd(2); 
+  plotVsRoc(fSMS->phscale, xpos, 0.2); 
+  plotVsRoc(fSMS->phoffset, xpos, 0.8, "same"); 
+
+  c0->cd(3); 
+  plotVsRoc(fSMS->vthrcomp, xpos, 0.2); 
+  plotVsRoc(fSMS->vtrim, xpos, 0.8, "same"); 
+
+  c0->cd(4); 
+  plotVsRoc(fSMS->vcalThr, xpos, 0.8); 
+  plotVsRoc(fSMS->vcalTrimThr, xpos, 0.2, "same"); 
+
+//   c0->cd(5); 
+//   plotVsRoc(fSMS->nonl, xpos, 0.85); 
+//   plotVsRoc(fSMS->nonlW, xpos, 0.2, "same"); 
+
+  c0->cd(5); 
+  plotVsRoc(fSMS->vcalThrW, xpos, 0.65, ""); 
+  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.30, "same"); 
+
+  c0->cd(6); 
+  plotVsRoc(fSMS->noise, xpos, 0.50, ""); 
+  plotVsRoc(fSMS->nonl, xpos, 0.15, "same"); 
+
+
+  c0->cd(7); 
+  plotVsRoc(fSMS->dead, xpos, 0.80, "", 1); 
+  plotVsRoc(fSMS->bb,   xpos, 0.74, "same", 1); 
+  plotVsRoc(fSMS->mask, xpos, 0.68, "same", 1); 
+  plotVsRoc(fSMS->addr, xpos, 0.62, "same", 1); 
+
+  c0->cd(8); 
+  int customPalette[4];
+  customPalette[0] = kBlue;
+  customPalette[1] = kBlack;
+  customPalette[2] = kRed;
+  customPalette[3] = kGreen+2;
+
+  gStyle->SetPalette(4, customPalette); 
+  fSMS->defectMap->Draw("col");
+
+  tl->SetTextSize(0.07); 
+  tl->SetTextColor(kBlack); 
+  tl->DrawLatex(0.18, 0.92, "all modules defects"); 
+
+
+  c0->cd(9); 
+  tl->SetTextSize(0.13); 
+  tl->SetTextColor(kBlack); 
+  tl->DrawLatex(0.0, 0.90, modname.c_str()); 
+
+  tl->SetTextSize(0.08); 
+  tl->DrawLatex(0.0, 0.75, "Date:");           tl->DrawLatex(0.5, 0.75, date.c_str()); 
+  tl->DrawLatex(0.0, 0.65, "Start:");          tl->DrawLatex(0.5, 0.65, startTest.c_str()); 
+  tl->DrawLatex(0.0, 0.55, "Duration:");       tl->DrawLatex(0.5, 0.55, duration.c_str()); 
+  tl->DrawLatex(0.0, 0.35, "# crit. errors:"); tl->DrawLatex(0.5, 0.35, criticals.c_str()); 
+
+  
+  c0->SaveAs(Form("%s.pdf", modname.c_str())); 
+
+
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
+  
+  fSMS->moduleName = modulename; 
+
+  TH1::SetDefaultSumw2(kTRUE);
+
+  if (0 == first) delete fSMS->noise; 
+  fSMS->noise = new TH1D("noise", "", 16, 0., 16.);                 setHist(fSMS->noise, "ROC", "noise", kBlack, 0., 10.);
+
+  if (0 == first) delete fSMS->vcalThr; 
+  fSMS->vcalThr = new TH1D("vcalThr", "", 16, 0., 16.);             setHist(fSMS->vcalThr, "ROC", "VCAL THR", kBlack, 0., 150.);
+
+  if (0 == first) delete fSMS->vcalThrW; 
+  fSMS->vcalThrW = new TH1D("vcalThrW", "", 16, 0., 16.);           setHist(fSMS->vcalThrW, "ROC", "VCAL THR width", kBlack, 0., 10.);
+
+  if (0 == first) delete fSMS->vcalTrimThr; 
+  fSMS->vcalTrimThr = new TH1D("vcalTrimThr", "", 16, 0., 16.);     setHist(fSMS->vcalTrimThr, "ROC", "VCAL THR (trimmed)", kBlue, 0., 40.);
+
+  if (0 == first) delete fSMS->vcalTrimThrW; 
+  fSMS->vcalTrimThrW = new TH1D("vcalTrimThrW", "", 16, 0., 16.);   setHist(fSMS->vcalTrimThrW, "ROC", "VCAL THR width (trimmed)", kBlue, 0., 4.);
+
+  if (0 == first) delete fSMS->relGainW; 
+  fSMS->relGainW = new TH1D("relGainW", "", 16, 0., 16.);           setHist(fSMS->relGainW, "ROC", "rel gain width", kBlack, 0., 40.);
+
+  if (0 == first) delete fSMS->pedestalW; 
+  fSMS->pedestalW = new TH1D("pedestalW", "", 16, 0., 16.);         setHist(fSMS->pedestalW, "ROC", "pedestal width", kBlack, 0., 40.);
+
+  if (0 == first) delete fSMS->nonl; 
+  fSMS->nonl = new TH1D("nonl", "", 16, 0., 16.);                   setHist(fSMS->nonl, "ROC", "non-linearity", kBlue, 0., 1.1);
+
+  if (0 == first) delete fSMS->nonlW; 
+  fSMS->nonlW = new TH1D("nonlW", "", 16, 0., 16.);                 setHist(fSMS->nonlW, "ROC", "non-linearity width", kBlue, 0., 1.1);
+
+  if (0 == first) delete fSMS->dead; 
+  fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 10.);
+
+  if (0 == first) delete fSMS->bb; 
+  fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue, 0., 40.);
+
+  if (0 == first) delete fSMS->mask; 
+  fSMS->mask = new TH1D("mask", "", 16, 0., 16.);                   setHist(fSMS->mask, "ROC", "mask defects", kRed, 0., 40.);
+
+  if (0 == first) delete fSMS->addr; 
+  fSMS->addr = new TH1D("addr", "", 16, 0., 16.);                   setHist(fSMS->addr, "ROC", "address defects", kGreen+2, 0., 40.);
+
+  if (0 == first) delete fSMS->vana; 
+  fSMS->vana = new TH1D("vana", "", 16, 0., 16.);                   setHist(fSMS->vana, "ROC", "VANA", kBlack, 0., 256.);
+
+  if (0 == first) delete fSMS->caldel; 
+  fSMS->caldel = new TH1D("caldel", "", 16, 0., 16.);               setHist(fSMS->caldel, "ROC", "CALDEL", kRed, 0., 256.);
+
+  if (0 == first) delete fSMS->vthrcomp; 
+  fSMS->vthrcomp = new TH1D("vthrcomp", "", 16, 0., 16.);           setHist(fSMS->vthrcomp, "ROC", "VTHRCOMP", kBlack, 0., 256.);
+
+  if (0 == first) delete fSMS->vtrim; 
+  fSMS->vtrim = new TH1D("vtrim", "", 16, 0., 16.);                 setHist(fSMS->vtrim, "ROC", "VTRIM", kRed, 0., 256.);
+
+  if (0 == first) delete fSMS->phscale; 
+  fSMS->phscale = new TH1D("phscale", "", 16, 0., 16.);             setHist(fSMS->phscale, "ROC", "PHSCALE", kBlack, 0., 256.);
+
+  if (0 == first) delete fSMS->phoffset; 
+  fSMS->phoffset = new TH1D("phoffset", "", 16, 0., 16.);           setHist(fSMS->phoffset, "ROC", "PHOFFSET", kRed, 0., 256.);
+
+  if (0 == first) delete fSMS->defectMap; 
+  fSMS->defectMap = new TH2D("defectMap", "", 52, 0., 52., 80, 0., 80.); 
+  fSMS->defectMap->SetXTitle("column");          
+  fSMS->defectMap->SetYTitle("row"); 
+  fSMS->defectMap->SetMinimum(0.); 
+  fSMS->defectMap->SetMaximum(4.01); 
+  
+}
+
 // ----------------------------------------------------------------------
 void anaFullTest::bookModuleSummary(string modulename) {
 
@@ -43,7 +333,7 @@ void anaFullTest::bookModuleSummary(string modulename) {
   ms->moduleName = modulename; 
 
   for (unsigned int idac = 0; idac < fDacs.size(); ++idac) {
-    for (int iroc = 0; iroc < fNrocs; ++iroc) {
+    for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
       TH1D *h = new TH1D(Form("%s_%s_C%d", modulename.c_str(), fDacs[idac].c_str(), iroc), 
 			 Form("%s_%s_C%d", modulename.c_str(), fDacs[idac].c_str(), iroc), 
 			 256, 0., 256.); 
@@ -67,7 +357,7 @@ void anaFullTest::bookModuleSummary(string modulename) {
   }
 
   string what(""); 
-  for (int iroc = 0; iroc < fNrocs; ++iroc) {
+  for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
     what = "ndeadpixels"; 
     TH1D *h = new TH1D(Form("%s_%s_C%d", modulename.c_str(), what.c_str(), iroc), 
 		       Form("%s_%s_C%d", modulename.c_str(), what.c_str(), iroc), 
@@ -90,7 +380,7 @@ void anaFullTest::bookModuleSummary(string modulename) {
 
   ms->trimthrpos = new TH1D(Form("%s_trimthrpos", modulename.c_str()), 
 			    Form("%s_trimthrpos", modulename.c_str()), 
-			    80, 39., 41.); 
+			    80, 34., 36.); 
 
   ms->trimthrpos->SetXTitle("VCAL [DAC]");
 
@@ -216,7 +506,7 @@ void anaFullTest::validateFullTests() {
 
 // ----------------------------------------------------------------------
 void anaFullTest::addFullTests(string mname, string mpattern) {
-  vector<string> dirs = glob(mname+mpattern); 
+  vector<string> dirs = glob(".", mname+mpattern); 
   cout << dirs.size() << endl;
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
     cout << dirs[idirs] << endl;
@@ -350,6 +640,135 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
 }
 
 
+// ----------------------------------------------------------------------
+void anaFullTest::fillRocHist(string dirname, string hbasename, TH1D* rochist, int mode) {
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+  TH1D *h(0); 
+  for (int i = 0; i < fNrocs; ++i) {
+    h = (TH1D*)f->Get(Form("%s_C%d_V0", hbasename.c_str(), i)); 
+    if (h) {
+      if (0 == mode) {
+	rochist->SetBinContent(i+1, h->GetMean()); 
+      } else if (1 == mode) {
+	rochist->SetBinContent(i+1, h->GetRMS()); 
+      }
+    }
+  }
+  f->Close();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode) {
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+  TH2D *h(0); 
+  int cnt(0); 
+  for (int i = 0; i < fNrocs; ++i) {
+    h = (TH2D*)f->Get(Form("%s_C%d_V0", hbasename.c_str(), i)); 
+    cnt = 0; 
+    if (h) {
+      if (0 == mode) {
+	// -- zero entries are missing
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    if (h->GetBinContent(ix+1, iy+1) < 0.1) ++cnt;
+	  }
+	} 
+	rochist->SetBinContent(i+1, cnt); 
+      } else if (1 == mode) {
+	// -- negative entries are missing (zero are dead pixels)
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    if (h->GetBinContent(ix+1, iy+1) < -0.1) ++cnt;
+	  }
+	} 
+	rochist->SetBinContent(i+1, cnt); 
+      } 
+    }
+  }
+  f->Close();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::fillRocDefects(string dirname, TH2D *hmap) {
+
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+
+  vector<TH1D*> vh; 
+  TH1D *h(0); 
+  for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
+    h = (TH1D*)gROOT->Get(Form("h_C%d", iroc)); 
+    if (!h) h = new TH1D(Form("h_C%d", iroc), Form("h_C%d", iroc), 256, 0., 256.); 
+    vh.push_back(h); 
+  }
+
+  // -- dead bumps
+  readLogFile(dirname, "separation cut       (per ROC):", vh);
+  TH2D *h2(0); 
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("BumpBonding/thr_calSMap_VthrComp_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) > vh[i]->GetMean()) {
+	    hmap->SetBinContent(ix+1, iy+1, 1); 
+	  }
+	}
+      } 
+      
+    }
+  }
+
+  // -- dead pixels
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < 1) {
+	    hmap->SetBinContent(ix+1, iy+1, 2); 
+	  }
+	}
+      } 
+      
+    }
+  }
+
+  // -- mask problems
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/MaskTest_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < -0.1) {
+	    hmap->SetBinContent(ix+1, iy+1, 3); 
+	  }
+	}
+      } 
+    }
+  }
+
+  // -- address problems
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/AddressDecodingTest_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < -0.1) {
+	    hmap->SetBinContent(ix+1, iy+1, 4); 
+	  }
+	}
+      } 
+    }
+  }
+
+  
+
+}
+ 
+
+
 
 // ----------------------------------------------------------------------
 void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
@@ -371,6 +790,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
 	sline = sline.substr(s1+dac.length()+1); 
 	val = atoi(sline.c_str()); 
 	vals[i]->Fill(val); 
+	vals[fNrocs]->Fill(val); 
       }
     }
     IN.close(); 
@@ -381,14 +801,14 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
 
 
 // ----------------------------------------------------------------------
-vector<string> anaFullTest::glob(string basename) {
+vector<string> anaFullTest::glob(string basedir, string basename) {
   vector<string> lof; 
 #if defined(WIN32)
 #else
   TString fname;
   const char *file;
   TSystem *lunix = gSystem; //new TUnixSystem();
-  void *pDir = lunix->OpenDirectory(".");
+  void *pDir = lunix->OpenDirectory(basedir.c_str());
   while ((file = lunix->GetDirEntry(pDir))) {
     fname = file;
     if (fname.Contains(basename.c_str())) {
@@ -432,4 +852,164 @@ std::vector<double> anaFullTest::splitIntoRocs(std::string line) {
   cout << endl;
 
   return result;
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::clearHistVector(vector<TH1D*> vh) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    vh[i]->Reset();
+  }
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    if (opt == "0") {
+      h->SetBinContent(i+1, vh[i]->GetMean()); 
+    } else if (opt == "1") {
+      h->SetBinContent(i+1, vh[i]->GetRMS()); 
+    } else if (opt == "2") {
+      h->SetBinContent(i+1, vh[i]->GetMean()); 
+      h->SetBinError(i+1, vh[i]->GetMeanError()); 
+    }
+  }
+
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::setHist(TH1D *h, std::string sx, std::string sy, int color, double miny, double maxy) {
+
+  h->SetLineWidth(2); 
+  h->SetMarkerSize(1.3); 
+
+  double xoff(1.2), yoff(1.2), size(0.05), lsize(0.05); 
+
+  h->SetXTitle(sx.c_str());          h->SetYTitle(sy.c_str()); 
+  h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
+  h->SetTitleSize(size, "x");        h->SetTitleSize(size, "y");
+  h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
+
+  h->SetMinimum(miny); 
+  h->SetMaximum(maxy); 
+  
+  h->SetMarkerColor(color); 
+  h->SetLineColor(color); 
+  
+
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::plotVsRoc(TH1D *h, double tx, double ty, std::string s, int mode) {
+  h->Draw(s.c_str()); 
+  tl->SetTextColor(h->GetLineColor());
+  int total; 
+  double mean, rms;
+  projectRocHist(h, mean, rms, total); 
+  if (0 == mode) {
+    tl->DrawLatex(tx, ty, Form("%s (%4.2f, %4.2f)", h->GetName(), mean, rms)); 
+  } else if (1 == mode) {
+    tl->DrawLatex(tx, ty, Form("%s (%d)", h->GetName(), total)); 
+  }
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::projectRocHist(TH1D *h, double &mean, double &rms, int &total) {
+
+  TH1D *h1 = new TH1D("h1", "", 1000, h->GetMinimum(), h->GetMaximum()); 
+  total = 0; 
+  for (int i = 1; i <= h->GetNbinsX(); ++i) {
+    h1->Fill(h->GetBinContent(i)); 
+    total += h->GetBinContent(i);
+  }
+  mean = h1->GetMean(); 
+  rms  = h1->GetRMS(); 
+  delete h1; 
+}
+
+
+// ----------------------------------------------------------------------
+string anaFullTest::readLine(string dir, string pattern, int mode) {
+
+  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
+  ifstream IN; 
+
+  char buffer[1000];
+  string sline; 
+  string::size_type s1;
+  IN.open(Form("%s/pxar.log", dir.c_str())); 
+  while (IN.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    s1 = sline.find(pattern.c_str()); 
+    if (string::npos == s1) continue;
+    if (0 == mode) {
+      // return entire line
+      break;
+    } else if (1 == mode) {
+      // return string after pattern
+      sline = sline.substr(s1+pattern.length()+1);
+    } else if (2 == mode) {
+      // return string beforepattern
+      sline = sline.substr(0, s1);
+    }
+    break;
+  }
+  IN.close();
+  return sline; 
+
+}
+
+
+// ----------------------------------------------------------------------
+int anaFullTest::countWord(string dir, string pattern) {
+  ifstream IN; 
+
+  char buffer[1000];
+  string sline; 
+  string::size_type s1;
+  IN.open(Form("%s/pxar.log", dir.c_str())); 
+  int cnt(0); 
+  while (IN.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    s1 = sline.find(pattern.c_str()); 
+    if (string::npos == s1) continue;
+    ++cnt;
+  }
+  IN.close();
+  return cnt; 
+}
+
+
+// ----------------------------------------------------------------------
+int anaFullTest::testDuration(string startTest, string endTest) {
+  int h0, h1, m0, m1, s0, s1; 
+  string ss0 = startTest.substr(0, startTest.rfind(".")); 
+  string ss1 = endTest.substr(0, endTest.rfind(".")); 
+
+  string::size_type st0, st1;
+
+  string parse = ss0; 
+  st0 = parse.find(":");
+  st1 = parse.find(":", st0+1);
+  
+  h0 = atoi(parse.substr(0, st0).c_str());
+  m0 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
+  s0 = atoi(parse.substr(st1+1).c_str());
+
+  parse = ss1; 
+  st0 = parse.find(":");
+  st1 = parse.find(":", st0+1);
+
+  h1 = atoi(parse.substr(0, st0).c_str());
+  m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
+  s1 = atoi(parse.substr(st1+1).c_str());
+  
+  struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
+  struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
+  
+  return tv1.tv_sec - tv0.tv_sec;
 }
