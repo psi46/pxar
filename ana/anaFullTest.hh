@@ -40,6 +40,8 @@ struct singleModuleSummary {
   TH1D *dead, *bb, *mask, *addr; 
 
   TH2D *defectMap;
+  TH1D *distNoise;
+
 };
 
 
@@ -50,7 +52,7 @@ class DLLEXPORT anaFullTest {
   anaFullTest(); 
   virtual ~anaFullTest(); 
 
-  void showAllFullTests(std::string basename = "/scratch/ursl/pxar/modules");
+  void showAllFullTests(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d");
   void showFullTest(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
 
   void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");

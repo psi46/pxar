@@ -50,9 +50,8 @@ anaFullTest::~anaFullTest() {
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::showAllFullTests(string dir) {
-  vector<string> dirs = glob(dir, "m"); 
-  cout << dirs.size() << endl;
+void anaFullTest::showAllFullTests(string dir, string pattern) {
+  vector<string> dirs = glob(dir, pattern); 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
     cout << dirs[idirs] << endl;
     showFullTest(dirs[idirs], dir); 
@@ -175,6 +174,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThrW, 1);
   fillRocHist(dirname, "Scurves/dist_sig_scurveVcal_Vcal", fSMS->noise, 0);
 
+  anaRocMap(dirname, "Scurves/sig_scurveVcal_Vcal", fSMS->distNoise, 2);
   
   fillRocDefects(dirname, fSMS->defectMap);
 
@@ -206,13 +206,17 @@ void anaFullTest::showFullTest(string modname, string basename) {
 //   plotVsRoc(fSMS->nonlW, xpos, 0.2, "same"); 
 
   c0->cd(5); 
-  plotVsRoc(fSMS->vcalThrW, xpos, 0.65, ""); 
-  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.30, "same"); 
+  plotVsRoc(fSMS->vcalThrW, xpos, 0.80, ""); 
+  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.15, "same"); 
+  plotVsRoc(fSMS->noise, xpos, 0.40, "same"); 
 
   c0->cd(6); 
-  plotVsRoc(fSMS->noise, xpos, 0.50, ""); 
-  plotVsRoc(fSMS->nonl, xpos, 0.15, "same"); 
-
+  fSMS->distNoise->Draw("hist");
+  tl->SetTextSize(0.05); 
+  tl->DrawLatex(0.20, 0.92, Form("low: %d", static_cast<int>(fSMS->distNoise->Integral(0, fSMS->distNoise->FindBin(0.5))))); 
+  tl->DrawLatex(0.55, 0.80, Form("mean: %7.3f", fSMS->distNoise->GetMean()));
+  tl->DrawLatex(0.55, 0.75, Form("RMS:  %7.3f", fSMS->distNoise->GetRMS()));
+  gPad->SetLogy(1); 
 
   c0->cd(7); 
   plotVsRoc(fSMS->dead, xpos, 0.80, "", 1); 
@@ -222,7 +226,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   c0->cd(8); 
   int customPalette[4];
-  customPalette[0] = kBlue;
+  customPalette[0] = kBlue-4;
   customPalette[1] = kBlack;
   customPalette[2] = kRed;
   customPalette[3] = kGreen+2;
@@ -261,7 +265,7 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
   TH1::SetDefaultSumw2(kTRUE);
 
   if (0 == first) delete fSMS->noise; 
-  fSMS->noise = new TH1D("noise", "", 16, 0., 16.);                 setHist(fSMS->noise, "ROC", "noise", kBlack, 0., 10.);
+  fSMS->noise = new TH1D("noise", "", 16, 0., 16.);                 setHist(fSMS->noise, "ROC", "noise", kGreen+2, 0., 4.);
 
   if (0 == first) delete fSMS->vcalThr; 
   fSMS->vcalThr = new TH1D("vcalThr", "", 16, 0., 16.);             setHist(fSMS->vcalThr, "ROC", "VCAL THR", kBlack, 0., 150.);
@@ -288,10 +292,10 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
   fSMS->nonlW = new TH1D("nonlW", "", 16, 0., 16.);                 setHist(fSMS->nonlW, "ROC", "non-linearity width", kBlue, 0., 1.1);
 
   if (0 == first) delete fSMS->dead; 
-  fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 10.);
+  fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 40.);
 
   if (0 == first) delete fSMS->bb; 
-  fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue, 0., 40.);
+  fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue-4, 0., 40.);
 
   if (0 == first) delete fSMS->mask; 
   fSMS->mask = new TH1D("mask", "", 16, 0., 16.);                   setHist(fSMS->mask, "ROC", "mask defects", kRed, 0., 40.);
@@ -324,6 +328,10 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
   fSMS->defectMap->SetMinimum(0.); 
   fSMS->defectMap->SetMaximum(4.01); 
   
+  if (0 == first) delete fSMS->distNoise; 
+  fSMS->distNoise = new TH1D("distNoise", "", 100, 0., 10.);           setHist(fSMS->distNoise, "noise [VCAL]", "entries/bin", kGreen+2, 0.5, 10000.);
+
+
 }
 
 // ----------------------------------------------------------------------
@@ -683,6 +691,13 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
 	  }
 	} 
 	rochist->SetBinContent(i+1, cnt); 
+      } else if (2 == mode) {
+	// -- create histogram (projection)
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    rochist->Fill(h->GetBinContent(ix+1, iy+1)); 
+	  }
+	} 
       } 
     }
   }
@@ -840,16 +855,16 @@ std::vector<double> anaFullTest::splitIntoRocs(std::string line) {
   istringstream istring(line);
   vector<double> result; 
   double x(0.); 
-  cout << "splitting: " << line << endl;
+  //  cout << "splitting: " << line << endl;
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
     istring >> x;
     result.push_back(x); 
   }
 
   for (unsigned int i = 0; i < result.size(); ++i) {
-    cout << result[i] << " "; 
+    //    cout << result[i] << " "; 
   }
-  cout << endl;
+  //  cout << endl;
 
   return result;
 }
@@ -935,7 +950,7 @@ void anaFullTest::projectRocHist(TH1D *h, double &mean, double &rms, int &total)
 // ----------------------------------------------------------------------
 string anaFullTest::readLine(string dir, string pattern, int mode) {
 
-  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
+  //  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
   ifstream IN; 
 
   char buffer[1000];
