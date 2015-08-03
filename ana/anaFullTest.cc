@@ -238,29 +238,26 @@ void anaFullTest::showFullTest(string modname, string basename) {
   readDacFile(dirname, "phoffset", vh);
   dumpVector(vh, fSMS->phoffset, "0"); 
   summarizeVector(vh, fhPhoffset); 
+
+  vector<double> vd; 
   
   // -- log file parsing
-  clearHistVector(vh); 
-  readLogFile(dirname, "vcal mean:", vh);
-  dumpVector(vh, fSMS->vcalTrimThr, "0"); 
+  readLogFile(dirname, "vcal mean:", vd);
+  dumpVector(vd, fSMS->vcalTrimThr, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "vcal RMS:", vh);
-  dumpVector(vh, fSMS->vcalTrimThrW, "0"); 
+  readLogFile(dirname, "vcal RMS:", vd);
+  dumpVector(vd, fSMS->vcalTrimThrW, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "non-linearity mean:", vh);
-  dumpVector(vh, fSMS->nonl, "0"); 
+  readLogFile(dirname, "non-linearity mean:", vd);
+  dumpVector(vd, fSMS->nonl, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "non-linearity RMS:", vh);
-  dumpVector(vh, fSMS->nonlW, "0"); 
+  readLogFile(dirname, "non-linearity RMS:", vd);
+  dumpVector(vd, fSMS->nonlW, "0"); 
 
   // -- note: ideally this should be filled in fillRocDefects?
-  clearHistVector(vh); 
-  readLogFile(dirname, "number of dead bumps (per ROC):", vh);
-  dumpVector(vh, fSMS->bb, "0"); 
-  summarizeVector(vh, fhBb); 
+  readLogFile(dirname, "number of dead bumps (per ROC):", vd);
+  dumpVector(vd, fSMS->bb, "0"); 
+  summarizeVector(vd, fhBb); 
 
 
   // ROOT file 
@@ -342,7 +339,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   tl->SetTextSize(0.07); 
   tl->SetTextColor(kBlack); 
-  tl->DrawLatex(0.18, 0.92, "all modules defects"); 
+  tl->DrawLatex(0.18, 0.92, "all ROC defects"); 
 
 
   c0->cd(9); 
@@ -440,7 +437,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
   tl->DrawLatex(0.0, 0.55, "# low-thr (<25):");   
   tl->DrawLatex(0.5, 0.55, Form("%d", static_cast<int>(fhVcaltrimthr->Integral(0, fhVcaltrimthr->FindBin(25.))))); 
   tl->DrawLatex(0.5, 0.45, Form("(%3.2e)", fhVcaltrimthr->Integral(0, fhVcaltrimthr->FindBin(25.))/fhVcaltrimthr->Integral()));
-  c0->SaveAs("anaFullTest-summary.pdf"); 
+  c0->SaveAs("summary.pdf"); 
 
 
 }
@@ -707,6 +704,31 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
 
 }
 
+
+// ----------------------------------------------------------------------
+void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<double> &v) {
+  ifstream IN; 
+  
+  char buffer[1000];
+  string sline; 
+  string::size_type s1;
+  vector<double> x;
+  IN.open(Form("%s/pxar.log", dir.c_str())); 
+  while (IN.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    s1 = sline.find(tag.c_str()); 
+    if (string::npos == s1) continue;
+    sline = sline.substr(s1+tag.length()+1);
+    break;
+  }
+  
+  x = splitIntoRocs(sline);
+  v.clear();
+  copy(x.begin(), x.end(), back_inserter(v));
+  IN.close(); 
+}
+
+
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists) {
 
@@ -727,7 +749,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
 
   x = splitIntoRocs(sline);
   for (unsigned int i = 0; i < x.size(); ++i) {
-    //     cout << "Filling into " << hist->GetName() << " x = " << x[i] << endl;
+    cout << "Filling into " << hists[i]->GetName() << " x = " << x[i] << endl;
     hists[i]->Fill(x[i]); 
   }
 
@@ -1014,6 +1036,7 @@ void anaFullTest::clearHistVector(vector<TH1D*> vh) {
 void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
   for (unsigned int i = 0; i < vh.size(); ++i) {
     if (opt == "0") {
+      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i]->GetMean() << endl;
       h->SetBinContent(i+1, vh[i]->GetMean()); 
     } else if (opt == "1") {
       h->SetBinContent(i+1, vh[i]->GetRMS()); 
@@ -1026,11 +1049,27 @@ void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
 }
 
 // ----------------------------------------------------------------------
+void anaFullTest::dumpVector(vector<double> vh, TH1D *h, string opt) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    if (opt == "0") {
+      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i] << endl;
+      h->SetBinContent(i+1, vh[i]); 
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
 void anaFullTest::summarizeVector(vector<TH1D*> vh, TH1D *h) {
   for (unsigned int i = 0; i < vh.size(); ++i) {
     h->Fill(vh[i]->GetMean()); 
   }
+}
 
+// ----------------------------------------------------------------------
+void anaFullTest::summarizeVector(vector<double> vh, TH1D *h) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    h->Fill(vh[i]); 
+  }
 }
 
 

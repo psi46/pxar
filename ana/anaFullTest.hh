@@ -59,6 +59,7 @@ class DLLEXPORT anaFullTest {
   void validateFullTests();
   void readDacFile(std::string dir, std::string dac, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists);
+  void readLogFile(std::string dir, std::string tag, std::vector<double> &v);
   void readLogFile(std::string dir, std::string tag, TH1D* hist);
 
   void fillRocHist(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
@@ -73,8 +74,11 @@ class DLLEXPORT anaFullTest {
   double diff(TH1D*); 
 
   void clearHistVector(std::vector<TH1D*>); 
+
   void dumpVector(std::vector<TH1D*>, TH1D *, std::string); 
+  void dumpVector(std::vector<double>, TH1D *, std::string); 
   void summarizeVector(std::vector<TH1D*>, TH1D *); 
+  void summarizeVector(std::vector<double>, TH1D *); 
 
   void projectRocHist(TH1D *h, double &mean, double &rms, int &total); 
   void plotVsRoc(TH1D *h, double tx = 0.20, double ty = 0.85, std::string s = "", int mode = 0); 
