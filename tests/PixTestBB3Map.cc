@@ -125,7 +125,7 @@ void PixTestBB3Map::doTest() {
   fNDaqErrors = 0;
   // scurveMaps function is located in pxar/tests/PixTest.cc
   // generate a TH1 s-curve wrt VthrComp for each pixel
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, fParNtrig, result, 1, flag);
  
   // create vectors of plots to hold the rescaled thresholds
   vector<TH2D*>  rescaledThrmaps;
@@ -191,8 +191,12 @@ void PixTestBB3Map::doTest() {
 
   // loop over the 1D distribution pairs (one for each ROC)
   for (unsigned int i = 0; i < dlist.size(); ++i) {
+
     distEven = (TH1D*)dlist[i].first;
-    distOdd = (TH1D*)dlist[i].second;
+    distOdd  = (TH1D*)dlist[i].second;
+    distEven->GetXaxis()->SetRangeUser(10.,256.);
+    distOdd->GetXaxis()->SetRangeUser(10.,256.);
+
     // search for peaks in the distribution
     // sigma = 5, threshold = 50%
     // peaks below threshold*max_peak_height are discarded
@@ -200,6 +204,8 @@ void PixTestBB3Map::doTest() {
     //   from the distribution
     nPeaksEven = s.Search(distEven, 5, "nobackground", 0.5);
     nPeaksOdd = s.Search(distOdd, 5, "nobackground", 0.5);
+    distEven->GetXaxis()->UnZoom();
+    distOdd->GetXaxis()->UnZoom();
 
     // use fitPeaks algorithm to get the fitted gaussian of good bumps
     fitEven = fitPeaks(distEven, s, nPeaksEven);

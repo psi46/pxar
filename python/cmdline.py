@@ -332,10 +332,10 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_setClockStretch.__doc__, '']
 
-    @arity(0,0,[])
-    def do_daqStart(self):
+    @arity(0,1,[int])
+    def do_daqStart(self, flags = 0):
         """daqStart: starts a new DAQ session"""
-        self.api.daqStart()
+        self.api.daqStart(flags)
 
     def complete_daqStart(self, text, line, start_index, end_index):
         # return help for the cmd

@@ -282,6 +282,11 @@ void PixTestDacScan::doTest() {
       if (h) {
 	if (vpix[ipix].value() > 0) {
 	  h->Fill(idac, static_cast<float>(vpix[ipix].value())); 
+	}
+	else if (!fParUnmasked) {
+	  // If we are not unmasked we still want to have negative pulse heights - they are not flagged by pxarCore but
+	  // might just be the negative PH from an analog chip...
+	  h->Fill(idac, static_cast<float>(vpix[ipix].value())); 
 	} else {
 	  hname = Form("%s_xraymap_C%d", name.c_str(), vpix[ipix].roc()); 
 	  h3 = xmap[hname];

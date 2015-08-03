@@ -327,14 +327,17 @@ vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 	  }
   }
 
+  uint8_t delay = 6;
+  if(fRocType.find("dig") == std::string::npos) { delay = 5; }
+  
   if (fnTbms < 1) {
     a.push_back(make_pair("resetroc",25));    // PG_RESR b001000 
-    a.push_back(make_pair("calibrate",wbc+6)); // PG_CAL  b000100
+    a.push_back(make_pair("calibrate",wbc+delay)); // PG_CAL  b000100
     a.push_back(make_pair("trigger",16));    // PG_TRG  b000010
     a.push_back(make_pair("token",0));     // PG_TOK  b000001
   } else {
     a.push_back(std::make_pair("resetroc",15));    // PG_REST
-    a.push_back(std::make_pair("calibrate",wbc+6)); // PG_CAL
+    a.push_back(std::make_pair("calibrate",wbc+delay)); // PG_CAL
     a.push_back(std::make_pair("trigger;sync",0));     // PG_TRG PG_SYNC
   }
 
