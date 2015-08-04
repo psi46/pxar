@@ -487,7 +487,7 @@ bool PixTestPretest::checkReadBackBits(uint16_t period, bool restartDAQ) {
   for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
     for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
       if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
-      if (ReadBackBits[irb][jrb]>>12 != irb) ReadBackGood = false;
+      if (static_cast<size_t>(ReadBackBits[irb][jrb]>>12) != irb) ReadBackGood = false;
     }
   }
   return ReadBackGood;
