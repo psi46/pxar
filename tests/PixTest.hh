@@ -159,6 +159,8 @@ public:
   /// disable cal-injects for all pixels on DUT with subsequent call to maskPixels()
   void dutCalibrateOff();
   
+  /// determine hot pixels with high occupancy and increase their threshold with trim bit
+  void trimHotPixels(int hitThreshold = -1, int runSeconds = 10, bool maskuntrimmable = false);  
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
   /// send reset to ROC(s)
