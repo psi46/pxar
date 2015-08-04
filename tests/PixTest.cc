@@ -2001,6 +2001,7 @@ uint16_t PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
   return totalPeriod;
 }
 
+
 // ----------------------------------------------------------------------
 void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
 
@@ -2105,7 +2106,8 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
         if (rocIdx >= 0 && rocIdx < hotpixel_map.size()) {
           hotpixel_map[rocIdx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
         } else {
-          LOG(logERROR) << "found hit from disabled ROC " << (int)it->pixels[ipix].roc() << ", col " << (int)it->pixels[ipix].column() << " row " << (int)it->pixels[ipix].row(); 
+          LOG(logERROR) << "found hit from disabled ROC " << (int)it->pixels[ipix].roc() 
+			<< ", col " << (int)it->pixels[ipix].column() << " row " << (int)it->pixels[ipix].row(); 
           break;
         }
       }
@@ -2247,6 +2249,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
 
   LOG(logINFO) << "PixTest::trimHotPixels() done";
 }
+
 
 // ----------------------------------------------------------------------
 void PixTest::maskHotPixels(std::vector<TH2D*> v) {

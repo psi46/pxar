@@ -109,24 +109,24 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("trimhotpixelthr")) {
-  fParTrimHotPixelThr = atoi(sval.c_str());
-  setToolTips();
+	fParTrimHotPixelThr = atoi(sval.c_str());
+	setToolTips();
       }
       if (!parName.compare("runsecondshotpixels")) {
-  fParRunSecondsHotPixels = atoi(sval.c_str());
-  setToolTips();
+	fParRunSecondsHotPixels = atoi(sval.c_str());
+	setToolTips();
       }
       if (!parName.compare("savetrimbits")) {
-  PixUtil::replaceAll(sval, "checkbox(", "");
-  PixUtil::replaceAll(sval, ")", "");
-  fParSaveTrimbits = !(atoi(sval.c_str())==0);
-  setToolTips();
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParSaveTrimbits = !(atoi(sval.c_str())==0);
+	setToolTips();
       }
       if (!parName.compare("maskuntrimmable")) {
-  PixUtil::replaceAll(sval, "checkbox(", "");
-  PixUtil::replaceAll(sval, ")", "");
-  fParMaskUntrimmable = !(atoi(sval.c_str())==0);
-  setToolTips();
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fParMaskUntrimmable = !(atoi(sval.c_str())==0);
+	setToolTips();
       }
       if (!parName.compare("pix") || !parName.compare("pix1") ) {
 	s1 = sval.find(",");
@@ -149,8 +149,6 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
   }
   return found;
 }
-
-
 
 
 // ----------------------------------------------------------------------
