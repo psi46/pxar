@@ -2103,7 +2103,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
     for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
       for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
         int rocIdx = getIdxFromId(it->pixels[ipix].roc());
-        if (rocIdx >= 0 && rocIdx < hotpixel_map.size()) {
+        if (rocIdx >= 0 && rocIdx < static_cast<int>(hotpixel_map.size())) {
           hotpixel_map[rocIdx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
         } else {
           LOG(logERROR) << "found hit from disabled ROC " << (int)it->pixels[ipix].roc() 
