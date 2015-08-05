@@ -172,6 +172,7 @@ void PixTestPretest::doTest() {
 
   // -- save DACs!
   saveDacs();
+  saveTbmParameters();
 
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestPretest::doTest() done, duration: " << seconds << " seconds";
