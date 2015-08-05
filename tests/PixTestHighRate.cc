@@ -22,7 +22,7 @@ ClassImp(PixTestHighRate)
 
 // ----------------------------------------------------------------------
 PixTestHighRate::PixTestHighRate(PixSetup *a, std::string name) : PixTest(a, name),
-  fParTriggerFrequency(0), fParRunSeconds(0), fParTriggerDelay(20),
+  fParTriggerFrequency(1), fParRunSeconds(1), fParTriggerDelay(20),
   fParFillTree(false), fParDelayTBM(false), fParNtrig(5), fParVcal(200), 
   fParDacLo(0), fParDacHi(100), fParDacsPerStep(20),
   fParMaskFileName("default"), fParSaveMaskedPixels(0)   {

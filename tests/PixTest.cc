@@ -1760,6 +1760,11 @@ void PixTest::saveTrimBits() {
 }
 
 // ----------------------------------------------------------------------
+void PixTest::saveTbmParameters() {
+  fPixSetup->writeTbmParameterFiles();
+}
+
+// ----------------------------------------------------------------------
 void PixTest::saveTbParameters() {
   LOG(logDEBUG) << "save Tb parameters"; 
   fPixSetup->getConfigParameters()->writeTbParameterFile();

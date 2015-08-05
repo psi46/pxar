@@ -17,7 +17,7 @@ ClassImp(PixTestDacScan)
 
 // ----------------------------------------------------------------------
 PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParPHmap(-1), fParAllPixels(-1), fParUnmasked(-1), 
-  fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
+  fParNtrig(1), fParDAC("nada"), fParLoDAC(0), fParHiDAC(0) {
   PixTest::init();
   init(); 
 }
@@ -132,6 +132,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+
   uint16_t FLAGS = FLAG_FORCE_MASKED; 
   if (fParUnmasked) {
     LOG(logINFO) << "unmasking the detector"; 
