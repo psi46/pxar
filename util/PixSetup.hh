@@ -32,6 +32,7 @@ public:
   bool               guiActive() {return fGuiActive;}
   void               setGuiActive(bool x) {fGuiActive = x;}
 
+  void               writeAllFiles();
   void               writeDacParameterFiles();
   void               writeTrimFiles();
   void               writeTbmParameterFiles();

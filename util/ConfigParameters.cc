@@ -111,15 +111,6 @@ void ConfigParameters::readAllConfigParameterFiles() {
 void ConfigParameters::writeAllFiles() {
   writeConfigParameterFile();
   writeTbParameterFile();
-
-//   for (unsigned int i = 0; i < fnTbms; ++i) writeIdx.push_back(i); 
-//   writeTbmParameterFiles(writeIdx); 
-
-//   writeIdx.clear();
-//   for (unsigned int i = 0; i < fnRocs; ++i) writeIdx.push_back(i); 
-//   writeDacParameterFiles(writeIdx);
-//   writeTrimFiles(writeIdx);
-
 }
 
 
