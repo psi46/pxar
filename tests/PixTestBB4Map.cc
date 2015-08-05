@@ -278,10 +278,10 @@ void PixTestBB4Map::doTest()
 		LOG(logINFO) << "VthrComp = " << thr << " done";
 		
 		thrfound = 0;
-		for (int i = 0; i < fApi->_dut->getNRocs(); i++){
+		for (size_t i = 0; i < fApi->_dut->getNRocs(); i++){
 		  if (minthrfound[i]) thrfound++; 
 		}
-		if(thrfound == fApi->_dut->getNRocs()){
+		if(static_cast<unsigned int>(thrfound) == fApi->_dut->getNRocs()){
 		  LOG(logINFO) << "Minimal threshold for all ROCs found";
 		  break;
 		}

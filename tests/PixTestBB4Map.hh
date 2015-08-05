@@ -40,7 +40,7 @@ private:
   int     fParVcal;
   int     fParNoisyPixels;
   float   fParCut;
-  ClassDef(PixTestBBEffMap, 1)
+  ClassDef(PixTestBB4Map, 1)
 
 };
 #endif
