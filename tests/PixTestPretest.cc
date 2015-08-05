@@ -170,7 +170,7 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  // -- save DACs!
+  // -- save DACs and TBM parameters!
   saveDacs();
   saveTbmParameters();
 
@@ -384,9 +384,11 @@ void PixTestPretest::setTimings() {
   fApi->_dut->maskAllPixels(true);
   
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  int nTBMs = (fApi->_dut->getTbmType() == "tbm09") ? 4 : 2;
-  if (fApi->_dut->getNTbms() == 0) nTBMs = 0; // reset the above if no TBM is present
-
+  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
+  
   uint16_t period = 300;
 
   if (nTBMs==0) {
@@ -394,67 +396,66 @@ void PixTestPretest::setTimings() {
     return;
   }
 
+  vector<rawEvent> daqRawEv;
+  vector<Event> daqEv;
+
   bool GoodDelaySettings = false;
   for (int itry = 0; itry < 3 && !GoodDelaySettings; itry++) {
     LOG(logDEBUG) << "Testing Timing: Attempt #" << itry+1;
     fApi->daqStart();
-    fApi->daqTrigger(fParNtrig, period);
-    vector<Event> daqEv;
+    fApi->daqTrigger(fIterations*fParNtrig, period);
+    Log::ReportingLevel() = Log::FromString("QUIET");
     try { daqEv = fApi->daqGetEventBuffer(); }
     catch(pxar::DataNoEvent &) {}
-    fApi->daqStop();
     statistics results = fApi->getStatistics();
-    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
-    if (results.errors()==0 && NEvents==fParNtrig) GoodDelaySettings = true;
-    if (Log::ReportingLevel() >= logDEBUG) results.dump();
+    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+    bool goodreadback = checkReadBackBits(period, false);
+    fApi->daqStop();
+    Log::ReportingLevel() = UserReportingLevel;
+    if (results.errors()==0 && NEvents==fIterations*fParNtrig && goodreadback) GoodDelaySettings = true;
   }
 
-  if (GoodDelaySettings) banner("Default timings are good. No timing scan needed.");
+  if (GoodDelaySettings) banner("Current timings are good. No timing scan needed.");
+  else  banner("Current timings are not Good. Starting timing scan.");
   
   // Loop through all possible TBM Phases settings.
-  for (int pll160 = 0; pll160 < 8 && !GoodDelaySettings; pll160++) {
-    for (int pll400 = 0; pll400 < 8 && !GoodDelaySettings; pll400++) {
+  for (int pll400 = 0; pll400 < 8 && !GoodDelaySettings; pll400++) {
+    for (int pll160 = 0; pll160 < 8 && !GoodDelaySettings; pll160++) {
       //Apply TBM Phase Settings
       uint8_t TBMPhase = pll160<<5 | pll400<<2;
-      LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
       fApi->setTbmReg("basee", TBMPhase, 0); //Set TBM PLL Phases
-
-      //Loop through the different ROC delays (4, 3, 5, 2, 6, 1)
-      int ROCDelays[6] = {4, 3, 5, 2, 6, 1};
       fApi->daqStart();
-      for (int iROCDelay = 0; iROCDelay < 6 && !GoodDelaySettings; iROCDelay++) {
-        //Apply ROC Delays
-        int ROCDelay = ROCDelays[iROCDelay];
-        uint8_t ROCPhase = (1<<6) | (ROCDelay<<3) | ROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
-        LOG(logDEBUG) << "Testing ROC Phase: " << bitset<8>(ROCPhase).to_string();
-        for (int itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
-
+      for (int iROCDelay = 0; iROCDelay < 8 && !GoodDelaySettings; iROCDelay++) {
+        uint8_t ROCPhase = (1<<6) | (iROCDelay<<3) | iROCDelay; //Disable token delay, enable header/trailer delay, and set the ROC delays to the same values
+        LOG(logDEBUG) << "Testing TBM Phase: " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400 << " ROC Phase: " << bitset<8>(ROCPhase).to_string();
+        for (size_t itbm=0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCPhase, itbm); //Set ROC Phases
         //Test Delay Settings
-        fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
-        vector<rawEvent> daqRawEv;
-	try { daqRawEv = fApi->daqGetRawEventBuffer(); }
-	catch(pxar::DataNoEvent &) {}
-        for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
         Log::ReportingLevel() = Log::FromString("QUIET");
-        vector<Event> daqEv;
+        fApi->daqTrigger(fParNtrig, period); //Read in fParNtrig events and throw them away, first event is generally bad.
+        try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+        catch(pxar::DataNoEvent &) {}
         for (int interation=0; interation < fIterations; interation++) {
           fApi->daqTrigger(fParNtrig, period);
           try { daqEv = fApi->daqGetEventBuffer(); }
-	  catch(pxar::DataNoEvent &) {}
+          catch(pxar::DataNoEvent &) {}
         }
-        statistics results = fApi->getStatistics();
-        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
         Log::ReportingLevel() = UserReportingLevel;
-        LOG(logDEBUG) << "Number of Errors: " << results.errors();
-        LOG(logDEBUG) << "Number of Events: " << NEvents;
-        if (Log::ReportingLevel() >= logDEBUG) results.dump();
+        statistics results = fApi->getStatistics();
+        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+        LOG(logDEBUG) << Form("The fraction of properly decoded events is %4.1f%%: %d/%d", float(NEvents)/(fIterations*fParNtrig)*100, NEvents, fIterations*fParNtrig);
+        if (results.errors()>0) { LOG(logDEBUG) << results.errors() << " Decoding Errors Found!"; }
         if (results.errors()==0 && NEvents==fIterations*fParNtrig) {
+          bool goodreadback = checkReadBackBits(period, false);
+          if (!goodreadback) {
+            LOG(logDEBUG) << "Last bit of ROC header stuck at 1. Continuing to next timing setting.";
+            continue;
+          }
           GoodDelaySettings=true;
           banner("Good Timings Found!!!");
           LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
           LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
           fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
-          for (int itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
+          for (size_t itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
         }
       }
       fApi->daqStop();
@@ -468,6 +469,29 @@ void PixTestPretest::setTimings() {
   LOG(logINFO) << "PixTestPretest::setTimings() done.";
 
   dutCalibrateOff();
+}
+
+// ----------------------------------------------------------------------
+bool PixTestPretest::checkReadBackBits(uint16_t period, bool restartDAQ) {
+
+  bool ReadBackGood = true;
+  vector<Event> daqEv;
+  std::vector<std::vector<uint16_t> > ReadBackBits;
+  
+  if (restartDAQ) fApi->daqStart();
+  fApi->daqTrigger(32, period);
+  try { daqEv = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
+  ReadBackBits = fApi->daqGetReadback();
+  if (restartDAQ) fApi->daqStop();
+  
+  for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
+    for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
+      if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
+      if (static_cast<size_t>(ReadBackBits[irb][jrb]>>12) != irb) ReadBackGood = false;
+    }
+  }
+  return ReadBackGood;
 }
 
 // ----------------------------------------------------------------------
