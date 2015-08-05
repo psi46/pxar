@@ -29,6 +29,8 @@ class CTestboard {
   std::vector<std::vector<uint16_t> > daq_buffer; // Data buffers
   std::vector<bool> daq_status; // Channel status
   std::vector<size_t> daq_event; // Event counters
+
+  std::vector<uint16_t> pg_setup; // pattern generator
   
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
