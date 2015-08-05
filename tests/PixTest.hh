@@ -90,8 +90,6 @@ public:
   void saveDacs(); 
   /// save trim bits to file
   void saveTrimBits(); 
-  /// save DACs to file
-  void saveDacs(); 
   /// save TBM parameters to file
   void saveTbmParameters(); 
   /// save TB parameters to file
