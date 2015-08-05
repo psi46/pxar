@@ -170,7 +170,7 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  // -- save DACs!
+  // -- save DACs and TBM parameters!
   saveDacs();
   saveTbmParameters();
 
