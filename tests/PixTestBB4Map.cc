@@ -183,7 +183,7 @@ void PixTestBB4Map::doTest()
 	//save VthrComp and CalDel to restore them at the end of the test	
 	uint8_t std_caldel[16];
 	uint8_t std_vthr[16];
-	int rocthr[16], goodint[16]; //threshold for each roc 
+	int rocthr[16]; //threshold for each roc 
 	bool minthrfound[16]; // minimum threshold found
 
 
@@ -194,7 +194,6 @@ void PixTestBB4Map::doTest()
 		std_caldel[i] = fApi->_dut->getDAC( i, "CalDel" );
 		rocthr[i] = fParVthrCompHi;
 		minthrfound[i] = false;
-		goodint[i] = 0;
 		LOG(logINFO) << (int) i << " " << (int) rocthr[i] << " " 
 			     << (bool) minthrfound[i];
 	}
