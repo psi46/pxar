@@ -198,9 +198,6 @@ namespace pxar {
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
     IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
 
-    // Check for correct TBM event ID:
-    CheckEventID();
-
 
     // TBM Trailer:
 
@@ -216,6 +213,9 @@ namespace pxar {
 
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
     IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
+
+    // Check for correct TBM event ID:
+    CheckEventID();
 
     // Remove header and trailer:
     sample->data.erase(sample->data.begin(), sample->data.begin() + 2);
@@ -441,6 +441,13 @@ namespace pxar {
     // After startup, register the first event ID:
     if(eventID == -1) { eventID = roc_Event.triggerCount(); }
 
+    // Check if event contains TBM reset:
+    if(roc_Event.hasResetTBM()) {
+      LOG(logDEBUGPIPES) << "Channel " <<  static_cast<int>(GetChannel())
+			 << " Event ID reset due to ResetTBM";
+      eventID = roc_Event.triggerCount();
+    }
+    
     // Check if TBM event ID matches with expectation:
     if(roc_Event.triggerCount() != (eventID%256)) {
       LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Event ID mismatch:  local ID (" << static_cast<int>(eventID)
