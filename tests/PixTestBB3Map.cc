@@ -23,7 +23,7 @@ ClassImp(PixTestBB3Map)
 
 //------------------------------------------------------------------------------
 PixTestBB3Map::PixTestBB3Map(PixSetup *a, std::string name): PixTest(a, name),
-  fParNtrig(-1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
+  fParNtrig(1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBB3Map ctor(PixSetup &a, string, TGTab *)";

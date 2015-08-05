@@ -21,8 +21,8 @@ ClassImp(PixTestPretest)
 // ----------------------------------------------------------------------
 PixTestPretest::PixTestPretest( PixSetup *a, std::string name) : 
 PixTest(a, name), 
-  fTargetIa(-1), fNoiseWidth(22), fNoiseMargin(10), 
-  fParNtrig(-1), 
+  fTargetIa(24), fNoiseWidth(22), fNoiseMargin(10), 
+  fParNtrig(1), 
   fParVcal(200), 
   fParDeltaVthrComp(-50), 
   fParFracCalDel(0.5) {

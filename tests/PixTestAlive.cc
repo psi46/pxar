@@ -15,7 +15,7 @@ using namespace pxar;
 ClassImp(PixTestAlive)
 
 // ----------------------------------------------------------------------
-PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(0), fParVcal(-1) {
+PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1), fParVcal(200) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestAlive ctor(PixSetup &a, string, TGTab *)";
