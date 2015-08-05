@@ -347,8 +347,8 @@ void PixTestBB4Map::doTest()
 		hresult[i]->GetXaxis()->SetTitle("column");
 		hresult[i]->GetYaxis()->SetTitle("row");
 
-		hBestEfficiency[i] = new TH2D(Form("BBeffMapBest_C%i_V%i",i,durchlauf),
-					      Form("BBeffMapBest_C%i (V%i)",i,durchlauf),
+		hBestEfficiency[i] = new TH2D(Form("BB4MapBest_C%i_V%i",i,durchlauf),
+					      Form("BB4Best_C%i (V%i)",i,durchlauf),
 					      52,-0.5,51.5,80,-0.5,79.5);
 		hBestEfficiency[i]->GetXaxis()->SetTitle("column");
 		hBestEfficiency[i]->GetYaxis()->SetTitle("row");
@@ -470,7 +470,7 @@ void PixTestBB4Map::doTest()
 
 		fHistList.push_back((*maps)[idx]);
 		hist = (TH2D*) fHistList.back();
-		hist->SetTitle(Form("BBEffMap_C%i",idx));
+		hist->SetTitle(Form("BB4Map_C%i",idx));
 
 		//headline for ROC
 		f << "----------\nROC " << setw(2) << (int)idx << ":\n----------\n";
@@ -619,8 +619,8 @@ void PixTestBB4Map::mapeff(vector<TH2D*>* maps)
   for( size_t roc = 0; roc < nRocs; ++roc ) {
 
     //    h2 = new TH2D( Form( "MapBB_V%i_C%d", int(durchlauf), int(roc) ),
-    h2 = new TH2D( Form( "BBEffMap_C%d_V%d", int(roc) , int(durchlauf)),
-		   Form( "partial BBEffMap ROC %d", int(roc) ),
+    h2 = new TH2D( Form( "BB4Map_C%d_V%d", int(roc) , int(durchlauf)),
+		   Form( "partial BB4Map ROC %d", int(roc) ),
 		   52, -0.5, 51.5, 80, -0.5, 79.5 );
     setTitles( h2, "col", "row" );
     h2->GetZaxis()->SetTitle( "PH [ADC]" );
