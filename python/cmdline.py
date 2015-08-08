@@ -151,6 +151,60 @@ class PxarCoreCmd(cmd.Cmd):
         self.api.daqStop()
         return rawEvent
 
+    def converted_raw_event(self):
+        event = []
+        try:
+            event = self.api.daqGetRawEvent()
+        except RuntimeError:
+            pass
+        count = 0
+        for i in event:
+            i &= 0x0fff
+            if i & 0x0800:
+                i -= 4096
+            event[count] = i
+            count += 1
+        return event
+
+    def set_clock(self, value):
+        # sets all the delays to the right value if you want to change clk
+        self.api.setTestboardDelays({"clk": value})
+        self.api.setTestboardDelays({"ctr": value})
+        self.api.setTestboardDelays({"sda": value + 15})
+        self.api.setTestboardDelays({"tin": value + 5})
+
+    def enable_pix(self, row=5, col=12, roc=0):
+        self.api.testAllPixels(0)
+        self.api.maskAllPixels(1)
+        self.api.testPixel(row, col, 1, roc)
+        self.api.maskPixel(row, col, 0, roc)
+
+    def address_level_scan(self):
+        self.api.daqStart()
+        self.api.daqTrigger(1000, 500)  # choose here how many triggers you want to send (crucial for the time it takes)
+        plotdata = zeros(1024)
+        try:
+
+            while True:
+                pos = -3
+                dat = self.api.daqGetRawEvent()
+                for i in dat:
+                    # REMOVE HEADER
+                    i &= 0x0fff
+                    # Remove PH from hits:
+                    if pos == 5:
+                        pos = 0
+                        continue
+                    # convert negatives
+                    if i & 0x0800:
+                        i -= 4096
+                    plotdata[500 + i] += 1
+                    pos += 1
+        except RuntimeError:
+            pass
+        self.api.daqStop()
+        return plotdata
+
 ##########################################################################################################################
 
     def do_EOF(self, line):
@@ -649,30 +703,14 @@ class PxarCoreCmd(cmd.Cmd):
         """analogLevelScan: scan the ADC levels of an analog ROC"""
         self.api.daqStart()
         self.api.daqTrigger(5000,500)
-        plotdata = zeros(1024)
-
-        try:
-            while True:
-                s = ""
-                p = ""
-                pos = -3
-                dat = self.api.daqGetRawEvent()
-                for i in dat:
-                    i = i & 0x0fff
-                    # Remove PH from hits:
-                    if pos == 5:
-                        pos = 0
-                        continue
-                    if i & 0x0800:
-                        i -= 4096
-                    plotdata[500+i] += 1
-                    pos += 1
-        except RuntimeError:
-            pass
-
+        plotdata = self.address_level_scan()
         plot = Plotter.create_th1(plotdata, -512, +512, "Address Levels", "ADC", "#")
         self.window.histos.append(plot)
         self.window.update()
+
+    def complete_analogLevelScan(self):
+        # return help for the cmd
+        return [self.do_analogLevelScan.__doc__, '']
 
     def complete_analogLevelScan(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -1016,7 +1054,7 @@ class PxarCoreCmd(cmd.Cmd):
         """ do_latencyScan [min] [max] [triggers] [signal]: scan the trigger latency from min to max with set number of triggers)"""
 
         self.api.testAllPixels(0,None)
-        self.api.HVon();
+        self.api.HVon()
 
         latencyScan = []
         print "latency \tyield"
@@ -1055,6 +1093,155 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_latencyScan(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_latencyScan.__doc__, '']
+
+    @arity(0, 3, [int, int, int])
+    def do_find_clk_delay(self, n_rocs=1, min_val=0, max_val=25):
+        """find the best clock delay setting """
+        # variable declarations
+        cols = [0, 2, 4, 6, 8, 10]
+        rows = [44, 41, 38, 35, 32, 29]  # special pixel setting for splitting
+        n_triggers = 100
+        n_levels = len(cols)
+        clk_x = []
+        levels_y = []
+        mean_value = []
+        spread_black = []
+        header = [0, 0]
+
+        # find the address levels
+        print "get level splitting:"
+        for roc in range(n_rocs):
+            self.api.maskAllPixels(1, roc)
+            self.api.testAllPixels(0, roc)
+            levels_y.append([])
+            mean_value.append([])
+            spread_black.append([])
+            for i in range(len(cols)):
+                levels_y[roc].append([])
+                mean_value[roc].append(0)
+                self.api.testPixel(cols[i], rows[i], 1, roc)
+                self.api.maskPixel(cols[i], rows[i], 0, roc)
+            # active pixel for black level spread
+            self.api.testPixel(15, 59, 1, roc)
+            self.api.maskPixel(15, 59, 0, roc)
+
+            for clk in range(min_val, max_val):
+                # clear mean values
+                for i in range(n_levels):
+                    mean_value[roc][i] = 0
+                if not roc:
+                    clk_x.append(clk)
+                self.set_clock(clk)
+                self.api.daqStart()
+                self.api.daqTrigger(n_triggers, 500)
+                sum_spread = 0
+                for k in range(n_triggers):
+                    event = self.converted_raw_event()
+                    # black level spread
+                    spread_j = 0
+                    for j in range(5):
+                        try:
+                            spread_j += abs(event[1 + roc * 3] - event[3 + roc * 3 + n_levels * 6 + j])
+                        except IndexError:
+                            spread_j = 99
+                            break
+                    sum_spread += spread_j / 5
+                    # level split
+                    stop_loop = False
+                    for j in range(len(cols)):
+                        try:
+                            mean_value[roc][j] += event[5 + roc * 3 + j * 6]
+                        except IndexError:
+                            mean_value[roc][j] = 0
+                            stop_loop = True
+                            break
+                    if stop_loop:
+                        break
+                spread_black[roc].append(sum_spread / float(n_triggers))
+                for i in range(n_levels):
+                    levels_y[roc][i].append(mean_value[roc][i] / float(n_triggers))
+                print '\rclk-delay:', "{0:2d}".format(clk), 'black lvl spread: ', "{0:2.2f}".format(spread_black[roc][clk]),
+                sys.stdout.flush()
+                self.api.daqStop()
+            self.api.maskAllPixels(1, roc)
+            self.api.testAllPixels(0, roc)
+        print
+
+        # find the best phase
+        spread = []
+        for i in range(len(levels_y[0][0])):
+            sum_level = 0
+            sum_spread = 0
+            for j in range(n_levels):
+                sum_level += levels_y[0][j][i]
+            for j in range(n_levels):
+                if levels_y[0][j][i] != 0:
+                    sum_spread += abs(sum_level / n_levels - levels_y[0][j][i])
+                else:
+                    sum_spread = 99 * n_levels
+                    break
+            spread.append(sum_spread / n_levels)
+        best_clk = 99
+        min_spread = 99
+        for i in range(len(spread)):
+            if spread[i] < min_spread:
+                min_spread = spread[i]
+                best_clk = i
+        print
+        print 'best clk: ', best_clk
+        names = ['clk\t\t\t', 'level spread:\t\t', 'black level spread:\t']
+        infos = [clk_x, spread, spread_black[0]]
+        for i in range(3):
+            print names[i],
+            for j in range(-2, 3):
+                if not i:
+                    print infos[i][best_clk + j], '\t',
+                else:
+                    print '{0:2.2f}'.format(infos[i][best_clk + j]), '\t',
+            print
+        self.set_clock(best_clk)
+
+        # get an averaged header for the lvl margins
+        self.api.daqStart()
+        self.api.daqTrigger(n_triggers, 500)
+        for i in range(n_triggers):
+            event = self.converted_raw_event()
+            header[0] += event[0]
+            header[1] += event[1]
+        self.api.daqStop()
+        header[0] /= n_triggers
+        header[1] /= n_triggers
+
+        # save the data to file (optional)
+        f = open('levels_header.txt', 'w')
+        f.write(str(header[0]) + "\n" + str(header[1]))
+        f.close()
+        file_name = []
+        for i_roc in range(n_rocs):
+            file_name.append('levels_roc' + str(i_roc) + '.txt')
+            f = open(file_name[i_roc], 'w')
+            for i in range(n_levels):
+                for j in levels_y[i_roc][i]:
+                    f.write(str(j) + ' ')
+                f.write("\n")
+            for i in clk_x:
+                f.write(str(i) + ' ')
+            f.close()
+        print 'saved the levels to file(s)'
+        for name in file_name:
+            print name
+
+        # plot address levels
+        self.enable_pix(5, 12)
+        self.window = PxarGui(ROOT.gClient.GetRoot(), 800, 800)
+        plotdata = self.address_level_scan()
+        plot = Plotter.create_th1(plotdata, -512, +512, "Address Levels", "ADC", "#")
+        self.window.histos.append(plot)
+        self.window.update()
+
+    def complete_find_clk_delay(self):
+        # return help for the cmd
+        return [self.do_find_clk_delay.__doc__, '']
 
     def do_quit(self, arg):
         """quit: terminates the application"""
