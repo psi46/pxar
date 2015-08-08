@@ -708,10 +708,6 @@ class PxarCoreCmd(cmd.Cmd):
         self.window.histos.append(plot)
         self.window.update()
 
-    def complete_analogLevelScan(self):
-        # return help for the cmd
-        return [self.do_analogLevelScan.__doc__, '']
-
     def complete_analogLevelScan(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_analogLevelScan.__doc__, '']
