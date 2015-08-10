@@ -3649,7 +3649,34 @@ int CmdProc::exec(std::string s){
     }
 }
 
+void PixTestCmd::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "running command: " << command;
 
+  fDirectory->cd();
+  fHistList.clear();
 
+  // read the history file for future use
+  ifstream inputFile(".history");
+  if ( inputFile.is_open()){
+      string line;
+      while( getline( inputFile, line ) ){
+          cmdHistory.push_back(line);
+      }
+      historyIndex = cmdHistory.size();
+  }
 
+  PixTest::update();
+
+  cmd = new CmdProc( this );
+  cmd->setApi(fApi, fPixSetup);
+
+  if (!command.compare("timing")){
+      std::string s_redirect = "timing > pxar_timing.log";
+      cmd->exec(s_redirect.c_str());
+  }
+
+  PixTest::update();
+
+}
 
