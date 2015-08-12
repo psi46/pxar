@@ -84,10 +84,14 @@ public:
   virtual void fullTest(); 
   /// allow execution of any button in the test 
   virtual void runCommand(std::string command); 
+  /// allow interrupt of test
+  virtual void stopTest() {fStopTest = true;}
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file
   void saveTrimBits(); 
+  /// save TBM parameters to file
+  void saveTbmParameters(); 
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
@@ -134,7 +138,8 @@ public:
   /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 4
   /// result &0x10: dump 'problematic' threshold histogram fits
   /// result &0x20: dump all threshold histogram fits
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int dacsperstep = -1, 
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
+			       int dacsperstep = -1, int ntrigperstep = 1, 
 			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
@@ -156,6 +161,8 @@ public:
   /// disable cal-injects for all pixels on DUT with subsequent call to maskPixels()
   void dutCalibrateOff();
   
+  /// determine hot pixels with high occupancy and increase their threshold with trim bit
+  void trimHotPixels(int hitThreshold = -1, int runSeconds = 10, bool maskuntrimmable = false);  
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
   /// send reset to ROC(s)
@@ -332,7 +339,7 @@ protected:
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
 
-  bool                  fProblem;
+  bool                  fProblem, fStopTest;
 
   std::vector<TH2D*>    fXrayMaps; 
 

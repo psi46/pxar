@@ -22,7 +22,7 @@ public:
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
-  
+  bool checkReadBackBits(uint16_t period, bool restartDAQ);
 
 private:
 
