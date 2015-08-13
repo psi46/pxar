@@ -587,6 +587,20 @@ dumpProblematic     checkbox(0)
 Ntrig               5
 vcals               250
 
+-- BB4
+savecaldelscan      checkbox(0)
+Ntrig               100
+Cals                1
+CalDelLo            80
+CalDelHi            200
+CalDelStep          10
+VthrCompLo          70
+VthrCompHi          130
+VthrCompStep        5
+NoisyPixels         10
+Vcal                255
+Cut                 0.5
+
 -- Readback
 calibrateVd         button
 calibrateVa         button
