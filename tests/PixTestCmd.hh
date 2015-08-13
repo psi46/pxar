@@ -40,6 +40,7 @@ public:
   void DoUpArrow();
   void DoDnArrow();
   void flush(std::string s);
+  void runCommand(std::string s);
 
 private:
 
