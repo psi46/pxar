@@ -40,6 +40,7 @@ public:
   void DoUpArrow();
   void DoDnArrow();
   void flush(std::string s);
+  void runCommand(std::string s);
 
 private:
 
@@ -178,6 +179,7 @@ class Keyword{
     bool match(const char *, int &);
     bool match(const char *, int &, int &);
     bool match(const char *, int &, int &, int &);
+    bool match(const char *, int &, int &, int &, int &, int &);
     bool match(const char *, string &);
     bool match(const char * s, vector<int> & , vector<int> &);
     bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
@@ -358,6 +360,7 @@ class CmdProc {
   bool verbose;
   bool redirected;
   bool fEchoExecs;  // echo command from executed files
+  uint16_t fDumpFlawed;
   Target defaultTarget;
   map<string, deque <string> > macros;
   
