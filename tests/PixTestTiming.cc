@@ -254,7 +254,7 @@ void PixTestTiming::PhaseScan() {
   vector<TH2D*> tbmhists;
   vector<TH2D*> rocdelayhists;
 
-  int NTimings;
+  int NTimings(0);
 
   for (size_t itbm = 0; itbm<nTBMs; itbm++) {
     NTimings = 0;

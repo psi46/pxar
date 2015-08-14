@@ -107,6 +107,33 @@ class PxarParametersFile:
     def getAll(self):
         return self.config
 
+class PxarTrimFile:
+    """ class that loads the old-style trim parameters files of psi46expert """
+    def __init__(self, f):
+        self.config = list()
+        import shlex
+        thisf = open(f)
+        try:
+            for line in thisf:
+                if not line.startswith("--") and not line.startswith("#"):
+                    parts = shlex.split(line)
+                    if len(parts) == 4:
+                        # Ignore the 'Pix' string in the file...
+                        p = PixelConfig(int(parts[2]),int(parts[3]),int(parts[0]))
+                        p.mask = False
+                        self.config.append(p)
+        finally:
+            thisf.close()
+    def show(self):
+        print self.config
+    def get(self, opt, default = None):
+        if default:
+            return self.config.get(opt.lower(),default)
+        else:
+            return self.config[opt.lower()]
+    def getAll(self):
+        return self.config
+
 def PxarStartup(directory, verbosity):
     if not directory or not os.path.isdir(directory):
         print "Error: no or invalid configuration directory specified!"
@@ -158,9 +185,11 @@ def PxarStartup(directory, verbosity):
         else:
             i2c = roc
         dacconfig = PxarParametersFile('%s%s_C%i.dat'%(os.path.join(directory,""),config.get("dacParameters"),i2c))
+        trimconfig = PxarTrimFile('%s%s_C%i.dat'%(os.path.join(directory,""),config.get("trimParameters"),i2c))
+        print "We have " + str(len(trimconfig.getAll())) + " pixels for ROC " + str(i2c)
         rocI2C.append(i2c)
         rocDacs.append(dacconfig.getAll())
-        rocPixels.append(pixels)
+        rocPixels.append(trimconfig.getAll())
 
     # set pgcal according to wbc
     pgcal = int(rocDacs[0]['wbc']) + 6
@@ -187,9 +216,6 @@ def PxarStartup(directory, verbosity):
         print "WARNING: could not init DTB -- possible firmware mismatch."
         print "Please check if a new FW version is available"
         exit
-
-
-    print "And we have just initialized " + str(len(pixels)) + " pixel configs to be used for every ROC!"
 
     api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
 

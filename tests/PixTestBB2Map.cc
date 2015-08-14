@@ -23,7 +23,7 @@ using namespace pxar;
 ClassImp(PixTestBB2Map)
 
 //------------------------------------------------------------------------------
-PixTestBB2Map::PixTestBB2Map(PixSetup *a, std::string name): PixTest(a, name), fTargetIa(-1), fParNtrig(10), fParVcalS(250), fParPlWidth(35) {
+PixTestBB2Map::PixTestBB2Map(PixSetup *a, std::string name): PixTest(a, name), fTargetIa(24), fParNtrig(1), fParVcalS(250), fParPlWidth(35) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBB2Map ctor(PixSetup &a, string, TGTab *)";
