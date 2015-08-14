@@ -1,0 +1,65 @@
+#! /usr/bin/perl
+
+# ----------------------------------------------------------------------
+# Usage     ../main/shortTest -d directory [-t TBM09C] [-r digv21respin] 
+# -----
+#
+#           script used for the quick qualification at PSI before trasnfer to ETH
+#
+# Options   -d directory the directory into which all config files will be put
+# -------   -t TBM08     the TBM type; mkConfig -h will list all known types
+#           -r digv21    the ROC type; mkConfig -h will list all known types
+# ----------------------------------------------------------------------
+
+use Getopt::Std;
+getopts('d:r:t:');
+
+# -- define pxar production release
+my $pxarbase = "/home/l_tester/prod/pxar-prod";
+
+# -- define known hardware types
+my @rocok = ("digv2", "digv21", "digv21respin");
+my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
+
+if (!$opt_d) {
+    die "you must specify a directory for the module setup\n";
+} else {
+    if (-d "$opt_d") {
+	die "directory $opt_d already exists; please remove it manually or choose another name\n";
+    }
+}
+
+# -- ROC type from either command line or by default
+my $roctype = "digv21respin";
+if ($opt_r) {
+    $opt_r =~ tr/A-Z/a-z/;
+    if (grep(/$opt_r/, @rocok)) {
+	$roctype = $opt_r;
+    } else {
+	print "roc type $opt_r not known, resetting to $roctype (known ROC types: ", join(", " , @rocok), ")\n";
+    }
+}
+
+# -- TBM type from either command line or by default
+my $tbmtype = "TBM09C";
+if ($opt_t) {
+    $opt_t =~ tr/a-z/A-Z/;
+    if (grep(/$opt_t/, @tbmok)) {
+	$tbmtype = $opt_t;
+    } else {
+	print "TBM type $opt_t not known, resetting to $tbmtype (known TBM types: ", join(", " , @tbmok), ")\n";
+    }
+}
+
+print "###### shortTest: create directory with config files\n";
+system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $opt_d");
+ 
+print "###### shortTest: run essential pretest and Wolfram's timing test\n";
+system("cat $pxarbase/main/ltest | $pxarbase/bin/pXar -v DEBUG -d $opt_d");
+
+print "###### shortTest: mv pxar_timing.log into $opt_d\n";
+system("/bin/mv pxar_timing.log $opt_d");
+
+print "###### shortTest: run full test\n";
+system("cat $pxarbase/main/mtest | $pxarbase/bin/pXar -v DEBUG -d $opt_d");
+
