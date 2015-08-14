@@ -708,9 +708,10 @@ EOF
     print FH <<"EOF";
 -- Timing
 targetclk           4
-ntrig               10
-clocksdascan        button
+ntrig               1000
 notokenpass         checkbox(0)
+ignorereadback      checkbox(0)
+clocksdascan        button
 phasescan           button
 levelscan           button
 tbmphasescan        button
