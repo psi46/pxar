@@ -399,7 +399,7 @@ uint8_t CTestboard::Daq_Read(std::vector<uint16_t> &data, uint32_t blocksize, ui
     eventcounter++;
     LOG(logDEBUGRPC) << "Event counter: " << eventcounter;
     if(!daq_status.at(channel)) { available = 0; return 0; }
-    fillRawData(daq_event.at(channel)++,daq_buffer.at(channel),channel,tbmtype,roci2c.size(),false,true,0,0,pg_setup);
+    fillRawData(daq_event.at(channel)++,daq_buffer.at(channel),tbmtype,roci2c.size(),false,true,0,0,pg_setup);
     mDelay(10);
   }
 
