@@ -521,7 +521,12 @@ void hal::setTBvd(double VD) {
 
 void hal::setHubId(uint8_t hubid) {
   LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
-  hubId = hubid;
+  _testboard->mod_Addr(hubid);
+}
+
+void hal::setHubId(uint8_t hub0, uint8_t hub1) {
+  LOG(logDEBUGHAL) << "Setting both Layer 1 Hub IDs: " << static_cast<int>(hub0) << ", " << static_cast<int>(hub1);
+  _testboard->mod_Addr(hub0, hub1);
 }
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {

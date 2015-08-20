@@ -139,14 +139,24 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
   // Verification/sanity checks of supplied DUT configuration values
 
   // Check if the number of hub ids and TBM core settings match:
-  if(tbmDACs.empty()) {
-    // No TBM: store the first hubId, ignore the rest:
-    _dut->hubId = hubids.front();
+  if(tbmDACs.size() <= 2) {
+    // We need to set the global hub ID once, take the first, ignore the rest:
+    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(hubids.front());
+    _hal->setHubId(hubids.front());
+  }
+  // We only support maximum two hubs connected:
+  else if(hubids.size() > 2) {
+    LOG(logCRITICAL) << "Too many hub ids supplied. Only two hubs supported for Layer 1 modules...";
+    throw InvalidConfig("Too many hub ids supplied.");
   }
   else if(2*hubids.size() != tbmDACs.size()) {
     LOG(logCRITICAL) << "Hm, we have " << tbmDACs.size() << " TBM Cores but " << hubids.size() << " HUB ids.";
     LOG(logCRITICAL) << "This cannot end well...";
     throw InvalidConfig("Mismatch between number of HUB addresses and TBM Cores");
+  }
+  else {
+    // We have two hub ids - this calls for a Layer 1 module initialization:
+    _hal->setHubId(hubids.front(), hubids.back());
   }
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
@@ -418,12 +428,7 @@ bool pxarCore::programDUT() {
   // Start programming the devices here!
 
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  // No TBM - we need to set the global hub ID once:
-  if(enabledTbms.empty()) {
-    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(_dut->hubId);
-    _hal->setHubId(_dut->hubId);
-  }
-  else { LOG(logDEBUGAPI) << "Programming TBMs..."; }
+  if(!enabledTbms.empty()) { LOG(logDEBUGAPI) << "Programming TBMs..."; }
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
     _hal->initTBMCore((*tbmit));
   }

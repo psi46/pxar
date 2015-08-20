@@ -236,10 +236,10 @@ cdef class PyPxarCore:
         for item in enumerate(pg_setup):
             pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         self.thisptr.setPatternGenerator(pgs)
-    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2C = None):
+    def initDUT(self, hubids, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2C = None):
         """ Initializer method for the DUT (attached devices)
         Parameters:
-	hubId (int)
+	hubId (int vector)
         tbmtype (string)
         tbmDACs (list of dictionaries (string,int), one for each TBM)
         roctype (string)
@@ -247,11 +247,18 @@ cdef class PyPxarCore:
         rocPixels (list of list of pixelConfigs, one list for each ROC)
         rocI2C (list of I2C addresses of the ROCs)
         """
+        cdef vector[uint8_t] hubs
         cdef vector[vector[pair[string,uint8_t]]] td
         cdef vector[vector[pair[string,uint8_t]]] rd
         cdef vector[vector[pixelConfig]] rpcs
         cdef PixelConfig pc
         cdef vector[uint8_t] i2c
+
+        if isinstance(hubids,list):
+            for i in hubids:
+                hubs.push_back(i)
+        else:
+            hubs.push_back(hubids)
 
         for idx, tbmDAC in enumerate(tbmDACs):
             td.push_back(vector[pair[string,uint8_t]]())
@@ -269,9 +276,9 @@ cdef class PyPxarCore:
         if rocI2C is not None:
             for i in rocI2C:
                 i2c.push_back(i)
-            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs,i2c)
+            return self.thisptr.initDUT(hubs, tbmtype, td, roctype,rd,rpcs,i2c)
         else:
-            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
+            return self.thisptr.initDUT(hubs, tbmtype, td, roctype,rd,rpcs)
 
     def getVersion(self):
         return self.thisptr.getVersion()

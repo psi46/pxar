@@ -167,14 +167,14 @@ cdef extern from "api.h" namespace "pxar":
         void setTestboardDelays(vector[pair[string, uint8_t] ] sig_delays) except +
         void setPatternGenerator(vector[pair[string, uint8_t] ] pg_setup) except +
 
-        bool initDUT(uint8_t hubId,
+        bool initDUT(vector[uint8_t] hubId,
 	             string tbmtype,
                      vector[vector[pair[string,uint8_t]]] tbmDACs,
                      string roctype,
                      vector[vector[pair[string,uint8_t]]] rocDACs,
                      vector[vector[pixelConfig]] rocPixels) except +
 
-        bool initDUT(uint8_t hubId,
+        bool initDUT(vector[uint8_t] hubId,
 	             string tbmtype,
                      vector[vector[pair[string,uint8_t]]] tbmDACs,
                      string roctype,

@@ -65,6 +65,9 @@ class PxarConfigFile:
                     parts = shlex.split(line)
                     if len(parts) == 2:
                         self.config[parts[0].lower()] = parts[1]
+                    elif len(parts) == 3:
+                        parts = [parts[0],' '.join(parts[1:])]
+                        self.config[parts[0].lower()] = parts[1]
                     elif len(parts) == 4:
                         parts = [parts[0],' '.join(parts[1:])]
                         if len(parts) == 2:
