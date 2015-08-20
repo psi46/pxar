@@ -204,6 +204,7 @@ class CTestboard {
   void Daq_Close(uint8_t channel);
   void Daq_Start(uint8_t channel);
   void Daq_Stop(uint8_t channel);
+  void Daq_MemReset(uint8_t channel);
   uint32_t Daq_GetSize(uint8_t channel);
   uint8_t Daq_FillLevel(uint8_t channel);
   uint8_t Daq_FillLevel();

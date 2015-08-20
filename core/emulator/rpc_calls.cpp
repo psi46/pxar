@@ -351,6 +351,11 @@ void CTestboard::Daq_Stop(uint8_t channel) {
   daq_status.at(channel) = false;
 }
 
+void CTestboard::Daq_MemReset(uint8_t channel) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+  daq_buffer.at(channel).clear();
+}
+
 uint32_t CTestboard::Daq_GetSize(uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
   if(daq_status.at(channel)) return daq_buffer.at(channel).size();
