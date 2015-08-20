@@ -293,6 +293,7 @@ void PixTestTiming::PhaseScan() {
           setTitles(h2, "ROC Port 0 Delay", "ROC Port 1 Delay");
           h2->SetMinimum(0);
           for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+            fApi->daqStart();
             for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
               NTimings++;
               int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
@@ -302,11 +303,11 @@ void PixTestTiming::PhaseScan() {
               Log::ReportingLevel() = Log::FromString("QUIET");
               statistics results = getEvents(fNTrig, period, fTrigBuffer);
               Log::ReportingLevel() = UserReportingLevel;
-              if ((ROCDelay & 63)==63) fApi->daqStop();
               int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-              if (NEvents==fNTrig && results.errors()==0) {
+              int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+              if (NEvents==fNTrig && NErrors==0) {
                 bool goodreadback = true;
-                if (fNoTokenPass && fIgnoreReadBack) {
+                if (!fNoTokenPass && !fIgnoreReadBack) {
                   goodreadback = checkReadBackBits(period);
                   fApi->daqStop();
                 }
@@ -317,6 +318,7 @@ void PixTestTiming::PhaseScan() {
                 }
               }
             }
+            fApi->daqStop();
           }
           if (h2->GetEntries()>0) rocdelayhists.push_back(h2);
         }
@@ -483,25 +485,27 @@ void PixTestTiming::ROCDelayScan() {
     fHistOptions.insert(make_pair(h1, "colz"));
     h1->SetMinimum(0);
     for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+      fApi->daqStart();
       for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
         int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
         LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
         for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
         if (fApi->daqStatus()==0) fApi->daqStart();
-        //Log::ReportingLevel() = Log::FromString("QUIET");
+        Log::ReportingLevel() = Log::FromString("QUIET");
         statistics results = getEvents(fNTrig, period, fTrigBuffer);
-        //Log::ReportingLevel() = UserReportingLevel;
-        if ((ROCDelay & 63)==63) fApi->daqStop();
+        Log::ReportingLevel() = UserReportingLevel;
         int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-        if (NEvents==fNTrig && results.errors()==0) {
+        int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+        if (NEvents==fNTrig && NErrors==0) {
           bool goodreadback = true;
-          // if (!fIgnoreReadBack && !fNoTokenPass) {
-          //   goodreadback = checkReadBackBits(period);
-          //   fApi->daqStop();
-          // }
+          if (!fIgnoreReadBack && !fNoTokenPass) {
+            goodreadback = checkReadBackBits(period);
+            fApi->daqStop();
+          }
           if (goodreadback) h1->Fill(irocphaseport0,irocphaseport1);
         }
       }
+      fApi->daqStop();
     }
     rocdelayhists.push_back(h1);
   }
@@ -768,7 +772,6 @@ bool PixTestTiming::checkReadBackBits(uint16_t period) {
     }
   }
 
-  if (fApi->daqStatus()==0) fApi->daqStart();
   fApi->daqTrigger(32, period);
   try { daqEv = fApi->daqGetEventBuffer(); }
   catch(pxar::DataNoEvent &) {}
