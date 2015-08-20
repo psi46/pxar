@@ -13,7 +13,11 @@ namespace pxar {
       dtbState = tb->Daq_Read(buffer, DTB_SOURCE_BLOCK_SIZE, dtbRemainingSize, channel);
     
       if (buffer.size() == 0) {
-	if (stopAtEmptyData) throw dsBufferEmpty();
+	if (stopAtEmptyData) {
+	  // Reset the DTB memory to work around buffer issue:
+	  tb->Daq_MemReset(channel);
+	  throw dsBufferEmpty();
+	}
 	if (dtbState) throw dsBufferOverflow();
       }
     } while (buffer.size() == 0);
