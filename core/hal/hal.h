@@ -126,11 +126,6 @@ namespace pxar {
      */
     bool tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > regPairs);
 
-    /** Set no token pass so that token chain lengths of zero are used. tbmid is here the number of the
-	TBM core, not the hubid. channels marks, how many channels need to be flagged on this core
-     */
-    void tbmSetNoTokenPass(uint8_t tbmid, uint8_t channels, bool notokenpass);
-    
     /** Function to set and update the pattern generator command list on the DTB
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);
@@ -429,7 +424,6 @@ namespace pxar {
     uint8_t m_roctype;
     uint8_t m_roccount;
     std::vector<uint8_t> m_tokenchains;
-    std::vector<bool> m_notokenpass;
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
 

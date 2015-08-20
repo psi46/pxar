@@ -771,9 +771,6 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
     }
     
     _hal->tbmSetReg(_dut->tbm.at(tbmid).hubid,_dut->tbm.at(tbmid).core | _register,regValue);
-    
-    // update HAL no token pass setting:
-    _hal->tbmSetNoTokenPass(tbmid,_dut->tbm.at(tbmid).tokenchains.size(),_dut->tbm.at(tbmid).NoTokenPass());
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";

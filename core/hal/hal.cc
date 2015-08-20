@@ -22,7 +22,6 @@ hal::hal(std::string name) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
-  m_notokenpass(),
   m_daqstatus(),
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
@@ -303,7 +302,6 @@ void hal::initTBMCore(tbmConfig tbm) {
   for(std::vector<uint8_t>::iterator i = tbm.tokenchains.begin(); i != tbm.tokenchains.end(); i++) {
     // One tokenchain setting per TBM channel:
     m_tokenchains.push_back(*i);
-    m_notokenpass.push_back(tbm.NoTokenPass());
   }
   
   // Set the hub address for the modules (BPIX default is 31)
@@ -611,14 +609,6 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
   // Set this register:
   _testboard->tbm_Set(regId,regValue);
   return true;
-}
-
-void hal::tbmSetNoTokenPass(uint8_t tbmid, uint8_t channels, bool notokenpass) {
-  // Set the NoTokenPass flag for all TBM channels of this core:
-  for(size_t i = 0; i < channels; i++) {
-    LOG(logDEBUGHAL) << "Flagging " << (int)channels << " channels on core #" << (int)tbmid << " (at " << (tbmid*channels+i) << ")";
-    if((tbmid*channels+i) < m_notokenpass.size()) { m_notokenpass.at(tbmid*channels+i) = notokenpass; }
-  }
 }
 
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
@@ -1687,7 +1677,6 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 
   // Figure out the number of DAQ channels we need:
   if(m_tokenchains.empty()) { m_tokenchains.push_back(m_roccount); }
-  if(m_notokenpass.empty()) { m_notokenpass.push_back(false); }
   
   LOG(logDEBUGHAL) << "Number of token chains: " << m_tokenchains.size();
   if(m_tokenchains.size() > DTB_DAQ_CHANNELS) {
@@ -1704,10 +1693,10 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
     // Open DAQ in channel i:
     uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
     LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
-		     << (m_notokenpass.at(i) ? 0 : static_cast<int>(m_tokenchains.at(i)))
+		     << static_cast<int>(m_tokenchains.at(i))
 		     << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
     // Initialize the data source, set tokenchain length to zero if no token pass is expected:
-    m_src.at(i) = dtbSource(_testboard,i,(m_notokenpass.at(i) ? 0 : m_tokenchains.at(i)),rocid_offset,m_tbmtype,m_roctype,true,flags);
+    m_src.at(i) = dtbSource(_testboard,i,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
     m_src.at(i) >> m_splitter.at(i);
     _testboard->uDelay(100);
     // Increment the ROC id offset by the amount of ROCs expected:
