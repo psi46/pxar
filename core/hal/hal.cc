@@ -1823,6 +1823,8 @@ std::vector<Event*> hal::daqAllEvents() {
 	try { *current_Event += *Eventpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
+	  // Reset the DTB memory to work around buffer issue:
+	  _testboard->Daq_MemReset(ch);
 	  done_ch.at(ch) = true;
 	}
 	catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
@@ -1893,6 +1895,8 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
 	try { *current_Event += *rawpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
+	  // Reset the DTB memory to work around buffer issue:
+	  _testboard->Daq_MemReset(ch);
 	  done_ch.at(ch) = true;
 	}
 	catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
@@ -1923,7 +1927,11 @@ std::vector<uint16_t> hal::daqBuffer() {
       dataSink<uint16_t> rawpump;
       m_src.at(ch) >> rawpump;
       try { while(1) { raw.push_back(rawpump.Get()); } }
-      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel " << ch << "."; }
+      catch (dsBufferEmpty &) {
+	LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
+	// Reset the DTB memory to work around buffer issue:
+	_testboard->Daq_MemReset(ch);
+      }
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
     }
   }
