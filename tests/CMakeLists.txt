@@ -28,6 +28,7 @@ PixTestReadback.cc
 PixTestBBMap.cc
 PixTestBB2Map.cc
 PixTestBB3Map.cc
+PixTestBB4Map.cc
 PixTestBareModule.cc
 PixTestFullTest.cc
 PixTestCmd.cc
@@ -59,6 +60,7 @@ PixTestReadback.hh
 PixTestBBMap.hh
 PixTestBB2Map.hh
 PixTestBB3Map.hh
+PixTestBB4Map.hh
 PixTestBareModule.hh
 PixTestFullTest.hh
 PixTestCmd.hh
