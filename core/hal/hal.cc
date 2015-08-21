@@ -1820,7 +1820,9 @@ std::vector<Event*> hal::daqAllEvents() {
       }
       else { done_ch.at(ch) = true; }
     }
-      
+
+    _testboard->Flush();
+
     // If all readout is finished, return:
     std::vector<bool>::iterator fin = std::find(done_ch.begin(), done_ch.end(), false);
     if(fin == done_ch.end()) {
@@ -1892,7 +1894,9 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
       }
       else { done_ch.at(ch) = true; }
     }
-      
+
+    _testboard->Flush();
+
     // If all readout is finished, return:
     std::vector<bool>::iterator fin = std::find(done_ch.begin(), done_ch.end(), false);
     if(fin == done_ch.end()) {
@@ -1925,6 +1929,7 @@ std::vector<uint16_t> hal::daqBuffer() {
     }
   }
 
+  _testboard->Flush();
   if(raw.empty()) throw DataNoEvent("No data available");
   return raw;
 }
