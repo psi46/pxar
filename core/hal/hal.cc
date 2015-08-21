@@ -733,6 +733,7 @@ void hal::estimateDataVolume(uint32_t events, uint8_t nROCs) {
   // DESER160: header 1 word, pixel 2 words
   else { nSamples = events*nROCs*(1+2); }
 
+  LOG(logINFO) << "Expecting " << events << " events.";
   LOG(logDEBUGHAL) << "Estimated data volume: "
 		   << (nSamples/1000) << "k/" << (DTB_SOURCE_BUFFER_SIZE/1000) 
 		   << "k (~" << (100*static_cast<double>(nSamples)/DTB_SOURCE_BUFFER_SIZE) << "% allocated DTB RAM)";
@@ -752,7 +753,6 @@ std::vector<Event> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs,
   LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -795,7 +795,6 @@ std::vector<Event> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs, 
 		   << static_cast<int>(row) << " on "
 		   << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
-  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   estimateDataVolume(nTriggers, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -837,7 +836,6 @@ std::vector<Event> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, bool efficie
   int expected = nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(roci2c) << ".";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -878,7 +876,6 @@ std::vector<Event> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colum
   LOG(logDEBUGHAL) << "Called SingleRocOnePixelCalibrate for pixel " << static_cast<int>(column) << ","
 		   << static_cast<int>(row) << " with flags " << listFlags(flags) << ", running "
 		   << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   estimateDataVolume(nTriggers, 1);
 
  // Prepare for data acquisition:
@@ -931,7 +928,6 @@ std::vector<Event> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, b
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
@@ -985,7 +981,6 @@ std::vector<Event> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, ui
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
@@ -1035,7 +1030,6 @@ std::vector<Event> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, bool efficienc
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
  // Prepare for data acquisition:
@@ -1085,7 +1079,6 @@ std::vector<Event> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column,
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -1145,7 +1138,6 @@ std::vector<Event> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2cs
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -1208,7 +1200,6 @@ std::vector<Event> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs,
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -1267,7 +1258,6 @@ std::vector<Event> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, bool effici
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -1326,7 +1316,6 @@ std::vector<Event> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t colu
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -1973,6 +1962,7 @@ void hal::addCondensedData(std::vector<Event> &data, uint16_t nTriggers, bool ef
     data.insert(data.end(),tmpdata.begin(),tmpdata.end());
     LOG(logDEBUGHAL) << (tmpdata.size()*nTriggers) << " events read and condensed (" << t << "ms), "
 		     << data.size() << " events buffered.";
+    LOG(logINFO) << (data.size()*nTriggers) << " events read in total (" << t << "ms).";
   }
   catch(DataNoEvent) {}
   catch(DataException &e) {
