@@ -1775,9 +1775,9 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
   _testboard->Flush();
 }
 
-Event* hal::daqEvent() {
+Event hal::daqEvent() {
 
-  Event* current_Event = new Event();
+  Event current_Event;
 
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
@@ -1785,13 +1785,13 @@ Event* hal::daqEvent() {
       dataSink<Event*> Eventpump;
       m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
-      try { *current_Event += *Eventpump.Get(); }
+      try { current_Event += *Eventpump.Get(); }
       catch (dsBufferEmpty &) {
 	// If nothing has been read yet, just throw DataNoevent:
 	if(ch == 0) throw DataNoEvent("No event available");
 	
 	// Else the previous channels already got data, so we have to retry:
-	try { *current_Event += *Eventpump.Get(); }
+	try { current_Event += *Eventpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logCRITICAL) << "Found data in channel" << (ch > 1 ? std::string("s 0-" + (ch-1)) : std::string(" 0")) << " but not in channel " << ch << "!";
 	  throw DataChannelMismatch("No event available in channel " + ch);
@@ -1804,9 +1804,9 @@ Event* hal::daqEvent() {
   return current_Event;
 }
 
-std::vector<Event*> hal::daqAllEvents() {
+std::vector<Event> hal::daqAllEvents() {
 
-  std::vector<Event*> evt;
+  std::vector<Event> evt;
   
   // Prepare channel flags:
   std::vector<bool> done_ch;
@@ -1814,14 +1814,14 @@ std::vector<Event*> hal::daqAllEvents() {
 
   while(1) {
     // Read the next Event from each of the pipes:
-    Event* current_Event = new Event();
+    Event current_Event;
     for(size_t ch = 0; ch < m_src.size(); ch++) {
       if(m_src.at(ch).isConnected()) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
 	// Add all event data from this channel:
-	try { *current_Event += *Eventpump.Get(); }
+	try { current_Event += *Eventpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
 	  // Reset the DTB memory to work around buffer issue:
@@ -1848,9 +1848,9 @@ std::vector<Event*> hal::daqAllEvents() {
   return evt;
 }
 
-rawEvent* hal::daqRawEvent() {
+rawEvent hal::daqRawEvent() {
 
-  rawEvent* current_Event = new rawEvent();
+  rawEvent current_Event;
   
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
@@ -1858,14 +1858,14 @@ rawEvent* hal::daqRawEvent() {
       dataSink<rawEvent*> rawpump;
       m_splitter.at(ch) >> rawpump;
 
-      try { *current_Event += *rawpump.Get(); }
+      try { current_Event += *rawpump.Get(); }
       // One of the channels did not return anything!
       catch (dsBufferEmpty &) {
 	// If nothing has been read yet, just throw DataNoevent:
 	if(ch == 0) throw DataNoEvent("No event available");
 	
 	// Else the previous channels already got data, so we have to retry:
-	try { *current_Event += *rawpump.Get(); }
+	try { current_Event += *rawpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logCRITICAL) << "Found data in channel" << (ch > 1 ? std::string("s 0-" + (ch-1)) : std::string(" 0")) << " but not in channel " << ch << "!";
 	  throw DataChannelMismatch("No event available in channel " + ch);
@@ -1878,9 +1878,9 @@ rawEvent* hal::daqRawEvent() {
   return current_Event;
 }
 
-std::vector<rawEvent*> hal::daqAllRawEvents() {
+std::vector<rawEvent> hal::daqAllRawEvents() {
 
-  std::vector<rawEvent*> raw;
+  std::vector<rawEvent> raw;
 
   // Prepare channel flags:
   std::vector<bool> done_ch;
@@ -1888,14 +1888,14 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
 
   while(1) {
     // Read the next Event from each of the pipes:
-    rawEvent* current_Event = new rawEvent();
+    rawEvent current_Event;
     
     for(size_t ch = 0; ch < m_src.size(); ch++) {
       if(m_src.at(ch).isConnected()) {
 	dataSink<rawEvent*> rawpump;
 	m_splitter.at(ch) >> rawpump;
 	
-	try { *current_Event += *rawpump.Get(); }
+	try { current_Event += *rawpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
 	  // Reset the DTB memory to work around buffer issue:

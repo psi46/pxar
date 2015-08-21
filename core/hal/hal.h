@@ -333,19 +333,19 @@ namespace pxar {
 
     /** Reading out the full undecoded DAQ buffer
      */
-    std::vector<rawEvent*> daqAllRawEvents();
+    std::vector<rawEvent> daqAllRawEvents();
 
     /** Read the next decoded Event from the FIFO buffer
      */
-    Event* daqEvent();
+    Event daqEvent();
 
     /** Read the next raw (undecoded) Event from the FIFO buffer
      */
-    rawEvent* daqRawEvent();
+    rawEvent daqRawEvent();
 
     /** Read all remaining decoded Events from the FIFO buffer
      */
-    std::vector<Event*> daqAllEvents();
+    std::vector<Event> daqAllEvents();
 
     /** Return the current decoding statistics for all channels:
      */
