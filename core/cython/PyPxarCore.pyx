@@ -62,6 +62,15 @@ cdef class PixelConfig:
             self.thisptr = new pixelConfig()
     def __dealloc__(self):
         del self.thisptr
+    def __str__(self):
+        s = "ROC " + str(self.roc) + " [" + str(self.column) + "," + str(self.row) + "] Trim: " + str(self.trim) + " Mask: "
+        s += "True" if self.mask else "False"
+        return s
+    def __richcmp__(self, other not None, int op):
+        if op == 2: # ==
+            return (self.roc == other.roc and self.column == other.column and self.row == other.row)
+        elif op == 3: # !=
+            return (self.roc != other.roc or self.column != other.column or self.row != other.row)
     cdef fill(self, pixelConfig p):
         self.thisptr.setRoc(p.roc())
         self.thisptr.setColumn(p.column())
