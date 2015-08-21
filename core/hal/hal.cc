@@ -2101,3 +2101,69 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
 uint16_t hal::GetADC(uint8_t rpc_par1){
   return _testboard->GetADC(rpc_par1);
 }
+
+std::vector<Event> hal::condenseTriggers(std::vector<Event> &data, uint16_t nTriggers, bool efficiency) {
+
+  std::vector<Event> packed;
+
+  if(data.size()%nTriggers != 0) {
+    LOG(logCRITICAL) << "Data size does not correspond to " << nTriggers << " triggers! Aborting data processing!";
+    return packed;
+  }
+
+  for(std::vector<Event>::iterator Eventit = data.begin(); Eventit!= data.end(); Eventit += nTriggers) {
+
+    Event evt;
+    std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
+    std::map<pixel,double> pxmean = std::map<pixel,double>();
+    std::map<pixel,double> pxm2 = std::map<pixel,double>();
+
+    for(std::vector<Event>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
+
+      // Loop over all contained pixels:
+      for(std::vector<pixel>::iterator pixit = (it)->pixels.begin(); pixit != (it)->pixels.end(); ++pixit) {
+
+	// Check if we have that particular pixel already in:
+	std::vector<pixel>::iterator px = std::find_if(evt.pixels.begin(),
+						       evt.pixels.end(),
+						       findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+	// Pixel is known:
+	if(px != evt.pixels.end()) {
+	  if(efficiency) { px->setValue(px->value()+1); }
+	  else {
+	    // Calculate the variance incrementally:
+	    double delta = pixit->value() - pxmean[*px];
+	    pxmean[*px] += delta/pxcount[*px];
+	    pxm2[*px] += delta*(pixit->value() - pxmean[*px]);
+	    pxcount[*px]++;
+	  }
+	}
+	// Pixel is new:
+	else {
+	  if(efficiency) { pixit->setValue(1); }
+	  else {
+	    // Initialize counters and temporary variables:
+	    pxcount.insert(std::make_pair(*pixit,1));
+	    pxmean.insert(std::make_pair(*pixit,pixit->value()));
+	    pxm2.insert(std::make_pair(*pixit,0));
+	  }
+	  evt.pixels.push_back(*pixit);
+	}
+      }
+    }
+
+    // Calculate mean and variance for the pulse height depending on the
+    // number of triggers received:
+    if(!efficiency) {
+      for(std::vector<pixel>::iterator px = evt.pixels.begin(); px != evt.pixels.end(); ++px) {
+	px->setValue(pxmean[*px]); // The mean
+	px->setVariance(pxm2[*px]/(pxcount[*px] - 1)); // The variance
+      }
+    }
+    packed.push_back(evt);
+  }
+
+  // Clean up the dangling pointers in the vector:
+  data.clear();
+  return packed;
+}

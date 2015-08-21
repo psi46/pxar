@@ -452,6 +452,11 @@ namespace pxar {
      */
     void estimateDataVolume(uint32_t events, uint8_t nROCs);
 
+    /** Merges all consecutive triggers into one pxar::Event. This function deletes the original event data after
+     *  merging! 
+     */
+    std::vector<Event> condenseTriggers(std::vector<Event> &data, uint16_t nTriggers, bool efficiency);
+    
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit
      */
