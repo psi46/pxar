@@ -741,7 +741,7 @@ void hal::estimateDataVolume(uint32_t events, uint8_t nROCs) {
 
 // ---------------- TEST FUNCTIONS ----------------------
 
-std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter) {
 
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
