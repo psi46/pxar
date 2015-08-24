@@ -69,7 +69,7 @@ namespace pxar {
 
   }
 
-  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool empty, bool noise, size_t col, size_t row, uint32_t flags) {
+  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool empty, bool noise, size_t col, size_t row, std::vector<uint16_t> pattern, uint32_t flags) {
 
     size_t pos = data.size();
     
@@ -105,7 +105,13 @@ namespace pxar {
 
     // Add a TBM trailer if necessary:
     if(tbm != TBM_NONE) {
-      data.push_back(0xe000);
+      bool has_tbm_reset = false;
+      bool has_roc_reset = false;
+      for(size_t i = 0; i < pattern.size(); i++) {
+	if((pattern.at(i)&PG_REST) != 0) has_tbm_reset = true;
+	if((pattern.at(i)&PG_RESR) != 0) has_roc_reset = true;
+      }
+      data.push_back(0xe000 | ((nroc==0) << 7) | (has_tbm_reset << 6) | (has_roc_reset << 5));
       data.push_back(0xc002);
     }
     // Adjust event start and end marker:

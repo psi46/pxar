@@ -21,7 +21,7 @@ ClassImp(PixTestBBMap)
 
 //------------------------------------------------------------------------------
 PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), 
-  fParNtrig(-1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
+  fParNtrig(0), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBBMap ctor(PixSetup &a, string, TGTab *)";

@@ -3,16 +3,19 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <time.h>
 
 #include <TROOT.h>
 #include <TSystem.h>
 #include <TStyle.h>
 #include <TFile.h>
-#include <TH2.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
 #endif
+
+#include "PixUtil.hh"
+
 
 using namespace std;
 
@@ -27,6 +30,25 @@ anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
   tl->SetTextSize(0.06); 
 
   fSMS = new singleModuleSummary; 
+
+  double YMAX(-1.);
+  fhDuration    = new TH1D("hDuration", "", 50, 0., 10000.);    setHist(fhDuration, "test duration [seconds]", "tests", kBlack, 0., YMAX);
+  fhCritical    = new TH1D("hCritical", "", 20, 0., 20.);        setHist(fhCritical, "#criticals seen", "tests", kBlack, 0., YMAX);
+  fhDead        = new TH1D("hDead", "", 40, 0., 40.);            setHist(fhDead, "pixels", "", kBlack, 0.5, YMAX);
+  fhMask        = new TH1D("hMask", "", 40, 0., 40.);            setHist(fhMask, "pixels", "", kRed, 0.5, YMAX);
+  fhAddr        = new TH1D("hAddr", "", 40, 0., 40.);            setHist(fhAddr, "pixels", "", kGreen+2, 0., YMAX);
+  fhBb          = new TH1D("hBb", "", 40, 0., 40.);              setHist(fhBb, "pixels", "", kBlue-4, 0.5, YMAX);
+
+  fhNoise       = new TH1D("hNoise", "", 100, 0., 10.);          setHist(fhNoise, "noise [VCAL]", "pixels", kGreen+2, 0.5, YMAX);
+  fhVcaltrimthr = new TH1D("hVcaltrimthr", "", 100, 0., 50.);    setHist(fhVcaltrimthr, "VCAL trim thr", "pixels", kBlack, 0.5, YMAX);
+
+  fhVana        = new TH1D("hVana", "", 256, 0., 256);           setHist(fhVana, "DAC", "ROCs", kBlack, 0., YMAX);
+  fhCaldel      = new TH1D("hCaldel", "", 256, 0., 256);         setHist(fhCaldel, "DAC", "ROCs", kRed, 0., YMAX);
+  fhPhoffset    = new TH1D("hPhoffset", "", 256, 0., 256);       setHist(fhPhoffset, "DAC", "ROCs", kRed+2, 0., YMAX);
+  fhPhscale     = new TH1D("hPfscale", "", 256, 0., 256);        setHist(fhPhscale, "DAC", "ROCs", kYellow+2, 0., YMAX);
+  fhVtrim       = new TH1D("hVtrim", "", 256, 0., 256);          setHist(fhVtrim, "DAC", "ROCs", kRed, 0., YMAX);
+  fhVthrcomp    = new TH1D("hVthrcomp", "", 256, 0., 256);       setHist(fhVthrcomp, "DAC", "ROCs", kBlack, 0., YMAX);
+
 
   fDiffMetric = 0;
 
@@ -47,9 +69,90 @@ anaFullTest::~anaFullTest() {
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::showAllFullTests(string dir) {
-  vector<string> dirs = glob(dir, "m"); 
-  cout << dirs.size() << endl;
+void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
+  
+  fSMS->moduleName = modulename; 
+
+  TH1::SetDefaultSumw2(kTRUE);
+
+  if (0 == first) delete fSMS->noise; 
+  fSMS->noise = new TH1D("noise", "", 16, 0., 16.);                 setHist(fSMS->noise, "ROC", "noise", kGreen+2, 0., 4.);
+
+  if (0 == first) delete fSMS->vcalThr; 
+  fSMS->vcalThr = new TH1D("vcalThr", "", 16, 0., 16.);             setHist(fSMS->vcalThr, "ROC", "VCAL THR", kBlack, 0., 150.);
+
+  if (0 == first) delete fSMS->vcalThrW; 
+  fSMS->vcalThrW = new TH1D("vcalThrW", "", 16, 0., 16.);           setHist(fSMS->vcalThrW, "ROC", "VCAL THR width", kBlack, 0., 10.);
+
+  if (0 == first) delete fSMS->vcalTrimThr; 
+  fSMS->vcalTrimThr = new TH1D("vcalTrimThr", "", 16, 0., 16.);     setHist(fSMS->vcalTrimThr, "ROC", "VCAL THR (trimmed)", kBlue, 0., -1.);
+
+  if (0 == first) delete fSMS->vcalTrimThrW; 
+  fSMS->vcalTrimThrW = new TH1D("vcalTrimThrW", "", 16, 0., 16.);   setHist(fSMS->vcalTrimThrW, "ROC", "VCAL THR width (trimmed)", kBlue, 0., 4.);
+
+  if (0 == first) delete fSMS->relGainW; 
+  fSMS->relGainW = new TH1D("relGainW", "", 16, 0., 16.);           setHist(fSMS->relGainW, "ROC", "rel gain width", kBlack, 0., 40.);
+
+  if (0 == first) delete fSMS->pedestalW; 
+  fSMS->pedestalW = new TH1D("pedestalW", "", 16, 0., 16.);         setHist(fSMS->pedestalW, "ROC", "pedestal width", kBlack, 0., 40.);
+
+  if (0 == first) delete fSMS->nonl; 
+  fSMS->nonl = new TH1D("nonl", "", 16, 0., 16.);                   setHist(fSMS->nonl, "ROC", "non-linearity", kBlue, 0., 1.1);
+
+  if (0 == first) delete fSMS->nonlW; 
+  fSMS->nonlW = new TH1D("nonlW", "", 16, 0., 16.);                 setHist(fSMS->nonlW, "ROC", "non-linearity width", kBlue, 0., 1.1);
+
+  if (0 == first) delete fSMS->dead; 
+  fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 40.);
+
+  if (0 == first) delete fSMS->bb; 
+  fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue-4, 0., 40.);
+
+  if (0 == first) delete fSMS->mask; 
+  fSMS->mask = new TH1D("mask", "", 16, 0., 16.);                   setHist(fSMS->mask, "ROC", "mask defects", kRed, 0., 40.);
+
+  if (0 == first) delete fSMS->addr; 
+  fSMS->addr = new TH1D("addr", "", 16, 0., 16.);                   setHist(fSMS->addr, "ROC", "address defects", kGreen+2, 0., 40.);
+
+  if (0 == first) delete fSMS->vana; 
+  fSMS->vana = new TH1D("vana", "", 16, 0., 16.);                   setHist(fSMS->vana, "ROC", "VANA", kBlack, 0., 256.);
+
+  if (0 == first) delete fSMS->caldel; 
+  fSMS->caldel = new TH1D("caldel", "", 16, 0., 16.);               setHist(fSMS->caldel, "ROC", "CALDEL", kRed, 0., 256.);
+
+  if (0 == first) delete fSMS->vthrcomp; 
+  fSMS->vthrcomp = new TH1D("vthrcomp", "", 16, 0., 16.);           setHist(fSMS->vthrcomp, "ROC", "VTHRCOMP", kBlack, 0., 256.);
+
+  if (0 == first) delete fSMS->vtrim; 
+  fSMS->vtrim = new TH1D("vtrim", "", 16, 0., 16.);                 setHist(fSMS->vtrim, "ROC", "VTRIM", kRed, 0., 256.);
+
+  if (0 == first) delete fSMS->phscale; 
+  fSMS->phscale = new TH1D("phscale", "", 16, 0., 16.);             setHist(fSMS->phscale, "ROC", "PHSCALE", kYellow+2, 0., 256.);
+
+  if (0 == first) delete fSMS->phoffset; 
+  fSMS->phoffset = new TH1D("phoffset", "", 16, 0., 16.);           setHist(fSMS->phoffset, "ROC", "PHOFFSET", kRed+2, 0., 256.);
+
+  if (0 == first) delete fSMS->defectMap; 
+  fSMS->defectMap = new TH2D("defectMap", "", 52, 0., 52., 80, 0., 80.); 
+  fSMS->defectMap->SetXTitle("column");          
+  fSMS->defectMap->SetYTitle("row"); 
+  fSMS->defectMap->SetMinimum(0.); 
+  fSMS->defectMap->SetMaximum(4.01); 
+  
+  if (0 == first) delete fSMS->distNoise; 
+  fSMS->distNoise = new TH1D("distNoise", "", 100, 0., 10.);           setHist(fSMS->distNoise, "noise [VCAL]", "entries/bin", kGreen+2, 0.5, -1.);
+
+  if (0 == first) delete fSMS->distVcalTrimThr;
+  fSMS->distVcalTrimThr = new TH1D("distVcalTrimThr", "", 90, 0., 45.); setHist(fSMS->distVcalTrimThr, "VCAL trim THR [VCAL]", "entries/bin", kBlack, 0.5, -1.);
+
+}
+
+
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::showAllFullTests(string dir, string pattern) {
+  vector<string> dirs = glob(dir, pattern); 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
     cout << dirs[idirs] << endl;
     showFullTest(dirs[idirs], dir); 
@@ -64,19 +167,39 @@ void anaFullTest::showFullTest(string modname, string basename) {
   string dirname = basename + string("/") + modname; 
 
   tl->SetTextSize(0.05); 
-  bookSingleModuleSummary(modname); 
+  static int first(1); 
+  bookSingleModuleSummary(modname, first); 
+  if (1 == first) {
+    first = 0; 
+  }
 
-  string date = Form("Date: %s", readLine(dirname, "Today:", 1).c_str()); 
-  cout << "DATE: " << date << endl;
+  string date = Form("Date:        %s", readLine(dirname, "Today:", 1).c_str()); 
+  PixUtil::replaceAll(date, "Date:", ""); 
+  PixUtil::cleanupString(date); 
 
-  string criticals = Form("CRITICAL: %d", countWord(dirname, "CRITICAL:")); 
-  cout << "CRITICAL: " << criticals << endl;
+  int ncritical = countWord(dirname, "CRITICAL:");
+  fhCritical->Fill(ncritical); 
+  string criticals = Form("%d", ncritical); 
 
-  string startTest = Form("Start: %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
+  string startTest = Form("Start:       %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
   string endTest   = Form("End:   %s", readLine(dirname, "INFO: pXar: this is the end, my friend", 2).c_str()); 
-  cout << "startTest: " << startTest << endl;
-  cout << "endTest: "   << endTest << endl;
 
+  PixUtil::replaceAll(startTest, "Start:", ""); 
+  PixUtil::replaceAll(startTest, "[", ""); 
+  PixUtil::replaceAll(startTest, "]", ""); 
+
+  PixUtil::replaceAll(endTest, "End:", ""); 
+  PixUtil::replaceAll(endTest, "[", ""); 
+  PixUtil::replaceAll(endTest, "]", ""); 
+
+  int seconds = testDuration(startTest, endTest); 
+  fhDuration->Fill(seconds); 
+  string duration = Form("%d:%d:%d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+
+  // -- remove the sub-second digits
+  startTest = startTest.substr(0, startTest.rfind(".")); 
+  PixUtil::cleanupString(startTest);
+ 
   vector<TH1D*> vh; 
   TH1D *h(0); 
   for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
@@ -89,72 +212,68 @@ void anaFullTest::showFullTest(string modname, string basename) {
   clearHistVector(vh); 
   readDacFile(dirname, "vana", vh);
   dumpVector(vh, fSMS->vana, "0"); 
+  summarizeVector(vh, fhVana); 
   
   clearHistVector(vh); 
   readDacFile(dirname, "caldel", vh);
   dumpVector(vh, fSMS->caldel, "0"); 
+  summarizeVector(vh, fhCaldel); 
 
   clearHistVector(vh); 
   readDacFile(dirname, "vthrcomp", vh);
   dumpVector(vh, fSMS->vthrcomp, "0"); 
+  summarizeVector(vh, fhVthrcomp); 
 
   clearHistVector(vh); 
   readDacFile(dirname, "vtrim", vh);
   dumpVector(vh, fSMS->vtrim, "0"); 
+  summarizeVector(vh, fhVtrim); 
 
   clearHistVector(vh); 
   readDacFile(dirname, "phscale", vh);
   dumpVector(vh, fSMS->phscale, "0"); 
+  summarizeVector(vh, fhPhscale); 
 
   clearHistVector(vh); 
   readDacFile(dirname, "phoffset", vh);
   dumpVector(vh, fSMS->phoffset, "0"); 
+  summarizeVector(vh, fhPhoffset); 
+
+  vector<double> vd; 
   
   // -- log file parsing
-  clearHistVector(vh); 
-  readLogFile(dirname, "vcal mean:", vh);
-  dumpVector(vh, fSMS->vcalTrimThr, "0"); 
+  readLogFile(dirname, "vcal mean:", vd);
+  dumpVector(vd, fSMS->vcalTrimThr, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "vcal RMS:", vh);
-  dumpVector(vh, fSMS->vcalTrimThrW, "0"); 
+  readLogFile(dirname, "vcal RMS:", vd);
+  dumpVector(vd, fSMS->vcalTrimThrW, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "non-linearity mean:", vh);
-  dumpVector(vh, fSMS->nonl, "0"); 
+  readLogFile(dirname, "non-linearity mean:", vd);
+  dumpVector(vd, fSMS->nonl, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "non-linearity RMS:", vh);
-  dumpVector(vh, fSMS->nonlW, "0"); 
+  readLogFile(dirname, "non-linearity RMS:", vd);
+  dumpVector(vd, fSMS->nonlW, "0"); 
 
-  clearHistVector(vh); 
-  readLogFile(dirname, "number of dead bumps (per ROC):", vh);
-  dumpVector(vh, fSMS->bb, "0"); 
-
-//   clearHistVector(vh); 
-//   readLogFile(dirname, "number of dead pixels (per ROC):", vh);
-//   dumpVector(vh, fSMS->dead, "0"); 
-
-
-//   clearHistVector(vh); 
-//   readLogFile(dirname, "number of mask-defect pixels (per ROC):", vh);
-//   dumpVector(vh, fSMS->mask, "0"); 
-
-//   clearHistVector(vh); 
-//   readLogFile(dirname, "number of address-decoding pixels (per ROC):", vh);
-//   dumpVector(vh, fSMS->addr, "0"); 
+  // -- note: ideally this should be filled in fillRocDefects?
+  readLogFile(dirname, "number of dead bumps (per ROC):", vd);
+  dumpVector(vd, fSMS->bb, "0"); 
+  summarizeVector(vd, fhBb); 
 
 
   // ROOT file 
   anaRocMap(dirname, "PixelAlive/PixelAlive", fSMS->dead, 0);
-  anaRocMap(dirname, "PixelAlive/MaskTest", fSMS->mask, 0);
-  anaRocMap(dirname, "PixelAlive/AddressDecodingTest", fSMS->addr, 0);
+  anaRocMap(dirname, "PixelAlive/MaskTest", fSMS->mask, 1);
+  anaRocMap(dirname, "PixelAlive/AddressDecodingTest", fSMS->addr, 1);
 
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThr, 0);
   fillRocHist(dirname, "Scurves/dist_thr_scurveVcal_Vcal", fSMS->vcalThrW, 1);
   fillRocHist(dirname, "Scurves/dist_sig_scurveVcal_Vcal", fSMS->noise, 0);
 
+  anaRocMap(dirname, "Scurves/sig_scurveVcal_Vcal", fSMS->distNoise, 2);
+  anaRocMap(dirname, "Trim/thr_TrimThrFinal_vcal", fSMS->distVcalTrimThr, 2);
   
+  fillRocDefects(dirname, fSMS->defectMap);
+
 
   gStyle->SetOptStat(0); 
   c0->Clear(); 
@@ -170,21 +289,37 @@ void anaFullTest::showFullTest(string modname, string basename) {
   plotVsRoc(fSMS->phscale, xpos, 0.2); 
   plotVsRoc(fSMS->phoffset, xpos, 0.8, "same"); 
 
-  c0->cd(3); 
-  plotVsRoc(fSMS->vthrcomp, xpos, 0.2); 
-  plotVsRoc(fSMS->vtrim, xpos, 0.8, "same"); 
+  plotVsRoc(fSMS->vtrim, xpos, 0.55, "same"); 
+  plotVsRoc(fSMS->vthrcomp, xpos, 0.35, "same"); 
 
+  c0->cd(3); 
+  fSMS->distVcalTrimThr->Draw("hist");
+  tl->SetTextSize(0.05); 
+  tl->DrawLatex(0.20, 0.92, Form("<25: %d", static_cast<int>(fSMS->distVcalTrimThr->Integral(0, fSMS->distVcalTrimThr->FindBin(25.))))); 
+  tl->DrawLatex(0.25, 0.80, Form("mean: %7.3f", fSMS->distVcalTrimThr->GetMean()));
+  tl->DrawLatex(0.25, 0.75, Form("RMS:  %7.3f", fSMS->distVcalTrimThr->GetRMS()));
+  gPad->SetLogy(1); 
+  
   c0->cd(4); 
   plotVsRoc(fSMS->vcalThr, xpos, 0.8); 
   plotVsRoc(fSMS->vcalTrimThr, xpos, 0.2, "same"); 
 
+//   c0->cd(5); 
+//   plotVsRoc(fSMS->nonl, xpos, 0.85); 
+//   plotVsRoc(fSMS->nonlW, xpos, 0.2, "same"); 
+
   c0->cd(5); 
-  plotVsRoc(fSMS->nonl, xpos, 0.8); 
-  plotVsRoc(fSMS->nonlW, xpos, 0.2, "same"); 
+  plotVsRoc(fSMS->vcalThrW, xpos, 0.80, ""); 
+  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.15, "same"); 
+  plotVsRoc(fSMS->noise, xpos, 0.40, "same"); 
 
   c0->cd(6); 
-  plotVsRoc(fSMS->vcalThrW, xpos, 0.65, ""); 
-  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.50, "same"); 
+  fSMS->distNoise->Draw("hist");
+  tl->SetTextSize(0.05); 
+  tl->DrawLatex(0.20, 0.92, Form("<0.5: %d", static_cast<int>(fSMS->distNoise->Integral(0, fSMS->distNoise->FindBin(0.5))))); 
+  tl->DrawLatex(0.55, 0.80, Form("mean: %7.3f", fSMS->distNoise->GetMean()));
+  tl->DrawLatex(0.55, 0.75, Form("RMS:  %7.3f", fSMS->distNoise->GetRMS()));
+  gPad->SetLogy(1); 
 
   c0->cd(7); 
   plotVsRoc(fSMS->dead, xpos, 0.80, "", 1); 
@@ -193,91 +328,121 @@ void anaFullTest::showFullTest(string modname, string basename) {
   plotVsRoc(fSMS->addr, xpos, 0.62, "same", 1); 
 
   c0->cd(8); 
-  plotVsRoc(fSMS->noise, xpos, 0.50, ""); 
+  int customPalette[4];
+  customPalette[0] = kBlue-4;
+  customPalette[1] = kBlack;
+  customPalette[2] = kRed;
+  customPalette[3] = kGreen+2;
+
+  gStyle->SetPalette(4, customPalette); 
+  fSMS->defectMap->Draw("col");
+
+  tl->SetTextSize(0.07); 
+  tl->SetTextColor(kBlack); 
+  tl->DrawLatex(0.18, 0.92, "all ROC defects"); 
+
 
   c0->cd(9); 
-  tl->SetTextSize(0.15); 
+  tl->SetTextSize(0.13); 
   tl->SetTextColor(kBlack); 
   tl->DrawLatex(0.0, 0.90, modname.c_str()); 
 
-  tl->SetTextSize(0.09); 
-  tl->DrawLatex(0.0, 0.75, date.c_str()); 
-  tl->DrawLatex(0.0, 0.65, startTest.c_str()); 
-  tl->DrawLatex(0.0, 0.55, endTest.c_str()); 
-  tl->DrawLatex(0.0, 0.45, criticals.c_str()); 
+  tl->SetTextSize(0.08); 
+  tl->DrawLatex(0.0, 0.75, "Date:");           tl->DrawLatex(0.5, 0.75, date.c_str()); 
+  tl->DrawLatex(0.0, 0.65, "Start:");          tl->DrawLatex(0.5, 0.65, startTest.c_str()); 
+  tl->DrawLatex(0.0, 0.55, "Duration:");       tl->DrawLatex(0.5, 0.55, duration.c_str()); 
+  tl->DrawLatex(0.0, 0.35, "# crit. errors:"); tl->DrawLatex(0.5, 0.35, criticals.c_str()); 
 
   
   c0->SaveAs(Form("%s.pdf", modname.c_str())); 
 
 
-}
 
-
-// ----------------------------------------------------------------------
-void anaFullTest::bookSingleModuleSummary(string modulename) {
   
-  fSMS->moduleName = modulename; 
+  gStyle->SetOptStat(0); 
+  c0->Clear(); 
+  c0->Divide(3, 3);
+  
 
-  TH1::SetDefaultSumw2(kTRUE);
+  tl->SetTextSize(0.07); 
 
-  if (fSMS->noise) delete fSMS->noise; 
-  fSMS->noise = new TH1D("noise", "", 16, 0., 16.);                 setHist(fSMS->noise, "ROC", "noise", kBlack, 0., 10.);
+  c0->cd(1);
+  fhVana->Draw();
+  tl->SetTextColor(fhVana->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, "VANA"); 
+  tl->DrawLatex(0.55, 0.75, Form("%3.1f/%3.1f", fhVana->GetMean(), fhVana->GetRMS())); 
+  fhCaldel->Draw("same");
+  tl->SetTextColor(fhCaldel->GetLineColor()); 
+  tl->DrawLatex(0.58, 0.92, "CALDEL"); 
+  tl->DrawLatex(0.55, 0.65, Form("%3.1f/%3.1f", fhCaldel->GetMean(), fhCaldel->GetRMS())); 
 
-  if (fSMS->vcalThr) delete fSMS->vcalThr; 
-  fSMS->vcalThr = new TH1D("vcalThr", "", 16, 0., 16.);             setHist(fSMS->vcalThr, "ROC", "VCAL THR", kBlack, 0., 150.);
+  c0->cd(2);
+  fhPhscale->Draw();
+  tl->SetTextColor(fhPhscale->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, "PHSCALE"); 
+  tl->DrawLatex(0.55, 0.75, Form("%3.1f/%3.1f", fhPhscale->GetMean(), fhPhscale->GetRMS())); 
+  fhPhoffset->Draw("same");
+  tl->SetTextColor(fhPhoffset->GetLineColor()); 
+  tl->DrawLatex(0.58, 0.92, "PHOFFSET"); 
+  tl->DrawLatex(0.55, 0.65, Form("%3.1f/%3.1f", fhPhoffset->GetMean(), fhPhoffset->GetRMS())); 
 
-  if (fSMS->vcalThrW) delete fSMS->vcalThrW; 
-  fSMS->vcalThrW = new TH1D("vcalThrW", "", 16, 0., 16.);           setHist(fSMS->vcalThrW, "ROC", "VCAL THR width", kBlack, 0., 10.);
+  c0->cd(3);
+  fhVthrcomp->Draw();
+  tl->SetTextColor(fhVthrcomp->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, "VTHRCOMP"); 
+  tl->DrawLatex(0.55, 0.75, Form("%3.1f/%3.1f", fhVthrcomp->GetMean(), fhVthrcomp->GetRMS())); 
+  fhVtrim->Draw("same");
+  tl->SetTextColor(fhVtrim->GetLineColor()); 
+  tl->DrawLatex(0.58, 0.92, "VTRIM"); 
+  tl->DrawLatex(0.55, 0.65, Form("%3.1f/%3.1f", fhVtrim->GetMean(), fhVtrim->GetRMS())); 
 
-  if (fSMS->vcalTrimThrW) delete fSMS->vcalTrimThr; 
-  fSMS->vcalTrimThr = new TH1D("vcalTrimThr", "", 16, 0., 16.);     setHist(fSMS->vcalTrimThr, "ROC", "VCAL THR (trimmed)", kBlack, 0., 40.);
+  c0->cd(4);
+  fhDuration->Draw();
+  tl->SetTextColor(fhDuration->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, Form("Mean/RMS: %4.1f/%4.1f", fhDuration->GetMean(), fhDuration->GetRMS())); 
 
-  if (fSMS->vcalTrimThrW) delete fSMS->vcalTrimThrW; 
-  fSMS->vcalTrimThrW = new TH1D("vcalTrimThrW", "", 16, 0., 16.);   setHist(fSMS->vcalTrimThrW, "ROC", "VCAL THR width (trimmed)", kBlack, 0., 4.);
+  c0->cd(5);
+  fhCritical->Draw();
+  tl->SetTextColor(fhCritical->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, Form("Mean/RMS: %4.3f/%4.3f", fhCritical->GetMean(), fhCritical->GetRMS())); 
 
-  if (fSMS->relGainW) delete fSMS->relGainW; 
-  fSMS->relGainW = new TH1D("relGainW", "", 16, 0., 16.);           setHist(fSMS->relGainW, "ROC", "rel gain width", kBlack, 0., 40.);
+  c0->cd(6);
+  gPad->SetLogy(1);
+  fhDead->Draw();
+  tl->SetTextColor(fhDead->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, "Dead"); 
+  tl->DrawLatex(0.38, 0.75, Form("%4.3f/%4.3f", fhDead->GetMean(), fhDead->GetRMS())); 
+  fhBb->Draw("same");
+  tl->SetTextColor(fhBb->GetLineColor()); 
+  tl->DrawLatex(0.58, 0.92, "BB"); 
+  tl->DrawLatex(0.38, 0.65, Form("%4.3f/%4.3f", fhBb->GetMean(), fhBb->GetRMS())); 
 
-  if (fSMS->pedestalW) delete fSMS->pedestalW; 
-  fSMS->pedestalW = new TH1D("pedestalW", "", 16, 0., 16.);         setHist(fSMS->pedestalW, "ROC", "pedestal width", kBlack, 0., 40.);
+  c0->cd(7);
+  gPad->SetLogy(1);
+  fhNoise->Draw();
+  tl->SetTextColor(fhNoise->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, Form("noise: %4.3f/%4.3f", fhNoise->GetMean(), fhNoise->GetRMS())); 
 
-  if (fSMS->nonl) delete fSMS->nonl; 
-  fSMS->nonl = new TH1D("nonl", "", 16, 0., 16.);                   setHist(fSMS->nonl, "ROC", "non-linearity", kBlack, 0., 1.1);
+  c0->cd(8);
+  gPad->SetLogy(1);
+  fhVcaltrimthr->Draw();
+  tl->SetTextColor(fhVcaltrimthr->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, Form("trim thr: %4.3f/%4.3f", fhVcaltrimthr->GetMean(), fhVcaltrimthr->GetRMS())); 
 
-  if (fSMS->nonlW) delete fSMS->nonlW; 
-  fSMS->nonlW = new TH1D("nonlW", "", 16, 0., 16.);                 setHist(fSMS->nonlW, "ROC", "non-linearity width", kBlack, 0., 1.1);
+  c0->cd(9);
 
-  if (fSMS->dead) delete fSMS->dead; 
-  fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 10.);
+  tl->SetTextSize(0.07); 
+  tl->DrawLatex(0.0, 0.75, "# modules:");   tl->DrawLatex(0.5, 0.75, Form("%d", static_cast<int>(fhCritical->GetEntries()))); 
+  tl->DrawLatex(0.0, 0.65, "# pixels:");    tl->DrawLatex(0.5, 0.65, Form("%d", static_cast<int>(fhNoise->GetEntries()))); 
+  tl->DrawLatex(0.0, 0.55, "# low-thr (<25):");   
+  tl->DrawLatex(0.5, 0.55, Form("%d", static_cast<int>(fhVcaltrimthr->Integral(0, fhVcaltrimthr->FindBin(25.))))); 
+  tl->DrawLatex(0.5, 0.45, Form("(%3.2e)", fhVcaltrimthr->Integral(0, fhVcaltrimthr->FindBin(25.))/fhVcaltrimthr->Integral()));
+  c0->SaveAs("summary.pdf"); 
 
-  if (fSMS->bb) delete fSMS->bb; 
-  fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue, 0., 40.);
-
-  if (fSMS->mask) delete fSMS->mask; 
-  fSMS->mask = new TH1D("mask", "", 16, 0., 16.);                   setHist(fSMS->mask, "ROC", "mask defects", kRed, 0., 40.);
-
-  if (fSMS->addr) delete fSMS->addr; 
-  fSMS->addr = new TH1D("addr", "", 16, 0., 16.);                   setHist(fSMS->addr, "ROC", "address defects", kRed+2, 0., 40.);
-
-  if (fSMS->vana) delete fSMS->vana; 
-  fSMS->vana = new TH1D("vana", "", 16, 0., 16.);                   setHist(fSMS->vana, "ROC", "VANA", kBlack, 0., 256.);
-
-  if (fSMS->caldel) delete fSMS->caldel; 
-  fSMS->caldel = new TH1D("caldel", "", 16, 0., 16.);               setHist(fSMS->caldel, "ROC", "CALDEL", kRed, 0., 256.);
-
-  if (fSMS->vthrcomp) delete fSMS->vthrcomp; 
-  fSMS->vthrcomp = new TH1D("vthrcomp", "", 16, 0., 16.);           setHist(fSMS->vthrcomp, "ROC", "VTHRCOMP", kBlack, 0., 256.);
-
-  if (fSMS->vtrim) delete fSMS->vtrim; 
-  fSMS->vtrim = new TH1D("vtrim", "", 16, 0., 16.);                 setHist(fSMS->vtrim, "ROC", "VTRIM", kBlue, 0., 256.);
-
-  if (fSMS->phscale) delete fSMS->phscale; 
-  fSMS->phscale = new TH1D("phscale", "", 16, 0., 16.);             setHist(fSMS->phscale, "ROC", "PHSCALE", kBlack, 0., 256.);
-
-  if (fSMS->phoffset) delete fSMS->phoffset; 
-  fSMS->phoffset = new TH1D("phoffset", "", 16, 0., 16.);           setHist(fSMS->phoffset, "ROC", "PHOFFSET", kBlue, 0., 256.);
 
 }
+
+
 
 // ----------------------------------------------------------------------
 void anaFullTest::bookModuleSummary(string modulename) {
@@ -539,6 +704,31 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
 
 }
 
+
+// ----------------------------------------------------------------------
+void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<double> &v) {
+  ifstream IN; 
+  
+  char buffer[1000];
+  string sline; 
+  string::size_type s1;
+  vector<double> x;
+  IN.open(Form("%s/pxar.log", dir.c_str())); 
+  while (IN.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    s1 = sline.find(tag.c_str()); 
+    if (string::npos == s1) continue;
+    sline = sline.substr(s1+tag.length()+1);
+    break;
+  }
+  
+  x = splitIntoRocs(sline);
+  v.clear();
+  copy(x.begin(), x.end(), back_inserter(v));
+  IN.close(); 
+}
+
+
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists) {
 
@@ -559,7 +749,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
 
   x = splitIntoRocs(sline);
   for (unsigned int i = 0; i < x.size(); ++i) {
-    //     cout << "Filling into " << hist->GetName() << " x = " << x[i] << endl;
+    cout << "Filling into " << hists[i]->GetName() << " x = " << x[i] << endl;
     hists[i]->Fill(x[i]); 
   }
 
@@ -614,6 +804,20 @@ void anaFullTest::fillRocHist(string dirname, string hbasename, TH1D* rochist, i
 // ----------------------------------------------------------------------
 void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode) {
   TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+
+  TH1D *hs(0); 
+  if (string(rochist->GetName()) == string("dead")) {
+    hs = fhDead;
+  } else if (string(rochist->GetName()) == string("mask")) {
+    hs = fhMask;
+  } else if (string(rochist->GetName()) == string("addr")) {
+    hs = fhAddr;
+  } else if (string(rochist->GetName()) == string("distNoise")) {
+    hs = fhNoise;
+  } else if (string(rochist->GetName()) == string("distVcalTrimThr")) {
+    hs = fhVcaltrimthr;
+  }
+  
   TH2D *h(0); 
   int cnt(0); 
   for (int i = 0; i < fNrocs; ++i) {
@@ -621,17 +825,117 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
     cnt = 0; 
     if (h) {
       if (0 == mode) {
+	// -- zero entries are missing
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    if (h->GetBinContent(ix+1, iy+1) < 0.1) ++cnt;
+	  }
+	} 
+	rochist->SetBinContent(i+1, cnt); 
+	hs->Fill(cnt);
+      } else if (1 == mode) {
+	// -- negative entries are missing (zero are dead pixels)
 	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
 	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
 	    if (h->GetBinContent(ix+1, iy+1) < -0.1) ++cnt;
 	  }
 	} 
 	rochist->SetBinContent(i+1, cnt); 
+	hs->Fill(cnt);
+      } else if (2 == mode) {
+	// -- create histogram (projection)
+	double val(-1.); 
+	for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+	  for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+	    val = h->GetBinContent(ix+1, iy+1);
+	    rochist->Fill(val); 
+	    hs->Fill(val);
+	  }
+	} 
       } 
     }
   }
   f->Close();
 }
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::fillRocDefects(string dirname, TH2D *hmap) {
+
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+
+  vector<TH1D*> vh; 
+  TH1D *h(0); 
+  for (int iroc = 0; iroc < fNrocs+1; ++iroc) {
+    h = (TH1D*)gROOT->Get(Form("h_C%d", iroc)); 
+    if (!h) h = new TH1D(Form("h_C%d", iroc), Form("h_C%d", iroc), 256, 0., 256.); 
+    vh.push_back(h); 
+  }
+
+  // -- dead bumps
+  readLogFile(dirname, "separation cut       (per ROC):", vh);
+  TH2D *h2(0); 
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("BumpBonding/thr_calSMap_VthrComp_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) > vh[i]->GetMean()) {
+	    hmap->SetBinContent(ix+1, iy+1, 1); 
+	  }
+	}
+      } 
+      
+    }
+  }
+
+  // -- dead pixels
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < 1) {
+	    hmap->SetBinContent(ix+1, iy+1, 2); 
+	  }
+	}
+      } 
+      
+    }
+  }
+
+  // -- mask problems
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/MaskTest_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < -0.1) {
+	    hmap->SetBinContent(ix+1, iy+1, 3); 
+	  }
+	}
+      } 
+    }
+  }
+
+  // -- address problems
+  for (int i = 0; i < fNrocs; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/AddressDecodingTest_C%d_V0", i)); 
+    if (h2) {
+      for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	  if (h2->GetBinContent(ix+1, iy+1) < -0.1) {
+	    hmap->SetBinContent(ix+1, iy+1, 4); 
+	  }
+	}
+      } 
+    }
+  }
+
+  
+
+}
+ 
 
 
 
@@ -705,16 +1009,16 @@ std::vector<double> anaFullTest::splitIntoRocs(std::string line) {
   istringstream istring(line);
   vector<double> result; 
   double x(0.); 
-  cout << "splitting: " << line << endl;
+  //  cout << "splitting: " << line << endl;
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
     istring >> x;
     result.push_back(x); 
   }
 
   for (unsigned int i = 0; i < result.size(); ++i) {
-    cout << result[i] << " "; 
+    //    cout << result[i] << " "; 
   }
-  cout << endl;
+  //  cout << endl;
 
   return result;
 }
@@ -732,6 +1036,7 @@ void anaFullTest::clearHistVector(vector<TH1D*> vh) {
 void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
   for (unsigned int i = 0; i < vh.size(); ++i) {
     if (opt == "0") {
+      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i]->GetMean() << endl;
       h->SetBinContent(i+1, vh[i]->GetMean()); 
     } else if (opt == "1") {
       h->SetBinContent(i+1, vh[i]->GetRMS()); 
@@ -741,6 +1046,30 @@ void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
     }
   }
 
+}
+
+// ----------------------------------------------------------------------
+void anaFullTest::dumpVector(vector<double> vh, TH1D *h, string opt) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    if (opt == "0") {
+      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i] << endl;
+      h->SetBinContent(i+1, vh[i]); 
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+void anaFullTest::summarizeVector(vector<TH1D*> vh, TH1D *h) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    h->Fill(vh[i]->GetMean()); 
+  }
+}
+
+// ----------------------------------------------------------------------
+void anaFullTest::summarizeVector(vector<double> vh, TH1D *h) {
+  for (unsigned int i = 0; i < vh.size(); ++i) {
+    h->Fill(vh[i]); 
+  }
 }
 
 
@@ -758,7 +1087,7 @@ void anaFullTest::setHist(TH1D *h, std::string sx, std::string sy, int color, do
   h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
 
   h->SetMinimum(miny); 
-  h->SetMaximum(maxy); 
+  if (maxy > 0.) h->SetMaximum(maxy); 
   
   h->SetMarkerColor(color); 
   h->SetLineColor(color); 
@@ -800,7 +1129,7 @@ void anaFullTest::projectRocHist(TH1D *h, double &mean, double &rms, int &total)
 // ----------------------------------------------------------------------
 string anaFullTest::readLine(string dir, string pattern, int mode) {
 
-  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
+  //  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
   ifstream IN; 
 
   char buffer[1000];
@@ -846,4 +1175,35 @@ int anaFullTest::countWord(string dir, string pattern) {
   }
   IN.close();
   return cnt; 
+}
+
+
+// ----------------------------------------------------------------------
+int anaFullTest::testDuration(string startTest, string endTest) {
+  int h0, h1, m0, m1, s0, s1; 
+  string ss0 = startTest.substr(0, startTest.rfind(".")); 
+  string ss1 = endTest.substr(0, endTest.rfind(".")); 
+
+  string::size_type st0, st1;
+
+  string parse = ss0; 
+  st0 = parse.find(":");
+  st1 = parse.find(":", st0+1);
+  
+  h0 = atoi(parse.substr(0, st0).c_str());
+  m0 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
+  s0 = atoi(parse.substr(st1+1).c_str());
+
+  parse = ss1; 
+  st0 = parse.find(":");
+  st1 = parse.find(":", st0+1);
+
+  h1 = atoi(parse.substr(0, st0).c_str());
+  m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
+  s1 = atoi(parse.substr(st1+1).c_str());
+  
+  struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
+  struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
+  
+  return tv1.tv_sec - tv0.tv_sec;
 }

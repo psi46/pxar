@@ -198,9 +198,6 @@ namespace pxar {
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
     IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
 
-    // Check for correct TBM event ID:
-    CheckEventID();
-
 
     // TBM Trailer:
 
@@ -216,6 +213,9 @@ namespace pxar {
 
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
     IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
+
+    // Check for correct TBM event ID:
+    CheckEventID();
 
     // Remove header and trailer:
     sample->data.erase(sample->data.begin(), sample->data.begin() + 2);
@@ -441,6 +441,13 @@ namespace pxar {
     // After startup, register the first event ID:
     if(eventID == -1) { eventID = roc_Event.triggerCount(); }
 
+    // Check if event contains TBM reset:
+    if(roc_Event.hasResetTBM()) {
+      LOG(logDEBUGPIPES) << "Channel " <<  static_cast<int>(GetChannel())
+			 << " Event ID reset due to ResetTBM";
+      eventID = roc_Event.triggerCount();
+    }
+    
     // Check if TBM event ID matches with expectation:
     if(roc_Event.triggerCount() != (eventID%256)) {
       LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Event ID mismatch:  local ID (" << static_cast<int>(eventID)
@@ -457,9 +464,19 @@ namespace pxar {
   void dtbEventDecoder::CheckEventValidity(int16_t roc_n) {
 
     // Check that we found all expected ROC headers:
-    // If the number of ROCs does not correspond to what we expect
-    // clear the event and return:
-    if(roc_n+1 != GetTokenChainLength()) {
+    // In case of a NoTokenPass flag, no ROC headers are expected
+    if(roc_Event.hasNoTokenPass() && (roc_n+1 > 0)) {
+      LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel())
+		    << " has NoTokenPass but " << static_cast<int>(roc_n+1) 
+		    << " ROCs were found";
+      decodingStats.m_errors_roc_missing++;
+      // This breaks the readback for the missing roc, let's ignore this readback cycle:
+      readback_dirty = true;
+      // Clearing event content:
+      roc_Event.Clear();
+    }
+    // If the number of ROCs does not correspond to what we expect clear the event and return
+    else if(roc_Event.hasTokenPass() && (roc_n+1 != GetTokenChainLength())) {
       LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Number of ROCs (" << static_cast<int>(roc_n+1)
 		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
       decodingStats.m_errors_roc_missing++;
