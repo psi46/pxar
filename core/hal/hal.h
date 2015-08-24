@@ -6,6 +6,7 @@
 #include "datapipe.h"
 #include "datasource_dtb.h"
 #include "constants.h"
+#include "timer.h"
 
 namespace pxar {
 
@@ -104,6 +105,10 @@ namespace pxar {
      */
     void setHubId(uint8_t hubid);
 
+    /** Set dual HubID for Layer 1 modules:
+     */
+    void setHubId(uint8_t hub0, uint8_t hub1);
+    
     /** Set a DAC on a specific ROC with I2C address roci2c
      */
     bool rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue);
@@ -122,11 +127,6 @@ namespace pxar {
      */
     bool tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > regPairs);
 
-    /** Set no token pass so that token chain lengths of zero are used. tbmid is here the number of the
-	TBM core, not the hubid. channels marks, how many channels need to be flagged on this core
-     */
-    void tbmSetNoTokenPass(uint8_t tbmid, uint8_t channels, bool notokenpass);
-    
     /** Function to set and update the pattern generator command list on the DTB
      */
     void SetupPatternGenerator(std::vector<std::pair<uint16_t,uint8_t> > pg_setup, uint16_t delaysum);
@@ -206,88 +206,88 @@ namespace pxar {
      *  The roci2c vector parameter allows to select ROCs with arbitrary I2C addresses. Usually module
      *  I2C addresses range from 0-15 but for special purposes this might be different.
      */
-    std::vector<Event*> MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter);
+    std::vector<Event> MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to return ROC maps of calibration pulses
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and 
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector<int32_t> parameter);
+    std::vector<Event> SingleRocAllPixelsCalibrate(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel on multiple ROCs.
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to return "Pixel maps" of calibration pulses, i.e. pinging a single pixel on one ROC.
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to return ROC maps of thresholds
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS), cross-talk
      *  settings (FLAG_XTALK) and the possibility to reverse the scanning (FLAG_RISING).
      *  The parameters additionally contain the DAC register to be scanned for threshold setting.
      */
-    std::vector<Event*> RocThresholdMap(uint8_t roci2c, std::vector<int32_t> parameter);
+    std::vector<Event> RocThresholdMap(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to return "Pixel maps" of threshold values, i.e. measuring the threshold for a single pixel.
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS), cross-talk
      *  settings (FLAG_XTALK) and the possibility to reverse the scanning (FLAG_RISING).
      *  The parameters additionally contain the DAC register to be scanned for threshold setting.
      */
-    std::vector<Event*> PixelThresholdMap(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> PixelThresholdMap(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan a given DAC for all pixels on multiple ROCs, selected via their I2C address
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter);
+    std::vector<Event> MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan a given DAC for all pixels on one ROC
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<int32_t> parameter);
+    std::vector<Event> SingleRocAllPixelsDacScan(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan a given DAC for a pixel on multiple ROCs, selected via their I2C address
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan a given DAC for a pixel on one ROC
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
 
     /** Function to scan two given DAC ranges for all pixels on multiple ROCs, selected via their I2C address
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter);
+    std::vector<Event> MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan two given DAC ranges for all pixels on one ROC
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vector<int32_t> parameter);
+    std::vector<Event> SingleRocAllPixelsDacDacScan(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan two given DAC ranges for a pixel on multiple ROCs, selected via their I2C address
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
     /** Function to scan two given DAC ranges for a pixel on one ROC
      *  Public flags contain possibility to route the calibrate pulse via the sensor (FLAG_CALS) and
      *  possibility for cross-talk measurement (FLAG_XTALK)
      */
-    std::vector<Event*> SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+    std::vector<Event> SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
 
     // DAQ functions:
@@ -334,19 +334,19 @@ namespace pxar {
 
     /** Reading out the full undecoded DAQ buffer
      */
-    std::vector<rawEvent*> daqAllRawEvents();
+    std::vector<rawEvent> daqAllRawEvents();
 
     /** Read the next decoded Event from the FIFO buffer
      */
-    Event* daqEvent();
+    Event daqEvent();
 
     /** Read the next raw (undecoded) Event from the FIFO buffer
      */
-    rawEvent* daqRawEvent();
+    rawEvent daqRawEvent();
 
     /** Read all remaining decoded Events from the FIFO buffer
      */
-    std::vector<Event*> daqAllEvents();
+    std::vector<Event> daqAllEvents();
 
     /** Return the current decoding statistics for all channels:
      */
@@ -425,10 +425,8 @@ namespace pxar {
     uint8_t m_roctype;
     uint8_t m_roccount;
     std::vector<uint8_t> m_tokenchains;
-    std::vector<bool> m_notokenpass;
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
-    uint8_t hubId;
 
     uint16_t _currentTrgSrc;
 
@@ -454,6 +452,15 @@ namespace pxar {
      *  and has no further effect on the data transmission or similar.
      */
     void estimateDataVolume(uint32_t events, uint8_t nROCs);
+
+    /** Merges all consecutive triggers into one pxar::Event. This function deletes the original event data after
+     *  merging! 
+     */
+    std::vector<Event> condenseTriggers(std::vector<Event> &data, uint16_t nTriggers, bool efficiency);
+
+    /** Helper function reading data, passing it to the condenser and then returns it to the test function
+     */
+    void addCondensedData(std::vector<Event> &data, uint16_t nTriggers, bool efficiency, timer t);
 
     // TESTBOARD SET COMMANDS
     /** Set the testboard analog current limit

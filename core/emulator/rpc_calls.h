@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <map>
+
 #include "log.h"
 #include "constants.h"
 
@@ -31,12 +33,15 @@ class CTestboard {
   std::vector<size_t> daq_event; // Event counters
 
   std::vector<uint16_t> pg_setup; // pattern generator
-  
+  // hub map of core maps of registers
+  std::map<uint8_t,std::map<uint8_t, std::map<uint8_t, uint8_t> > > tbm_registers;
+  uint8_t active_tbm;
+
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
     nrocs_loops(0), roci2c(), tbmtype(TBM_NONE),trigger(TRG_SEL_PG_DIR),
     eventcounter(0),
-    daq_buffer(), daq_status(), daq_event()
+    daq_buffer(), daq_status(), daq_event(), tbm_registers(), active_tbm(0)
   {
     // Initialize all available DAQ channels:
     for(size_t i = 0; i < DTB_DAQ_CHANNELS; i++) {
@@ -204,6 +209,7 @@ class CTestboard {
   void Daq_Close(uint8_t channel);
   void Daq_Start(uint8_t channel);
   void Daq_Stop(uint8_t channel);
+  void Daq_MemReset(uint8_t channel);
   uint32_t Daq_GetSize(uint8_t channel);
   uint8_t Daq_FillLevel(uint8_t channel);
   uint8_t Daq_FillLevel();
@@ -259,12 +265,15 @@ class CTestboard {
   void tbm_Enable(bool on);
   void tbm_Addr(uint8_t hub, uint8_t port);
   void mod_Addr(uint8_t hub);
+  void mod_Addr(uint8_t hub0, uint8_t hub1);
   void tbm_Set(uint8_t reg, uint8_t value);
   bool tbm_Get(uint8_t reg, uint8_t &value);
   bool tbm_GetRaw(uint8_t reg, uint32_t &value);
 
   int16_t TrimChip(std::vector<int16_t> &trim);
 
+  bool notokenpass(uint8_t tbmtype, uint8_t channel);
+  
   // == Trigger Loop functions for Host-side DAQ ROC/Module testing ==============
   // Exported RPC-Calls for the Trimbit storage setup:
   bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
