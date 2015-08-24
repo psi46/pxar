@@ -331,6 +331,7 @@ public:
 	RPC_EXPORT void Daq_Close(uint8_t channel);
 	RPC_EXPORT void Daq_Start(uint8_t channel);
 	RPC_EXPORT void Daq_Stop(uint8_t channel);
+	RPC_EXPORT void Daq_MemReset(uint8_t channel);
 	RPC_EXPORT uint32_t Daq_GetSize(uint8_t channel);
 	RPC_EXPORT uint8_t Daq_FillLevel(uint8_t channel);
 	RPC_EXPORT uint8_t Daq_FillLevel();
@@ -351,6 +352,8 @@ public:
 	// --- ROC/module Communication -----------------------------------------
 	// -- set the i2c address for the following commands
 	RPC_EXPORT void roc_I2cAddr(uint8_t id);
+	// -- set the i2c address for a Layer1 module ROC (internally used after calling mod_Addr(uint,uint)
+	RPC_EXPORT void roc_I2cAddr_Layer_1(uint8_t id);
 	// -- sends "ClrCal" command to ROC
 	RPC_EXPORT void roc_ClrCal();
 	// -- sets a single (DAC) register
@@ -386,6 +389,7 @@ public:
 	RPC_EXPORT void tbm_Enable(bool on);
 	RPC_EXPORT void tbm_Addr(uint8_t hub, uint8_t port);
 	RPC_EXPORT void mod_Addr(uint8_t hub);
+	RPC_EXPORT void mod_Addr(uint8_t hub0, uint8_t hub1);
 	RPC_EXPORT void tbm_Set(uint8_t reg, uint8_t value);
 	RPC_EXPORT bool tbm_Get(uint8_t reg, uint8_t &value);
 	RPC_EXPORT bool tbm_GetRaw(uint8_t reg, uint32_t &value);
@@ -398,23 +402,7 @@ public:
 	RPC_EXPORT uint32_t Ethernet_RecvPackets();
 
 	RPC_EXPORT void VectorTest(vector<uint16_t> &in, vectorR<uint16_t> &out);
-	
-	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers);
-	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers, int32_t chipId);
-	RPC_EXPORT int32_t CountReadouts(int32_t nTriggers, int32_t dacReg, int32_t dacValue);
-	RPC_EXPORT int32_t PixelThreshold(int32_t col, int32_t row, int32_t start, int32_t step, int32_t thrLevel, int32_t nTrig, int32_t dacReg, bool xtalk, bool cals);
-	RPC_EXPORT int32_t PH(int32_t col, int32_t row, int32_t trim, int16_t nTriggers);
-	RPC_EXPORT bool test_pixel_address(int32_t col, int32_t row);
-	RPC_EXPORT int32_t ChipEfficiency_dtb(int16_t nTriggers, vectorR<uint8_t> &res);
-
-	RPC_EXPORT int8_t CalibratePixel(int16_t nTriggers, int16_t col, int16_t row, int16_t &nReadouts, int32_t &PHsum);
-	RPC_EXPORT int8_t CalibrateDacScan(int16_t nTriggers, int16_t col, int16_t row, int16_t dacReg1, int16_t dacLower1, int16_t dacUpper1, vectorR<int16_t>& nReadouts, vectorR<int32_t> &PHsum);
-	RPC_EXPORT int8_t CalibrateDacDacScan(int16_t nTriggers, int16_t  col, int16_t  row, int16_t  dacReg1, int16_t  dacLower1, int16_t  dacUpper1, int16_t  dacReg2, int16_t  dacLower2, int16_t  dacUpper2, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum);
-	RPC_EXPORT void ParallelCalibrateDacDacScan(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint8_t col, uint8_t row, uint8_t dacReg1, uint8_t dacLower1, uint8_t dacUpper1, uint8_t dacReg2, uint8_t dacLower2, uint8_t dacUpper2, uint16_t flags);
-	RPC_EXPORT int16_t CalibrateMap(int16_t nTriggers, vectorR<int16_t> &nReadouts, vectorR<int32_t> &PHsum, vectorR<uint32_t> &address);
-	RPC_EXPORT int16_t CalibrateModule(vector<uint8_t> &roc_i2c, uint16_t nTriggers, uint16_t flags);
 	RPC_EXPORT int16_t TrimChip(vector<int16_t> &trim);
-	RPC_EXPORT int16_t TriggerRow(int16_t nTriggers, int16_t col, vector<int16_t> &rocs, int16_t delay=4);
 
 
 	// == Wafer Test functions =====================================================
@@ -464,7 +452,7 @@ public:
 	RPC_EXPORT bool LoopSingleRocOnePixelDacDacScan(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1step, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2step, uint8_t dac2low, uint8_t dac2high);
 
 
-	// Debug-RPC-Calls returnung a Checker Board Pattern
+	// Debug-RPC-Calls returning a Checker Board Pattern
 	RPC_EXPORT void LoopCheckerBoard(uint8_t roc_i2c, uint8_t column, uint8_t row, uint16_t nTriggers, uint16_t flags, uint8_t dac1register, uint8_t dac1low, uint8_t dac1high, uint8_t dac2register, uint8_t dac2low, uint8_t dac2high);
 
 };

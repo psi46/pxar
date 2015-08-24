@@ -282,7 +282,8 @@ void CTestboard::Pg_Triggers(uint32_t nTriggers, uint16_t) {
 
   for(size_t i = 0; i < nTriggers; i++) {
     for(size_t ch = 0; ch < channels; ch++) {
-      fillRawData(i,daq_buffer.at(ch),tbmtype,roc_per_ch,false,true,0,0,pg_setup);
+      size_t rocs = notokenpass(tbmtype,ch) ? 0 : roc_per_ch;
+      fillRawData(i,daq_buffer.at(ch),tbmtype,rocs,false,true,0,0);
     }
   }
 }
@@ -327,6 +328,9 @@ uint32_t CTestboard::Daq_Open(uint32_t buffersize, uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
 
   if(channel > daq_buffer.size()) return 0;
+
+  // more than 2 channels? TBM09!
+  if(channel > 2) tbmtype = TBM_09;
   
   // Reserve some memory (not necessary but nice...)
   // Dividing by 2 since we're talking abour 16bit words here, not bytes:
@@ -349,6 +353,11 @@ void CTestboard::Daq_Start(uint8_t channel) {
 void CTestboard::Daq_Stop(uint8_t channel) {
   LOG(pxar::logDEBUGRPC) << "called.";
   daq_status.at(channel) = false;
+}
+
+void CTestboard::Daq_MemReset(uint8_t channel) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+  daq_buffer.at(channel).clear();
 }
 
 uint32_t CTestboard::Daq_GetSize(uint8_t channel) {
@@ -497,12 +506,36 @@ void CTestboard::tbm_Addr(uint8_t, uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-void CTestboard::mod_Addr(uint8_t) {
+void CTestboard::mod_Addr(uint8_t hubid) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+  // Add this TBM to the map:
+  std::map<uint8_t, uint8_t> regmap;
+  std::map<uint8_t, std::map<uint8_t,uint8_t> > coremap;
+  coremap.insert(std::make_pair(0xE0,regmap));
+  coremap.insert(std::make_pair(0xF0,regmap));
+  tbm_registers.insert(std::make_pair(hubid,coremap));
+
+  // Set it active:
+  active_tbm = hubid;
+}
+
+void CTestboard::mod_Addr(uint8_t, uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
-void CTestboard::tbm_Set(uint8_t, uint8_t) {
+void CTestboard::tbm_Set(uint8_t reg, uint8_t val) {
   LOG(pxar::logDEBUGRPC) << "called.";
+
+  LOG(logDEBUGRPC) << "Set " << (int)active_tbm << " " << std::hex << (int)(reg&0xF0) << " " << (int)(reg&0x0F) << " " << (int)val;
+  
+  std::pair<std::map<uint8_t,uint8_t>::iterator,bool> ret;
+  ret = tbm_registers[active_tbm][reg&0xF0].insert(std::make_pair(reg&0x0F,val));
+  if(ret.second == false) {
+    LOG(logDEBUGRPC) << "Overwriting existing DAC \"" << (int)(reg&0x0F)
+		     << "\" value " << static_cast<int>(ret.first->second)
+		     << " with " << static_cast<int>(val);
+    tbm_registers[active_tbm][reg&0xF0][reg&0x0F] = val;
+  }
 }
 
 bool CTestboard::tbm_Get(uint8_t, uint8_t &) {
@@ -541,20 +574,34 @@ bool CTestboard::SetTrimValues(uint8_t, std::vector<uint8_t> &) {
   return true;
 }
 
+bool CTestboard::notokenpass(uint8_t tbmtype, uint8_t channel) {
+
+  // No or emulated TBM - token passes:
+  if(tbmtype <= TBM_EMU) return false;
+  
+  // Check for NTP bit on this TBM core:
+  uint8_t channels_per_tbm = (tbmtype >= TBM_09 ? 4 : 2);
+  // Maps are sorted:
+  uint8_t hubid = (channel/channels_per_tbm ? tbm_registers.rbegin()->first : tbm_registers.begin()->first);
+  uint8_t core = ((channel%channels_per_tbm)/(channels_per_tbm/2) > 0 ? 0xF0 : 0xE0);
+  return (tbm_registers.at(hubid).at(core)[0x0]&0x40);
+}
+
 bool CTestboard::LoopMultiRocAllPixelsCalibrate(std::vector<uint8_t> &roci2cs, uint16_t nTriggers, uint16_t flags) {
   LOG(pxar::logDEBUGRPC) << "called.";
 
   // Check how many open DAQ channels we have:
   size_t channels = std::count(daq_status.begin(), daq_status.end(), true);
   // Distribute the ROCs evenly:
-  size_t roc_per_ch = roci2cs.size()/channels;
+  size_t roc_per_ch = (roci2cs.size()/channels);
 
   uint32_t event = 0;
   for(size_t i = 0; i < ROC_NUMCOLS; i++) {
     for(size_t j = 0; j < ROC_NUMROWS; j++) {
       for(size_t k = 0; k < nTriggers; k++) {
 	for(size_t ch = 0; ch < channels; ch++) {
-	  fillRawData(event,daq_buffer.at(ch),tbmtype,roc_per_ch,false,false,i,j,pg_setup,flags);
+	  size_t rocs = notokenpass(tbmtype,ch) ? 0 : roc_per_ch;
+	  fillRawData(event,daq_buffer.at(ch),tbmtype,rocs,false,false,i,j,pg_setup,flags);
 	}
 	event++;
       }
