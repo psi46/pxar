@@ -22,7 +22,6 @@ hal::hal(std::string name) :
   m_roctype(0),
   m_roccount(0),
   m_tokenchains(),
-  m_notokenpass(),
   m_daqstatus(),
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
@@ -303,7 +302,6 @@ void hal::initTBMCore(tbmConfig tbm) {
   for(std::vector<uint8_t>::iterator i = tbm.tokenchains.begin(); i != tbm.tokenchains.end(); i++) {
     // One tokenchain setting per TBM channel:
     m_tokenchains.push_back(*i);
-    m_notokenpass.push_back(tbm.NoTokenPass());
   }
   
   // Set the hub address for the modules (BPIX default is 31)
@@ -521,7 +519,12 @@ void hal::setTBvd(double VD) {
 
 void hal::setHubId(uint8_t hubid) {
   LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
-  hubId = hubid;
+  _testboard->mod_Addr(hubid);
+}
+
+void hal::setHubId(uint8_t hub0, uint8_t hub1) {
+  LOG(logDEBUGHAL) << "Setting both Layer 1 Hub IDs: " << static_cast<int>(hub0) << ", " << static_cast<int>(hub1);
+  _testboard->mod_Addr(hub0, hub1);
 }
 
 bool hal::rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs) {
@@ -606,14 +609,6 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
   // Set this register:
   _testboard->tbm_Set(regId,regValue);
   return true;
-}
-
-void hal::tbmSetNoTokenPass(uint8_t tbmid, uint8_t channels, bool notokenpass) {
-  // Set the NoTokenPass flag for all TBM channels of this core:
-  for(size_t i = 0; i < channels; i++) {
-    LOG(logDEBUGHAL) << "Flagging " << (int)channels << " channels on core #" << (int)tbmid << " (at " << (tbmid*channels+i) << ")";
-    if((tbmid*channels+i) < m_notokenpass.size()) { m_notokenpass.at(tbmid*channels+i) = notokenpass; }
-  }
 }
 
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
@@ -738,6 +733,7 @@ void hal::estimateDataVolume(uint32_t events, uint8_t nROCs) {
   // DESER160: header 1 word, pixel 2 words
   else { nSamples = events*nROCs*(1+2); }
 
+  LOG(logINFO) << "Expecting " << events << " events.";
   LOG(logDEBUGHAL) << "Estimated data volume: "
 		   << (nSamples/1000) << "k/" << (DTB_SOURCE_BUFFER_SIZE/1000) 
 		   << "k (~" << (100*static_cast<double>(nSamples)/DTB_SOURCE_BUFFER_SIZE) << "% allocated DTB RAM)";
@@ -746,7 +742,7 @@ void hal::estimateDataVolume(uint32_t events, uint8_t nROCs) {
 
 // ---------------- TEST FUNCTIONS ----------------------
 
-std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter) {
 
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
@@ -757,7 +753,6 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   LOG(logDEBUGHAL) << "Called MultiRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers.";
   LOG(logDEBUGHAL) << "Function will take care of all pixels on " << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -766,24 +761,11 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopMultiRocAllPixelsCalibrate(roci2cs, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -792,21 +774,18 @@ std::vector<Event*> hal::MultiRocAllPixelsCalibrate(std::vector<uint8_t> roci2cs
   daqClear();
 
   // check for missing events
-  int missing = expected - data.size();
-  if(missing != 0) { 
+  int missing = expected/nTriggers - data.size();
+  if(missing != 0) {
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++) {
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter) {
 
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
@@ -816,7 +795,6 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 		   << static_cast<int>(row) << " on "
 		   << roci2cs.size() << " ROCs with the I2C addresses:";
   LOG(logDEBUGHAL) << listVector(roci2cs);
-  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   estimateDataVolume(nTriggers, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -825,24 +803,11 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopMultiRocOnePixelCalibrate(roci2cs, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -851,21 +816,18 @@ std::vector<Event*> hal::MultiRocOnePixelCalibrate(std::vector<uint8_t> roci2cs,
   daqClear();
 
   // We expect one Event per trigger, all ROCs are triggered in parallel:
-  int missing = nTriggers - data.size();
+  int missing = 1 - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events."; 
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector<int32_t> parameter) {
+std::vector<Event> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter) {
 
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
@@ -874,7 +836,6 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
   int expected = nTriggers*ROC_NUMROWS*ROC_NUMCOLS;
 
   LOG(logDEBUGHAL) << "Called SingleRocAllPixelsCalibrate with flags " << listFlags(flags) << ", running " << nTriggers << " triggers on I2C " << static_cast<int>(roci2c) << ".";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -883,24 +844,11 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopSingleRocAllPixelsCalibrate(roci2c, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -909,21 +857,18 @@ std::vector<Event*> hal::SingleRocAllPixelsCalibrate(uint8_t roci2c, std::vector
   daqClear();
 
   // check for missing events
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter) {
 
   uint16_t flags = static_cast<uint16_t>(parameter.at(0));
   uint16_t nTriggers = static_cast<uint16_t>(parameter.at(1));
@@ -931,7 +876,6 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
   LOG(logDEBUGHAL) << "Called SingleRocOnePixelCalibrate for pixel " << static_cast<int>(column) << ","
 		   << static_cast<int>(row) << " with flags " << listFlags(flags) << ", running "
 		   << nTriggers << " triggers.";
-  LOG(logDEBUGHAL) << "Expecting " << nTriggers << " events.";
   estimateDataVolume(nTriggers, 1);
 
  // Prepare for data acquisition:
@@ -940,24 +884,11 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopSingleRocOnePixelCalibrate(roci2c, column, row, nTriggers, flags);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -966,14 +897,11 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
   daqClear();
 
   // We are expecting one Event per trigger:
-  int missing = nTriggers - data.size();
+  int missing = 1 - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
@@ -981,7 +909,7 @@ std::vector<Event*> hal::SingleRocOnePixelCalibrate(uint8_t roci2c, uint8_t colu
 }
 
 
-std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
@@ -1000,7 +928,6 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
@@ -1009,24 +936,11 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopMultiRocAllPixelsDacScan(roci2cs, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1035,21 +949,18 @@ std::vector<Event*> hal::MultiRocAllPixelsDacScan(std::vector<uint8_t> roci2cs, 
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
-  if(missing != 0) { 
+  int missing = expected/nTriggers - data.size();
+  if(missing != 0) {
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
@@ -1070,7 +981,6 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
  // Prepare for data acquisition:
@@ -1079,24 +989,11 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopMultiRocOnePixelDacScan(roci2cs, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1105,21 +1002,18 @@ std::vector<Event*> hal::MultiRocOnePixelDacScan(std::vector<uint8_t> roci2cs, u
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<int32_t> parameter) {
+std::vector<Event> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
@@ -1136,7 +1030,6 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
  // Prepare for data acquisition:
@@ -1145,24 +1038,11 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopSingleRocAllPixelsDacScan(roci2c, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1171,21 +1051,18 @@ std::vector<Event*> hal::SingleRocAllPixelsDacScan(uint8_t roci2c, std::vector<i
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dacreg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dacmin = static_cast<uint8_t>(parameter.at(1));
@@ -1202,7 +1079,6 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 		   << " from " << static_cast<int>(dacmin) 
 		   << " to " << static_cast<int>(dacmax)
 		   << " (step size " << static_cast<int>(dacstep) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -1211,24 +1087,11 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopSingleRocOnePixelDacScan(roci2c, column, row, nTriggers, flags, dacreg, dacstep, dacmin, dacmax);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1237,21 +1100,18 @@ std::vector<Event*> hal::SingleRocOnePixelDacScan(uint8_t roci2c, uint8_t column
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2cs, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2cs, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
@@ -1278,7 +1138,6 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -1287,24 +1146,11 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopMultiRocAllPixelsDacDacScan(roci2cs, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1313,21 +1159,18 @@ std::vector<Event*> hal::MultiRocAllPixelsDacDacScan(std::vector<uint8_t> roci2c
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
@@ -1357,7 +1200,6 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, roci2cs.size());
 
   // Prepare for data acquisition:
@@ -1366,24 +1208,11 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopMultiRocOnePixelDacDacScan(roci2cs, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1392,21 +1221,18 @@ std::vector<Event*> hal::MultiRocOnePixelDacDacScan(std::vector<uint8_t> roci2cs
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vector<int32_t> parameter) {
+std::vector<Event> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
@@ -1432,7 +1258,6 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -1441,24 +1266,11 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopSingleRocAllPixelsDacDacScan(roci2c, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1467,21 +1279,18 @@ std::vector<Event*> hal::SingleRocAllPixelsDacDacScan(uint8_t roci2c, std::vecto
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
   return data;
 }
 
-std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t column, uint8_t row, std::vector<int32_t> parameter) {
+std::vector<Event> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter) {
 
   uint8_t dac1reg = static_cast<uint8_t>(parameter.at(0));
   uint8_t dac1min = static_cast<uint8_t>(parameter.at(1));
@@ -1507,7 +1316,6 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 		   << " from " << static_cast<int>(dac2min) 
 		   << " to " << static_cast<int>(dac2max)
 		   << " (step size " << static_cast<int>(dac2step) << ")";
-  LOG(logDEBUGHAL) << "Expecting " << expected << " events.";
   estimateDataVolume(expected, 1);
 
   // Prepare for data acquisition:
@@ -1516,24 +1324,11 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
 
   // Call the RPC command containing the trigger loop:
   bool done = false;
-  std::vector<Event*> data = std::vector<Event*>();
-  std::vector<Event*> tmpdata = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
   while(!done) {
-    // Delete previously read events:
-    tmpdata.clear();
-
     done = _testboard->LoopSingleRocOnePixelDacDacScan(roci2c, column, row, nTriggers, flags, dac1reg, dac1step, dac1min, dac1max, dac2reg, dac2step, dac2min, dac2max);
     LOG(logDEBUGHAL) << "Loop " << (done ? "finished" : "interrupted") << " (" << t << "ms), reading " << daqBufferStatus() << " words...";
-
-    try {
-      tmpdata = daqAllEvents();
-      LOG(logDEBUGHAL) << tmpdata.size() << " events read (" << t << "ms).";
-      data.insert(data.end(),tmpdata.begin(),tmpdata.end());
-    }
-    catch(DataDecodingError /*&e*/) {
-      LOG(logCRITICAL) << "Error in DAQ. Aborting test.";
-      break;
-    }
+    addCondensedData(data,nTriggers,efficiency,t);
   }
   LOG(logDEBUGHAL) << "Loop done after " << t << "ms. Readout size: " << data.size() << " events.";
 
@@ -1542,14 +1337,11 @@ std::vector<Event*> hal::SingleRocOnePixelDacDacScan(uint8_t roci2c, uint8_t col
   daqClear();
 
   // check for errors in readout (i.e. missing events)
-  int missing = expected - data.size();
+  int missing = expected/nTriggers - data.size();
   if(missing != 0) { 
     LOG(logCRITICAL) << "Incomplete DAQ data readout! Missing " << missing << " Events.";
     // serious runtime issue as data is invalid and cannot be recovered at this point:
-    for(std::vector<Event*>::iterator evtit = data.begin();evtit != data.end(); evtit++){
-      // clean up (now garbage) events
-      delete *evtit;
-    }
+    data.clear();
     throw DataMissingEvent("Incomplete DAQ data readout in function "+std::string(__func__),missing);
   }
 
@@ -1682,7 +1474,6 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 
   // Figure out the number of DAQ channels we need:
   if(m_tokenchains.empty()) { m_tokenchains.push_back(m_roccount); }
-  if(m_notokenpass.empty()) { m_notokenpass.push_back(false); }
   
   LOG(logDEBUGHAL) << "Number of token chains: " << m_tokenchains.size();
   if(m_tokenchains.size() > DTB_DAQ_CHANNELS) {
@@ -1699,10 +1490,10 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
     // Open DAQ in channel i:
     uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
     LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
-		     << (m_notokenpass.at(i) ? 0 : static_cast<int>(m_tokenchains.at(i)))
+		     << static_cast<int>(m_tokenchains.at(i))
 		     << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
     // Initialize the data source, set tokenchain length to zero if no token pass is expected:
-    m_src.at(i) = dtbSource(_testboard,i,(m_notokenpass.at(i) ? 0 : m_tokenchains.at(i)),rocid_offset,m_tbmtype,m_roctype,true,flags);
+    m_src.at(i) = dtbSource(_testboard,i,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
     m_src.at(i) >> m_splitter.at(i);
     _testboard->uDelay(100);
     // Increment the ROC id offset by the amount of ROCs expected:
@@ -1769,9 +1560,9 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
   _testboard->Flush();
 }
 
-Event* hal::daqEvent() {
+Event hal::daqEvent() {
 
-  Event* current_Event = new Event();
+  Event current_Event;
 
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
@@ -1779,13 +1570,13 @@ Event* hal::daqEvent() {
       dataSink<Event*> Eventpump;
       m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
-      try { *current_Event += *Eventpump.Get(); }
+      try { current_Event += *Eventpump.Get(); }
       catch (dsBufferEmpty &) {
 	// If nothing has been read yet, just throw DataNoevent:
 	if(ch == 0) throw DataNoEvent("No event available");
 	
 	// Else the previous channels already got data, so we have to retry:
-	try { *current_Event += *Eventpump.Get(); }
+	try { current_Event += *Eventpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logCRITICAL) << "Found data in channel" << (ch > 1 ? std::string("s 0-" + (ch-1)) : std::string(" 0")) << " but not in channel " << ch << "!";
 	  throw DataChannelMismatch("No event available in channel " + ch);
@@ -1798,9 +1589,9 @@ Event* hal::daqEvent() {
   return current_Event;
 }
 
-std::vector<Event*> hal::daqAllEvents() {
+std::vector<Event> hal::daqAllEvents() {
 
-  std::vector<Event*> evt;
+  std::vector<Event> evt;
   
   // Prepare channel flags:
   std::vector<bool> done_ch;
@@ -1808,23 +1599,27 @@ std::vector<Event*> hal::daqAllEvents() {
 
   while(1) {
     // Read the next Event from each of the pipes:
-    Event* current_Event = new Event();
+    Event current_Event;
     for(size_t ch = 0; ch < m_src.size(); ch++) {
       if(m_src.at(ch).isConnected()) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
 	// Add all event data from this channel:
-	try { *current_Event += *Eventpump.Get(); }
+	try { current_Event += *Eventpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
+	  // Reset the DTB memory to work around buffer issue:
+	  _testboard->Daq_MemReset(ch);
 	  done_ch.at(ch) = true;
 	}
 	catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
       }
       else { done_ch.at(ch) = true; }
     }
-      
+
+    _testboard->Flush();
+
     // If all readout is finished, return:
     std::vector<bool>::iterator fin = std::find(done_ch.begin(), done_ch.end(), false);
     if(fin == done_ch.end()) {
@@ -1838,9 +1633,9 @@ std::vector<Event*> hal::daqAllEvents() {
   return evt;
 }
 
-rawEvent* hal::daqRawEvent() {
+rawEvent hal::daqRawEvent() {
 
-  rawEvent* current_Event = new rawEvent();
+  rawEvent current_Event;
   
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
@@ -1848,14 +1643,14 @@ rawEvent* hal::daqRawEvent() {
       dataSink<rawEvent*> rawpump;
       m_splitter.at(ch) >> rawpump;
 
-      try { *current_Event += *rawpump.Get(); }
+      try { current_Event += *rawpump.Get(); }
       // One of the channels did not return anything!
       catch (dsBufferEmpty &) {
 	// If nothing has been read yet, just throw DataNoevent:
 	if(ch == 0) throw DataNoEvent("No event available");
 	
 	// Else the previous channels already got data, so we have to retry:
-	try { *current_Event += *rawpump.Get(); }
+	try { current_Event += *rawpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logCRITICAL) << "Found data in channel" << (ch > 1 ? std::string("s 0-" + (ch-1)) : std::string(" 0")) << " but not in channel " << ch << "!";
 	  throw DataChannelMismatch("No event available in channel " + ch);
@@ -1868,9 +1663,9 @@ rawEvent* hal::daqRawEvent() {
   return current_Event;
 }
 
-std::vector<rawEvent*> hal::daqAllRawEvents() {
+std::vector<rawEvent> hal::daqAllRawEvents() {
 
-  std::vector<rawEvent*> raw;
+  std::vector<rawEvent> raw;
 
   // Prepare channel flags:
   std::vector<bool> done_ch;
@@ -1878,23 +1673,27 @@ std::vector<rawEvent*> hal::daqAllRawEvents() {
 
   while(1) {
     // Read the next Event from each of the pipes:
-    rawEvent* current_Event = new rawEvent();
+    rawEvent current_Event;
     
     for(size_t ch = 0; ch < m_src.size(); ch++) {
       if(m_src.at(ch).isConnected()) {
 	dataSink<rawEvent*> rawpump;
 	m_splitter.at(ch) >> rawpump;
 	
-	try { *current_Event += *rawpump.Get(); }
+	try { current_Event += *rawpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
+	  // Reset the DTB memory to work around buffer issue:
+	  _testboard->Daq_MemReset(ch);
 	  done_ch.at(ch) = true;
 	}
 	catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
       }
       else { done_ch.at(ch) = true; }
     }
-      
+
+    _testboard->Flush();
+
     // If all readout is finished, return:
     std::vector<bool>::iterator fin = std::find(done_ch.begin(), done_ch.end(), false);
     if(fin == done_ch.end()) {
@@ -1918,11 +1717,16 @@ std::vector<uint16_t> hal::daqBuffer() {
       dataSink<uint16_t> rawpump;
       m_src.at(ch) >> rawpump;
       try { while(1) { raw.push_back(rawpump.Get()); } }
-      catch (dsBufferEmpty &) { LOG(logDEBUGHAL) << "Finished readout Channel " << ch << "."; }
+      catch (dsBufferEmpty &) {
+	LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
+	// Reset the DTB memory to work around buffer issue:
+	_testboard->Daq_MemReset(ch);
+      }
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
     }
   }
 
+  _testboard->Flush();
   if(raw.empty()) throw DataNoEvent("No data available");
   return raw;
 }
@@ -2081,4 +1885,88 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
 
 uint16_t hal::GetADC(uint8_t rpc_par1){
   return _testboard->GetADC(rpc_par1);
+}
+
+std::vector<Event> hal::condenseTriggers(std::vector<Event> &data, uint16_t nTriggers, bool efficiency) {
+
+  std::vector<Event> packed;
+
+  if(data.size()%nTriggers != 0) {
+    LOG(logCRITICAL) << "Data size does not correspond to " << nTriggers << " triggers! Aborting data processing!";
+    return packed;
+  }
+
+  for(std::vector<Event>::iterator Eventit = data.begin(); Eventit!= data.end(); Eventit += nTriggers) {
+
+    Event evt;
+    std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
+    std::map<pixel,double> pxmean = std::map<pixel,double>();
+    std::map<pixel,double> pxm2 = std::map<pixel,double>();
+
+    for(std::vector<Event>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
+
+      // Loop over all contained pixels:
+      for(std::vector<pixel>::iterator pixit = (it)->pixels.begin(); pixit != (it)->pixels.end(); ++pixit) {
+
+	// Check if we have that particular pixel already in:
+	std::vector<pixel>::iterator px = std::find_if(evt.pixels.begin(),
+						       evt.pixels.end(),
+						       findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
+	// Pixel is known:
+	if(px != evt.pixels.end()) {
+	  if(efficiency) { px->setValue(px->value()+1); }
+	  else {
+	    // Calculate the variance incrementally:
+	    double delta = pixit->value() - pxmean[*px];
+	    pxmean[*px] += delta/pxcount[*px];
+	    pxm2[*px] += delta*(pixit->value() - pxmean[*px]);
+	    pxcount[*px]++;
+	  }
+	}
+	// Pixel is new:
+	else {
+	  if(efficiency) { pixit->setValue(1); }
+	  else {
+	    // Initialize counters and temporary variables:
+	    pxcount.insert(std::make_pair(*pixit,1));
+	    pxmean.insert(std::make_pair(*pixit,pixit->value()));
+	    pxm2.insert(std::make_pair(*pixit,0));
+	  }
+	  evt.pixels.push_back(*pixit);
+	}
+      }
+    }
+
+    // Calculate mean and variance for the pulse height depending on the
+    // number of triggers received:
+    if(!efficiency) {
+      for(std::vector<pixel>::iterator px = evt.pixels.begin(); px != evt.pixels.end(); ++px) {
+	px->setValue(pxmean[*px]); // The mean
+	px->setVariance(pxm2[*px]/(pxcount[*px] - 1)); // The variance
+      }
+    }
+    packed.push_back(evt);
+  }
+
+  // Clean up the dangling pointers in the vector:
+  data.clear();
+  return packed;
+}
+
+void hal::addCondensedData(std::vector<Event> &data, uint16_t nTriggers, bool efficiency, timer t) {
+
+  std::vector<Event> tmpdata = std::vector<Event>();
+  try {
+    tmpdata = daqAllEvents();
+    tmpdata = condenseTriggers(tmpdata, nTriggers, efficiency);
+    data.insert(data.end(),tmpdata.begin(),tmpdata.end());
+    LOG(logDEBUGHAL) << (tmpdata.size()*nTriggers) << " events read and condensed (" << t << "ms), "
+		     << data.size() << " events buffered.";
+    LOG(logINFO) << (data.size()*nTriggers) << " events read in total (" << t << "ms).";
+  }
+  catch(DataNoEvent) {}
+  catch(DataException &e) {
+    LOG(logCRITICAL) << "Error in DAQ: " << e.what() << " Aborting test.";
+    throw e;
+  }
 }

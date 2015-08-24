@@ -107,6 +107,16 @@ void PixSetup::init() {
 }
 
 
+// ----------------------------------------------------------------------
+void PixSetup::writeAllFiles() {
+  // -- DUT files
+  writeDacParameterFiles();
+  writeTrimFiles();
+  writeTbmParameterFiles();
+
+  // -- TB and configParameters.dat
+  fConfigParameters->writeAllFiles();
+}
 
 // ----------------------------------------------------------------------
 void PixSetup::writeDacParameterFiles() {
