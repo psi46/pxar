@@ -161,10 +161,10 @@ void PixTestTrim::trimTest() {
   setTrimBits(15);  
   
   // -- determine minimal VthrComp 
-  int NTRIG(static_cast<int>(0.5*fParNtrig));
+  int NTRIG(20);
   map<int, int> rocVthrComp;
   print("VthrComp thr map (minimal VthrComp)"); 
-  vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", fParNtrig, 30, 159, -1, -1, 7); 
+  vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", NTRIG, 0, 159, -1, -1, 7); 
   PixTest::update(); 
   if (thr0.size()/3 != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr0.size() << " does not agree with number of enabled ROCs " << rocIds.size();
@@ -182,7 +182,7 @@ void PixTestTrim::trimTest() {
 
   // -- determine pixel with largest VCAL threshold
   print("Vcal thr map (pixel with maximum Vcal thr)"); 
-  vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", fParNtrig, 1, 120, -1, -1, 1); 
+  vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 0, 159, -1, -1, 1); 
   PixTest::update(); 
   if (thr1.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr1.size() << " does not agree with number of enabled ROCs " << rocIds.size() << endl;
@@ -332,7 +332,7 @@ void PixTestTrim::trimTest() {
 
   // -- set trim bits
   int correction = 4;
-  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 10, 150, -1, -1, 1); 
+  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 199, -1, -1, 1); 
   if (thr2.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map thr2 size " << thr2.size() << " does not agree with number of enabled ROCs " << rocIds.size();
     fProblem = true;
@@ -340,11 +340,9 @@ void PixTestTrim::trimTest() {
   }
   double maxthr = getMaximumThreshold(thr2);
   double minthr = getMinimumThreshold(thr2);
-  if (maxthr > 150) maxthr = 150; 
-  if (minthr < 10) minthr = 10; 
   print(Form("TrimStepCorr4 extremal thresholds: %f .. %f", minthr,  maxthr));
-  //   if (maxthr < 245) maxthr += 10; 
-  //   if (minthr > 10)  minthr -= 10; 
+  if (maxthr < 245) maxthr += 10; 
+  if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr2a = trimStep("trimStepCorr4", correction, thr2, static_cast<int>(minthr), static_cast<int>(maxthr));
   PixTest::update(); 
   if (thr2a.size() != rocIds.size()) {
@@ -357,11 +355,9 @@ void PixTestTrim::trimTest() {
   correction = 2; 
   maxthr = getMaximumThreshold(thr2a);
   minthr = getMinimumThreshold(thr2a);
-  if (maxthr > 150) maxthr = 150; 
-  if (minthr < 10) minthr = 10; 
   print(Form("TrimStepCorr2 extremal thresholds: %f .. %f", minthr,  maxthr));
-  //   if (maxthr < 245) maxthr += 10; 
-  //   if (minthr > 10)  minthr -= 10; 
+  if (maxthr < 245) maxthr += 10; 
+  if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr3a = trimStep("trimStepCorr2", correction, thr2a, static_cast<int>(minthr), static_cast<int>(maxthr));
   PixTest::update(); 
   if (thr3a.size() != rocIds.size()) {
@@ -373,11 +369,9 @@ void PixTestTrim::trimTest() {
   correction = 1; 
   maxthr = getMaximumThreshold(thr3a);
   minthr = getMinimumThreshold(thr3a);
-  if (maxthr > 150) maxthr = 150; 
-  if (minthr < 10) minthr = 10; 
   print(Form("TrimStepCorr1a extremal thresholds: %f .. %f", minthr,  maxthr));
-  //   if (maxthr < 245) maxthr += 10; 
-  //   if (minthr > 10)  minthr -= 10; 
+  if (maxthr < 245) maxthr += 10; 
+  if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr4a = trimStep("trimStepCorr1a", correction, thr3a, static_cast<int>(minthr), static_cast<int>(maxthr));
   PixTest::update(); 
   if (thr4a.size() != rocIds.size()) {
@@ -389,11 +383,9 @@ void PixTestTrim::trimTest() {
   correction = 1; 
   maxthr = getMaximumThreshold(thr4a);
   minthr = getMinimumThreshold(thr4a);
-  if (maxthr > 150) maxthr = 150; 
-  if (minthr < 10) minthr = 10; 
   print(Form("TrimStepCorr1b extremal thresholds: %f .. %f", minthr,  maxthr));
-  //   if (maxthr < 245) maxthr += 10; 
-  //   if (minthr > 10)  minthr -= 10; 
+  if (maxthr < 245) maxthr += 10; 
+  if (minthr > 10)  minthr -= 10; 
   vector<TH1*> thr5a = trimStep("trimStepCorr1b", correction, thr4a, static_cast<int>(minthr), static_cast<int>(maxthr));
   PixTest::update(); 
   if (thr5a.size() != rocIds.size()) {
