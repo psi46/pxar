@@ -111,7 +111,7 @@ namespace pxar {
 	if((pattern.at(i)&PG_REST) != 0) has_tbm_reset = true;
 	if((pattern.at(i)&PG_RESR) != 0) has_roc_reset = true;
       }
-      data.push_back(0xe000 | (has_tbm_reset << 6) | (has_roc_reset << 5));
+      data.push_back(0xe000 | ((nroc==0) << 7) | (has_tbm_reset << 6) | (has_roc_reset << 5));
       data.push_back(0xc002);
     }
     // Adjust event start and end marker:

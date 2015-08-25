@@ -169,6 +169,8 @@ public:
   void resetROC();
   /// send reset to TBM(s)
   void resetTBM();
+  /// TBM register programming (from PixTestCmd)
+  int tbmSet(std::string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   /// set up DAQ (including call to setTriggerFrequency)
   uint16_t prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
