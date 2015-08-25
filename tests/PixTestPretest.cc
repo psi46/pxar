@@ -162,7 +162,7 @@ void PixTestPretest::doTest() {
 
   // -- this no longer seems to converge with f/w 4.4
   //  setTimings();
-  findTimings(); 
+  findTiming(); 
 
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
