@@ -2369,3 +2369,46 @@ bool sortRocHist(const TH1* h1, const TH1* h2) {
   
   return roc1 < roc2;
 }
+
+
+// ----------------------------------------------------------------------
+// -- from PixTestCmd
+int PixTest::tbmSet(string name, uint8_t cores, int value, uint8_t valueMask){
+  /* set a tbm register, allow setting a subset of bits (thoese where mask=1)
+   * the default value of mask is 0xff, i.e. all bits are changed
+   * the cores = 0:TBMA, 1:TBMB, >1 TBMA+TBMB
+   * 
+   */
+  if ((value & (~valueMask) )>0) {
+    LOG(logDEBUG) << "Warning! tbm set value " << hex << (int) value 
+		  << " has bits outside mask ("<<hex<< (int) valueMask << ")";
+  }
+  
+  uint8_t coreMask = 3;
+  if (cores==0){coreMask=1;}  else if(cores==1){ coreMask=2;}
+  
+  int err=1;
+  //out << "tbmset" << name << " " <<  (int) coreMask << " " << value << "  " << bitset<8>(valueMask) << "\n";
+  for(size_t core=0; core<2; core++){
+    if ( ((coreMask >> core) & 1) == 1 ){
+      std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(core);
+      if (regs.size()==0) {
+	LOG(logWARNING) << "TBM registers not set !?! This is not going to work.";
+      }
+      for(unsigned int i=0; i<regs.size(); i++){
+	if (name==regs[i].first){
+	  // found it , do something
+	  uint8_t present = regs[i].second;
+	  uint8_t update = value & valueMask;
+	  update |= (present & (~valueMask) );
+	  LOG(logDEBUG) << "changing tbm reg " <<  name << "["<<core<<"]"
+			<< " from 0x" << hex << (int) regs[i].second
+			<< " to 0x" << hex << (int) update << "";
+	  fApi->setTbmReg( name, update, core );
+	  err=0;
+	}
+      }
+    }
+  }
+  return err; // nonzero values for errors
+}
