@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdlib.h>  
 #include <algorithm> 
+#include <fstream> 
 
 #include <TColor.h>
 #include <TStyle.h>
@@ -9,6 +10,7 @@
 #include <bitset>
 
 #include "PixTestPretest.hh"
+#include "PixTestFactory.hh"
 #include "timer.h"
 #include "log.h"
 #include "helper.h"
@@ -158,8 +160,10 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  setTimings();
-    
+  // -- this no longer seems to converge with f/w 4.4
+  //  setTimings();
+  findTimings(); 
+
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
@@ -200,6 +204,10 @@ void PixTestPretest::runCommand(std::string command) {
   }
   if (!command.compare("settimings")) {
     setTimings();
+    return;
+  }
+  if (!command.compare("findtiming")) {
+    findTiming();
     return;
   }
   if (!command.compare("findworkingpixel")) {
@@ -371,6 +379,66 @@ void PixTestPretest::setVana() {
 
   dutCalibrateOff();
 }
+
+// ----------------------------------------------------------------------
+// this is quite horrible, but a consequence of the parallel world in PixTestCmd which I do not intend to duplicate here
+void PixTestPretest::findTiming() {
+
+  LOG(logDEBUG) << "run PixTestCmd::find_timing";
+  PixTestFactory *factory = PixTestFactory::instance(); 
+  PixTest *t =  factory->createTest("cmd", fPixSetup);		    
+  t->runCommand("timing");
+  delete t; 
+
+  // -- parse output file
+  ifstream IN; 
+  char buffer[1000];
+  string sline, sparameters, ssuccess; 
+  string::size_type s1;
+  vector<double> x;
+  IN.open("pxar_timing.log"); 
+  while (IN.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    s1 = sline.find("selecting"); 
+    if (string::npos == s1) continue;
+    sparameters = sline;
+    IN.getline(buffer, 1000, '\n');
+    ssuccess = buffer; 
+  }
+  IN.close();
+
+  // -- parse relevant lines
+  int tries(-1), success(-1); 
+  istringstream istring(ssuccess);
+  istring >> sline >> sline >> success >> sline >> tries; 
+  istring.clear(); 
+  istring.str(sparameters); 
+  int i160(-1), i400(-1), iroc(-1), iht(-1), itoken(-1); 
+  istring >> sline >> i160 >> i400 >> iroc >> iht >> itoken; 
+  cout << "parameter line: " << sparameters << endl;
+  cout << "parameters =    " << i160 << ", " << i400 << ", " << iroc << ", " << iht << ", " << itoken << endl;
+  cout << "success line:   " << ssuccess << endl;
+  cout << "success/tries = " << success << "/" << tries << endl;
+
+  uint8_t value= ((i160 & 0x7)<<5) + ((i400 & 0x7)<<2);
+  int stat = tbmSet("basee", 0, value);
+  if (stat > 0){
+    LOG(logWARNING) << "error setting delay  base A " << hex << value << dec;
+  }
+
+  if (iroc >= 0){
+    value = ((itoken & 0x1)<<7) + ((iht & 0x1)<<6) + ((iroc & 0x7)<<3) + (iroc & 0x7);
+    stat = tbmSet("basea",2, value);
+    if (stat > 0){
+      LOG(logWARNING) << "error setting delay  base A " << hex << value << dec;
+    }
+  }
+  tbmSet("base4", 2, 0x80); // reset once after changing phases
+
+
+}
+
+
 
 // ----------------------------------------------------------------------
 void PixTestPretest::setTimings() {
