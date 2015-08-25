@@ -601,7 +601,6 @@ NoisyPixels         10
 Vcal                255
 Cut                 0.5
 
-
 -- Readback
 calibrateVd         button
 calibrateVa         button
@@ -651,7 +650,7 @@ scurves             button
 
 -- Trim
 trim                button
-Ntrig               10
+Ntrig               20
 Vcal                35
 TrimBits            button
 
