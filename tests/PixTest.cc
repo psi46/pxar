@@ -26,7 +26,7 @@ using namespace pxar;
 ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
-PixTest::PixTest(PixSetup *a, string name) {
+PixTest::PixTest(PixSetup *a, string name): fNDaqErrors(99999), fProblem(false), fStopTest(false)  {
   //  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
   fPIF            = new PixInitFunc(); 
   fPixSetup       = a;
