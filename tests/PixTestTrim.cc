@@ -39,7 +39,6 @@ bool PixTestTrim::setParameter(string parName, string sval) {
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true; 
-      sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
       }
