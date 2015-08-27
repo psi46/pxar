@@ -35,9 +35,10 @@ private:
   UInt_t getHistMinSec(TH1D *h);
 
   pxar::pxarCore  *fApi; 
-  double           fIana, fIdig;
+  double           fIana, fIdig, fTemp;
 
   std::vector<std::pair<UInt_t, std::pair<double, double> > > fMeasurements;
+  std::vector<std::pair<UInt_t, double> > fRtdMeasurements;
 
   ClassDef(PixMonitor, 1); // testing PixMonitor
 
