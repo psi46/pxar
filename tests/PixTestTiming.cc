@@ -46,6 +46,13 @@ bool PixTestTiming::setParameter(string parName, string sval) {
         LOG(logDEBUG) << "fNoTokenPass: " << fNoTokenPass;
         setToolTips();
       }
+      if (!parName.compare("ignorereadback")) {
+        PixUtil::replaceAll(sval, "checkbox(", "");
+        PixUtil::replaceAll(sval, ")", "");
+        fIgnoreReadBack = atoi(sval.c_str());
+        LOG(logDEBUG) << "fIgnoreReadBack: " << fIgnoreReadBack;
+        setToolTips();
+      }
       if (!parName.compare("targetclk")) {
         fTargetClk = atoi(sval.c_str());
         LOG(logDEBUG) << "PixTestTiming::PixTest() targetclk = " << fTargetClk;
@@ -286,23 +293,32 @@ void PixTestTiming::PhaseScan() {
           setTitles(h2, "ROC Port 0 Delay", "ROC Port 1 Delay");
           h2->SetMinimum(0);
           for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+            fApi->daqStart();
             for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
               NTimings++;
               int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
               LOG(logDEBUG) << "TBM Core: " << itbm << " 160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " TBM Phase " << bitset<8>(delaysetting).to_string() << " Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
               for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
-              if ((ROCDelay & 63)==0) fApi->daqStart();
+              if (fApi->daqStatus()==0) fApi->daqStart();
               Log::ReportingLevel() = Log::FromString("QUIET");
               statistics results = getEvents(fNTrig, period, fTrigBuffer);
               Log::ReportingLevel() = UserReportingLevel;
-              if ((ROCDelay & 63)==63) fApi->daqStop();
               int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-              if (NEvents==fNTrig) {
-                h2->Fill(irocphaseport0,irocphaseport1);
-                NFunctionalTimings[itbm]++;
-                NFunctionalROCPhases++;
+              int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+              if (NEvents==fNTrig && NErrors==0) {
+                bool goodreadback = true;
+                if (!fNoTokenPass && !fIgnoreReadBack) {
+                  goodreadback = checkReadBackBits(period);
+                  fApi->daqStop();
+                }
+                if (goodreadback) {
+                  h2->Fill(irocphaseport0,irocphaseport1);
+                  NFunctionalTimings[itbm]++;
+                  NFunctionalROCPhases++;
+                }
               }
             }
+            fApi->daqStop();
           }
           if (h2->GetEntries()>0) rocdelayhists.push_back(h2);
         }
@@ -402,9 +418,11 @@ void PixTestTiming::TBMPhaseScan() {
         Log::ReportingLevel() = Log::FromString("QUIET");
         statistics results = getEvents(fNTrig, period, fTrigBuffer);
         Log::ReportingLevel() = UserReportingLevel;
-        fApi->daqStop();
         int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-        if (NEvents==fNTrig) h1->Fill(iclk160,iclk400);
+        bool goodreadback = true;
+        if (NEvents==fNTrig && !fIgnoreReadBack && !fNoTokenPass) goodreadback = checkReadBackBits(period);
+        fApi->daqStop();
+        if (NEvents==fNTrig && results.errors()==0 && goodreadback) h1->Fill(iclk160,iclk400);
       }
     }
     if (fNoTokenPass) break;
@@ -460,25 +478,34 @@ void PixTestTiming::ROCDelayScan() {
   }
 
   for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
-    //if (ithtdelay==2) continue;
+    if (ithtdelay==2) continue;
     h1 = bookTH2D(Form("ROCDelayScan%d",ithtdelay),Form("ROC Delay Scan: THT Delay = %d",ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "ROC Port 0 Delay", "ROC Port 1 Delay");
     fHistOptions.insert(make_pair(h1, "colz"));
     h1->SetMinimum(0);
     for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+      fApi->daqStart();
       for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
         int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
         LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
         for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
-        if ((ROCDelay & 63)==0) fApi->daqStart();
+        if (fApi->daqStatus()==0) fApi->daqStart();
         Log::ReportingLevel() = Log::FromString("QUIET");
         statistics results = getEvents(fNTrig, period, fTrigBuffer);
         Log::ReportingLevel() = UserReportingLevel;
-        if ((ROCDelay & 63)==63) fApi->daqStop();
         int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-        if (NEvents==fNTrig) h1->Fill(irocphaseport0,irocphaseport1);
+        int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+        if (NEvents==fNTrig && NErrors==0) {
+          bool goodreadback = true;
+          if (!fIgnoreReadBack && !fNoTokenPass) {
+            goodreadback = checkReadBackBits(period);
+            fApi->daqStop();
+          }
+          if (goodreadback) h1->Fill(irocphaseport0,irocphaseport1);
+        }
       }
+      fApi->daqStop();
     }
     rocdelayhists.push_back(h1);
   }
@@ -527,15 +554,18 @@ void PixTestTiming::TimingTest() {
     }
   }
 
+  bool goodreadback = true;
   fApi->daqStart();
   statistics results = getEvents(fNTrig, period, fTrigBuffer);
+  if (!fIgnoreReadBack && !fNoTokenPass) goodreadback = checkReadBackBits(period);
   fApi->daqStop();
   int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
   if (Log::ReportingLevel() >= logDEBUG) results.dump();
 
   restoreTBMDacs();
   banner(Form("The fraction of properly decoded events is %4.2f%%: %d/%d", float(NEvents)/fNTrig*100, NEvents, fNTrig));
-  if (NEvents==fNTrig) banner("Timings are good!");
+  if (!fIgnoreReadBack) banner(Form("Read back bit status: %d",goodreadback));
+  if (NEvents==fNTrig && results.errors()==0 && goodreadback) banner("Timings are good!");
   else banner("Timings are not good :(", logERROR);
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TimingTest() done.";
@@ -551,6 +581,7 @@ void PixTestTiming::LevelScan() {
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
+  cacheTBMDacs();
 
   fDirectory->cd();
   PixTest::update();
@@ -570,6 +601,14 @@ void PixTestTiming::LevelScan() {
   std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
   for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
 
+  if (fNoTokenPass) {
+    size_t nTBMs = fApi->_dut->getNTbms();
+    for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+      uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
+      fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+    }
+  }
+
   //Get Intial TBM Parameters
   vector<pair<string, uint8_t> > InitTBParameters = fPixSetup->getConfigParameters()->getTbParameters();
 
@@ -585,10 +624,14 @@ void PixTestTiming::LevelScan() {
     Log::ReportingLevel() = Log::FromString("QUIET");
     statistics results = getEvents(fNTrig, period, fTrigBuffer);
     Log::ReportingLevel() = UserReportingLevel;
-    fApi->daqStop();
     int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-    if (NEvents) h1->Fill(int(ilevel), NEvents);
-    if (NEvents==fNTrig) GoodLevels.push_back(ilevel);
+    bool goodreadback = true;
+    if (NEvents==fNTrig && !fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+    fApi->daqStop();
+    if (NEvents==fNTrig && results.errors()==0 && goodreadback) {
+      h1->Fill(int(ilevel), NEvents);
+      GoodLevels.push_back(ilevel);
+    }
   }
 
   if (GoodLevels.size()) {
@@ -609,10 +652,10 @@ void PixTestTiming::LevelScan() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   PixTest::update();
 
-  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 
+  restoreTBMDacs();
   dutCalibrateOff();
 }
 
@@ -701,6 +744,46 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
 
   return make_pair(MaxGoodRegionSize, GoodROCDelay);
 
+}
+
+// ----------------------------------------------------------------------
+bool PixTestTiming::checkReadBackBits(uint16_t period) {
+
+  bool ReadBackGood = true;
+  vector<Event> daqEv;
+  std::vector<std::vector<uint16_t> > ReadBackBits;
+  std::vector<uint8_t> ROClist;
+
+  std::vector<uint8_t> rocids = fApi->_dut->getRocI2Caddr();
+  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
+
+  int iroc=0;
+  for (size_t itbm=0; itbm < nTBMs; itbm++) {
+    if ((GetTBMSetting("base0", itbm) & 64) == 64) {
+      iroc += 16/nTokenChains;
+    } else {
+      for (int jroc=0; jroc < 16/nTokenChains; jroc++) {
+        ROClist.push_back(rocids[iroc]);
+        iroc++;
+      }
+    }
+  }
+
+  fApi->daqTrigger(32, period);
+  try { daqEv = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
+  ReadBackBits = fApi->daqGetReadback();
+
+  for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
+    for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
+      if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
+      if (ReadBackBits[irb][jrb]>>12 != ROClist[irb]) ReadBackGood = false;
+    }
+  }
+  return ReadBackGood;
 }
 
 // ----------------------------------------------------------------------
