@@ -464,6 +464,8 @@ void PixTestTrim::trimBitTest() {
 
   cacheDacs();
 
+  int NTRIG = static_cast<int>(0.5*fParNtrig);
+  if (NTRIG < 10) NTRIG = 10;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   unsigned int nrocs = rocIds.size();
 
@@ -496,7 +498,7 @@ void PixTestTrim::trimBitTest() {
   fDirectory->cd();
   PixTest::update(); 
   banner(Form("PixTestTrim::trimBitTest() ntrig = %d, vtrims = %d %d %d %d", 
-	      fParNtrig, vtrim[0], vtrim[1], vtrim[2], vtrim[3]));
+	      NTRIG, vtrim[0], vtrim[1], vtrim[2], vtrim[3]));
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
@@ -515,7 +517,7 @@ void PixTestTrim::trimBitTest() {
   fApi->setDAC("CtrlReg", 0); 
   fApi->setDAC("Vtrim", 0); 
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims "; 
-  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", fParNtrig, 0, 199, -1, -1, 7), "thr");
+  vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", NTRIG, 0, 199, -1, -1, 7), "thr");
   
   // -- now loop over all trim bits
   vector<TH1*> thr;
@@ -536,7 +538,7 @@ void PixTestTrim::trimBitTest() {
 
     fApi->setDAC("Vtrim", vtrim[iv]); 
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv]; 
-    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), fParNtrig, 0, static_cast<int>(maxThr)+10, -1, -1, 7), "thr");
+    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), NTRIG, 0, static_cast<int>(maxThr)+10, -1, -1, 7), "thr");
     maxThr = getMaximumThreshold(thr); 
     if (maxThr > 245.) maxThr = 245.; 
     steps.push_back(thr); 
