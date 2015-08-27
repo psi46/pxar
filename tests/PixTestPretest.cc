@@ -160,9 +160,15 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  // -- this no longer seems to converge with f/w 4.4
+  // -- this no longer seems to converge with f/w 4.4 for TBM09C
   //  setTimings();
-  findTiming(); 
+
+  string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
+  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c")) {
+    findTiming(); 
+  } else {
+    LOG(logWARNING) << "pretest::findTiming only works for TBM08c/09c! Do something on your own.";
+  }
 
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
@@ -176,7 +182,9 @@ void PixTestPretest::doTest() {
 
   // -- save DACs and TBM parameters!
   saveDacs();
-  saveTbmParameters();
+  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c")) {
+    saveTbmParameters();
+  }
 
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestPretest::doTest() done, duration: " << seconds << " seconds";
