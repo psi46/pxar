@@ -749,7 +749,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
 
   x = splitIntoRocs(sline);
   for (unsigned int i = 0; i < x.size(); ++i) {
-    cout << "Filling into " << hists[i]->GetName() << " x = " << x[i] << endl;
+    //    cout << "Filling into " << hists[i]->GetName() << " x = " << x[i] << endl;
     hists[i]->Fill(x[i]); 
   }
 
@@ -1036,7 +1036,7 @@ void anaFullTest::clearHistVector(vector<TH1D*> vh) {
 void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
   for (unsigned int i = 0; i < vh.size(); ++i) {
     if (opt == "0") {
-      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i]->GetMean() << endl;
+      //      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i]->GetMean() << endl;
       h->SetBinContent(i+1, vh[i]->GetMean()); 
     } else if (opt == "1") {
       h->SetBinContent(i+1, vh[i]->GetRMS()); 
@@ -1052,7 +1052,7 @@ void anaFullTest::dumpVector(vector<TH1D*> vh, TH1D *h, string opt) {
 void anaFullTest::dumpVector(vector<double> vh, TH1D *h, string opt) {
   for (unsigned int i = 0; i < vh.size(); ++i) {
     if (opt == "0") {
-      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i] << endl;
+      //      cout << h->GetName() << " bin " << i+1 << " what? " << vh[i] << endl;
       h->SetBinContent(i+1, vh[i]); 
     }
   }
