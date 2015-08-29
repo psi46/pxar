@@ -87,6 +87,11 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_DUMP_FLAWED_EVENTS 0x0200
 
+/** Flag to disable the collection of readback data from ROC headers. This might be desirable when sending
+ *  several million triggers at once since the amount of readback data collected can be huge.
+ */
+#define FLAG_DISABLE_READBACK_COLLECTION 0x0400
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).

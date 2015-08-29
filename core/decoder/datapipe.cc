@@ -516,6 +516,9 @@ namespace pxar {
   }
 
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
+    // Obey disable flag:
+    if((GetFlags() & FLAG_DISABLE_READBACK_COLLECTION) != 0) { return; }
+
     // Check if we have seen this ROC already:
     if(readback.size() <= roc) readback.resize(roc+1);
     readback.at(roc).push_back(val);
@@ -526,6 +529,9 @@ namespace pxar {
   }
 
   void dtbEventDecoder::evalReadback(uint8_t roc, uint16_t val) {
+    // Obey disable flag:
+    if((GetFlags() & FLAG_DISABLE_READBACK_COLLECTION) != 0) { return; }
+
     // Check if we have seen this ROC already:
     if(shiftReg.size() <= roc) shiftReg.resize(roc+1,0);
     shiftReg.at(roc) <<= 1;
