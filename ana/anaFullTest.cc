@@ -397,21 +397,25 @@ void anaFullTest::showFullTest(string modname, string basename) {
   tl->DrawLatex(0.55, 0.65, Form("%3.1f/%3.1f", fhVtrim->GetMean(), fhVtrim->GetRMS())); 
 
   c0->cd(4);
+  showOverFlow(fhDuration);
   fhDuration->Draw();
   tl->SetTextColor(fhDuration->GetLineColor()); 
   tl->DrawLatex(0.18, 0.92, Form("Mean/RMS: %4.1f/%4.1f", fhDuration->GetMean(), fhDuration->GetRMS())); 
 
   c0->cd(5);
+  showOverFlow(fhCritical);
   fhCritical->Draw();
   tl->SetTextColor(fhCritical->GetLineColor()); 
   tl->DrawLatex(0.18, 0.92, Form("Mean/RMS: %4.3f/%4.3f", fhCritical->GetMean(), fhCritical->GetRMS())); 
 
   c0->cd(6);
   gPad->SetLogy(1);
+  showOverFlow(fhDead);
   fhDead->Draw();
   tl->SetTextColor(fhDead->GetLineColor()); 
   tl->DrawLatex(0.18, 0.92, "Dead"); 
   tl->DrawLatex(0.38, 0.75, Form("%4.3f/%4.3f", fhDead->GetMean(), fhDead->GetRMS())); 
+  showOverFlow(fhBb);
   fhBb->Draw("same");
   tl->SetTextColor(fhBb->GetLineColor()); 
   tl->DrawLatex(0.58, 0.92, "BB"); 
@@ -419,12 +423,14 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   c0->cd(7);
   gPad->SetLogy(1);
+  showOverFlow(fhNoise);
   fhNoise->Draw();
   tl->SetTextColor(fhNoise->GetLineColor()); 
   tl->DrawLatex(0.18, 0.92, Form("noise: %4.3f/%4.3f", fhNoise->GetMean(), fhNoise->GetRMS())); 
 
   c0->cd(8);
   gPad->SetLogy(1);
+  showOverFlow(fhVcaltrimthr);
   fhVcaltrimthr->Draw();
   tl->SetTextColor(fhVcaltrimthr->GetLineColor()); 
   tl->DrawLatex(0.18, 0.92, Form("trim thr: %4.3f/%4.3f", fhVcaltrimthr->GetMean(), fhVcaltrimthr->GetRMS())); 
@@ -432,8 +438,8 @@ void anaFullTest::showFullTest(string modname, string basename) {
   c0->cd(9);
 
   tl->SetTextSize(0.07); 
-  tl->DrawLatex(0.0, 0.75, "# modules:");   tl->DrawLatex(0.5, 0.75, Form("%d", static_cast<int>(fhCritical->GetEntries()))); 
-  tl->DrawLatex(0.0, 0.65, "# pixels:");    tl->DrawLatex(0.5, 0.65, Form("%d", static_cast<int>(fhNoise->GetEntries()))); 
+  tl->DrawLatex(0.0, 0.75, "# modules:");   tl->DrawLatex(0.5, 0.75, Form("%d", static_cast<int>(fhCritical->GetSumOfWeights()))); 
+  tl->DrawLatex(0.0, 0.65, "# pixels:");    tl->DrawLatex(0.5, 0.65, Form("%d", static_cast<int>(fhNoise->GetSumOfWeights()))); 
   tl->DrawLatex(0.0, 0.55, "# low-thr (<25):");   
   tl->DrawLatex(0.5, 0.55, Form("%d", static_cast<int>(fhVcaltrimthr->Integral(0, fhVcaltrimthr->FindBin(25.))))); 
   tl->DrawLatex(0.5, 0.45, Form("(%3.2e)", fhVcaltrimthr->Integral(0, fhVcaltrimthr->FindBin(25.))/fhVcaltrimthr->Integral()));
@@ -1206,4 +1212,12 @@ int anaFullTest::testDuration(string startTest, string endTest) {
   struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
   
   return tv1.tv_sec - tv0.tv_sec;
+}
+
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::showOverFlow(TH1D* h) {
+  h->SetBinContent(h->GetNbinsX(), h->GetBinContent(h->GetNbinsX()) + h->GetBinContent(h->GetNbinsX()+1));
+
 }
