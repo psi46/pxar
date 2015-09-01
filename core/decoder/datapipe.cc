@@ -127,7 +127,7 @@ namespace pxar {
     roc_Event.Clear();
     rawEvent *sample = Get();
 
-    if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
+    if(dump_count < 100 && (GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
       // Store the current error count for comparison:
       // Exclude pixel decoding problems, we are looking for more serious things...
       error_count = decodingStats.errors_event()
@@ -154,7 +154,7 @@ namespace pxar {
     // Decode DESER160 Data for digital devices without real TBM
     else { DecodeDeser160(sample); }
 
-    if((GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
+    if(dump_count < 100 && (GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
       if(error_count != (decodingStats.errors_event()
 			 + decodingStats.errors_tbm()
 			 + decodingStats.errors_roc())) { flawed_event = total_event; }
@@ -164,6 +164,10 @@ namespace pxar {
 	LOG(logERROR) << "Dumping the flawed event +- 3 events:";
 	for(size_t i = total_event; i < total_event+event_ringbuffer.size(); i++) {
 	  LOG(logERROR) << event_ringbuffer.at(i%7);
+	}
+	dump_count++;
+	if(dump_count == 100) {
+	  LOG(logERROR) << "Reached 100 dumped events, stopping now...";
 	}
       }
       total_event++;
