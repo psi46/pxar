@@ -16,6 +16,21 @@
 #include "pxardllexport.h"
 
 // ----------------------------------------------------------------------
+struct trimSummary {
+  std::string modName; 
+  int stat;
+  // one hist per ROC
+  std::vector<TH1D *> vana, caldel, vthrcomp, vtrim;
+
+  // one hist (RMS of pixel histograms fvTrimVcalThr, fvTrimBits)
+  TH1D *trimBits, *trimVcalThr; 
+
+  // one hist (RMS of ROC histograms)
+  TH1D *rvana, *rcaldel, *rvthrcomp, *rvtrim;
+
+};
+
+// ----------------------------------------------------------------------
 struct moduleSummary {
   std::string moduleName; 
   // one hist per ROC, filled n iterations times
@@ -40,7 +55,7 @@ struct singleModuleSummary {
   TH1D *dead, *bb, *mask, *addr; 
 
   TH2D *defectMap;
-  TH1D *distNoise, *distVcalTrimThr;
+  TH1D *distNoise, *distVcalTrimThr, *distVcalThr;
 
 };
 
@@ -55,8 +70,14 @@ class DLLEXPORT anaFullTest {
   void showAllFullTests(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d");
   void showFullTest(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
 
-  void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
   void validateFullTests();
+  void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
+
+  void validateTrimTests();
+  void addTrimTests(std::string dir = "/scratch/ursl/pxar/150828-repro", int ioffset = 0);
+  void bookTrimSummary(int ioffset = 0); 
+  void fillTrimInfo(std::string dir); 
+
   void readDacFile(std::string dir, std::string dac, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, std::vector<double> &v);
@@ -100,10 +121,15 @@ private:
   std::map<std::string, moduleSummary*> fModSummaries;
   singleModuleSummary*        fSMS;
 
+  std::vector<trimSummary*> fTrimSummaries;
+
   TH1D *fhDuration, *fhCritical, *fhDead, *fhBb, *fhMask, *fhAddr;
-  TH1D *fhNoise, *fhVcaltrimthr;
+  TH1D *fhNoise, *fhVcaltrimthr, *fhVcalthr;
   TH1D *fhVana, *fhCaldel, *fhPhoffset, *fhPhscale, *fhVtrim, *fhVthrcomp; 
 
+  std::vector<std::vector<TH1D*> > fvTrimVcalThr, fvTrimBits;
+  std::vector<int> fvNtrig;
+  std::vector<int> fvColor; 
 
   ClassDef(anaFullTest, 1); // testing anaFullTest
 
