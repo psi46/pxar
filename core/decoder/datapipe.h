@@ -25,9 +25,9 @@ namespace pxar {
     virtual T ReadLast() = 0;
     virtual T Read() = 0;
     virtual uint8_t ReadChannel() = 0;
+    virtual uint16_t ReadFlags() = 0;
     virtual uint8_t ReadTokenChainLength() = 0;
     virtual uint8_t ReadTokenChainOffset() = 0;
-    virtual uint8_t ReadDefaultTokenChainLength() = 0;
     virtual uint8_t ReadEnvelopeType() = 0;
     virtual uint8_t ReadDeviceType() = 0;
   public:
@@ -45,9 +45,9 @@ namespace pxar {
     T ReadLast() { throw dpNotConnected(); }
     T Read()     { return ReadLast();     }
     uint8_t ReadChannel() { throw dpNotConnected(); }
+    uint16_t ReadFlags() { throw dpNotConnected(); }
     uint8_t ReadTokenChainLength() { throw dpNotConnected(); }
     uint8_t ReadTokenChainOffset() { throw dpNotConnected(); }
-    uint8_t ReadDefaultTokenChainLength() { throw dpNotConnected(); }
     uint8_t ReadEnvelopeType() { throw dpNotConnected(); }
     uint8_t ReadDeviceType() { throw dpNotConnected(); }
     template <class TO> friend class dataSink;
@@ -66,9 +66,9 @@ namespace pxar {
     T GetLast() { return src->ReadLast(); }
     T Get() { return src->Read(); }
     uint8_t GetChannel() { return src->ReadChannel(); }
+    uint16_t GetFlags() { return src->ReadFlags(); }
     uint8_t GetTokenChainLength() { return src->ReadTokenChainLength(); }
     uint8_t GetTokenChainOffset() { return src->ReadTokenChainOffset(); }
-    uint8_t GetDefaultTokenChainLength() { return src->ReadDefaultTokenChainLength(); }
     uint8_t GetEnvelopeType() { return src->ReadEnvelopeType(); }
     uint8_t GetDeviceType() { return src->ReadDeviceType(); }
     void GetAll() { while (true) Get(); }
@@ -114,9 +114,9 @@ namespace pxar {
     rawEvent* Read();
     rawEvent* ReadLast() { return &record; }
     uint8_t ReadChannel() { return GetChannel(); }
+    uint16_t ReadFlags() { return GetFlags(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadTokenChainOffset() { return GetTokenChainOffset(); }
-    uint8_t ReadDefaultTokenChainLength() { return GetDefaultTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
@@ -138,9 +138,9 @@ namespace pxar {
     rawEvent* Read();
     rawEvent* ReadLast() { return &record; }
     uint8_t ReadChannel() { return GetChannel(); }
+    uint16_t ReadFlags() { return GetFlags(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadTokenChainOffset() { return GetTokenChainOffset(); }
-    uint8_t ReadDefaultTokenChainLength() { return GetDefaultTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
   public:
@@ -152,10 +152,10 @@ namespace pxar {
     Event roc_Event;
     Event* Read();
     Event* ReadLast() { return &roc_Event; }
+    uint16_t ReadFlags() { return GetFlags(); }
     uint8_t ReadChannel() { return GetChannel(); }
     uint8_t ReadTokenChainLength() { return GetTokenChainLength(); }
     uint8_t ReadTokenChainOffset() { return GetTokenChainOffset(); }
-    uint8_t ReadDefaultTokenChainLength() { return GetDefaultTokenChainLength(); }
     uint8_t ReadEnvelopeType() { return GetEnvelopeType(); }
     uint8_t ReadDeviceType() { return GetDeviceType(); }
 
@@ -167,6 +167,7 @@ namespace pxar {
 
     // Readback decoding:
     void evalReadback(uint8_t roc, uint16_t val);
+    bool readback_dirty;
     std::vector<uint16_t> count;
     std::vector<uint16_t> shiftReg;
     std::vector<std::vector<uint16_t> > readback;
@@ -181,14 +182,19 @@ namespace pxar {
     void AverageAnalogLevel(int16_t word1, int16_t word2);
     int32_t ultrablack;
     int32_t black;
+    int16_t levelS;
     int32_t sumUB, sumB;
     size_t slidingWindow;
     
     // Last DAC storage for analog ROCs:
     void evalLastDAC(uint8_t roc, uint16_t val);
 
+    // Debugging mechanism for problematic events
+    uint32_t total_event, flawed_event, error_count, dump_count;
+    std::vector<std::string> event_ringbuffer;
+
   public:
-  dtbEventDecoder() : decodingStats(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), sumUB(0), sumB(0), slidingWindow(0) {};
+  dtbEventDecoder() : decodingStats(), readback_dirty(false), count(), shiftReg(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), levelS(0), sumUB(0), sumB(0), slidingWindow(0), total_event(5), flawed_event(0), error_count(0), dump_count(0), event_ringbuffer(7) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();

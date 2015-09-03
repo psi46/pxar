@@ -21,7 +21,7 @@ ClassImp(PixTestBBMap)
 
 //------------------------------------------------------------------------------
 PixTestBBMap::PixTestBBMap(PixSetup *a, std::string name): PixTest(a, name), 
-  fParNtrig(-1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
+  fParNtrig(0), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBBMap ctor(PixSetup &a, string, TGTab *)";
@@ -111,6 +111,7 @@ void PixTestBBMap::doTest() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   int flag(FLAG_CALS);
   fApi->setDAC("ctrlreg", 4);     // high range
@@ -121,7 +122,7 @@ void PixTestBBMap::doTest() {
   if (fDumpProblematic) result |= 0x10;
 
   fNDaqErrors = 0; 
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, -1, -1, result, 1, flag);
 
   // -- relabel negative thresholds as 255 and create distribution list
   vector<TH1D*> dlist; 
@@ -175,6 +176,7 @@ void PixTestBBMap::doTest() {
 	       << ", duration: " << seconds << " seconds";
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
   LOG(logINFO) << "separation cut       (per ROC): " << bbCuts;
+  dutCalibrateOff();
 
 }
 

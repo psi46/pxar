@@ -12,9 +12,9 @@ namespace pxar {
   class evtSource : public dataSource<uint16_t> {
     // --- Control/state
     uint8_t channel;
-    std::vector<uint8_t> chainlength;
+    uint16_t flags;
+    uint8_t chainlength;
     uint8_t chainlengthOffset;
-    uint8_t defaultChainlength;
     uint8_t envelopetype;
     uint8_t devicetype;
 
@@ -38,17 +38,17 @@ namespace pxar {
       if(!connected) throw dpNotConnected();
       return channel;
     }
+    uint16_t ReadFlags() {
+      if(!connected) throw dpNotConnected();
+      return flags;
+    }
     uint8_t ReadTokenChainLength() {
       if(!connected) throw dpNotConnected();
-      return chainlength.at(channel);
+      return chainlength;
     }
     uint8_t ReadTokenChainOffset() {
       if(!connected) throw dpNotConnected();
       return chainlengthOffset;
-    }
-    uint8_t ReadDefaultTokenChainLength() {
-      if(!connected) throw dpNotConnected();
-      return defaultChainlength;
     }
     uint8_t ReadEnvelopeType() {
       if(!connected) throw dpNotConnected();
@@ -59,12 +59,13 @@ namespace pxar {
       return devicetype;
     }
   public:
-  evtSource(uint8_t daqchannel, const std::vector<uint8_t> &tokenChainLength, uint8_t tbmtype, uint8_t roctype)
-    : channel(daqchannel), chainlength(tokenChainLength), chainlengthOffset(0), defaultChainlength(8), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
+  evtSource(uint8_t daqchannel, uint8_t tokenChainLength, uint8_t offset, uint8_t tbmtype, uint8_t roctype, uint16_t daqflags = 0)
+    : channel(daqchannel), flags(daqflags), chainlength(tokenChainLength), chainlengthOffset(offset), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
       LOG(logDEBUGPIPES) << "New evtSource instantiated with properties:";
       LOG(logDEBUGPIPES) << "-------------------------";
       LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
-			 << " (" << static_cast<int>(chainlength.at(channel)) << " ROCs)"
+			 << " (" << static_cast<int>(chainlength) << " ROCs, "
+			 << static_cast<int>(chainlengthOffset) << "-" << static_cast<int>(chainlengthOffset+chainlength)<< ")"
 			 << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
     }
   evtSource() : connected(false) {};
@@ -76,7 +77,7 @@ namespace pxar {
       buffer.insert(buffer.end(), data.begin(), data.end());
       LOG(logDEBUGPIPES) << "-------------------------";
       LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB (" << buffer.size() << " words buffered):";
-      LOG(logDEBUGPIPES) << listVector(buffer,true);
+      if(devicetype < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(buffer,false,true); }
       LOG(logDEBUGPIPES) << "-------------------------";
     }
 

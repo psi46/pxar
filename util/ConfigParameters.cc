@@ -85,6 +85,8 @@ void ConfigParameters::initialize() {
   fTbmType = ""; 
   fHdiType = "bpix"; 
   fTBName = "*"; 
+
+  fMaskedPixels.clear(); 
 }
 
 
@@ -109,15 +111,6 @@ void ConfigParameters::readAllConfigParameterFiles() {
 void ConfigParameters::writeAllFiles() {
   writeConfigParameterFile();
   writeTbParameterFile();
-
-//   for (unsigned int i = 0; i < fnTbms; ++i) writeIdx.push_back(i); 
-//   writeTbmParameterFiles(writeIdx); 
-
-//   writeIdx.clear();
-//   for (unsigned int i = 0; i < fnRocs; ++i) writeIdx.push_back(i); 
-//   writeDacParameterFiles(writeIdx);
-//   writeTrimFiles(writeIdx);
-
 }
 
 
@@ -325,14 +318,17 @@ vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 	  }
   }
 
+  uint8_t delay = 6;
+  if(fRocType.find("dig") == std::string::npos) { delay = 5; }
+  
   if (fnTbms < 1) {
     a.push_back(make_pair("resetroc",25));    // PG_RESR b001000 
-    a.push_back(make_pair("calibrate",wbc+6)); // PG_CAL  b000100
+    a.push_back(make_pair("calibrate",wbc+delay)); // PG_CAL  b000100
     a.push_back(make_pair("trigger",16));    // PG_TRG  b000010
     a.push_back(make_pair("token",0));     // PG_TOK  b000001
   } else {
     a.push_back(std::make_pair("resetroc",15));    // PG_REST
-    a.push_back(std::make_pair("calibrate",wbc+6)); // PG_CAL
+    a.push_back(std::make_pair("calibrate",wbc+delay)); // PG_CAL
     a.push_back(std::make_pair("trigger;sync",0));     // PG_TRG PG_SYNC
   }
 
@@ -366,9 +362,10 @@ void ConfigParameters::readRocPixelConfig() {
   vector<bool> rocmasked; 
   for (unsigned int i = 0; i < fnRocs; ++i) rocmasked.push_back(false); 
   
-  vector<vector<pair<int, int> > > vmask = readMaskFile(filename); 
-  for (unsigned int i = 0; i < vmask.size(); ++i) {
-    vector<pair<int, int> > v = vmask[i]; 
+  fMaskedPixels = readMaskFile(filename); 
+
+  for (unsigned int i = 0; i < fMaskedPixels.size(); ++i) {
+    vector<pair<int, int> > v = fMaskedPixels[i]; 
     if (v.size() > 0) {
       rocmasked[i] = true; 
       for (unsigned int j = 0; j < v.size(); ++j) {
@@ -390,7 +387,7 @@ void ConfigParameters::readRocPixelConfig() {
 	//	pxar::pixelConfig a(ic,ir,0,false,true); 
 	pxar::pixelConfig a(ic,ir,0,false,false); 
 	if (rocmasked[i]) {
-	  vector<pair<int, int> > v = vmask[i]; 
+	  vector<pair<int, int> > v = fMaskedPixels[i]; 
 	  for (unsigned int j = 0; j < v.size(); ++j) {
 	    if (v[j].first == ic && v[j].second == ir) {
 	      LOG(logINFO) << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
@@ -1252,5 +1249,17 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
     fTrimVcalSuffix = name;
   }
   InputFile.close();
+}
+
+
+// ----------------------------------------------------------------------
+bool ConfigParameters::isMaskedPixel(int roc, int col, int row) {
+  vector<pair<int, int> > v = fMaskedPixels[roc]; 
+  for (unsigned int j = 0; j < v.size(); ++j) {
+    if (v[j].first == col && v[j].second == row) {
+      return true; 
+    }
+  }
+  return false;
 }
 

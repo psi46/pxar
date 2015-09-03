@@ -397,7 +397,7 @@ void PixGui::handleButtons(Int_t id) {
 
   case B_WRITEALLFILES: {
     LOG(logDEBUG) << "PixGui::writeAllFiles called";
-    fConfigParameters->writeAllFiles();
+    fPixSetup->writeAllFiles();
     break;
   }
   case B_POWER: {

@@ -23,7 +23,7 @@ ClassImp(PixTestBB3Map)
 
 //------------------------------------------------------------------------------
 PixTestBB3Map::PixTestBB3Map(PixSetup *a, std::string name): PixTest(a, name),
-  fParNtrig(-1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
+  fParNtrig(1), fParVcalS(200), fDumpAll(-1), fDumpProblematic(-1) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBB3Map ctor(PixSetup &a, string, TGTab *)";
@@ -112,6 +112,7 @@ void PixTestBB3Map::doTest() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   int flag(FLAG_CALS);
   fApi->setDAC("ctrlreg", 4);     // high range
@@ -124,7 +125,7 @@ void PixTestBB3Map::doTest() {
   fNDaqErrors = 0;
   // scurveMaps function is located in pxar/tests/PixTest.cc
   // generate a TH1 s-curve wrt VthrComp for each pixel
-  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, 30, result, 1, flag);
+  vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, -1, -1, result, 1, flag);
  
   // create vectors of plots to hold the rescaled thresholds
   vector<TH2D*>  rescaledThrmaps;
@@ -154,11 +155,11 @@ void PixTestBB3Map::doTest() {
 				  52, 0., 52., 80, 0., 80.);
     rescaledThrmaps.push_back(rescaledPlot);
 
-    // -- relabel negative thresholds as 255 and create distribution list
+    // -- relabel negative thresholds as 0 and create distribution list
     // a negative threshold implies that the fit failed to converge
     for (int ix = 0; ix < thrmapsCals[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < thrmapsCals[i]->GetNbinsY(); ++iy) {
-	if (thrmapsCals[i]->GetBinContent(ix+1, iy+1) < 0) thrmapsCals[i]->SetBinContent(ix+1, iy+1, 255.);
+    	if (thrmapsCals[i]->GetBinContent(ix+1, iy+1) < 0) thrmapsCals[i]->SetBinContent(ix+1, iy+1, 0.);
       }
     }
     // make a 1D distributions of the VthrComp threshold for each ROC
@@ -190,8 +191,12 @@ void PixTestBB3Map::doTest() {
 
   // loop over the 1D distribution pairs (one for each ROC)
   for (unsigned int i = 0; i < dlist.size(); ++i) {
+
     distEven = (TH1D*)dlist[i].first;
-    distOdd = (TH1D*)dlist[i].second;
+    distOdd  = (TH1D*)dlist[i].second;
+    distEven->GetXaxis()->SetRangeUser(10.,256.);
+    distOdd->GetXaxis()->SetRangeUser(10.,256.);
+
     // search for peaks in the distribution
     // sigma = 5, threshold = 50%
     // peaks below threshold*max_peak_height are discarded
@@ -199,39 +204,55 @@ void PixTestBB3Map::doTest() {
     //   from the distribution
     nPeaksEven = s.Search(distEven, 5, "nobackground", 0.5);
     nPeaksOdd = s.Search(distOdd, 5, "nobackground", 0.5);
+    distEven->GetXaxis()->UnZoom();
+    distOdd->GetXaxis()->UnZoom();
 
     // use fitPeaks algorithm to get the fitted gaussian of good bumps
     fitEven = fitPeaks(distEven, s, nPeaksEven);
-    double meanEven = fitEven->GetParameter(1);
-    double sigmaEven = fabs(fitEven->GetParameter(2));
+    //initial to values that will make no bumps get flagged as bad
+    double meanEven = 255-NSIGMA, sigmaEven = 1, meanOdd = 255-NSIGMA, sigmaOdd = 1;
+    if (fitEven){
+      meanEven = fitEven->GetParameter(1);
+      sigmaEven = fabs(fitEven->GetParameter(2));
+    }
     fitOdd = fitPeaks(distOdd, s, nPeaksOdd);
-    double meanOdd = fitOdd->GetParameter(1);
-    double sigmaOdd = fabs(fitOdd->GetParameter(2));
+    if (fitOdd){
+      meanOdd = fitOdd->GetParameter(1);
+      sigmaOdd = fabs(fitOdd->GetParameter(2));
+    }
 
     int cutEven = static_cast<int>(meanEven + NSIGMA*sigmaEven) + 1;
     int cutOdd = static_cast<int>(meanOdd + NSIGMA*sigmaOdd) + 1;
 
     LOG(logDEBUG) << "found " << nPeaksEven << " peaks in " << distEven->GetName();
-    LOG(logDEBUG) << "  best peak: mean = " << meanEven << ", RMS = " << sigmaEven;
-    LOG(logDEBUG) << "    cut value = " << cutEven;
-
+    if(fitEven){
+      LOG(logDEBUG) << "  best peak: mean = " << meanEven << ", RMS = " << sigmaEven;
+      LOG(logDEBUG) << "    cut value = " << cutEven;
+      // draw an arrow on the plot to denote cutEven
+      TArrow *paEven = new TArrow(cutEven, 0.5*distEven->GetMaximum(), cutEven, 0., 0.06, "|>");
+      paEven->SetArrowSize(0.1);
+      paEven->SetAngle(40);
+      paEven->SetLineWidth(2);
+      distEven->GetListOfFunctions()->Add(paEven);
+    }
+    else{
+      LOG(logDEBUG) << " fit failed, ignoring plot";
+    }
+    
     LOG(logDEBUG) << "found " << nPeaksOdd << " peaks in " << distOdd->GetName();
-    LOG(logDEBUG) << "  best peak: mean = " << meanOdd << ", RMS = " << sigmaOdd;
-    LOG(logDEBUG) << "    cut value = " << cutOdd;
-
-    // draw an arrow on the plot to denote cutEven
-    TArrow *paEven = new TArrow(cutEven, 0.5*distEven->GetMaximum(), cutEven, 0., 0.06, "|>");
-    paEven->SetArrowSize(0.1);
-    paEven->SetAngle(40);
-    paEven->SetLineWidth(2);
-    distEven->GetListOfFunctions()->Add(paEven);
-
-    // draw an arrow on the plot to denote cutOdd
-    TArrow *paOdd = new TArrow(cutOdd, 0.5*distOdd->GetMaximum(), cutOdd, 0., 0.06, "|>");
-    paOdd->SetArrowSize(0.1);
-    paOdd->SetAngle(40);
-    paOdd->SetLineWidth(2);
-    distOdd->GetListOfFunctions()->Add(paOdd);
+    if(fitEven){
+      LOG(logDEBUG) << "  best peak: mean = " << meanOdd << ", RMS = " << sigmaOdd;
+      LOG(logDEBUG) << "    cut value = " << cutOdd;
+      // draw an arrow on the plot to denote cutOdd
+      TArrow *paOdd = new TArrow(cutOdd, 0.5*distOdd->GetMaximum(), cutOdd, 0., 0.06, "|>");
+      paOdd->SetArrowSize(0.1);
+      paOdd->SetAngle(40);
+      paOdd->SetLineWidth(2);
+      distOdd->GetListOfFunctions()->Add(paOdd);
+    }
+    else{
+      LOG(logDEBUG) << " fit failed, ignoring plot";
+    }
 
     // fill plots with (thr-mean)/sigma (things above NSIGMA are called bad)
     for (int ix = 1; ix <= thrmapsCals[i]->GetNbinsX(); ++ix) {
@@ -255,8 +276,6 @@ void PixTestBB3Map::doTest() {
 	else {
 	    rescaledThrdists[i]->Fill(rescaledThrdists[i]->GetXaxis()->GetXmax()-0.01);
 	}
-	  
-
 	rescaledThrmaps[i]->Fill(ix-1,iy-1,rescaledThr);
       }
     }
@@ -291,6 +310,7 @@ void PixTestBB3Map::doTest() {
 	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"")
 	       << ", duration: " << seconds << " seconds";
   LOG(logINFO) << "number of dead bumps (per ROC): " << bbString;
+  dutCalibrateOff();
 
 }
 
@@ -307,7 +327,7 @@ TF1* PixTestBB3Map::fitPeaks(TH1D *h, TSpectrum &s, int npeaks) {
 
   // this function has been simplified wrt the BB test
   // we now only use the highest peak to fit
-  double bestHeight = 0;
+  double bestHeight = -1;
   TF1* f(0);
   TF1* bestFit(0);
 

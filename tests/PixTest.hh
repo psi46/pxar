@@ -84,10 +84,14 @@ public:
   virtual void fullTest(); 
   /// allow execution of any button in the test 
   virtual void runCommand(std::string command); 
+  /// allow interrupt of test
+  virtual void stopTest() {fStopTest = true;}
   /// save DACs to file
   void saveDacs(); 
   /// save trim bits to file
   void saveTrimBits(); 
+  /// save TBM parameters to file
+  void saveTbmParameters(); 
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
@@ -134,7 +138,8 @@ public:
   /// result & 0x8: also dump distributions for those maps enabled with 1,2, or 4
   /// result &0x10: dump 'problematic' threshold histogram fits
   /// result &0x20: dump all threshold histogram fits
-  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, int dacsperstep = -1, 
+  std::vector<TH1*> scurveMaps(std::string dac, std::string name, int ntrig = 10, int daclo = 0, int dachi = 255, 
+			       int dacsperstep = -1, int ntrigperstep = 1, 
 			       int result = 15, int ihit = 1, int flag = FLAG_FORCE_MASKED); 
   /// returns TH2D's for the threshold, the user flag argument is intended for selecting calS and will be OR'ed with other flags
   std::vector<TH1*> thrMaps(std::string dac, std::string name, uint8_t dacmin, uint8_t dachi, int ntrig, uint16_t flag = 0);
@@ -147,24 +152,25 @@ public:
   /// list.
   std::vector<std::pair<int,int> > checkHotPixels(TH2D* h);
 
-
-//   /// Return pixelAlive map and additional hit map when running with external source
-//   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xEfficiencyMaps(std::string name, uint16_t ntrig, 
-// 								    uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-
-//   std::pair<std::vector<TH2D*>,std::vector<TH2D*> > xNoiseMaps(std::string name, uint16_t ntrig, 
-// 							       int daclo = 0, int dachi = 255, int dacsperstep = -1, 
-// 							       int result = 15, uint16_t FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-
   /// provide access to noiseMaps when (FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED) was set
   std::vector<TH2D*> getXrayMaps() {return fXrayMaps;}
+
+  /// enable cal-injects for all pixels on DUT except those mentioned in the mask file
+  void dutCalibrateOn();
+
+  /// disable cal-injects for all pixels on DUT with subsequent call to maskPixels()
+  void dutCalibrateOff();
   
+  /// determine hot pixels with high occupancy and increase their threshold with trim bit
+  void trimHotPixels(int hitThreshold = -1, int runSeconds = 10, bool maskuntrimmable = false);  
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
   /// send reset to ROC(s)
   void resetROC();
   /// send reset to TBM(s)
   void resetTBM();
+  /// TBM register programming (from PixTestCmd)
+  int tbmSet(std::string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   /// set up DAQ (including call to setTriggerFrequency)
   uint16_t prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
@@ -184,9 +190,6 @@ public:
   /// fill the results of a api::getEfficiencyVsDAC into a TH1D; if icol/irow/iroc are > -1, then fill only 'correct' pixels
   void fillDacHist(std::vector<std::pair<uint8_t, std::vector<pxar::pixel> > > &results, TH1D *h, 
 		   int icol = -1, int irow = -1, int iroc = -1); 
-
-  /// select some pattern of pixels if not enabling the complete ROC. Enables the complete ROC if npix > 999
-  virtual void sparseRoc(int npix = 8);
 
   /// creates a 1D distribution of a map
   TH1D* distribution(TH2D *, int nbins, double xmin, double xmax); 
@@ -338,7 +341,7 @@ protected:
   TreeEvent             fTreeEvent;
   TTimeStamp           *fTimeStamp; 
 
-  bool                  fProblem;
+  bool                  fProblem, fStopTest;
 
   std::vector<TH2D*>    fXrayMaps; 
 

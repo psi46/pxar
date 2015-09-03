@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ----------------------------------------------------------------------
-# Usage     ../main/mkConfig -d directory [-f] [-t TBM08] [-r digv21] [-m] [-b] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
+# Usage     ../main/mkConfig -d directory [-f] [-t TBM08C] [-r digv21] [-m] [-b] [-h] [-p 's/hubId 31/hubId 0/g%s/nRocs 16/nRocs 12/g']
 # -----
 #
 # Options   -d directory              the directory into which all config files will be put
@@ -12,20 +12,15 @@
 #           -b                        whether a bare module config directory should be set up (still single ROC folder; impacts hvOn, testParameters)
 #           -h                        list all known ROC and TBM types and print help message
 #           -p 's/hubId 31/hubId 0/'  pattern changes: will apply the regexp to change any matches among all files; separate multiple patterns with %
-#
-#
-# History    2014/07/15 First shot: static setup (will change, eventually, probably)
-# -------
-#
-#
+#           -s                        short: only produce testParameters.dat
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('bd:fhmp:r:t:');
+getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
-my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM09");
+my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
 
 if ($opt_h) {
     &printHelp;
@@ -42,6 +37,13 @@ if (!-d "$dir") {
 } else {
     &cleanFiles;
 }
+
+# -- recreate testParameters.dat file
+if ($opt_s) {
+    &printTestParameters;
+    exit(0); 
+}
+
 
 # -- number of rocs and tbms
 my $nrocs = 1;
@@ -62,6 +64,7 @@ if ($opt_b) {
 my $dacs = "";
 my $roctype = "digv21respin";
 if ($opt_r) {
+    $opt_r =~ tr/A-Z/a-z/;
     if (grep(/$opt_r/, @rocok)) {
 	$roctype = $opt_r;
     } else {
@@ -75,7 +78,7 @@ my $rbCals = "";
 
 # -- TBM type from either command line or by default
 my $tbms = "";
-my $tbmtype = "TBM08";
+my $tbmtype = "TBM08C";
 if ($opt_t) {
     $opt_t =~ tr/a-z/A-Z/;
     if (grep(/$opt_t/, @tbmok)) {
@@ -150,7 +153,30 @@ exit(0);
 sub setTbms {
     $tbms = "";
     $oldStyle = 0; 
-    if ($tbmtype eq "TBM08B") {
+    if ($tbmtype eq "TBM08C") {
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+#	    $tbms .= "4      delays   0x64\n";
+#	    $tbms .= "5       basee   0x2c\n";
+	    # -- WE's parameters
+	    $tbms .= "4      delays   0x49\n";
+	    $tbms .= "5       basee   0x84\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+#	    $tbms .= "basea   0x64\n";
+#	    $tbms .= "basee   0x2c\n";
+	    $tbms .= "basea   0x49\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x84\n";
+	}
+    } elsif ($tbmtype eq "TBM08B") {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
 	    $tbms .= "1    counters   0x81\n";
@@ -225,8 +251,25 @@ sub setTbms {
 	    $tbms .= "basec   0x00\n";
 	    $tbms .= "basee   0x34\n";
 	}
+    } elsif ($tbmtype eq "TBM09C") {
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+	    $tbms .= "4      delays   0x64\n";
+	    $tbms .= "5       basee   0x34\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+	    $tbms .= "basea   0x64\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x34\n";
+	}
     }
-
 }
 
 # ----------------------------------------------------------------------
@@ -246,7 +289,7 @@ sub setDacs {
 	$dacs .= " 17 phoffset   170\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
 	$dacs .= " 20 phscale    130\n";
-	$dacs .= " 22 vicolor    10\n";
+	$dacs .= " 22 vicolor    100\n";
 	$dacs .= " 25 vcal       200\n";
 	$dacs .= " 26 caldel     96 \n";
 	$dacs .= "253 ctrlreg    0  \n";
@@ -266,7 +309,7 @@ sub setDacs {
 	$dacs .= " 17 phoffset   170\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
 	$dacs .= " 20 phscale    130\n";
-	$dacs .= " 22 vicolor    10\n";
+	$dacs .= " 22 vicolor    100\n";
 	$dacs .= " 25 vcal       200\n";
 	$dacs .= " 26 caldel     96 \n";
 	$dacs .= "253 ctrlreg    0  \n";
@@ -289,7 +332,7 @@ sub setDacs {
 	$dacs .= " 18       vion 128\n";
 	$dacs .= " 19  vcomp_adc 100\n";
 	$dacs .= " 20  phscale    60\n";
-	$dacs .= " 22    vicolor  10\n";
+	$dacs .= " 22    vicolor  20\n";
 	$dacs .= " 25       vcal 200\n";
 	$dacs .= " 26     caldel 100\n";
 	$dacs .= "253    ctrlreg   0\n";
@@ -316,6 +359,16 @@ sub setRbCals {
 
 # ----------------------------------------------------------------------
 sub cleanFiles {
+
+    # -- clean only testParameters.dat if -s is amongst the cmd line options
+    if ($opt_s) {
+	$file = "$dir/testParameters.dat";
+	if (-e "$file") {
+	    unlink($file);
+	}
+	return;
+    }
+    
     my $file;
     for ($i = 0; $i < 16; $i++) {
 	$file = "$dir/trimParameters_C$i.dat";
@@ -367,6 +420,7 @@ sub cleanFiles {
     if (-e "$file") {
 	unlink($file);
     }
+
 }
 
 # ----------------------------------------------------------------------
@@ -423,6 +477,9 @@ if ($roctype eq "digv21") {
 if ($opt_m) {
     if ($tbmtype eq "TBM08") {
 	print FH "tbmType tbm08\n";
+    } elsif ($tbmtype eq "TBM08C") {
+	$VD = "2.800";
+	print FH "tbmType tbm08c\n";
     } elsif ($tbmtype eq "TBM08B") {
 	$VD = "2.800";
 	print FH "tbmType tbm08b\n";
@@ -431,6 +488,9 @@ if ($opt_m) {
     } elsif ($tbmtype eq "TBM09") {
 	$VD = "2.900";
 	print FH "tbmType tbm09\n";
+    } elsif ($tbmtype eq "TBM09C") {
+	$VD = "2.900";
+	print FH "tbmType tbm09c\n";
     } else {
 	print FH "tbmType tbm08\n";
     }
@@ -471,6 +531,7 @@ targetIa            24
 setVana             button
 iterations          100
 setTimings          button
+findTiming          button
 findWorkingPixel    button
 setVthrCompCalDel   button
 PIX                 11,20
@@ -521,6 +582,26 @@ Plwidth             35
 PIX                 11,20
 targetIa            24
 
+-- BB3
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
+Ntrig               5
+vcals               250
+
+-- BB4
+savecaldelscan      checkbox(0)
+Ntrig               100
+Cals                1
+CalDelLo            80
+CalDelHi            200
+CalDelStep          10
+VthrCompLo          70
+VthrCompHi          130
+VthrCompStep        5
+NoisyPixels         10
+Vcal                255
+Cut                 0.5
+
 -- Readback
 calibrateVd         button
 calibrateVa         button
@@ -556,20 +637,21 @@ EOF
 } else {
     print FH <<"EOF";
 -- Scurves
-adjustvcal          checkbox(1)
+adjustvcal          checkbox(0)
 dumpAll             checkbox(0)
 dumpProblematic     checkbox(0)
 dumpOutputFile      checkbox(0)
 Ntrig               50
-DAC                 VthrComp
+DAC                 Vcal
 DacLo               0
 DacHi               200
-Dacs/Step           10
+Dacs/Step           -1
+Ntrig/Step          -1
 scurves             button
 
 -- Trim
 trim                button
-Ntrig               10
+Ntrig               20
 Vcal                35
 TrimBits            button
 
@@ -578,6 +660,7 @@ showFits            checkbox(0)
 extended            checkbox(0)
 dumpHists           checkbox(0)
 Ntrig               10
+vcalstep            10
 measure             button
 fit                 button
 save                button
@@ -605,6 +688,11 @@ FillTree            checkbox
 
 -- HighRate
 PIX                 11,20
+trimhotpixels       button
+trimhotpixelthr     200
+runsecondsHotPixels 10
+savetrimbits        checkbox(1)
+maskuntrimmable     checkbox(1)
 maskHotPixels       button
 saveMaskFile        checkbox(0)
 maskFileName        default
@@ -623,6 +711,8 @@ triggerdelay        20
 DelayTBM            checkbox
 FillTree            checkbox
 
+-- Cmd
+
 EOF
 }
 
@@ -637,10 +727,10 @@ EOF
 } else {
     print FH <<"EOF";
 -- Timing
-fastscan            checkbox(0)
 targetclk           4
 ntrig               10
 clocksdascan        button
+notokenpass         checkbox(0)
 phasescan           button
 levelscan           button
 tbmphasescan        button

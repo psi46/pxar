@@ -15,7 +15,7 @@ namespace pxar {
 #define DTB_DAQ_FIFO_OVFL 4 // bit 2 = DAQ fast HW FIFO overflow
 #define DTB_DAQ_MEM_OVFL  2 // bit 1 = DAQ RAM FIFO overflow
 #define DTB_DAQ_STOPPED   1 // bit 0 = DAQ stopped (because of overflow)
-#define DTB_DAQ_CHANNELS  6 // Number of DAQ channels implemented in the DTB
+#define DTB_DAQ_CHANNELS  8 // Number of DAQ channels implemented in the DTB
 
 // --- TBM Types ---------------------------------------------------------------
 #define TBM_NONE           0x20
@@ -49,6 +49,7 @@ namespace pxar {
 #define MOD_NUMROCS 16
 
 // --- ROC Types ---------------------------------------------------------------
+#define ROC_NONE              0x00
 #define ROC_PSI46V2           0x01
 #define ROC_PSI46XDB          0x02
 #define ROC_PSI46DIG          0x03

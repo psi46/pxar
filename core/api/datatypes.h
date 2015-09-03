@@ -23,6 +23,8 @@ typedef unsigned char uint8_t;
 #include <limits>
 #include <cmath>
 
+#include "constants.h"
+
 namespace pxar {
 
   /** Class for storing decoded pixel readout data
@@ -414,11 +416,18 @@ namespace pxar {
    */
   class DLLEXPORT tbmConfig {
   public:
-  tbmConfig() : dacs(), type(0), tokenchains(), enable(true) {}
+    tbmConfig(uint8_t tbmtype);
     std::map< uint8_t,uint8_t > dacs;
     uint8_t type;
+    uint8_t hubid;
+    uint8_t core;
     std::vector<uint8_t> tokenchains;
     bool enable;
+
+    // Check token pass setting:
+    bool NoTokenPass() { return (dacs[0x00]&0x40); };
+    // Return readable name of the core:
+    std::string corename() { return ((core&0x10) ? "Beta" : "Alpha"); };
   };
 
   /** Class for statistics on event and pixel decoding
@@ -455,7 +464,37 @@ namespace pxar {
 	{};
     // Print all statistics to stdout:
     void dump();
-    friend statistics& operator+=(statistics &lhs, const statistics &rhs);
+    friend statistics& operator+=(statistics &lhs, const statistics &rhs) {
+      // Informational bits:
+      lhs.m_info_words_read += rhs.m_info_words_read;
+      lhs.m_info_events_empty += rhs.m_info_events_empty;
+      lhs.m_info_events_valid += rhs.m_info_events_valid;
+      lhs.m_info_pixels_valid += rhs.m_info_pixels_valid;
+
+      // Event errors:
+      lhs.m_errors_event_start += rhs.m_errors_event_start;
+      lhs.m_errors_event_stop += rhs.m_errors_event_stop;
+      lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
+      lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
+      lhs.m_errors_event_invalid_xor += rhs.m_errors_event_invalid_xor;
+
+      // TBM errors:
+      lhs.m_errors_tbm_header += rhs.m_errors_tbm_header;
+      lhs.m_errors_tbm_trailer += rhs.m_errors_tbm_trailer;
+      lhs.m_errors_tbm_eventid_mismatch += rhs.m_errors_tbm_eventid_mismatch;
+
+      // ROC errors:
+      lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
+      lhs.m_errors_roc_readback += rhs.m_errors_roc_readback;
+
+      // Pixel decoding errors:
+      lhs.m_errors_pixel_incomplete += rhs.m_errors_pixel_incomplete;
+      lhs.m_errors_pixel_address += rhs.m_errors_pixel_address;
+      lhs.m_errors_pixel_pulseheight += rhs.m_errors_pixel_pulseheight;
+      lhs.m_errors_pixel_buffer_corrupt += rhs.m_errors_pixel_buffer_corrupt;
+
+      return lhs;
+    };
 
     uint32_t info_words_read() {return m_info_words_read; }
     uint32_t info_events_empty() {return m_info_events_empty; }

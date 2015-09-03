@@ -16,7 +16,7 @@ ClassImp(PixTestPhOptimization)
 
 PixTestPhOptimization::PixTestPhOptimization() {}
 
-PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fSafetyMarginLow(20), fQuantMax(0.98), fVcalMax(100) {
+PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(1), fSafetyMarginLow(20), fQuantMax(0.98), fVcalMax(100) {
   PixTest::init();
   init();
 }
@@ -202,13 +202,15 @@ void PixTestPhOptimization::doTest() {
   LOG(logINFO) << "PixTestPhOptimization::doTest() done, duration: " << seconds << " seconds";
   LOG(logINFO) << "PH scale (per ROC):  " << psString;
   LOG(logINFO) << "PH offset (per ROC): " << poString;
-  
+
+  dutCalibrateOff();
  }
 
 void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<uint8_t, pair<int, int> > > &badPixels, int aliveTrig){
   //makes a list of inefficient pixels, to be avoided during optimization
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   vector<uint8_t> vVcal = getDacs("vcal"); 
   vector<uint8_t> vCreg = getDacs("ctrlreg"); 
@@ -275,6 +277,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
   LOG(logDEBUG)<<"ROC type is "<<rocType;
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   bool isPixGood=true;
   int maxph = 255;
@@ -425,6 +428,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   LOG(logDEBUG)<<"ROC type is "<<rocType;
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   bool isPixGood=true;
   int minph = 0;
@@ -633,7 +637,8 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   //draw PH maps and extract validation distributions from them
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  
+  maskPixels();
+
   std::vector<pxar::pixel> result_map;
   map<int, TH2D* > h2_PhMaps;
   map<int, TH1D* > h1_PhMaps;
@@ -642,7 +647,21 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   fApi->setDAC("ctrlreg",4);
   fApi->setDAC("vcal",fVcalMax);
   //pulseheight map at vcal=100
-  result_map = fApi->getPulseheightMap(0,10);
+  //result_map = fApi->getPulseheightMap(0,10);   //unprotected, leads to crash with bad r/o:
+  int  cnt = 0;
+  bool done = false;
+  while (!done) {
+    try {
+      result_map = fApi->getPulseheightMap(0,10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what();
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
+
   //unpacking data from map and filling one histo per ROC
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     name  = Form("PH_mapHiVcal_C%d", rocIds[roc_it]);
@@ -664,7 +683,21 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   map<int, TH2D* > h2_PhMapsMin;
   map<int, TH1D* > h1_PhMapsMin;
   //phmap
-  result_map = fApi->getPulseheightMap(0,10);
+  //result_map = fApi->getPulseheightMap(0,10);   //unprotected, leads to crash with bad r/o:
+  cnt = 0;
+  done = false;
+  while (!done) {
+    try {
+      result_map = fApi->getPulseheightMap(0,10);
+      done = true;
+    } catch(pxarException &e) {
+      LOG(logCRITICAL) << "pXar execption: "<< e.what();
+      ++cnt;
+    }
+    done = (cnt>5) || done;
+  }
+
+
   //unpacking data from map and filling one histo per ROC
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
     name  = Form("PH_mapLowVcal_C%d", rocIds[roc_it]);

@@ -305,7 +305,7 @@ void PixTestReadback::doTest() {
   }
   
  LOG(logINFO) << "PixTestReadback::doTest() done";
-
+ dutCalibrateOff();
 }
 
 
