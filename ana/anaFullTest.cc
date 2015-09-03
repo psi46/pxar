@@ -9,6 +9,8 @@
 #include <TSystem.h>
 #include <TStyle.h>
 #include <TFile.h>
+#include <TPad.h>
+#include <TLegend.h>
 #if defined(WIN32)
 #else
 #include <TUnixSystem.h>
@@ -41,6 +43,7 @@ anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
 
   fhNoise       = new TH1D("hNoise", "", 100, 0., 10.);          setHist(fhNoise, "noise [VCAL]", "pixels", kGreen+2, 0.5, YMAX);
   fhVcaltrimthr = new TH1D("hVcaltrimthr", "", 100, 0., 50.);    setHist(fhVcaltrimthr, "VCAL trim thr", "pixels", kBlack, 0.5, YMAX);
+  fhVcalthr     = new TH1D("hVcalthr", "", 200, 0., 200.);       setHist(fhVcalthr, "VCAL thr [DAC]", "pixels", kBlack, 0.5, YMAX);
 
   fhVana        = new TH1D("hVana", "", 256, 0., 256);           setHist(fhVana, "DAC", "ROCs", kBlack, 0., YMAX);
   fhCaldel      = new TH1D("hCaldel", "", 256, 0., 256);         setHist(fhCaldel, "DAC", "ROCs", kRed, 0., YMAX);
@@ -59,6 +62,30 @@ anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
   fDacs.push_back("vtrim"); 
   fDacs.push_back("phscale"); 
   fDacs.push_back("phoffset"); 
+
+  // -- central histograms for all pixels on all ROCs
+  fvTrimVcalThr.clear();
+  fvTrimBits.clear();
+  vector<TH1D*> v0, v1;
+  for (int iroc = 0; iroc < fNrocs; ++iroc) {
+    v0.clear();
+    v1.clear();
+    for (int j = 0; j < 4160; ++j) {
+      v0.push_back(new TH1D(Form("roc%d_pix%d_thr", iroc, j), Form("roc%d_pix%d_thr", iroc, j), 500, 0., 100.));
+      v1.push_back(new TH1D(Form("roc%d_pix%d_trim", iroc, j), Form("roc%d_pix%d_trim", iroc, j), 16, 0., 16.));
+    }
+    fvTrimVcalThr.push_back(v0); 
+    fvTrimBits.push_back(v1); 
+  }
+
+  fvNtrig.push_back(5);  fvColor.push_back(kRed+1); 
+  fvNtrig.push_back(10); fvColor.push_back(kYellow+2); 
+  fvNtrig.push_back(15); fvColor.push_back(kGreen+1); 
+  fvNtrig.push_back(20); fvColor.push_back(kCyan+2); 
+  fvNtrig.push_back(40); fvColor.push_back(kBlue+1); 
+  fvNtrig.push_back(50); fvColor.push_back(kMagenta+3); 
+
+
 }
 
 // ----------------------------------------------------------------------
@@ -145,6 +172,8 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
   if (0 == first) delete fSMS->distVcalTrimThr;
   fSMS->distVcalTrimThr = new TH1D("distVcalTrimThr", "", 90, 0., 45.); setHist(fSMS->distVcalTrimThr, "VCAL trim THR [VCAL]", "entries/bin", kBlack, 0.5, -1.);
 
+  if (0 == first) delete fSMS->distVcalThr;
+  fSMS->distVcalThr = new TH1D("distVcalThr", "", 200, 0., 200.);         setHist(fSMS->distVcalThr, "VCAL THR [VCAL]", "entries/bin", kBlack, 0.5, -1.);
 }
 
 
@@ -271,6 +300,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   anaRocMap(dirname, "Scurves/sig_scurveVcal_Vcal", fSMS->distNoise, 2);
   anaRocMap(dirname, "Trim/thr_TrimThrFinal_vcal", fSMS->distVcalTrimThr, 2);
+  anaRocMap(dirname, "Scurves/thr_scurveVcal_Vcal", fSMS->distVcalThr, 2);
   
   fillRocDefects(dirname, fSMS->defectMap);
 
@@ -310,18 +340,29 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   c0->cd(5); 
   plotVsRoc(fSMS->vcalThrW, xpos, 0.80, ""); 
-  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.15, "same"); 
+  plotVsRoc(fSMS->vcalTrimThrW, xpos, 0.13, "same"); 
   plotVsRoc(fSMS->noise, xpos, 0.40, "same"); 
 
-  c0->cd(6); 
+  TVirtualPad *c1 = c0->cd(6); 
+  c1->Divide(1,2);
+  c1->cd(1);
   fSMS->distNoise->Draw("hist");
-  tl->SetTextSize(0.05); 
+  tl->SetTextSize(0.08); 
   tl->DrawLatex(0.20, 0.92, Form("<0.5: %d", static_cast<int>(fSMS->distNoise->Integral(0, fSMS->distNoise->FindBin(0.5))))); 
   tl->DrawLatex(0.55, 0.80, Form("mean: %7.3f", fSMS->distNoise->GetMean()));
-  tl->DrawLatex(0.55, 0.75, Form("RMS:  %7.3f", fSMS->distNoise->GetRMS()));
+  tl->DrawLatex(0.55, 0.70, Form("RMS:  %7.3f", fSMS->distNoise->GetRMS()));
+  gPad->SetLogy(1); 
+
+  c1->cd(2);
+  fSMS->distVcalThr->Draw("hist");
+  tl->SetTextColor(kBlack);
+  tl->SetTextSize(0.08); 
+  tl->DrawLatex(0.18, 0.80, Form("mean: %7.3f", fSMS->distVcalThr->GetMean()));
+  tl->DrawLatex(0.18, 0.70, Form("RMS:  %7.3f", fSMS->distVcalThr->GetRMS()));
   gPad->SetLogy(1); 
 
   c0->cd(7); 
+  tl->SetTextSize(0.05); 
   plotVsRoc(fSMS->dead, xpos, 0.80, "", 1); 
   plotVsRoc(fSMS->bb,   xpos, 0.74, "same", 1); 
   plotVsRoc(fSMS->mask, xpos, 0.68, "same", 1); 
@@ -421,12 +462,21 @@ void anaFullTest::showFullTest(string modname, string basename) {
   tl->DrawLatex(0.58, 0.92, "BB"); 
   tl->DrawLatex(0.38, 0.65, Form("%4.3f/%4.3f", fhBb->GetMean(), fhBb->GetRMS())); 
 
-  c0->cd(7);
+  c1 = c0->cd(7);
+  c1->Divide(1,2);
+  c1->cd(1);
   gPad->SetLogy(1);
   showOverFlow(fhNoise);
   fhNoise->Draw();
   tl->SetTextColor(fhNoise->GetLineColor()); 
   tl->DrawLatex(0.18, 0.92, Form("noise: %4.3f/%4.3f", fhNoise->GetMean(), fhNoise->GetRMS())); 
+
+  c1->cd(2);
+  gPad->SetLogy(1);
+  showOverFlow(fhVcalthr);
+  fhVcalthr->Draw();
+  tl->SetTextColor(fhVcalthr->GetLineColor()); 
+  tl->DrawLatex(0.18, 0.92, Form("vcal thr: %4.3f/%4.3f", fhVcalthr->GetMean(), fhVcalthr->GetRMS())); 
 
   c0->cd(8);
   gPad->SetLogy(1);
@@ -446,6 +496,298 @@ void anaFullTest::showFullTest(string modname, string basename) {
   c0->SaveAs("summary.pdf"); 
 
 
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::validateTrimTests() {
+
+  addTrimTests("/scratch/ursl/pxar/150828-repro", 0); 
+
+  c0->Clear();
+  fvTrimVcalThr[0][1234]->Draw();
+  c0->SaveAs("trimvcalthr-roc0-1234-ntrig5.pdf");
+
+  fvTrimVcalThr[1][2345]->Draw();
+  c0->SaveAs("trimvcalthr-roc1-2345-ntrig5.pdf");
+
+  fvTrimBits[0][1234]->Draw();
+  c0->SaveAs("trimbits-roc0-1234-ntrig5.pdf");
+
+  fvTrimBits[1][2345]->Draw();
+  c0->SaveAs("trimbits-roc1-2345-ntrig5.pdf");
+
+  fTrimSummaries[0]->vana[0]->Draw();
+  c0->SaveAs("vana-roc0-ntrig5.pdf");
+
+  fTrimSummaries[0]->vthrcomp[0]->Draw();
+  c0->SaveAs("vthrcomp-roc0-ntrig5.pdf");
+
+  addTrimTests("/scratch/ursl/pxar/150828-repro", 1); 
+  addTrimTests("/scratch/ursl/pxar/150828-repro", 2); 
+  addTrimTests("/scratch/ursl/pxar/150828-repro", 3); 
+  addTrimTests("/scratch/ursl/pxar/150828-repro", 4); 
+
+  fTrimSummaries[4]->vthrcomp[0]->Draw();
+  c0->SaveAs("vthrcomp-roc0-ntrig40.pdf");
+
+  addTrimTests("/scratch/ursl/pxar/150828-repro", 5); 
+
+  c0->Clear();
+
+  gStyle->SetOptStat(0); 
+
+  c0->Clear();
+  fTrimSummaries[0]->trimVcalThr->Draw();
+  fTrimSummaries[1]->trimVcalThr->Draw("same");
+  fTrimSummaries[2]->trimVcalThr->Draw("same");
+  fTrimSummaries[3]->trimVcalThr->Draw("same");
+  fTrimSummaries[4]->trimVcalThr->Draw("same");
+  fTrimSummaries[5]->trimVcalThr->Draw("same");
+
+  TLegend *legg = new TLegend(0.6, 0.4, 0.85, 0.85, "Ntrig ");
+  legg->SetFillStyle(0); 
+  legg->SetBorderSize(0); 
+  legg->SetTextSize(0.04);  
+  legg->SetFillColor(0); 
+  legg->SetTextFont(42); 
+
+  legg->AddEntry(fTrimSummaries[0]->trimVcalThr, Form("5 (%d)", fTrimSummaries[0]->stat),  "l");
+  legg->AddEntry(fTrimSummaries[1]->trimVcalThr, Form("10 (%d)", fTrimSummaries[1]->stat), "l");
+  legg->AddEntry(fTrimSummaries[2]->trimVcalThr, Form("15 (%d)", fTrimSummaries[2]->stat), "l");
+  legg->AddEntry(fTrimSummaries[3]->trimVcalThr, Form("20 (%d)", fTrimSummaries[3]->stat), "l");
+  legg->AddEntry(fTrimSummaries[4]->trimVcalThr, Form("40 (%d)", fTrimSummaries[4]->stat), "l");
+  legg->AddEntry(fTrimSummaries[5]->trimVcalThr, Form("50 (%d)", fTrimSummaries[5]->stat), "l");
+  legg->Draw();
+  c0->SaveAs("trimvcalthr.pdf");
+
+  c0->Clear();
+  fTrimSummaries[0]->trimBits->Draw();
+  fTrimSummaries[1]->trimBits->Draw("same");
+  fTrimSummaries[2]->trimBits->Draw("same");
+  fTrimSummaries[3]->trimBits->Draw("same");
+  fTrimSummaries[4]->trimBits->Draw("same");
+  fTrimSummaries[5]->trimBits->Draw("same");
+  c0->SaveAs("trimbits.pdf");
+
+  // -- vs ntrig
+  TH1D *h1 = new TH1D("h1", "", 6, 0., 6.); h1->Sumw2();
+  setHist(h1, "ntrig", "mean threshold RMS", kBlack, 0.01, -1.); 
+  TH1D *h2 = new TH1D("h2", "", 6, 0., 6.); h2->Sumw2();
+  setHist(h2, "ntrig", "mean trimbit RMS", kBlack, 0.01, -1.); 
+  TH1D *h3 = new TH1D("h3", "", 6, 0., 6.); h3->Sumw2();
+  setHist(h3, "ntrig", "mean VthrComp RMS", kBlack, 0.01, -1.); 
+  TH1D *h4 = new TH1D("h4", "", 6, 0., 6.); h4->Sumw2();
+  setHist(h4, "ntrig", "mean Vtrim RMS", kBlack, 0.01, -1.); 
+
+  // -- simply a histogram of the means:
+  TH1D *h10 = new TH1D("h10", "", 50, 0., 5.); h10->Sumw2();
+  setHist(h10, "VANA RMS", "ROCs", kBlack, 0.01, -1.); 
+  TH1D *h11 = new TH1D("h11", "", 50, 0., 5.); h11->Sumw2();
+  setHist(h11, "CALDEL RMS", "ROCs", kBlack, 0.01, -1.); 
+
+  for (unsigned int i = 0; i < fvNtrig.size(); ++i) {
+    h1->GetXaxis()->SetBinLabel(i+1, Form("%d", fvNtrig[i]));
+    h2->GetXaxis()->SetBinLabel(i+1, Form("%d", fvNtrig[i]));
+    h3->GetXaxis()->SetBinLabel(i+1, Form("%d", fvNtrig[i]));
+    h4->GetXaxis()->SetBinLabel(i+1, Form("%d", fvNtrig[i]));
+
+    h1->SetBinContent(i+1, fTrimSummaries[i]->trimVcalThr->GetMean());
+    h1->SetBinError(i+1, fTrimSummaries[i]->trimVcalThr->GetMeanError());
+
+    h2->SetBinContent(i+1, fTrimSummaries[i]->trimBits->GetMean());
+    h2->SetBinError(i+1, fTrimSummaries[i]->trimBits->GetMeanError());
+
+    h3->SetBinContent(i+1, fTrimSummaries[i]->rvthrcomp->GetMean());
+    h3->SetBinError(i+1, fTrimSummaries[i]->rvthrcomp->GetMeanError());
+
+    h4->SetBinContent(i+1, fTrimSummaries[i]->rvtrim->GetMean());
+    h4->SetBinError(i+1, fTrimSummaries[i]->rvtrim->GetMeanError());
+
+    for (int iroc = 0; iroc < fNrocs; ++iroc) {
+      h10->Fill(fTrimSummaries[i]->vana[iroc]->GetRMS());
+      h11->Fill(fTrimSummaries[i]->caldel[iroc]->GetRMS());
+    }
+  }
+
+
+  c0->Clear();
+  for (unsigned int i = 0; i < fvNtrig.size(); ++i) {
+    fTrimSummaries[i]->trimVcalThr->Draw();
+    c0->SaveAs(Form("trimvcalthr-ntrig%d.pdf", fvNtrig[i])); 
+  }
+  
+
+  c0->Clear();
+  h1->Draw("histl");
+  c0->SaveAs("trimvcalthr-ntrig.pdf");
+
+  c0->Clear();
+  h2->Draw("histl");
+  c0->SaveAs("trimbits-ntrig.pdf");
+
+  gStyle->SetOptStat(1); 
+
+  c0->Clear();
+  h10->Draw();
+  c0->SaveAs("vana.pdf");
+
+  c0->Clear();
+  h11->Draw();
+  c0->SaveAs("caldel.pdf");
+
+
+  gStyle->SetOptStat(0); 
+
+  c0->Clear();
+  h3->Draw();
+  c0->SaveAs("vtrim-ntrig.pdf");
+
+  c0->Clear();
+  h4->Draw();
+  c0->SaveAs("vthrcomp-ntrig.pdf");
+
+  gStyle->SetOptStat(1); 
+
+  c0->Clear();
+  fTrimSummaries[0]->vana[0]->Draw();
+  c0->SaveAs("vana-ntrig5.pdf");
+
+ 
+
+}
+
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::addTrimTests(std::string dir, int ioffset) {
+  
+  int ntrig = fvNtrig[ioffset];
+
+  vector<string> dirs = glob(Form("%s/ntrig%d", dir.c_str(), ntrig), "d2097"); 
+  cout << dirs.size() << endl;
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    cout << dirs[idirs] << endl;
+  }
+
+  bookTrimSummary(ioffset); 
+
+  // -- reset histograms for trim info
+  for (int iroc = 0; iroc < fNrocs; ++iroc) {
+    for (int i = 0; i < 4160; ++i) {
+      fvTrimVcalThr[iroc][i]->Reset();
+      fvTrimBits[iroc][i]->Reset();
+    }
+  }
+
+
+  fTrimSummaries[ioffset]->stat = dirs.size(); 
+
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    if (1) {
+      readDacFile(Form("%s/ntrig%d/%s", dir.c_str(), ntrig, dirs[idirs].c_str()), "vana", fTrimSummaries[ioffset]->vana);
+      readDacFile(Form("%s/ntrig%d/%s", dir.c_str(), ntrig, dirs[idirs].c_str()), "caldel", fTrimSummaries[ioffset]->caldel);
+      readDacFile(Form("%s/ntrig%d/%s", dir.c_str(), ntrig, dirs[idirs].c_str()), "vthrcomp", fTrimSummaries[ioffset]->vthrcomp);
+      readDacFile(Form("%s/ntrig%d/%s", dir.c_str(), ntrig, dirs[idirs].c_str()), "vtrim", fTrimSummaries[ioffset]->vtrim);
+    }
+
+    fillTrimInfo(Form("%s/ntrig%d/%s", dir.c_str(), ntrig, dirs[idirs].c_str()));
+  }
+
+  
+
+  for (int iroc = 0; iroc < fNrocs; ++iroc) {
+    fTrimSummaries[ioffset]->rvana->Fill(fTrimSummaries[ioffset]->vana[iroc]->GetRMS());
+    fTrimSummaries[ioffset]->rcaldel->Fill(fTrimSummaries[ioffset]->caldel[iroc]->GetRMS());
+    fTrimSummaries[ioffset]->rvthrcomp->Fill(fTrimSummaries[ioffset]->vthrcomp[iroc]->GetRMS());
+    fTrimSummaries[ioffset]->rvtrim->Fill(fTrimSummaries[ioffset]->vtrim[iroc]->GetRMS());
+    
+
+    for (int i = 0; i < 4160; ++i) {
+      fTrimSummaries[ioffset]->trimVcalThr->Fill(fvTrimVcalThr[iroc][i]->GetRMS());
+      fTrimSummaries[ioffset]->trimBits->Fill(fvTrimBits[iroc][i]->GetRMS());
+    }
+  }
+
+  
+}
+  
+
+// ----------------------------------------------------------------------
+void anaFullTest::fillTrimInfo(std::string dir) {
+
+  cout << Form("open %s/pxar.root", dir.c_str()) << endl;
+  TFile *f = TFile::Open(Form("%s/pxar.root", dir.c_str())); 
+  TH2D *h1(0), *h2(0); 
+  h1 = (TH2D*)f->Get("Trim/thr_TrimThrFinal_vcal_C0_V0");
+  if (!h1) {
+    f->Close();
+    return;
+  }
+
+  for (int iroc = 0; iroc < fNrocs; ++iroc) {
+    h1 = (TH2D*)f->Get(Form("Trim/thr_TrimThrFinal_vcal_C%d_V0", iroc));
+    h2 = (TH2D*)f->Get(Form("Trim/TrimMap_C%d_V0", iroc));
+    if (!h1) {
+      cout << "histogram " << Form("Trim/thr_TrimThrFinal_vcal_C%d_V0", iroc) << " not found" << endl;
+      continue;
+    }
+
+    if (!h2) {
+      cout << "histogram " << Form("Trim/TrimMap_C%d_V0", iroc) << " not found" << endl;
+      continue;
+    }
+
+    //     vector<TH1D*> vh1 =	fvTrimVcalThr[iroc];
+    //     vector<TH1D*> vh2 =	fvTrimBits[iroc];
+    for (int ix = 0; ix < 52; ++ix) {
+      for (int iy = 0; iy < 80; ++iy) {
+	fvTrimVcalThr[iroc][ix*80+iy]->Fill(h1->GetBinContent(ix+1, iy+1)); 
+	fvTrimBits[iroc][ix*80+iy]->Fill(h2->GetBinContent(ix+1, iy+1)); 
+	//	if (fvTrimVcalThr[iroc][ix*80+iy]->GetRMS() > 4) cout << "ROC " << iroc << " dir: " << dir << endl;
+      }
+    }
+  }
+
+
+  f->Close();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::bookTrimSummary(int ioffset) {
+
+  int ntrig = fvNtrig[ioffset]; 
+
+  vector<TH1D*> v; 
+  trimSummary *rs = new trimSummary(); 
+  rs->modName = Form("ntrig = %d", ntrig); 
+  for (int iroc = 0; iroc <= 16; ++iroc) {
+    rs->vana.push_back(new TH1D(Form("ntrig%d_roc%d_vana", ntrig, iroc), Form("ntrig%d_roc%d_vana", ntrig, iroc), 256, 0., 256.)); 
+    rs->caldel.push_back(new TH1D(Form("ntrig%d_roc%d_caldel", ntrig, iroc), Form("ntrig%d_roc%d_caldel", ntrig, iroc), 256, 0., 256.)); 
+    rs->vthrcomp.push_back(new TH1D(Form("ntrig%d_roc%d_vtrim", ntrig, iroc), Form("ntrig%d_roc%d_vtrim", ntrig, iroc), 256, 0., 256.)); 
+    rs->vtrim.push_back(new TH1D(Form("ntrig%d_roc%d_vthrcomp", ntrig, iroc), Form("ntrig%d_roc%d_vthrcomp", ntrig, iroc), 256, 0., 256.));     
+  }
+
+  rs->trimBits    = new TH1D(Form("ntrig%d_trimbits", ntrig), "", 8, 0., 1.); 
+  setHist(rs->trimBits, "RMS of trim bit reproducibility", "", fvColor[ioffset], 0.01, 40000.); 
+  rs->trimVcalThr = new TH1D(Form("ntrig%d_trimvcalthr", ntrig), "", 100, 0., 2.); 
+  setHist(rs->trimVcalThr, "RMS of threshold reproducibility", "", fvColor[ioffset], 0.01, 4000.); 
+
+  rs->rvana = new TH1D(Form("ntrig%d_vana", ntrig), "", 100, 0., 5.); 
+  setHist(rs->rvana, "RMS of VANA reproducibility", "", fvColor[ioffset], 0.01, 400.); 
+
+  rs->rcaldel = new TH1D(Form("ntrig%d_caldel", ntrig), "", 100, 0., 5.); 
+  setHist(rs->rcaldel, "RMS of CALDEL reproducibility", "", fvColor[ioffset], 0.01, 400.); 
+
+  rs->rvthrcomp = new TH1D(Form("ntrig%d_vthrcomp", ntrig), "", 100, 0., 5.); 
+  setHist(rs->rvthrcomp, "RMS of VTHRCOMP reproducibility", "", fvColor[ioffset], 0.01, 400.); 
+
+  rs->rvtrim = new TH1D(Form("ntrig%d_vtrim", ntrig), "", 100, 0., 5.); 
+  setHist(rs->rvtrim, "RMS of VTRIM reproducibility", "", fvColor[ioffset], 0.01, 400.); 
+
+  fTrimSummaries.push_back(rs); 
+ 
 }
 
 
@@ -822,6 +1164,8 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
     hs = fhNoise;
   } else if (string(rochist->GetName()) == string("distVcalTrimThr")) {
     hs = fhVcaltrimthr;
+  } else if (string(rochist->GetName()) == string("distVcalThr")) {
+    hs = fhVcalthr;
   }
   
   TH2D *h(0); 
@@ -953,6 +1297,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
   string sline; 
   string::size_type s1;
   int val(0); 
+  cout << Form("%s/dacParameters%d_C0.dat", dir.c_str(), fTrimVcal) << endl;
   for (int i = 0; i < fNrocs; ++i) {
     IN.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
     while (IN.getline(buffer, 1000, '\n')) {
@@ -977,6 +1322,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
 
 // ----------------------------------------------------------------------
 vector<string> anaFullTest::glob(string basedir, string basename) {
+  cout << "Looking in " << basedir << " for " << basename << endl;
   vector<string> lof; 
 #if defined(WIN32)
 #else
@@ -1220,4 +1566,53 @@ int anaFullTest::testDuration(string startTest, string endTest) {
 void anaFullTest::showOverFlow(TH1D* h) {
   h->SetBinContent(h->GetNbinsX(), h->GetBinContent(h->GetNbinsX()) + h->GetBinContent(h->GetNbinsX()+1));
 
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::trimTestRanges(string dir, string pattern) {
+
+  TH1D *h1 = new TH1D("h1", "thr_TrimThr0_vthrcomp", 256, 0., 256.); 
+  TH1D *h2 = new TH1D("h2", "thr_TrimThr1_vcal", 256, 0., 256.); 
+  TH1D *h3 = new TH1D("h3", "thr_TrimThr2_vcal", 256, 0., 256.); 
+
+  TH2D* h(0); 
+  vector<string> dirs = glob(dir, pattern); 
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    cout << dirs[idirs] << endl;
+    TFile *f = TFile::Open(Form("%s/%s/pxar.root", dir.c_str(), dirs[idirs].c_str())); 
+    for (int i = 0; i < 16; ++i) {
+      h = (TH2D*)f->Get(Form("Trim/thr_TrimThr0_vthrcomp_C%d_V0", i)); 
+      dump2dTo1d(h, h1); 
+      h = (TH2D*)f->Get(Form("Trim/thr_TrimThr1_vcal_C%d_V0", i)); 
+      dump2dTo1d(h, h2); 
+      h = (TH2D*)f->Get(Form("Trim/thr_TrimThr2_vcal_C%d_V0", i)); 
+      dump2dTo1d(h, h3); 
+    }
+  }
+
+  c0->Clear();
+  c0->Divide(2,2);
+
+  c0->cd(1);
+  gPad->SetLogy(1);
+  h1->Draw();
+
+  c0->cd(2);
+  gPad->SetLogy(1);
+  h2->Draw();
+
+  c0->cd(3);
+  gPad->SetLogy(1);
+  h3->Draw();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::dump2dTo1d(TH2D *h2, TH1D *h1) {
+  for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+    for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+      h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
+    }
+  }
 }
