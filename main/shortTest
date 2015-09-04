@@ -12,7 +12,7 @@
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('d:m:r:t:');
+getopts('d:m:r:t:v:');
 
 # -- define pxar production release
 my $pxarbase = "..";
@@ -60,7 +60,7 @@ if ($opt_m) {
     while (42) {
 	$dir = sprintf("%s-%02d", $opt_d, $cnt); 
 	system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $dir");
-	system("cat $opt_m | $pxarbase/bin/pXar -v DEBUG -d $dir");
+	system("cat $opt_m | $pxarbase/bin/pXar -v $opt_v -d $dir");
 	$cnt += 1;
     }
     exit(0); 
