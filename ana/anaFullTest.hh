@@ -78,6 +78,9 @@ class DLLEXPORT anaFullTest {
   void bookTrimSummary(int ioffset = 0); 
   void fillTrimInfo(std::string dir); 
 
+  void trimTestRanges(std::string dir = "/scratch/ursl/pxar/modules", std::string pattern = "d"); 
+  void dump2dTo1d(TH2D *h2, TH1D *h1);
+
   void readDacFile(std::string dir, std::string dac, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists);
   void readLogFile(std::string dir, std::string tag, std::vector<double> &v);

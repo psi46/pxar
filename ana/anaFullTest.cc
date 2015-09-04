@@ -1567,3 +1567,52 @@ void anaFullTest::showOverFlow(TH1D* h) {
   h->SetBinContent(h->GetNbinsX(), h->GetBinContent(h->GetNbinsX()) + h->GetBinContent(h->GetNbinsX()+1));
 
 }
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::trimTestRanges(string dir, string pattern) {
+
+  TH1D *h1 = new TH1D("h1", "thr_TrimThr0_vthrcomp", 256, 0., 256.); 
+  TH1D *h2 = new TH1D("h2", "thr_TrimThr1_vcal", 256, 0., 256.); 
+  TH1D *h3 = new TH1D("h3", "thr_TrimThr2_vcal", 256, 0., 256.); 
+
+  TH2D* h(0); 
+  vector<string> dirs = glob(dir, pattern); 
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    cout << dirs[idirs] << endl;
+    TFile *f = TFile::Open(Form("%s/%s/pxar.root", dir.c_str(), dirs[idirs].c_str())); 
+    for (int i = 0; i < 16; ++i) {
+      h = (TH2D*)f->Get(Form("Trim/thr_TrimThr0_vthrcomp_C%d_V0", i)); 
+      dump2dTo1d(h, h1); 
+      h = (TH2D*)f->Get(Form("Trim/thr_TrimThr1_vcal_C%d_V0", i)); 
+      dump2dTo1d(h, h2); 
+      h = (TH2D*)f->Get(Form("Trim/thr_TrimThr2_vcal_C%d_V0", i)); 
+      dump2dTo1d(h, h3); 
+    }
+  }
+
+  c0->Clear();
+  c0->Divide(2,2);
+
+  c0->cd(1);
+  gPad->SetLogy(1);
+  h1->Draw();
+
+  c0->cd(2);
+  gPad->SetLogy(1);
+  h2->Draw();
+
+  c0->cd(3);
+  gPad->SetLogy(1);
+  h3->Draw();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::dump2dTo1d(TH2D *h2, TH1D *h1) {
+  for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+    for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+      h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
+    }
+  }
+}

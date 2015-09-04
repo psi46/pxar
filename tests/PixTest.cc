@@ -160,7 +160,7 @@ void PixTest::resetDirectory() {
 // ----------------------------------------------------------------------
 int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
   TH1D *h = new TH1D("h1", "h1", 256, 0., 256.); 
 
   vector<pair<uint8_t, vector<pixel> > > results;
@@ -197,6 +197,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 				 int result, int ihit, int flag) {
 
   fNtrig = ntrig;
+
+  flag |= FLAG_DUMP_FLAWED_EVENTS;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string type("hits"); 
@@ -301,6 +303,8 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
 
   vector<pixel> results;
 
+  FLAGS |= FLAG_DUMP_FLAWED_EVENTS;
+
   int cnt(0); 
   bool done = false;
   while (!done){
@@ -361,7 +365,8 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   vector<pixel> results;
   vector<TH2D*> maps;
   TH2D *h2(0), *h3(0); 
-
+  
+  FLAGS |= FLAG_DUMP_FLAWED_EVENTS; 
 
   bool unmasked = (0 != (FLAGS & FLAG_CHECK_ORDER))  &&  (0 != (FLAGS & FLAG_FORCE_UNMASKED));
 
@@ -459,7 +464,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
     return resultMaps;
   }
 
-  uint16_t FLAGS = flag | FLAG_RISING_EDGE;    
+  uint16_t FLAGS = flag | FLAG_RISING_EDGE | FLAG_DUMP_FLAWED_EVENTS;    
   TH1* h1(0); 
   fDirectory->cd();
   
@@ -1130,7 +1135,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
   results.clear();
 
   //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
 
   vector<pair<uint8_t, vector<pixel> > > scans;
   int cnt(0); 
@@ -1404,7 +1409,7 @@ void PixTest::print(string what, TLogLevel log) {
 // ----------------------------------------------------------------------
 void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int &dacmax) {
   PixTest::update(); 
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
@@ -1523,6 +1528,8 @@ void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int 
 void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int FLAGS) {
   //  uint16_t FLAGS = flag | FLAG_FORCE_MASKED;
 
+  FLAGS |= FLAG_DUMP_FLAWED_EVENTS;
+  
   bool unmasked = (0 != (FLAGS & FLAG_CHECK_ORDER))  &&  (0 != (FLAGS & FLAG_FORCE_UNMASKED));
 
   //  fNtrig = ntrig; 
@@ -2065,7 +2072,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
     uint8_t perFull;
     bool daq_loop = true;
       
-    fApi->daqStart();
+    fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
     int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
     LOG(logINFO) << "Collecting data for " << NSECONDS << " seconds...";
@@ -2275,7 +2282,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   uint8_t perFull;
   bool daq_loop = true;
     
-  fApi->daqStart();
+  fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
   int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::maskHotPixels start TriggerLoop with period " << finalPeriod 
