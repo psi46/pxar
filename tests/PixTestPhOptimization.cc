@@ -594,7 +594,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	fApi->_dut->setROCEnable(roc_jt, false);
       }
     }
-    fApi->_dut->info();
+    //    fApi->_dut->info();
     cnt = 0; 
     done = false;
     while (!done) {
