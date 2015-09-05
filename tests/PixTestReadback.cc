@@ -293,7 +293,7 @@ void PixTestReadback::FinalCleaning() {
 
 // ----------------------------------------------------------------------
 void PixTestReadback::doTest() {
-  LOG(logINFO) << "PixTestReadback::doTest() start.";
+  bigBanner(Form("PixTestTrim::doTest()"));
   
   CalibrateVd();
   CalibrateVa();

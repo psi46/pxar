@@ -378,7 +378,7 @@ void PixTestXray::doPhRun() {
 
   uint8_t perFull;
   TStopwatch t;
-  fApi->daqStart();
+  fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
   int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with trigger frequency " << fParTriggerFrequency 
 	       << " kHz, period "  << finalPeriod 
@@ -462,7 +462,7 @@ void PixTestXray::doRateScan() {
     
     LOG(logINFO)<< "Starting Loop with VthrComp = " << fVthrComp;
     t.Start(kTRUE);
-    fApi->daqStart();
+    fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
     int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
     LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParStepSeconds << " seconds";

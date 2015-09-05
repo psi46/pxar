@@ -323,7 +323,7 @@ void PixTestDaq::doDaqRun() {
 
   //Start the DAQ:
   fDaq_loop = true;
-  fApi->daqStart();
+  fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
   //Using number of triggers
   if (fRunDaqTrigger) {
