@@ -167,7 +167,7 @@ namespace pxar {
 
     // Readback decoding:
     void evalReadback(uint8_t roc, uint16_t val);
-    bool readback_dirty;
+    std::vector<bool> readback_dirty;
     std::vector<uint16_t> count;
     std::vector<uint16_t> shiftReg;
     std::vector<std::vector<uint16_t> > readback;
@@ -194,7 +194,7 @@ namespace pxar {
     std::vector<std::string> event_ringbuffer;
 
   public:
-  dtbEventDecoder() : decodingStats(), readback_dirty(false), count(), shiftReg(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), levelS(0), sumUB(0), sumB(0), slidingWindow(0), total_event(5), flawed_event(0), error_count(0), dump_count(0), event_ringbuffer(7) {};
+  dtbEventDecoder() : decodingStats(), readback_dirty(), count(), shiftReg(), readback(), eventID(-1), ultrablack(0xfff), black(0xfff), levelS(0), sumUB(0), sumB(0), slidingWindow(0), total_event(5), flawed_event(0), error_count(0), dump_count(0), event_ringbuffer(7) {};
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();
