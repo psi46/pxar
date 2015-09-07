@@ -171,6 +171,10 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);
     }
+    else if(sigIt->first == SIG_LOOP_TRIM_DELAY) {
+      LOG(logDEBUGHAL) << "Set DTB loop delay after trimming to " << static_cast<int>(sigIt->second)*10 <<" clk";
+      _testboard->SetLoopTrimDelay(sigIt->second*10);
+    }
     else if(sigIt->first == SIG_TRIGGER_LATENCY) {
       LOG(logDEBUGHAL) << "Set latency for external triggers to " << static_cast<int>(sigIt->second) <<" clk";
       _testboard->Trigger_Delay(sigIt->second);
