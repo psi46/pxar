@@ -474,8 +474,8 @@ namespace pxar {
 		    << " has NoTokenPass but " << static_cast<int>(roc_n+1) 
 		    << " ROCs were found";
       decodingStats.m_errors_roc_missing++;
-      // This breaks the readback for the missing roc, let's ignore this readback cycle:
-      readback_dirty = true;
+      // This breaks the readback for the missing roc, let's ignore this readback cycle for all ROCs:
+      std::fill(readback_dirty.begin(), readback_dirty.end(), true);
       // Clearing event content:
       roc_Event.Clear();
     }
@@ -484,8 +484,8 @@ namespace pxar {
       LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Number of ROCs (" << static_cast<int>(roc_n+1)
 		    << ") != Token Chain Length (" << static_cast<int>(GetTokenChainLength()) << ")";
       decodingStats.m_errors_roc_missing++;
-      // This breaks the readback for the missing roc, let's ignore this readback cycle:
-      readback_dirty = true;
+      // This breaks the readback for the missing roc, let's ignore this readback cycle for all ROCs:
+      std::fill(readback_dirty.begin(), readback_dirty.end(), true);
       // Clearing event content:
       roc_Event.Clear();
     }
@@ -538,6 +538,7 @@ namespace pxar {
 
     // Check if we have seen this ROC already:
     if(shiftReg.size() <= roc) shiftReg.resize(roc+1,0);
+    if(readback_dirty.size() <= roc) readback_dirty.resize(roc+1,false);
     shiftReg.at(roc) <<= 1;
     if(val&1) shiftReg.at(roc)++;
 
@@ -561,11 +562,11 @@ namespace pxar {
       }
       else {
 	// If this is the first readback cycle of the ROC, ignore the mismatch:
-	if(readback.size() <= roc || readback.at(roc).empty() || readback_dirty) {
+	if(readback.size() <= roc || readback.at(roc).empty() || readback_dirty.at(roc)) {
 	  LOG(logDEBUGAPI) << "Channel " <<  static_cast<int>(GetChannel()) << " ROC " << static_cast<int>(roc)
 			   << ": first readback marker after "
 			   << count.at(roc) << " readouts. Ignoring error condition.";
-	  readback_dirty = false;
+	  readback_dirty.at(roc) = false;
 	}
 	else {
 	  LOG(logWARNING) << "Channel " <<  static_cast<int>(GetChannel()) << " ROC " << static_cast<int>(roc)
