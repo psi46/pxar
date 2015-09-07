@@ -167,7 +167,7 @@ namespace pxar {
 	}
 	dump_count++;
 	if(dump_count == 100) {
-	  LOG(logERROR) << "Reached 100 dumped events, stopping now...";
+	  LOG(logERROR) << "Channel " << static_cast<int>(GetChannel()) << ": Reached 100 dumped events, stopping now...";
 	}
       }
       total_event++;
