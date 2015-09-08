@@ -24,3 +24,5 @@ usertests/PixUserTestFactory.cc
 
 # Ignore Doxygen's SQlite3 databases:
 *.db
+
+*.dat
