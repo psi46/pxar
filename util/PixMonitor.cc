@@ -61,6 +61,21 @@ void PixMonitor::dumpSummaries() {
 
   hd->SetDirectory(gFile); 
   hd->Write();
+
+  TH1D *rtd = new TH1D("RTD", Form("RTD Temperature Measurement, start: %s / sec:%ld", ts.AsString("lc"), begSec), endSec-begSec, 0., endSec-begSec);
+  rtd->SetXTitle(Form("seconds after %s", ts.AsString("lc"))); 
+  rtd->SetTitleSize(0.03, "X");
+  rtd->SetTitleOffset(1.5, "X");
+
+  for (unsigned int i = 0; i < fRtdMeasurements.size(); ++i) {
+    int ibin = fRtdMeasurements[i].first - begSec;
+    rtd->SetBinContent(ibin+1, fRtdMeasurements[i].second);
+  }
+
+  rtd->Draw();
+  rtd->SetDirectory(gFile); 
+  rtd->Write();
+
 }
 
 // ----------------------------------------------------------------------
@@ -96,7 +111,22 @@ void PixMonitor::update() {
   hd->SetBinContent(ibin+1, fIdig); 
 
   fMeasurements.push_back(make_pair(seconds, make_pair(fIana, fIdig))); 
-  
+
+  TH1D *rtd = (TH1D*)gDirectory->Get("rtd");
+  if (0 ==rtd) {
+    rtd = new TH1D("rtd", Form("RTD Temperature, start: %s / sec:%ld", ts.AsString("lc"), seconds), NBINS, 0, NBINS);
+    rtd->SetXTitle(Form("seconds after %s", ts.AsString("lc")));
+    rtd->SetTitleSize(0.03, "X");
+    rtd->SetTitleOffset(1.5, "X");
+  }
+
+  uint16_t v_ref = fApi->GetADC(5);
+  uint16_t v_val = fApi->GetADC(4);
+  fTemp = ((v_ref-v_val-0.92)/6.55);
+
+  if (ibin > rtd->GetNbinsX()) rtd = extendHist(rtd, ibin);
+  rtd->SetBinContent(ibin+1, fTemp);
+  fRtdMeasurements.push_back(make_pair(seconds, fTemp)); 
 
 }
 

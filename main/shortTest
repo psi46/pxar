@@ -12,15 +12,16 @@
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('d:r:t:');
+getopts('d:m:r:t:');
 
 # -- define pxar production release
-my $pxarbase = "/home/l_tester/prod/pxar-prod";
+my $pxarbase = "..";
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
 my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
 
+# -- check for directory sopecification
 if (!$opt_d) {
     die "you must specify a directory for the module setup\n";
 } else {
@@ -51,6 +52,22 @@ if ($opt_t) {
     }
 }
 
+
+# -- run something many times
+if ($opt_m) {
+    my $cnt = 0; 
+    my $dir = $opt_d."-".$cnt; 
+    while (42) {
+	$dir = sprintf("%s-%02d", $opt_d, $cnt); 
+	system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $dir");
+	system("cat $opt_m | $pxarbase/bin/pXar -v DEBUG -d $dir");
+	$cnt += 1;
+    }
+    exit(0); 
+}
+
+
+# -- the original default procedure
 print "\n";
 print "###### shortTest: create directory with config files\n";
 system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $opt_d");

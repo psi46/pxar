@@ -1,4 +1,4 @@
-pretest:setvana
-pretest:setvthrcompcaldel
-cmd:timing
+Pretest:setvana
+Pretest:setvthrcompcaldel
+Cmd:timing
 q
