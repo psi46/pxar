@@ -1043,7 +1043,10 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
 
   return rb_val;
