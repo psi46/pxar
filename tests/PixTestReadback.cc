@@ -1015,22 +1015,9 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   if (!dac.compare("vana")){
     LOG(logDEBUG)<<"Wrong daqReadback function called!!!";
   }
-  else if (!dac.compare("vd")){
-    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
-    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
-      if( pow_it->first.compare("vd") == 0){
-	pow_it->second = vana;
-      }
-    }
-    fApi->setTestboardPower(powerset);
-  }
-  else if (!dac.compare("va")){
-    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
-    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
-      if( pow_it->first.compare("va") == 0){
-	pow_it->second = vana;
-      }
-    }
+  else {
+    vector<pair<string,double > > powerset;
+    powerset.push_back(std::make_pair(dac,vana));
     fApi->setTestboardPower(powerset);
   }
 
