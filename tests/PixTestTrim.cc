@@ -466,7 +466,7 @@ void PixTestTrim::trimBitTest() {
   cacheDacs();
 
   int NTRIG = static_cast<int>(0.5*fParNtrig);
-  if (NTRIG < 10) NTRIG = 10;
+  if (NTRIG < 5) NTRIG = 5;
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   unsigned int nrocs = rocIds.size();
 
