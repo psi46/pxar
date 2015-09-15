@@ -351,7 +351,7 @@ void PixTestPretest::setVana() {
   fHistList.push_back(hsum);
 
   TH1D *hcurr = bookTH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
-  setTitles(hcurr, "ROC", "Vana [DAC]"); 
+  setTitles(hcurr, "ROC", "Iana [mA]"); 
   hcurr->SetStats(0); // no stats
   hcurr->SetMinimum(0);
   hcurr->SetMaximum(30.0);
