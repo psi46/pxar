@@ -161,7 +161,7 @@ void PixTestGainPedestal::fullTest() {
   saveGainPedestalParameters();
 
   int seconds = t.RealTime(); 
-  LOG(logINFO) << "PixTestGainPedestal::doTest() done, duration: " << seconds << " seconds";
+  LOG(logINFO) << "PixTestGainPedestal::fullTest() done, duration: " << seconds << " seconds";
 }
 
 
