@@ -36,12 +36,12 @@ using namespace pxar;
 
 void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
 void createBackup(string a, string b);  
+string exec(string cmd);
 
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
   
   LOG(logINFO) << "*** Welcome to pxar ***";
-  gSystem->Exec("git status");
 
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
@@ -154,6 +154,9 @@ int main(int argc, char *argv[]){
 
   LOG(logINFO) << "*** Welcome to pxar ***";
   LOG(logINFO) << Form("*** Today: %s", tstamp.c_str());
+  string version = exec("git describe --abbrev=4 --dirty --always --tags");
+  PixUtil::replaceAll(version, "\n", ""); 
+  LOG(logINFO) << "*** Version: " << version;
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
@@ -372,6 +375,20 @@ void createBackup(string rootfile, string logfile) {
   if (!gSystem->AccessPathName(rootfile.c_str())) gSystem->Rename(rootfile.c_str(), nrootfile.c_str()); 
   if (!gSystem->AccessPathName(logfile.c_str())) gSystem->Rename(logfile.c_str(), nlogfile.c_str()); 
   
+}
+
+// ----------------------------------------------------------------------
+string exec(string cmd) {
+  FILE* pipe = popen(cmd.c_str(), "r");
+  if (!pipe) return "ERROR";
+  char buffer[128];
+  std::string result = "";
+  while(!feof(pipe)) {
+    if(fgets(buffer, 128, pipe) != NULL)
+      result += buffer;
+  }
+  pclose(pipe);
+  return result;
 }
 
 #endif
