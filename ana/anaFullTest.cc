@@ -86,6 +86,19 @@ anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
   fvNtrig.push_back(50); fvColor.push_back(kMagenta+3); 
 
 
+  fTS  = new timingSummary; 
+  fTS->tPretest = new TH1D("pretest", "pretest", 150, 0, 300);
+  fTS->tAlive   = new TH1D("alive", "alive", 50, 0, 50);
+  fTS->tBB      = new TH1D("bb", "bb", 100, 0, 200);
+  fTS->tScurve  = new TH1D("scurve", "scurve", 200, 0, 1000);
+  fTS->tTrim    = new TH1D("trim", "trim", 600, 0, 3000);
+  fTS->tTrimBit = new TH1D("trimbit", "trimbit", 600, 0, 3000);
+  fTS->tPhOpt   = new TH1D("phopt", "phoptimization", 200, 0, 1000);
+  fTS->tGain    = new TH1D("gain", "gain", 150, 0, 300);
+  fTS->tReadback= new TH1D("readback", "readback", 150, 0, 300);
+  fTS->tFullTest= new TH1D("fulltest", "fulltest", 1000, 0, 10000);
+
+
 }
 
 // ----------------------------------------------------------------------
@@ -1542,7 +1555,7 @@ int anaFullTest::testDuration(string startTest, string endTest) {
   st0 = parse.find(":");
   st1 = parse.find(":", st0+1);
   
-  h0 = atoi(parse.substr(0, st0).c_str());
+  h0 = atoi(parse.substr(1, st0-1).c_str());
   m0 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
   s0 = atoi(parse.substr(st1+1).c_str());
 
@@ -1550,10 +1563,13 @@ int anaFullTest::testDuration(string startTest, string endTest) {
   st0 = parse.find(":");
   st1 = parse.find(":", st0+1);
 
-  h1 = atoi(parse.substr(0, st0).c_str());
+  h1 = atoi(parse.substr(1, st0-1).c_str());
   m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
   s1 = atoi(parse.substr(st1+1).c_str());
   
+
+  cout << "start (" << startTest << ") h/m/s = " << h0 << "/" << m0 << "/" << s0 << " h0: ->" << ss0.substr(1, st0-1).c_str() << "<-" << endl;
+  cout << "end   (" << endTest << ") h/m/s = " << h1 << "/" << m1 << "/" << s1 << " h1: ->" << ss1.substr(1, st0-1).c_str() << "<-" << endl;
   struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
   struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
   
@@ -1615,4 +1631,121 @@ void anaFullTest::dump2dTo1d(TH2D *h2, TH1D *h1) {
       h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
     }
   }
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::showAllTimings(string dir, string pattern) {
+
+
+  vector<string> dirs = glob(dir, pattern); 
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    cout << dirs[idirs] << endl;
+    fullTestTiming(dirs[idirs], dir); 
+  }
+
+  c0->Clear();
+  c0->Divide(3,3);
+  c0->cd(1); 
+  fTS->tPretest->Draw();
+
+  c0->cd(2); 
+  fTS->tAlive->Draw();
+
+  c0->cd(3); 
+  fTS->tBB->Draw();
+
+  c0->cd(4); 
+  fTS->tScurve->Draw();
+
+  c0->cd(5); 
+  fTS->tTrim->Draw();
+  fTS->tTrimBit->Draw("same");
+
+  c0->cd(6); 
+  fTS->tPhOpt->Draw();
+
+  c0->cd(7); 
+  fTS->tGain->Draw();
+
+  c0->cd(8); 
+  fTS->tReadback->Draw();
+
+  c0->cd(9); 
+  fTS->tFullTest->Draw();
+
+  cout << "ShowAllTiming Summary" << endl;
+  cout << "Pretest:    " << fTS->tPretest->GetMean() << endl;
+  cout << "Alive:      " << fTS->tAlive->GetMean() << endl;
+  cout << "BB:         " << fTS->tBB->GetMean() << endl;
+  cout << "Scurve:     " << fTS->tScurve->GetMean() << endl;
+  cout << "Trim:       " << fTS->tTrim->GetMean() << endl;
+  cout << "TrimBit:    " << fTS->tTrimBit->GetMean() << endl;
+  cout << "PhOpt:      " << fTS->tPhOpt->GetMean() << endl;
+  cout << "Gain:       " << fTS->tGain->GetMean() << endl;
+  cout << "Readback:   " << fTS->tReadback->GetMean() << endl;
+  cout << "FullTest:   " << fTS->tFullTest->GetMean() << endl;
+
+
+}
+
+// ----------------------------------------------------------------------
+void anaFullTest::fullTestTiming(string dir, string basedir) {
+
+  ifstream IN; 
+
+  char buffer[1000];
+  string sline; 
+  string::size_type s1;
+
+  
+
+  vector<string> patterns; 
+  patterns.push_back("INFO:   running: pretest");
+  patterns.push_back("INFO:    PixTestAlive::aliveTest");
+  patterns.push_back("INFO: PixTestBBMap::doTest() Ntrig");
+  patterns.push_back("INFO: PixTestScurves::fullTest() ntrig");
+  patterns.push_back("INFO:    PixTestTrim::trimTest() ntrig");
+  patterns.push_back("INFO:    PixTestTrim::trimBitTest() ntrig");
+  patterns.push_back("INFO: PixTestPhOptimization::doTest() Ntrig");
+  patterns.push_back("INFO: PixTestGainPedestal::fullTest() ntrig");
+  patterns.push_back("INFO: readReadbackCal:");
+  patterns.push_back("INFO: pXar: this is the end, my friend");
+
+  vector<string> startPoints; 
+
+
+  IN.open(Form("%s/%s/pxar.log", basedir.c_str(), dir.c_str())); 
+  while (IN.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    for (unsigned int i = 0; i < patterns.size(); ++i) {
+      s1 = sline.find(patterns[i].c_str()); 
+      if (string::npos != s1) {
+	startPoints.push_back(sline); 
+	break;
+      }
+    }
+  }
+
+  IN.close(); 
+
+  int testD(0); 
+  for (unsigned int i = 0; i < startPoints.size(); ++i) {
+    if (i < startPoints.size() - 1) {
+      testD = testDuration(startPoints[i], startPoints[i+1]);
+      if (0 == i) fTS->tPretest->Fill(testD); 
+      if (1 == i) fTS->tAlive->Fill(testD); 
+      if (2 == i) fTS->tBB->Fill(testD); 
+      if (3 == i) fTS->tScurve->Fill(testD); 
+      if (4 == i) fTS->tTrim->Fill(testD); 
+      if (5 == i) fTS->tTrimBit->Fill(testD); 
+      if (6 == i) fTS->tPhOpt->Fill(testD); 
+      if (7 == i) fTS->tGain->Fill(testD); 
+      if (8 == i) fTS->tReadback->Fill(testD); 
+      cout << Form("%4d from %s", testD, startPoints[i].c_str()) << endl;
+    }
+  }
+
+  testD = testDuration(startPoints[0], startPoints[startPoints.size()-1]);
+  fTS->tFullTest->Fill(testD); 
 }

@@ -59,6 +59,11 @@ struct singleModuleSummary {
 
 };
 
+// ----------------------------------------------------------------------
+struct timingSummary {
+  TH1D *tPretest, *tAlive, *tBB, *tScurve, *tTrim, *tTrimBit, *tPhOpt, *tGain, *tReadback, *tFullTest; 
+};
+
 
 // ----------------------------------------------------------------------
 class DLLEXPORT anaFullTest {
@@ -72,6 +77,9 @@ class DLLEXPORT anaFullTest {
 
   void validateFullTests();
   void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
+
+  void showAllTimings(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d2116.");
+  void fullTestTiming(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
 
   void validateTrimTests();
   void addTrimTests(std::string dir = "/scratch/ursl/pxar/150828-repro", int ioffset = 0);
@@ -123,6 +131,7 @@ private:
   std::vector<std::string>    fDacs; 
   std::map<std::string, moduleSummary*> fModSummaries;
   singleModuleSummary*        fSMS;
+  timingSummary*              fTS;
 
   std::vector<trimSummary*> fTrimSummaries;
 
