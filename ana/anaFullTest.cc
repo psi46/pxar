@@ -87,16 +87,16 @@ anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
 
 
   fTS  = new timingSummary; 
-  fTS->tPretest = new TH1D("pretest", "pretest", 150, 0, 300);
-  fTS->tAlive   = new TH1D("alive", "alive", 50, 0, 50);
-  fTS->tBB      = new TH1D("bb", "bb", 100, 0, 200);
-  fTS->tScurve  = new TH1D("scurve", "scurve", 200, 0, 1000);
-  fTS->tTrim    = new TH1D("trim", "trim", 600, 0, 3000);
-  fTS->tTrimBit = new TH1D("trimbit", "trimbit", 600, 0, 3000);
-  fTS->tPhOpt   = new TH1D("phopt", "phoptimization", 200, 0, 1000);
-  fTS->tGain    = new TH1D("gain", "gain", 150, 0, 300);
-  fTS->tReadback= new TH1D("readback", "readback", 150, 0, 300);
-  fTS->tFullTest= new TH1D("fulltest", "fulltest", 1000, 0, 10000);
+  fTS->tPretest = new TH1D("pretest", "", 150, 0, 300);        fTS->tPretest->GetXaxis()->SetTitle("[sec]");
+  fTS->tAlive   = new TH1D("alive", "", 100, 0, 50);           fTS->tAlive->GetXaxis()->SetTitle("[sec]");
+  fTS->tBB      = new TH1D("bb", "", 100, 0, 200);             fTS->tBB->GetXaxis()->SetTitle("[sec]");
+  fTS->tScurve  = new TH1D("scurve", "", 200, 0, 1000);        fTS->tScurve->GetXaxis()->SetTitle("[sec]");
+  fTS->tTrim    = new TH1D("trim", "", 100, 0, 3000);         fTS->tTrim->GetXaxis()->SetTitle("[sec]");
+  fTS->tTrimBit = new TH1D("trimbit", "", 100, 0, 3000);      fTS->tTrimBit->GetXaxis()->SetTitle("[sec]"); fTS->tTrimBit->SetLineColor(kRed);
+  fTS->tPhOpt   = new TH1D("phopt", "", 200, 0, 1000);         fTS->tPhOpt->GetXaxis()->SetTitle("[sec]");
+  fTS->tGain    = new TH1D("gain", "", 150, 0, 300);           fTS->tGain->GetXaxis()->SetTitle("[sec]");
+  fTS->tReadback= new TH1D("readback", "", 150, 0, 300);       fTS->tReadback->GetXaxis()->SetTitle("[sec]");
+  fTS->tFullTest= new TH1D("fulltest", "", 100, 0, 10000);    fTS->tFullTest->GetXaxis()->SetTitle("[sec]");
 
 
 }
@@ -1567,9 +1567,6 @@ int anaFullTest::testDuration(string startTest, string endTest) {
   m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
   s1 = atoi(parse.substr(st1+1).c_str());
   
-
-  cout << "start (" << startTest << ") h/m/s = " << h0 << "/" << m0 << "/" << s0 << " h0: ->" << ss0.substr(1, st0-1).c_str() << "<-" << endl;
-  cout << "end   (" << endTest << ") h/m/s = " << h1 << "/" << m1 << "/" << s1 << " h1: ->" << ss1.substr(1, st0-1).c_str() << "<-" << endl;
   struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
   struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
   
@@ -1644,35 +1641,58 @@ void anaFullTest::showAllTimings(string dir, string pattern) {
     fullTestTiming(dirs[idirs], dir); 
   }
 
+  gStyle->SetOptStat(0); 
   c0->Clear();
   c0->Divide(3,3);
   c0->cd(1); 
   fTS->tPretest->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("pretest: %2.1f min", fTS->tPretest->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tPretest->GetEntries())));
 
   c0->cd(2); 
   fTS->tAlive->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("alive: %2.1f min", fTS->tAlive->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tAlive->GetEntries())));
 
   c0->cd(3); 
   fTS->tBB->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("BB: %2.1f min", fTS->tBB->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tBB->GetEntries())));
 
   c0->cd(4); 
   fTS->tScurve->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("scurve: %2.1f min", fTS->tScurve->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tScurve->GetEntries())));
 
   c0->cd(5); 
   fTS->tTrim->Draw();
   fTS->tTrimBit->Draw("same");
+  tl->DrawLatex(0.52, 0.92, Form("trim: %2.1f min", fTS->tTrim->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tTrim->GetEntries())));
+  tl->SetTextColor(kRed);
+  tl->DrawLatex(0.05, 0.92, Form("trimbits: %2.1f min", fTS->tTrimBit->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.76, Form("(%d)", static_cast<int>(fTS->tTrimBit->GetEntries())));
+  tl->SetTextColor(kBlack);
 
   c0->cd(6); 
   fTS->tPhOpt->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("phoptimization: %2.1f min", fTS->tPhOpt->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tPhOpt->GetEntries())));
 
   c0->cd(7); 
   fTS->tGain->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("gain: %2.1f min", fTS->tGain->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tGain->GetEntries())));
 
   c0->cd(8); 
   fTS->tReadback->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("readback: %2.1f min", fTS->tReadback->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tReadback->GetEntries())));
 
   c0->cd(9); 
   fTS->tFullTest->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("fulltest: %2.1f min", fTS->tFullTest->GetMean()/60.));
+  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tFullTest->GetEntries())));
 
   cout << "ShowAllTiming Summary" << endl;
   cout << "Pretest:    " << fTS->tPretest->GetMean() << endl;
@@ -1685,6 +1705,9 @@ void anaFullTest::showAllTimings(string dir, string pattern) {
   cout << "Gain:       " << fTS->tGain->GetMean() << endl;
   cout << "Readback:   " << fTS->tReadback->GetMean() << endl;
   cout << "FullTest:   " << fTS->tFullTest->GetMean() << endl;
+
+  
+  c0->SaveAs("fullTestTiming.pdf"); 
 
 
 }
