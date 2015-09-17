@@ -379,7 +379,11 @@ void createBackup(string rootfile, string logfile) {
 
 // ----------------------------------------------------------------------
 string exec(string cmd) {
+#if (defined WIN32)
+  FILE* pipe = _popen(cmd.c_str(), "r");
+#else
   FILE* pipe = popen(cmd.c_str(), "r");
+#endif
   if (!pipe) return "ERROR";
   char buffer[128];
   std::string result = "";
@@ -387,7 +391,11 @@ string exec(string cmd) {
     if(fgets(buffer, 128, pipe) != NULL)
       result += buffer;
   }
+#if (defined WIN32)
+  _pclose(pipe);
+#else 
   pclose(pipe);
+#endif
   return result;
 }
 
