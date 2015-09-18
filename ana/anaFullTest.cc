@@ -90,13 +90,13 @@ anaFullTest::anaFullTest(): fNrocs(16), fTrimVcal(35) {
   fTS->tPretest = new TH1D("pretest", "", 150, 0, 300);        fTS->tPretest->GetXaxis()->SetTitle("[sec]");
   fTS->tAlive   = new TH1D("alive", "", 100, 0, 50);           fTS->tAlive->GetXaxis()->SetTitle("[sec]");
   fTS->tBB      = new TH1D("bb", "", 100, 0, 200);             fTS->tBB->GetXaxis()->SetTitle("[sec]");
-  fTS->tScurve  = new TH1D("scurve", "", 200, 0, 1000);        fTS->tScurve->GetXaxis()->SetTitle("[sec]");
-  fTS->tTrim    = new TH1D("trim", "", 100, 0, 3000);         fTS->tTrim->GetXaxis()->SetTitle("[sec]");
-  fTS->tTrimBit = new TH1D("trimbit", "", 100, 0, 3000);      fTS->tTrimBit->GetXaxis()->SetTitle("[sec]"); fTS->tTrimBit->SetLineColor(kRed);
+  fTS->tScurve  = new TH1D("scurve", "", 120, 0, 1200);        fTS->tScurve->GetXaxis()->SetTitle("[sec]");
+  fTS->tTrim    = new TH1D("trim", "", 100, 0, 3000);          fTS->tTrim->GetXaxis()->SetTitle("[sec]");
+  fTS->tTrimBit = new TH1D("trimbit", "", 100, 0, 3000);       fTS->tTrimBit->GetXaxis()->SetTitle("[sec]"); fTS->tTrimBit->SetLineColor(kRed);
   fTS->tPhOpt   = new TH1D("phopt", "", 200, 0, 1000);         fTS->tPhOpt->GetXaxis()->SetTitle("[sec]");
   fTS->tGain    = new TH1D("gain", "", 150, 0, 300);           fTS->tGain->GetXaxis()->SetTitle("[sec]");
   fTS->tReadback= new TH1D("readback", "", 150, 0, 300);       fTS->tReadback->GetXaxis()->SetTitle("[sec]");
-  fTS->tFullTest= new TH1D("fulltest", "", 100, 0, 10000);    fTS->tFullTest->GetXaxis()->SetTitle("[sec]");
+  fTS->tFullTest= new TH1D("fulltest", "", 100, 0, 10000);     fTS->tFullTest->GetXaxis()->SetTitle("[sec]");
 
 
 }
