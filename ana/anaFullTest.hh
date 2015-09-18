@@ -78,7 +78,7 @@ class DLLEXPORT anaFullTest {
   void validateFullTests();
   void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
 
-  void showAllTimings(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d2116.");
+  void showAllTimings(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d2116-", bool reset = false);
   void fullTestTiming(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
 
   void validateTrimTests();

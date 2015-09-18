@@ -1632,9 +1632,21 @@ void anaFullTest::dump2dTo1d(TH2D *h2, TH1D *h1) {
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::showAllTimings(string dir, string pattern) {
+void anaFullTest::showAllTimings(string dir, string pattern, bool reset) {
 
-
+  if (reset) {
+    fTS->tPretest->Reset(); 
+    fTS->tAlive->Reset(); 
+    fTS->tBB->Reset(); 
+    fTS->tScurve->Reset(); 
+    fTS->tTrim->Reset(); 
+    fTS->tTrimBit->Reset(); 
+    fTS->tPhOpt->Reset(); 
+    fTS->tGain->Reset(); 
+    fTS->tReadback->Reset(); 
+    fTS->tFullTest->Reset(); 
+  }    
+  
   vector<string> dirs = glob(dir, pattern); 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
     cout << dirs[idirs] << endl;
@@ -1647,52 +1659,52 @@ void anaFullTest::showAllTimings(string dir, string pattern) {
   c0->cd(1); 
   fTS->tPretest->Draw();
   tl->DrawLatex(0.2, 0.92, Form("pretest: %2.1f min", fTS->tPretest->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tPretest->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tPretest->GetEntries())));
 
   c0->cd(2); 
   fTS->tAlive->Draw();
   tl->DrawLatex(0.2, 0.92, Form("alive: %2.1f min", fTS->tAlive->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tAlive->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tAlive->GetEntries())));
 
   c0->cd(3); 
   fTS->tBB->Draw();
   tl->DrawLatex(0.2, 0.92, Form("BB: %2.1f min", fTS->tBB->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tBB->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tBB->GetEntries())));
 
   c0->cd(4); 
   fTS->tScurve->Draw();
   tl->DrawLatex(0.2, 0.92, Form("scurve: %2.1f min", fTS->tScurve->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tScurve->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tScurve->GetEntries())));
 
   c0->cd(5); 
   fTS->tTrim->Draw();
   fTS->tTrimBit->Draw("same");
   tl->DrawLatex(0.52, 0.92, Form("trim: %2.1f min", fTS->tTrim->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tTrim->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tTrim->GetEntries())));
   tl->SetTextColor(kRed);
   tl->DrawLatex(0.05, 0.92, Form("trimbits: %2.1f min", fTS->tTrimBit->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.76, Form("(%d)", static_cast<int>(fTS->tTrimBit->GetEntries())));
+  tl->DrawLatex(0.7, 0.76, Form("(%d)", static_cast<int>(fTS->tTrimBit->GetEntries())));
   tl->SetTextColor(kBlack);
 
   c0->cd(6); 
   fTS->tPhOpt->Draw();
   tl->DrawLatex(0.2, 0.92, Form("phoptimization: %2.1f min", fTS->tPhOpt->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tPhOpt->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tPhOpt->GetEntries())));
 
   c0->cd(7); 
   fTS->tGain->Draw();
   tl->DrawLatex(0.2, 0.92, Form("gain: %2.1f min", fTS->tGain->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tGain->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tGain->GetEntries())));
 
   c0->cd(8); 
   fTS->tReadback->Draw();
   tl->DrawLatex(0.2, 0.92, Form("readback: %2.1f min", fTS->tReadback->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tReadback->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tReadback->GetEntries())));
 
   c0->cd(9); 
   fTS->tFullTest->Draw();
   tl->DrawLatex(0.2, 0.92, Form("fulltest: %2.1f min", fTS->tFullTest->GetMean()/60.));
-  tl->DrawLatex(0.8, 0.82, Form("(%d)", static_cast<int>(fTS->tFullTest->GetEntries())));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tFullTest->GetEntries())));
 
   cout << "ShowAllTiming Summary" << endl;
   cout << "Pretest:    " << fTS->tPretest->GetMean() << endl;
