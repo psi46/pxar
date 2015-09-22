@@ -293,28 +293,28 @@ void PixTestTiming::PhaseScan() {
           setTitles(h2, "ROC Port 0 Delay", "ROC Port 1 Delay");
           h2->SetMinimum(0);
           for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+            fApi->daqStart();
             for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
               NTimings++;
               int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
               LOG(logDEBUG) << "TBM Core: " << itbm << " 160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " TBM Phase " << bitset<8>(delaysetting).to_string() << " Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
               for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
-              fApi->daqStart();
               Log::ReportingLevel() = Log::FromString("QUIET");
-              statistics results = getEvents(fNTrig, period, fTrigBuffer);
-              Log::ReportingLevel() = UserReportingLevel;
-              int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-              int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
-              if (NEvents==fNTrig && NErrors==0) {
-                bool goodreadback = true;
-                if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
-                if (goodreadback) {
+              bool goodreadback = true;
+              if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+              if (goodreadback) {
+                statistics results = getEvents(fNTrig, period, fTrigBuffer);
+                int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+                int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+                if (NEvents==fNTrig && NErrors==0) {
                   h2->Fill(irocphaseport0,irocphaseport1);
                   NFunctionalTimings[itbm]++;
                   NFunctionalROCPhases++;
                 }
               }
-              fApi->daqStop();
+              Log::ReportingLevel() = UserReportingLevel;
             }
+            fApi->daqStop();
           }
           if (h2->GetEntries()>0) rocdelayhists.push_back(h2);
         }
@@ -412,13 +412,16 @@ void PixTestTiming::TBMPhaseScan() {
         fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
         fApi->daqStart();
         Log::ReportingLevel() = Log::FromString("QUIET");
-        statistics results = getEvents(fNTrig, period, fTrigBuffer);
-        Log::ReportingLevel() = UserReportingLevel;
-        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
         bool goodreadback = true;
-        if (NEvents==fNTrig && !fIgnoreReadBack && !fNoTokenPass) goodreadback = checkReadBackBits(period);
+        if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+        if (goodreadback) {
+          statistics results = getEvents(fNTrig, period, fTrigBuffer);
+          int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+          int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+          if (NEvents==fNTrig && NErrors==0) h1->Fill(iclk160,iclk400);
+        }
+        Log::ReportingLevel() = UserReportingLevel;
         fApi->daqStop();
-        if (NEvents==fNTrig && results.errors()==0 && goodreadback) h1->Fill(iclk160,iclk400);
       }
     }
     if (fNoTokenPass) break;
@@ -481,23 +484,23 @@ void PixTestTiming::ROCDelayScan() {
     fHistOptions.insert(make_pair(h1, "colz"));
     h1->SetMinimum(0);
     for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+      fApi->daqStart();
       for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
         int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
         LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
         for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
         Log::ReportingLevel() = Log::FromString("QUIET");
-        fApi->daqStart();
-        statistics results = getEvents(fNTrig, period, fTrigBuffer);
-        Log::ReportingLevel() = UserReportingLevel;
-        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-        int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
-        if (NEvents==fNTrig && NErrors==0) {
-          bool goodreadback = true;
-          if (!fIgnoreReadBack && !fNoTokenPass) goodreadback = checkReadBackBits(period);
-          if (goodreadback) h1->Fill(irocphaseport0,irocphaseport1);
+        bool goodreadback = true;
+        if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+        if (goodreadback) {
+          statistics results = getEvents(fNTrig, period, fTrigBuffer);
+          int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+          int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+          if (NEvents==fNTrig && NErrors==0) h1->Fill(irocphaseport0,irocphaseport1);
         }
-        fApi->daqStop();
+        Log::ReportingLevel() = UserReportingLevel;
       }
+      fApi->daqStop();
     }
     rocdelayhists.push_back(h1);
   }
@@ -768,6 +771,10 @@ bool PixTestTiming::checkReadBackBits(uint16_t period) {
   try { daqEv = fApi->daqGetEventBuffer(); }
   catch(pxar::DataNoEvent &) {}
   ReadBackBits = fApi->daqGetReadback();
+  statistics results = fApi->getStatistics();
+  int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+  int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+  if (NEvents!=32 || NErrors!=0) return false;
 
   for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
     for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {

@@ -728,7 +728,7 @@ EOF
     print FH <<"EOF";
 -- Timing
 targetclk           4
-ntrig               1000
+ntrig               10000
 notokenpass         checkbox(0)
 ignorereadback      checkbox(0)
 clocksdascan        button
