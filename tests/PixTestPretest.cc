@@ -303,7 +303,7 @@ void PixTestPretest::setVana() {
 		 << " Vana " << vana
 		 << " Ia " << ia-i015 << " mA";
 
-    while (TMath::Abs(diff) > eps && iter < 11 && vana > 0 && vana < 255) {
+    while (TMath::Abs(diff) > eps && iter < 11 && vana >= 0 && vana < 255) {
 
       int stp = static_cast<int>(TMath::Abs(slope*diff));
       if (stp == 0) stp = 1;
