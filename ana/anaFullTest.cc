@@ -145,8 +145,8 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
   if (0 == first) delete fSMS->dead; 
   fSMS->dead = new TH1D("dead", "", 16, 0., 16.);                   setHist(fSMS->dead, "ROC", "dead pixels", kBlack, 0., 40.);
 
-  if (0 == first) delete fSMS->bb; 
-  fSMS->bb = new TH1D("bb", "", 16, 0., 16.);                       setHist(fSMS->bb, "ROC", "dead bumps", kBlue-4, 0., 40.);
+  if (0 == first) delete fSMS->BB; 
+  fSMS->BB = new TH1D("BB", "", 16, 0., 16.);                       setHist(fSMS->BB, "ROC", "dead bumps", kBlue-4, 0., 40.);
 
   if (0 == first) delete fSMS->mask; 
   fSMS->mask = new TH1D("mask", "", 16, 0., 16.);                   setHist(fSMS->mask, "ROC", "mask defects", kRed, 0., 40.);
@@ -162,6 +162,9 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
 
   if (0 == first) delete fSMS->vthrcomp; 
   fSMS->vthrcomp = new TH1D("vthrcomp", "", 16, 0., 16.);           setHist(fSMS->vthrcomp, "ROC", "VTHRCOMP", kBlack, 0., 256.);
+
+  if (0 == first) delete fSMS->noiseLevel; 
+  fSMS->noiseLevel = new TH1D("noiseLevel", "", 16, 0., 16.);       setHist(fSMS->noiseLevel, "ROC", "Noise level", kBlack, 0., 256.);
 
   if (0 == first) delete fSMS->vtrim; 
   fSMS->vtrim = new TH1D("vtrim", "", 16, 0., 16.);                 setHist(fSMS->vtrim, "ROC", "VTRIM", kRed, 0., 256.);
@@ -187,6 +190,9 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
 
   if (0 == first) delete fSMS->distVcalThr;
   fSMS->distVcalThr = new TH1D("distVcalThr", "", 200, 0., 200.);         setHist(fSMS->distVcalThr, "VCAL THR [VCAL]", "entries/bin", kBlack, 0.5, -1.);
+
+
+
 }
 
 
@@ -298,7 +304,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   // -- note: ideally this should be filled in fillRocDefects?
   readLogFile(dirname, "number of dead bumps (per ROC):", vd);
-  dumpVector(vd, fSMS->bb, "0"); 
+  dumpVector(vd, fSMS->BB, "0"); 
   summarizeVector(vd, fhBb); 
 
 
@@ -314,6 +320,8 @@ void anaFullTest::showFullTest(string modname, string basename) {
   anaRocMap(dirname, "Scurves/sig_scurveVcal_Vcal", fSMS->distNoise, 2);
   anaRocMap(dirname, "Trim/thr_TrimThrFinal_vcal", fSMS->distVcalTrimThr, 2);
   anaRocMap(dirname, "Scurves/thr_scurveVcal_Vcal", fSMS->distVcalThr, 2);
+
+  //  findNoiseLevel(dirname, "Pretest/pretestVthrCompCalDel", fSMS->noiseLevel);
   
   fillRocDefects(dirname, fSMS->defectMap);
 
@@ -377,7 +385,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
   c0->cd(7); 
   tl->SetTextSize(0.05); 
   plotVsRoc(fSMS->dead, xpos, 0.80, "", 1); 
-  plotVsRoc(fSMS->bb,   xpos, 0.74, "same", 1); 
+  plotVsRoc(fSMS->BB,   xpos, 0.74, "same", 1); 
   plotVsRoc(fSMS->mask, xpos, 0.68, "same", 1); 
   plotVsRoc(fSMS->addr, xpos, 0.62, "same", 1); 
 
@@ -1216,6 +1224,54 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
 	  }
 	} 
       } 
+    }
+  }
+  f->Close();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::findNoiseLevel(std::string dirname, std::string hbasename, TH1D* rochist) {
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+  
+  TH2D *h(0); 
+  int cnt(0); 
+  
+  vector<pair<int, int> > pixelList; 
+  pixelList.push_back(make_pair(12,22)); 
+  pixelList.push_back(make_pair(5,5)); 
+  pixelList.push_back(make_pair(15,26)); 
+  pixelList.push_back(make_pair(20,32)); 
+  pixelList.push_back(make_pair(25,36)); 
+  pixelList.push_back(make_pair(30,42)); 
+  pixelList.push_back(make_pair(35,50)); 
+  pixelList.push_back(make_pair(40,60)); 
+  pixelList.push_back(make_pair(45,70)); 
+  pixelList.push_back(make_pair(50,75)); 
+
+  //try  ;
+  int ipixel(-1); 
+  for (unsigned int i = 0; i < pixelList.size(); ++i) {
+    h = (TH2D*)f->Get(Form("pretestVthrCompCalDel_c%d_r%d_C0", pixelList[i].first, pixelList[i].second)); 
+    if (h) {
+      ipixel = i; 
+      cout << "found " << h->GetName() << endl;
+      break;
+    }
+  }  
+
+  if (ipixel < 0) {
+    cout << "did not find histograms for working pixel" << endl;
+    return;
+  }
+  
+  for (int i = 0; i < fNrocs; ++i) {
+    h = (TH2D*)f->Get(Form("pretestVthrCompCalDel_c%d_r%d_C%d", pixelList[ipixel].first, pixelList[ipixel].second, i)); 
+    cnt = 0; 
+    if (h) {
+      int x = static_cast<int>(h->GetMean()); 
+      TH1D *hy = h->ProjectionY("_py", x, x); 
+      cout << "last bin above 50%: " << hy->FindLastBinAbove(0.5*h->GetMaximum()) << endl;
     }
   }
   f->Close();
