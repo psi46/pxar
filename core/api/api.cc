@@ -558,6 +558,9 @@ double pxarCore::getTBvd() {
   return _hal->getTBvd();
 }
 
+double pxarCore::getTemp() {
+  return (-double(this->GetADC(4) - this->GetADC(5)) - 0.92)/ 6.55;
+}
 
 void pxarCore::HVoff() {
   _hal->HVoff();

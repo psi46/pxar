@@ -343,6 +343,11 @@ namespace pxar {
      */
     double getTBvd();
 
+    /** Function to read out the temperature of the RTD on FPIX HDIs
+     *  The temperature will be returned in units of Celsius
+     */
+    double getTemp();
+
     /** turn off HV
      */
     void HVoff();
