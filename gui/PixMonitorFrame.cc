@@ -133,7 +133,7 @@ void PixMonitorFrame::Update() {
   fNmrDigi->SetText(Form("%4.3f", id));
 
   if ("fpix" == fGui->getHdiType()) {
-    if (fGui->getApi()) fNmrTDegree->SetText(Form("%3.1f", fGui->getApi()->getTemp()));
+    if (fGui->getApi()) fNmrTDegree->SetText(Form("%3.1f", a->getTemp()));
     else fNmrTDegree->SetText(Form("---"));
   }
 

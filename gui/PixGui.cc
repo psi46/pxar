@@ -334,7 +334,7 @@ void PixGui::Cleanup() {
 void PixGui::CloseWindow() {
   LOG(logDEBUG) << "Final Analog Current: " << fApi->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Final Digital Current: " << fApi->getTBid()*1000 << "mA";
-  if (fConfigParameters->getHdiType() == "fpix") LOG(logDEBUG) << "Final Module Temperatue: " << Form("%3.1f", fApi->getTemp()) << " C";
+  if (fConfigParameters->getHdiType() == "fpix") LOG(logDEBUG) << "Final Module Temperatue: " << Form("%3.1f", fPixSetup->getPixMonitor()->getTemp()) << " C";
   std::vector<PixTest*>::iterator il; 
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
     delete (*il); 

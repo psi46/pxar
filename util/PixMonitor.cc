@@ -85,7 +85,7 @@ void PixMonitor::update() {
   int NBINS(10); 
   fIana = fApi->getTBia();
   fIdig = fApi->getTBid();
-  if (fHdiType == "fpix") fTemp = fApi->getTemp();
+  if (fHdiType == "fpix") fTemp = (-double(fApi->GetADC(4) - fApi->GetADC(5)) - 0.92)/ 6.55;
 
   TTimeStamp ts; 
   ULong_t seconds  = ts.GetSec();
@@ -199,4 +199,3 @@ UInt_t PixMonitor::getHistMinSec(TH1D *h) {
   UInt_t seconds = atoi(sseconds.c_str()); 
   return seconds;
 }
-

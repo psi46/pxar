@@ -29,7 +29,7 @@ public:
   double getTemp() {return fTemp;}
 
   void dumpSummaries();
-  void drawHist(std::string hname); 
+  void drawHist(std::string hname);
 
 private: 
   TH1D* extendHist(TH1D *h, int nbins);
