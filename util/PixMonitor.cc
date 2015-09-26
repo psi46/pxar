@@ -16,6 +16,7 @@ using namespace pxar;
 
 // ----------------------------------------------------------------------
 PixMonitor::PixMonitor(pxarCore *a, string HdiType): fApi(a), fHdiType(HdiType), fIana(0.), fIdig(0.) {
+  if (fHdiType == "fpix") fTemp = (-double(fApi->GetADC(4) - fApi->GetADC(5)) - 0.92)/ 6.55;
 }
 
 // ----------------------------------------------------------------------
