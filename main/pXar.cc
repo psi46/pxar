@@ -298,6 +298,10 @@ int main(int argc, char *argv[]){
 	a.writeTbmParameterFiles();
 	continue;
       }
+      if (!input.compare("poff")) {
+	api->Poff();
+	continue;
+      }
   
       if (!input.compare("gui"))  runGui(a, argc, argv); 
       if (!input.compare("exit")) stop = true; 
