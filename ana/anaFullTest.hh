@@ -51,8 +51,8 @@ struct singleModuleSummary {
   // histograms showing DACs vs iroc
   TH1D *vana, *caldel, *vthrcomp, *vtrim, *phscale, *phoffset; 
   // histograms showing something vs iroc
-  TH1D *noise, *vcalThr, *vcalThrW, *vcalTrimThr, *vcalTrimThrW, *relGainW, *pedestalW, *nonl, *nonlW; 
-  TH1D *dead, *bb, *mask, *addr; 
+  TH1D *noise, *vcalThr, *vcalThrW, *vcalTrimThr, *vcalTrimThrW, *relGainW, *pedestalW, *nonl, *nonlW, *noiseLevel; 
+  TH1D *dead, *BB, *mask, *addr; 
 
   TH2D *defectMap;
   TH1D *distNoise, *distVcalTrimThr, *distVcalThr;
@@ -96,6 +96,7 @@ class DLLEXPORT anaFullTest {
 
   void fillRocHist(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
   void anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
+  void findNoiseLevel(std::string dirname, std::string hbasename, TH1D* rochist);
   void fillRocDefects(std::string dirname, TH2D* defectMap);
 
   void bookModuleSummary(std::string modulename); 

@@ -15,11 +15,11 @@ typedef char int8_t;
 #include <TH1.h>
 #include <TQObject.h> 
 
-#include "api.h"
+class PixSetup;
 
 class DLLEXPORT PixMonitor: public TQObject {
 public:
-  PixMonitor(pxar::pxarCore *, std::string); 
+  PixMonitor(PixSetup *); 
   ~PixMonitor();
   void init(); 
 
@@ -35,8 +35,7 @@ private:
   TH1D* extendHist(TH1D *h, int nbins);
   UInt_t getHistMinSec(TH1D *h);
 
-  pxar::pxarCore  *fApi;
-  std::string      fHdiType;
+  PixSetup        *fSetup; 
   double           fIana, fIdig, fTemp;
 
   std::vector<std::pair<UInt_t, std::pair<double, double> > > fMeasurements;
