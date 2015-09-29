@@ -147,6 +147,22 @@ void PixTest::bookTree() {
 // ----------------------------------------------------------------------
 void PixTest::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  if (!command.compare("poweron")) {
+    powerOn();
+    return;
+  }
+  if (!command.compare("poweroff")) {
+    powerOff();
+    return;
+  }
+  if (!command.compare("hvon")) {
+    hvOn();
+    return;
+  }
+  if (!command.compare("hvoff")) {
+    hvOff();
+    return;
+  }
   LOG(logDEBUG) << "Nothing done with " << command; 
 }
 
