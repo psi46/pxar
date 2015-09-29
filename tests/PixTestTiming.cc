@@ -250,7 +250,6 @@ void PixTestTiming::PhaseScan() {
   vector<TH2D*> rocdelayhists;
 
   int NTimings(0);
-
   for (size_t itbm = 0; itbm<nTBMs; itbm++) {
     NTimings = 0;
     h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
@@ -262,7 +261,7 @@ void PixTestTiming::PhaseScan() {
     h2->SetDirectory(fDirectory);
     setTitles(h2, "160MHz Phase", "400 MHz Phase");
     h2->SetMinimum(0);
-    tbmhists.push_back(h2);
+    goodareahists.push_back(h2);
     NFunctionalTimings.push_back(0);
     NFunctionalTBMPhases.push_back(0);
     if (fNoTokenPass) {
@@ -294,7 +293,6 @@ void PixTestTiming::PhaseScan() {
           setTitles(h3, "ROC Port 0 Delay", "ROC Port 1 Delay");
           h3->SetMinimum(0);
           for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
-            //fApi->daqStart();
             for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
               NTimings++;
               int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
@@ -302,7 +300,7 @@ void PixTestTiming::PhaseScan() {
               for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
               Log::ReportingLevel() = Log::FromString("QUIET");
               bool goodreadback = true;
-	      fApi->daqStart();
+              fApi->daqStart();
               if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
               if (goodreadback) {
                 statistics results = getEvents(fNTrig, period, fTrigBuffer);
@@ -315,9 +313,8 @@ void PixTestTiming::PhaseScan() {
                 }
               }
               Log::ReportingLevel() = UserReportingLevel;
-	      fApi->daqStop();
+              fApi->daqStop();
             }
-            //fApi->daqStop();
           }
           if (h3->GetEntries()>0) {
             rocdelayhists.push_back(h3);
@@ -347,6 +344,11 @@ void PixTestTiming::PhaseScan() {
     fHistList.push_back(tbmhists[itbm]);
     fHistOptions.insert(make_pair(tbmhists[itbm], "colz"));
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), tbmhists[itbm]);
+    PixTest::update();
+    goodareahists[itbm]->Draw("colz");
+    fHistList.push_back(goodareahists[itbm]);
+    fHistOptions.insert(make_pair(goodareahists[itbm], "colz"));
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), goodareahists[itbm]);
     PixTest::update();
   }
   
