@@ -258,7 +258,7 @@ void PixTestTiming::PhaseScan() {
 
   for (size_t itbm = 0; itbm<nTBMs; itbm++) {
     NTimings = 0;
-    h1 = bookTH2D(Form("TBMPhaseScan_%zu",itbm),Form("Phase Scan for TBM Core %zu",itbm), 8, -0.5, 7.5, 8, -0.5, 7.5);
+    h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "160MHz Phase", "400 MHz Phase");
     h1->SetMinimum(0);
@@ -288,7 +288,7 @@ void PixTestTiming::PhaseScan() {
         int NFunctionalROCPhases = 0;
         for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
           if (ithtdelay==2) continue;
-          h2 = bookTH2D(Form("ROCDelayScan_TBMCore_%zu_%d_%d",itbm,delaysetting/4,ithtdelay),Form("TBM Core: %zu ROC Delay Scan: 160MHz Phase = %d 400MHz Phase = %d THT Delay = %d",itbm,iclk160,iclk400,ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
+          h2 = bookTH2D(Form("ROCDelayScan_TBMCore_%d_%d_%d",int(itbm),delaysetting/4,ithtdelay),Form("TBM Core: %d ROC Delay Scan: 160MHz Phase = %d 400MHz Phase = %d THT Delay = %d",int(itbm),iclk160,iclk400,ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
           h2->SetDirectory(fDirectory);
           setTitles(h2, "ROC Port 0 Delay", "ROC Port 1 Delay");
           h2->SetMinimum(0);
@@ -386,7 +386,7 @@ void PixTestTiming::TBMPhaseScan() {
   vector<TH2D*> tbmhists;
 
   for (size_t itbm = 0; itbm<nTBMs; itbm++) {
-    h1 = bookTH2D(Form("TBMPhaseScan_%zu",itbm),Form("Phase Scan for TBM Core %zu",itbm), 8, -0.5, 7.5, 8, -0.5, 7.5);
+    h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "160MHz Phase", "400 MHz Phase");
     h1->SetMinimum(0);
