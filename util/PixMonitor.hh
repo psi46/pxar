@@ -26,15 +26,16 @@ public:
   void update(); 
   double getIana() {return fIana;}
   double getIdig() {return fIdig;}
+  double getTemp() {return fTemp;}
 
   void dumpSummaries();
-  void drawHist(std::string hname); 
+  void drawHist(std::string hname);
 
 private: 
   TH1D* extendHist(TH1D *h, int nbins);
   UInt_t getHistMinSec(TH1D *h);
 
-  pxar::pxarCore  *fApi; 
+  PixSetup        *fSetup; 
   double           fIana, fIdig, fTemp;
 
   std::vector<std::pair<UInt_t, std::pair<double, double> > > fMeasurements;
