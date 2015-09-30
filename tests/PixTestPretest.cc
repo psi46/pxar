@@ -156,13 +156,24 @@ void PixTestPretest::doTest() {
   }
 
   setVana();
+  if (fProblem) {
+    bigBanner("ERROR: turning of some ROCs lead to less I(ana) current drop than expected;  stop"); 
+    return;
+  }
+
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
 
-  // -- this no longer seems to converge with f/w 4.4
+  // -- this no longer seems to converge with f/w 4.4 for TBM09C
   //  setTimings();
-  findTiming(); 
+
+  string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
+  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c")) {
+    findTiming(); 
+  } else {
+    LOG(logWARNING) << "pretest::findTiming only works for TBM08c/09c! Do something on your own.";
+  }
 
   findWorkingPixel();
   h1 = (*fDisplayedHist); 
@@ -176,7 +187,9 @@ void PixTestPretest::doTest() {
 
   // -- save DACs and TBM parameters!
   saveDacs();
-  saveTbmParameters();
+  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c")) {
+    saveTbmParameters();
+  }
 
   int seconds = t.RealTime(); 
   LOG(logINFO) << "PixTestPretest::doTest() done, duration: " << seconds << " seconds";
@@ -295,7 +308,7 @@ void PixTestPretest::setVana() {
 		 << " Vana " << vana
 		 << " Ia " << ia-i015 << " mA";
 
-    while (TMath::Abs(diff) > eps && iter < 11 && vana > 0 && vana < 255) {
+    while (TMath::Abs(diff) > eps && iter < 11 && vana >= 0 && vana < 255) {
 
       int stp = static_cast<int>(TMath::Abs(slope*diff));
       if (stp == 0) stp = 1;
@@ -343,7 +356,7 @@ void PixTestPretest::setVana() {
   fHistList.push_back(hsum);
 
   TH1D *hcurr = bookTH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
-  setTitles(hcurr, "ROC", "Vana [DAC]"); 
+  setTitles(hcurr, "ROC", "Iana [mA]"); 
   hcurr->SetStats(0); // no stats
   hcurr->SetMinimum(0);
   hcurr->SetMaximum(30.0);
@@ -375,7 +388,49 @@ void PixTestPretest::setVana() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
   PixTest::update();
 
+
+  // -- test that current drops when turning off single ROCs
+  cacheDacs();
+  double iAll = fApi->getTBia()*1E3; 
+  sw.Start(kTRUE); 
+  do {
+    sw.Start(kFALSE); 
+    iAll = fApi->getTBia()*1E3;
+  } while (sw.RealTime() < 0.1);
+
+  double iMinus1(0), vanaOld(0); 
+  vector<double> iLoss; 
+  for (int iroc = 0; iroc < nRocs; ++iroc) {
+    vanaOld = fApi->_dut->getDAC(iroc, "vana");
+    fApi->setDAC("vana", 0, iroc);
+
+    iMinus1 = fApi->getTBia()*1E3; // [mA], just to be sure to flush usb
+    sw.Start(kTRUE); // reset
+    do {
+      sw.Start(kFALSE); // continue
+      iMinus1 = fApi->getTBia()*1E3; // [mA]
+    } while (sw.RealTime() < 0.1);
+    iLoss.push_back(iAll-iMinus1); 
+    
+    fApi->setDAC("vana", vanaOld, iroc);
+  }
+
+  string vanaString(""), vthrcompString(""); 
+  for (int iroc = 0; iroc < nRocs; ++iroc){
+    if (iLoss[iroc] < 15) {
+      vanaString += Form("  ->%3.1f<-", iLoss[iroc]); 
+      fProblem = true; 
+    } else {
+      vanaString += Form("  %3.1f", iLoss[iroc]); 
+    }
+  }
+  // -- summary printout
   LOG(logINFO) << "PixTestPretest::setVana() done, Module Ia " << ia16 << " mA = " << ia16/nRocs << " mA/ROC";
+  LOG(logINFO) << "i(loss) [mA/ROC]:   " << vanaString;
+
+
+  restoreDacs();
+
 
   dutCalibrateOff();
 }
@@ -413,11 +468,11 @@ void PixTestPretest::findTiming() {
   istring >> sline >> sline >> success >> sline >> tries; 
   istring.clear(); 
   istring.str(sparameters); 
-  int i160(-1), i400(-1), iroc(-1), iht(-1), itoken(-1); 
-  istring >> sline >> i160 >> i400 >> iroc >> iht >> itoken; 
+  int i160(-1), i400(-1), iroc(-1), iht(-1), itoken(-1), iwidth(-1); 
+  istring >> sline >> i160 >> i400 >> iroc >> iht >> itoken >> sline >> sline >> iwidth; 
   LOG(logINFO) << "TBM phases:  160MHz: " << i160 << ", 400MHz: " << i400 
 	       << ", TBM delays: ROC(0/1):" << iroc << ", header/trailer: " << iht << ", token: " << itoken;
-  LOG(logINFO) << "(success/tries = " << success << "/" << tries << ")";
+  LOG(logINFO) << "(success/tries = " << success << "/" << tries << "), width = " << iwidth;
 
   uint8_t value= ((i160 & 0x7)<<5) + ((i400 & 0x7)<<2);
   int stat = tbmSet("basee", 0, value);

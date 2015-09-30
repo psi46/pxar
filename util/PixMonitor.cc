@@ -11,11 +11,16 @@
 #include <TDirectory.h>
 #include <TFile.h>
 
+#include "PixSetup.hh"
+
 using namespace std;
 using namespace pxar;
 
 // ----------------------------------------------------------------------
-PixMonitor::PixMonitor(pxarCore *a): fApi(a), fIana(0.), fIdig(0.) {
+PixMonitor::PixMonitor(PixSetup *a): fSetup(a), fIana(0.), fIdig(0.) {
+  if ("fpix" == a->getConfigParameters()->getHdiType()) {
+    //fTemp = (-double(fApi->GetADC(4) - fApi->GetADC(5)) - 0.92)/ 6.55;
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -81,8 +86,8 @@ void PixMonitor::dumpSummaries() {
 // ----------------------------------------------------------------------
 void PixMonitor::update() {
   int NBINS(10); 
-  fIana = fApi->getTBia();
-  fIdig = fApi->getTBid();
+  fIana = fSetup->getApi()->getTBia();
+  fIdig = fSetup->getApi()->getTBid();
   
   TTimeStamp ts; 
   ULong_t seconds  = ts.GetSec();

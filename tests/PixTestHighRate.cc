@@ -262,7 +262,7 @@ void PixTestHighRate::doTest() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doCalDelScan() {
 
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
 
   int ntrig(10); 
   banner(Form("PixTestHighRate::calDelScan() ntrig = %d, vcal = %d", ntrig, fParVcal));
@@ -829,7 +829,7 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
 
   gStyle->SetPalette(1);
   int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
-  fApi->daqStart();
+  fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
   int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::doHitMap start TriggerLoop with trigger frequency " << fParTriggerFrequency

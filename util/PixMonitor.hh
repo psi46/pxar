@@ -15,11 +15,11 @@ typedef char int8_t;
 #include <TH1.h>
 #include <TQObject.h> 
 
-#include "api.h"
+class PixSetup;
 
 class DLLEXPORT PixMonitor: public TQObject {
 public:
-  PixMonitor(pxar::pxarCore *); 
+  PixMonitor(PixSetup *); 
   ~PixMonitor();
   void init(); 
 

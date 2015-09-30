@@ -16,6 +16,7 @@ cdef extern from "api.h" namespace "pxar":
     cdef int _flag_check_order    "FLAG_CHECK_ORDER"
     cdef int _flag_force_unmasked "FLAG_FORCE_UNMASKED"
     cdef int _flag_dump_flawed_events "FLAG_DUMP_FLAWED_EVENTS"
+    cdef int _flag_disable_readback_collection "FLAG_DISABLE_READBACK_COLLECTION"
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:

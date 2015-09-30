@@ -91,7 +91,7 @@ void PixTestFPIXTest::doTest() {
   suite.push_back("scurves");
   suite.push_back("phoptimization"); 
   suite.push_back("gainpedestal"); 
-  suite.push_back("bb"); 
+  suite.push_back("bb3"); 
 
   PixTest *t(0); 
 
@@ -105,7 +105,16 @@ void PixTestFPIXTest::doTest() {
       fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal, true); 
     }
 
-    t->fullTest(); 
+    if (!suite[i].compare("scurves")) {
+      t->setParameter("dumpoutputfile","1");
+      t->setParameter("dac","Vcal");
+      t->setParameter("daclo","0");
+      t->setParameter("dachi","70");
+      //t->setParameter("dacs/step","1");
+      t->setParameter("ntrig","200");
+    }
+
+    t->doTest(); 
 
     delete t; 
   }

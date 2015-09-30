@@ -293,7 +293,7 @@ void PixTestReadback::FinalCleaning() {
 
 // ----------------------------------------------------------------------
 void PixTestReadback::doTest() {
-  LOG(logINFO) << "PixTestReadback::doTest() start.";
+  bigBanner(Form("PixTestReadback::doTest()"));
   
   CalibrateVd();
   CalibrateVa();
@@ -1015,22 +1015,9 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   if (!dac.compare("vana")){
     LOG(logDEBUG)<<"Wrong daqReadback function called!!!";
   }
-  else if (!dac.compare("vd")){
-    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
-    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
-      if( pow_it->first.compare("vd") == 0){
-	pow_it->second = vana;
-      }
-    }
-    fApi->setTestboardPower(powerset);
-  }
-  else if (!dac.compare("va")){
-    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
-    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
-      if( pow_it->first.compare("va") == 0){
-	pow_it->second = vana;
-      }
-    }
+  else {
+    vector<pair<string,double > > powerset;
+    powerset.push_back(std::make_pair(dac,vana));
     fApi->setTestboardPower(powerset);
   }
 
@@ -1043,7 +1030,10 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
 
   return rb_val;
@@ -1070,7 +1060,10 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, int8
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
 
   return rb_val;
@@ -1096,7 +1089,10 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, unsi
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
   
   return rb_val;
@@ -1115,7 +1111,10 @@ std::vector<uint8_t> PixTestReadback::daqReadbackIa(){
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
  
   return rb_val;

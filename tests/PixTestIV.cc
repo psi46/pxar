@@ -96,6 +96,14 @@ PixTestIV::~PixTestIV() {
   LOG(logDEBUG) << "PixTestIV dtor";
 }
 
+
+// ----------------------------------------------------------------------
+void PixTestIV::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "running command: " << command;
+  PixTest::runCommand(command);
+}
+
 // ----------------------------------------------------------------------
 void PixTestIV::doTest() {
 

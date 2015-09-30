@@ -12,7 +12,7 @@
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('d:m:r:t:');
+getopts('d:m:r:t:v:');
 
 # -- define pxar production release
 my $pxarbase = "..";
@@ -21,7 +21,12 @@ my $pxarbase = "..";
 my @rocok = ("digv2", "digv21", "digv21respin");
 my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
 
-# -- check for directory sopecification
+# -- set verbosity if not done on command line
+if (!$opt_v) {
+    $opt_v = "DEBUG"; 
+}
+
+# -- check for directory specification
 if (!$opt_d) {
     die "you must specify a directory for the module setup\n";
 } else {
@@ -60,7 +65,7 @@ if ($opt_m) {
     while (42) {
 	$dir = sprintf("%s-%02d", $opt_d, $cnt); 
 	system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $dir");
-	system("cat $opt_m | $pxarbase/bin/pXar -v DEBUG -d $dir");
+	system("cat $opt_m | $pxarbase/bin/pXar -v $opt_v -d $dir");
 	$cnt += 1;
     }
     exit(0); 
@@ -72,16 +77,16 @@ print "\n";
 print "###### shortTest: create directory with config files\n";
 system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $opt_d");
  
-print "\n";
-print "###### shortTest: run essential pretest and Wolfram's timing test\n";
-system("cat $pxarbase/main/ltest | $pxarbase/bin/pXar -v DEBUG -d $opt_d");
+#print "\n";
+#print "###### shortTest: run essential pretest and Wolfram's timing test\n";
+#system("cat $pxarbase/main/ltest | $pxarbase/bin/pXar -v DEBUG -d $opt_d");
 
-print "\n";
-print "###### shortTest: mv pxar_timing.log into $opt_d\n";
-system("/bin/mv pxar_timing.log $opt_d");
-system("cat $opt_d/pxar_timing.log");
+#print "\n";
+#print "###### shortTest: mv pxar_timing.log into $opt_d\n";
+#system("/bin/mv pxar_timing.log $opt_d");
+#system("cat $opt_d/pxar_timing.log");
 
 print "\n";
 print "###### shortTest: run full test\n";
-system("cat $pxarbase/main/mtest | $pxarbase/bin/pXar -v DEBUG -d $opt_d");
+system("cat $pxarbase/main/mtest | $pxarbase/bin/pXar -v $opt_v -d $opt_d");
 

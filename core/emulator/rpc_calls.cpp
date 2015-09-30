@@ -562,6 +562,10 @@ void CTestboard::SetLoopTriggerDelay(uint16_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
+void CTestboard::SetLoopTrimDelay(uint16_t) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
 bool CTestboard::SetI2CAddresses(std::vector<uint8_t> &rpc_par1) {
   LOG(pxar::logDEBUGRPC) << "called.";
   nrocs_loops = rpc_par1.size();

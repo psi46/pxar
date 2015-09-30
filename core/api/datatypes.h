@@ -42,7 +42,10 @@ namespace pxar {
 
     /** Constructor for pixel objects with rawdata pixel address & value and ROC id initialization.
      */
-  pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false) : _roc_id(rocid) { decodeRaw(rawdata,invertAddress); }
+  pixel(uint32_t rawdata, uint8_t rocid, bool invertAddress = false, bool linearAddress = false) : _roc_id(rocid) {
+      if(linearAddress) { decodeLinear(rawdata); }
+      else { decodeRaw(rawdata,invertAddress); }
+    }
 
     /** Constructor for pixel objects with analog levels data, ultrablack & black levels and ROC id initialization.
      */
@@ -96,6 +99,10 @@ namespace pxar {
      */
     uint32_t encode();
 
+    /** Member function to re-encode pixel into raw data, linear address space
+     */
+    uint32_t encodeLinear();
+
     /** Overloaded comparison operator
      */
     bool operator == (const pixel& px) {
@@ -147,6 +154,13 @@ namespace pxar {
      *  case of a failed decoding attempts.
      */
     void decodeRaw(uint32_t raw, bool invert);
+
+    /** Decoding function for PSI46digPlus raw ROC data with linear 
+     *  address space.
+     *  This function throws a pxar::DataDecodingError exception in
+     *  case of a failed decoding attempts.
+     */
+    void decodeLinear(uint32_t raw);
 
     /** Decoding function for PSI46 analog levels ROC data. Parameters "black"
      *  and "ultrablack" refer to the ROC identifier levels and are used to calculate

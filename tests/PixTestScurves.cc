@@ -193,8 +193,8 @@ void PixTestScurves::fullTest() {
   fOutputFilename = "SCurveData";
   fParNtrig = 50; 
   fParDac = "Vcal"; 
-  fParDacLo = 0; 
-  fParDacHi = 149;
+  fParDacLo = 25;
+  fParDacHi = 150;
   fParDacsPerStep = -1;   
   fParNtrigPerStep = -1;   
   bigBanner(Form("PixTestScurves::fullTest() ntrig = %d, dacs/step = %d, ntrig/step = %d", fParNtrig, fParDacsPerStep, fParNtrigPerStep));
