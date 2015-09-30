@@ -162,8 +162,8 @@ sub setTbms {
 #	    $tbms .= "4      delays   0x64\n";
 #	    $tbms .= "5       basee   0x2c\n";
 	    # -- WE's parameters
-	    $tbms .= "4      delays   0x49\n";
-	    $tbms .= "5       basee   0x84\n";
+	    $tbms .= "4      delays   0xD2\n";
+	    $tbms .= "5       basee   0xC8\n";
 	    $tbms .= "6 temperature   0x00\n";
 	} else {
 	    $tbms .= "base0   0x81\n";
@@ -172,9 +172,9 @@ sub setTbms {
 	    $tbms .= "base8   0x10\n";
 #	    $tbms .= "basea   0x64\n";
 #	    $tbms .= "basee   0x2c\n";
-	    $tbms .= "basea   0x49\n";
+	    $tbms .= "basea   0xD2\n";
 	    $tbms .= "basec   0x00\n";
-	    $tbms .= "basee   0x84\n";
+	    $tbms .= "basee   0xC8\n";
 	}
     } elsif ($tbmtype eq "TBM08B") {
 	if ($oldStyle == 1) {
