@@ -163,6 +163,10 @@ void PixTest::runCommand(std::string command) {
     hvOff();
     return;
   }
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
   LOG(logDEBUG) << "Nothing done with " << command; 
 }
 
