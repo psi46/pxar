@@ -222,7 +222,7 @@ int main(int argc, char *argv[]){
   a.setRootFileUpdate(doUpdateRootFile);
   LOG(logDEBUG) << "Initial Analog Current: " << api->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Initial Digital Current: " << api->getTBid()*1000 << "mA";
-  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Initial Module Temperatue: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
+  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Initial Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
 
   if (doRunGui) {
     runGui(a, argc, argv);
@@ -339,7 +339,7 @@ int main(int argc, char *argv[]){
   // -- clean exit (however, you should not get here when running with the GUI)
   LOG(logDEBUG) << "Final Analog Current: " << api->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Final Digital Current: " << api->getTBid()*1000 << "mA";
-  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Final Module Temperatue: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
+  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
   a.getPixMonitor()->dumpSummaries();
   rfile->Close();
   if (api) delete api;
