@@ -220,9 +220,12 @@ int main(int argc, char *argv[]){
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
   a.setRootFileUpdate(doUpdateRootFile);
+  LOG(logDEBUG) << "Initial Analog Current: " << api->getTBia()*1000 << "mA";
+  LOG(logDEBUG) << "Initial Digital Current: " << api->getTBid()*1000 << "mA";
+  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Initial Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
 
   if (doRunGui) {
-    runGui(a, argc, argv); 
+    runGui(a, argc, argv);
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
     PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
@@ -334,6 +337,9 @@ int main(int argc, char *argv[]){
   }
   
   // -- clean exit (however, you should not get here when running with the GUI)
+  LOG(logDEBUG) << "Final Analog Current: " << api->getTBia()*1000 << "mA";
+  LOG(logDEBUG) << "Final Digital Current: " << api->getTBid()*1000 << "mA";
+  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
   a.getPixMonitor()->dumpSummaries();
   rfile->Close();
   if (api) delete api;

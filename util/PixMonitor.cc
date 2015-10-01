@@ -17,9 +17,9 @@ using namespace std;
 using namespace pxar;
 
 // ----------------------------------------------------------------------
-PixMonitor::PixMonitor(PixSetup *a): fSetup(a), fIana(0.), fIdig(0.) {
+PixMonitor::PixMonitor(PixSetup *a): fSetup(a), fIana(0.), fIdig(0.), fTemp(0.) {
   if ("fpix" == a->getConfigParameters()->getHdiType()) {
-    //fTemp = (-double(fApi->GetADC(4) - fApi->GetADC(5)) - 0.92)/ 6.55;
+    fTemp = (-double(a->getApi()->GetADC(4) - a->getApi()->GetADC(5)) - 0.92)/ 6.55;
   }
 }
 
@@ -66,6 +66,23 @@ void PixMonitor::dumpSummaries() {
 
   hd->SetDirectory(gFile); 
   hd->Write();
+
+  if (fSetup->getConfigParameters()->getHdiType() == "fpix") { 
+    TH1D *rtd = new TH1D("RTD", Form("RTD Temperature Measurement, start: %s / sec:%ld", ts.AsString("lc"), begSec), endSec-begSec, 0., endSec-begSec);
+    rtd->SetXTitle(Form("seconds after %s", ts.AsString("lc"))); 
+    rtd->SetTitleSize(0.03, "X");
+    rtd->SetTitleOffset(1.5, "X");
+    
+    for (unsigned int i = 0; i < fRtdMeasurements.size(); ++i) {
+      int ibin = fRtdMeasurements[i].first - begSec;
+      rtd->SetBinContent(ibin+1, fRtdMeasurements[i].second);
+    }
+    
+    rtd->Draw();
+    rtd->SetDirectory(gFile); 
+    rtd->Write();
+  }
+
 }
 
 // ----------------------------------------------------------------------
@@ -73,7 +90,8 @@ void PixMonitor::update() {
   int NBINS(10); 
   fIana = fSetup->getApi()->getTBia();
   fIdig = fSetup->getApi()->getTBid();
-  
+  if (fSetup->getConfigParameters()->getHdiType() == "fpix") fTemp = (-double(fSetup->getApi()->GetADC(4) - fSetup->getApi()->GetADC(5)) - 0.92)/ 6.55;
+
   TTimeStamp ts; 
   ULong_t seconds  = ts.GetSec();
   
@@ -101,7 +119,20 @@ void PixMonitor::update() {
   hd->SetBinContent(ibin+1, fIdig); 
 
   fMeasurements.push_back(make_pair(seconds, make_pair(fIana, fIdig))); 
-  
+
+  if (fSetup->getConfigParameters()->getHdiType() == "fpix") {
+    TH1D *rtd = (TH1D*)gDirectory->Get("rtd");
+    if (0 ==rtd) {
+      rtd = new TH1D("rtd", Form("RTD Temperature, start: %s / sec:%ld", ts.AsString("lc"), seconds), NBINS, 0, NBINS);
+      rtd->SetXTitle(Form("seconds after %s", ts.AsString("lc")));
+      rtd->SetTitleSize(0.03, "X");
+      rtd->SetTitleOffset(1.5, "X");
+    }
+
+    if (ibin > rtd->GetNbinsX()) rtd = extendHist(rtd, ibin);
+    rtd->SetBinContent(ibin+1, fTemp);
+    fRtdMeasurements.push_back(make_pair(seconds, fTemp));
+  }
 
 }
 
@@ -173,4 +204,3 @@ UInt_t PixMonitor::getHistMinSec(TH1D *h) {
   UInt_t seconds = atoi(sseconds.c_str()); 
   return seconds;
 }
-
