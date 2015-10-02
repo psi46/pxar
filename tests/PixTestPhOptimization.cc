@@ -281,8 +281,9 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   bool isPixGood=true;
   int maxph = 255;
+  
   fApi->setDAC("phoffset", 200);
-  int init_phScale =200;
+  int init_phScale = 200; 
   int init_phOffset = 150;
   if(!isRoc21){
     init_phScale = 110;
@@ -348,7 +349,6 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     int colMargin = 3;
     int rowMargin = 5; 
     bool pix_found = false;
-    bool badpix = false;
     //first, pixel search excludes edges (col(row)Margin cols (rows) per side)
     for(int ibinx = 1 + colMargin; ibinx < maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx++){
       if(pix_found) break;
@@ -357,7 +357,8 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
 	ibinx = (ibinx)%maxphmap[ith2]->GetNbinsX();
 	ibiny = (ibiny)%maxphmap[ith2]->GetNbinsY();
 	if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
-	  temp_pix.setRoc( getIdFromIdx(ith2) );
+	  bool badpix = false;
+    temp_pix.setRoc( getIdFromIdx(ith2) );
 	  temp_pix.setRow( ibiny - 1 );
 	  temp_pix.setColumn( ibinx - 1 );
 	  for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
@@ -377,16 +378,17 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     }
     //if not found, look outside fiducial region
     if(!pix_found){
-      badpix=false;
       LOG(logDEBUG)<<"Search for maxph pixel failed in the fiducial region on chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
       for(int ibinx_ex = maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx_ex < maxphmap[ith2]->GetNbinsX()+1+colMargin; ibinx_ex++){
 	if(pix_found) break;
 	for(int ibiny_ex = maxphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny_ex < maxphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny_ex++){
-	  //try to avoid picking edge pixels
+	  badpix = false
+    //try to avoid picking edge pixels
 	  int ibinx = (ibinx_ex)%maxphmap[ith2]->GetNbinsX();
 	  int ibiny = (ibiny_ex)%maxphmap[ith2]->GetNbinsY();
 	  if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
-	    temp_pix.setRoc( getIdFromIdx(ith2) );
+	    badpix=false;
+      temp_pix.setRoc( getIdFromIdx(ith2) );
 	    temp_pix.setRow( ibiny - 1 );
 	    temp_pix.setColumn( ibinx - 1 );
 	    for(std::vector<std::pair<uint8_t, pair<int, int> > >::iterator bad_it = badPixels.begin(); bad_it != badPixels.end(); bad_it++){
@@ -503,12 +505,12 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     int colMargin = 3;
     int rowMargin = 5; 
     bool pix_found = false;
-    bool badpix = false;
     //first, pixel search excludes edges (col(row)Margin cols (rows) per side)
     for(int ibinx = 1 + colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx++){
       if(pix_found) break;
       for(int ibiny = 1 + rowMargin; ibiny < minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny++){
-	//try to avoid picking edge pixels
+	     bool badpix = false;
+  //try to avoid picking edge pixels
 	ibinx = (ibinx)%minphmap[ith2]->GetNbinsX();
 	ibiny = (ibiny)%minphmap[ith2]->GetNbinsY();	  
 	if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) <= 1){
@@ -533,12 +535,12 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     
     //if not found, look outside fiducial region
     if(!pix_found){
-      badpix = false;
       LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
       for(int ibinx_ex = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx_ex < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx_ex++){
 	if(pix_found) break;
 	for(int ibiny_ex = minphmap[ith2]->GetNbinsY()+1 - rowMargin; ibiny_ex < minphmap[ith2]->GetNbinsY()+1 + rowMargin; ibiny_ex++){
-	  //ibinx_ex, ibiny_ex extend beyond the range so wrap around 
+	   badpix = false;
+    //ibinx_ex, ibiny_ex extend beyond the range so wrap around 
 	  int ibinx = (ibinx_ex)%minphmap[ith2]->GetNbinsX();
 	  int ibiny = (ibiny_ex)%minphmap[ith2]->GetNbinsY();
 	  if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) <= 1){
