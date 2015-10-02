@@ -283,7 +283,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
   int maxph = 255;
   
   fApi->setDAC("phoffset", 200);
-  int init_phScale = 200; 
+  int init_phScale =200;
   int init_phOffset = 150;
   if(!isRoc21){
     init_phScale = 110;
