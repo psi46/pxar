@@ -993,23 +993,12 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
       
       for(int ibinx=21; ibinx < hmin->GetNbinsX()+1; ibinx++){//Excluding PhScan lower than 20 DAC
 	for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-      //creating green bands for min and max with red interception
 	  if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
-       th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
-    }
+	    th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+	  }
 	}
       }
       maxsol = th2_sol[rocIds[iroc]]->GetMaximum();
-      if(maxsol < 1){ //If no solutions can be found, include the region with PhScale lower than 20
-        LOG(logINFO)<<"For ROC "<<iroc<<": No solutions with PhScale > 20 could be found. Looking for a solution with PhScale < 20.";
-        for(int ibinx=1;ibinx < hmin->GetNbinsX()+1; ibinx++){ 
-          for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-            if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
-              th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
-             }
-            }
-          }
-        }
       th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
       
     }//safetycorr
