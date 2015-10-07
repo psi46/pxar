@@ -977,7 +977,7 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
       for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
 	for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
 	  //ideally, the condition would be bincontent - maxPH == 1, relaxed ( >0 && <=3) to allow a wider band for solution
-    if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
+	  if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
 	    hmax->SetBinContent(ibinx, ibiny, 0);
 	  }
 	}
@@ -993,31 +993,59 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
       
       for(int ibinx=21; ibinx < hmin->GetNbinsX()+1; ibinx++){//Excluding PhScan lower than 20 DAC
 	for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-      //creating green bands for min and max with red interception
 	  if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
-       th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
-    }
+	    th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+	  }
 	}
       }
       maxsol = th2_sol[rocIds[iroc]]->GetMaximum();
-      if(maxsol < 1){ //If no solutions can be found, include the region with PhScale lower than 20
-        LOG(logINFO)<<"For ROC "<<iroc<<": No solutions with PhScale > 20 could be found. Looking for a solution with PhScale < 20.";
-        for(int ibinx=1;ibinx < hmin->GetNbinsX()+1; ibinx++){ 
-          for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
-            if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
-              th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
-             }
-            }
-          }
-        }
       th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
       
-    }
+    }//safetycorr
+    
+    if(maxsol < 1){  
+      LOG(logINFO)<<"For ROC "<<iroc<<": No solutions with PhScale > 20 could be found. Looking for a solution with PhScale < 20."; 
+      for(int safetyCorrection = 0; maxsol<1. && safetyCorrection+fSafetyMarginLow<256; safetyCorrection++){
+	LOG(logINFO)<<"safety margin for low PH: adding "<<safetyCorrection<<", margin is now "<<safetyCorrection+fSafetyMarginLow;
+	// hsol->Reset("M");
+	hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
+	hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
+	maxPH = hmax->GetMaximum();
+	
+	for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
+	  for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
+	    //ideally, the condition would be bincontent - maxPH == 1, relaxed ( >0 && <=3) to allow a wider band for solution
+	    if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
+	      hmax->SetBinContent(ibinx, ibiny, 0);
+	    }
+	  }
+	}
+	
+	for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+	  for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	    if(abs(hmin->GetBinContent(ibinx, ibiny) - (fSafetyMarginLow+safetyCorrection)) > 1 ){
+	      hmin->SetBinContent(ibinx, ibiny, 0);
+	    }
+	  }
+	}
+	
+	for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){//Excluding PhScan lower than 20 DAC
+	  for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	    if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
+	      th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+	    }
+	  }
+	}
+	maxsol = th2_sol[rocIds[iroc]]->GetMaximum();
+	th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
+	
+      }//safety corr
+    }//if no sol
     //po_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetXaxis()->GetBinCenter(goodbinx);
     //ps_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetYaxis()->GetBinCenter(goodbiny);
     po_opt[rocIds[iroc]] = goodbiny - 1;
     ps_opt[rocIds[iroc]] = goodbinx - 1;
-  }
+  }//rocs loop
 
   
   delete hmin;
