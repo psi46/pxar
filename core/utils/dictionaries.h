@@ -303,6 +303,7 @@ namespace pxar {
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
       _devices["psi46digplus"]      = ROC_PSI46DIGPLUS;
+      _devices["psi46digl1"]        = ROC_PSI46DIGPLUS;
 
       // TBM flavors:
       _devices["notbm"]         = TBM_NONE;
@@ -313,6 +314,8 @@ namespace pxar {
       _devices["tbm08c"]        = TBM_08C;
       _devices["tbm09"]         = TBM_09;
       _devices["tbm09c"]        = TBM_09C;
+      _devices["tbm09d"]        = TBM_10;
+      _devices["tbm10"]        = TBM_10;
     }
 
     std::map<std::string, uint8_t> _devices;
