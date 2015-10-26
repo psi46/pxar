@@ -312,7 +312,7 @@ void PixTestReadback::doTest() {
 
 void PixTestReadback::CalibrateIa(){
   LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Starting CalibrateIa()";
+  LOG(logINFO)<<"Running CalibrateIa()";
   prepareDAQ();
   cacheDacs();
   //readback DAC set to 12 (i.e. Ia)
@@ -558,7 +558,7 @@ double PixTestReadback::getCalibratedIa(unsigned int iroc){
 
 void PixTestReadback::CalibrateVd(){
   LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Starting CalibrateVd()";
+  LOG(logINFO)<<"Running CalibrateVd()";
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -719,7 +719,7 @@ void PixTestReadback::CalibrateVd(){
 
 void PixTestReadback::readbackVbg(){
   LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Starting readbackVbg())";
+  LOG(logINFO)<<"Running readbackVbg())";
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -803,7 +803,7 @@ void PixTestReadback::readbackVbg(){
 
 vector<double> PixTestReadback::getCalibratedVbg(){
   LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Starting getCalibratedVbg()";
+  LOG(logINFO)<<"Running getCalibratedVbg()";
   vector<double> calVbg(fRbVbg.size(), 0.);
   string name="";
   if(fCalwVd){
@@ -855,7 +855,7 @@ vector<double> PixTestReadback::getCalibratedVbg(){
 
 void PixTestReadback::CalibrateVa(){
   LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Starting CalibrateVa()";
+  LOG(logINFO)<<"Running CalibrateVa()";
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -1286,7 +1286,7 @@ void PixTestReadback::prepareDAQ(){
   // FIXME - issuing a ROC reset should not be necessary anymore since
   // pxarCore automatically resets the ROC when WBC is changed.
   fApi->daqSingleSignal("resetroc");
-  LOG(logINFO) << "PixTestReadback::RES sent once ";
+  LOG(logDEBUG) << "PixTestReadback::RES sent once ";
 
   //adding triggers to pg
   PreparePG();
@@ -1326,6 +1326,13 @@ void PixTestReadback::PreparePG(){
   //for ROCs: subtract "resetroc"
   int nTbms = fApi->_dut->getNTbms();
   vector<pair<string, uint8_t> > pgtmp = fPixSetup->getConfigParameters()->getTbPgSettings();
+  
+  //for debugging: showing the pattern to be generated
+  LOG(logDEBUG) << "********** The Pattern Generator will be set as following:";
+  if (1) for (unsigned int i = 0; i < pgtmp.size(); ++i){
+    LOG(logDEBUG) << "********** "<<pgtmp[i].first << ": " << (int)pgtmp[i].second;
+  }
+
   for (unsigned i = 0; i < pgtmp.size(); ++i) {
     if(nTbms==0){
       if (string::npos != pgtmp[i].first.find("resetroc")){
@@ -1338,6 +1345,10 @@ void PixTestReadback::PreparePG(){
       }
       if (string::npos != pgtmp[i].first.find("token")){
       LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 1) from "<<ClkDelays;
+      ClkDelays -= pgtmp[i].second+1;
+      }
+      if (string::npos != pgtmp[i].first.find("trigger;sinc")){
+      LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 2) from "<<ClkDelays;
       ClkDelays -= pgtmp[i].second+1;
       }
     }
@@ -1376,6 +1387,7 @@ void PixTestReadback::PreparePG(){
   for(std::vector<std::pair<std::string,uint8_t> >::iterator it = fPg_setup.begin(); it != fPg_setup.end(); ++it){
      if((string)(*it).first==("resetroc")){fParPeriod += (*it).second + 3; LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 3";}
      if((string)(*it).first==("trigger")){fParPeriod += (*it).second + 2;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 2";}
+     if((string)(*it).first==("trigger;sync")){fParPeriod += (*it).second + 2;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 2";}
      if((string)(*it).first==("delay")){fParPeriod += (*it).second + 1;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 1";}
      if((string)(*it).first==("token")){fParPeriod += (*it).second + 1;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 1";}
   }
