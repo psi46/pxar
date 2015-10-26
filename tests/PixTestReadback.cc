@@ -1318,11 +1318,10 @@ void PixTestReadback::PreparePG(){
 
   //adding delays to the pattern generator, assuming a trigger frequency of 100 kHz, giving a pattern length of 400.
   int nDel = 0;
-  uint8_t trgtkdel= 20;
   double  triggerFreq=100.;
   double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
   uint16_t Period = (uint16_t)period_ns / 25;
-  uint16_t ClkDelays = Period - trgtkdel; // subtracting trigger token delay.
+  uint16_t ClkDelays = Period; // subtracting trigger token delay.
 
   //for ROCs: subtract "resetroc"
   int nTbms = fApi->_dut->getNTbms();
@@ -1331,7 +1330,15 @@ void PixTestReadback::PreparePG(){
     if(nTbms==0){
       if (string::npos != pgtmp[i].first.find("resetroc")){
         LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 3) from "<<ClkDelays;
+        ClkDelays -= pgtmp[i].second+3;
+      }
+      if (string::npos != pgtmp[i].first.find("trigger")){
+        LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 2) from "<<ClkDelays;
         ClkDelays -= pgtmp[i].second+2;
+      }
+      if (string::npos != pgtmp[i].first.find("token")){
+      LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 1) from "<<ClkDelays;
+      ClkDelays -= pgtmp[i].second+1;
       }
     }
   }
@@ -1342,7 +1349,9 @@ void PixTestReadback::PreparePG(){
     ClkDelays = ClkDelays - 256;
     nDel ++;
   }
-  fPg_setup.push_back(make_pair("delay", ClkDelays-1));
+  if(ClkDelays>1){
+    fPg_setup.push_back(make_pair("delay", ClkDelays-1));
+  }
 
   //remove "resetroc" (if module), "resettbm" and "calibrate" from fPg_setup.
   for (unsigned i = 0; i < pgtmp.size(); ++i) {
