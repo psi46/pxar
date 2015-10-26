@@ -1334,24 +1334,21 @@ void PixTestReadback::PreparePG(){
   }
 
   for (unsigned i = 0; i < pgtmp.size(); ++i) {
-    if(nTbms==0){
+    if(nTbms==0){  
       if (string::npos != pgtmp[i].first.find("resetroc")){
         LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 3) from "<<ClkDelays;
         ClkDelays -= pgtmp[i].second+3;
       }
-      if (string::npos != pgtmp[i].first.find("trigger")){
-        LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 2) from "<<ClkDelays;
-        ClkDelays -= pgtmp[i].second+2;
-      }
-      if (string::npos != pgtmp[i].first.find("token")){
-      LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 1) from "<<ClkDelays;
-      ClkDelays -= pgtmp[i].second+1;
-      }
-      if (string::npos != pgtmp[i].first.find("trigger;sinc")){
+    }  
+    if (string::npos != pgtmp[i].first.find("trigger")){
       LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 2) from "<<ClkDelays;
-      ClkDelays -= pgtmp[i].second+1;
-      }
+      ClkDelays -= pgtmp[i].second+2;
     }
+    if (string::npos != pgtmp[i].first.find("token")){
+    LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 1) from "<<ClkDelays;
+    ClkDelays -= pgtmp[i].second+1;
+    }
+      
   }
 
   //filling the rest of the clock cycles with "delay", taking account, that each delay needs one Clkcycle to be inititated.
