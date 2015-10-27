@@ -311,8 +311,7 @@ void PixTestReadback::doTest() {
 
 
 void PixTestReadback::CalibrateIa(){
-  LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Running CalibrateIa()";
+  banner("PixTestReadback::CalibrateIa()");
   prepareDAQ();
   cacheDacs();
   //readback DAC set to 12 (i.e. Ia)
@@ -557,8 +556,7 @@ double PixTestReadback::getCalibratedIa(unsigned int iroc){
 }
 
 void PixTestReadback::CalibrateVd(){
-  LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Running CalibrateVd()";
+  banner("PixTestReadback::CalibrateVd()");
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -718,8 +716,7 @@ void PixTestReadback::CalibrateVd(){
 
 
 void PixTestReadback::readbackVbg(){
-  LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Running readbackVbg())";
+  banner("PixTestReadback::readbackVbg()");
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -802,8 +799,7 @@ void PixTestReadback::readbackVbg(){
 }
 
 vector<double> PixTestReadback::getCalibratedVbg(){
-  LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Running getCalibratedVbg()";
+  banner("PixTestReadback::getCalibratedVbg()");
   vector<double> calVbg(fRbVbg.size(), 0.);
   string name="";
   if(fCalwVd){
@@ -854,8 +850,7 @@ vector<double> PixTestReadback::getCalibratedVbg(){
 }
 
 void PixTestReadback::CalibrateVa(){
-  LOG(logINFO)<<"*******************************************************";
-  LOG(logINFO)<<"Running CalibrateVa()";
+  banner("PixTestReadback::CalibrateVa()");
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
