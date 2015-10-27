@@ -1428,7 +1428,7 @@ uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting ("<<inputperiod<<") too small for configured "
+    LOG(logWARNING) << "Loop period setting (" << inputperiod << ") too small for configured "
 		    << "Pattern generator. "
 		    << "Forcing loop delay to " << period << " clk";
     LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
@@ -1446,7 +1446,7 @@ uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting ("<<inputperiod<<") too small for configured "
+    LOG(logWARNING) << "Loop period setting (" << inputperiod << ") too small for configured "
 		    << "Pattern generator. "
 		    << "Forcing loop delay to " << period << " clk";
     LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
