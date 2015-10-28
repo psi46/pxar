@@ -1423,7 +1423,7 @@ bool pxarCore::daqStatus(uint8_t & perFull) {
 uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
 
   if(!daqStatus()) { return 0; }
-  int inputperiod=period;
+  uint16_t inputperiod=period;
   // Pattern Generator loop doesn't work for delay periods smaller than
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
@@ -1441,7 +1441,7 @@ uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
 uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
 
   if(!daqStatus()) { return 0; }
-  int inputperiod=period;
+  uint16_t inputperiod=period;
   // Pattern Generator loop doesn't work for delay periods smaller than
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
