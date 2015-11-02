@@ -92,6 +92,10 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_DISABLE_READBACK_COLLECTION 0x0400
 
+/** Flag to disable cross-checking the TBM event id against a local counter.
+ */
+#define FLAG_DISABLE_EVENTID_CHECK 0x0800
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
