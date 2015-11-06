@@ -12,6 +12,7 @@
 #include <TPad.h>
 #include <TLegend.h>
 #if defined(WIN32)
+#include <Winsock2.h>
 #else
 #include <TUnixSystem.h>
 #endif
@@ -1055,14 +1056,14 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
 
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<double> &v) {
-  ifstream IN; 
+  ifstream INS; 
   
   char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer; 
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
@@ -1073,21 +1074,21 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<doub
   x = splitIntoRocs(sline);
   v.clear();
   copy(x.begin(), x.end(), back_inserter(v));
-  IN.close(); 
+  INS.close(); 
 }
 
 
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists) {
 
-  ifstream IN; 
+  ifstream INS; 
 
   char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer; 
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
@@ -1101,20 +1102,20 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
     hists[i]->Fill(x[i]); 
   }
 
-  IN.close(); 
+  INS.close(); 
 }
 
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
 
-  ifstream IN; 
+  ifstream INS; 
 
   char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer; 
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
@@ -1127,7 +1128,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
     hist->Fill(x[i]); 
   }
 
-  IN.close(); 
+  INS.close(); 
 }
 
 
@@ -1203,6 +1204,54 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
 	  }
 	} 
       } 
+    }
+  }
+  f->Close();
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::findNoiseLevel(std::string dirname, std::string /*hbasename*/, TH1D* /*rochist*/) {
+  TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
+  
+  TH2D *h(0); 
+  int cnt(0); 
+  
+  vector<pair<int, int> > pixelList; 
+  pixelList.push_back(make_pair(12,22)); 
+  pixelList.push_back(make_pair(5,5)); 
+  pixelList.push_back(make_pair(15,26)); 
+  pixelList.push_back(make_pair(20,32)); 
+  pixelList.push_back(make_pair(25,36)); 
+  pixelList.push_back(make_pair(30,42)); 
+  pixelList.push_back(make_pair(35,50)); 
+  pixelList.push_back(make_pair(40,60)); 
+  pixelList.push_back(make_pair(45,70)); 
+  pixelList.push_back(make_pair(50,75)); 
+
+  //try  ;
+  int ipixel(-1); 
+  for (unsigned int i = 0; i < pixelList.size(); ++i) {
+    h = (TH2D*)f->Get(Form("pretestVthrCompCalDel_c%d_r%d_C0", pixelList[i].first, pixelList[i].second)); 
+    if (h) {
+      ipixel = i; 
+      cout << "found " << h->GetName() << endl;
+      break;
+    }
+  }  
+
+  if (ipixel < 0) {
+    cout << "did not find histograms for working pixel" << endl;
+    return;
+  }
+  
+  for (int i = 0; i < fNrocs; ++i) {
+    h = (TH2D*)f->Get(Form("pretestVthrCompCalDel_c%d_r%d_C%d", pixelList[ipixel].first, pixelList[ipixel].second, i)); 
+    cnt = 0; 
+    if (h) {
+      int x = static_cast<int>(h->GetMean()); 
+      TH1D *hy = h->ProjectionY("_py", x, x); 
+      cout << "last bin above 50%: " << hy->FindLastBinAbove(0.5*h->GetMaximum()) << endl;
     }
   }
   f->Close();
@@ -1291,7 +1340,7 @@ void anaFullTest::fillRocDefects(string dirname, TH2D *hmap) {
 
 // ----------------------------------------------------------------------
 void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
-  ifstream IN; 
+  ifstream INS; 
 
   char buffer[1000];
   string sline; 
@@ -1299,8 +1348,8 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
   int val(0); 
   cout << Form("%s/dacParameters%d_C0.dat", dir.c_str(), fTrimVcal) << endl;
   for (int i = 0; i < fNrocs; ++i) {
-    IN.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
-    while (IN.getline(buffer, 1000, '\n')) {
+    INS.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
+    while (INS.getline(buffer, 1000, '\n')) {
       if (buffer[0] == '#') {continue;}
       if (buffer[0] == '/') {continue;}
       if (buffer[0] == '\n') {continue;}
@@ -1313,7 +1362,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
 	vals[fNrocs]->Fill(val); 
       }
     }
-    IN.close(); 
+    INS.close(); 
   }
 
 }
@@ -1482,13 +1531,13 @@ void anaFullTest::projectRocHist(TH1D *h, double &mean, double &rms, int &total)
 string anaFullTest::readLine(string dir, string pattern, int mode) {
 
   //  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
-  ifstream IN; 
+  ifstream INS; 
 
   char buffer[1000];
   string sline; 
   string::size_type s1;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer; 
     s1 = sline.find(pattern.c_str()); 
     if (string::npos == s1) continue;
@@ -1504,7 +1553,7 @@ string anaFullTest::readLine(string dir, string pattern, int mode) {
     }
     break;
   }
-  IN.close();
+  INS.close();
   return sline; 
 
 }
@@ -1512,20 +1561,20 @@ string anaFullTest::readLine(string dir, string pattern, int mode) {
 
 // ----------------------------------------------------------------------
 int anaFullTest::countWord(string dir, string pattern) {
-  ifstream IN; 
+  ifstream INS; 
 
   char buffer[1000];
   string sline; 
   string::size_type s1;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
   int cnt(0); 
-  while (IN.getline(buffer, 1000, '\n')) {
+  while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer; 
     s1 = sline.find(pattern.c_str()); 
     if (string::npos == s1) continue;
     ++cnt;
   }
-  IN.close();
+  INS.close();
   return cnt; 
 }
 
@@ -1615,4 +1664,159 @@ void anaFullTest::dump2dTo1d(TH2D *h2, TH1D *h1) {
       h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
     }
   }
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::showAllTimings(string dir, string pattern, bool reset) {
+
+  if (reset) {
+    fTS->tPretest->Reset(); 
+    fTS->tAlive->Reset(); 
+    fTS->tBB->Reset(); 
+    fTS->tScurve->Reset(); 
+    fTS->tTrim->Reset(); 
+    fTS->tTrimBit->Reset(); 
+    fTS->tPhOpt->Reset(); 
+    fTS->tGain->Reset(); 
+    fTS->tReadback->Reset(); 
+    fTS->tFullTest->Reset(); 
+  }    
+  
+  vector<string> dirs = glob(dir, pattern); 
+  for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    cout << dirs[idirs] << endl;
+    fullTestTiming(dirs[idirs], dir); 
+  }
+
+  gStyle->SetOptStat(0); 
+  c0->Clear();
+  c0->Divide(3,3);
+  c0->cd(1); 
+  fTS->tPretest->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("pretest: %2.1f min", fTS->tPretest->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tPretest->GetEntries())));
+
+  c0->cd(2); 
+  fTS->tAlive->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("alive: %2.1f min", fTS->tAlive->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tAlive->GetEntries())));
+
+  c0->cd(3); 
+  fTS->tBB->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("BB: %2.1f min", fTS->tBB->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tBB->GetEntries())));
+
+  c0->cd(4); 
+  fTS->tScurve->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("scurve: %2.1f min", fTS->tScurve->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tScurve->GetEntries())));
+
+  c0->cd(5); 
+  fTS->tTrim->Draw();
+  fTS->tTrimBit->Draw("same");
+  tl->DrawLatex(0.52, 0.92, Form("trim: %2.1f min", fTS->tTrim->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tTrim->GetEntries())));
+  tl->SetTextColor(kRed);
+  tl->DrawLatex(0.05, 0.92, Form("trimbits: %2.1f min", fTS->tTrimBit->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.76, Form("(%d)", static_cast<int>(fTS->tTrimBit->GetEntries())));
+  tl->SetTextColor(kBlack);
+
+  c0->cd(6); 
+  fTS->tPhOpt->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("phoptimization: %2.1f min", fTS->tPhOpt->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tPhOpt->GetEntries())));
+
+  c0->cd(7); 
+  fTS->tGain->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("gain: %2.1f min", fTS->tGain->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tGain->GetEntries())));
+
+  c0->cd(8); 
+  fTS->tReadback->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("readback: %2.1f min", fTS->tReadback->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tReadback->GetEntries())));
+
+  c0->cd(9); 
+  fTS->tFullTest->Draw();
+  tl->DrawLatex(0.2, 0.92, Form("fulltest: %2.1f min", fTS->tFullTest->GetMean()/60.));
+  tl->DrawLatex(0.7, 0.82, Form("(%d)", static_cast<int>(fTS->tFullTest->GetEntries())));
+
+  cout << "ShowAllTiming Summary" << endl;
+  cout << "Pretest:    " << fTS->tPretest->GetMean() << endl;
+  cout << "Alive:      " << fTS->tAlive->GetMean() << endl;
+  cout << "BB:         " << fTS->tBB->GetMean() << endl;
+  cout << "Scurve:     " << fTS->tScurve->GetMean() << endl;
+  cout << "Trim:       " << fTS->tTrim->GetMean() << endl;
+  cout << "TrimBit:    " << fTS->tTrimBit->GetMean() << endl;
+  cout << "PhOpt:      " << fTS->tPhOpt->GetMean() << endl;
+  cout << "Gain:       " << fTS->tGain->GetMean() << endl;
+  cout << "Readback:   " << fTS->tReadback->GetMean() << endl;
+  cout << "FullTest:   " << fTS->tFullTest->GetMean() << endl;
+
+  
+  c0->SaveAs("fullTestTiming.pdf"); 
+
+
+}
+
+// ----------------------------------------------------------------------
+void anaFullTest::fullTestTiming(string dir, string basedir) {
+
+  ifstream INS; 
+
+  char buffer[1000];
+  string sline; 
+  string::size_type s1;
+
+  
+
+  vector<string> patterns; 
+  patterns.push_back("INFO:   running: pretest");
+  patterns.push_back("INFO:    PixTestAlive::aliveTest");
+  patterns.push_back("INFO: PixTestBBMap::doTest() Ntrig");
+  patterns.push_back("INFO: PixTestScurves::fullTest() ntrig");
+  patterns.push_back("INFO:    PixTestTrim::trimTest() ntrig");
+  patterns.push_back("INFO:    PixTestTrim::trimBitTest() ntrig");
+  patterns.push_back("INFO: PixTestPhOptimization::doTest() Ntrig");
+  patterns.push_back("INFO: PixTestGainPedestal::fullTest() ntrig");
+  patterns.push_back("INFO: readReadbackCal:");
+  patterns.push_back("INFO: pXar: this is the end, my friend");
+
+  vector<string> startPoints; 
+
+
+  INS.open(Form("%s/%s/pxar.log", basedir.c_str(), dir.c_str())); 
+  while (INS.getline(buffer, 1000, '\n')) {
+    sline = buffer; 
+    for (unsigned int i = 0; i < patterns.size(); ++i) {
+      s1 = sline.find(patterns[i].c_str()); 
+      if (string::npos != s1) {
+	startPoints.push_back(sline); 
+	break;
+      }
+    }
+  }
+
+  INS.close(); 
+
+  int testD(0); 
+  for (unsigned int i = 0; i < startPoints.size(); ++i) {
+    if (i < startPoints.size() - 1) {
+      testD = testDuration(startPoints[i], startPoints[i+1]);
+      if (0 == i) fTS->tPretest->Fill(testD); 
+      if (1 == i) fTS->tAlive->Fill(testD); 
+      if (2 == i) fTS->tBB->Fill(testD); 
+      if (3 == i) fTS->tScurve->Fill(testD); 
+      if (4 == i) fTS->tTrim->Fill(testD); 
+      if (5 == i) fTS->tTrimBit->Fill(testD); 
+      if (6 == i) fTS->tPhOpt->Fill(testD); 
+      if (7 == i) fTS->tGain->Fill(testD); 
+      if (8 == i) fTS->tReadback->Fill(testD); 
+      cout << Form("%4d from %s", testD, startPoints[i].c_str()) << endl;
+    }
+  }
+
+  testD = testDuration(startPoints[0], startPoints[startPoints.size()-1]);
+  fTS->tFullTest->Fill(testD); 
 }
