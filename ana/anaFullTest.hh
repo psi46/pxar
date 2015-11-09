@@ -51,12 +51,17 @@ struct singleModuleSummary {
   // histograms showing DACs vs iroc
   TH1D *vana, *caldel, *vthrcomp, *vtrim, *phscale, *phoffset; 
   // histograms showing something vs iroc
-  TH1D *noise, *vcalThr, *vcalThrW, *vcalTrimThr, *vcalTrimThrW, *relGainW, *pedestalW, *nonl, *nonlW; 
-  TH1D *dead, *bb, *mask, *addr; 
+  TH1D *noise, *vcalThr, *vcalThrW, *vcalTrimThr, *vcalTrimThrW, *relGainW, *pedestalW, *nonl, *nonlW, *noiseLevel; 
+  TH1D *dead, *BB, *mask, *addr; 
 
   TH2D *defectMap;
   TH1D *distNoise, *distVcalTrimThr, *distVcalThr;
 
+};
+
+// ----------------------------------------------------------------------
+struct timingSummary {
+  TH1D *tPretest, *tAlive, *tBB, *tScurve, *tTrim, *tTrimBit, *tPhOpt, *tGain, *tReadback, *tFullTest; 
 };
 
 
@@ -73,6 +78,9 @@ class DLLEXPORT anaFullTest {
   void validateFullTests();
   void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
 
+  void showAllTimings(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d2116-", bool reset = false);
+  void fullTestTiming(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
+
   void validateTrimTests();
   void addTrimTests(std::string dir = "/scratch/ursl/pxar/150828-repro", int ioffset = 0);
   void bookTrimSummary(int ioffset = 0); 
@@ -88,6 +96,7 @@ class DLLEXPORT anaFullTest {
 
   void fillRocHist(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
   void anaRocMap(std::string dirname, std::string hbasename, TH1D* rochist, int mode);
+  void findNoiseLevel(std::string dirname, std::string hbasename, TH1D* rochist);
   void fillRocDefects(std::string dirname, TH2D* defectMap);
 
   void bookModuleSummary(std::string modulename); 
@@ -123,6 +132,7 @@ private:
   std::vector<std::string>    fDacs; 
   std::map<std::string, moduleSummary*> fModSummaries;
   singleModuleSummary*        fSMS;
+  timingSummary*              fTS;
 
   std::vector<trimSummary*> fTrimSummaries;
 
