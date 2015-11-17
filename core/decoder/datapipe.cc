@@ -455,16 +455,19 @@ namespace pxar {
 			 << " Event ID reset due to ResetTBM";
       eventID = roc_Event.triggerCount();
     }
-    
-    // Check if TBM event ID matches with expectation:
-    if(roc_Event.triggerCount() != (eventID%256)) {
-      LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Event ID mismatch:  local ID (" << static_cast<int>(eventID)
-		    << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
-      decodingStats.m_errors_tbm_eventid_mismatch++;
-      // To continue readout, set event ID to the currently decoded one:
-      eventID = roc_Event.triggerCount();
-    }
 
+    // Check if the event ID cross-check is disabled:
+    if((GetFlags() & FLAG_DISABLE_EVENTID_CHECK) == 0) {
+      // Check if TBM event ID matches with expectation:
+      if(roc_Event.triggerCount() != (eventID%256)) {
+	LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Event ID mismatch:  local ID (" << static_cast<int>(eventID)
+		      << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
+	decodingStats.m_errors_tbm_eventid_mismatch++;
+	// To continue readout, set event ID to the currently decoded one:
+	eventID = roc_Event.triggerCount();
+      }
+    }
+    
     // Increment event counter:
     eventID = (eventID%256) + 1;
   }

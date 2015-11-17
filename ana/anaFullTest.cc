@@ -12,6 +12,7 @@
 #include <TPad.h>
 #include <TLegend.h>
 #if defined(WIN32)
+#include <Winsock2.h>
 #else
 #include <TUnixSystem.h>
 #endif
@@ -229,6 +230,8 @@ void anaFullTest::showFullTest(string modname, string basename) {
   fhCritical->Fill(ncritical); 
   string criticals = Form("%d", ncritical); 
 
+  cout << "criticals: " << criticals << endl;
+  
   string startTest = Form("Start:       %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
   string endTest   = Form("End:   %s", readLine(dirname, "INFO: pXar: this is the end, my friend", 2).c_str()); 
 
@@ -1076,15 +1079,13 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
 
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<double> &v) {
-  ifstream IN; 
+  ifstream INS; 
   
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (getline(INS, sline)) {
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
@@ -1094,22 +1095,20 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<doub
   x = splitIntoRocs(sline);
   v.clear();
   copy(x.begin(), x.end(), back_inserter(v));
-  IN.close(); 
+  INS.close(); 
 }
 
 
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D*> hists) {
 
-  ifstream IN; 
+  ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (getline(INS, sline)) {
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
@@ -1122,21 +1121,19 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
     hists[i]->Fill(x[i]); 
   }
 
-  IN.close(); 
+  INS.close(); 
 }
 
 // ----------------------------------------------------------------------
 void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
 
-  ifstream IN; 
+  ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (getline(INS, sline)) {
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
@@ -1148,7 +1145,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
     hist->Fill(x[i]); 
   }
 
-  IN.close(); 
+  INS.close(); 
 }
 
 
@@ -1231,7 +1228,7 @@ void anaFullTest::anaRocMap(std::string dirname, std::string hbasename, TH1D* ro
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::findNoiseLevel(std::string dirname, std::string hbasename, TH1D* rochist) {
+void anaFullTest::findNoiseLevel(std::string dirname, std::string /*hbasename*/, TH1D* /*rochist*/) {
   TFile *f = TFile::Open((dirname+"/pxar.root").c_str()); 
   
   TH2D *h(0); 
@@ -1360,20 +1357,18 @@ void anaFullTest::fillRocDefects(string dirname, TH2D *hmap) {
 
 // ----------------------------------------------------------------------
 void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
-  ifstream IN; 
+  ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   int val(0); 
   cout << Form("%s/dacParameters%d_C0.dat", dir.c_str(), fTrimVcal) << endl;
   for (int i = 0; i < fNrocs; ++i) {
-    IN.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
-    while (IN.getline(buffer, 1000, '\n')) {
-      if (buffer[0] == '#') {continue;}
-      if (buffer[0] == '/') {continue;}
-      if (buffer[0] == '\n') {continue;}
-      sline = buffer; 
+    INS.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
+    while (getline(INS, sline)) {
+      if (sline[0] == '#') {continue;}
+      if (sline[0] == '/') {continue;}
+      if (sline[0] == '\n') {continue;}
       s1 = sline.find(dac.c_str()); 
       if (string::npos != s1) {
 	sline = sline.substr(s1+dac.length()+1); 
@@ -1382,7 +1377,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
 	vals[fNrocs]->Fill(val); 
       }
     }
-    IN.close(); 
+    INS.close(); 
   }
 
 }
@@ -1551,14 +1546,12 @@ void anaFullTest::projectRocHist(TH1D *h, double &mean, double &rms, int &total)
 string anaFullTest::readLine(string dir, string pattern, int mode) {
 
   //  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
-  ifstream IN; 
+  ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
+  while (getline(INS, sline)) {
     s1 = sline.find(pattern.c_str()); 
     if (string::npos == s1) continue;
     if (0 == mode) {
@@ -1573,7 +1566,7 @@ string anaFullTest::readLine(string dir, string pattern, int mode) {
     }
     break;
   }
-  IN.close();
+  INS.close();
   return sline; 
 
 }
@@ -1581,20 +1574,18 @@ string anaFullTest::readLine(string dir, string pattern, int mode) {
 
 // ----------------------------------------------------------------------
 int anaFullTest::countWord(string dir, string pattern) {
-  ifstream IN; 
+  ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
-  IN.open(Form("%s/pxar.log", dir.c_str())); 
+  INS.open(Form("%s/pxar.log", dir.c_str())); 
   int cnt(0); 
-  while (IN.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     s1 = sline.find(pattern.c_str()); 
     if (string::npos == s1) continue;
     ++cnt;
   }
-  IN.close();
+  INS.close();
   return cnt; 
 }
 
@@ -1783,13 +1774,10 @@ void anaFullTest::showAllTimings(string dir, string pattern, bool reset) {
 // ----------------------------------------------------------------------
 void anaFullTest::fullTestTiming(string dir, string basedir) {
 
-  ifstream IN; 
+  ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
-
-  
 
   vector<string> patterns; 
   patterns.push_back("INFO:   running: pretest");
@@ -1806,9 +1794,8 @@ void anaFullTest::fullTestTiming(string dir, string basedir) {
   vector<string> startPoints; 
 
 
-  IN.open(Form("%s/%s/pxar.log", basedir.c_str(), dir.c_str())); 
-  while (IN.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  INS.open(Form("%s/%s/pxar.log", basedir.c_str(), dir.c_str())); 
+  while (getline(INS, sline)) {
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       s1 = sline.find(patterns[i].c_str()); 
       if (string::npos != s1) {
@@ -1818,7 +1805,7 @@ void anaFullTest::fullTestTiming(string dir, string basedir) {
     }
   }
 
-  IN.close(); 
+  INS.close(); 
 
   int testD(0); 
   for (unsigned int i = 0; i < startPoints.size(); ++i) {
