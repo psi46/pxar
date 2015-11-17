@@ -230,6 +230,8 @@ void anaFullTest::showFullTest(string modname, string basename) {
   fhCritical->Fill(ncritical); 
   string criticals = Form("%d", ncritical); 
 
+  cout << "criticals: " << criticals << endl;
+  
   string startTest = Form("Start:       %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str()); 
   string endTest   = Form("End:   %s", readLine(dirname, "INFO: pXar: this is the end, my friend", 2).c_str()); 
 
@@ -1079,13 +1081,11 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
 void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<double> &v) {
   ifstream INS; 
   
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
   INS.open(Form("%s/pxar.log", dir.c_str())); 
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
@@ -1104,13 +1104,11 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, std::vector<TH1D
 
   ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
   INS.open(Form("%s/pxar.log", dir.c_str())); 
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
@@ -1131,13 +1129,11 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
 
   ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   vector<double> x;
   INS.open(Form("%s/pxar.log", dir.c_str())); 
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     s1 = sline.find(tag.c_str()); 
     if (string::npos == s1) continue;
     sline = sline.substr(s1+tag.length()+1);
@@ -1363,18 +1359,16 @@ void anaFullTest::fillRocDefects(string dirname, TH2D *hmap) {
 void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
   ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   int val(0); 
   cout << Form("%s/dacParameters%d_C0.dat", dir.c_str(), fTrimVcal) << endl;
   for (int i = 0; i < fNrocs; ++i) {
     INS.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
-    while (INS.getline(buffer, 1000, '\n')) {
-      if (buffer[0] == '#') {continue;}
-      if (buffer[0] == '/') {continue;}
-      if (buffer[0] == '\n') {continue;}
-      sline = buffer; 
+    while (getline(INS, sline)) {
+      if (sline[0] == '#') {continue;}
+      if (sline[0] == '/') {continue;}
+      if (sline[0] == '\n') {continue;}
       s1 = sline.find(dac.c_str()); 
       if (string::npos != s1) {
 	sline = sline.substr(s1+dac.length()+1); 
@@ -1554,12 +1548,10 @@ string anaFullTest::readLine(string dir, string pattern, int mode) {
   //  cout << "readLine: " << Form("%s/pxar.log", dir.c_str()) << endl;
   ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   INS.open(Form("%s/pxar.log", dir.c_str())); 
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     s1 = sline.find(pattern.c_str()); 
     if (string::npos == s1) continue;
     if (0 == mode) {
@@ -1584,13 +1576,11 @@ string anaFullTest::readLine(string dir, string pattern, int mode) {
 int anaFullTest::countWord(string dir, string pattern) {
   ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
   INS.open(Form("%s/pxar.log", dir.c_str())); 
   int cnt(0); 
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     s1 = sline.find(pattern.c_str()); 
     if (string::npos == s1) continue;
     ++cnt;
@@ -1786,11 +1776,8 @@ void anaFullTest::fullTestTiming(string dir, string basedir) {
 
   ifstream INS; 
 
-  char buffer[1000];
   string sline; 
   string::size_type s1;
-
-  
 
   vector<string> patterns; 
   patterns.push_back("INFO:   running: pretest");
@@ -1808,8 +1795,7 @@ void anaFullTest::fullTestTiming(string dir, string basedir) {
 
 
   INS.open(Form("%s/%s/pxar.log", basedir.c_str(), dir.c_str())); 
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer; 
+  while (getline(INS, sline)) {
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       s1 = sline.find(patterns[i].c_str()); 
       if (string::npos != s1) {
