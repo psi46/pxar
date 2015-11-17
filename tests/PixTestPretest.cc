@@ -446,21 +446,21 @@ void PixTestPretest::findTiming() {
   delete t; 
 
   // -- parse output file
-  ifstream IN; 
+  ifstream INS; 
   char buffer[1000];
   string sline, sparameters, ssuccess; 
   string::size_type s1;
   vector<double> x;
-  IN.open("pxar_timing.log"); 
-  while (IN.getline(buffer, 1000, '\n')) {
+  INS.open("pxar_timing.log"); 
+  while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer; 
     s1 = sline.find("selecting"); 
     if (string::npos == s1) continue;
     sparameters = sline;
-    IN.getline(buffer, 1000, '\n');
+    INS.getline(buffer, 1000, '\n');
     ssuccess = buffer; 
   }
-  IN.close();
+  INS.close();
 
   // -- parse relevant lines
   int tries(-1), success(-1); 
