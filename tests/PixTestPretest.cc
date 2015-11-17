@@ -166,12 +166,14 @@ void PixTestPretest::doTest() {
   PixTest::update(); 
 
   string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
-  if (fPixSetup->getConfigParameters()->getHdiType() == "fpix") {
-    setTimings();
-  } else if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c")) {
+  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c")) {
     findTiming();
+  } else if (tbmtype == "tbm08b" || tbmtype == "tbm08a") {
+    setTimings();
+  } else if (tbmtype == "tbm08") {
+    LOG(logWARNING) << "tbm08 does not have programable phase settings";
   } else {
-    LOG(logWARNING) << "pretest::findTiming only works for TBM08c/09c! Do something on your own.";
+    LOG(logWARNING) << "No timing test implemented for " <<  tbmtype << "! Do something on your own.";
   }
 
   if (fProblem) {
@@ -492,9 +494,8 @@ void PixTestPretest::findTiming() {
     }
   }
   tbmSet("base4", 2, 0x80); // reset once after changing phases
-  
-}
 
+}
 
 
 // ----------------------------------------------------------------------
@@ -572,12 +573,13 @@ void PixTestPretest::setTimings() {
         }
         Log::ReportingLevel() = UserReportingLevel;
         fApi->daqStop();
-        if (GoodDelaySettings)
+        if (GoodDelaySettings) {
           banner("Good Timings Found!!!");
-        LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
-        LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
-        fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
-        for (size_t itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
+          LOG(logINFO) << "Setting TBM Phases to " << bitset<8>(TBMPhase).to_string() << " 160 MHz PLL: " << pll160 << " 400MHz PLL: " << pll400;
+          LOG(logINFO) << "Setting ROC Phases to " << bitset<8>(ROCPhase).to_string();
+          fPixSetup->getConfigParameters()->setTbmDac("basee", TBMPhase, 0);
+          for (size_t itbm=0; itbm<nTBMs; itbm++) fPixSetup->getConfigParameters()->setTbmDac("basea", ROCPhase, itbm);
+        }
       }
     }
   }
