@@ -26,6 +26,7 @@ namespace pxar {
 #define TBM_08C            0x25
 #define TBM_09             0x26
 #define TBM_09C            0x27
+#define TBM_10             0x28
 
 
 // --- TBM Register -----------------------------------------------------------
@@ -58,7 +59,7 @@ namespace pxar {
 #define ROC_PSI46DIGV2        0x06
 #define ROC_PSI46DIGV21       0x07
 #define ROC_PSI46DIGV21RESPIN 0x08
-
+#define ROC_PSI46DIGPLUS      0x09
 
 // --- ROC DACs ---------------------------------------------------------------
 #define ROC_DAC_Vdig       0x01
@@ -107,6 +108,7 @@ namespace pxar {
 #define SIG_TRIGGER_LATENCY 0xFB
 #define SIG_LEVEL 0xFC
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
+#define SIG_LOOP_TRIM_DELAY 0xF6
 #define SIG_DESER160PHASE 0xFE
 
 #define SIG_MODE_NORMAL  0

@@ -280,6 +280,7 @@ class CTestboard {
   bool SetTrimValues(uint8_t roc_i2c, std::vector<uint8_t> &trimvalues);
 	
   void SetLoopTriggerDelay(uint16_t delay);
+  void SetLoopTrimDelay(uint16_t delay);
   void LoopInterruptReset();
 
   // Exported RPC-Calls for Maps

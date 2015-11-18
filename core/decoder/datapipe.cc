@@ -234,6 +234,8 @@ namespace pxar {
 
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
+    // Check if ROC is a Layer1 chip with different address encoding:
+    bool linearAddress = ( GetDeviceType() == ROC_PSI46DIGPLUS ? true : false );
 
     // Loop over the full data:
     for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
@@ -282,7 +284,7 @@ namespace pxar {
 	  // Get the correct ROC id: Channel number x ROC offset (= token chain length)
 	  // TBM08x: channel 0: 0-7, channel 1: 8-15
 	  // TBM09x: channel 0: 0-3, channel 1: 4-7, channel 2: 8-11, channel 3: 12-15
-	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetTokenChainOffset()),invertedAddress);
+	  pixel pix(raw,static_cast<uint8_t>(roc_n + GetTokenChainOffset()),invertedAddress,linearAddress);
 	  roc_Event.pixels.push_back(pix);
 	  decodingStats.m_info_pixels_valid++;
 	}
@@ -385,6 +387,8 @@ namespace pxar {
 
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
+    // Check if ROC is a Layer1 chip with different address encoding:
+    bool linearAddress = ( GetDeviceType() == ROC_PSI46DIGPLUS ? true : false );
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
     if(sample->GetSize()-GetTokenChainLength() > 0) {
@@ -412,7 +416,7 @@ namespace pxar {
 
 	uint32_t raw = (((*word) & 0x0fff) << 12) + ((*(++word)) & 0x0fff);
 	try {
-	  pixel pix(raw,roc_n,invertedAddress);
+	  pixel pix(raw,roc_n,invertedAddress,linearAddress);
 	  roc_Event.pixels.push_back(pix);
 	  decodingStats.m_info_pixels_valid++;
 	}
@@ -451,16 +455,19 @@ namespace pxar {
 			 << " Event ID reset due to ResetTBM";
       eventID = roc_Event.triggerCount();
     }
-    
-    // Check if TBM event ID matches with expectation:
-    if(roc_Event.triggerCount() != (eventID%256)) {
-      LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Event ID mismatch:  local ID (" << static_cast<int>(eventID)
-		    << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
-      decodingStats.m_errors_tbm_eventid_mismatch++;
-      // To continue readout, set event ID to the currently decoded one:
-      eventID = roc_Event.triggerCount();
-    }
 
+    // Check if the event ID cross-check is disabled:
+    if((GetFlags() & FLAG_DISABLE_EVENTID_CHECK) == 0) {
+      // Check if TBM event ID matches with expectation:
+      if(roc_Event.triggerCount() != (eventID%256)) {
+	LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel()) << " Event ID mismatch:  local ID (" << static_cast<int>(eventID)
+		      << ") !=  TBM ID (" << static_cast<int>(roc_Event.triggerCount()) << ")";
+	decodingStats.m_errors_tbm_eventid_mismatch++;
+	// To continue readout, set event ID to the currently decoded one:
+	eventID = roc_Event.triggerCount();
+      }
+    }
+    
     // Increment event counter:
     eventID = (eventID%256) + 1;
   }

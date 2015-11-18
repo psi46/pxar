@@ -384,6 +384,8 @@ class CmdProc {
   int countErrors(unsigned int ntrig=1, int ftrigkhz=0, int nroc_expected=-1, bool setup=true);
   int countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int nroc);
   int printData(vector<uint16_t> buf, int level, unsigned int nheader=0);
+  int rawRocReadback(uint8_t  signal, std::vector<uint16_t> &);
+  int readRocsAnalog(uint8_t  signal, double scale, std::string units);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
   int getBuffer(vector<uint16_t> & buf);
   int setupDaq(int ntrig, int ftrigkhz, int verbosity=0);

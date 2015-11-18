@@ -1,5 +1,5 @@
-#include <stdlib.h>     /* atof, atoi */
-#include <algorithm>    // std::find
+#include <stdlib.h>     
+#include <algorithm>    
 #include <iostream>
 #include <fstream>
 
