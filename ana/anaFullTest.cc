@@ -879,13 +879,13 @@ void anaFullTest::bookModuleSummary(string modulename) {
 			    50, 0., 2.); 
   ms->trimthrrms->SetXTitle("VCAL [DAC]");
 
-  ms->p1pos = new TH1D(Form("%s_p1pos", modulename.c_str()), 
-		    Form("%s_p1pos", modulename.c_str()), 
+  ms->nlpos = new TH1D(Form("%s_nlpos", modulename.c_str()), 
+		    Form("%s_nlpos", modulename.c_str()), 
 		    50, 0.5, 1.0); 
 
-  ms->p1rms = new TH1D(Form("%s_p1rms", modulename.c_str()), 
-		    Form("%s_p1rms", modulename.c_str()), 
-		    50, 0., 0.2); 
+  ms->nlrms = new TH1D(Form("%s_nlrms", modulename.c_str()), 
+		    Form("%s_nlrms", modulename.c_str()), 
+		    50, 0., 0.1); 
   
   fModSummaries.insert(make_pair(modulename, ms)); 
 
@@ -893,20 +893,15 @@ void anaFullTest::bookModuleSummary(string modulename) {
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::validateFullTests() {
-  // -- PSI module
-  addFullTests("D14-0001", "-003");
-  // -- ETH modules 
-  addFullTests("D14-0006", "-000");
-  addFullTests("D14-0008", "-000");
-  addFullTests("D14-0009", "-000");
+void anaFullTest::validateFullTests(string dir, string mname, string mpattern) {
+  addFullTests(dir, mname, mpattern);
 
-  TH1D *hVana = new TH1D("hVana", Form("Vana %s", fDiffMetric == 0?"difference":"RMS"), 50, 0., 5.);
-  TH1D *hCaldel = new TH1D("hCaldel", Form("CalDel %s", fDiffMetric == 0?"difference":"RMS"), 50, 0., 5.);
-  TH1D *hVthrcomp = new TH1D("hVthrcomp", Form("VthrComp %s", fDiffMetric == 0?"difference":"RMS"), 50, 0., 5.);
-  TH1D *hVtrim = new TH1D("hVtrim", Form("Vtrim %s", fDiffMetric == 0?"difference":"RMS"), 50, 0., 10.);
-  TH1D *hPhs = new TH1D("hPhs", Form("phscale %s", fDiffMetric == 0?"difference":"RMS"), 50, 0., 5.);
-  TH1D *hPho = new TH1D("hPho", Form("phoffset %s", fDiffMetric == 0?"difference":"RMS"), 50, 0., 5.);
+  TH1D *hVana = new TH1D("hVana", Form("Vana %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
+  TH1D *hCaldel = new TH1D("hCaldel", Form("CalDel %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
+  TH1D *hVthrcomp = new TH1D("hVthrcomp", Form("VthrComp %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
+  TH1D *hVtrim = new TH1D("hVtrim", Form("Vtrim %s", fDiffMetric == 0?"difference":"RMS"), 25, 0., 25.);
+  TH1D *hPhs = new TH1D("hPhs", Form("phscale %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
+  TH1D *hPho = new TH1D("hPho", Form("phoffset %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
 
   map<string, moduleSummary*>::iterator ib = fModSummaries.begin();
 
@@ -918,13 +913,13 @@ void anaFullTest::validateFullTests() {
   hTrimThrRms->SetTitle("Trim Threshold RMS");
   hTrimThrRms->Reset();
 
-  TH1D *hp1Pos = (TH1D*)ib->second->p1pos->Clone("hp1Pos");
-  hp1Pos->SetTitle("p1");
-  hp1Pos->Reset();
+  TH1D *hnlpos = (TH1D*)ib->second->nlpos->Clone("hnlpos");
+  hnlpos->SetTitle("nl");
+  hnlpos->Reset();
 
-  TH1D *hp1Rms = (TH1D*)ib->second->p1rms->Clone("hp1Rms");
-  hp1Rms->SetTitle("p1 RMS");
-  hp1Rms->Reset();
+  TH1D *hnlrms = (TH1D*)ib->second->nlrms->Clone("hnlrms");
+  hnlrms->SetTitle("nl RMS");
+  hnlrms->Reset();
 
   for (map<string, moduleSummary*>::iterator it = fModSummaries.begin(); it != fModSummaries.end(); ++it) {
 
@@ -939,67 +934,77 @@ void anaFullTest::validateFullTests() {
     }
     
     for (int ibin = 1; ibin <= it->second->trimthrpos->GetNbinsX(); ++ibin) {
-      hTrimThrPos->SetBinContent(ibin, hTrimThrPos->GetBinContent(ibin)+it->second->trimthrpos->GetBinContent(ibin)); 
+      // -- the following results in the "correct" Entries and Integral
+      if (it->second->trimthrpos->GetBinContent(ibin) > 0)
+	for (int i = 0; i < it->second->trimthrpos->GetBinContent(ibin); ++i) 
+	  hTrimThrPos->Fill(it->second->trimthrpos->GetBinCenter(ibin)); 
     }
 
     for (int ibin = 1; ibin <= it->second->trimthrrms->GetNbinsX(); ++ibin) {
-      hTrimThrRms->SetBinContent(ibin, hTrimThrRms->GetBinContent(ibin) + it->second->trimthrrms->GetBinContent(ibin)); 
+      if (it->second->trimthrrms->GetBinContent(ibin) > 0)
+	for (int i = 0; i < it->second->trimthrrms->GetBinContent(ibin); ++i) 
+	  hTrimThrRms->Fill(it->second->trimthrrms->GetBinCenter(ibin)); 
     }
 
-    for (int ibin = 1; ibin <= it->second->p1pos->GetNbinsX(); ++ibin) {
-      hp1Pos->SetBinContent(ibin, hp1Pos->GetBinContent(ibin)+it->second->p1pos->GetBinContent(ibin)); 
+    for (int ibin = 1; ibin <= it->second->nlpos->GetNbinsX(); ++ibin) {
+      if (it->second->nlpos->GetBinContent(ibin) > 0)
+	for (int i = 0; i < it->second->nlpos->GetBinContent(ibin); ++i) 
+	  hnlpos->Fill(it->second->nlpos->GetBinCenter(ibin)); 
     }
 
-    for (int ibin = 1; ibin <= it->second->p1rms->GetNbinsX(); ++ibin) {
-      hp1Rms->SetBinContent(ibin, hp1Rms->GetBinContent(ibin) + it->second->p1rms->GetBinContent(ibin)); 
+    for (int ibin = 1; ibin <= it->second->nlrms->GetNbinsX(); ++ibin) {
+      if (it->second->nlrms->GetBinContent(ibin) > 0)
+	for (int i = 0; i < it->second->nlrms->GetBinContent(ibin); ++i) 
+	  hnlrms->Fill(it->second->nlrms->GetBinCenter(ibin)); 
     }
     
   }
 			  
 			  
   c0->Clear();
+  c0->Divide(3,3);
+
   c0->cd(1);
-
   hVana->Draw();
-  c0->SaveAs("ftval-vana.pdf"); 
-  
+
+  c0->cd(2);
   hCaldel->Draw();
-  c0->SaveAs("ftval-caldel.pdf"); 
 
+  c0->cd(3);
   hVthrcomp->Draw();
-  c0->SaveAs("ftval-vthrcomp.pdf"); 
 
+  c0->cd(4);
   hVtrim->Draw();
-  c0->SaveAs("ftval-vtrim.pdf"); 
 
+  c0->cd(5);
   hPhs->Draw();
-  c0->SaveAs("ftval-phscale.pdf"); 
 
+  c0->cd(6);
   hPho->Draw();
-  c0->SaveAs("ftval-phoffset.pdf"); 
 
+  c0->cd(7);
   hTrimThrPos->Draw();
-  c0->SaveAs("ftval-trimthrpos.pdf"); 
 
+  c0->cd(8);
   hTrimThrRms->Draw();
-  c0->SaveAs("ftval-trimthrrms.pdf"); 
 
-  hp1Pos->Draw();
-  c0->SaveAs("ftval-p1pos.pdf"); 
+  c0->cd(9);
+  hnlrms->Draw();
 
-  hp1Rms->Draw();
-  c0->SaveAs("ftval-p1rms.pdf"); 
+  // hnlpos->Draw();
+
+  c0->SaveAs(Form("ftval-%s.pdf", mname.c_str())); 
 
 
 }
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::addFullTests(string mname, string mpattern) {
-  vector<string> dirs = glob(".", mname+mpattern); 
-  cout << dirs.size() << endl;
+void anaFullTest::addFullTests(string dir, string mname, string mpattern) {
+  vector<string> dirs = glob(dir, mname+mpattern); 
+  cout << "# directories found: " << dirs.size() << endl;
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
-    cout << dirs[idirs] << endl;
+    cout << "  " << dirs[idirs] << endl;
   }
 
   bookModuleSummary(mname); 
@@ -1018,8 +1023,8 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
 //     readLogFile(dirs[idirs], "separation cut       (per ROC):", fModSummaries[mname]->deadsep);    
     readLogFile(dirs[idirs], "vcal mean:", fModSummaries[mname]->trimthrpos);
     readLogFile(dirs[idirs], "vcal RMS:", fModSummaries[mname]->trimthrrms);
-    readLogFile(dirs[idirs], "p1 mean:", fModSummaries[mname]->p1pos);
-    readLogFile(dirs[idirs], "p1 RMS:", fModSummaries[mname]->p1rms);
+    readLogFile(dirs[idirs], "non-linearity mean:", fModSummaries[mname]->nlpos);
+    readLogFile(dirs[idirs], "non-linearity RMS:", fModSummaries[mname]->nlrms);
       
     /*
       vcal mean:
@@ -1070,7 +1075,7 @@ void anaFullTest::addFullTests(string mname, string mpattern) {
   fModSummaries[mname]->trimthrrms->Draw();
 
   c0->cd(9); 
-  fModSummaries[mname]->p1pos->Draw();
+  fModSummaries[mname]->nlpos->Draw();
   
   c0->SaveAs(Form("%s.pdf", mname.c_str())); 
 
@@ -1139,6 +1144,7 @@ void anaFullTest::readLogFile(std::string dir, std::string tag, TH1D* hist) {
     sline = sline.substr(s1+tag.length()+1);
     break;
   }
+  cout << sline << endl;
   x = splitIntoRocs(sline);
   for (unsigned int i = 0; i < x.size(); ++i) {
     //     cout << "Filling into " << hist->GetName() << " x = " << x[i] << endl;
@@ -1362,14 +1368,16 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
   string sline; 
   string::size_type s1;
   int val(0); 
-  cout << Form("%s/dacParameters%d_C0.dat", dir.c_str(), fTrimVcal) << endl;
+  cout << Form("%s/dacParameters%d_CX.dat, X = ", dir.c_str(), fTrimVcal);
   for (int i = 0; i < fNrocs; ++i) {
     INS.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i)); 
+    cout << i << " "; 
     while (getline(INS, sline)) {
       if (sline[0] == '#') {continue;}
       if (sline[0] == '/') {continue;}
       if (sline[0] == '\n') {continue;}
       s1 = sline.find(dac.c_str()); 
+      //      cout << sline << endl;
       if (string::npos != s1) {
 	sline = sline.substr(s1+dac.length()+1); 
 	val = atoi(sline.c_str()); 
@@ -1379,7 +1387,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
     }
     INS.close(); 
   }
-
+  cout << endl;
 }
 
 
@@ -1397,7 +1405,7 @@ vector<string> anaFullTest::glob(string basedir, string basename) {
   while ((file = lunix->GetDirEntry(pDir))) {
     fname = file;
     if (fname.Contains(basename.c_str())) {
-      lof.push_back(string(fname));
+      lof.push_back(string(basedir+"/"+fname));
     }
   }  
 #endif

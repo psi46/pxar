@@ -41,7 +41,7 @@ struct moduleSummary {
   TH1D *rmsVana, *rmsCaldel, *rmsVthrcomp, *rmsVtrim, *rmsPhscale, *rmsPhoffset; 
 
   // absolute values that should be the same everywhere
-  TH1D *trimthrpos, *trimthrrms, *p1pos, *p1rms; 
+  TH1D *trimthrpos, *trimthrrms, *nlpos, *nlrms; 
 };
 
 
@@ -72,11 +72,13 @@ class DLLEXPORT anaFullTest {
   anaFullTest(); 
   virtual ~anaFullTest(); 
 
+  // -- create summary plots for module fulltests: for one module and the overall summary
   void showAllFullTests(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d");
   void showFullTest(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
 
-  void validateFullTests();
-  void addFullTests(std::string mname = "D14-0006", std::string mpattern = "-000");
+  // -- compare n fulltests of the same module (e.g. for release tests)
+  void validateFullTests(std::string dir, std::string mname = "d2116", std::string mpattern = "-");
+  void addFullTests(std::string mdir = "/scratch/ursl/pxar/modules/prod12", std::string mname = "D14-0006", std::string mpattern = "-000");
 
   void showAllTimings(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d2116-", bool reset = false);
   void fullTestTiming(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
