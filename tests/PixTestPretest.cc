@@ -156,6 +156,11 @@ void PixTestPretest::doTest() {
   }
 
   setVana();
+  if (fProblem) {
+    bigBanner("ERROR: turning off some ROCs lead to less I(ana) current drop than expected;  stop"); 
+    return;
+  }
+
   h1 = (*fDisplayedHist); 
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update(); 
