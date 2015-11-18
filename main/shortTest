@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 
 # ----------------------------------------------------------------------
-# Usage     ../main/shortTest -d directory [-t TBM09C] [-r digv21respin] 
-# -----
+# Usage     ../main/shortTest -d directory [-t TBM09C] [-r digv21respin] [-s mtest]
+# ----- 
 #
 #           script used for the quick qualification at PSI before trasnfer to ETH
 #
@@ -12,7 +12,7 @@
 # ----------------------------------------------------------------------
 
 use Getopt::Std;
-getopts('d:m:r:t:v:');
+getopts('d:m:r:s:t:v:');
 
 # -- define pxar production release
 my $pxarbase = "..";
@@ -24,6 +24,11 @@ my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
 # -- set verbosity if not done on command line
 if (!$opt_v) {
     $opt_v = "DEBUG"; 
+}
+
+# -- define script to be run
+if (!$opt_s) {
+    $opt_s = "mtest"; 
 }
 
 # -- check for directory specification
@@ -88,5 +93,5 @@ system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $opt_d");
 
 print "\n";
 print "###### shortTest: run full test\n";
-system("cat $pxarbase/main/mtest | $pxarbase/bin/pXar -v $opt_v -d $opt_d");
+system("cat $pxarbase/main/$opt_s | $pxarbase/bin/pXar -v $opt_v -d $opt_d");
 
