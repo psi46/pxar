@@ -157,7 +157,7 @@ void PixTestPretest::doTest() {
 
   setVana();
   if (fProblem) {
-    bigBanner("ERROR: turning of some ROCs lead to less I(ana) current drop than expected;  stop"); 
+    bigBanner("ERROR: turning off some ROCs lead to less I(ana) current drop than expected;  stop"); 
     return;
   }
 
