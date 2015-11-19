@@ -19,7 +19,6 @@ using namespace pxar;
 // ----------------------------------------------------------------------
 PixMonitor::PixMonitor(PixSetup *a): fSetup(a), fIana(0.), fIdig(0.), fTemp(0.) {
   if ("fpix" == a->getConfigParameters()->getHdiType()) {
-    //fTemp = (-double(a->getApi()->GetADC(4) - a->getApi()->GetADC(5)) - 0.92)/ 6.55;
     fTemp = calcTemp(a->getApi());
   }
 }
@@ -91,7 +90,6 @@ void PixMonitor::update() {
   int NBINS(10); 
   fIana = fSetup->getApi()->getTBia();
   fIdig = fSetup->getApi()->getTBid();
-  //if (fSetup->getConfigParameters()->getHdiType() == "fpix") fTemp = (-double(fSetup->getApi()->GetADC(4) - fSetup->getApi()->GetADC(5)) - 0.92)/ 6.55;
   if (fSetup->getConfigParameters()->getHdiType() == "fpix") fTemp = calcTemp(fSetup->getApi());
 
   TTimeStamp ts; 
@@ -210,6 +208,6 @@ UInt_t PixMonitor::getHistMinSec(TH1D *h) {
 // ----------------------------------------------------------------------
 double PixMonitor::calcTemp(pxar::pxarCore *api) {
   int ADCdiff = api->GetADC(4) - api->GetADC(5);
-  double temp = 0.00005*double(ADCdiff*ADCdiff)-0.1557*double(ADCdiff)-0.2244;
+  double temp = 0.00004882*double(ADCdiff*ADCdiff)-0.1557*double(ADCdiff)-0.2244;
   return temp;
 }
