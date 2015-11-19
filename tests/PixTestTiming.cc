@@ -36,6 +36,8 @@ PixTestTiming::PixTestTiming() : PixTest() {}
 bool PixTestTiming::setParameter(string parName, string sval) {
   bool found(false);
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
+  fNoTokenPass = false;
+  fIgnoreReadBack = false;
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true;

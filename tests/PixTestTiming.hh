@@ -30,8 +30,8 @@ private:
     int     fTargetClk;
     int     fNTrig;
     int     fTrigBuffer;
-    bool    fNoTokenPass=false;
-    bool    fIgnoreReadBack=false;
+    bool    fNoTokenPass;
+    bool    fIgnoreReadBack;
 
 	ClassDef(PixTestTiming, 1)
 
