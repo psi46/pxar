@@ -497,10 +497,10 @@ if ($opt_m) {
 	print FH "tbmType tbm08c\n";
     } elsif ($tbmtype eq "TBM08A") {
 	$VD = "2.800";
-	print FH "tbmType tbm08A\n";
+	print FH "tbmType tbm08a\n";
     } elsif ($tbmtype eq "TBM08B") {
     $VD = "2.800";
-    print FH "tbmType tbm08A\n";
+    print FH "tbmType tbm08b\n";
     } elsif ($tbmtype eq "TBM09") {
 	$VD = "2.900";
 	print FH "tbmType tbm09\n";

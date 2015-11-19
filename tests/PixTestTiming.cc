@@ -665,52 +665,6 @@ void PixTestTiming::LevelScan() {
 }
 
 //------------------------------------------------------------------------------
-statistics PixTestTiming::getEvents(int NEvents, int period, int buffer) {
-
-  int NStep = 1000000;
-  int NLoops = floor((NEvents-1)/NStep);
-  int NRemainder = NEvents%NStep;
-  if (NRemainder==0) NRemainder=NStep;
-
-  statistics results;
-  vector<Event> daqEv;
-
-  if (buffer > 0) {
-    vector<rawEvent> daqRawEv;
-    fApi->daqTrigger(buffer, period);
-    try { daqRawEv = fApi->daqGetRawEventBuffer(); }
-    catch(pxar::DataNoEvent &) {}
-    for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
-  }
-
-  for (int iloop=0; iloop<NLoops; iloop++) {
-    LOG(logDEBUG) << "Collecting " << (iloop+1)*NStep << "/" << NEvents << " Triggers";
-    fApi->daqTrigger(NStep, period);
-    try { daqEv = fApi->daqGetEventBuffer(); }
-    catch(pxar::DataNoEvent &) {}
-    results += fApi->getStatistics();
-  }
-
-  LOG(logDEBUG) << "Collecting " << (NLoops*NStep)+NRemainder << "/" << NEvents << " Triggers";
-  fApi->daqTrigger(NRemainder, period);
-  try { daqEv = fApi->daqGetEventBuffer(); }
-  catch(pxar::DataNoEvent &) {}
-  results += fApi->getStatistics();
-
-  return results;
-}
-
-//------------------------------------------------------------------------------
-uint8_t PixTestTiming::GetTBMSetting(string base, size_t tbmId) {
-  vector<pair<string, uint8_t> > tbmdacs = fApi->_dut->getTbmDACs(tbmId);
-  for (size_t idac=0; idac<tbmdacs.size(); idac++) {
-    if (tbmdacs[idac].first==base) return tbmdacs[idac].second;
-  }
-  LOG(logERROR) << "TBM Dac (" << base << ") Not Found!";
-  return 0;
-}
-
-//------------------------------------------------------------------------------
 vector<pair<string,uint8_t> > PixTestTiming::getDelays(uint8_t clk, uint8_t sda) {
   vector<pair<string,uint8_t> > sigdelays;
   sigdelays.push_back(make_pair("clk", clk%20));
@@ -749,50 +703,6 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
 
   return make_pair(MaxGoodRegionSize, GoodROCDelay);
 
-}
-
-// ----------------------------------------------------------------------
-bool PixTestTiming::checkReadBackBits(uint16_t period) {
-
-  bool ReadBackGood = true;
-  vector<Event> daqEv;
-  std::vector<std::vector<uint16_t> > ReadBackBits;
-  std::vector<uint8_t> ROClist;
-
-  std::vector<uint8_t> rocids = fApi->_dut->getRocI2Caddr();
-  size_t nTBMs = fApi->_dut->getNTbms();
-  int nTokenChains = 0;
-  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
-  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
-
-  int iroc=0;
-  for (size_t itbm=0; itbm < nTBMs; itbm++) {
-    if ((GetTBMSetting("base0", itbm) & 64) == 64) {
-      iroc += 16/nTokenChains;
-    } else {
-      for (int jroc=0; jroc < 16/nTokenChains; jroc++) {
-        ROClist.push_back(rocids[iroc]);
-        iroc++;
-      }
-    }
-  }
-
-  fApi->daqTrigger(32, period);
-  try { daqEv = fApi->daqGetEventBuffer(); }
-  catch(pxar::DataNoEvent &) {}
-  ReadBackBits = fApi->daqGetReadback();
-  statistics results = fApi->getStatistics();
-  int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-  int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
-  if (NEvents!=32 || NErrors!=0) return false;
-
-  for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
-    for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
-      if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
-      if (ReadBackBits[irb][jrb]>>12 != ROClist[irb]) ReadBackGood = false;
-    }
-  }
-  return ReadBackGood;
 }
 
 // ----------------------------------------------------------------------

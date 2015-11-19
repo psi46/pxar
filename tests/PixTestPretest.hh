@@ -25,9 +25,6 @@ public:
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
-  bool checkReadBackBits(uint16_t);
-  pxar::statistics getEvents(int, int, int);
-  uint8_t GetTBMSetting(std::string, size_t);
 
 private:
 
