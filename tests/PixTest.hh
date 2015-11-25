@@ -304,7 +304,13 @@ public:
   TH1* nextHistV(); 
   /// allow backward iteration through list of histograms
   TH1* previousHistV();  
-  
+
+  //Get NEvents and return the decoding statistics
+  pxar::statistics getEvents(int NEvents, int period, int buffer);
+  //Check the read back bits of the ROCs
+  bool checkReadBackBits(uint16_t period);
+  //Get the current TBM setting for the dut
+  uint8_t GetTBMSetting(std::string base, size_t tbmId);
 
 protected: 
 
