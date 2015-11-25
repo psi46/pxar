@@ -2,6 +2,7 @@
 #define PIXMONITOR_H
 
 #include "pxardllexport.h"
+#include "api.h"
 
 #ifdef __CINT__
 #undef __GNUC__
@@ -34,6 +35,7 @@ public:
 private: 
   TH1D* extendHist(TH1D *h, int nbins);
   UInt_t getHistMinSec(TH1D *h);
+  double calcTemp(pxar::pxarCore *api);
 
   PixSetup        *fSetup; 
   double           fIana, fIdig, fTemp;
