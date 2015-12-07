@@ -203,8 +203,9 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
 void anaFullTest::showAllFullTests(string dir, string pattern) {
   vector<string> dirs = glob(dir, pattern); 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
-    cout << dirs[idirs] << endl;
-    showFullTest(dirs[idirs], dir); 
+    string ldir = dirs[idirs].substr(dirs[idirs].rfind("/")+1); 
+    cout << "showFullTest(" << ldir << ", " << dir << ")" << endl;
+    showFullTest(ldir, dir); 
   }
   
 }
@@ -1404,8 +1405,12 @@ vector<string> anaFullTest::glob(string basedir, string basename) {
   void *pDir = lunix->OpenDirectory(basedir.c_str());
   while ((file = lunix->GetDirEntry(pDir))) {
     fname = file;
+    cout << "glob checking " << fname;
     if (fname.Contains(basename.c_str())) {
       lof.push_back(string(basedir+"/"+fname));
+      cout << ", adding " << string(basedir+"/"+fname) << endl;
+    } else {
+      cout << ", skipping" << endl;
     }
   }  
 #endif
