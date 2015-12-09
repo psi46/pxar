@@ -889,20 +889,29 @@ void anaFullTest::bookModuleSummary(string modulename) {
 		    50, 0., 0.1); 
   
   fModSummaries.insert(make_pair(modulename, ms)); 
-
+  
 }
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::validateFullTests(string dir, string mname, string mpattern) {
+void anaFullTest::validateFullTests(string dir, string mname, int metric, string mpattern) {
+  fDiffMetric = metric; 
   addFullTests(dir, mname, mpattern);
 
-  TH1D *hVana = new TH1D("hVana", Form("Vana %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hCaldel = new TH1D("hCaldel", Form("CalDel %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hVthrcomp = new TH1D("hVthrcomp", Form("VthrComp %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hVtrim = new TH1D("hVtrim", Form("Vtrim %s", fDiffMetric == 0?"difference":"RMS"), 25, 0., 25.);
-  TH1D *hPhs = new TH1D("hPhs", Form("phscale %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hPho = new TH1D("hPho", Form("phoffset %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
+  string type = fDiffMetric == 0?"difference":"RMS";
+  int ntests  = fModSummaries[mname]->vana[0]->GetEntries();
+  TH1D *hVana = new TH1D("hVana", Form("Vana %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			 fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hCaldel = new TH1D("hCaldel", Form("CalDel %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			   fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hVthrcomp = new TH1D("hVthrcomp", Form("VthrComp %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			     fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hVtrim = new TH1D("hVtrim", Form("Vtrim %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			  fDiffMetric == 0?30:60, 0., 30.);
+  TH1D *hPhs = new TH1D("hPhs", Form("phscale %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hPho = new TH1D("hPho", Form("phoffset %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			fDiffMetric == 0?10:40, 0., 10.);
 
   map<string, moduleSummary*>::iterator ib = fModSummaries.begin();
 
@@ -911,17 +920,17 @@ void anaFullTest::validateFullTests(string dir, string mname, string mpattern) {
   hTrimThrPos->Reset();
 
   TH1D *hTrimThrRms = (TH1D*)ib->second->trimthrrms->Clone("hTrimThrRms");
-  hTrimThrRms->SetTitle("Trim Threshold RMS");
+  hTrimThrRms->SetTitle(Form("Trim Threshold RMS (1 entry for each ROC from %d tests)", ntests));
   hTrimThrRms->Reset();
 
   TH1D *hnlpos = (TH1D*)ib->second->nlpos->Clone("hnlpos");
-  hnlpos->SetTitle("nl");
+  hnlpos->SetTitle(Form("nl (1 entry for each ROC from %d tests)", ntests));
   hnlpos->Reset();
 
   TH1D *hnlrms = (TH1D*)ib->second->nlrms->Clone("hnlrms");
-  hnlrms->SetTitle("nl RMS");
+  hnlrms->SetTitle(Form("nl RMS (1 entry for each ROC from %d tests)", ntests));
   hnlrms->Reset();
-
+  
   for (map<string, moduleSummary*>::iterator it = fModSummaries.begin(); it != fModSummaries.end(); ++it) {
 
     cout << "summarizing " << it->second->moduleName << endl;
