@@ -292,7 +292,7 @@ sub setDacs {
     $dacs = "";
     if ($roctype eq "digv21respin") {
 	$dacs .= "  1 vdig       6  \n";
-	$dacs .= "  2 vana       78 \n";
+	$dacs .= "  2 vana       81 \n";
 	$dacs .= "  3 vsh        30 \n";
 	$dacs .= "  4 vcomp      12 \n";
 	$dacs .= "  7 vwllpr     150\n";
@@ -301,12 +301,12 @@ sub setDacs {
 	$dacs .= " 11 vtrim      0  \n";
 	$dacs .= " 12 vthrcomp   85 \n";
 	$dacs .= " 13 vibias_bus 30 \n";
-	$dacs .= " 17 phoffset   170\n";
+	$dacs .= " 17 phoffset   185\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
-	$dacs .= " 20 phscale    130\n";
+	$dacs .= " 20 phscale    65\n";
 	$dacs .= " 22 vicolor    100\n";
 	$dacs .= " 25 vcal       200\n";
-	$dacs .= " 26 caldel     96 \n";
+	$dacs .= " 26 caldel     133 \n";
 	$dacs .= "253 ctrlreg    0  \n";
 	$dacs .= "254 wbc        100\n";
 	$dacs .= "255 readback   0  \n";
