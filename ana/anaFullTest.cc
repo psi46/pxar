@@ -246,7 +246,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   int seconds = testDuration(startTest, endTest); 
   fhDuration->Fill(seconds); 
-  string duration = Form("%d:%d:%d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+  string duration = Form("%02d:%02d:%02d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
 
   // -- remove the sub-second digits
   startTest = startTest.substr(0, startTest.rfind(".")); 
