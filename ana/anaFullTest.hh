@@ -123,6 +123,8 @@ class DLLEXPORT anaFullTest {
   int countWord(std::string dir, std::string pattern); 
   int testDuration(std::string startTest, std::string endTest);
 
+
+  void print(TH1*, double x, double y, double size); 
   void setHist(TH1D *h, std::string xtitle = "", std::string ytitle = "", int color = kBlack, double miny = 0., double maxy = 256.); 
 
 private: 

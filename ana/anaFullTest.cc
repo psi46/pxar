@@ -882,11 +882,11 @@ void anaFullTest::bookModuleSummary(string modulename) {
 
   ms->nlpos = new TH1D(Form("%s_nlpos", modulename.c_str()), 
 		    Form("%s_nlpos", modulename.c_str()), 
-		    50, 0.5, 1.0); 
+		    50, 0.9, 1.0); 
 
   ms->nlrms = new TH1D(Form("%s_nlrms", modulename.c_str()), 
 		    Form("%s_nlrms", modulename.c_str()), 
-		    50, 0., 0.1); 
+		    50, 0., 0.02); 
   
   fModSummaries.insert(make_pair(modulename, ms)); 
   
@@ -974,35 +974,67 @@ void anaFullTest::validateFullTests(string dir, string mname, int metric, string
   c0->Clear();
   c0->Divide(3,3);
 
+  gStyle->SetOptStat(0); 
+  
   c0->cd(1);
   hVana->Draw();
+  print(hVana, 0.6, 0.80, 0.05); 
 
+  
   c0->cd(2);
   hCaldel->Draw();
+  print(hCaldel, 0.6, 0.80, 0.05); 
 
   c0->cd(3);
   hVthrcomp->Draw();
+  print(hVthrcomp, 0.6, 0.80, 0.05); 
 
   c0->cd(4);
   hVtrim->Draw();
+  print(hVtrim, 0.6, 0.80, 0.05); 
 
   c0->cd(5);
   hPhs->Draw();
-
+  print(hPhs, 0.6, 0.80, 0.05);
+  
   c0->cd(6);
   hPho->Draw();
+  print(hPho, 0.6, 0.80, 0.05);
 
-  c0->cd(7);
+  TVirtualPad *c1 = c0->cd(7); 
+  gStyle->SetOptStat(0); 
+  c1->Divide(1,2);
+  c1->cd(1);
+  gPad->SetLogy(1); 
+  showOverFlow(hTrimThrPos);
   hTrimThrPos->Draw();
+  print(hTrimThrPos, 0.2, 0.80, 0.07);
 
-  c0->cd(8);
+  c1->cd(2);
+  gPad->SetLogy(1); 
+  showOverFlow(hTrimThrRms);
   hTrimThrRms->Draw();
+  print(hTrimThrRms, 0.2, 0.80, 0.07);
 
-  c0->cd(9);
+  c1 = c0->cd(8);
+  gStyle->SetOptStat(0); 
+  c1->Divide(1,2);
+  c1->cd(1);
+  gStyle->SetOptStat(0);
+  hnlpos->Draw();
+  print(hnlpos, 0.2, 0.80, 0.07);
+
+  c1->cd(2);
+  gStyle->SetOptStat(0);
   hnlrms->Draw();
+  print(hnlrms, 0.6, 0.80, 0.07);
 
-  // hnlpos->Draw();
+  c0->cd(9); 
+  showOverFlow(fhCritical);
+  fhCritical->Draw();
+  tl->DrawLatexNDC(0.4, 0.7, Form("# crit. errors: %d", static_cast<int>(fhCritical->Integral(2, fhCritical->GetNbinsX()+1)))); 
 
+  
   c0->SaveAs(Form("ftval-%s.pdf", mname.c_str())); 
 
 
@@ -1020,6 +1052,8 @@ void anaFullTest::addFullTests(string dir, string mname, string mpattern) {
   bookModuleSummary(mname); 
 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    int ncritical = countWord(dirs[idirs], "CRITICAL:");
+    fhCritical->Fill(ncritical); 
     readDacFile(dirs[idirs], "vana", fModSummaries[mname]->vana);
     readDacFile(dirs[idirs], "caldel", fModSummaries[mname]->caldel);
     readDacFile(dirs[idirs], "vthrcomp", fModSummaries[mname]->vthrcomp);
@@ -1848,4 +1882,20 @@ void anaFullTest::fullTestTiming(string dir, string basedir) {
 
   testD = testDuration(startPoints[0], startPoints[startPoints.size()-1]);
   fTS->tFullTest->Fill(testD); 
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::print(TH1 *h, double left, double top, double size) {
+
+  double old = tl->GetTextSize(); 
+  tl->SetTextSize(size); 
+  double xleft(left), ytop(top);
+  tl->DrawLatexNDC(xleft, ytop, Form("Mean:"));
+  tl->DrawLatexNDC(xleft+0.15, ytop, Form("%4.3f", h->GetMean()));
+
+  tl->DrawLatexNDC(xleft, ytop-1.1*size, Form("RMS:"));
+  tl->DrawLatexNDC(xleft+0.15, ytop-1.1*size, Form("%4.3f", h->GetRMS()));
+
+  tl->SetTextSize(old); 
 }
