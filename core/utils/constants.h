@@ -237,6 +237,21 @@ namespace pxar {
 #define GAIN_3   2
 #define GAIN_4   3
 
+// --- DESER400 probe
+#define PROBE_FRAME_ERROR    0
+#define PROBE_CODE_ERROR     1
+#define PROBE_ERROR          2  // FRAME or CODE
+#define PROBE_A_HEADER       3
+#define PROBE_A_PACKET       4
+#define PROBE_A_TBM_HDR      5
+#define PROBE_A_ROC_HDR      6
+#define PROBE_A_TBM_TRL      7
+#define PROBE_B_HEADER       8
+#define PROBE_B_PACKET       9
+#define PROBE_B_TBM_HDR     10
+#define PROBE_B_ROC_HDR     11
+#define PROBE_B_TBM_TRL     12
+
 
 // --- Testboard pulse pattern generator --------------------------------------
 #define PG_TOK   0x0100

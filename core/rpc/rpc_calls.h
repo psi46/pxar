@@ -273,6 +273,9 @@ public:
 	RPC_EXPORT void SignalProbeD2(uint8_t signal);
 
 
+        RPC_EXPORT void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
+        RPC_EXPORT void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
+
 	// --- analog signal probe ----------------------------------------------
 	RPC_EXPORT void SignalProbeA1(uint8_t signal);
 	RPC_EXPORT void SignalProbeA2(uint8_t signal);
@@ -344,9 +347,46 @@ public:
 	RPC_EXPORT void Daq_Select_Deser400();
 	RPC_EXPORT void Daq_Deser400_Reset(uint8_t reset);
 	RPC_EXPORT void Daq_Deser400_OldFormat(bool old);
+	RPC_EXPORT void Daq_Select_Datagenerator(uint16_t startvalue);
 	RPC_EXPORT void Daq_DeselectAll();
 	
-	RPC_EXPORT void Daq_Select_Datagenerator(uint16_t startvalue);
+	// --- DESER400 configuration -------------------------------------------
+	RPC_EXPORT void Deser400_Enable(uint8_t deser);
+	RPC_EXPORT void Deser400_Disable(uint8_t deser);
+	RPC_EXPORT void Deser400_DisableAll();
+
+	RPC_EXPORT void Deser400_SetPhase(uint8_t deser, uint8_t phase);
+	RPC_EXPORT void Deser400_SetPhaseAuto(uint8_t deser);
+	RPC_EXPORT void Deser400_SetPhaseAutoAll();
+
+	RPC_EXPORT uint8_t Deser400_GetXor(uint8_t deser);
+	RPC_EXPORT uint8_t Deser400_GetPhase(uint8_t deser);
+
+
+	/* --- deser400 gate
+		width: gate length
+		  0       200 ns
+		  1       800 ns
+		  2       3.2 us
+		  3      12.8 us
+		  4      51.2 us
+		  5     204.8 us
+		  6       1.6 ms (default)
+		  7      26.2 ms
+
+		period: gate repetition periode
+		  0       800 ns
+		  1       3.2 us
+		  2      12.8 us
+		  3      51.2 us
+		  4     204.8 us
+		  5       1.6 ms
+		  6      13.1 ms
+		  7     209.7 ms (default)
+	*/
+	RPC_EXPORT void Deser400_GateRun(uint8_t width, uint8_t period);
+	RPC_EXPORT void Deser400_GateSingle(uint8_t width);
+	RPC_EXPORT void Deser400_GateStop();
 
 
 	// --- ROC/module Communication -----------------------------------------
