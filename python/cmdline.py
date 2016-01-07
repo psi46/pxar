@@ -730,10 +730,10 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all signals
                 return dacdict.getAllDTBNames()
 
-    @arity(2,2,[str, str])
-    def do_SignalProbe(self, probe, name):
-        """SignalProbe [probe] [name]: Switches DTB probe output [probe] to signal [name]"""
-        self.api.SignalProbe(probe,name)
+    @arity(2,3,[str, str, int])
+    def do_SignalProbe(self, probe, name, channel = 0):
+        """SignalProbe [probe] [name] [channel]: Switches DTB probe output [probe] to signal [name]. The [channel] parameter can be used to select the deserializer DAQ channel"""
+        self.api.SignalProbe(probe,name, channel)
 
     def complete_SignalProbe(self, text, line, start_index, end_index):
         probes = ["d1","d2","a1","a2"]
