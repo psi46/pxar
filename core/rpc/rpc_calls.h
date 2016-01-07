@@ -272,7 +272,6 @@ public:
 	RPC_EXPORT void SignalProbeD1(uint8_t signal);
 	RPC_EXPORT void SignalProbeD2(uint8_t signal);
 
-
         RPC_EXPORT void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
         RPC_EXPORT void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
 

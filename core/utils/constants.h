@@ -184,43 +184,7 @@ namespace pxar {
 #define PROBE_ADC_START 22
 #define PROBE_ADC_SGATE 23
 #define PROBE_ADC_S 24
-
-#define PROBE_TBM0_GATE 100
-#define PROBE_TBM0_DATA 101
-#define PROBE_TBM0_TBMHDR 102
-#define PROBE_TBM0_ROCHDR 103
-#define PROBE_TBM0_TBMTRL 104
-
-#define PROBE_TBM1_GATE 105
-#define PROBE_TBM1_DATA 106
-#define PROBE_TBM1_TBMHDR 107
-#define PROBE_TBM1_ROCHDR 108
-#define PROBE_TBM1_TBMTRL 109
-
-#define PROBE_TBM2_GATE 110
-#define PROBE_TBM2_DATA 111
-#define PROBE_TBM2_TBMHDR 112
-#define PROBE_TBM2_ROCHDR 113
-#define PROBE_TBM2_TBMTRL 114
-
-#define PROBE_TBM3_GATE 115
-#define PROBE_TBM3_DATA 116
-#define PROBE_TBM3_TBMHDR 117
-#define PROBE_TBM3_ROCHDR 118
-#define PROBE_TBM3_TBMTRL 119
-
-#define PROBE_TBM4_GATE 120
-#define PROBE_TBM4_DATA 121
-#define PROBE_TBM4_TBMHDR 122
-#define PROBE_TBM4_ROCHDR 123
-#define PROBE_TBM4_TBMTRL 124
-
-#define PROBE_TBM5_GATE 125
-#define PROBE_TBM5_DATA 126
-#define PROBE_TBM5_TBMHDR 127
-#define PROBE_TBM5_ROCHDR 128
-#define PROBE_TBM5_TBMTRL 129
-
+#define PROBE_DS_GATE 29
 
 // --- Testboard analog signal probe ------------------------------------------
 #define PROBEA_TIN     0
@@ -241,17 +205,23 @@ namespace pxar {
 #define PROBE_FRAME_ERROR    0
 #define PROBE_CODE_ERROR     1
 #define PROBE_ERROR          2  // FRAME or CODE
+  
 #define PROBE_A_HEADER       3
 #define PROBE_A_PACKET       4
 #define PROBE_A_TBM_HDR      5
 #define PROBE_A_ROC_HDR      6
 #define PROBE_A_TBM_TRL      7
-#define PROBE_B_HEADER       8
-#define PROBE_B_PACKET       9
-#define PROBE_B_TBM_HDR     10
-#define PROBE_B_ROC_HDR     11
-#define PROBE_B_TBM_TRL     12
-
+#define PROBE_A_IDLE_ERROR   8
+#define PROBE_A_HDR_ERROR    9
+  
+#define PROBE_B_HEADER      10
+#define PROBE_B_PACKET      11
+#define PROBE_B_TBM_HDR     12
+#define PROBE_B_ROC_HDR     13
+#define PROBE_B_TBM_TRL     14
+#define PROBE_B_IDLE_ERROR  15
+#define PROBE_B_HDR_ERROR   16
+  
 
 // --- Testboard pulse pattern generator --------------------------------------
 #define PG_TOK   0x0100
