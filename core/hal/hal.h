@@ -171,6 +171,14 @@ namespace pxar {
      */
     void SignalProbeD2(uint8_t signal);
 
+    /** Selects DESER400 "signal" as output for the DTB probe channel D2 (digital) 
+     */
+    void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
+
+    /** Selects DESER400 "signal" as output for the DTB probe channel D2 (digital) 
+     */
+    void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
+
     /** Selects "signal" as output for the DTB probe channel A1 (analog) 
      */
     void SignalProbeA1(uint8_t signal);
