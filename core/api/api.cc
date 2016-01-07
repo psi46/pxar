@@ -610,8 +610,8 @@ bool pxarCore::SignalProbe(std::string probe, std::string name, uint8_t channel)
       if(channel%2 != 0) signal += (PROBE_B_HEADER - PROBE_A_HEADER);
 
       // Divide channel count by two, since one DESER400 holds two DAQ channels:
-      if(probe.compare("d1") == 0) { _hal->SignalProbeDeserD1(signal, channel/2); return true; }
-      else if(probe.compare("d2") == 0) { _hal->SignalProbeDeserD2(signal, channel/2); return true; }
+      if(probe.compare("d1") == 0) { _hal->SignalProbeDeserD1(channel/2, signal); return true; }
+      else if(probe.compare("d2") == 0) { _hal->SignalProbeDeserD2(channel/2, signal); return true; }
     }
     else {
       // Select the correct probe for the output:
