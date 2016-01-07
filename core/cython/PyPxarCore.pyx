@@ -301,6 +301,11 @@ cdef class PyPxarCore:
     def getTbmDACs(self, int tbmid):
         return self.thisptr._dut.getTbmDACs(tbmid)
   
+    def getRocDACs(self, int rocid):
+        return self.thisptr._dut.getDACs(rocid)
+    def getDACs(self, int rocid):
+        return self.thisptr._dut.getDACs(rocid)
+  
     def updateTrimBits(self, trimming, int rocid):
         cdef vector[pixelConfig] v
         cdef pixelConfig pc

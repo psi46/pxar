@@ -849,6 +849,15 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getTbmDACs.__doc__, '']
 
+    @arity(1,1,[int])
+    def do_getRocDACs(self, tbmid):
+        """getRocDACs [id]: get the currently programmed register/DAC settings for ROC #id"""
+        print self.api.getRocDACs(tbmid)
+
+    def complete_getRocDACs(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getRocDACs.__doc__, '']
+
     @arity(0,0,[])
     def do_info(self):
         """info: print pxarCore DUT info"""
