@@ -135,6 +135,14 @@ void CTestboard::Sig_SetRdaToutDelay(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
+void CTestboard::SignalProbeDeserD1(uint8_t a, uint8_t b) {
+  LOG(pxar::logDEBUGRPC) << "called with " << std::hex << static_cast<int>(a) << " " << static_cast<int>(b) << std::dec;
+}
+
+void CTestboard::SignalProbeDeserD2(uint8_t a, uint8_t b) {
+  LOG(pxar::logDEBUGRPC) << "called with " << std::hex << static_cast<int>(a) << " " << static_cast<int>(b) << std::dec;
+}
+
 void CTestboard::SignalProbeD1(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
