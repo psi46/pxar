@@ -369,8 +369,11 @@ namespace pxar {
       *
       *  The signal identifier is checked against a dictionary to be valid.
       *  In case of an invalid signal identifier the output is turned off.
+      *
+      *  The channel variable allows to select a certain channel of the 
+      *  signal to be selected of applicable.
       */
-    bool SignalProbe(std::string probe, std::string name);
+    bool SignalProbe(std::string probe, std::string name, uint8_t channel = 0);
     
     std::vector<uint16_t> daqADC(std::string signal, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start);
  

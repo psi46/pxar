@@ -194,7 +194,7 @@ cdef extern from "api.h" namespace "pxar":
         void HVon()
         void Poff()
         void Pon()
-        bool SignalProbe(string probe, string name) except +
+        bool SignalProbe(string probe, string name, uint8_t channel) except +
         bool setDAC(string dacName, uint8_t dacValue, uint8_t rocid) except +
         bool setDAC(string dacName, uint8_t dacValue) except +
         uint8_t getDACRange(string dacName) except +
