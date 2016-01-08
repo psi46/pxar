@@ -190,9 +190,6 @@ namespace pxar {
 
     // TBM Header:
 
-    // Check the validity of the data words:
-    CheckInvalidWord(sample->data.at(0));
-    CheckInvalidWord(sample->data.at(1));
     // Check the alignment markers to be correct:
     if((sample->data.at(0) & 0xe000) != 0xa000
        || (sample->data.at(1) & 0xe000) != 0x8000) { decodingStats.m_errors_tbm_header++; }
@@ -205,19 +202,22 @@ namespace pxar {
 
     // TBM Trailer:
 
-    // Check the validity of the data words:
-    CheckInvalidWord(sample->data.at(size-2));
-    CheckInvalidWord(sample->data.at(size-1));
-    // Check the alignment markers to be correct:
-    if((sample->data.at(size-2) & 0xe000) != 0xe000
-       || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
-    // Store the two trailer words:
-    roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
-      + (sample->data.at(size-1) & 0x00ff);
+    // Check possible DESER400 error flags in the TBM trailer:
+    if((sample->data.at(size-2) & 0x1000) == 0x1000) { evalDeser400Errors(sample->data.at(size-2)); }
+    else if((sample->data.at(size-1) & 0x1000) == 0x1000) { evalDeser400Errors(sample->data.at(size-1)); }
+    // No Error flag is set by the DESER400, just decode the TBM header as usual:
+    else {
+      // Check the alignment markers to be correct:
+      if((sample->data.at(size-2) & 0xe000) != 0xe000
+	 || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
+      // Store the two trailer words:
+      roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
+	+ (sample->data.at(size-1) & 0x00ff);
 
-    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
-    IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
-
+      LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
+      IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
+    }
+    
     // Check for correct TBM event ID:
     CheckEventID();
 
@@ -239,7 +239,6 @@ namespace pxar {
 
     // Loop over the full data:
     for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
-      CheckInvalidWord(*word);
 
       // Check if we have a ROC header:
       if(((*word) & 0xe000) == 0x4000) {
@@ -439,12 +438,6 @@ namespace pxar {
     CheckEventValidity(roc_n);
   }
 
-  void dtbEventDecoder::CheckInvalidWord(uint16_t v) {
-    // Check last bit of identifier nibble to be zero:
-    if((v & 0x1000) == 0x0000) { return; }
-    decodingStats.m_errors_event_invalid_words++;
-  }
-
   void dtbEventDecoder::CheckEventID() {
     // After startup, register the first event ID:
     if(eventID == -1) { eventID = roc_Event.triggerCount(); }
@@ -526,6 +519,16 @@ namespace pxar {
     levelS = (black - ultrablack)/8;
   }
 
+  void dtbEventDecoder::evalDeser400Errors(uint16_t data) {
+
+    // Evaluate the four error bits of the TBM trailer word:
+    if((data & 0x0100) != 0x0000) { decodingStats.m_errors_event_nodata++; }
+    if((data & 0x0200) != 0x0000) { decodingStats.m_errors_event_idledata++; }
+    if((data & 0x0400) != 0x0000) { decodingStats.m_errors_event_invalid_words++; }
+    if((data & 0x0800) != 0x0000) { decodingStats.m_errors_event_frame++; }
+
+  }
+  
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
     // Obey disable flag:
     if((GetFlags() & FLAG_DISABLE_READBACK_COLLECTION) != 0) { return; }
