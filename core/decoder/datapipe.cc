@@ -521,12 +521,15 @@ namespace pxar {
 
   void dtbEventDecoder::evalDeser400Errors(uint16_t data) {
 
+    LOG(logDEBUGPIPES) << "Detected DESER400 trailer error bits, evaluating...";
+    
     // Evaluate the four error bits of the TBM trailer word:
     if((data & 0x0100) != 0x0000) { decodingStats.m_errors_event_nodata++; }
     if((data & 0x0200) != 0x0000) { decodingStats.m_errors_event_idledata++; }
     if((data & 0x0400) != 0x0000) { decodingStats.m_errors_event_invalid_words++; }
     if((data & 0x0800) != 0x0000) { decodingStats.m_errors_event_frame++; }
 
+    throw DataDecodingError("Detected DESER400 failure.");
   }
   
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
