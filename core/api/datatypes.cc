@@ -209,6 +209,9 @@ namespace pxar {
     m_errors_event_overflow = 0;
     m_errors_event_invalid_words = 0;
     m_errors_event_invalid_xor = 0;
+    m_errors_event_frame = 0;
+    m_errors_event_idledata = 0;
+    m_errors_event_nodata = 0;
 
     m_errors_tbm_header = 0;
     m_errors_tbm_trailer = 0;
