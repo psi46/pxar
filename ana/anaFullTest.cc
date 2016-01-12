@@ -1029,10 +1029,19 @@ void anaFullTest::validateFullTests(string dir, string mname, int metric, string
   hnlrms->Draw();
   print(hnlrms, 0.6, 0.80, 0.07);
 
-  c0->cd(9); 
+  c1 =  c0->cd(9); 
+  c1->Divide(1,2);
+  c1->cd(1);
   showOverFlow(fhCritical);
   fhCritical->Draw();
   tl->DrawLatexNDC(0.4, 0.7, Form("# crit. errors: %d", static_cast<int>(fhCritical->Integral(2, fhCritical->GetNbinsX()+1)))); 
+
+  c1->cd(2);
+  showOverFlow(fhDuration);
+  fhDuration->Draw();
+  int seconds = fhDuration->GetMean();
+  string duration = Form("%02d:%02d:%02d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+  tl->DrawLatexNDC(0.7, 0.7, duration.c_str()); 
 
   
   c0->SaveAs(Form("ftval-%s.pdf", mname.c_str())); 
@@ -1069,18 +1078,22 @@ void anaFullTest::addFullTests(string dir, string mname, string mpattern) {
     readLogFile(dirs[idirs], "vcal RMS:", fModSummaries[mname]->trimthrrms);
     readLogFile(dirs[idirs], "non-linearity mean:", fModSummaries[mname]->nlpos);
     readLogFile(dirs[idirs], "non-linearity RMS:", fModSummaries[mname]->nlrms);
-      
-    /*
-      vcal mean:
-      vcal RMS: 
-      bits mean:
-      bits RMS: 
 
-      VthrComp mean:
-      VthrComp RMS:
-      Vcal mean:
-      Vcal RMS:
-     */
+    string startTest = Form("Start:       %s", readLine(dirs[idirs], "INFO: *** Welcome to pxar ***", 2).c_str()); 
+    string endTest   = Form("End:   %s", readLine(dirs[idirs], "INFO: pXar: this is the end, my friend", 2).c_str()); 
+    
+    PixUtil::replaceAll(startTest, "Start:", ""); 
+    PixUtil::replaceAll(startTest, "[", ""); 
+    PixUtil::replaceAll(startTest, "]", ""); 
+    
+    PixUtil::replaceAll(endTest, "End:", ""); 
+    PixUtil::replaceAll(endTest, "[", ""); 
+    PixUtil::replaceAll(endTest, "]", ""); 
+    
+    int seconds = testDuration(startTest, endTest); 
+    fhDuration->Fill(seconds); 
+    cout << "XXXXXXXXXX test duration for idirs =  " << idirs << ": " << seconds << endl;
+    
   }
 
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
@@ -1670,8 +1683,14 @@ int anaFullTest::testDuration(string startTest, string endTest) {
   m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
   s1 = atoi(parse.substr(st1+1).c_str());
   
+  int offset(0); 
+  if (h1 < h0) {
+    cout << "anaFullTest::testDuration> add another day to h1!" << endl;
+    offset = 86400;
+  }
+
   struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
-  struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
+  struct timeval tv1 = {offset + h1*60*60 + m1*60 + s1, 0};
   
   return tv1.tv_sec - tv0.tv_sec;
 }
