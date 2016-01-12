@@ -621,8 +621,12 @@ namespace pxar {
       _signals["single_direct"]    = triggerConfig(TRG_SEL_SINGLE_DIR,false,false);
 
       // Internal Trigger Generator
-      _signals["gen"]              = triggerConfig(TRG_SEL_GEN,true);
+      _signals["random"]           = triggerConfig(TRG_SEL_GEN,true);
+      _signals["gen"]              = triggerConfig(TRG_SEL_GEN,true,false);
       _signals["generator"]        = triggerConfig(TRG_SEL_GEN,true,false);
+      _signals["random_dir"]       = triggerConfig(TRG_SEL_GEN_DIR,false);
+      _signals["gen_dir"]          = triggerConfig(TRG_SEL_GEN_DIR,false,false);
+      _signals["generator_direct"] = triggerConfig(TRG_SEL_GEN_DIR,false,false);
 
       // Pattern Generator
       _signals["pg"]               = triggerConfig(TRG_SEL_PG,true);
