@@ -315,6 +315,9 @@ namespace pxar {
      */
     void daqTriggerSingleSignal(uint8_t signal);
 
+    void daqTriggerGenRandom(uint32_t rate);
+    void daqTriggerGenPeriodic(uint32_t period);
+    
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
     void daqTrigger(uint32_t nTrig, uint16_t period);

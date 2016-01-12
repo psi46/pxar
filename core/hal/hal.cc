@@ -1758,6 +1758,23 @@ void hal::daqTriggerSource(uint16_t source) {
 
   // Write new trigger source to DTB:
   _testboard->Trigger_Select(source);
+  _testboard->Flush();
+}
+
+void hal::daqTriggerGenRandom(uint32_t rate) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger generator with rate " << rate;
+
+  // Activate random generator:
+  _testboard->Trigger_SetGenRandom(rate);
+}
+
+void hal::daqTriggerGenPeriodic(uint32_t period) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger generator with period " << period;
+
+  // Activate periodic generator:
+  _testboard->Trigger_SetGenPeriodic(period);
 }
 
 void hal::daqTriggerSingleSignal(uint8_t signal) {
