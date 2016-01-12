@@ -407,10 +407,10 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqStatus.__doc__, '']
 
-    @arity(1,1,[str])
-    def do_daqTriggerSource(self, source):
+    @arity(1,2,[str,int])
+    def do_daqTriggerSource(self, source, rate = 0):
         """daqTriggerSource: select the trigger source to be used for the DAQ session"""
-        if self.api.daqTriggerSource(source):
+        if self.api.daqTriggerSource(source,rate):
             print "Trigger source \"" + source + "\" selected."
         else:
             print "DAQ returns faulty state."
