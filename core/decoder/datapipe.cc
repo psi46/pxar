@@ -468,8 +468,18 @@ namespace pxar {
   void dtbEventDecoder::CheckEventValidity(int16_t roc_n) {
 
     // Check that we found all expected ROC headers:
+    // If a PKAM has been detected, the NoTokenPass bis is set and the content should be discarded:
+    if(roc_Event.hasPkamReset() && roc_Event.hasNoTokenPass()) {
+      LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel())
+		    << " detected a PKAM reset, event cleared.";
+
+      // This breaks the readback for the missing roc, let's ignore this readback cycle for all ROCs:
+      std::fill(readback_dirty.begin(), readback_dirty.end(), true);
+      // Clearing event content:
+      roc_Event.Clear();
+    }
     // In case of a NoTokenPass flag, no ROC headers are expected
-    if(roc_Event.hasNoTokenPass() && (roc_n+1 > 0)) {
+    else if(roc_Event.hasNoTokenPass() && (roc_n+1 > 0)) {
       LOG(logERROR) << "Channel " <<  static_cast<int>(GetChannel())
 		    << " has NoTokenPass but " << static_cast<int>(roc_n+1) 
 		    << " ROCs were found";
