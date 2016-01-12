@@ -120,7 +120,7 @@ namespace pxar {
 
     /** Set a register on a specific TBM at hubid
      */
-    bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue);
+    bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush = true);
 
     /** Set all registers on a specific TBM tbmId
      *  registers are provided as map of uint8_t,uint8_t pairs with Reg Id and value.

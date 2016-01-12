@@ -595,7 +595,7 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   // Iterate over all register id/value pairs and set them
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
-    if(!tbmSetReg(hubid, core | it->first, it->second)) return false;
+    if(!tbmSetReg(hubid, core | it->first, it->second),false) return false;
   }
 
   // Send all queued commands to the testboard:
@@ -604,7 +604,7 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush) {
 
   LOG(logDEBUGHAL) << "TBM@HUB " << static_cast<int>(hubid)
 		   << ": set register \"0x" << std::hex << static_cast<int>(regId) 
@@ -615,6 +615,9 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
 
   // Set this register:
   _testboard->tbm_Set(regId,regValue);
+
+  // If requested, flush immediately:
+  if(flush) _testboard->Flush();
   return true;
 }
 
