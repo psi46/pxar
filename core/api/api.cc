@@ -1315,6 +1315,9 @@ bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool i
   // And start the DAQ session:
   _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
+  // Activate the selected trigger source
+  _hal->daqTriggerSource(_dut->trigger_source);
+
   _daq_running = true;
   return true;
 }
@@ -1372,8 +1375,8 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
   }
 
   LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
-  _hal->daqTriggerSource(signal);
-
+  _dut->trigger_source = signal;
+    
   // Check if we need to change the tbmtype for HAL:
   uint8_t newtype = 0x0;
   if(_dict->getEmulationState(signal)) {
@@ -1524,6 +1527,9 @@ bool pxarCore::daqStop(const bool init) {
     return false;
   }
 
+  // Turn off all trigger sources:
+  _hal->daqTriggerSource(TRG_SEL_NONE);
+
   _daq_running = false;
   
   // Stop all active DAQ channels:
@@ -1552,6 +1558,9 @@ bool pxarCore::daqStop(const bool init) {
 
 
 std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags) {
+
+  // Activate the pattern generator trigger:
+  _hal->daqTriggerSource(TRG_SEL_PG_DIR);
   
   // pointer to vector to hold our data
   std::vector<Event> data = std::vector<Event>();
@@ -1714,6 +1723,9 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
+
+  // Turn off all trigger sources:
+  _hal->daqTriggerSource(TRG_SEL_NONE);
 
   return data;
 } // expandLoop()

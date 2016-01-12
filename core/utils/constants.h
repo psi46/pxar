@@ -135,6 +135,9 @@ namespace pxar {
 #define MHZ_40     0
 
 // --- Trigger settings -------------------------------------------------------
+// Turn off all triggers:
+#define TRG_SEL_NONE       0x0000
+
 // Via TBM Emulator:
 #define TRG_SEL_ASYNC      0x0100
 #define TRG_SEL_SYNC       0x0080
