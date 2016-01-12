@@ -1344,7 +1344,7 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
   return true;
 }
 
-bool pxarCore::daqTriggerSource(std::string triggerSource) {
+bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
   if(daqStatus()) {
     LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
@@ -1367,6 +1367,22 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
     if(sig != TRG_ERR) {
       signal |= sig;
       LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
+
+      // If we are using the DTB generator, also set the rate/period:
+      if(sig == TRG_SEL_GEN || sig == TRG_SEL_GEN_DIR) {
+
+	if(s.compare(0,6,"random") == 0) {
+	  // Be gentle and convert to centi-Hertz for the DTB :)
+	  uint32_t rate = int(timing/40e6*4294967296 + 0.5);
+	  // FIXME better also take the user input as BC instead of Hz, reduces confusion...
+	  LOG(logDEBUGAPI) << "Setting random trigger generator, rate = " << rate << " cHz";
+	  _hal->daqTriggerGenRandom(rate);
+	}
+	else if(s.compare(0,6,"period") == 0) {
+	  LOG(logDEBUGAPI) << "Setting periodic trigger generator, period = " << timing << " BC";
+	  _hal->daqTriggerGenPeriodic(timing);
+	}
+      }
     }
     else {
       LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";

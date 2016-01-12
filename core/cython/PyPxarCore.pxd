@@ -215,7 +215,7 @@ cdef extern from "api.h" namespace "pxar":
         void setSignalMode(string signal, string mode, uint8_t speed) except +
         bool daqStart(uint16_t flags) except +
         bool daqStatus() except +
-        bool daqTriggerSource(string triggerSource) except +
+        bool daqTriggerSource(string triggerSource, uint32_t period) except +
         bool daqSingleSignal(string triggerSignal) except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +

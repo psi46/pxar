@@ -708,8 +708,14 @@ namespace pxar {
      *  synchronous or asynchronous trigger sources. The trigger source is
      *  looked up from the dictionary, and the corresponding decoding module
      *  is automatically selected.
+     *
+     *  The optional "timing" parameter is required for the DTB trigger generator
+     *  (random, periodic) and represents the trigger period in BC.
+     *
+     *  The trigger is only activated at pxar::daqStart() and is stopped again at
+     *  pxar::daqStop().
      */
-    bool daqTriggerSource(std::string triggerSource);
+    bool daqTriggerSource(std::string triggerSource, uint32_t rate = 0);
 
     /** Function to send a single (direct) signal to the DUT.
      *
