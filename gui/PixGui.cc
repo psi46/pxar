@@ -169,13 +169,13 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   sigFrame->AddFrame(signalBoxD[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   signalBoxD[1]->SetName("d2");
 
-  signalBoxA[0]->SetWidth(75);
+  signalBoxA[0]->SetWidth(120);
   signalBoxA[0]->SetHeight(20);
-  signalBoxA[1]->SetWidth(75);
+  signalBoxA[1]->SetWidth(120);
   signalBoxA[1]->SetHeight(20);
-  signalBoxD[0]->SetWidth(75);
+  signalBoxD[0]->SetWidth(120);
   signalBoxD[0]->SetHeight(20);
-  signalBoxD[1]->SetWidth(75);
+  signalBoxD[1]->SetWidth(120);
   signalBoxD[1]->SetHeight(20);
 
   // Get singleton Probe dictionary object:

@@ -203,8 +203,9 @@ void anaFullTest::bookSingleModuleSummary(string modulename, int first) {
 void anaFullTest::showAllFullTests(string dir, string pattern) {
   vector<string> dirs = glob(dir, pattern); 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
-    cout << dirs[idirs] << endl;
-    showFullTest(dirs[idirs], dir); 
+    string ldir = dirs[idirs].substr(dirs[idirs].rfind("/")+1); 
+    cout << "showFullTest(" << ldir << ", " << dir << ")" << endl;
+    showFullTest(ldir, dir); 
   }
   
 }
@@ -245,7 +246,7 @@ void anaFullTest::showFullTest(string modname, string basename) {
 
   int seconds = testDuration(startTest, endTest); 
   fhDuration->Fill(seconds); 
-  string duration = Form("%d:%d:%d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+  string duration = Form("%02d:%02d:%02d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
 
   // -- remove the sub-second digits
   startTest = startTest.substr(0, startTest.rfind(".")); 
@@ -881,27 +882,36 @@ void anaFullTest::bookModuleSummary(string modulename) {
 
   ms->nlpos = new TH1D(Form("%s_nlpos", modulename.c_str()), 
 		    Form("%s_nlpos", modulename.c_str()), 
-		    50, 0.5, 1.0); 
+		    50, 0.9, 1.0); 
 
   ms->nlrms = new TH1D(Form("%s_nlrms", modulename.c_str()), 
 		    Form("%s_nlrms", modulename.c_str()), 
-		    50, 0., 0.1); 
+		    50, 0., 0.02); 
   
   fModSummaries.insert(make_pair(modulename, ms)); 
-
+  
 }
 
 
 // ----------------------------------------------------------------------
-void anaFullTest::validateFullTests(string dir, string mname, string mpattern) {
+void anaFullTest::validateFullTests(string dir, string mname, int metric, string mpattern) {
+  fDiffMetric = metric; 
   addFullTests(dir, mname, mpattern);
 
-  TH1D *hVana = new TH1D("hVana", Form("Vana %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hCaldel = new TH1D("hCaldel", Form("CalDel %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hVthrcomp = new TH1D("hVthrcomp", Form("VthrComp %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hVtrim = new TH1D("hVtrim", Form("Vtrim %s", fDiffMetric == 0?"difference":"RMS"), 25, 0., 25.);
-  TH1D *hPhs = new TH1D("hPhs", Form("phscale %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
-  TH1D *hPho = new TH1D("hPho", Form("phoffset %s", fDiffMetric == 0?"difference":"RMS"), 5, 0., 5.);
+  string type = fDiffMetric == 0?"difference":"RMS";
+  int ntests  = fModSummaries[mname]->vana[0]->GetEntries();
+  TH1D *hVana = new TH1D("hVana", Form("Vana %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			 fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hCaldel = new TH1D("hCaldel", Form("CalDel %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			   fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hVthrcomp = new TH1D("hVthrcomp", Form("VthrComp %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			     fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hVtrim = new TH1D("hVtrim", Form("Vtrim %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			  fDiffMetric == 0?30:60, 0., 30.);
+  TH1D *hPhs = new TH1D("hPhs", Form("phscale %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			fDiffMetric == 0?10:40, 0., 10.);
+  TH1D *hPho = new TH1D("hPho", Form("phoffset %s (1 entry/ROC from %d tests)", type.c_str(), ntests),
+			fDiffMetric == 0?10:40, 0., 10.);
 
   map<string, moduleSummary*>::iterator ib = fModSummaries.begin();
 
@@ -910,17 +920,17 @@ void anaFullTest::validateFullTests(string dir, string mname, string mpattern) {
   hTrimThrPos->Reset();
 
   TH1D *hTrimThrRms = (TH1D*)ib->second->trimthrrms->Clone("hTrimThrRms");
-  hTrimThrRms->SetTitle("Trim Threshold RMS");
+  hTrimThrRms->SetTitle(Form("Trim Threshold RMS (1 entry for each ROC from %d tests)", ntests));
   hTrimThrRms->Reset();
 
   TH1D *hnlpos = (TH1D*)ib->second->nlpos->Clone("hnlpos");
-  hnlpos->SetTitle("nl");
+  hnlpos->SetTitle(Form("nl (1 entry for each ROC from %d tests)", ntests));
   hnlpos->Reset();
 
   TH1D *hnlrms = (TH1D*)ib->second->nlrms->Clone("hnlrms");
-  hnlrms->SetTitle("nl RMS");
+  hnlrms->SetTitle(Form("nl RMS (1 entry for each ROC from %d tests)", ntests));
   hnlrms->Reset();
-
+  
   for (map<string, moduleSummary*>::iterator it = fModSummaries.begin(); it != fModSummaries.end(); ++it) {
 
     cout << "summarizing " << it->second->moduleName << endl;
@@ -964,35 +974,76 @@ void anaFullTest::validateFullTests(string dir, string mname, string mpattern) {
   c0->Clear();
   c0->Divide(3,3);
 
+  gStyle->SetOptStat(0); 
+  
   c0->cd(1);
   hVana->Draw();
+  print(hVana, 0.6, 0.80, 0.05); 
 
+  
   c0->cd(2);
   hCaldel->Draw();
+  print(hCaldel, 0.6, 0.80, 0.05); 
 
   c0->cd(3);
   hVthrcomp->Draw();
+  print(hVthrcomp, 0.6, 0.80, 0.05); 
 
   c0->cd(4);
   hVtrim->Draw();
+  print(hVtrim, 0.6, 0.80, 0.05); 
 
   c0->cd(5);
   hPhs->Draw();
-
+  print(hPhs, 0.6, 0.80, 0.05);
+  
   c0->cd(6);
   hPho->Draw();
+  print(hPho, 0.6, 0.80, 0.05);
 
-  c0->cd(7);
+  TVirtualPad *c1 = c0->cd(7); 
+  gStyle->SetOptStat(0); 
+  c1->Divide(1,2);
+  c1->cd(1);
+  gPad->SetLogy(1); 
+  showOverFlow(hTrimThrPos);
   hTrimThrPos->Draw();
+  print(hTrimThrPos, 0.2, 0.80, 0.07);
 
-  c0->cd(8);
+  c1->cd(2);
+  gPad->SetLogy(1); 
+  showOverFlow(hTrimThrRms);
   hTrimThrRms->Draw();
+  print(hTrimThrRms, 0.2, 0.80, 0.07);
 
-  c0->cd(9);
+  c1 = c0->cd(8);
+  gStyle->SetOptStat(0); 
+  c1->Divide(1,2);
+  c1->cd(1);
+  gStyle->SetOptStat(0);
+  hnlpos->Draw();
+  print(hnlpos, 0.2, 0.80, 0.07);
+
+  c1->cd(2);
+  gStyle->SetOptStat(0);
   hnlrms->Draw();
+  print(hnlrms, 0.6, 0.80, 0.07);
 
-  // hnlpos->Draw();
+  c1 =  c0->cd(9); 
+  c1->Divide(1,2);
+  c1->cd(1);
+  showOverFlow(fhCritical);
+  fhCritical->Draw();
+  tl->DrawLatexNDC(0.4, 0.7, Form("# crit. errors: %d", static_cast<int>(fhCritical->Integral(2, fhCritical->GetNbinsX()+1)))); 
 
+  c1->cd(2);
+  showOverFlow(fhDuration);
+  fhDuration->Draw();
+  int seconds = fhDuration->GetMean();
+  string duration = Form("%02d:%02d:%02d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+  tl->DrawLatexNDC(0.7, 0.7, duration.c_str()); 
+
+  
   c0->SaveAs(Form("ftval-%s.pdf", mname.c_str())); 
 
 
@@ -1010,6 +1061,8 @@ void anaFullTest::addFullTests(string dir, string mname, string mpattern) {
   bookModuleSummary(mname); 
 
   for (unsigned int idirs = 0; idirs < dirs.size(); ++idirs) {
+    int ncritical = countWord(dirs[idirs], "CRITICAL:");
+    fhCritical->Fill(ncritical); 
     readDacFile(dirs[idirs], "vana", fModSummaries[mname]->vana);
     readDacFile(dirs[idirs], "caldel", fModSummaries[mname]->caldel);
     readDacFile(dirs[idirs], "vthrcomp", fModSummaries[mname]->vthrcomp);
@@ -1025,18 +1078,22 @@ void anaFullTest::addFullTests(string dir, string mname, string mpattern) {
     readLogFile(dirs[idirs], "vcal RMS:", fModSummaries[mname]->trimthrrms);
     readLogFile(dirs[idirs], "non-linearity mean:", fModSummaries[mname]->nlpos);
     readLogFile(dirs[idirs], "non-linearity RMS:", fModSummaries[mname]->nlrms);
-      
-    /*
-      vcal mean:
-      vcal RMS: 
-      bits mean:
-      bits RMS: 
 
-      VthrComp mean:
-      VthrComp RMS:
-      Vcal mean:
-      Vcal RMS:
-     */
+    string startTest = Form("Start:       %s", readLine(dirs[idirs], "INFO: *** Welcome to pxar ***", 2).c_str()); 
+    string endTest   = Form("End:   %s", readLine(dirs[idirs], "INFO: pXar: this is the end, my friend", 2).c_str()); 
+    
+    PixUtil::replaceAll(startTest, "Start:", ""); 
+    PixUtil::replaceAll(startTest, "[", ""); 
+    PixUtil::replaceAll(startTest, "]", ""); 
+    
+    PixUtil::replaceAll(endTest, "End:", ""); 
+    PixUtil::replaceAll(endTest, "[", ""); 
+    PixUtil::replaceAll(endTest, "]", ""); 
+    
+    int seconds = testDuration(startTest, endTest); 
+    fhDuration->Fill(seconds); 
+    cout << "XXXXXXXXXX test duration for idirs =  " << idirs << ": " << seconds << endl;
+    
   }
 
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
@@ -1404,8 +1461,12 @@ vector<string> anaFullTest::glob(string basedir, string basename) {
   void *pDir = lunix->OpenDirectory(basedir.c_str());
   while ((file = lunix->GetDirEntry(pDir))) {
     fname = file;
+    cout << "glob checking " << fname;
     if (fname.Contains(basename.c_str())) {
       lof.push_back(string(basedir+"/"+fname));
+      cout << ", adding " << string(basedir+"/"+fname) << endl;
+    } else {
+      cout << ", skipping" << endl;
     }
   }  
 #endif
@@ -1622,8 +1683,14 @@ int anaFullTest::testDuration(string startTest, string endTest) {
   m1 = atoi(parse.substr(st0+1, st1-st0-1).c_str());
   s1 = atoi(parse.substr(st1+1).c_str());
   
+  int offset(0); 
+  if (h1 < h0) {
+    cout << "anaFullTest::testDuration> add another day to h1!" << endl;
+    offset = 86400;
+  }
+
   struct timeval tv0 = {h0*60*60 + m0*60 + s0, 0};
-  struct timeval tv1 = {h1*60*60 + m1*60 + s1, 0};
+  struct timeval tv1 = {offset + h1*60*60 + m1*60 + s1, 0};
   
   return tv1.tv_sec - tv0.tv_sec;
 }
@@ -1834,4 +1901,20 @@ void anaFullTest::fullTestTiming(string dir, string basedir) {
 
   testD = testDuration(startPoints[0], startPoints[startPoints.size()-1]);
   fTS->tFullTest->Fill(testD); 
+}
+
+
+// ----------------------------------------------------------------------
+void anaFullTest::print(TH1 *h, double left, double top, double size) {
+
+  double old = tl->GetTextSize(); 
+  tl->SetTextSize(size); 
+  double xleft(left), ytop(top);
+  tl->DrawLatexNDC(xleft, ytop, Form("Mean:"));
+  tl->DrawLatexNDC(xleft+0.15, ytop, Form("%4.3f", h->GetMean()));
+
+  tl->DrawLatexNDC(xleft, ytop-1.1*size, Form("RMS:"));
+  tl->DrawLatexNDC(xleft+0.15, ytop-1.1*size, Form("%4.3f", h->GetRMS()));
+
+  tl->SetTextSize(old); 
 }

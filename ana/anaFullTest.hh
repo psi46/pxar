@@ -77,7 +77,7 @@ class DLLEXPORT anaFullTest {
   void showFullTest(std::string modname = "m2057", std::string basename = "/scratch/ursl/pxar/modules");
 
   // -- compare n fulltests of the same module (e.g. for release tests)
-  void validateFullTests(std::string dir, std::string mname = "d2116", std::string mpattern = "-");
+  void validateFullTests(std::string dir, std::string mname = "d2116", int metric = 0, std::string mpattern = "-");
   void addFullTests(std::string mdir = "/scratch/ursl/pxar/modules/prod12", std::string mname = "D14-0006", std::string mpattern = "-000");
 
   void showAllTimings(std::string basename = "/scratch/ursl/pxar/modules", std::string pattern = "d2116-", bool reset = false);
@@ -123,6 +123,8 @@ class DLLEXPORT anaFullTest {
   int countWord(std::string dir, std::string pattern); 
   int testDuration(std::string startTest, std::string endTest);
 
+
+  void print(TH1*, double x, double y, double size); 
   void setHist(TH1D *h, std::string xtitle = "", std::string ytitle = "", int color = kBlack, double miny = 0., double maxy = 256.); 
 
 private: 
