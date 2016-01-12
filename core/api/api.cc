@@ -579,10 +579,13 @@ void pxarCore::Pon() {
   programDUT();
 }
 
-bool pxarCore::SignalProbe(std::string probe, std::string name) {
+bool pxarCore::SignalProbe(std::string probe, std::string name, uint8_t channel) {
 
   if(!_hal->status()) {return false;}
 
+  // Check selected channel to be within range of valid DAQ channels:
+  if(channel >= DTB_DAQ_CHANNELS) throw InvalidConfig("No DAQ available for selected channel.");
+  
   // Get singleton Probe dictionary object:
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
 
@@ -600,14 +603,20 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
     LOG(logDEBUGAPI) << "Digital probe signal lookup for \"" << name 
 		     << "\" returned signal: " << static_cast<int>(signal);
 
-    // Select the correct probe for the output:
-    if(probe.compare("d1") == 0) {
-      _hal->SignalProbeD1(signal);
-      return true;
+    // Check if this is a DESER400 probe signal:
+    if(name.compare(0,5,"deser") == 0) {
+      // Distinguish between DESER channel A (even DAQ channels) and B (odd DAQ channels)
+      // and shift the signal registers accordingly:
+      if(channel%2 != 0) signal += (PROBE_B_HEADER - PROBE_A_HEADER);
+
+      // Divide channel count by two, since one DESER400 holds two DAQ channels:
+      if(probe.compare("d1") == 0) { _hal->SignalProbeDeserD1(channel/2, signal); return true; }
+      else if(probe.compare("d2") == 0) { _hal->SignalProbeDeserD2(channel/2, signal); return true; }
     }
-    else if(probe.compare("d2") == 0) {
-      _hal->SignalProbeD2(signal);
-      return true;
+    else {
+      // Select the correct probe for the output:
+      if(probe.compare("d1") == 0) { _hal->SignalProbeD1(signal); return true; }
+      else if(probe.compare("d2") == 0) {  _hal->SignalProbeD2(signal); return true; }
     }
   }
   // Analog signal probes:

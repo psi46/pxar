@@ -730,10 +730,10 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all signals
                 return dacdict.getAllDTBNames()
 
-    @arity(2,2,[str, str])
-    def do_SignalProbe(self, probe, name):
-        """SignalProbe [probe] [name]: Switches DTB probe output [probe] to signal [name]"""
-        self.api.SignalProbe(probe,name)
+    @arity(2,3,[str, str, int])
+    def do_SignalProbe(self, probe, name, channel = 0):
+        """SignalProbe [probe] [name] [channel]: Switches DTB probe output [probe] to signal [name]. The [channel] parameter can be used to select the deserializer DAQ channel"""
+        self.api.SignalProbe(probe,name, channel)
 
     def complete_SignalProbe(self, text, line, start_index, end_index):
         probes = ["d1","d2","a1","a2"]
@@ -848,6 +848,15 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_getTbmDACs(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getTbmDACs.__doc__, '']
+
+    @arity(1,1,[int])
+    def do_getRocDACs(self, tbmid):
+        """getRocDACs [id]: get the currently programmed register/DAC settings for ROC #id"""
+        print self.api.getRocDACs(tbmid)
+
+    def complete_getRocDACs(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getRocDACs.__doc__, '']
 
     @arity(0,0,[])
     def do_info(self):

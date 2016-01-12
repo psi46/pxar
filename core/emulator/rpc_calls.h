@@ -150,6 +150,8 @@ class CTestboard {
   void SignalProbeD1(uint8_t signal);
   void SignalProbeD2(uint8_t signal);
 
+  void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
+  void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
 
   // --- analog signal probe ----------------------------------------------
   void SignalProbeA1(uint8_t signal);

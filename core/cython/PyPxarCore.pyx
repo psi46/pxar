@@ -301,6 +301,11 @@ cdef class PyPxarCore:
     def getTbmDACs(self, int tbmid):
         return self.thisptr._dut.getTbmDACs(tbmid)
   
+    def getRocDACs(self, int rocid):
+        return self.thisptr._dut.getDACs(rocid)
+    def getDACs(self, int rocid):
+        return self.thisptr._dut.getDACs(rocid)
+  
     def updateTrimBits(self, trimming, int rocid):
         cdef vector[pixelConfig] v
         cdef pixelConfig pc
@@ -424,8 +429,8 @@ cdef class PyPxarCore:
         self.thisptr.Poff()
     def Pon(self):
         self.thisptr.Pon()
-    def SignalProbe(self, string probe, string name):
-        return self.thisptr.SignalProbe(probe, name)
+    def SignalProbe(self, string probe, string name, int channel = 0):
+        return self.thisptr.SignalProbe(probe, name, channel)
     def setDAC(self, string dacName, uint8_t dacValue, rocid = None):
         if rocid is None:
             return self.thisptr.setDAC(dacName, dacValue)

@@ -1407,6 +1407,20 @@ void hal::SignalProbeD2(uint8_t signal) {
   _testboard->Flush();
 }
 
+void hal::SignalProbeDeserD1(uint8_t deser, uint8_t signal) {
+  LOG(logDEBUGHAL) << "Setting Deser " << static_cast<int>(deser) << " to signal " << static_cast<int>(signal) << " (D1)";
+  _testboard->SignalProbeDeserD1(deser, signal);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
+void hal::SignalProbeDeserD2(uint8_t deser, uint8_t signal) {
+  LOG(logDEBUGHAL) << "Setting Deser " << static_cast<int>(deser) << " to signal " << static_cast<int>(signal) << " (D2)";
+  _testboard->SignalProbeDeserD2(deser, signal);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
 void hal::SignalProbeA1(uint8_t signal) {
   _testboard->SignalProbeA1(signal);
   _testboard->uDelay(100);

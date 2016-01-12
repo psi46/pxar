@@ -1884,13 +1884,13 @@ int CmdProc::pixDecodeRaw(int raw, int level){
     error = (raw & 0x10) ? 128 : 0;
     if((error==128)&&(level>0)){ s=", wrong stuffing bit";}
 
-    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16;}; s+=", illegal raw column data (msb)";
-    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8;}; s+=", illegal raw column data (lsb)";
+    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16; s+=", illegal raw column data (msb)"; };
+    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8; s+=", illegal raw column data (lsb)";};
     int c = c1*6 + c0;
 
-    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4;}; s+=", illegal raw row data (msb)";
-    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2;}; s+=", illegal raw row data (nmsb)";
-    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1;}; s+=", illegal raw row data (lsb)";
+    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4; s+=", illegal raw row data (msb)";};
+    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2; s+=", illegal raw row data (nmsb)";};
+    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1; s+=", illegal raw row data (lsb)";};
     int r = (r2*6 + r1)*6 + r0;
 
     y = 80 - r/2; if ((unsigned int)y >= 80){ error |= 32; s+=", bad row";};
@@ -3110,8 +3110,8 @@ int CmdProc::tb(Keyword kw){
 		out << "Base + F   " << tbmprint(0xef) << "\n";
 		return 0;
 	}
-    if( kw.match("readrocs", value)){ return readRocs(value); }
     if( kw.match("readback")) { return readRocs();}
+    if( kw.match("readback", value)){ return readRocs(value); }
     if( kw.match("readback", "vd")  ) { return readRocs(8, 0.016,"V");  }
     if( kw.match("readback", "va")  ) { return readRocs(9, 0.016,"V");  }
     if( kw.match("readback", "vana")) { return readRocs(10, 0.008,"V"); }
@@ -3858,6 +3858,8 @@ void PixTestCmd::runCommand(std::string command) {
   if (!command.compare("timing")){
       std::string s_redirect = "timing > pxar_timing.log";
       cmd->exec(s_redirect.c_str());
+      cmd->fApi->daqStart(500000,true);
+      cmd->fApi->daqStop(true);
   }
 
   PixTest::update();
