@@ -224,6 +224,7 @@ class CTestboard {
   void Daq_Select_Deser400();
   void Daq_Deser400_Reset(uint8_t reset);
   void Daq_Deser400_OldFormat(bool old);
+  void Deser400_GateRun(uint8_t width, uint8_t period);
   void Daq_DeselectAll();
 	
   void Daq_Select_Datagenerator(uint16_t startvalue);
