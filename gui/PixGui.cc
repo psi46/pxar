@@ -242,7 +242,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   rootfileFrame->SetName("rootfileFrame");
 
   TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
-  rootfileButton->SetToolTipText("change the rootfile name");
+  rootfileButton->SetToolTipText("change the rootfile name.\nNote: the histogram versioning will restart at V0!");
   rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
@@ -260,7 +260,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   TGTextButton *dirButton = new TGTextButton(dirFrame, " Change directory ", B_DIRECTORY);
   dirButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
-  dirButton->SetToolTipText("change the output directory; will move the rootfile as well");
+  dirButton->SetToolTipText("change the output directory; will move the rootfile as well.\nNote: the histogram versioning will restart at V0!");
   dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
@@ -542,6 +542,11 @@ void PixGui::selectedTab(int id) {
 
 // ----------------------------------------------------------------------
 void PixGui::changeRootFile() {
+  std::vector<PixTest*>::iterator il;
+  for (il = fTestList.begin(); il != fTestList.end(); ++il) {
+    (*il)->writeOutput();
+  }
+
   string oldRootFilePath = gFile->GetName();
   gFile->Close();
 
@@ -550,10 +555,9 @@ void PixGui::changeRootFile() {
   gSystem->Rename(oldRootFilePath.c_str(), newRootFilePath.c_str()); 
   TFile *f = TFile::Open(newRootFilePath.c_str(), "UPDATE"); 
   (void)f;
-  std::vector<PixTest*>::iterator il; 
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
     (*il)->resetDirectory();
-  } 
+  }
 }
 
 
