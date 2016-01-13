@@ -165,7 +165,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
+  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
   hFrame = new TGHorizontalFrame(fV2); 
@@ -210,16 +210,11 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
-  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
+  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
   updateToolTips();
 
-//   fhFrame->MapSubwindows();
-//   fhFrame->Resize(fhFrame->GetDefaultSize());
-//   fhFrame->MapWindow();
-
-  fTabFrame->AddFrame(fhFrame, 
-		      new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
+  fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fTabFrame->MapSubwindows();
   fTabFrame->Resize(fTabFrame->GetDefaultSize());
   fTabFrame->MapWindow();
