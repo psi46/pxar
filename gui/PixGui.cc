@@ -203,7 +203,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // -- right frame
   // --------------
   TGGroupFrame *pControl = new TGGroupFrame(h1v3, "pXar control");
-  h1v3->AddFrame(pControl);
+  h1v3->AddFrame(pControl, new TGLayoutHints(kLHintsRight | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   TGVerticalFrame *FpControl = new TGVerticalFrame(pControl); 
   pControl->AddFrame(FpControl); 
 
