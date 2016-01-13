@@ -63,18 +63,18 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
   fH2 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.8), kFixedHeight);
 
-  TGVerticalFrame *h1v1 = new TGVerticalFrame(fH1); 
+  // TGVerticalFrame *h1v1 = new TGVerticalFrame(fH1); 
   TGVerticalFrame *h1v2 = new TGVerticalFrame(fH1);
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
   // ---------------
   // -- left frame
   // ---------------
-  TGGroupFrame *pStuff = new TGGroupFrame(h1v1, "lost in space");
-  h1v1->AddFrame(pStuff);
-  pStuff->SetWidth(500); 
-  TGVerticalFrame *FpStuff = new TGVerticalFrame(pStuff); 
-  pStuff->AddFrame(FpStuff); 
+  // TGGroupFrame *pStuff = new TGGroupFrame(h1v1, "lost in space");
+  // h1v1->AddFrame(pStuff);
+  // pStuff->SetWidth(100); 
+  // TGVerticalFrame *FpStuff = new TGVerticalFrame(pStuff); 
+  // pStuff->AddFrame(FpStuff); 
 
 
 
@@ -169,13 +169,14 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   sigFrame->AddFrame(signalBoxD[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   signalBoxD[1]->SetName("d2");
 
-  signalBoxA[0]->SetWidth(120);
+  int width(250); 
+  signalBoxA[0]->SetWidth(width);
   signalBoxA[0]->SetHeight(20);
-  signalBoxA[1]->SetWidth(120);
+  signalBoxA[1]->SetWidth(width);
   signalBoxA[1]->SetHeight(20);
-  signalBoxD[0]->SetWidth(120);
+  signalBoxD[0]->SetWidth(width);
   signalBoxD[0]->SetHeight(20);
-  signalBoxD[1]->SetWidth(120);
+  signalBoxD[1]->SetWidth(width);
   signalBoxD[1]->SetHeight(20);
 
   // Get singleton Probe dictionary object:
@@ -269,7 +270,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
  
 
-  h1v3->SetWidth(fWidth-h1v1->GetWidth()-h1v2->GetWidth());
+  //  h1v3->SetWidth(fWidth - /*h1v1->GetWidth()*/ - h1v2->GetWidth());
 
 
 
@@ -290,8 +291,8 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     createTab(tests[i].c_str()); 
   }
 
-  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
-  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX , fBorderN, fBorderN, fBorderN, fBorderN));
+  //  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
+  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX  | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
