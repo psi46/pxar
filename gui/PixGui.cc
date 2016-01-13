@@ -63,24 +63,15 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
   fH2 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.8), kFixedHeight);
 
-  // TGVerticalFrame *h1v1 = new TGVerticalFrame(fH1); 
+  // %%%%%%%%%%%%
+  // -- top frame
+  // %%%%%%%%%%%%
   TGVerticalFrame *h1v2 = new TGVerticalFrame(fH1);
   TGVerticalFrame *h1v3 = new TGVerticalFrame(fH1);
 
-  // ---------------
-  // -- left frame
-  // ---------------
-  // TGGroupFrame *pStuff = new TGGroupFrame(h1v1, "lost in space");
-  // h1v1->AddFrame(pStuff);
-  // pStuff->SetWidth(100); 
-  // TGVerticalFrame *FpStuff = new TGVerticalFrame(pStuff); 
-  // pStuff->AddFrame(FpStuff); 
-
-
-
-  // ---------------
-  // -- middle frame
-  // ---------------
+  // ------------------------
+  // -- (former) middle frame
+  // ------------------------
   TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
   h1v2->AddFrame(hwControl);
   TGHorizontalFrame *FhwControl = new TGHorizontalFrame(hwControl); 
@@ -217,7 +208,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   pControl->AddFrame(FpControl); 
 
   TGHorizontalFrame *bFrame = new TGHorizontalFrame(FpControl); 
-  FpControl->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN)); 
+  FpControl->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
   bFrame->AddFrame(exitButton, new TGLayoutHints(kLHintsBottom | kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -238,7 +229,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
 
   TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(FpControl, 150,75);
-  FpControl->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  FpControl->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
   rootfileFrame->SetName("rootfileFrame");
 
   TGTextButton *rootfileButton = new TGTextButton(rootfileFrame, " Change rootfile ", B_FILENAME);
@@ -246,9 +237,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   rootfileButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
   rootfileFrame->AddFrame(rootfileButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(200), B_FILENAME);
+  TGTextEntry *output = new TGTextEntry(rootfileFrame, fRootFileNameBuffer = new TGTextBuffer(25), B_FILENAME);
   output->SetText(fConfigParameters->getRootFileName().c_str());
-  output->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  //  output->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  output->Resize(100, output->GetDefaultHeight());
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
   rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
  
@@ -263,18 +255,16 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   dirButton->SetToolTipText("change the output directory; will move the rootfile as well.\nNote: the histogram versioning will restart at V0!");
   dirFrame->AddFrame(dirButton, new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(200), B_DIRECTORY);
+  TGTextEntry *doutput = new TGTextEntry(dirFrame, fDirNameBuffer = new TGTextBuffer(25), B_DIRECTORY);
   doutput->SetText(fConfigParameters->getDirectory().c_str());
-  doutput->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  //  doutput->MoveResize(100, 60, 120, output->GetDefaultHeight());
+  doutput->Resize(100, doutput->GetDefaultHeight());
   doutput->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
   dirFrame->AddFrame(doutput, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
  
-
-  //  h1v3->SetWidth(fWidth - /*h1v1->GetWidth()*/ - h1v2->GetWidth());
-
-
-
+  // %%%%%%%%%%%%%
   // -- tab widget
+  // %%%%%%%%%%%%%
   fTabs = new TGTab(fH2, fH2->GetDefaultWidth(), fH2->GetDefaultHeight());
   fTabs->SetTab(0);
   fTabs->Connect("Selected(Int_t)", "PixGui", this, "selectedTab(Int_t)");
@@ -291,8 +281,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     createTab(tests[i].c_str()); 
   }
 
-  //  fH1->AddFrame(h1v1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
-  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsCenterX  | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
+  fH1->AddFrame(h1v2, new TGLayoutHints(kLHintsLeft  | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fH1->AddFrame(h1v3, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
 
   AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
