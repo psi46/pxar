@@ -77,7 +77,8 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
 //------------------------------------------------------------------------------
 void PixTestBBMap::init() {
   LOG(logDEBUG) << "PixTestBBMap::init()";
-  
+  // -- NOTE: The hard-coded name is really bad. This should be fName.
+  //    not going to change in production, as this affects moreweb. 
   fDirectory = gFile->GetDirectory("BumpBonding");
   if (!fDirectory) {
     fDirectory = gFile->mkdir("BumpBonding");
