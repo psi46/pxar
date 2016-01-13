@@ -1034,14 +1034,16 @@ void anaFullTest::validateFullTests(string dir, string mname, int metric, string
   c1->cd(1);
   showOverFlow(fhCritical);
   fhCritical->Draw();
-  tl->DrawLatexNDC(0.4, 0.7, Form("# crit. errors: %d", static_cast<int>(fhCritical->Integral(2, fhCritical->GetNbinsX()+1)))); 
+  tl->SetNDC(kTRUE);
+  tl->DrawLatex(0.4, 0.7, Form("# crit. errors: %d", static_cast<int>(fhCritical->Integral(2, fhCritical->GetNbinsX()+1)))); 
 
   c1->cd(2);
   showOverFlow(fhDuration);
   fhDuration->Draw();
   int seconds = fhDuration->GetMean();
   string duration = Form("%02d:%02d:%02d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
-  tl->DrawLatexNDC(0.7, 0.7, duration.c_str()); 
+  tl->SetNDC(kTRUE);
+  tl->DrawLatex(0.7, 0.7, duration.c_str()); 
 
   
   c0->SaveAs(Form("ftval-%s.pdf", mname.c_str())); 
