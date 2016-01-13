@@ -170,6 +170,11 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       // FIXME
       deser160phase = sigIt->second;
     }
+    else if(sigIt->first == SIG_DESER400RATE) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 phase sampling rate to value " << static_cast<int>(sigIt->second);
+      // This function is a DTB-internal call to Deser400_PdPhase(), I don't know why Beat decided to encapsulate it...
+      _testboard->Deser400_GateRun(0,sigIt->second);
+    }
     else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
       _testboard->SetLoopTriggerDelay(sigIt->second*10);

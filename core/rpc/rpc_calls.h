@@ -361,27 +361,12 @@ public:
 	RPC_EXPORT uint8_t Deser400_GetXor(uint8_t deser);
 	RPC_EXPORT uint8_t Deser400_GetPhase(uint8_t deser);
 
-
-	/* --- deser400 gate
-		width: gate length
-		  0       200 ns
-		  1       800 ns
-		  2       3.2 us
-		  3      12.8 us
-		  4      51.2 us
-		  5     204.8 us
-		  6       1.6 ms (default)
-		  7      26.2 ms
-
-		period: gate repetition periode
-		  0       800 ns
-		  1       3.2 us
-		  2      12.8 us
-		  3      51.2 us
-		  4     204.8 us
-		  5       1.6 ms
-		  6      13.1 ms
-		  7     209.7 ms (default)
+	/* --- deser400 phase detector trigger
+		rate / measure time:
+		  0       112.5 /  75 ns
+		  1       212.5 / 175 ns (default)
+		  2       412.5 / 375 ns
+		  3       812.5 / 775 ns
 	*/
 	RPC_EXPORT void Deser400_GateRun(uint8_t width, uint8_t period);
 	RPC_EXPORT void Deser400_GateSingle(uint8_t width);

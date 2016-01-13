@@ -110,6 +110,7 @@ namespace pxar {
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
 #define SIG_LOOP_TRIM_DELAY 0xF6
 #define SIG_DESER160PHASE 0xFE
+#define SIG_DESER400RATE 0xF5
 
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
