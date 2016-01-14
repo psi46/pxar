@@ -606,6 +606,9 @@ namespace pxar {
     };
 
     TriggerDictionary() {
+      // No trigger source selected:
+      _signals["none"]             = triggerConfig(TRG_SEL_NONE,false);
+
       // Asynchronous external triggers:
       _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
       _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
