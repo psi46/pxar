@@ -145,73 +145,76 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   std::vector<std::string> analogsignals = _dict->getAllAnalogNames();
   std::vector<std::string> digitalsignals = _dict->getAllDigitalNames();
 
-  TGComboBox *signalBoxA[2];
-  TGComboBox *signalBoxD[2];
-
   TGHorizontalFrame *sigFrame = new TGHorizontalFrame(h1v2m);
   h1v2m->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft|kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
   sigFrame->AddFrame(new TGLabel(sigFrame, "A1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  signalBoxA[0] = new TGComboBox(sigFrame);
-  signalBoxA[0]->SetHeight(20);
-  signalBoxA[0]->SetWidth(200);
+  fSignalBoxA[0] = new TGComboBox(sigFrame);
+  fSignalBoxA[0]->SetHeight(20);
+  fSignalBoxA[0]->SetWidth(200);
   for(std::vector<std::string>::iterator it = analogsignals.begin(); it != analogsignals.end(); it++) {
-    signalBoxA[0]->AddEntry(it->c_str(), _dict->getSignal(*it,PROBE_ANALOG));
+    fSignalBoxA[0]->AddEntry(it->c_str(), _dict->getSignal(*it,PROBE_ANALOG));
   }
-  sigFrame->AddFrame(signalBoxA[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  signalBoxA[0]->SetName("a1");
+  sigFrame->AddFrame(fSignalBoxA[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  fSignalBoxA[0]->SetName("a1");
+  //  fSignalBoxA[0]->SetToolTipText("Select signal to be routed to A1(+/-)");
    
   sigFrame = new TGHorizontalFrame(h1v2m);
   h1v2m->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft|kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
   sigFrame->AddFrame(new TGLabel(sigFrame, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  signalBoxA[1] = new TGComboBox(sigFrame);
-  signalBoxA[1]->SetHeight(20);
-  signalBoxA[1]->SetWidth(200);
+  fSignalBoxA[1] = new TGComboBox(sigFrame);
+  fSignalBoxA[1]->SetHeight(20);
+  fSignalBoxA[1]->SetWidth(200);
   for(std::vector<std::string>::iterator it = analogsignals.begin(); it != analogsignals.end(); it++) {
-    signalBoxA[1]->AddEntry(it->c_str(), _dict->getSignal(*it,PROBE_ANALOG));
+    fSignalBoxA[1]->AddEntry(it->c_str(), _dict->getSignal(*it,PROBE_ANALOG));
   }
-  sigFrame->AddFrame(signalBoxA[1], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  signalBoxA[1]->SetName("a2");
+  sigFrame->AddFrame(fSignalBoxA[1], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  fSignalBoxA[1]->SetName("a2");
+  //  fSignalBoxA[1]->SetToolTipText("Select signal to be routed to A2(+/-)");
 
   sigFrame = new TGHorizontalFrame(h1v2m);
   h1v2m->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft|kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
   sigFrame->AddFrame(new TGLabel(sigFrame, "D1:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrame->AddFrame(signalBoxD[0] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  signalBoxD[0]->SetName("d1");
-  signalBoxD[0]->SetHeight(20);
-  signalBoxD[0]->SetWidth(200);
+  sigFrame->AddFrame(fSignalBoxD[0] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  fSignalBoxD[0]->SetName("d1");
+  fSignalBoxD[0]->SetHeight(20);
+  fSignalBoxD[0]->SetWidth(200);
+  //  fSignalBoxD[0]->SetToolTipText("Select signal to be routed to D1");
 
   sigFrame = new TGHorizontalFrame(h1v2m);
   h1v2m->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft|kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
   sigFrame->AddFrame(new TGLabel(sigFrame, "D2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  sigFrame->AddFrame(signalBoxD[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  signalBoxD[1]->SetName("d2");
-  signalBoxD[1]->SetHeight(20);
-  signalBoxD[1]->SetWidth(200);
+  sigFrame->AddFrame(fSignalBoxD[1] = new TGComboBox(sigFrame), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  fSignalBoxD[1]->SetName("d2");
+  fSignalBoxD[1]->SetHeight(20);
+  fSignalBoxD[1]->SetWidth(200);
+  //  fSignalBoxD[1]->SetToolTipText("Select signal to be routed to D2");
 
   for (std::vector<std::string>::iterator it = digitalsignals.begin(); it != digitalsignals.end(); it++) {
-    signalBoxD[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
-    signalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
+    fSignalBoxD[0]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
+    fSignalBoxD[1]->AddEntry(it->c_str(),_dict->getSignal(*it,PROBE_DIGITAL));
   }
 
   for (int i = 0 ; i <= 1 ; i++) {
-    signalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
-    signalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+    fSignalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
+    fSignalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
   }
   
-  signalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
-  signalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
-  signalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
-  signalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
+  fSignalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
+  fSignalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
+  fSignalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
+  fSignalBoxD[1]->Select(_dict->getSignal(fConfigParameters->getProbe("d2"),PROBE_DIGITAL),false);
 
 
   // right
   TGHorizontalFrame *rbFrame = new TGHorizontalFrame(h1v2r);
   rbFrame->SetName("rbFrame");
   TGLabel *rblabel = new TGLabel(rbFrame, new TGString("<readback> "));
-  TGTextEntry *rbTxt = new TGTextEntry(rbFrame, fReadbackBuffer = new TGTextBuffer());
+  TGTextEntry *rbTxt = new TGTextEntry(rbFrame, fReadbackBuffer = new TGTextBuffer(5));
   rbFrame->AddFrame(rblabel, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   rbFrame->AddFrame(rbTxt, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   h1v2r->AddFrame(rbFrame, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
+  rbTxt->SetWidth(0.25*rbFrame->GetDefaultWidth()); 
+  rbTxt->SetToolTipText("Not yet implemented!");
 
   
   TGHorizontalFrame *rbbFrame = new TGHorizontalFrame(h1v2r);
@@ -219,34 +222,43 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   rbbFrame->SetName("rbbFrame");
   TGTextButton *rb0Button = new TGTextButton(rbbFrame, "rb", B_POWER);
   rbbFrame->AddFrame(rb0Button, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+  rb0Button->SetToolTipText("Not yet implemented!");
 
 
   TGHorizontalFrame *d2TBM = new TGHorizontalFrame(h1v2r);
   h1v2r->AddFrame(d2TBM, new TGLayoutHints(kLHintsLeft|kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
-  d2TBM->SetName("d2TBM");
   d2TBM->AddFrame(new TGLabel(d2TBM, "chan"), new TGLayoutHints(kLHintsLeft|kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   d2TBM->AddFrame(fD2TBM = new TGComboBox(d2TBM), new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+  fD2TBM->SetName("d2chan");
   fD2TBM->SetHeight(20);
-  fD2TBM->SetWidth(150);
+  fD2TBM->SetWidth(100);
   fD2TBM->AddEntry(Form("undefined"), 0);
   for (unsigned int i = 0 ; i < fApi->_dut->getNTbms(); i++) {
-    fD2TBM->AddEntry(Form("TBM chan %d", i), i + 1);
+    for (unsigned int j = 0 ; j < 4; j++) {
+      fD2TBM->AddEntry(Form("chan %d", 4*i + j), 4*i + j);
+    }
   }
   fD2TBM->Select(0);
+  //  fD2TBM->SetToolTipText("Select DAQ channel for deser signals (on D2)");
+  fD2TBM->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
 
   
   TGHorizontalFrame *d1TBM = new TGHorizontalFrame(h1v2r);
   h1v2r->AddFrame(d1TBM, new TGLayoutHints(kLHintsLeft|kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
-  d1TBM->SetName("d1TBM");
   d1TBM->AddFrame(new TGLabel(d1TBM, "chan"), new TGLayoutHints(kLHintsLeft|kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   d1TBM->AddFrame(fD1TBM = new TGComboBox(d1TBM), new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
+  fD1TBM->SetName("d1chan");
   fD1TBM->SetHeight(20);
-  fD1TBM->SetWidth(150);
+  fD1TBM->SetWidth(100);
   fD1TBM->AddEntry(Form("undefined"), 0);
   for (unsigned int i = 0 ; i < fApi->_dut->getNTbms(); i++) {
-    fD1TBM->AddEntry(Form("TBM chan %d", i), i + 1);
+    for (unsigned int j = 0 ; j < 4; j++) {
+      fD1TBM->AddEntry(Form("chan %d", 4*i + j), 4*i + j);
+    }
   }
   fD1TBM->Select(0);
+  //  fD1TBM->SetToolTipText("Select DAQ channel for deser signals (on D1)");
+  fD1TBM->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
 
   // --------------
   // -- right frame
@@ -398,16 +410,49 @@ void PixGui::CloseWindow() {
 void PixGui::selectProbes(Int_t /*id*/) {
    TGComboBox *box = (TGComboBox *) gTQSender;
 
-   cout << "D1TBM: " << fD1TBM->GetSelectedEntry()->GetTitle() << endl;
-   cout << "D2TBM: " << fD2TBM->GetSelectedEntry()->GetTitle() << endl;
+   string probe, name;
+   int channel(-1);
+   bool doSet(false); 
+
+   if ((!strcmp("a1", box->GetName()))) {
+     doSet = true; 
+     probe = "a1";
+     name  = fSignalBoxA[0]->GetSelectedEntry()->GetTitle();
+   }
+   if ((!strcmp("a2", box->GetName()))) {
+     doSet = true; 
+     probe = "a2";
+     name  = fSignalBoxA[1]->GetSelectedEntry()->GetTitle();
+   }
+
+   //   if ((!strcmp("d1", box->GetName())) || (!strcmp("d1chan", box->GetName()))) {
+   if (!strcmp("d1", box->GetName())) {
+     doSet = true; 
+     probe = "d1";
+     name  = fSignalBoxD[0]->GetSelectedEntry()->GetTitle();
+     sscanf(fD1TBM->GetSelectedEntry()->GetTitle(), "chan %d", &channel);
+   }
+   //   if ((!strcmp("d2", box->GetName())) || (!strcmp("d2chan", box->GetName()))) {
+   if (!strcmp("d2", box->GetName())) {
+     doSet = true; 
+     probe = "d2"; 
+     name  = fSignalBoxD[1]->GetSelectedEntry()->GetTitle();
+     sscanf(fD2TBM->GetSelectedEntry()->GetTitle(), "chan %d", &channel);
+   }
+       
+   if (doSet) {
+     if (channel > -1) {
+       LOG(logDEBUG) << "probe: " << probe << " name: " << name << " channel: " << channel << " (setting w/ channel)";
+       fApi->SignalProbe(probe, name, channel);
+     } else {
+       LOG(logDEBUG) << "probe: " << probe << " name: " << name << " channel: " << channel << " (setting w/o channel)";
+       fApi->SignalProbe(probe, name);
+     }
+   }
    
-   fApi->SignalProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
+   // -- Write the selected probe to configParameters
+   fConfigParameters->setProbe(box->GetName(), box->GetSelectedEntry()->GetTitle());
 
-   // Write the selected probe to the configParameters.
-
-   fConfigParameters->setProbe(box->GetName(),box->GetSelectedEntry()->GetTitle());
-
-   //   fConfigParameters->writeConfigParameterFile();
 
 }
 

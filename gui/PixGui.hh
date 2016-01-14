@@ -102,6 +102,9 @@ private:
   TGLabel		*flblHV;
   TGHorizontalFrame 	*fH1;
   TGHorizontalFrame	*fH2;
+
+  TGComboBox            *fSignalBoxA[2];
+  TGComboBox            *fSignalBoxD[2];
   TGComboBox            *fD1TBM, *fD2TBM; 
 
   std::vector<PixTest *> fTestList; 
