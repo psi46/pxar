@@ -78,6 +78,11 @@ cdef extern from "api.h" namespace "pxar":
         statistics()
         uint32_t errors()
         uint32_t info_words_read()
+        uint32_t errors_event()
+        uint32_t errors_tbm()
+        uint32_t errors_roc()
+        uint32_t errors_pixel()
+
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass dut:

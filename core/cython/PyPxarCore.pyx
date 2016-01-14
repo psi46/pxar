@@ -147,11 +147,20 @@ cdef class Statistics:
     cdef c_clone(self, statistics s):
         self.thisobj = s
     property dump:
-        def __get__(self): return self.thisobj.dump()
+        def __get__(self): self.thisobj.dump()
     property errors:
         def __get__(self): return self.thisobj.errors()
     property info_words_read:
         def __get__(self): return self.thisobj.info_words_read()
+    property errors_event:
+        def __get__(self): return self.thisobj.errors_event()
+    property errors_tbm:
+        def __get__(self): return self.thisobj.errors_tbm()
+    property errors_roc:
+        def __get__(self): return self.thisobj.errors_roc()
+    property errors_pixel:
+        def __get__(self): return self.thisobj.errors_pixel()
+
         
 
 cdef class PxEvent:
