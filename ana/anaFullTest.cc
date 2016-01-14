@@ -1912,11 +1912,12 @@ void anaFullTest::print(TH1 *h, double left, double top, double size) {
   double old = tl->GetTextSize(); 
   tl->SetTextSize(size); 
   double xleft(left), ytop(top);
-  tl->DrawLatexNDC(xleft, ytop, Form("Mean:"));
-  tl->DrawLatexNDC(xleft+0.15, ytop, Form("%4.3f", h->GetMean()));
+  tl->SetNDC(kTRUE); 
+  tl->DrawLatex(xleft, ytop, Form("Mean:"));
+  tl->DrawLatex(xleft+0.15, ytop, Form("%4.3f", h->GetMean()));
 
-  tl->DrawLatexNDC(xleft, ytop-1.1*size, Form("RMS:"));
-  tl->DrawLatexNDC(xleft+0.15, ytop-1.1*size, Form("%4.3f", h->GetRMS()));
+  tl->DrawLatex(xleft, ytop-1.1*size, Form("RMS:"));
+  tl->DrawLatex(xleft+0.15, ytop-1.1*size, Form("%4.3f", h->GetRMS()));
 
   tl->SetTextSize(old); 
 }
