@@ -662,7 +662,7 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
 }
 
 statistics pxarCore::getStatistics() {
-  LOG(logINFO) << "Fetched DAQ statistics. Counters are being reset now.";
+  LOG(logDEBUG) << "Fetched DAQ statistics. Counters are being reset now.";
   // Return the accumulated number of decoding errors:
   return _hal->daqStatistics();
 }
