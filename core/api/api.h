@@ -96,6 +96,10 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_DISABLE_EVENTID_CHECK 0x0800
 
+/** Flag to enable the collection of XOR sums from the DESER400 modules for every event.
+ */
+#define FLAG_ENABLE_XORSUM_LOGGING 0x1000
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
