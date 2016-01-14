@@ -146,6 +146,8 @@ cdef class Statistics:
         return "Decoding statistics..."
     cdef c_clone(self, statistics s):
         self.thisobj = s
+    property dump:
+        def __get__(self): return self.thisobj.dump()
     property errors:
         def __get__(self): return self.thisobj.errors()
     property info_words_read:
@@ -629,7 +631,6 @@ cdef class PyPxarCore:
     def getStatistics(self):
         cdef statistics r
         r = self.thisptr.getStatistics()
-        r.dump()
         s = Statistics()
         s.c_clone(r)
         return s
