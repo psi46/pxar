@@ -483,7 +483,7 @@ void PixTestPretest::findTiming() {
   uint8_t value= ((i160 & 0x7)<<5) + ((i400 & 0x7)<<2);
   int stat = tbmSet("basee", 0, value);
   if (stat > 0){
-    LOG(logWARNING) << "error setting delay  base A " << hex << value << dec;
+    LOG(logWARNING) << "error setting delay  base E " << hex << value << dec;
   }
 
   if (iroc >= 0){
