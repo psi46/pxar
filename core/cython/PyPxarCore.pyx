@@ -146,6 +146,11 @@ cdef class Statistics:
         return "Decoding statistics..."
     cdef c_clone(self, statistics s):
         self.thisobj = s
+    property errors:
+        def __get__(self): return self.thisobj.errors()
+    property info_words_read:
+        def __get__(self): return self.thisobj.info_words_read()
+        
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping

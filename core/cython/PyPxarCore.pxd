@@ -76,6 +76,8 @@ cdef extern from "api.h" namespace "pxar":
         void clear()
         void dump()
         statistics()
+        uint32_t errors()
+        uint32_t info_words_read()
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass dut:
