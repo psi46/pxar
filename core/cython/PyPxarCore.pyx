@@ -634,6 +634,11 @@ cdef class PyPxarCore:
         r = self.thisptr.daqGetReadback()
         return r
 
+    def daqGetXORsum(self, uint8_t channel):
+        cdef vector[uint8_t] r
+        r = self.thisptr.daqGetXORsum(channel)
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
 

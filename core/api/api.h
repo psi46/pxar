@@ -811,6 +811,13 @@ namespace pxar {
      */
     std::vector<std::vector<uint16_t> > daqGetReadback();
 
+    /** Function to return the recorded XOR sum of the DESER400 module for the
+     *  selected channel. The data is stored until a new DAQ session or test is 
+     *  called and can be fetched once (deleted at read time). The return vector 
+     *  contains all recorded XOR sum values of the DAQ channel.
+     */
+    std::vector<uint8_t> daqGetXORsum(uint8_t channel);
+
     /** Function that returns a class object of the type pxar::statistics
      *  containing all collected error statistics from the last (non-raw)
      *  DAQ readout or API test call. Statistics can be fetched once and

@@ -233,6 +233,7 @@ cdef extern from "api.h" namespace "pxar":
         vector[Event] daqGetEventBuffer() except +
         vector[uint16_t] daqGetBuffer() except +
         vector[vector[uint16_t]] daqGetReadback() except +
+        vector[uint8_t] daqGetXORsum(uint8_t channel) except +
         statistics getStatistics()
         bool daqStop() except +
 

@@ -552,6 +552,16 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqGetReadback.__doc__, '']
 
+    @arity(1,1,[int])
+    def do_daqGetXORsum(self, channel):
+        """daqGetXORsum: return all DESER400 XOR sum values from the last DAQ session fo channel [channel]"""
+        dat = self.api.daqGetXORsum(channel)
+        print dat
+
+    def complete_daqGetXORsum(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetXORsum.__doc__, '']
+
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
         """getEfficiencyMap [flags = 0] [nTriggers = 10]: returns the efficiency map"""
