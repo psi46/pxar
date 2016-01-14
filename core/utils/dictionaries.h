@@ -128,6 +128,7 @@ namespace pxar {
       _registers["triggerdelay"]   = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["trimdelay"]      = dacConfig(SIG_LOOP_TRIM_DELAY,255,DTB_REG);
       _registers["deser160phase"]  = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+      _registers["deser400rate"]   = dacConfig(SIG_DESER400RATE,3,DTB_REG);
       _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
       _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
 
@@ -621,9 +622,11 @@ namespace pxar {
       _signals["single_direct"]    = triggerConfig(TRG_SEL_SINGLE_DIR,false,false);
 
       // Internal Trigger Generator
-      _signals["gen"]              = triggerConfig(TRG_SEL_GEN,true);
-      _signals["generator"]        = triggerConfig(TRG_SEL_GEN,true,false);
-
+      _signals["random"]           = triggerConfig(TRG_SEL_GEN,true);
+      _signals["random_dir"]       = triggerConfig(TRG_SEL_GEN_DIR,false);
+      _signals["periodic"]         = triggerConfig(TRG_SEL_GEN,true);
+      _signals["periodic_dir"]     = triggerConfig(TRG_SEL_GEN_DIR,false);
+      
       // Pattern Generator
       _signals["pg"]               = triggerConfig(TRG_SEL_PG,true);
       _signals["patterngenerator"] = triggerConfig(TRG_SEL_PG,true,false);

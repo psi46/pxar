@@ -92,6 +92,9 @@ hal::~hal() {
   // Turn DUT power off:
   _testboard->Poff();
 
+  // Turn off triggers (default to Pattern Generator, direct):
+  _testboard->Trigger_Select(TRG_SEL_NONE);
+  
   // Close the RPC/USB Connection:
   LOG(logQUIET) << "Connection to board " << _testboard->GetBoardId() << " closed.";
   _testboard->Close();
@@ -166,6 +169,11 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       _testboard->Daq_Select_Deser160(sigIt->second);
       // FIXME
       deser160phase = sigIt->second;
+    }
+    else if(sigIt->first == SIG_DESER400RATE) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 phase sampling rate to value " << static_cast<int>(sigIt->second);
+      // This function is a DTB-internal call to Deser400_PdPhase(), I don't know why Beat decided to encapsulate it...
+      _testboard->Deser400_GateRun(0,sigIt->second);
     }
     else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
@@ -592,7 +600,7 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   // Iterate over all register id/value pairs and set them
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
-    if(!tbmSetReg(hubid, core | it->first, it->second)) return false;
+    if(!tbmSetReg(hubid, core | it->first, it->second),false) return false;
   }
 
   // Send all queued commands to the testboard:
@@ -601,7 +609,7 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush) {
 
   LOG(logDEBUGHAL) << "TBM@HUB " << static_cast<int>(hubid)
 		   << ": set register \"0x" << std::hex << static_cast<int>(regId) 
@@ -612,6 +620,9 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
 
   // Set this register:
   _testboard->tbm_Set(regId,regValue);
+
+  // If requested, flush immediately:
+  if(flush) _testboard->Flush();
   return true;
 }
 
@@ -1758,6 +1769,23 @@ void hal::daqTriggerSource(uint16_t source) {
 
   // Write new trigger source to DTB:
   _testboard->Trigger_Select(source);
+  _testboard->Flush();
+}
+
+void hal::daqTriggerGenRandom(uint32_t rate) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger generator with rate " << rate;
+
+  // Activate random generator:
+  _testboard->Trigger_SetGenRandom(rate);
+}
+
+void hal::daqTriggerGenPeriodic(uint32_t period) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger generator with period " << period;
+
+  // Activate periodic generator:
+  _testboard->Trigger_SetGenPeriodic(period);
 }
 
 void hal::daqTriggerSingleSignal(uint8_t signal) {

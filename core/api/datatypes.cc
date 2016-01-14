@@ -181,6 +181,9 @@ namespace pxar {
     LOG(logINFO) << "\t overflow:                 " << this->errors_event_overflow();
     LOG(logINFO) << "\t invalid 5bit words:       " << this->errors_event_invalid_words();
     LOG(logINFO) << "\t invalid XOR eye diagram:  " << this->errors_event_invalid_xor();
+    LOG(logINFO) << "\t frame (failed synchr.):   " << this->errors_event_frame();
+    LOG(logINFO) << "\t idle data (no TBM trl):   " << this->errors_event_idledata();
+    LOG(logINFO) << "\t no data (only TBM hdr):   " << this->errors_event_nodata();
     LOG(logINFO) << "  TBM errors: \t\t           " << this->errors_tbm();
     LOG(logINFO) << "\t flawed TBM headers:       " << this->errors_tbm_header();
     LOG(logINFO) << "\t flawed TBM trailers:      " << this->errors_tbm_trailer();
@@ -206,6 +209,9 @@ namespace pxar {
     m_errors_event_overflow = 0;
     m_errors_event_invalid_words = 0;
     m_errors_event_invalid_xor = 0;
+    m_errors_event_frame = 0;
+    m_errors_event_idledata = 0;
+    m_errors_event_nodata = 0;
 
     m_errors_tbm_header = 0;
     m_errors_tbm_trailer = 0;

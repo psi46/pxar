@@ -440,6 +440,10 @@ void CTestboard::Daq_Deser400_Reset(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
+void CTestboard::Deser400_GateRun(uint8_t,uint8_t) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
 void CTestboard::Daq_Deser400_OldFormat(bool) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }

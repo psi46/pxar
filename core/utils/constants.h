@@ -110,6 +110,7 @@ namespace pxar {
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
 #define SIG_LOOP_TRIM_DELAY 0xF6
 #define SIG_DESER160PHASE 0xFE
+#define SIG_DESER400RATE 0xF5
 
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
@@ -135,6 +136,9 @@ namespace pxar {
 #define MHZ_40     0
 
 // --- Trigger settings -------------------------------------------------------
+// Turn off all triggers:
+#define TRG_SEL_NONE       0x0000
+
 // Via TBM Emulator:
 #define TRG_SEL_ASYNC      0x0100
 #define TRG_SEL_SYNC       0x0080

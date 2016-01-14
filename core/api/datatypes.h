@@ -466,6 +466,9 @@ namespace pxar {
       m_errors_event_overflow(0),
       m_errors_event_invalid_words(0),
       m_errors_event_invalid_xor(0),
+      m_errors_event_frame(0),
+      m_errors_event_idledata(0),
+      m_errors_event_nodata(0),
       m_errors_tbm_header(0),
       m_errors_tbm_trailer(0),
       m_errors_tbm_eventid_mismatch(0),
@@ -491,6 +494,9 @@ namespace pxar {
       lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
       lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
       lhs.m_errors_event_invalid_xor += rhs.m_errors_event_invalid_xor;
+      lhs.m_errors_event_frame += rhs.m_errors_event_frame;
+      lhs.m_errors_event_idledata += rhs.m_errors_event_idledata;
+      lhs.m_errors_event_nodata += rhs.m_errors_event_nodata;
 
       // TBM errors:
       lhs.m_errors_tbm_header += rhs.m_errors_tbm_header;
@@ -524,7 +530,10 @@ namespace pxar {
 	      + errors_event_stop()
 	      + errors_event_overflow()
 	      + errors_event_invalid_words()
-	      + errors_event_invalid_xor());
+	      + errors_event_invalid_xor()
+	      + errors_event_frame()
+	      + errors_event_idledata()
+	      + errors_event_nodata());
     };
     uint32_t errors_tbm() {
       return (errors_tbm_header()
@@ -546,6 +555,10 @@ namespace pxar {
     uint32_t errors_event_overflow() { return m_errors_event_overflow; }
     uint32_t errors_event_invalid_words() { return m_errors_event_invalid_words; }
     uint32_t errors_event_invalid_xor() { return m_errors_event_invalid_xor; }
+    uint32_t errors_event_frame() { return m_errors_event_frame; }
+    uint32_t errors_event_idledata() { return m_errors_event_idledata; }
+    uint32_t errors_event_nodata() { return m_errors_event_nodata; }
+
     uint32_t errors_tbm_header() { return m_errors_tbm_header; }
     uint32_t errors_tbm_eventid_mismatch() { return m_errors_tbm_eventid_mismatch; }
     uint32_t errors_tbm_trailer() { return m_errors_tbm_trailer; }
@@ -578,6 +591,12 @@ namespace pxar {
     uint32_t m_errors_event_invalid_words;
     // Total number of events with invalid XOR eye diagram:
     uint32_t m_errors_event_invalid_xor;
+    // Total number of DESER400 Frame errors (failed synchronization):
+    uint32_t m_errors_event_frame;
+    // Total number of DESER400 idle data errors (no TBM trailer received):
+    uint32_t m_errors_event_idledata;
+    // Total number of DESER400 no-data error (only TBM header received):
+    uint32_t m_errors_event_nodata;
 
     // Total number of events with flawed TBM header:
     uint32_t m_errors_tbm_header;

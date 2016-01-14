@@ -1315,6 +1315,9 @@ bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool i
   // And start the DAQ session:
   _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
+  // Activate the selected trigger source
+  _hal->daqTriggerSource(_dut->trigger_source);
+
   _daq_running = true;
   return true;
 }
@@ -1341,7 +1344,7 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
   return true;
 }
 
-bool pxarCore::daqTriggerSource(std::string triggerSource) {
+bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
   if(daqStatus()) {
     LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
@@ -1364,6 +1367,22 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
     if(sig != TRG_ERR) {
       signal |= sig;
       LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
+
+      // If we are using the DTB generator, also set the rate/period:
+      if(sig == TRG_SEL_GEN || sig == TRG_SEL_GEN_DIR) {
+
+	if(s.compare(0,6,"random") == 0) {
+	  // Be gentle and convert to centi-Hertz for the DTB :)
+	  uint32_t rate = int(timing/40e6*4294967296 + 0.5);
+	  // FIXME better also take the user input as BC instead of Hz, reduces confusion...
+	  LOG(logDEBUGAPI) << "Setting random trigger generator, rate = " << rate << " cHz";
+	  _hal->daqTriggerGenRandom(rate);
+	}
+	else if(s.compare(0,6,"period") == 0) {
+	  LOG(logDEBUGAPI) << "Setting periodic trigger generator, period = " << timing << " BC";
+	  _hal->daqTriggerGenPeriodic(timing);
+	}
+      }
     }
     else {
       LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
@@ -1372,8 +1391,8 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
   }
 
   LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
-  _hal->daqTriggerSource(signal);
-
+  _dut->trigger_source = signal;
+    
   // Check if we need to change the tbmtype for HAL:
   uint8_t newtype = 0x0;
   if(_dict->getEmulationState(signal)) {
@@ -1524,6 +1543,9 @@ bool pxarCore::daqStop(const bool init) {
     return false;
   }
 
+  // Turn off all trigger sources:
+  _hal->daqTriggerSource(TRG_SEL_NONE);
+
   _daq_running = false;
   
   // Stop all active DAQ channels:
@@ -1552,6 +1574,9 @@ bool pxarCore::daqStop(const bool init) {
 
 
 std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags) {
+
+  // Activate the pattern generator trigger:
+  _hal->daqTriggerSource(TRG_SEL_PG_DIR);
   
   // pointer to vector to hold our data
   std::vector<Event> data = std::vector<Event>();
@@ -1714,6 +1739,9 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
+
+  // Turn off all trigger sources:
+  _hal->daqTriggerSource(TRG_SEL_NONE);
 
   return data;
 } // expandLoop()
