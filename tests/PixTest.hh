@@ -242,7 +242,7 @@ public:
   /// returns the test name
   std::string getName() {return fName; }
   /// ???
-  void resetDirectory();
+  virtual void resetDirectory();
   /// return fDirectory
   TDirectory* getDirectory() {return fDirectory;}
 
