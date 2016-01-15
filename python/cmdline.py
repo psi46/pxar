@@ -25,6 +25,7 @@ import sys
 # set up the DAC and probe dictionaries
 dacdict = PyRegisterDictionary()
 probedict = PyProbeDictionary()
+triggerdict = PyTriggerDictionary()
 
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
@@ -409,7 +410,7 @@ class PxarCoreCmd(cmd.Cmd):
 
     @arity(1,2,[str,int])
     def do_daqTriggerSource(self, source, rate = 0):
-        """daqTriggerSource: select the trigger source to be used for the DAQ session"""
+        """daqTriggerSource [source] [rate]: select the trigger source to be used for the DAQ session, the rate is valid for periodic and random triggers"""
         if self.api.daqTriggerSource(source,rate):
             print "Trigger source \"" + source + "\" selected."
         else:
@@ -417,7 +418,17 @@ class PxarCoreCmd(cmd.Cmd):
 
     def complete_daqTriggerSource(self, text, line, start_index, end_index):
         # return help for the cmd
-        return [self.do_daqTriggerSource.__doc__, '']
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [trg for trg in triggerdict.getAllNames()
+                        if trg.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_daqTriggerSource.__doc__, '']
+            else:
+                # return all trigger sources
+                return triggerdict.getAllNames()
 
     @arity(1,1,[str])
     def do_daqSingleSignal(self, signal):
