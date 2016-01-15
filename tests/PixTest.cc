@@ -2246,16 +2246,20 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
   // now mask all remaining pixels
   if (maskuntrimmable) {
 
-    fHotPixels.clear();
+    //LOG(logINFO) << fHotPixels.size() << " pixels are already masked.";
+
     int numMaskedHotPixels = 0;
     TH2D *h(0);
 
+    // for each ROC
     for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
       h = hotpixel_map[i];
-      vector<pair<int, int> > hot; 
-      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
 
-        
+      vector<pair<int, int> > hotPixelsROC;
+      if (fHotPixels.size() > i) {
+        hotPixelsROC = fHotPixels[i];
+      }
+      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
         for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
           float pixelAreaFactor = 1.0;
           if (ix == 0 || ix == 51)
@@ -2263,14 +2267,21 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
           if (iy == 0 || iy == 79)
             pixelAreaFactor*=2;
           if (h->GetBinContent(ix+1, iy+1) > THR * pixelAreaFactor) {
-            hot.push_back(make_pair(ix, iy));
-            numMaskedHotPixels++;
+            pair<int, int> hotPixel = make_pair(ix, iy);
+            if (std::find(hotPixelsROC.begin(), hotPixelsROC.end(), hotPixel) == hotPixelsROC.end()) {
+              hotPixelsROC.push_back(hotPixel);
+              LOG(logINFO) << "masking new hot pixel: " << (int)i << " " << (int)ix << " " << (int)iy;
+              numMaskedHotPixels++;
+            } else {
+              LOG(logINFO) << "already masked: " << (int)i << " " << (int)ix << " " << (int)iy;
+            }
           }
         }
       }
-      fHotPixels.push_back(hot); 
+      fHotPixels.push_back(hotPixelsROC);
     }
-    LOG(logINFO) << numMaskedHotPixels << " hot pixels could not be trimmed and have been masked.";
+    LOG(logINFO) << numMaskedHotPixels << " additional hot pixels could not be trimmed and have been masked.";
+
   }
 
   for (size_t i = 0; i < diff_map.size(); ++i) {
