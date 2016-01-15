@@ -20,7 +20,7 @@ getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
-my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
+my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM09", "TBM09C");
 
 if ($opt_h) {
     &printHelp;
@@ -161,9 +161,14 @@ sub setTbms {
 	    $tbms .= "3    pkam_set   0x10\n";
 #	    $tbms .= "4      delays   0x64\n";
 #	    $tbms .= "5       basee   0x2c\n";
+        if ($opt_f) {
+           $tbms .= "4      delays   0xD2\n";
+           $tbms .= "5       basee   0xC8\n";
+        } else {
 	    # -- WE's parameters
-	    $tbms .= "4      delays   0x49\n";
-	    $tbms .= "5       basee   0x84\n";
+           $tbms .= "4      delays   0x49\n";
+           $tbms .= "5       basee   0x84\n";
+        }
 	    $tbms .= "6 temperature   0x00\n";
 	} else {
 	    $tbms .= "base0   0x81\n";
@@ -172,11 +177,16 @@ sub setTbms {
 	    $tbms .= "base8   0x10\n";
 #	    $tbms .= "basea   0x64\n";
 #	    $tbms .= "basee   0x2c\n";
-	    $tbms .= "basea   0x49\n";
-	    $tbms .= "basec   0x00\n";
-	    $tbms .= "basee   0x84\n";
+        $tbms .= "basec   0x00\n";
+        if ($opt_f) {
+           $tbms .= "basea   0xD2\n";
+           $tbms .= "basee   0xC8\n";
+        } else {
+           $tbms .= "basea   0x49\n";
+           $tbms .= "basee   0x84\n";
+        }
 	}
-    } elsif ($tbmtype eq "TBM08B") {
+    } elsif ($tbmtype eq "TBM08A") {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
 	    $tbms .= "1    counters   0x81\n";
@@ -199,24 +209,29 @@ sub setTbms {
 	    $tbms .= "basec   0x00\n";
 	    $tbms .= "basee   0x84\n";
 	}
-    } elsif ($tbmtype eq "TBM08B_FPIX") {
-	if ($oldStyle == 1) {
-	    $tbms .= "0       clear   0xF0\n";
-	    $tbms .= "1    counters   0x81\n";
-	    $tbms .= "2        mode   0xC0\n";
-	    $tbms .= "3    pkam_set   0x10\n";
-	    $tbms .= "4      delays   0x00\n";
-	    $tbms .= "5       basee   0x20\n";
-	    $tbms .= "6 temperature   0x00\n";
-	} else {
-	    $tbms .= "base0   0x81\n";
-	    $tbms .= "base2   0xC0\n";
-	    $tbms .= "base4   0xF0\n";
-	    $tbms .= "base8   0x10\n";
-	    $tbms .= "basea   0x00\n";
-	    $tbms .= "basec   0x00\n";
-	    $tbms .= "basee   0x20\n";
-	}
+    } elsif ($tbmtype eq "TBM08B") {
+    if ($oldStyle == 1) {
+       $tbms .= "0       clear   0xF0\n";
+       $tbms .= "1    counters   0x81\n";
+       $tbms .= "2        mode   0xC0\n";
+       $tbms .= "3    pkam_set   0x10\n";
+       #       $tbms .= "4      delays   0x64\n";
+       #       $tbms .= "5       basee   0x2c\n";
+       # -- WE's parameters
+       $tbms .= "4      delays   0x49\n";
+       $tbms .= "5       basee   0x84\n";
+       $tbms .= "6 temperature   0x00\n";
+    } else {
+       $tbms .= "base0   0x81\n";
+       $tbms .= "base2   0xC0\n";
+       $tbms .= "base4   0xF0\n";
+       $tbms .= "base8   0x10\n";
+       #       $tbms .= "basea   0x64\n";
+       #       $tbms .= "basee   0x2c\n";
+       $tbms .= "basea   0x49\n";
+       $tbms .= "basec   0x00\n";
+       $tbms .= "basee   0x84\n";
+    }
     } elsif ($tbmtype eq "TBM08") {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
@@ -277,7 +292,7 @@ sub setDacs {
     $dacs = "";
     if ($roctype eq "digv21respin") {
 	$dacs .= "  1 vdig       6  \n";
-	$dacs .= "  2 vana       78 \n";
+	$dacs .= "  2 vana       81 \n";
 	$dacs .= "  3 vsh        30 \n";
 	$dacs .= "  4 vcomp      12 \n";
 	$dacs .= "  7 vwllpr     150\n";
@@ -286,12 +301,12 @@ sub setDacs {
 	$dacs .= " 11 vtrim      0  \n";
 	$dacs .= " 12 vthrcomp   85 \n";
 	$dacs .= " 13 vibias_bus 30 \n";
-	$dacs .= " 17 phoffset   170\n";
+	$dacs .= " 17 phoffset   185\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
-	$dacs .= " 20 phscale    130\n";
+	$dacs .= " 20 phscale    65\n";
 	$dacs .= " 22 vicolor    100\n";
 	$dacs .= " 25 vcal       200\n";
-	$dacs .= " 26 caldel     96 \n";
+	$dacs .= " 26 caldel     133 \n";
 	$dacs .= "253 ctrlreg    0  \n";
 	$dacs .= "254 wbc        100\n";
 	$dacs .= "255 readback   0  \n";
@@ -480,11 +495,12 @@ if ($opt_m) {
     } elsif ($tbmtype eq "TBM08C") {
 	$VD = "2.800";
 	print FH "tbmType tbm08c\n";
-    } elsif ($tbmtype eq "TBM08B") {
+    } elsif ($tbmtype eq "TBM08A") {
 	$VD = "2.800";
-	print FH "tbmType tbm08b\n";
-    } elsif ($tbmtype eq "TBM08B_FPIX") {
-	print FH "tbmType tbm08b\n"; #sic!
+	print FH "tbmType tbm08a\n";
+    } elsif ($tbmtype eq "TBM08B") {
+    $VD = "2.800";
+    print FH "tbmType tbm08b\n";
     } elsif ($tbmtype eq "TBM09") {
 	$VD = "2.900";
 	print FH "tbmType tbm09\n";
@@ -531,6 +547,7 @@ targetIa            24
 setVana             button
 iterations          100
 setTimings          button
+findTiming          button
 findWorkingPixel    button
 setVthrCompCalDel   button
 PIX                 11,20
@@ -587,6 +604,20 @@ dumpProblematic     checkbox(0)
 Ntrig               5
 vcals               250
 
+-- BB4
+savecaldelscan      checkbox(0)
+Ntrig               100
+Cals                1
+CalDelLo            80
+CalDelHi            200
+CalDelStep          10
+VthrCompLo          70
+VthrCompHi          130
+VthrCompStep        5
+NoisyPixels         10
+Vcal                255
+Cut                 0.5
+
 -- Readback
 calibrateVd         button
 calibrateVa         button
@@ -636,7 +667,7 @@ scurves             button
 
 -- Trim
 trim                button
-Ntrig               10
+Ntrig               8
 Vcal                35
 TrimBits            button
 
@@ -673,6 +704,11 @@ FillTree            checkbox
 
 -- HighRate
 PIX                 11,20
+trimhotpixels       button
+trimhotpixelthr     200
+runsecondsHotPixels 10
+savetrimbits        checkbox(1)
+maskuntrimmable     checkbox(1)
 maskHotPixels       button
 saveMaskFile        checkbox(0)
 maskFileName        default
@@ -708,9 +744,10 @@ EOF
     print FH <<"EOF";
 -- Timing
 targetclk           4
-ntrig               10
-clocksdascan        button
+ntrig               10000
 notokenpass         checkbox(0)
+ignorereadback      checkbox(0)
+clocksdascan        button
 phasescan           button
 levelscan           button
 tbmphasescan        button

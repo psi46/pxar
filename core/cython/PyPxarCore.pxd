@@ -16,6 +16,7 @@ cdef extern from "api.h" namespace "pxar":
     cdef int _flag_check_order    "FLAG_CHECK_ORDER"
     cdef int _flag_force_unmasked "FLAG_FORCE_UNMASKED"
     cdef int _flag_dump_flawed_events "FLAG_DUMP_FLAWED_EVENTS"
+    cdef int _flag_disable_readback_collection "FLAG_DISABLE_READBACK_COLLECTION"
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:
@@ -167,14 +168,14 @@ cdef extern from "api.h" namespace "pxar":
         void setTestboardDelays(vector[pair[string, uint8_t] ] sig_delays) except +
         void setPatternGenerator(vector[pair[string, uint8_t] ] pg_setup) except +
 
-        bool initDUT(uint8_t hubId,
+        bool initDUT(vector[uint8_t] hubId,
 	             string tbmtype,
                      vector[vector[pair[string,uint8_t]]] tbmDACs,
                      string roctype,
                      vector[vector[pair[string,uint8_t]]] rocDACs,
                      vector[vector[pixelConfig]] rocPixels) except +
 
-        bool initDUT(uint8_t hubId,
+        bool initDUT(vector[uint8_t] hubId,
 	             string tbmtype,
                      vector[vector[pair[string,uint8_t]]] tbmDACs,
                      string roctype,
@@ -193,7 +194,7 @@ cdef extern from "api.h" namespace "pxar":
         void HVon()
         void Poff()
         void Pon()
-        bool SignalProbe(string probe, string name) except +
+        bool SignalProbe(string probe, string name, uint8_t channel) except +
         bool setDAC(string dacName, uint8_t dacValue, uint8_t rocid) except +
         bool setDAC(string dacName, uint8_t dacValue) except +
         uint8_t getDACRange(string dacName) except +
@@ -214,7 +215,7 @@ cdef extern from "api.h" namespace "pxar":
         void setSignalMode(string signal, string mode, uint8_t speed) except +
         bool daqStart(uint16_t flags) except +
         bool daqStatus() except +
-        bool daqTriggerSource(string triggerSource) except +
+        bool daqTriggerSource(string triggerSource, uint32_t period) except +
         bool daqSingleSignal(string triggerSignal) except +
         void daqTrigger(uint32_t nTrig, uint16_t period) except +
         void daqTriggerLoop(uint16_t period) except +

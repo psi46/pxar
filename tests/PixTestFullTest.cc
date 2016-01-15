@@ -84,6 +84,8 @@ void PixTestFullTest::doTest() {
 
   bigBanner(Form("PixTestFullTest::doTest()"));
 
+  pxar::statistics statSummary;
+
   vector<string> suite;
   suite.push_back("alive"); 
   suite.push_back("bb"); 
@@ -91,7 +93,7 @@ void PixTestFullTest::doTest() {
   suite.push_back("trim"); 
   suite.push_back("phoptimization"); 
   suite.push_back("gainpedestal"); 
-  suite.push_back("readback"); 
+  suite.push_back("readback");
 
   PixTest *t(0); 
 
@@ -107,8 +109,14 @@ void PixTestFullTest::doTest() {
 
     t->fullTest(); 
 
+    pxar::statistics testStat = fApi->getStatistics();
+    testStat.dump();
+    statSummary += testStat;
     delete t; 
   }
+
+  statSummary.dump();
+  
 
 }
 

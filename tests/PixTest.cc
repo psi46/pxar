@@ -18,6 +18,7 @@
 #include "log.h"
 #include "helper.h"
 #include "rsstools.hh"
+#include "TStopwatch.h"
 
 using namespace std;
 using namespace pxar;
@@ -25,7 +26,7 @@ using namespace pxar;
 ClassImp(PixTest)
 
 // ----------------------------------------------------------------------
-PixTest::PixTest(PixSetup *a, string name) {
+PixTest::PixTest(PixSetup *a, string name): fNDaqErrors(99999), fProblem(false), fStopTest(false)  {
   //  LOG(logINFO) << "PixTest ctor(PixSetup, string)";
   fPIF            = new PixInitFunc(); 
   fPixSetup       = a;
@@ -146,6 +147,26 @@ void PixTest::bookTree() {
 // ----------------------------------------------------------------------
 void PixTest::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  if (!command.compare("poweron")) {
+    powerOn();
+    return;
+  }
+  if (!command.compare("poweroff")) {
+    powerOff();
+    return;
+  }
+  if (!command.compare("hvon")) {
+    hvOn();
+    return;
+  }
+  if (!command.compare("hvoff")) {
+    hvOff();
+    return;
+  }
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
   LOG(logDEBUG) << "Nothing done with " << command; 
 }
 
@@ -159,7 +180,7 @@ void PixTest::resetDirectory() {
 // ----------------------------------------------------------------------
 int PixTest::pixelThreshold(string dac, int ntrig, int dacmin, int dacmax) {
   //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
   TH1D *h = new TH1D("h1", "h1", 256, 0., 256.); 
 
   vector<pair<uint8_t, vector<pixel> > > results;
@@ -196,6 +217,8 @@ vector<TH1*> PixTest::scurveMaps(string dac, string name, int ntrig, int dacmin,
 				 int result, int ihit, int flag) {
 
   fNtrig = ntrig;
+
+  flag |= FLAG_DUMP_FLAWED_EVENTS;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
   string type("hits"); 
@@ -300,6 +323,8 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
 
   vector<pixel> results;
 
+  FLAGS |= FLAG_DUMP_FLAWED_EVENTS;
+
   int cnt(0); 
   bool done = false;
   while (!done){
@@ -360,7 +385,8 @@ vector<TH2D*> PixTest::efficiencyMaps(string name, uint16_t ntrig, uint16_t FLAG
   vector<pixel> results;
   vector<TH2D*> maps;
   TH2D *h2(0), *h3(0); 
-
+  
+  FLAGS |= FLAG_DUMP_FLAWED_EVENTS; 
 
   bool unmasked = (0 != (FLAGS & FLAG_CHECK_ORDER))  &&  (0 != (FLAGS & FLAG_FORCE_UNMASKED));
 
@@ -458,7 +484,7 @@ vector<TH1*> PixTest::thrMaps(string dac, string name, uint8_t daclo, uint8_t da
     return resultMaps;
   }
 
-  uint16_t FLAGS = flag | FLAG_RISING_EDGE;    
+  uint16_t FLAGS = flag | FLAG_RISING_EDGE | FLAG_DUMP_FLAWED_EVENTS;    
   TH1* h1(0); 
   fDirectory->cd();
   
@@ -628,15 +654,14 @@ void PixTest::dumpParameters() {
 
 
 // ----------------------------------------------------------------------
-PixTest::~PixTest() {
-  //  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
+void PixTest::writeOutput() {
   std::list<TH1*>::iterator il; 
   fDirectory->cd(); 
   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
-    //    LOG(logINFO) << "Write out " << (*il)->GetName();
     (*il)->SetDirectory(fDirectory); 
     (*il)->Write(); 
   }
+  clearHistList();
 
   TH1D *h = (TH1D*)gDirectory->Get("ha"); 
   if (h) {
@@ -649,6 +674,13 @@ PixTest::~PixTest() {
     h->SetDirectory(fDirectory); 
     h->Write();
   }
+
+}
+
+// ----------------------------------------------------------------------
+PixTest::~PixTest() {
+  //  LOG(logDEBUG) << "PixTestBase dtor(), writing out histograms";
+  writeOutput();
 }
 
 // ----------------------------------------------------------------------
@@ -1129,7 +1161,7 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
   results.clear();
 
   //  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_FORCE_SERIAL;
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
 
   vector<pair<uint8_t, vector<pixel> > > scans;
   int cnt(0); 
@@ -1403,7 +1435,7 @@ void PixTest::print(string what, TLogLevel log) {
 // ----------------------------------------------------------------------
 void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int &dacmax) {
   PixTest::update(); 
-  uint16_t FLAGS = FLAG_FORCE_MASKED;
+  uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
 
@@ -1522,6 +1554,8 @@ void PixTest::preScan(string dac, std::vector<shist256*> maps, int &dacmin, int 
 void PixTest::dacScan(string dac, int ntrig, int dacmin, int dacmax, std::vector<shist256*> maps, int ihit, int FLAGS) {
   //  uint16_t FLAGS = flag | FLAG_FORCE_MASKED;
 
+  FLAGS |= FLAG_DUMP_FLAWED_EVENTS;
+  
   bool unmasked = (0 != (FLAGS & FLAG_CHECK_ORDER))  &&  (0 != (FLAGS & FLAG_FORCE_UNMASKED));
 
   //  fNtrig = ntrig; 
@@ -1756,6 +1790,11 @@ void PixTest::saveDacs() {
 void PixTest::saveTrimBits() {
   fPixSetup->writeTrimFiles();
   
+}
+
+// ----------------------------------------------------------------------
+void PixTest::saveTbmParameters() {
+  fPixSetup->writeTbmParameterFiles();
 }
 
 // ----------------------------------------------------------------------
@@ -2000,6 +2039,256 @@ uint16_t PixTest::setTriggerFrequency(int triggerFreq, uint8_t trgTkDel) {
   return totalPeriod;
 }
 
+
+// ----------------------------------------------------------------------
+void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
+
+  int NSECONDS(runSeconds); 
+  int TRGFREQ(100); // in kiloHertz
+
+  double THR = 1.e-5*NSECONDS*TRGFREQ*1000;
+
+  if (hitThr > 0) {
+    THR = (double)hitThr;
+  }
+
+  banner(Form("PixTest::trimHotPixels() running for %d seconds with %d kHz trigger rate", NSECONDS, TRGFREQ));
+
+  LOG(logINFO) << "THR = " << THR << ", corresponding to ~ " << THR/(NSECONDS*TRGFREQ*1000*2.5e-8*150*100*1.e-8)*1.e-6 << " MHz/cm2";
+  LOG(logINFO) << "edge/corner pixel THR is adjusted";
+
+  bool finished = false;
+  int step = 0;
+  int nHotPixels = 0;
+  LOG(logINFO) << "PixTestHighRate::trimHotPixels: step " << step << "...";
+
+  // get enabled rocs
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+
+  // get trim bits
+  ConfigParameters* cp = fPixSetup->getConfigParameters();
+  vector<vector<pxar::pixelConfig> > rocPixelConfig = cp->getRocPixelConfig();
+
+  std::vector<TH2D*> hotpixel_map(rocIds.size());
+  std::vector<std::pair<int, std::pair<int,int> > > hotPixelList;
+
+  for (size_t i = 0; i < rocIds.size(); ++i) { 
+    hotpixel_map[i] = bookTH2D(Form("hitMap_hotpixels_C%d", rocIds[i]), Form("hits_C%d", rocIds[i]), 52, 0., 52., 80, 0., 80.);
+  }
+
+  std::vector<TH2D*> diff_map(rocIds.size());
+  for (size_t i = 0; i < rocIds.size(); ++i) { 
+    diff_map[i] = bookTH2D(Form("trimbitdiff_C%d", rocIds[i]), Form("trimbitdiff_C%d", rocIds[i]), 52, 0., 52., 80, 0., 80.);
+  }
+
+  while (!finished) {
+    for (size_t i = 0; i < rocIds.size(); ++i) { 
+      hotpixel_map[i]->Reset();
+    }
+
+    nHotPixels = 0;
+    finished = true;
+    fApi->_dut->testAllPixels(false);
+    fApi->_dut->maskAllPixels(false);
+
+    int totalPeriod = prepareDaq(TRGFREQ, (uint8_t)500);
+    
+    TStopwatch t;
+    int seconds(0);
+    uint8_t perFull;
+    bool daq_loop = true;
+      
+    fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
+
+    int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
+    LOG(logINFO) << "Collecting data for " << NSECONDS << " seconds...";
+    
+    t.Start(kTRUE);
+    while (fApi->daqStatus(perFull) && daq_loop) {
+      if (perFull > 80) {
+        LOG(logINFO) << "Buffer almost full, pausing triggers.";
+        fApi->daqTriggerLoopHalt();
+        t.Stop();
+        vector<pxar::Event> daqdat;
+        try { daqdat = fApi->daqGetEventBuffer(); }
+        catch(pxar::DataNoEvent &) {}
+        for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+          for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+            hotpixel_map[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+          }
+        }
+
+        LOG(logINFO) << "Resuming triggers.";
+        t.Start(kFALSE);
+      fApi->daqTriggerLoop(finalPeriod);
+      }
+     
+      seconds = t.RealTime(); 
+      t.Start(kFALSE); 
+      if (static_cast<int>(seconds >= NSECONDS)) {
+        LOG(logINFO) << "Done with hot pixel readout";
+        daq_loop = false;
+        break;
+      }
+    }
+      
+    fApi->daqTriggerLoopHalt();
+    fApi->daqStop();
+
+    vector<pxar::Event> daqdat;
+    try { daqdat = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
+    for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+      for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+        int rocIdx = getIdxFromId(it->pixels[ipix].roc());
+        if (rocIdx >= 0 && rocIdx < static_cast<int>(hotpixel_map.size())) {
+          hotpixel_map[rocIdx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
+        } else {
+          LOG(logERROR) << "found hit from disabled ROC " << (int)it->pixels[ipix].roc() 
+			<< ", col " << (int)it->pixels[ipix].column() << " row " << (int)it->pixels[ipix].row(); 
+          break;
+        }
+      }
+    }
+    finalCleanup();
+
+    // -- analysis of hit map
+    LOG(logDEBUG) << "hot pixel determination with THR = " << THR; 
+    TH2D *h(0);
+    float pixelAreaFactor = 1.0;
+    for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
+      h = hotpixel_map[i];
+      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+        for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+          pixelAreaFactor = 1.0;
+          if (ix == 0 || ix == 51)
+            pixelAreaFactor*=2;
+          if (iy == 0 || iy == 79)
+            pixelAreaFactor*=2;
+          if (h->GetBinContent(ix+1, iy+1) > THR * pixelAreaFactor) {
+            nHotPixels++;
+            if (step == 0) {
+              hotPixelList.push_back(std::make_pair(rocIds[i], std::make_pair(ix, iy)));
+            }
+            LOG(logDEBUG) << "ROC " << (int)rocIds[i] << " with hot pixel " << ix << "/" << iy << ",  hits = " << h->GetBinContent(ix+1, iy+1);
+            
+            // find pixel 
+            int foundPixel = -1;
+            for(size_t k=0;k<rocPixelConfig[i].size();k++) {
+              if (rocPixelConfig[i][k].column() == ix && rocPixelConfig[i][k].row() == iy) {
+                foundPixel = k;
+                break;
+              }
+            }
+
+            if(foundPixel > -1){
+              int trimBits = (int)(rocPixelConfig[i][foundPixel].trim());              
+              if (trimBits < 15) {
+                LOG(logDEBUG) << " => trim bit: " << trimBits << " => " << (trimBits+1);
+                trimBits++;
+                int col = rocPixelConfig[i][foundPixel].column();
+                int row = rocPixelConfig[i][foundPixel].row();
+                diff_map[i]->SetBinContent(1 + col, 1 + row, diff_map[i]->GetBinContent(1 + col, 1 + row) + 1);
+                rocPixelConfig[i][foundPixel].setTrim(trimBits);
+                bool result = fApi->_dut->updateTrimBits(rocPixelConfig[i][foundPixel].column(), rocPixelConfig[i][foundPixel].row(), trimBits, rocIds[i]);
+                if (!result) {
+                  LOG(logERROR) << "could not update trim bit.";
+                } else {
+                  // check again if increasing trim bits by one was enough, otherwise repeat
+                  finished = false;
+                }
+              } else {
+                LOG(logWARNING) << "  => trimBits already at highest possible threshold, 'real' hot pixel found";
+              }
+            }
+          }
+        }
+      }
+    }
+    LOG(logINFO) << nHotPixels << " hot pixels found in step " << step;
+    step++;
+    if (step > 14) {
+      finished = true;
+    }
+  }
+
+  int trimBitMargin = 1;
+  LOG(logDEBUG) << "list of re-trimmed hot pixels:";
+  for (size_t i = 0; i< hotPixelList.size(); ++i) {
+    int rocId = hotPixelList[i].first;
+    int col = hotPixelList[i].second.first;
+    int row = hotPixelList[i].second.second;
+
+    // find pixel config
+    int foundPixel = -1;
+    for(size_t k=0;k<rocPixelConfig[rocId].size();k++) {
+      if (rocPixelConfig[rocId][k].column() == col && rocPixelConfig[rocId][k].row() == row) {
+        foundPixel = k;
+        break;
+      }
+    }
+
+    // increase trim bits by trimBitMargin
+    if(foundPixel > -1){
+      int trimBits = (int)(rocPixelConfig[rocId][foundPixel].trim());
+      int trimBitsOld = trimBits;
+      trimBits+=trimBitMargin;
+      if (trimBits > 15) trimBits = 15;
+      diff_map[rocId]->SetBinContent(1 + col, 1 + row, diff_map[rocId]->GetBinContent(1 + col, 1 + row) + (trimBits - trimBitsOld));
+      rocPixelConfig[rocId][foundPixel].setTrim(trimBits);
+      fApi->_dut->updateTrimBits(col, row, trimBits, rocId);
+      
+    }
+    LOG(logDEBUG) << "ROC " << rocId << " pix " << col << "/" << row;
+  }
+
+
+  // now mask all remaining pixels
+  if (maskuntrimmable) {
+
+    fHotPixels.clear();
+    int numMaskedHotPixels = 0;
+    TH2D *h(0);
+
+    for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
+      h = hotpixel_map[i];
+      vector<pair<int, int> > hot; 
+      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+
+        
+        for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+          float pixelAreaFactor = 1.0;
+          if (ix == 0 || ix == 51)
+            pixelAreaFactor*=2;
+          if (iy == 0 || iy == 79)
+            pixelAreaFactor*=2;
+          if (h->GetBinContent(ix+1, iy+1) > THR * pixelAreaFactor) {
+            hot.push_back(make_pair(ix, iy));
+            numMaskedHotPixels++;
+          }
+        }
+      }
+      fHotPixels.push_back(hot); 
+    }
+    LOG(logINFO) << numMaskedHotPixels << " hot pixels could not be trimmed and have been masked.";
+  }
+
+  for (size_t i = 0; i < diff_map.size(); ++i) {
+    fHistList.push_back(hotpixel_map[i]);
+    fHistOptions.insert(make_pair(hotpixel_map[i], "colz"));
+  }
+  for (size_t i = 0; i < diff_map.size(); ++i) {
+    fHistList.push_back(diff_map[i]);
+    fHistOptions.insert(make_pair(diff_map[i], "colz"));
+  }
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), diff_map[diff_map.size()-1]);
+  diff_map[diff_map.size()-1]->Draw("colz");
+  PixTest::update();
+
+  LOG(logINFO) << "PixTest::trimHotPixels() done";
+}
+
+
 // ----------------------------------------------------------------------
 void PixTest::maskHotPixels(std::vector<TH2D*> v) {
 
@@ -2019,7 +2308,7 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
   uint8_t perFull;
   bool daq_loop = true;
     
-  fApi->daqStart();
+  fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
   int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
   LOG(logINFO) << "PixTestHighRate::maskHotPixels start TriggerLoop with period " << finalPeriod 
@@ -2087,7 +2376,9 @@ void PixTest::maskHotPixels(std::vector<TH2D*> v) {
     fHotPixels.push_back(hot); 
   }
   if (0 == cntHot) {
-    LOG(logDEBUG) << "no hot pixel found!";
+    LOG(logINFO) << "no hot pixel found!";
+  } else {
+    LOG(logINFO) << cntHot << " hot pixels found!";
   }
   LOG(logINFO) << "PixTest::maskHotPixels() done";
 
@@ -2110,4 +2401,137 @@ bool sortRocHist(const TH1* h1, const TH1* h2) {
   int roc2 = atoi(sroc2.c_str()); 
   
   return roc1 < roc2;
+}
+
+
+// ----------------------------------------------------------------------
+// -- from PixTestCmd
+int PixTest::tbmSet(string name, uint8_t cores, int value, uint8_t valueMask){
+  /* set a tbm register, allow setting a subset of bits (thoese where mask=1)
+   * the default value of mask is 0xff, i.e. all bits are changed
+   * the cores = 0:TBMA, 1:TBMB, >1 TBMA+TBMB
+   * 
+   */
+  if ((value & (~valueMask) )>0) {
+    LOG(logDEBUG) << "Warning! tbm set value " << hex << (int) value 
+		  << " has bits outside mask ("<<hex<< (int) valueMask << ")";
+  }
+  
+  uint8_t coreMask = 3;
+  if (cores==0){coreMask=1;}  else if(cores==1){ coreMask=2;}
+  
+  int err=1;
+  //out << "tbmset" << name << " " <<  (int) coreMask << " " << value << "  " << bitset<8>(valueMask) << "\n";
+  for(size_t core=0; core<2; core++){
+    if ( ((coreMask >> core) & 1) == 1 ){
+      std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(core);
+      if (regs.size()==0) {
+	LOG(logWARNING) << "TBM registers not set !?! This is not going to work.";
+      }
+      for(unsigned int i=0; i<regs.size(); i++){
+	if (name==regs[i].first){
+	  // found it , do something
+	  uint8_t present = regs[i].second;
+	  uint8_t update = value & valueMask;
+	  update |= (present & (~valueMask) );
+	  LOG(logDEBUG) << "changing tbm reg " <<  name << "["<<core<<"]"
+			<< " from 0x" << hex << (int) regs[i].second
+			<< " to 0x" << hex << (int) update << "";
+	  fApi->setTbmReg( name, update, core );
+	  err=0;
+	}
+      }
+    }
+  }
+  return err; // nonzero values for errors
+}
+
+//------------------------------------------------------------------------------
+statistics PixTest::getEvents(int NEvents, int period, int buffer) {
+
+  int NStep = 1000000;
+  int NLoops = floor((NEvents-1)/NStep);
+  int NRemainder = NEvents%NStep;
+  if (NRemainder==0) NRemainder=NStep;
+
+  statistics results;
+  vector<Event> daqEv;
+
+  if (buffer > 0) {
+    vector<rawEvent> daqRawEv;
+    fApi->daqTrigger(buffer, period);
+    try { daqRawEv = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
+    for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
+  }
+
+  for (int iloop=0; iloop<NLoops; iloop++) {
+    LOG(logDEBUG) << "Collecting " << (iloop+1)*NStep << "/" << NEvents << " Triggers";
+    fApi->daqTrigger(NStep, period);
+    try { daqEv = fApi->daqGetEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
+    results += fApi->getStatistics();
+  }
+
+  LOG(logDEBUG) << "Collecting " << (NLoops*NStep)+NRemainder << "/" << NEvents << " Triggers";
+  fApi->daqTrigger(NRemainder, period);
+  try { daqEv = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
+  results += fApi->getStatistics();
+
+  return results;
+}
+
+// ----------------------------------------------------------------------
+bool PixTest::checkReadBackBits(uint16_t period) {
+
+  bool ReadBackGood = true;
+  vector<Event> daqEv;
+  std::vector<std::vector<uint16_t> > ReadBackBits;
+  std::vector<uint8_t> ROClist;
+
+  std::vector<uint8_t> rocids = fApi->_dut->getRocI2Caddr();
+  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
+
+  int iroc=0;
+  for (size_t itbm=0; itbm < nTBMs; itbm++) {
+    if ((GetTBMSetting("base0", itbm) & 64) == 64) {
+      iroc += 16/nTokenChains;
+    } else {
+      for (int jroc=0; jroc < 16/nTokenChains; jroc++) {
+        ROClist.push_back(rocids[iroc]);
+        iroc++;
+      }
+    }
+  }
+
+  fApi->daqTrigger(32, period);
+  try { daqEv = fApi->daqGetEventBuffer(); }
+  catch(pxar::DataNoEvent &) {}
+  ReadBackBits = fApi->daqGetReadback();
+  statistics results = fApi->getStatistics();
+  int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+  int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+  if (NEvents!=32 || NErrors!=0) return false;
+
+  for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
+    for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
+      if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
+      if (ReadBackBits[irb][jrb]>>12 != ROClist[irb]) ReadBackGood = false;
+    }
+  }
+  return ReadBackGood;
+}
+
+//------------------------------------------------------------------------------
+uint8_t PixTest::GetTBMSetting(string base, size_t tbmId) {
+  vector<pair<string, uint8_t> > tbmdacs = fApi->_dut->getTbmDACs(tbmId);
+  for (size_t idac=0; idac<tbmdacs.size(); idac++) {
+    if (tbmdacs[idac].first==base) return tbmdacs[idac].second;
+  }
+  LOG(logERROR) << "TBM Dac (" << base << ") Not Found!";
+  return 0;
 }

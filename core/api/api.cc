@@ -139,14 +139,24 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
   // Verification/sanity checks of supplied DUT configuration values
 
   // Check if the number of hub ids and TBM core settings match:
-  if(tbmDACs.empty()) {
-    // No TBM: store the first hubId, ignore the rest:
-    _dut->hubId = hubids.front();
+  if(tbmDACs.size() <= 2) {
+    // We need to set the global hub ID once, take the first, ignore the rest:
+    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(hubids.front());
+    _hal->setHubId(hubids.front());
+  }
+  // We only support maximum two hubs connected:
+  else if(hubids.size() > 2) {
+    LOG(logCRITICAL) << "Too many hub ids supplied. Only two hubs supported for Layer 1 modules...";
+    throw InvalidConfig("Too many hub ids supplied.");
   }
   else if(2*hubids.size() != tbmDACs.size()) {
     LOG(logCRITICAL) << "Hm, we have " << tbmDACs.size() << " TBM Cores but " << hubids.size() << " HUB ids.";
     LOG(logCRITICAL) << "This cannot end well...";
     throw InvalidConfig("Mismatch between number of HUB addresses and TBM Cores");
+  }
+  else {
+    // We have two hub ids - this calls for a Layer 1 module initialization:
+    _hal->setHubId(hubids.front(), hubids.back());
   }
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
@@ -418,12 +428,7 @@ bool pxarCore::programDUT() {
   // Start programming the devices here!
 
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
-  // No TBM - we need to set the global hub ID once:
-  if(enabledTbms.empty()) {
-    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(_dut->hubId);
-    _hal->setHubId(_dut->hubId);
-  }
-  else { LOG(logDEBUGAPI) << "Programming TBMs..."; }
+  if(!enabledTbms.empty()) { LOG(logDEBUGAPI) << "Programming TBMs..."; }
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
     _hal->initTBMCore((*tbmit));
   }
@@ -574,10 +579,13 @@ void pxarCore::Pon() {
   programDUT();
 }
 
-bool pxarCore::SignalProbe(std::string probe, std::string name) {
+bool pxarCore::SignalProbe(std::string probe, std::string name, uint8_t channel) {
 
   if(!_hal->status()) {return false;}
 
+  // Check selected channel to be within range of valid DAQ channels:
+  if(channel >= DTB_DAQ_CHANNELS) throw InvalidConfig("No DAQ available for selected channel.");
+  
   // Get singleton Probe dictionary object:
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
 
@@ -595,14 +603,20 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
     LOG(logDEBUGAPI) << "Digital probe signal lookup for \"" << name 
 		     << "\" returned signal: " << static_cast<int>(signal);
 
-    // Select the correct probe for the output:
-    if(probe.compare("d1") == 0) {
-      _hal->SignalProbeD1(signal);
-      return true;
+    // Check if this is a DESER400 probe signal:
+    if(name.compare(0,5,"deser") == 0) {
+      // Distinguish between DESER channel A (even DAQ channels) and B (odd DAQ channels)
+      // and shift the signal registers accordingly:
+      if(channel%2 != 0) signal += (PROBE_B_HEADER - PROBE_A_HEADER);
+
+      // Divide channel count by two, since one DESER400 holds two DAQ channels:
+      if(probe.compare("d1") == 0) { _hal->SignalProbeDeserD1(channel/2, signal); return true; }
+      else if(probe.compare("d2") == 0) { _hal->SignalProbeDeserD2(channel/2, signal); return true; }
     }
-    else if(probe.compare("d2") == 0) {
-      _hal->SignalProbeD2(signal);
-      return true;
+    else {
+      // Select the correct probe for the output:
+      if(probe.compare("d1") == 0) { _hal->SignalProbeD1(signal); return true; }
+      else if(probe.compare("d2") == 0) {  _hal->SignalProbeD2(signal); return true; }
     }
   }
   // Analog signal probes:
@@ -766,9 +780,6 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
     }
     
     _hal->tbmSetReg(_dut->tbm.at(tbmid).hubid,_dut->tbm.at(tbmid).core | _register,regValue);
-    
-    // update HAL no token pass setting:
-    _hal->tbmSetNoTokenPass(tbmid,_dut->tbm.at(tbmid).tokenchains.size(),_dut->tbm.at(tbmid).NoTokenPass());
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";
@@ -828,9 +839,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getPulseheightV
   param.push_back(static_cast<int32_t>(dacStep));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, false, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacStep,dacMin,dacMax,nTriggers,flags,false);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacStep,dacMin,dacMax,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -884,9 +895,9 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getEfficiencyVs
   param.push_back(static_cast<int32_t>(dacStep));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, true, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacStep,dacMin,dacMax,nTriggers,flags,true);
+  std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackDacScanData(data,dacStep,dacMin,dacMax,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -969,7 +980,7 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getThresholdVsD
   param.push_back(static_cast<int32_t>(dac2step));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, true, flags);
   // repack data into the expected return format
   std::vector< std::pair<uint8_t, std::vector<pixel> > > result = repackThresholdDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,threshold,nTriggers,flags);
 
@@ -1043,9 +1054,9 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxar
   param.push_back(static_cast<int32_t>(dac2step));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, false, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,false);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -1116,9 +1127,9 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxar
   param.push_back(static_cast<int32_t>(dac2step));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, true, flags);
   // repack data into the expected return format
-  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,true);
+  std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,flags);
 
   // Reset the original value for the scanned DAC:
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -1150,10 +1161,10 @@ std::vector<pixel> pxarCore::getPulseheightMap(uint16_t flags, uint16_t nTrigger
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, false, flags);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel> result = repackMapData(data, nTriggers, flags,false);
+  std::vector<pixel> result = repackMapData(data, flags);
 
   return result;
 }
@@ -1174,10 +1185,10 @@ std::vector<pixel> pxarCore::getEfficiencyMap(uint16_t flags, uint16_t nTriggers
   param.push_back(static_cast<int32_t>(nTriggers));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, true, flags);
 
   // Repacking of all data segments into one long map vector:
-  std::vector<pixel> result = repackMapData(data, nTriggers, flags, true);
+  std::vector<pixel> result = repackMapData(data, flags);
 
   return result;
 }
@@ -1228,7 +1239,7 @@ std::vector<pixel> pxarCore::getThresholdMap(std::string dacName, uint8_t dacSte
   param.push_back(static_cast<int32_t>(dacStep));
 
   // check if the flags indicate that the user explicitly asks for serial execution of test:
-  std::vector<Event*> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, flags);
+  std::vector<Event> data = expandLoop(pixelfn, multipixelfn, rocfn, multirocfn, param, true, flags);
 
   // Repacking of all data segments into one long map vector:
   std::vector<pixel> result = repackThresholdMapData(data, dacStep, dacMin, dacMax, threshold, nTriggers, flags);
@@ -1304,6 +1315,9 @@ bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool i
   // And start the DAQ session:
   _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
+  // Activate the selected trigger source
+  _hal->daqTriggerSource(_dut->trigger_source);
+
   _daq_running = true;
   return true;
 }
@@ -1330,7 +1344,7 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
   return true;
 }
 
-bool pxarCore::daqTriggerSource(std::string triggerSource) {
+bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
   if(daqStatus()) {
     LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
@@ -1353,6 +1367,22 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
     if(sig != TRG_ERR) {
       signal |= sig;
       LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
+
+      // If we are using the DTB generator, also set the rate/period:
+      if(sig == TRG_SEL_GEN || sig == TRG_SEL_GEN_DIR) {
+
+	if(s.compare(0,6,"random") == 0) {
+	  // Be gentle and convert to centi-Hertz for the DTB :)
+	  uint32_t rate = int(timing/40e6*4294967296 + 0.5);
+	  // FIXME better also take the user input as BC instead of Hz, reduces confusion...
+	  LOG(logDEBUGAPI) << "Setting random trigger generator, rate = " << rate << " cHz";
+	  _hal->daqTriggerGenRandom(rate);
+	}
+	else if(s.compare(0,6,"period") == 0) {
+	  LOG(logDEBUGAPI) << "Setting periodic trigger generator, period = " << timing << " BC";
+	  _hal->daqTriggerGenPeriodic(timing);
+	}
+      }
     }
     else {
       LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
@@ -1361,8 +1391,8 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
   }
 
   LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
-  _hal->daqTriggerSource(signal);
-
+  _dut->trigger_source = signal;
+    
   // Check if we need to change the tbmtype for HAL:
   uint8_t newtype = 0x0;
   if(_dict->getEmulationState(signal)) {
@@ -1421,11 +1451,12 @@ bool pxarCore::daqStatus(uint8_t & perFull) {
 uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
 
   if(!daqStatus()) { return 0; }
+  uint16_t inputperiod=period;
   // Pattern Generator loop doesn't work for delay periods smaller than
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting too small for configured "
+    LOG(logWARNING) << "Loop period setting (" << inputperiod << ") too small for configured "
 		    << "Pattern generator. "
 		    << "Forcing loop delay to " << period << " clk";
     LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
@@ -1438,12 +1469,12 @@ uint16_t pxarCore::daqTrigger(uint32_t nTrig, uint16_t period) {
 uint16_t pxarCore::daqTriggerLoop(uint16_t period) {
 
   if(!daqStatus()) { return 0; }
-
+  uint16_t inputperiod=period;
   // Pattern Generator loop doesn't work for delay periods smaller than
   // the pattern generator duration, so limit it to that:
   if(period < _dut->pg_sum) {
     period = _dut->pg_sum;
-    LOG(logWARNING) << "Loop period setting too small for configured "
+    LOG(logWARNING) << "Loop period setting (" << inputperiod << ") too small for configured "
 		    << "Pattern generator. "
 		    << "Forcing loop delay to " << period << " clk";
     LOG(logWARNING) << "To suppress this warning supply a larger delay setting";
@@ -1474,15 +1505,7 @@ std::vector<rawEvent> pxarCore::daqGetRawEventBuffer() {
   // Select the right readout channels depending on the number of TBMs
   // The HAL function throws pxar::DataNoEvent if nothing to be 
   // returned
-  std::vector<rawEvent> data = std::vector<rawEvent>();
-  std::vector<rawEvent*> buffer = _hal->daqAllRawEvents();
-
-  // Dereference all vector entries and give data back:
-  for(std::vector<rawEvent*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
-    data.push_back(**it);
-    delete *it;
-  }
-  return data;
+  return _hal->daqAllRawEvents();
 }
 
 std::vector<Event> pxarCore::daqGetEventBuffer() {
@@ -1491,35 +1514,21 @@ std::vector<Event> pxarCore::daqGetEventBuffer() {
   // Select the right readout channels depending on the number of TBMs
   // The HAL function throws pxar::DataNoEvent if nothing to be 
   // returned
-  std::vector<Event> data = std::vector<Event>();
-  std::vector<Event*> buffer = _hal->daqAllEvents();
-
-  // Dereference all vector entries and give data back:
-  for(std::vector<Event*>::iterator it = buffer.begin(); it != buffer.end(); ++it) {
-    data.push_back(**it);
-    delete *it;
-  }
-  return data;
+  return _hal->daqAllEvents();
 }
 
 Event pxarCore::daqGetEvent() {
 
   // Return the next decoded Event from the FIFO buffer.
   // The HAL function throws pxar::DataNoEvent if no event is available
-  Event * evt = _hal->daqEvent();
-  Event ret = *evt;
-  delete evt;
-  return ret;
+  return _hal->daqEvent();
 }
 
 rawEvent pxarCore::daqGetRawEvent() {
 
   // Return the next raw data record from the FIFO buffer:
   // The HAL function throws pxar::DataNoEvent if no event is available
-  rawEvent * evt = _hal->daqRawEvent();
-  rawEvent ret = *evt;
-  delete evt;
-  return ret;
+  return _hal->daqRawEvent();
 }
 
 bool pxarCore::daqStop() {
@@ -1533,6 +1542,9 @@ bool pxarCore::daqStop(const bool init) {
     LOG(logINFO) << "No DAQ running, not executing daqStop command.";
     return false;
   }
+
+  // Turn off all trigger sources:
+  _hal->daqTriggerSource(TRG_SEL_NONE);
 
   _daq_running = false;
   
@@ -1561,10 +1573,13 @@ bool pxarCore::daqStop(const bool init) {
 }
 
 
-std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags) {
+std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags) {
+
+  // Activate the pattern generator trigger:
+  _hal->daqTriggerSource(TRG_SEL_PG_DIR);
   
   // pointer to vector to hold our data
-  std::vector<Event*> data = std::vector<Event*>();
+  std::vector<Event> data = std::vector<Event>();
 
   // Start test timer:
   timer t;
@@ -1604,14 +1619,14 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
       LOG(logDEBUGAPI) << "\"The Loop\" contains one call to \'multirocfn\'";
       
       // execute call to HAL layer routine
-      data = CALL_MEMBER_FN(*_hal,multirocfn)(rocs_i2c, param);
+      data = CALL_MEMBER_FN(*_hal,multirocfn)(rocs_i2c, efficiency, param);
     } // ROCs parallel
     // Otherwise call the Pixel Parallel function several times:
     else if (multipixelfn != NULL) {
       
       // Get one of the enabled ROCs:
       std::vector<uint8_t> enabledRocs = _dut->getEnabledRocIDs();
-      std::vector<Event*> rocdata = std::vector<Event*>();
+      std::vector<Event> rocdata = std::vector<Event>();
       std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixels(enabledRocs.front());
 
       LOG(logDEBUGAPI) << "\"The Loop\" contains "
@@ -1619,7 +1634,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
 
       for (std::vector<pixelConfig>::iterator px = enabledPixels.begin(); px != enabledPixels.end(); ++px) {
 	// execute call to HAL layer routine and store data in buffer
-	std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column(), px->row(), param);
+	std::vector<Event> buffer = CALL_MEMBER_FN(*_hal,multipixelfn)(rocs_i2c, px->column(), px->row(), efficiency, param);
 
 	// merge pixel data into roc data storage vector
 	if (rocdata.empty()){
@@ -1658,7 +1673,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
 	if(((flags & FLAG_FORCE_SERIAL) != 0) && ((flags & FLAG_FORCE_UNMASKED) != 0)) { MaskAndTrim(true,rocit); }
 
 	// execute call to HAL layer routine and save returned data in buffer
-	std::vector<Event*> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, param);
+	std::vector<Event> rocdata = CALL_MEMBER_FN(*_hal,rocfn)(rocit->i2c_address, efficiency, param);
 	// append rocdata to main data storage vector
         if (data.empty()) data = rocdata;
 	else {
@@ -1676,7 +1691,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
       LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " enabled ROCs.";
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-	std::vector<Event*> rocdata = std::vector<Event*>();
+	std::vector<Event> rocdata = std::vector<Event>();
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixelsI2C(rocit->i2c_address);
 
 
@@ -1685,7 +1700,7 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
 
 	for (std::vector<pixelConfig>::iterator pixit = enabledPixels.begin(); pixit != enabledPixels.end(); ++pixit) {
 	  // execute call to HAL layer routine and store data in buffer
-	  std::vector<Event*> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column(), pixit->row(), param);
+	  std::vector<Event> buffer = CALL_MEMBER_FN(*_hal,pixelfn)(rocit->i2c_address, pixit->column(), pixit->row(), efficiency, param);
 	  // merge pixel data into roc data storage vector
 	  if (rocdata.empty()){
 	    rocdata = buffer; // for first time call
@@ -1725,96 +1740,28 @@ std::vector<Event*> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPi
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
 
+  // Turn off all trigger sources:
+  _hal->daqTriggerSource(TRG_SEL_NONE);
+
   return data;
 } // expandLoop()
 
-
-std::vector<Event*> pxarCore::condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency) {
-
-  std::vector<Event*> packed;
-
-  if(data.size()%nTriggers != 0) {
-    LOG(logCRITICAL) << "Data size does not correspond to " << nTriggers << " triggers! Aborting data processing!";
-    return packed;
-  }
-
-  for(std::vector<Event*>::iterator Eventit = data.begin(); Eventit!= data.end(); Eventit += nTriggers) {
-
-    Event * evt = new Event();
-    std::map<pixel,uint16_t> pxcount = std::map<pixel,uint16_t>();
-    std::map<pixel,double> pxmean = std::map<pixel,double>();
-    std::map<pixel,double> pxm2 = std::map<pixel,double>();
-
-    for(std::vector<Event*>::iterator it = Eventit; it != Eventit+nTriggers; ++it) {
-
-      // Loop over all contained pixels:
-      for(std::vector<pixel>::iterator pixit = (*it)->pixels.begin(); pixit != (*it)->pixels.end(); ++pixit) {
-
-	// Check if we have that particular pixel already in:
-	std::vector<pixel>::iterator px = std::find_if(evt->pixels.begin(),
-						       evt->pixels.end(),
-						       findPixelXY(pixit->column(), pixit->row(), pixit->roc()));
-	// Pixel is known:
-	if(px != evt->pixels.end()) {
-	  if(efficiency) { px->setValue(px->value()+1); }
-	  else {
-	    // Calculate the variance incrementally:
-	    double delta = pixit->value() - pxmean[*px];
-	    pxmean[*px] += delta/pxcount[*px];
-	    pxm2[*px] += delta*(pixit->value() - pxmean[*px]);
-	    pxcount[*px]++;
-	  }
-	}
-	// Pixel is new:
-	else {
-	  if(efficiency) { pixit->setValue(1); }
-	  else { 
-	    // Initialize counters and temporary variables:
-	    pxcount.insert(std::make_pair(*pixit,1));
-	    pxmean.insert(std::make_pair(*pixit,pixit->value()));
-	    pxm2.insert(std::make_pair(*pixit,0));
-	  }
-	  evt->pixels.push_back(*pixit);
-	}
-      }
-
-      // Delete the original data, not needed anymore:
-      delete *it;
-    }
-
-    // Calculate mean and variance for the pulse height depending on the
-    // number of triggers received:
-    if(!efficiency) {
-      for(std::vector<pixel>::iterator px = evt->pixels.begin(); px != evt->pixels.end(); ++px) {
-	px->setValue(pxmean[*px]); // The mean
-	px->setVariance(pxm2[*px]/(pxcount[*px] - 1)); // The variance
-      }
-    }
-    packed.push_back(evt);
-  }
-
-  return packed;
-}
-
-std::vector<pixel> pxarCore::repackMapData(std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency) {
+std::vector<pixel> pxarCore::repackMapData(std::vector<Event> &data, uint16_t flags) {
 
   // Keep track of the pixel to be expected:
   uint8_t expected_column = 0, expected_row = 0;
 
   std::vector<pixel> result;
-  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks, returning " << (efficiency ? "efficiency" : "averaged pulse height") << ".";
+  LOG(logDEBUGAPI) << "Simple Map Repack of " << data.size() << " data blocks.";
 
   // Measure time:
   timer t;
 
-  // First reduce triggers, we have #nTriggers Events which belong together:
-  std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
-
   // Loop over all Events we have:
-  for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
+  for(std::vector<Event>::iterator Eventit = data.begin(); Eventit!= data.end(); ++Eventit) {
 
     // For every Event, loop over all contained pixels:
-    for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
+    for(std::vector<pixel>::iterator pixit = Eventit->pixels.begin(); pixit != Eventit->pixels.end(); ++pixit) {
       // Check for pulsed pixels being present:
       if((flags&FLAG_CHECK_ORDER) != 0) {
 	if(pixit->column() != expected_column || pixit->row() != expected_row) {
@@ -1844,14 +1791,14 @@ std::vector<pixel> pxarCore::repackMapData(std::vector<Event*> data, uint16_t nT
   if((flags&FLAG_NOSORT) == 0) { std::sort(result.begin(),result.end()); }
 
   // Cleanup temporary data:
-  for(std::vector<Event*>::iterator it = packed.begin(); it != packed.end(); ++it) { delete *it; }
-
+  data.clear();
+  
   LOG(logDEBUGAPI) << "Correctly repacked Map data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency){
+std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanData (std::vector<Event> &data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags){
 
   // Keep track of the pixel to be expected:
   uint8_t expected_column = 0, expected_row = 0;
@@ -1861,27 +1808,24 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
   // Measure time:
   timer t;
 
-  // First reduce triggers, we have #nTriggers Events which belong together:
-  std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
-
-  if(packed.size() % static_cast<size_t>((dacMax-dacMin)/dacStep+1) != 0) {
-    LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>((dacMax-dacMin)/dacStep+1) << " DAC values!";
+  if(data.size() % static_cast<size_t>((dacMax-dacMin)/dacStep+1) != 0) {
+    LOG(logCRITICAL) << "Data size not as expected! " << data.size() << " data blocks do not fit to " << static_cast<int>((dacMax-dacMin)/dacStep+1) << " DAC values!";
     return result;
   }
 
-  LOG(logDEBUGAPI) << "Packing DAC range " << static_cast<int>(dacMin) << " - " << static_cast<int>(dacMax) << " (step size " << static_cast<int>(dacStep) << "), data has " << packed.size() << " entries.";
+  LOG(logDEBUGAPI) << "Packing DAC range " << static_cast<int>(dacMin) << " - " << static_cast<int>(dacMax) << " (step size " << static_cast<int>(dacStep) << "), data has " << data.size() << " entries.";
 
   // Prepare the result vector
   for(size_t dac = dacMin; dac <= dacMax; dac += dacStep) { result.push_back(std::make_pair(dac,std::vector<pixel>())); }
 
   size_t currentDAC = dacMin;
   // Loop over the packed data and separate into DAC ranges, potentially several rounds:
-  for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
+  for(std::vector<Event>::iterator Eventit = data.begin(); Eventit!= data.end(); ++Eventit) {
 
     if(currentDAC > dacMax) { currentDAC = dacMin; }
 
     // For every Event, loop over all contained pixels:
-    for(std::vector<pixel>::iterator pixit = (*Eventit)->pixels.begin(); pixit != (*Eventit)->pixels.end(); ++pixit) {
+    for(std::vector<pixel>::iterator pixit = Eventit->pixels.begin(); pixit != Eventit->pixels.end(); ++pixit) {
       // Check for pulsed pixels being present:
       if((flags&FLAG_CHECK_ORDER) != 0) {
 	if(pixit->column() != expected_column || pixit->row() != expected_row) {
@@ -1916,14 +1860,14 @@ std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::repackDacScanDa
   } // loop over events
   
   // Cleanup temporary data:
-  for(std::vector<Event*>::iterator it = packed.begin(); it != packed.end(); ++it) { delete *it; }
-
+  data.clear();
+  
   LOG(logDEBUGAPI) << "Correctly repacked DacScan data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;
 }
 
-std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
+std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event> &data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<pixel> result;
   // Vector of pixels for which a threshold has already been found
@@ -1939,7 +1883,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   timer t;
 
   // First, pack the data as it would be a regular Dac Scan:
-  std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacStep, dacMin, dacMax, nTriggers, flags, true);
+  std::vector<std::pair<uint8_t,std::vector<pixel> > > packed_dac = repackDacScanData(data, dacStep, dacMin, dacMax, flags);
 
   // Efficiency map:
   std::map<pixel,uint8_t> oldvalue;
@@ -2026,7 +1970,7 @@ std::vector<pixel> pxarCore::repackThresholdMapData (std::vector<Event*> data, u
   return result;
 }
 
-std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
+std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDacScanData (std::vector<Event> &data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags) {
 
   std::vector<std::pair<uint8_t,std::vector<pixel> > > result;
   // Map of pixels with already assigned threshold (key is the dac2 value):
@@ -2042,7 +1986,7 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
   timer t;
 
   // First, pack the data as it would be a regular DacDac Scan:
-  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,nTriggers,flags,true);
+  std::vector<std::pair<uint8_t,std::pair<uint8_t,std::vector<pixel> > > > packed_dacdac = repackDacDacScanData(data,dac1step,dac1min,dac1max,dac2step,dac2min,dac2max,flags);
 
   // Efficiency map:
   std::map<uint8_t,std::map<pixel,uint8_t> > oldvalue;  
@@ -2146,17 +2090,14 @@ std::vector<std::pair<uint8_t,std::vector<pixel> > > pxarCore::repackThresholdDa
   return result;
 }
 
-std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::repackDacDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t /*flags*/, bool efficiency) {
+std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxarCore::repackDacDacScanData (std::vector<Event> &data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t /*flags*/) {
   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > result;
 
   // Measure time:
   timer t;
 
-  // First reduce triggers, we have #nTriggers Events which belong together:
-  std::vector<Event*> packed = condenseTriggers(data, nTriggers, efficiency);
-
-  if(packed.size() % static_cast<size_t>(((dac1max-dac1min)/dac1step+1)*((dac2max-dac2min)/dac2step+1)) != 0) {
-    LOG(logCRITICAL) << "Data size not as expected! " << packed.size() << " data blocks do not fit to " << static_cast<int>(((dac1max-dac1min)/dac1step+1)*((dac2max-dac2min)/dac2step+1)) << " DAC values!";
+  if(data.size() % static_cast<size_t>(((dac1max-dac1min)/dac1step+1)*((dac2max-dac2min)/dac2step+1)) != 0) {
+    LOG(logCRITICAL) << "Data size not as expected! " << data.size() << " data blocks do not fit to " << static_cast<int>(((dac1max-dac1min)/dac1step+1)*((dac2max-dac2min)/dac2step+1)) << " DAC values!";
     return result;
   }
 
@@ -2164,7 +2105,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxar
 		   << ", step size " << static_cast<int>(dac1step) << "]x[" 
 		   << static_cast<int>(dac2min) << " - " << static_cast<int>(dac2max)
 		   << ", step size " << static_cast<int>(dac2step)
-		   << "], data has " << packed.size() << " entries.";
+		   << "], data has " << data.size() << " entries.";
 
   // Prepare the result vector
   for(size_t dac1 = dac1min; dac1 <= dac1max; dac1 += dac1step) {
@@ -2180,7 +2121,7 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxar
 
   // Loop over the packed data and separeate into DAC ranges, potentially several rounds:
   int i = 0;
-  for(std::vector<Event*>::iterator Eventit = packed.begin(); Eventit!= packed.end(); ++Eventit) {
+  for(std::vector<Event>::iterator Eventit = data.begin(); Eventit!= data.end(); ++Eventit) {
     if(current2dac > dac2max) {
       current2dac = dac2min;
       current1dac += dac1step;
@@ -2188,15 +2129,15 @@ std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > pxar
     if(current1dac > dac1max) { current1dac = dac1min; }
 
     result.at((current1dac-dac1min)/dac1step*((dac2max-dac2min)/dac2step+1) + (current2dac-dac2min)/dac2step).second.second.insert(result.at((current1dac-dac1min)/dac1step*((dac2max-dac2min)/dac2step+1) + (current2dac-dac2min)/dac2step).second.second.end(),
-												       (*Eventit)->pixels.begin(),
-												       (*Eventit)->pixels.end());
+												       Eventit->pixels.begin(),
+												       Eventit->pixels.end());
     i++;
     current2dac += dac2step;
   }
   
   // Cleanup temporary data:
-  for(std::vector<Event*>::iterator it = packed.begin(); it != packed.end(); ++it) { delete *it; }
-
+  data.clear();
+  
   LOG(logDEBUGAPI) << "Correctly repacked DacDacScan data for delivery.";
   LOG(logDEBUGAPI) << "Repacking took " << t << "ms.";
   return result;

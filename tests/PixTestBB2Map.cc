@@ -23,7 +23,7 @@ using namespace pxar;
 ClassImp(PixTestBB2Map)
 
 //------------------------------------------------------------------------------
-PixTestBB2Map::PixTestBB2Map(PixSetup *a, std::string name): PixTest(a, name), fTargetIa(-1), fParNtrig(10), fParVcalS(250), fParPlWidth(35) {
+PixTestBB2Map::PixTestBB2Map(PixSetup *a, std::string name): PixTest(a, name), fTargetIa(24), fParNtrig(1), fParVcalS(250), fParPlWidth(35) {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestBB2Map ctor(PixSetup &a, string, TGTab *)";
@@ -447,9 +447,7 @@ void PixTestBB2Map::doTest() {
 
   LOG(logINFO) << "Missing Bumps:   " << bb2mapString;
   LOG(logINFO) << "Separation Cut: " << bb2SeparationCut;
-  LOG(logINFO) << "PixTestBB2Map::doTest() done"
-	       << (fNDaqErrors>0? Form(" with %d decoding errors: ", static_cast<int>(fNDaqErrors)):"") 
-	       << ", duration: " << seconds << " seconds";
+  LOG(logINFO) << "PixTestBB2Map::doTest() done," << seconds << " seconds";
 
   dutCalibrateOff();
 }

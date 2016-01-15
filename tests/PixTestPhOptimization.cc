@@ -16,7 +16,7 @@ ClassImp(PixTestPhOptimization)
 
 PixTestPhOptimization::PixTestPhOptimization() {}
 
-PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(-1), fSafetyMarginLow(20), fQuantMax(0.98), fVcalMax(100) {
+PixTestPhOptimization::PixTestPhOptimization( PixSetup *a, std::string name ) :  PixTest(a, name), fParNtrig(1), fSafetyMarginLow(20), fQuantMax(0.98), fVcalMax(100) {
   PixTest::init();
   init();
 }
@@ -348,7 +348,6 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     int colMargin = 3;
     int rowMargin = 5; 
     bool pix_found = false;
-    bool badpix = false;
     //first, pixel search excludes edges (col(row)Margin cols (rows) per side)
     for(int ibinx = 1 + colMargin; ibinx < maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx++){
       if(pix_found) break;
@@ -357,6 +356,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
 	ibinx = (ibinx)%maxphmap[ith2]->GetNbinsX();
 	ibiny = (ibiny)%maxphmap[ith2]->GetNbinsY();
 	if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	  bool badpix = false;
 	  temp_pix.setRoc( getIdFromIdx(ith2) );
 	  temp_pix.setRow( ibiny - 1 );
 	  temp_pix.setColumn( ibinx - 1 );
@@ -377,7 +377,6 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     }
     //if not found, look outside fiducial region
     if(!pix_found){
-      badpix=false;
       LOG(logDEBUG)<<"Search for maxph pixel failed in the fiducial region on chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
       for(int ibinx_ex = maxphmap[ith2]->GetNbinsX()+1-colMargin; ibinx_ex < maxphmap[ith2]->GetNbinsX()+1+colMargin; ibinx_ex++){
 	if(pix_found) break;
@@ -386,6 +385,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
 	  int ibinx = (ibinx_ex)%maxphmap[ith2]->GetNbinsX();
 	  int ibiny = (ibiny_ex)%maxphmap[ith2]->GetNbinsY();
 	  if( abs( maxphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) < 1){
+	  bool badpix = false;
 	    temp_pix.setRoc( getIdFromIdx(ith2) );
 	    temp_pix.setRow( ibiny - 1 );
 	    temp_pix.setColumn( ibinx - 1 );
@@ -503,7 +503,6 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     int colMargin = 3;
     int rowMargin = 5; 
     bool pix_found = false;
-    bool badpix = false;
     //first, pixel search excludes edges (col(row)Margin cols (rows) per side)
     for(int ibinx = 1 + colMargin; ibinx < minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx++){
       if(pix_found) break;
@@ -512,6 +511,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	ibinx = (ibinx)%minphmap[ith2]->GetNbinsX();
 	ibiny = (ibiny)%minphmap[ith2]->GetNbinsY();	  
 	if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) <= 1){
+	  bool badpix = false;
 	  temp_pix.setRoc( getIdFromIdx(ith2) );
 	  temp_pix.setRow( ibiny - 1 );
 	  temp_pix.setColumn( ibinx - 1 );
@@ -533,7 +533,6 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     
     //if not found, look outside fiducial region
     if(!pix_found){
-      badpix = false;
       LOG(logDEBUG)<<"Search for minph pixel failed in the fiducial region for chip "<< (int)getIdFromIdx(ith2)<<", looking at the edges";
       for(int ibinx_ex = minphmap[ith2]->GetNbinsX()+1-colMargin; ibinx_ex < minphmap[ith2]->GetNbinsX()+1+colMargin; ibinx_ex++){
 	if(pix_found) break;
@@ -542,6 +541,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	  int ibinx = (ibinx_ex)%minphmap[ith2]->GetNbinsX();
 	  int ibiny = (ibiny_ex)%minphmap[ith2]->GetNbinsY();
 	  if( abs( minphmap[ith2]->GetBinContent(ibinx, ibiny) - yq[0] ) <= 1){
+	    bool badpix = false;
 	    temp_pix.setRoc( getIdFromIdx(ith2) );
 	    temp_pix.setRow( ibiny - 1 );
 	    temp_pix.setColumn( ibinx - 1 );
@@ -594,7 +594,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
 	fApi->_dut->setROCEnable(roc_jt, false);
       }
     }
-    fApi->_dut->info();
+    //    fApi->_dut->info();
     cnt = 0; 
     done = false;
     while (!done) {
@@ -976,6 +976,7 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
       
       for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
 	for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
+	  //ideally, the condition would be bincontent - maxPH == 1, relaxed ( >0 && <=3) to allow a wider band for solution
 	  if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
 	    hmax->SetBinContent(ibinx, ibiny, 0);
 	  }
@@ -990,7 +991,7 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
 	}
       }
       
-      for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+      for(int ibinx=21; ibinx < hmin->GetNbinsX()+1; ibinx++){//Excluding PhScan lower than 20 DAC
 	for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
 	  if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
 	    th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
@@ -1000,12 +1001,51 @@ void PixTestPhOptimization::optimiseOnMapsNew(std::map<uint8_t, int> &po_opt, st
       maxsol = th2_sol[rocIds[iroc]]->GetMaximum();
       th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
       
-    }
+    }//safetycorr
+    
+    if(maxsol < 1){  
+      LOG(logINFO)<<"For ROC "<<iroc<<": No solutions with PhScale > 20 could be found. Looking for a solution with PhScale < 20."; 
+      for(int safetyCorrection = 0; maxsol<1. && safetyCorrection+fSafetyMarginLow<256; safetyCorrection++){
+	LOG(logINFO)<<"safety margin for low PH: adding "<<safetyCorrection<<", margin is now "<<safetyCorrection+fSafetyMarginLow;
+	// hsol->Reset("M");
+	hmin = (TH2D*)th2_min[rocIds[iroc]]->Clone();
+	hmax = (TH2D*)th2_max[rocIds[iroc]]->Clone();
+	maxPH = hmax->GetMaximum();
+	
+	for(int ibinx=1; ibinx < hmax->GetNbinsX()+1; ibinx++){
+	  for(int ibiny=1; ibiny < hmax->GetNbinsY()+1; ibiny++){
+	    //ideally, the condition would be bincontent - maxPH == 1, relaxed ( >0 && <=3) to allow a wider band for solution
+	    if(abs(hmax->GetBinContent(ibinx, ibiny) - maxPH + 2) > 1 ){
+	      hmax->SetBinContent(ibinx, ibiny, 0);
+	    }
+	  }
+	}
+	
+	for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){
+	  for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	    if(abs(hmin->GetBinContent(ibinx, ibiny) - (fSafetyMarginLow+safetyCorrection)) > 1 ){
+	      hmin->SetBinContent(ibinx, ibiny, 0);
+	    }
+	  }
+	}
+	
+	for(int ibinx=1; ibinx < hmin->GetNbinsX()+1; ibinx++){//Excluding PhScan lower than 20 DAC
+	  for(int ibiny=1; ibiny < hmin->GetNbinsY()+1; ibiny++){
+	    if(hmin->GetBinContent(ibinx, ibiny) != 0 && hmax->GetBinContent(ibinx, ibiny) != 0){
+	      th2_sol[rocIds[iroc]]->SetBinContent(ibinx, ibiny, 1);
+	    }
+	  }
+	}
+	maxsol = th2_sol[rocIds[iroc]]->GetMaximum();
+	th2_sol[rocIds[iroc]]->GetBinXYZ(th2_sol[rocIds[iroc]]->GetMaximumBin(), goodbinx, goodbiny, goodbinz);
+	
+      }//safety corr
+    }//if no sol
     //po_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetXaxis()->GetBinCenter(goodbinx);
     //ps_opt[rocIds[iroc]] = (int)th2_sol[rocIds[iroc]]->GetYaxis()->GetBinCenter(goodbiny);
     po_opt[rocIds[iroc]] = goodbiny - 1;
     ps_opt[rocIds[iroc]] = goodbinx - 1;
-  }
+  }//rocs loop
 
   
   delete hmin;

@@ -15,7 +15,7 @@ namespace pxar {
 #define DTB_DAQ_FIFO_OVFL 4 // bit 2 = DAQ fast HW FIFO overflow
 #define DTB_DAQ_MEM_OVFL  2 // bit 1 = DAQ RAM FIFO overflow
 #define DTB_DAQ_STOPPED   1 // bit 0 = DAQ stopped (because of overflow)
-#define DTB_DAQ_CHANNELS  6 // Number of DAQ channels implemented in the DTB
+#define DTB_DAQ_CHANNELS  8 // Number of DAQ channels implemented in the DTB
 
 // --- TBM Types ---------------------------------------------------------------
 #define TBM_NONE           0x20
@@ -26,6 +26,7 @@ namespace pxar {
 #define TBM_08C            0x25
 #define TBM_09             0x26
 #define TBM_09C            0x27
+#define TBM_10             0x28
 
 
 // --- TBM Register -----------------------------------------------------------
@@ -58,7 +59,7 @@ namespace pxar {
 #define ROC_PSI46DIGV2        0x06
 #define ROC_PSI46DIGV21       0x07
 #define ROC_PSI46DIGV21RESPIN 0x08
-
+#define ROC_PSI46DIGPLUS      0x09
 
 // --- ROC DACs ---------------------------------------------------------------
 #define ROC_DAC_Vdig       0x01
@@ -107,7 +108,9 @@ namespace pxar {
 #define SIG_TRIGGER_LATENCY 0xFB
 #define SIG_LEVEL 0xFC
 #define SIG_LOOP_TRIGGER_DELAY 0xFD
+#define SIG_LOOP_TRIM_DELAY 0xF6
 #define SIG_DESER160PHASE 0xFE
+#define SIG_DESER400RATE 0xF5
 
 #define SIG_MODE_NORMAL  0
 #define SIG_MODE_LO      1
@@ -133,6 +136,9 @@ namespace pxar {
 #define MHZ_40     0
 
 // --- Trigger settings -------------------------------------------------------
+// Turn off all triggers:
+#define TRG_SEL_NONE       0x0000
+
 // Via TBM Emulator:
 #define TRG_SEL_ASYNC      0x0100
 #define TRG_SEL_SYNC       0x0080
@@ -182,43 +188,7 @@ namespace pxar {
 #define PROBE_ADC_START 22
 #define PROBE_ADC_SGATE 23
 #define PROBE_ADC_S 24
-
-#define PROBE_TBM0_GATE 100
-#define PROBE_TBM0_DATA 101
-#define PROBE_TBM0_TBMHDR 102
-#define PROBE_TBM0_ROCHDR 103
-#define PROBE_TBM0_TBMTRL 104
-
-#define PROBE_TBM1_GATE 105
-#define PROBE_TBM1_DATA 106
-#define PROBE_TBM1_TBMHDR 107
-#define PROBE_TBM1_ROCHDR 108
-#define PROBE_TBM1_TBMTRL 109
-
-#define PROBE_TBM2_GATE 110
-#define PROBE_TBM2_DATA 111
-#define PROBE_TBM2_TBMHDR 112
-#define PROBE_TBM2_ROCHDR 113
-#define PROBE_TBM2_TBMTRL 114
-
-#define PROBE_TBM3_GATE 115
-#define PROBE_TBM3_DATA 116
-#define PROBE_TBM3_TBMHDR 117
-#define PROBE_TBM3_ROCHDR 118
-#define PROBE_TBM3_TBMTRL 119
-
-#define PROBE_TBM4_GATE 120
-#define PROBE_TBM4_DATA 121
-#define PROBE_TBM4_TBMHDR 122
-#define PROBE_TBM4_ROCHDR 123
-#define PROBE_TBM4_TBMTRL 124
-
-#define PROBE_TBM5_GATE 125
-#define PROBE_TBM5_DATA 126
-#define PROBE_TBM5_TBMHDR 127
-#define PROBE_TBM5_ROCHDR 128
-#define PROBE_TBM5_TBMTRL 129
-
+#define PROBE_DS_GATE 29
 
 // --- Testboard analog signal probe ------------------------------------------
 #define PROBEA_TIN     0
@@ -235,6 +205,27 @@ namespace pxar {
 #define GAIN_3   2
 #define GAIN_4   3
 
+// --- DESER400 probe
+#define PROBE_FRAME_ERROR    0
+#define PROBE_CODE_ERROR     1
+#define PROBE_ERROR          2  // FRAME or CODE
+  
+#define PROBE_A_HEADER       3
+#define PROBE_A_PACKET       4
+#define PROBE_A_TBM_HDR      5
+#define PROBE_A_ROC_HDR      6
+#define PROBE_A_TBM_TRL      7
+#define PROBE_A_IDLE_ERROR   8
+#define PROBE_A_HDR_ERROR    9
+  
+#define PROBE_B_HEADER      10
+#define PROBE_B_PACKET      11
+#define PROBE_B_TBM_HDR     12
+#define PROBE_B_ROC_HDR     13
+#define PROBE_B_TBM_TRL     14
+#define PROBE_B_IDLE_ERROR  15
+#define PROBE_B_HDR_ERROR   16
+  
 
 // --- Testboard pulse pattern generator --------------------------------------
 #define PG_TOK   0x0100

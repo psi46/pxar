@@ -90,6 +90,8 @@ public:
   void saveDacs(); 
   /// save trim bits to file
   void saveTrimBits(); 
+  /// save TBM parameters to file
+  void saveTbmParameters(); 
   /// save TB parameters to file
   void saveTbParameters(); 
   /// create vector (per ROC) of vector of dead pixels
@@ -159,12 +161,16 @@ public:
   /// disable cal-injects for all pixels on DUT with subsequent call to maskPixels()
   void dutCalibrateOff();
   
+  /// determine hot pixels with high occupancy and increase their threshold with trim bit
+  void trimHotPixels(int hitThreshold = -1, int runSeconds = 10, bool maskuntrimmable = false);  
   /// determine hot pixels with high occupancy
   void maskHotPixels(std::vector<TH2D*>); 
   /// send reset to ROC(s)
   void resetROC();
   /// send reset to TBM(s)
   void resetTBM();
+  /// TBM register programming (from PixTestCmd)
+  int tbmSet(std::string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   /// set up DAQ (including call to setTriggerFrequency)
   uint16_t prepareDaq(int triggerFreq, uint8_t trgTkDel);
   /// set trigger frequence [kHz] and trigger token delay
@@ -236,7 +242,7 @@ public:
   /// returns the test name
   std::string getName() {return fName; }
   /// ???
-  void resetDirectory();
+  virtual void resetDirectory();
   /// return fDirectory
   TDirectory* getDirectory() {return fDirectory;}
 
@@ -298,7 +304,15 @@ public:
   TH1* nextHistV(); 
   /// allow backward iteration through list of histograms
   TH1* previousHistV();  
-  
+  /// split histogram writing from destructor to flush out histograms already filled for re-naming of root files
+  void writeOutput();
+
+  //Get NEvents and return the decoding statistics
+  pxar::statistics getEvents(int NEvents, int period, int buffer);
+  //Check the read back bits of the ROCs
+  bool checkReadBackBits(uint16_t period);
+  //Get the current TBM setting for the dut
+  uint8_t GetTBMSetting(std::string base, size_t tbmId);
 
 protected: 
 

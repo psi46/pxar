@@ -19,6 +19,7 @@
 #include <bitset>
 
 #include "timer.h"
+#include "helper.h"
 
 
 // #define DEBUG
@@ -1883,13 +1884,13 @@ int CmdProc::pixDecodeRaw(int raw, int level){
     error = (raw & 0x10) ? 128 : 0;
     if((error==128)&&(level>0)){ s=", wrong stuffing bit";}
 
-    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16;};
-    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8;};
+    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16; s+=", illegal raw column data (msb)"; };
+    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8; s+=", illegal raw column data (lsb)";};
     int c = c1*6 + c0;
 
-    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4;};
-    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2;};
-    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1;};
+    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4; s+=", illegal raw row data (msb)";};
+    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2; s+=", illegal raw row data (nmsb)";};
+    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1; s+=", illegal raw row data (lsb)";};
     int r = (r2*6 + r1)*6 + r0;
 
     y = 80 - r/2; if ((unsigned int)y >= 80){ error |= 32; s+=", bad row";};
@@ -1904,6 +1905,185 @@ int CmdProc::pixDecodeRaw(int raw, int level){
     }
     return error;
 }
+
+
+int CmdProc::rawRocReadback(uint8_t  signal, std::vector<uint16_t> & values){
+    /* readback bits in the roc header(s), if signal is not 0xff,
+     * program the readback register first, otherwise read back whatever
+     * the readback register has previously been set-up for.
+     * The latter mode is useful for the 'last dac' readback, while
+     * the former is useful for analog readbacks (triggers the ADC)
+     */
+     
+    if (signal<0xff){
+        if ( ! (fApi->setDAC("readback", signal))){
+            out << "Warning ! May have failed to write to readback register\n";
+        }
+    }
+
+    size_t nTBM = fApi->_dut->getNTbms();
+    
+    if (nTBM==0){
+        pg_sequence( 3 ); // token+trigger
+    }else{
+        pg_sequence( 2 ); // trigger only
+    }
+    fApi->daqStart(fBufsize, fPixelConfigNeeded);
+    fApi->daqTrigger(100, fPeriod);
+    try { fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
+    fApi->daqTrigger(16, fPeriod);
+    std::vector<pxar::rawEvent> buf;
+    try { buf = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
+    fApi->daqStop(false);
+    pg_restore();
+
+    if(buf.size()<16){
+        out << "only got " << buf.size() << " events instead of 16 !\n";
+        return 15;
+    }
+    
+    size_t nRoc = 0;
+    
+    values.clear();
+    vector<int> start;
+    for(unsigned int i=0; i<buf.size(); i++){
+        unsigned int iroc=0;
+        for(unsigned int k=0; k<buf[i].data.size(); k++){
+            uint16_t w = buf[i].data[k];
+            // only look at roc headers (0x4...)
+            if(    ( (nTBM == 0) && (k==0) ) 
+                || ( (nTBM > 0 ) && ((w & 0xf000)== 0x4000)) ){
+                uint8_t D = (w & 1);
+                uint8_t S = (w >>1) & 1;
+                if (iroc==values.size()) { values.push_back(0); start.push_back(-1); }
+                values[iroc] = ( values[iroc] << 1 ) + D;
+                if (S==1){
+                    start[iroc]=i;
+                }
+                iroc++;
+                if (verbose) {cout << (int) iroc;}
+            }
+        }
+        if(iroc>nRoc) nRoc= iroc;
+        if(verbose) {cout << "  nroc=" << (int) nRoc << endl;}
+    }
+    
+    if(nRoc == 0){
+        
+        out << "readback failed, no roc headers!\n";
+        return 15;
+
+    }else{
+        int flags = 0;
+        for(uint8_t iroc=0; iroc<nRoc; iroc++){
+            if(verbose){
+                cout << "readback roc " << (int) iroc << "   start=" << start[iroc]
+                << "      raw = " <<  bitset<16>( values[iroc] ) 
+                << "  aligned = " << bitset<16>((values[iroc] >> (15-start[iroc]) ) | (values[iroc]<<(start[iroc]+1))) << endl;
+            }
+            if(start[iroc]>=0){
+                uint16_t value = (values[iroc] >> (15-start[iroc]) ) | (values[iroc]<<(start[iroc]+1));
+                uint8_t rocid= (value & 0xF000) >> 12;
+                uint8_t cmd  = (value & 0x0F00) >>  8;
+                //uint8_t data = (value & 0x00FF);
+                values[iroc] = value;  // store the aligned value
+                if (!( ((cmd == signal)||(signal==0xff)) && (rocid==iroc) ) ){
+                        flags |= (1<<iroc); // inconsistent data
+                }
+            }else{
+                flags |= (1<<iroc); // no startbit
+            }
+        }
+        return flags;
+    }
+    
+    return 99;
+}
+
+int CmdProc::readRocsAnalog(uint8_t  signal, double scale, std::string units){
+    /* readback bits in the roc header(s), normalize to vbg
+     * if signal must be a valid analog adc register (8..12)
+     * program the readback register first, otherwise read back whatever
+     * the readback register has previously been set-up for.
+     * The latter mode is useful for the 'last dac' readback, while
+     * the former is useful for analog readbacks (triggers the ADC)
+     */
+     
+    if ((signal<8)||(signal>12)){
+        out << "only meaningful for analog readback registers\n";
+        return 1;
+
+    }
+
+    std::vector<uint16_t> vbg;
+    int flags = rawRocReadback( 11, vbg);
+    
+    if ((flags==15)||(vbg.size()==0)){
+        out << "error reading vbg for normalization\n";
+        return 2;
+    }
+    
+    std::vector<uint16_t> values;
+    flags = rawRocReadback( signal, values);
+    if (flags==15){
+        out << "error reading values\n";
+        return 3;
+    }
+
+    if (!(vbg.size()==values.size())){
+        out << "values and reference readback inconsistent \n";
+        return 4;
+    }
+    
+    
+    float xaverage=0;
+    int average=0;
+    int nvalid=0;
+    for(uint8_t iroc=0; iroc<values.size(); iroc++){
+        uint8_t rocid= (values[iroc] & 0xF000) >> 12;
+        uint8_t cmd  = (values[iroc] & 0x0F00) >>  8;
+        uint8_t data = (values[iroc] & 0x00FF);
+        float x=0;
+        if (vbg[iroc]>0){
+            x= float(data) * scale / (float(vbg[iroc]&0xff) * 0.008 ) * 1.22;
+        }
+        
+        out << dec << fixed << setfill(' ') << setw(2) << (int) iroc
+                <<  "(" << setw(2) << (int) rocid << ")" << ": " 
+                << fixed << setw(3) << (int) data;
+        if((scale>0) && (vbg[iroc]>0)){
+            out << " ~ " << fixed << setw(6)  << setprecision(3) << x 
+                << " " << units;
+        }
+        if ((cmd == signal)||(signal==0xff)){
+            out << "\n";
+            average += data;
+            xaverage += x;
+            nvalid+=1;
+        }else{
+            out <<  "   readback inconsistent  " << (int)cmd << " <> " << (int) signal << "\n";
+        }
+            
+        if( (flags & (1<<iroc)) > 0){
+            out << " error\n";
+        }
+    }   
+
+
+    if((values.size()>1)&&(nvalid>0)){
+        out << "average:"  << dec<<fixed << setw(3) << int(average/nvalid);
+        if(scale>0){
+            out << " ~ " << fixed << setw(6)  << setprecision(3) << xaverage/nvalid
+                << " " << units;  
+        }
+        out << "\n";
+    }
+
+    return 0;
+}
+
 
 
 int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
@@ -2018,9 +2198,6 @@ int CmdProc::readRocs(uint8_t  signal, double scale, std::string units){
     pg_restore();
     return 0;
 }
-
-
-
 
 int CmdProc::getBuffer(vector<uint16_t> & buf){
     fDeser400XOR1=0;
@@ -2906,7 +3083,7 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("stop") ){ return pg_stop();}
     if( kw.match("pg","loop") ){ return pg_loop();}
     if( kw.match("pg","stop") ){ return pg_stop();}
-    //if( kw.match("res"){ int s0=fSeq; sequence( 8 ); pg_single(); sequence(s0);}
+    //if( kw.match("res") ){ int s0=fSeq; sequence( 8 ); pg_single(); sequence(s0);}
     if( kw.match("sighi",s)){ fApi->setSignalMode(s,2); return 0;}
     if( kw.match("siglo",s)){ fApi->setSignalMode(s,1); return 0;}
     if( kw.match("signorm",s)){ fApi->setSignalMode(s,0); return 0;}
@@ -2933,14 +3110,19 @@ int CmdProc::tb(Keyword kw){
 		out << "Base + F   " << tbmprint(0xef) << "\n";
 		return 0;
 	}
-    if( kw.match("readrocs", value)){ return readRocs(value); }
     if( kw.match("readback")) { return readRocs();}
+    if( kw.match("readback", value)){ return readRocs(value); }
     if( kw.match("readback", "vd")  ) { return readRocs(8, 0.016,"V");  }
     if( kw.match("readback", "va")  ) { return readRocs(9, 0.016,"V");  }
     if( kw.match("readback", "vana")) { return readRocs(10, 0.008,"V"); }
     if( kw.match("readback", "vbg") ) { return readRocs(11, 0.008,"V"); }
     if( kw.match("readback", "iana")) { return readRocs(12, 0.24,"mA"); }
     if( kw.match("readback", "ia")  ) { return readRocs(12, 0.24,"mA"); }
+    if( kw.match("read", "vd")  ) { return readRocsAnalog(8, 0.016,"V");  }
+    if( kw.match("read", "va")  ) { return readRocsAnalog(9, 0.016,"V");  }
+    if( kw.match("read", "vana")) { return readRocsAnalog(10, 0.008,"V"); }
+    if( kw.match("read", "iana")) { return readRocsAnalog(12, 0.24,"mA"); }
+    if( kw.match("read", "ia")  ) { return readRocsAnalog(12, 0.24,"mA"); }
     if( kw.match("scan","tct")){ tctscan(); return 0;}
     if( kw.match("tct", value)){ fTCT=value; if (fSeq>0){sequence(fSeq);} return 0;}
     if( kw.match("ttk", value)){ fTTK=value; if (fSeq>0){sequence(fSeq);} return 0;}
@@ -3087,8 +3269,9 @@ int CmdProc::tb(Keyword kw){
             // single ROC
             for(unsigned int i=0; i<fBuf.size(); i++){
                 
-                if((fBuf[i]&0x8000)==0x8000){//((fBuf[i]&0x0ff8)==0x07f8) {
-                    if(i>0) out << "\n";
+                //if ((fBuf[i]&0x0ff8)==0x07f8) {
+                if((fBuf[i]&0x8000)==0x8000){
+                   if(i>0) out << "\n";
                     out << dec << setfill(' ') << setw(4) << ++n << ": ";
                 }
                 out << setw(4) << setfill('0') << hex << fBuf[i] << " ";
@@ -3494,7 +3677,8 @@ bool CmdProc::process(Keyword keyword, Target target, bool forceTarget){
   
     if( keyword.match("dump","on") ){ fDumpFlawed=FLAG_DUMP_FLAWED_EVENTS;return true;}
     if( keyword.match("dump","off") ){ fDumpFlawed=0;  return true;}
-  
+    
+    if( keyword.match("wait",value)){ pxar::mDelay( value ); return true; }
     string message;
     if ( keyword.match("echo","on")){ fEchoExecs = true; return true;}
     if ( keyword.match("echo","off")){ fEchoExecs = false; return true;}
@@ -3649,7 +3833,36 @@ int CmdProc::exec(std::string s){
     }
 }
 
+void PixTestCmd::runCommand(std::string command) {
+  std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+  LOG(logDEBUG) << "running command: " << command;
 
+  fDirectory->cd();
+  fHistList.clear();
 
+  // read the history file for future use
+  ifstream inputFile(".history");
+  if ( inputFile.is_open()){
+      string line;
+      while( getline( inputFile, line ) ){
+          cmdHistory.push_back(line);
+      }
+      historyIndex = cmdHistory.size();
+  }
 
+  PixTest::update();
+
+  cmd = new CmdProc( this );
+  cmd->setApi(fApi, fPixSetup);
+
+  if (!command.compare("timing")){
+      std::string s_redirect = "timing > pxar_timing.log";
+      cmd->exec(s_redirect.c_str());
+      cmd->fApi->daqStart(500000,true);
+      cmd->fApi->daqStop(true);
+  }
+
+  PixTest::update();
+
+}
 

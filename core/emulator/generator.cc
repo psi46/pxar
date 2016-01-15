@@ -69,7 +69,7 @@ namespace pxar {
 
   }
 
-  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool empty, bool noise, size_t col, size_t row, uint32_t flags) {
+  void fillRawData(uint32_t event, std::vector<uint16_t> &data, uint8_t tbm, uint8_t nroc, bool empty, bool noise, size_t col, size_t row, std::vector<uint16_t> pattern, uint32_t flags) {
 
     size_t pos = data.size();
     
@@ -82,7 +82,8 @@ namespace pxar {
     // For every ROC configured, add one noise hit:
     for(size_t roc = 0; roc < nroc; roc++) {
       // Add a ROC header:
-      if(tbm != TBM_NONE) data.push_back(0x47f8);
+      if(tbm == TBM_EMU) data.push_back(0x47f8);
+      else if(tbm != TBM_NONE) data.push_back(0x4001);
       else data.push_back(0x07f8);
 
       if(!empty) {
@@ -91,21 +92,27 @@ namespace pxar {
 	if(noise) px = getNoiseHit(roc,col,row);
 	else px = getTriggeredHit(roc,col,row,flags);
       
-	data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
-	data.push_back(0x1000 | (px.encode() & 0x0fff));
+	data.push_back(0x0000 | ((px.encodeLinear() >> 12) & 0x0fff));
+	data.push_back(0x2000 | (px.encodeLinear() & 0x0fff));
 
 	// If the full chip is unmasked, add some noise hits:
 	if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) {
 	  px = getNoiseHit(roc,col,row);
-	  data.push_back(0x2000 | ((px.encode() >> 12) & 0x0fff));
-	  data.push_back(0x1000 | (px.encode() & 0x0fff));
+	  data.push_back(0x0000 | ((px.encodeLinear() >> 12) & 0x0fff));
+	  data.push_back(0x2000 | (px.encodeLinear() & 0x0fff));
 	}
       }
     }
 
     // Add a TBM trailer if necessary:
     if(tbm != TBM_NONE) {
-      data.push_back(0xe000);
+      bool has_tbm_reset = false;
+      bool has_roc_reset = false;
+      for(size_t i = 0; i < pattern.size(); i++) {
+	if((pattern.at(i)&PG_REST) != 0) has_tbm_reset = true;
+	if((pattern.at(i)&PG_RESR) != 0) has_roc_reset = true;
+      }
+      data.push_back(0xe000 | ((nroc==0) << 7) | (has_tbm_reset << 6) | (has_roc_reset << 5));
       data.push_back(0xc002);
     }
     // Adjust event start and end marker:

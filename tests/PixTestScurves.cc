@@ -21,7 +21,7 @@ ClassImp(PixTestScurves)
 
 // ----------------------------------------------------------------------
 PixTestScurves::PixTestScurves(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParDac(""), fParNtrig(-1), fParNpix(-1), fParDacLo(-1), fParDacHi(-1), fParDacsPerStep(-1), fParNtrigPerStep(-1), 
+  fParDac(""), fParNtrig(1), fParDacLo(0), fParDacHi(0), fParDacsPerStep(1), fParNtrigPerStep(1), 
   fAdjustVcal(1), fDumpAll(-1), fDumpProblematic(-1), fDumpOutputFile(-1) {
   PixTest::init();
   init(); 
@@ -43,9 +43,6 @@ bool PixTestScurves::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("ntrig")) {
 	fParNtrig = atoi(sval.c_str()); 
-      }
-      if (!parName.compare("npix")) {
-	fParNpix = atoi(sval.c_str()); 
       }
       if (!parName.compare("dac")) {
 	fParDac = sval;
@@ -196,10 +193,10 @@ void PixTestScurves::fullTest() {
   fOutputFilename = "SCurveData";
   fParNtrig = 50; 
   fParDac = "Vcal"; 
-  fParDacLo = 0; 
-  fParDacHi = 149;
+  fParDacLo = 25;
+  fParDacHi = 150;
   fParDacsPerStep = -1;   
-  fParNtrigPerStep = 1;   
+  fParNtrigPerStep = -1;   
   bigBanner(Form("PixTestScurves::fullTest() ntrig = %d, dacs/step = %d, ntrig/step = %d", fParNtrig, fParDacsPerStep, fParNtrigPerStep));
   scurves();
 
