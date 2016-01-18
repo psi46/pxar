@@ -513,7 +513,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getStatistics(self):
         """getStatistics: print full statistics accumulated during last DAQ session"""
         dat = self.api.getStatistics()
-        print dat
+        dat.dump
 
     def complete_getStatistics(self, text, line, start_index, end_index):
         # return help for the cmd
