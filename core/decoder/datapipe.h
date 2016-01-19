@@ -178,6 +178,9 @@ namespace pxar {
     void CheckEventID();
     int16_t eventID;
 
+    // Collection of XOR patterns
+    std::vector<uint8_t> xorsum;
+    
     // Analog level averaging:
     void AverageAnalogLevel(int16_t word1, int16_t word2);
     int32_t ultrablack;
@@ -198,6 +201,7 @@ namespace pxar {
     void Clear() { decodingStats.clear(); readback.clear(); count.clear(); shiftReg.clear(); eventID = -1; };
     statistics getStatistics();
     std::vector<std::vector<uint16_t> > getReadback();
+    std::vector<uint8_t> getXORsum();
   };
 }
 #endif

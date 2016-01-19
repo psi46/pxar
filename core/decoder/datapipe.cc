@@ -246,6 +246,9 @@ namespace pxar {
 	// Count ROC Headers up:
 	roc_n++;
 
+	// Maybe store the XOR sum:
+	if((GetFlags() & FLAG_ENABLE_XORSUM_LOGGING) != 0) { xorsum.push_back(((*word) & 0x0ff0) >> 4); }
+	  
 	// Check for DESER400 failure:
 	if(((*word) & 0x0ff0) == 0x0ff0) {
 	  LOG(logCRITICAL) << "Channel " << static_cast<int>(GetChannel())
@@ -614,6 +617,13 @@ namespace pxar {
     // Automatically clear the readback vector after it was read out:
     std::vector<std::vector<uint16_t> > tmp = readback;
     readback.clear();
+    return tmp;
+  }
+
+  std::vector<uint8_t> dtbEventDecoder::getXORsum() {
+    // Automatically clear the XOR sum vector after it was read out:
+    std::vector<uint8_t> tmp = xorsum;
+    xorsum.clear();
     return tmp;
   }
 }

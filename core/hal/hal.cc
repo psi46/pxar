@@ -1497,7 +1497,7 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
   for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) { m_daqstatus.push_back(false); }
-
+  
   // Clear all decoder instances:
   for(size_t ch = 0; ch < m_decoder.size(); ch++) { m_decoder.at(ch).Clear(); }
 
@@ -1788,6 +1788,17 @@ void hal::daqTriggerGenPeriodic(uint32_t period) {
   _testboard->Trigger_SetGenPeriodic(period);
 }
 
+void hal::daqTriggerPgExtern() {
+
+    // Connect the DTB TRG input to the PG trigger input
+
+    LOG(logDEBUGHAL) << "Configuring externally triggered pattern generator";
+
+    _testboard->Pg_Trigger();
+    _testboard->Flush();
+
+}
+
 void hal::daqTriggerSingleSignal(uint8_t signal) {
 
   // Attach the single signal direct source for triggers
@@ -1860,6 +1871,13 @@ std::vector<std::vector<uint16_t> > hal::daqReadback() {
     rb.insert(rb.end(),tmp_rb.begin(),tmp_rb.end());
   }
   return rb;
+}
+
+std::vector<uint8_t> hal::daqXORsum(uint8_t channel) {
+
+  // Collect the XOR sum values from the selected DAQ channel:
+  if(channel < m_decoder.size()) return m_decoder.at(channel).getXORsum();
+  else return std::vector<uint8_t>();
 }
 
 void hal::daqStop() {

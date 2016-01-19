@@ -25,7 +25,7 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
-#define TRG_ERR 0x00
+#define TRG_ERR 0xF000
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
@@ -593,6 +593,15 @@ namespace pxar {
       return "";
     }
 
+    // Return all (preferred) trigger source names:
+    inline std::vector<std::string> getAllNames() {
+      std::vector<std::string> names;
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._preferred == true) { names.push_back(iter->first); }
+      }
+      return names;
+    }
+
   private:
     /** class to store a trigger config
      */
@@ -606,6 +615,9 @@ namespace pxar {
     };
 
     TriggerDictionary() {
+      // No trigger source selected:
+      _signals["none"]             = triggerConfig(TRG_SEL_NONE,false);
+
       // Asynchronous external triggers:
       _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
       _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
@@ -615,6 +627,10 @@ namespace pxar {
       // Synchronous external triggers:
       _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
       _signals["sync_dir"]         = triggerConfig(TRG_SEL_SYNC_DIR,false);
+
+      // External triggered Pattern Generator:
+      _signals["async_pg"]         = triggerConfig(TRG_SEL_ASYNC_PG, false);
+      _signals["extern_pg"]        = triggerConfig(TRG_SEL_ASYNC_PG, false, false);
 
       // Single event injection:
       _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);

@@ -76,6 +76,13 @@ cdef extern from "api.h" namespace "pxar":
         void clear()
         void dump()
         statistics()
+        uint32_t errors()
+        uint32_t info_words_read()
+        uint32_t errors_event()
+        uint32_t errors_tbm()
+        uint32_t errors_roc()
+        uint32_t errors_pixel()
+
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass dut:
@@ -226,6 +233,7 @@ cdef extern from "api.h" namespace "pxar":
         vector[Event] daqGetEventBuffer() except +
         vector[uint16_t] daqGetBuffer() except +
         vector[vector[uint16_t]] daqGetReadback() except +
+        vector[uint8_t] daqGetXORsum(uint8_t channel) except +
         statistics getStatistics()
         bool daqStop() except +
 
