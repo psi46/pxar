@@ -25,7 +25,7 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
-#define TRG_ERR 0x00
+#define TRG_ERR 0xF000
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
@@ -591,6 +591,15 @@ namespace pxar {
 	if(iter->second._trigger_type == signal && iter->second._preferred == true) { return iter->first; }
       }
       return "";
+    }
+
+    // Return all (preferred) trigger source names:
+    inline std::vector<std::string> getAllNames() {
+      std::vector<std::string> names;
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._preferred == true) { names.push_back(iter->first); }
+      }
+      return names;
     }
 
   private:

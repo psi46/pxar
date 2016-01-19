@@ -368,6 +368,11 @@ namespace pxar {
      */
     std::vector<std::vector<uint16_t> > daqReadback();
 
+    /** Return all XOR sum values for the selected channel. Return format is a vector containing
+     *  all samples XOR sums for the respective DESER400 channel.
+     */
+    std::vector<uint8_t> daqXORsum(uint8_t channel);
+
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
     void daqClear();

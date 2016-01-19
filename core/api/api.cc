@@ -1257,6 +1257,16 @@ std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
   return values;
 }
 
+std::vector<uint8_t> pxarCore::daqGetXORsum(uint8_t channel) {
+
+  std::vector<uint8_t> values;
+  if(!status() || channel >= DTB_DAQ_CHANNELS) { return values; }
+
+  values = _hal->daqXORsum(channel);
+  LOG(logDEBUGAPI) << "Decoder channel " << static_cast<int>(channel) << " provided " << values.size() << " XOR sum values.";
+  return values;
+}
+
 
 // DAQ functions
 

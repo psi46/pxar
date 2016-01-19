@@ -634,6 +634,11 @@ cdef class PyPxarCore:
         r = self.thisptr.daqGetReadback()
         return r
 
+    def daqGetXORsum(self, uint8_t channel):
+        cdef vector[uint8_t] r
+        r = self.thisptr.daqGetXORsum(channel)
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
 
@@ -699,4 +704,17 @@ cdef class PyProbeDictionary:
             names.append(v.at(i))
         return names
 
+cimport triggerdict
+cdef class PyTriggerDictionary:
+    cdef triggerdict.TriggerDictionary *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisptr = triggerdict.getInstance()
+    def __dealloc__(self):
+        self.thisptr = NULL
+    def getAllNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
 

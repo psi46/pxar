@@ -96,6 +96,10 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_DISABLE_EVENTID_CHECK 0x0800
 
+/** Flag to enable the collection of XOR sums from the DESER400 modules for every event.
+ */
+#define FLAG_ENABLE_XORSUM_LOGGING 0x1000
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
@@ -806,6 +810,13 @@ namespace pxar {
      *  one vector of readback values for every ROC found in the readout chain.
      */
     std::vector<std::vector<uint16_t> > daqGetReadback();
+
+    /** Function to return the recorded XOR sum of the DESER400 module for the
+     *  selected channel. The data is stored until a new DAQ session or test is 
+     *  called and can be fetched once (deleted at read time). The return vector 
+     *  contains all recorded XOR sum values of the DAQ channel.
+     */
+    std::vector<uint8_t> daqGetXORsum(uint8_t channel);
 
     /** Function that returns a class object of the type pxar::statistics
      *  containing all collected error statistics from the last (non-raw)
