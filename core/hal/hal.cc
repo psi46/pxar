@@ -203,6 +203,10 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "caching ADC Token Out delay as " << static_cast<int>(sigIt->second);
       m_toutdelay = sigIt->second;
     }
+    else if(sigIt->first == SIG_ADC_TIMEOUT) {
+      LOG(logDEBUGHAL) << "caching ADC timeout as " << static_cast<int>(sigIt->second)*10 << " clk";
+      m_adctimeout = sigIt->second*10;
+    }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
       _testboard->Sig_SetDelay(sigIt->first, sigIt->second);
