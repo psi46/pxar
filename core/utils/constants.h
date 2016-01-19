@@ -152,6 +152,7 @@ namespace pxar {
 #define TRG_SEL_SINGLE_DIR 0x0008
 #define TRG_SEL_GEN_DIR    0x0200
 #define TRG_SEL_PG_DIR     0x0004
+#define TRG_SEL_ASYNC_PG   0x8000
 
 // Sync signals:
 #define TRG_SEL_CHAIN      0x0002

@@ -1788,6 +1788,17 @@ void hal::daqTriggerGenPeriodic(uint32_t period) {
   _testboard->Trigger_SetGenPeriodic(period);
 }
 
+void hal::daqTriggerPgExtern() {
+
+    // Connect the DTB TRG input to the PG trigger input
+
+    LOG(logDEBUGHAL) << "Configuring externally triggered pattern generator";
+
+    _testboard->Pg_Trigger();
+    _testboard->Flush();
+
+}
+
 void hal::daqTriggerSingleSignal(uint8_t signal) {
 
   // Attach the single signal direct source for triggers

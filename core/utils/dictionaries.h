@@ -628,6 +628,10 @@ namespace pxar {
       _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
       _signals["sync_dir"]         = triggerConfig(TRG_SEL_SYNC_DIR,false);
 
+      // External triggered Pattern Generator:
+      _signals["async_pg"]         = triggerConfig(TRG_SEL_ASYNC_PG, false);
+      _signals["extern_pg"]        = triggerConfig(TRG_SEL_ASYNC_PG, false, false);
+
       // Single event injection:
       _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);
       _signals["single_dir"]       = triggerConfig(TRG_SEL_SINGLE_DIR,false);

@@ -330,6 +330,10 @@ namespace pxar {
      */
     void daqTriggerLoopHalt();
 
+    /** Activating the external trigger input of the pattern generator
+     */
+    void daqTriggerPgExtern();
+
     /** Stopping the current DAQ session. This is not resetting the data buffers.
      *  All DAQ channels are stopped.
      */
