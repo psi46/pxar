@@ -1634,7 +1634,7 @@ std::vector<Event> hal::daqAllEvents() {
     // Read the next Event from each of the pipes:
     Event current_Event;
     for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if(m_src.at(ch).isConnected()) {
+      if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
@@ -1709,7 +1709,7 @@ std::vector<rawEvent> hal::daqAllRawEvents() {
     rawEvent current_Event;
     
     for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if(m_src.at(ch).isConnected()) {
+      if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<rawEvent*> rawpump;
 	m_splitter.at(ch) >> rawpump;
 	
