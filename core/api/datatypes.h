@@ -303,6 +303,8 @@ namespace pxar {
     friend Event& operator+=(Event &lhs, const Event &rhs) {
       // FIXME this currently only transports pixels, no header information:
       lhs.pixels.insert(lhs.pixels.end(), rhs.pixels.begin(), rhs.pixels.end());
+      lhs.header = rhs.header;
+      lhs.trailer = rhs.trailer;
       return lhs;
     };
 
