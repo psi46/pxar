@@ -1356,11 +1356,6 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
 
 bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
-  if(daqStatus()) {
-    LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
-    return false;
-  }
-
   // Get singleton Trigger dictionary object:
   TriggerDictionary * _dict = TriggerDictionary::getInstance();
 
