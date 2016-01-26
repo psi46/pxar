@@ -19,6 +19,8 @@ FLAG_CHECK_ORDER    = int(_flag_check_order)
 FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
 FLAG_DUMP_FLAWED_EVENTS = int(_flag_dump_flawed_events)
 FLAG_DISABLE_READBACK_COLLECTION = int(_flag_disable_readback_collection)
+FLAG_DISABLE_EVENTID_CHECK = int(_flag_disable_eventid_check)
+FLAG_ENABLE_XORSUM_LOGGING = int(_flag_enable_xorsum_logging)
 
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
@@ -203,6 +205,12 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
+    property hasNoTokenPass:
+        def __get__(self): return self.thisptr.hasNoTokenPass()
+    property triggerCount:
+        def __get__(self): return self.thisptr.triggerCount()
+    property stackCount:
+        def __get__(self): return self.thisptr.stackCount()
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
