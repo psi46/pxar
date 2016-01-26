@@ -1556,9 +1556,6 @@ bool pxarCore::daqStop(const bool init) {
     return false;
   }
 
-  // Turn off all trigger sources:
-  _hal->daqTriggerSource(TRG_SEL_NONE);
-
   _daq_running = false;
   
   // Stop all active DAQ channels:
@@ -1588,7 +1585,7 @@ bool pxarCore::daqStop(const bool init) {
 
 std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags) {
 
-  // Activate the pattern generator trigger:
+  // Ensure the pattern generator trigger is active:
   _hal->daqTriggerSource(TRG_SEL_PG_DIR);
   
   // pointer to vector to hold our data
@@ -1752,9 +1749,6 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
-
-  // Turn off all trigger sources:
-  _hal->daqTriggerSource(TRG_SEL_NONE);
 
   return data;
 } // expandLoop()

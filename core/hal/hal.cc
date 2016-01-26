@@ -93,7 +93,7 @@ hal::~hal() {
   _testboard->Poff();
 
   // Turn off triggers (default to Pattern Generator, direct):
-  _testboard->Trigger_Select(TRG_SEL_NONE);
+  _testboard->Trigger_Select(TRG_SEL_PG_DIR);
   
   // Close the RPC/USB Connection:
   LOG(logQUIET) << "Connection to board " << _testboard->GetBoardId() << " closed.";
