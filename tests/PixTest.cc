@@ -2198,7 +2198,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
                   finished = false;
                 }
               } else {
-                LOG(logWARNING) << "  => trimBits already at highest possible threshold, 'real' hot pixel found";
+                LOG(logINFO) << "  ROC" << i << " pix " << ix << "," << iy << ": trimBits already at highest possible threshold, 'real' hot pixel found";
               }
             }
           }
@@ -2246,19 +2246,29 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
   // now mask all remaining pixels
   if (maskuntrimmable) {
 
-    //LOG(logINFO) << fHotPixels.size() << " pixels are already masked.";
 
     int numMaskedHotPixels = 0;
     TH2D *h(0);
 
+    fHotPixels.clear();
+
     // for each ROC
     for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
-      h = hotpixel_map[i];
 
+      // initialize empty ROC hot pixel map
       vector<pair<int, int> > hotPixelsROC;
-      if (fHotPixels.size() > i) {
-        hotPixelsROC = fHotPixels[i];
+
+      // then add the pixels, which are already masked by ROC configuration (e.g. defaultMaskFile.dat)
+      for(size_t k=0;k<rocPixelConfig[i].size();k++) {
+        if (rocPixelConfig[i][k].mask()) {
+          hotPixelsROC.push_back(make_pair(rocPixelConfig[i][k].column(), rocPixelConfig[i][k].row()));
+        }
       }
+
+      LOG(logDEBUG) << hotPixelsROC.size() << " pixels are already masked on ROC " << i << ".";
+
+      // then add the pixels which could not be retrimmed in this test
+      h = hotpixel_map[i];
       for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
         for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
           float pixelAreaFactor = 1.0;
@@ -2280,7 +2290,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
       }
       fHotPixels.push_back(hotPixelsROC);
     }
-    LOG(logINFO) << numMaskedHotPixels << " additional hot pixels could not be trimmed and have been masked.";
+    LOG(logINFO) << "In total " << numMaskedHotPixels << " additional hot pixels could not be trimmed and have been masked.";
 
   }
 
