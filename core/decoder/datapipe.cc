@@ -245,7 +245,7 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     // Check if ROC is a Layer1 chip with different address encoding:
-    bool linearAddress = ( GetDeviceType() == ROC_PSI46DIGPLUS ? true : false );
+    bool linearAddress = ( GetDeviceType() == ROC_PROC600 ? true : false );
 
     // Loop over the full data:
     for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
@@ -400,7 +400,7 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     // Check if ROC is a Layer1 chip with different address encoding:
-    bool linearAddress = ( GetDeviceType() == ROC_PSI46DIGPLUS ? true : false );
+    bool linearAddress = ( GetDeviceType() == ROC_PROC600 ? true : false );
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
     if(sample->GetSize()-GetTokenChainLength() > 0) {

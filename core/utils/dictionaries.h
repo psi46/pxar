@@ -309,8 +309,9 @@ namespace pxar {
       _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
-      _devices["psi46digplus"]      = ROC_PSI46DIGPLUS;
-      _devices["psi46digl1"]        = ROC_PSI46DIGPLUS;
+      _devices["proc600"]           = ROC_PROC600;
+      _devices["psi46digplus"]      = ROC_PROC600;
+      _devices["psi46digl1"]        = ROC_PROC600;
 
       // TBM flavors:
       _devices["notbm"]         = TBM_NONE;
