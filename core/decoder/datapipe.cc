@@ -144,16 +144,22 @@ namespace pxar {
     if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
     decodingStats.m_info_words_read += sample->GetSize();
 
-    // If a TBM header and trailer should be available, process them first:
-    if(GetEnvelopeType() != TBM_NONE) { ProcessTBM(sample); }
+    try {
+      // If a TBM header and trailer should be available, process them first:
+      if(GetEnvelopeType() != TBM_NONE) { ProcessTBM(sample); }
 
-    // Decode ADC Data for analog devices:
-    if(GetDeviceType() < ROC_PSI46DIG) { DecodeADC(sample); }
-    // Decode DESER400 Data for digital devices and TBMs:
-    else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
-    // Decode DESER160 Data for digital devices without real TBM
-    else { DecodeDeser160(sample); }
-
+      // Decode ADC Data for analog devices:
+      if(GetDeviceType() < ROC_PSI46DIG) { DecodeADC(sample); }
+      // Decode DESER400 Data for digital devices and TBMs:
+      else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
+      // Decode DESER160 Data for digital devices without real TBM
+      else { DecodeDeser160(sample); }
+    }
+    catch(DataDeserializerError /*e*/) {
+      // Clearing event content:
+      roc_Event.Clear();
+    }
+    
     if(dump_count < 100 && (GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
       if(error_count != (decodingStats.errors_event()
 			 + decodingStats.errors_tbm()
@@ -201,19 +207,23 @@ namespace pxar {
 
 
     // TBM Trailer:
-
+    // Check the alignment markers to be correct:
+    if((sample->data.at(size-2) & 0xe000) != 0xe000
+       || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
+    
     // Check possible DESER400 error flags in the TBM trailer:
-    if((sample->data.at(size-2) & 0x1000) == 0x1000) { evalDeser400Errors(sample->data.at(size-2)); }
-    else if((sample->data.at(size-1) & 0x1000) == 0x1000) { evalDeser400Errors(sample->data.at(size-1)); }
+    if((sample->data.at(size-2) & 0x1000) == 0x1000
+       || (sample->data.at(size-1) & 0x1000) == 0x1000) {
+      // Currently the same error bits are stored in both trailer words, so only evaluating one of them.
+      evalDeser400Errors(sample->data.at(size-2));
+    }
+
     // No Error flag is set by the DESER400, just decode the TBM header as usual:
     else {
-      // Check the alignment markers to be correct:
-      if((sample->data.at(size-2) & 0xe000) != 0xe000
-	 || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
       // Store the two trailer words:
       roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
 	+ (sample->data.at(size-1) & 0x00ff);
-
+      
       LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
       IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
     }
@@ -537,19 +547,23 @@ namespace pxar {
     // Evaluate the four error bits of the TBM trailer word:
     if((data & 0x0100) != 0x0000) {
       decodingStats.m_errors_event_nodata++;
-      LOG(logDEBUGPIPES) << "Detected DESER400 trailer error bits: \"NO DATA\"";
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"NO DATA\"";
+      throw DataDeserializerError("No data");
     }
     if((data & 0x0200) != 0x0000) {
-      LOG(logDEBUGPIPES) << "Detected DESER400 trailer error bits: \"IDLE DATA\"";
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"IDLE DATA\"";
       decodingStats.m_errors_event_idledata++;
+      throw DataDeserializerError("Idle data");
     }
     if((data & 0x0400) != 0x0000) {
-      LOG(logDEBUGPIPES) << "Detected DESER400 trailer error bits: \"CODE ERROR\"";
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"CODE ERROR\"";
       decodingStats.m_errors_event_invalid_words++;
+      throw DataDeserializerError("Code errro");
     }
     if((data & 0x0800) != 0x0000) {
-      LOG(logDEBUGPIPES) << "Detected DESER400 trailer error bits: \"FRAME ERROR\"";
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"FRAME ERROR\"";
       decodingStats.m_errors_event_frame++;
+      throw DataDeserializerError("Frame error");
     }
   }
   
