@@ -128,7 +128,13 @@ namespace pxar {
       _registers["triggerdelay"]   = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["trimdelay"]      = dacConfig(SIG_LOOP_TRIM_DELAY,255,DTB_REG);
       _registers["deser160phase"]  = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+
       _registers["deser400rate"]   = dacConfig(SIG_DESER400RATE,3,DTB_REG);
+      _registers["deser400phase0"] = dacConfig(SIG_DESER400PHASE0,15,DTB_REG);
+      _registers["deser400phase1"] = dacConfig(SIG_DESER400PHASE1,15,DTB_REG);
+      _registers["deser400phase2"] = dacConfig(SIG_DESER400PHASE2,15,DTB_REG);
+      _registers["deser400phase3"] = dacConfig(SIG_DESER400PHASE3,15,DTB_REG);
+
       _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
       _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
 

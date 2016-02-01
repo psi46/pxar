@@ -161,6 +161,9 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
   }
   LOG(logDEBUGHAL) << "Setting all DTB signal levels to " << static_cast<int>(signal_level);
 
+  _testboard->Deser400_SetPhaseAutoAll();  
+  LOG(logDEBUGHAL) << "Defaulting all DESER400 modules to automatic phase selection.";
+  
   // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
@@ -174,6 +177,22 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       LOG(logDEBUGHAL) << "Set DTB deser400 phase sampling rate to value " << static_cast<int>(sigIt->second);
       // This function is a DTB-internal call to Deser400_PdPhase(), I don't know why Beat decided to encapsulate it...
       _testboard->Deser400_GateRun(0,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE0) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 0 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(0,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE1) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 1 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(1,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE2) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 2 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(2,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE3) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 3 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(3,sigIt->second);
     }
     else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
