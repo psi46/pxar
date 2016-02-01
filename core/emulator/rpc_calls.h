@@ -229,6 +229,18 @@ class CTestboard {
 	
   void Daq_Select_Datagenerator(uint16_t startvalue);
 
+  // --- DESER400 configuration -------------------------------------------
+  void Deser400_Enable(uint8_t deser);
+  void Deser400_Disable(uint8_t deser);
+  void Deser400_DisableAll();
+
+  void Deser400_SetPhase(uint8_t deser, uint8_t phase);
+  void Deser400_SetPhaseAuto(uint8_t deser);
+  void Deser400_SetPhaseAutoAll();
+
+  uint8_t Deser400_GetXor(uint8_t deser);
+  uint8_t Deser400_GetPhase(uint8_t deser);
+
 
   // --- ROC/module Communication -----------------------------------------
   // -- set the i2c address for the following commands
