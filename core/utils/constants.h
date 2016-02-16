@@ -179,6 +179,7 @@ namespace pxar {
 #define PROBE_ADC_START 22
 #define PROBE_ADC_SGATE 23
 #define PROBE_ADC_S 24
+#define PROBE_DS_GATE       29
 
 #define PROBE_TBM0_GATE 100
 #define PROBE_TBM0_DATA 101
@@ -215,6 +216,20 @@ namespace pxar {
 #define PROBE_TBM5_TBMHDR 127
 #define PROBE_TBM5_ROCHDR 128
 #define PROBE_TBM5_TBMTRL 129
+
+#define PROBE_FRAME_ERROR    0
+#define PROBE_CODE_ERROR     1
+#define PROBE_ERROR          2  // FRAME or CODE
+#define PROBE_A_HEADER       3
+#define PROBE_A_PACKET       4
+#define PROBE_A_TBM_HDR      5
+#define PROBE_A_ROC_HDR      6
+#define PROBE_A_TBM_TRL      7
+#define PROBE_B_HEADER       8
+#define PROBE_B_PACKET       9
+#define PROBE_B_TBM_HDR     10
+#define PROBE_B_ROC_HDR     11
+#define PROBE_B_TBM_TRL     12
 
 
 // --- Testboard analog signal probe ------------------------------------------

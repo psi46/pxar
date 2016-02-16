@@ -889,7 +889,7 @@ void PixTestPretest::programROC() {
       result += Form(" %d", rocIds[iroc]); 
       problem = true; 
     }
-    h1->SetBinContent(iroc+1, dA); 
+    h1->SetBinContent(rocIds[iroc+1], dA); 
     fApi->setDAC("vana", 0, rocIds[iroc]);
   }
 
@@ -903,7 +903,7 @@ void PixTestPretest::programROC() {
   // -- summary printout
   string dIaString(""); 
   for (unsigned int i = 0; i < nRocs; ++i) {
-    dIaString += Form(" %3.1f", h1->GetBinContent(i+1)); 
+    dIaString += Form(" %3.1f", h1->GetBinContent(rocIds[i+1])); 
   }
   
   LOG(logINFO) << "PixTestPretest::programROC() done: " << result;
