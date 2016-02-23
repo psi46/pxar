@@ -460,6 +460,33 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqTrigger.__doc__, '']
 
+    @arity(0,3,[int, int, int])
+    def do_setPG(self, n_trig=5, t=30, tbm_id=0):
+        """
+        Sets up a multi trigger pattern generator for ROC testing
+        :param n_trig: [=5] number of accumulated triggers
+        :param t: [=30] time between first two calibrates
+        :param tbm_id: [=0]
+        """
+        print 'Set up pattern generator with {0} calibrates/triggers per loop!'.format(n_trig)
+        pgcal = self.api.getRocDACs(tbm_id)['wbc'] + 4
+        if n_trig == 1:
+            pg_setup = (("PG_RESR", 25), ("PG_CAL",pgcal + 2), ("PG_TRG",16), ("PG_TOK",0))
+        else:
+            double_cal = (("PG_CAL",pgcal - t + 1), ("PG_CAL", t))
+            single_cal = (("PG_TRG",pgcal - 2 * t), ("PG_CAL", t))
+            tok_delay = (("PG_TOK", 255), ('DELAY', 255), ('DELAY', 255))
+            n_trig -= 2
+            pg_setup = (("PG_RESR", 25),) + double_cal + single_cal * n_trig + (("PG_TRG", pgcal - t + 1),) + (("PG_TRG", 255),) + (n_trig + 1) * tok_delay  + (("PG_TOK", 0),)
+        try:
+            self.api.setPatternGenerator(pg_setup)
+        except RuntimeError, err:
+            print err
+
+    def complete_setPG(self):
+        # return help for the cmd
+        return [self.do_setPG.__doc__, '']
+
     @arity(1,1,[int])
     def do_daqTriggerLoop(self, period):
         """daqTriggerLoop [period]: starts trigger loop with given period (in BC/40MHz)"""
