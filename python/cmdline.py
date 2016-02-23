@@ -511,8 +511,8 @@ class PxarCoreCmd(cmd.Cmd):
         try:
             data = self.api.daqGetEvent()
             self.plot_eventdisplay(data)
-        except RuntimeError:
-            pass
+        except RuntimeError, err:
+            print err
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -900,7 +900,10 @@ class PxarCoreCmd(cmd.Cmd):
     @arity(0,1,[int])
     def do_getRocDACs(self, tbmid=0):
         """getRocDACs [id]: get the currently programmed register/DAC settings for ROC #id"""
-        print self.api.getRocDACs(tbmid)
+        dacs = self.api.getRocDACs(tbmid)
+        for dac, value in dacs.iteritems():
+            print '{dac}: {value}'.format(dac=dac.rjust(10), value=value)
+        return dacs
 
     def complete_getRocDACs(self, text, line, start_index, end_index):
         # return help for the cmd
