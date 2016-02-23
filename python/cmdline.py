@@ -451,10 +451,10 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqStop.__doc__, '']
 
-    @arity(1,2,[int, int])
-    def do_daqTrigger(self, ntrig, period = 0):
-        """daqTrigger [ntrig] [period = 0]: sends ntrig patterns to the device"""
-        self.api.daqTrigger(ntrig,period)
+    @arity(0,2,[int, float])
+    def do_daqTrigger(self, ntrig=1, period=0):
+        """daqTrigger [ntrig = 1] [period = 0]: sends ntrig patterns to the device"""
+        self.api.daqTrigger(ntrig, int(period))
 
     def complete_daqTrigger(self, text, line, start_index, end_index):
         # return help for the cmd
