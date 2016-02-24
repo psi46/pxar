@@ -859,6 +859,10 @@ namespace pxar {
      */
     uint16_t GetADC( uint8_t rpc_par1 ) ;
 
+    void setReportingLevel(std::string logLevel);
+
+    std::string getReportingLevel();
+
   private:
 
     /** Private HAL object for the API to access hardware routines

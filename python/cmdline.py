@@ -239,6 +239,17 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_getVersion.__doc__, '']
 
+    @arity(1,1,[str])
+    def do_setReportingLevel(self, logLevel):
+        """setReportingLevel [logLevel]: Set another Reporting Level"""
+        self.api.setReportingLevel(logLevel)
+
+    @arity(0,0,[])
+    def do_getReportingLevel(self):
+        """getReportingLevel: Print the Reporting Level"""
+        self.api.getReportingLevel()
+
+
     @arity(0,0,[])
     def do_status(self):
         """status: returns the pxarcore library status"""

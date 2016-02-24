@@ -2418,15 +2418,27 @@ void pxarCore::setSignalMode(std::string signal, std::string mode, uint8_t speed
 
 void pxarCore::setClockStretch(uint8_t src, uint16_t delay, uint16_t width)
 {
-  LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width); 
+  LOG(logDEBUGAPI) << "Set Clock Stretch " << static_cast<int>(src) << " " << static_cast<int>(delay) << " " << static_cast<int>(width);
   _hal->SetClockStretch(src,width,delay);
-  
+
 }
 
 uint16_t pxarCore::GetADC( uint8_t rpc_par1 ){
-  
-  if( ! status() ) { return 0; } 
+
+  if( ! status() ) { return 0; }
 
   return _hal->GetADC( rpc_par1 );
 
+}
+
+void pxarCore::setReportingLevel(std::string logLevel)
+{
+  LOG(logINFO) << "Change Reporting Level from " << Log::ReportingLevel() << " to " << logLevel;
+  Log::ReportingLevel() = Log::FromString(logLevel);
+}
+
+std::string pxarCore::getReportingLevel()
+{
+  LOG(logINFO) << "Reporting Level is " << Log::ReportingLevel();
+  return Log::ToString(Log::ReportingLevel());
 }
