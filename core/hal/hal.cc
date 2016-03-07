@@ -27,7 +27,9 @@ hal::hal(std::string name) :
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
   m_splitter(),
-  m_decoder()
+  m_decoder(),
+  channel_start(0),
+  channel_end(7)
 {
 
   // Get a new CTestboard class instance:
@@ -291,7 +293,7 @@ bool hal::flashTestboard(std::ifstream& flashFile) {
   return false;
 }
 
-void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
+void hal::initTBMCore(uint8_t hubid, uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains) {
 
   // Turn the TBM on:
   _testboard->tbm_Enable(true);
@@ -304,7 +306,7 @@ void hal::initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::
   // Program all registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting register vector for TBM Core "
 		   << ((regVector.begin()->first&0xF0) == 0xE0 ? "alpha" : "beta") << ".";
-  tbmSetRegs(regVector);
+  tbmSetRegs(hubid, regVector);
 }
 
 void hal::setTBMType(uint8_t type) {
@@ -588,12 +590,12 @@ bool hal::rocSetDAC(uint8_t roci2c, uint8_t dacId, uint8_t dacValue) {
   return true;
 }
 
-bool hal::tbmSetRegs(std::map< uint8_t, uint8_t > regPairs) {
+bool hal::tbmSetRegs(uint8_t hubid, std::map< uint8_t, uint8_t > regPairs) {
 
   // Iterate over all register id/value pairs and set them
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
-    if(!tbmSetReg(it->first, it->second)) return false;
+    if(!tbmSetReg(hubid, it->first, it->second)) return false;
   }
 
   // Send all queued commands to the testboard:
@@ -602,10 +604,10 @@ bool hal::tbmSetRegs(std::map< uint8_t, uint8_t > regPairs) {
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
 
   // Make sure we are writing to the correct TBM by setting the module's hub id:
-  _testboard->mod_Addr(hubId);
+  _testboard->mod_Addr(hubid);
 
   LOG(logDEBUGHAL) << "TBM Core "
 		   << ((regId&0xF0) == 0xE0 ? "alpha" : "beta")

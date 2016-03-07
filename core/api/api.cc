@@ -100,39 +100,32 @@ bool pxarCore::initDUT(uint8_t hubid,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
-		       std::vector<std::vector<pixelConfig> > rocPixels,
-		       std::vector<uint8_t> rocI2Cs) {
-  bool layer1Enable = false;
-  uint8_t hubid1 = -1;
-  return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
-}
-
-bool pxarCore::initDUT(uint8_t hubid,
-		       std::string tbmtype,
-		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
-		       std::string roctype,
-		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
-  bool layer1Enable = false;
-  uint8_t hubid1 = -1;
-  return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels);
+  std::vector<uint8_t> rocI2Cs;
+  return initDUT(std::vector<uint8_t>(1,hubid), tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
-bool pxarCore::initDUT(bool layer1Enable,
-               uint8_t hubid,
-               uint8_t hubid1,
-		       std::string tbmtype,
+bool pxarCore::initDUT(std::vector<uint8_t> hubids,
+		       std::string tbmtype, 
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
 		       std::vector<std::vector<pixelConfig> > rocPixels) {
   std::vector<uint8_t> rocI2Cs;
-  return initDUT(layer1Enable, hubid, hubid1, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+  return initDUT(hubids, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
 }
 
-bool pxarCore::initDUT(bool layer1Enable,
-               uint8_t hubid,
-               uint8_t hubid1,
+bool pxarCore::initDUT(uint8_t hubid,
+		       std::string tbmtype, 
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
+		       std::string roctype,
+		       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs,
+		       std::vector<std::vector<pixelConfig> > rocPixels,
+		       std::vector<uint8_t> rocI2Cs) {
+  return initDUT(std::vector<uint8_t>(1,hubid), tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2Cs);
+}
+
+bool pxarCore::initDUT(std::vector<uint8_t> hubids,
 		       std::string tbmtype, 
 		       std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs,
 		       std::string roctype,
@@ -145,13 +138,25 @@ bool pxarCore::initDUT(bool layer1Enable,
 
   // Verification/sanity checks of supplied DUT configuration values
 
-  // Check for valid configuration of layer 1 module
-  if (layer1Enable) {
-	LOG(logINFO) << "layer: " << layer1Enable;
-    if (hubid > 31 or hubid1 > 31) {
-	  LOG(logCRITICAL) << "hubid0 = " << static_cast<int>(hubid) << " and hubid1 = " << static_cast<int>(hubid1) << "provided.";
-	  throw InvalidConfig("Non-valid hubIds for a layer 1 module provided.");
-    }
+  // Check if the number of hub ids and TBM core settings match:
+  if(tbmDACs.size() <= 2) {
+    // We need to set the global hub ID once, take the first, ignore the rest:
+    LOG(logDEBUGAPI) << "Setting global HUB id " << static_cast<int>(hubids.front());
+    _hal->setHubId(hubids.front());
+  }
+  // We only support maximum two hubs connected:
+  else if(hubids.size() > 2) {
+    LOG(logCRITICAL) << "Too many hub ids supplied. Only two hubs supported for Layer 1 modules...";
+    throw InvalidConfig("Too many hub ids supplied.");
+  }
+  else if(2*hubids.size() != tbmDACs.size()) {
+    LOG(logCRITICAL) << "Hm, we have " << tbmDACs.size() << " TBM Cores but " << hubids.size() << " HUB ids.";
+    LOG(logCRITICAL) << "This cannot end well...";
+    throw InvalidConfig("Mismatch between number of HUB addresses and TBM Cores");
+  }
+  else {
+    // We have two hub ids - this calls for a Layer 1 module initialization:
+    _hal->setHubId(hubids.front(), hubids.back());
   }
 
   // Check if I2C addresses were supplied - if so, check size agains sets of DACs:
@@ -206,13 +211,6 @@ bool pxarCore::initDUT(bool layer1Enable,
   }
 
   LOG(logDEBUGAPI) << "We have " << rocDACs.size() << " DAC configs and " << rocPixels.size() << " pixel configs, with " << rocDACs.at(0).size() << " and " << rocPixels.at(0).size() << " entries for the first ROC, respectively.";
-
-  // First initialized the API's DUT instance with the information supplied.
-
-  // Store the hubIds and layer status:
-  _dut->hubId = hubid;
-  _dut->hubId1 = hubid1;
-  _dut->_layer1Enable = layer1Enable;
 
   // Initialize TBMs:
   LOG(logDEBUGAPI) << "Received settings for " << tbmDACs.size() << " TBM cores.";
@@ -389,15 +387,16 @@ bool pxarCore::programDUT() {
   // Start programming the devices here!
   std::vector<tbmConfig> enabledTbms = _dut->getEnabledTbms();
 
-  if (!enabledTbms.empty()) {
-	  LOG(logDEBUGAPI) << "Programming TBMs...";
-	  if (!_dut->_layer1Enable) _hal->setHubId(_dut->hubId);
-	  // store two hubids for each tbm (layer 1)
-	  else _hal->setHubId(_dut->hubId, _dut->hubId1);
-  }
+  //if (!enabledTbms.empty()) {
+	  //LOG(logDEBUGAPI) << "Programming TBMs...";
+	  //if (!_dut->_layer1Enable) _hal->setHubId(_dut->hubId);
+	  //// store two hubids for each tbm (layer 1)
+	  //else _hal->setHubId(_dut->hubId, _dut->hubId1);
+  //}
 
   for (std::vector<tbmConfig>::iterator tbmit = enabledTbms.begin(); tbmit != enabledTbms.end(); ++tbmit){
-    _hal->initTBMCore((*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
+	_hal->initTBMCore((*tbmit).hubid, (*tbmit).type,(*tbmit).dacs,(*tbmit).tokenchains);
+
   }
 
   std::vector<rocConfig> enabledRocs = _dut->getEnabledRocs();
@@ -740,7 +739,7 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
       LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
     }
     
-    _hal->tbmSetReg(_register,regValue);
+    _hal->tbmSetReg(_dut->tbm.at(tbmid).hubid, _register,regValue);
   }
   else {
     LOG(logERROR) << "TBM " << tbmid << " is not existing in the DUT!";

@@ -139,15 +139,17 @@ public:
   double getVd() {return vd;}
   bool   getHvOn() {return fHvOn;}
 
-  uint8_t getHubId() {return fHubId;}
-  uint8_t getHubId0() {return fHubId0;}
-  uint8_t getHubId1() {return fHubId1;}
-  bool getLayer1Enable() {return fLayer1Enable;}
+  std::vector<uint8_t> getHubIds() {return fHubIds;}
+  uint8_t getHubId() {return fHubIds.front();}
+  //uint8_t getHubId0() {return fHubId0;}
+  //uint8_t getHubId1() {return fHubId1;}
+  //bool getLayer1Enable() {return fLayer1Enable;}
   
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
   void cleanupString(std::string& str);
   void readNrocs(std::string line);
+  void readHubIds(std::string line);
 
 private:
 
@@ -162,16 +164,16 @@ private:
 
   std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
-  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId, fHubId0, fHubId1;
+  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules;//, fHubId, fHubId0, fHubId1;
   int fHalfModule;
-  std::vector<uint8_t> fI2cAddresses; 
+  std::vector<uint8_t> fI2cAddresses, fHubIds; 
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;
   std::string fRocType, fTbmType, fHdiType;
   std::string fDirectory;
   std::string fTBName;
-  bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode, fLayer1Enable;
+  bool fHvOn, fTbmEnable, fTbmEmulator, fKeithleyRemote, fGuiMode;//, fLayer1Enable;
   std::string fProbeA1,fProbeA2, fProbeD1, fProbeD2;
 
   std::string fTBParametersFileName;

@@ -41,11 +41,11 @@ void ConfigParameters::initialize() {
   fnRocs = 16;
   fnTbms = 1; 
   fnModules = 1;
-  fHubId = 31;
-  fHubId0 = -1;
-  fHubId1 = -1;
-  fLayer1Enable = false;
-  fI2cAddresses.clear(); 
+  //fHubId = 31;
+  //fHubId0 = -1;
+  //fHubId1 = -1;
+  //fLayer1Enable = false;
+  //fI2cAddresses.clear(); 
 
   fHvOn = true;
   fTbmEnable = true;
@@ -172,10 +172,10 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("nModules")) { fnModules                  = _ivalue; }
       else if (0 == _name.compare("nRocs")) { readNrocs(_istring.str()); }
       else if (0 == _name.compare("nTbms")) { fnTbms                     = _ivalue; }
-      else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
-      else if (0 == _name.compare("hubId0")) { fHubId0                     = _ivalue; }
-      else if (0 == _name.compare("hubId1")) { fHubId1                     = _ivalue; }
-      else if (0 == _name.compare("layer")) { fLayer1Enable 				= (_ivalue>0); }
+      else if (0 == _name.compare("hubId")) { readHubIds(_istring.str()); }//fHubId                     = _ivalue; }
+      //else if (0 == _name.compare("hubId0")) { fHubId0                     = _ivalue; }
+      //else if (0 == _name.compare("hubId1")) { fHubId1                     = _ivalue; }
+      //else if (0 == _name.compare("layer")) { fLayer1Enable 				= (_ivalue>0); }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
@@ -784,10 +784,10 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "nModules %i\n", fnModules);
   fprintf(file, "nRocs %i\n", fnRocs);
   fprintf(file, "nTbms %i\n", fnTbms);
-  fprintf(file, "hubId %i\n", fHubId);
-  fprintf(file, "hubId0 %i\n", fHubId0);
-  fprintf(file, "hubId1 %i\n", fHubId1);
-  fprintf(file, "layer1Enable %i\n", fLayer1Enable);
+  fprintf(file, "hubId %i\n", fHubIds.front());
+  //fprintf(file, "hubId0 %i\n", fHubId0);
+  //fprintf(file, "hubId1 %i\n", fHubId1);
+  //fprintf(file, "layer1Enable %i\n", fLayer1Enable);
   fprintf(file, "tbmEnable %i\n", fTbmEnable);
   fprintf(file, "tbmEmulator %i\n", fTbmEmulator);
   fprintf(file, "hvOn %i\n", fHvOn);
@@ -1123,6 +1123,32 @@ void ConfigParameters::readNrocs(string line) {
       LOG(logWARNING) << "mismatch between number of i2c addresses and nRocs! Resetting nRocs to " 
 		      <<  fI2cAddresses.size();
       fnRocs =  fI2cAddresses.size(); 
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+void ConfigParameters::readHubIds(string line) {
+  cleanupString(line);
+  string::size_type s0 = line.find(" ");
+  if (string::npos == s0) {
+    return;
+  } else {
+    string hubidstring = line.substr(6);
+    s0 = hubidstring.find(","); 
+    string hubid("");
+    while (string::npos != s0) {
+      hubid = hubidstring.substr(0, s0);
+      fHubIds.push_back(atoi(hubid.c_str())); 
+      hubidstring = hubidstring.substr(s0+1); 
+      s0 = hubidstring.find(","); 
+    }
+    //  -- get the last one as well
+    fHubIds.push_back(atoi(hubidstring.c_str())); 
+    if (fnTbms > 0 && fnTbms != fHubIds.size()) {
+      LOG(logCRITICAL) << "We have " << static_cast<int>(fnTbms) << "TBMs, but " 
+              << static_cast<int>(fHubIds.size()) << " HubIds provided ";
+      throw InvalidConfig("Mismatch between number of TBMs and HubIds"); 
     }
   }
 }

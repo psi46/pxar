@@ -55,7 +55,7 @@ namespace pxar {
 
     /** Initialize attached TBMs with their settings and configuration
      */
-    void initTBMCore(uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains);
+    void initTBMCore(uint8_t hubid, uint8_t type, std::map< uint8_t,uint8_t > regVector, std::vector<uint8_t> tokenchains);
 
     /** Change the type of the TBM type member in HAL
      */
@@ -119,12 +119,12 @@ namespace pxar {
 
     /** Set a register on a specific TBM tbmId
      */
-    bool tbmSetReg(uint8_t regId, uint8_t regValue);
+    bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue);
 
     /** Set all registers on a specific TBM tbmId
      *  registers are provided as map of uint8_t,uint8_t pairs with Reg Id and value.
      */
-    bool tbmSetRegs(std::map< uint8_t, uint8_t > regPairs);
+    bool tbmSetRegs(uint8_t hubid, std::map< uint8_t, uint8_t > regPairs);
 
     /** Function to set and update the pattern generator command list on the DTB
      */
