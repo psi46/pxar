@@ -25,6 +25,7 @@ import sys
 # set up the DAC and probe dictionaries
 dacdict = PyRegisterDictionary()
 probedict = PyProbeDictionary()
+triggerdict = PyTriggerDictionary()
 
 class PxarCoreCmd(cmd.Cmd):
     """Simple command processor for the pxar core API."""
@@ -407,17 +408,27 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqStatus.__doc__, '']
 
-    @arity(1,1,[str])
-    def do_daqTriggerSource(self, source):
-        """daqTriggerSource: select the trigger source to be used for the DAQ session"""
-        if self.api.daqTriggerSource(source):
+    @arity(1,2,[str,int])
+    def do_daqTriggerSource(self, source, rate = 0):
+        """daqTriggerSource [source] [rate]: select the trigger source to be used for the DAQ session, the rate is valid for periodic and random triggers"""
+        if self.api.daqTriggerSource(source,rate):
             print "Trigger source \"" + source + "\" selected."
         else:
             print "DAQ returns faulty state."
 
     def complete_daqTriggerSource(self, text, line, start_index, end_index):
         # return help for the cmd
-        return [self.do_daqTriggerSource.__doc__, '']
+        if text and len(line.split(" ")) <= 2: # first argument and started to type
+            # list matching entries
+            return [trg for trg in triggerdict.getAllNames()
+                        if trg.startswith(text)]
+        else:
+            if len(line.split(" ")) > 2:
+                # return help for the cmd
+                return [self.do_daqTriggerSource.__doc__, '']
+            else:
+                # return all trigger sources
+                return triggerdict.getAllNames()
 
     @arity(1,1,[str])
     def do_daqSingleSignal(self, signal):
@@ -440,14 +451,41 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_daqStop.__doc__, '']
 
-    @arity(1,2,[int, int])
-    def do_daqTrigger(self, ntrig, period = 0):
-        """daqTrigger [ntrig] [period = 0]: sends ntrig patterns to the device"""
-        self.api.daqTrigger(ntrig,period)
+    @arity(0,2,[int, float])
+    def do_daqTrigger(self, ntrig=1, period=0):
+        """daqTrigger [ntrig = 1] [period = 0]: sends ntrig patterns to the device"""
+        self.api.daqTrigger(ntrig, int(period))
 
     def complete_daqTrigger(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqTrigger.__doc__, '']
+
+    @arity(0,3,[int, int, int])
+    def do_setPG(self, n_trig=5, t=30, tbm_id=0):
+        """
+        Sets up a multi trigger pattern generator for ROC testing
+        :param n_trig: [=5] number of accumulated triggers
+        :param t: [=30] time between first two calibrates
+        :param tbm_id: [=0]
+        """
+        print 'Set up pattern generator with {0} calibrates/triggers per loop!'.format(n_trig)
+        pgcal = self.api.getRocDACs(tbm_id)['wbc'] + 4
+        if n_trig == 1:
+            pg_setup = (("PG_RESR", 25), ("PG_CAL",pgcal + 2), ("PG_TRG",16), ("PG_TOK",0))
+        else:
+            double_cal = (("PG_CAL",pgcal - t + 1), ("PG_CAL", t))
+            single_cal = (("PG_TRG",pgcal - 2 * t), ("PG_CAL", t))
+            tok_delay = (("PG_TOK", 255), ('DELAY', 255), ('DELAY', 255))
+            n_trig -= 2
+            pg_setup = (("PG_RESR", 25),) + double_cal + single_cal * n_trig + (("PG_TRG", pgcal - t + 1),) + (("PG_TRG", 255),) + (n_trig + 1) * tok_delay  + (("PG_TOK", 0),)
+        try:
+            self.api.setPatternGenerator(pg_setup)
+        except RuntimeError, err:
+            print err
+
+    def complete_setPG(self):
+        # return help for the cmd
+        return [self.do_setPG.__doc__, '']
 
     @arity(1,1,[int])
     def do_daqTriggerLoop(self, period):
@@ -473,8 +511,8 @@ class PxarCoreCmd(cmd.Cmd):
         try:
             data = self.api.daqGetEvent()
             self.plot_eventdisplay(data)
-        except RuntimeError:
-            pass
+        except RuntimeError, err:
+            print err
 
     def complete_daqGetEvent(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -513,7 +551,7 @@ class PxarCoreCmd(cmd.Cmd):
     def do_getStatistics(self):
         """getStatistics: print full statistics accumulated during last DAQ session"""
         dat = self.api.getStatistics()
-        print dat
+        dat.dump
 
     def complete_getStatistics(self, text, line, start_index, end_index):
         # return help for the cmd
@@ -551,6 +589,16 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_daqGetReadback(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_daqGetReadback.__doc__, '']
+
+    @arity(1,1,[int])
+    def do_daqGetXORsum(self, channel):
+        """daqGetXORsum: return all DESER400 XOR sum values from the last DAQ session fo channel [channel]"""
+        dat = self.api.daqGetXORsum(channel)
+        print dat
+
+    def complete_daqGetXORsum(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_daqGetXORsum.__doc__, '']
 
     @arity(0,2,[int, int])
     def do_getEfficiencyMap(self, flags = 0, nTriggers = 10):
@@ -730,10 +778,10 @@ class PxarCoreCmd(cmd.Cmd):
                 # return all signals
                 return dacdict.getAllDTBNames()
 
-    @arity(2,2,[str, str])
-    def do_SignalProbe(self, probe, name):
-        """SignalProbe [probe] [name]: Switches DTB probe output [probe] to signal [name]"""
-        self.api.SignalProbe(probe,name)
+    @arity(2,3,[str, str, int])
+    def do_SignalProbe(self, probe, name, channel = 0):
+        """SignalProbe [probe] [name] [channel]: Switches DTB probe output [probe] to signal [name]. The [channel] parameter can be used to select the deserializer DAQ channel"""
+        self.api.SignalProbe(probe,name, channel)
 
     def complete_SignalProbe(self, text, line, start_index, end_index):
         probes = ["d1","d2","a1","a2"]
@@ -848,6 +896,18 @@ class PxarCoreCmd(cmd.Cmd):
     def complete_getTbmDACs(self, text, line, start_index, end_index):
         # return help for the cmd
         return [self.do_getTbmDACs.__doc__, '']
+
+    @arity(0,1,[int])
+    def do_getRocDACs(self, tbmid=0):
+        """getRocDACs [id]: get the currently programmed register/DAC settings for ROC #id"""
+        dacs = self.api.getRocDACs(tbmid)
+        for dac, value in dacs.iteritems():
+            print '{dac}: {value}'.format(dac=dac.rjust(10), value=value)
+        return dacs
+
+    def complete_getRocDACs(self, text, line, start_index, end_index):
+        # return help for the cmd
+        return [self.do_getRocDACs.__doc__, '']
 
     @arity(0,0,[])
     def do_info(self):

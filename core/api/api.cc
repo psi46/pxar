@@ -579,10 +579,13 @@ void pxarCore::Pon() {
   programDUT();
 }
 
-bool pxarCore::SignalProbe(std::string probe, std::string name) {
+bool pxarCore::SignalProbe(std::string probe, std::string name, uint8_t channel) {
 
   if(!_hal->status()) {return false;}
 
+  // Check selected channel to be within range of valid DAQ channels:
+  if(channel >= DTB_DAQ_CHANNELS) throw InvalidConfig("No DAQ available for selected channel.");
+  
   // Get singleton Probe dictionary object:
   ProbeDictionary * _dict = ProbeDictionary::getInstance();
 
@@ -600,14 +603,20 @@ bool pxarCore::SignalProbe(std::string probe, std::string name) {
     LOG(logDEBUGAPI) << "Digital probe signal lookup for \"" << name 
 		     << "\" returned signal: " << static_cast<int>(signal);
 
-    // Select the correct probe for the output:
-    if(probe.compare("d1") == 0) {
-      _hal->SignalProbeD1(signal);
-      return true;
+    // Check if this is a DESER400 probe signal:
+    if(name.compare(0,5,"deser") == 0) {
+      // Distinguish between DESER channel A (even DAQ channels) and B (odd DAQ channels)
+      // and shift the signal registers accordingly:
+      if(channel%2 != 0) signal += (PROBE_B_HEADER - PROBE_A_HEADER);
+
+      // Divide channel count by two, since one DESER400 holds two DAQ channels:
+      if(probe.compare("d1") == 0) { _hal->SignalProbeDeserD1(channel/2, signal); return true; }
+      else if(probe.compare("d2") == 0) { _hal->SignalProbeDeserD2(channel/2, signal); return true; }
     }
-    else if(probe.compare("d2") == 0) {
-      _hal->SignalProbeD2(signal);
-      return true;
+    else {
+      // Select the correct probe for the output:
+      if(probe.compare("d1") == 0) { _hal->SignalProbeD1(signal); return true; }
+      else if(probe.compare("d2") == 0) {  _hal->SignalProbeD2(signal); return true; }
     }
   }
   // Analog signal probes:
@@ -653,7 +662,7 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
 }
 
 statistics pxarCore::getStatistics() {
-  LOG(logINFO) << "Fetched DAQ statistics. Counters are being reset now.";
+  LOG(logDEBUG) << "Fetched DAQ statistics. Counters are being reset now.";
   // Return the accumulated number of decoding errors:
   return _hal->daqStatistics();
 }
@@ -1248,6 +1257,16 @@ std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
   return values;
 }
 
+std::vector<uint8_t> pxarCore::daqGetXORsum(uint8_t channel) {
+
+  std::vector<uint8_t> values;
+  if(!status() || channel >= DTB_DAQ_CHANNELS) { return values; }
+
+  values = _hal->daqXORsum(channel);
+  LOG(logDEBUGAPI) << "Decoder channel " << static_cast<int>(channel) << " provided " << values.size() << " XOR sum values.";
+  return values;
+}
+
 
 // DAQ functions
 
@@ -1306,6 +1325,9 @@ bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool i
   // And start the DAQ session:
   _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
+  // Activate the selected trigger source
+  _hal->daqTriggerSource(_dut->trigger_source);
+
   _daq_running = true;
   return true;
 }
@@ -1332,12 +1354,7 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
   return true;
 }
 
-bool pxarCore::daqTriggerSource(std::string triggerSource) {
-
-  if(daqStatus()) {
-    LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
-    return false;
-  }
+bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
   // Get singleton Trigger dictionary object:
   TriggerDictionary * _dict = TriggerDictionary::getInstance();
@@ -1353,8 +1370,32 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
     // Get the signal from the dictionary object:
     uint16_t sig = _dict->getSignal(s);
     if(sig != TRG_ERR) {
-      signal |= sig;
       LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
+
+      // If we are using the DTB generator, also set the rate/period:
+      if(sig == TRG_SEL_GEN || sig == TRG_SEL_GEN_DIR) {
+
+        if(s.compare(0,6,"random") == 0) {
+          // Be gentle and convert to centi-Hertz for the DTB :)
+          uint32_t rate = int(timing/40e6*4294967296 + 0.5);
+          // FIXME better also take the user input as BC instead of Hz, reduces confusion...
+          LOG(logDEBUGAPI) << "Setting random trigger generator, rate = " << rate << " cHz";
+          _hal->daqTriggerGenRandom(rate);
+        }
+        else if(s.compare(0,6,"period") == 0) {
+          LOG(logDEBUGAPI) << "Setting periodic trigger generator, period = " << timing << " BC";
+          _hal->daqTriggerGenPeriodic(timing);
+        }
+      }
+      else if(sig == TRG_SEL_ASYNC_PG)  {
+          LOG(logDEBUGAPI) << "Setting externally triggered Pattern Generator";
+          _hal->daqTriggerPgExtern();
+          sig = TRG_SEL_PG_DIR;
+      }
+
+      // Logical or for all trigger sources
+      signal |= sig;
+
     }
     else {
       LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
@@ -1363,8 +1404,8 @@ bool pxarCore::daqTriggerSource(std::string triggerSource) {
   }
 
   LOG(logDEBUGAPI) << "Selecting trigger source 0x" << std::hex << signal << std::dec;
-  _hal->daqTriggerSource(signal);
-
+  _dut->trigger_source = signal;
+    
   // Check if we need to change the tbmtype for HAL:
   uint8_t newtype = 0x0;
   if(_dict->getEmulationState(signal)) {
@@ -1543,6 +1584,9 @@ bool pxarCore::daqStop(const bool init) {
 
 
 std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags) {
+
+  // Ensure the pattern generator trigger is active:
+  _hal->daqTriggerSource(TRG_SEL_PG_DIR);
   
   // pointer to vector to hold our data
   std::vector<Event> data = std::vector<Event>();

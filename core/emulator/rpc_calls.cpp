@@ -135,6 +135,14 @@ void CTestboard::Sig_SetRdaToutDelay(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 
+void CTestboard::SignalProbeDeserD1(uint8_t a, uint8_t b) {
+  LOG(pxar::logDEBUGRPC) << "called with " << std::hex << static_cast<int>(a) << " " << static_cast<int>(b) << std::dec;
+}
+
+void CTestboard::SignalProbeDeserD2(uint8_t a, uint8_t b) {
+  LOG(pxar::logDEBUGRPC) << "called with " << std::hex << static_cast<int>(a) << " " << static_cast<int>(b) << std::dec;
+}
+
 void CTestboard::SignalProbeD1(uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
@@ -429,6 +437,18 @@ void CTestboard::Daq_Select_Deser400() {
 }
 
 void CTestboard::Daq_Deser400_Reset(uint8_t) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
+void CTestboard::Deser400_SetPhase(uint8_t, uint8_t) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
+void CTestboard::Deser400_SetPhaseAutoAll() {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
+void CTestboard::Deser400_GateRun(uint8_t,uint8_t) {
   LOG(pxar::logDEBUGRPC) << "called.";
 }
 

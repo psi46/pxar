@@ -97,6 +97,13 @@ namespace pxar {
     DataDecodingError(const std::string& what_arg) : DataException(what_arg) {}
   };
 
+  /** This exception class is used when the DESER400 module reports a data handling error.
+   */
+  class DataDeserializerError : public DataDecodingError {
+  public:
+    DataDeserializerError(const std::string& what_arg) : DataDecodingError(what_arg) {}
+  };
+
   /** This exception class is used when out-of-range pixel addresses
    *  are found during the decoding of the raw values.
    */

@@ -837,7 +837,12 @@ void PixParTab::saveTbParameters() {
 void PixParTab::saveTbmParameters() {
   LOG(logDEBUG) << "save Tbm parameters";
   for (unsigned int itbm = 0; itbm < fGui->getApi()->_dut->getNTbms(); itbm += 2) {
-    fConfigParameters->writeTbmParameterFile(itbm, fGui->getApi()->_dut->getTbmDACs(itbm), fGui->getApi()->_dut->getTbmChainLengths(itbm), fGui->getApi()->_dut->getTbmDACs(itbm+1), fGui->getApi()->_dut->getTbmChainLengths(itbm+1));
+    fConfigParameters->writeTbmParameterFile(itbm/2,
+					     fGui->getApi()->_dut->getTbmDACs(itbm),
+					     fGui->getApi()->_dut->getTbmChainLengths(itbm),
+					     fGui->getApi()->_dut->getTbmDACs(itbm+1),
+					     fGui->getApi()->_dut->getTbmChainLengths(itbm+1)
+					     );
   }
 }
 

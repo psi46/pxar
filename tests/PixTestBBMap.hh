@@ -12,8 +12,10 @@ public:
   PixTestBBMap();
   virtual ~PixTestBBMap();
   virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
-  void setToolTips();
+  virtual void init(); 
+  virtual void resetDirectory();
+  // virtual void writeOutput();
+  virtual void setToolTips();
 
   void doTest(); 
   int  fitPeaks(TH1D *h, TSpectrum &s, int npeaks);

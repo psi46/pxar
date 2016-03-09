@@ -150,6 +150,8 @@ class CTestboard {
   void SignalProbeD1(uint8_t signal);
   void SignalProbeD2(uint8_t signal);
 
+  void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
+  void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
 
   // --- analog signal probe ----------------------------------------------
   void SignalProbeA1(uint8_t signal);
@@ -222,9 +224,22 @@ class CTestboard {
   void Daq_Select_Deser400();
   void Daq_Deser400_Reset(uint8_t reset);
   void Daq_Deser400_OldFormat(bool old);
+  void Deser400_GateRun(uint8_t width, uint8_t period);
   void Daq_DeselectAll();
 	
   void Daq_Select_Datagenerator(uint16_t startvalue);
+
+  // --- DESER400 configuration -------------------------------------------
+  void Deser400_Enable(uint8_t deser);
+  void Deser400_Disable(uint8_t deser);
+  void Deser400_DisableAll();
+
+  void Deser400_SetPhase(uint8_t deser, uint8_t phase);
+  void Deser400_SetPhaseAuto(uint8_t deser);
+  void Deser400_SetPhaseAutoAll();
+
+  uint8_t Deser400_GetXor(uint8_t deser);
+  uint8_t Deser400_GetPhase(uint8_t deser);
 
 
   // --- ROC/module Communication -----------------------------------------

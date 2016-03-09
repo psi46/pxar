@@ -242,7 +242,7 @@ public:
   /// returns the test name
   std::string getName() {return fName; }
   /// ???
-  void resetDirectory();
+  virtual void resetDirectory();
   /// return fDirectory
   TDirectory* getDirectory() {return fDirectory;}
 
@@ -304,6 +304,8 @@ public:
   TH1* nextHistV(); 
   /// allow backward iteration through list of histograms
   TH1* previousHistV();  
+  /// split histogram writing from destructor to flush out histograms already filled for re-naming of root files
+  void writeOutput();
 
   //Get NEvents and return the decoding statistics
   pxar::statistics getEvents(int NEvents, int period, int buffer);

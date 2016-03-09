@@ -74,10 +74,17 @@ bool PixTestBBMap::setParameter(string parName, string sval) {
   return false;
 }
 
+// ----------------------------------------------------------------------
+void PixTestBBMap::resetDirectory() {
+  fDirectory = gFile->GetDirectory("BumpBonding"); 
+}
+
+
 //------------------------------------------------------------------------------
 void PixTestBBMap::init() {
   LOG(logDEBUG) << "PixTestBBMap::init()";
-  
+  // -- NOTE: The hard-coded name is really bad. This should be fName.
+  //    not going to change in production, as this affects moreweb. 
   fDirectory = gFile->GetDirectory("BumpBonding");
   if (!fDirectory) {
     fDirectory = gFile->mkdir("BumpBonding");
@@ -90,6 +97,33 @@ void PixTestBBMap::setToolTips() {
   fTestTip = string( "Bump Bonding Test = threshold map for CalS");
   fSummaryTip = string("module summary");
 }
+
+
+// // ----------------------------------------------------------------------
+// void PixTestBBMap::writeOutput() {
+//   std::list<TH1*>::iterator il; 
+//   string name("BumpBonding");
+//   cout << "name = " << name << " fDirectory = " << fDirectory << endl;
+//   fDirectory->cd(); 
+//   for (il = fHistList.begin(); il != fHistList.end(); ++il) {
+//     (*il)->SetDirectory(fDirectory); 
+//     (*il)->Write(); 
+//   }
+//   clearHistList();
+
+//   TH1D *h = (TH1D*)gDirectory->Get("ha"); 
+//   if (h) {
+//     h->SetDirectory(fDirectory); 
+//     h->Write();
+//   }
+
+//   h = (TH1D*)gDirectory->Get("hd"); 
+//   if (h) {
+//     h->SetDirectory(fDirectory); 
+//     h->Write();
+//   }
+
+// }
 
 
 //------------------------------------------------------------------------------

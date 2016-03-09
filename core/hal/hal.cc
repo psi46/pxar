@@ -92,6 +92,9 @@ hal::~hal() {
   // Turn DUT power off:
   _testboard->Poff();
 
+  // Turn off triggers (default to Pattern Generator, direct):
+  _testboard->Trigger_Select(TRG_SEL_PG_DIR);
+  
   // Close the RPC/USB Connection:
   LOG(logQUIET) << "Connection to board " << _testboard->GetBoardId() << " closed.";
   _testboard->Close();
@@ -158,6 +161,9 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
   }
   LOG(logDEBUGHAL) << "Setting all DTB signal levels to " << static_cast<int>(signal_level);
 
+  _testboard->Deser400_SetPhaseAutoAll();  
+  LOG(logDEBUGHAL) << "Defaulting all DESER400 modules to automatic phase selection.";
+  
   // Write testboard delay settings and deserializer phases to the repsective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
@@ -166,6 +172,27 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
       _testboard->Daq_Select_Deser160(sigIt->second);
       // FIXME
       deser160phase = sigIt->second;
+    }
+    else if(sigIt->first == SIG_DESER400RATE) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 phase sampling rate to value " << static_cast<int>(sigIt->second);
+      // This function is a DTB-internal call to Deser400_PdPhase(), I don't know why Beat decided to encapsulate it...
+      _testboard->Deser400_GateRun(0,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE0) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 0 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(0,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE1) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 1 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(1,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE2) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 2 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(2,sigIt->second);
+    }
+    else if(sigIt->first == SIG_DESER400PHASE3) {
+      LOG(logDEBUGHAL) << "Set DTB deser400 module 3 phase to value " << static_cast<int>(sigIt->second);
+      _testboard->Deser400_SetPhase(3,sigIt->second);
     }
     else if(sigIt->first == SIG_LOOP_TRIGGER_DELAY) {
       LOG(logDEBUGHAL) << "Set DTB loop delay between triggers to " << static_cast<int>(sigIt->second)*10 <<" clk";
@@ -194,6 +221,10 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
     else if(sigIt->first == SIG_ADC_TOUTDELAY) {
       LOG(logDEBUGHAL) << "caching ADC Token Out delay as " << static_cast<int>(sigIt->second);
       m_toutdelay = sigIt->second;
+    }
+    else if(sigIt->first == SIG_ADC_TIMEOUT) {
+      LOG(logDEBUGHAL) << "caching ADC timeout as " << static_cast<int>(sigIt->second)*10 << " clk";
+      m_adctimeout = sigIt->second*10;
     }
     else {
       LOG(logDEBUGHAL) << "Set DTB delay " << static_cast<int>(sigIt->first) << " to value " << static_cast<int>(sigIt->second);
@@ -592,7 +623,7 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   // Iterate over all register id/value pairs and set them
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
-    if(!tbmSetReg(hubid, core | it->first, it->second)) return false;
+    if(!tbmSetReg(hubid, core | it->first, it->second),false) return false;
   }
 
   // Send all queued commands to the testboard:
@@ -601,7 +632,7 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   return true;
 }
 
-bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
+bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush) {
 
   LOG(logDEBUGHAL) << "TBM@HUB " << static_cast<int>(hubid)
 		   << ": set register \"0x" << std::hex << static_cast<int>(regId) 
@@ -612,6 +643,9 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue) {
 
   // Set this register:
   _testboard->tbm_Set(regId,regValue);
+
+  // If requested, flush immediately:
+  if(flush) _testboard->Flush();
   return true;
 }
 
@@ -1407,6 +1441,20 @@ void hal::SignalProbeD2(uint8_t signal) {
   _testboard->Flush();
 }
 
+void hal::SignalProbeDeserD1(uint8_t deser, uint8_t signal) {
+  LOG(logDEBUGHAL) << "Setting Deser " << static_cast<int>(deser) << " to signal " << static_cast<int>(signal) << " (D1)";
+  _testboard->SignalProbeDeserD1(deser, signal);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
+void hal::SignalProbeDeserD2(uint8_t deser, uint8_t signal) {
+  LOG(logDEBUGHAL) << "Setting Deser " << static_cast<int>(deser) << " to signal " << static_cast<int>(signal) << " (D2)";
+  _testboard->SignalProbeDeserD2(deser, signal);
+  _testboard->uDelay(100);
+  _testboard->Flush();
+}
+
 void hal::SignalProbeA1(uint8_t signal) {
   _testboard->SignalProbeA1(signal);
   _testboard->uDelay(100);
@@ -1472,7 +1520,7 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 
   LOG(logDEBUGHAL) << "Starting new DAQ session.";
   for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) { m_daqstatus.push_back(false); }
-
+  
   // Clear all decoder instances:
   for(size_t ch = 0; ch < m_decoder.size(); ch++) { m_decoder.at(ch).Clear(); }
 
@@ -1605,7 +1653,7 @@ std::vector<Event> hal::daqAllEvents() {
     // Read the next Event from each of the pipes:
     Event current_Event;
     for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if(m_src.at(ch).isConnected()) {
+      if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
@@ -1680,7 +1728,7 @@ std::vector<rawEvent> hal::daqAllRawEvents() {
     rawEvent current_Event;
     
     for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if(m_src.at(ch).isConnected()) {
+      if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<rawEvent*> rawpump;
 	m_splitter.at(ch) >> rawpump;
 	
@@ -1744,6 +1792,34 @@ void hal::daqTriggerSource(uint16_t source) {
 
   // Write new trigger source to DTB:
   _testboard->Trigger_Select(source);
+  _testboard->Flush();
+}
+
+void hal::daqTriggerGenRandom(uint32_t rate) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger generator with rate " << rate;
+
+  // Activate random generator:
+  _testboard->Trigger_SetGenRandom(rate);
+}
+
+void hal::daqTriggerGenPeriodic(uint32_t period) {
+
+  LOG(logDEBUGHAL) << "Configuring trigger generator with period " << period;
+
+  // Activate periodic generator:
+  _testboard->Trigger_SetGenPeriodic(period);
+}
+
+void hal::daqTriggerPgExtern() {
+
+    // Connect the DTB TRG input to the PG trigger input
+
+    LOG(logDEBUGHAL) << "Configuring externally triggered pattern generator";
+
+    _testboard->Pg_Trigger();
+    _testboard->Flush();
+
 }
 
 void hal::daqTriggerSingleSignal(uint8_t signal) {
@@ -1818,6 +1894,13 @@ std::vector<std::vector<uint16_t> > hal::daqReadback() {
     rb.insert(rb.end(),tmp_rb.begin(),tmp_rb.end());
   }
   return rb;
+}
+
+std::vector<uint8_t> hal::daqXORsum(uint8_t channel) {
+
+  // Collect the XOR sum values from the selected DAQ channel:
+  if(channel < m_decoder.size()) return m_decoder.at(channel).getXORsum();
+  else return std::vector<uint8_t>();
 }
 
 void hal::daqStop() {

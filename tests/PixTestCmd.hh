@@ -41,6 +41,7 @@ public:
   void DoDnArrow();
   void flush(std::string s);
   void runCommand(std::string s);
+  void stopTest();
 
 private:
 
@@ -95,6 +96,7 @@ class Arg{
     static int varvalue;
     enum argtype {UNDEF,STRING_T, IVALUE_T, IVAR_T, ILIST_T};
     Arg(string s):type(STRING_T),svalue(s){};
+    Arg(int i):type(IVALUE_T),ivalue(i){};
     Arg(IntList v){
         if( v.isSingleValue() ){
             if (v.isVariable()){
@@ -179,8 +181,11 @@ class Keyword{
     bool match(const char *, int &);
     bool match(const char *, int &, int &);
     bool match(const char *, int &, int &, int &);
+    bool match(const char *, int &, int &, int &, int &);
     bool match(const char *, int &, int &, int &, int &, int &);
     bool match(const char *, string &);
+    bool match(const char *, vector<int> &);    
+    bool match(const char *, string &, vector<int> &);    
     bool match(const char * s, vector<int> & , vector<int> &);
     bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
     bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int, int &);
@@ -193,6 +198,19 @@ class Keyword{
 
     string keyword;
     vector<Arg> argv;
+    
+    Keyword at(int index){
+        Keyword k( keyword );
+        k.argv.clear();
+        for(unsigned int i=0; i<argv.size(); i++){
+            if (argv[i].type==Arg::ILIST_T){
+                k.argv.push_back( Arg( argv[i].lvalue.getVect(0,0)[index] ));
+            }else{
+                k.argv.push_back( Arg(argv[i]) );
+            }
+        }
+        return k;
+    };
 };
 
 
@@ -282,14 +300,17 @@ class DRecord{
     public:
     uint8_t channel;
     uint8_t type;
+    enum Type{HIT=0, ROC_HEADER=4, TBM_HEADER=10, TRAILER=14, DUMMYHIT=15};
+    uint8_t id;
     uint32_t w1,w2;
     uint32_t data;
-    DRecord(uint8_t ch=0, uint8_t T=0xff, uint32_t D=0x00000000, uint16_t W1=0x000, uint16_t W2=0x0000){
+    DRecord(uint8_t ch=0, uint8_t T=0xff, uint32_t D=0x00000000, uint16_t W1=0x000, uint16_t W2=0x0000, uint8_t Id=0){
         channel = ch;
         type = T;
         data = D;
         w1 = W1;
         w2 = W2;
+        id = Id;
     }
 };
 
@@ -297,7 +318,10 @@ class CmdProc {
 
  
  public:
-  CmdProc(){init();};
+
+  static bool fStopWhateverYouAreDoing;
+
+  CmdProc(){init(); fStopWhateverYouAreDoing=false; };
   CmdProc(PixTestCmd *pixtest){init(); master = pixtest; };
   CmdProc( CmdProc* p);
   ~CmdProc();
@@ -308,7 +332,7 @@ class CmdProc {
   int exec(string s);
   int exec(const char* p){ return exec(string(p));}
 
-  bool process(Keyword, Target, bool );
+  bool process(Keyword, Target, bool, int index=0 );
   bool setDefaultTarget( Target t){ defaultTarget=t; return true; }
 
   pxar::pxarCore * fApi;
@@ -337,24 +361,44 @@ class CmdProc {
   vector<pair<string,uint8_t> > fSigdelaysSetup;
   bool fPgRunning;
   
-  int fDeser400XOR1;
-  int fDeser400XOR2;
+  //int fDeser400XOR1;
+  //int fDeser400XOR2;
   int fDeser400XOR1sum[8];  // count transitions at the 8 phases
   int fDeser400XOR2sum[8];
   int fDeser400err;
   static int fPrerun;
   static bool fFW35;  // for fw<=3.5, to be removed
+  
 
    // xor and error counting per daq channel, supposed to replace 
    // the global counting variables above at some point
-   static const size_t nDaqChannel=8;
-   unsigned int fDeser400XOR[nDaqChannel];
-   unsigned int fDeser400SymbolErrors[nDaqChannel];
-   unsigned int fDeser400PhaseErrors[nDaqChannel];
-   unsigned int fDeser400XORChanges[nDaqChannel];
-   unsigned int fRocReadBackErrors[nDaqChannel];
-   unsigned int fNTBMHeader[nDaqChannel];
+   static const size_t nDaqChannelMax=8;
+   unsigned int fDeser400XOR[nDaqChannelMax];
+   unsigned int fDeser400SymbolErrors[nDaqChannelMax];
+   unsigned int fDeser400PhaseErrors[nDaqChannelMax];
+   unsigned int fDeser400XORChanges[nDaqChannelMax];
+   unsigned int fRocReadBackErrors[nDaqChannelMax];
+   unsigned int fNTBMHeader[nDaqChannelMax];
+   // new with fw4.6
+   unsigned int fDeser400_frame_error[nDaqChannelMax];
+   unsigned int fDeser400_code_error[nDaqChannelMax];
+   unsigned int fDeser400_idle_error[nDaqChannelMax];
+   unsigned int fDeser400_trailer_error[nDaqChannelMax];
+   
    uint16_t fRocHeaderData[17];
+   
+   // readout configuration
+   bool layer1(){return false;};
+   bool tbm08(){ return fApi->_dut->getTbmType()=="tbm08c"; };
+   bool tbmWithDummyHits(){ return !tbm08(); }
+   unsigned int fnDaqChannel;// filled in setApi
+   unsigned int fnRocPerChannel;// filled in setApi
+   vector<unsigned int> fDaqChannelRocIdOffset;  // filled in setApi
+   int rocIdFromReadoutPosition(unsigned int daqChannel, unsigned int roc){
+       return fDaqChannelRocIdOffset[daqChannel]+roc;
+   }
+  
+  
   
   bool fIgnoreReadbackErrors;
   bool verbose;
@@ -372,6 +416,7 @@ class CmdProc {
   int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
   int test_timing(int nloop, int d160, int d400, int rocdelay=-1, int htdelay=0, int tokdelay=0);
   int find_timing(int npass=0);
+  int find_timing2();
   bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
   bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
 
@@ -381,9 +426,12 @@ class CmdProc {
   int levelscan();
   
   int countHits();
+  vector<int> countHits( vector<DRecord> data, size_t nroc=16);
   int countErrors(unsigned int ntrig=1, int ftrigkhz=0, int nroc_expected=-1, bool setup=true);
   int countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int nroc);
   int printData(vector<uint16_t> buf, int level, unsigned int nheader=0);
+  int dumpBuffer(vector<uint16_t> buf, ofstream & fout, int level=0);
+  
   int rawRocReadback(uint8_t  signal, std::vector<uint16_t> &);
   int readRocsAnalog(uint8_t  signal, double scale, std::string units);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
@@ -392,10 +440,17 @@ class CmdProc {
   int restoreDaq(int verbosity=0);
   int runDaq(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0, bool setup=true);
   int runDaq(int ntrig, int ftrigkhz, int verbosity=0);
+  int runDaqRandom(int ntrig, int ftrigkhz, int verbosity=0);
+  int runDaqRandom(vector<uint16_t> & buf, vector<DRecord> & data, int ntrig, int ftrigkhz, int verbosity=0);
+  int maskHotPixels(int ntrig, int ftrigkHz, int multiplier=2, float percentile=0.9);
+
   int daqStatus();
+  int resetDaqStatus();
   int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
-  int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1);
+  int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1, bool resetStats=true);
   int pixDecodeRaw(int, int level=1);
+  int pixDecodeRaw(int raw, uint8_t & col, uint8_t & row, uint8_t & ph);
+
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
   
@@ -413,6 +468,9 @@ class CmdProc {
   int tb(Keyword);
   int tbm(Keyword, int cores=2);
   int roc(Keyword, int rocid);
+  
+  void stop(bool force=true);
+  bool stopped();
 
   
 };

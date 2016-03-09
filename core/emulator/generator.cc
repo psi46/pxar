@@ -82,7 +82,8 @@ namespace pxar {
     // For every ROC configured, add one noise hit:
     for(size_t roc = 0; roc < nroc; roc++) {
       // Add a ROC header:
-      if(tbm != TBM_NONE) data.push_back(0x47f8);
+      if(tbm == TBM_EMU) data.push_back(0x47f8);
+      else if(tbm != TBM_NONE) data.push_back(0x4001);
       else data.push_back(0x07f8);
 
       if(!empty) {
@@ -91,14 +92,14 @@ namespace pxar {
 	if(noise) px = getNoiseHit(roc,col,row);
 	else px = getTriggeredHit(roc,col,row,flags);
       
-	data.push_back(0x2000 | ((px.encodeLinear() >> 12) & 0x0fff));
-	data.push_back(0x1000 | (px.encodeLinear() & 0x0fff));
+	data.push_back(0x0000 | ((px.encode() >> 12) & 0x0fff));
+	data.push_back(0x2000 | (px.encode() & 0x0fff));
 
 	// If the full chip is unmasked, add some noise hits:
 	if((flags&FLAG_FORCE_UNMASKED) != 0 && (rand()%4) == 0) {
 	  px = getNoiseHit(roc,col,row);
-	  data.push_back(0x2000 | ((px.encodeLinear() >> 12) & 0x0fff));
-	  data.push_back(0x1000 | (px.encodeLinear() & 0x0fff));
+	  data.push_back(0x0000 | ((px.encode() >> 12) & 0x0fff));
+	  data.push_back(0x2000 | (px.encode() & 0x0fff));
 	}
       }
     }

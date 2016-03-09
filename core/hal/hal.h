@@ -120,7 +120,7 @@ namespace pxar {
 
     /** Set a register on a specific TBM at hubid
      */
-    bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue);
+    bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush = true);
 
     /** Set all registers on a specific TBM tbmId
      *  registers are provided as map of uint8_t,uint8_t pairs with Reg Id and value.
@@ -170,6 +170,14 @@ namespace pxar {
     /** Selects "signal" as output for the DTB probe channel D2 (digital) 
      */
     void SignalProbeD2(uint8_t signal);
+
+    /** Selects DESER400 "signal" as output for the DTB probe channel D2 (digital) 
+     */
+    void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
+
+    /** Selects DESER400 "signal" as output for the DTB probe channel D2 (digital) 
+     */
+    void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
 
     /** Selects "signal" as output for the DTB probe channel A1 (analog) 
      */
@@ -307,6 +315,9 @@ namespace pxar {
      */
     void daqTriggerSingleSignal(uint8_t signal);
 
+    void daqTriggerGenRandom(uint32_t rate);
+    void daqTriggerGenPeriodic(uint32_t period);
+    
     /** Firing the pattern generator nTrig times with the programmed patterns
      */
     void daqTrigger(uint32_t nTrig, uint16_t period);
@@ -318,6 +329,10 @@ namespace pxar {
     /** Halt the pattern generator loop - no more triggers
      */
     void daqTriggerLoopHalt();
+
+    /** Activating the external trigger input of the pattern generator
+     */
+    void daqTriggerPgExtern();
 
     /** Stopping the current DAQ session. This is not resetting the data buffers.
      *  All DAQ channels are stopped.
@@ -356,6 +371,11 @@ namespace pxar {
      *  one vector of uint16_t radback values for every ROC in the readout chain.
      */
     std::vector<std::vector<uint16_t> > daqReadback();
+
+    /** Return all XOR sum values for the selected channel. Return format is a vector containing
+     *  all samples XOR sums for the respective DESER400 channel.
+     */
+    std::vector<uint8_t> daqXORsum(uint8_t channel);
 
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */
