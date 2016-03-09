@@ -518,6 +518,9 @@ if ($opt_m) {
 }
     print FH <<"EOF";
 
+guiX 0
+guiY 0
+
 probeA1 sdata1
 probeA2 sdata2
 probeD1 clk

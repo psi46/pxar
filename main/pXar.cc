@@ -351,11 +351,24 @@ int main(int argc, char *argv[]){
 
 
 // ----------------------------------------------------------------------
-void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
+void runGui(PixSetup &a, int argc, char *argv[]) {
+
+  int x(a.getConfigParameters()->getGuiX()), y(a.getConfigParameters()->getGuiY());
+  bool changed(false);
+  for (int i = 0; i < argc; i++){
+    if (!strcmp(argv[i], "-x")) {x = atoi(argv[++i]); changed = true; }
+    if (!strcmp(argv[i], "-y")) {y = atoi(argv[++i]); changed = true; }
+  }
+
+  if (changed) {
+    a.getConfigParameters()->setGuiX(x);
+    a.getConfigParameters()->setGuiY(y);
+    a.getConfigParameters()->writeConfigParameterFile();
+  }
 
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
-  PixGui gui(gClient->GetRoot(), 1300, 800, &a);
+  PixGui gui(gClient->GetRoot(), x, y, &a);
   theApp.Run();
   LOG(logINFO) << "closing down 0 ";
 }

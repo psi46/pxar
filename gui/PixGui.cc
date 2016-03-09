@@ -355,6 +355,8 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   AddFrame(fH2, new TGLayoutHints(kLHintsBottom | kLHintsExpandY | kLHintsExpandX));
 
   Resize(GetDefaultSize());
+
+  MoveResize(fWidth, fHeight, GetDefaultWidth(), GetDefaultHeight());
   MapSubwindows();
   MapWindow();
 
