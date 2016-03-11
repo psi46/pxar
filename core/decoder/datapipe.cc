@@ -403,7 +403,7 @@ namespace pxar {
     bool linearAddress = ( GetDeviceType() == ROC_PROC600 ? true : false );
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
-    if(sample->GetSize()-GetTokenChainLength() > 0) {
+    if(static_cast<int>(sample->GetSize())-GetTokenChainLength() > 0) {
       roc_Event.pixels.reserve((sample->GetSize()-GetTokenChainLength())/2);
     }
 
