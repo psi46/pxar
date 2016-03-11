@@ -325,7 +325,7 @@ namespace pxar {
     int16_t roc_n = -1;
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
-    if (sample->GetSize() - 3*GetTokenChainLength() > 0) {
+    if (static_cast<int>(sample->GetSize()) - 3*GetTokenChainLength() > 0) {
       roc_Event.pixels.reserve((sample->GetSize() - 3*GetTokenChainLength())/6);
     }
 
