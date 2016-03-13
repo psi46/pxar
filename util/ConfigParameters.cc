@@ -41,7 +41,7 @@ void ConfigParameters::initialize() {
   fnRocs = 16;
   fnTbms = 1; 
   fnModules = 1;
-  fHubIds.push_back(31);
+  //fHubId = 31; FIX (?): default hubId needed?
   fI2cAddresses.clear(); 
 
   fHvOn = true;
