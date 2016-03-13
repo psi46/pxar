@@ -9,6 +9,7 @@ SET(LIB_SOURCE_FILES
   "api/dut.cc"
   # Decoder modules
   "decoder/datapipe.cc"
+  "decoder/datasource_evt.cc"
   # HAL
   "hal/hal.cc"
   "hal/datasource_dtb.cc"

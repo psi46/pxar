@@ -17,6 +17,10 @@ FLAG_DISABLE_DACCAL = int(_flag_disable_daccal)
 FLAG_NOSORT         = int(_flag_nosort)
 FLAG_CHECK_ORDER    = int(_flag_check_order)
 FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
+FLAG_DUMP_FLAWED_EVENTS = int(_flag_dump_flawed_events)
+FLAG_DISABLE_READBACK_COLLECTION = int(_flag_disable_readback_collection)
+FLAG_DISABLE_EVENTID_CHECK = int(_flag_disable_eventid_check)
+FLAG_ENABLE_XORSUM_LOGGING = int(_flag_enable_xorsum_logging)
 
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
@@ -61,6 +65,15 @@ cdef class PixelConfig:
             self.thisptr = new pixelConfig()
     def __dealloc__(self):
         del self.thisptr
+    def __str__(self):
+        s = "ROC " + str(self.roc) + " [" + str(self.column) + "," + str(self.row) + "] Trim: " + str(self.trim) + " Mask: "
+        s += "True" if self.mask else "False"
+        return s
+    def __richcmp__(self, other not None, int op):
+        if op == 2: # ==
+            return (self.roc == other.roc and self.column == other.column and self.row == other.row)
+        elif op == 3: # !=
+            return (self.roc != other.roc or self.column != other.column or self.row != other.row)
     cdef fill(self, pixelConfig p):
         self.thisptr.setRoc(p.roc())
         self.thisptr.setColumn(p.column())
@@ -135,6 +148,22 @@ cdef class Statistics:
         return "Decoding statistics..."
     cdef c_clone(self, statistics s):
         self.thisobj = s
+    property dump:
+        def __get__(self): self.thisobj.dump()
+    property errors:
+        def __get__(self): return self.thisobj.errors()
+    property info_words_read:
+        def __get__(self): return self.thisobj.info_words_read()
+    property errors_event:
+        def __get__(self): return self.thisobj.errors_event()
+    property errors_tbm:
+        def __get__(self): return self.thisobj.errors_tbm()
+    property errors_roc:
+        def __get__(self): return self.thisobj.errors_roc()
+    property errors_pixel:
+        def __get__(self): return self.thisobj.errors_pixel()
+
+        
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
@@ -176,6 +205,12 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
+    property hasNoTokenPass:
+        def __get__(self): return self.thisptr.hasNoTokenPass()
+    property triggerCount:
+        def __get__(self): return self.thisptr.triggerCount()
+    property stackCount:
+        def __get__(self): return self.thisptr.stackCount()
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -235,10 +270,10 @@ cdef class PyPxarCore:
         for item in enumerate(pg_setup):
             pgs.push_back(pair[string, uint8_t ](item[1][0],item[1][1]))
         self.thisptr.setPatternGenerator(pgs)
-    def initDUT(self, hubId, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2C = None):
+    def initDUT(self, hubids, tbmtype, tbmDACs, roctype, rocDACs, rocPixels, rocI2C = None):
         """ Initializer method for the DUT (attached devices)
         Parameters:
-	hubId (int)
+	hubId (int vector)
         tbmtype (string)
         tbmDACs (list of dictionaries (string,int), one for each TBM)
         roctype (string)
@@ -246,11 +281,18 @@ cdef class PyPxarCore:
         rocPixels (list of list of pixelConfigs, one list for each ROC)
         rocI2C (list of I2C addresses of the ROCs)
         """
+        cdef vector[uint8_t] hubs
         cdef vector[vector[pair[string,uint8_t]]] td
         cdef vector[vector[pair[string,uint8_t]]] rd
         cdef vector[vector[pixelConfig]] rpcs
         cdef PixelConfig pc
         cdef vector[uint8_t] i2c
+
+        if isinstance(hubids,list):
+            for i in hubids:
+                hubs.push_back(i)
+        else:
+            hubs.push_back(hubids)
 
         for idx, tbmDAC in enumerate(tbmDACs):
             td.push_back(vector[pair[string,uint8_t]]())
@@ -268,9 +310,9 @@ cdef class PyPxarCore:
         if rocI2C is not None:
             for i in rocI2C:
                 i2c.push_back(i)
-            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs,i2c)
+            return self.thisptr.initDUT(hubs, tbmtype, td, roctype,rd,rpcs,i2c)
         else:
-            return self.thisptr.initDUT(hubId, tbmtype, td, roctype,rd,rpcs)
+            return self.thisptr.initDUT(hubs, tbmtype, td, roctype,rd,rpcs)
 
     def getVersion(self):
         return self.thisptr.getVersion()
@@ -281,7 +323,14 @@ cdef class PyPxarCore:
             self.thisptr._dut.testAllPixels(enable)
 
     def getTbmDACs(self, int tbmid):
-        return self.thisptr._dut.getTbmDACs(tbmid)
+        r = self.thisptr._dut.getTbmDACs(tbmid)
+        return {tup.first: tup.second for tup in r}
+  
+    def getRocDACs(self, int rocid):
+        r = self.thisptr._dut.getDACs(rocid)
+        return {tup.first: tup.second for tup in r}
+    def getDACs(self, int rocid):
+        return self.getRocDACs(rocid)
   
     def updateTrimBits(self, trimming, int rocid):
         cdef vector[pixelConfig] v
@@ -406,8 +455,8 @@ cdef class PyPxarCore:
         self.thisptr.Poff()
     def Pon(self):
         self.thisptr.Pon()
-    def SignalProbe(self, string probe, string name):
-        return self.thisptr.SignalProbe(probe, name)
+    def SignalProbe(self, string probe, string name, int channel = 0):
+        return self.thisptr.SignalProbe(probe, name, channel)
     def setDAC(self, string dacName, uint8_t dacValue, rocid = None):
         if rocid is None:
             return self.thisptr.setDAC(dacName, dacValue)
@@ -531,14 +580,17 @@ cdef class PyPxarCore:
     def setSignalMode(self, string signal, string mode, uint8_t speed):
         self.thisptr.setSignalMode(signal, mode, speed)
 
+    def daqStart(self, uint16_t flags):
+        return self.thisptr.daqStart(flags)
+
     def daqStart(self):
-        return self.thisptr.daqStart()
+        return self.thisptr.daqStart(0)
 
     def daqStatus(self):
         return self.thisptr.daqStatus()
 
-    def daqTriggerSource(self, string source):
-        return self.thisptr.daqTriggerSource(source)
+    def daqTriggerSource(self, string source, uint32_t period = 0):
+        return self.thisptr.daqTriggerSource(source, period)
 
     def daqSingleSignal(self, string signal):
         return self.thisptr.daqSingleSignal(signal)
@@ -592,13 +644,17 @@ cdef class PyPxarCore:
         r = self.thisptr.daqGetReadback()
         return r
 
+    def daqGetXORsum(self, uint8_t channel):
+        cdef vector[uint8_t] r
+        r = self.thisptr.daqGetXORsum(channel)
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
 
     def getStatistics(self):
         cdef statistics r
         r = self.thisptr.getStatistics()
-        r.dump()
         s = Statistics()
         s.c_clone(r)
         return s
@@ -658,4 +714,17 @@ cdef class PyProbeDictionary:
             names.append(v.at(i))
         return names
 
+cimport triggerdict
+cdef class PyTriggerDictionary:
+    cdef triggerdict.TriggerDictionary *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisptr = triggerdict.getInstance()
+    def __dealloc__(self):
+        self.thisptr = NULL
+    def getAllNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
 

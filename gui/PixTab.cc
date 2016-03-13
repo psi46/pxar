@@ -13,6 +13,7 @@
 #include <TBrowser.h>
 
 #include "PixTab.hh"
+#include "PixUtil.hh"
 #include "log.h"
 
 using namespace std;
@@ -27,6 +28,10 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fBorderN = 2; 
   fBorderL = 10; 
   fBorderT = 1;
+
+  fTriStateColors[0] = kRed;
+  fTriStateColors[1] = 0;
+  fTriStateColors[2] = kGreen;
 
   UInt_t w = fGui->getTabs()->GetWidth(); 
   UInt_t h = fGui->getTabs()->GetHeight(); 
@@ -160,7 +165,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   clear->Connect("Clicked()", "PixTab", this, "clearHistList()");
   hFrame->AddFrame(clear, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
+  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
   hFrame = new TGHorizontalFrame(fV2); 
@@ -205,16 +210,11 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
   
-  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsLeft | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
+  fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
   updateToolTips();
 
-//   fhFrame->MapSubwindows();
-//   fhFrame->Resize(fhFrame->GetDefaultSize());
-//   fhFrame->MapWindow();
-
-  fTabFrame->AddFrame(fhFrame, 
-		      new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
+  fTabFrame->AddFrame(fhFrame, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   fTabFrame->MapSubwindows();
   fTabFrame->Resize(fTabFrame->GetDefaultSize());
   fTabFrame->MapWindow();
@@ -260,8 +260,7 @@ void PixTab::handleButtons(Int_t id) {
     }
 
     case B_DOSTOP: {
-      fTest->runCommand("stop"); 
-      LOG(logDEBUG) << "stopping...and now what???";
+      fTest->stopTest();
       break;
     }
 
@@ -411,13 +410,16 @@ void PixTab::nextHistogram() {
   TH1 *h = fTest->nextHist(); 
   if (h) {
     string option = fTest->getHistOption(h);
-    if (string::npos == option.find("same")) clearCanvas();
-    if (h->InheritsFrom(TH2::Class())) {
-      h->Draw(option.c_str());
+    string lopt = option;     
+    if (string::npos != option.find("tristate")) {
+      PixUtil::replaceAll(lopt, "tristate", ""); 
+      gStyle->SetPalette(3, fTriStateColors); 
     } else {
-      //      cout << "h: " << h->GetName() << " option: " << option << endl;
-      h->Draw(option.c_str());
+      gStyle->SetPalette(1);
     }
+
+    if (string::npos == option.find("same")) clearCanvas();
+    h->Draw(lopt.c_str());
     update(); 
   } else {
     LOG(logDEBUG) << "no previous histogram found ";
@@ -431,13 +433,16 @@ void PixTab::previousHistogram() {
   TH1 *h = fTest->previousHist(); 
   if (h) {
     string option = fTest->getHistOption(h);
-    if (string::npos == option.find("same")) clearCanvas();
-    if (h->InheritsFrom(TH2::Class())) {
-      h->Draw(option.c_str());
+    string lopt = option;     
+    if (string::npos != option.find("tristate")) {
+      PixUtil::replaceAll(lopt, "tristate", ""); 
+      gStyle->SetPalette(3, fTriStateColors); 
     } else {
-      //      cout << "h: " << h->GetName() << " option: " << option << endl;
-      h->Draw(option.c_str());
+      gStyle->SetPalette(1);
     }
+
+    if (string::npos == option.find("same")) clearCanvas();
+    h->Draw(lopt.c_str());
     update(); 
   } else {
     LOG(logDEBUG)  << "no previous histogram found ";
@@ -450,8 +455,16 @@ void PixTab::nextHistogramV() {
   TH1 *h = fTest->nextHistV(); 
   if (h) {
     string option = fTest->getHistOption(h);
+    string lopt = option;     
+    if (string::npos != option.find("tristate")) {
+      PixUtil::replaceAll(lopt, "tristate", ""); 
+      gStyle->SetPalette(3, fTriStateColors); 
+    } else {
+      gStyle->SetPalette(1);
+    }
+
     if (string::npos == option.find("same")) clearCanvas();
-    h->Draw(option.c_str());    
+    h->Draw(lopt.c_str());    
     update(); 
   } else {
     LOG(logDEBUG) << "no next histogram found ";
@@ -465,8 +478,16 @@ void PixTab::previousHistogramV() {
   TH1 *h = fTest->previousHistV(); 
   if (h) {
     string option = fTest->getHistOption(h);
+    string lopt = option;     
+    if (string::npos != option.find("tristate")) {
+      PixUtil::replaceAll(lopt, "tristate", ""); 
+      gStyle->SetPalette(3, fTriStateColors); 
+    } else {
+      gStyle->SetPalette(1);
+    }
+
     if (string::npos == option.find("same")) clearCanvas();
-    h->Draw(option.c_str());
+    h->Draw(lopt.c_str());
     update(); 
   } else {
     LOG(logDEBUG)  << "no previous histogram found ";

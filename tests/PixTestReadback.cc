@@ -204,6 +204,7 @@ bool PixTestReadback::setTrgFrequency(uint8_t TrgTkDel){
   return true;
 }
 
+
 // ----------------------------------------------------------------------
 void PixTestReadback::pgToDefault() {
   fPg_setup.clear();
@@ -293,7 +294,7 @@ void PixTestReadback::FinalCleaning() {
 
 // ----------------------------------------------------------------------
 void PixTestReadback::doTest() {
-  LOG(logINFO) << "PixTestReadback::doTest() start.";
+  bigBanner(Form("PixTestReadback::doTest()"));
   
   CalibrateVd();
   CalibrateVa();
@@ -305,11 +306,12 @@ void PixTestReadback::doTest() {
   }
   
  LOG(logINFO) << "PixTestReadback::doTest() done";
-
+ dutCalibrateOff();
 }
 
 
 void PixTestReadback::CalibrateIa(){
+  banner("PixTestReadback::CalibrateIa()");
   prepareDAQ();
   cacheDacs();
   //readback DAC set to 12 (i.e. Ia)
@@ -554,6 +556,7 @@ double PixTestReadback::getCalibratedIa(unsigned int iroc){
 }
 
 void PixTestReadback::CalibrateVd(){
+  banner("PixTestReadback::CalibrateVd()");
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -713,6 +716,7 @@ void PixTestReadback::CalibrateVd(){
 
 
 void PixTestReadback::readbackVbg(){
+  banner("PixTestReadback::readbackVbg()");
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -795,6 +799,7 @@ void PixTestReadback::readbackVbg(){
 }
 
 vector<double> PixTestReadback::getCalibratedVbg(){
+  banner("PixTestReadback::getCalibratedVbg()");
   vector<double> calVbg(fRbVbg.size(), 0.);
   string name="";
   if(fCalwVd){
@@ -845,6 +850,7 @@ vector<double> PixTestReadback::getCalibratedVbg(){
 }
 
 void PixTestReadback::CalibrateVa(){
+  banner("PixTestReadback::CalibrateVa()");
   prepareDAQ();
   cacheDacs();
   cachePowerSettings();
@@ -1015,22 +1021,9 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   if (!dac.compare("vana")){
     LOG(logDEBUG)<<"Wrong daqReadback function called!!!";
   }
-  else if (!dac.compare("vd")){
-    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
-    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
-      if( pow_it->first.compare("vd") == 0){
-	pow_it->second = vana;
-      }
-    }
-    fApi->setTestboardPower(powerset);
-  }
-  else if (!dac.compare("va")){
-    vector<pair<string,double > > powerset = fPixSetup->getConfigParameters()->getTbPowerSettings();
-    for(std::vector<std::pair<std::string,double> >::iterator pow_it=powerset.begin(); pow_it!=powerset.end(); pow_it++){
-      if( pow_it->first.compare("va") == 0){
-	pow_it->second = vana;
-      }
-    }
+  else {
+    vector<pair<string,double > > powerset;
+    powerset.push_back(std::make_pair(dac,vana));
     fApi->setTestboardPower(powerset);
   }
 
@@ -1043,7 +1036,10 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
 
   return rb_val;
@@ -1070,7 +1066,10 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, int8
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
 
   return rb_val;
@@ -1096,7 +1095,10 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, unsi
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
   
   return rb_val;
@@ -1115,7 +1117,10 @@ std::vector<uint8_t> PixTestReadback::daqReadbackIa(){
   std::vector<uint8_t> rb_val;
 
   for(uint8_t i=0; i<rb.size(); i++){
-    rb_val.push_back( rb[i][ rb[i].size()-1 ]&0xff ); // read the last (size-1) readback word read out for ROC i
+    if(!rb.at(i).empty()) {
+      // read the last readback word read out for ROC i
+      rb_val.push_back( rb.at(i).back()&0xff ); 
+    }
   }
  
   return rb_val;
@@ -1272,21 +1277,16 @@ void PixTestReadback::prepareDAQ(){
 
   //Set the ClockStretch
   fApi->setClockStretch(0, 0, 0); //Stretch after trigger, 0 delay
-  //only adding delays to pg
-  setTrgFrequency(20);
-  
+
   // FIXME - issuing a ROC reset should not be necessary anymore since
   // pxarCore automatically resets the ROC when WBC is changed.
   fApi->daqSingleSignal("resetroc");
-  LOG(logINFO) << "PixTestReadback::RES sent once ";
+  LOG(logDEBUG) << "PixTestReadback::RES sent once ";
 
   //adding triggers to pg
   PreparePG();
 
-//  for(std::vector<std::pair<std::string, uint8_t> >::iterator ipg = fPg_setup.begin(); ipg != fPg_setup.end(); ipg++){
-//    LOG(logDEBUG)<<"pg settings "<<ipg->first<<" "<<(int)ipg->second;
-//  }
-  //Set pattern generator:
+  //set Pattern Generator
   fApi->setPatternGenerator(fPg_setup);
  
 }
@@ -1309,9 +1309,54 @@ void PixTestReadback::doDAQ(){
 
 void PixTestReadback::PreparePG(){
 
-  int nTbms = fApi->_dut->getNTbms();
+  LOG(logDEBUG)<<"begin PreparePG()";
 
+  //adding delays to the pattern generator, assuming a trigger frequency of 100 kHz, giving a pattern length of 400.
+  int nDel = 0;
+  double  triggerFreq=100.;
+  double period_ns = 1 / (double)triggerFreq * 1000000; // trigger frequency in kHz.
+  uint16_t Period = (uint16_t)period_ns / 25;
+  uint16_t ClkDelays = Period; // subtracting trigger token delay.
+
+  //for ROCs: subtract "resetroc"
+  int nTbms = fApi->_dut->getNTbms();
   vector<pair<string, uint8_t> > pgtmp = fPixSetup->getConfigParameters()->getTbPgSettings();
+  
+  //for debugging: showing the pattern to be generated
+  LOG(logDEBUG) << "********** The Pattern Generator will be set as following:";
+  if (1) for (unsigned int i = 0; i < pgtmp.size(); ++i){
+    LOG(logDEBUG) << "********** "<<pgtmp[i].first << ": " << (int)pgtmp[i].second;
+  }
+
+  for (unsigned i = 0; i < pgtmp.size(); ++i) {
+    if(nTbms==0){  
+      if (string::npos != pgtmp[i].first.find("resetroc")){
+        LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 3) from "<<ClkDelays;
+        ClkDelays -= pgtmp[i].second+3;
+      }
+    }  
+    if (string::npos != pgtmp[i].first.find("trigger")){
+      LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 2) from "<<ClkDelays;
+      ClkDelays -= pgtmp[i].second+2;
+    }
+    if (string::npos != pgtmp[i].first.find("token")){
+    LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 1) from "<<ClkDelays;
+    ClkDelays -= pgtmp[i].second+1;
+    }
+      
+  }
+
+  //filling the rest of the clock cycles with "delay", taking account, that each delay needs one Clkcycle to be inititated.
+  while (ClkDelays>256){ //Considering the additional Clkcycle to perform the delay.
+    fPg_setup.push_back(make_pair("delay", 255));
+    ClkDelays = ClkDelays - 256;
+    nDel ++;
+  }
+  if(ClkDelays>1){
+    fPg_setup.push_back(make_pair("delay", ClkDelays-1));
+  }
+
+  //remove "resetroc" (if module), "resettbm" and "calibrate" from fPg_setup.
   for (unsigned i = 0; i < pgtmp.size(); ++i) {
     //remove roc resets (not needed) if this is a module
     if(nTbms>0){
@@ -1321,7 +1366,24 @@ void PixTestReadback::PreparePG(){
     if (string::npos != pgtmp[i].first.find("calibrate")) continue;
     fPg_setup.push_back(pgtmp[i]);
   }
-  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
   
-  fApi->setPatternGenerator(fPg_setup);
+  //for debugging: showing the pattern to be generated
+  LOG(logDEBUG) << "********** The Pattern Generator will be set as following:";
+  if (1) for (unsigned int i = 0; i < fPg_setup.size(); ++i){
+    LOG(logDEBUG) << "********** "<<fPg_setup[i].first << ": " << (int)fPg_setup[i].second;
+  }
+
+  //Calculate the needed period, which is the sum of delays plus one clock cycle for each of the commands (3 cycles for "resetroc" and 2 cycles for "trigger")
+  LOG(logDEBUG) << "********** Calculating the Pattern Period:";
+  fParPeriod=0;
+  for(std::vector<std::pair<std::string,uint8_t> >::iterator it = fPg_setup.begin(); it != fPg_setup.end(); ++it){
+     if((string)(*it).first==("resetroc")){fParPeriod += (*it).second + 3; LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 3";}
+     if((string)(*it).first==("trigger")){fParPeriod += (*it).second + 2;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 2";}
+     if((string)(*it).first==("trigger;sync")){fParPeriod += (*it).second + 2;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 2";}
+     if((string)(*it).first==("delay")){fParPeriod += (*it).second + 1;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 1";}
+     if((string)(*it).first==("token")){fParPeriod += (*it).second + 1;LOG(logDEBUG)<<"Adding "<<(*it).first<<": "<<(uint16_t)(*it).second<<" + 1";}
+  }
+
+  //for debugging: showing the calculated period to be sent to the PG.
+  LOG(logDEBUG) << "********** The pattern period is "<<fParPeriod;
 }

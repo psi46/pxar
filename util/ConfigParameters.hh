@@ -92,7 +92,12 @@ public:
   std::vector<std::pair<std::string, uint8_t> > readDacFile(std::string fname);
   std::vector<std::pair<std::string, double> > readReadbackFile(std::string fname);
   void readTrimFile(std::string fname, std::vector<pxar::pixelConfig>&);
+
   std::vector<std::vector<std::pair<int, int> > > readMaskFile(std::string fname);
+  std::vector<std::vector<std::pair<int, int> > > getMaskedPixels() {return fMaskedPixels;} 
+  int nMaskedPixels() {return fMaskedPixels.size();} 
+  bool isMaskedPixel(int roc, int col, int row); 
+
   std::vector<std::vector<pxar::pixelConfig> > getRocPixelConfig();
   std::vector<pxar::pixelConfig> getRocPixelConfig(int i);
   bool customI2cAddresses() {return fI2cAddresses.size() > 0;} 
@@ -151,6 +156,12 @@ public:
   void readNrocs(std::string line);
   void readHubIds(std::string line);
 
+  int getGuiX() {return fGuiX;}
+  int getGuiY() {return fGuiY;}
+
+  void setGuiX(int x) {fGuiX = x;}
+  void setGuiY(int x) {fGuiY = x;}
+
 private:
 
   bool fReadTbParameters, fReadTbmParameters, fReadDacParameters, fReadRocPixelConfig, fReadReadbackCal;
@@ -164,9 +175,11 @@ private:
 
   std::vector<std::vector<gainPedestalParameters> > fGainPedestalParameters;
 
-  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules;//, fHubId, fHubId0, fHubId1;
+  std::vector<std::vector<std::pair<int, int> > > fMaskedPixels;
+
+  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
   int fHalfModule;
-  std::vector<uint8_t> fI2cAddresses, fHubIds; 
+  std::vector<uint8_t> fI2cAddresses, fHubIds;
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;
@@ -188,6 +201,8 @@ private:
   std::string fDebugFileName;
   std::string fGainPedestalFileName, fGainPedestalParameterFileName; 
   std::string fReadbackCalFileName;
+
+  int fGuiX, fGuiY;
 
   static ConfigParameters* fInstance;
 

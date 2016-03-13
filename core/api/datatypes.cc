@@ -34,6 +34,32 @@ namespace pxar {
     }
   }
 
+  void pixel::decodeLinear(uint32_t raw) {
+    // Get the pulse height:
+    setValue(static_cast<double>((raw & 0x0f) + ((raw >> 1) & 0xf0)));
+    if((raw & 0x10) > 0) {
+      LOG(logDEBUGAPI) << "invalid pulse-height fill bit from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      throw DataInvalidPulseheightError("Error decoding pixel raw value");
+    }
+
+    // Perform checks on the fill bits:
+    if((raw & 0x1000) > 0 || (raw & 0x100000) > 0) {
+      LOG(logDEBUGAPI) << "invalid address fill bit from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      throw DataInvalidAddressError("Error decoding pixel raw value");
+    }
+
+    // Decode the pixel address
+    _column = ((raw >> 17) & 0x07) + ((raw >> 18) & 0x38);
+    _row = ((raw >> 9) & 0x07) + ((raw >> 10) & 0x78);
+    
+    // Perform range checks:
+    if(_row >= ROC_NUMROWS || _column >= ROC_NUMCOLS) {
+      LOG(logDEBUGAPI) << "Invalid pixel from raw value of "<< std::hex << raw << std::dec << ": " << *this;
+      if(_row == ROC_NUMROWS) throw DataCorruptBufferError("Error decoding pixel raw value");
+      else throw DataInvalidAddressError("Error decoding pixel raw value");
+    }
+  }
+
   uint8_t pixel::translateLevel(uint16_t x, int16_t level0, int16_t level1, int16_t levelS) {
     int16_t y = expandSign(x) - level0;
     if (y >= 0) y += levelS; else y -= levelS;
@@ -100,6 +126,23 @@ namespace pxar {
     return (raw & 0x00ffffff);
   }
 
+  uint32_t pixel::encodeLinear() {
+    uint32_t raw = 0;
+    // Set the pulse height:
+    raw = ((static_cast<int>(value()) & 0xf0) << 1) + (static_cast<int>(value()) & 0xf);
+
+    // Encode the pixel address
+    raw |= ((_column & 0x07) << 17) | ((_column & 0x38) << 18);
+    raw |= ((_row & 0x07) << 9) | ((_row & 0x78) << 10);
+
+    LOG(logDEBUGPIPES) << "Pix  " << static_cast<int>(_column) << "|" 
+		       << static_cast<int>(_row) << " = "
+		       << (raw & 0x00ffffff);
+
+    // Return the 24 bits belonging to the pixel:
+    return (raw & 0x00ffffff);
+  }
+
   void Event::printHeader() {
     LOG(logINFO) << "Header content: 0x" << std::hex << header << std::dec;
     LOG(logINFO) << "\t Event ID \t" << static_cast<int>(this->triggerCount());
@@ -138,6 +181,9 @@ namespace pxar {
     LOG(logINFO) << "\t overflow:                 " << this->errors_event_overflow();
     LOG(logINFO) << "\t invalid 5bit words:       " << this->errors_event_invalid_words();
     LOG(logINFO) << "\t invalid XOR eye diagram:  " << this->errors_event_invalid_xor();
+    LOG(logINFO) << "\t frame (failed synchr.):   " << this->errors_event_frame();
+    LOG(logINFO) << "\t idle data (no TBM trl):   " << this->errors_event_idledata();
+    LOG(logINFO) << "\t no data (only TBM hdr):   " << this->errors_event_nodata();
     LOG(logINFO) << "  TBM errors: \t\t           " << this->errors_tbm();
     LOG(logINFO) << "\t flawed TBM headers:       " << this->errors_tbm_header();
     LOG(logINFO) << "\t flawed TBM trailers:      " << this->errors_tbm_trailer();
@@ -163,6 +209,9 @@ namespace pxar {
     m_errors_event_overflow = 0;
     m_errors_event_invalid_words = 0;
     m_errors_event_invalid_xor = 0;
+    m_errors_event_frame = 0;
+    m_errors_event_idledata = 0;
+    m_errors_event_nodata = 0;
 
     m_errors_tbm_header = 0;
     m_errors_tbm_trailer = 0;
@@ -177,36 +226,17 @@ namespace pxar {
     m_errors_pixel_buffer_corrupt = 0;
   }
 
-  statistics& operator+=(statistics &lhs, const statistics &rhs) {
-    // Informational bits:
-    lhs.m_info_words_read += rhs.m_info_words_read;
-    lhs.m_info_events_empty += rhs.m_info_events_empty;
-    lhs.m_info_events_valid += rhs.m_info_events_valid;
-    lhs.m_info_pixels_valid += rhs.m_info_pixels_valid;
+  tbmConfig::tbmConfig(uint8_t tbmtype) : dacs(), type(tbmtype), hubid(31), core(0xE0), tokenchains(), enable(true) {
 
-    // Event errors:
-    lhs.m_errors_event_start += rhs.m_errors_event_start;
-    lhs.m_errors_event_stop += rhs.m_errors_event_stop;
-    lhs.m_errors_event_overflow += rhs.m_errors_event_overflow;
-    lhs.m_errors_event_invalid_words += rhs.m_errors_event_invalid_words;
-    lhs.m_errors_event_invalid_xor += rhs.m_errors_event_invalid_xor;
-
-    // TBM errors:
-    lhs.m_errors_tbm_header += rhs.m_errors_tbm_header;
-    lhs.m_errors_tbm_trailer += rhs.m_errors_tbm_trailer;
-    lhs.m_errors_tbm_eventid_mismatch += rhs.m_errors_tbm_eventid_mismatch;
-
-    // ROC errors:
-    lhs.m_errors_roc_missing += rhs.m_errors_roc_missing;
-    lhs.m_errors_roc_readback += rhs.m_errors_roc_readback;
-
-    // Pixel decoding errors:
-    lhs.m_errors_pixel_incomplete += rhs.m_errors_pixel_incomplete;
-    lhs.m_errors_pixel_address += rhs.m_errors_pixel_address;
-    lhs.m_errors_pixel_pulseheight += rhs.m_errors_pixel_pulseheight;
-    lhs.m_errors_pixel_buffer_corrupt += rhs.m_errors_pixel_buffer_corrupt;
-
-    return lhs;
+    if(tbmtype == 0x0) {
+      LOG(logCRITICAL) << "Invalid TBM type \"" << tbmtype << "\"";
+      throw InvalidConfig("Invalid TBM type.");
+    }
+    
+    // Standard setup for token chain lengths:
+    // Four ROCs per stream for dual-400MHz, eight ROCs for single-400MHz readout:
+    if(type >= TBM_09) { for(size_t i = 0; i < 2; i++) tokenchains.push_back(4); }
+    else if(type >= TBM_08) { tokenchains.push_back(8); }
   }
 
 } // namespace pxar

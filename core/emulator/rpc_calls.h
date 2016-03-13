@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <map>
+
 #include "log.h"
 #include "constants.h"
 
@@ -23,15 +25,23 @@ class CTestboard {
   std::vector<uint8_t> roci2c;
   uint8_t tbmtype;
   uint16_t trigger;
+
+  uint32_t eventcounter;
   
   std::vector<std::vector<uint16_t> > daq_buffer; // Data buffers
   std::vector<bool> daq_status; // Channel status
   std::vector<size_t> daq_event; // Event counters
-  
+
+  std::vector<uint16_t> pg_setup; // pattern generator
+  // hub map of core maps of registers
+  std::map<uint8_t,std::map<uint8_t, std::map<uint8_t, uint8_t> > > tbm_registers;
+  uint8_t active_tbm;
+
  public:
  CTestboard() : vd(0), va(0), id(0), ia(0),
     nrocs_loops(0), roci2c(), tbmtype(TBM_NONE),trigger(TRG_SEL_PG_DIR),
-    daq_buffer(), daq_status(), daq_event()
+    eventcounter(0),
+    daq_buffer(), daq_status(), daq_event(), tbm_registers(), active_tbm(0)
   {
     // Initialize all available DAQ channels:
     for(size_t i = 0; i < DTB_DAQ_CHANNELS; i++) {
@@ -140,6 +150,8 @@ class CTestboard {
   void SignalProbeD1(uint8_t signal);
   void SignalProbeD2(uint8_t signal);
 
+  void SignalProbeDeserD1(uint8_t deser, uint8_t signal);
+  void SignalProbeDeserD2(uint8_t deser, uint8_t signal);
 
   // --- analog signal probe ----------------------------------------------
   void SignalProbeA1(uint8_t signal);
@@ -199,6 +211,7 @@ class CTestboard {
   void Daq_Close(uint8_t channel);
   void Daq_Start(uint8_t channel);
   void Daq_Stop(uint8_t channel);
+  void Daq_MemReset(uint8_t channel);
   uint32_t Daq_GetSize(uint8_t channel);
   uint8_t Daq_FillLevel(uint8_t channel);
   uint8_t Daq_FillLevel();
@@ -211,9 +224,22 @@ class CTestboard {
   void Daq_Select_Deser400();
   void Daq_Deser400_Reset(uint8_t reset);
   void Daq_Deser400_OldFormat(bool old);
+  void Deser400_GateRun(uint8_t width, uint8_t period);
   void Daq_DeselectAll();
 	
   void Daq_Select_Datagenerator(uint16_t startvalue);
+
+  // --- DESER400 configuration -------------------------------------------
+  void Deser400_Enable(uint8_t deser);
+  void Deser400_Disable(uint8_t deser);
+  void Deser400_DisableAll();
+
+  void Deser400_SetPhase(uint8_t deser, uint8_t phase);
+  void Deser400_SetPhaseAuto(uint8_t deser);
+  void Deser400_SetPhaseAutoAll();
+
+  uint8_t Deser400_GetXor(uint8_t deser);
+  uint8_t Deser400_GetPhase(uint8_t deser);
 
 
   // --- ROC/module Communication -----------------------------------------
@@ -254,18 +280,22 @@ class CTestboard {
   void tbm_Enable(bool on);
   void tbm_Addr(uint8_t hub, uint8_t port);
   void mod_Addr(uint8_t hub);
+  void mod_Addr(uint8_t hub0, uint8_t hub1);
   void tbm_Set(uint8_t reg, uint8_t value);
   bool tbm_Get(uint8_t reg, uint8_t &value);
   bool tbm_GetRaw(uint8_t reg, uint32_t &value);
 
   int16_t TrimChip(std::vector<int16_t> &trim);
 
+  bool notokenpass(uint8_t tbmtype, uint8_t channel);
+  
   // == Trigger Loop functions for Host-side DAQ ROC/Module testing ==============
   // Exported RPC-Calls for the Trimbit storage setup:
   bool SetI2CAddresses(std::vector<uint8_t> &roc_i2c);
   bool SetTrimValues(uint8_t roc_i2c, std::vector<uint8_t> &trimvalues);
 	
   void SetLoopTriggerDelay(uint16_t delay);
+  void SetLoopTrimDelay(uint16_t delay);
   void LoopInterruptReset();
 
   // Exported RPC-Calls for Maps

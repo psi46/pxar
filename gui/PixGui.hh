@@ -12,6 +12,7 @@ typedef char int8_t;
 #include <iostream>
 #include <string>
 
+#include <TGComboBox.h>
 #include <TGFrame.h>
 #include <TGTab.h>
 #include <TGButton.h>
@@ -93,7 +94,7 @@ private:
   TTimer        	*fTimer;
   TGTab               	*fTabs;
   //  TGCompositeFrame     	*fParTab;
-  TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer;
+  TGTextBuffer          *fRootFileNameBuffer, *fDirNameBuffer, *fReadbackBuffer;
   TGTextButton		*fbtnPower, *fbtnHV;
   TGSlider		*fpowerSlider;
   TGSlider		*fhvSlider;
@@ -101,6 +102,11 @@ private:
   TGLabel		*flblHV;
   TGHorizontalFrame 	*fH1;
   TGHorizontalFrame	*fH2;
+
+  TGComboBox            *fSignalBoxA[2];
+  TGComboBox            *fSignalBoxD[2];
+  TGComboBox            *fD1TBM, *fD2TBM; 
+
   std::vector<PixTest *> fTestList; 
   bool			 fDebug;
   bool			 fPower, fHV;

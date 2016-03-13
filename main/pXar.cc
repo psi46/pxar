@@ -36,12 +36,12 @@ using namespace pxar;
 
 void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
 void createBackup(string a, string b);  
+string exec(string cmd);
 
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
   
   LOG(logINFO) << "*** Welcome to pxar ***";
-  gSystem->Exec("git status");
 
   // -- command line arguments
   string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
@@ -64,6 +64,8 @@ int main(int argc, char *argv[]){
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
       cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
+      cout << "-x XX                 x position for GUI placement" << endl;
+      cout << "-y YY                 y position for GUI placement" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       cout << "-L logID              add additional <logID> to log output after the timestamp. ex: pxar -L TB1" << endl;
       return 0;
@@ -154,6 +156,9 @@ int main(int argc, char *argv[]){
 
   LOG(logINFO) << "*** Welcome to pxar ***";
   LOG(logINFO) << Form("*** Today: %s", tstamp.c_str());
+  string version = exec("git describe --abbrev=4 --dirty --always --tags");
+  PixUtil::replaceAll(version, "\n", ""); 
+  LOG(logINFO) << "*** Version: " << version;
 
   vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
   vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
@@ -220,9 +225,12 @@ int main(int argc, char *argv[]){
   PixSetup a(api, ptp, configParameters);  
   a.setUseRootLogon(doUseRootLogon); 
   a.setRootFileUpdate(doUpdateRootFile);
+  LOG(logDEBUG) << "Initial Analog Current: " << api->getTBia()*1000 << "mA";
+  LOG(logDEBUG) << "Initial Digital Current: " << api->getTBid()*1000 << "mA";
+  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Initial Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
 
   if (doRunGui) {
-    runGui(a, argc, argv); 
+    runGui(a, argc, argv);
   } else if (doRunSingleTest) {
     PixTestFactory *factory = PixTestFactory::instance(); 
     PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
@@ -334,6 +342,9 @@ int main(int argc, char *argv[]){
   }
   
   // -- clean exit (however, you should not get here when running with the GUI)
+  LOG(logDEBUG) << "Final Analog Current: " << api->getTBia()*1000 << "mA";
+  LOG(logDEBUG) << "Final Digital Current: " << api->getTBid()*1000 << "mA";
+  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
   a.getPixMonitor()->dumpSummaries();
   rfile->Close();
   if (api) delete api;
@@ -345,11 +356,24 @@ int main(int argc, char *argv[]){
 
 
 // ----------------------------------------------------------------------
-void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
+void runGui(PixSetup &a, int argc, char *argv[]) {
+
+  int x(a.getConfigParameters()->getGuiX()), y(a.getConfigParameters()->getGuiY());
+  bool changed(false);
+  for (int i = 0; i < argc; i++){
+    if (!strcmp(argv[i], "-x")) {x = atoi(argv[++i]); changed = true; }
+    if (!strcmp(argv[i], "-y")) {y = atoi(argv[++i]); changed = true; }
+  }
+
+  if (changed) {
+    a.getConfigParameters()->setGuiX(x);
+    a.getConfigParameters()->setGuiY(y);
+    a.getConfigParameters()->writeConfigParameterFile();
+  }
 
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
-  PixGui gui(gClient->GetRoot(), 1300, 800, &a);
+  PixGui gui(gClient->GetRoot(), x, y, &a);
   theApp.Run();
   LOG(logINFO) << "closing down 0 ";
 }
@@ -375,6 +399,28 @@ void createBackup(string rootfile, string logfile) {
   if (!gSystem->AccessPathName(rootfile.c_str())) gSystem->Rename(rootfile.c_str(), nrootfile.c_str()); 
   if (!gSystem->AccessPathName(logfile.c_str())) gSystem->Rename(logfile.c_str(), nlogfile.c_str()); 
   
+}
+
+// ----------------------------------------------------------------------
+string exec(string cmd) {
+#if (defined WIN32)
+  FILE* pipe = _popen(cmd.c_str(), "r");
+#else
+  FILE* pipe = popen(cmd.c_str(), "r");
+#endif
+  if (!pipe) return "ERROR";
+  char buffer[128];
+  std::string result = "";
+  while(!feof(pipe)) {
+    if(fgets(buffer, 128, pipe) != NULL)
+      result += buffer;
+  }
+#if (defined WIN32)
+  _pclose(pipe);
+#else 
+  pclose(pipe);
+#endif
+  return result;
 }
 
 #endif

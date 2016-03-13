@@ -36,14 +36,23 @@ PixTestTiming::PixTestTiming() : PixTest() {}
 bool PixTestTiming::setParameter(string parName, string sval) {
   bool found(false);
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
+  fNoTokenPass = false;
+  fIgnoreReadBack = false;
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
       found = true;
-      if (!parName.compare("fastscan")) {
+      if (!parName.compare("notokenpass")) {
         PixUtil::replaceAll(sval, "checkbox(", "");
         PixUtil::replaceAll(sval, ")", "");
-        fFastScan = atoi(sval.c_str());
-        LOG(logDEBUG) << "fFastScan: " << fFastScan;
+        fNoTokenPass = atoi(sval.c_str());
+        LOG(logDEBUG) << "fNoTokenPass: " << fNoTokenPass;
+        setToolTips();
+      }
+      if (!parName.compare("ignorereadback")) {
+        PixUtil::replaceAll(sval, "checkbox(", "");
+        PixUtil::replaceAll(sval, ")", "");
+        fIgnoreReadBack = atoi(sval.c_str());
+        LOG(logDEBUG) << "fIgnoreReadBack: " << fIgnoreReadBack;
         setToolTips();
       }
       if (!parName.compare("targetclk")) {
@@ -108,16 +117,10 @@ void PixTestTiming::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
 
-  PhaseScan();
-  h1 = (*fDisplayedHist);
-  h1->Draw(getHistOption(h1).c_str());
-  PixTest::update();
-
-  // -- save DACs!
-  saveParameters();
   TimingTest();
-  
+
   LOG(logINFO) << "PixTestTiming::doTest() done";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -163,36 +166,32 @@ void PixTestTiming::ClkSdaScan() {
         GoodClk=iclk;
         GoodSDA=isda;
         goodsdalist.push_back(isda);
-        if (fFastScan) break;
       }
       fApi->setDAC("vana", 0);
       pxar::mDelay(10);
     }
     goodclksdalist[iclk]=goodsdalist;
-    if (fFastScan && GoodClk != -1) break;
   }
 
   //Overly complicated algorithm to figure out the best SDA.
   //Normally there are 7 sda settings that work, and this selects the middle one.
   //It's completcated because the working SDA settings can be 0, 1, 2, 3, 4, 18, and 19. The center most value is 1.
   if (GoodClk != -1) {
-    if (!fFastScan) {
-      GoodClk = -1;
-      for (int i = 0; i < 20; i++) {
-        int iclk = (i+fTargetClk) % 20;
-        if (goodclksdalist.count(iclk)) {
-          GoodClk = iclk;
-          vector<int> goodsdalist = goodclksdalist[iclk];
-          if (goodsdalist.size() == 1) {
-            GoodSDA=goodsdalist[0];
-          } else {
-            sort(goodsdalist.begin(),goodsdalist.end());
-            for (size_t isda=1; isda<goodsdalist.size(); isda++) if (TMath::Abs(goodsdalist[isda]-goodsdalist[isda-1])>1) goodsdalist[isda] -= 20;
-            sort(goodsdalist.begin(),goodsdalist.end());
-            GoodSDA=goodsdalist[goodsdalist.size()/2];
-            if (GoodSDA<0) GoodSDA+=20;
-            break;
-          }
+    GoodClk = -1;
+    for (int i = 0; i < 20; i++) {
+      int iclk = (i+fTargetClk) % 20;
+      if (goodclksdalist.count(iclk)) {
+        GoodClk = iclk;
+        vector<int> goodsdalist = goodclksdalist[iclk];
+        if (goodsdalist.size() == 1) {
+          GoodSDA=goodsdalist[0];
+        } else {
+          sort(goodsdalist.begin(),goodsdalist.end());
+          for (size_t isda=1; isda<goodsdalist.size(); isda++) if (TMath::Abs(goodsdalist[isda]-goodsdalist[isda-1])>1) goodsdalist[isda] -= 20;
+          sort(goodsdalist.begin(),goodsdalist.end());
+          GoodSDA=goodsdalist[goodsdalist.size()/2];
+          if (GoodSDA<0) GoodSDA+=20;
+          break;
         }
       }
     }
@@ -217,6 +216,8 @@ void PixTestTiming::ClkSdaScan() {
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::ClkSdaScan() done.";
+
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -225,215 +226,148 @@ void PixTestTiming::PhaseScan() {
   // Start test timer
   timer t;
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
   banner(Form("PixTestTiming::PhaseScan()"));
   cacheTBMDacs();
-  fDirectory->cd();
-  PixTest::update();
 
-  //Make histograms
-  TH2D *h1(0);
-  TH2D *h2(0);
-
-  //Set Number of Port (Probably won't work for TBM09 and is untested)
-  int nPorts = 2;
-  if (fPixSetup->getConfigParameters()->getTbmType() == "tbm09") nPorts=1;
-
-  // Setup a new pattern with only res and token:
-  vector<pair<string, uint8_t> > pg_setup;
-  //pg_setup.push_back(make_pair("resetroc", 25));
-  pg_setup.push_back(make_pair("resettbm", 25));
-  pg_setup.push_back(make_pair("trigger", 0));
-  fApi->setPatternGenerator(pg_setup);
+  TLogLevel UserReportingLevel = Log::ReportingLevel();
+  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
   uint16_t period = 200;
   vector<rawEvent> daqRawEv;
+  vector<Event> daqEv;
 
-  //Get the number of TBMs, Total ROCs, and ROCs per TBM
-  int nTBMs = fApi->_dut->getNTbms();
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocI2Caddr();
-  vector<int> nROCs;
-  vector <vector<int> > nROCsPort;
-  vector<TH2D*> phasehists;
-  vector<map <int, int> > TBMROCPhases;
-  for (int itbm = 0; itbm < nTBMs; itbm++) {
-    fApi->setTbmReg("basea", 0, itbm); //Reset the ROC delays
-    nROCs.push_back(0);
-    vector<int> InitnROCPorts;
-    InitnROCPorts.assign(nPorts, 0);
-    nROCsPort.push_back(InitnROCPorts);
-    map<int, int> TBMROCPhaseMap;
-    TBMROCPhases.push_back(TBMROCPhaseMap);
-    h1 = bookTH2D(Form("TBMPhaseScan%d",itbm),Form("TBM %d Phase Scan",itbm), 8, -0.5, 7.5, 8, -0.5, 7.5);
+  vector<int> NFunctionalTimings;
+  vector<int> NFunctionalTBMPhases;
+
+  TH2D *h1(0);
+  TH2D *h2(0);
+  TH2D *h3(0);
+  vector<TH2D*> tbmhists;
+  vector<TH2D*> goodareahists;
+  vector<TH2D*> rocdelayhists;
+
+  int NTimings(0);
+  for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+    NTimings = 0;
+    h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "160MHz Phase", "400 MHz Phase");
-    fHistOptions.insert(make_pair(h1, "colz"));
     h1->SetMinimum(0);
-    phasehists.push_back(h1);
-  }
-
-  //Count up the ROCs on each TBM Core
-  //8, 4 and 12 are all magic numbers! Number of expected ROCs per TBM, number of ROCs per port, and number of ports should be in the dut or ConfigParameters!
-  for (size_t iROC=0; iROC<rocIds.size(); iROC++) {
-    if (rocIds[iROC]<8) {
-      nROCs[0]++;
-      if (rocIds[iROC]<4) nROCsPort[0].at(0)++;
-      else nROCsPort[0].at(1)++;
+    tbmhists.push_back(h1);
+    h2 = bookTH2D(Form("TBMGoodArea_%d",int(itbm)),Form("Functional Roc Delay Area for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
+    h2->SetDirectory(fDirectory);
+    setTitles(h2, "160MHz Phase", "400 MHz Phase");
+    h2->SetMinimum(0);
+    goodareahists.push_back(h2);
+    NFunctionalTimings.push_back(0);
+    NFunctionalTBMPhases.push_back(0);
+    if (fNoTokenPass) {
+      for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+        uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
+        fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+      }
     } else {
-      nROCs[1]++;
-      if (rocIds[iROC]<12) nROCsPort[1].at(0)++;
-      else nROCsPort[1].at(1)++;
+      for (size_t jtbm = 0; jtbm<nTBMs; jtbm++) {
+        if (itbm==jtbm) {
+          uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) & 191;
+          fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm); //Enable Token Pass
+        } else {
+          uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) | 64;
+          fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm);
+        }
+      }
     }
-  }
-
-  // Loop through all possible TBM phase settings.
-  bool goodTBMPhase = false;
-  for (int iclk160 = 0; iclk160 < 8 && !(goodTBMPhase && fFastScan); iclk160++) {
-    for (int iclk400 = 0; iclk400 < 8 && !(goodTBMPhase && fFastScan); iclk400++) {
-      uint8_t delaysetting = iclk160<<5 | iclk400<<2;
-      fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
-      LOG(logINFO) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
-      fApi->daqStart();
-      fApi->daqTrigger(fTrigBuffer,period); //Read in fTrigBuffer events and throw them away, first event is generally bad.
-      try { daqRawEv = fApi->daqGetRawEventBuffer();}
-      catch(pxar::DataNoEvent &) {}
-      for (int itbm = 0; itbm < nTBMs; itbm++) fApi->setTbmReg("basea", 0, itbm); //Reset the ROC delays
-      //Loop through each TBM core and count the number of ROC headers on the core for all 256 delay settings
-      vector<int> GoodROCDelays;
-      for (int itbm = 0; itbm < nTBMs; itbm++) {
-        int MaxGoodROCSize=0;
-        bool goodROCDelay = false;
-        for (int delaytht = 0; delaytht < 4 && !goodROCDelay; delaytht++) {
-          if (delaytht==2) continue;
-          h2 = bookTH2D(Form("ROCPhaseScan_clk160_%d_clk400_%d_TBM_%d_delay_%d", iclk160, iclk400, itbm, delaytht),
-                        Form("ROC Phase Scan: TBM %d Phase: %s THT Delay: %s", itbm, bitset<8>(delaysetting).to_string().c_str(), bitset<2>(delaytht).to_string().c_str()),
-                        8, -0.5, 7.5, 8, -0.5, 7.5);
-          setTitles(h2, "ROC Port 0", "ROC Port 1");
-          h2->SetDirectory(fDirectory);
-          h2->SetMinimum(0);
-          h2->SetMaximum(nROCs[itbm]);
-          fHistOptions.insert(make_pair(h2, "colz"));
-          for (int iport = 0; iport < nPorts; iport++) {
-            for (int idelay = 0; idelay < 8; idelay++) {
-              int ROCDelay = (iport==0) ? (delaytht << 6) | idelay : (delaytht << 6) | (idelay << 3);
-              LOG(logDEBUG) << "Testing ROC Delay: " << bitset<8>(ROCDelay).to_string() << " For TBM Core: " << itbm;
-              fApi->setTbmReg("basea", ROCDelay, itbm);
-              fApi->daqTrigger(fNTrig,period);
-              try { daqRawEv = fApi->daqGetRawEventBuffer(); }
-	      catch(pxar::DataNoEvent &) {}
-              LOG(logDEBUG) << "Events in Data Buffer: " << daqRawEv.size();
-              if (int(daqRawEv.size()) < fNTrig) continue; //Grab fNTrig triggers
-              for (int ievent = 0; ievent<fNTrig; ievent++) {
-                rawEvent event = daqRawEv.at(ievent);
-                LOG(logDEBUG) << "Event: " << event;
-                vector<int> tbmheaders;
-                vector<int> tbmtrailers;
-                int header=0;
-                for (int idata = 0; idata < int(event.data.size()); idata++) {
-                  if (event.data.at(idata) >> 8 == 160) tbmheaders.push_back(idata); //Look for TBM Header a0
-                  if (event.data.at(idata) >> 8 == 192) tbmtrailers.push_back(idata); //Look for TBM Trailer c0, maybe should be c000
-                  if (header==0 && int(tbmheaders.size())==itbm+1 && int(tbmtrailers.size())==itbm && event.data.at(idata) >> 12 == 4) header = event.data.at(idata); //Grab the first object that looks like a header between the correct header and trailer
-                }
-                if (int(tbmheaders.size()) != nTBMs || int(tbmtrailers.size()) != nTBMs || header==0) continue; //Skip event if the correct number of TBM headers and trailer are not present or if a ROC header could not be found.
-                int rocheader_count = 0;
-                int StartData = tbmheaders[itbm]+2;
-                int StopData = tbmtrailers[itbm]-2;
-                for (int jport=0; jport<nPorts; jport++) {
-                  if (jport < iport) StartData += nROCsPort[itbm][jport];
-                  if (jport > iport) StopData -= nROCsPort[itbm][jport];
-                }
-                for (int idata = StartData; idata <= StopData; idata++) if (event.data.at(idata) >> 2  == header >> 2) rocheader_count++; //Count the number of ROCs on each TBM Core for each port
-                LOG(logDEBUG) << rocheader_count << " ROC headers (" << hex << (header) << dec << ") found for TBM Core " << itbm << " for Port " << iport << ". Looking for " << nROCsPort[itbm][iport] << ".";
-                for (int ibin=0; ibin<8; ibin++) {
-                  if (iport==0) h2->Fill(idelay, ibin, rocheader_count);
-                  if (iport==1) h2->Fill(ibin, idelay, rocheader_count);
+    for (int iclk160 = 0; iclk160 < 8; iclk160++) {
+      for (int iclk400 = 0; iclk400 < 8; iclk400++) {
+        uint8_t delaysetting = iclk160<<5 | iclk400<<2;
+        fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
+        int NFunctionalROCPhases = 0;
+        int MaxFunctionalROCArea = 0;
+        for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
+          if (ithtdelay==2) continue;
+          h3 = bookTH2D(Form("ROCDelayScan_TBMCore_%d_%d_%d",int(itbm),delaysetting/4,ithtdelay),Form("TBM Core: %d ROC Delay Scan: 160MHz Phase = %d 400MHz Phase = %d THT Delay = %d",int(itbm),iclk160,iclk400,ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
+          h3->SetDirectory(fDirectory);
+          setTitles(h3, "ROC Port 0 Delay", "ROC Port 1 Delay");
+          h3->SetMinimum(0);
+          for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+            for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
+              NTimings++;
+              int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
+              LOG(logDEBUG) << "TBM Core: " << itbm << " 160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " TBM Phase " << bitset<8>(delaysetting).to_string() << " Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
+              for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
+              Log::ReportingLevel() = Log::FromString("QUIET");
+              bool goodreadback = true;
+              fApi->daqStart();
+              if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+              if (goodreadback) {
+                statistics results = getEvents(fNTrig, period, fTrigBuffer);
+                int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+                int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+                if (NEvents==fNTrig && NErrors==0) {
+                  h3->Fill(irocphaseport0,irocphaseport1);
+                  NFunctionalTimings[itbm]++;
+                  NFunctionalROCPhases++;
                 }
               }
+              Log::ReportingLevel() = UserReportingLevel;
+              fApi->daqStop();
             }
           }
-          pair <int, int> GoodRegion = getGoodRegion(h2, nROCs[itbm]*fNTrig);
-          LOG(logDEBUG) << h2->GetTitle() << " - Size: " << GoodRegion.first << " Delay: " << GoodRegion.second;
-          h2->Scale(1/float(fNTrig));
-          if (GoodRegion.first > MaxGoodROCSize) {
-            MaxGoodROCSize = GoodRegion.first;
-            int ROCDelay = (delaytht << 6) | GoodRegion.second;
-            if (int(GoodROCDelays.size()) < itbm+1) GoodROCDelays.push_back(ROCDelay);
-            else GoodROCDelays[itbm] = ROCDelay;
-            if (fFastScan && GoodRegion.first > 0) {
-              goodROCDelay = true;
-              fPixSetup->getConfigParameters()->setTbmDac("basea", ROCDelay, itbm);
-            }
-          }
-          //Draw the plot
-          if (GoodRegion.first) {
-            h2->SetMinimum(0);
-            h2->Draw(getHistOption(h2).c_str());
-            fHistList.push_back(h2);
-            fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
-            PixTest::update();
+          if (h3->GetEntries()>0) {
+            rocdelayhists.push_back(h3);
+            int FunctionalROCArea = getGoodRegion(h3,1).first;
+            if (FunctionalROCArea > MaxFunctionalROCArea) MaxFunctionalROCArea=FunctionalROCArea;
           }
         }
-        phasehists[itbm]->Fill(iclk160, iclk400, MaxGoodROCSize);
-        if (int(GoodROCDelays.size())==itbm+1) { // Use the good ROC delays, or reset the ROCs to 0
-          TBMROCPhases[itbm][delaysetting] = GoodROCDelays[itbm];
-          fApi->setTbmReg("basea", GoodROCDelays[itbm], itbm);
-          fPixSetup->getConfigParameters()->setTbmDac("basea", GoodROCDelays[itbm], itbm);
-        } else fApi->setTbmReg("basea", 0, itbm);
-      }
-      fApi->daqStop();
-      if (int(GoodROCDelays.size())==nTBMs){
-        goodTBMPhase = true;
-        if (fFastScan) fPixSetup->getConfigParameters()->setTbmDac("basee", delaysetting, 0);
-        LOG(logINFO) << "Good timings found for TBMPhase basee: " << bitset<8>(delaysetting).to_string();
-        for (int itbm = 0; itbm < nTBMs; itbm++) LOG(logINFO) << "ROCPhase TBM Core " << itbm << " basea: " << bitset<8>(GoodROCDelays[itbm]).to_string();
-      }
-    }
-  }
-
-  banner(Form("PixTestTiming::Phase Scan Completed"));
-
-  if (!fFastScan && goodTBMPhase) {
-    int MaxBinSum = 0;
-    pair<int, int> BestBin(0,0);
-    for (int xbin=1; xbin<=phasehists[0]->GetNbinsX(); xbin++) {
-      for (int ybin=1; ybin<=phasehists[0]->GetNbinsY(); ybin++) {
-        double BinSum = 0;
-        for (int itbm=0; itbm<nTBMs; itbm++) BinSum += phasehists[itbm]->GetBinContent(xbin,ybin);
-        if (BinSum > MaxBinSum) {
-          MaxBinSum = BinSum;
-          BestBin = make_pair(xbin-1, ybin-1);
+        if (NFunctionalROCPhases>0) {
+          NFunctionalTBMPhases[itbm]++;
+          h1->Fill(iclk160,iclk400,NFunctionalROCPhases);
+          h2->Fill(iclk160,iclk400,MaxFunctionalROCArea);
         }
       }
     }
-    int delaysetting = BestBin.first<<5 | BestBin.second<<2;
-    fApi->setTbmReg("basee", delaysetting, 0);
-    fPixSetup->getConfigParameters()->setTbmDac("basee", delaysetting, 0);
-    LOG(logINFO) << "Final timing for TBMPhase basee: " << bitset<8>(delaysetting).to_string();
-    for (int itbm = 0; itbm < nTBMs; itbm++) {
-      fApi->setTbmReg("basea", TBMROCPhases[itbm][delaysetting], itbm);
-      fPixSetup->getConfigParameters()->setTbmDac("basea", TBMROCPhases[itbm][delaysetting], itbm);
-      LOG(logINFO) << "ROCPhase TBM Core " << itbm << " basea: " << bitset<8>(TBMROCPhases[itbm][delaysetting]).to_string();
-    }
+    if (fNoTokenPass) break;
   }
 
-  // Reset the pattern generator to the configured default:
-  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
-
-  if (!goodTBMPhase) {
-    restoreTBMDacs();
-    LOG(logERROR) << "No working TBM-ROC Phase found. Verify you have disabled bypassed ROCs in pXar on the h/w tab.";
-    for (int itbm = 0; itbm < nTBMs; itbm++) LOG(logERROR) << "PhaseScan searched for " << nROCs[itbm] << " ROCs on TBM Core " << itbm << ".";
+  //Draw the plots
+  for (size_t ihist = 0; ihist < rocdelayhists.size(); ihist++) {
+    rocdelayhists[ihist]->Draw("colz");
+    fHistList.push_back(rocdelayhists[ihist]);
+    fHistOptions.insert(make_pair(rocdelayhists[ihist], "colz"));
   }
 
-  //Draw TBM Phase Map
-  for (int itbm = 0; itbm < nTBMs && !fFastScan; itbm++) {
-    phasehists[itbm]->Draw(getHistOption(phasehists[itbm]).c_str());
-    fHistList.push_back(phasehists[itbm]);
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), phasehists[itbm]);
+  for (size_t itbm=0; itbm<tbmhists.size(); itbm++) {
+    tbmhists[itbm]->Draw("colz");
+    fHistList.push_back(tbmhists[itbm]);
+    fHistOptions.insert(make_pair(tbmhists[itbm], "colz"));
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), tbmhists[itbm]);
+    PixTest::update();
+    goodareahists[itbm]->Draw("colz");
+    fHistList.push_back(goodareahists[itbm]);
+    fHistOptions.insert(make_pair(goodareahists[itbm], "colz"));
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), goodareahists[itbm]);
     PixTest::update();
   }
+  
+  restoreTBMDacs();
+
+  LOG(logINFO) << "   ----------------------------------------------------------------------";
+  for (size_t itbm=0; itbm<NFunctionalTimings.size(); itbm++) {
+    LOG(logINFO) << "   Results for TBM Core: " << itbm;
+    LOG(logINFO) << Form("   The fraction of total functioning timings is %4.2f%%: %d/%d", float(NFunctionalTimings[itbm])/NTimings*100, NFunctionalTimings[itbm], NTimings);
+    LOG(logINFO) << Form("   The fraction of functioning TBM Phases is %4.2f%%: %d/%d", float(NFunctionalTBMPhases[itbm])/64*100, NFunctionalTBMPhases[itbm], 64);
+  }
+  LOG(logINFO) << "   ----------------------------------------------------------------------";
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::PhaseScan() done.";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -442,51 +376,84 @@ void PixTestTiming::TBMPhaseScan() {
   // Start test timer
   timer t;
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
   banner(Form("PixTestTiming::TBMPhaseScan()"));
   cacheTBMDacs();
 
-  //Make histograms
-  TH2D *h1(0);
-  h1 = bookTH2D("TBMPhaseScan","TBM Phase Scan", 8, -0.5, 7.5, 8, -0.5, 7.5);
-  h1->SetDirectory(fDirectory);
-  setTitles(h1, "160MHz Phase", "400 MHz Phase");
-  fHistOptions.insert(make_pair(h1, "colz"));
-  h1->SetMinimum(0);
-
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
   uint16_t period = 200;
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
-  fApi->daqStart();
-  for (int iclk160 = 0; iclk160 < 8; iclk160++) {
-    for (int iclk400 = 0; iclk400 < 8; iclk400++) {
-      uint8_t delaysetting = iclk160<<5 | iclk400<<2;
-      LOG(logDEBUG) << "160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " Delay Setting: " << bitset<8>(delaysetting).to_string();
-      fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
-      fApi->daqStart();
-      Log::ReportingLevel() = Log::FromString("QUIET");
-      statistics results = getEvents(fNTrig, period, fTrigBuffer);
-      Log::ReportingLevel() = UserReportingLevel;
-      fApi->daqStop();
-      int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
-      if (NEvents==fNTrig) h1->Fill(iclk160,iclk400);
-      if (Log::ReportingLevel() >= logDEBUG) results.dump();
+  //Make histograms
+  TH2D *h1(0);
+  vector<TH2D*> tbmhists;
+
+  for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+    h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
+    h1->SetDirectory(fDirectory);
+    setTitles(h1, "160MHz Phase", "400 MHz Phase");
+    h1->SetMinimum(0);
+    tbmhists.push_back(h1);
+    if (fNoTokenPass) {
+      for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+        uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
+        fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+      }
+    } else {
+      for (size_t jtbm = 0; jtbm<nTBMs; jtbm++) {
+        if (itbm==jtbm) {
+          uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) & 191;
+          fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm); //Enable Token Pass
+        } else {
+          uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) | 64;
+          fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm);
+        }
+      }
     }
+    for (int iclk160 = 0; iclk160 < 8; iclk160++) {
+      for (int iclk400 = 0; iclk400 < 8; iclk400++) {
+        uint8_t delaysetting = iclk160<<5 | iclk400<<2;
+        LOG(logDEBUG) << "TBM Core: " << itbm << " 160MHz Phase: " << iclk160 << " 400MHz Phase: " << iclk400 << " TBM Phase: " << bitset<8>(delaysetting).to_string();
+        fApi->setTbmReg("basee", delaysetting, 0); //Set TBM 160-400 MHz Clock Phase
+        fApi->daqStart();
+        Log::ReportingLevel() = Log::FromString("QUIET");
+        bool goodreadback = true;
+        if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+        if (goodreadback) {
+          statistics results = getEvents(fNTrig, period, fTrigBuffer);
+          int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+          int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+          if (NEvents==fNTrig && NErrors==0) h1->Fill(iclk160,iclk400);
+        }
+        Log::ReportingLevel() = UserReportingLevel;
+        fApi->daqStop();
+      }
+    }
+    if (fNoTokenPass) break;
   }
-  
-  //Draw the plot
-  h1->Draw("colz");
-  fHistList.push_back(h1);
-  fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  PixTest::update();
+
+  //Draw the plots
+  for (size_t itbm=0; itbm<tbmhists.size(); itbm++) {
+    tbmhists[itbm]->Draw("colz");
+    fHistList.push_back(tbmhists[itbm]);
+    fHistOptions.insert(make_pair(tbmhists[itbm], "colz"));
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), tbmhists[itbm]);
+    PixTest::update();
+  }
 
   restoreTBMDacs();
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TBMPhaseScan() done.";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -495,11 +462,17 @@ void PixTestTiming::ROCDelayScan() {
   // Start test timer
   timer t;
 
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+
   banner(Form("PixTestTiming::ROCDelayScan()"));
   cacheTBMDacs();
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
   size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
   uint16_t period = 200;
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
@@ -508,7 +481,13 @@ void PixTestTiming::ROCDelayScan() {
   TH2D *h1(0);
   vector<TH2D*> rocdelayhists;
 
-  fApi->daqStart();
+  if (fNoTokenPass) {
+    for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+      uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
+      fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+    }
+  }
+
   for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
     if (ithtdelay==2) continue;
     h1 = bookTH2D(Form("ROCDelayScan%d",ithtdelay),Form("ROC Delay Scan: THT Delay = %d",ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
@@ -517,22 +496,27 @@ void PixTestTiming::ROCDelayScan() {
     fHistOptions.insert(make_pair(h1, "colz"));
     h1->SetMinimum(0);
     for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+      fApi->daqStart();
       for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
         int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
-        LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << bitset<3>(irocphaseport1).to_string() << " ROC Port0: " << bitset<3>(irocphaseport0).to_string() << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
+        LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
         for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
         Log::ReportingLevel() = Log::FromString("QUIET");
-        statistics results = getEvents(fNTrig, period, fTrigBuffer);
+        bool goodreadback = true;
+        if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+        if (goodreadback) {
+          statistics results = getEvents(fNTrig, period, fTrigBuffer);
+          int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+          int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+          if (NEvents==fNTrig && NErrors==0) h1->Fill(irocphaseport0,irocphaseport1);
+        }
         Log::ReportingLevel() = UserReportingLevel;
-        int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
-        if (NEvents==fNTrig) h1->Fill(irocphaseport0,irocphaseport1);
-        if (Log::ReportingLevel() >= logDEBUG) results.dump();
       }
+      fApi->daqStop();
     }
     rocdelayhists.push_back(h1);
   }
-  fApi->daqStop();
-  
+
   //Draw plots
   for (size_t ihist = 0; ihist < rocdelayhists.size(); ihist++) {
     h1 = rocdelayhists[ihist];
@@ -543,10 +527,11 @@ void PixTestTiming::ROCDelayScan() {
   }
 
   restoreTBMDacs();
-  
+
   // Print timer value:
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::ROCDelayScan() done.";
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -555,25 +540,44 @@ void PixTestTiming::TimingTest() {
   // Start test timer
   timer t;
 
-  banner(Form("PixTestTiming::TimingTest()"));
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
 
-  int nTBMs = fApi->_dut->getNTbms();
+  banner(Form("PixTestTiming::TimingTest()"));
+  cacheTBMDacs();
+
+  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
   uint16_t period = 200;
   vector<rawEvent> daqRawEv;
   vector<Event> daqEv;
 
+  if (fNoTokenPass) {
+    for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+      uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
+      fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+    }
+  }
+
+  bool goodreadback = true;
   fApi->daqStart();
   statistics results = getEvents(fNTrig, period, fTrigBuffer);
+  if (!fIgnoreReadBack && !fNoTokenPass) goodreadback = checkReadBackBits(period);
   fApi->daqStop();
-  int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
+  int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
   if (Log::ReportingLevel() >= logDEBUG) results.dump();
 
+  restoreTBMDacs();
   banner(Form("The fraction of properly decoded events is %4.2f%%: %d/%d", float(NEvents)/fNTrig*100, NEvents, fNTrig));
-  if (NEvents==fNTrig) banner("Timings are good!");
+  if (!fIgnoreReadBack) banner(Form("Read back bit status: %d",goodreadback));
+  if (NEvents==fNTrig && results.errors()==0 && goodreadback) banner("Timings are good!");
   else banner("Timings are not good :(", logERROR);
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::TimingTest() done.";
 
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------
@@ -581,6 +585,10 @@ void PixTestTiming::LevelScan() {
 
   // Start test timer
   timer t;
+
+  fApi->_dut->testAllPixels(false);
+  fApi->_dut->maskAllPixels(true);
+  cacheTBMDacs();
 
   fDirectory->cd();
   PixTest::update();
@@ -596,10 +604,20 @@ void PixTestTiming::LevelScan() {
   setTitles(h1, "DTB Level", "Good Events");
 
   //Get the normal info
-  size_t nTBMs = fApi->_dut->getNTbms();
+  int nTokenChains = 0;
+  std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
+
+  if (fNoTokenPass) {
+    size_t nTBMs = fApi->_dut->getNTbms();
+    for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+      uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
+      fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+    }
+  }
 
   //Get Intial TBM Parameters
-  vector<pair<string, uint8_t> > InitTBMParameters = fPixSetup->getConfigParameters()->getTbParameters();
+  vector<pair<string, uint8_t> > InitTBParameters = fPixSetup->getConfigParameters()->getTbParameters();
 
   vector<uint8_t> GoodLevels;
   vector<rawEvent> daqRawEv;
@@ -613,10 +631,14 @@ void PixTestTiming::LevelScan() {
     Log::ReportingLevel() = Log::FromString("QUIET");
     statistics results = getEvents(fNTrig, period, fTrigBuffer);
     Log::ReportingLevel() = UserReportingLevel;
+    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+    bool goodreadback = true;
+    if (NEvents==fNTrig && !fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
     fApi->daqStop();
-    int NEvents = (results.info_events_empty()+results.info_events_valid())/nTBMs;
-    if (NEvents) h1->Fill(int(ilevel), NEvents);
-    if (NEvents==fNTrig) GoodLevels.push_back(ilevel);
+    if (NEvents==fNTrig && results.errors()==0 && goodreadback) {
+      h1->Fill(int(ilevel), NEvents);
+      GoodLevels.push_back(ilevel);
+    }
   }
 
   if (GoodLevels.size()) {
@@ -628,7 +650,7 @@ void PixTestTiming::LevelScan() {
     LOG(logINFO) << "DTB level set to " << int(MeanLevel);
   } else {
     LOG(logERROR) << "No working level found!";
-    fApi->setTestboardDelays(InitTBMParameters);
+    fApi->setTestboardDelays(InitTBParameters);
   }
 
   //Draw the plot
@@ -637,46 +659,11 @@ void PixTestTiming::LevelScan() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   PixTest::update();
 
-  fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
   LOG(logINFO) << "Test took " << t << " ms.";
   LOG(logINFO) << "PixTestTiming::LevelScan() done.";
 
-}
-
-//------------------------------------------------------------------------------
-statistics PixTestTiming::getEvents(int NEvents, int period, int buffer) {
-
-  int NStep = 1000000;
-  int NLoops = floor((NEvents-1)/NStep);
-  int NRemainder = NEvents%NStep;
-  if (NRemainder==0) NRemainder=NStep;
-
-  statistics results;
-  vector<Event> daqEv;
-
-  if (buffer > 0) {
-    vector<rawEvent> daqRawEv;
-    fApi->daqTrigger(buffer, period);
-    try { daqRawEv = fApi->daqGetRawEventBuffer(); }
-    catch(pxar::DataNoEvent &) {}
-    for (size_t iEvent=0; iEvent<daqRawEv.size(); iEvent++) LOG(logDEBUG) << "Event: " << daqRawEv[iEvent];
-  }
-  
-  for (int iloop=0; iloop<NLoops; iloop++) {
-    LOG(logDEBUG) << "Collecting " << (iloop+1)*NStep << "/" << NEvents << " Triggers";
-    fApi->daqTrigger(NStep, period);
-    try { daqEv = fApi->daqGetEventBuffer(); }
-    catch(pxar::DataNoEvent &) {}
-    results += fApi->getStatistics();
-  }
-
-  LOG(logDEBUG) << "Collecting " << (NLoops*NStep)+NRemainder << "/" << NEvents << " Triggers";
-  fApi->daqTrigger(NRemainder, period);
-  try { daqEv = fApi->daqGetEventBuffer(); }
-  catch(pxar::DataNoEvent &) {}
-  results += fApi->getStatistics();
-  
-  return results;
+  restoreTBMDacs();
+  dutCalibrateOff();
 }
 
 //------------------------------------------------------------------------------

@@ -17,10 +17,8 @@ void dut::info() {
   if (status()) {
     LOG(logINFO) << "The DUT currently contains the following objects:";
 
-    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores (" << getNEnabledTbms() 
+    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores " << getTbmType() << " (" << getNEnabledTbms() 
 		 << " ON)";
-
-	if (_layer1Enable) {LOG(logINFO) << "... on a Layer 1 module";}
 
     for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
       LOG(logINFO) << "\tTBM Core " 
@@ -31,7 +29,7 @@ void dut::info() {
 
     // We currently hide the possibility to enable pixels on some ROCs only,
     // so looking at ROC 0 as default is safe:
-    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs (" << getNEnabledRocs() 
+    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs " << getRocType() << " (" << getNEnabledRocs() 
 		 << " ON) with " << roc.at(0).pixels.size() << " pixelConfigs";
 
     for(std::vector<rocConfig>::iterator rocIt = roc.begin(); rocIt != roc.end(); rocIt++) {
@@ -134,6 +132,26 @@ std::vector< pixelConfig > dut::getEnabledPixels(size_t rocid) {
   for (std::vector<pixelConfig>::iterator it = roc.at(rocid).pixels.begin(); it != roc.at(rocid).pixels.end(); ++it){
     if (it->enable()) result.push_back(*it);
   }
+  return result;
+}
+
+std::vector< pixelConfig > dut::getEnabledPixelsI2C(size_t roci2c) {
+
+  std::vector< pixelConfig > result;
+
+  // Check if DUT is allright:
+  if (!status()) return result;
+
+  // Loop over all ROCs
+  for (std::vector<rocConfig>::iterator rocit = roc.begin() ; rocit != roc.end(); ++rocit){
+    if(rocit->i2c_address == roci2c) {
+      // Search for pixels that have enable set
+      for (std::vector<pixelConfig>::iterator it = rocit->pixels.begin(); it != rocit->pixels.end(); ++it){
+	if (it->enable()) result.push_back(*it);
+      }
+    }
+  }
+
   return result;
 }
 

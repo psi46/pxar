@@ -193,6 +193,10 @@ namespace pxar {
     if((flags&FLAG_NOSORT) != 0) { os << "FLAG_NOSORT, "; flags -= FLAG_NOSORT; }
     if((flags&FLAG_CHECK_ORDER) != 0) { os << "FLAG_CHECK_ORDER, "; flags -= FLAG_CHECK_ORDER; }
     if((flags&FLAG_FORCE_UNMASKED) != 0) { os << "FLAG_FORCE_UNMASKED, "; flags -= FLAG_FORCE_UNMASKED; }
+    if((flags&FLAG_DUMP_FLAWED_EVENTS) != 0) { os << "FLAG_DUMP_FLAWED_EVENTS, "; flags -= FLAG_DUMP_FLAWED_EVENTS; }
+    if((flags&FLAG_DISABLE_READBACK_COLLECTION) != 0) { os << "FLAG_DISABLE_READBACK_COLLECTION, "; flags -= FLAG_DISABLE_READBACK_COLLECTION; }
+    if((flags&FLAG_DISABLE_EVENTID_CHECK) != 0) { os << "FLAG_DISABLE_EVENTID_CHECK, "; flags -= FLAG_DISABLE_EVENTID_CHECK; }
+    if((flags&FLAG_ENABLE_XORSUM_LOGGING) != 0) { os << "FLAG_ENABLE_XORSUM_LOGGING, "; flags -= FLAG_ENABLE_XORSUM_LOGGING; }
 
     if(flags != 0) os << "Unknown flag: " << flags;
     return os.str();

@@ -6,6 +6,7 @@
 #include "log.h"
 
 #include <TH2.h>
+#include <TStyle.h>
 
 using namespace std;
 using namespace pxar;
@@ -14,8 +15,8 @@ ClassImp(PixTestDacDacScan)
 
 // ----------------------------------------------------------------------
 PixTestDacDacScan::PixTestDacDacScan(PixSetup *a, std::string name) : 
-PixTest(a, name), fParNtrig(-1), fParPHmap(0), fParDAC1("nada"), fParDAC2("nada"), 
-  fParLoDAC1(-1), fParHiDAC1(-1), fParLoDAC2(-1), fParHiDAC2(-1) {
+PixTest(a, name), fParNtrig(1), fParPHmap(0), fParDAC1("vcal"), fParDAC2("vcal"), 
+  fParLoDAC1(0), fParHiDAC1(0), fParLoDAC2(0), fParHiDAC2(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDacDacScan ctor(PixSetup &a, string, TGTab *)";
@@ -138,8 +139,10 @@ PixTestDacDacScan::~PixTestDacDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacDacScan::doTest() {
+
   //  uint16_t FLAGS = FLAG_FORCE_SERIAL | FLAG_FORCE_MASKED; // required for manual loop over ROCs
   uint16_t FLAGS = FLAG_FORCE_MASKED; // required for manual loop over ROCs
+  gStyle->SetPalette(1);
   fDirectory->cd();
   PixTest::update(); 
 
@@ -252,7 +255,7 @@ void PixTestDacDacScan::doTest() {
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h);
   if (h) h->Draw(getHistOption(h).c_str());
   PixTest::update(); 
-
+  dutCalibrateOff();
 }
 
 

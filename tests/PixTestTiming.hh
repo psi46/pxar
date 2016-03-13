@@ -22,7 +22,6 @@ public:
     void LevelScan();
     void TimingTest();
 	void saveParameters();
-    pxar::statistics getEvents(int NEvents, int period, int buffer);
 	std::vector<std::pair<std::string,uint8_t> > getDelays(uint8_t , uint8_t);
     std::pair<int, int> getGoodRegion(TH2D*, int);
 
@@ -31,7 +30,8 @@ private:
     int     fTargetClk;
     int     fNTrig;
     int     fTrigBuffer;
-    bool    fFastScan;
+    bool    fNoTokenPass;
+    bool    fIgnoreReadBack;
 
 	ClassDef(PixTestTiming, 1)
 

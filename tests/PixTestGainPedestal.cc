@@ -23,7 +23,7 @@ ClassImp(PixTestGainPedestal)
 
 // ----------------------------------------------------------------------
 PixTestGainPedestal::PixTestGainPedestal(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParNtrig(-1), fParShowFits(0), fParExtended(0), fParDumpHists(0)  {
+  fParNtrig(1), fParShowFits(0), fParExtended(0), fParDumpHists(0), fVcalStep(10)  {
   PixTest::init();
   init(); 
 
@@ -78,6 +78,10 @@ bool PixTestGainPedestal::setParameter(string parName, string sval) {
 	PixUtil::replaceAll(sval, ")", "");
 	fParDumpHists = atoi(sval.c_str()); 
       }
+      if (!parName.compare("vcalstep")) {
+        fVcalStep = atoi(sval.c_str());
+        LOG(logDEBUG) << "PixTestGainPedestal::PixTest() fVcalStep = " << fVcalStep;
+      }
       setToolTips();
       break;
     }
@@ -127,6 +131,7 @@ void PixTestGainPedestal::doTest() {
 
   TStopwatch t;
 
+  gStyle->SetPalette(1);
   fDirectory->cd();
   PixTest::update(); 
   bigBanner(Form("PixTestGainPedestal::doTest() ntrig = %d", fParNtrig));
@@ -156,7 +161,7 @@ void PixTestGainPedestal::fullTest() {
   saveGainPedestalParameters();
 
   int seconds = t.RealTime(); 
-  LOG(logINFO) << "PixTestGainPedestal::doTest() done, duration: " << seconds << " seconds";
+  LOG(logINFO) << "PixTestGainPedestal::fullTest() done, duration: " << seconds << " seconds";
 }
 
 
@@ -186,13 +191,11 @@ void PixTestGainPedestal::measure() {
   uint16_t FLAGS = FLAG_FORCE_MASKED;
   LOG(logDEBUG) << " using FLAGS = "  << (int)FLAGS; 
 
-
   fLpoints.clear();
-  fLpoints.push_back(50); 
-  fLpoints.push_back(100); 
-  fLpoints.push_back(150); 
-  fLpoints.push_back(200); 
-  fLpoints.push_back(250); 
+
+  for( int value = 10; value <= 255; value += fVcalStep ){
+    fLpoints.push_back(value);
+  }
 
   fHpoints.clear();
   if (1 == fParExtended) {
@@ -231,6 +234,7 @@ void PixTestGainPedestal::measure() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
+  maskPixels();
 
   // -- first low range 
   fApi->setDAC("ctrlreg", 0);
@@ -330,6 +334,7 @@ void PixTestGainPedestal::measure() {
   PixTest::update(); 
   restoreDacs();
   LOG(logINFO) << "PixTestGainPedestal::measure() done ";
+  dutCalibrateOff();
 }
 
 

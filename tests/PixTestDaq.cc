@@ -15,7 +15,8 @@ using namespace pxar;
 ClassImp(PixTestDaq)
 
 // ----------------------------------------------------------------------
-PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParDelayTBM(0), fParFillTree(0), fParStretch(0), fParTriggerFrequency(0), fParNtrig(0), fParIter(0), fRunDaqTrigger(0), fParSeconds(0) {
+PixTestDaq::PixTestDaq(PixSetup *a, std::string name) : PixTest(a, name), fParDelayTBM(0), fParFillTree(0), fParStretch(0), 
+  fParTriggerFrequency(0), fParNtrig(1), fParIter(0), fRunDaqTrigger(0), fParSeconds(0) {
   PixTest::init();
   init(); 
   LOG(logDEBUG) << "PixTestDaq ctor(PixSetup &a, string, TGTab *)";
@@ -322,7 +323,7 @@ void PixTestDaq::doDaqRun() {
 
   //Start the DAQ:
   fDaq_loop = true;
-  fApi->daqStart();
+  fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
   //Using number of triggers
   if (fRunDaqTrigger) {

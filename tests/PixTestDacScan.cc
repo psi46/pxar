@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <TH1.h>
+#include <TStyle.h>
 
 #include "PixTestDacScan.hh"
 #include "PixUtil.hh"
@@ -16,7 +17,7 @@ ClassImp(PixTestDacScan)
 
 // ----------------------------------------------------------------------
 PixTestDacScan::PixTestDacScan(PixSetup *a, std::string name) : PixTest(a, name), fParPHmap(-1), fParAllPixels(-1), fParUnmasked(-1), 
-  fParNtrig(-1), fParDAC("nada"), fParLoDAC(-1), fParHiDAC(-1) {
+  fParNtrig(1), fParDAC("nada"), fParLoDAC(0), fParHiDAC(0) {
   PixTest::init();
   init(); 
 }
@@ -131,6 +132,7 @@ PixTestDacScan::~PixTestDacScan() {
 
 // ----------------------------------------------------------------------
 void PixTestDacScan::doTest() {
+
   uint16_t FLAGS = FLAG_FORCE_MASKED; 
   if (fParUnmasked) {
     LOG(logINFO) << "unmasking the detector"; 
@@ -138,6 +140,7 @@ void PixTestDacScan::doTest() {
   }
 
   fDirectory->cd();
+  gStyle->SetPalette(1);
   TH1D *h1(0);
   TH2D *h3(0);
   vector<TH1D*> vhist;
@@ -196,6 +199,7 @@ void PixTestDacScan::doTest() {
   if (fParAllPixels) {
     fApi->_dut->testAllPixels(true);
     fApi->_dut->maskAllPixels(false);
+    maskPixels();
 
     bool done = false;
     int cnt(0); 
@@ -279,6 +283,11 @@ void PixTestDacScan::doTest() {
       if (h) {
 	if (vpix[ipix].value() > 0) {
 	  h->Fill(idac, static_cast<float>(vpix[ipix].value())); 
+	}
+	else if (!fParUnmasked) {
+	  // If we are not unmasked we still want to have negative pulse heights - they are not flagged by pxarCore but
+	  // might just be the negative PH from an analog chip...
+	  h->Fill(idac, static_cast<float>(vpix[ipix].value())); 
 	} else {
 	  hname = Form("%s_xraymap_C%d", name.c_str(), vpix[ipix].roc()); 
 	  h3 = xmap[hname];
@@ -305,7 +314,7 @@ void PixTestDacScan::doTest() {
     fDisplayedHist = (il);
   }
   PixTest::update(); 
-
+  dutCalibrateOff();
 }
 
 // ----------------------------------------------------------------------

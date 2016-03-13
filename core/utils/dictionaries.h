@@ -25,7 +25,7 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
-#define TRG_ERR 0x00
+#define TRG_ERR 0xF000
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
@@ -126,7 +126,15 @@ namespace pxar {
       _registers["tin"]            = dacConfig(SIG_TIN,255,DTB_REG);
       _registers["level"]          = dacConfig(SIG_LEVEL,15,DTB_REG);
       _registers["triggerdelay"]   = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
+      _registers["trimdelay"]      = dacConfig(SIG_LOOP_TRIM_DELAY,255,DTB_REG);
       _registers["deser160phase"]  = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+
+      _registers["deser400rate"]   = dacConfig(SIG_DESER400RATE,3,DTB_REG);
+      _registers["deser400phase0"] = dacConfig(SIG_DESER400PHASE0,15,DTB_REG);
+      _registers["deser400phase1"] = dacConfig(SIG_DESER400PHASE1,15,DTB_REG);
+      _registers["deser400phase2"] = dacConfig(SIG_DESER400PHASE2,15,DTB_REG);
+      _registers["deser400phase3"] = dacConfig(SIG_DESER400PHASE3,15,DTB_REG);
+
       _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
       _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
 
@@ -157,10 +165,13 @@ namespace pxar {
 
       _registers["autoreset"]     = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
       _registers["basec"]         = dacConfig(TBM_REG_AUTORESET,255,TBM_REG);
-
+      // Outdated name, since temperature register has moved to 0x0E
+      // name kept for legacy reasons so old configuration files still work:
+      _registers["temperature"]   = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
+      
       _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
-      _registers["temperature"]   = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
+
       // Special TBM settings:
       _registers["nrocs"]         = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
       _registers["nrocs1"]        = dacConfig(TBM_TOKENCHAIN_0,8,TBM_REG);
@@ -298,8 +309,9 @@ namespace pxar {
       _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
-      // This name is not correct, but kept for legacy reasons:
-      _devices["psi46digv3"]    = ROC_PSI46DIGV21;
+      _devices["proc600"]           = ROC_PROC600;
+      _devices["psi46digplus"]      = ROC_PROC600;
+      _devices["psi46digl1"]        = ROC_PROC600;
 
       // TBM flavors:
       _devices["notbm"]         = TBM_NONE;
@@ -307,7 +319,11 @@ namespace pxar {
       _devices["tbm08"]         = TBM_08;
       _devices["tbm08a"]        = TBM_08A;
       _devices["tbm08b"]        = TBM_08B;
+      _devices["tbm08c"]        = TBM_08C;
       _devices["tbm09"]         = TBM_09;
+      _devices["tbm09c"]        = TBM_09C;
+      _devices["tbm09d"]        = TBM_10;
+      _devices["tbm10"]        = TBM_10;
     }
 
     std::map<std::string, uint8_t> _devices;
@@ -426,71 +442,19 @@ namespace pxar {
       _signals["adcsgate"]   = probeConfig(PROBE_ADC_SGATE,PROBE_NONE);
       _signals["adcs"]       = probeConfig(PROBE_ADC_S,PROBE_NONE);
 
-      _signals["tbm0gate"]      = probeConfig(PROBE_TBM0_GATE,PROBE_NONE);
-      _signals["tbmgate0"]      = probeConfig(PROBE_TBM0_GATE,PROBE_NONE,false);
-      _signals["tbm0data"]      = probeConfig(PROBE_TBM0_DATA,PROBE_NONE);
-      _signals["tbmdata0"]      = probeConfig(PROBE_TBM0_DATA,PROBE_NONE,false);
-      _signals["tbm0tbmhdr"]    = probeConfig(PROBE_TBM0_TBMHDR,PROBE_NONE);
-      _signals["tbmheader0"]    = probeConfig(PROBE_TBM0_TBMHDR,PROBE_NONE,false);
-      _signals["tbm0rochdr"]    = probeConfig(PROBE_TBM0_ROCHDR,PROBE_NONE);
-      _signals["tbmrocheader0"] = probeConfig(PROBE_TBM0_ROCHDR,PROBE_NONE,false);
-      _signals["tbm0tbmtrl"]    = probeConfig(PROBE_TBM0_TBMTRL,PROBE_NONE);
-      _signals["tbmtrailer0"]   = probeConfig(PROBE_TBM0_TBMTRL,PROBE_NONE,false);
+      _signals["ds_gate"]      = probeConfig(PROBE_DS_GATE,PROBE_NONE);
+      
+      _signals["deser_frameerror"] = probeConfig(PROBE_FRAME_ERROR,PROBE_NONE);
+      _signals["deser_codeerror"]  = probeConfig(PROBE_CODE_ERROR,PROBE_NONE);
+      _signals["deser_error"]      = probeConfig(PROBE_ERROR,PROBE_NONE);
 
-      _signals["tbm1gate"]      = probeConfig(PROBE_TBM1_GATE,PROBE_NONE);
-      _signals["tbmgate1"]      = probeConfig(PROBE_TBM1_GATE,PROBE_NONE,false);
-      _signals["tbm1data"]      = probeConfig(PROBE_TBM1_DATA,PROBE_NONE);
-      _signals["tbmdata1"]      = probeConfig(PROBE_TBM1_DATA,PROBE_NONE,false);
-      _signals["tbm1tbmhdr"]    = probeConfig(PROBE_TBM1_TBMHDR,PROBE_NONE);
-      _signals["tbmheader1"]    = probeConfig(PROBE_TBM1_TBMHDR,PROBE_NONE,false);
-      _signals["tbm1rochdr"]    = probeConfig(PROBE_TBM1_ROCHDR,PROBE_NONE);
-      _signals["tbmrocheader1"] = probeConfig(PROBE_TBM1_ROCHDR,PROBE_NONE,false);
-      _signals["tbm1tbmtrl"]    = probeConfig(PROBE_TBM1_TBMTRL,PROBE_NONE);
-      _signals["tbmtrailer1"]   = probeConfig(PROBE_TBM1_TBMTRL,PROBE_NONE,false);
-
-      _signals["tbm2gate"]      = probeConfig(PROBE_TBM2_GATE,PROBE_NONE);
-      _signals["tbmgate2"]      = probeConfig(PROBE_TBM2_GATE,PROBE_NONE,false);
-      _signals["tbm2data"]      = probeConfig(PROBE_TBM2_DATA,PROBE_NONE);
-      _signals["tbmdata2"]      = probeConfig(PROBE_TBM2_DATA,PROBE_NONE,false);
-      _signals["tbm2tbmhdr"]    = probeConfig(PROBE_TBM2_TBMHDR,PROBE_NONE);
-      _signals["tbmheader2"]    = probeConfig(PROBE_TBM2_TBMHDR,PROBE_NONE,false);
-      _signals["tbm2rochdr"]    = probeConfig(PROBE_TBM2_ROCHDR,PROBE_NONE);
-      _signals["tbmrocheader2"] = probeConfig(PROBE_TBM2_ROCHDR,PROBE_NONE,false);
-      _signals["tbm2tbmtrl"]    = probeConfig(PROBE_TBM2_TBMTRL,PROBE_NONE);
-      _signals["tbmtrailer2"]   = probeConfig(PROBE_TBM2_TBMTRL,PROBE_NONE,false);
-
-      _signals["tbm3gate"]      = probeConfig(PROBE_TBM3_GATE,PROBE_NONE);
-      _signals["tbmgate3"]      = probeConfig(PROBE_TBM3_GATE,PROBE_NONE,false);
-      _signals["tbm3data"]      = probeConfig(PROBE_TBM3_DATA,PROBE_NONE);
-      _signals["tbmdata3"]      = probeConfig(PROBE_TBM3_DATA,PROBE_NONE,false);
-      _signals["tbm3tbmhdr"]    = probeConfig(PROBE_TBM3_TBMHDR,PROBE_NONE);
-      _signals["tbmheader3"]    = probeConfig(PROBE_TBM3_TBMHDR,PROBE_NONE,false);
-      _signals["tbm3rochdr"]    = probeConfig(PROBE_TBM3_ROCHDR,PROBE_NONE);
-      _signals["tbmrocheader3"] = probeConfig(PROBE_TBM3_ROCHDR,PROBE_NONE,false);
-      _signals["tbm3tbmtrl"]    = probeConfig(PROBE_TBM3_TBMTRL,PROBE_NONE);
-      _signals["tbmtrailer3"]   = probeConfig(PROBE_TBM3_TBMTRL,PROBE_NONE,false);
-
-      _signals["tbm4gate"]      = probeConfig(PROBE_TBM4_GATE,PROBE_NONE);
-      _signals["tbmgate4"]      = probeConfig(PROBE_TBM4_GATE,PROBE_NONE,false);
-      _signals["tbm4data"]      = probeConfig(PROBE_TBM4_DATA,PROBE_NONE);
-      _signals["tbmdata4"]      = probeConfig(PROBE_TBM4_DATA,PROBE_NONE,false);
-      _signals["tbm4tbmhdr"]    = probeConfig(PROBE_TBM4_TBMHDR,PROBE_NONE);
-      _signals["tbmheader4"]    = probeConfig(PROBE_TBM4_TBMHDR,PROBE_NONE,false);
-      _signals["tbm4rochdr"]    = probeConfig(PROBE_TBM4_ROCHDR,PROBE_NONE);
-      _signals["tbmrocheader4"] = probeConfig(PROBE_TBM4_ROCHDR,PROBE_NONE,false);
-      _signals["tbm4tbmtrl"]    = probeConfig(PROBE_TBM4_TBMTRL,PROBE_NONE);
-      _signals["tbmtrailer4"]   = probeConfig(PROBE_TBM4_TBMTRL,PROBE_NONE,false);
-
-      _signals["tbm5gate"]      = probeConfig(PROBE_TBM5_GATE,PROBE_NONE);
-      _signals["tbmgate5"]      = probeConfig(PROBE_TBM5_GATE,PROBE_NONE,false);
-      _signals["tbm5data"]      = probeConfig(PROBE_TBM5_DATA,PROBE_NONE);
-      _signals["tbmdata5"]      = probeConfig(PROBE_TBM5_DATA,PROBE_NONE,false);
-      _signals["tbm5tbmhdr"]    = probeConfig(PROBE_TBM5_TBMHDR,PROBE_NONE);
-      _signals["tbmheader5"]    = probeConfig(PROBE_TBM5_TBMHDR,PROBE_NONE,false);
-      _signals["tbm5rochdr"]    = probeConfig(PROBE_TBM5_ROCHDR,PROBE_NONE);
-      _signals["tbmrocheader5"] = probeConfig(PROBE_TBM5_ROCHDR,PROBE_NONE,false);
-      _signals["tbm5tbmtrl"]    = probeConfig(PROBE_TBM5_TBMTRL,PROBE_NONE);
-      _signals["tbmtrailer5"]   = probeConfig(PROBE_TBM5_TBMTRL,PROBE_NONE,false);
+      _signals["deser_header"]       = probeConfig(PROBE_A_HEADER,PROBE_NONE);
+      _signals["deser_packet"]       = probeConfig(PROBE_A_PACKET,PROBE_NONE);
+      _signals["deser_tbmhdr"]       = probeConfig(PROBE_A_TBM_HDR,PROBE_NONE);
+      _signals["deser_rochdr"]       = probeConfig(PROBE_A_ROC_HDR,PROBE_NONE);
+      _signals["deser_tbmtrl"]       = probeConfig(PROBE_A_TBM_TRL,PROBE_NONE);
+      _signals["deser_idle_error"]   = probeConfig(PROBE_A_IDLE_ERROR,PROBE_NONE);
+      _signals["deser_header_error"] = probeConfig(PROBE_A_HDR_ERROR,PROBE_NONE);
 
       // Purely analog signals:
       _signals["sdata1"] = probeConfig(PROBE_NONE,PROBEA_SDATA1);
@@ -636,6 +600,15 @@ namespace pxar {
       return "";
     }
 
+    // Return all (preferred) trigger source names:
+    inline std::vector<std::string> getAllNames() {
+      std::vector<std::string> names;
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._preferred == true) { names.push_back(iter->first); }
+      }
+      return names;
+    }
+
   private:
     /** class to store a trigger config
      */
@@ -649,6 +622,9 @@ namespace pxar {
     };
 
     TriggerDictionary() {
+      // No trigger source selected:
+      _signals["none"]             = triggerConfig(TRG_SEL_NONE,false);
+
       // Asynchronous external triggers:
       _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
       _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
@@ -659,15 +635,21 @@ namespace pxar {
       _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
       _signals["sync_dir"]         = triggerConfig(TRG_SEL_SYNC_DIR,false);
 
+      // External triggered Pattern Generator:
+      _signals["async_pg"]         = triggerConfig(TRG_SEL_ASYNC_PG, false);
+      _signals["extern_pg"]        = triggerConfig(TRG_SEL_ASYNC_PG, false, false);
+
       // Single event injection:
       _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);
       _signals["single_dir"]       = triggerConfig(TRG_SEL_SINGLE_DIR,false);
       _signals["single_direct"]    = triggerConfig(TRG_SEL_SINGLE_DIR,false,false);
 
       // Internal Trigger Generator
-      _signals["gen"]              = triggerConfig(TRG_SEL_GEN,true);
-      _signals["generator"]        = triggerConfig(TRG_SEL_GEN,true,false);
-
+      _signals["random"]           = triggerConfig(TRG_SEL_GEN,true);
+      _signals["random_dir"]       = triggerConfig(TRG_SEL_GEN_DIR,false);
+      _signals["periodic"]         = triggerConfig(TRG_SEL_GEN,true);
+      _signals["periodic_dir"]     = triggerConfig(TRG_SEL_GEN_DIR,false);
+      
       // Pattern Generator
       _signals["pg"]               = triggerConfig(TRG_SEL_PG,true);
       _signals["patterngenerator"] = triggerConfig(TRG_SEL_PG,true,false);

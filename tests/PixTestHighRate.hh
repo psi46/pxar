@@ -24,6 +24,7 @@ public:
   void doXNoiseMaps();
   void doRunDaq(); 
   void doRunMaskHotPixels();
+  void doRunTrimHotPixels();
   void doStop();
 
   void doHitMap(int nseconds, std::vector<TH2D*>);
@@ -44,6 +45,11 @@ private:
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
+
+  bool    fParSaveTrimbits;
+  bool    fParMaskUntrimmable;
+  int     fParRunSecondsHotPixels;
+  int     fParTrimHotPixelThr;
 
   bool          fDaq_loop;
   

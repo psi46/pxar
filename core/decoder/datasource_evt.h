@@ -12,7 +12,9 @@ namespace pxar {
   class evtSource : public dataSource<uint16_t> {
     // --- Control/state
     uint8_t channel;
+    uint16_t flags;
     uint8_t chainlength;
+    uint8_t chainlengthOffset;
     uint8_t envelopetype;
     uint8_t devicetype;
 
@@ -23,11 +25,7 @@ namespace pxar {
     std::vector<uint16_t> buffer;
 
     // --- virtual data access methods
-    uint16_t Read() {
-      if(!connected) throw dpNotConnected();
-      // LOG(logDEBUGPIPES) << "pos " << pos;
-      return (pos < buffer.size()) ? lastSample = buffer[pos++] : throw dsBufferEmpty();
-    }
+    uint16_t Read();
     uint16_t ReadLast() {
       if(!connected) throw dpNotConnected();
       return lastSample;
@@ -36,9 +34,17 @@ namespace pxar {
       if(!connected) throw dpNotConnected();
       return channel;
     }
+    uint16_t ReadFlags() {
+      if(!connected) throw dpNotConnected();
+      return flags;
+    }
     uint8_t ReadTokenChainLength() {
       if(!connected) throw dpNotConnected();
       return chainlength;
+    }
+    uint8_t ReadTokenChainOffset() {
+      if(!connected) throw dpNotConnected();
+      return chainlengthOffset;
     }
     uint8_t ReadEnvelopeType() {
       if(!connected) throw dpNotConnected();
@@ -49,26 +55,10 @@ namespace pxar {
       return devicetype;
     }
   public:
-  evtSource(uint8_t daqchannel, uint8_t tokenChainLength, uint8_t tbmtype, uint8_t roctype)
-    : channel(daqchannel), chainlength(tokenChainLength), envelopetype(tbmtype), devicetype(roctype), lastSample(0x4000), pos(0), connected(true) {
-      LOG(logDEBUGPIPES) << "New evtSource instantiated with properties:";
-      LOG(logDEBUGPIPES) << "-------------------------";
-      LOG(logDEBUGPIPES) << "Channel " << static_cast<int>(channel)
-			 << " (" << static_cast<int>(chainlength) << " ROCs)"
-			 << (envelopetype == TBM_NONE ? " DESER160 " : (envelopetype == TBM_EMU ? " SOFTTBM " : " DESER400 "));
-    }
+    evtSource(uint8_t daqchannel, uint8_t tokenChainLength, uint8_t offset, uint8_t tbmtype, uint8_t roctype, uint16_t daqflags = 0);
   evtSource() : connected(false) {};
-    void AddData(uint16_t data) {
-      buffer.push_back(data);
-      LOG(logDEBUGPIPES) << buffer.size() << " words buffered.";
-    }
-    void AddData(std::vector<uint16_t> data) {
-      buffer.insert(buffer.end(), data.begin(), data.end());
-      LOG(logDEBUGPIPES) << "-------------------------";
-      LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB (" << buffer.size() << " words buffered):";
-      LOG(logDEBUGPIPES) << listVector(buffer,true);
-      LOG(logDEBUGPIPES) << "-------------------------";
-    }
+    void AddData(uint16_t data);
+    void AddData(std::vector<uint16_t> data);
 
     // --- control and status
     uint8_t  GetState() { return (!buffer.empty() && connected); }

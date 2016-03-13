@@ -9,8 +9,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # Project name
 PROJECT( pxar )
 # UPDATE THIS BEFORE RELEASING A SOURCE CODE TARBALL!
-SET(PXAR_VERSION "2.2.2")
-SET(PXAR_FW_VERSION "4.2")
+SET(PXAR_VERSION "2.7.5")
+SET(PXAR_FW_VERSION "4.6")
 
 
 #########################################
@@ -26,7 +26,7 @@ OPTION(INTERFACE_ETH "Build DTB Ethernet interface?" OFF)
 # Build flag for USB interface implementation:
 OPTION(INTERFACE_USB "Build DTB USB interface?" ON)
 # Switch off building for all interfaces:
-OPTION(BUILD_dummydtb "Do not build anny interface but simulate DTB?" OFF)
+OPTION(BUILD_dtbemulator "Do not build any interface but simulate DTB?" OFF)
 
 ########################################
 # Setup the build environment for pxar #
@@ -91,11 +91,11 @@ include( cmake/Platform.cmake)
 # Include packages for threading:
 FIND_PACKAGE(Threads)
 
-IF(BUILD_dummydtb)
-  MESSAGE(WARNING "Build flag BUILD_dummydtb passed. Turning off all interfaces")
+IF(BUILD_dtbemulator)
+  MESSAGE(WARNING "Build flag BUILD_dtbemulator passed. Turning off all interfaces and building DTB emulator class instead.")
   SET(INTERFACE_ETH OFF)
   SET(INTERFACE_USB OFF)
-ENDIF(BUILD_dummydtb)
+ENDIF(BUILD_dtbemulator)
 
 IF(INTERFACE_ETH)
   # Find the required libraries for the ethernet interface:

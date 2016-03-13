@@ -25,7 +25,7 @@ public:
 private:
 
   std::string fParDac;
-  int         fParNtrig, fParNpix, fParDacLo, fParDacHi, fParDacsPerStep, fAdjustVcal, fDumpAll, fDumpProblematic;
+  int         fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, fParNtrigPerStep, fAdjustVcal, fDumpAll, fDumpProblematic, fDumpOutputFile;
 
   ClassDef(PixTestScurves, 1)
 

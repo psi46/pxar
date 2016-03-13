@@ -17,12 +17,14 @@ public:
   void doTest();
   void setVana();
   void programROC();
+  /// Doug's timing setting
   void setTimings();
+  /// Wolfram's timing setting (optimized)
+  void findTiming();
   void findWorkingPixel();  
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
-  
 
 private:
 
@@ -33,6 +35,7 @@ private:
   int     fParNtrig;
   int     fParVcal, fParDeltaVthrComp;
   double  fParFracCalDel;
+  int     fIgnoreProblems;
 
   ClassDef(PixTestPretest, 1)
 

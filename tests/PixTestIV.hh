@@ -17,6 +17,7 @@ public:
   void bookHist(std::string); 
   void doTest();
   void stop(); 
+  void runCommand(std::string);
 
 private:
   void writeOutput(std::vector<double>        &voltageMeasurements,

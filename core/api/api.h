@@ -82,6 +82,24 @@ typedef unsigned char uint8_t;
  */
 #define FLAG_FORCE_UNMASKED   0x0100
 
+/** Flag to dump all flawed events plus the surrounding ones to the logger on ERROR level.
+ *  Only use this to debug readout since it slows down decoding considerably.
+ */
+#define FLAG_DUMP_FLAWED_EVENTS 0x0200
+
+/** Flag to disable the collection of readback data from ROC headers. This might be desirable when sending
+ *  several million triggers at once since the amount of readback data collected can be huge.
+ */
+#define FLAG_DISABLE_READBACK_COLLECTION 0x0400
+
+/** Flag to disable cross-checking the TBM event id against a local counter.
+ */
+#define FLAG_DISABLE_EVENTID_CHECK 0x0800
+
+/** Flag to enable the collection of XOR sums from the DESER400 modules for every event.
+ */
+#define FLAG_ENABLE_XORSUM_LOGGING 0x1000
+
 
 /** Define a macro for calls to member functions through pointers 
  *  to member functions (used in the loop expansion routines).
@@ -104,10 +122,10 @@ namespace pxar {
    *  addresses from the HAL class, used e.g. in loop expansion routines.
    *  Follows advice of http://www.parashift.com/c++-faq/typedef-for-ptr-to-memfn.html
    */
-  typedef  std::vector<Event*> (hal::*HalMemFnRocParallel)(std::vector<uint8_t> rocids, std::vector<int32_t> parameter);
-  typedef  std::vector<Event*> (hal::*HalMemFnPixelParallel)(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
-  typedef  std::vector<Event*> (hal::*HalMemFnRocSerial)(uint8_t rocid, std::vector<int32_t> parameter);
-  typedef  std::vector<Event*> (hal::*HalMemFnPixelSerial)(uint8_t rocid, uint8_t column, uint8_t row, std::vector<int32_t> parameter);
+  typedef  std::vector<Event> (hal::*HalMemFnRocParallel)(std::vector<uint8_t> rocids, bool efficiency, std::vector<int32_t> parameter);
+  typedef  std::vector<Event> (hal::*HalMemFnPixelParallel)(std::vector<uint8_t> rocids, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
+  typedef  std::vector<Event> (hal::*HalMemFnRocSerial)(uint8_t rocid, bool efficiency, std::vector<int32_t> parameter);
+  typedef  std::vector<Event> (hal::*HalMemFnPixelSerial)(uint8_t rocid, uint8_t column, uint8_t row, bool efficiency, std::vector<int32_t> parameter);
 
 
 
@@ -355,8 +373,11 @@ namespace pxar {
       *
       *  The signal identifier is checked against a dictionary to be valid.
       *  In case of an invalid signal identifier the output is turned off.
+      *
+      *  The channel variable allows to select a certain channel of the 
+      *  signal to be selected of applicable.
       */
-    bool SignalProbe(std::string probe, std::string name);
+    bool SignalProbe(std::string probe, std::string name, uint8_t channel = 0);
     
     std::vector<uint16_t> daqADC(std::string signal, uint8_t gain, uint16_t nSample, uint8_t source, uint8_t start);
  
@@ -667,7 +688,9 @@ namespace pxar {
      *  pixels in question before calling pxar::daqStart()!
      */
     bool daqStart();
+    bool daqStart(const uint16_t flags);
     bool daqStart(const int bufsize, const bool init);
+    bool daqStart(const uint16_t flags, const int bufsize, const bool init);
 
     /** Function to get back the DAQ status
      *
@@ -689,8 +712,14 @@ namespace pxar {
      *  synchronous or asynchronous trigger sources. The trigger source is
      *  looked up from the dictionary, and the corresponding decoding module
      *  is automatically selected.
+     *
+     *  The optional "timing" parameter is required for the DTB trigger generator
+     *  (random, periodic) and represents the trigger period in BC.
+     *
+     *  The trigger is only activated at pxar::daqStart() and is stopped again at
+     *  pxar::daqStop().
      */
-    bool daqTriggerSource(std::string triggerSource);
+    bool daqTriggerSource(std::string triggerSource, uint32_t rate = 0);
 
     /** Function to send a single (direct) signal to the DUT.
      *
@@ -782,6 +811,13 @@ namespace pxar {
      */
     std::vector<std::vector<uint16_t> > daqGetReadback();
 
+    /** Function to return the recorded XOR sum of the DESER400 module for the
+     *  selected channel. The data is stored until a new DAQ session or test is 
+     *  called and can be fetched once (deleted at read time). The return vector 
+     *  contains all recorded XOR sum values of the DAQ channel.
+     */
+    std::vector<uint8_t> daqGetXORsum(uint8_t channel);
+
     /** Function that returns a class object of the type pxar::statistics
      *  containing all collected error statistics from the last (non-raw)
      *  DAQ readout or API test call. Statistics can be fetched once and
@@ -822,10 +858,10 @@ namespace pxar {
     /** Get ADC value
      */
     uint16_t GetADC( uint8_t rpc_par1 ) ;
-    
+
     /** debug function to enable a channel range
      */
-    
+
     void setChannels(uint8_t start, uint8_t end);
 
   private:
@@ -842,35 +878,30 @@ namespace pxar {
      *  the user, i.e. select the full-ROC test instead of the pixel-by-pixel
      *  function, all depending on the configuration of the DUT.
      */
-    std::vector<Event*> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, uint16_t flags = 0);
-
-    /** Merges all consecutive triggers into one pxar::Event. This function deletes the original event data after
-     *  merging! 
-     */
-    std::vector<Event*> condenseTriggers(std::vector<Event*> data, uint16_t nTriggers, bool efficiency);
+    std::vector<Event> expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags = 0);
     
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels.
      */
-    std::vector<pixel> repackMapData (std::vector<Event*> data, uint16_t nTriggers, uint16_t flags, bool efficiency);
+    std::vector<pixel> repackMapData (std::vector<Event> &data, uint16_t flags);
 
     /** Repacks map data from (possibly) several ROCs into one long vector
      *  of pixels and returns the threshold value.
      */
-    std::vector<pixel> repackThresholdMapData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags);
+    std::vector<pixel> repackThresholdMapData (std::vector<Event> &data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors.
      */
-    std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector<Event*> data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t nTriggers, uint16_t flags, bool efficiency);
+    std::vector< std::pair<uint8_t, std::vector<pixel> > > repackDacScanData (std::vector<Event> &data, uint8_t dacStep, uint8_t dacMin, uint8_t dacMax, uint16_t flags);
 
     /** Repacks DAC scan data into pairs of DAC values with fired pxar::pixel vectors and return the threshold value.
      */
-    std::vector<std::pair<uint8_t,std::vector<pixel> > > repackThresholdDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags);
+    std::vector<std::pair<uint8_t,std::vector<pixel> > > repackThresholdDacScanData (std::vector<Event> &data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint8_t thresholdlevel, uint16_t nTriggers, uint16_t flags);
 
     /** repacks (2D) DAC-DAC scan data into pairs of DAC values with
      *  vectors of the fired pixels.
      */
-    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > repackDacDacScanData (std::vector<Event*> data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t nTriggers, uint16_t flags, bool efficiency);
+    std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pixel> > > > repackDacDacScanData (std::vector<Event> &data, uint8_t dac1step, uint8_t dac1min, uint8_t dac1max, uint8_t dac2step, uint8_t dac2min, uint8_t dac2max, uint16_t flags);
 
     /** Helper function for conversion from string to register value
      *
@@ -979,7 +1010,7 @@ namespace pxar {
     /** Default DUT constructor
      */
     dut() : _initialized(false), _programmed(false), roc(), tbm(), sig_delays(),
-      va(0), vd(0), ia(0), id(0), pg_setup(), pg_sum(0) {}
+      va(0), vd(0), ia(0), id(0), pg_setup(), pg_sum(0), trigger_source(TRG_SEL_PG_DIR) {}
 
     // GET functions to read information
 
@@ -1027,9 +1058,13 @@ namespace pxar {
      */
     std::string getRocType();
 
-    /** Function returning the enabled pixels configs for a specific ROC:
+    /** Function returning the enabled pixels configs for a specific ROC ID:
      */
     std::vector< pixelConfig > getEnabledPixels(size_t rocid);
+
+    /** Function returning the enabled pixels configs for a ROC with given I2C address:
+     */
+    std::vector< pixelConfig > getEnabledPixelsI2C(size_t roci2c);
 
     /** Function returning the enabled pixels configs for all ROCs:
      */
@@ -1091,7 +1126,7 @@ namespace pxar {
      */
     std::vector< std::pair<std::string,uint8_t> > getTbmDACs(size_t tbmId);
 
-    /** Function returning the token chain length:
+    /** Function returning the token chain lengths:
      */
     std::vector<uint8_t> getTbmChainLengths(size_t tbmId);
 
@@ -1175,15 +1210,6 @@ namespace pxar {
      */
     std::vector< bool > getEnabledColumns(size_t roci2c);
 
-    /** DUT hub IDs
-     */
-    uint8_t hubId;
-    uint8_t hubId1;
-
-    /** DUT member to identify layer 1 modules
-     */
-    bool _layer1Enable;
-
     /** DUT member to hold all ROC configurations
      */
     std::vector< rocConfig > roc;
@@ -1208,6 +1234,10 @@ namespace pxar {
      *  command list
      */
     uint32_t pg_sum;
+
+    /** DUT member to store the selected trigger source to be activated
+     */
+    uint16_t trigger_source;
 
   }; //class DUT
 

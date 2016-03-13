@@ -309,12 +309,19 @@ TF1* PixInitFunc::errScurve(TH1 *h) {
 	      << " foundLo: " << foundLo
 	      << " plateauWidth: "  << plateauWidth
 	      << endl;
+  // -- step function found; fix threshold
   if (jbin == ibin) {
-    //    cout << "XXXXXXXXXXX PixInitFunc: STEP FUNCTION " << h->GetTitle() << " ibin = " << ibin << " jbin = " << jbin << endl;
-    f->FixParameter(0, h->GetBinCenter(jbin)); 
-    f->FixParameter(1, 1.e2); 
+    f->FixParameter(0, h->GetBinCenter(jbin));
+    f->FixParameter(1, 1.e2);
     fDoNotFit = true;
   }
+  // -- if no plateau found, reset step to unphysical range (outside of histogram)
+  if (jbin < 0) {
+    f->FixParameter(0, h->GetBinLowEdge(1) - h->GetBinWidth(1));
+    f->FixParameter(1, 1.e2);
+    fDoNotFit = true;
+  }
+
   f->FixParameter(2, 1.); 
   f->FixParameter(3, 0.5*h->GetMaximum()); 
   return f; 
