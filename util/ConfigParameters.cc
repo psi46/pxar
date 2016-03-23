@@ -41,7 +41,7 @@ void ConfigParameters::initialize() {
   fnRocs = 16;
   fnTbms = 1; 
   fnModules = 1;
-  //fHubId = 31; FIX (?): default hubId needed?
+  fHubIds.push_back(31);
   fI2cAddresses.clear(); 
 
   fHvOn = true;
@@ -1153,6 +1153,7 @@ void ConfigParameters::readNrocs(string line) {
 void ConfigParameters::readHubIds(string line) {
   cleanupString(line);
   string::size_type s0 = line.find(" ");
+  fHubIds.clear();
   if (string::npos == s0) {
     return;
   } else {
