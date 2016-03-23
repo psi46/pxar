@@ -63,6 +63,7 @@ public:
 
   static ConfigParameters* Singleton();
 
+  std::string vectorToString(std::vector<uint8_t>);
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
   std::string getDACParameterFileName()   {return fDACParametersFileName;}
   std::string getTbmParameterFileName()   {return fTbmParametersFileName;}

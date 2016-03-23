@@ -765,6 +765,15 @@ bool ConfigParameters::setTrimBits(int trim) {
   return true;
 }
 
+// ----------------------------------------------------------------------
+std::string ConfigParameters::vectorToString(std::vector<uint8_t> vec) {
+  stringstream ss;
+  for (std::vector<uint8_t>::iterator ivec = vec.begin(); ivec != vec.end() - 1; ivec++)
+    ss << int(*ivec) << ", ";
+  ss << int(vec.back());
+  return ss.str();
+}
+
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeConfigParameterFile() {
