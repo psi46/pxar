@@ -26,9 +26,7 @@ hal::hal(std::string name) :
   _currentTrgSrc(TRG_SEL_PG_DIR),
   m_src(),
   m_splitter(),
-  m_decoder(),
-  channel_start(0),
-  channel_end(7)
+  m_decoder()
 {
 
   // Get a new CTestboard class instance:
@@ -1575,14 +1573,6 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
       _testboard->Daq_Deser400_OldFormat(true);
     }
     else { _testboard->Daq_Deser400_OldFormat(false); }
-
-    // And start the DAQ:
-	for (uint8_t ch = 0; ch < m_tokenchains.size(); ++ ch) {
-		_testboard->Daq_Start(ch);
-		m_daqstatus.at(ch) = true;
-        if ( ch < channel_start || ch > channel_end) _testboard->Daq_Stop(ch);
-	}
-
   }
   // Data acquisition without real TBM:
   else {
@@ -1603,11 +1593,16 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 		       << " Phase: " << static_cast<int>(deser160phase);
       _testboard->Daq_Select_Deser160(deser160phase);
     }
-    // Start DAQ in channel 0:
-    _testboard->Daq_Start(0);
-    m_daqstatus.at(0) = true;
   }
 
+  // Start all open DAQ channels:
+  for(size_t i = 0; i < m_tokenchains.size(); i++) {
+    // Start DAQ in channel i:
+    _testboard->uDelay(100);
+    _testboard->Daq_Start(i);
+    m_daqstatus.at(i) = true;
+  }
+  
   _testboard->uDelay(100);
   _testboard->Flush();
 }
@@ -1618,7 +1613,6 @@ Event hal::daqEvent() {
 
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if (ch < channel_start || ch > channel_end) continue;
     if(m_src.at(ch).isConnected()) {
       dataSink<Event*> Eventpump;
       m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
@@ -1654,8 +1648,7 @@ std::vector<Event> hal::daqAllEvents() {
     // Read the next Event from each of the pipes:
     Event current_Event;
     for(size_t ch = 0; ch < m_src.size(); ch++) {
-        if (ch < channel_start || ch > channel_end) {done_ch.at(ch) = true; continue;}
-      if(m_src.at(ch).isConnected()) {
+      if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
 
@@ -1693,7 +1686,6 @@ rawEvent hal::daqRawEvent() {
   
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if (ch < channel_start || ch > channel_end) { continue;}
     if(m_src.at(ch).isConnected()) {
       dataSink<rawEvent*> rawpump;
       m_splitter.at(ch) >> rawpump;
@@ -1731,8 +1723,7 @@ std::vector<rawEvent> hal::daqAllRawEvents() {
     rawEvent current_Event;
     
     for(size_t ch = 0; ch < m_src.size(); ch++) {
-        if (ch < channel_start || ch > channel_end) {done_ch.at(ch) = true; continue;}
-      if(m_src.at(ch).isConnected()) {
+      if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<rawEvent*> rawpump;
 	m_splitter.at(ch) >> rawpump;
 	
@@ -1769,7 +1760,6 @@ std::vector<uint16_t> hal::daqBuffer() {
   
   // Read the full data blob from each of the pipes:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
-      if (ch < channel_start || ch > channel_end) {continue;}
     if(m_src.at(ch).isConnected()) {
       dataSink<uint16_t> rawpump;
       m_src.at(ch) >> rawpump;
@@ -1978,11 +1968,6 @@ std::vector<uint16_t> hal::daqADC(uint8_t analog_probe, uint8_t gain, uint16_t n
 
 uint16_t hal::GetADC(uint8_t rpc_par1){
   return _testboard->GetADC(rpc_par1);
-}
-
-void hal::setReadoutChannels(uint8_t start, uint8_t end){
-    channel_start = start;
-    channel_end = end;
 }
 
 std::vector<Event> hal::condenseTriggers(std::vector<Event> &data, uint16_t nTriggers, bool efficiency) {

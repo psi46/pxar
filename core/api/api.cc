@@ -415,10 +415,6 @@ bool pxarCore::initDUT(std::vector<uint8_t> hubids,
   return programDUT();
 }
 
-void pxarCore::setChannels(uint8_t start, uint8_t end){
-    _hal->setReadoutChannels(start, end);
-}
-
 bool pxarCore::programDUT() {
 
   if(!_dut->_initialized) {

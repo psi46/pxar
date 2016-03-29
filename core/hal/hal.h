@@ -418,9 +418,6 @@ namespace pxar {
     /** Get ADC value
      */
     uint16_t GetADC(uint8_t rpc_par1);
-    
-    
-    void setReadoutChannels(uint8_t start, uint8_t end);
 
   private:
 
@@ -518,9 +515,6 @@ namespace pxar {
     std::vector<dtbSource> m_src;
     std::vector<dtbEventSplitter> m_splitter;
     std::vector<dtbEventDecoder> m_decoder;
-
-    uint8_t channel_start;
-    uint8_t channel_end;
   };
 }
 #endif

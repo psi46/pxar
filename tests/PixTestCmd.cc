@@ -4338,11 +4338,6 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("timing")){return find_timing(2);}
     int npass=0;
     if (kw.match("timing",npass)){return find_timing(npass);}
-
-    if (kw.match("channel", value1, value2)){
-        fApi->setChannels(value1, value2);
-        return 0;
-    }
     return -1; // nothing done
 }
 
