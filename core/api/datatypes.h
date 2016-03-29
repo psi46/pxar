@@ -444,7 +444,6 @@ namespace pxar {
     bool NoTokenPass() { return (dacs[0x00]&0x40); };
     // Return readable name of the core:
     std::string corename() { return ((core&0x10) ? "Beta" : "Alpha"); };
-
   };
 
   /** Class for statistics on event and pixel decoding

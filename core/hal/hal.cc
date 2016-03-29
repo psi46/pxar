@@ -550,7 +550,6 @@ void hal::setTBvd(double VD) {
 
 void hal::setHubId(uint8_t hubid) {
   LOG(logDEBUGHAL) << "Setting Hub ID: " << static_cast<int>(hubid);
-
   _testboard->mod_Addr(hubid);
 }
 
@@ -621,7 +620,6 @@ bool hal::tbmSetRegs(uint8_t hubid, uint8_t core, std::map< uint8_t, uint8_t > r
   for(std::map< uint8_t,uint8_t >::iterator it = regPairs.begin(); it != regPairs.end(); ++it) {
     // One of the register settings had an issue, abort:
     if(!tbmSetReg(hubid, core | it->first, it->second),false) return false;
-
   }
 
   // Send all queued commands to the testboard:

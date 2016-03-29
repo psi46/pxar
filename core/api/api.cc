@@ -1705,7 +1705,6 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
       LOG(logDEBUGAPI) << "\"The Loop\" contains " << enabledRocs.size() << " enabled ROCs.";
 
       for (std::vector<rocConfig>::iterator rocit = enabledRocs.begin(); rocit != enabledRocs.end(); ++rocit){
-
 	std::vector<Event> rocdata = std::vector<Event>();
 	std::vector<pixelConfig> enabledPixels = _dut->getEnabledPixelsI2C(rocit->i2c_address);
 

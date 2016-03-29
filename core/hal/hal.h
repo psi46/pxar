@@ -451,7 +451,6 @@ namespace pxar {
     // Store which channels are active:
     std::vector<bool> m_daqstatus;
 
-
     uint16_t _currentTrgSrc;
 
     /** Print the info block with software and firmware versions,
@@ -516,15 +515,9 @@ namespace pxar {
     std::vector<uint16_t> * daqReadChannel(uint8_t channel);
 
     // Our default pipe work buffers:
-
     std::vector<dtbSource> m_src;
     std::vector<dtbEventSplitter> m_splitter;
     std::vector<dtbEventDecoder> m_decoder;
-
-    // My test buffers
-    std::vector<dtbSource> srce; // give it a unique name
-    std::vector<dtbEventSplitter> splitter;
-    std::vector<dtbEventDecoder> decoder;
 
     uint8_t channel_start;
     uint8_t channel_end;
