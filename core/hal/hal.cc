@@ -1579,7 +1579,7 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
     // Select the Deser400 as DAQ source:
     LOG(logDEBUGHAL) << "Enabling Deserializer400 for data acquisition.";
     _testboard->Daq_Select_Deser400();
-
+    
     // Reset the Deserializer 400, re-synchronize:
     _testboard->Daq_Deser400_Reset(3);
 

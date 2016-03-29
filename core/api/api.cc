@@ -782,7 +782,7 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue, uint8_t tbmid) {
       _dut->tbm.at(tbmid).dacs[_register] = regValue;
       LOG(logDEBUGAPI) << "Register \"" << regName << "\" (" << std::hex << static_cast<int>(_register) << std::dec << ") updated with value " << static_cast<int>(regValue);
     }
-
+    
     _hal->tbmSetReg(_dut->tbm.at(tbmid).hubid,_dut->tbm.at(tbmid).core | _register,regValue);
   }
   else {

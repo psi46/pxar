@@ -42,7 +42,7 @@ void ConfigParameters::initialize() {
   fnTbms = 1; 
   fnModules = 1;
   fHubIds.push_back(31);
-  fI2cAddresses.clear(); 
+  fI2cAddresses.clear();
 
   fHvOn = true;
   fTbmEnable = true;
