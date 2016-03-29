@@ -1534,23 +1534,6 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 
   // Open all DAQ channels we need:
   uint8_t rocid_offset = 0;
-  if (m_tokenchains.size() == 8) {
-         for(size_t i = 0; i < m_tokenchains.size(); i++) {
-           // Open DAQ in channel i:
-           uint32_t allocated_buffer = _testboard->Daq_Open(buffersize, (6+i)%8);
-           LOG(logDEBUGHAL) << "Channel " << (6+i)%8 << ": token chain: "
-                            << static_cast<int>(m_tokenchains.at(i))
-                            << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
-           // Initialize the data source, set tokenchain length to zero if no token pass is expected:
-           m_src.at(i) = dtbSource(_testboard,(6+i)%8 ,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
-           m_src.at(i) >> m_splitter.at(i);
-           _testboard->uDelay(100);
-           // Increment the ROC id offset by the amount of ROCs expected:
-           rocid_offset += m_tokenchains.at(i);
-         }
-       }
-
-  else {
   for(size_t i = 0; i < m_tokenchains.size(); i++) {
     // Open DAQ in channel i:
     uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
@@ -1564,7 +1547,6 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
     // Increment the ROC id offset by the amount of ROCs expected:
     rocid_offset += m_tokenchains.at(i);
   }
-}
 
   // Data acquisition with real TBM:
   if(m_tbmtype != TBM_NONE && m_tbmtype != TBM_EMU) {
