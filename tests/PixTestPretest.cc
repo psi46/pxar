@@ -1214,7 +1214,7 @@ void PixTestPretest::findWorkingPixel() {
 
       if (!okVthrComp || !okCalDel) {
 	okAllRocs = false;
-	if (ifwp != pixelList.size() - 1) {LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp << " Delta(CalDel) = " << cdLast - cdFirst << ", trying another"; }
+    LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp << " Delta(CalDel) = " << cdLast - cdFirst << ((ifwp != pixelList.size() - 1) ? ", trying another" : ".");
 	break;
       } else{
 	LOG(logDEBUG) << hname << " OK, with vthrComp = " << vthrComp << " and Delta(CalDel) = " << cdLast - cdFirst; 
