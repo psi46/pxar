@@ -495,7 +495,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
   Double_t yq[1];  // array to contain the quantiles
   // Look for pixel with min. pulse height on every ROC:
   for(unsigned int ith2 = 0; ith2 < minphmap.size(); ith2++) {
-    TH1D* h_quant = distribution(minphmap[ith2], 246, 10., 255.);
+    TH1D* h_quant = distribution(minphmap[ith2], 254, 1., 255.);
     fHistList.push_back(h_quant);
     h_quant->GetQuantiles(1, yq, xq);
     //    yq[0] = h_quant->FindFirstBinAbove(1.) + 1;
