@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "log.h"
 #include "helper.h"
+#include "PixUtil.hh"
 
 using namespace std;
 using namespace pxar;
@@ -27,7 +28,8 @@ PixTest(a, name),
   fParNtrig(1), 
   fParVcal(200), 
   fParDeltaVthrComp(-50), 
-  fParFracCalDel(0.5) {
+  fParFracCalDel(0.5),
+  fIgnoreProblems(0) {
   PixTest::init();
   init(); 
 }
@@ -67,7 +69,7 @@ bool PixTestPretest::setParameter(string parName, string sval) {
       }
 
       if (!parName.compare("iterations") ) {
-    fIterations = atoi(sval.c_str() );
+	fIterations = atoi(sval.c_str() );
       }
 
       if (!parName.compare("vcal") ) {
@@ -80,6 +82,12 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 
       if (!parName.compare("fraccaldel") ) {
 	fParFracCalDel = atof(sval.c_str() );
+      }
+
+      if (!parName.compare("ignoreproblems")) {
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fIgnoreProblems = atoi(sval.c_str());
       }
 
       if (!parName.compare("pix") || !parName.compare("pix1") ) {
@@ -151,14 +159,24 @@ void PixTestPretest::doTest() {
   PixTest::update(); 
 
   if (fProblem) {
-    bigBanner("ERROR: some ROCs are not programmable; stop"); 
-    return;
+    if (fIgnoreProblems) {
+      bigBanner("ERROR: some ROCs are not programmable; NOT stopping because you chose not to");
+      fProblem = false; 
+    } else {
+      bigBanner("ERROR: some ROCs are not programmable; stop"); 
+      return;
+    }
   }
 
   setVana();
   if (fProblem) {
-    bigBanner("ERROR: turning off some ROCs lead to less I(ana) current drop than expected;  stop"); 
-    return;
+    if (fIgnoreProblems) {
+      bigBanner("ERROR: turning off some ROCs lead to less I(ana) current drop than expected; NOT stopping because you chose not to");
+      fProblem = false; 
+    } else {
+      bigBanner("ERROR: turning off some ROCs lead to less I(ana) current drop than expected; stop"); 
+      return;
+    }
   }
 
   h1 = (*fDisplayedHist); 
@@ -177,8 +195,13 @@ void PixTestPretest::doTest() {
   }
 
   if (fProblem) {
-    bigBanner("ERROR: No functional timings found;  stop");
-    return;
+    if (fIgnoreProblems) {
+      bigBanner("ERROR: No functional timings found;  NOT stopping because you chose not to");
+      fProblem = false;
+    } else {
+      bigBanner("ERROR: No functional timings found;  stop");
+      return;
+    }
   }
 
   findWorkingPixel();
@@ -483,7 +506,7 @@ void PixTestPretest::findTiming() {
   uint8_t value= ((i160 & 0x7)<<5) + ((i400 & 0x7)<<2);
   int stat = tbmSet("basee", 0, value);
   if (stat > 0){
-    LOG(logWARNING) << "error setting delay  base A " << hex << value << dec;
+    LOG(logWARNING) << "error setting delay  base E " << hex << value << dec;
   }
 
   if (iroc >= 0){
@@ -494,6 +517,8 @@ void PixTestPretest::findTiming() {
     }
   }
   tbmSet("base4", 2, 0x80); // reset once after changing phases
+
+  if (success < 0) fProblem = true; 
 
 }
 

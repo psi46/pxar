@@ -19,6 +19,8 @@ FLAG_CHECK_ORDER    = int(_flag_check_order)
 FLAG_FORCE_UNMASKED = int(_flag_force_unmasked)
 FLAG_DUMP_FLAWED_EVENTS = int(_flag_dump_flawed_events)
 FLAG_DISABLE_READBACK_COLLECTION = int(_flag_disable_readback_collection)
+FLAG_DISABLE_EVENTID_CHECK = int(_flag_disable_eventid_check)
+FLAG_ENABLE_XORSUM_LOGGING = int(_flag_enable_xorsum_logging)
 
 cdef class Pixel:
     cdef pixel *thisptr      # hold a C++ instance which we're wrapping
@@ -146,6 +148,22 @@ cdef class Statistics:
         return "Decoding statistics..."
     cdef c_clone(self, statistics s):
         self.thisobj = s
+    property dump:
+        def __get__(self): self.thisobj.dump()
+    property errors:
+        def __get__(self): return self.thisobj.errors()
+    property info_words_read:
+        def __get__(self): return self.thisobj.info_words_read()
+    property errors_event:
+        def __get__(self): return self.thisobj.errors_event()
+    property errors_tbm:
+        def __get__(self): return self.thisobj.errors_tbm()
+    property errors_roc:
+        def __get__(self): return self.thisobj.errors_roc()
+    property errors_pixel:
+        def __get__(self): return self.thisobj.errors_pixel()
+
+        
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
@@ -187,6 +205,12 @@ cdef class PxEvent:
     property trailer:
         def __get__(self): return self.thisptr.trailer
         def __set__(self, trailer): self.thisptr.trailer = trailer
+    property hasNoTokenPass:
+        def __get__(self): return self.thisptr.hasNoTokenPass()
+    property triggerCount:
+        def __get__(self): return self.thisptr.triggerCount()
+    property stackCount:
+        def __get__(self): return self.thisptr.stackCount()
 
 cdef class PyPxarCore:
     cdef pxarCore *thisptr # hold the C++ instance
@@ -299,12 +323,14 @@ cdef class PyPxarCore:
             self.thisptr._dut.testAllPixels(enable)
 
     def getTbmDACs(self, int tbmid):
-        return self.thisptr._dut.getTbmDACs(tbmid)
+        r = self.thisptr._dut.getTbmDACs(tbmid)
+        return {tup.first: tup.second for tup in r}
   
     def getRocDACs(self, int rocid):
-        return self.thisptr._dut.getDACs(rocid)
+        r = self.thisptr._dut.getDACs(rocid)
+        return {tup.first: tup.second for tup in r}
     def getDACs(self, int rocid):
-        return self.thisptr._dut.getDACs(rocid)
+        return self.getRocDACs(rocid)
   
     def updateTrimBits(self, trimming, int rocid):
         cdef vector[pixelConfig] v
@@ -618,13 +644,17 @@ cdef class PyPxarCore:
         r = self.thisptr.daqGetReadback()
         return r
 
+    def daqGetXORsum(self, uint8_t channel):
+        cdef vector[uint8_t] r
+        r = self.thisptr.daqGetXORsum(channel)
+        return r
+
     def daqStop(self):
         return self.thisptr.daqStop()
 
     def getStatistics(self):
         cdef statistics r
         r = self.thisptr.getStatistics()
-        r.dump()
         s = Statistics()
         s.c_clone(r)
         return s
@@ -684,4 +714,17 @@ cdef class PyProbeDictionary:
             names.append(v.at(i))
         return names
 
+cimport triggerdict
+cdef class PyTriggerDictionary:
+    cdef triggerdict.TriggerDictionary *thisptr      # hold a C++ instance which we're wrapping
+    def __cinit__(self):
+        self.thisptr = triggerdict.getInstance()
+    def __dealloc__(self):
+        self.thisptr = NULL
+    def getAllNames(self):
+        names = []
+        cdef vector[string] v = self.thisptr.getAllNames()
+        for i in xrange(v.size()):
+            names.append(v.at(i))
+        return names
 

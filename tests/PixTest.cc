@@ -2198,7 +2198,7 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
                   finished = false;
                 }
               } else {
-                LOG(logWARNING) << "  => trimBits already at highest possible threshold, 'real' hot pixel found";
+                LOG(logINFO) << "  ROC" << i << " pix " << ix << "," << iy << ": trimBits already at highest possible threshold, 'real' hot pixel found";
               }
             }
           }
@@ -2246,16 +2246,30 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
   // now mask all remaining pixels
   if (maskuntrimmable) {
 
-    fHotPixels.clear();
+
     int numMaskedHotPixels = 0;
     TH2D *h(0);
 
-    for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
-      h = hotpixel_map[i];
-      vector<pair<int, int> > hot; 
-      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+    fHotPixels.clear();
 
-        
+    // for each ROC
+    for (unsigned int i = 0; i < hotpixel_map.size(); ++i) {
+
+      // initialize empty ROC hot pixel map
+      vector<pair<int, int> > hotPixelsROC;
+
+      // then add the pixels, which are already masked by ROC configuration (e.g. defaultMaskFile.dat)
+      for(size_t k=0;k<rocPixelConfig[i].size();k++) {
+        if (rocPixelConfig[i][k].mask()) {
+          hotPixelsROC.push_back(make_pair(rocPixelConfig[i][k].column(), rocPixelConfig[i][k].row()));
+        }
+      }
+
+      LOG(logDEBUG) << hotPixelsROC.size() << " pixels are already masked on ROC " << i << ".";
+
+      // then add the pixels which could not be retrimmed in this test
+      h = hotpixel_map[i];
+      for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
         for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
           float pixelAreaFactor = 1.0;
           if (ix == 0 || ix == 51)
@@ -2263,14 +2277,21 @@ void PixTest::trimHotPixels(int hitThr, int runSeconds, bool maskuntrimmable) {
           if (iy == 0 || iy == 79)
             pixelAreaFactor*=2;
           if (h->GetBinContent(ix+1, iy+1) > THR * pixelAreaFactor) {
-            hot.push_back(make_pair(ix, iy));
-            numMaskedHotPixels++;
+            pair<int, int> hotPixel = make_pair(ix, iy);
+            if (std::find(hotPixelsROC.begin(), hotPixelsROC.end(), hotPixel) == hotPixelsROC.end()) {
+              hotPixelsROC.push_back(hotPixel);
+              LOG(logINFO) << "masking new hot pixel: " << (int)i << " " << (int)ix << " " << (int)iy;
+              numMaskedHotPixels++;
+            } else {
+              LOG(logINFO) << "already masked: " << (int)i << " " << (int)ix << " " << (int)iy;
+            }
           }
         }
       }
-      fHotPixels.push_back(hot); 
+      fHotPixels.push_back(hotPixelsROC);
     }
-    LOG(logINFO) << numMaskedHotPixels << " hot pixels could not be trimmed and have been masked.";
+    LOG(logINFO) << "In total " << numMaskedHotPixels << " additional hot pixels could not be trimmed and have been masked.";
+
   }
 
   for (size_t i = 0; i < diff_map.size(); ++i) {

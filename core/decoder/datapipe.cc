@@ -144,16 +144,22 @@ namespace pxar {
     if(sample->IsOverflow()) { decodingStats.m_errors_event_overflow++; }
     decodingStats.m_info_words_read += sample->GetSize();
 
-    // If a TBM header and trailer should be available, process them first:
-    if(GetEnvelopeType() != TBM_NONE) { ProcessTBM(sample); }
+    try {
+      // If a TBM header and trailer should be available, process them first:
+      if(GetEnvelopeType() != TBM_NONE) { ProcessTBM(sample); }
 
-    // Decode ADC Data for analog devices:
-    if(GetDeviceType() < ROC_PSI46DIG) { DecodeADC(sample); }
-    // Decode DESER400 Data for digital devices and TBMs:
-    else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
-    // Decode DESER160 Data for digital devices without real TBM
-    else { DecodeDeser160(sample); }
-
+      // Decode ADC Data for analog devices:
+      if(GetDeviceType() < ROC_PSI46DIG) { DecodeADC(sample); }
+      // Decode DESER400 Data for digital devices and TBMs:
+      else if(GetEnvelopeType() > TBM_EMU) { DecodeDeser400(sample); }
+      // Decode DESER160 Data for digital devices without real TBM
+      else { DecodeDeser160(sample); }
+    }
+    catch(DataDeserializerError /*e*/) {
+      // Clearing event content:
+      roc_Event.Clear();
+    }
+    
     if(dump_count < 100 && (GetFlags() & FLAG_DUMP_FLAWED_EVENTS) != 0) {
       if(error_count != (decodingStats.errors_event()
 			 + decodingStats.errors_tbm()
@@ -201,19 +207,23 @@ namespace pxar {
 
 
     // TBM Trailer:
-
+    // Check the alignment markers to be correct:
+    if((sample->data.at(size-2) & 0xe000) != 0xe000
+       || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
+    
     // Check possible DESER400 error flags in the TBM trailer:
-    if((sample->data.at(size-2) & 0x1000) == 0x1000) { evalDeser400Errors(sample->data.at(size-2)); }
-    else if((sample->data.at(size-1) & 0x1000) == 0x1000) { evalDeser400Errors(sample->data.at(size-1)); }
+    if((sample->data.at(size-2) & 0x1000) == 0x1000
+       || (sample->data.at(size-1) & 0x1000) == 0x1000) {
+      // Currently the same error bits are stored in both trailer words, so only evaluating one of them.
+      evalDeser400Errors(sample->data.at(size-2));
+    }
+
     // No Error flag is set by the DESER400, just decode the TBM header as usual:
     else {
-      // Check the alignment markers to be correct:
-      if((sample->data.at(size-2) & 0xe000) != 0xe000
-	 || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
       // Store the two trailer words:
       roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
 	+ (sample->data.at(size-1) & 0x00ff);
-
+      
       LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
       IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
     }
@@ -235,7 +245,7 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     // Check if ROC is a Layer1 chip with different address encoding:
-    bool linearAddress = ( GetDeviceType() == ROC_PSI46DIGPLUS ? true : false );
+    bool linearAddress = ( GetDeviceType() == ROC_PROC600 ? true : false );
 
     // Loop over the full data:
     for(std::vector<uint16_t>::iterator word = sample->data.begin(); word != sample->data.end(); word++) {
@@ -246,6 +256,9 @@ namespace pxar {
 	// Count ROC Headers up:
 	roc_n++;
 
+	// Maybe store the XOR sum:
+	if((GetFlags() & FLAG_ENABLE_XORSUM_LOGGING) != 0) { xorsum.push_back(((*word) & 0x0ff0) >> 4); }
+	  
 	// Check for DESER400 failure:
 	if(((*word) & 0x0ff0) == 0x0ff0) {
 	  LOG(logCRITICAL) << "Channel " << static_cast<int>(GetChannel())
@@ -312,7 +325,7 @@ namespace pxar {
     int16_t roc_n = -1;
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
-    if (sample->GetSize() - 3*GetTokenChainLength() > 0) {
+    if (static_cast<int>(sample->GetSize()) - 3*GetTokenChainLength() > 0) {
       roc_Event.pixels.reserve((sample->GetSize() - 3*GetTokenChainLength())/6);
     }
 
@@ -387,10 +400,10 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     // Check if ROC is a Layer1 chip with different address encoding:
-    bool linearAddress = ( GetDeviceType() == ROC_PSI46DIGPLUS ? true : false );
+    bool linearAddress = ( GetDeviceType() == ROC_PROC600 ? true : false );
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
-    if(sample->GetSize()-GetTokenChainLength() > 0) {
+    if(static_cast<int>(sample->GetSize())-GetTokenChainLength() > 0) {
       roc_Event.pixels.reserve((sample->GetSize()-GetTokenChainLength())/2);
     }
 
@@ -531,15 +544,27 @@ namespace pxar {
 
   void dtbEventDecoder::evalDeser400Errors(uint16_t data) {
 
-    LOG(logDEBUGPIPES) << "Detected DESER400 trailer error bits, evaluating...";
-    
     // Evaluate the four error bits of the TBM trailer word:
-    if((data & 0x0100) != 0x0000) { decodingStats.m_errors_event_nodata++; }
-    if((data & 0x0200) != 0x0000) { decodingStats.m_errors_event_idledata++; }
-    if((data & 0x0400) != 0x0000) { decodingStats.m_errors_event_invalid_words++; }
-    if((data & 0x0800) != 0x0000) { decodingStats.m_errors_event_frame++; }
-
-    throw DataDecodingError("Detected DESER400 failure.");
+    if((data & 0x0100) != 0x0000) {
+      decodingStats.m_errors_event_nodata++;
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"NO DATA\"";
+      throw DataDeserializerError("No data");
+    }
+    if((data & 0x0200) != 0x0000) {
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"IDLE DATA\"";
+      decodingStats.m_errors_event_idledata++;
+      throw DataDeserializerError("Idle data");
+    }
+    if((data & 0x0400) != 0x0000) {
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"CODE ERROR\"";
+      decodingStats.m_errors_event_invalid_words++;
+      throw DataDeserializerError("Code errro");
+    }
+    if((data & 0x0800) != 0x0000) {
+      LOG(logWARNING) << "Detected DESER400 trailer error bits: \"FRAME ERROR\"";
+      decodingStats.m_errors_event_frame++;
+      throw DataDeserializerError("Frame error");
+    }
   }
   
   void dtbEventDecoder::evalLastDAC(uint8_t roc, uint16_t val) {
@@ -614,6 +639,13 @@ namespace pxar {
     // Automatically clear the readback vector after it was read out:
     std::vector<std::vector<uint16_t> > tmp = readback;
     readback.clear();
+    return tmp;
+  }
+
+  std::vector<uint8_t> dtbEventDecoder::getXORsum() {
+    // Automatically clear the XOR sum vector after it was read out:
+    std::vector<uint8_t> tmp = xorsum;
+    xorsum.clear();
     return tmp;
   }
 }

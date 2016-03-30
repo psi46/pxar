@@ -25,7 +25,7 @@ typedef unsigned char uint8_t;
 #define DTB_REG 0xFF
 #define TBM_REG 0x0F
 #define ROC_REG 0x00
-#define TRG_ERR 0x00
+#define TRG_ERR 0xF000
 
 #define PROBE_ANALOG  PROBEA_OFF
 #define PROBE_DIGITAL PROBE_OFF
@@ -128,7 +128,13 @@ namespace pxar {
       _registers["triggerdelay"]   = dacConfig(SIG_LOOP_TRIGGER_DELAY,255,DTB_REG);
       _registers["trimdelay"]      = dacConfig(SIG_LOOP_TRIM_DELAY,255,DTB_REG);
       _registers["deser160phase"]  = dacConfig(SIG_DESER160PHASE,7,DTB_REG);
+
       _registers["deser400rate"]   = dacConfig(SIG_DESER400RATE,3,DTB_REG);
+      _registers["deser400phase0"] = dacConfig(SIG_DESER400PHASE0,15,DTB_REG);
+      _registers["deser400phase1"] = dacConfig(SIG_DESER400PHASE1,15,DTB_REG);
+      _registers["deser400phase2"] = dacConfig(SIG_DESER400PHASE2,15,DTB_REG);
+      _registers["deser400phase3"] = dacConfig(SIG_DESER400PHASE3,15,DTB_REG);
+
       _registers["triggerlatency"] = dacConfig(SIG_TRIGGER_LATENCY,255,DTB_REG);
       _registers["triggertimeout"] = dacConfig(SIG_TRIGGER_TIMEOUT,255,DTB_REG);
 
@@ -303,8 +309,9 @@ namespace pxar {
       _devices["psi46digv2.1"]      = ROC_PSI46DIGV21;
       _devices["psi46digv21"]       = ROC_PSI46DIGV21;
       _devices["psi46digv21respin"] = ROC_PSI46DIGV21RESPIN;
-      _devices["psi46digplus"]      = ROC_PSI46DIGPLUS;
-      _devices["psi46digl1"]        = ROC_PSI46DIGPLUS;
+      _devices["proc600"]           = ROC_PROC600;
+      _devices["psi46digplus"]      = ROC_PROC600;
+      _devices["psi46digl1"]        = ROC_PROC600;
 
       // TBM flavors:
       _devices["notbm"]         = TBM_NONE;
@@ -593,6 +600,15 @@ namespace pxar {
       return "";
     }
 
+    // Return all (preferred) trigger source names:
+    inline std::vector<std::string> getAllNames() {
+      std::vector<std::string> names;
+      for(std::map<std::string, triggerConfig>::iterator iter = _signals.begin(); iter != _signals.end(); ++iter) {
+	if(iter->second._preferred == true) { names.push_back(iter->first); }
+      }
+      return names;
+    }
+
   private:
     /** class to store a trigger config
      */
@@ -606,6 +622,9 @@ namespace pxar {
     };
 
     TriggerDictionary() {
+      // No trigger source selected:
+      _signals["none"]             = triggerConfig(TRG_SEL_NONE,false);
+
       // Asynchronous external triggers:
       _signals["async"]            = triggerConfig(TRG_SEL_ASYNC,true);
       _signals["extern"]           = triggerConfig(TRG_SEL_ASYNC,true,false);
@@ -615,6 +634,10 @@ namespace pxar {
       // Synchronous external triggers:
       _signals["sync"]             = triggerConfig(TRG_SEL_SYNC,true);
       _signals["sync_dir"]         = triggerConfig(TRG_SEL_SYNC_DIR,false);
+
+      // External triggered Pattern Generator:
+      _signals["async_pg"]         = triggerConfig(TRG_SEL_ASYNC_PG, false);
+      _signals["extern_pg"]        = triggerConfig(TRG_SEL_ASYNC_PG, false, false);
 
       // Single event injection:
       _signals["single"]           = triggerConfig(TRG_SEL_SINGLE,true);

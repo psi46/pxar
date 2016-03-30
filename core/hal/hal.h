@@ -330,6 +330,10 @@ namespace pxar {
      */
     void daqTriggerLoopHalt();
 
+    /** Activating the external trigger input of the pattern generator
+     */
+    void daqTriggerPgExtern();
+
     /** Stopping the current DAQ session. This is not resetting the data buffers.
      *  All DAQ channels are stopped.
      */
@@ -367,6 +371,11 @@ namespace pxar {
      *  one vector of uint16_t radback values for every ROC in the readout chain.
      */
     std::vector<std::vector<uint16_t> > daqReadback();
+
+    /** Return all XOR sum values for the selected channel. Return format is a vector containing
+     *  all samples XOR sums for the respective DESER400 channel.
+     */
+    std::vector<uint8_t> daqXORsum(uint8_t channel);
 
     /** Clears the DAQ buffer on the DTB, deletes all previously taken and not yet read out data!
      */

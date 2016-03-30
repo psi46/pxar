@@ -17,6 +17,8 @@ cdef extern from "api.h" namespace "pxar":
     cdef int _flag_force_unmasked "FLAG_FORCE_UNMASKED"
     cdef int _flag_dump_flawed_events "FLAG_DUMP_FLAWED_EVENTS"
     cdef int _flag_disable_readback_collection "FLAG_DISABLE_READBACK_COLLECTION"
+    cdef int _flag_disable_eventid_check "FLAG_DISABLE_EVENTID_CHECK"
+    cdef int _flag_enable_xorsum_logging "FLAG_ENABLE_XORSUM_LOGGING"
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixel:
@@ -36,6 +38,9 @@ cdef extern from "api.h" namespace "pxar":
         uint16_t header
         uint16_t trailer
         vector[pixel] pixels
+        bool hasNoTokenPass()
+        uint8_t stackCount()
+        uint8_t triggerCount()
         Event()
 
 cdef extern from "api.h" namespace "pxar":
@@ -76,6 +81,13 @@ cdef extern from "api.h" namespace "pxar":
         void clear()
         void dump()
         statistics()
+        uint32_t errors()
+        uint32_t info_words_read()
+        uint32_t errors_event()
+        uint32_t errors_tbm()
+        uint32_t errors_roc()
+        uint32_t errors_pixel()
+
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass dut:
@@ -226,6 +238,7 @@ cdef extern from "api.h" namespace "pxar":
         vector[Event] daqGetEventBuffer() except +
         vector[uint16_t] daqGetBuffer() except +
         vector[vector[uint16_t]] daqGetReadback() except +
+        vector[uint8_t] daqGetXORsum(uint8_t channel) except +
         statistics getStatistics()
         bool daqStop() except +
 

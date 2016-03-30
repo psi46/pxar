@@ -518,6 +518,9 @@ if ($opt_m) {
 }
     print FH <<"EOF";
 
+guiX 0
+guiY 0
+
 probeA1 sdata1
 probeA2 sdata2
 probeD1 clk
@@ -543,6 +546,7 @@ sub printTestParameters {
     print FH <<"EOF";
 -- Pretest
 programroc          button
+ignoreProblems      checkbox(0)
 targetIa            24
 setVana             button
 iterations          100

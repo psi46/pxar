@@ -64,6 +64,8 @@ int main(int argc, char *argv[]){
       cout << "-r rootfilename       set rootfile (and logfile) name" << endl;
       cout << "-t test               run test" << endl;
       cout << "-T [--vcal] XX        read in DAC and Trim parameter files corresponding to trim VCAL = XX" << endl;
+      cout << "-x XX                 x position for GUI placement" << endl;
+      cout << "-y YY                 y position for GUI placement" << endl;
       cout << "-v verbositylevel     set verbosity level: QUIET CRITICAL ERROR WARNING DEBUG DEBUGAPI DEBUGHAL ..." << endl;
       cout << "-L logID              add additional <logID> to log output after the timestamp. ex: pxar -L TB1" << endl;
       return 0;
@@ -351,11 +353,24 @@ int main(int argc, char *argv[]){
 
 
 // ----------------------------------------------------------------------
-void runGui(PixSetup &a, int /*argc*/, char ** /*argv[]*/) {
+void runGui(PixSetup &a, int argc, char *argv[]) {
+
+  int x(a.getConfigParameters()->getGuiX()), y(a.getConfigParameters()->getGuiY());
+  bool changed(false);
+  for (int i = 0; i < argc; i++){
+    if (!strcmp(argv[i], "-x")) {x = atoi(argv[++i]); changed = true; }
+    if (!strcmp(argv[i], "-y")) {y = atoi(argv[++i]); changed = true; }
+  }
+
+  if (changed) {
+    a.getConfigParameters()->setGuiX(x);
+    a.getConfigParameters()->setGuiY(y);
+    a.getConfigParameters()->writeConfigParameterFile();
+  }
 
   TApplication theApp("App", 0, 0);
   theApp.SetReturnFromRun(true);
-  PixGui gui(gClient->GetRoot(), 1300, 800, &a);
+  PixGui gui(gClient->GetRoot(), x, y, &a);
   theApp.Run();
   LOG(logINFO) << "closing down 0 ";
 }

@@ -662,7 +662,7 @@ std::vector<uint16_t> pxarCore::daqADC(std::string signalName, uint8_t gain, uin
 }
 
 statistics pxarCore::getStatistics() {
-  LOG(logINFO) << "Fetched DAQ statistics. Counters are being reset now.";
+  LOG(logDEBUG) << "Fetched DAQ statistics. Counters are being reset now.";
   // Return the accumulated number of decoding errors:
   return _hal->daqStatistics();
 }
@@ -1257,6 +1257,16 @@ std::vector<std::vector<uint16_t> > pxarCore::daqGetReadback() {
   return values;
 }
 
+std::vector<uint8_t> pxarCore::daqGetXORsum(uint8_t channel) {
+
+  std::vector<uint8_t> values;
+  if(!status() || channel >= DTB_DAQ_CHANNELS) { return values; }
+
+  values = _hal->daqXORsum(channel);
+  LOG(logDEBUGAPI) << "Decoder channel " << static_cast<int>(channel) << " provided " << values.size() << " XOR sum values.";
+  return values;
+}
+
 
 // DAQ functions
 
@@ -1346,11 +1356,6 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
 
 bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
-  if(daqStatus()) {
-    LOG(logERROR) << "DAQ is already running! Stop DAQ to change the trigger source.";
-    return false;
-  }
-
   // Get singleton Trigger dictionary object:
   TriggerDictionary * _dict = TriggerDictionary::getInstance();
 
@@ -1365,24 +1370,32 @@ bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
     // Get the signal from the dictionary object:
     uint16_t sig = _dict->getSignal(s);
     if(sig != TRG_ERR) {
-      signal |= sig;
       LOG(logDEBUGAPI) << "Trigger Source Identifier " << s << ": " << sig << " (0x" << std::hex << sig << std::dec << ")";
 
       // If we are using the DTB generator, also set the rate/period:
       if(sig == TRG_SEL_GEN || sig == TRG_SEL_GEN_DIR) {
 
-	if(s.compare(0,6,"random") == 0) {
-	  // Be gentle and convert to centi-Hertz for the DTB :)
-	  uint32_t rate = int(timing/40e6*4294967296 + 0.5);
-	  // FIXME better also take the user input as BC instead of Hz, reduces confusion...
-	  LOG(logDEBUGAPI) << "Setting random trigger generator, rate = " << rate << " cHz";
-	  _hal->daqTriggerGenRandom(rate);
-	}
-	else if(s.compare(0,6,"period") == 0) {
-	  LOG(logDEBUGAPI) << "Setting periodic trigger generator, period = " << timing << " BC";
-	  _hal->daqTriggerGenPeriodic(timing);
-	}
+        if(s.compare(0,6,"random") == 0) {
+          // Be gentle and convert to centi-Hertz for the DTB :)
+          uint32_t rate = int(timing/40e6*4294967296 + 0.5);
+          // FIXME better also take the user input as BC instead of Hz, reduces confusion...
+          LOG(logDEBUGAPI) << "Setting random trigger generator, rate = " << rate << " cHz";
+          _hal->daqTriggerGenRandom(rate);
+        }
+        else if(s.compare(0,6,"period") == 0) {
+          LOG(logDEBUGAPI) << "Setting periodic trigger generator, period = " << timing << " BC";
+          _hal->daqTriggerGenPeriodic(timing);
+        }
       }
+      else if(sig == TRG_SEL_ASYNC_PG)  {
+          LOG(logDEBUGAPI) << "Setting externally triggered Pattern Generator";
+          _hal->daqTriggerPgExtern();
+          sig = TRG_SEL_PG_DIR;
+      }
+
+      // Logical or for all trigger sources
+      signal |= sig;
+
     }
     else {
       LOG(logCRITICAL) << "Could not find trigger source identifier \"" << s << "\" in the dictionary!";
@@ -1543,9 +1556,6 @@ bool pxarCore::daqStop(const bool init) {
     return false;
   }
 
-  // Turn off all trigger sources:
-  _hal->daqTriggerSource(TRG_SEL_NONE);
-
   _daq_running = false;
   
   // Stop all active DAQ channels:
@@ -1575,7 +1585,7 @@ bool pxarCore::daqStop(const bool init) {
 
 std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPixelParallel multipixelfn, HalMemFnRocSerial rocfn, HalMemFnRocParallel multirocfn, std::vector<int32_t> param, bool efficiency, uint16_t flags) {
 
-  // Activate the pattern generator trigger:
+  // Ensure the pattern generator trigger is active:
   _hal->daqTriggerSource(TRG_SEL_PG_DIR);
   
   // pointer to vector to hold our data
@@ -1739,9 +1749,6 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
 
   // Print timer value:
   LOG(logINFO) << "Test took " << t << "ms.";
-
-  // Turn off all trigger sources:
-  _hal->daqTriggerSource(TRG_SEL_NONE);
 
   return data;
 } // expandLoop()
