@@ -990,7 +990,7 @@ void CmdProc::init()
     fTRC = 10;
     fTTK = 30;
     fMaxPeriod = 100000;
-    fBufsize = DTB_SOURCE_BUFFER_SIZE;
+    fBufsize = 50000; // DTB_SOURCE_BUFFER_SIZE makes things slow, only increase where needed
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
@@ -1315,26 +1315,8 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
             tbmset("base4", ALLTBMS, 0x80);// reset once after changing phases
             
             // waste a bit of time keeping the daq busy
-            for (unsigned int ne=0; ne<4; ne++){ countGood(2, 100, 10, nroc); }
-            /*
-            int e1=countGood(2, 100, 10,nroc);
-            int e2=countGood(2, 100, 10,nroc);
-            int e3=countGood(2, 100, 10,nroc);
-            */
-           int good= countGood(nloop, ntrig, ftrigkhz, nroc); //default 10 loops, 100 trigger, 10 kHz
-            /*
-            cout << "scantbm " << dec<< (int) p160 << " " << dec << (int) p400 ;
-            cout << "   " <<  setw(2) <<  e1 << setw(2)<< e2 << setw(2) << e3 << setw(4) << good << "   ";
-            for(unsigned int i=0; i<4; i++){
-                if (fDeser400XOR[i] < 0x100){
-                    cout << " "<< setw(4) << hex << fDeser400XOR[0] ;
-                }else{
-                    cout << "    0";
-                } 
-            }
-            cout << endl;
-            */
-            
+            pxar::mDelay(10);
+            int good= countGood(nloop, ntrig, ftrigkhz, nroc); //default 10 loops, 100 trigger, 10 kHz
             for(unsigned int i=0; i<8; i++){
                 xor1[i] += good*fDeser400XOR1sum[i];
                 xor2[i] += good*fDeser400XOR2sum[i];
