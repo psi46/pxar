@@ -162,8 +162,9 @@ cdef class Statistics:
         def __get__(self): return self.thisobj.errors_roc()
     property errors_pixel:
         def __get__(self): return self.thisobj.errors_pixel()
+    property info_pixels_valid:
+        def __get__(self): return self.thisobj.info_pixels_valid()
 
-        
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
