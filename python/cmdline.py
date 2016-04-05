@@ -1062,7 +1062,7 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_findAnalogueTBDelays.__doc__, '']
 
-    @arity(0,3,[int, int, int])
+    @arity(0,4,[int, int, int, str])
     def do_wbcScan(self, minWBC = 90, maxWBC = 255, maxTriggers = 10, triggersignal = "extern"):
         """ do_wbcScan [minWBC] [maxWBC] [maxTriggers] [signal]: sets the values of wbc from minWBC until it finds the wbc which has more than 90% filled events or it reaches 255 (default minWBC 90)"""
 
