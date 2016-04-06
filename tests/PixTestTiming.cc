@@ -112,11 +112,16 @@ void PixTestTiming::doTest() {
   PixTest::update();
   bigBanner(Form("PixTestTiming::doTest()"));
 
-  ClkSdaScan();
+  TBMPhaseScan();
   TH1 *h1 = (*fDisplayedHist);
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
 
+  ROCDelayScan();
+  h1 = (*fDisplayedHist);
+  h1->Draw(getHistOption(h1).c_str());
+  PixTest::update();
+  
   TimingTest();
 
   LOG(logINFO) << "PixTestTiming::doTest() done";
@@ -256,12 +261,12 @@ void PixTestTiming::PhaseScan() {
     NTimings = 0;
     h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
-    setTitles(h1, "160MHz Phase", "400 MHz Phase");
+    setTitles(h1, "400MHz Phase", "160 MHz Phase");
     h1->SetMinimum(0);
     tbmhists.push_back(h1);
     h2 = bookTH2D(Form("TBMGoodArea_%d",int(itbm)),Form("Functional Roc Delay Area for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h2->SetDirectory(fDirectory);
-    setTitles(h2, "160MHz Phase", "400 MHz Phase");
+    setTitles(h2, "400MHz Phase", "160 MHz Phase");
     h2->SetMinimum(0);
     goodareahists.push_back(h2);
     NFunctionalTimings.push_back(0);
@@ -326,8 +331,8 @@ void PixTestTiming::PhaseScan() {
         }
         if (NFunctionalROCPhases>0) {
           NFunctionalTBMPhases[itbm]++;
-          h1->Fill(iclk160,iclk400,NFunctionalROCPhases);
-          h2->Fill(iclk160,iclk400,MaxFunctionalROCArea);
+          h1->Fill(iclk400,iclk160,NFunctionalROCPhases);
+          h2->Fill(iclk400,iclk160,MaxFunctionalROCArea);
         }
       }
     }
@@ -398,13 +403,13 @@ void PixTestTiming::TBMPhaseScan() {
   for (size_t itbm = 0; itbm<nTBMs; itbm++) {
     h1 = bookTH2D(Form("TBMPhaseScan_%d",int(itbm)),Form("Phase Scan for TBM Core %d",int(itbm)), 8, -0.5, 7.5, 8, -0.5, 7.5);
     h1->SetDirectory(fDirectory);
-    setTitles(h1, "160MHz Phase", "400 MHz Phase");
+    setTitles(h1, "400MHz Phase", "160 MHz Phase");
     h1->SetMinimum(0);
     tbmhists.push_back(h1);
     if (fNoTokenPass) {
-      for (size_t itbm = 0; itbm<nTBMs; itbm++) {
-        uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
-        fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
+      for (size_t jtbm = 0; jtbm<nTBMs; jtbm++) {
+        uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) | 64;
+        fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm); //Disable Token Pass
       }
     } else {
       for (size_t jtbm = 0; jtbm<nTBMs; jtbm++) {
@@ -417,6 +422,7 @@ void PixTestTiming::TBMPhaseScan() {
         }
       }
     }
+    pair<int, int> TBMSettings;
     for (int iclk160 = 0; iclk160 < 8; iclk160++) {
       for (int iclk400 = 0; iclk400 < 8; iclk400++) {
         uint8_t delaysetting = iclk160<<5 | iclk400<<2;
@@ -430,12 +436,19 @@ void PixTestTiming::TBMPhaseScan() {
           statistics results = getEvents(fNTrig, period, fTrigBuffer);
           int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
           int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
-          if (NEvents==fNTrig && NErrors==0) h1->Fill(iclk160,iclk400);
+          if (NEvents==fNTrig && NErrors==0) h1->Fill(iclk400,iclk160);
         }
         Log::ReportingLevel() = UserReportingLevel;
         fApi->daqStop();
       }
     }
+    TBMSettings = getGoodRegion(h1,1);
+    TBMSettings.second = (TBMSettings.second<<2);
+    LOG(logINFO) << "Best TBMPhase for TBM " << itbm << " is " << bitset<8>(TBMSettings.second).to_string() << " and has an area of " << TBMSettings.first << " settings.";
+    TMarker *pm = new TMarker((TBMSettings.second >> 2) & 7, TBMSettings.second >> 5, 5);
+    pm->SetMarkerColor(kBlack);
+    pm->SetMarkerSize(7);
+    h1->GetListOfFunctions()->Add(pm);
     if (fNoTokenPass) break;
   }
 
@@ -481,40 +494,63 @@ void PixTestTiming::ROCDelayScan() {
   TH2D *h1(0);
   vector<TH2D*> rocdelayhists;
 
-  if (fNoTokenPass) {
-    for (size_t itbm = 0; itbm<nTBMs; itbm++) {
-      uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", itbm) | 64;
-      fApi->setTbmReg("base0", NewTBMSettingBase0, itbm); //Disable Token Pass
-    }
-  }
-
-  for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
-    if (ithtdelay==2) continue;
-    h1 = bookTH2D(Form("ROCDelayScan%d",ithtdelay),Form("ROC Delay Scan: THT Delay = %d",ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
-    h1->SetDirectory(fDirectory);
-    setTitles(h1, "ROC Port 0 Delay", "ROC Port 1 Delay");
-    fHistOptions.insert(make_pair(h1, "colz"));
-    h1->SetMinimum(0);
-    for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
-      fApi->daqStart();
-      for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
-        int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
-        LOG(logDEBUG) << "Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
-        for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
-        Log::ReportingLevel() = Log::FromString("QUIET");
-        bool goodreadback = true;
-        if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
-        if (goodreadback) {
-          statistics results = getEvents(fNTrig, period, fTrigBuffer);
-          int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
-          int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
-          if (NEvents==fNTrig && NErrors==0) h1->Fill(irocphaseport0,irocphaseport1);
-        }
-        Log::ReportingLevel() = UserReportingLevel;
+  for (size_t itbm = 0; itbm<nTBMs; itbm++) {
+    if (fNoTokenPass) {
+      for (size_t jtbm = 0; jtbm<nTBMs; jtbm++) {
+        uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) | 64;
+        fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm); //Disable Token Pass
       }
-      fApi->daqStop();
+    } else {
+      for (size_t jtbm = 0; jtbm<nTBMs; jtbm++) {
+        if (itbm==jtbm) {
+          uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) & 191;
+          fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm); //Enable Token Pass
+        } else {
+          uint8_t NewTBMSettingBase0 = GetTBMSetting("base0", jtbm) | 64;
+          fApi->setTbmReg("base0", NewTBMSettingBase0, jtbm);
+        }
+      }
     }
-    rocdelayhists.push_back(h1);
+    pair<int, int> ROCSettings;
+    for (int ithtdelay = 0; ithtdelay < 4; ithtdelay++) {
+      //if (ithtdelay==2) continue;
+      if (ithtdelay!=3) continue;
+      h1 = bookTH2D(Form("ROCDelayScan%d_TBM%d",ithtdelay,int(itbm)),Form("ROC Delay Scan: TBM %d THT Delay = %d",int(itbm),ithtdelay), 8, -0.5, 7.5, 8, -0.5, 7.5);
+      h1->SetDirectory(fDirectory);
+      setTitles(h1, "ROC Port 0 Delay", "ROC Port 1 Delay");
+      fHistOptions.insert(make_pair(h1, "colz"));
+      h1->SetMinimum(0);
+      for (int irocphaseport1 = 0; irocphaseport1 < 8; irocphaseport1++) {
+        fApi->daqStart();
+        for (int irocphaseport0 = 0; irocphaseport0 < 8; irocphaseport0++) {
+          int ROCDelay = (ithtdelay << 6) | (irocphaseport1 << 3) | irocphaseport0;
+          LOG(logDEBUG) << "TBM " << itbm << " Token Header/Trailer Delay: " << bitset<2>(ithtdelay).to_string() << " ROC Port1: " << irocphaseport1 << " ROC Port0: " << irocphaseport0 << " ROCDelay Setting: " << bitset<8>(ROCDelay).to_string();
+          for (size_t itbm = 0; itbm<nTBMs; itbm++) fApi->setTbmReg("basea", ROCDelay, itbm);
+          Log::ReportingLevel() = Log::FromString("QUIET");
+          bool goodreadback = true;
+          if (!fNoTokenPass && !fIgnoreReadBack) goodreadback = checkReadBackBits(period);
+          if (goodreadback) {
+            statistics results = getEvents(fNTrig, period, fTrigBuffer);
+            int NEvents = (results.info_events_empty()+results.info_events_valid())/nTokenChains;
+            int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
+            if (NEvents==fNTrig && NErrors==0) h1->Fill(irocphaseport0,irocphaseport1);
+          }
+          Log::ReportingLevel() = UserReportingLevel;
+        }
+        fApi->daqStop();
+      }
+      rocdelayhists.push_back(h1);
+      if (getGoodRegion(h1,1).first > ROCSettings.first) {
+        ROCSettings = getGoodRegion(h1,1);
+        ROCSettings.second = ROCSettings.second | (ithtdelay << 6);
+      }
+    }
+    LOG(logINFO) << "Best ROCDelay for TBM " << itbm << " is " << bitset<8>(ROCSettings.second).to_string() << " and has an area of " << ROCSettings.first << " settings.";
+    TMarker *pm = new TMarker(ROCSettings.second & 7, (ROCSettings.second >> 3) & 7, 5);
+    pm->SetMarkerColor(kBlack);
+    pm->SetMarkerSize(7);
+    h1->GetListOfFunctions()->Add(pm);
+    if (fNoTokenPass) break;
   }
 
   //Draw plots
@@ -686,18 +722,26 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
   for (int startbinx=1; startbinx<=hist->GetNbinsX(); startbinx++) {
     for (int startbiny=1; startbiny<=hist->GetNbinsY(); startbiny++) {
       if (int(hist->GetBinContent(startbinx,startbiny))!=hits) continue;
-      for (int regionsize=0; regionsize<8; regionsize++) {
+      int xsize = 0;
+      int ysize = 0;
+      for (int isize=0; isize<16; isize++) {
+        if (isize%2==0) xsize+=1;
+        if (isize%2==1) ysize+=1;
         bool regiongood = true;
-        for (int xoffset=0; xoffset<=regionsize && regiongood; xoffset++) {
-          for (int yoffset=0; yoffset<=regionsize && regiongood; yoffset++) {
+        for (int xoffset=0; xoffset<=xsize && regiongood; xoffset++) {
+          for (int yoffset=0; yoffset<=ysize && regiongood; yoffset++) {
             int checkbinx = (startbinx+xoffset>8) ? startbinx+xoffset-8 : startbinx+xoffset;
             int checkbiny = (startbiny+yoffset>8) ? startbiny+yoffset-8 : startbiny+yoffset;
             if (int(hist->GetBinContent(checkbinx,checkbiny))!=hits) regiongood=false;
           }
         }
-        if (regiongood && regionsize+1>MaxGoodRegionSize) {
-          MaxGoodRegionSize=regionsize+1;
-          GoodROCDelay = (startbinx-1+regionsize/2)%8 | (startbiny-1+regionsize/2)%8<<3;
+        if (!regiongood) {
+          if (isize%2==0) xsize-=1;
+          if (isize%2==1) ysize-=1;
+        }
+        if (regiongood && (xsize+1)*(ysize+1)>MaxGoodRegionSize) {
+          MaxGoodRegionSize=(xsize+1)*(ysize+1);
+          GoodROCDelay = (startbinx-1+xsize/2)%8 | (startbiny-1+ysize/2)%8<<3;
         }
       }
     }
