@@ -164,7 +164,7 @@ void hal::setTestboardDelays(std::map<uint8_t,uint8_t> sig_delays) {
   _testboard->Deser400_SetPhaseAutoAll();  
   LOG(logDEBUGHAL) << "Defaulting all DESER400 modules to automatic phase selection.";
   
-  // Write testboard delay settings and deserializer phases to the repsective registers:
+  // Write testboard delay settings and deserializer phases to the respective registers:
   for(std::map<uint8_t,uint8_t>::iterator sigIt = sig_delays.begin(); sigIt != sig_delays.end(); ++sigIt) {
 
     if(sigIt->first == SIG_DESER160PHASE) {
