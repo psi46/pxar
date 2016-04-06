@@ -63,6 +63,7 @@ public:
 
   static ConfigParameters* Singleton();
 
+  std::string vectorToString(std::vector<uint8_t>);
   std::string getTBParameterFileName()    {return fTBParametersFileName;}
   std::string getDACParameterFileName()   {return fDACParametersFileName;}
   std::string getTbmParameterFileName()   {return fTbmParametersFileName;}
@@ -144,12 +145,14 @@ public:
   double getVd() {return vd;}
   bool   getHvOn() {return fHvOn;}
 
-  uint8_t getHubId() {return fHubId;}
+  std::vector<uint8_t> getHubIds() {return fHubIds;}
+  uint8_t getHubId() {return fHubIds.front();}
   
   static bool bothAreSpaces(char lhs, char rhs);
   void replaceAll(std::string& str, const std::string& from, const std::string& to);
   void cleanupString(std::string& str);
   void readNrocs(std::string line);
+  void readHubIds(std::string line);
 
   int getGuiX() {return fGuiX;}
   int getGuiY() {return fGuiY;}
@@ -172,9 +175,9 @@ private:
 
   std::vector<std::vector<std::pair<int, int> > > fMaskedPixels;
 
-  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules, fHubId;
+  unsigned int fnCol, fnRow, fnRocs, fnTbms, fnModules;
   int fHalfModule;
-  std::vector<uint8_t> fI2cAddresses; 
+  std::vector<uint8_t> fI2cAddresses, fHubIds;
   int fEmptyReadoutLength, fEmptyReadoutLengthADC, fEmptyReadoutLengthADCDual, fTbmChannel;
   float ia, id, va, vd;
   float rocZeroAnalogCurrent;

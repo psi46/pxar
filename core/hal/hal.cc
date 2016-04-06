@@ -338,12 +338,6 @@ void hal::initTBMCore(tbmConfig tbm) {
     // One tokenchain setting per TBM channel:
     m_tokenchains.push_back(*i);
   }
-  
-  // Set the hub address for the modules (BPIX default is 31)
-  // FIXME add hubid to tbmConfig!
-  LOG(logDEBUGHAL) << "Module addr is " << static_cast<int>(tbm.hubid) << ".";
-  _testboard->mod_Addr(tbm.hubid);
-  _testboard->Flush();
 
   // Program all registers according to the configuration data:
   LOG(logDEBUGHAL) << "Setting register vector for TBM Core " << tbm.corename() << ".";
@@ -424,7 +418,7 @@ bool hal::CheckCompatibility() {
   }
   else { LOG(logINFO) << "RPC call hashes of host and DTB match: " << hostCmdHash; }
 
-  // We are though all checks, testboard is successfully connected:
+  // We are through all checks, testboard is successfully connected:
   return true;
 }
 
@@ -1540,16 +1534,17 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
   uint8_t rocid_offset = 0;
   for(size_t i = 0; i < m_tokenchains.size(); i++) {
     // Open DAQ in channel i:
-    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize,i);
-    LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
-		     << static_cast<int>(m_tokenchains.at(i))
-		     << " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
+    size_t j = (( m_tbmtype == TBM_10 && m_roccount == 16 ) ? (6+i)%8 : i);
+    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize, j);
+    LOG(logDEBUGHAL) << "Channel " << j << ": token chain: "
+				<< static_cast<int>(m_tokenchains.at(j))
+				<< " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
     // Initialize the data source, set tokenchain length to zero if no token pass is expected:
-    m_src.at(i) = dtbSource(_testboard,i,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
-    m_src.at(i) >> m_splitter.at(i);
+    m_src.at(j) = dtbSource(_testboard,j,m_tokenchains.at(j),rocid_offset,m_tbmtype,m_roctype,true,flags);
+    m_src.at(j) >> m_splitter.at(j);
     _testboard->uDelay(100);
     // Increment the ROC id offset by the amount of ROCs expected:
-    rocid_offset += m_tokenchains.at(i);
+    rocid_offset += m_tokenchains.at(j);
   }
 
   // Data acquisition with real TBM:
@@ -1870,6 +1865,7 @@ uint32_t hal::daqBufferStatus() {
   for(uint8_t channel = 0; channel < DTB_DAQ_CHANNELS; channel++) {
     if(m_daqstatus.size() > channel && m_daqstatus.at(channel)) {
       buffered_data += _testboard->Daq_GetSize(channel);
+      LOG(logDEBUGHAL) << "daqbufferstatus" << static_cast<int>(channel) << ": " << _testboard->Daq_GetSize(channel);
     }
   }
   return buffered_data;

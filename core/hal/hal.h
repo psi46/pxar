@@ -14,7 +14,7 @@ namespace pxar {
   {
 
   public:
-    /** Default constructor for cerating a new HAL instance. Takes
+    /** Default constructor for creating a new HAL instance. Takes
      *  a testboard USB ID name as parameter and tries to connect to
      *  the board. Exception is thrown if connection fails.
      */
@@ -432,7 +432,7 @@ namespace pxar {
     bool _initialized;
 
     /** Compatibility status of the HAL RPC calls with the DTB. If not set the
-     *  DTB cannot be initialized, onlz flashing is allowed then.
+     *  DTB cannot be initialized, only flashing is allowed then.
      */
     bool _compatible;
 

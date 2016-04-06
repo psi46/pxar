@@ -1821,10 +1821,10 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel)
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
   vector<TH2D*> testEff;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   if (scanCalDel) {
     // -- initialize testEff with zero-contents TH2D
-    vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       TH2D *h2 = bookTH2D(Form("dp0_C%d", rocIds[iroc]), Form("dp0_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
       testEff.push_back(h2);
@@ -1860,7 +1860,7 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel)
       for(int c=0; c<52; c++){
 	eff = testEff[i]->GetBinContent( testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5) );
 	if (eff<ntrig){
-	  LOG(logDEBUG) << Form("ROC %2d", i) << " col/row = " << c << "/" << r << " with eff " << eff << "/" << ntrig << ";  blacklisting";
+	  LOG(logDEBUG) << Form("ROC %2d", rocIds[i]) << " col/row = " << c << "/" << r << " with eff " << eff << "/" << ntrig << ";  blacklisting";
 	  badPix.first = c;
 	  badPix.second = r;
 	  deadPixelsRoc.push_back(badPix);
