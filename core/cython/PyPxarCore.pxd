@@ -87,6 +87,7 @@ cdef extern from "api.h" namespace "pxar":
         uint32_t errors_tbm()
         uint32_t errors_roc()
         uint32_t errors_pixel()
+        uint32_t info_pixels_valid()
 
 
 cdef extern from "api.h" namespace "pxar":
