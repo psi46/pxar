@@ -253,6 +253,9 @@ namespace pxar {
 
       _registers["vibias_roc"] = dacConfig(ROC_DAC_VIbias_roc,255,ROC_REG);
 
+      // DAC only present in the PROC600, same address as old VIBias_Bus:
+      _registers["vicolorbias"]= dacConfig(ROC_DAC_VIBias_Bus,255,ROC_REG);
+
       // DACs only relevant for analog chips:
       _registers["vnpix"]      = dacConfig(ROC_DAC_Vnpix,255,ROC_REG);
       _registers["vsumcol"]    = dacConfig(ROC_DAC_VsumCol,255,ROC_REG);
