@@ -1464,6 +1464,16 @@ int CmdProc::test_timing2(int nloop, int d160, int d400, int rocdelay[], int htd
 }
 
 
+void CmdProc::sort_time(int values[], double step, double range){
+    // indirect sort according to time modulo range
+    for(int i=0; i<8; i++){
+        for(int j=0; j<7; j++){
+            if(  fmod(values[j]*step,range) >  fmod(values[j+1]*step,range) ){
+                int tmp=values[j]; values[j]=values[j+1]; values[j+1]=tmp;
+            }
+        }
+    }
+}
 
 bool CmdProc::find_midpoint(int threshold, int data[], uint8_t & position, int & width){
 
@@ -1486,15 +1496,8 @@ bool CmdProc::find_midpoint(int threshold, int data[], uint8_t & position, int &
 
 
 bool CmdProc::find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width){
-    // indirect sort according to time modulo range
-    int m[8]={0,1,2,3,4,5,6,7};
-    for(int i=0; i<8; i++){
-        for(int j=0; j<7; j++){
-            if(  fmod(m[j]*step,range) >  fmod(m[j+1]*step,range) ){
-                int tmp=m[j]; m[j]=m[j+1]; m[j+1]=tmp;
-            }
-        }
-    }
+    int m[8] = {0,1,2,3,4,5,6,7};
+    sort_time(m, step, range);
     // now data[m[*]] is time-ordered
     
     width=0;

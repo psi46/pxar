@@ -453,6 +453,7 @@ class CmdProc {
   int post_timing();
   
   int find_timing(int npass=0);
+  void sort_time(int values[], double step, double range);
   bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
   bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
 
