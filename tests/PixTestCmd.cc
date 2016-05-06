@@ -1316,16 +1316,26 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
     if( (ntpreg & 0x40) > 0 ){
         nroc=0;
     }
-    
-    out << "400\\160 0  1  2  3  4  5  6  7\n";
+
+    // show the phase delays in time-ordered manner
+    int p160_timed[8] = {0,1,2,3,4,5,6,7};
+    sort_time(p160_timed, STEP160, RANGE160);
+    out << "400\\160";
+    for(int i : p160_timed) {
+        out << " " << i << " ";
+    }
+    out << "\n";
+    int p400_timed[8] = {0,1,2,3,4,5,6,7};
+    sort_time(p400_timed, STEP400, RANGE400);
+
     for(uint8_t p400=0; p400<8; p400++){
         int xor1[8] = {0,0,0,0,0,0,0,0};
         int xor2[8] = {0,0,0,0,0,0,0,0};
-        out << "  " << (int) p400 << " :  ";
+        out << "  " << (int) p400_timed[p400] << " :  ";
         for(uint8_t p160=0; p160<8; p160++){
-            stat = tbmset("basee", TBMA, ((p160&7)<<5)+((p400&7)<<2));
+            stat = tbmset("basee", TBMA, ((p160_timed[p160]&7)<<5)+((p400_timed[p400]&7)<<2));
             if(stat>0){
-                out << "error setting delay  base E " << hex << (int) ((p160<<5)+(p400<<2)) << dec << "\n";
+                out << "error setting delay  base E " << hex << (int) ((p160_timed[p160]<<5)+(p400_timed[p400]<<2)) << dec << "\n";
             }
             tbmset("base4", ALLTBMS, 0x80);// reset once after changing phases
             
@@ -1341,7 +1351,7 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
             else if (good>(0.7*nloop)) { c='o' ;}
             else if (good>0) { c='.' ;}
             
-            if((p160==p160c)&&(p400==p400c)){
+            if((p160_timed[p160]==p160c)&&(p400_timed[p400]==p400c)){
                out << "(" << c << ")";
             }else{
                out << " " << c << " ";
@@ -1573,7 +1583,7 @@ int CmdProc::find_timing(int npass){
         }
         
         int w160=0;
-        if (! find_midpoint(nloop, 1.0, 6.25, test160, d160, w160)){
+        if (! find_midpoint(nloop, STEP160, RANGE160, test160, d160, w160)){
             out << "160 MHz scan failed ";
             tbmset("base0",ALLTBMS ,register_0);
             tbmset("basee",ALLTBMS ,register_e);
@@ -1597,7 +1607,7 @@ int CmdProc::find_timing(int npass){
         }
         
         int w400=0;
-        if (! find_midpoint(nloop, 0.57, 2.5, test400, d400, w400)){
+        if (! find_midpoint(nloop, STEP400, RANGE400, test400, d400, w400)){
             out << "400 MHz scan failed ";
             tbmset("base0",ALLTBMS, register_0);
             tbmset("basee",ALLTBMS, register_e);

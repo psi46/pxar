@@ -451,7 +451,11 @@ class CmdProc {
   
   int test_timing2(int nloop, int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], int daqchannel=-1);
   int post_timing();
-  
+
+  #define STEP160   1.0
+  #define RANGE160  6.25
+  #define STEP400   0.57
+  #define RANGE400  2.5
   int find_timing(int npass=0);
   void sort_time(int values[], double step, double range);
   bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
