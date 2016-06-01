@@ -382,12 +382,20 @@ class CmdProc {
    unsigned int fDeser400XORChanges[nDaqChannelMax];
    unsigned int fRocReadBackErrors[nDaqChannelMax];
    unsigned int fNTBMHeader[nDaqChannelMax];
+   unsigned int fDaqErrorCount[nDaqChannelMax]; //  any kind of error
    // new with fw4.6
    unsigned int fDeser400_frame_error[nDaqChannelMax];
    unsigned int fDeser400_code_error[nDaqChannelMax];
    unsigned int fDeser400_idle_error[nDaqChannelMax];
    unsigned int fDeser400_trailer_error[nDaqChannelMax];
    
+   // read out counting for "countGood(...)", not reset by resetDaqStatus
+   unsigned int fGoodLoops[nDaqChannelMax];
+   
+   void clear_DaqChannelCounter( unsigned int f[]){ 
+        for(size_t i=0; i<nDaqChannelMax; i++){ f[i]=0;}
+    }
+  
    uint16_t fRocHeaderData[17];
    
    // readout configuration
@@ -396,6 +404,8 @@ class CmdProc {
    bool tbmWithDummyHits(){ return !tbm08(); }
    unsigned int fnDaqChannel;// filled in setApi
    unsigned int fnRocPerChannel;// filled in setApi
+   unsigned int fnTbmCore; // =   fApi->_dut->getNTbms();
+   unsigned int fnTbmPort; // = 2*fnTbmCore;
    vector<unsigned int> fDaqChannelRocIdOffset;  // filled in setApi
    int rocIdFromReadoutPosition(unsigned int daqChannel, unsigned int roc){
        return fDaqChannelRocIdOffset[daqChannel]+roc;
@@ -405,6 +415,11 @@ class CmdProc {
 	   uint8_t daqChannel = position / fnRocPerChannel;
 	   return fDaqChannelRocIdOffset[daqChannel] + (position % fnRocPerChannel);
    }
+   int daqChannelFromTbmPort( unsigned int port){
+       if (tbm08()){ return port/2 ; }
+       else{ return port; }
+   }
+
    /* TBM core selection masks for settbm */
   #define ALLTBMS 0xf
   #define TBMA    0x5
@@ -432,8 +447,12 @@ class CmdProc {
   int tbmget(string name, const uint8_t core, uint8_t & value);
   int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
   int test_timing(int nloop, int d160, int d400, int rocdelay=-1, int htdelay=0, int tokdelay=0);
+  bool set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], bool reset=true);
+  
+  int test_timing2(int nloop, int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], int daqchannel=-1);
+  int post_timing();
+  
   int find_timing(int npass=0);
-  int find_timing2(int npass, uint8_t tbm=0);
   bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
   bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
 
@@ -461,6 +480,7 @@ class CmdProc {
   int runDaqRandom(vector<uint16_t> & buf, vector<DRecord> & data, int ntrig, int ftrigkhz, int verbosity=0);
   int maskHotPixels(int ntrig, int ftrigkHz, int multiplier=2, float percentile=0.9);
 
+  int drainBuffer(bool tellme=true);
   int daqStatus();
   int resetDaqStatus();
   int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
@@ -489,6 +509,7 @@ class CmdProc {
   void stop(bool force=true);
   bool stopped();
 
+  char wait_for_key_pressed(){char ch; cout << "Press enter: "; cin  >> ch; return ch; }
   
 };
 
