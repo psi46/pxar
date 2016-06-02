@@ -2519,12 +2519,15 @@ bool PixTest::checkReadBackBits(uint16_t period) {
 
   for (size_t itbm=0; itbm < nTBMs; itbm++) {
     if ((GetTBMSetting("base0", itbm) & 64) != 64) {
-      for (int iroc=16/nTokenChains*itbm; iroc < 16/nTokenChains*(int(itbm)+1); iroc++) {
-        ROCList.push_back((uint8_t) iroc);
+      for (size_t iroc=0; iroc < rocids.size(); iroc++) {
+        uint8_t ROCIndex = rocids[iroc];
+        if (int(ROCIndex) >= 16/nTokenChains*int(itbm) && int(ROCIndex) < 16/nTokenChains*(int(itbm)+1)) {
+          ROCList.push_back(ROCIndex);
+        }
       }
     }
   }
-  
+
   fApi->daqTrigger(32, period);
   try { daqEv = fApi->daqGetEventBuffer(); }
   catch(DataNoEvent &) {}
@@ -2534,6 +2537,7 @@ bool PixTest::checkReadBackBits(uint16_t period) {
   int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
   if (NEvents!=32 || NErrors!=0) return false;
 
+  if (ROCList.size() != ReadBackBits.size()) return false;
   for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
     for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
       if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
