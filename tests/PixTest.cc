@@ -2509,22 +2509,21 @@ bool PixTest::checkReadBackBits(uint16_t period) {
   bool ReadBackGood = true;
   vector<Event> daqEv;
   vector<vector<uint16_t> > ReadBackBits;
-  vector<uint8_t> ROClist;
 
   vector<uint8_t> rocids = fApi->_dut->getRocI2Caddr();
+  vector<uint8_t> ROCList;
   size_t nTBMs = fApi->_dut->getNTbms();
   int nTokenChains = 0;
   vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
   for(vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
 
-  int iroc=0;
   for (size_t itbm=0; itbm < nTBMs; itbm++) {
-    if ((GetTBMSetting("base0", itbm) & 64) == 64) {
-      iroc += 16/nTokenChains;
-    } else {
-      for (int jroc=0; jroc < 16/nTokenChains; jroc++) {
-        ROClist.push_back(rocids[iroc]);
-        iroc++;
+    if ((GetTBMSetting("base0", itbm) & 64) != 64) {
+      for (size_t iroc=0; iroc < rocids.size(); iroc++) {
+        uint8_t ROCIndex = rocids[iroc];
+        if (int(ROCIndex) >= 16/nTokenChains*int(itbm) && int(ROCIndex) < 16/nTokenChains*(int(itbm)+1)) {
+          ROCList.push_back(ROCIndex);
+        }
       }
     }
   }
@@ -2538,10 +2537,11 @@ bool PixTest::checkReadBackBits(uint16_t period) {
   int NErrors = results.errors_tbm_header() + results.errors_tbm_trailer() + results.errors_roc_missing();
   if (NEvents!=32 || NErrors!=0) return false;
 
+  if (ROCList.size() != ReadBackBits.size()) return false;
   for (size_t irb=0; irb<ReadBackBits.size(); irb++) {
     for (size_t jrb=0; jrb<ReadBackBits[irb].size(); jrb++) {
       if (ReadBackBits[irb][jrb]==65535) ReadBackGood = false;
-      if (ReadBackBits[irb][jrb]>>12 != ROClist[irb]) ReadBackGood = false;
+      if (ReadBackBits[irb][jrb]>>12 != ROCList[irb]) ReadBackGood = false;
     }
   }
   return ReadBackGood;
