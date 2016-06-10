@@ -118,6 +118,10 @@ namespace pxar {
      */
     bool rocSetDACs(uint8_t roci2c, std::map< uint8_t, uint8_t > dacPairs);
 
+    /** Select the RDA channel of the module for tbm readback
+    */
+    void tbmSelectRDA(uint8_t rda_id);
+
     /** Set a register on a specific TBM at hubid
      */
     bool tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush = true);

@@ -643,6 +643,10 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush) 
   return true;
 }
 
+void hal::tbmSelectRDA(uint8_t rda_id) {
+  _testboard->tbm_SelectRDA(rda_id);
+}
+
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
 
   LOG(logDEBUGHAL) << "Writing the following available I2C devices into NIOS storage:";

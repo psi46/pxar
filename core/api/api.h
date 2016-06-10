@@ -427,6 +427,10 @@ namespace pxar {
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
+    /** Select the RDA channel of the module for tbm readback
+    */
+    void selectTbmRDA(uint8_t channel);
+
     /** Manually set the HUB_address in the testboard
      */
     void setHubID(uint8_t id);

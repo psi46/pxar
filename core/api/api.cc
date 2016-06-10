@@ -796,6 +796,15 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
   return true;
 }
 
+void pxarCore::selectTbmRDA(uint8_t channel) {
+  if (channel < 2) {
+    _hal->tbmSelectRDA(channel);
+  }
+  else {
+    LOG(logERROR) << "We don't have a TBM at RDA channel " << int(channel);
+  }
+}
+
 void pxarCore::setHubID(uint8_t id) {
   // check if provided hubid is available
   std::vector<int> hubids;
