@@ -967,14 +967,14 @@ int CmdProc::fNtrigTimingTest  = 100;
 int CmdProc::fPrerun=0;
 bool CmdProc::fFW35=false;
 bool CmdProc::fStopWhateverYouAreDoing = false;
-
+int CmdProc::fIgnoreReadbackErrors = false;
 
 void CmdProc::init()
 {
     /* note: fApi may not be defined yet !*/
     verbose=false;
     redirected=false;
-    fIgnoreReadbackErrors=false;
+    //fIgnoreReadbackErrors=false;  now static
     fDumpFlawed=FLAG_DUMP_FLAWED_EVENTS;
     master = NULL;
     fEchoExecs = true;
@@ -991,7 +991,7 @@ void CmdProc::init()
     fTRC = 10;
     fTTK = 30;
     fMaxPeriod = 10000;
-    fBufsize = 50000; // DTB_SOURCE_BUFFER_SIZE makes things slow, only increase where needed
+    fBufsize = 100000; // DTB_SOURCE_BUFFER_SIZE makes things slow, only increase where needed
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
@@ -1060,7 +1060,7 @@ CmdProc::CmdProc(CmdProc * p)
     verbose = p->verbose;
     redirected = p->redirected;
     fDumpFlawed= p->fDumpFlawed;
-    fIgnoreReadbackErrors = p->fIgnoreReadbackErrors;
+    // fIgnoreReadbackErrors = p->fIgnoreReadbackErrors; now static
     master = p->master;
     fEchoExecs = p->fEchoExecs;
     defaultTarget = p->defaultTarget;
@@ -1221,7 +1221,7 @@ int CmdProc::countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int
      * returns the total number good loops
      * the result separated by channel is available in fGoodLoops */
      
-    tbmset("base4", ALLTBMS, 0x80);// reset once, both cores
+    tbmset("base4", ALLTBMS, 0x80);// reset tbm event counter, both cores
     int good=0;
     clear_DaqChannelCounter( fGoodLoops );
         
@@ -1233,13 +1233,14 @@ int CmdProc::countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int
         if(nerr==0){
             good++;
         }
-        
+
         for( unsigned int i=0;i<8; i++){  //legacy code
             fDeser400XOR1sum[i] += ( ((fDeser400XOR[0]|fDeser400XOR[1]) >> i) & 1);
          }
+
          // channel-wise book-keeping
-         for( unsigned int i=0; i<nDaqChannelMax; i++ ){
-             if (fDaqErrorCount[i]==0){
+         for( unsigned int i=0; i<nDaqChannelMax; i++ ) {
+             if ((fDaqErrorCount[i] == 0)  && (fNEvent[i]==ntrig) ){
                  fGoodLoops[i]++;
              }
          }
@@ -1338,7 +1339,7 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
             if(stat>0){
                 out << "error setting delay  base E " << hex << (int) ((p160_timed[p160]<<5)+(p400_timed[p400]<<2)) << dec << "\n";
             }
-            tbmset("base4", ALLTBMS, 0x80);// reset once after changing phases
+            tbmset("base4", ALLTBMS, 0x10);// reset once after changing phases
             
             // waste a bit of time keeping the daq busy
             pxar::mDelay(10);
@@ -1374,10 +1375,11 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
 }
 
 
+
 int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdelay, int tokdelay){
     int ftrigkhz = 100;
     int nroc=16;
-    uint8_t value=( (d160&0x7)<<5 ) + ( ( d400&0x7 )<<2);
+    uint8_t value = ( (d160&0x7)<<5 ) + ( (d400&0x7 )<<2 );
     
     int stat = tbmset("basee", TBMA, value);
     if(stat>0){
@@ -1391,11 +1393,11 @@ int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdela
             out << "error setting delay  base A " << hex << (int) value << dec << "\n";
         }
     }
-    tbmset("base4", ALLTBMS, 0x80); // reset once after changing phases
+    tbmset("base4", ALLTBMS, 0x10); // reset once after changing phases
     pxar::mDelay( 10 );
-    
     return countGood(nloop, fNtrigTimingTest, ftrigkhz, nroc);
 }
+
 
 
 bool CmdProc::set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], bool reset){
@@ -1413,7 +1415,7 @@ bool CmdProc::set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], i
     
     
        
-    for(unsigned int core=0; core<2; core++){   
+    for(unsigned int core=0; core<fnTbmCore; core++){   
             value = 
                 ( (tokdelay[core]&0x1)<<7 ) 
               + ( (htdelay[core]&0x1)<<6 )
@@ -1427,11 +1429,12 @@ bool CmdProc::set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], i
     }
     
     if(reset){
-        tbmset("base4", ALLTBMS, 0x80); // reset once after changing phases
+        tbmset("base4", ALLTBMS, 0x10); // reset once after changing phases
     }
     
     return ok;
 }
+
 
 
 int CmdProc::test_timing2(int nloop, int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[],
@@ -1471,6 +1474,7 @@ int CmdProc::test_timing2(int nloop, int d160, int d400, int rocdelay[], int htd
         return fGoodLoops[daqChannel];
     }
 }
+
 
 
 void CmdProc::sort_time(int values[], double step, double range){
@@ -1559,6 +1563,7 @@ int CmdProc::find_timing(int npass){
             d160 = m; 
             nmax = nvalid;
         }
+        flush(out);
     }
     if (nmax==0){
         out << " no working phases found ";
@@ -1566,11 +1571,11 @@ int CmdProc::find_timing(int npass){
         tbmset("basee",ALLTBMS ,register_e);
         return 0;
     }
-    if(verbose) cout << "diag scan result = " << (int) d400 << endl;
+    if (verbose) cout << "diag scan result = " << (int) d400 << endl;
     
     for(int pass=0; pass<3; pass++){
         
-        if(verbose) cout << " pass " << pass << endl;
+        if (verbose) cout << " pass " << pass << endl;
          // scan 160 MHz @ selected position
         int test160[8]={0,0,0,0,0,0,0,0};
         for (uint8_t m=0; m<8; m++){
@@ -1634,6 +1639,8 @@ int CmdProc::find_timing(int npass){
                     sumtest += test[dport];
                     if (test[dport]>test[portmax]) portmax=dport;
                     if(verbose) {cout << (int) d160 << "," << (int) d400 << "," << (int)dport << "," << (int)dheader << "," << (int)dtoken << " -> " <<(int)test[dport] << endl;}
+                    out << (int) d160 << "," << (int) d400 << "," << (int)dport << "," << (int)dheader << "," << (int)dtoken << " -> " <<(int)test[dport] << endl;
+                    flush(out);
                 }
                 int w=0;
                 uint8_t d=0;
@@ -1798,7 +1805,7 @@ int CmdProc::rawscan(int level){
             if(stat>0){
                 out << "error setting delay  base E " << hex << ((p160<<5)+(p400<<2)) << dec << "\n";
             }
-            tbmset("base4", ALLTBMS, 0x80);// reset once after changing phases
+            tbmset("base4", ALLTBMS, 0x10);// reset once after changing phases
             
             int stat = runDaq(fBuf, 100, 10, 0, true);
             
@@ -1886,7 +1893,7 @@ int CmdProc::levelscan(){
     for(unsigned int level=3; level<16; level++){
         
         setTestboardDelay("level", level); 
-        if (fFW35) tbmset("base4", ALLTBMS, 0x80); // temp fix, avoid event counter reaching 255
+        if (fFW35) tbmset("base4", ALLTBMS, 0x10); // temp fix, avoid event counter reaching 255
         
         int good = countGood(100,1,0,nroc);
     
@@ -2141,7 +2148,7 @@ int CmdProc::tbmread(uint8_t regId, int hubid){
                 }   
                 */
                
-				if (valid ){ 
+				if (valid ){
 					setTestboardDelay("all");
 					return (int) D;
 				}
@@ -2705,7 +2712,7 @@ int CmdProc::runDaqRandom(vector<uint16_t> & buf, vector<DRecord> & data, int nt
         nloop++;
         
         data.clear();
-        int stat = getData(buf, data, 1, nroc, false); // verbosity, nroc, resetDaqStatus
+        int stat = getData(buf, data, 0, nroc, false); // verbosity, nroc, resetDaqStatus
         
         // dump data if an error occurred 
         if(stat>0){
@@ -3070,27 +3077,18 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
             if( flag == 0xa ){ // TBM header
             
                 tbmHeaderSeen=true;
-                
                 fHeaderCount++;
 
                 daqChannel = (buf[i]&0x700)>>8;
                 fNTBMHeader[daqChannel]++;
                 rocCounter[daqChannel]=0;
-     
+
                 if (buf[i]&0x0800) { // assuming the lower bits are used for the channel nr
                     nerr++; // should be 0
                     fDaqErrorCount[daqChannel]++;
-                    if (verbosity>0) out << "illegal deser400 header record " << hex << buf[i] << dec << "\n";
+                    if (verbosity>0) out << "illegal deser400 header record \n";
                 }
-                daqChannel = (buf[i]&0x700)>>8;
-                fNTBMHeader[daqChannel]++;
-                rocCounter[daqChannel]=0;
 
-                if (buf[i]&0x1000){
-                    fDeser400SymbolErrors[daqChannel]++;
-                    fDaqErrorCount[daqChannel]++;
-
-                }
                 
                 uint8_t h1=buf[i]&0xFF;
                 i++;
@@ -3101,8 +3099,12 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     return nerr + fDeser400err;
                 }
                 
-                if (buf[i]&0x1000) fDeser400err++;
-                
+                if (buf[i]&0x1000){
+                    fDeser400SymbolErrors[daqChannel]++;
+                    fDaqErrorCount[daqChannel]++;
+					fDeser400err++;
+				}
+				                
                 if ((buf[i]&0xE000)==0x8000){
                     uint8_t h2 = buf[i]&0xFF;
                     data.push_back( DRecord( daqChannel, 0xa, (h1<<8 | h2), buf[i-1], buf[i]) );
@@ -3170,7 +3172,10 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                              
                             if ( !(hrocid == rocId) ){
                                 fRocReadBackErrors[daqChannel]++;
-                                if( ! fIgnoreReadbackErrors ) nerr++;
+                                if( !fIgnoreReadbackErrors ) {
+									nerr++;
+									fDaqErrorCount[daqChannel]++;
+								}
                                 if( !fIgnoreReadbackErrors && verbose ){
                                     cout << hex << setw(4) << rocHeaderWord[rocId];
                                     cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
@@ -3185,7 +3190,9 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                         rocHeaderWord[rocId]=0;
                         rocHeaderBits[rocId]=0;
                     }else  if(rocHeaderBits[rocId]==16){
-                        if( ! fIgnoreReadbackErrors ) nerr++;
+                        if( ! fIgnoreReadbackErrors ) {
+							nerr++;
+						}
                         if( !fIgnoreReadbackErrors && verbose){
                                     cout << "start bit expected ";
                                     cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
@@ -3262,6 +3269,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                             << dec << setfill(' ') << " at position "<< i-1 << "\n";
                         }
                     nerr++;
+                    fDaqErrorCount[daqChannel]++;
                  }
                 continue;
             }
@@ -3274,6 +3282,8 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     }
                     cout << endl;
                 }
+                fNEvent[daqChannel]++;
+
                 tbmHeaderSeen=false;
                 // TBM trailer
                 if (buf[i]&0x0f00){
@@ -3333,6 +3343,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 out << "unexpected qualifier " << hex << (int) flag <<", skipped\n" << dec;
             }
             nerr++;
+            fDaqErrorCount[daqChannel]++;
             i++;
             
         } // while i< buf.size()
@@ -3342,7 +3353,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 cout << "stuck at i=" << dec << i << endl;
                 cout << hex << (int) buf[i-1] << " " << (int) buf[i] << dec << endl;
         }
-        
+
          fNumberOfEvents = nevent;
 
     }
@@ -3635,6 +3646,7 @@ int CmdProc::resetDaqStatus(){
         fDeser400PhaseErrors[i]=0;
         fDeser400XORChanges[i]=0;
         fNTBMHeader[i]=0;
+        fNEvent[i]=0;
         fRocReadBackErrors[i]=0;
         fDeser400_frame_error[i]=0;
         fDeser400_code_error[i]=0;
