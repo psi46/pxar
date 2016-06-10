@@ -2056,13 +2056,13 @@ int CmdProc::adctest(const string signalName){
 }
 
 
-int CmdProc::tbmread(uint8_t regId){
+int CmdProc::tbmread(uint8_t regId, int hubid){
 
     // part 1 , acquire data : delay scan
    
     uint8_t gain = GAIN_1;
     uint8_t start  = 17;  // wait after sda
-    uint8_t hubId = 31; // FIXME allow configurable values later, get from api?
+    uint8_t hubId = hubid;
     
     uint16_t nSample = 100;
     unsigned int nDly = 20; // stepsize 1.25 ns
@@ -2142,15 +2142,36 @@ int CmdProc::tbmread(uint8_t regId){
     return -1;
 }
 
-string CmdProc::tbmprint(uint8_t regId){
+
+string CmdProc::tbmprint(uint8_t regId, int hubid){
 	stringstream s;
-	int value = tbmread(regId);
+	int value = tbmread(regId, hubid);
 	if (value>=0){
 		s<< "      0x" << (hex) << setfill('0') << setw(2) << value << setfill(' ');
 	}else{
 		s<< "       err";
 	}
 	return s.str();
+}
+
+
+int CmdProc::tbmreadback() {
+    // read some registers of the TBMs.
+    for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
+        // use the switch
+        fApi->selectTbmRDA(1 - i);
+        int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
+        fApi->setHubID(hubid);
+        cout << "TBM " << i << ", hubid: " << hubid;
+        cout << "               core A      core B \n";
+        cout << "Base + 1/0 " << tbmprint(0xe1, hubid) << "  " << tbmprint(0xf1, hubid) << "\n";
+        cout << "Base + 3/2 " << tbmprint(0xe3, hubid) << "  " << tbmprint(0xf3, hubid) << "\n";
+        cout << "Base + 9/8 " << tbmprint(0xe9, hubid) << "  " << tbmprint(0xf9, hubid) << "\n";
+        cout << "Base + B/A " << tbmprint(0xeb, hubid) << "  " << tbmprint(0xfb, hubid) << "\n";
+        cout << "Base + D/C " << tbmprint(0xed, hubid) << "  " << tbmprint(0xfd, hubid) << "\n";
+        cout << "Base + F   " << tbmprint(0xef, hubid) << "\n";
+    }
+    return 0;
 }
 
 
@@ -3816,16 +3837,7 @@ int CmdProc::tb(Keyword kw){
         }
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;} 
     if( kw.match("adctest") ){ adctest("clk"); adctest("ctr"); adctest("sda"); adctest("rda"); adctest("sdata1"); adctest("sdata2"); return 0;} 
-	if( kw.match("tbmread") || kw.match("readback","tbm") ){
-		out <<"               core A      core B \n";
-		out << "Base + 1/0 " << tbmprint(0xe1)  << "  " << tbmprint(0xf1) << "\n";
-		out << "Base + 3/2 " << tbmprint(0xe3)  << "  " << tbmprint(0xf3) << "\n";
-		out << "Base + 9/8 " << tbmprint(0xe9)  << "  " << tbmprint(0xf9) << "\n";
-		out << "Base + B/A " << tbmprint(0xeb)  << "  " << tbmprint(0xfb) << "\n";
-		out << "Base + D/C " << tbmprint(0xed)  << "  " << tbmprint(0xfd) << "\n";
-		out << "Base + F   " << tbmprint(0xef) << "\n";
-		return 0;
-	}
+	if( kw.match("tbmread") || kw.match("readback","tbm") ){return tbmreadback();}
     if( kw.match("readback")) { return readRocs();}
     if( kw.match("readback", value)){ return readRocs(value); }
     if( kw.match("readback", "vd")  ) { return readRocs(8, 0.016,"V");  }
@@ -3871,7 +3883,7 @@ int CmdProc::tb(Keyword kw){
 				uint8_t testvalue= (~value) | 0x02; // don't shut down the clock
 				tbmset("base0", 1 << core, testvalue);
 
-				int readvalue = tbmread(addr);
+				int readvalue = tbmread(addr, 31); // TODO: needs a fix, expand similar to tbmreadback()
 				tbmset("base0",1 << core, value);
 				if( readvalue == (int) testvalue){
 					out << "core " << name << " write/read ok\n";
