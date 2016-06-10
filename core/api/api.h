@@ -427,6 +427,10 @@ namespace pxar {
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
+    /** Manually set the HUB_address in the testboard
+     */
+    void setHubID(uint8_t id);
+
     /** Method to scan a DAC range and measure the pulse height
      *
      *  Returns a vector of pairs containing set dac value and a pxar::pixel vector,

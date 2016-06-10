@@ -796,6 +796,21 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
   return true;
 }
 
+void pxarCore::setHubID(uint8_t id) {
+  // check if provided hubid is available
+  std::vector<int> hubids;
+  std::vector<tbmConfig> tbms = _dut->getEnabledTbms();
+  for (unsigned int i = 0; i < tbms.size() / 2; i++) {
+    hubids.push_back(tbms.at(i*2).hubid);
+  }
+  if (std::find(hubids.begin(), hubids.end(), id) != hubids.end()) {
+    _hal->setHubId(id);
+  }
+  else {
+    LOG(logERROR) << "This hubid does not exist in the dut: " << int(id);
+  }
+}
+
 std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {
 
   // No step size provided - scanning all DACs with step size 1:
