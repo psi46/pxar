@@ -25,12 +25,12 @@ ClassImp(PixTestDoubleColumn)
 min                 0
 max                 23
 npix                2
-delay               1000
+delay               65
 data                button
 */
 
 // ----------------------------------------------------------------------
-PixTestDoubleColumn::PixTestDoubleColumn(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1), fParNpix(1), fParDelay(1000),fParTsMin(0),fParTsMax(23),fParDaqDatRead(false),fParRowOffset(10) {
+PixTestDoubleColumn::PixTestDoubleColumn(PixSetup *a, std::string name) : PixTest(a, name), fParNtrig(1), fParNpix(1), fParDelay(65),fParTsMin(0),fParTsMax(23),fParDaqDatRead(false),fParRowOffset(10) {
   PixTest::init();
   init(); 
   //  LOG(logINFO) << "PixTestDoubleColumn ctor(PixSetup &a, string, TGTab *)";
@@ -177,7 +177,7 @@ void PixTestDoubleColumn::testBuffers(std::vector<TH2D*> hX, int tsMin, int tsMa
     fPg_setup.push_back(std::make_pair("resetroc",15));    // PG_REST
     fPg_setup.push_back(std::make_pair("delay",15));    // PG_REST
     for (int i=0;i<nTestTimestamps;i++) {
-    fPg_setup.push_back(std::make_pair("calibrate",65)); // PG_CAL
+    fPg_setup.push_back(std::make_pair("calibrate",fParDelay)); // PG_CAL
     }
     fPg_setup.push_back(std::make_pair("calibrate",wbc+delay)); // PG_CAL
     if (nTestTimestamps == tsMax) {

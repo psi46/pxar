@@ -589,6 +589,13 @@ DAC2LO              0
 DAC2HI              255
 PIX                 11,20
 
+-- DoubleColumn
+min                 0
+max                 23
+npix                2
+delay               65
+data                button
+
 -- Ph
 Ntrig               10
 DAC                 vcal
