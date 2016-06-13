@@ -374,7 +374,7 @@ namespace pxar {
 
   /** Class to store the configuration for single pixels (i.e. their mask state,
    *  trim bit settings and whether they belong to the currently run test ("enable").
-   *  By default, pixelConfigs have the  mask bit set.
+   *  By default, pixelConfigs have the mask bit set.
    */
   class DLLEXPORT pixelConfig {
   public:
@@ -450,7 +450,7 @@ namespace pxar {
    *
    *  The class collects all decoding statistics gathered during one DAQ 
    *  session (i.e. one test command from pxarCore or one session started 
-   *  with daqStart() and ended with daqStop().
+   *  with daqStart() and ended with daqStop()).
    */
   class DLLEXPORT statistics {
     /** Allow the dtbEventDecoder to directly alter private members of the statistics

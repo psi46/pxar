@@ -1062,15 +1062,15 @@ class PxarCoreCmd(cmd.Cmd):
         # return help for the cmd
         return [self.do_findAnalogueTBDelays.__doc__, '']
 
-    @arity(0,3,[int, int, int])
+    @arity(0,4,[int, int, int, str])
     def do_wbcScan(self, minWBC = 90, maxWBC = 255, maxTriggers = 10, triggersignal = "extern"):
         """ do_wbcScan [minWBC] [maxWBC] [maxTriggers] [signal]: sets the values of wbc from minWBC until it finds the wbc which has more than 90% filled events or it reaches 255 (default minWBC 90)"""
 
         self.api.daqTriggerSource(triggersignal)
-        self.api.HVon();
+        self.api.HVon()
 
         wbcScan = []
-        print "wbc \tyield"
+        print "wbc \t yield \t err \t pixel"
 
         # loop over wbc
         for wbc in range (minWBC,maxWBC):
@@ -1090,10 +1090,14 @@ class PxarCoreCmd(cmd.Cmd):
                     pass
 
             hitYield = 100*nHits/maxTriggers
+            stats = self.api.getStatistics()
             wbcScan.append(hitYield)
-            print '{0:03d}'.format(wbc),"\t", '{0:3.0f}%'.format(hitYield)
+            print '{0:03d}'.format(wbc),"\t", '{0:3.0f}%'.format(hitYield),"\t", '{0:3d}'.format(stats.errors),"\t", '{0:3d}'.format(stats.info_pixels_valid)
 
             self.api.daqStop()
+
+        # Turn HV off again.
+        self.api.HVoff()
 
         if(self.window):
             self.window = PxarGui( ROOT.gClient.GetRoot(), 1000, 800 )

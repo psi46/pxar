@@ -1068,7 +1068,7 @@ void PixTestPretest::programROC() {
       result += Form(" %d", rocIds[iroc]); 
       problem = true; 
     }
-    h1->SetBinContent(iroc+1, dA); 
+    h1->SetBinContent(iroc+1, dA);
     fApi->setDAC("vana", 0, rocIds[iroc]);
 
     gSystem->ProcessEvents();
@@ -1086,7 +1086,7 @@ void PixTestPretest::programROC() {
   // -- summary printout
   string dIaString(""); 
   for (unsigned int i = 0; i < nRocs; ++i) {
-    dIaString += Form(" %3.1f", h1->GetBinContent(i+1)); 
+    dIaString += Form(" %3.1f", h1->GetBinContent(i+1));
   }
   
   LOG(logINFO) << "PixTestPretest::programROC() done: " << result;
@@ -1173,12 +1173,12 @@ void PixTestPretest::findWorkingPixel() {
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-	hname = Form("fwp_c%d_r%d_C%d", ic, ir, wpix[ipix].roc());
-	if (maps.count(hname) > 0) {
-	  maps[hname]->Fill(idac1, idac2, wpix[ipix].value()); 
-	} else {
-	  LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping"; 
-	}
+          hname = Form("fwp_c%d_r%d_C%d", ic, ir, wpix[ipix].roc());
+          if (maps.count(hname) > 0) {
+	        maps[hname]->Fill(idac1, idac2, wpix[ipix].value());
+	      } else {
+	        LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping";
+	      }
       }
     }
     
@@ -1214,7 +1214,8 @@ void PixTestPretest::findWorkingPixel() {
 
       if (!okVthrComp || !okCalDel) {
 	okAllRocs = false;
-	LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp << " Delta(CalDel) = " << cdLast - cdFirst << ", trying another"; 
+	LOG(logINFO) << hname << " does not pass: vthrComp = " << vthrComp
+		     << " Delta(CalDel) = " << cdLast - cdFirst << ((ifwp != pixelList.size() - 1) ? ", trying another" : ".");
 	break;
       } else{
 	LOG(logDEBUG) << hname << " OK, with vthrComp = " << vthrComp << " and Delta(CalDel) = " << cdLast - cdFirst; 
@@ -1237,11 +1238,19 @@ void PixTestPretest::findWorkingPixel() {
       maps.clear();
     }
   }
-
-  LOG(logINFO) << "Found working pixel in all ROCs: col/row = " << ic << "/" << ir; 
-  clearSelectedPixels();
-  fPIX.push_back(make_pair(ic, ir));
-  addSelectedPixels(Form("%d,%d", ic, ir)); 
+  
+  if (maps.size()) {
+    LOG(logINFO) << "Found working pixel in all ROCs: col/row = " << ic << "/" << ir; 
+    clearSelectedPixels();
+    fPIX.push_back(make_pair(ic, ir));
+    addSelectedPixels(Form("%d,%d", ic, ir));
+  } else {
+    LOG(logINFO) << "Something went wrong...";
+    LOG(logINFO) << "Didn't find a working pixel in all ROCs.";
+    for (size_t iroc = 0; iroc < rocIds.size(); iroc++) {
+      LOG(logINFO) << "our roc list from in the dut: " << static_cast<int>(rocIds[iroc]);
+    }
+  }
 
   dutCalibrateOff();  
   restoreDacs();

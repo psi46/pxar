@@ -273,7 +273,7 @@ std::vector< uint8_t > dut::getRocI2Caddr() {
 std::vector< tbmConfig > dut::getEnabledTbms() {
   std::vector< tbmConfig > result;
   if (!_initialized) return result;
-  // search for rocs that have enable set
+  // search for TBMs that have enable set
   for (std::vector<tbmConfig>::iterator it = tbm.begin(); it != tbm.end(); ++it){
     if (it->enable) result.push_back(*it);
   }

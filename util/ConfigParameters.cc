@@ -41,9 +41,9 @@ void ConfigParameters::initialize() {
   fnRocs = 16;
   fnTbms = 1; 
   fnModules = 1;
-  fHubId = 31;
-  fI2cAddresses.clear(); 
-  
+  fHubIds.push_back(31);
+  fI2cAddresses.clear();
+
   fHvOn = true;
   fTbmEnable = true;
   fTbmEmulator = false;
@@ -164,7 +164,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
       else if (0 == _name.compare("nModules")) { fnModules                  = _ivalue; }
       else if (0 == _name.compare("nRocs")) { readNrocs(_istring.str()); }
       else if (0 == _name.compare("nTbms")) { fnTbms                     = _ivalue; }
-      else if (0 == _name.compare("hubId")) { fHubId                     = _ivalue; }
+      else if (0 == _name.compare("hubId")) { readHubIds(_istring.str()); }
       else if (0 == _name.compare("halfModule")) { fHalfModule                = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLength")) { fEmptyReadoutLength        = _ivalue; }
       else if (0 == _name.compare("emptyReadoutLengthADC")) { fEmptyReadoutLengthADC     = _ivalue; }
@@ -311,9 +311,9 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
 }
 
 // ----------------------------------------------------------------------
-vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
+vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
-  vector<pair<std::string, uint8_t> > a;
+  vector<pair<string, uint8_t> > a;
   
   uint8_t wbc = 100;
   vector<vector<pair<string, uint8_t> > > dacs = getRocDacs();
@@ -324,7 +324,7 @@ vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
   }
 
   uint8_t delay = 6;
-  if(fRocType.find("dig") == std::string::npos) { delay = 5; }
+  if(fRocType.find("dig") == string::npos) { delay = 5; }
   
   if (fnTbms < 1) {
     a.push_back(make_pair("resetroc",25));    // PG_RESR b001000 
@@ -332,9 +332,9 @@ vector<pair<std::string, uint8_t> >  ConfigParameters::getTbPgSettings() {
     a.push_back(make_pair("trigger",16));    // PG_TRG  b000010
     a.push_back(make_pair("token",0));     // PG_TOK  b000001
   } else {
-    a.push_back(std::make_pair("resetroc",15));    // PG_REST
-    a.push_back(std::make_pair("calibrate",wbc+delay)); // PG_CAL
-    a.push_back(std::make_pair("trigger;sync",0));     // PG_TRG PG_SYNC
+    a.push_back(make_pair("resetroc",15));    // PG_REST
+    a.push_back(make_pair("calibrate",wbc+delay)); // PG_CAL
+    a.push_back(make_pair("trigger;sync",0));     // PG_TRG PG_SYNC
   }
 
   return a;
@@ -403,7 +403,7 @@ void ConfigParameters::readRocPixelConfig() {
 	v.push_back(a); 
       }
     }
-    std::stringstream fname;
+    stringstream fname;
     fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
     readTrimFile(fname.str(), v); 
     fRocPixelConfigs.push_back(v); 
@@ -572,7 +572,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeMaskFile(vector<vector<pair<int, int> > > v, string name) {
-  std::stringstream fname;
+  stringstream fname;
   if (!name.compare("")) {
     fname << fDirectory << "/" << fMaskFileName; 
   } else {
@@ -625,7 +625,7 @@ vector<string> ConfigParameters::getDacs() {
     readRocDacs();
   }
   vector<string> names; 
-  vector<std::pair<std::string, uint8_t> > dacs = fDacParameters[0];
+  vector<pair<string, uint8_t> > dacs = fDacParameters[0];
   for (unsigned int i = 0; i < dacs.size(); ++i) {
     names.push_back(dacs[i].first);
   }
@@ -684,7 +684,7 @@ void ConfigParameters::readTbmDacs() {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::setTbParameter(std::string var, uint8_t val, bool appendIfNotFound) {
+bool ConfigParameters::setTbParameter(string var, uint8_t val, bool appendIfNotFound) {
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
     if (!fTbParameters[i].first.compare(var)) {
       fTbParameters[i].second = val;
@@ -700,7 +700,7 @@ bool ConfigParameters::setTbParameter(std::string var, uint8_t val, bool appendI
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::setTbmDac(std::string var, uint8_t val, int itbm) {
+bool ConfigParameters::setTbmDac(string var, uint8_t val, int itbm) {
   bool changed(false);
   for (unsigned int i = 0; i < fTbmParameters.size(); ++i) {
     if (itbm < 0 || itbm == static_cast<int>(i)) {
@@ -721,7 +721,7 @@ bool ConfigParameters::setTbmDac(std::string var, uint8_t val, int itbm) {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::setRocDac(std::string var, uint8_t val, int iroc) {
+bool ConfigParameters::setRocDac(string var, uint8_t val, int iroc) {
   bool changed(false);
   for (unsigned int i = 0; i < fDacParameters.size(); ++i) {
     if (iroc < 0 || iroc == static_cast<int>(i)) {
@@ -742,7 +742,7 @@ bool ConfigParameters::setRocDac(std::string var, uint8_t val, int iroc) {
 
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::setTbPowerSettings(std::string var, double val) {
+bool ConfigParameters::setTbPowerSettings(string var, double val) {
   
   for (unsigned int i = 0; i < fTbPowerSettings.size(); ++i) {
     if (!fTbPowerSettings[i].first.compare(var)) {
@@ -763,6 +763,15 @@ bool ConfigParameters::setTrimBits(int trim) {
     }
   }
   return true;
+}
+
+// ----------------------------------------------------------------------
+string ConfigParameters::vectorToString(vector<uint8_t> vec) {
+  stringstream ss;
+  for (vector<uint8_t>::iterator ivec = vec.begin(); ivec != vec.end() - 1; ivec++)
+    ss << int(*ivec) << ", ";
+  ss << int(vec.back());
+  return ss.str();
 }
 
 
@@ -796,7 +805,7 @@ bool ConfigParameters::writeConfigParameterFile() {
   fprintf(file, "nModules %i\n", fnModules);
   fprintf(file, "nRocs %i\n", fnRocs);
   fprintf(file, "nTbms %i\n", fnTbms);
-  fprintf(file, "hubId %i\n", fHubId);
+  fprintf(file, "hubId %s\n", vectorToString(fHubIds).c_str());
   fprintf(file, "tbmEnable %i\n", fTbmEnable);
   fprintf(file, "tbmEmulator %i\n", fTbmEmulator);
   fprintf(file, "hvOn %i\n", fHvOn);
@@ -833,7 +842,7 @@ bool ConfigParameters::writeConfigParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
-  std::stringstream fname;
+  stringstream fname;
   fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
   
   ofstream OutputFile;
@@ -844,7 +853,7 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
     LOG(logINFO) << "write trim parameters into " << fname.str(); 
   }
     
-  for (std::vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
+  for (vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
     OutputFile << setw(2) << static_cast<int>(ipix->trim()) 
 	       << "   Pix " << setw(2) 
 	       << static_cast<int>(ipix->column()) << " " << setw(2) << static_cast<int>(ipix->row()) 
@@ -859,7 +868,7 @@ bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8_t> > v) {
 
-  std::stringstream fname;
+  stringstream fname;
   fname << fDirectory << "/" << getDACParameterFileName() << fTrimVcalSuffix << "_C" << iroc << ".dat";
 
   ofstream OutputFile;
@@ -871,8 +880,8 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
   }
   
   RegisterDictionary *a = RegisterDictionary::getInstance();
-  for (std::vector<std::pair<std::string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    //    OutputFile << left << std::setw(10) << idac->first << " " << std::setw(3) << static_cast<int>(idac->second) << std::endl;
+  for (vector<pair<string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+    //    OutputFile << left << setw(10) << idac->first << " " << setw(3) << static_cast<int>(idac->second) << endl;
     OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, ROC_REG)) << " " << left
 	       << setw(10) << idac->first << " " << setw(3) << static_cast<int>(idac->second) 
 	       << endl;
@@ -909,7 +918,7 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
     }
 
     RegisterDictionary *a = RegisterDictionary::getInstance();
-    for (std::vector<std::pair<std::string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+    for (vector<pair<string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
       OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
 		 << idac->first  
 		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
@@ -948,9 +957,9 @@ bool ConfigParameters::writeTbParameterFile() {
   RegisterDictionary *a = RegisterDictionary::getInstance();
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
-    std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+    transform(data.begin(), data.end(), data.begin(), ::tolower);
     OutputFile << right << setw(3) << static_cast<int>(a->getRegister(fTbParameters[idac].first, DTB_REG)) << " " 
-	       << setw(15) << fTbParameters[idac].first << "  " << std::setw(3) << static_cast<int>(fTbParameters[idac].second) 
+	       << setw(15) << fTbParameters[idac].first << "  " << setw(3) << static_cast<int>(fTbParameters[idac].second) 
 	       << endl;
   }
   
@@ -988,8 +997,8 @@ void ConfigParameters::readGainPedestalParameters() {
   for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
     lines.clear();
     rocPar.clear();
-    std::stringstream fname;
-    fname.str(std::string());
+    stringstream fname;
+    fname.str(string());
     fname << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
     is.open((fname.str()).c_str());
     if (!is.is_open()) {
@@ -1023,7 +1032,7 @@ void ConfigParameters::writeGainPedestalParameters() {
   stringstream fname;
   
   for (unsigned int iroc = 0; iroc < fGainPedestalParameters.size(); ++iroc) {
-    fname.str(std::string());
+    fname.str(string());
     fname << fDirectory << "/" << getGainPedestalParameterFileName() << fTrimVcalSuffix << "_C" << iroc << ".dat";
     ofstream OutputFile;
     OutputFile.open((fname.str()).c_str());
@@ -1064,7 +1073,7 @@ void ConfigParameters::setGainPedestalParameters(vector<vector<gainPedestalParam
 }
 
 // ----------------------------------------------------------------------
-std::vector<std::vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParameters() {
+vector<vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParameters() {
   if (fGainPedestalParameters.size() == 0) {
     readGainPedestalParameters();
   }
@@ -1072,9 +1081,9 @@ std::vector<std::vector<gainPedestalParameters> > ConfigParameters::getGainPedes
 }
 
 
-void ConfigParameters::setProbe(std::string probe, std::string value) {
+void ConfigParameters::setProbe(string probe, string value) {
 
-   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+   transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
 
    if (probe == "a1") fProbeA1 = value;	
    else if (probe == "a2") fProbeA2 = value;	
@@ -1083,8 +1092,8 @@ void ConfigParameters::setProbe(std::string probe, std::string value) {
 }
 
 // ----------------------------------------------------------------------
-std::string ConfigParameters::getProbe(std::string probe) {
-   std::transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
+string ConfigParameters::getProbe(string probe) {
+   transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
    if (probe == "a1") return fProbeA1;	
    else if (probe == "a2") return fProbeA2;	
    else if (probe == "d1") return fProbeD1;	
@@ -1150,6 +1159,33 @@ void ConfigParameters::readNrocs(string line) {
 }
 
 // ----------------------------------------------------------------------
+void ConfigParameters::readHubIds(string line) {
+  cleanupString(line);
+  string::size_type s0 = line.find(" ");
+  fHubIds.clear();
+  if (string::npos == s0) {
+    return;
+  } else {
+    string hubidstring = line.substr(6);
+    s0 = hubidstring.find(",");
+    string hubid("");
+    while (string::npos != s0) {
+      hubid = hubidstring.substr(0, s0);
+      fHubIds.push_back(atoi(hubid.c_str()));
+      hubidstring = hubidstring.substr(s0+1);
+      s0 = hubidstring.find(",");
+    }
+    //  -- get the last one as well
+    fHubIds.push_back(atoi(hubidstring.c_str()));
+    if (fnTbms > 0 && fnTbms != fHubIds.size()) {
+      LOG(logCRITICAL) << "We have " << static_cast<int>(fnTbms) << "TBMs, but "
+              << static_cast<int>(fHubIds.size()) << " HubIds provided ";
+      throw InvalidConfig("Mismatch between number of TBMs and HubIds");
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
 void ConfigParameters::readReadbackCal() {
   if (!fReadReadbackCal) {
     stringstream firstFile, lastFile;
@@ -1196,7 +1232,7 @@ vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
     str1 = lines[i].substr(0, s1); 
     str2 = lines[i].substr(s1+1); 
 
-    std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+    transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
     ival = atof(str2.c_str()); 
     
     uval = ival;
@@ -1218,7 +1254,7 @@ vector<vector<pair<string, double> > > ConfigParameters::getReadbackCal() {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> > v) {
 
-  std::stringstream fname;
+  stringstream fname;
   fname << fDirectory << "/" << fReadbackCalFileName << "_C" << iroc << ".dat";
 
   ofstream OutputFile;
@@ -1230,7 +1266,7 @@ bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> >
   }
   
   //  RegisterDictionary *a = RegisterDictionary::getInstance();
-  for (std::vector<std::pair<std::string,double> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
+  for (vector<pair<string,double> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
     OutputFile << left << setw(3) << idac->first << " " << setw(3) << static_cast<double>(idac->second) 
 	       << endl;
   }
@@ -1248,7 +1284,7 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
     return;
   }
 
-  std::stringstream fname;
+  stringstream fname;
   
   fname << fDirectory << "/" << fTrimParametersFileName << name << "_C0.dat"; 
   ifstream InputFile;
