@@ -302,6 +302,11 @@ void PixTestDoubleColumn::testData() {
   fDisplayedHist = find( fHistList.begin(), fHistList.end(), hX[0] );
   (*fDisplayedHist)->Draw("colz");
 
+  fPg_setup.clear();
+  LOG(logDEBUG) << "PixTestDoubleColumn::PG_Setup clean";
+  fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
+  fApi->setPatternGenerator(fPg_setup);
+
   restoreDacs();
   PixTest::update(); 
   dutCalibrateOff();
