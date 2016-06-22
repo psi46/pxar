@@ -564,6 +564,9 @@ SaveDacs            button
 -- PixelAlive
 Ntrig               10
 Vcal                200
+MaskDeadPixels      checkbox(0)
+SaveMaskFile        checkbox(0)
+maskFileName        default
 aliveTest           button
 maskTest            button
 addressDecodingTest button
