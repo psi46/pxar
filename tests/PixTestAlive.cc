@@ -18,7 +18,7 @@ ClassImp(PixTestAlive)
 PixTestAlive::PixTestAlive(PixSetup *a, std::string name) : PixTest(a, name),
   fParNtrig(1), fParVcal(200),
   fParMaskDeadPixels(false), fParSaveMaskedPixels(false),
-  fParMaskFileName("nada") {
+  fParMaskFileName("default") {
   PixTest::init();
   init();
   LOG(logDEBUG) << "PixTestAlive ctor(PixSetup &a, string, TGTab *)";
