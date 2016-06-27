@@ -1538,7 +1538,7 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
   uint8_t rocid_offset = 0;
   for(size_t i = 0; i < m_tokenchains.size(); i++) {
     // Open DAQ in channel i:
-    size_t j = (( m_tbmtype == TBM_10 && m_roccount == 16 ) ? (6+i)%8 : i);
+    size_t j = (( m_tbmtype == TBM_10C && m_roccount == 16 ) ? (6+i)%8 : i);
     uint32_t allocated_buffer = _testboard->Daq_Open(buffersize, j);
     LOG(logDEBUGHAL) << "Channel " << j << ": token chain: "
 				<< static_cast<int>(m_tokenchains.at(j))
