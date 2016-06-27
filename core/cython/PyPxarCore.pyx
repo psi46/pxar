@@ -162,8 +162,9 @@ cdef class Statistics:
         def __get__(self): return self.thisobj.errors_roc()
     property errors_pixel:
         def __get__(self): return self.thisobj.errors_pixel()
+    property info_pixels_valid:
+        def __get__(self): return self.thisobj.info_pixels_valid()
 
-        
 
 cdef class PxEvent:
     cdef Event *thisptr      # hold a C++ instance which we're wrapping
@@ -580,11 +581,11 @@ cdef class PyPxarCore:
     def setSignalMode(self, string signal, string mode, uint8_t speed):
         self.thisptr.setSignalMode(signal, mode, speed)
 
-    def daqStart(self, uint16_t flags):
-        return self.thisptr.daqStart(flags)
-
-    def daqStart(self):
-        return self.thisptr.daqStart(0)
+    def daqStart(self, flags = None):
+        if flags is not None:
+            return self.thisptr.daqStart(flags)
+        else:
+            return self.thisptr.daqStart(0)
 
     def daqStatus(self):
         return self.thisptr.daqStatus()

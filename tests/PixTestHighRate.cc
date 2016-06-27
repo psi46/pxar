@@ -23,7 +23,7 @@ ClassImp(PixTestHighRate)
 // ----------------------------------------------------------------------
 PixTestHighRate::PixTestHighRate(PixSetup *a, std::string name) : PixTest(a, name),
   fParTriggerFrequency(1), fParRunSeconds(1), fParTriggerDelay(20),
-  fParFillTree(false), fParDelayTBM(false), fParNtrig(5), fParVcal(200), 
+  fParFillTree(false), fParDelayTBM(false), fParNtrig(5), fParVcal(200),
   fParDacLo(0), fParDacHi(100), fParDacsPerStep(20),
   fParMaskFileName("default"), fParSaveMaskedPixels(0)   {
   PixTest::init();
@@ -46,9 +46,9 @@ PixTestHighRate::PixTestHighRate() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestHighRate::setParameter(string parName, string sval) {
   bool found(false);
-  string str1, str2; 
+  string str1, str2;
   string::size_type s1;
-  int pixc, pixr; 
+  int pixc, pixr;
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
@@ -60,7 +60,7 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("maskfilename")) {
-	fParMaskFileName = sval; 
+	fParMaskFileName = sval;
 	setToolTips();
       }
       if (!parName.compare("trgfrequency(khz)")) {
@@ -97,15 +97,15 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("daclo")) {
-	fParDacLo = atoi(sval.c_str()); 
+	fParDacLo = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("dachi")) {
-	fParDacHi = atoi(sval.c_str()); 
+	fParDacHi = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("dacs/step")) {
-	fParDacsPerStep = atoi(sval.c_str()); 
+	fParDacsPerStep = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("trimhotpixelthr")) {
@@ -137,11 +137,11 @@ bool PixTestHighRate::setParameter(string parName, string sval) {
 	  pixr = atoi(str2.c_str());
 	  clearSelectedPixels();
 	  fPIX.push_back( make_pair(pixc, pixr) );
-	  addSelectedPixels(sval); 
+	  addSelectedPixels(sval);
 	} else {
 	  clearSelectedPixels();
-	  addSelectedPixels("-1,-1"); 
-	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size(); 
+	  addSelectedPixels("-1,-1");
+	  LOG(logDEBUG) << "  clear fPIX: " << fPIX.size();
 	}
       }
       break;
@@ -264,7 +264,7 @@ void PixTestHighRate::doCalDelScan() {
 
   uint16_t FLAGS = FLAG_FORCE_MASKED | FLAG_DUMP_FLAWED_EVENTS;
 
-  int ntrig(10); 
+  int ntrig(10);
   banner(Form("PixTestHighRate::calDelScan() ntrig = %d, vcal = %d", ntrig, fParVcal));
   cacheDacs();
 
@@ -276,26 +276,26 @@ void PixTestHighRate::doCalDelScan() {
 
   // -- do local short 1D caldel scan
   // --------------------------------
-  int ip = 0; 
+  int ip = 0;
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
   fApi->_dut->testPixel(fPIX[ip].first, fPIX[ip].second, true);
   fApi->_dut->maskPixel(fPIX[ip].first, fPIX[ip].second, false);
-  
+
   bool done = false;
   vector<pair<uint8_t, vector<pixel> > >  results;
   while (!done) {
-    results.clear(); 
-    int cnt(0); 
+    results.clear();
+    int cnt(0);
     try{
       results = fApi->getEfficiencyVsDAC("caldel", 0, 255, FLAGS, 3);
       done = true;
     } catch(DataMissingEvent &e){
-      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events"; 
+      LOG(logCRITICAL) << "problem with readout: "<< e.what() << " missing " << e.numberMissing << " events";
       ++cnt;
-      if (e.numberMissing > 10) done = true; 
+      if (e.numberMissing > 10) done = true;
     } catch(pxarException &e) {
-      LOG(logCRITICAL) << "pXar execption: "<< e.what(); 
+      LOG(logCRITICAL) << "pXar execption: "<< e.what();
       ++cnt;
     }
     done = (cnt>5) || done;
@@ -306,41 +306,41 @@ void PixTestHighRate::doCalDelScan() {
   fApi->_dut->maskAllPixels(false);
 
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   TH1D *h1(0);
   vector<TH1D*> maps;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     h1 = bookTH1D(Form("hrCalDelScan_C%d", rocIds[iroc]), Form("hrCalDelScan_C%d", rocIds[iroc]), 256, 0., 256.);
-    h1->SetMinimum(0.); 
-    h1->SetDirectory(fDirectory); 
-    fHistList.push_back(h1); 
-    maps.push_back(h1); 
+    h1->SetMinimum(0.);
+    h1->SetDirectory(fDirectory);
+    fHistList.push_back(h1);
+    maps.push_back(h1);
   }
-  
-  int idx(-1); 
+
+  int idx(-1);
   for (unsigned int i = 0; i < results.size(); ++i) {
-    int caldel = results[i].first; 
-    vector<pixel> pixels = results[i].second; 
+    int caldel = results[i].first;
+    vector<pixel> pixels = results[i].second;
     for (unsigned int ipix = 0; ipix < pixels.size(); ++ipix) {
       idx = getIdxFromId(pixels[ipix].roc());
-      h1 = maps[idx]; 
+      h1 = maps[idx];
       if (h1) {
-	h1->Fill(caldel, pixels[ipix].value()); 
+	h1->Fill(caldel, pixels[ipix].value());
       } else {
-	LOG(logDEBUG) << "no histogram found for ROC " << pixels[ipix].roc() << " with index " << idx; 
+	LOG(logDEBUG) << "no histogram found for ROC " << pixels[ipix].roc() << " with index " << idx;
       }
     }
   }
-      
-  vector<int> calDelLo(rocIds.size(), -1); 
-  vector<int> calDelHi(rocIds.size(), -1); 
-  int DeltaCalDelMax(-1), reserve(1); 
+
+  vector<int> calDelLo(rocIds.size(), -1);
+  vector<int> calDelHi(rocIds.size(), -1);
+  int DeltaCalDelMax(-1), reserve(1);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
     double cdMax   = maps[iroc]->GetMaximum();
-    calDelLo[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindFirstBinAbove(0.8*cdMax) + reserve)); 
+    calDelLo[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindFirstBinAbove(0.8*cdMax) + reserve));
     calDelHi[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindLastBinAbove(0.8*cdMax) - reserve));
     if (calDelHi[iroc] - calDelLo[iroc] > DeltaCalDelMax) {
-      DeltaCalDelMax = calDelHi[iroc] - calDelLo[iroc]; 
+      DeltaCalDelMax = calDelHi[iroc] - calDelLo[iroc];
     }
   }
 
@@ -373,46 +373,46 @@ void PixTestHighRate::doCalDelScan() {
   vector<pair<int, double> > calDelMax(rocIds.size(), make_pair(-1, -1)); // (CalDel,meanEff)
   vector<TH1D*> calDelEffHist;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-    h1 = bookTH1D(Form("HR_CalDelScan_eff_C%d", getIdFromIdx(iroc)),  
+    h1 = bookTH1D(Form("HR_CalDelScan_eff_C%d", getIdFromIdx(iroc)),
 		  Form("HR_CalDelScan_eff_C%d", getIdFromIdx(iroc)), 256, 0., 256);
-    calDelEffHist.push_back(h1); 
+    calDelEffHist.push_back(h1);
   }
 
-  int nsteps(20); 
+  int nsteps(20);
   for (int istep = 0; istep < nsteps; ++istep) {
-    // -- set CalDel per ROC 
+    // -- set CalDel per ROC
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
       int caldel = calDelLo[iroc] + istep*(calDelHi[iroc]-calDelLo[iroc])/(nsteps-1);
       fApi->setDAC("CalDel", caldel, rocIds[iroc]);
     }
-    
-    
-//     pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), 
+
+
+//     pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep),
 // 							       ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
     vector<TH2D*>  test2 = efficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
     for (unsigned int iroc = 0; iroc < test2.size(); ++iroc) {
       fHistOptions.insert(make_pair(test2[iroc], "colz"));
-      h1 = bookTH1D(Form("HR_CalDelScan_step%d_C%d", istep, getIdFromIdx(iroc)),  
+      h1 = bookTH1D(Form("HR_CalDelScan_step%d_C%d", istep, getIdFromIdx(iroc)),
 		    Form("HR_CalDelScan_step%d_C%d", istep, getIdFromIdx(iroc)),  201, 0., 1.005);
-      fHistList.push_back(h1); 
+      fHistList.push_back(h1);
       for (int ix = 0; ix < test2[iroc]->GetNbinsX(); ++ix) {
 	for (int iy = 0; iy < test2[iroc]->GetNbinsY(); ++iy) {
 	  h1->Fill(test2[iroc]->GetBinContent(ix+1, iy+1)/ntrig);
 	}
       }
       int caldel = fApi->_dut->getDAC(rocIds[iroc], "CalDel");
-      calDelEffHist[iroc]->SetBinContent(caldel, h1->GetMean()); 
+      calDelEffHist[iroc]->SetBinContent(caldel, h1->GetMean());
 
       if (h1->GetMean() > calDelMax[iroc].second) {
- 	calDelMax[iroc].first  = caldel; 
+ 	calDelMax[iroc].first  = caldel;
  	calDelMax[iroc].second = h1->GetMean();
       }
     }
 
     for (unsigned int i = 0; i < test2.size(); ++i) {
-      delete test2[i]; 
+      delete test2[i];
     }
     test2.clear();
   }
@@ -425,9 +425,9 @@ void PixTestHighRate::doCalDelScan() {
 
   copy(calDelEffHist.begin(), calDelEffHist.end(), back_inserter(fHistList));
 
-  calDelEffHist[0]->Draw();  
+  calDelEffHist[0]->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), calDelEffHist[0]);
-  PixTest::update(); 
+  PixTest::update();
 
 
 }
@@ -509,15 +509,15 @@ void PixTestHighRate::doXPixelAlive() {
   vector<int> fidHits(test2.size(),0);
   vector<int> allHits(test2.size(),0);
   vector<int> fidPixels(test2.size(),0);
-  TH1D *h1(0), *h2(0); 
+  TH1D *h1(0), *h2(0);
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
     fHistOptions.insert(make_pair(test3[i], "colz"));
     h1 = bookTH1D(Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
-    fHistList.push_back(h1); 
+    fHistList.push_back(h1);
     h2 = bookTH1D(Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
-    fHistList.push_back(h2); 
-    
+    fHistList.push_back(h2);
+
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
       for (int iy = 0; iy < test2[i]->GetNbinsY(); ++iy) {
         allHits[i] += static_cast<int>(test2[i]->GetBinContent(ix+1, iy+1));
@@ -654,10 +654,10 @@ void PixTestHighRate::doXNoiseMaps() {
 
   fApi->setPatternGenerator(fPg_setup);
 
-  int results(0xf); 
+  int results(0xf);
   int FLAG = FLAG_FORCE_UNMASKED | FLAG_CHECK_ORDER;
   fOutputFilename = "XSCurveData";
-  vector<TH1*> test2 = scurveMaps("vcal", "xNoiseMap", fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, -1, results, 1, FLAG); 
+  vector<TH1*> test2 = scurveMaps("vcal", "xNoiseMap", fParNtrig, fParDacLo, fParDacHi, fParDacsPerStep, -1, results, 1, FLAG);
   vector<TH2D*> test3 = getXrayMaps();
   copy(test3.begin(), test3.end(), back_inserter(fHistList));
 
@@ -674,21 +674,21 @@ void PixTestHighRate::doXNoiseMaps() {
   finalCleanup();
 
   if (test2.size() < 1) {
-    LOG(logERROR) << "no scurve result histograms received?!"; 
+    LOG(logERROR) << "no scurve result histograms received?!";
     return;
 
   }
 
   vector<int> xHits(test3.size(),0);
-  string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
+  string hname(""), scurvesMeanString(""), scurvesRmsString("");
   for (unsigned int i = 0; i < test2.size(); ++i) {
     if (!test2[i]) continue;
     hname = test2[i]->GetName();
 
     // -- skip sig_ and thn_ histograms
     if (string::npos == hname.find("dist_thr_")) continue;
-    scurvesMeanString += Form("%6.2f ", test2[i]->GetMean()); 
-    scurvesRmsString += Form("%6.2f ", test2[i]->GetRMS()); 
+    scurvesMeanString += Form("%6.2f ", test2[i]->GetMean());
+    scurvesRmsString += Form("%6.2f ", test2[i]->GetRMS());
 
   }
 
@@ -716,8 +716,8 @@ void PixTestHighRate::doXNoiseMaps() {
     xRayRateString += Form(" %.1f", xHits[i]/static_cast<double>(numTrigs)/25./sensorArea*1000.);
   }
 
-  LOG(logINFO) << "vcal mean: " << scurvesMeanString; 
-  LOG(logINFO) << "vcal RMS:  " << scurvesRmsString; 
+  LOG(logINFO) << "vcal mean: " << scurvesMeanString;
+  LOG(logINFO) << "vcal RMS:  " << scurvesRmsString;
   LOG(logINFO) << "number of X-ray hits detected:   " << xHitsString;
   LOG(logINFO) << "number of triggers sent (total per ROC): " << numTrigsString;
   LOG(logINFO) << "X-ray hit rate [MHz/cm2]: " <<  xRayRateString;
@@ -839,11 +839,11 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
   TStopwatch t;
   uint8_t perFull;
   fDaq_loop = true;
-  int seconds(0); 
+  int seconds(0);
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
-      seconds = t.RealTime(); 
+      seconds = t.RealTime();
       LOG(logINFO) << "run duration " << seconds << " seconds, buffer almost full ("
 		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
@@ -853,7 +853,7 @@ void PixTestHighRate::doHitMap(int nseconds, vector<TH2D*> h) {
       fApi->daqTriggerLoop(finalPeriod);
     }
 
-    seconds = t.RealTime(); 
+    seconds = t.RealTime();
     t.Start(kFALSE);
     if (static_cast<int>(seconds) >= nseconds)	{
       LOG(logINFO) << "data taking finished, elapsed time: " << seconds << " seconds.";
@@ -903,9 +903,9 @@ void PixTestHighRate::doRunMaskHotPixels() {
 
   if (fParSaveMaskedPixels) {
     if (fParMaskFileName == "default") {
-      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels); 
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels);
     } else {
-      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName); 
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName);
     }
   }
 
@@ -920,7 +920,7 @@ void PixTestHighRate::doRunMaskHotPixels() {
 // ----------------------------------------------------------------------
 void PixTestHighRate::doRunTrimHotPixels() {
   PixTest::update();
-  trimHotPixels(fParTrimHotPixelThr, fParRunSecondsHotPixels, fParMaskUntrimmable);  
+  trimHotPixels(fParTrimHotPixelThr, fParRunSecondsHotPixels, fParMaskUntrimmable);
   if (fParSaveTrimbits) {
     // enable all pixels, otherwise saveTrimBits() saves empty files
     fApi->_dut->testAllPixels(true);
@@ -928,9 +928,9 @@ void PixTestHighRate::doRunTrimHotPixels() {
   }
   if (fParMaskUntrimmable) {
     if (fParMaskFileName == "default") {
-      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels); 
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels);
     } else {
-      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName); 
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName);
     }
   }
   PixTest::update();
@@ -939,7 +939,7 @@ void PixTestHighRate::doRunTrimHotPixels() {
 
 // ----------------------------------------------------------------------
 void PixTestHighRate::doStop(){
-	// Interrupt the test
-	fDaq_loop = false;
-	LOG(logINFO) << "Stop pressed. Ending test.";
+  // Interrupt the test
+  fDaq_loop = false;
+  LOG(logINFO) << "Stop pressed. Ending test.";
 }

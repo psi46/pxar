@@ -178,6 +178,8 @@ class Keyword{
     bool match(const char * s1 ,const char * s2, int &, int &, int& );
 
     bool match(const char * s, string & s1, vector<string> & options, ostream & err);
+    bool match(const char * s, string & s1, vector<string> & options, int & value,  ostream & err);
+    
     bool match(const char *, int &);
     bool match(const char *, int &, int &);
     bool match(const char *, int &, int &, int &);
@@ -314,6 +316,18 @@ class DRecord{
     }
 };
 
+
+struct TBMDelays{
+    uint8_t register_0[ 4 ];
+    uint8_t register_e[ 4 ];
+    uint8_t register_a[ 4 ];
+    int d400, d160;
+    int htdelay[4],tokendelay[4];
+    int rocdelay[8];
+};
+
+
+
 class CmdProc {
 
  
@@ -347,10 +361,12 @@ class CmdProc {
   static const unsigned int fnDAC_names;
   static const char * const fDAC_names[];
   static int fGetBufMethod;
+  static int fNtrigTimingTest;
   
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
+  unsigned int fMaxPeriod;
   vector<uint16_t>  fBuf;
   unsigned int fNumberOfEvents;
   unsigned int fHeaderCount;
@@ -379,25 +395,54 @@ class CmdProc {
    unsigned int fDeser400XORChanges[nDaqChannelMax];
    unsigned int fRocReadBackErrors[nDaqChannelMax];
    unsigned int fNTBMHeader[nDaqChannelMax];
+   unsigned int fDaqErrorCount[nDaqChannelMax]; //  any kind of error
    // new with fw4.6
    unsigned int fDeser400_frame_error[nDaqChannelMax];
    unsigned int fDeser400_code_error[nDaqChannelMax];
    unsigned int fDeser400_idle_error[nDaqChannelMax];
    unsigned int fDeser400_trailer_error[nDaqChannelMax];
    
+   // read out counting for "countGood(...)", not reset by resetDaqStatus
+   unsigned int fGoodLoops[nDaqChannelMax];
+   
+   void clear_DaqChannelCounter( unsigned int f[]){ 
+        for(size_t i=0; i<nDaqChannelMax; i++){ f[i]=0;}
+    }
+  
    uint16_t fRocHeaderData[17];
    
    // readout configuration
-   bool layer1(){return false;};
+   bool layer1(){ if (fApi->_dut->getNEnabledTbms() == 4 ) {return true;} else {return false;}};
    bool tbm08(){ return fApi->_dut->getTbmType()=="tbm08c"; };
    bool tbmWithDummyHits(){ return !tbm08(); }
    unsigned int fnDaqChannel;// filled in setApi
    unsigned int fnRocPerChannel;// filled in setApi
+   unsigned int fnTbmCore; // =   fApi->_dut->getNTbms();
+   unsigned int fnTbmPort; // = 2*fnTbmCore;
    vector<unsigned int> fDaqChannelRocIdOffset;  // filled in setApi
    int rocIdFromReadoutPosition(unsigned int daqChannel, unsigned int roc){
        return fDaqChannelRocIdOffset[daqChannel]+roc;
    }
-  
+   int rocIdFromReadoutPositionRaw( unsigned int position){
+	   // needed for daqGetRawEventBuffer()
+	   uint8_t daqChannel = position / fnRocPerChannel;
+	   return fDaqChannelRocIdOffset[daqChannel] + (position % fnRocPerChannel);
+   }
+   int daqChannelFromTbmPort( unsigned int port){
+       if (tbm08()){ return port/2 ; }
+       else{ return port; }
+   }
+
+   /* TBM core selection masks for settbm */
+  #define ALLTBMS 0xf
+  #define TBMA    0x5
+  #define TBMB    0xa
+  #define TBM0    0x3
+  #define TBM1    0xc
+  #define TBM0A   0x1
+  #define TBM0B   0x2
+  #define TBM1A   0x4
+  #define TBM1B   0x8
   
   
   bool fIgnoreReadbackErrors;
@@ -413,10 +458,15 @@ class CmdProc {
   int tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
+  TBMDelays tbmgetDelays();
   int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
   int test_timing(int nloop, int d160, int d400, int rocdelay=-1, int htdelay=0, int tokdelay=0);
+  bool set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], bool reset=true);
+  
+  int test_timing2(int nloop, int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], int daqchannel=-1);
+  int post_timing();
+  
   int find_timing(int npass=0);
-  int find_timing2();
   bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
   bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
 
@@ -444,6 +494,7 @@ class CmdProc {
   int runDaqRandom(vector<uint16_t> & buf, vector<DRecord> & data, int ntrig, int ftrigkhz, int verbosity=0);
   int maskHotPixels(int ntrig, int ftrigkHz, int multiplier=2, float percentile=0.9);
 
+  int drainBuffer(bool tellme=true);
   int daqStatus();
   int resetDaqStatus();
   int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
@@ -454,7 +505,7 @@ class CmdProc {
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
   
-  int bursttest(int ntrig, int trigsep=6, int nburst=1);
+  int bursttest(int ntrig, int trigsep=6, int nburst=1, int nloop=1);
   int adctest(const string s);
   int tbmread(uint8_t regId);
   string tbmprint(uint8_t regId);
@@ -466,12 +517,13 @@ class CmdProc {
   int pg_stop();
 
   int tb(Keyword);
-  int tbm(Keyword, int cores=2);
+  int tbm(Keyword, int cores=ALLTBMS);
   int roc(Keyword, int rocid);
   
   void stop(bool force=true);
   bool stopped();
 
+  char wait_for_key_pressed(){char ch; cout << "Press enter: "; cin  >> ch; return ch; }
   
 };
 

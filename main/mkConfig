@@ -41,7 +41,7 @@ if (!-d "$dir") {
 # -- recreate testParameters.dat file
 if ($opt_s) {
     &printTestParameters;
-    exit(0); 
+    exit(0);
 }
 
 
@@ -54,9 +54,9 @@ if ($opt_m) {
 }
 
 # -- do not turn on HV when running a baremodule test
-my $hvon = 1; 
+my $hvon = 1;
 if ($opt_b) {
-    $hvon = 0; 
+    $hvon = 0;
 }
 
 
@@ -152,7 +152,7 @@ exit(0);
 # ----------------------------------------------------------------------
 sub setTbms {
     $tbms = "";
-    $oldStyle = 0; 
+    $oldStyle = 0;
     if ($tbmtype eq "TBM08C") {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
@@ -383,7 +383,7 @@ sub cleanFiles {
 	}
 	return;
     }
-    
+
     my $file;
     for ($i = 0; $i < 16; $i++) {
 	$file = "$dir/trimParameters_C$i.dat";
@@ -441,7 +441,7 @@ sub cleanFiles {
 # ----------------------------------------------------------------------
 sub printConfigParameters {
     my $file = "$dir/configParameters.dat";
-    my $VD = "2.600"; 
+    my $VD = "2.600";
     open(FH, ">$file") || die "cannot open $file\n";
     print FH <<"EOF";
 testboardName *
@@ -518,6 +518,9 @@ if ($opt_m) {
 }
     print FH <<"EOF";
 
+guiX 0
+guiY 0
+
 probeA1 sdata1
 probeA2 sdata2
 probeD1 clk
@@ -561,6 +564,9 @@ SaveDacs            button
 -- PixelAlive
 Ntrig               10
 Vcal                200
+MaskDeadPixels      checkbox(0)
+SaveMaskFile        checkbox(0)
+maskFileName        default
 aliveTest           button
 maskTest            button
 addressDecodingTest button
@@ -585,6 +591,13 @@ DAC2                vthrcomp
 DAC2LO              0
 DAC2HI              255
 PIX                 11,20
+
+-- Ph
+Ntrig               10
+DAC                 vcal
+DACval              200
+PIX                 11,20
+phMap               button
 
 -- BB
 dumpAll             checkbox(0)
@@ -756,13 +769,13 @@ rocdelayscan        button
 timingtest          button
 saveparameters      button
 EOF
-} 
+}
 
 
 close(FH);
 
 
-    
+
     my $file2 = "$dir/moreTestParameters.dat";
     open(FH, ">$file2") || die "cannot open $file2\n";
     print FH <<"EOF";
