@@ -41,8 +41,8 @@ namespace pxar {
     logDEBUG,
     logDEBUGAPI,
     logDEBUGHAL,
-    logDEBUGRPC,
     logDEBUGPIPES,
+    logDEBUGRPC,
     logINTERFACE
   };
 
@@ -142,7 +142,7 @@ namespace pxar {
 
   template <typename T>
     std::string pxarLog<T>::ToString(TLogLevel level) {
-    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGRPC", "DEBUGPIPES", "INTERFACE"};
+    static const char* const buffer[] = {"QUIET","CRITICAL","ERROR", "WARNING", "INFO", "DEBUG", "DEBUGAPI", "DEBUGHAL", "DEBUGPIPES", "DEBUGRPC", "INTERFACE"};
     return buffer[level];
   }
 
