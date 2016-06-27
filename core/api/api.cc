@@ -2433,12 +2433,12 @@ uint16_t pxarCore::GetADC( uint8_t rpc_par1 ){
 
 void pxarCore::setReportingLevel(std::string logLevel)
 {
-  LOG(logINFO) << "Change Reporting Level from " << Log::ReportingLevel() << " to " << logLevel;
   Log::ReportingLevel() = Log::FromString(logLevel);
+  LOG(logQUIET) << "Changed Reporting Level from " << Log::ToString(Log::ReportingLevel()) << " to " << logLevel;
 }
 
 std::string pxarCore::getReportingLevel()
 {
-  LOG(logINFO) << "Reporting Level is " << Log::ReportingLevel();
+  LOG(logQUIET) << "Reporting Level is " << Log::ReportingLevel();
   return Log::ToString(Log::ReportingLevel());
 }
