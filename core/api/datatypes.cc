@@ -143,27 +143,158 @@ namespace pxar {
     return (raw & 0x00ffffff);
   }
 
+  /** Overloaded ostream operator for simple printing of Event data
+   */
+  std::ostream & operator<<(std::ostream &out, Event& evt) {
+    // FIXME fix printout of multiple headers/trailers
+    out << "====== " << std::hex << listVector(evt.getHeaders(),true) << std::dec << " ====== ";
+    for (std::vector<pixel>::iterator it = evt.pixels.begin(); it != evt.pixels.end(); ++it)
+      out << (*it) << " ";
+    out << "====== " << std::hex << listVector(evt.getTrailers(),true) << std::dec << " ====== ";
+    return out;
+  }
+
+  std::vector<uint8_t> Event::triggerCounts() {
+    std::vector<uint8_t> counts;
+    for(size_t i = 0; i < this->header.size(); i++) {
+      counts.push_back(this->triggerCount(i));
+    }
+    return counts;
+  }
+  
+  std::vector<uint8_t> Event::dataIDs() {
+    std::vector<uint8_t> counts;
+    for(size_t i = 0; i < this->header.size(); i++) {
+      counts.push_back(this->dataID(i));
+    }
+    return counts;
+  }
+
+  std::vector<uint8_t> Event::dataValues() {
+    std::vector<uint8_t> counts;
+    for(size_t i = 0; i < this->header.size(); i++) {
+      counts.push_back(this->dataValue(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveTokenPass() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasTokenPass(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveNoTokenPass() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasNoTokenPass(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveResetTBM() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasResetTBM(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveResetROC() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasResetROC(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveSyncError() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasSyncError(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveSyncTrigger() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasSyncTrigger(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveClearTriggerCount() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasClearTriggerCount(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveCalTrigger() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasCalTrigger(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::stacksFull() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->stackFull(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::haveAutoReset() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasAutoReset(i));
+    }
+    return counts;
+  }
+
+  std::vector<bool> Event::havePkamReset() {
+    std::vector<bool> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->hasPkamReset(i));
+    }
+    return counts;
+  }
+
+  std::vector<uint8_t> Event::stackCounts() {
+    std::vector<uint8_t> counts;
+    for(size_t i = 0; i < this->trailer.size(); i++) {
+      counts.push_back(this->stackCount(i));
+    }
+    return counts;
+  }
+  
   void Event::printHeader() {
-    LOG(logINFO) << "Header content: 0x" << std::hex << header << std::dec;
-    LOG(logINFO) << "\t Event ID \t" << static_cast<int>(this->triggerCount());
-    LOG(logINFO) << "\t Data ID " << static_cast<int>(this->dataID()) 
-		       << " Value " << static_cast<int>(this->dataValue());
+    LOG(logINFO) << "Header contents: \t" << listVector(getHeaders(),true,false,true);
+    LOG(logINFO) << "\t Event ID \t" << listVector(this->triggerCounts(),false,false,true);
+    LOG(logINFO) << "\t Data ID \t" << listVector(this->dataIDs(),false,false,true);
+    LOG(logINFO) << "\t      Values \t" << listVector(this->dataValues(),false,false,true);
   }
 
   void Event::printTrailer() {
-    LOG(logINFO) << "Trailer content: 0x" << std::hex << trailer << std::dec;
-    LOG(logINFO) << "\t Token Pass \t" << textBool(this->hasTokenPass());
-    LOG(logINFO) << "\t Reset TBM \t" << textBool(this->hasResetTBM());
-    LOG(logINFO) << "\t Reset ROC \t" << textBool(this->hasResetROC());
-    LOG(logINFO) << "\t Sync Err \t" << textBool(this->hasSyncError());
-    LOG(logINFO) << "\t Sync Trigger \t" << textBool(this->hasSyncTrigger());
-    LOG(logINFO) << "\t ClearTrig Cnt \t" << textBool(this->hasClearTriggerCount());
-    LOG(logINFO) << "\t Cal Trigger \t" << textBool(this->hasCalTrigger());
-    LOG(logINFO) << "\t Stack Full \t" << textBool(this->stackFull());
+    LOG(logINFO) << "Trailer content: \t" << listVector(getTrailers(),true,false,true);
+    LOG(logINFO) << "\t Token Pass \t" << textBools(this->haveTokenPass(),true);
+    LOG(logINFO) << "\t Reset TBM \t" << textBools(this->haveResetTBM(),true);
+    LOG(logINFO) << "\t Reset ROC \t" << textBools(this->haveResetROC(),true);
+    LOG(logINFO) << "\t Sync Err \t" << textBools(this->haveSyncError(),true);
+    LOG(logINFO) << "\t Sync Trigger \t" << textBools(this->haveSyncTrigger(),true);
+    LOG(logINFO) << "\t ClearTrig Cnt \t" << textBools(this->haveClearTriggerCount(),true);
+    LOG(logINFO) << "\t Cal Trigger \t" << textBools(this->haveCalTrigger(),true);
+    LOG(logINFO) << "\t Stack Full \t" << textBools(this->stacksFull(),true);
 
-    LOG(logINFO) << "\t Auto Reset \t" << textBool(this->hasAutoReset());
-    LOG(logINFO) << "\t PKAM Reset \t" << textBool(this->hasPkamReset());
-    LOG(logINFO) << "\t Stack Count \t" << static_cast<int>(this->stackCount());
+    LOG(logINFO) << "\t Auto Reset \t" << textBools(this->haveAutoReset(),true);
+    LOG(logINFO) << "\t PKAM Reset \t" << textBools(this->havePkamReset(),true);
+    LOG(logINFO) << "\t Stack Count \t" << listVector(this->stackCounts(),false,false,true);
   }
 
   void statistics::dump() {

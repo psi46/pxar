@@ -200,7 +200,7 @@ namespace pxar {
     if((sample->data.at(0) & 0xe000) != 0xa000
        || (sample->data.at(1) & 0xe000) != 0x8000) { decodingStats.m_errors_tbm_header++; }
     // Store the two header words:
-    roc_Event.header = ((sample->data.at(0) & 0x00ff) << 8) + (sample->data.at(1) & 0x00ff);
+    roc_Event.addHeader(((sample->data.at(0) & 0x00ff) << 8) + (sample->data.at(1) & 0x00ff));
 
     LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
     IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
@@ -221,8 +221,8 @@ namespace pxar {
     // No Error flag is set by the DESER400, just decode the TBM header as usual:
     else {
       // Store the two trailer words:
-      roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
-	+ (sample->data.at(size-1) & 0x00ff);
+      roc_Event.addTrailer(((sample->data.at(size-2) & 0x00ff) << 8) 
+			   + (sample->data.at(size-1) & 0x00ff));
       
       LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
       IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
