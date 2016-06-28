@@ -1632,7 +1632,13 @@ Event hal::daqEvent() {
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
     }
   }
-  
+
+  // Check for the channels all reporting the same event number:
+  if(!equalElements(current_Event.triggerCounts())) {
+    LOG(logERROR) << "Channels report mismatching event numbers: " << listVector(current_Event.triggerCounts());
+    throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
+  }
+
   return current_Event;
 }
 
@@ -1673,7 +1679,15 @@ std::vector<Event> hal::daqAllEvents() {
       LOG(logDEBUGHAL) << "Drained all DAQ channels.";
       break;
     }
-    else { evt.push_back(current_Event); }
+    else {
+      // Check for the channels all reporting the same event number:
+      if(!equalElements(current_Event.triggerCounts())) {
+	LOG(logERROR) << "Channels report mismatching event numbers: " << listVector(current_Event.triggerCounts());
+	throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
+      }
+      // Store the event
+      evt.push_back(current_Event);
+    }
   }
   
   if(evt.empty()) throw DataNoEvent("No event available");
