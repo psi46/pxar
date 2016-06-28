@@ -7,6 +7,7 @@ from PyPxarCore import Pixel, PixelConfig, PyPxarCore, PyRegisterDictionary, PyP
 from functools import wraps # used in parameter verification decorator ("arity")
 import os # for file system cmds
 import sys
+import shlex
 
 # "arity": decorator used for parameter parsing/verification on each cmd function call
 # Usually, the cmd module only passes a single string ('line') with all parameters;
@@ -57,7 +58,6 @@ class PxarConfigFile:
     """ class that loads the old-style config files of psi46expert """
     def __init__(self, f):
         self.config = {}
-        import shlex
         thisf = open(f)
         try:
             for line in thisf:
@@ -87,7 +87,6 @@ class PxarParametersFile:
     """ class that loads the old-style parameters files of psi46expert """
     def __init__(self, f):
         self.config = {}
-        import shlex
         thisf = open(f)
         try:
             for line in thisf:
@@ -114,7 +113,6 @@ class PxarMaskFile:
     """ class that loads the mask files of pxarGUI """
     def __init__(self, f):
         self.config = list()
-        import shlex
         thisf = open(f)
         try:
             for line in thisf:
@@ -159,7 +157,6 @@ class PxarTrimFile:
     """ class that loads the old-style trim parameters files of psi46expert """
     def __init__(self, f, roc, masks):
         self.config = list()
-        import shlex
         thisf = open(f)
         try:
             for line in thisf:
@@ -270,8 +267,7 @@ def PxarStartup(directory, verbosity):
         print "WARNING: could not init DTB -- possible firmware mismatch."
         print "Please check if a new FW version is available"
         exit
-
-    api.initDUT(int(config.get("hubId",31)),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
+    api.initDUT(map(int, shlex.split(config.get("hubId",31))),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
 
     api.testAllPixels(True)
     print "Now enabled all pixels"
