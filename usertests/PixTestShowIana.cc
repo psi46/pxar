@@ -94,10 +94,10 @@ uint8_t PixTestShowIana::readRocADC(uint8_t adc)
         pxar::Event & e= *ie; 
 
         if ( ( n>=0 ) && (n<16) ){
-            value = (value << 1 ) + (e.header & 1);
+	    value = (value << 1 ) + (e.getHeader() & 1);
             n++;
         }
-        else if ( ((e.header & 2) >>1) == 1 ){
+        else if ( ((e.getHeader() & 2) >>1) == 1 ){
             n=0;
         }
     }
