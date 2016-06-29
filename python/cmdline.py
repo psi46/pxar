@@ -91,7 +91,7 @@ class PxarCoreCmd(cmd.Cmd):
 
     def plot_1d(self,data,name,dacname,min,max):
         if(not self.window):
-            print_data(self.fullOutput,data,(max-min)/len(data))
+            print_data(self.fullOutput,data,(max-min)/(len(data)-1))
             return
 
         # Prepare new numpy matrix:
@@ -110,8 +110,11 @@ class PxarCoreCmd(cmd.Cmd):
                 dac1 = min1 + (idac/((max2-min2)/step2+1))*step1
                 dac2 = min2 + (idac%((max2-min2)/step2+1))*step2
                 s = "DACs " + str(dac1) + ":" + str(dac2) + " - "
-                for px in dac:
-                    s += str(px)
+                if self.fullOutput:
+                    for px in dac:
+                        s += str(px)
+                else:
+                    s += str(len(dac)) + " pixels"
                 print s
             return
 
