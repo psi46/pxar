@@ -2,6 +2,7 @@
 #include <algorithm>    
 #include <iostream>
 #include <fstream>
+#include <numeric>
 
 #include <TH1.h>
 #include <TRandom.h>
@@ -50,7 +51,7 @@ bool PixTestDoubleColumn::setParameter(string parName, string sval) {
     if (fParameters[i].first == parName) {
       found = true; 
       if (!parName.compare("ntrig")) {
-	fParNtrig = atoi(sval.c_str()); 
+  fParNtrig = atoi(sval.c_str()); 
       }
       if (!parName.compare("min")) {
   fParTsMin = atoi(sval.c_str()); 
@@ -59,7 +60,7 @@ bool PixTestDoubleColumn::setParameter(string parName, string sval) {
   fParTsMax = atoi(sval.c_str()); 
       }
       if (!parName.compare("npix")) {
-	fParNpix = atoi(sval.c_str()); 
+  fParNpix = atoi(sval.c_str()); 
   if (fParNpix > 4) {
     fParNpix = 4;
   }
@@ -126,6 +127,50 @@ void PixTestDoubleColumn::resetDaq() {
 fParDaqDatRead = false;
 }
 
+std::vector< std::vector<int> > PixTestDoubleColumn::readPulseheights(int nEv) {
+
+  if (!fParDaqDatRead) {
+    try { 
+      fParDaqDat = fApi->daqGetEventBuffer(); 
+      fParDaqDatRead = true;
+    }
+    catch(pxar::DataNoEvent &) {}
+  }
+  
+  int nRocs = fApi->_dut->getNEnabledRocs();
+  std::vector<int> doubleColumnHitsRoc(52,0);
+  std::vector< std::vector<int> > doubleColumnHits(nRocs, doubleColumnHitsRoc);
+  std::vector< std::vector<int> > doubleColumnPH(nRocs, doubleColumnHitsRoc);
+
+  //for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
+  if (nEv < fParDaqDat.size()) {
+    pxar::Event it = fParDaqDat.at(nEv);
+    int idx(0); 
+    int meanPH = 0;
+    int doubleColumn = -1;
+    for (unsigned int ipix = 0; ipix < it.pixels.size(); ++ipix) {   
+      idx = getIdxFromId(it.pixels[ipix].roc());
+      doubleColumn = it.pixels[ipix].column() / 2;
+      if (it.pixels[ipix].value() > 0) {
+        doubleColumnHits[idx][doubleColumn]++;
+        doubleColumnPH[idx][doubleColumn] += it.pixels[ipix].value();
+      }
+    }
+  }
+
+  for (int idx=0;idx<nRocs;idx++) {
+    for (int doubleColumn=0;doubleColumn<26;doubleColumn++) {
+      if (doubleColumnHits[idx][doubleColumn] > 0) {
+        doubleColumnPH[idx][doubleColumn] /= doubleColumnHits[idx][doubleColumn];
+      } else {
+        doubleColumnPH[idx][doubleColumn] = 0;
+      }
+    }
+  }
+  //}
+  return doubleColumnPH;
+}
+
 std::vector< std::vector<int> > PixTestDoubleColumn::readData(int nEv) {
 
   if (!fParDaqDatRead) {
@@ -156,7 +201,7 @@ std::vector< std::vector<int> > PixTestDoubleColumn::readData(int nEv) {
 }
 
 
-void PixTestDoubleColumn::testBuffers(std::vector<TH2D*> hX, int tsMin, int tsMax) {
+void PixTestDoubleColumn::testBuffers(std::vector<TH2D*> hX, std::vector<TH2D*> hXPH, int tsMin, int tsMax) {
   int nRocs = fApi->_dut->getNEnabledRocs();
 
   fApi->_dut->testAllPixels(false);
@@ -227,13 +272,17 @@ void PixTestDoubleColumn::testBuffers(std::vector<TH2D*> hX, int tsMin, int tsMa
     fApi->daqTrigger(1, period);
     fApi->daqStop();
     std::vector< std::vector<int> > doubleColumnHits;
+    std::vector< std::vector<int> > doubleColumnPH;
 
     // fill histograms
     int iEv=0;
     for (int nTestTimestamps=tsMin;nTestTimestamps<tsMax+1;nTestTimestamps++) {
       doubleColumnHits = readData(iEv);
+      doubleColumnPH = readPulseheights(iEv);
       for (int iRocIdx=0;iRocIdx<nRocs;iRocIdx++) {
         hX[iRocIdx]->Fill(iDcTest+0.1, nTestTimestamps+0.1, doubleColumnHits[iRocIdx][iDcTest]);
+        double PHsum = std::accumulate(doubleColumnPH[iRocIdx].begin(), doubleColumnPH[iRocIdx].end(), 0.0);
+        hXPH[iRocIdx]->Fill(iDcTest+0.1, nTestTimestamps+0.1, PHsum);
       }
       iEv++;
     }
@@ -271,13 +320,16 @@ void PixTestDoubleColumn::testData() {
   cacheDacs();
 
   std::vector<TH2D*> hX;
+  std::vector<TH2D*> hXPH;
 
   int nRocs = fApi->_dut->getNEnabledRocs();
 
   PixTest::update(); 
   for (int iRocIdx=0;iRocIdx<nRocs;iRocIdx++) {
     TH2D* rocHist  = bookTH2D(Form("npix%d_C%d", fParNpix, getIdFromIdx(iRocIdx)),  Form("npix%d_C%d", fParNpix, getIdFromIdx(iRocIdx)),  26, 0, 26.0, fParTsMax-fParTsMin+1, fParTsMin, fParTsMax+1);
-    hX.push_back(rocHist);
+    TH2D* rocHistPH  = bookTH2D(Form("npix%d_PH_C%d", fParNpix, getIdFromIdx(iRocIdx)),  Form("npix%d_PH_C%d", fParNpix, getIdFromIdx(iRocIdx)),  26, 0, 26.0, fParTsMax-fParTsMin+1, fParTsMin, fParTsMax+1);
+    hX.push_back(rocHist);    
+    hXPH.push_back(rocHistPH);
   }
 
   int ts=fParTsMin;
@@ -289,8 +341,13 @@ void PixTestDoubleColumn::testData() {
       tsTo = fParTsMax;
     }
     LOG(logINFO) << "testing FROM " << (int)ts << " TO " << (int)tsTo;
-    testBuffers(hX, ts, tsTo);
+    testBuffers(hX, hXPH, ts, tsTo);
     ts = tsTo+1;
+  }
+
+  for (int iRocIdx=0;iRocIdx<nRocs;iRocIdx++) {
+    fHistList.push_back(hXPH[iRocIdx]);
+    fHistOptions.insert( make_pair(hXPH[iRocIdx], "colz")  ); 
   }
 
   for (int iRocIdx=0;iRocIdx<nRocs;iRocIdx++) {

@@ -18,9 +18,10 @@ public:
   void runCommand(std::string); 
   void doTest();
   std::vector< std::vector<int> > readData(int) ;
+  std::vector< std::vector<int> > readPulseheights(int) ;
   void testData();
   void resetDaq();
-  void testBuffers(std::vector<TH2D*>, int, int);
+  void testBuffers(std::vector<TH2D*>, std::vector<TH2D*>, int, int);
   void findWorkingRows();
 private:
 
