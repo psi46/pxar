@@ -163,6 +163,8 @@ namespace pxar {
     void DecodeDeser160(rawEvent * sample);
     void DecodeDeser400(rawEvent * sample);
     void ProcessTBM(rawEvent * sample);
+    void ProcessTBMHeader(uint16_t h1, uint16_t h2);
+    void ProcessTBMTrailer(uint16_t t1, uint16_t t2);
     statistics decodingStats;
 
     // Readback decoding:
