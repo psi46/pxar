@@ -328,6 +328,9 @@ namespace pxar {
       }
     }
 
+    // FIXME: woohoo, this is soooo evil:
+    roc_Event.flipTrailers();
+    
     // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
   }

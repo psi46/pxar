@@ -308,6 +308,12 @@ namespace pxar {
     /** add new TBM Trailer
      */
     void addTrailer(uint16_t data) { trailer.push_back(data); };
+    // FIXME DOUBLE FIXME
+    // Paul: "Fieser Hack!"
+    void flipTrailers() {
+      trailer.push_back(trailer.front());
+      trailer.erase(trailer.begin(), trailer.begin() + 1);
+    }
 
     /** get TBM Trailer
      */
