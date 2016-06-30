@@ -276,8 +276,14 @@ namespace pxar {
 	if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),(*word)); }
       }
       // FIXME for linearized channels read from EUDAQ, check for interleaved TBM headers and trailers:
-      else if(((*word) & 0xe000) == 0xa000) { ProcessTBMHeader(*word,*(++word)); }
-      else if(((*word) & 0xe000) == 0xe000) { ProcessTBMTrailer(*word,*(++word)); }
+      else if(((*word) & 0xe000) == 0xa000) {
+	uint16_t tmp = *word;
+	ProcessTBMHeader(tmp,*(++word));
+      }
+      else if(((*word) & 0xe000) == 0xe000) {
+	uint16_t tmp = *word;
+	ProcessTBMTrailer(tmp,*(++word));
+      }
       // We have a pixel hit:
       else if(((*word) & 0xe000) <= 0x2000) {
 
