@@ -203,6 +203,11 @@ namespace pxar {
   class DLLEXPORT Event {
   public:
   Event() : pixels(), header(), trailer() {}
+  Event(const Event &evt) {
+    pixels = evt.pixels;
+    header = evt.header;
+    trailer = evt.trailer;
+  }
 
     /** Helper function to clear the event content
      */
@@ -218,7 +223,7 @@ namespace pxar {
      *  Event::dataValue()
      */
     uint8_t triggerPhase(uint8_t core = 0) { return dataValue(core); };
-    std::vector<uint8_t> triggerPhases();
+    std::vector<uint8_t> triggerPhases() { return dataValues(); };
     
     /** TBM Header Information: returns the Data ID bits
      */

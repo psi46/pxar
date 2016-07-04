@@ -161,7 +161,7 @@ namespace pxar {
     }
     return counts;
   }
-  
+
   std::vector<uint8_t> Event::dataIDs() {
     std::vector<uint8_t> counts;
     for(size_t i = 0; i < this->header.size(); i++) {
