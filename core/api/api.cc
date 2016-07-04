@@ -504,7 +504,7 @@ uint8_t pxarCore::stringToDeviceCode(std::string name) {
   uint8_t _code = _devices->getDevCode(name);
   LOG(logDEBUGAPI) << "Device type return: " << static_cast<int>(_code);
 
-  if(_code == 0x0) {LOG(logERROR) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
+  if(_code == 0x0) {LOG(logERROR) << "Unknown device: \"" << name << "\" could not be found in the dictionary!";}
   return _code;
 }
 
