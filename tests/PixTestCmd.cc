@@ -2159,9 +2159,8 @@ int CmdProc::tbmreadback() {
     // read some registers of the TBMs.
     for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
         // use the switch
-        fApi->selectTbmRDA(1 - i);
+        fApi->selectTbmRDA(i);
         int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
-        fApi->setHubID(hubid);
         cout << "TBM " << i << ", hubid: " << hubid;
         cout << "               core A      core B \n";
         cout << "Base + 1/0 " << tbmprint(0xe1, hubid) << "  " << tbmprint(0xf1, hubid) << "\n";

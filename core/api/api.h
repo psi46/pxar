@@ -429,7 +429,7 @@ namespace pxar {
 
     /** Select the RDA channel of the module for tbm readback
     */
-    void selectTbmRDA(uint8_t channel);
+    void selectTbmRDA(uint8_t tbmid);
 
     /** Manually set the HUB_address in the testboard
      */

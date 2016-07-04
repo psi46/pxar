@@ -796,12 +796,14 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
   return true;
 }
 
-void pxarCore::selectTbmRDA(uint8_t channel) {
-  if (channel < 2) {
-    _hal->tbmSelectRDA(channel);
+void pxarCore::selectTbmRDA(uint8_t tbmid) {
+  if (tbmid < 2) {
+    uint8_t hubid = _dut->getEnabledTbms().at(tbmid*2).hubid;
+    setHubID(hubid);
+    _hal->tbmSelectRDA(1 - tbmid); // FIXME: change mapping in firmware for better readability
   }
   else {
-    LOG(logERROR) << "We don't have a TBM at RDA channel " << int(channel);
+    LOG(logERROR) << "We don't have a TBM at RDA channel " << int(tbmid);
   }
 }
 
