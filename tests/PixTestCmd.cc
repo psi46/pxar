@@ -1322,7 +1322,7 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
     int p160_timed[8] = {0,1,2,3,4,5,6,7};
     sort_time(p160_timed, STEP160, RANGE160);
     out << "400\\160";
-    for(int i : p160_timed) {
+    for(uint8_t i = 0; i < sizeof(p160_timed); i++) {
         out << " " << i << " ";
     }
     out << "\n";
