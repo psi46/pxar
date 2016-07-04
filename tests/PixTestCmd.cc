@@ -2181,8 +2181,10 @@ string CmdProc::tbmprint(uint8_t regId, int hubid){
 int CmdProc::tbmreadback() {
     // read some registers of the TBMs.
     for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
-        // use the switch
-        fApi->selectTbmRDA(i);
+        // in order to read back TBM registers for layer 1 modules
+        // we have to use the analog switch of the module adapter
+        if (fnTbmCore > 2) fApi->selectTbmRDA(i);
+
         int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
         cout << "TBM " << i << ", hubid: " << hubid;
         cout << "               core A      core B \n";
