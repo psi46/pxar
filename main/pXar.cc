@@ -10,10 +10,10 @@
 #include <Windows4Root.h>
 #endif
 
-#include <TApplication.h> 
-#include <TFile.h> 
-#include <TROOT.h> 
-#include <TRint.h> 
+#include <TApplication.h>
+#include <TFile.h>
+#include <TROOT.h>
+#include <TRint.h>
 #include <TSystem.h>
 #include <TDatime.h>
 
@@ -32,23 +32,23 @@
 #include "helper.h"
 
 using namespace std;
-using namespace pxar; 
+using namespace pxar;
 
 void runGui(PixSetup &a, int argc = 0, char *argv[] = 0);
-void createBackup(string a, string b);  
+void createBackup(string a, string b);
 string exec(string cmd);
 
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[]){
-  
+
   LOG(logINFO) << "*** Welcome to pxar ***";
 
   // -- command line arguments
-  string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"), 
-    verbosity("INFO"), flashFile("nada"), runtest("fulltest"), trimVcal(""), testParameters("nada"); 
-  bool doRunGui(false), 
-    doRunScript(false), 
-    doRunSingleTest(false), 
+  string dir("."), cmdFile("nada"), rootfile("nada.root"), logfile("nada.log"),
+    verbosity("INFO"), flashFile("nada"), runtest("fulltest"), trimVcal(""), testParameters("nada");
+  bool doRunGui(false),
+    doRunScript(false),
+    doRunSingleTest(false),
     doUpdateFlash(false),
     doUpdateRootFile(false),
     doUseRootLogon(false)
@@ -70,24 +70,24 @@ int main(int argc, char *argv[]){
       cout << "-L logID              add additional <logID> to log output after the timestamp. ex: pxar -L TB1" << endl;
       return 0;
     }
-    if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;} 
-    if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }               
-    if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);} 
-    if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; } 
-    if (!strcmp(argv[i],"-p"))                                {testParameters  = string(argv[++i]); }               
-    if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }               
+    if (!strcmp(argv[i],"-c"))                                {cmdFile    = string(argv[++i]); doRunScript = true;}
+    if (!strcmp(argv[i],"-d") || !strcmp(argv[i], "--dir"))   {dir  = string(argv[++i]); }
+    if (!strcmp(argv[i],"-f"))                                {doUpdateFlash = true; flashFile = string(argv[++i]);}
+    if (!strcmp(argv[i],"-g"))                                {doRunGui   = true; }
+    if (!strcmp(argv[i],"-p"))                                {testParameters  = string(argv[++i]); }
+    if (!strcmp(argv[i],"-r"))                                {rootfile  = string(argv[++i]); }
     if (!strcmp(argv[i],"-t"))                                {doRunSingleTest = true; runtest  = string(argv[++i]); }
     if (!strcmp(argv[i],"-T") || !strcmp(argv[i], "--vcal"))  {trimVcal = string(argv[++i]); }
-    if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;} 
-    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }   
-    if (!strcmp(argv[i],"-L"))                                {Log::logName(string(argv[++i]));}             
+    if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;}
+    if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }
+    if (!strcmp(argv[i],"-L"))                                {Log::logName(string(argv[++i]));}
   }
 
-  struct stat buffer;   
+  struct stat buffer;
   if (stat("rootlogon.C", &buffer) == 0) {
     LOG(logINFO) << "reading rootlogon.C, will use gStyle settings from there";
     gROOT->Macro("rootlogon.C");
-    doUseRootLogon = true; 
+    doUseRootLogon = true;
   } else {
     LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
   }
@@ -96,24 +96,22 @@ int main(int argc, char *argv[]){
     TRint *interpreter = new TRint("pXar", 0, 0, 0, true);
     interpreter->ExecuteFile(cmdFile.c_str());
     interpreter->Terminate(0);
-    LOG(logINFO) << "terminate and shut down"; 
+    LOG(logINFO) << "terminate and shut down";
   }
-
 
   pxar::pxarCore *api(0);
   if (doUpdateFlash) {
     api = new pxar::pxarCore("*", verbosity);
-    struct stat buffer;   
+    struct stat buffer;
     if (stat(flashFile.c_str(), &buffer) == 0) {
-      
+
       api->flashTB(flashFile);
     } else {
       LOG(logINFO) << "error: File " << flashFile << " not found" << endl;
-    }	  
+    }
     delete api;
-    return 0; 
+    return 0;
   }
-
 
   ConfigParameters *configParameters = ConfigParameters::Singleton();
   configParameters->setDirectory(dir);
@@ -124,46 +122,46 @@ int main(int argc, char *argv[]){
   if (!rootfile.compare("nada.root")) {
     rootfile = configParameters->getDirectory() + "/" + configParameters->getRootFileName();
   } else {
-    configParameters->setRootFileName(rootfile); 
+    configParameters->setRootFileName(rootfile);
     rootfile  = configParameters->getDirectory() + "/" + rootfile;
   }
 
   if (trimVcal.compare("")) {
-    configParameters->setTrimVcalSuffix(trimVcal); 
+    configParameters->setTrimVcalSuffix(trimVcal);
   }
-  
-  logfile = rootfile; 
+
+  logfile = rootfile;
   PixUtil::replaceAll(logfile, ".root", ".log");
-  
+
   LOG(logINFO)<< "pxar: dumping results into " << rootfile << " logfile = " << logfile;
-  TFile *rfile(0); 
+  TFile *rfile(0);
   FILE* lfile;
   if (doUpdateRootFile) {
-    rfile = TFile::Open(rootfile.c_str(), "UPDATE"); 
+    rfile = TFile::Open(rootfile.c_str(), "UPDATE");
     lfile = fopen(logfile.c_str(), "a");
     SetLogOutput::Stream() = lfile;
     SetLogOutput::Duplicate() = true;
   } else {
-    createBackup(rootfile, logfile); 
-    rfile = TFile::Open(rootfile.c_str(), "RECREATE"); 
+    createBackup(rootfile, logfile);
+    rfile = TFile::Open(rootfile.c_str(), "RECREATE");
     lfile = fopen(logfile.c_str(), "a");
     SetLogOutput::Stream() = lfile;
     SetLogOutput::Duplicate() = true;
   }
 
   TDatime today;
-  string tstamp = Form("%d/%02d/%02d", today.GetYear(), today.GetMonth(), today.GetDay()); 
+  string tstamp = Form("%d/%02d/%02d", today.GetYear(), today.GetMonth(), today.GetDay());
 
   LOG(logINFO) << "*** Welcome to pxar ***";
   LOG(logINFO) << Form("*** Today: %s", tstamp.c_str());
   string version = exec("git describe --abbrev=4 --dirty --always --tags");
-  PixUtil::replaceAll(version, "\n", ""); 
+  PixUtil::replaceAll(version, "\n", "");
   LOG(logINFO) << "*** Version: " << version;
 
-  vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs(); 
-  vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs(); 
+  vector<vector<pair<string,uint8_t> > >       rocDACs = configParameters->getRocDacs();
+  vector<vector<pair<string,uint8_t> > >       tbmDACs = configParameters->getTbmDacs();
   vector<vector<pixelConfig> >                 rocPixels = configParameters->getRocPixelConfig();
-  vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays(); 
+  vector<pair<string,uint8_t> >                sig_delays = configParameters->getTbSigDelays();
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
   vector<pair<std::string, uint8_t> >          pg_setup = configParameters->getTbPgSettings();
   string tbname = "*";
@@ -172,22 +170,22 @@ int main(int argc, char *argv[]){
 
   try {
     api = new pxar::pxarCore(tbname, verbosity);
-    
+
     api->initTestboard(sig_delays, power_settings, pg_setup);
     if (configParameters->customI2cAddresses()) {
       string i2cstring("");
-      vector<uint8_t> i2cAddr = configParameters->getI2cAddresses(); 
-      for (unsigned int i = 0; i < i2cAddr.size(); ++i) i2cstring += Form(" %d", (int)i2cAddr[i]); 
-      LOG(logINFO) << "custom i2c addresses: " << i2cstring; 
+      vector<uint8_t> i2cAddr = configParameters->getI2cAddresses();
+      for (unsigned int i = 0; i < i2cAddr.size(); ++i) i2cstring += Form(" %d", (int)i2cAddr[i]);
+      LOG(logINFO) << "custom i2c addresses: " << i2cstring;
       api->initDUT(configParameters->getHubIds(),
-		   configParameters->getTbmType(), tbmDACs, 
-		   configParameters->getRocType(), rocDACs, 
-		   rocPixels, 
+		   configParameters->getTbmType(), tbmDACs,
+		   configParameters->getRocType(), rocDACs,
+		   rocPixels,
 		   i2cAddr);
     } else {
       api->initDUT(configParameters->getHubIds(),
-		   configParameters->getTbmType(), tbmDACs, 
-		   configParameters->getRocType(), rocDACs, 
+		   configParameters->getTbmType(), tbmDACs,
+		   configParameters->getRocType(), rocDACs,
 		   rocPixels);
     }
 
@@ -198,17 +196,17 @@ int main(int argc, char *argv[]){
     api->SignalProbe("d2", configParameters->getProbe("d2"));
 
     LOG(logINFO) << "DUT info: ";
-    api->_dut->info(); 
-  } 
+    api->_dut->info();
+  }
   catch (pxar::InvalidConfig &e){
     std::cout << "pxar caught an exception due to invalid configuration settings: " << e.what() << std::endl;
     delete api;
-    return -1;    
+    return -1;
   }
   catch (pxar::pxarException &e){
     std::cout << "pxar caught an internal exception: " << e.what() << std::endl;
     delete api;
-    return -1;    
+    return -1;
   }
   catch (...) {
     std::cout << "pxar caught an unknown exception. Exiting." << std::endl;
@@ -216,84 +214,85 @@ int main(int argc, char *argv[]){
     return -1;
   }
 
-  PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/" 
+  PixTestParameters *ptp = new PixTestParameters(configParameters->getDirectory() + "/"
 						 + configParameters->getTestParameterFileName()
-						 , true); 
-  PixSetup a(api, ptp, configParameters);  
-  a.setUseRootLogon(doUseRootLogon); 
+						 , true);
+  PixSetup a(api, ptp, configParameters);
+  a.setUseRootLogon(doUseRootLogon);
   a.setRootFileUpdate(doUpdateRootFile);
   LOG(logDEBUG) << "Initial Analog Current: " << api->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Initial Digital Current: " << api->getTBid()*1000 << "mA";
-  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Initial Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
+  if (configParameters->getHdiType() == "fpix") {
+    LOG(logDEBUG) << "Initial Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C";
+  }
 
   if (doRunGui) {
     runGui(a, argc, argv);
   } else if (doRunSingleTest) {
-    PixTestFactory *factory = PixTestFactory::instance(); 
-    PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
-    if (configParameters->getHvOn()) api->HVon(); 
+    PixTestFactory *factory = PixTestFactory::instance();
+    PixUserTestFactory *userfactory = PixUserTestFactory::instance();
+    if (configParameters->getHvOn()) api->HVon();
 
-    // -- search for subtest 
-    string::size_type m0 = runtest.find(":"); 
-    string subtest("nada"); 
+    // -- search for subtest
+    string::size_type m0 = runtest.find(":");
+    string subtest("nada");
     if (m0 != string::npos) {
-      subtest = runtest.substr(m0+1); 
-      runtest = runtest.substr(0, m0); 
+      subtest = runtest.substr(m0+1);
+      runtest = runtest.substr(0, m0);
     }
-    
+
     if (testParameters.compare("nada")) {
-      ptp->setTestParameters(runtest, testParameters); 
+      ptp->setTestParameters(runtest, testParameters);
     }
     PixTest *t = factory->createTest(runtest, &a);
     if (0 == t) t = userfactory->createTest(runtest, &a);
     if (t) {
       if (subtest.compare("nada")) {
-	t->runCommand(subtest); 
+	t->runCommand(subtest);
       } else {
 	t->doTest();
       }
-      delete t; 
+      delete t;
     }
   } else {
-    string input; 
+    string input;
     bool stop(false);
-    PixTestFactory *factory = PixTestFactory::instance(); 
-    PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
-    if (configParameters->getHvOn()) api->HVon(); 
+    PixTestFactory *factory = PixTestFactory::instance();
+    PixUserTestFactory *userfactory = PixUserTestFactory::instance();
+    if (configParameters->getHvOn()) api->HVon();
     LOG(logINFO) << "enter 'restricted' command line mode";
     do {
       LOG(logINFO) << "enter test to run";
-      cout << "pxar> "; 
+      cout << "pxar> ";
       string input;
       std::getline(cin, input);
       if (input.size() == 0) stop = true;
       string parameters("nada"), subtest("nada");
       // -- split input with space into testname(s) and parameters
-      string::size_type m1 = input.find(" "); 
+      string::size_type m1 = input.find(" ");
       if (m1 != string::npos) {
-	parameters = input.substr(m1+1); 
+	parameters = input.substr(m1+1);
 	input = input.substr(0, m1);
 	cout << "parameters: ->" << parameters << "<- input: ->" << input << "<-" << endl;
       }
       // -- find subtest
-      string::size_type m0 = input.find(":"); 
+      string::size_type m0 = input.find(":");
       if (m0 != string::npos) {
-	subtest = input.substr(m0+1); 
-	input = input.substr(0, m0); 
+	subtest = input.substr(m0+1);
+	input = input.substr(0, m0);
 	cout << "subtest: ->" << subtest << "<- input: ->" << input << "<-" << endl;
       }
 
-
       if (!parameters.compare("nada")) {
-	LOG(logINFO) << "  test: " << input << " no parameter change"; 
+	LOG(logINFO) << "  test: " << input << " no parameter change";
       } else {
-	LOG(logINFO) << "  test: " << input << " setting parameters: ->" << parameters << "<-"; 
-	ptp->setTestParameters(input, parameters); 
+	LOG(logINFO) << "  test: " << input << " setting parameters: ->" << parameters << "<-";
+	ptp->setTestParameters(input, parameters);
       }
 
       std::transform(subtest.begin(), subtest.end(), subtest.begin(), ::tolower);
       std::transform(input.begin(), input.end(), input.begin(), ::tolower);
-      
+
       if (!input.compare("savedacs")) {
 	a.writeDacParameterFiles();
 	continue;
@@ -306,42 +305,44 @@ int main(int argc, char *argv[]){
 	a.writeTbmParameterFiles();
 	continue;
       }
-  
-      if (!input.compare("gui"))  runGui(a, argc, argv); 
-      if (!input.compare("exit")) stop = true; 
-      if (!input.compare("quit")) stop = true; 
-      if (!input.compare("q")) stop = true; 
+
+      if (!input.compare("gui"))  runGui(a, argc, argv);
+      if (!input.compare("exit")) stop = true;
+      if (!input.compare("quit")) stop = true;
+      if (!input.compare("q")) stop = true;
 
       if (stop) break;
 
       if (!input.compare("delay")) {
-          int delaySeconds = atoi(parameters.c_str());
-          LOG(logINFO) << "delay test by " << delaySeconds << " seconds...";
-          pxar::mDelay(delaySeconds * 1000); // milliseconds
+	int delaySeconds = atoi(parameters.c_str());
+	LOG(logINFO) << "delay test by " << delaySeconds << " seconds...";
+	pxar::mDelay(delaySeconds * 1000); // milliseconds
       } else {
-        LOG(logINFO) << "  running: " << input; 
+        LOG(logINFO) << "  running: " << input;
         PixTest *t = factory->createTest(input, &a);
         if (0 == t) t = userfactory->createTest(input, &a);
         if (t) {
-        	if (subtest.compare("nada")) {
-        	  t->runCommand(subtest); 
-        	} else {
-        	  t->doTest();
-        	}
-  	     delete t;
+	  if (subtest.compare("nada")) {
+	    t->runCommand(subtest);
+	  } else {
+	    t->doTest();
+	  }
+	  delete t;
         } else {
-  	LOG(logINFO) << "command ->" << input << "<- not known, ignored";
+	  LOG(logINFO) << "command ->" << input << "<- not known, ignored";
         }
       }
     } while (!stop);
-    
+
 
   }
-  
+
   // -- clean exit (however, you should not get here when running with the GUI)
   LOG(logDEBUG) << "Final Analog Current: " << api->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Final Digital Current: " << api->getTBid()*1000 << "mA";
-  if (configParameters->getHdiType() == "fpix") { LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C"; }
+  if (configParameters->getHdiType() == "fpix") {
+    LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", a.getPixMonitor()->getTemp()) << " C";
+  }
   a.getPixMonitor()->dumpSummaries();
   rfile->Close();
   if (api) delete api;
@@ -378,25 +379,27 @@ void runGui(PixSetup &a, int argc, char *argv[]) {
 
 // ----------------------------------------------------------------------
 void createBackup(string rootfile, string logfile) {
-  
-  Long_t id, flags, modtime; 
-  Long64_t size; 
 
-  string nrootfile(rootfile), nlogfile(logfile); 
-  const char *path = rootfile.c_str(); 
+  Long_t id, flags, modtime;
+  Long64_t size;
+
+  string nrootfile(rootfile), nlogfile(logfile);
+  const char *path = rootfile.c_str();
   int result = gSystem->GetPathInfo(path, &id, &size, &flags, &modtime);
   if (1 == result) return;
 
   TDatime d(modtime);
-  string tstamp = Form("_%d%02d%02d_%02d%02d%02d", d.GetYear(), d.GetMonth(), d.GetDay(), d.GetHour(), d.GetMinute(), d.GetSecond()); 
+  string tstamp = Form("_%d%02d%02d_%02d%02d%02d",
+		       d.GetYear(), d.GetMonth(), d.GetDay(), d.GetHour(), d.GetMinute(), d.GetSecond());
   PixUtil::replaceAll(nrootfile, ".root", tstamp+".root");
   PixUtil::replaceAll(nlogfile, ".log", tstamp+".log");
 
-  LOG(logINFO) << "creating backup files for previous run: " << nrootfile << " and " << nlogfile; 
-  if (!gSystem->AccessPathName(rootfile.c_str())) gSystem->Rename(rootfile.c_str(), nrootfile.c_str()); 
-  if (!gSystem->AccessPathName(logfile.c_str())) gSystem->Rename(logfile.c_str(), nlogfile.c_str()); 
-  
+  LOG(logINFO) << "creating backup files for previous run: " << nrootfile << " and " << nlogfile;
+  if (!gSystem->AccessPathName(rootfile.c_str())) gSystem->Rename(rootfile.c_str(), nrootfile.c_str());
+  if (!gSystem->AccessPathName(logfile.c_str())) gSystem->Rename(logfile.c_str(), nlogfile.c_str());
+
 }
+
 
 // ----------------------------------------------------------------------
 string exec(string cmd) {
@@ -414,7 +417,7 @@ string exec(string cmd) {
   }
 #if (defined WIN32)
   _pclose(pipe);
-#else 
+#else
   pclose(pipe);
 #endif
   return result;

@@ -316,6 +316,18 @@ class DRecord{
     }
 };
 
+
+struct TBMDelays{
+    uint8_t register_0[ 4 ];
+    uint8_t register_e[ 4 ];
+    uint8_t register_a[ 4 ];
+    int d400, d160;
+    int htdelay[4],tokendelay[4];
+    int rocdelay[8];
+};
+
+
+
 class CmdProc {
 
  
@@ -349,6 +361,7 @@ class CmdProc {
   static const unsigned int fnDAC_names;
   static const char * const fDAC_names[];
   static int fGetBufMethod;
+  static int fNtrigTimingTest;
   
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
@@ -445,6 +458,7 @@ class CmdProc {
   int tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
   int tbmget(string name, const uint8_t core, uint8_t & value);
+  TBMDelays tbmgetDelays();
   int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
   int test_timing(int nloop, int d160, int d400, int rocdelay=-1, int htdelay=0, int tokdelay=0);
   bool set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], bool reset=true);
@@ -496,7 +510,7 @@ class CmdProc {
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
   
-  int bursttest(int ntrig, int trigsep=6, int nburst=1);
+  int bursttest(int ntrig, int trigsep=6, int nburst=1, int nloop=1);
   int adctest(const string s);
   int tbmread(uint8_t regId, int hubid);
   string tbmprint(uint8_t regId, int hubid);

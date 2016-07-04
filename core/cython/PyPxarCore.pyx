@@ -660,6 +660,12 @@ cdef class PyPxarCore:
         s.c_clone(r)
         return s
 
+    def setReportingLevel(self, string logLevel):
+        self.thisptr.setReportingLevel(logLevel)
+
+    def getReportingLevel(self):
+        return self.thisptr.getReportingLevel()
+
 cimport regdict
 cdef class PyRegisterDictionary:
     cdef regdict.RegisterDictionary *thisptr      # hold a C++ instance which we're wrapping

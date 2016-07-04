@@ -8,22 +8,24 @@ public:
   PixTestAlive(PixSetup *, std::string);
   PixTestAlive();
   virtual ~PixTestAlive();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
   void setToolTips();
-  void bookHist(std::string); 
+  void bookHist(std::string);
 
-  void runCommand(std::string); 
+  void runCommand(std::string);
   void aliveTest();
   void maskTest();
   void addressDecodingTest();
 
-  void doTest(); 
+  void doTest();
 
 private:
 
-  uint16_t fParNtrig; 
-  int      fParVcal; 
+  uint16_t    fParNtrig;
+  int         fParVcal;
+  bool        fParMaskDeadPixels, fParSaveMaskedPixels;
+  std::string fParMaskFileName;
 
   ClassDef(PixTestAlive, 1)
 
