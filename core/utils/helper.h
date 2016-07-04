@@ -178,7 +178,7 @@ namespace pxar {
   template <typename T>
     bool equalElements(std::vector<T> vec) {
     // Empty vectors cannot be tested:
-    if(vec.empty()) return false;
+    if(vec.empty()) return true;
     
     T first = vec.front();
     for(typename std::vector<T>::iterator it = vec.begin(); it != vec.end(); ++it) {
