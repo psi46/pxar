@@ -1021,7 +1021,7 @@ void CmdProc::setApi(pxar::pxarCore * api, PixSetup * setup){
     if(layer1()){
         fnRocPerChannel=2;
         fnDaqChannel=8;
-        fDaqChannelRocIdOffset[0]= 4; 
+        fDaqChannelRocIdOffset[0]= 4;
         fDaqChannelRocIdOffset[1]= 6;
         fDaqChannelRocIdOffset[2]= 8;
         fDaqChannelRocIdOffset[3]= 10;
