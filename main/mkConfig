@@ -20,7 +20,7 @@ getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin");
-my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM09", "TBM09C");
+my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM09", "TBM09C", "TBM10C");
 
 if ($opt_h) {
     &printHelp;
@@ -44,14 +44,6 @@ if ($opt_s) {
     exit(0);
 }
 
-
-# -- number of rocs and tbms
-my $nrocs = 1;
-my $ntbms = 0;
-if ($opt_m) {
-    $nrocs = 16;
-    $ntbms = 1;
-}
 
 # -- do not turn on HV when running a baremodule test
 my $hvon = 1;
@@ -87,6 +79,19 @@ if ($opt_t) {
 	print "TBM type $opt_t not known, resetting to $tbmtype (known TBM types: ", join(", " , @tbmok), ")\n";
     }
 }
+
+
+# -- number of rocs and tbms
+my $nrocs = 1;
+my $ntbms = 0;
+if ($opt_m) {
+    $nrocs = 16;
+    $ntbms = 1;
+    if ($tbmtype eq "TBM10C") {
+        $ntbms = 2;
+    }
+}
+
 
 # -- create all config files
 print "dumping ";
@@ -284,6 +289,28 @@ sub setTbms {
 	    $tbms .= "basec   0x00\n";
 	    $tbms .= "basee   0x34\n";
 	}
+    } elsif ($tbmtype eq "TBM10C") {
+    if ($oldStyle == 1) {
+        $tbms .= "0       clear   0xF0\n";
+        $tbms .= "1    counters   0x81\n";
+        $tbms .= "2        mode   0xC0\n";
+        $tbms .= "3    pkam_set   0x10\n";
+        $tbms .= "4      delays   0xe4\n";
+        $tbms .= "5       basee   0x08\n";
+        $tbms .= "6 temperature   0x00\n";
+        $tbms .= "7      nrocs1   0x02\n";
+        $tbms .= "8      nrocs2   0x02\n";
+    } else {
+        $tbms .= "base0   0x81\n";
+        $tbms .= "base2   0xC0\n";
+        $tbms .= "base4   0xF0\n";
+        $tbms .= "base8   0x10\n";
+        $tbms .= "basea   0xe4\n";
+        $tbms .= "basec   0x00\n";
+        $tbms .= "basee   0x08\n";
+        $tbms .= "nrocs1  0x02\n";
+        $tbms .= "nrocs2  0x02\n";
+    }
     }
 }
 
@@ -467,8 +494,12 @@ nRocs $nrocs
 nTbms $ntbms
 EOF
     if ($opt_m) {
-	print FH "hubId 31\n";
-	print FH "tbmEnable 1\n";
+        if ($tbmtype eq "TBM10C") {
+        print FH "hubId 31, 30\n";
+        } else {
+        print FH "hubId 31\n";
+	    }
+    print FH "tbmEnable 1\n";
     } else {
 	print FH "hubId 0\n";
 	print FH "tbmEnable 0\n";
@@ -507,7 +538,11 @@ if ($opt_m) {
     } elsif ($tbmtype eq "TBM09C") {
 	$VD = "2.900";
 	print FH "tbmType tbm09c\n";
-    } else {
+    } elsif ($tbmtype eq "TBM10C") {
+    $VD = "2.900";
+    print FH "tbmType tbm10c\n";
+    }
+    else {
 	print FH "tbmType tbm08\n";
     }
     if ($opt_f) {
@@ -887,10 +922,11 @@ sub printRbCal {
 
 # ----------------------------------------------------------------------
 sub printTbmParameters {
+    $tbmsa = $tbms;
     for ($itbm = 0; $itbm < $ntbms; $itbm++) {
 	my $file = "$dir/tbmParameters_C${itbm}a.dat";
 	open(FH, ">$file") || die "cannot open $file\n";
-	print FH $tbms;
+	print FH $tbmsa;
 	close(FH);
 
 	my $file = "$dir/tbmParameters_C${itbm}b.dat";
