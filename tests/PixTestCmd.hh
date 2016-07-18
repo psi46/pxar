@@ -427,8 +427,9 @@ class CmdProc {
    }
    int rocIdFromReadoutPositionRaw( unsigned int position){
 	   // needed for daqGetRawEventBuffer()
-	   uint8_t daqChannel = position / fnRocPerChannel;
-	   return fDaqChannelRocIdOffset[daqChannel] + (position % fnRocPerChannel);
+//	   uint8_t daqChannel = position / fnRocPerChannel;
+	   return position; //fDaqChannelRocIdOffset[daqChannel] + (position % fnRocPerChannel);
+       // channels are now sorted in pxar core
    }
    int daqChannelFromTbmPort( unsigned int port){
        if (tbm08()){ return port/2 ; }
