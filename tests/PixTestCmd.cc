@@ -1950,10 +1950,10 @@ int CmdProc::setTestboardDelay(string name, uint8_t value){
 
 
 
-int CmdProc::bursttest(int ntrig, int trigsep, int nburst, int loop){
+int CmdProc::bursttest(int ntrig, int trigsep, int nburst, int caltrig, int loop){
         int stat = 0;
         while( ! ( (loop==0) || (stopped()) ) ) {
-            burst(fBuf, ntrig, trigsep, nburst);
+            burst(fBuf, ntrig, trigsep, nburst, caltrig);
         
             vector<DRecord > data;
             stat = getData(fBuf, data, 0);
@@ -2952,7 +2952,7 @@ int CmdProc::maskHotPixels(int ntrig, int ftrigkHz, int multiplier, float percen
     return 0;
 }
 
-int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, int verbosity){
+int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, int caltrig, int verbosity){
     /* run ntrig sequences and get the raw data from the DTB */
     
     // warn user when no data expected
@@ -2966,12 +2966,26 @@ int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, i
     vector< pair<string, uint8_t> > pgsetup;
     pgsetup.push_back( make_pair("sync", 10) );
     pgsetup.push_back( make_pair("resr", fTRC) );
-    pgsetup.push_back( make_pair("cal",  fTCT ));
+    if(caltrig>0){
+        if ( (fTCT-trigsep*caltrig)>1){
+            pgsetup.push_back( make_pair("cal",  fTCT-trigsep*caltrig ));
+        }else{
+            out << "warning, illegal timing for calinject requested\n";
+            out << "TCT =  " << fTCT << "\n";
+            out << "trigsep * caltrig =  " << trigsep << " * " << caltrig << " = " << trigsep*caltrig << "\n";
+        }
+    }else{
+        pgsetup.push_back( make_pair("cal",  fTCT ));
+    }
     for(int i=0; i<ntrig; i++){
         pgsetup.push_back( make_pair("trg",  trigsep-1 ));
     }
-    pgsetup.push_back( make_pair("token", 0));
 
+    if(fApi->_dut->getNTbms()==0){
+        pgsetup.push_back( make_pair("token", 0));
+    }else{
+        pgsetup.push_back( make_pair("none",0) );
+    }
     fPeriod = fMaxPeriod;
  
     fApi->setPatternGenerator(pgsetup);
@@ -4210,12 +4224,12 @@ int CmdProc::tb(Keyword kw){
     }
     
     
-    int trigsep, nburst;
+    int trigsep, nburst,caltrig=0;
     if( kw.match("burst", ntrig, trigsep, nburst) ){ return bursttest(ntrig, trigsep, nburst);}
     if( kw.match("burst", ntrig, trigsep) ){ return bursttest(ntrig, trigsep);}
     if( kw.match("burst",ntrig) ){ return bursttest(ntrig);}
-
-    if( kw.match("bust",ntrig) ){ return bursttest(ntrig,10,1,-1);}
+    if( kw.match("burstcal",ntrig,trigsep,caltrig) ){ return bursttest(ntrig,trigsep,1,caltrig);}
+    // bursttest ntrig trigsep nburst caltrig loop
 
     
     if( kw.greedy_match("pgset",step, pattern, delay, comment)){

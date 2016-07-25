@@ -507,7 +507,7 @@ class CmdProc {
   int drainBuffer(bool tellme=true);
   int daqStatus();
   int resetDaqStatus();
-  int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
+  int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int caltrig=0, int nburst=1, int verbosity=0);
   int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1, bool resetStats=true);
   int pixDecodeRaw(int, int level=1);
   int pixDecodeRaw(int raw, uint8_t & col, uint8_t & row, uint8_t & ph);
@@ -515,7 +515,7 @@ class CmdProc {
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
   
-  int bursttest(int ntrig, int trigsep=6, int nburst=1, int nloop=1);
+  int bursttest(int ntrig, int trigsep=6, int nburst=1, int caltrig=0, int nloop=1);
   int adctest(const string s);
   int tbmread(uint8_t regId, int hubid);
   string tbmprint(uint8_t regId, int hubid);
