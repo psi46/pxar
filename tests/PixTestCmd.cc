@@ -2208,18 +2208,51 @@ int CmdProc::pixDecodeRaw(int raw, int level){
     error = (raw & 0x10) ? 128 : 0;
     if((error==128)&&(level>0)){ s=", wrong stuffing bit";}
 
-    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16; s+=", illegal raw column data (msb)"; };
-    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8; s+=", illegal raw column data (lsb)";};
-    int c = c1*6 + c0;
+    if (fApi->_dut->getRocType() >= ROC_PROC600) {
+        x = ((raw >> 17) & 0x07) + ((raw >> 18) & 0x38);
+        y = ((raw >> 9) & 0x07) + ((raw >> 10) & 0x78);
+    }
+    else {
+        int c1 = (raw >> 21) & 7;
+        if (c1 >= 6) {
+            error |= 16;
+            s += ", illegal raw column data (msb)";
+        };
+        int c0 = (raw >> 18) & 7;
+        if (c0 >= 6) {
+            error |= 8;
+            s += ", illegal raw column data (lsb)";
+        };
+        int c = c1 * 6 + c0;
 
-    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4; s+=", illegal raw row data (msb)";};
-    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2; s+=", illegal raw row data (nmsb)";};
-    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1; s+=", illegal raw row data (lsb)";};
-    int r = (r2*6 + r1)*6 + r0;
+        int r2 = (raw >> 15) & 7;
+        if (r2 >= 6) {
+            error |= 4;
+            s += ", illegal raw row data (msb)";
+        };
+        int r1 = (raw >> 12) & 7;
+        if (r1 >= 6) {
+            error |= 2;
+            s += ", illegal raw row data (nmsb)";
+        };
+        int r0 = (raw >> 9) & 7;
+        if (r0 >= 6) {
+            error |= 1;
+            s += ", illegal raw row data (lsb)";
+        };
+        int r = (r2 * 6 + r1) * 6 + r0;
 
-    y = 80 - r/2; if ((unsigned int)y >= 80){ error |= 32; s+=", bad row";};
-    x = 2*c + (r&1); if ((unsigned int)x >= 52) {error |= 64; s+=", bad column";};
-    if(level>0){
+        y = 80 - r / 2;
+        if ((unsigned int) y >= 80) {
+            error |= 32;
+            s += ", bad row";
+        };
+        x = 2 * c + (r & 1);
+        if ((unsigned int) x >= 52) {
+            error |= 64;
+            s += ", bad column";
+        };
+    }if(level>0){
     out << "( " << dec << setw(2) << setfill(' ') << x
          << ", "<< dec << setw(2) << setfill(' ') << y 
          << ": "<< setw(3) << ph << ") ";
@@ -2238,20 +2271,32 @@ int CmdProc::pixDecodeRaw(int raw, uint8_t & col, uint8_t & row, uint8_t & ph){
     ph = (raw & 0x0f) + ((raw >> 1) & 0xf0);
     error = (raw & 0x10) ? 128 : 0;
 
-    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16;  };
-    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8; };
-    int c = c1*6 + c0;
+    if (fApi->_dut->getRocType() >= ROC_PROC600)  {
+        col = ((raw >> 17) & 0x07) + ((raw >> 18) & 0x38);
+        row = ((raw >> 9) & 0x07) + ((raw >> 10) & 0x78);
+    }
+    else {
+        int c1 = (raw >> 21) & 7;
+        if (c1 >= 6) { error |= 16; };
+        int c0 = (raw >> 18) & 7;
+        if (c0 >= 6) { error |= 8; };
+        int c = c1 * 6 + c0;
 
-    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4;};
-    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2;};
-    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1;};
-    int r = (r2*6 + r1)*6 + r0;
+        int r2 = (raw >> 15) & 7;
+        if (r2 >= 6) { error |= 4; };
+        int r1 = (raw >> 12) & 7;
+        if (r1 >= 6) { error |= 2; };
+        int r0 = (raw >> 9) & 7;
+        if (r0 >= 6) { error |= 1; };
+        int r = (r2 * 6 + r1) * 6 + r0;
 
-    y = 80 - r/2; if ((unsigned int)y >= 80){ error |= 32;};
-    x = 2*c + (r&1); if ((unsigned int)x >= 52) {error |= 64;};
-    col = static_cast<uint8_t>(x);
-    row = static_cast<uint8_t>(y);
-
+        y = 80 - r / 2;
+        if ((unsigned int) y >= 80) { error |= 32; };
+        x = 2 * c + (r & 1);
+        if ((unsigned int) x >= 52) { error |= 64; };
+        col = static_cast<uint8_t>(x);
+        row = static_cast<uint8_t>(y);
+    }
     return error;
 }
 
