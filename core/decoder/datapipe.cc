@@ -183,6 +183,38 @@ namespace pxar {
     return &roc_Event;
   }
 
+  void dtbEventDecoder::ProcessTBMHeader(uint16_t h1, uint16_t h2) {
+    // Check the alignment markers to be correct:
+    if((h1 & 0xe000) != 0xa000 || (h2 & 0xe000) != 0x8000)
+      { decodingStats.m_errors_tbm_header++; }
+    // Store the two header words:
+    roc_Event.addHeader(((h1 & 0x00ff) << 8) + (h2 & 0x00ff));
+
+    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
+    IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
+  }
+
+  void dtbEventDecoder::ProcessTBMTrailer(uint16_t t1, uint16_t t2) {
+    // Check the alignment markers to be correct:
+    if((t1 & 0xe000) != 0xe000 || (t2 & 0xe000) != 0xc000)
+      { decodingStats.m_errors_tbm_trailer++; }
+    
+    // Check possible DESER400 error flags in the TBM trailer:
+    if((t1 & 0x1000) == 0x1000 || (t2 & 0x1000) == 0x1000) {
+      // Currently the same error bits are stored in both trailer words, so only evaluating one of them.
+      evalDeser400Errors(t1);
+    }
+
+    // No Error flag is set by the DESER400, just decode the TBM header as usual:
+    else {
+      // Store the two trailer words:
+      roc_Event.addTrailer(((t1 & 0x00ff) << 8) + (t2 & 0x00ff));
+      
+      LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
+      IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
+    }
+  }
+  
   void dtbEventDecoder::ProcessTBM(rawEvent * sample) {
     LOG(logDEBUGPIPES) << "Processing TBM header and trailer...";
 
@@ -195,38 +227,10 @@ namespace pxar {
     unsigned int size = sample->GetSize();
 
     // TBM Header:
-
-    // Check the alignment markers to be correct:
-    if((sample->data.at(0) & 0xe000) != 0xa000
-       || (sample->data.at(1) & 0xe000) != 0x8000) { decodingStats.m_errors_tbm_header++; }
-    // Store the two header words:
-    roc_Event.header = ((sample->data.at(0) & 0x00ff) << 8) + (sample->data.at(1) & 0x00ff);
-
-    LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Header:";
-    IFLOG(logDEBUGPIPES) { roc_Event.printHeader(); }
-
+    ProcessTBMHeader(sample->data.at(0),sample->data.at(1));
 
     // TBM Trailer:
-    // Check the alignment markers to be correct:
-    if((sample->data.at(size-2) & 0xe000) != 0xe000
-       || (sample->data.at(size-1) & 0xe000) != 0xc000) { decodingStats.m_errors_tbm_trailer++; }
-    
-    // Check possible DESER400 error flags in the TBM trailer:
-    if((sample->data.at(size-2) & 0x1000) == 0x1000
-       || (sample->data.at(size-1) & 0x1000) == 0x1000) {
-      // Currently the same error bits are stored in both trailer words, so only evaluating one of them.
-      evalDeser400Errors(sample->data.at(size-2));
-    }
-
-    // No Error flag is set by the DESER400, just decode the TBM header as usual:
-    else {
-      // Store the two trailer words:
-      roc_Event.trailer = ((sample->data.at(size-2) & 0x00ff) << 8) 
-	+ (sample->data.at(size-1) & 0x00ff);
-      
-      LOG(logDEBUGPIPES) << "TBM " << static_cast<int>(GetChannel()) << " Trailer:";
-      IFLOG(logDEBUGPIPES) roc_Event.printTrailer();
-    }
+    ProcessTBMTrailer(sample->data.at(size-2),sample->data.at(size-1));
     
     // Check for correct TBM event ID:
     CheckEventID();
@@ -270,6 +274,15 @@ namespace pxar {
 
 	// Decode the readback bits in the ROC header:
 	if(GetDeviceType() >= ROC_PSI46DIGV2) { evalReadback(static_cast<uint8_t>(roc_n),(*word)); }
+      }
+      // FIXME for linearized channels read from EUDAQ, check for interleaved TBM headers and trailers:
+      else if(((*word) & 0xe000) == 0xa000) {
+	uint16_t tmp = *word;
+	ProcessTBMHeader(tmp,*(++word));
+      }
+      else if(((*word) & 0xe000) == 0xe000) {
+	uint16_t tmp = *word;
+	ProcessTBMTrailer(tmp,*(++word));
       }
       // We have a pixel hit:
       else if(((*word) & 0xe000) <= 0x2000) {
@@ -315,6 +328,9 @@ namespace pxar {
       }
     }
 
+    // FIXME: woohoo, this is soooo evil:
+    roc_Event.flipTrailers();
+    
     // Check event validity (empty, missing ROCs...):
     CheckEventValidity(roc_n);
   }

@@ -37,6 +37,7 @@ namespace pxar {
     LOG(logDEBUGPIPES) << "-------------------------";
     LOG(logDEBUGPIPES) << "FULL RAW DATA BLOB (" << buffer.size() << " words buffered):";
     if(devicetype < ROC_PSI46DIG) { LOG(logDEBUGPIPES) << listVector(buffer,false,true); }
+    else { LOG(logDEBUGPIPES) << listVector(buffer,true); }
     LOG(logDEBUGPIPES) << "-------------------------";
   }
 

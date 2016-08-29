@@ -1613,12 +1613,15 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 Event hal::daqEvent() {
 
   Event current_Event;
-
+  uint16_t flags = 0;
+  
   // Read the next Event from each of the pipes, copy the data:
   for(size_t ch = 0; ch < m_src.size(); ch++) {
     if(m_src.at(ch).isConnected()) {
       dataSink<Event*> Eventpump;
       m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
+      // Read the supplied DAQ flags:
+      if(ch == 0) { flags = Eventpump.GetFlags(); }
 
       try { current_Event += *Eventpump.Get(); }
       catch (dsBufferEmpty &) {
@@ -1635,13 +1638,20 @@ Event hal::daqEvent() {
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
     }
   }
-  
+
+  // Check for the channels all reporting the same event number:
+  if((flags & FLAG_DISABLE_EVENTID_CHECK) == 0 && !equalElements(current_Event.triggerCounts())) {
+    LOG(logERROR) << "Channels report mismatching event numbers: " << listVector(current_Event.triggerCounts());
+    throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
+  }
+
   return current_Event;
 }
 
 std::vector<Event> hal::daqAllEvents() {
 
   std::vector<Event> evt;
+  uint16_t flags = 0;
   
   // Prepare channel flags:
   std::vector<bool> done_ch;
@@ -1654,6 +1664,9 @@ std::vector<Event> hal::daqAllEvents() {
       if(m_src.at(ch).isConnected() && (!done_ch.at(ch))) {
 	dataSink<Event*> Eventpump;
 	m_splitter.at(ch) >> m_decoder.at(ch) >> Eventpump;
+
+	// Read the supplied DAQ flags:
+      if(flags == 0 && ch == 0) { flags = Eventpump.GetFlags(); }
 
 	// Add all event data from this channel:
 	try { current_Event += *Eventpump.Get(); }
@@ -1676,7 +1689,15 @@ std::vector<Event> hal::daqAllEvents() {
       LOG(logDEBUGHAL) << "Drained all DAQ channels.";
       break;
     }
-    else { evt.push_back(current_Event); }
+    else {
+      // Check for the channels all reporting the same event number:
+      if((flags & FLAG_DISABLE_EVENTID_CHECK) == 0 && !equalElements(current_Event.triggerCounts())) {
+	LOG(logERROR) << "Channels report mismatching event numbers: " << listVector(current_Event.triggerCounts());
+	throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
+      }
+      // Store the event
+      evt.push_back(current_Event);
+    }
   }
   
   if(evt.empty()) throw DataNoEvent("No event available");

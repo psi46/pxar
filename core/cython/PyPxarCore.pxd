@@ -35,13 +35,31 @@ cdef extern from "api.h" namespace "pxar":
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass Event:
-        uint16_t header
-        uint16_t trailer
+        vector[uint16_t] getHeaders()
+        vector[uint16_t] getTrailers()
+        void printHeader()
+        void printTrailer()
+        void addHeader(uint16_t data)
+        void addTrailer(uint16_t data)
         vector[pixel] pixels
-        bool hasNoTokenPass()
-        uint8_t stackCount()
-        uint8_t triggerCount()
+        vector[bool] haveNoTokenPass()
+        vector[bool] haveTokenPass()
+        vector[bool] haveResetTBM()
+        vector[bool] haveResetROC()
+        vector[bool] haveSyncError()
+        vector[bool] haveSyncTrigger()
+        vector[bool] haveClearTriggerCount()
+        vector[bool] haveCalTrigger()
+        vector[bool] stacksFull()
+        vector[bool] haveAutoReset()
+        vector[bool] havePkamReset()
+        vector[uint8_t] stackCounts()
+        vector[uint8_t] triggerCounts()
+        vector[uint8_t] triggerPhases()
+        vector[uint8_t] dataIDs()
+        vector[uint8_t] dataValues()
         Event()
+        Event(Event &) except +
 
 cdef extern from "api.h" namespace "pxar":
     cdef cppclass pixelConfig:

@@ -688,9 +688,9 @@ void PixTestXray::readData() {
 
     if (fParFillTree) {
       bookTree();  
-      fTreeEvent.header           = it->header; 
+      fTreeEvent.header           = it->getHeader(); 
       fTreeEvent.dac              = 0;
-      fTreeEvent.trailer          = it->trailer; 
+      fTreeEvent.trailer          = it->getTrailer(); 
     }
 
     int idx(0); 
@@ -765,9 +765,9 @@ void PixTestXray::processData(uint16_t numevents) {
     
     if (fParFillTree) {
       bookTree();  
-      fTreeEvent.header           = it->header; 
+      fTreeEvent.header           = it->getHeader(); 
       fTreeEvent.dac              = 0;
-      fTreeEvent.trailer          = it->trailer; 
+      fTreeEvent.trailer          = it->getTrailer(); 
     }
 
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
