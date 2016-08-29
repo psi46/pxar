@@ -643,6 +643,10 @@ bool hal::tbmSetReg(uint8_t hubid, uint8_t regId, uint8_t regValue, bool flush) 
   return true;
 }
 
+void hal::tbmSelectRDA(uint8_t rda_id) {
+  _testboard->tbm_SelectRDA(rda_id);
+}
+
 void hal::SetupI2CValues(std::vector<uint8_t> roci2cs) {
 
   LOG(logDEBUGHAL) << "Writing the following available I2C devices into NIOS storage:";
@@ -1534,17 +1538,16 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
   uint8_t rocid_offset = 0;
   for(size_t i = 0; i < m_tokenchains.size(); i++) {
     // Open DAQ in channel i:
-    size_t j = (( m_tbmtype == TBM_10 && m_roccount == 16 ) ? (6+i)%8 : i);
-    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize, j);
-    LOG(logDEBUGHAL) << "Channel " << j << ": token chain: "
-				<< static_cast<int>(m_tokenchains.at(j))
+    uint32_t allocated_buffer = _testboard->Daq_Open(buffersize, i);
+    LOG(logDEBUGHAL) << "Channel " << i << ": token chain: "
+				<< static_cast<int>(m_tokenchains.at(i))
 				<< " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
     // Initialize the data source, set tokenchain length to zero if no token pass is expected:
-    m_src.at(j) = dtbSource(_testboard,j,m_tokenchains.at(j),rocid_offset,m_tbmtype,m_roctype,true,flags);
-    m_src.at(j) >> m_splitter.at(j);
+    m_src.at(i) = dtbSource(_testboard,( m_tbmtype == TBM_10C && m_roccount == 16 ) ? ((i + 6) % 8) : i,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
+    m_src.at(i) >> m_splitter.at(i);
     _testboard->uDelay(100);
     // Increment the ROC id offset by the amount of ROCs expected:
-    rocid_offset += m_tokenchains.at(j);
+    rocid_offset += m_tokenchains.at(i);
   }
 
   // Data acquisition with real TBM:

@@ -504,7 +504,7 @@ uint8_t pxarCore::stringToDeviceCode(std::string name) {
   uint8_t _code = _devices->getDevCode(name);
   LOG(logDEBUGAPI) << "Device type return: " << static_cast<int>(_code);
 
-  if(_code == 0x0) {LOG(logERROR) << "Unknown device \"" << static_cast<int>(_code) << "\"!";}
+  if(_code == 0x0) {LOG(logERROR) << "Unknown device: \"" << name << "\" could not be found in the dictionary!";}
   return _code;
 }
 
@@ -794,6 +794,32 @@ bool pxarCore::setTbmReg(std::string regName, uint8_t regValue) {
     if(!setTbmReg(regName, regValue, tbms)) return false;
   }
   return true;
+}
+
+void pxarCore::selectTbmRDA(uint8_t tbmid) {
+  if (tbmid < 2) {
+    uint8_t hubid = _dut->getEnabledTbms().at(tbmid*2).hubid;
+    setHubID(hubid);
+    _hal->tbmSelectRDA(1 - tbmid); // FIXME: change mapping in firmware for better readability
+  }
+  else {
+    LOG(logERROR) << "We don't have a TBM at RDA channel " << int(tbmid);
+  }
+}
+
+void pxarCore::setHubID(uint8_t id) {
+  // check if provided hubid is available
+  std::vector<int> hubids;
+  std::vector<tbmConfig> tbms = _dut->getEnabledTbms();
+  for (unsigned int i = 0; i < tbms.size() / 2; i++) {
+    hubids.push_back(tbms.at(i*2).hubid);
+  }
+  if (std::find(hubids.begin(), hubids.end(), id) != hubids.end()) {
+    _hal->setHubId(id);
+  }
+  else {
+    LOG(logERROR) << "This hubid does not exist in the dut: " << int(id);
+  }
 }
 
 std::vector< std::pair<uint8_t, std::vector<pixel> > > pxarCore::getPulseheightVsDAC(std::string dacName, uint8_t dacMin, uint8_t dacMax, uint16_t flags, uint16_t nTriggers) {

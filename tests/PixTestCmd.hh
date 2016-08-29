@@ -362,6 +362,7 @@ class CmdProc {
   static const char * const fDAC_names[];
   static int fGetBufMethod;
   static int fNtrigTimingTest;
+  static int fIgnoreReadbackErrors;
   
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
@@ -395,6 +396,7 @@ class CmdProc {
    unsigned int fDeser400XORChanges[nDaqChannelMax];
    unsigned int fRocReadBackErrors[nDaqChannelMax];
    unsigned int fNTBMHeader[nDaqChannelMax];
+   unsigned int fNEvent[nDaqChannelMax];
    unsigned int fDaqErrorCount[nDaqChannelMax]; //  any kind of error
    // new with fw4.6
    unsigned int fDeser400_frame_error[nDaqChannelMax];
@@ -425,11 +427,15 @@ class CmdProc {
    }
    int rocIdFromReadoutPositionRaw( unsigned int position){
 	   // needed for daqGetRawEventBuffer()
-	   uint8_t daqChannel = position / fnRocPerChannel;
-	   return fDaqChannelRocIdOffset[daqChannel] + (position % fnRocPerChannel);
+//	   uint8_t daqChannel = position / fnRocPerChannel;
+	   return position; //fDaqChannelRocIdOffset[daqChannel] + (position % fnRocPerChannel);
+       // channels are now sorted in pxar core
    }
    int daqChannelFromTbmPort( unsigned int port){
        if (tbm08()){ return port/2 ; }
+       else if(fnTbmCore==4){
+          return (port+4) % 8; // cross your fingers
+       }
        else{ return port; }
    }
 
@@ -445,7 +451,6 @@ class CmdProc {
   #define TBM1B   0x8
   
   
-  bool fIgnoreReadbackErrors;
   bool verbose;
   bool redirected;
   bool fEchoExecs;  // echo command from executed files
@@ -465,8 +470,13 @@ class CmdProc {
   
   int test_timing2(int nloop, int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], int daqchannel=-1);
   int post_timing();
-  
+
+  #define STEP160   1.0
+  #define RANGE160  6.25
+  #define STEP400   0.57
+  #define RANGE400  2.5
   int find_timing(int npass=0);
+  void sort_time(int values[], double step, double range);
   bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
   bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
 
@@ -497,7 +507,7 @@ class CmdProc {
   int drainBuffer(bool tellme=true);
   int daqStatus();
   int resetDaqStatus();
-  int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int nburst=1, int verbosity=0);
+  int burst(vector<uint16_t> & buf, int ntrig, int trigsep=6, int caltrig=0, int nburst=1, int verbosity=0);
   int getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity=1, int nroc_expected=-1, bool resetStats=true);
   int pixDecodeRaw(int, int level=1);
   int pixDecodeRaw(int raw, uint8_t & col, uint8_t & row, uint8_t & ph);
@@ -505,10 +515,11 @@ class CmdProc {
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
   
-  int bursttest(int ntrig, int trigsep=6, int nburst=1, int nloop=1);
+  int bursttest(int ntrig, int trigsep=6, int nburst=1, int caltrig=0, int nloop=1);
   int adctest(const string s);
-  int tbmread(uint8_t regId);
-  string tbmprint(uint8_t regId);
+  int tbmread(uint8_t regId, int hubid);
+  string tbmprint(uint8_t regId, int hubid);
+  int tbmreadback();
   
   int sequence(int seq);
   int pg_sequence(int seq, int length=0);

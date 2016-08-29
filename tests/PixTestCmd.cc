@@ -967,14 +967,14 @@ int CmdProc::fNtrigTimingTest  = 100;
 int CmdProc::fPrerun=0;
 bool CmdProc::fFW35=false;
 bool CmdProc::fStopWhateverYouAreDoing = false;
-
+int CmdProc::fIgnoreReadbackErrors = false;
 
 void CmdProc::init()
 {
     /* note: fApi may not be defined yet !*/
     verbose=false;
     redirected=false;
-    fIgnoreReadbackErrors=false;
+    //fIgnoreReadbackErrors=false;  now static
     fDumpFlawed=FLAG_DUMP_FLAWED_EVENTS;
     master = NULL;
     fEchoExecs = true;
@@ -991,7 +991,7 @@ void CmdProc::init()
     fTRC = 10;
     fTTK = 30;
     fMaxPeriod = 10000;
-    fBufsize = 50000; // DTB_SOURCE_BUFFER_SIZE makes things slow, only increase where needed
+    fBufsize = 100000; // DTB_SOURCE_BUFFER_SIZE makes things slow, only increase where needed
     fSeq = 7;  // pg sequence bits
     fPeriod = 0;
     fPgRunning = false;
@@ -1021,7 +1021,7 @@ void CmdProc::setApi(pxar::pxarCore * api, PixSetup * setup){
     if(layer1()){
         fnRocPerChannel=2;
         fnDaqChannel=8;
-        fDaqChannelRocIdOffset[0]= 4; 
+        fDaqChannelRocIdOffset[0]= 4;
         fDaqChannelRocIdOffset[1]= 6;
         fDaqChannelRocIdOffset[2]= 8;
         fDaqChannelRocIdOffset[3]= 10;
@@ -1060,7 +1060,7 @@ CmdProc::CmdProc(CmdProc * p)
     verbose = p->verbose;
     redirected = p->redirected;
     fDumpFlawed= p->fDumpFlawed;
-    fIgnoreReadbackErrors = p->fIgnoreReadbackErrors;
+    // fIgnoreReadbackErrors = p->fIgnoreReadbackErrors; now static
     master = p->master;
     fEchoExecs = p->fEchoExecs;
     defaultTarget = p->defaultTarget;
@@ -1221,7 +1221,7 @@ int CmdProc::countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int
      * returns the total number good loops
      * the result separated by channel is available in fGoodLoops */
      
-    tbmset("base4", ALLTBMS, 0x80);// reset once, both cores
+    tbmset("base4", ALLTBMS, 0x80);// reset tbm event counter, both cores
     int good=0;
     clear_DaqChannelCounter( fGoodLoops );
         
@@ -1233,13 +1233,14 @@ int CmdProc::countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int
         if(nerr==0){
             good++;
         }
-        
+
         for( unsigned int i=0;i<8; i++){  //legacy code
             fDeser400XOR1sum[i] += ( ((fDeser400XOR[0]|fDeser400XOR[1]) >> i) & 1);
          }
+
          // channel-wise book-keeping
-         for( unsigned int i=0; i<nDaqChannelMax; i++ ){
-             if (fDaqErrorCount[i]==0){
+         for( unsigned int i=0; i<nDaqChannelMax; i++ ) {
+             if ((fDaqErrorCount[i] == 0)  && (fNEvent[i]==ntrig) ){
                  fGoodLoops[i]++;
              }
          }
@@ -1317,18 +1318,28 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
     if( (ntpreg & 0x40) > 0 ){
         nroc=0;
     }
-    
-    out << "400\\160 0  1  2  3  4  5  6  7\n";
+
+    // show the phase delays in time-ordered manner
+    int p160_timed[8] = {0,1,2,3,4,5,6,7};
+    sort_time(p160_timed, STEP160, RANGE160);
+    out << "400\\160";
+    for(uint8_t i = 0; i < sizeof(p160_timed); i++) {
+        out << " " << i << " ";
+    }
+    out << "\n";
+    int p400_timed[8] = {0,1,2,3,4,5,6,7};
+    sort_time(p400_timed, STEP400, RANGE400);
+
     for(uint8_t p400=0; p400<8; p400++){
         int xor1[8] = {0,0,0,0,0,0,0,0};
         int xor2[8] = {0,0,0,0,0,0,0,0};
-        out << "  " << (int) p400 << " :  ";
+        out << "  " << (int) p400_timed[p400] << " :  ";
         for(uint8_t p160=0; p160<8; p160++){
-            stat = tbmset("basee", TBMA, ((p160&7)<<5)+((p400&7)<<2));
+            stat = tbmset("basee", TBMA, ((p160_timed[p160]&7)<<5)+((p400_timed[p400]&7)<<2));
             if(stat>0){
-                out << "error setting delay  base E " << hex << (int) ((p160<<5)+(p400<<2)) << dec << "\n";
+                out << "error setting delay  base E " << hex << (int) ((p160_timed[p160]<<5)+(p400_timed[p400]<<2)) << dec << "\n";
             }
-            tbmset("base4", ALLTBMS, 0x80);// reset once after changing phases
+            tbmset("base4", ALLTBMS, 0x10);// reset once after changing phases
             
             // waste a bit of time keeping the daq busy
             pxar::mDelay(10);
@@ -1342,7 +1353,7 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
             else if (good>(0.7*nloop)) { c='o' ;}
             else if (good>0) { c='.' ;}
             
-            if((p160==p160c)&&(p400==p400c)){
+            if((p160_timed[p160]==p160c)&&(p400_timed[p400]==p400c)){
                out << "(" << c << ")";
             }else{
                out << " " << c << " ";
@@ -1364,10 +1375,11 @@ int CmdProc::tbmscan(const int nloop, const int ntrig, const int ftrigkhz){
 }
 
 
+
 int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdelay, int tokdelay){
     int ftrigkhz = 100;
     int nroc=16;
-    uint8_t value=( (d160&0x7)<<5 ) + ( ( d400&0x7 )<<2);
+    uint8_t value = ( (d160&0x7)<<5 ) + ( (d400&0x7 )<<2 );
     
     int stat = tbmset("basee", TBMA, value);
     if(stat>0){
@@ -1381,11 +1393,11 @@ int CmdProc::test_timing(int nloop, int d160, int d400, int rocdelay, int htdela
             out << "error setting delay  base A " << hex << (int) value << dec << "\n";
         }
     }
-    tbmset("base4", ALLTBMS, 0x80); // reset once after changing phases
+    tbmset("base4", ALLTBMS, 0x10); // reset once after changing phases
     pxar::mDelay( 10 );
-    
     return countGood(nloop, fNtrigTimingTest, ftrigkhz, nroc);
 }
+
 
 
 bool CmdProc::set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], bool reset){
@@ -1403,7 +1415,7 @@ bool CmdProc::set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], i
     
     
        
-    for(unsigned int core=0; core<2; core++){   
+    for(unsigned int core=0; core<fnTbmCore; core++){   
             value = 
                 ( (tokdelay[core]&0x1)<<7 ) 
               + ( (htdelay[core]&0x1)<<6 )
@@ -1417,11 +1429,12 @@ bool CmdProc::set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], i
     }
     
     if(reset){
-        tbmset("base4", ALLTBMS, 0x80); // reset once after changing phases
+        tbmset("base4", ALLTBMS, 0x10); // reset once after changing phases
     }
     
     return ok;
 }
+
 
 
 int CmdProc::test_timing2(int nloop, int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[],
@@ -1464,6 +1477,17 @@ int CmdProc::test_timing2(int nloop, int d160, int d400, int rocdelay[], int htd
 
 
 
+void CmdProc::sort_time(int values[], double step, double range){
+    // indirect sort according to time modulo range
+    for(int i=0; i<8; i++){
+        for(int j=0; j<7; j++){
+            if(  fmod(values[j]*step,range) >  fmod(values[j+1]*step,range) ){
+                int tmp=values[j]; values[j]=values[j+1]; values[j+1]=tmp;
+            }
+        }
+    }
+}
+
 bool CmdProc::find_midpoint(int threshold, int data[], uint8_t & position, int & width){
 
     width=0;
@@ -1485,15 +1509,8 @@ bool CmdProc::find_midpoint(int threshold, int data[], uint8_t & position, int &
 
 
 bool CmdProc::find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width){
-    // indirect sort according to time modulo range
-    int m[8]={0,1,2,3,4,5,6,7};
-    for(int i=0; i<8; i++){
-        for(int j=0; j<7; j++){
-            if(  fmod(m[j]*step,range) >  fmod(m[j+1]*step,range) ){
-                int tmp=m[j]; m[j]=m[j+1]; m[j+1]=tmp;
-            }
-        }
-    }
+    int m[8] = {0,1,2,3,4,5,6,7};
+    sort_time(m, step, range);
     // now data[m[*]] is time-ordered
     
     width=0;
@@ -1546,6 +1563,7 @@ int CmdProc::find_timing(int npass){
             d160 = m; 
             nmax = nvalid;
         }
+        flush(out);
     }
     if (nmax==0){
         out << " no working phases found ";
@@ -1553,11 +1571,11 @@ int CmdProc::find_timing(int npass){
         tbmset("basee",ALLTBMS ,register_e);
         return 0;
     }
-    if(verbose) cout << "diag scan result = " << (int) d400 << endl;
+    if (verbose) cout << "diag scan result = " << (int) d400 << endl;
     
     for(int pass=0; pass<3; pass++){
         
-        if(verbose) cout << " pass " << pass << endl;
+        if (verbose) cout << " pass " << pass << endl;
          // scan 160 MHz @ selected position
         int test160[8]={0,0,0,0,0,0,0,0};
         for (uint8_t m=0; m<8; m++){
@@ -1569,7 +1587,7 @@ int CmdProc::find_timing(int npass){
         }
         
         int w160=0;
-        if (! find_midpoint(nloop, 1.0, 6.25, test160, d160, w160)){
+        if (! find_midpoint(nloop, STEP160, RANGE160, test160, d160, w160)){
             out << "160 MHz scan failed  in pass " << pass << "  d400=" << (int) d400 << " " ;
             for(unsigned int i=0; i<8; i++){ out << " " << dec << (int) test160[i];}
             out << "\n";
@@ -1595,7 +1613,7 @@ int CmdProc::find_timing(int npass){
         }
         
         int w400=0;
-        if (! find_midpoint(nloop, 0.57, 2.5, test400, d400, w400)){
+        if (! find_midpoint(nloop, STEP400, RANGE400, test400, d400, w400)){
             out << "400 MHz scan failed ";
             tbmset("base0",ALLTBMS, register_0);
             tbmset("basee",ALLTBMS, register_e);
@@ -1621,6 +1639,8 @@ int CmdProc::find_timing(int npass){
                     sumtest += test[dport];
                     if (test[dport]>test[portmax]) portmax=dport;
                     if(verbose) {cout << (int) d160 << "," << (int) d400 << "," << (int)dport << "," << (int)dheader << "," << (int)dtoken << " -> " <<(int)test[dport] << endl;}
+                    out << (int) d160 << "," << (int) d400 << "," << (int)dport << "," << (int)dheader << "," << (int)dtoken << " -> " <<(int)test[dport] << endl;
+                    flush(out);
                 }
                 int w=0;
                 uint8_t d=0;
@@ -1785,7 +1805,7 @@ int CmdProc::rawscan(int level){
             if(stat>0){
                 out << "error setting delay  base E " << hex << ((p160<<5)+(p400<<2)) << dec << "\n";
             }
-            tbmset("base4", ALLTBMS, 0x80);// reset once after changing phases
+            tbmset("base4", ALLTBMS, 0x10);// reset once after changing phases
             
             int stat = runDaq(fBuf, 100, 10, 0, true);
             
@@ -1873,7 +1893,7 @@ int CmdProc::levelscan(){
     for(unsigned int level=3; level<16; level++){
         
         setTestboardDelay("level", level); 
-        if (fFW35) tbmset("base4", ALLTBMS, 0x80); // temp fix, avoid event counter reaching 255
+        if (fFW35) tbmset("base4", ALLTBMS, 0x10); // temp fix, avoid event counter reaching 255
         
         int good = countGood(100,1,0,nroc);
     
@@ -1930,10 +1950,10 @@ int CmdProc::setTestboardDelay(string name, uint8_t value){
 
 
 
-int CmdProc::bursttest(int ntrig, int trigsep, int nburst, int loop){
+int CmdProc::bursttest(int ntrig, int trigsep, int nburst, int caltrig, int loop){
         int stat = 0;
         while( ! ( (loop==0) || (stopped()) ) ) {
-            burst(fBuf, ntrig, trigsep, nburst);
+            burst(fBuf, ntrig, trigsep, nburst, caltrig);
         
             vector<DRecord > data;
             stat = getData(fBuf, data, 0);
@@ -2047,13 +2067,13 @@ int CmdProc::adctest(const string signalName){
 }
 
 
-int CmdProc::tbmread(uint8_t regId){
+int CmdProc::tbmread(uint8_t regId, int hubid){
 
     // part 1 , acquire data : delay scan
    
     uint8_t gain = GAIN_1;
     uint8_t start  = 17;  // wait after sda
-    uint8_t hubId = 31;  // FIXME allow configurable values later, get from api?
+    uint8_t hubId = hubid;
     
     uint16_t nSample = 100;
     unsigned int nDly = 20; // stepsize 1.25 ns
@@ -2128,7 +2148,7 @@ int CmdProc::tbmread(uint8_t regId){
                 }   
                 */
                
-				if (valid ){ 
+				if (valid ){
 					setTestboardDelay("all");
 					return (int) D;
 				}
@@ -2145,15 +2165,37 @@ int CmdProc::tbmread(uint8_t regId){
     return -1;
 }
 
-string CmdProc::tbmprint(uint8_t regId){
+
+string CmdProc::tbmprint(uint8_t regId, int hubid){
 	stringstream s;
-	int value = tbmread(regId);
+	int value = tbmread(regId, hubid);
 	if (value>=0){
 		s<< "      0x" << (hex) << setfill('0') << setw(2) << value << setfill(' ');
 	}else{
 		s<< "       err";
 	}
 	return s.str();
+}
+
+
+int CmdProc::tbmreadback() {
+    // read some registers of the TBMs.
+    for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
+        // in order to read back TBM registers for layer 1 modules
+        // we have to use the analog switch of the module adapter
+        if (fnTbmCore > 2) fApi->selectTbmRDA(i);
+
+        int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
+        cout << "TBM " << i << ", hubid: " << hubid;
+        cout << "               core A      core B \n";
+        cout << "Base + 1/0 " << tbmprint(0xe1, hubid) << "  " << tbmprint(0xf1, hubid) << "\n";
+        cout << "Base + 3/2 " << tbmprint(0xe3, hubid) << "  " << tbmprint(0xf3, hubid) << "\n";
+        cout << "Base + 9/8 " << tbmprint(0xe9, hubid) << "  " << tbmprint(0xf9, hubid) << "\n";
+        cout << "Base + B/A " << tbmprint(0xeb, hubid) << "  " << tbmprint(0xfb, hubid) << "\n";
+        cout << "Base + D/C " << tbmprint(0xed, hubid) << "  " << tbmprint(0xfd, hubid) << "\n";
+        cout << "Base + F   " << tbmprint(0xef, hubid) << "\n";
+    }
+    return 0;
 }
 
 
@@ -2166,18 +2208,51 @@ int CmdProc::pixDecodeRaw(int raw, int level){
     error = (raw & 0x10) ? 128 : 0;
     if((error==128)&&(level>0)){ s=", wrong stuffing bit";}
 
-    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16; s+=", illegal raw column data (msb)"; };
-    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8; s+=", illegal raw column data (lsb)";};
-    int c = c1*6 + c0;
+    if (fApi->_dut->getRocType() >= ROC_PROC600) {
+        x = ((raw >> 17) & 0x07) + ((raw >> 18) & 0x38);
+        y = ((raw >> 9) & 0x07) + ((raw >> 10) & 0x78);
+    }
+    else {
+        int c1 = (raw >> 21) & 7;
+        if (c1 >= 6) {
+            error |= 16;
+            s += ", illegal raw column data (msb)";
+        };
+        int c0 = (raw >> 18) & 7;
+        if (c0 >= 6) {
+            error |= 8;
+            s += ", illegal raw column data (lsb)";
+        };
+        int c = c1 * 6 + c0;
 
-    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4; s+=", illegal raw row data (msb)";};
-    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2; s+=", illegal raw row data (nmsb)";};
-    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1; s+=", illegal raw row data (lsb)";};
-    int r = (r2*6 + r1)*6 + r0;
+        int r2 = (raw >> 15) & 7;
+        if (r2 >= 6) {
+            error |= 4;
+            s += ", illegal raw row data (msb)";
+        };
+        int r1 = (raw >> 12) & 7;
+        if (r1 >= 6) {
+            error |= 2;
+            s += ", illegal raw row data (nmsb)";
+        };
+        int r0 = (raw >> 9) & 7;
+        if (r0 >= 6) {
+            error |= 1;
+            s += ", illegal raw row data (lsb)";
+        };
+        int r = (r2 * 6 + r1) * 6 + r0;
 
-    y = 80 - r/2; if ((unsigned int)y >= 80){ error |= 32; s+=", bad row";};
-    x = 2*c + (r&1); if ((unsigned int)x >= 52) {error |= 64; s+=", bad column";};
-    if(level>0){
+        y = 80 - r / 2;
+        if ((unsigned int) y >= 80) {
+            error |= 32;
+            s += ", bad row";
+        };
+        x = 2 * c + (r & 1);
+        if ((unsigned int) x >= 52) {
+            error |= 64;
+            s += ", bad column";
+        };
+    }if(level>0){
     out << "( " << dec << setw(2) << setfill(' ') << x
          << ", "<< dec << setw(2) << setfill(' ') << y 
          << ": "<< setw(3) << ph << ") ";
@@ -2196,20 +2271,32 @@ int CmdProc::pixDecodeRaw(int raw, uint8_t & col, uint8_t & row, uint8_t & ph){
     ph = (raw & 0x0f) + ((raw >> 1) & 0xf0);
     error = (raw & 0x10) ? 128 : 0;
 
-    int c1 = (raw >> 21) & 7; if (c1>=6) {error |= 16;  };
-    int c0 = (raw >> 18) & 7; if (c0>=6) {error |= 8; };
-    int c = c1*6 + c0;
+    if (fApi->_dut->getRocType() >= ROC_PROC600)  {
+        col = ((raw >> 17) & 0x07) + ((raw >> 18) & 0x38);
+        row = ((raw >> 9) & 0x07) + ((raw >> 10) & 0x78);
+    }
+    else {
+        int c1 = (raw >> 21) & 7;
+        if (c1 >= 6) { error |= 16; };
+        int c0 = (raw >> 18) & 7;
+        if (c0 >= 6) { error |= 8; };
+        int c = c1 * 6 + c0;
 
-    int r2 = (raw >> 15) & 7; if (r2>=6) {error |= 4;};
-    int r1 = (raw >> 12) & 7; if (r1>=6) {error |= 2;};
-    int r0 = (raw >> 9) & 7; if (r0>=6) {error |= 1;};
-    int r = (r2*6 + r1)*6 + r0;
+        int r2 = (raw >> 15) & 7;
+        if (r2 >= 6) { error |= 4; };
+        int r1 = (raw >> 12) & 7;
+        if (r1 >= 6) { error |= 2; };
+        int r0 = (raw >> 9) & 7;
+        if (r0 >= 6) { error |= 1; };
+        int r = (r2 * 6 + r1) * 6 + r0;
 
-    y = 80 - r/2; if ((unsigned int)y >= 80){ error |= 32;};
-    x = 2*c + (r&1); if ((unsigned int)x >= 52) {error |= 64;};
-    col = static_cast<uint8_t>(x);
-    row = static_cast<uint8_t>(y);
-
+        y = 80 - r / 2;
+        if ((unsigned int) y >= 80) { error |= 32; };
+        x = 2 * c + (r & 1);
+        if ((unsigned int) x >= 52) { error |= 64; };
+        col = static_cast<uint8_t>(x);
+        row = static_cast<uint8_t>(y);
+    }
     return error;
 }
 
@@ -2672,7 +2759,7 @@ int CmdProc::runDaqRandom(vector<uint16_t> & buf, vector<DRecord> & data, int nt
         nloop++;
         
         data.clear();
-        int stat = getData(buf, data, 1, nroc, false); // verbosity, nroc, resetDaqStatus
+        int stat = getData(buf, data, 0, nroc, false); // verbosity, nroc, resetDaqStatus
         
         // dump data if an error occurred 
         if(stat>0){
@@ -2910,7 +2997,7 @@ int CmdProc::maskHotPixels(int ntrig, int ftrigkHz, int multiplier, float percen
     return 0;
 }
 
-int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, int verbosity){
+int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, int caltrig, int verbosity){
     /* run ntrig sequences and get the raw data from the DTB */
     
     // warn user when no data expected
@@ -2924,12 +3011,26 @@ int CmdProc::burst(vector<uint16_t> & buf, int ntrig, int trigsep, int nburst, i
     vector< pair<string, uint8_t> > pgsetup;
     pgsetup.push_back( make_pair("sync", 10) );
     pgsetup.push_back( make_pair("resr", fTRC) );
-    pgsetup.push_back( make_pair("cal",  fTCT ));
+    if(caltrig>0){
+        if ( (fTCT-trigsep*caltrig)>1){
+            pgsetup.push_back( make_pair("cal",  fTCT-trigsep*caltrig ));
+        }else{
+            out << "warning, illegal timing for calinject requested\n";
+            out << "TCT =  " << fTCT << "\n";
+            out << "trigsep * caltrig =  " << trigsep << " * " << caltrig << " = " << trigsep*caltrig << "\n";
+        }
+    }else{
+        pgsetup.push_back( make_pair("cal",  fTCT ));
+    }
     for(int i=0; i<ntrig; i++){
         pgsetup.push_back( make_pair("trg",  trigsep-1 ));
     }
-    pgsetup.push_back( make_pair("token", 0));
 
+    if(fApi->_dut->getNTbms()==0){
+        pgsetup.push_back( make_pair("token", 0));
+    }else{
+        pgsetup.push_back( make_pair("none",0) );
+    }
     fPeriod = fMaxPeriod;
  
     fApi->setPatternGenerator(pgsetup);
@@ -3037,27 +3138,18 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
             if( flag == 0xa ){ // TBM header
             
                 tbmHeaderSeen=true;
-                
                 fHeaderCount++;
 
                 daqChannel = (buf[i]&0x700)>>8;
                 fNTBMHeader[daqChannel]++;
                 rocCounter[daqChannel]=0;
-     
+
                 if (buf[i]&0x0800) { // assuming the lower bits are used for the channel nr
                     nerr++; // should be 0
                     fDaqErrorCount[daqChannel]++;
-                    if (verbosity>0) out << "illegal deser400 header record " << hex << buf[i] << dec << "\n";
+                    if (verbosity>0) out << "illegal deser400 header record \n";
                 }
-                daqChannel = (buf[i]&0x700)>>8;
-                fNTBMHeader[daqChannel]++;
-                rocCounter[daqChannel]=0;
 
-                if (buf[i]&0x1000){
-                    fDeser400SymbolErrors[daqChannel]++;
-                    fDaqErrorCount[daqChannel]++;
-
-                }
                 
                 uint8_t h1=buf[i]&0xFF;
                 i++;
@@ -3068,8 +3160,12 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     return nerr + fDeser400err;
                 }
                 
-                if (buf[i]&0x1000) fDeser400err++;
-                
+                if (buf[i]&0x1000){
+                    fDeser400SymbolErrors[daqChannel]++;
+                    fDaqErrorCount[daqChannel]++;
+					fDeser400err++;
+				}
+				                
                 if ((buf[i]&0xE000)==0x8000){
                     uint8_t h2 = buf[i]&0xFF;
                     data.push_back( DRecord( daqChannel, 0xa, (h1<<8 | h2), buf[i-1], buf[i]) );
@@ -3137,7 +3233,10 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                              
                             if ( !(hrocid == rocId) ){
                                 fRocReadBackErrors[daqChannel]++;
-                                if( ! fIgnoreReadbackErrors ) nerr++;
+                                if( !fIgnoreReadbackErrors ) {
+									nerr++;
+									fDaqErrorCount[daqChannel]++;
+								}
                                 if( !fIgnoreReadbackErrors && verbose ){
                                     cout << hex << setw(4) << rocHeaderWord[rocId];
                                     cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
@@ -3152,7 +3251,9 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                         rocHeaderWord[rocId]=0;
                         rocHeaderBits[rocId]=0;
                     }else  if(rocHeaderBits[rocId]==16){
-                        if( ! fIgnoreReadbackErrors ) nerr++;
+                        if( ! fIgnoreReadbackErrors ) {
+							nerr++;
+						}
                         if( !fIgnoreReadbackErrors && verbose){
                                     cout << "start bit expected ";
                                     cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
@@ -3229,6 +3330,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                             << dec << setfill(' ') << " at position "<< i-1 << "\n";
                         }
                     nerr++;
+                    fDaqErrorCount[daqChannel]++;
                  }
                 continue;
             }
@@ -3241,6 +3343,8 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                     }
                     cout << endl;
                 }
+                fNEvent[daqChannel]++;
+
                 tbmHeaderSeen=false;
                 // TBM trailer
                 if (buf[i]&0x0f00){
@@ -3300,6 +3404,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 out << "unexpected qualifier " << hex << (int) flag <<", skipped\n" << dec;
             }
             nerr++;
+            fDaqErrorCount[daqChannel]++;
             i++;
             
         } // while i< buf.size()
@@ -3309,7 +3414,7 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
                 cout << "stuck at i=" << dec << i << endl;
                 cout << hex << (int) buf[i-1] << " " << (int) buf[i] << dec << endl;
         }
-        
+
          fNumberOfEvents = nevent;
 
     }
@@ -3602,6 +3707,7 @@ int CmdProc::resetDaqStatus(){
         fDeser400PhaseErrors[i]=0;
         fDeser400XORChanges[i]=0;
         fNTBMHeader[i]=0;
+        fNEvent[i]=0;
         fRocReadBackErrors[i]=0;
         fDeser400_frame_error[i]=0;
         fDeser400_code_error[i]=0;
@@ -3762,16 +3868,7 @@ int CmdProc::tb(Keyword kw){
         }
     if( kw.match("adctest", s, fA_names, out ) ){ adctest(s); return 0;} 
     if( kw.match("adctest") ){ adctest("clk"); adctest("ctr"); adctest("sda"); adctest("rda"); adctest("sdata1"); adctest("sdata2"); return 0;} 
-	if( kw.match("tbmread") || kw.match("readback","tbm") ){
-		out <<"               core A      core B \n";
-		out << "Base + 1/0 " << tbmprint(0xe1)  << "  " << tbmprint(0xf1) << "\n";
-		out << "Base + 3/2 " << tbmprint(0xe3)  << "  " << tbmprint(0xf3) << "\n";
-		out << "Base + 9/8 " << tbmprint(0xe9)  << "  " << tbmprint(0xf9) << "\n";
-		out << "Base + B/A " << tbmprint(0xeb)  << "  " << tbmprint(0xfb) << "\n";
-		out << "Base + D/C " << tbmprint(0xed)  << "  " << tbmprint(0xfd) << "\n";
-		out << "Base + F   " << tbmprint(0xef) << "\n";
-		return 0;
-	}
+	if( kw.match("tbmread") || kw.match("readback","tbm") ){return tbmreadback();}
     if( kw.match("readback")) { return readRocs();}
     if( kw.match("readback", value)){ return readRocs(value); }
     if( kw.match("readback", "vd")  ) { return readRocs(8, 0.016,"V");  }
@@ -3817,7 +3914,7 @@ int CmdProc::tb(Keyword kw){
 				uint8_t testvalue= (~value) | 0x02; // don't shut down the clock
 				tbmset("base0", 1 << core, testvalue);
 
-				int readvalue = tbmread(addr);
+				int readvalue = tbmread(addr, 31); // TODO: needs a fix, expand similar to tbmreadback()
 				tbmset("base0",1 << core, value);
 				if( readvalue == (int) testvalue){
 					out << "core " << name << " write/read ok\n";
@@ -4172,12 +4269,12 @@ int CmdProc::tb(Keyword kw){
     }
     
     
-    int trigsep, nburst;
+    int trigsep, nburst,caltrig=0;
     if( kw.match("burst", ntrig, trigsep, nburst) ){ return bursttest(ntrig, trigsep, nburst);}
     if( kw.match("burst", ntrig, trigsep) ){ return bursttest(ntrig, trigsep);}
     if( kw.match("burst",ntrig) ){ return bursttest(ntrig);}
-
-    if( kw.match("bust",ntrig) ){ return bursttest(ntrig,10,1,-1);}
+    if( kw.match("burstcal",ntrig,trigsep,caltrig) ){ return bursttest(ntrig,trigsep,1,caltrig);}
+    // bursttest ntrig trigsep nburst caltrig loop
 
     
     if( kw.greedy_match("pgset",step, pattern, delay, comment)){

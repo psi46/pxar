@@ -427,6 +427,14 @@ namespace pxar {
      */
     bool setTbmReg(std::string regName, uint8_t regValue);
 
+    /** Select the RDA channel of a layer 1 module for tbm readback
+    */
+    void selectTbmRDA(uint8_t tbmid);
+
+    /** Manually set the HUB_address in the testboard
+     */
+    void setHubID(uint8_t id);
+
     /** Method to scan a DAC range and measure the pulse height
      *
      *  Returns a vector of pairs containing set dac value and a pxar::pixel vector,
