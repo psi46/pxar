@@ -627,13 +627,6 @@ DAC2LO              0
 DAC2HI              255
 PIX                 11,20
 
--- DoubleColumn
-min                 0
-max                 40
-npix                4
-delay               65
-data                button
-
 -- Ph
 Ntrig               10
 DAC                 vcal
@@ -856,6 +849,13 @@ iterations          10
 rundaqtrg           button
 daqseconds          5
 rundaqseconds       button
+
+-- DoubleColumn
+min                 0
+max                 40
+npix                4
+delay               65
+data                button
 
 
 EOF
