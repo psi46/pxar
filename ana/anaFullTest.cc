@@ -231,7 +231,6 @@ void anaFullTest::showFullTest(string modname, string basename) {
   fhCritical->Fill(ncritical);
   string criticals = Form("%d", ncritical);
 
-  cout << "criticals: " << criticals << endl;
 
   string startTest = Form("Start:       %s", readLine(dirname, "INFO: *** Welcome to pxar ***", 2).c_str());
   string endTest   = Form("End:   %s", readLine(dirname, "INFO: pXar: this is the end, my friend", 2).c_str());
@@ -247,6 +246,8 @@ void anaFullTest::showFullTest(string modname, string basename) {
   int seconds = testDuration(startTest, endTest);
   fhDuration->Fill(seconds);
   string duration = Form("%02d:%02d:%02d", seconds/3600, (seconds-seconds/3600*3600)/60, seconds%60);
+
+  cout << "criticals: " << criticals << " duration: " << duration << endl;
 
   // -- remove the sub-second digits
   startTest = startTest.substr(0, startTest.rfind("."));
@@ -946,14 +947,17 @@ void anaFullTest::validateFullTests(string dir, string mname, int metric, string
     for (int ibin = 1; ibin <= it->second->trimthrpos->GetNbinsX(); ++ibin) {
       // -- the following results in the "correct" Entries and Integral
       if (it->second->trimthrpos->GetBinContent(ibin) > 0)
-	for (int i = 0; i < it->second->trimthrpos->GetBinContent(ibin); ++i)
+	for (int i = 0; i < it->second->trimthrpos->GetBinContent(ibin); ++i) {
 	  hTrimThrPos->Fill(it->second->trimthrpos->GetBinCenter(ibin));
+	  // cout << "trim thr = " << it->second->trimthrpos->GetBinCenter(ibin) << endl;
+	}
     }
 
     for (int ibin = 1; ibin <= it->second->trimthrrms->GetNbinsX(); ++ibin) {
       if (it->second->trimthrrms->GetBinContent(ibin) > 0)
-	for (int i = 0; i < it->second->trimthrrms->GetBinContent(ibin); ++i)
+	for (int i = 0; i < it->second->trimthrrms->GetBinContent(ibin); ++i) {
 	  hTrimThrRms->Fill(it->second->trimthrrms->GetBinCenter(ibin));
+	}
     }
 
     for (int ibin = 1; ibin <= it->second->nlpos->GetNbinsX(); ++ibin) {
@@ -1007,6 +1011,7 @@ void anaFullTest::validateFullTests(string dir, string mname, int metric, string
   c1->cd(1);
   gPad->SetLogy(1);
   showOverFlow(hTrimThrPos);
+  hTrimThrPos->SetMinimum(0.5);
   hTrimThrPos->Draw();
   print(hTrimThrPos, 0.2, 0.80, 0.07);
 
@@ -1425,10 +1430,10 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
   string sline;
   string::size_type s1;
   int val(0);
-  cout << Form("%s/dacParameters%d_CX.dat, X = ", dir.c_str(), fTrimVcal);
+  //  cout << Form("%s/dacParameters%d_CX.dat, X = ", dir.c_str(), fTrimVcal);
   for (int i = 0; i < fNrocs; ++i) {
     INS.open(Form("%s/dacParameters%d_C%d.dat", dir.c_str(), fTrimVcal, i));
-    cout << i << " ";
+    //cout << i << " ";
     while (getline(INS, sline)) {
       if (sline[0] == '#') {continue;}
       if (sline[0] == '/') {continue;}
@@ -1444,7 +1449,7 @@ void anaFullTest::readDacFile(string dir, string dac, vector<TH1D*> vals) {
     }
     INS.close();
   }
-  cout << endl;
+  //  cout << endl;
 }
 
 
@@ -1916,6 +1921,12 @@ void anaFullTest::print(TH1 *h, double left, double top, double size) {
 
   tl->DrawLatex(xleft, ytop-1.1*size, Form("RMS:"));
   tl->DrawLatex(xleft+0.15, ytop-1.1*size, Form("%4.3f", h->GetRMS()));
+
+  tl->DrawLatex(xleft, ytop-2.2*size, Form("Entr:"));
+  tl->DrawLatex(xleft+0.15, ytop-2.2*size, Form("%4.1f", h->Integral()));
+
+  // tl->DrawLatex(xleft, ytop-3.3*size, Form("U/O/fl:"));
+  // tl->DrawLatex(xleft+0.15, ytop-3.3*size, Form("%4.1f/%4.1f", h->GetBinContent(0), h->GetBinContent(h->GetNbinsX()+1)));
 
   tl->SetTextSize(old);
 }
