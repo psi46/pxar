@@ -306,6 +306,11 @@ int main(int argc, char *argv[]){
 	continue;
       }
 
+      if (!input.compare("poff")) {
+	api->Poff();
+	continue;
+      }
+
       if (!input.compare("gui"))  runGui(a, argc, argv);
       if (!input.compare("exit")) stop = true;
       if (!input.compare("quit")) stop = true;
