@@ -332,7 +332,19 @@ void PixTestTrim::trimTest() {
 
   // -- set trim bits
   int correction = 4;
-  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, 150, -1, -1, 1);
+  int initialCorrectionThresholdMax = 150;
+  vector<TH1*> thr2  = scurveMaps("vcal", "TrimThr2", fParNtrig, 0, initialCorrectionThresholdMax, -1, -1, 1);
+
+  for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    for (int ix = 0; ix < 52; ++ix) {
+      for (int iy = 0; iy < 80; ++iy) {
+        if (thr2[iroc]->GetBinContent(1+ix,1+iy) > initialCorrectionThresholdMax - 2) {
+          thr2[iroc]->SetBinContent(1+ix,1+iy,0);
+        }
+      }
+    }
+  }
+
   if (thr2.size() != rocIds.size()) {
     LOG(logERROR) << "scurve map thr2 size " << thr2.size() << " does not agree with number of enabled ROCs " << rocIds.size();
     fProblem = true;
@@ -601,22 +613,36 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
   int NTRIG(fParNtrig);
 
   if (vcalMin < 0) vcalMin = 0; 
-  if (vcalMin > 255) vcalMax = 255; 
-  
+  if (vcalMin > 255) vcalMax = 255;
+
+  int nTrigAlive = 50;
+  int vcalHigh = fParVcal + 200;
+  if (vcalHigh > 250) {
+    vcalHigh = 250;
+  }
+  fApi->setDAC("Vcal", vcalHigh);
+  vector<TH2D*> effHighVcal = efficiencyMaps("PixelAliveHighVcal", nTrigAlive, FLAG_FORCE_MASKED);
+
   int trim(1); 
   int trimBitsOld[16][52][80];
   for (unsigned int i = 0; i < calOld.size(); ++i) {
     for (int ix = 0; ix < 52; ++ix) {
       for (int iy = 0; iy < 80; ++iy) {
 	trimBitsOld[i][ix][iy] = fTrimBits[i][ix][iy];
-	if (calOld[i]->GetBinContent(ix+1, iy+1) > fParVcal) {
-	  trim = fTrimBits[i][ix][iy] - correction; 
-	} else {
-	  trim = fTrimBits[i][ix][iy] + correction; 
-	}
-	if (trim < 1) trim = 1; 
-	if (trim > 15) trim = 15; 
-	fTrimBits[i][ix][iy] = trim; 
+        if (effHighVcal[i]->GetBinContent(ix+1, iy+1) < nTrigAlive * 0.95) {
+          trim = fTrimBits[i][ix][iy] + correction;
+          if (trim > 15) trim = 15;
+          fTrimBits[i][ix][iy] = trim;
+        } else {
+          if (calOld[i]->GetBinContent(ix + 1, iy + 1) > fParVcal) {
+            trim = fTrimBits[i][ix][iy] - correction;
+          } else {
+            trim = fTrimBits[i][ix][iy] + correction;
+          }
+          if (trim < 1) trim = 1;
+          if (trim > 15) trim = 15;
+          fTrimBits[i][ix][iy] = trim;
+        }
       }
     }
   } 	
@@ -633,13 +659,25 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
   for (unsigned int i = 0; i < calOld.size(); ++i) {
     for (int ix = 0; ix < 52; ++ix) {
       for (int iy = 0; iy < 80; ++iy) {
-	if (TMath::Abs(calOld[i]->GetBinContent(ix+1, iy+1) - fParVcal) < TMath::Abs(calNew[i]->GetBinContent(ix+1, iy+1) - fParVcal)) {
-	  trim = trimBitsOld[i][ix][iy];
-	  calNew[i]->SetBinContent(ix+1, iy+1, calOld[i]->GetBinContent(ix+1, iy+1)); 
-	} else {
-	  trim = fTrimBits[i][ix][iy]; 
-	}
-	fTrimBits[i][ix][iy] = trim; 
+
+        if (effHighVcal[i]->GetBinContent(ix+1, iy+1) < nTrigAlive * 0.95) {
+          calNew[i]->SetBinContent(ix+1, iy+1, 0); // threshold too low!
+        }
+        if (calNew[i]->GetBinContent(ix+1, iy+1) < 5 || calNew[i]->GetBinContent(ix+1, iy+1) < vcalMin + 2 || calNew[i]->GetBinContent(ix+1, iy+1) > vcalMax - 2) {
+          if (trimBitsOld[i][ix][iy] > fTrimBits[i][ix][iy]) {
+            fTrimBits[i][ix][iy] = trimBitsOld[i][ix][iy];
+          }
+          calNew[i]->SetBinContent(ix + 1, iy + 1, 0);
+        } else {
+          if (TMath::Abs(calOld[i]->GetBinContent(ix + 1, iy + 1) - fParVcal) <
+              TMath::Abs(calNew[i]->GetBinContent(ix + 1, iy + 1) - fParVcal)) {
+            trim = trimBitsOld[i][ix][iy];
+            calNew[i]->SetBinContent(ix + 1, iy + 1, calOld[i]->GetBinContent(ix + 1, iy + 1));
+          } else {
+            trim = fTrimBits[i][ix][iy];
+          }
+          fTrimBits[i][ix][iy] = trim;
+        }
       }
     }
   } 	
