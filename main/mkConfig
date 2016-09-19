@@ -19,7 +19,7 @@ use Getopt::Std;
 getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
-my @rocok = ("digv2", "digv21", "digv21respin");
+my @rocok = ("digv2", "digv21", "digv21respin", "proc600");
 my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM09", "TBM09C", "TBM10C");
 
 if ($opt_h) {
@@ -166,14 +166,14 @@ sub setTbms {
 	    $tbms .= "3    pkam_set   0x10\n";
 #	    $tbms .= "4      delays   0x64\n";
 #	    $tbms .= "5       basee   0x2c\n";
-        if ($opt_f) {
-           $tbms .= "4      delays   0xD2\n";
-           $tbms .= "5       basee   0xC8\n";
-        } else {
-	    # -- WE's parameters
-           $tbms .= "4      delays   0x49\n";
-           $tbms .= "5       basee   0x84\n";
-        }
+	    if ($opt_f) {
+		$tbms .= "4      delays   0xD2\n";
+		$tbms .= "5       basee   0xC8\n";
+	    } else {
+		# -- WE's parameters
+		$tbms .= "4      delays   0x49\n";
+		$tbms .= "5       basee   0x84\n";
+	    }
 	    $tbms .= "6 temperature   0x00\n";
 	} else {
 	    $tbms .= "base0   0x81\n";
@@ -182,14 +182,14 @@ sub setTbms {
 	    $tbms .= "base8   0x10\n";
 #	    $tbms .= "basea   0x64\n";
 #	    $tbms .= "basee   0x2c\n";
-        $tbms .= "basec   0x00\n";
-        if ($opt_f) {
-           $tbms .= "basea   0xD2\n";
-           $tbms .= "basee   0xC8\n";
-        } else {
-           $tbms .= "basea   0x49\n";
-           $tbms .= "basee   0x84\n";
-        }
+	    $tbms .= "basec   0x00\n";
+	    if ($opt_f) {
+		$tbms .= "basea   0xD2\n";
+		$tbms .= "basee   0xC8\n";
+	    } else {
+		$tbms .= "basea   0x49\n";
+		$tbms .= "basee   0x84\n";
+	    }
 	}
     } elsif ($tbmtype eq "TBM08A") {
 	if ($oldStyle == 1) {
@@ -215,28 +215,28 @@ sub setTbms {
 	    $tbms .= "basee   0x84\n";
 	}
     } elsif ($tbmtype eq "TBM08B") {
-    if ($oldStyle == 1) {
-       $tbms .= "0       clear   0xF0\n";
-       $tbms .= "1    counters   0x81\n";
-       $tbms .= "2        mode   0xC0\n";
-       $tbms .= "3    pkam_set   0x10\n";
-       #       $tbms .= "4      delays   0x64\n";
-       #       $tbms .= "5       basee   0x2c\n";
-       # -- WE's parameters
-       $tbms .= "4      delays   0x49\n";
-       $tbms .= "5       basee   0x84\n";
-       $tbms .= "6 temperature   0x00\n";
-    } else {
-       $tbms .= "base0   0x81\n";
-       $tbms .= "base2   0xC0\n";
-       $tbms .= "base4   0xF0\n";
-       $tbms .= "base8   0x10\n";
-       #       $tbms .= "basea   0x64\n";
-       #       $tbms .= "basee   0x2c\n";
-       $tbms .= "basea   0x49\n";
-       $tbms .= "basec   0x00\n";
-       $tbms .= "basee   0x84\n";
-    }
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+#           $tbms .= "4      delays   0x64\n";
+#           $tbms .= "5       basee   0x2c\n";
+	    # -- WE's parameters
+	    $tbms .= "4      delays   0x49\n";
+	    $tbms .= "5       basee   0x84\n";
+	    $tbms .= "6 temperature   0x00\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+#           $tbms .= "basea   0x64\n";
+#           $tbms .= "basee   0x2c\n";
+	    $tbms .= "basea   0x49\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x84\n";
+	}
     } elsif ($tbmtype eq "TBM08") {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
@@ -290,34 +290,54 @@ sub setTbms {
 	    $tbms .= "basee   0x34\n";
 	}
     } elsif ($tbmtype eq "TBM10C") {
-    if ($oldStyle == 1) {
-        $tbms .= "0       clear   0xF0\n";
-        $tbms .= "1    counters   0x81\n";
-        $tbms .= "2        mode   0xC0\n";
-        $tbms .= "3    pkam_set   0x10\n";
-        $tbms .= "4      delays   0xe4\n";
-        $tbms .= "5       basee   0x08\n";
-        $tbms .= "6 temperature   0x00\n";
-        $tbms .= "7      nrocs1   0x02\n";
-        $tbms .= "8      nrocs2   0x02\n";
-    } else {
-        $tbms .= "base0   0x81\n";
-        $tbms .= "base2   0xC0\n";
-        $tbms .= "base4   0xF0\n";
-        $tbms .= "base8   0x10\n";
-        $tbms .= "basea   0xe4\n";
-        $tbms .= "basec   0x00\n";
-        $tbms .= "basee   0x08\n";
-        $tbms .= "nrocs1  0x02\n";
-        $tbms .= "nrocs2  0x02\n";
-    }
+	if ($oldStyle == 1) {
+	    $tbms .= "0       clear   0xF0\n";
+	    $tbms .= "1    counters   0x81\n";
+	    $tbms .= "2        mode   0xC0\n";
+	    $tbms .= "3    pkam_set   0x10\n";
+	    $tbms .= "4      delays   0xe4\n";
+	    $tbms .= "5       basee   0x08\n";
+	    $tbms .= "6 temperature   0x00\n";
+	    $tbms .= "7      nrocs1   0x02\n";
+	    $tbms .= "8      nrocs2   0x02\n";
+	} else {
+	    $tbms .= "base0   0x81\n";
+	    $tbms .= "base2   0xC0\n";
+	    $tbms .= "base4   0xF0\n";
+	    $tbms .= "base8   0x10\n";
+	    $tbms .= "basea   0xe4\n";
+	    $tbms .= "basec   0x00\n";
+	    $tbms .= "basee   0x08\n";
+	    $tbms .= "nrocs1  0x02\n";
+	    $tbms .= "nrocs2  0x02\n";
+	}
     }
 }
 
 # ----------------------------------------------------------------------
 sub setDacs {
     $dacs = "";
-    if ($roctype eq "digv21respin") {
+    if ($roctype eq "proc600") {
+	$dacs .= "  1 vdig       6  \n";
+	$dacs .= "  2 vana       74 \n";
+	$dacs .= "  3 vsh        30 \n";
+	$dacs .= "  4 vcomp      12 \n";
+	$dacs .= "  7 vwllpr     150\n";
+	$dacs .= "  9 vwllsh     150\n";
+	$dacs .= " 10 vhlddel    250\n";
+	$dacs .= " 11 vtrim      0  \n";
+	$dacs .= " 12 vthrcomp   85 \n";
+	$dacs .= " 13 vcolorbias 30 \n";
+	$dacs .= " 17 phoffset   185\n";
+	$dacs .= " 19 vcomp_adc  50 \n";
+	$dacs .= " 20 phscale    65\n";
+	$dacs .= " 22 vicolor    100\n";
+	$dacs .= " 25 vcal       200\n";
+	$dacs .= " 26 caldel     133 \n";
+	$dacs .= "253 ctrlreg    0  \n";
+	$dacs .= "254 wbc        100\n";
+	$dacs .= "255 readback   0  \n";
+    } elsif ($roctype eq "digv21respin") {
 	$dacs .= "  1 vdig       6  \n";
 	$dacs .= "  2 vana       81 \n";
 	$dacs .= "  3 vsh        30 \n";
@@ -517,7 +537,10 @@ if ($roctype eq "digv21") {
     print FH "rocType psi46digv2\n";
 } elsif ($roctype eq "digv21respin") {
     print FH "rocType psi46digv21respin\n";
+} elsif ($roctype eq "proc600") {
+    print FH "rocType proc600\n";
 }
+
 
 
 if ($opt_m) {
