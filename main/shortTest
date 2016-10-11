@@ -2,7 +2,7 @@
 
 # ----------------------------------------------------------------------
 # Usage     ../main/shortTest -d directory [-t TBM09C] [-r digv21respin] [-s mtest]
-# ----- 
+# -----
 #
 #           script used for the quick qualification at PSI before trasnfer to ETH
 #
@@ -18,17 +18,17 @@ getopts('d:m:r:s:t:v:');
 my $pxarbase = "..";
 
 # -- define known hardware types
-my @rocok = ("digv2", "digv21", "digv21respin");
-my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C");
+my @rocok = ("digv2", "digv21", "digv21respin", "proc600");
+my @tbmok = ("TBM08", "TBM08B", "TBM08B_FPIX", "TBM08C", "TBM09", "TBM09C", "TBM10C");
 
 # -- set verbosity if not done on command line
 if (!$opt_v) {
-    $opt_v = "DEBUG"; 
+    $opt_v = "DEBUG";
 }
 
 # -- define script to be run
 if (!$opt_s) {
-    $opt_s = "mtest"; 
+    $opt_s = "mtest";
 }
 
 # -- check for directory specification
@@ -65,15 +65,15 @@ if ($opt_t) {
 
 # -- run something many times
 if ($opt_m) {
-    my $cnt = 0; 
-    my $dir = $opt_d."-".$cnt; 
+    my $cnt = 0;
+    my $dir = $opt_d."-".$cnt;
     while (42) {
-	$dir = sprintf("%s-%02d", $opt_d, $cnt); 
+	$dir = sprintf("%s-%02d", $opt_d, $cnt);
 	system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $dir");
 	system("cat $opt_m | $pxarbase/bin/pXar -v $opt_v -d $dir");
 	$cnt += 1;
     }
-    exit(0); 
+    exit(0);
 }
 
 
@@ -81,7 +81,7 @@ if ($opt_m) {
 print "\n";
 print "###### shortTest: create directory with config files\n";
 system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $opt_d");
- 
+
 #print "\n";
 #print "###### shortTest: run essential pretest and Wolfram's timing test\n";
 #system("cat $pxarbase/main/ltest | $pxarbase/bin/pXar -v DEBUG -d $opt_d");
@@ -91,7 +91,13 @@ system("$pxarbase/main/mkConfig -t $tbmtype -r $roctype -m -d $opt_d");
 #system("/bin/mv pxar_timing.log $opt_d");
 #system("cat $opt_d/pxar_timing.log");
 
-print "\n";
-print "###### shortTest: run full test\n";
-system("cat $pxarbase/main/$opt_s | $pxarbase/bin/pXar -v $opt_v -d $opt_d");
-
+if ($roctype eq "proc600") {
+    print "\n";
+    print "###### shortTest: run full test\n";
+    system("cat $pxarbase/main/ptest | $pxarbase/bin/pXar -v $opt_v -d $opt_d");
+    system("cat $pxarbase/main/ntest | $pxarbase/bin/pXar -u -v $opt_v -d $opt_d");
+} else {
+    print "\n";
+    print "###### shortTest: run full test\n";
+    system("cat $pxarbase/main/$opt_s | $pxarbase/bin/pXar -v $opt_v -d $opt_d");
+}
