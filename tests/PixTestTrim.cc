@@ -180,6 +180,20 @@ void PixTestTrim::trimTest() {
     rocVthrComp.insert(make_pair(rocIds[iroc], minVthrComp[iroc]));
   }
 
+  //Do PixelAliveMap creating a "blacklist" of defective pixels
+  fApi->setDAC("vcal", 200);
+  int ntrigblacklist = 10;
+
+  fApi->_dut->testAllPixels(true);
+  fApi->_dut->maskAllPixels(false);
+  maskPixels();
+
+  vector<TH2D*> test2 = efficiencyMaps("PixelAlive", ntrigblacklist, FLAG_FORCE_MASKED);
+  for(int i=0; i<test2.size();i++){
+    fHistList.push_back(test2[i]);
+    fHistOptions.insert(make_pair(test2[i], "colz"));
+  }
+
   // -- determine pixel with largest VCAL threshold
   print("Vcal thr map (pixel with maximum Vcal thr)");
   vector<TH1*> thr1 = scurveMaps("vcal", "TrimThr1", NTRIG, 10, 160, -1, -1, 1);
@@ -220,7 +234,7 @@ void PixTestTrim::trimTest() {
     for (int ic = 0; ic < h2->GetNbinsX(); ++ic) {
       for (int ir = 0; ir < h2->GetNbinsY(); ++ir) {
 	vcal = h2->GetBinContent(ic+1, ir+1);
-	if (vcal > vcalMin && vcal > maxVcal && vcal < vcalMax) {
+	if (vcal > vcalMin && vcal > maxVcal && vcal < vcalMax && test2[i]->GetBinContent(ic+1,ir+1)==ntrigblacklist) {
 	  maxVcal = vcal;
 	  ix = ic;
 	  iy = ir;
