@@ -282,6 +282,7 @@ class CTestboard {
   void mod_Addr(uint8_t hub);
   void mod_Addr(uint8_t hub0, uint8_t hub1);
   void tbm_Set(uint8_t reg, uint8_t value);
+  void tbm_SelectRDA(uint8_t channel);
   bool tbm_Get(uint8_t reg, uint8_t &value);
   bool tbm_GetRaw(uint8_t reg, uint32_t &value);
 

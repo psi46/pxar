@@ -558,6 +558,10 @@ void CTestboard::tbm_Set(uint8_t reg, uint8_t val) {
   }
 }
 
+void tbm_SelectRDA(uint8_t) {
+  LOG(pxar::logDEBUGRPC) << "called.";
+}
+
 bool CTestboard::tbm_Get(uint8_t, uint8_t &) {
   LOG(pxar::logDEBUGRPC) << "called.";
   return true;
