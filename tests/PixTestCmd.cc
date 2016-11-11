@@ -3906,7 +3906,7 @@ int CmdProc::tb(Keyword kw){
     
     if( kw.match("tbmtest","rda")){
 		uint8_t value;
-		for(int core=0; core<2; core++){
+		for(size_t core=0; core<fApi->_dut->getNEnabledTbms(); core++){
 			int stat = tbmget("base0", 1<<core, value);
 			uint8_t addr= (core==0) ? 0xe1 : 0xf1;
 			string name= (core==0) ? "A" : "B";

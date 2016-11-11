@@ -2438,12 +2438,12 @@ int PixTest::tbmSet(string name, uint8_t cores, int value, uint8_t valueMask){
                   << " has bits outside mask ("<<hex<< (int) valueMask << ")";
   }
 
-  uint8_t coreMask = 3;
-  if (cores==0){coreMask=1;}  else if(cores==1){ coreMask=2;}
+  uint8_t coreMask = 15;
+  if (cores==0){coreMask=5;}  else if(cores==1){ coreMask=10;}
 
   int err=1;
   //out << "tbmset" << name << " " <<  (int) coreMask << " " << value << "  " << bitset<8>(valueMask) << "\n";
-  for(size_t core=0; core<2; core++){
+  for(size_t core=0; core<fApi->_dut->getNEnabledTbms(); core++){
     if ( ((coreMask >> core) & 1) == 1 ){
       vector< pair<string,uint8_t> > regs = fApi->_dut->getTbmDACs(core);
       if (regs.size()==0) {
