@@ -94,7 +94,6 @@ void PixTestFullTest::doTest() {
   suite.push_back("trim"); 
   suite.push_back("phoptimization"); 
   suite.push_back("gainpedestal"); 
-  
 
   PixTest *t(0); 
 
