@@ -11,41 +11,41 @@ using namespace pxar;
 
 // ----------------------------------------------------------------------
 PixSetup::PixSetup(pxarCore *a, PixTestParameters *tp, ConfigParameters *cp) {
-  fApi               = a; 
-  fPixTestParameters = tp; 
-  fConfigParameters  = cp; 
+  fApi               = a;
+  fPixTestParameters = tp;
+  fConfigParameters  = cp;
   fPixMonitor        = new PixMonitor(this);
-  fDoAnalysisOnly    = false; 
+  fDoAnalysisOnly    = false;
   fDoUpdateRootFile  = false;
   fGuiActive         = false;
-  init(); 
+  init();
 }
 
 
 // ----------------------------------------------------------------------
 PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp) {
-  fPixTestParameters = tp; 
-  fConfigParameters  = cp; 
-  fDoAnalysisOnly    = false; 
+  fPixTestParameters = tp;
+  fConfigParameters  = cp;
+  fDoAnalysisOnly    = false;
   fDoUpdateRootFile  = false;
   fGuiActive         = false;
-  init(); 
+  init();
 
-  vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs(); 
-  vector<vector<pair<string,uint8_t> > >       tbmDACs = fConfigParameters->getTbmDacs(); 
+  vector<vector<pair<string,uint8_t> > >       rocDACs = fConfigParameters->getRocDacs();
+  vector<vector<pair<string,uint8_t> > >       tbmDACs = fConfigParameters->getTbmDacs();
   vector<vector<pixelConfig> >                 rocPixels = fConfigParameters->getRocPixelConfig();
-  vector<pair<string,uint8_t> >                sig_delays = fConfigParameters->getTbSigDelays(); 
+  vector<pair<string,uint8_t> >                sig_delays = fConfigParameters->getTbSigDelays();
   vector<pair<string, double> >                power_settings = fConfigParameters->getTbPowerSettings();
   vector<pair<std::string, uint8_t> >             pg_setup = fConfigParameters->getTbPgSettings();
 
   fApi = new pxar::pxarCore("*", verbosity);
   fApi->initTestboard(sig_delays, power_settings, pg_setup);
   fApi->initDUT(fConfigParameters->getHubId(),
-		fConfigParameters->getTbmType(), tbmDACs, 
-		fConfigParameters->getRocType(), rocDACs, 
+		fConfigParameters->getTbmType(), tbmDACs,
+		fConfigParameters->getRocType(), rocDACs,
 		rocPixels);
   LOG(logINFO) << "DUT info: ";
-  fApi->_dut->info(); 
+  fApi->_dut->info();
 
   fPixMonitor = new PixMonitor(this);
 
@@ -54,12 +54,12 @@ PixSetup::PixSetup(string verbosity, PixTestParameters *tp, ConfigParameters *cp
 
 // ----------------------------------------------------------------------
 PixSetup::PixSetup() {
-  fApi               = 0; 
-  fPixTestParameters = 0; 
-  fConfigParameters  = 0; 
+  fApi               = 0;
+  fPixTestParameters = 0;
+  fConfigParameters  = 0;
   fPixMonitor        = 0;
-  fDoAnalysisOnly    = false; 
-  init(); 
+  fDoAnalysisOnly    = false;
+  init();
   LOG(logDEBUG) << "PixSetup ctor()";
 }
 
@@ -93,14 +93,14 @@ void PixSetup::init() {
     LOG(logERROR) << "not enough memory; go invest money into a larger computer";
     exit(1);
   } else {
-    //     shist256 *p = (shist256*)fPxarMemory; 
-    //     int cnt(0); 
+    //     shist256 *p = (shist256*)fPxarMemory;
+    //     int cnt(0);
     //     while (p < fPxarMemHi) {
     //       if (cnt%100 == 0) cout << p << ": " << p->get(0) << ", " << (p - (shist256*)fPxarMemory) << endl;
     //       p += 1;
     //       ++cnt;
     //     }
-    //     p -= 1; 
+    //     p -= 1;
     //     cout << p << ": " << p->get(0) << ", " << (p - (shist256*)fPxarMemory) << endl;
   }
   LOG(logDEBUG) << "PixSetup init done;  getCurrentRSS() = " << rss.getCurrentRSS() << " fPxarMemory = " << fPxarMemory;
@@ -120,17 +120,26 @@ void PixSetup::writeAllFiles() {
 
 // ----------------------------------------------------------------------
 void PixSetup::writeDacParameterFiles() {
-  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs();
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    fConfigParameters->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc)); 
+    fConfigParameters->writeDacParameterFile(rocs[iroc], fApi->_dut->getDACs(iroc));
   }
 }
 
 // ----------------------------------------------------------------------
 void PixSetup::writeTrimFiles() {
-  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs(); 
+  int active = fApi->_dut->getEnabledPixels().size();
+  if (0 == active) {
+    LOG(logINFO) << "enbling all pixels for trim file writing";
+    fApi->_dut->testAllPixels(true);
+  }
+  vector<uint8_t> rocs = fApi->_dut->getEnabledRocIDs();
   for (unsigned int iroc = 0; iroc < rocs.size(); ++iroc) {
-    fConfigParameters->writeTrimFile(rocs[iroc], fApi->_dut->getEnabledPixels(rocs[iroc])); 
+    fConfigParameters->writeTrimFile(rocs[iroc], fApi->_dut->getEnabledPixels(rocs[iroc]));
+  }
+  if (0 == active) {
+    LOG(logINFO) << "disabling (again) all pixels for trim file writing";
+    fApi->_dut->testAllPixels(false);
   }
 }
 
