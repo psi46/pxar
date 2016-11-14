@@ -634,6 +634,16 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
   if (vcalHigh > 250) {
     vcalHigh = 250;
   }
+
+  // get current caldel values and set larger delays for high vcal alive-map
+  vector<uint8_t> caldel;
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
+  for(unsigned int iroc=0; iroc<rocIds.size(); ++iroc){
+    uint8_t value = fApi->_dut->getDAC(rocIds[iroc], "Caldel");
+    caldel.push_back( value );
+    fApi->setDAC("Caldel",caldel[iroc]+20, rocIds[iroc]);
+  }
+  
   fApi->setDAC("Vcal", vcalHigh);
   vector<TH2D*> effHighVcal = efficiencyMaps("PixelAliveHighVcal", nTrigAlive, FLAG_FORCE_MASKED);
 
@@ -661,6 +671,11 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
     }
   }
 
+  // restore original caldel
+  for(unsigned int iroc=0; iroc<rocIds.size(); ++iroc){
+       fApi->setDAC("Caldel",caldel[iroc], rocIds[iroc]);
+  } 
+  
   setTrimBits();
   vector<TH1*> calNew = scurveMaps("vcal", name, NTRIG, vcalMin, vcalMax, -1, -1, 1);
   if (calNew.size() != calOld.size()) {
@@ -678,8 +693,8 @@ vector<TH1*> PixTestTrim::trimStep(string name, int correction, vector<TH1*> cal
           calNew[i]->SetBinContent(ix+1, iy+1, 0); // threshold too low!
         }
         if (calNew[i]->GetBinContent(ix+1, iy+1) < 5
-	    || calNew[i]->GetBinContent(ix+1, iy+1) < vcalMin + 2
-	    || calNew[i]->GetBinContent(ix+1, iy+1) > vcalMax - 2) {
+      || calNew[i]->GetBinContent(ix+1, iy+1) < vcalMin + 2
+      || calNew[i]->GetBinContent(ix+1, iy+1) > vcalMax - 2) {
           if (trimBitsOld[i][ix][iy] > fTrimBits[i][ix][iy]) {
             fTrimBits[i][ix][iy] = trimBitsOld[i][ix][iy];
           }
