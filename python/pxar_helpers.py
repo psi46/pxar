@@ -267,7 +267,11 @@ def PxarStartup(directory, verbosity):
         print "WARNING: could not init DTB -- possible firmware mismatch."
         print "Please check if a new FW version is available"
         exit
-    api.initDUT(map(int, shlex.split(config.get("hubId",31))),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
+
+    hubid_splitter=shlex.shlex(config.get("hubId",31))
+    hubid_splitter.whitespace+=','
+    hubids=list(hubid_splitter)
+    api.initDUT(map(int, hubids),config.get("tbmType","tbm08"),tbmDACs,config.get("rocType"),rocDacs,rocPixels, rocI2C)
 
     api.testAllPixels(True)
     print "Now enabled all pixels"
