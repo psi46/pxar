@@ -1632,17 +1632,18 @@ Event hal::daqEvent() {
 	try { current_Event += *Eventpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logCRITICAL) << "Found data in channel" << (ch > 1 ? std::string("s 0-" + (ch-1)) : std::string(" 0")) << " but not in channel " << ch << "!";
-	  throw DataChannelMismatch("No event available in channel " + ch);
+	  //throw DataChannelMismatch("No event available in channel " + ch);
 	}
       }
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }
     }
   }
 
+ 
   // Check for the channels all reporting the same event number:
   if((flags & FLAG_DISABLE_EVENTID_CHECK) == 0 && !equalElements(current_Event.triggerCounts())) {
     LOG(logERROR) << "Channels report mismatching event numbers: " << listVector(current_Event.triggerCounts());
-    throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
+    //throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
   }
 
   return current_Event;
@@ -1690,11 +1691,13 @@ std::vector<Event> hal::daqAllEvents() {
       break;
     }
     else {
+ 
       // Check for the channels all reporting the same event number:
       if((flags & FLAG_DISABLE_EVENTID_CHECK) == 0 && !equalElements(current_Event.triggerCounts())) {
 	LOG(logERROR) << "Channels report mismatching event numbers: " << listVector(current_Event.triggerCounts());
-	throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
+	//throw DataEventNumberMismatch("Channels report mismatching event numbers: " + listVector(current_Event.triggerCounts()));
       }
+
       // Store the event
       evt.push_back(current_Event);
     }
@@ -1724,7 +1727,7 @@ rawEvent hal::daqRawEvent() {
 	try { current_Event += *rawpump.Get(); }
 	catch (dsBufferEmpty &) {
 	  LOG(logCRITICAL) << "Found data in channel" << (ch > 1 ? std::string("s 0-" + (ch-1)) : std::string(" 0")) << " but not in channel " << ch << "!";
-	  throw DataChannelMismatch("No event available in channel " + ch);
+	  //throw DataChannelMismatch("No event available in channel " + ch);
 	}
       }
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return current_Event; }

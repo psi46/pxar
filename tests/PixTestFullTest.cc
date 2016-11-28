@@ -88,12 +88,12 @@ void PixTestFullTest::doTest() {
 
   vector<string> suite;
   suite.push_back("alive"); 
+  suite.push_back("readback");
   suite.push_back("bb"); 
   suite.push_back("scurves");
   suite.push_back("trim"); 
   suite.push_back("phoptimization"); 
   suite.push_back("gainpedestal"); 
-  suite.push_back("readback");
 
   PixTest *t(0); 
 
