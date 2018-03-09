@@ -168,7 +168,7 @@ namespace pxar {
       // Outdated name, since temperature register has moved to 0x0E
       // name kept for legacy reasons so old configuration files still work:
       _registers["temperature"]   = dacConfig(TBM_REG_AUTORESET,255,TBM_REG,false);
-      
+
       _registers["cores"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG,false);
       _registers["basee"]         = dacConfig(TBM_REG_CORES_A_B,255,TBM_REG);
 
@@ -255,6 +255,7 @@ namespace pxar {
 
       // DAC only present in the PROC600, same address as old VIBias_Bus:
       _registers["vcolorbias"] = dacConfig(ROC_DAC_VIBias_Bus,255,ROC_REG);
+      _registers["vsh600"]     = dacConfig(ROC_DAC_Vsh,15,ROC_REG);
 
       // DACs only relevant for analog chips:
       _registers["vnpix"]      = dacConfig(ROC_DAC_Vnpix,255,ROC_REG);
@@ -335,7 +336,7 @@ namespace pxar {
     void operator=(DeviceDictionary const&); // Don't implement
   };
 
-  
+
   /** Map for DTB analog & digital probe signal name lookup
    *  All signal names are lower case, check is case-insensitive.
    *  Singleton class, only one object of this floating around.
@@ -447,7 +448,7 @@ namespace pxar {
       _signals["adcs"]       = probeConfig(PROBE_ADC_S,PROBE_NONE);
 
       _signals["ds_gate"]      = probeConfig(PROBE_DS_GATE,PROBE_NONE);
-      
+
       _signals["deser_frameerror"] = probeConfig(PROBE_FRAME_ERROR,PROBE_NONE);
       _signals["deser_codeerror"]  = probeConfig(PROBE_CODE_ERROR,PROBE_NONE);
       _signals["deser_error"]      = probeConfig(PROBE_ERROR,PROBE_NONE);
@@ -528,7 +529,7 @@ namespace pxar {
       _signals["none"]      = patternConfig(PATTERN_NONE,PATTERN_NONE);
       _signals["empty"]     = patternConfig(PATTERN_NONE,PATTERN_NONE,false);
       _signals["delay"]     = patternConfig(PATTERN_NONE,PATTERN_NONE,false);
-      
+
       // Token:
       _signals["pg_tok"]    = patternConfig(PG_TOK,PATTERN_ERR);
       _signals["tok"]       = patternConfig(PG_TOK,PATTERN_ERR,false);
@@ -653,7 +654,7 @@ namespace pxar {
       _signals["random_dir"]       = triggerConfig(TRG_SEL_GEN_DIR,false);
       _signals["periodic"]         = triggerConfig(TRG_SEL_GEN,true);
       _signals["periodic_dir"]     = triggerConfig(TRG_SEL_GEN_DIR,false);
-      
+
       // Pattern Generator
       _signals["pg"]               = triggerConfig(TRG_SEL_PG,true);
       _signals["patterngenerator"] = triggerConfig(TRG_SEL_PG,true,false);
