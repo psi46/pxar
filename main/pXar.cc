@@ -2,6 +2,7 @@
 #define PIX_H
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <fstream>
 #include <sys/stat.h>
@@ -281,6 +282,35 @@ int main(int argc, char *argv[]){
 	subtest = input.substr(m0+1);
 	input = input.substr(0, m0);
 	cout << "subtest: ->" << subtest << "<- input: ->" << input << "<-" << endl;
+      }
+
+      if (!input.compare("setdac")) {
+	istringstream iss(parameters);
+	vector<string> tokens;
+	do {
+	  string subs;
+	  iss >> subs;
+	  tokens.push_back(subs);
+	} while (iss);
+	tokens.pop_back();
+	int udac = atoi(tokens[1].c_str());
+	if (udac < 0 || udac > 255) {
+	  LOG(logERROR) << "  DAC value " << udac << " outside of 8bit range; ignoring";
+	  continue;
+	}
+	if (3 == tokens.size()) {
+	  size_t iroc = atoi(tokens[2].c_str());
+	  if (iroc > api->_dut->getNRocs()) {
+	    LOG(logERROR) << "  ROC index " << iroc << " invalid; ignoring";
+	    continue;
+	  }
+	  LOG(logINFO) << "  setDAC(" << tokens[0] << ", " << udac << ", " << iroc << ")";
+	  api->setDAC(tokens[0], udac, iroc);
+	} else {
+	  LOG(logINFO) << "  setDAC(" << tokens[0] << ", " << udac << ")";
+	  api->setDAC(tokens[0], udac);
+	}
+	continue;
       }
 
       if (!parameters.compare("nada")) {
