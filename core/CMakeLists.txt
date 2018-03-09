@@ -27,7 +27,7 @@ IF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
 # We want to build a real interface, so add RPC and the HAL:
 ELSE(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
   INCLUDE_DIRECTORIES(rpc usb ethernet)
-  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} 
+  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES}
     # RPC
     "rpc/rpc_calls.cpp"
     "rpc/rpc.cpp"
@@ -37,7 +37,7 @@ ENDIF(NOT INTERFACE_USB AND NOT INTERFACE_ETH)
 
 IF(INTERFACE_ETH)
   # add Ethernet source files
-  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES} 
+  SET(LIB_SOURCE_FILES ${LIB_SOURCE_FILES}
     "ethernet/EthernetInterface.cc"
     )
   MESSAGE(STATUS "Building DTB Ethernet interface.")
@@ -90,6 +90,7 @@ IF(BUILD_python)
       HINTS ${_numpy_include} )
   endif()
   include_directories( ${NUMPY_INCLUDE_DIR} )
+  include_directories( $ENV{PYTHON_INCLUDE_DIR} )
 
   set( cxx_pyx_files
     cython/PyPxarCore.pyx
