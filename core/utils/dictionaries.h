@@ -329,6 +329,7 @@ namespace pxar {
       _devices["tbm09"]         = TBM_09;
       _devices["tbm09c"]        = TBM_09C;
       _devices["tbm10c"]        = TBM_10C;
+      _devices["tbm10d"]        = TBM_10D;
     }
 
     std::map<std::string, uint8_t> _devices;

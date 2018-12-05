@@ -1556,8 +1556,9 @@ int CmdProc::find_timing(int npass){
     // npass is the minimal number of passes
     
     string tbmtype = fApi->_dut->getTbmType();
-    if (! ((tbmtype=="tbm09c")||(tbmtype=="tbm08c")||(tbmtype=="tbm10c")) ){
-        out << "This only works for TBM08c/09c/10c! \n";
+    if (! ((tbmtype=="tbm09c")||(tbmtype=="tbm08c")||(tbmtype=="tbm10c")
+	    || (tbmtype == "tbm08d")  || (tbmtype == "tbm10d")) ){
+        out << "This only works for TBM08c/08d/09c/10c/10d! \n";
     }
 
     uint8_t register_0=0;

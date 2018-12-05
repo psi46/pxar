@@ -184,7 +184,8 @@ void PixTestPretest::doTest() {
   PixTest::update();
 
   string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
-  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c") || (tbmtype == "tbm10c")) {
+  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c") || (tbmtype == "tbm10c")
+       || (tbmtype == "tbm08d")  || (tbmtype == "tbm10d") ) {
     findTiming();
   } else if (tbmtype == "tbm08b" || tbmtype == "tbm08a") {
     setTimings();

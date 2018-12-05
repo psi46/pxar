@@ -20,7 +20,7 @@ getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
 my @rocok = ("digv2", "digv21", "digv21respin", "proc600");
-my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM09", "TBM09C", "TBM10C");
+my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM08D","TBM09", "TBM09C", "TBM10C", "TBM10D");
 
 if ($opt_h) {
     &printHelp;
@@ -87,7 +87,7 @@ my $ntbms = 0;
 if ($opt_m) {
     $nrocs = 16;
     $ntbms = 1;
-    if ($tbmtype eq "TBM10C") {
+    if (($tbmtype eq "TBM10C") or ($tbmtype eq "TBM10D")) {
         $ntbms = 2;
     }
 }
@@ -158,7 +158,7 @@ exit(0);
 sub setTbms {
     $tbms = "";
     $oldStyle = 0;
-    if ($tbmtype eq "TBM08C") {
+    if ( ($tbmtype eq "TBM08C") or ($tbmtype eq "TBM08D") ) {
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
 	    $tbms .= "1    counters   0x81\n";
@@ -289,7 +289,7 @@ sub setTbms {
 	    $tbms .= "basec   0x00\n";
 	    $tbms .= "basee   0x34\n";
 	}
-    } elsif ($tbmtype eq "TBM10C") {
+    } elsif ( ($tbmtype eq "TBM10C") or ($tbmtype eq "TBM10D") ){
 	if ($oldStyle == 1) {
 	    $tbms .= "0       clear   0xF0\n";
 	    $tbms .= "1    counters   0x81\n";
@@ -514,7 +514,7 @@ nRocs $nrocs
 nTbms $ntbms
 EOF
     if ($opt_m) {
-        if ($tbmtype eq "TBM10C") {
+        if (($tbmtype eq "TBM10C") or ($tbmtype eq "TBM10D")) {
         print FH "hubId 31, 30\n";
         } else {
         print FH "hubId 31\n";
@@ -549,6 +549,9 @@ if ($opt_m) {
     } elsif ($tbmtype eq "TBM08C") {
 	$VD = "2.800";
 	print FH "tbmType tbm08c\n";
+    } elsif ($tbmtype eq "TBM08D") {
+	$VD = "2.800";
+	print FH "tbmType tbm08d\n";
     } elsif ($tbmtype eq "TBM08A") {
 	$VD = "2.800";
 	print FH "tbmType tbm08a\n";
@@ -564,7 +567,10 @@ if ($opt_m) {
     } elsif ($tbmtype eq "TBM10C") {
     $VD = "2.900";
     print FH "tbmType tbm10c\n";
-    }
+    } elsif ($tbmtype eq "TBM10D") {
+    $VD = "2.900";
+    print FH "tbmType tbm10d\n";
+   }
     else {
 	print FH "tbmType tbm08\n";
     }

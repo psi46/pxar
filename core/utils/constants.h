@@ -27,6 +27,8 @@ namespace pxar {
 #define TBM_09             0x26
 #define TBM_09C            0x27
 #define TBM_10C            0x28
+#define TBM_08D            0x29
+#define TBM_10D            0x30
 
 
 // --- TBM Register -----------------------------------------------------------

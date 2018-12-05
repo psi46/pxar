@@ -1543,7 +1543,7 @@ void hal::daqStart(uint16_t flags, uint8_t deser160phase, uint32_t buffersize) {
 				<< static_cast<int>(m_tokenchains.at(i))
 				<< " offset " << static_cast<int>(rocid_offset) << " buffer " << allocated_buffer;
     // Initialize the data source, set tokenchain length to zero if no token pass is expected:
-    m_src.at(i) = dtbSource(_testboard,( m_tbmtype == TBM_10C && m_roccount == 16 ) ? ((i + 6) % 8) : i,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
+    m_src.at(i) = dtbSource(_testboard,( (m_tbmtype == TBM_10C || m_tbmtype == TBM_10D) && m_roccount == 16 ) ? ((i + 6) % 8) : i,m_tokenchains.at(i),rocid_offset,m_tbmtype,m_roctype,true,flags);
     m_src.at(i) >> m_splitter.at(i);
     _testboard->uDelay(100);
     // Increment the ROC id offset by the amount of ROCs expected:
