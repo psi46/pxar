@@ -529,9 +529,12 @@ class CmdProc {
   int bursttest(int ntrig, int trigsep=6, int nburst=1, int caltrig=0, int nloop=1);
   int adctest(const string s);
   int tbmread(uint8_t regId, int hubid);
+  int tbmread(uint8_t regId, int hubid, bool scan, unsigned int & delay);
+
   string tbmprint(uint8_t regId, int hubid);
   int tbmreadback();
-  
+  int tbmreadstack();
+
   int sequence(int seq);
   int pg_sequence(int seq, int length=0);
   int pg_restore();
