@@ -533,7 +533,9 @@ class CmdProc {
 
   string tbmprint(uint8_t regId, int hubid);
   int tbmreadback();
-  int tbmreadstack();
+  vector<vector<int> > tbmreadstack();
+  int printStack( const vector<vector<int> > stackdata, stringstream & outstream);
+  int monitorStack(int period_in_s, int cycles=1000, int run_number=0);
 
   int sequence(int seq);
   int pg_sequence(int seq, int length=0);

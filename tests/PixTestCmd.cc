@@ -2720,8 +2720,9 @@ int CmdProc::tbmreadback() {
 }
 
 
-int CmdProc::tbmreadstack() {
-  /*  read the stack of all tbm cores and print the result*/
+
+vector<vector<int>> CmdProc::tbmreadstack() {
+  /*  read the stack of all tbm cores */
     
     // save the content of the base+0 registers
     uint8_t reg0[4];
@@ -2729,106 +2730,185 @@ int CmdProc::tbmreadstack() {
       tbmget("base0", 1<<core, reg0[core]);
     }
 
+    vector<vector<int>> data;
     for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
         if (fnTbmCore > 2) fApi->selectTbmRDA(i); // relevant for L1 only
 
-	stringstream s;
         int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
-        cout << "TBM " << i << ", hubid: " << hubid << "\n";
-        cout << "               core A      core B \n";
-        
-	// get the delay setting by reading Base+1
-        unsigned int delay=0;
-	int reg1_a = tbmread(0xe1, hubid, true, delay);
-	if(verbose) { cout << "A delay " << delay << endl; }
-	int reg1_b = tbmread(0xf1, hubid, true, delay);
-	if( verbose) {cout << "B delay " << delay << endl;}
-		
-	s << "Base + 1/0 ";
-	if (reg1_a>=0){
-	    s<< "      0x" << (hex) << setfill('0') << setw(2) << reg1_a << setfill(' ');
-	}else{
-	    s<< "       err";
-	}	
-	s << "  ";
-	if (reg1_b>=0){
-	    s<< "      0x" << (hex) << setfill('0') << setw(2) << reg1_b << setfill(' ');
-	}else{
-	    s<< "       err";
-	}	
-	out << s.str() << "\n";
-	cout << s.str() << endl;
-		
-	// stack readback mode :  Pause Readout, Ignore Incoming Triggers, Stack Readback Mode.
-	tbmset("base0", ALLTBMS, 0xB8);
+        	
+		// stack readback mode :  Pause Readout, Ignore Incoming Triggers, Stack Readback Mode.
+		tbmset("base0", ALLTBMS, 0xB8);
 
-	fApi->selectTbmRDA(i);  // for some reason needed here again
-	// read the stack count readback register (Base+3)
-	int reg3_a = tbmread(0xe3, hubid, false, delay);
-	int reg3_b = tbmread(0xf3, hubid, false, delay);
-		
-	s.str("");
-	s << "count";
-	if (reg3_a>=0){
-	    s<< "      "  << dec << setw(4) << (reg3_a & 0x3F) << setfill(' ');
-	}else{
-	    s<< "       err";
-	}	
-	s << "  ";
-	if (reg3_b>=0){
-	    s<< "      "  << dec << setw(4) << (reg3_b & 0x3F) << setfill(' ');
-	}else{
-	    s<< "       err";
-	}	
-	cout << s.str() << endl;
-	out << s.str() << "\n";
-	flush(out);
-		
-	// read the stack data base+7 and base+5
-	for(unsigned int k = 0; k<32; k++){
-	    int stat_a = tbmread(0xe7, hubid, false, delay);
-	    int stat_b = tbmread(0xf7, hubid, false, delay);
-	    int evt_a  = tbmread(0xe5, hubid, false, delay);
-	    int evt_b  = tbmread(0xf5, hubid, false, delay);
-			
-	    s.str("");
-	    s << dec << setw(2) << k <<")  ";
-	    if (stat_a >= 0){
-	        s<< " " << bitset<8>(stat_a);
-	    }else{
-		s<< " err     ";
-	    }	
-	    if (evt_a >= 0){
-	        s<< " "  << dec << setw(4) << evt_a << setfill(' ');
-	    }else{
-	        s<< " err";
-	    }	
-	    s << " ";
+		// select the proper RDA on the adapter (L1 only)
+		if (fnTbmCore > 2) fApi->selectTbmRDA(i);  // for some reason needed here again
 
-	    if (stat_b >= 0){
-	        s<< " " << bitset<8>(stat_b);
-	    }else{
-	        s<< "    err   ";
-	    }	
+		// stack data vectors, 32*stack + count
+		vector<int> stack_a(33,-1), stack_b(33,-1);
+
+		// read the stack count readback register (Base+3)
+		unsigned int delay = 0;
+		stack_a[32] = tbmread(0xe3, hubid, true,  delay);
+		stack_b[32] = tbmread(0xf3, hubid, false, delay);
+		
+		if (fnTbmCore > 2) fApi->selectTbmRDA(i);
+		// read the stack data base+7 and base+5
+		for(unsigned int k = 0; k<32; k++){
+			int stat_a = tbmread(0xe7, hubid, false, delay);
+			int stat_b = tbmread(0xf7, hubid, false, delay);
+			int evt_a  = tbmread(0xe5, hubid, false, delay);
+			int evt_b  = tbmread(0xf5, hubid, false, delay);
+					
+			if( (stat_a >= 0) && (evt_a >=0 )){
+				stack_a[k] = ( (stat_a << 8) + evt_a );
+			}
 			
-	    if (evt_b >= 0){
-	        s<< " "  << dec << setw(4) << evt_b << setfill(' ');
-	    }else{
-	        s<< " err";
-	    }	
-	    out << s.str() << "\n";
-	    flush(out);
-	    cout << s.str() << endl;
+			if( (stat_b >= 0) && (evt_b >=0 )){
+				stack_b[k] = ( (stat_b << 8) + evt_b );
+			}
+		}
+		
+		data.push_back(stack_a);
+		data.push_back(stack_b);
+
 	}
 
 	// revert base+0 registers
 	for(unsigned int core=0; core<fnTbmCore; core++){
 	  tbmset("base0", 1<<core, reg0[core]);
 	}
+
+    return data;
+}
+
+
+int CmdProc::printStack( const vector<vector<int> > stackdata, stringstream & outstream){
+	
+	unsigned int ncore = stackdata.size();
+	stringstream s;
+
+	
+	s.str("");
+	s << "core ";
+	for(unsigned int n = 0; n< ncore; n++){
+		if ( (n % 2) == 0) {
+			s << "            " << dec << int(n/2) << " A    ";
+		}else{
+			s << "       " << dec << int(n/2) << " B      ";
+		}
+	}
+	//out << s.str() << "\n";
+	outstream << s.str() << "\n";
+	
+	s.str("");
+	s << "count";
+	for(unsigned int n = 0; n< ncore; n++){
+		if ( (n%2) == 0 ){ s << "    ";}
+		if (stackdata[n][32] >= 0) {
+			s<< dec << setw(15) << (stackdata[n][32] & 0x3F) << setfill(' ');
+		}else{
+			s<< "       err";
+		}
+	}
+	//out << s.str() << "\n";
+	outstream << s.str() << "\n";
+	
+	for( unsigned int k=0; k<32; k++){
+		s.str("");
+		s << dec << setw(4) << k << ")";
+		for (unsigned int n=0; n < ncore; n++){
+			if ( ( n%2 ) == 0) {s << "    ";}
+			int word = stackdata[n][k];
+			if (word >= 0){
+				s<< "   " << bitset<8>( (word >> 8) & 0xFF);
+				s<< dec << setw(4) << (word & 0xFF) << setfill(' ');
+			}else{
+				s<< "        err       ";
+			}
+		}	
+		//out << s.str() << "\n";
+		outstream << s.str() << "\n";
+	}
+	return 0;
+}
+
+
+
+int CmdProc::monitorStack(int period_in_s, int number_of_periods, int run_number){
+	vector<vector<int> > stackdata = tbmreadstack();
+    printStack(stackdata, out);
+    flush(out);
+    
+    timer t0;
+    
+    ofstream fout;
+    if (run_number >  0){
+ 		stringstream out_filename;
+		out_filename << "seu_run_" << setw(6) << setfill('0') << run_number << setfill(' ') << ".log";
+		fout.open( out_filename.str());
+		if(fout){
+			fout << "seu test, initial stack\n";
+			stringstream s;
+			printStack(stackdata, s);
+			fout << s.str() << endl;
+		}else{
+			cerr << "unable to open " << out_filename << endl;
+		}
+	}
+	    
+    int n = 0;
+    int ndiff_total = 0;
+    bool aborted = false;
+    while ((n< number_of_periods) && (not aborted) ){
+        n++;
+        timer t;
+		while( (t.get() < (1000.*period_in_s)) && (not aborted)) {
+			pxar::mDelay( 100 ); 
+			aborted = stopped();
+        }
+        vector<vector<int> > newdata = tbmreadstack();
+        
+        // compare
+		unsigned int ncore = stackdata.size();
+		int ndiff = 0;
+		for (unsigned int n=0; n < ncore; n++){
+			for( unsigned int k=0; k<32; k++){
+				if ((stackdata[n][k]>=0) && (newdata[n][k]>=0) && (!(stackdata[n][k] == newdata[n][k]))){
+					// count bit flips
+					int wxor = stackdata[n][k] ^ newdata[n][k];
+					for(unsigned int b=0; b<16; b++){
+						if (((wxor >> b) & 1) > 0){
+							ndiff ++;
+						}
+					}
+				}
+			}
+		}
+		
+		out << "loop nr " << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;
+		if (fout) {fout << "loop nr " << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;}
+		if (ndiff > 0){
+			ndiff_total += ndiff;
+			printStack(newdata, out);
+			if (fout){
+				stringstream s;
+				printStack(newdata, s);
+				fout << s.str() << endl;
+			}
+			stackdata = newdata;
+		}
+        flush(out);
+	}
+ 
+ 
+	out << "total number of differences " << ndiff_total << " in " << 0.001*t0.get() << " seconds\n";
+   if(fout){
+		fout << "total number of differences " << ndiff_total << " in " << 0.001*t0.get() << " seconds\n";
+		fout.close();
     }
 
-    return 0;
+	return 0;
 }
+
 
 int CmdProc::pixDecodeRaw(int raw, int level){
     int ph(0), error(0),x(0),y(0);
@@ -4757,7 +4837,12 @@ int CmdProc::tb(Keyword kw){
         return 0;
     } 
     if( kw.match("tbmread") || kw.match("readback","tbm") ){return tbmreadback();}
-    if( kw.match("read","stack")  ){return tbmreadstack();}
+    if( kw.match("read","stack")  ){ printStack(tbmreadstack(), out); flush(out); return 0;}
+    if( kw.match("monitor","stack",value) ){return monitorStack(value);}
+    int cycles=0, run=0;
+    if( kw.match("seu",value) ){return monitorStack(value, run);}
+    if( kw.match("seu",value, cycles) ){return monitorStack(value, cycles);}
+    if( kw.match("seu",value, cycles, run) ){return monitorStack(value, cycles, run);}
     if( kw.match("readback")) { return readRocs();}
     if( kw.match("readback", value)){ return readRocs(value); }
     if( kw.match("readback", "vd")  ) { return readRocs(8, 0.016,"V");  }
