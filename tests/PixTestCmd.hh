@@ -523,11 +523,13 @@ class CmdProc {
   int pixDecodeRaw(int, int level=1);
   int pixDecodeRaw(int raw, uint8_t & col, uint8_t & row, uint8_t & ph);
 
+  uint8_t getTestboardDelay(string name);
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
   
   int bursttest(int ntrig, int trigsep=6, int nburst=1, int caltrig=0, int nloop=1);
   int adctest(const string s);
+  int tbmreadword(uint8_t regId, int hubid, int ntry=3);
   int tbmread(uint8_t regId, int hubid);
   int tbmread(uint8_t regId, int hubid, bool scan, unsigned int & delay);
 

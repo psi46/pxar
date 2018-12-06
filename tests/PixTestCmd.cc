@@ -2315,7 +2315,20 @@ int CmdProc::setTestboardDelay(string name, uint8_t value){
     return 0;
 }
 
-
+uint8_t CmdProc::getTestboardDelay(string name){
+    if (fSigdelays.size()==0){
+		ConfigParameters *p = fPixSetup->getConfigParameters();
+        fSigdelaysSetup = p->getTbSigDelays();
+        fSigdelays = p->getTbSigDelays();
+	}
+    for(size_t i=0; i<fSigdelays.size(); i++){
+		if (fSigdelays[i].first==name){
+			return fSigdelays[i].second;
+        }
+	}
+    out << "getTestboardDelay " << name << " not found \n";
+    return 0;
+}
 
 
 int CmdProc::bursttest(int ntrig, int trigsep, int nburst, int caltrig, int loop){
@@ -2435,7 +2448,114 @@ int CmdProc::adctest(const string signalName){
 }
 
 
-int CmdProc::tbmread(uint8_t regId, int hubid){
+
+int CmdProc::tbmreadword(uint8_t regId, int hubId, int ntry){
+ /* tbm i2c readback, one byte from register regId
+  * the higher four bits determine the tbm core: 0xF* or 0xE*
+  * in case of multiple tbms, the proper rda line must have been 
+  * chosen before
+  * the hubId is only used for verification
+  * repeat ntry times if it fails, default argument value = 3
+  * 
+  *   from the TBM documentation:
+  *   The TBM returns:
+  *   Start (TBM Register Address) (Data Byte) Stop (Hub/Port Address*)
+  *           (* Hub/Port Address does not use the 10 bit encoding in return data)
+  *       TBM Register Address is 10 bit encoded, i.e. the 5th and 10th bits 
+  *	 are the inverse of the 4th and 9th bit, respectively:
+  *	  (4-bit register msb) X (4-bit register lsb) X
+  *
+  * returns -1 when data was invalid
+  */
+  
+    uint8_t gain = GAIN_1;
+    uint8_t start  = 17;  // wait after sda
+    
+    while((--ntry) >= 0){
+		// get the raw waveform
+		uint16_t nSample = 100;
+		vector<uint16_t> data = fApi->daqADC("rda", gain, nSample, regId, start);
+			
+		if (data.size()<nSample) {
+			cout << "tbmreadword : Warning, data size = " << data.size() << endl;
+			return -1;
+		}
+		
+		// convert level to binary
+		vector< int > b;
+		vector< int > v;
+		for(unsigned int i=0; i<nSample; i++){
+			int raw = data[i] & 0x0fff;
+			if (raw & 0x0800) raw |= 0xfffff000;  // sign
+			v.push_back( raw );
+			if (raw>0){ b.push_back(1);}else{b.push_back(0);}
+		}
+		
+		// search for a valid sequence within the bitstream
+		for(unsigned int istart=0; istart<b.size()-30; istart++){
+			uint8_t S=0;	 // reflected address, lowest bit should be 1
+			S  = (b[istart+1])<<7;
+			S |= (b[istart+2])<<6;
+			S |= (b[istart+3])<<5;
+			S |= (b[istart+4])<<4;
+			bool compS3 = (b[istart+4] == b[istart+5]);
+			S |= (b[istart+6])<<3;
+			S |= (b[istart+7])<<2;
+			S |= (b[istart+8])<<1;
+			S |= (b[istart+9]); // called RW  in the tbm doc
+			bool compRW = (b[istart+9] == b[istart+10]); 
+				
+			uint8_t D=0;  // readback data
+			D  = (b[istart+11])<<7;
+			D |= (b[istart+12])<<6;
+			D |= (b[istart+13])<<5;
+			D |= (b[istart+14])<<4;
+			bool compD4 = (b[istart+15]==1);  // for readback data is 255
+			D |= (b[istart+16])<<3;
+			D |= (b[istart+17])<<2;
+			D |= (b[istart+18])<<1;
+			D |= (b[istart+19]);
+			bool compD0 = (b[istart+20]==1);  // for readback data is 255
+
+			bool bstop = (abs( v[istart]-v[istart+21] ) > (0.5*abs(v[istart]+v[istart+21])));
+			
+			uint8_t H=0;  // hubId
+			H  = b[istart+22] << 4;
+			H |= b[istart+23] << 3;
+			H |= b[istart+24] << 2;
+			H |= b[istart+25] << 1;
+			H |= b[istart+26];
+				   
+			uint8_t P=0; // port, =4 for tbm readback
+			P  = b[istart+27] <<2;
+			P |= b[istart+28] <<1;
+			P |= b[istart+29];
+
+			bool valid = (S==(regId | 1))  && (H==hubId) && (P==4)
+			  &&  !compS3 && !compRW && !compD4 && !compD0 && bstop;
+			
+
+			if( verbose && (S==(regId | 1))  && (H==hubId) && (P==4) ){
+				cout << "tbmread "   << istart << "  valid=" << valid 
+					<< "  port=" <<  (int) P << "  hub=" << (int) H 
+					<< "  address = 0x" << hex << (int) S  << " regid= " << (int) regId
+					<< "  data= 0x" << hex <<  (int) D 
+					<< "  S3 = " << compS3 << "   RW=" << compRW << " " << "  D4= " << compD4 << "  D0=" << compD0 
+					<<   "  bstop=" << bstop 
+					<< " start= " << dec << v[istart] << "  stop=" << v[istart+21] << " " << v[30] 
+					 << endl;
+			}   
+			   
+			if (valid ){
+				return (int) D;
+			}
+		} 
+	}
+	return -1;
+}
+
+
+int CmdProc::tbmread(uint8_t regId, int hubId){
   /* tbm i2c readback :
      from the TBM documentation:
      The TBM returns:
@@ -2448,241 +2568,76 @@ int CmdProc::tbmread(uint8_t regId, int hubid){
      scans the rda delay and returns the first valid data encountered
   */
 
-    // part 1 , acquire data : delay scan
-   
-    uint8_t gain = GAIN_1;
-    uint8_t start  = 17;  // wait after sda
-    uint8_t hubId = hubid;
-    
-    uint16_t nSample = 100;
+    uint8_t sda0 = getTestboardDelay("sda");
     unsigned int nDly = 20; // stepsize 1.25 ns
-
 
     for(unsigned int dly=0; dly<nDly; dly++){
         setTestboardDelay("sda", dly);
-        vector<uint16_t> data = fApi->daqADC("rda", gain, nSample, regId, start);
-        
-        if (data.size()<nSample) {
-            cout << "Warning, data size = " << data.size() << endl;
-        }else{
-	    vector< int > b;
-            for(unsigned int i=0; i<nSample; i++){
-                int raw = data[i] & 0x0fff;
-                if (raw & 0x0800) raw |= 0xfffff000;  // sign
-                if (raw>0){ b.push_back(1);}else{b.push_back(0);}
-                //if(raw>0) {cout << "1";} else {cout << "_";}
-            }
-            for(unsigned int istart=0; istart<b.size()-30; istart++){
-	        uint8_t S=0;	 // reflected address, lowest bit should be 1
-		S  = (b[istart+1])<<7;
-		S |= (b[istart+2])<<6;
-		S |= (b[istart+3])<<5;
-		S |= (b[istart+4])<<4;
-		bool compS3 = (b[istart+4] == b[istart+5]);
-		S |= (b[istart+6])<<3;
-		S |= (b[istart+7])<<2;
-		S |= (b[istart+8])<<1;
-		S |= (b[istart+9]); // called RW  in the tbm doc
-		bool compRW = (b[istart+9] == b[istart+10]); 
-			
-		uint8_t D=0;  // readback data
-		D  = (b[istart+11])<<7;
-		D |= (b[istart+12])<<6;
-		D |= (b[istart+13])<<5;
-		D |= (b[istart+14])<<4;
-		//bool compD4 = (b[istart+14] == b[istart+15]);
-		bool compD4 = (b[istart+15]==1);  // for readback data is 255
-		D |= (b[istart+16])<<3;
-		D |= (b[istart+17])<<2;
-		D |= (b[istart+18])<<1;
-		D |= (b[istart+19]);
-		//bool compD0 = (b[istart+19] == b[istart+20]);
-		bool compD0 = (b[istart+20]==1);  // for readback data is 255
-		//bool bstop = (b[istart+21]==1);
-               
-		uint8_t H=0;  // hubId
-		H  = b[istart+22] << 4;
-		H |= b[istart+23] << 3;
-		H |= b[istart+24] << 2;
-		H |= b[istart+25] << 1;
-		H |= b[istart+26];
-			   
-		uint8_t P=0; // port, =4 for tbm readback
-		P  = b[istart+27] <<2;
-		P |= b[istart+28] <<1;
-		P |= b[istart+29];
-
-
-		bool valid = (S==(regId | 1))  && (H==hubId) && (P==4)
-		  &&  !compS3 && !compRW && !compD4 && !compD0;
-			
-
-                if( verbose && (S==(regId | 1))  && (H==hubId) && (P==4) ){
-		  cout << "tbmread " << dec << dly  <<  " " << istart << "  valid=" << valid 
-                    << "  port=" <<  (int) P << "  hub=" << (int) H 
-                    << "  address = 0x" << hex << (int) S  << " regid= " << (int) regId
-                    << "  data= 0x" << hex <<  (int) D 
-                    << "  S3 = " << compS3 << "   RW=" << compRW << " " << "  D4= " << compD4 << "  D0=" << compD0 
-                    <<   "  b21=" << b[istart+21]  << endl;
-                }   
-               
-		if (valid ){
-		    setTestboardDelay("all");
-		    return (int) D;
+		int D = tbmreadword(regId, hubId);
+		if (D >= 0){
+			setTestboardDelay("sda",sda0);
+			setTestboardDelay("all");
+			return D;
 		}
-				
-
-            }    
-        }
-
     }
 
     // restore delays, signals (modified by daqADC) and pg
+    setTestboardDelay("sda",sda0);
     setTestboardDelay("all");
-
     return -1;
 }
 
 
-int CmdProc::tbmread(uint8_t regId, int hubid, bool scan, unsigned int & delay){
-  /* tbm i2c readback :
-     from the TBM documentation:
-     The TBM returns:
-     Start (TBM Register Address) (Data Byte) Stop (Hub/Port Address*)
-             (* Hub/Port Address does not use the 10 bit encoding in return data)
-         TBM Register Address is 10 bit encoded, i.e. the 5th and 10th bits 
-	 are the inverse of the 4th and 9th bit, respectively:
-	  (4-bit register msb) X (4-bit register lsb) X
-  */
-	// allow fixed delay or return delay value when scan is requested
-	// needed for stack readback
-   
-    uint8_t gain = GAIN_1;
-    uint8_t start  = 17;  // wait after sda
-    uint8_t hubId = hubid;
-    
-    uint16_t nSample = 100;
-    unsigned int nDly = 20; // stepsize 1.25 ns
 
-    unsigned int dly0 = 0;
-    unsigned int dly1 = nDly;
-    if (! scan){  // fixed delay, "loop" over one value only
-        dly0 = delay;
-        dly1 = delay+1;
+int CmdProc::tbmread(uint8_t regId, int hubId, bool scan, unsigned int & delay){
+  /* tbm i2c readback :
+   * either with fixed delay or scanning delay values (if scan==true)
+  */
+ 
+	//save sda, restore it afterwards
+	uint8_t sda0 = getTestboardDelay("sda");
+
+    if (! scan){  // fixed delay
+		setTestboardDelay("sda", delay);
+		int D = tbmreadword(regId, hubId);
+		setTestboardDelay("sda",sda0);
+		return D;
     }
 		
+	// scan
+    unsigned int nDly = 20; // stepsize 1.25 ns
     vector<int> result;
-    for(unsigned int dly = dly0; dly < dly1; dly++){
+    for(unsigned int dly = 0; dly < nDly; dly++){
         setTestboardDelay("sda", dly);
-        vector<uint16_t> data = fApi->daqADC("rda", gain, nSample, regId, start);
-        result.push_back(-1);
-        
-        if (data.size()<nSample) {
-            cout << "Warning, data size = " << data.size() << endl;
-        }else{
-	    vector< int > b;
-            for(unsigned int i=0; i<nSample; i++){
-                int raw = data[i] & 0x0fff;
-                if (raw & 0x0800) raw |= 0xfffff000;  // sign
-                if (raw>0){ b.push_back(1);}else{b.push_back(0);}
-                //if(raw>0) {cout << "1";} else {cout << "_";}
-            }
-            for(unsigned int istart=0; istart<b.size()-30; istart++){
-	        uint8_t S=0;	 // reflected address, lowest bit should be 1
-	        S  = (b[istart+1])<<7;
-		S |= (b[istart+2])<<6;
-		S |= (b[istart+3])<<5;
-		S |= (b[istart+4])<<4;
-		bool compS3 = (b[istart+4] == b[istart+5]);
-		S |= (b[istart+6])<<3;
-		S |= (b[istart+7])<<2;
-		S |= (b[istart+8])<<1;
-		S |= (b[istart+9]); // called RW  in the tbm doc
-		bool compRW = (b[istart+9] == b[istart+10]); 
-		
-		uint8_t D=0;  // readback data
-		D  = (b[istart+11])<<7;
-		D |= (b[istart+12])<<6;
-		D |= (b[istart+13])<<5;
-		D |= (b[istart+14])<<4;
-		//bool compD4 = (b[istart+14] == b[istart+15]);
-		bool compD4 = (b[istart+15]==1);  // for readback data is 255
-		D |= (b[istart+16])<<3;
-		D |= (b[istart+17])<<2;
-		D |= (b[istart+18])<<1;
-		D |= (b[istart+19]);
-		//bool compD0 = (b[istart+19] == b[istart+20]);
-		bool compD0 = (b[istart+20]==1);  // for readback data is 255
-		//bool bstop = (b[istart+21]==1);
-                uint8_t H=0;  // hubId
-		H  = b[istart+22] << 4;
-		H |= b[istart+23] << 3;
-		H |= b[istart+24] << 2;
-		H |= b[istart+25] << 1;
-		H |= b[istart+26];
-		
-		uint8_t P=0; // port, =4 for tbm readback
-		P  = b[istart+27] <<2;
-		P |= b[istart+28] <<1;
-		P |= b[istart+29];
-
-
-		bool valid = (S==(regId | 1))  && (H==hubId) && (P==4)
-	  	    && !compS3 && !compRW && !compD4 && !compD0;
-               
-                if( verbose && (S==(regId | 1))  && (H==hubId) && (P==4) ){
-		  cout << "tbmread " << dec << dly  <<  " " << istart << "  valid=" << valid 
-                    << "  port=" <<  (int) P << "  hub=" << (int) H 
-                    << "  address = 0x" << hex << (int) S  << " regid= " << (int) regId
-                    << "  data= 0x" << hex <<  (int) D 
-                    << "  S3 = " << compS3 << "   RW=" << compRW << " " << "  D4= " << compD4 << "  D0=" << compD0 
-                    <<   "  b21=" << b[istart+21]  << endl;
-                }   
-
-                if(valid){
-		    if(scan){
-		        result[dly-dly0] = D;
-		    }else{
-		        setTestboardDelay("all");
-		        return (int) D;
-		    }
-	        }		
-	    }
-        }
-   }
+ 		int D = tbmreadword(regId, hubId);
+ 		result.push_back(D);
+	}
 	
-
-   if(scan){
-       int nbest = 0;
-       int dlybest = 0;
-       for(unsigned int dly=0; dly<nDly; dly++){
-	    if(result[dly]>=0){
+	// select a good delay value for repeated use
+	int nbest = 0;
+	int dlybest = 0;
+    for(unsigned int dly=0; dly<nDly; dly++){
+	    if(result.at(dly) >= 0){
 	        int ngood =1;
 	        for (unsigned int m=1; m < nDly; m++){
-	            if (result[(dly+m) % nDly] == result[dly]){
-	                ngood += 1;
-	            }else{
-		        break;
-	            }
+	           if (result.at((dly+m) % nDly) == result.at(dly)){
+	              ngood += 1;
+	           }else{
+		            break;
+	           }
+		    }
+			if (ngood > nbest){
+			    nbest = ngood;
+				dlybest = int(dly + ngood/2 ) % nDly;
+		    }
 		}
-		if (ngood > nbest){
-		  nbest = ngood;
-		  dlybest = int(dly + ngood/2 ) % nDly;
-		}
-	    }
-        }
-	
-        //cout << "chose " << dlybest <<  " value = " << result[dlybest] << endl;
-        delay = dlybest;
-        setTestboardDelay("all");
-	return result[dlybest];
     }
-   
-    // restore delays, signals (modified by daqADC) and pg
-    setTestboardDelay("all");
-
-    return -1;
+    delay = dlybest; // passed by reference
+	setTestboardDelay("sda",sda0);
+	setTestboardDelay("all");
+	return result.at(dlybest);
 }
+
 
 
 
@@ -2704,6 +2659,11 @@ int CmdProc::tbmreadback() {
         // in order to read back TBM registers for layer 1 modules
         // we have to use the analog switch of the module adapter
         if (fnTbmCore > 2) fApi->selectTbmRDA(i);
+		string tbmtype = fApi->_dut->getTbmType();
+		if (! ((tbmtype=="tbm09c")||(tbmtype=="tbm08c")||(tbmtype=="tbm10c")
+            || (tbmtype=="tbm08d")||(tbmtype=="tbm10d") )){
+			out << "This only works for TBM08c/08d/09c/10c/10d! \n";
+		}
 
         int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
         out << "TBM " << (dec) << i << ", hubid: " << hubid << "\n" ;
@@ -2713,8 +2673,8 @@ int CmdProc::tbmreadback() {
         out << "Base + 9/8 " << tbmprint(0xe9, hubid) << "  " << tbmprint(0xf9, hubid) << "\n";
         out << "Base + B/A " << tbmprint(0xeb, hubid) << "  " << tbmprint(0xfb, hubid) << "\n";
         out << "Base + D/C " << tbmprint(0xed, hubid) << "  " << tbmprint(0xfd, hubid) << "\n";
-        out << "Base + F   " << tbmprint(0xef, hubid) << "  " << tbmprint(0xff, hubid) << "\n" 
-	    << (dec) ;
+		out << "Base + F/E " << tbmprint(0xef, hubid) << "  " << tbmprint(0xff, hubid) << "\n"; 
+	    out << (dec) ;
     }
     return 0;
 }
@@ -2722,23 +2682,31 @@ int CmdProc::tbmreadback() {
 
 
 vector<vector<int>> CmdProc::tbmreadstack() {
-  /*  read the stack of all tbm cores */
+    /*  read the stack of all tbm cores
+     * returns one vector per core with 33 entries \
+     * = 32 stack values  + the stack count (bits 0-5 of base+3)
+     * 
+     * in at least one module this has the unwanted side-effect that the
+     * content of the 0xFC register in the first TBM changes
+     * (=autoreset counter of tbm0)
+     * This is not understood. It appears to happend during the delay scan.
+     *      tbmread(0xf3, hubid, true,  delay);
+     * 
+     *  */
     
     // save the content of the base+0 registers
     uint8_t reg0[4];
     for(unsigned int core=0; core<fnTbmCore; core++){
       tbmget("base0", 1<<core, reg0[core]);
     }
+    // stack readback mode :  Pause Readout, Ignore Incoming Triggers, Stack Readback Mode.
+    tbmset("base0", ALLTBMS, 0x78);
 
     vector<vector<int>> data;
     for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
-        if (fnTbmCore > 2) fApi->selectTbmRDA(i); // relevant for L1 only
-
+ 
         int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
         	
-		// stack readback mode :  Pause Readout, Ignore Incoming Triggers, Stack Readback Mode.
-		tbmset("base0", ALLTBMS, 0xB8);
-
 		// select the proper RDA on the adapter (L1 only)
 		if (fnTbmCore > 2) fApi->selectTbmRDA(i);  // for some reason needed here again
 
@@ -2747,12 +2715,13 @@ vector<vector<int>> CmdProc::tbmreadstack() {
 
 		// read the stack count readback register (Base+3)
 		unsigned int delay = 0;
-		stack_a[32] = tbmread(0xe3, hubid, true,  delay);
-		stack_b[32] = tbmread(0xf3, hubid, false, delay);
+		stack_a[32] = tbmread(0xf3, hubid, true,  delay);
+		stack_b[32] = tbmread(0xe3, hubid, false, delay);
 		
 		if (fnTbmCore > 2) fApi->selectTbmRDA(i);
 		// read the stack data base+7 and base+5
 		for(unsigned int k = 0; k<32; k++){
+		    
 			int stat_a = tbmread(0xe7, hubid, false, delay);
 			int stat_b = tbmread(0xf7, hubid, false, delay);
 			int evt_a  = tbmread(0xe5, hubid, false, delay);
@@ -2796,7 +2765,6 @@ int CmdProc::printStack( const vector<vector<int> > stackdata, stringstream & ou
 			s << "       " << dec << int(n/2) << " B      ";
 		}
 	}
-	//out << s.str() << "\n";
 	outstream << s.str() << "\n";
 	
 	s.str("");
@@ -2809,7 +2777,6 @@ int CmdProc::printStack( const vector<vector<int> > stackdata, stringstream & ou
 			s<< "       err";
 		}
 	}
-	//out << s.str() << "\n";
 	outstream << s.str() << "\n";
 	
 	for( unsigned int k=0; k<32; k++){
@@ -2822,10 +2789,9 @@ int CmdProc::printStack( const vector<vector<int> > stackdata, stringstream & ou
 				s<< "   " << bitset<8>( (word >> 8) & 0xFF);
 				s<< dec << setw(4) << (word & 0xFF) << setfill(' ');
 			}else{
-				s<< "        err       ";
+				s<< "            err";
 			}
 		}	
-		//out << s.str() << "\n";
 		outstream << s.str() << "\n";
 	}
 	return 0;
@@ -2843,7 +2809,7 @@ int CmdProc::monitorStack(int period_in_s, int number_of_periods, int run_number
     ofstream fout;
     if (run_number >  0){
  		stringstream out_filename;
-		out_filename << "seu_run_" << setw(6) << setfill('0') << run_number << setfill(' ') << ".log";
+		out_filename << "seu_run_" << dec << setw(6) << setfill('0') << run_number << setfill(' ') << ".log";
 		fout.open( out_filename.str());
 		if(fout){
 			fout << "seu test, initial stack\n";
@@ -2884,8 +2850,8 @@ int CmdProc::monitorStack(int period_in_s, int number_of_periods, int run_number
 			}
 		}
 		
-		out << "loop nr " << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;
-		if (fout) {fout << "loop nr " << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;}
+		out << "loop nr " << dec << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;
+		if (fout) {fout << "loop nr " << dec << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;}
 		if (ndiff > 0){
 			ndiff_total += ndiff;
 			printStack(newdata, out);
@@ -2900,9 +2866,9 @@ int CmdProc::monitorStack(int period_in_s, int number_of_periods, int run_number
 	}
  
  
-	out << "total number of differences " << ndiff_total << " in " << 0.001*t0.get() << " seconds\n";
+	out << "total number of differences " << dec << ndiff_total << " in " << 0.001*t0.get() << " seconds\n";
    if(fout){
-		fout << "total number of differences " << ndiff_total << " in " << 0.001*t0.get() << " seconds\n";
+		fout << "total number of differences " << dec << ndiff_total << " in " << 0.001*t0.get() << " seconds\n";
 		fout.close();
     }
 
@@ -4814,6 +4780,7 @@ int CmdProc::tb(Keyword kw){
     if( kw.match("level",value)){ setTestboardDelay("level", value); return 0;}
     if( kw.match("clk",value)){ setTestboardDelay("clk", value); return 0;}
     if( kw.match("sda",value)){ setTestboardDelay("sda", value); return 0;}
+    if( kw.match("sda")){ out << dec << (int) getTestboardDelay("sda"); return 0;}
     if( kw.match("ctr",value)){ setTestboardDelay("ctr", value); return 0;}
     if( kw.match("tbdly",value)){ 
             setTestboardDelay("clk",value); 
@@ -5511,7 +5478,14 @@ int CmdProc::tbm(Keyword kw, int cores){
     if (kw.match("dlytok",value)){return tbmset("basea", cores,  (value&0x1)<<7, 0x80);}
     if (kw.match("phase400",value) ){return tbmset("basee", TBMA, (value&0x7)<<2, 0x1c);}
     if (kw.match("phase160",value) ){return tbmset("basee", TBMA, (value&0x7)<<5, 0xe0);}
-    if (kw.match("delay", value) ){return tbmset("basee", TBMB,  value);}
+    if (kw.match("delay", value) ){
+		if ((cores == TBMA) || (cores ==TBM1A) || (cores==TBM0A)){
+			out << "delay register only in core B\n";
+			return 0;
+		}else{
+			return tbmset("basee", cores & TBMB,  value);
+		}
+	}
     if (kw.match("phases") ){ return printTbmPhases();}
 
 
