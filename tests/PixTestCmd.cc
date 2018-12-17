@@ -2681,7 +2681,7 @@ int CmdProc::tbmreadback() {
 
 
 
-vector<vector<int>> CmdProc::tbmreadstack() {
+vector<vector<int> > CmdProc::tbmreadstack() {
     /*  read the stack of all tbm cores
      * returns one vector per core with 33 entries \
      * = 32 stack values  + the stack count (bits 0-5 of base+3)
@@ -2702,7 +2702,7 @@ vector<vector<int>> CmdProc::tbmreadstack() {
     // stack readback mode :  Pause Readout, Ignore Incoming Triggers, Stack Readback Mode.
     tbmset("base0", ALLTBMS, 0x78);
 
-    vector<vector<int>> data;
+    vector<vector<int> > data;
     for(unsigned int i = 0; i < (fnTbmCore / 2); i++) {
  
         int hubid = fApi->_dut->getEnabledTbms().at(i*2).hubid;
@@ -2810,22 +2810,21 @@ int CmdProc::monitorStack(int period_in_s, int number_of_periods, int run_number
     if (run_number >  0){
  		stringstream out_filename;
 		out_filename << "seu_run_" << dec << setw(6) << setfill('0') << run_number << setfill(' ') << ".log";
-		fout.open( out_filename.str());
+		fout.open( out_filename.str().c_str());// ofstream.open() does not accept str before C++11
 		if(fout){
 			fout << "seu test, initial stack\n";
 			stringstream s;
 			printStack(stackdata, s);
 			fout << s.str() << endl;
 		}else{
-			cerr << "unable to open " << out_filename << endl;
+		  cerr << "unable to open " << out_filename.str() << endl;
 		}
 	}
 	    
-    int n = 0;
+    int np = 0;
     int ndiff_total = 0;
     bool aborted = false;
-    while ((n< number_of_periods) && (not aborted) ){
-        n++;
+    while ((np++ < number_of_periods) && (not aborted) ){
         timer t;
 		while( (t.get() < (1000.*period_in_s)) && (not aborted)) {
 			pxar::mDelay( 100 ); 
@@ -2850,8 +2849,8 @@ int CmdProc::monitorStack(int period_in_s, int number_of_periods, int run_number
 			}
 		}
 		
-		out << "loop nr " << dec << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;
-		if (fout) {fout << "loop nr " << dec << n << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;}
+		out << "loop nr " << dec << np << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;
+		if (fout) {fout << "loop nr " << dec << np << " timestamp= " << t0.get() << "  " << ndiff << " differences "<< endl;}
 		if (ndiff > 0){
 			ndiff_total += ndiff;
 			printStack(newdata, out);
