@@ -533,8 +533,12 @@ class CmdProc {
   int tbmread(uint8_t regId, int hubid);
   int tbmread(uint8_t regId, int hubid, bool scan, unsigned int & delay);
 
+  int dumpRawTBMReadback(uint8_t regId);
+  int getRawTBMReadback(uint8_t regId, int hubId);
+  int decodeTBMReadback(vector<int> & b, uint8_t regId,int hubId, int & eye, int istart=0);
   string tbmprint(uint8_t regId, int hubid);
   int tbmreadback();
+  int tbmreadback(stringstream &);
   vector<vector<int> > tbmreadstack();
   int printStack( const vector<vector<int> > stackdata, stringstream & outstream);
   int monitorStack(int period_in_s, int cycles=1000, int run_number=0);
