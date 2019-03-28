@@ -11,9 +11,10 @@ using namespace pxar;
 
 
 
-hal::hal(std::string name) :
+hal::hal(std::string name, bool doDaq_MemReset) :
   _initialized(false),
   _compatible(false),
+  _do_Daq_MemReset(doDaq_MemReset),
   m_tbmtype(TBM_NONE),
   m_adctimeout(300),
   m_tindelay(13),
@@ -80,7 +81,11 @@ hal::hal(std::string name) :
     m_splitter.push_back(dtbEventSplitter());
     m_decoder.push_back(dtbEventDecoder());
   }
-  
+
+  if (!_do_Daq_MemReset){
+      LOG(logINFO) << "Daq_MemReset disabled ";
+  }
+
 }
 
 hal::~hal() {
@@ -1674,7 +1679,7 @@ std::vector<Event> hal::daqAllEvents() {
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
 	  // Reset the DTB memory to work around buffer issue:
-	  _testboard->Daq_MemReset(ch);
+	  if (_do_Daq_MemReset) _testboard->Daq_MemReset(ch);
 	  done_ch.at(ch) = true;
 	}
 	catch (dataPipeException &e) { LOG(logERROR) << e.what(); return evt; }
@@ -1756,7 +1761,7 @@ std::vector<rawEvent> hal::daqAllRawEvents() {
 	catch (dsBufferEmpty &) {
 	  LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
 	  // Reset the DTB memory to work around buffer issue:
-	  _testboard->Daq_MemReset(ch);
+	  if (_do_Daq_MemReset) _testboard->Daq_MemReset(ch);
 	  done_ch.at(ch) = true;
 	}
 	catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
@@ -1792,7 +1797,7 @@ std::vector<uint16_t> hal::daqBuffer() {
       catch (dsBufferEmpty &) {
 	LOG(logDEBUGHAL) << "Finished readout Channel " << ch << ".";
 	// Reset the DTB memory to work around buffer issue:
-	_testboard->Daq_MemReset(ch);
+	if (_do_Daq_MemReset) _testboard->Daq_MemReset(ch);
       }
       catch (dataPipeException &e) { LOG(logERROR) << e.what(); return raw; }
     }

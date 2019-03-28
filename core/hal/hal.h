@@ -18,7 +18,7 @@ namespace pxar {
      *  a testboard USB ID name as parameter and tries to connect to
      *  the board. Exception is thrown if connection fails.
      */
-    hal(std::string name = "*");
+      hal(std::string name = "*", bool do_Daq_MemReset = true);
 
     /** Default destructor for HAL objects. Testboard USB connection is
      *  closed and RPC object destroyed.
@@ -439,6 +439,12 @@ namespace pxar {
      *  DTB cannot be initialized, only flashing is allowed then.
      */
     bool _compatible;
+    
+    /** do a daq memreset after finishing a channel readout,
+	for reasons that are not fully understood, this leads to problems when one of the
+	channels does not send valid data. It is also not full understood why this is needed at all */
+    bool _do_Daq_MemReset;
+
 
     // FIXME can't we find a smarter solution to this?!
     uint8_t m_tbmtype;

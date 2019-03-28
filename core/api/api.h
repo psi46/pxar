@@ -177,7 +177,7 @@ namespace pxar {
      *  a pxar::FirmwareVersionMismatch exception is thrown.
      *
      */
-    pxarCore(std::string usbId = "*", std::string logLevel = "WARNING");
+      pxarCore(std::string usbId = "*", std::string logLevel = "WARNING", bool doDaq_MemReset = true);
 
     /** Default destructor for libpxar API
      *

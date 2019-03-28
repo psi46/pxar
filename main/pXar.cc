@@ -52,7 +52,8 @@ int main(int argc, char *argv[]){
     doRunSingleTest(false),
     doUpdateFlash(false),
     doUpdateRootFile(false),
-    doUseRootLogon(false)
+    doUseRootLogon(false),
+    doDaqMemReset(true)  
     ;
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
@@ -82,6 +83,7 @@ int main(int argc, char *argv[]){
     if (!strcmp(argv[i],"-u"))                                {doUpdateRootFile = true;}
     if (!strcmp(argv[i],"-v"))                                {verbosity  = string(argv[++i]); }
     if (!strcmp(argv[i],"-L"))                                {Log::logName(string(argv[++i]));}
+    if (!strcmp(argv[i],"-nomemreset"))                       {doDaqMemReset=false;}
   }
 
   struct stat buffer;
@@ -170,7 +172,7 @@ int main(int argc, char *argv[]){
     tbname = configParameters->getTbName();
 
   try {
-    api = new pxar::pxarCore(tbname, verbosity);
+      api = new pxar::pxarCore(tbname, verbosity, doDaqMemReset);
 
     api->initTestboard(sig_delays, power_settings, pg_setup);
     if (configParameters->customI2cAddresses()) {

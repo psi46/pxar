@@ -16,7 +16,7 @@
 
 using namespace pxar;
 
-pxarCore::pxarCore(std::string usbId, std::string logLevel) : 
+pxarCore::pxarCore(std::string usbId, std::string logLevel, bool do_Daq_MemReset) : 
   _daq_running(false), 
   _daq_buffersize(DTB_SOURCE_BUFFER_SIZE),
   _daq_startstop_warning(false)
@@ -29,7 +29,7 @@ pxarCore::pxarCore(std::string usbId, std::string logLevel) :
   LOG(logINFO) << "Log level: " << logLevel;
 
   // Get a new HAL instance with the DTB USB ID passed to the API constructor:
-  _hal = new hal(usbId);
+  _hal = new hal(usbId, do_Daq_MemReset);
 
   // Get the DUT up and running:
   _dut = new dut();
