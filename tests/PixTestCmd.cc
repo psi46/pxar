@@ -4254,10 +4254,11 @@ int CmdProc::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbos
     // FIXME, for >1 event this code required fGetBufMethod=1
    
     if(verbosity>100){
+	stringstream ss;
         for(unsigned int i=0; i< buf.size(); i++){
-            cout << hex << setw(4) << setfill('0') << buf[i] << " ";
+            ss << hex << setw(4) << setfill('0') << buf[i] << " ";
         }
-        cout << dec << setfill(' ') << endl;
+        LOG(logINFO) << ss.str() << dec << setfill(' ');
     }   
     
     unsigned int nerr=0;
@@ -6180,6 +6181,7 @@ void PixTestCmd::runCommand(std::string command) {
   PixTest::update();
 
   cmd = new CmdProc( this );
+  cmd->master = NULL; // for non-gui mode
   cmd->setApi(fApi, fPixSetup);
 
   if (!command.compare("timing")){
@@ -6190,13 +6192,8 @@ void PixTestCmd::runCommand(std::string command) {
       cmd->fApi->daqStop(true);
   }
 
-  if (command.rfind("freeze", 0) == 0) {
-    string cores = command.substr(6);
-    LOG(logINFO) << " freeze "+cores;
-    cmd->exec("freeze "+cores);
-  }
 
-  if (!command.compare("test_freeze")){
+  else if (!command.compare("test_freeze")){
     cmd->fApi->daqTriggerSource("pg_direct");
     cmd->sequence(2);
     vector<uint16_t> buf;
@@ -6233,34 +6230,21 @@ void PixTestCmd::runCommand(std::string command) {
 		 << " " << n_roc_header[7];
   }
 
-  
-  if (!command.compare("raw")){
-	vector<uint16_t> buf;
-        int stat = cmd->runDaqRaw( buf, 1,0, 0 );
-        if(stat==0){
-	    LOG(logINFO) << endl << "raw read " << buf.size() << " words";
-	    stringstream log;
-	    for(unsigned int i=0; i<buf.size(); i++){ log << hex << setw(4) << setfill('0') << (int) buf[i] << " ";}
-	    LOG(logINFO) << log.str() << dec;
-        }else{
-            LOG(logINFO) << " error getting data ("<<dec<<(int)stat<<")\n";
-        }
+
+  else if (!command.compare("x")){  cmd->exec("do 0:32 [raw]");  }
+  else{
+
+      // generic 
+      // only one string is passed to runCommand, replace underscores by spaces
+      while( command.find("_")  != std::string::npos ){
+	  command.replace(command.find("_"), 1, " ");
+      }
+      cout << "the command is >>" << command <<  "<<" << endl;
+      cmd->exec( command );
+      LOG(logINFO) << cmd->out.str() << endl;
   }
-
-
-  if (!command.compare("readstack")){
-      stringstream log;
-      cmd->printStack(cmd->tbmreadstack(), log);
-      LOG(logINFO) << endl << log.str();
-  }
-
-  if (!command.compare("tbmread")){
-      stringstream log;
-      cmd->tbmreadback(log);
-      LOG(logINFO) << endl << log.str();
-  }
-
-    PixTest::update();
+  cmd->out.str("");
+//  PixTest::update();//? why
 
 }
 
