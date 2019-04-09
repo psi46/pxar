@@ -35,11 +35,11 @@ ConfigParameters::ConfigParameters(string filename) {
 
 // ----------------------------------------------------------------------
 void ConfigParameters::initialize() {
-  fReadTbParameters = fReadTbmParameters = fReadDacParameters = fReadRocPixelConfig = fReadReadbackCal = false; 
-  fnCol = 52; 
-  fnRow = 80; 
+  fReadTbParameters = fReadTbmParameters = fReadDacParameters = fReadRocPixelConfig = fReadReadbackCal = false;
+  fnCol = 52;
+  fnRow = 80;
   fnRocs = 16;
-  fnTbms = 1; 
+  fnTbms = 1;
   fnModules = 1;
   fHubIds.push_back(31);
   fI2cAddresses.clear();
@@ -56,7 +56,7 @@ void ConfigParameters::initialize() {
   fEmptyReadoutLengthADC = 64;
   fEmptyReadoutLengthADCDual = 40;
 
-  fTrimVcalSuffix                = ""; 
+  fTrimVcalSuffix                = "";
   fDACParametersFileName         = "defaultDACParameters";
   fTbmParametersFileName         = "defaultTBMParameters";
   fTBParametersFileName          = "defaultTBParameters.dat";
@@ -70,25 +70,25 @@ void ConfigParameters::initialize() {
   fGainPedestalFileName          = "phCalibration";
   fReadbackCalFileName           = "readbackCal";
 
-  ia = -1.; 
+  ia = -1.;
   id = -1.;
   va = -1.;
   vd = -1.;
 
   fProbeA1 = "sdata1";
-  fProbeA2 = "sdata2"; 
+  fProbeA2 = "sdata2";
   fProbeD1 = "clk";
   fProbeD2 = "ctr";
 
   rocZeroAnalogCurrent = 0.0;
   fRocType = "psi46digv21respin";
-  fTbmType = ""; 
-  fHdiType = "bpix"; 
-  fTBName = "*"; 
+  fTbmType = "";
+  fHdiType = "bpix";
+  fTBName = "*";
 
   fGuiX = fGuiY = 0;
 
-  fMaskedPixels.clear(); 
+  fMaskedPixels.clear();
 }
 
 
@@ -148,7 +148,7 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
       int _ivalue = atoi(_value.c_str());
       double dvalue = atof(_value.c_str());
-      
+
       if (0 == _name.compare("testboardName")) { fTBName = _value; }
       else if (0 == _name.compare("directory")) { fDirectory =  _value; }
 
@@ -200,21 +200,21 @@ bool ConfigParameters::readConfigParameterFile(string file) {
 
   _input.close();
 
-  fTbPowerSettings.push_back(make_pair("ia", ia));   
-  fTbPowerSettings.push_back(make_pair("id", id)); 
-  fTbPowerSettings.push_back(make_pair("va", va));   
-  fTbPowerSettings.push_back(make_pair("vd", vd)); 
-  
+  fTbPowerSettings.push_back(make_pair("ia", ia));
+  fTbPowerSettings.push_back(make_pair("id", id));
+  fTbPowerSettings.push_back(make_pair("va", va));
+  fTbPowerSettings.push_back(make_pair("vd", vd));
+
   return true;
 }
 
 
 // ----------------------------------------------------------------------
 vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
-  vector<pair<string, uint8_t> > rocDacs; 
+  vector<pair<string, uint8_t> > rocDacs;
 
   // -- read in file
-  vector<string> lines; 
+  vector<string> lines;
   char  buffer[5000];
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
@@ -223,41 +223,41 @@ vector<pair<string, uint8_t> > ConfigParameters::readDacFile(string fname) {
   is.close();
 
   // -- parse lines
-  unsigned int ival(0); 
-  uint8_t uval(0); 
-  //  unsigned char uval(0); 
-  
-  string::size_type s1, s2; 
+  unsigned int ival(0);
+  uint8_t uval(0);
+  //  unsigned char uval(0);
+
+  string::size_type s1, s2;
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
-    //    cout << lines[i] << endl;   
+    //    cout << lines[i] << endl;
     // -- remove tabs, adjacent spaces, leading and trailing spaces, and everything after (and including) a #
     cleanupString(lines[i]);
     if (lines[i].length() < 2) continue;
-    s1 = lines[i].find(" "); 
-    s2 = lines[i].rfind(" "); 
+    s1 = lines[i].find(" ");
+    s2 = lines[i].rfind(" ");
     if (s1 != s2) {
-      // -- with register number 
-      str1 = lines[i].substr(0, s1); 
-      str2 = lines[i].substr(s1+1, s2-s1-1); 
-      str3 = lines[i].substr(s2+1); 
+      // -- with register number
+      str1 = lines[i].substr(0, s1);
+      str2 = lines[i].substr(s1+1, s2-s1-1);
+      str3 = lines[i].substr(s2+1);
     } else {
-      // -- without register number 
-      str2 = lines[i].substr(0, s1); 
-      str3 = lines[i].substr(s1+1); 
+      // -- without register number
+      str2 = lines[i].substr(0, s1);
+      str3 = lines[i].substr(s1+1);
     }
-    
+
     if (string::npos != str3.find("0x")) {
-      sscanf(str3.c_str(), "%x", &ival);  
+      sscanf(str3.c_str(), "%x", &ival);
     } else {
-      ival = atoi(str3.c_str()); 
+      ival = atoi(str3.c_str());
     }
     uval = ival;
-    rocDacs.push_back(make_pair(str2, uval)); 
+    rocDacs.push_back(make_pair(str2, uval));
 
   }
 
-  return rocDacs; 
+  return rocDacs;
 }
 
 // ----------------------------------------------------------------------
@@ -272,25 +272,25 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbParameters() {
 // ----------------------------------------------------------------------
 void ConfigParameters::readTbParameters() {
   if (!fReadTbParameters) {
-    string filename = fDirectory + "/" + fTBParametersFileName; 
-    fTbParameters = readDacFile(filename); 
+    string filename = fDirectory + "/" + fTBParametersFileName;
+    fTbParameters = readDacFile(filename);
     // Cannot use LOG(...) for this printout, as pxarCore is instantiated only afterwards ...
     for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
       //      LOG(logDEBUG) << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
       LOG(logINFO) << "        " << fTbParameters[i].first << ": " << (int)fTbParameters[i].second;
     }
-    fReadTbParameters = true; 
+    fReadTbParameters = true;
   }
 }
 
 // ----------------------------------------------------------------------
 vector<pair<string, double> >  ConfigParameters::getTbPowerSettings() {
-  vector<pair<string, double> > v; 
+  vector<pair<string, double> > v;
   if (ia < 0.) {
-    LOG(logINFO) << "Read config files first!" << endl;    
-    return v; 
+    LOG(logINFO) << "Read config files first!" << endl;
+    return v;
   }
-  return fTbPowerSettings; 
+  return fTbPowerSettings;
 }
 
 // ----------------------------------------------------------------------
@@ -314,7 +314,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbSigDelays() {
 vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
   vector<pair<string, uint8_t> > a;
-  
+
   uint8_t wbc = 100;
   vector<vector<pair<string, uint8_t> > > dacs = getRocDacs();
   for (unsigned int idac = 0; idac < dacs[0].size(); ++idac) {
@@ -325,9 +325,9 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 
   uint8_t delay = 6;
   if(fRocType.find("dig") == string::npos) { delay = 5; }
-  
+
   if (fnTbms < 1) {
-    a.push_back(make_pair("resetroc",25));    // PG_RESR b001000 
+    a.push_back(make_pair("resetroc",25));    // PG_RESR b001000
     a.push_back(make_pair("calibrate",wbc+delay)); // PG_CAL  b000100
     a.push_back(make_pair("trigger",16));    // PG_TRG  b000010
     a.push_back(make_pair("token",0));     // PG_TOK  b000001
@@ -344,7 +344,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 // ----------------------------------------------------------------------
 vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
   if (!fReadRocPixelConfig) {
-    readRocPixelConfig(); 
+    readRocPixelConfig();
   }
   return fRocPixelConfigs;
 }
@@ -352,7 +352,7 @@ vector<vector<pxar::pixelConfig> > ConfigParameters::getRocPixelConfig() {
 // ----------------------------------------------------------------------
 vector<pxar::pixelConfig> ConfigParameters::getRocPixelConfig(int i) {
   if (!fReadRocPixelConfig) {
-    readRocPixelConfig(); 
+    readRocPixelConfig();
   }
   return fRocPixelConfigs[i];
 
@@ -361,38 +361,38 @@ vector<pxar::pixelConfig> ConfigParameters::getRocPixelConfig(int i) {
 
 // ----------------------------------------------------------------------
 void ConfigParameters::readRocPixelConfig() {
-  string filename; 
+  string filename;
   // -- read one mask file containing entire DUT mask
-  filename = fDirectory + "/" + fMaskFileName; 
-  vector<bool> rocmasked; 
-  for (unsigned int i = 0; i < fnRocs; ++i) rocmasked.push_back(false); 
-  
-  fMaskedPixels = readMaskFile(filename); 
+  filename = fDirectory + "/" + fMaskFileName;
+  vector<bool> rocmasked;
+  for (unsigned int i = 0; i < fnRocs; ++i) rocmasked.push_back(false);
+
+  fMaskedPixels = readMaskFile(filename);
 
   for (unsigned int i = 0; i < fMaskedPixels.size(); ++i) {
-    vector<pair<int, int> > v = fMaskedPixels[i]; 
+    vector<pair<int, int> > v = fMaskedPixels[i];
     if (v.size() > 0) {
-      rocmasked[i] = true; 
+      rocmasked[i] = true;
       for (unsigned int j = 0; j < v.size(); ++j) {
 	LOG(logINFO) << "MASKED Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
       }
     }
   }
-  
+
   // -- read all trim files and create pixelconfig vector
   stringstream firstFile, lastFile;
-  firstFile << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << 0 << ".dat"; 
-  lastFile << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat"; 
+  firstFile << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << 0 << ".dat";
+  lastFile << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat";
   LOG(logINFO) << "readTrimFile: " << firstFile.str() << " .. " << lastFile.str();
 
   for (unsigned int i = 0; i < fnRocs; ++i) {
     vector<pxar::pixelConfig> v;
     for (uint8_t ic = 0; ic < fnCol; ++ic) {
       for (uint8_t ir = 0; ir < fnRow; ++ir) {
-	//	pxar::pixelConfig a(ic,ir,0,false,true); 
-	pxar::pixelConfig a(ic,ir,0,false,false); 
+	//	pxar::pixelConfig a(ic,ir,0,false,true);
+	pxar::pixelConfig a(ic,ir,0,false,false);
 	if (rocmasked[i]) {
-	  vector<pair<int, int> > v = fMaskedPixels[i]; 
+	  vector<pair<int, int> > v = fMaskedPixels[i];
 	  for (unsigned int j = 0; j < v.size(); ++j) {
 	    if (v[j].first == ic && v[j].second == ir) {
 	      LOG(logINFO) << "  masking Roc " << i << " col/row: " << v[j].first << " " << v[j].second;
@@ -400,61 +400,61 @@ void ConfigParameters::readRocPixelConfig() {
 	    }
 	  }
 	}
-	v.push_back(a); 
+	v.push_back(a);
       }
     }
     stringstream fname;
-    fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
-    readTrimFile(fname.str(), v); 
-    fRocPixelConfigs.push_back(v); 
+    fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat";
+    readTrimFile(fname.str(), v);
+    fRocPixelConfigs.push_back(v);
   }
-  
-  fReadRocPixelConfig = true; 
+
+  fReadRocPixelConfig = true;
 }
 
 
 // ----------------------------------------------------------------------
 void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) {
-  
+
   // -- read in file
-  vector<string> lines; 
+  vector<string> lines;
   char  buffer[5000];
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
     lines.push_back(string(buffer));
   }
   is.close();
-  
+
   // -- parse lines
-  unsigned int ival(0), irow(0), icol(0); 
-  uint8_t uval(0); 
-  
-  string::size_type s1, s2; 
+  unsigned int ival(0), irow(0), icol(0);
+  uint8_t uval(0);
+
+  string::size_type s1, s2;
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    replaceAll(lines[i], "\t", " "); 
-    replaceAll(lines[i], "Pix", " "); 
+    replaceAll(lines[i], "\t", " ");
+    replaceAll(lines[i], "Pix", " ");
     string::iterator new_end = unique(lines[i].begin(), lines[i].end(), bothAreSpaces);
-    lines[i].erase(new_end, lines[i].end()); 
+    lines[i].erase(new_end, lines[i].end());
     if (0 == lines[i].length()) continue;
-    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1); 
-    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1); 
-    s1 = lines[i].find(" "); 
-    s2 = lines[i].rfind(" "); 
+    if (lines[i].substr(0, 1) == string(" ")) lines[i].erase(0, 1);
+    if (lines[i].substr(lines[i].length()-1, 1) == string(" ")) lines[i].erase(lines[i].length()-1, 1);
+    s1 = lines[i].find(" ");
+    s2 = lines[i].rfind(" ");
     if (s1 != s2) {
-      str1 = lines[i].substr(0, s1); 
-      str2 = lines[i].substr(s1+1, s2-s1); 
-      str3 = lines[i].substr(s2+1); 
+      str1 = lines[i].substr(0, s1);
+      str2 = lines[i].substr(s1+1, s2-s1);
+      str3 = lines[i].substr(s2+1);
     } else {
       LOG(logINFO) << "could not read line -->" << lines[i] << "<--";
     }
-    
-    ival = atoi(str1.c_str()); 
-    icol = atoi(str2.c_str()); 
-    irow = atoi(str3.c_str()); 
+
+    ival = atoi(str1.c_str());
+    icol = atoi(str2.c_str());
+    irow = atoi(str3.c_str());
     uval = ival;
-    unsigned int index = icol*80+irow; 
+    unsigned int index = icol*80+irow;
     if (index <= v.size()) {
       v[index].setTrim(uval);
     } else {
@@ -469,14 +469,14 @@ void ConfigParameters::readTrimFile(string fname, vector<pxar::pixelConfig> &v) 
 // ----------------------------------------------------------------------
 vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 
-  vector<vector<pair<int, int> > > v; 
-  vector<pair<int, int> > a; 
+  vector<vector<pair<int, int> > > v;
+  vector<pair<int, int> > a;
   for (unsigned int i = 0; i < fnRocs; ++i) {
-    v.push_back(a); 
+    v.push_back(a);
   }
 
   // -- read in file
-  vector<string> lines; 
+  vector<string> lines;
   char  buffer[5000];
   LOG(logINFO) << "readMaskFile: " << fname;
   ifstream is(fname.c_str());
@@ -484,81 +484,81 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     lines.push_back(string(buffer));
   }
   is.close();
-  
+
   // -- parse lines
-  unsigned int iroc(0), irow(0), icol(0); 
-  
-  string::size_type s1, s2, s3; 
+  unsigned int iroc(0), irow(0), icol(0);
+
+  string::size_type s1, s2, s3;
   string str1, str2, str3;
   for (unsigned int i = 0; i < lines.size(); ++i) {
-    //    cout << lines[i] << endl;   
+    //    cout << lines[i] << endl;
     if (lines[i].substr(0, 1) == string("#")) continue;
     // -- remove tabs, adjacent spaces, leading and trailing spaces
-    cleanupString(lines[i]); 
+    cleanupString(lines[i]);
     if (0 == lines[i].length()) continue;
 
-    s1 = lines[i].find("roc"); 
+    s1 = lines[i].find("roc");
     if (string::npos != s1) {
-      str3 = lines[i].substr(s1+4); 
-      iroc = atoi(str3.c_str()); 
+      str3 = lines[i].substr(s1+4);
+      iroc = atoi(str3.c_str());
       //      cout << "masking all pixels for ROC " << iroc << endl;
       if (iroc < fnRocs) {
 	for (uint8_t ic = 0; ic < fnCol; ++ic) {
 	  for (uint8_t ir = 0; ir < fnRow; ++ir) {
-	    v[iroc].push_back(make_pair(ic, ir)); 
+	    v[iroc].push_back(make_pair(ic, ir));
 	  }
-	}  
+	}
       } else {
 	LOG(logINFO) << "illegal ROC coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
-    
-    s1 = lines[i].find("row"); 
+
+    s1 = lines[i].find("row");
     if (string::npos != s1) {
-      s1 += 4; 
-      s2 = lines[i].find(" ", s1) + 1; 
-      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
-      irow = atoi(lines[i].substr(s2).c_str()); 
+      s1 += 4;
+      s2 = lines[i].find(" ", s1) + 1;
+      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str());
+      irow = atoi(lines[i].substr(s2).c_str());
       //      cout << "-> MASKING ROC " << iroc << " row " << irow << endl;
       if (iroc < fnRocs && irow < fnRow) {
 	for (unsigned int ic = 0; ic < fnCol; ++ic) {
-	  v[iroc].push_back(make_pair(ic, irow)); 
-	}  
+	  v[iroc].push_back(make_pair(ic, irow));
+	}
       } else {
 	LOG(logINFO) << "illegal ROC/row coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
 
-    s1 = lines[i].find("col"); 
+    s1 = lines[i].find("col");
     if (string::npos != s1) {
-      s1 += 4; 
-      s2 = lines[i].find(" ", s1) + 1; 
-      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
-      icol = atoi(lines[i].substr(s2).c_str()); 
+      s1 += 4;
+      s2 = lines[i].find(" ", s1) + 1;
+      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str());
+      icol = atoi(lines[i].substr(s2).c_str());
       //      cout << "-> MASKING ROC " << iroc << " col " << icol << endl;
       if (iroc < fnRocs && icol < fnCol) {
 	for (unsigned int ir = 0; ir < fnRow; ++ir) {
-	  v[iroc].push_back(make_pair(icol, ir)); 
-	}  
+	  v[iroc].push_back(make_pair(icol, ir));
+	}
       } else {
 	LOG(logINFO) << "illegal ROC/col coordinates in line " << i << ": " << lines[i];
       }
       continue;
     }
 
-    s1 = lines[i].find("pix"); 
+    s1 = lines[i].find("pix");
     if (string::npos != s1) {
-      s1 += 4; 
-      s2 = lines[i].find(" ", s1) + 1; 
-      s3 = lines[i].find(" ", s2) + 1; 
-      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str()); 
-      icol = atoi(lines[i].substr(s2, s3-s2-1).c_str()); 
-      irow = atoi(lines[i].substr(s3).c_str()); 
+      s1 += 4;
+      s2 = lines[i].find(" ", s1) + 1;
+      s3 = lines[i].find(" ", s2) + 1;
+      iroc = atoi(lines[i].substr(s1, s2-s1-1).c_str());
+      icol = atoi(lines[i].substr(s2, s3-s2-1).c_str());
+      irow = atoi(lines[i].substr(s3).c_str());
       //      cout << "-> MASKING ROC " << iroc << " col " << icol << " row " << irow << endl;
       if (iroc < fnRocs && icol < fnCol && irow < fnRow) {
-	v[iroc].push_back(make_pair(icol, irow)); 
+	v[iroc].push_back(make_pair(icol, irow));
       } else {
 	LOG(logINFO) << "illegal ROC/row/col coordinates in line " << i << ": " << lines[i];
       }
@@ -566,7 +566,7 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
     }
   }
 
-  return v; 
+  return v;
 }
 
 
@@ -574,30 +574,30 @@ vector<vector<pair<int, int> > > ConfigParameters::readMaskFile(string fname) {
 bool ConfigParameters::writeMaskFile(vector<vector<pair<int, int> > > v, string name) {
   stringstream fname;
   if (!name.compare("")) {
-    fname << fDirectory << "/" << fMaskFileName; 
+    fname << fDirectory << "/" << fMaskFileName;
   } else {
     if (string::npos == name.find("/")) {
-      fname << fDirectory << "/" << name; 
+      fname << fDirectory << "/" << name;
     } else {
-      fname << name; 
+      fname << name;
     }
   }
 
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
-  if (!OutputFile.is_open()) { 
-    LOG(logERROR) << "failed to open " << fname.str().c_str() << " as mask file"; 
+  if (!OutputFile.is_open()) {
+    LOG(logERROR) << "failed to open " << fname.str().c_str() << " as mask file";
     return false;
   } else {
-    LOG(logINFO) << "write masked pixels into " << fname.str(); 
+    LOG(logINFO) << "write masked pixels into " << fname.str();
   }
 
   OutputFile << "# mask file generated by maskHotPixels" << endl;
-  
+
   for (unsigned int iroc = 0; iroc < v.size(); ++iroc) {
-    vector<pair<int, int> > a = v[iroc]; 
+    vector<pair<int, int> > a = v[iroc];
     for (unsigned int ipix = 0; ipix < a.size(); ++ipix) {
-      OutputFile << "pix " << iroc << " " 
+      OutputFile << "pix " << iroc << " "
 		 << a[ipix].first << " " << a[ipix].second
 		 << endl;
     }
@@ -615,7 +615,7 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getRocDacs() {
   if (!fReadDacParameters) {
     readRocDacs();
   }
-  return fDacParameters; 
+  return fDacParameters;
 }
 
 
@@ -624,7 +624,7 @@ vector<string> ConfigParameters::getDacs() {
   if (!fReadDacParameters) {
     readRocDacs();
   }
-  vector<string> names; 
+  vector<string> names;
   vector<pair<string, uint8_t> > dacs = fDacParameters[0];
   for (unsigned int i = 0; i < dacs.size(); ++i) {
     names.push_back(dacs[i].first);
@@ -638,17 +638,17 @@ void ConfigParameters::readRocDacs() {
   if (!fReadDacParameters) {
 
     stringstream firstFile, lastFile;
-    firstFile << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << 0 << ".dat"; 
-    lastFile << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat"; 
+    firstFile << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << 0 << ".dat";
+    lastFile << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat";
     LOG(logINFO) << "readRocDacs: " << firstFile.str() << " .. " << lastFile.str();
 
     for (unsigned int i = 0; i < fnRocs; ++i) {
       stringstream filename;
-      filename << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat"; 
-      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
-      fDacParameters.push_back(rocDacs); 
+      filename << fDirectory << "/" << fDACParametersFileName << fTrimVcalSuffix << "_C" << i << ".dat";
+      vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str());
+      fDacParameters.push_back(rocDacs);
     }
-    fReadDacParameters = true; 
+    fReadDacParameters = true;
   }
 }
 
@@ -658,27 +658,27 @@ vector<vector<pair<string, uint8_t> > > ConfigParameters::getTbmDacs() {
   if (!fReadTbmParameters) {
     readTbmDacs();
   }
-  return fTbmParameters; 
+  return fTbmParameters;
 }
 
 // ----------------------------------------------------------------------
 void ConfigParameters::readTbmDacs() {
   if (!fReadTbmParameters) {
     stringstream firstFile, lastFile;
-    firstFile << fDirectory << "/" << fTbmParametersFileName << "_C" << "0a" << ".dat"; 
-    lastFile << fDirectory << "/" << fTbmParametersFileName << "_C" << fnTbms-1 << "b" << ".dat"; 
+    firstFile << fDirectory << "/" << fTbmParametersFileName << "_C" << "0a" << ".dat";
+    lastFile << fDirectory << "/" << fTbmParametersFileName << "_C" << fnTbms-1 << "b" << ".dat";
     LOG(logINFO) << "readTbmDacs: " << firstFile.str() << " .. " << lastFile.str();
 
-    string filename; 
+    string filename;
     for (unsigned int i = 0; i < fnTbms; ++i) {
       for (unsigned int ic = 0; ic < 2; ++ic) {
 	stringstream filename;
-	filename << fDirectory << "/" << fTbmParametersFileName << "_C" << i << (ic==0?"a":"b") << ".dat"; 
-	vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str()); 
-	fTbmParameters.push_back(rocDacs); 
+	filename << fDirectory << "/" << fTbmParametersFileName << "_C" << i << (ic==0?"a":"b") << ".dat";
+	vector<pair<string, uint8_t> > rocDacs = readDacFile(filename.str());
+	fTbmParameters.push_back(rocDacs);
       }
     }
-    fReadTbmParameters = true; 
+    fReadTbmParameters = true;
   }
 }
 
@@ -688,14 +688,14 @@ bool ConfigParameters::setTbParameter(string var, uint8_t val, bool appendIfNotF
   for (unsigned int i = 0; i < fTbParameters.size(); ++i) {
     if (!fTbParameters[i].first.compare(var)) {
       fTbParameters[i].second = val;
-      return true; 
+      return true;
     }
   }
   if (appendIfNotFound) {
-    fTbParameters.push_back(make_pair(var, val)); 
+    fTbParameters.push_back(make_pair(var, val));
     return true;
   }
-  return false; 
+  return false;
 }
 
 
@@ -707,7 +707,7 @@ bool ConfigParameters::setTbmDac(string var, uint8_t val, int itbm) {
       for (unsigned int idac = 0; idac < fTbmParameters[i].size(); ++idac) {
 	if (!fTbmParameters[i][idac].first.compare(var)) {
 	  fTbmParameters[i][idac].second = val;
-	  changed = true; 
+	  changed = true;
 	  break;
 	}
       }
@@ -715,8 +715,8 @@ bool ConfigParameters::setTbmDac(string var, uint8_t val, int itbm) {
   }
   if (changed) {
     return true;
-  } 
-  return false; 
+  }
+  return false;
 }
 
 
@@ -728,7 +728,7 @@ bool ConfigParameters::setRocDac(string var, uint8_t val, int iroc) {
       for (unsigned int idac = 0; idac < fDacParameters[i].size(); ++idac) {
 	if (!fDacParameters[i][idac].first.compare(var)) {
 	  fDacParameters[i][idac].second = val;
-	  changed = true; 
+	  changed = true;
 	  break;
 	}
       }
@@ -736,21 +736,21 @@ bool ConfigParameters::setRocDac(string var, uint8_t val, int iroc) {
   }
   if (changed) {
     return true;
-  } 
-  return false; 
+  }
+  return false;
 }
 
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::setTbPowerSettings(string var, double val) {
-  
+
   for (unsigned int i = 0; i < fTbPowerSettings.size(); ++i) {
     if (!fTbPowerSettings[i].first.compare(var)) {
       fTbPowerSettings[i].second = val;
-      return true; 
+      return true;
     }
   }
-  return false; 
+  return false;
 
 }
 
@@ -816,10 +816,8 @@ bool ConfigParameters::writeConfigParameterFile() {
 
   fprintf(file, "\n");
 
-  if ((fGuiX > 0) || (fGuiY > 0)) {
-    fprintf(file, "guiX %i\n", fGuiX);
-    fprintf(file, "guiY %i\n", fGuiY);
-  }
+  fprintf(file, "guiX %i\n", fGuiX);
+  fprintf(file, "guiY %i\n", fGuiY);
 
   fprintf(file, "\n");
 
@@ -843,23 +841,23 @@ bool ConfigParameters::writeConfigParameterFile() {
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTrimFile(int iroc, vector<pixelConfig> v) {
   stringstream fname;
-  fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
-  
+  fname << fDirectory << "/" << fTrimParametersFileName << fTrimVcalSuffix << "_C" << iroc << ".dat";
+
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
-  if (!OutputFile.is_open()) { 
+  if (!OutputFile.is_open()) {
     return false;
   } else {
-    LOG(logINFO) << "write trim parameters into " << fname.str(); 
+    LOG(logINFO) << "write trim parameters into " << fname.str();
   }
-    
+
   for (vector<pixelConfig>::iterator ipix = v.begin(); ipix != v.end(); ++ipix) {
-    OutputFile << setw(2) << static_cast<int>(ipix->trim()) 
-	       << "   Pix " << setw(2) 
-	       << static_cast<int>(ipix->column()) << " " << setw(2) << static_cast<int>(ipix->row()) 
+    OutputFile << setw(2) << static_cast<int>(ipix->trim())
+	       << "   Pix " << setw(2)
+	       << static_cast<int>(ipix->column()) << " " << setw(2) << static_cast<int>(ipix->row())
 	       << endl;
   }
-  
+
   OutputFile.close();
   return true;
 }
@@ -874,16 +872,16 @@ bool ConfigParameters::writeDacParameterFile(int iroc, vector<pair<string, uint8
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) {
-    return false; 
+    return false;
   } else {
-    LOG(logINFO) << "write dac parameters into " << fname.str(); 
+    LOG(logINFO) << "write dac parameters into " << fname.str();
   }
-  
+
   RegisterDictionary *a = RegisterDictionary::getInstance();
   for (vector<pair<string,uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
     //    OutputFile << left << setw(10) << idac->first << " " << setw(3) << static_cast<int>(idac->second) << endl;
     OutputFile << right << setw(3) << static_cast<int>(a->getRegister(idac->first, ROC_REG)) << " " << left
-	       << setw(10) << idac->first << " " << setw(3) << static_cast<int>(idac->second) 
+	       << setw(10) << idac->first << " " << setw(3) << static_cast<int>(idac->second)
 	       << endl;
   }
 
@@ -899,42 +897,42 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
   vector<uint8_t> tc;
   for (unsigned int ic = 0; ic < 2; ++ic) {
     stringstream fname;
-    fname << fDirectory << "/" << fTbmParametersFileName << "_C" << itbm << (ic==0?"a":"b") << ".dat"; 
+    fname << fDirectory << "/" << fTbmParametersFileName << "_C" << itbm << (ic==0?"a":"b") << ".dat";
 
     ofstream OutputFile;
     OutputFile.open((fname.str()).c_str());
     if (!OutputFile.is_open()) {
-      return false; 
+      return false;
     } else {
-      LOG(logINFO) << "write tbm parameters into " << (fname.str()).c_str(); 
-    } 
-  
+      LOG(logINFO) << "write tbm parameters into " << (fname.str()).c_str();
+    }
+
     if (0 == ic) {
       v = vA;
       tc = tcA;
     } else {
-      v = vB; 
+      v = vB;
       tc = tcB;
     }
 
     RegisterDictionary *a = RegisterDictionary::getInstance();
     for (vector<pair<string, uint8_t> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " " 
-		 << idac->first  
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister(idac->first, TBM_REG)) << " "
+		 << idac->first
 		 << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(idac->second)
 		 << endl;
     }
     if (tc.size() > 0)
-      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs1", TBM_REG)) << " " 
-                 << "nrocs1"  
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs1", TBM_REG)) << " "
+                 << "nrocs1"
                  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(tc.at(0))
                  << endl;
     if (tc.size() > 1)
-      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs2", TBM_REG)) << " " 
-                 << "nrocs2"  
+      OutputFile << right << setw(3) << setfill('0') << static_cast<int>(a->getRegister("nrocs2", TBM_REG)) << " "
+                 << "nrocs2"
                  << "   0x" << setw(2) << setfill('0') << hex << static_cast<int>(tc.at(1))
                  << endl;
-    
+
     OutputFile.close();
   }
   return true;
@@ -945,24 +943,24 @@ bool ConfigParameters::writeTbmParameterFile(int itbm, vector<pair<string, uint8
 bool ConfigParameters::writeTbParameterFile() {
   string fname = fDirectory + "/" + getTBParameterFileName();
   ofstream OutputFile;
-  string data; 
+  string data;
 
   OutputFile.open(fname.c_str());
   if (!OutputFile.is_open()) {
-    return false; 
+    return false;
   } else {
-    LOG(logINFO) << "write dtb parameters into " << fname.c_str(); 
+    LOG(logINFO) << "write dtb parameters into " << fname.c_str();
   }
-  
+
   RegisterDictionary *a = RegisterDictionary::getInstance();
   for (unsigned int idac = 0; idac < fTbParameters.size(); ++idac) {
     data = fTbParameters[idac].first;
     transform(data.begin(), data.end(), data.begin(), ::tolower);
-    OutputFile << right << setw(3) << static_cast<int>(a->getRegister(fTbParameters[idac].first, DTB_REG)) << " " 
-	       << setw(15) << fTbParameters[idac].first << "  " << setw(3) << static_cast<int>(fTbParameters[idac].second) 
+    OutputFile << right << setw(3) << static_cast<int>(a->getRegister(fTbParameters[idac].first, DTB_REG)) << " "
+	       << setw(15) << fTbParameters[idac].first << "  " << setw(3) << static_cast<int>(fTbParameters[idac].second)
 	       << endl;
   }
-  
+
   OutputFile.close();
 
   return true;
@@ -970,8 +968,8 @@ bool ConfigParameters::writeTbParameterFile() {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::writeTestParameterFile(string whichTest) {
-  string bla = "no implementation for dumping test parameters " +  whichTest; 
-  LOG(logINFO) << bla; 
+  string bla = "no implementation for dumping test parameters " +  whichTest;
+  LOG(logINFO) << bla;
   return true;
 }
 
@@ -979,19 +977,19 @@ bool ConfigParameters::writeTestParameterFile(string whichTest) {
 // ----------------------------------------------------------------------
 void ConfigParameters::readGainPedestalParameters() {
 
-  string bname = getGainPedestalParameterFileName(); 
+  string bname = getGainPedestalParameterFileName();
 
   fGainPedestalParameters.clear();
 
   // -- read in file
-  vector<string> lines; 
+  vector<string> lines;
   char  buffer[5000];
   ifstream is;
-  vector<gainPedestalParameters> rocPar; 
-  
+  vector<gainPedestalParameters> rocPar;
+
   stringstream firstFile, lastFile;
-  firstFile << fDirectory << "/" << bname << fTrimVcalSuffix << "_C0" << ".dat"; 
-  lastFile << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat"; 
+  firstFile << fDirectory << "/" << bname << fTrimVcalSuffix << "_C0" << ".dat";
+  lastFile << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << fnRocs-1 << ".dat";
   LOG(logINFO) << "readGainPedestalParameters " << firstFile.str() << " .. " << lastFile.str();
 
   for (unsigned int iroc = 0; iroc < fnRocs; ++iroc) {
@@ -999,12 +997,12 @@ void ConfigParameters::readGainPedestalParameters() {
     rocPar.clear();
     stringstream fname;
     fname.str(string());
-    fname << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << iroc << ".dat"; 
+    fname << fDirectory << "/" << bname << fTrimVcalSuffix << "_C" << iroc << ".dat";
     is.open((fname.str()).c_str());
     if (!is.is_open()) {
-      LOG(logERROR) << "cannot open " << (fname.str()) << " for reading PH calibration constants"; 
+      LOG(logERROR) << "cannot open " << (fname.str()) << " for reading PH calibration constants";
       return;
-    } 
+    }
 
     while (is.getline(buffer, 200, '\n')) {
       lines.push_back(string(buffer));
@@ -1012,17 +1010,17 @@ void ConfigParameters::readGainPedestalParameters() {
     is.close();
 
     // -- parse lines
-    double p0, p1, p2, p3;  
-    int icol, irow; 
-    string pix; 
+    double p0, p1, p2, p3;
+    int icol, irow;
+    string pix;
 
     for (unsigned int i = 3; i < lines.size(); ++i) {
       istringstream istring(lines[i]);
-      istring >> p0 >> p1 >> p2 >> p3 >> pix >> icol >> irow; 
+      istring >> p0 >> p1 >> p2 >> p3 >> pix >> icol >> irow;
       gainPedestalParameters a = {p0, p1, p2, p3};
-      rocPar.push_back(a); 
+      rocPar.push_back(a);
     }
-    fGainPedestalParameters.push_back(rocPar); 
+    fGainPedestalParameters.push_back(rocPar);
   }
 }
 
@@ -1030,29 +1028,29 @@ void ConfigParameters::readGainPedestalParameters() {
 void ConfigParameters::writeGainPedestalParameters() {
 
   stringstream fname;
-  
+
   for (unsigned int iroc = 0; iroc < fGainPedestalParameters.size(); ++iroc) {
     fname.str(string());
     fname << fDirectory << "/" << getGainPedestalParameterFileName() << fTrimVcalSuffix << "_C" << iroc << ".dat";
     ofstream OutputFile;
     OutputFile.open((fname.str()).c_str());
     if (!OutputFile.is_open()) {
-      LOG(logERROR) << "Could not open " << fname.str(); 
+      LOG(logERROR) << "Could not open " << fname.str();
       return;
     } else {
-      LOG(logINFO) << "write gain/ped parameters into " << fname.str(); 
+      LOG(logINFO) << "write gain/ped parameters into " << fname.str();
     }
-    
+
     OutputFile << "Parameters of the vcal vs. pulse height fits" << endl;
     //    OutputFile << "par[3] + par[2] * TMath::TanH(par[0]*x[0] - par[1])" << endl << endl;
     OutputFile << "par[3]*(TMath::Erf((x[0]-par[0])/par[1])+par[2])" << endl << endl;
-    
-    vector<gainPedestalParameters> pars = fGainPedestalParameters[iroc]; 
-    for (unsigned ipix = 0; ipix < pars.size(); ++ipix) {	
-      OutputFile << scientific 
-		 << pars[ipix].p0 << " " 
-		 << pars[ipix].p1 << " " 
-		 << pars[ipix].p2 << " " 
+
+    vector<gainPedestalParameters> pars = fGainPedestalParameters[iroc];
+    for (unsigned ipix = 0; ipix < pars.size(); ++ipix) {
+      OutputFile << scientific
+		 << pars[ipix].p0 << " "
+		 << pars[ipix].p1 << " "
+		 << pars[ipix].p2 << " "
 		 << pars[ipix].p3;
       OutputFile.unsetf(ios::fixed | ios::scientific);
       OutputFile << "     Pix "
@@ -1060,13 +1058,13 @@ void ConfigParameters::writeGainPedestalParameters() {
 		 << endl;
     }
     OutputFile.close();
-  }    
-  
+  }
+
 }
 
 // ----------------------------------------------------------------------
 void ConfigParameters::setGainPedestalParameters(vector<vector<gainPedestalParameters> >v) {
-  fGainPedestalParameters.clear(); 
+  fGainPedestalParameters.clear();
   for (unsigned int i = 0; i < v.size(); ++i) {
     fGainPedestalParameters.push_back(v[i]);
   }
@@ -1077,7 +1075,7 @@ vector<vector<gainPedestalParameters> > ConfigParameters::getGainPedestalParamet
   if (fGainPedestalParameters.size() == 0) {
     readGainPedestalParameters();
   }
-  return fGainPedestalParameters; 
+  return fGainPedestalParameters;
 }
 
 
@@ -1085,18 +1083,18 @@ void ConfigParameters::setProbe(string probe, string value) {
 
    transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
 
-   if (probe == "a1") fProbeA1 = value;	
-   else if (probe == "a2") fProbeA2 = value;	
-   else if (probe == "d1") fProbeD1 = value;	
-   else if (probe == "d2") fProbeD2 = value;	
+   if (probe == "a1") fProbeA1 = value;
+   else if (probe == "a2") fProbeA2 = value;
+   else if (probe == "d1") fProbeD1 = value;
+   else if (probe == "d2") fProbeD2 = value;
 }
 
 // ----------------------------------------------------------------------
 string ConfigParameters::getProbe(string probe) {
    transform(probe.begin(), probe.end(), probe.begin(), ::tolower);
-   if (probe == "a1") return fProbeA1;	
-   else if (probe == "a2") return fProbeA2;	
-   else if (probe == "d1") return fProbeD1;	
+   if (probe == "a1") return fProbeA1;
+   else if (probe == "a2") return fProbeA2;
+   else if (probe == "d1") return fProbeD1;
    else if (probe == "d2") return fProbeD2;
    else return "";
 }
@@ -1104,19 +1102,19 @@ string ConfigParameters::getProbe(string probe) {
 
 // ----------------------------------------------------------------------
 void ConfigParameters::cleanupString(string &s) {
-  replaceAll(s, "\t", " "); 
+  replaceAll(s, "\t", " ");
   string::size_type s1 = s.find("#");
-  if (string::npos != s1) s.erase(s1); 
+  if (string::npos != s1) s.erase(s1);
   if (0 == s.length()) return;
   string::iterator new_end = unique(s.begin(), s.end(), bothAreSpaces);
-  s.erase(new_end, s.end()); 
-  if (s.substr(0, 1) == string(" ")) s.erase(0, 1); 
-  if (s.substr(s.length()-1, 1) == string(" ")) s.erase(s.length()-1, 1); 
+  s.erase(new_end, s.end());
+  if (s.substr(0, 1) == string(" ")) s.erase(0, 1);
+  if (s.substr(s.length()-1, 1) == string(" ")) s.erase(s.length()-1, 1);
 }
 
 // ----------------------------------------------------------------------
-bool ConfigParameters::bothAreSpaces(char lhs, char rhs) { 
-  return (lhs == rhs) && (lhs == ' '); 
+bool ConfigParameters::bothAreSpaces(char lhs, char rhs) {
+  return (lhs == rhs) && (lhs == ' ');
 }
 
 // ----------------------------------------------------------------------
@@ -1132,28 +1130,28 @@ void ConfigParameters::replaceAll(string& str, const string& from, const string&
 // ----------------------------------------------------------------------
 void ConfigParameters::readNrocs(string line) {
   cleanupString(line);
-  string::size_type s0 = line.find(" "); 
-  string nrocs = line.substr(s0); 
-  fnRocs = atoi(nrocs.c_str()); 
-  string::size_type s1 = line.find("i2c:"); 
+  string::size_type s0 = line.find(" ");
+  string nrocs = line.substr(s0);
+  fnRocs = atoi(nrocs.c_str());
+  string::size_type s1 = line.find("i2c:");
   if (string::npos == s1) {
     return;
   } else {
     string i2cstring = line.substr(s1+5);
-    s0 = i2cstring.find(","); 
+    s0 = i2cstring.find(",");
     string i2c(""), leftover("");
     while (string::npos != s0) {
       i2c = i2cstring.substr(0, s0);
-      fI2cAddresses.push_back(atoi(i2c.c_str())); 
-      i2cstring = i2cstring.substr(s0+1); 
-      s0 = i2cstring.find(","); 
+      fI2cAddresses.push_back(atoi(i2c.c_str()));
+      i2cstring = i2cstring.substr(s0+1);
+      s0 = i2cstring.find(",");
     }
     //  -- get the last one as well
-    fI2cAddresses.push_back(atoi(i2cstring.c_str())); 
+    fI2cAddresses.push_back(atoi(i2cstring.c_str()));
     if (fnRocs != fI2cAddresses.size()) {
-      LOG(logWARNING) << "mismatch between number of i2c addresses and nRocs! Resetting nRocs to " 
+      LOG(logWARNING) << "mismatch between number of i2c addresses and nRocs! Resetting nRocs to "
 		      <<  fI2cAddresses.size();
-      fnRocs =  fI2cAddresses.size(); 
+      fnRocs =  fI2cAddresses.size();
     }
   }
 }
@@ -1189,26 +1187,26 @@ void ConfigParameters::readHubIds(string line) {
 void ConfigParameters::readReadbackCal() {
   if (!fReadReadbackCal) {
     stringstream firstFile, lastFile;
-    firstFile << fDirectory << "/" << fReadbackCalFileName << "_C" << 0 << ".dat"; 
-    lastFile << fDirectory << "/" << fReadbackCalFileName << "_C" << fnRocs-1 << ".dat"; 
+    firstFile << fDirectory << "/" << fReadbackCalFileName << "_C" << 0 << ".dat";
+    lastFile << fDirectory << "/" << fReadbackCalFileName << "_C" << fnRocs-1 << ".dat";
     LOG(logINFO) << "readReadbackCal: " << firstFile.str() << " .. " << lastFile.str();
 
     for (unsigned int i = 0; i < fnRocs; ++i) {
       stringstream filename;
-      filename << fDirectory << "/" << fReadbackCalFileName << "_C" << i << ".dat"; 
-      vector<pair<string, double> > rbCal = readReadbackFile(filename.str()); 
-      fReadbackCal.push_back(rbCal); 
+      filename << fDirectory << "/" << fReadbackCalFileName << "_C" << i << ".dat";
+      vector<pair<string, double> > rbCal = readReadbackFile(filename.str());
+      fReadbackCal.push_back(rbCal);
     }
-    fReadReadbackCal = true; 
+    fReadReadbackCal = true;
   }
 }
 
 // ----------------------------------------------------------------------
 vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
-  vector<pair<string, double> > rocRb; 
+  vector<pair<string, double> > rocRb;
 
   // -- read in file
-  vector<string> lines; 
+  vector<string> lines;
   char  buffer[5000];
   ifstream is(fname.c_str());
   while (is.getline(buffer, 200, '\n')) {
@@ -1217,30 +1215,30 @@ vector<pair<string, double> > ConfigParameters::readReadbackFile(string fname) {
   is.close();
 
   // -- parse lines
-  double ival(0); 
-  double uval(0); 
-  //  unsigned char uval(0); 
-  
-  string::size_type s1; 
+  double ival(0);
+  double uval(0);
+  //  unsigned char uval(0);
+
+  string::size_type s1;
   string str1, str2;
   for (unsigned int i = 0; i < lines.size(); ++i) {
-    //cout << lines[i] << endl;   
+    //cout << lines[i] << endl;
     // -- remove tabs, adjacent spaces, leading and trailing spaces
     cleanupString(lines[i]);
     if (lines[i].length() < 2) continue;
-    s1 = lines[i].find(" "); 
-    str1 = lines[i].substr(0, s1); 
-    str2 = lines[i].substr(s1+1); 
+    s1 = lines[i].find(" ");
+    str1 = lines[i].substr(0, s1);
+    str2 = lines[i].substr(s1+1);
 
     transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
-    ival = atof(str2.c_str()); 
-    
+    ival = atof(str2.c_str());
+
     uval = ival;
-    rocRb.push_back(make_pair(str1, uval)); 
+    rocRb.push_back(make_pair(str1, uval));
 
   }
 
-  return rocRb; 
+  return rocRb;
 }
 
 // ----------------------------------------------------------------------
@@ -1260,14 +1258,14 @@ bool ConfigParameters::writeReadbackFile(int iroc, vector<pair<string, double> >
   ofstream OutputFile;
   OutputFile.open((fname.str()).c_str());
   if (!OutputFile.is_open()) {
-    return false; 
+    return false;
   } else {
-    LOG(logINFO) << "write readback calibration parameters into " << fname.str(); 
+    LOG(logINFO) << "write readback calibration parameters into " << fname.str();
   }
-  
+
   //  RegisterDictionary *a = RegisterDictionary::getInstance();
   for (vector<pair<string,double> >::iterator idac = v.begin(); idac != v.end(); ++idac) {
-    OutputFile << left << setw(3) << idac->first << " " << setw(3) << static_cast<double>(idac->second) 
+    OutputFile << left << setw(3) << idac->first << " " << setw(3) << static_cast<double>(idac->second)
 	       << endl;
   }
 
@@ -1285,15 +1283,15 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
   }
 
   stringstream fname;
-  
-  fname << fDirectory << "/" << fTrimParametersFileName << name << "_C0.dat"; 
+
+  fname << fDirectory << "/" << fTrimParametersFileName << name << "_C0.dat";
   ifstream InputFile;
   InputFile.open((fname.str()).c_str());
   //  cout << "check for " << fname.str() << endl;
 
   if (!InputFile.is_open()) {
     LOG(logERROR) << "Did not find file " << fname.str() << ", no trim VCAL value used";
-    fTrimVcalSuffix = ""; 
+    fTrimVcalSuffix = "";
   } else {
     fTrimVcalSuffix = name;
   }
@@ -1303,12 +1301,11 @@ void ConfigParameters::setTrimVcalSuffix(string name, bool nocheck) {
 
 // ----------------------------------------------------------------------
 bool ConfigParameters::isMaskedPixel(int roc, int col, int row) {
-  vector<pair<int, int> > v = fMaskedPixels[roc]; 
+  vector<pair<int, int> > v = fMaskedPixels[roc];
   for (unsigned int j = 0; j < v.size(); ++j) {
     if (v[j].first == col && v[j].second == row) {
-      return true; 
+      return true;
     }
   }
   return false;
 }
-
