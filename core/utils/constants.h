@@ -63,6 +63,7 @@ namespace pxar {
 #define ROC_PSI46DIGV21RESPIN 0x08
 #define ROC_PROC600           0x09
 #define ROC_PROC600V2         0x0A
+#define ROC_PROC600V3         0x0B
 
 // --- ROC DACs ---------------------------------------------------------------
 #define ROC_DAC_Vdig       0x01
