@@ -25,16 +25,16 @@ using namespace pxar;
 ClassImp(PixGui)
 
 // ----------------------------------------------------------------------
-PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) : 
+PixGui::PixGui( const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup) :
 TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
-  fBorderN = 2; 
-  fBorderL = 10; 
+  fBorderN = 2;
+  fBorderL = 10;
   fBorderT = 1;
 
   SetWindowName("pXar");
 
-  fOldDirectory = "nada"; 
+  fOldDirectory = "nada";
 
   gClient->GetColorByName("red", fRed);
   gClient->GetColorByName("green", fGreen);
@@ -48,17 +48,17 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   fPixSetup = setup;
   fApi = fPixSetup->getApi();
   fConfigParameters = fPixSetup->getConfigParameters();
-  fTestParameters = fPixSetup->getPixTestParameters(); 
+  fTestParameters = fPixSetup->getPixTestParameters();
 
   fPixSetup->setGuiActive(true);
 
   fPower = true;
   if (fConfigParameters->getHvOn()) {
-    fHV = true; 
+    fHV = true;
   } else {
     fHV = false;
   }
-  
+
   // -- create the main frames: fH1 for top stuff and fH2 for tabs
   // fH1 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.2), kFixedHeight);
   // fH2 = new TGHorizontalFrame(this, fWidth, static_cast<int>(fHeight*0.8), kFixedHeight);
@@ -77,10 +77,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // ------------------------
   TGGroupFrame *hwControl = new TGGroupFrame(h1v2, "Hardware control");
   h1v2->AddFrame(hwControl);
-  TGHorizontalFrame *FhwControl = new TGHorizontalFrame(hwControl); 
+  TGHorizontalFrame *FhwControl = new TGHorizontalFrame(hwControl);
   hwControl->AddFrame(FhwControl);
   // -- leftmost frame: power, HV, monitoring
-  TGVerticalFrame *h1v2l = new TGVerticalFrame(FhwControl); 
+  TGVerticalFrame *h1v2l = new TGVerticalFrame(FhwControl);
   FhwControl->AddFrame(h1v2l);
   // -- middle frame: signal probes
   TGVerticalFrame *h1v2m = new TGVerticalFrame(FhwControl);
@@ -108,29 +108,29 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fbtnPower->SetText("Off");
   }
   powerFrame->AddFrame(fbtnPower, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
-  
+
   // left: HV
   //  TGHorizontalFrame *hvFrame = new TGHorizontalFrame(h1v2l, 150,75);
   TGHorizontalFrame *hvFrame = new TGHorizontalFrame(h1v2l);
   h1v2l->AddFrame(hvFrame);
   hvFrame->SetName("hvFrame");
   hvFrame->AddFrame(new TGLabel(hvFrame, "HV:     "), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-  
+
   fbtnHV = new TGTextButton(hvFrame, "Off", B_HV);
   fbtnHV->SetToolTipText(fConfigParameters->getNrocs()>1?"Turn on/off module bias voltage":"Turn on/off ROC bias voltage");
   fbtnHV->Resize(70,35);
   fbtnHV->Connect("Clicked()", "PixGui", this, "handleButtons()");
   if (fHV) {
-    hvOn();    
+    hvOn();
   } else {
     hvOff();
   }
   hvFrame->AddFrame(fbtnHV, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
 
-  Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()"); 
-  Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()"); 
-  Connect("PixTest", "powerOn()", "PixGui", this, "powerOn()"); 
-  Connect("PixTest", "powerOff()", "PixGui", this, "powerOff()"); 
+  Connect("PixTest", "hvOn()", "PixGui", this, "hvOn()");
+  Connect("PixTest", "hvOff()", "PixGui", this, "hvOff()");
+  Connect("PixTest", "powerOn()", "PixGui", this, "powerOn()");
+  Connect("PixTest", "powerOff()", "PixGui", this, "powerOff()");
 
 
   // left: monitoring
@@ -157,7 +157,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   sigFrame->AddFrame(fSignalBoxA[0], new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
   fSignalBoxA[0]->SetName("a1");
   //  fSignalBoxA[0]->SetToolTipText("Select signal to be routed to A1(+/-)");
-   
+
   sigFrame = new TGHorizontalFrame(h1v2m);
   h1v2m->AddFrame(sigFrame, new TGLayoutHints(kLHintsTop|kLHintsLeft|kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
   sigFrame->AddFrame(new TGLabel(sigFrame, "A2:"), new TGLayoutHints(kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -198,7 +198,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
     fSignalBoxA[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
     fSignalBoxD[i]->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
   }
-  
+
   fSignalBoxA[0]->Select(_dict->getSignal(fConfigParameters->getProbe("a1"),PROBE_ANALOG),false);
   fSignalBoxA[1]->Select(_dict->getSignal(fConfigParameters->getProbe("a2"),PROBE_ANALOG),false);
   fSignalBoxD[0]->Select(_dict->getSignal(fConfigParameters->getProbe("d1"),PROBE_DIGITAL),false);
@@ -213,10 +213,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   rbFrame->AddFrame(rblabel, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   rbFrame->AddFrame(rbTxt, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   h1v2r->AddFrame(rbFrame, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
-  rbTxt->SetWidth(0.25*rbFrame->GetDefaultWidth()); 
+  rbTxt->SetWidth(0.25*rbFrame->GetDefaultWidth());
   rbTxt->SetToolTipText("Not yet implemented!");
 
-  
+
   TGHorizontalFrame *rbbFrame = new TGHorizontalFrame(h1v2r);
   h1v2r->AddFrame(rbbFrame, new TGLayoutHints(kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   rbbFrame->SetName("rbbFrame");
@@ -242,7 +242,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   //  fD2TBM->SetToolTipText("Select DAQ channel for deser signals (on D2)");
   fD2TBM->Connect("Selected(Int_t)", "PixGui", this, "selectProbes(Int_t)");
 
-  
+
   TGHorizontalFrame *d1TBM = new TGHorizontalFrame(h1v2r);
   h1v2r->AddFrame(d1TBM, new TGLayoutHints(kLHintsLeft|kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
   d1TBM->AddFrame(new TGLabel(d1TBM, "chan"), new TGLayoutHints(kLHintsLeft|kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -265,10 +265,10 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // --------------
   TGGroupFrame *pControl = new TGGroupFrame(h1v3, "pXar control");
   h1v3->AddFrame(pControl, new TGLayoutHints(kLHintsRight | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
-  TGVerticalFrame *FpControl = new TGVerticalFrame(pControl); 
-  pControl->AddFrame(FpControl); 
+  TGVerticalFrame *FpControl = new TGVerticalFrame(pControl);
+  pControl->AddFrame(FpControl);
 
-  TGHorizontalFrame *bFrame = new TGHorizontalFrame(FpControl); 
+  TGHorizontalFrame *bFrame = new TGHorizontalFrame(FpControl);
   FpControl->AddFrame(bFrame, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
 
   TGTextButton *exitButton = new TGTextButton(bFrame, "exit", B_EXIT);
@@ -304,7 +304,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // output->Resize(100, output->GetDefaultHeight());
   output->Connect("ReturnPressed()", "PixGui", this, "handleButtons()");
   rootfileFrame->AddFrame(output, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
- 
+
 
 
   TGHorizontalFrame *dirFrame = new TGHorizontalFrame(FpControl);
@@ -328,7 +328,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   AddFrame(fH1, new TGLayoutHints(kLHintsTop | kLHintsExpandX));
 
 
-  
+
   Resize(GetDefaultSize());
 
   // %%%%%%%%%%%%%
@@ -340,22 +340,24 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 
   fTabs->SetTab(0);
   fTabs->Connect("Selected(Int_t)", "PixGui", this, "selectedTab(Int_t)");
-  
-  if (fApi) fParTab = new PixParTab(this, fConfigParameters, "h/w"); 
+
+  if (fApi) fParTab = new PixParTab(this, fConfigParameters, "h/w");
   fTabs->SetTab(0);
 
   if (fApi) fParTab->updateSelection(); // ensure that fId2Idx for all tests is initialized
 
   vector<string> tests = fTestParameters->getTests();
   for (unsigned int i = 0; i < tests.size(); ++i) {
-    createTab(tests[i].c_str()); 
+    createTab(tests[i].c_str());
   }
 
   fH2->AddFrame(fTabs, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
   AddFrame(fH2, new TGLayoutHints(kLHintsBottom | kLHintsExpandY | kLHintsExpandX));
 
   Resize(GetDefaultSize());
-
+  if (fWidth < 0) {
+    fWidth = gClient->GetDisplayWidth() - GetDefaultWidth();
+  }
   MoveResize(fWidth, fHeight, GetDefaultWidth(), GetDefaultHeight());
   MapSubwindows();
   MapWindow();
@@ -366,7 +368,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
 PixGui::~PixGui() {
   LOG(logDEBUG) << "PixGui::destructor";
   delete fTimer;
-  delete fMonitor; 
+  delete fMonitor;
   delete fTabs;
   delete fParTab;
   delete fRootFileNameBuffer;
@@ -394,13 +396,13 @@ void PixGui::CloseWindow() {
   LOG(logDEBUG) << "Final Analog Current: " << fApi->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Final Digital Current: " << fApi->getTBid()*1000 << "mA";
   if (fConfigParameters->getHdiType() == "fpix") {LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", fPixSetup->getPixMonitor()->getTemp()) << " C";}
-  std::vector<PixTest*>::iterator il; 
+  std::vector<PixTest*>::iterator il;
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
-    delete (*il); 
-  } 
-  
+    delete (*il);
+  }
+
   if (fTimer) fTimer->TurnOff();
-  if (fApi) delete fApi; 
+  if (fApi) delete fApi;
   fPixSetup->getPixMonitor()->dumpSummaries();
 
   //  DestroyWindow();
@@ -414,34 +416,34 @@ void PixGui::selectProbes(Int_t /*id*/) {
 
    string probe, name;
    int channel(-1);
-   bool doSet(false); 
+   bool doSet(false);
 
    if ((!strcmp("a1", box->GetName()))) {
-     doSet = true; 
+     doSet = true;
      probe = "a1";
      name  = fSignalBoxA[0]->GetSelectedEntry()->GetTitle();
    }
    if ((!strcmp("a2", box->GetName()))) {
-     doSet = true; 
+     doSet = true;
      probe = "a2";
      name  = fSignalBoxA[1]->GetSelectedEntry()->GetTitle();
    }
 
    //   if ((!strcmp("d1", box->GetName())) || (!strcmp("d1chan", box->GetName()))) {
    if (!strcmp("d1", box->GetName())) {
-     doSet = true; 
+     doSet = true;
      probe = "d1";
      name  = fSignalBoxD[0]->GetSelectedEntry()->GetTitle();
      sscanf(fD1TBM->GetSelectedEntry()->GetTitle(), "chan %d", &channel);
    }
    //   if ((!strcmp("d2", box->GetName())) || (!strcmp("d2chan", box->GetName()))) {
    if (!strcmp("d2", box->GetName())) {
-     doSet = true; 
-     probe = "d2"; 
+     doSet = true;
+     probe = "d2";
      name  = fSignalBoxD[1]->GetSelectedEntry()->GetTitle();
      sscanf(fD2TBM->GetSelectedEntry()->GetTitle(), "chan %d", &channel);
    }
-       
+
    if (doSet) {
      if (channel > -1) {
        LOG(logDEBUG) << "probe: " << probe << " name: " << name << " channel: " << channel << " (setting w/ channel)";
@@ -451,7 +453,7 @@ void PixGui::selectProbes(Int_t /*id*/) {
        fApi->SignalProbe(probe, name);
      }
    }
-   
+
    // -- Write the selected probe to configParameters
    fConfigParameters->setProbe(box->GetName(), box->GetSelectedEntry()->GetTitle());
 
@@ -464,27 +466,27 @@ void PixGui::handleButtons(Int_t id) {
     TGButton *btn = (TGButton *) gTQSender;
     id = btn->WidgetId();
   }
- 
+
   switch (id) {
   case B_DIRECTORY: {
     LOG(logDEBUG) << Form("changing base directory: %s", fDirNameBuffer->GetString());
-    fOldDirectory = fConfigParameters->getDirectory(); 
+    fOldDirectory = fConfigParameters->getDirectory();
     if (0 == gSystem->OpenDirectory(fDirNameBuffer->GetString())) {
-      LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it"; 
-      int bla = gSystem->MakeDirectory(fDirNameBuffer->GetString()); 
+      LOG(logINFO) << "directory " << fDirNameBuffer->GetString() << " does not exist, creating it";
+      int bla = gSystem->MakeDirectory(fDirNameBuffer->GetString());
       if (bla < 0)  {
 	LOG(logWARNING) << " failed to create directory " << fDirNameBuffer->GetString();
 	break;
       }
-    } 
-    
-    fConfigParameters->setDirectory(fDirNameBuffer->GetString()); 
+    }
+
+    fConfigParameters->setDirectory(fDirNameBuffer->GetString());
     changeRootFile();
     break;
   }
   case B_FILENAME: {
     LOG(logINFO) << Form("changing rootfilenme: %s", fRootFileNameBuffer->GetString());
-    changeRootFile(); 
+    changeRootFile();
     break;
   }
   case B_EXIT: {
@@ -512,7 +514,7 @@ void PixGui::handleButtons(Int_t id) {
     } else {
       hvOn();
     }
-    break;  
+    break;
   }
   default:
     break;
@@ -525,7 +527,7 @@ void PixGui::powerOn() {
     fPower = true;
     fbtnPower->ChangeBackground(fGreen);
     fbtnPower->SetText("On");
-    fApi->Pon(); 
+    fApi->Pon();
     gSystem->ProcessEvents();
     LOG(logDEBUG) << "Power set On";
   }
@@ -537,7 +539,7 @@ void PixGui::powerOff() {
     fPower = false;
     fbtnPower->ChangeBackground(fRed);
     fbtnPower->SetText("Off");
-    fApi->Poff(); 
+    fApi->Poff();
     gSystem->ProcessEvents();
     LOG(logDEBUG) << "Power set Off";
   }
@@ -550,7 +552,7 @@ void PixGui::hvOn() {
     fHV = true;
     fbtnHV->ChangeBackground(fGreen);
     fbtnHV->ChangeText("On");
-    fApi->HVon(); 
+    fApi->HVon();
     gSystem->ProcessEvents();
     LOG(logDEBUG) << "HV set On: " << fbtnHV->GetText();
   }
@@ -563,7 +565,7 @@ void PixGui::hvOff() {
     fHV = false;
     fbtnHV->ChangeBackground(fRed);
     fbtnHV->ChangeText("Off");
-    fApi->HVoff(); 
+    fApi->HVoff();
     gSystem->ProcessEvents();
     LOG(logDEBUG) << "HV set Off";
   }
@@ -574,8 +576,8 @@ void PixGui::hvOff() {
 // // --------------------------------------------------------------------------------
 // // FIXME needed?
 // void PixGui::createParTab() {
-//   UInt_t w = 400; 
-//   UInt_t h = 400; 
+//   UInt_t w = 400;
+//   UInt_t h = 400;
 
 //   fParTab = fTabs->AddTab("hardware parameters");
 //   fParTab->SetLayoutManager(new TGVerticalLayout(fParTab));
@@ -595,23 +597,23 @@ void PixGui::createTab(const char* csel) {
     return;
   }
 
-  fTestList.push_back(pt); 
-  PixTab *t = new PixTab(this, pt, string(csel)); 
+  fTestList.push_back(pt);
+  PixTab *t = new PixTab(this, pt, string(csel));
   fPixTabList.push_back(t);
-  
-  pt->Connect("update()", "PixTab", t, "update()"); 
+
+  pt->Connect("update()", "PixTab", t, "update()");
   MapSubwindows();
   Resize(GetDefaultSize());
   MapWindow();
-  fTabs->SetTab(csel); 
-  
+  fTabs->SetTab(csel);
+
 }
 
 
 // ----------------------------------------------------------------------
 PixTest* PixGui::createTest(string testname) {
-  PixTestFactory *factory = PixTestFactory::instance(); 
-  PixUserTestFactory *userfactory = PixUserTestFactory::instance(); 
+  PixTestFactory *factory = PixTestFactory::instance();
+  PixUserTestFactory *userfactory = PixUserTestFactory::instance();
   PixTest *t =  factory->createTest(testname, fPixSetup);
   if (0 == t) t = userfactory->createTest(testname, fPixSetup);
   return t;
@@ -643,8 +645,8 @@ void PixGui::changeRootFile() {
 
   string newRootFilePath = fConfigParameters->getDirectory() + "/" + fRootFileNameBuffer->GetString();
 
-  gSystem->Rename(oldRootFilePath.c_str(), newRootFilePath.c_str()); 
-  TFile *f = TFile::Open(newRootFilePath.c_str(), "UPDATE"); 
+  gSystem->Rename(oldRootFilePath.c_str(), newRootFilePath.c_str());
+  TFile *f = TFile::Open(newRootFilePath.c_str(), "UPDATE");
   (void)f;
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
     (*il)->resetDirectory();
@@ -656,7 +658,7 @@ void PixGui::changeRootFile() {
 void PixGui::updateSelectedRocs(map<int, int> a) {
 
   for (unsigned int i = 0; i < fTestList.size(); ++i) {
-    fTestList[i]->setId2Idx(a); 
+    fTestList[i]->setId2Idx(a);
   }
 
 
