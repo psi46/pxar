@@ -881,6 +881,7 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
 
+    // FIXME/to understand: Dinko had this loop commented. Correct?!
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       hist[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
     }
@@ -897,7 +898,7 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       idx = getIdxFromId(it->pixels[ipix].roc());
       if(idx == -1) {
-	LOG(logWARNING) << "PixTestDaq::ProcessData() wrong 'idx' value --> return";
+	LOG(logWARNING) << "PixTestHighRate::ProcessData() wrong 'idx' value --> return";
 	return;
       }
       if (fPhCalOK) {
