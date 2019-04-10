@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
     doUpdateFlash(false),
     doUpdateRootFile(false),
     doUseRootLogon(false),
-    doDaqMemReset(true)  
+    doDaqMemReset(true)
     ;
   for (int i = 0; i < argc; i++){
     if (!strcmp(argv[i],"-h")) {
@@ -93,6 +93,8 @@ int main(int argc, char *argv[]){
     doUseRootLogon = true;
   } else {
     LOG(logINFO) << "no rootlogon.C found, live with the defaults provided";
+    LOG(logINFO) << "note: you can place the GUI with command line parameters -x .. -y .. ";
+    LOG(logINFO) << "      or by setting guiX and guiY in the following file:";
   }
 
   if (doRunScript) {
@@ -360,7 +362,15 @@ int main(int argc, char *argv[]){
         if (0 == t) t = userfactory->createTest(input, &a);
         if (t) {
 	  if (subtest.compare("nada")) {
-	    t->runCommand(subtest);
+	    if (!input.compare("cmd")) {
+	      if (!parameters.compare("nada")) {
+		t->runCommand(subtest);
+	      } else {
+		t->runCommand(subtest + " " + parameters);
+	      }
+	    } else {
+	      t->runCommand(subtest);
+	    }
 	  } else {
 	    t->doTest();
 	  }
@@ -399,7 +409,6 @@ void runGui(PixSetup &a, int argc, char *argv[]) {
     if (!strcmp(argv[i], "-x")) {x = atoi(argv[++i]); changed = true; }
     if (!strcmp(argv[i], "-y")) {y = atoi(argv[++i]); changed = true; }
   }
-
   if (changed) {
     a.getConfigParameters()->setGuiX(x);
     a.getConfigParameters()->setGuiY(y);
