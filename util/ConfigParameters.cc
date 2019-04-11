@@ -323,8 +323,15 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 	  }
   }
 
-  uint8_t delay = 6;
-  if(fRocType.find("dig") == string::npos) { delay = 5; }
+  uint8_t delay = 6; // for the 46dig
+  //if(fRocType.find("dig") == string::npos) { delay = 5; }
+  // shift the cel-trigger delay by 2 for proc600v3,4, so 5->7
+  if     (fRocType=="proc600v4" ) { delay = 7; }
+  else if(fRocType=="proc600v3")  { delay = 7; }
+  else if(fRocType=="proc600")    { delay = 5; }
+
+  //cout<<" danek - delay "<<int(delay)<<" ntbms "<<fnTbms<<" roctype "
+  // <<fRocType<<endl;
   
   if (fnTbms < 1) {
     a.push_back(make_pair("resetroc",25));    // PG_RESR b001000 
