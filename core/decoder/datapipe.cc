@@ -416,7 +416,7 @@ namespace pxar {
     // Check if ROC has inverted pixel address (ROC_PSI46DIG):
     bool invertedAddress = ( GetDeviceType() == ROC_PSI46DIG ? true : false );
     // Check if ROC is a Layer1 chip with different address encoding:
-    bool linearAddress = ( GetDeviceType() == ROC_PROC600 ? true : false );
+    bool linearAddress = ( (GetDeviceType() == ROC_PROC600 || GetDeviceType() == ROC_PROC600V2 || GetDeviceType() == ROC_PROC600V3)  ? true : false );
 
     // Reserve expected number of pixels from data length (subtract ROC headers):
     if(static_cast<int>(sample->GetSize())-GetTokenChainLength() > 0) {

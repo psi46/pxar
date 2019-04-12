@@ -29,12 +29,12 @@ public:
   PixTestCmd(PixSetup *, std::string);
   PixTestCmd();
   virtual ~PixTestCmd();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
   void setToolTips();
-  void bookHist(std::string); 
+  void bookHist(std::string);
 
-  void doTest(); 
+  void doTest();
   void createWidgets();
   void DoTextField();
   void DoUpArrow();
@@ -42,6 +42,7 @@ public:
   void flush(std::string s);
   void runCommand(std::string s);
   void stopTest();
+  void writeOutput(std::string s);
 
 private:
 
@@ -52,9 +53,9 @@ private:
   TGTextEntry * commandLine;
   std::vector<std::string> cmdHistory;
   unsigned int historyIndex;
-  
+
   CmdProc * cmd;
-  
+
   ClassDef(PixTestCmd, 1)
 
 };
@@ -77,13 +78,13 @@ class Token;
 
 class IntList{
     int singleValue;
-    vector< pair<int,int> > ranges; 
-    
+    vector< pair<int,int> > ranges;
+
     public:
     enum special{IMIN=-1, IMAX=-2, UNDEFINED=-3, IVAR=-4};
     IntList():singleValue(UNDEFINED){ranges.clear();}
     bool parse( Token & , const bool append=false );
-    
+
     int value(){return singleValue;}
     bool isSingleValue(){return (!(singleValue==UNDEFINED));}
     bool isVariable(){return ( (singleValue==IVAR));}
@@ -111,7 +112,7 @@ class Arg{
             lvalue=v;
         }
     }
-    bool getInt(int & value){ 
+    bool getInt(int & value){
         if (type==IVALUE_T){value=ivalue; return true;}
         if (type==IVAR_T){value=varvalue; return true;}
         return false;
@@ -119,7 +120,7 @@ class Arg{
 
     bool getList(IntList & value){ if(type==ILIST_T){ value=lvalue; return true;} return false;}
     bool getVect(vector<int> & value, const int imin=0, const int imax=0){
-        if(type==ILIST_T){ 
+        if(type==ILIST_T){
             value=lvalue.getVect(imin, imax);
             return true;
         }else if(type==IVALUE_T){
@@ -139,7 +140,7 @@ class Arg{
     string svalue;
     IntList lvalue;
     int ivalue;
-    
+
     string str(){
         stringstream s;
         if (type==IVALUE_T){ s << ivalue;}
@@ -149,7 +150,7 @@ class Arg{
         else s <<"???";
         return s.str();
     }
-    
+
     string raw(){
         stringstream s;
         if (type==IVALUE_T){ s << ivalue;}
@@ -179,16 +180,16 @@ class Keyword{
 
     bool match(const char * s, string & s1, vector<string> & options, ostream & err);
     bool match(const char * s, string & s1, vector<string> & options, int & value,  ostream & err);
-    
+
     bool match(const char *, int &);
     bool match(const char *, int &, int &);
     bool match(const char *, int &, int &, int &);
     bool match(const char *, int &, int &, int &, int &);
     bool match(const char *, int &, int &, int &, int &, int &);
     bool match(const char *, string &);
-    bool match(const char *, vector<int> &); 
-    bool match(const char *, string &, int &, int &, int &);   
-    bool match(const char *, string &, vector<int> &);    
+    bool match(const char *, vector<int> &);
+    bool match(const char *, string &, int &, int &, int &);
+    bool match(const char *, string &, vector<int> &);
     bool match(const char * s, vector<int> & , vector<int> &);
     bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int);
     bool match(const char * s, vector<int> &, const int, const int , vector<int> &, const int, const int, int &);
@@ -201,7 +202,7 @@ class Keyword{
 
     string keyword;
     vector<Arg> argv;
-    
+
     Keyword at(int index){
         Keyword k( keyword );
         k.argv.clear();
@@ -218,7 +219,7 @@ class Keyword{
 
 
 class Token{
-  // container for a list of tokens, basically a deque<string> 
+  // container for a list of tokens, basically a deque<string>
   // with the capability to replace tokens by macros
   deque<string> token;
   map<string, deque <string> >::iterator mi;
@@ -257,7 +258,7 @@ class Target{
     vector<int> values(){return ivalues;}// todo fix unexpanded
     Target():name(""){expanded=false;}
     Target(string s):name(s){expanded=false;}
-  
+
     // for single valued targets
     int value(){ if (!expanded) {return 0;}else{return ivalues.size()==1 ? ivalues[0] : -1;}; }
     Target(string name, const int value):name(name){ivalues.clear();ivalues.push_back( value );expanded=true;}
@@ -266,7 +267,7 @@ class Target{
     bool parse( Token & );
     string str();
 
-}; 
+};
 
 
 class Block{
@@ -292,7 +293,7 @@ class Statement{
   ~Statement(){ if (!(block==NULL)) delete block; }
   bool parse( Token & );
   bool exec(CmdProc *, Target &);
-  
+
   Keyword keyword;
   bool redirected;
   string out_filename;
@@ -331,7 +332,7 @@ struct TBMDelays{
 
 class CmdProc {
 
- 
+
  public:
 
   static bool fStopWhateverYouAreDoing;
@@ -343,7 +344,7 @@ class CmdProc {
   void init();
   void setApi(pxar::pxarCore * api, PixSetup * setup );
   void flush(stringstream & o);
-  
+
   int exec(string s);
   int exec(const char* p){ return exec(string(p));}
 
@@ -352,9 +353,9 @@ class CmdProc {
 
   pxar::pxarCore * fApi;
   PixSetup * fPixSetup;
- 
+
   PixTestCmd * master;
-  stringstream out; 
+  stringstream out;
   pxar::RegisterDictionary * _dict;
   pxar::ProbeDictionary * _probeDict;
   vector<string>  fD_names;
@@ -364,7 +365,7 @@ class CmdProc {
   static int fGetBufMethod;
   static int fNtrigTimingTest;
   static int fIgnoreReadbackErrors;
-  
+
   bool fPixelConfigNeeded;
   unsigned int fTCT, fTRC, fTTK;
   unsigned int fBufsize;
@@ -378,15 +379,15 @@ class CmdProc {
   vector<pair<string,uint8_t> > fSigdelays;
   vector<pair<string,uint8_t> > fSigdelaysSetup;
   bool fPgRunning;
-  
+
   int fDeser400XOR1sum[8];  // count transitions at the 8 phases
   int fDeser400XOR2sum[8];
   int fDeser400err;
   static int fPrerun;
   static bool fFW35;  // for fw<=3.5, to be removed
-  
 
-   // xor and error counting per daq channel, supposed to replace 
+
+   // xor and error counting per daq channel, supposed to replace
    // the global counting variables above at some point
    static const size_t nDaqChannelMax=8;
    unsigned int fDeser400XOR[nDaqChannelMax];
@@ -402,16 +403,16 @@ class CmdProc {
    unsigned int fDeser400_code_error[nDaqChannelMax];
    unsigned int fDeser400_idle_error[nDaqChannelMax];
    unsigned int fDeser400_trailer_error[nDaqChannelMax];
-   
+
    // read out counting for "countGood(...)", not reset by resetDaqStatus
    unsigned int fGoodLoops[nDaqChannelMax];
-   
-   void clear_DaqChannelCounter( unsigned int f[]){ 
+
+   void clear_DaqChannelCounter( unsigned int f[]){
         for(size_t i=0; i<nDaqChannelMax; i++){ f[i]=0;}
     }
-  
+
    uint16_t fRocHeaderData[17];
-   
+
    // readout configuration
    bool layer1(){ if (fApi->_dut->getNEnabledTbms() == 4 ) {return true;} else {return false;}};
    bool tbm08(){ return fApi->_dut->getTbmType()=="tbm08c"; };
@@ -420,7 +421,7 @@ class CmdProc {
    unsigned int fnRocPerChannel;// filled in setApi
    unsigned int fnTbmCore; // =   fApi->_dut->getNTbms();
    unsigned int fnCoresPerTBM; // number of cores per physical TBM
-   unsigned int fnTbm;         // number of physical TBMs 
+   unsigned int fnTbm;         // number of physical TBMs
    vector<int> fTbmChannels;   // daq channels connected to a tbm (bit-pattern) [size=fnTbm]
 
    vector<unsigned int> fDaqChannelRocIdOffset;  // filled in setApi
@@ -451,16 +452,16 @@ class CmdProc {
   #define TBM0B   0x2
   #define TBM1A   0x4
   #define TBM1B   0x8
-  
-  
+
+
   bool verbose;
   bool redirected;
   bool fEchoExecs;  // echo command from executed files
   uint16_t fDumpFlawed;
   Target defaultTarget;
   map<string, deque <string> > macros;
-  
-  
+
+
   int tbmset(int address, int value);
   int tbmset(string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmsetbit(string name, uint8_t coreMask, int bit, int value);
@@ -469,11 +470,11 @@ class CmdProc {
   int tbmsetDelays(TBMDelays &, uint8_t tbm=0);
   int tbmsetDelaysReg0(TBMDelays & d, uint8_t tbm=0);
   int printTbmPhases();
-  
+
   int tbmscan(const int nloop=10, const int ntrig=100, const int ftrigkhz=10);
   int test_timing(int nloop, int d160, int d400, int rocdelay=-1, int htdelay=0, int tokdelay=0);
   bool set_tbmtiming(int d160, int d400, int rocdelay[], int htdelay[], int tokdelay[], bool reset=true);
-  
+
   int post_timing( int );
 
   #define STEP160   1.0
@@ -488,19 +489,19 @@ class CmdProc {
   int find_tbmtiming(int npass=0);
   int test_tbmtiming(int nloop, int tbms, int tbmchannels,
     int d160, int d400, int rocdelay0=-1, int rocdelay1=-1, int htdelay=-1, int tokendelay=-1 );
-  
+
   int rawscan(int level=0);
   int rocscan();
   int tctscan(unsigned int tctmin=0, unsigned int tctmax=0);
   int levelscan();
-  
+
   int countHits();
   vector<int> countHits( vector<DRecord> data, size_t nroc=16);
   int countErrors(unsigned int ntrig=1, int ftrigkhz=0, int nroc_expected=-1, bool setup=true);
   int countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int nroc);
   int printData(vector<uint16_t> buf, int level, unsigned int nheader=0);
   int dumpBuffer(vector<uint16_t> buf, ofstream & fout, int level=0);
-  
+
   int rawRocReadback(uint8_t  signal, std::vector<uint16_t> &);
   int readRocsAnalog(uint8_t  signal, double scale, std::string units);
   int readRocs(uint8_t signal=0xff, double scale=0, std::string units=""  );
@@ -526,7 +527,7 @@ class CmdProc {
   uint8_t getTestboardDelay(string name);
   int setTestboardDelay(string name="all", uint8_t value=0);
   int setTestboardPower(string name, uint16_t value);
-  
+
   int bursttest(int ntrig, int trigsep=6, int nburst=1, int caltrig=0, int nloop=1);
   int adctest(const string s);
   int tbmreadword(uint8_t regId, int hubid, int ntry=3);
@@ -552,12 +553,12 @@ class CmdProc {
   int tb(Keyword);
   int tbm(Keyword, int cores=ALLTBMS);
   int roc(Keyword, int rocid);
-  
+
   void stop(bool force=true);
   bool stopped();
 
   char wait_for_key_pressed(){char ch; cout << "Press enter: "; cin  >> ch; return ch; }
-  
+
 };
 
 

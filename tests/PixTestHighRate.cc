@@ -881,9 +881,47 @@ void PixTestHighRate::fillMap(vector<TH2D*> hist) {
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
 
+    // FIXME/to understand: Dinko had this loop commented. Correct?!
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       hist[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
     }
+
+    int idx(-1);
+    uint16_t q;
+    if (fParFillTree) {
+      bookTree();
+      fTreeEvent.header = it->getHeader();
+      fTreeEvent.dac = 0;
+      fTreeEvent.trailer = it->getTrailer();
+    }
+
+    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
+      idx = getIdxFromId(it->pixels[ipix].roc());
+      if(idx == -1) {
+	LOG(logWARNING) << "PixTestHighRate::ProcessData() wrong 'idx' value --> return";
+	return;
+      }
+      if (fPhCalOK) {
+	q = static_cast<uint16_t>(fPhCal.vcal(it->pixels[ipix].roc(), it->pixels[ipix].column(),
+					      it->pixels[ipix].row(), it->pixels[ipix].value()));
+      }
+      else {
+	q = 0;
+      }
+      if (fParFillTree && ipix < 20000) {
+	++fTreeEvent.npix;
+	fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+	fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+	fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+	fTreeEvent.pval[ipix] = it->pixels[ipix].value();
+	fTreeEvent.pq[ipix] = q;
+      }
+    }
+    if (fParFillTree) fTree->Fill();
+
+
+
+
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
 }

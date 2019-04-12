@@ -10,7 +10,9 @@
 namespace pxar {
 
 // --- Data Transmission settings & flags --------------------------------------
-#define DTB_SOURCE_BLOCK_SIZE  8192
+// see https://github.com/psi46/pxar/issues/419
+// #define DTB_SOURCE_BLOCK_SIZE  8192
+#define DTB_SOURCE_BLOCK_SIZE 65536
 #define DTB_SOURCE_BUFFER_SIZE 50000000
 #define DTB_DAQ_FIFO_OVFL 4 // bit 2 = DAQ fast HW FIFO overflow
 #define DTB_DAQ_MEM_OVFL  2 // bit 1 = DAQ RAM FIFO overflow
@@ -219,7 +221,7 @@ namespace pxar {
 #define PROBE_FRAME_ERROR    0
 #define PROBE_CODE_ERROR     1
 #define PROBE_ERROR          2  // FRAME or CODE
-  
+
 #define PROBE_A_HEADER       3
 #define PROBE_A_PACKET       4
 #define PROBE_A_TBM_HDR      5
@@ -227,7 +229,7 @@ namespace pxar {
 #define PROBE_A_TBM_TRL      7
 #define PROBE_A_IDLE_ERROR   8
 #define PROBE_A_HDR_ERROR    9
-  
+
 #define PROBE_B_HEADER      10
 #define PROBE_B_PACKET      11
 #define PROBE_B_TBM_HDR     12
@@ -235,7 +237,7 @@ namespace pxar {
 #define PROBE_B_TBM_TRL     14
 #define PROBE_B_IDLE_ERROR  15
 #define PROBE_B_HDR_ERROR   16
-  
+
 
 // --- Testboard pulse pattern generator --------------------------------------
 #define PG_TOK   0x0100
