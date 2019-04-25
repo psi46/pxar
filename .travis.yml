@@ -1,15 +1,14 @@
 language: cpp
 compiler:
-  - clang
   - gcc
 before_install:
   - echo $LANG
   - echo $LC_ALL
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install libusb libftdi homebrew/core/root; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget https://root.cern/download/root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz &&  && tar -xzvf root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source /usr/local/bin/thisroot.sh; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install libusb libftdi wget; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then sudo wget https://root.cern/download/root_v6.16.00.macosx64-10.13-clang100.tar.gz && tar -xzvf root_v6.16.00.macosx64-10.13-clang100.tar.gz && source root/bin/thisroot.sh; fi
 before_script:
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget http://downloads.sourceforge.net/project/cernrootdebs/latest-recommended/root_5.34.07-1_amd64.deb && sudo dpkg --install root_5.34.07-1_amd64.deb && source /usr/local/bin/thisroot.sh; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
 script:
   - mkdir build && cd build/
   - if [ $TRAVIS_OS_NAME == linux ]; then cmake ..; fi
