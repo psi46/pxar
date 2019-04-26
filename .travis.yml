@@ -5,7 +5,7 @@ before_install:
   - echo $LANG
   - echo $LC_ALL
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev; fi
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget https://root.cern/download/root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz &&  && tar -xzvf root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget https://root.cern/download/root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && tar -xzvf root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install libusb libftdi wget; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then sudo wget https://root.cern/download/root_v6.16.00.macosx64-10.13-clang100.tar.gz && tar -xzvf root_v6.16.00.macosx64-10.13-clang100.tar.gz && source root/bin/thisroot.sh; fi
   - echo $ROOTSYS
