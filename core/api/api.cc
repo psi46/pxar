@@ -1644,6 +1644,7 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
   else { MaskAndTrim(true); }
 
   // Now run over all existing ROCs and program an unphysical pixel
+  LOG(logINFO) << "programming unphysical pixel on all rocs";
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->RocUnphysicalPixel(rocit->i2c_address);
   }
