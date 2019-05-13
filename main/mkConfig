@@ -538,8 +538,8 @@ if ($roctype eq "digv21") {
     print FH "rocType psi46digv2\n";
 } elsif ($roctype eq "digv21respin") {
     print FH "rocType psi46digv21respin\n";
-} elsif ($roctype eq "proc600") {
-    print FH "rocType proc600\n";
+} else {
+    print FH "rocType $roctype\n";
 }
 
 
