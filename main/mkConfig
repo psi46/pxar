@@ -19,7 +19,7 @@ use Getopt::Std;
 getopts('bd:fhmp:r:t:s');
 
 # -- define known hardware types
-my @rocok = ("digv2", "digv21", "digv21respin", "proc600");
+my @rocok = ("digv2", "digv21", "digv21respin", "proc600", "proc600v3", "proc600v4");
 my @tbmok = ("TBM08", "TBM08A", "TBM08B", "TBM08C", "TBM08D","TBM09", "TBM09C", "TBM10C", "TBM10D");
 
 if ($opt_h) {
