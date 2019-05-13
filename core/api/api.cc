@@ -1348,6 +1348,13 @@ bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool i
     _daq_startstop_warning = true;
   }
 
+  // Now run over all existing ROCs and program an unphysical pixel
+  LOG(logINFO) << "programming unphysical pixel on all rocs";
+  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+    _hal->RocUnphysicalPixel(rocit->i2c_address);
+  }
+
+
   // And start the DAQ session:
   _hal->daqStart(flags, _dut->sig_delays[SIG_DESER160PHASE],buffersize);
 
@@ -1642,12 +1649,6 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
   else if((flags & FLAG_FORCE_SERIAL) != 0) { MaskAndTrim(false); }
   // Else just trim all the pixels:
   else { MaskAndTrim(true); }
-
-  // Now run over all existing ROCs and program an unphysical pixel
-  LOG(logINFO) << "programming unphysical pixel on all rocs";
-  for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
-    _hal->RocUnphysicalPixel(rocit->i2c_address);
-  }
 
   // Check if we might use parallel routine on whole module: more than one ROC
   // must be enabled and parallel execution not disabled by user
