@@ -322,10 +322,10 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
 		  wbc = dacs[0][idac].second;
 	  }
   }
-  
+
   uint8_t delay = 6;
   if((fRocType.find("proc600v3") != string::npos) || (fRocType.find("proc600_v3") != string::npos)){
-    delay = 7;
+    delay = 6;
   } else if((fRocType.find("proc600v4") != string::npos) || (fRocType.find("proc600_v4") != string::npos)){
     delay = 7;
   } else if(fRocType.find("dig") == string::npos) {
