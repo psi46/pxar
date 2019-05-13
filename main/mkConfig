@@ -57,6 +57,7 @@ my $dacs = "";
 my $roctype = "digv21respin";
 if ($opt_r) {
     $opt_r =~ tr/A-Z/a-z/;
+    $opt_r =~ s/_//;
     if (grep(/$opt_r/, @rocok)) {
 	$roctype = $opt_r;
     } else {
@@ -317,7 +318,7 @@ sub setTbms {
 # ----------------------------------------------------------------------
 sub setDacs {
     $dacs = "";
-    if ($roctype eq "proc600") {
+    if (($roctype eq "proc600") || ($roctype eq "proc600v3") || ($roctype eq "proc600v4")) {
 	$dacs .= "  1 vdig       6  \n";
 	$dacs .= "  2 vana       74 \n";
 	$dacs .= "  3 vsh        30 \n";
