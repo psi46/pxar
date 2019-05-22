@@ -363,6 +363,10 @@ namespace pxar {
      */
     rawEvent daqRawEvent();
 
+   /** Reading 10 bytes for NTrig triggers in channel 0
+     */
+    std::vector<rawEvent> Deser160PhaseScan(int NTrig);
+
     /** Read all remaining decoded Events from the FIFO buffer
      */
     std::vector<Event> daqAllEvents();

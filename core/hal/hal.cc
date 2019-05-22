@@ -1740,6 +1740,25 @@ rawEvent hal::daqRawEvent() {
   return current_Event;
 }
 
+
+std::vector<rawEvent> hal::Deser160PhaseScan(int nTrig) {
+   rawEvent raw;
+   std::vector<rawEvent> daqRawData; 
+   _testboard->Daq_Open(1000, 0);
+
+   for (int i=0; i<nTrig; i++) {
+      raw.Clear();
+      _testboard->Daq_Start(0); 
+      _testboard->Pg_Single();
+      _testboard->uDelay(50);
+      _testboard->Daq_Stop(0); 
+      _testboard->Daq_Read(raw.data,10);
+      daqRawData.push_back(raw);
+   }
+   _testboard->Daq_Close(0);
+   return daqRawData;
+}
+
 std::vector<rawEvent> hal::daqAllRawEvents() {
 
   std::vector<rawEvent> raw;

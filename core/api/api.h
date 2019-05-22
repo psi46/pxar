@@ -700,6 +700,13 @@ namespace pxar {
     bool daqStart(const int bufsize, const bool init);
     bool daqStart(const uint16_t flags, const int bufsize, const bool init);
 
+    /** Function used for the Deser160 phase scan in PixTestSetup
+     *  Sending Ntrig triggers and reading back the raw data
+     *  only 10 bytes per trigger. The rest would be corrupted data anyway
+     */
+
+    std::vector<rawEvent> Deser160PhaseScan(int Ntrig);
+
     /** Function to get back the DAQ status
      *
      *  For a running DAQ with free buffer memory left, this function returns

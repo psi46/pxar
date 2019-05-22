@@ -1387,6 +1387,12 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
   return true;
 }
 
+
+std::vector<rawEvent> pxarCore::Deser160PhaseScan(int Ntrig) {
+   return _hal->Deser160PhaseScan(Ntrig); 
+}
+
+
 bool pxarCore::daqTriggerSource(std::string triggerSource, uint32_t timing) {
 
   // Get singleton Trigger dictionary object:

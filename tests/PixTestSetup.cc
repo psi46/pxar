@@ -127,9 +127,6 @@ void PixTestSetup::doTest()
   for (ideser = 0; ideser <= fDeserMax; ideser++) tablehead << std::setw(8) << ideser;
   LOG(logINFO) << tablehead.str();
 
-  // Start the DAQ:
-  fApi->daqStart();
-
   // Loop over the Signal Delay range we want to scan:
   for (iclk = 0; iclk <= fClkMax; iclk++) {
     std::stringstream oneline;
@@ -141,9 +138,7 @@ void PixTestSetup::doTest()
       fApi->setTestboardDelays(getMagicDelays(iclk,ideser));
 
       // Send the triggers and read out the events:    
-	  fApi->daqTrigger(Ntrig,period);	  	       
-	  try { daqRawEv = fApi->daqGetRawEventBuffer(); }
-	  catch(pxar::DataNoEvent &) {}
+      daqRawEv = fApi->Deser160PhaseScan(Ntrig);
 
       unsigned int head_good = 0;
       unsigned int head_bad = 0;
@@ -151,9 +146,11 @@ void PixTestSetup::doTest()
       // Trying to find the ROC header 0x7f8 in the raw DESER160 data:
 	  for (std::vector<rawEvent>::iterator evt = daqRawEv.begin(); evt != daqRawEv.end(); ++evt) {
 		  // Get the first word from ROC header:
-		  int head = static_cast<int>(evt->data.at(0) & 0xffc);
+	       if(evt->data.size()){
+		  int head = static_cast<int>(evt->data[0] & 0xffc);
 		  if (head == 0x7f8) { head_good++; }
 		  else head_bad++;
+	       } else head_bad++;
 	  }
 
       // Print the stuff:
@@ -173,10 +170,6 @@ void PixTestSetup::doTest()
     }
     LOG(logINFO) << oneline.str();
   }
-
-  // Stop the DAQ:
-  fApi->daqStop();
-
 
   int finalclk, finaldeser;
   histo->Draw("colz");
