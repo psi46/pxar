@@ -400,6 +400,21 @@ namespace pxar {
      */
     bool setDAC(std::string dacName, uint8_t dacValue);
 
+    /** Set the Vcal range to high, leaving the other bits in ctrlreg untouched
+     *
+     *  This function will both update the bookkeeping value in the pxar::dut
+     *  struct and program the actual device.
+     */
+    void setVcalHighRange();
+
+    /** Set the Vcal range to low, leaving the other bits in ctrlreg untouched
+     *
+     *  This function will both update the bookkeeping value in the pxar::dut
+     *  struct and program the actual device.
+     */
+    void setVcalLowRange();
+
+
     /** Get the valid range of a given DAC
      */
     uint8_t getDACRange(std::string dacName);

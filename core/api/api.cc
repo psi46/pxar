@@ -743,6 +743,16 @@ bool pxarCore::setDAC(std::string dacName, uint8_t dacValue) {
   return true;
 }
 
+void pxarCore::setVcalHighRange() {
+     for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+	  setDAC("ctrlreg", (_dut->getDAC(rocit->i2c_address, "ctrlreg")) | 4, rocit->i2c_address );}
+}
+
+void pxarCore::setVcalLowRange() {
+     for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
+          setDAC("ctrlreg", (_dut->getDAC(rocit->i2c_address, "ctrlreg")) & 0xfb, rocit->i2c_address);}
+}
+
 uint8_t pxarCore::getDACRange(std::string dacName) {
 
   // Get the register number and check the range from dictionary:
