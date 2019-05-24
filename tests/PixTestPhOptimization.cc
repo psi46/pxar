@@ -242,7 +242,7 @@ void PixTestPhOptimization::BlacklistPixels(std::vector<std::pair<uint8_t, pair<
 
 pxar::pixel* PixTestPhOptimization::RandomPixel(std::vector<std::pair<uint8_t, pair<int, int> > > &badPixels, uint8_t iroc){
   //Returns a random pixel, taking care it is not on the blacklist
-  fApi->setDAC("ctrlreg",4);
+  fApi->setVcalHighRange();
   bool isPixGood=true;
   pxar::pixel *randPixel= new pixel();
   srand(int(time(NULL)));
@@ -299,7 +299,7 @@ void PixTestPhOptimization::GetMaxPhPixel(map<int, pxar::pixel > &maxpixels,   s
     fApi->setDAC("phscale", abs(init_phScale)%255);
     fApi->setDAC("phoffset",init_phOffset);  
     fApi->setDAC("vcal",255);
-    fApi->setDAC("ctrlreg",4);
+    fApi->setVcalHighRange();
     maxphmap = phMaps("maxphmap", 10, 0);
     
     maxph=0;
@@ -450,7 +450,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     LOG(logDEBUG) << "init_phScale=" << init_phScale << ", flag_minPh = " << flag_minPh << ", minph = " << minph;
     fApi->setDAC("phscale", init_phScale%255);
     fApi->setDAC("phoffset",init_phOffset);  
-    fApi->setDAC("ctrlreg",0);
+    fApi->setVcalLowRange();
     fApi->setDAC("vcal",60);
     minphmap = phMaps("minphmap", 10, 0);
     minph=255;
@@ -571,7 +571,7 @@ void PixTestPhOptimization::GetMinPhPixel(map<int, pxar::pixel > &minpixels, map
     }
   }
   //finds min vcal
-  fApi->setDAC("ctrlreg",0);
+  fApi->setVcalLowRange();
   int cnt(0); 
   bool done(false);
   TH1D *h1(0); 
@@ -644,7 +644,7 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   map<int, TH1D* > h1_PhMaps;
   TH2D* h2_PhMap(0);
   TH1D* h1_PhMap(0);
-  fApi->setDAC("ctrlreg",4);
+  fApi->setVcalHighRange();
   fApi->setDAC("vcal",fVcalMax);
   //pulseheight map at vcal=100
   //result_map = fApi->getPulseheightMap(0,10);   //unprotected, leads to crash with bad r/o:
@@ -677,7 +677,7 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   
   //PH map for lower vcal sampling point
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
-    fApi->setDAC("ctrlreg",0);
+    fApi->setVcalLowRange();
     fApi->setDAC("vcal",minVcal[roc_it]+10, rocIds[roc_it] );
   }
   map<int, TH2D* > h2_PhMapsMin;
@@ -714,7 +714,7 @@ void PixTestPhOptimization::DrawPhMaps(std::map<int, int> &minVcal, std::vector<
   
   //PH map for lower vcal sampling point
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
-    fApi->setDAC("ctrlreg",0);
+    fApi->setVcalLowRange();
     fApi->setDAC("vcal",50, rocIds[roc_it] );
   }
   map<int, TH2D* > h2_PhMaps50;
@@ -772,7 +772,7 @@ void PixTestPhOptimization::DrawPhCurves(map<int, pxar::pixel > &maxpixels, map<
   string name, title;
   TH1D *h1(0); 
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
-    fApi->setDAC("ctrlreg",4);
+    fApi->setVcalHighRange();
   }
   vector<pair<uint8_t, vector<pixel> > > results;
   for(unsigned int roc_it = 0; roc_it < rocIds.size(); roc_it++){
@@ -855,7 +855,7 @@ void PixTestPhOptimization::MaxPhVsDacDac(std::vector< std::pair<uint8_t, std::p
   } 
   //sample pulseheight at 35k e-
   fApi->setDAC("vcal",fVcalMax);
-  fApi->setDAC("ctrlreg",4);
+  fApi->setVcalHighRange();
   
   //scanning through offset and scale for max pixel (or randpixel)
   int cnt = 0; 
@@ -881,7 +881,7 @@ void PixTestPhOptimization::MinPhVsDacDac(std::vector< std::pair<uint8_t, std::p
     fApi->_dut->maskPixel(minp_it->second.column(),minp_it->second.row(),false, getIdxFromId(minp_it->second.roc()));
   }
 
-  fApi->setDAC("ctrlreg",0);
+  fApi->setVcalLowRange();
   for(std::map<int, int>::iterator ivcal = minVcal.begin(); ivcal != minVcal.end(); ivcal++){
     fApi->setDAC("vcal",minVcal[ivcal->first]+10, getIdxFromId(ivcal->first));
   }

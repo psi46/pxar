@@ -1815,7 +1815,7 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel)
   vector<uint8_t> vCalDel   = getDacs("caldel");
 
   fApi->setDAC("vcal", 200);
-  fApi->setDAC("ctrlreg", 4);
+  fApi->setVcalHighRange();
   fApi->setDAC("vthrcomp", 50);
 
   fApi->_dut->testAllPixels(true);

@@ -237,7 +237,7 @@ void PixTestGainPedestal::measure() {
   maskPixels();
 
   // -- first low range 
-  fApi->setDAC("ctrlreg", 0);
+  fApi->setVcalLowRange();
 
   vector<pair<uint8_t, vector<pixel> > > rresult, lresult, hresult; 
   for (unsigned int i = 0; i < fLpoints.size(); ++i) {
@@ -263,7 +263,7 @@ void PixTestGainPedestal::measure() {
   }
 
   // -- and high range
-  fApi->setDAC("ctrlreg", 4);
+  fApi->setVcalHighRange();
   for (unsigned int i = 0; i < fHpoints.size(); ++i) {
     LOG(logINFO) << "scanning high vcal = " << fHpoints[i] << " (= " << 7*fHpoints[i] << " in low range)";
     int cnt(0); 

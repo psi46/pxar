@@ -148,7 +148,7 @@ void PixTestBBMap::doTest() {
   maskPixels();
 
   int flag(FLAG_CALS);
-  fApi->setDAC("ctrlreg", 4);     // high range
+  fApi->setVcalHighRange();
   fApi->setDAC("vcal", fParVcalS);    
 
   int result(1);

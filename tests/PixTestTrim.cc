@@ -154,7 +154,7 @@ void PixTestTrim::trimTest() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   fApi->setDAC("Vtrim", 0);
-  fApi->setDAC("ctrlreg", 0);
+  fApi->setVcalLowRange();
   fApi->setDAC("Vcal", fParVcal);
 
   setTrimBits(15);
@@ -164,7 +164,7 @@ void PixTestTrim::trimTest() {
   if (NTRIG < 5) NTRIG = 5;
   map<int, int> rocVthrComp;
   print("VthrComp thr map (minimal VthrComp)");
-  vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", NTRIG, 10, 160, -1, -1, 7);
+  vector<TH1*> thr0 = scurveMaps("vthrcomp", "TrimThr0", NTRIG, 10, 200, -1, -1, 7);
   PixTest::update();
   if (thr0.size()/3 != rocIds.size()) {
     LOG(logERROR) << "scurve map size " << thr0.size() << " does not agree with number of enabled ROCs " << rocIds.size();
@@ -527,7 +527,7 @@ void PixTestTrim::trimBitTest() {
     fProblem = true;
     return;
   }
-  fApi->setDAC("CtrlReg", 0);
+  fApi->setVcalLowRange();
   fApi->setDAC("Vtrim", 0);
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims ";
   vector<TH1*> thr0 = mapsWithString(scurveMaps("Vcal", "TrimBitsThr0", NTRIG, 0, 199, -1, -1, 7), "thr");
