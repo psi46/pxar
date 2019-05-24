@@ -172,6 +172,9 @@ void PixTestTrim::trimTest() {
     return;
   }
   vector<int> minVthrComp = getMinimumVthrComp(thr0, 10, 2.);
+  if(fParVcal<=30){         // for very low thresholds set VcThr slightly lower, because after trimming threshold shifts a bit downwards
+    for(unsigned int i=0; i<minVthrComp.size();  i++) minVthrComp[i]-=5;
+  }
 
   TH2D* h2(0);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
