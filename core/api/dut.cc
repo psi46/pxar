@@ -2,7 +2,7 @@
  * pxar DUT class implementation
  */
 
-#include "api.h"
+#include "dut.h"
 #include "log.h"
 #include "dictionaries.h"
 #include "helper.h"
@@ -17,24 +17,24 @@ void dut::info() {
   if (status()) {
     LOG(logINFO) << "The DUT currently contains the following objects:";
 
-    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores " << getTbmType() << " (" << getNEnabledTbms() 
+    LOG(logINFO) << std::setw(2) << tbm.size() << " TBM Cores " << getTbmType() << " (" << getNEnabledTbms()
 		 << " ON)";
 
     for(std::vector<tbmConfig>::iterator tbmIt = tbm.begin(); tbmIt != tbm.end(); tbmIt++) {
-      LOG(logINFO) << "\tTBM Core " 
+      LOG(logINFO) << "\tTBM Core "
 		   << ((tbmIt-tbm.begin())%2 == 0 ? "alpha" : "beta " )
-		   << " (" << static_cast<int>(tbmIt - tbm.begin()) << "): " 
+		   << " (" << static_cast<int>(tbmIt - tbm.begin()) << "): "
 		   << (*tbmIt).dacs.size() << " registers set";
     }
 
     // We currently hide the possibility to enable pixels on some ROCs only,
     // so looking at ROC 0 as default is safe:
-    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs " << getRocType() << " (" << getNEnabledRocs() 
+    LOG(logINFO) << std::setw(2) << roc.size() << " ROCs " << getRocType() << " (" << getNEnabledRocs()
 		 << " ON) with " << roc.at(0).pixels.size() << " pixelConfigs";
 
     for(std::vector<rocConfig>::iterator rocIt = roc.begin(); rocIt != roc.end(); rocIt++) {
-      LOG(logINFO) << "\tROC " << static_cast<int>(rocIt-roc.begin()) << ": " 
-		   << (*rocIt).dacs.size() << " DACs set, Pixels: " 
+      LOG(logINFO) << "\tROC " << static_cast<int>(rocIt-roc.begin()) << ": "
+		   << (*rocIt).dacs.size() << " DACs set, Pixels: "
 		   << getNMaskedPixels(static_cast<int>(rocIt-roc.begin())) << " masked, "
 		   << getNEnabledPixels(static_cast<int>(rocIt-roc.begin())) << " active.";
     }
@@ -333,7 +333,7 @@ pixelConfig dut::getPixelConfig(size_t rocid, uint8_t column, uint8_t row) {
 
 uint8_t dut::getDAC(size_t rocId, std::string dacName) {
 
-  if(status() && rocId < roc.size()) {  
+  if(status() && rocId < roc.size()) {
     // Convert the name to lower case for comparison:
     std::transform(dacName.begin(), dacName.end(), dacName.begin(), ::tolower);
 
@@ -356,7 +356,7 @@ std::vector< std::pair<std::string,uint8_t> > dut::getDACs(size_t rocId) {
     // Get singleton DAC dictionary object:
     RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
-    for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
+    for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin();
 	it != roc.at(rocId).dacs.end(); ++it) {
       vec.push_back(std::make_pair(_dict->getName(it->first,ROC_REG),it->second));
     }
@@ -373,7 +373,7 @@ std::vector< std::pair<std::string,uint8_t> > dut::getTbmDACs(size_t tbmId) {
     // Get singleton DAC dictionary object:
     RegisterDictionary * _dict = RegisterDictionary::getInstance();
 
-    for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin(); 
+    for(std::map< uint8_t,uint8_t >::iterator it = tbm.at(tbmId).dacs.begin();
 	it != tbm.at(tbmId).dacs.end(); ++it) {
       // We need to strip the core identifier in order to look up the register name from the dictionary (&0x0F):
       vec.push_back(std::make_pair(_dict->getName((it->first&0x0F),TBM_REG),it->second));
@@ -395,7 +395,7 @@ void dut::printDACs(size_t rocId) {
 
 
     LOG(logINFO) << "Printing current DAC settings for ROC " << rocId << ":";
-    for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin(); 
+    for(std::map< uint8_t,uint8_t >::iterator it = roc.at(rocId).dacs.begin();
 	it != roc.at(rocId).dacs.end(); ++it) {
       LOG(logINFO) << "DAC " << _dict->getName(it->first,ROC_REG) << " (" << static_cast<int>(it->first) << ") = " << static_cast<int>(it->second);
     }

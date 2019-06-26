@@ -1,8 +1,8 @@
 /**
  * pxar API class implementation
  */
-
 #include "api.h"
+#include "dut.h"
 #include "hal.h"
 #include "log.h"
 #include "timer.h"
@@ -1399,7 +1399,7 @@ bool pxarCore::daqSingleSignal(std::string triggerSignal) {
 
 
 std::vector<rawEvent> pxarCore::Deser160PhaseScan(int Ntrig) {
-   return _hal->Deser160PhaseScan(Ntrig); 
+   return _hal->Deser160PhaseScan(Ntrig);
 }
 
 
