@@ -16,7 +16,7 @@ public:
   PixSetup(std::string verbosity, PixTestParameters *, ConfigParameters *);
   PixSetup();
   ~PixSetup();
-  void init(); 
+  void init();
 
   PixTestParameters* getPixTestParameters() {return fPixTestParameters;}
   ConfigParameters * getConfigParameters()  {return fConfigParameters;}
@@ -24,9 +24,9 @@ public:
   PixMonitor*        getPixMonitor() {return fPixMonitor;}
   bool               doAnalysisOnly() {return fDoAnalysisOnly;}
   void               setDoAnalysisOnly(bool x) {fDoAnalysisOnly = x;}
-  bool               useRootLogon() {return fUseRootLogon;} 
-  void               setUseRootLogon(bool x) {fUseRootLogon = x;} 
-  void               killApi(); 
+  bool               useRootLogon() {return fUseRootLogon;}
+  void               setUseRootLogon(bool x) {fUseRootLogon = x;}
+  void               killApi();
   void               setRootFileUpdate(bool x) {fDoUpdateRootFile = x;}
   bool               doRootFileUpdate() {return fDoUpdateRootFile;}
   bool               guiActive() {return fGuiActive;}
@@ -36,21 +36,20 @@ public:
   void               writeDacParameterFiles();
   void               writeTrimFiles();
   void               writeTbmParameterFiles();
-  
+
 
   void              *fPxarMemory, *fPxarMemHi;
-private: 
-  bool              fDoUpdateRootFile; 
-  bool              fDoAnalysisOnly; 
+private:
+  bool              fDoUpdateRootFile;
+  bool              fDoAnalysisOnly;
   bool              fUseRootLogon;
   bool              fGuiActive;
 
-  pxar::pxarCore    *fApi; 
-  PixTestParameters *fPixTestParameters; 
-  ConfigParameters  *fConfigParameters;   
-  PixMonitor        *fPixMonitor; 
+  pxar::pxarCore    *fApi;
+  PixTestParameters *fPixTestParameters;
+  ConfigParameters  *fConfigParameters;
+  PixMonitor        *fPixMonitor;
 
 };
 
 #endif
-
