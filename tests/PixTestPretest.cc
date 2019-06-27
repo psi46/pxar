@@ -635,7 +635,7 @@ void PixTestPretest::setVthrCompCalDel() {
 
   string name("pretestVthrCompCalDel");
 
-  fApi->setDAC("CtrlReg", 0);
+  fApi->setVcalLowRange();
   fApi->setDAC("Vcal", 250);
 
   fApi->_dut->testAllPixels(false);
@@ -924,7 +924,7 @@ void PixTestPretest::setCalDel() {
   // set maximum pulse (minimal time walk):
 
   fApi->setDAC("Vcal", 250);
-  fApi->setDAC("CtrlReg", 4);
+  fApi->setVcalHighRange();
 
   string DacName = "caldel";
 
