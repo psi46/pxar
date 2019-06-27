@@ -328,6 +328,7 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
     delay = 6;
   } else if((fRocType.find("proc600v4") != string::npos) || (fRocType.find("proc600_v4") != string::npos)){
     delay = 7;
+    delay = 6; // go back to old value
   } else if(fRocType.find("dig") == string::npos) {
     delay = 5;
   }
