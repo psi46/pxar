@@ -318,9 +318,9 @@ vector<pair<string, uint8_t> >  ConfigParameters::getTbPgSettings() {
   uint8_t wbc = 100;
   vector<vector<pair<string, uint8_t> > > dacs = getRocDacs();
   for (unsigned int idac = 0; idac < dacs[0].size(); ++idac) {
-	  if (!dacs[0][idac].first.compare("wbc")) {
-		  wbc = dacs[0][idac].second;
-	  }
+    if (!dacs[0][idac].first.compare("wbc")) {
+      wbc = dacs[0][idac].second;
+    }
   }
 
   uint8_t delay = 6;
