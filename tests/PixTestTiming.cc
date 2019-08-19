@@ -121,7 +121,7 @@ void PixTestTiming::doTest() {
   h1 = (*fDisplayedHist);
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
-  
+
   TimingTest();
 
   LOG(logINFO) << "PixTestTiming::doTest() done";
@@ -358,7 +358,7 @@ void PixTestTiming::PhaseScan() {
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), goodareahists[itbm]);
     PixTest::update();
   }
-  
+
   restoreTBMDacs();
 
   LOG(logINFO) << "   ----------------------------------------------------------------------";
@@ -755,7 +755,7 @@ pair <int, int> PixTestTiming::getGoodRegion(TH2D* hist, int hits) {
 void PixTestTiming::saveParameters() {
   LOG(logINFO) << "PixTestTiming:: Write Tbm parameters to file.";
   fPixSetup->getConfigParameters()->writeTbParameterFile();
-  for (unsigned int itbm = 0; itbm < fApi->_dut->getNTbms(); itbm += 2) {
+  for (unsigned int itbm = 0; itbm < fApi->_dut->getNTbms(); ++itbm) {
     fPixSetup->getConfigParameters()->writeTbmParameterFile(itbm, fApi->_dut->getTbmDACs(itbm), fApi->_dut->getTbmChainLengths(itbm), fApi->_dut->getTbmDACs(itbm+1), fApi->_dut->getTbmChainLengths(itbm+1));
   }
 }
