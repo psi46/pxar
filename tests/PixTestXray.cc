@@ -20,14 +20,14 @@ using namespace pxar;
 ClassImp(PixTestXray)
 
 // ----------------------------------------------------------------------
-PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name), 
-  fParSource("nada"), fParMaskFileName("default"), fParTriggerFrequency(1), fParRunSeconds(1), fParStepSeconds(1), 
+PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name),
+  fParSource("nada"), fParMaskFileName("default"), fParTriggerFrequency(1), fParRunSeconds(1), fParStepSeconds(1),
   fParVthrCompMin(0), fParVthrCompMax(0),  fParFillTree(false), fParDelayTBM(false), fParSaveMaskedPixels(0), fSourceChanged(false) {
   PixTest::init();
-  init(); 
+  init();
   LOG(logDEBUG) << "PixTestXray ctor(PixSetup &a, string, TGTab *)";
 
-  fTree = 0; 
+  fTree = 0;
   fPhCal.setPHParameters(fPixSetup->getConfigParameters()->getGainPedestalParameters());
   fPhCalOK = fPhCal.initialized();
 
@@ -37,7 +37,7 @@ PixTestXray::PixTestXray(PixSetup *a, std::string name) : PixTest(a, name),
 //----------------------------------------------------------
 PixTestXray::PixTestXray() : PixTest() {
   LOG(logDEBUG) << "PixTestXray ctor()";
-  fTree = 0; 
+  fTree = 0;
 }
 
 
@@ -47,7 +47,7 @@ bool PixTestXray::setParameter(string parName, string sval) {
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
-      found = true; 
+      found = true;
       if (!parName.compare("savemaskfile")) {
 	PixUtil::replaceAll(sval, "checkbox(", "");
 	PixUtil::replaceAll(sval, ")", "");
@@ -55,32 +55,32 @@ bool PixTestXray::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("maskfilename")) {
-	fParMaskFileName = sval; 
+	fParMaskFileName = sval;
 	setToolTips();
       }
       if (!parName.compare("source")) {
-	fParSource = sval; 
-	fSourceChanged = true; 
+	fParSource = sval;
+	fSourceChanged = true;
 	setToolTips();
       }
       if (!parName.compare("vthrcompmin")) {
-	fParVthrCompMin = atoi(sval.c_str()); 
+	fParVthrCompMin = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("vthrcompmax")) {
-	fParVthrCompMax = atoi(sval.c_str()); 
+	fParVthrCompMax = atoi(sval.c_str());
 	setToolTips();
-      }	
+      }
       if (!parName.compare("trgfrequency(khz)")) {
-	fParTriggerFrequency = atoi(sval.c_str()); 
+	fParTriggerFrequency = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("runseconds")) {
-	fParRunSeconds = atoi(sval.c_str()); 
+	fParRunSeconds = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("stepseconds")) {
-	fParStepSeconds = atoi(sval.c_str()); 
+	fParStepSeconds = atoi(sval.c_str());
 	setToolTips();
       }
       if (!parName.compare("delaytbm")) {
@@ -98,7 +98,7 @@ bool PixTestXray::setParameter(string parName, string sval) {
       break;
     }
   }
-  return found; 
+  return found;
 }
 
 
@@ -112,17 +112,17 @@ void PixTestXray::runCommand(std::string command) {
   }
 
   if (!command.compare("maskhotpixels")) {
-    doRunMaskHotPixels(); 
+    doRunMaskHotPixels();
     return;
   }
 
   if (!command.compare("ratescan")) {
-    doRateScan(); 
+    doRateScan();
     return;
   }
 
   if (!command.compare("phrun")) {
-    doPhRun(); 
+    doPhRun();
     return;
   }
 
@@ -133,13 +133,13 @@ void PixTestXray::runCommand(std::string command) {
 void PixTestXray::init() {
   LOG(logDEBUG) << "PixTestXray::init()";
   setToolTips();
-  fDirectory = gFile->GetDirectory(fName.c_str()); 
+  fDirectory = gFile->GetDirectory(fName.c_str());
   if (!fDirectory) {
-    fDirectory = gFile->mkdir(fName.c_str()); 
-  } 
-  fDirectory->cd(); 
-  fSourceChanged = false; 
-	
+    fDirectory = gFile->mkdir(fName.c_str());
+  }
+  fDirectory->cd();
+  fSourceChanged = false;
+
 }
 
 // ----------------------------------------------------------------------
@@ -152,54 +152,61 @@ void PixTestXray::setToolTips() {
     ;
 }
 
+// ----------------------------------------------------------------------
+string PixTestXray::toolTip(string what) {
+  if (string::npos != what.find("maskhotpixels")) return string("find and mask hot pixels (more than 10 hits in 10 seconds at 100kHz)");
+  if (string::npos != what.find("phrun")) return string("FIXME");
+  if (string::npos != what.find("ratescan")) return string("FIXME");
+  return string("nada");
+}
 
 // ----------------------------------------------------------------------
 vector<TH2D*> PixTestXray::bookHotPixelMap() {
-  fDirectory->cd(); 
+  fDirectory->cd();
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  unsigned nrocs = rocIds.size(); 
-  vector<TH2D*> v; 
+  unsigned nrocs = rocIds.size();
+  vector<TH2D*> v;
   for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
-    TH2D *h2 = bookTH2D(Form("hotPixelMap_C%d", rocIds[iroc]), Form("hotPixelMap_C%d", rocIds[iroc]), 
+    TH2D *h2 = bookTH2D(Form("hotPixelMap_C%d", rocIds[iroc]), Form("hotPixelMap_C%d", rocIds[iroc]),
 			52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     fHotPixelMap.push_back(h2);
     fHistOptions.insert(make_pair(h2,"colz"));
-    v.push_back(h2); 
+    v.push_back(h2);
   }
   copy(fHotPixelMap.begin(), fHotPixelMap.end(), back_inserter(fHistList));
-  return v; 
-}  
+  return v;
+}
 
 
 // ----------------------------------------------------------------------
 void PixTestXray::bookHist(string name) {
-  fDirectory->cd(); 
-  if (fParFillTree) bookTree();  
-  
+  fDirectory->cd();
+  if (fParFillTree) bookTree();
+
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  unsigned nrocs = rocIds.size(); 
-  
+  unsigned nrocs = rocIds.size();
+
   //-- Sets up the histogram
   TH1D *h1(0);
   TH2D *h2(0);
   for (unsigned int iroc = 0; iroc < nrocs; ++iroc){
-    h1 = bookTH1D(Form("hits_%s_C%d", name.c_str(), rocIds[iroc]), Form("hits_%s_C%d", name.c_str(), rocIds[iroc]), 
+    h1 = bookTH1D(Form("hits_%s_C%d", name.c_str(), rocIds[iroc]), Form("hits_%s_C%d", name.c_str(), rocIds[iroc]),
 		  256, 0., 256.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "VthrComp", "Hits");
     fHits.push_back(h1);
 
-    h1 = bookTH1D(Form("mpix_%s_C%d", name.c_str(), rocIds[iroc]), Form("mpix_%s_C%d", name.c_str(), rocIds[iroc]), 
+    h1 = bookTH1D(Form("mpix_%s_C%d", name.c_str(), rocIds[iroc]), Form("mpix_%s_C%d", name.c_str(), rocIds[iroc]),
 		  256, 0., 256.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "VthrComp", "maskedpixels");
     fMpix.push_back(h1);
-    
-    h2 = bookTH2D(Form("hitMap_%s_C%d", name.c_str(), rocIds[iroc]), Form("hitMap_%s_C%d", name.c_str(), rocIds[iroc]), 
+
+    h2 = bookTH2D(Form("hitMap_%s_C%d", name.c_str(), rocIds[iroc]), Form("hitMap_%s_C%d", name.c_str(), rocIds[iroc]),
 		  52, 0., 52., 80, 0., 80.);
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
@@ -216,7 +223,7 @@ void PixTestXray::bookHist(string name) {
 PixTestXray::~PixTestXray() {
   LOG(logDEBUG) << "PixTestXray dtor";
   fDirectory->cd();
-  if (fTree && fParFillTree) fTree->Write(); 
+  if (fTree && fParFillTree) fTree->Write();
 }
 
 
@@ -238,22 +245,22 @@ void PixTestXray::doPhRun() {
   banner(Form("PixTestXray::doPhRun() fParRunSeconds = %d", fParRunSeconds));
 
   gStyle->SetPalette(1);
-  PixTest::update(); 
+  PixTest::update();
   fDirectory->cd();
 
   // -- unmask entire chip and then mask hot pixels
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
   for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
-    vector<pair<int, int> > hot = fHotPixels[i]; 
+    vector<pair<int, int> > hot = fHotPixels[i];
     for (unsigned int ipix = 0; ipix < hot.size(); ++ipix) {
-      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second; 
-      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i)); 
+      LOG(logINFO) << "ROC " << getIdFromIdx(i) << " masking hot pixel " << hot[ipix].first << "/" << hot[ipix].second;
+      fApi->_dut->maskPixel(hot[ipix].first, hot[ipix].second, true, getIdFromIdx(i));
     }
   }
   maskPixels();
 
-  
+
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
@@ -263,7 +270,7 @@ void PixTestXray::doPhRun() {
     fApi->setTbmReg("delays", 0x40);
   }
 
-  fEventsMax = 1000 * fParTriggerFrequency * fParRunSeconds; 
+  fEventsMax = 1000 * fParTriggerFrequency * fParRunSeconds;
 
   if (fQ.size() > 0 && (fSourceChanged || fHistList.size() == 0)) {
     if (fSourceChanged) {
@@ -271,27 +278,27 @@ void PixTestXray::doPhRun() {
     } else {
       LOG(logDEBUG) << "booking new histograms";
     }
-    fQ.clear(); 
-    fQmap.clear(); 
-    fHmap.clear(); 
-    fPHmap.clear(); 
+    fQ.clear();
+    fQmap.clear();
+    fHmap.clear();
+    fPHmap.clear();
     fPH.clear();
-    fHitsVsEvents.clear(); 
-    fHitsVsColumn.clear(); 
+    fHitsVsEvents.clear();
+    fHitsVsColumn.clear();
     fHitsVsEvtCol.clear();
     fTriggers.clear();
   }
 
   if (0 == fQ.size()) {
-    fSourceChanged = false; 
-    if (fParFillTree) bookTree(); 
-    TH1D *h1(0); 
+    fSourceChanged = false;
+    if (fParFillTree) bookTree();
+    TH1D *h1(0);
     TH2D *h2(0);
-    TH1D *h3(0); 
-    TProfile2D *p2(0); 
+    TH1D *h3(0);
+    TProfile2D *p2(0);
     for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc){
-      h2 = bookTH2D(Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-		    Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+      h2 = bookTH2D(Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+		    Form("hMap_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 		    52, 0., 52., 80, 0., 80.);
       h2->SetMinimum(0.);
       h2->SetDirectory(fDirectory);
@@ -300,8 +307,8 @@ void PixTestXray::doPhRun() {
       fHmap.push_back(h2);
 
 
-      p2 = bookTProfile2D(Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-			  Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+      p2 = bookTProfile2D(Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+			  Form("qMap_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 			  52, 0., 52., 80, 0., 80.);
       p2->SetMinimum(0.);
       p2->SetDirectory(fDirectory);
@@ -309,25 +316,25 @@ void PixTestXray::doPhRun() {
       fHistOptions.insert(make_pair(p2,"colz"));
       fQmap.push_back(p2);
 
-      p2 = bookTProfile2D(Form("phMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-			  Form("phMap_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+      p2 = bookTProfile2D(Form("phMap_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+			  Form("phMap_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 			  52, 0., 52., 80, 0., 80.);
       p2->SetMinimum(0.);
       p2->SetDirectory(fDirectory);
       setTitles(p2, "col", "row");
       fHistOptions.insert(make_pair(p2,"colz"));
       fPHmap.push_back(p2);
-      
-      h1 = bookTH1D(Form("q_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-		    Form("q_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+
+      h1 = bookTH1D(Form("q_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+		    Form("q_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 		    2000, 0., 2000.);
       h1->SetMinimum(0.);
       h1->SetDirectory(fDirectory);
       setTitles(h1, "Q [Vcal]", "Entries/bin");
       fQ.push_back(h1);
 
-      h1 = bookTH1D(Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-		    Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+      h1 = bookTH1D(Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+		    Form("ph_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 		    256, 0., 256.);
       h1->SetMinimum(0.);
       h1->SetDirectory(fDirectory);
@@ -341,16 +348,16 @@ void PixTestXray::doPhRun() {
       setTitles(h1, "events", "hits/bin");
       fHitsVsEvents.push_back(h1);
 
-      h1 = bookTH1D(Form("hitsVsColumn_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-		    Form("hitsVsColumn_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+      h1 = bookTH1D(Form("hitsVsColumn_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+		    Form("hitsVsColumn_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 		    52, 0., 52.);
       h1->SetMinimum(0.);
       h1->SetDirectory(fDirectory);
       setTitles(h1, "col", "hits/bin");
       fHitsVsColumn.push_back(h1);
 
-      h2 = bookTH2D(Form("hitsVsEvtCol_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
-		    Form("hitsVsEvtCol_%s_C%d", fParSource.c_str(), rocIds[iroc]), 
+      h2 = bookTH2D(Form("hitsVsEvtCol_%s_C%d", fParSource.c_str(), rocIds[iroc]),
+		    Form("hitsVsEvtCol_%s_C%d", fParSource.c_str(), rocIds[iroc]),
 		    1000, 0., fEventsMax, 52, 0., 52.);
       h2->SetMinimum(0.);
       h2->SetDirectory(fDirectory);
@@ -363,8 +370,8 @@ void PixTestXray::doPhRun() {
 		  Form("ntrig_%s", fParSource.c_str()), 1, 0., 1.);
     h3->SetDirectory(fDirectory);
     fTriggers.push_back(h3);
-    
- 
+
+
     copy(fHmap.begin(), fHmap.end(), back_inserter(fHistList));
     copy(fQmap.begin(), fQmap.end(), back_inserter(fHistList));
     copy(fQ.begin(), fQ.end(), back_inserter(fHistList));
@@ -380,20 +387,20 @@ void PixTestXray::doPhRun() {
   TStopwatch t;
   fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
   int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
-  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with trigger frequency " << fParTriggerFrequency 
-	       << " kHz, period "  << finalPeriod 
+  LOG(logINFO) << "PixTestXray::doPhRun start TriggerLoop with trigger frequency " << fParTriggerFrequency
+	       << " kHz, period "  << finalPeriod
 	       << " and duration " << fParRunSeconds << " seconds, "
 	       << " fEventsMax = " <<   fEventsMax ;
-  
+
   t.Start(kTRUE);
   fDaq_loop = true;
-  int seconds(0); 
-    
+  int seconds(0);
+
   while (fApi->daqStatus(perFull) && fDaq_loop) {
     gSystem->ProcessEvents();
     if (perFull > 80) {
-      seconds = t.RealTime(); 
-      LOG(logINFO) << "run duration " << seconds << " seconds, buffer almost full (" 
+      seconds = t.RealTime();
+      LOG(logINFO) << "run duration " << seconds << " seconds, buffer almost full ("
 		   << (int)perFull << "%), pausing triggers.";
       fApi->daqTriggerLoopHalt();
       processData(0);
@@ -402,11 +409,11 @@ void PixTestXray::doPhRun() {
       fApi->daqTriggerLoop(finalPeriod);
     }
 
-    
-    seconds = t.RealTime(); 
+
+    seconds = t.RealTime();
     t.Start(kFALSE);
     if (static_cast<int>(seconds >= fParRunSeconds)) {
-      LOG(logINFO) << "data taking finished, elapsed time: " << seconds << " seconds."; 
+      LOG(logINFO) << "data taking finished, elapsed time: " << seconds << " seconds.";
       fDaq_loop = false;
       break;
     }
@@ -429,16 +436,16 @@ void PixTestXray::doPhRun() {
 
 // ----------------------------------------------------------------------
 void PixTestXray::doRateScan() {
-  
+
   banner(Form("PixTestXray::doRateScan() fParStepSeconds = %d, vthrcom = %d .. %d", fParStepSeconds, fParVthrCompMin, fParVthrCompMax));
-  cacheDacs(); 
+  cacheDacs();
 
   if (1) {
   fPg_setup.clear();
   fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
   fApi->setPatternGenerator(fPg_setup);
 
-  PixTest::update(); 
+  PixTest::update();
   fDirectory->cd();
 
   if (0 == fHits.size()) bookHist("xrayVthrCompScan");
@@ -446,11 +453,11 @@ void PixTestXray::doRateScan() {
 
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(false);
-  
+
 
   int totalPeriod = prepareDaq(fParTriggerFrequency, 50);
 
-  // -- scan VthrComp  
+  // -- scan VthrComp
   for (fVthrComp = fParVthrCompMin; fVthrComp <= fParVthrCompMax;  ++fVthrComp) {
     for (unsigned i = 0; i < fHitMap.size(); ++i) {
       fHitMap[i]->Reset();
@@ -459,14 +466,14 @@ void PixTestXray::doRateScan() {
     uint8_t perFull;
     fApi->setDAC("vthrcomp", fVthrComp);
     fDaq_loop = true;
-    
+
     LOG(logINFO)<< "Starting Loop with VthrComp = " << fVthrComp;
     t.Start(kTRUE);
     fApi->daqStart(FLAG_DUMP_FLAWED_EVENTS);
 
     int finalPeriod = fApi->daqTriggerLoop(totalPeriod);
     LOG(logINFO) << "PixTestXray::doRateScan start TriggerLoop with period " << finalPeriod << " and duration " << fParStepSeconds << " seconds";
-    
+
     while (fApi->daqStatus(perFull) && fDaq_loop) {
       gSystem->ProcessEvents();
       if (perFull > 80) {
@@ -476,21 +483,21 @@ void PixTestXray::doRateScan() {
 	LOG(logINFO) << "Resuming triggers.";
 	fApi->daqTriggerLoop(finalPeriod);
       }
-      
+
       if (static_cast<int>(t.RealTime()) >= fParStepSeconds)	{
 	LOG(logINFO) << "Elapsed time: " << t.RealTime() << " seconds.";
 	fDaq_loop = false;
 	break;
       }
     }
-    
+
     fApi->daqTriggerLoopHalt();
-    
+
     fApi->daqStop();
     readData();
-    
 
-       
+
+
     analyzeData();
 
     fHits[0]->Draw();
@@ -504,14 +511,14 @@ void PixTestXray::doRateScan() {
     //    TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
     //    TFile *f = TFile::Open("testROC/pxar_Ag_Vcal_10_70_10s.root");
     TFile *f = TFile::Open("testROC/pxar_Mo_Vcal_30_80_10s.root");
-    
+
     TH1D *h1 = ((TH1D*)f->Get("Xray/hits_xrayVthrCompScan_C0_V0"));
     TH1D *h2 = (TH1D*)h1->Clone("local");
     h2->SetDirectory(0);
     f->Close();
     fHits.push_back(h2);
     copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
-  
+
     fHits[0]->Draw();
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
     PixTest::update();
@@ -520,17 +527,17 @@ void PixTestXray::doRateScan() {
 
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  unsigned nrocs = rocIds.size(); 
+  unsigned nrocs = rocIds.size();
   double lo(-1.), hi(-1.);
   for (unsigned int i = 0; i < nrocs; ++i) {
     TF1 *f1 = fPIF->xrayScan(fHits[i]);
-    f1->GetRange(lo, hi); 
-    fHits[i]->Fit(f1, "lr", "", lo, hi); 
-    double thr = f1->GetParameter(0); 
+    f1->GetRange(lo, hi);
+    fHits[i]->Fit(f1, "lr", "", lo, hi);
+    double thr = f1->GetParameter(0);
     if (thr < 0 || thr > 255.) thr = 0.;
-    uint8_t ithr = static_cast<uint8_t>(thr); 
-    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr << " -> " << static_cast<int>(ithr); 
-    fApi->setDAC("vthrcomp", ithr, rocIds[i]); 
+    uint8_t ithr = static_cast<uint8_t>(thr);
+    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr << " -> " << static_cast<int>(ithr);
+    fApi->setDAC("vthrcomp", ithr, rocIds[i]);
     PixTest::update();
   }
 
@@ -539,24 +546,24 @@ void PixTestXray::doRateScan() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, -1, -1, 9); 
+  vector<TH1*> thr0 = scurveMaps("vcal", "xrayScan", 5, 0, 255, -1, -1, 9);
 
   fHits[0]->Draw();
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
   PixTest::update();
 
-  string hname(""), scurvesMeanString(""), scurvesRmsString(""); 
+  string hname(""), scurvesMeanString(""), scurvesRmsString("");
   for (unsigned int i = 0; i < thr0.size(); ++i) {
     hname = thr0[i]->GetName();
     // -- skip sig_ and thn_ histograms
     if (string::npos == hname.find("dist_thr_")) continue;
-    scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean()); 
-    scurvesRmsString += Form("%6.2f ", thr0[i]->GetRMS()); 
+    scurvesMeanString += Form("%6.2f ", thr0[i]->GetMean());
+    scurvesRmsString += Form("%6.2f ", thr0[i]->GetRMS());
   }
 
   LOG(logINFO) << "PixTestXray::doTest() done";
-  LOG(logINFO) << "vcal mean: " << scurvesMeanString; 
-  LOG(logINFO) << "vcal RMS:  " << scurvesRmsString; 
+  LOG(logINFO) << "vcal mean: " << scurvesMeanString;
+  LOG(logINFO) << "vcal RMS:  " << scurvesRmsString;
 
   LOG(logINFO) << "PixTestXray::doRateScan() done";
 
@@ -565,15 +572,15 @@ void PixTestXray::doRateScan() {
 // ----------------------------------------------------------------------
 void PixTestXray::readDataOld() {
 
-  int pixCnt(0);  
+  int pixCnt(0);
   vector<pxar::Event> daqdat;
-  
+
   try { daqdat = fApi->daqGetEventBuffer(); }
   catch(pxar::DataNoEvent &) {}
-  
+
   for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
-    
+
     for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       fHitMap[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
     }
@@ -585,16 +592,16 @@ void PixTestXray::readDataOld() {
 void PixTestXray::analyzeData() {
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
-  unsigned nrocs = rocIds.size(); 
+  unsigned nrocs = rocIds.size();
 
-  int cnt(0); 
+  int cnt(0);
   for (unsigned int i = 0; i < nrocs; ++i) {
-    double cut = meanHit(fHitMap[i]); 
-    cut = noiseLevel(fHitMap[i]); 
-    cnt = countHitsAndMaskPixels(fHitMap[i], cut, rocIds[i]); 
-    fHits[i]->SetBinContent(fVthrComp+1, cnt); 
+    double cut = meanHit(fHitMap[i]);
+    cut = noiseLevel(fHitMap[i]);
+    cnt = countHitsAndMaskPixels(fHitMap[i], cut, rocIds[i]);
+    fHits[i]->SetBinContent(fVthrComp+1, cnt);
     int mpix = fApi->_dut->getNMaskedPixels(rocIds[i]);
-    fMpix[i]->SetBinContent(fVthrComp+1, mpix); 
+    fMpix[i]->SetBinContent(fVthrComp+1, mpix);
   }
 
 
@@ -604,36 +611,36 @@ void PixTestXray::analyzeData() {
 // ----------------------------------------------------------------------
 double PixTestXray::meanHit(TH2D *h2) {
 
-  TH1D *h1 = new TH1D("h1", "h1", 1000, 0., 1000.); 
+  TH1D *h1 = new TH1D("h1", "h1", 1000, 0., 1000.);
 
   for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
     for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
-      h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
+      h1->Fill(h2->GetBinContent(ix+1, iy+1));
     }
   }
-  
-  double mean = h1->GetMean(); 
-  delete h1; 
-  LOG(logDEBUG) << "hist " << h2->GetName() << " mean hits = " << mean; 
-  return mean; 
+
+  double mean = h1->GetMean();
+  delete h1;
+  LOG(logDEBUG) << "hist " << h2->GetName() << " mean hits = " << mean;
+  return mean;
 }
 
 // ----------------------------------------------------------------------
 double PixTestXray::noiseLevel(TH2D *h2) {
 
-  TH1D *h1 = new TH1D("h1", "h1", 1000, 0., 1000.); 
+  TH1D *h1 = new TH1D("h1", "h1", 1000, 0., 1000.);
 
   for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
     for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
-      h1->Fill(h2->GetBinContent(ix+1, iy+1)); 
+      h1->Fill(h2->GetBinContent(ix+1, iy+1));
     }
   }
-  
+
   // -- skip bin for zero hits!
   int noise(-1);
   for (int ix = 1; ix < h1->GetNbinsX(); ++ix) {
     if (h1->GetBinContent(ix+1) < 1) {
-      noise = ix; 
+      noise = ix;
       break;
     }
   }
@@ -641,66 +648,66 @@ double PixTestXray::noiseLevel(TH2D *h2) {
   int lastbin(1);
   for (int ix = 1; ix < h1->GetNbinsX(); ++ix) {
     if (h1->GetBinContent(ix+1) > 1) {
-      lastbin = ix; 
+      lastbin = ix;
     }
   }
 
 
-  delete h1; 
-  LOG(logINFO) << "hist " << h2->GetName() 
+  delete h1;
+  LOG(logINFO) << "hist " << h2->GetName()
 	       << " (maximum: " << h2->GetMaximum() << ") "
-	       << " noise level = " << noise << " last bin above 1: " << lastbin; 
-  return lastbin; 
+	       << " noise level = " << noise << " last bin above 1: " << lastbin;
+  return lastbin;
 }
 
 
 // ----------------------------------------------------------------------
 int PixTestXray::countHitsAndMaskPixels(TH2D *h2, double noiseLevel, int iroc) {
-  
-  int cnt(0); 
-  double entries(0.); 
+
+  int cnt(0);
+  double entries(0.);
   for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
     for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
       entries = h2->GetBinContent(ix+1, iy+1);
       if (entries > noiseLevel) {
-	fApi->_dut->maskPixel(ix, iy, true, iroc); 
-	LOG(logINFO) << "ROC " << iroc << " masking pixel " << ix << "/" << iy 
-		     << " with #hits = " << entries << " (cut: " << noiseLevel << ")"; 
+	fApi->_dut->maskPixel(ix, iy, true, iroc);
+	LOG(logINFO) << "ROC " << iroc << " masking pixel " << ix << "/" << iy
+		     << " with #hits = " << entries << " (cut: " << noiseLevel << ")";
       } else {
 	cnt += static_cast<int>(entries);
       }
     }
   }
-  return cnt; 
+  return cnt;
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestXray::readData() {
 
-  int pixCnt(0);  
+  int pixCnt(0);
   vector<pxar::Event> daqdat;
   try { daqdat = fApi->daqGetEventBuffer(); }
   catch(pxar::DataNoEvent &) {}
-  
+
   for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     pixCnt += it->pixels.size();
 
     if (fParFillTree) {
-      bookTree();  
-      fTreeEvent.header           = it->getHeader(); 
+      bookTree();
+      fTreeEvent.header           = it->getHeader();
       fTreeEvent.dac              = 0;
-      fTreeEvent.trailer          = it->getTrailer(); 
+      fTreeEvent.trailer          = it->getTrailer();
     }
 
-    int idx(0); 
+    int idx(0);
     double q(0.);
-    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
+    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       idx = getIdxFromId(it->pixels[ipix].roc());
       if (fPhCalOK) {
-	q = fPhCal.vcal(it->pixels[ipix].roc(), 
-			it->pixels[ipix].column(), 
-			it->pixels[ipix].row(), 
+	q = fPhCal.vcal(it->pixels[ipix].roc(),
+			it->pixels[ipix].column(),
+			it->pixels[ipix].row(),
 			it->pixels[ipix].value());
       } else {
 	q = 0;
@@ -711,19 +718,19 @@ void PixTestXray::readData() {
 
       fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
       fPH[idx]->Fill(it->pixels[ipix].value());
-	
+
       if (fParFillTree && ipix < 20000) {
 	++fTreeEvent.npix;
-	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
-	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
-	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
-	fTreeEvent.pval[ipix] = it->pixels[ipix].value(); 
+	fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+	fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+	fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+	fTreeEvent.pval[ipix] = it->pixels[ipix].value();
 	fTreeEvent.pq[ipix]   = q;
       }
     }
-    
+
     if (fParFillTree) fTree->Fill();
-    
+
   }
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
 }
@@ -734,11 +741,11 @@ void PixTestXray::processData(uint16_t numevents) {
   fDirectory->cd();
   PixTest::update();
 
-  static long int evtCnt(-1); 
+  static long int evtCnt(-1);
   int pixCnt(0);
   LOG(logDEBUG) << "Getting Event Buffer";
   vector<pxar::Event> daqdat;
-   
+
   if (numevents > 0) {
     for (unsigned int i = 0; i < numevents ; i++) {
       pxar::Event evt;
@@ -755,32 +762,32 @@ void PixTestXray::processData(uint16_t numevents) {
   }
 
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
-  
-  int idx(-1); 
-  uint16_t q; 
+
+  int idx(-1);
+  uint16_t q;
   for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     ++evtCnt;
-    pixCnt += it->pixels.size(); 
-    
-    
+    pixCnt += it->pixels.size();
+
+
     if (fParFillTree) {
-      bookTree();  
-      fTreeEvent.header           = it->getHeader(); 
+      bookTree();
+      fTreeEvent.header           = it->getHeader();
       fTreeEvent.dac              = 0;
-      fTreeEvent.trailer          = it->getTrailer(); 
+      fTreeEvent.trailer          = it->getTrailer();
     }
 
-    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {   
+    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
       idx = getIdxFromId(it->pixels[ipix].roc());
 
-      fHitsVsEvents[idx]->Fill(evtCnt); 
-      fHitsVsColumn[idx]->Fill(it->pixels[ipix].column()); 
-      fHitsVsEvtCol[idx]->Fill(evtCnt, it->pixels[ipix].column()); 
+      fHitsVsEvents[idx]->Fill(evtCnt);
+      fHitsVsColumn[idx]->Fill(it->pixels[ipix].column());
+      fHitsVsEvtCol[idx]->Fill(evtCnt, it->pixels[ipix].column());
 
       if (fPhCalOK) {
-	q = fPhCal.vcal(it->pixels[ipix].roc(), 
-			it->pixels[ipix].column(), 
-			it->pixels[ipix].row(), 
+	q = fPhCal.vcal(it->pixels[ipix].roc(),
+			it->pixels[ipix].column(),
+			it->pixels[ipix].row(),
 			it->pixels[ipix].value());
       } else {
 	q = 0;
@@ -791,22 +798,22 @@ void PixTestXray::processData(uint16_t numevents) {
 
       fPHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row(), it->pixels[ipix].value());
       fPH[idx]->Fill(it->pixels[ipix].value());
-	
+
       if (fParFillTree && ipix < 20000) {
 	++fTreeEvent.npix;
-	fTreeEvent.proc[ipix] = it->pixels[ipix].roc(); 
-	fTreeEvent.pcol[ipix] = it->pixels[ipix].column(); 
-	fTreeEvent.prow[ipix] = it->pixels[ipix].row(); 
-	fTreeEvent.pval[ipix] = it->pixels[ipix].value(); 
+	fTreeEvent.proc[ipix] = it->pixels[ipix].roc();
+	fTreeEvent.pcol[ipix] = it->pixels[ipix].column();
+	fTreeEvent.prow[ipix] = it->pixels[ipix].row();
+	fTreeEvent.pval[ipix] = it->pixels[ipix].value();
 	fTreeEvent.pq[ipix]   = q;
       }
     }
-    
+
     if (fParFillTree) fTree->Fill();
   }
-  
+
   LOG(logDEBUG) << Form(" # events read: %6ld, pixels seen in all events: %3d", daqdat.size(), pixCnt);
-  
+
   fHmap[0]->Draw("colz");
   fTriggers[0]->SetBinContent(1, fTriggers[0]->GetBinContent(1) + daqdat.size());
   PixTest::update();
@@ -814,21 +821,21 @@ void PixTestXray::processData(uint16_t numevents) {
 
 
 // ----------------------------------------------------------------------
-void PixTestXray::doRunMaskHotPixels() {    
-  PixTest::update(); 
-  vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels"); 
+void PixTestXray::doRunMaskHotPixels() {
+  PixTest::update();
+  vector<TH2D*> v = mapsWithString(fHitMap, "hotpixels");
   if (0 == v.size()) {
     bookHist("hotpixels");
-    v = mapsWithString(fHitMap, "hotpixels"); 
+    v = mapsWithString(fHitMap, "hotpixels");
   }
   for (unsigned int i = 0; i < v.size(); ++i) v[i]->Reset();
-  maskHotPixels(v); 
+  maskHotPixels(v);
 
   if (fParSaveMaskedPixels) {
     if (fParMaskFileName == "default") {
-      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels); 
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels);
     } else {
-      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName); 
+      fPixSetup->getConfigParameters()->writeMaskFile(fHotPixels, fParMaskFileName);
     }
   }
 
@@ -836,15 +843,14 @@ void PixTestXray::doRunMaskHotPixels() {
   // -- display
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), v[0]);
   v[0]->Draw("colz");
-  PixTest::update(); 
+  PixTest::update();
   return;
 }
 
 
 // ----------------------------------------------------------------------
 void PixTestXray::doStop(){
-	// Interrupt the test 
+	// Interrupt the test
 	fDaq_loop = false;
 	LOG(logINFO) << "Stop pressed. Ending test.";
 }
-

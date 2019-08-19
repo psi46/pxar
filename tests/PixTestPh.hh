@@ -11,6 +11,8 @@ public:
   virtual ~PixTestPh();
   virtual bool setParameter(std::string parName, std::string sval);
   void init();
+  void setToolTips();
+  std::string toolTip(std::string what);
   void bookHist(std::string);
 
   void runCommand(std::string);

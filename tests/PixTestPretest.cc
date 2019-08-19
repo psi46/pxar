@@ -132,6 +132,7 @@ void PixTestPretest::setToolTips() {
   fSummaryTip = string("summary plot to be implemented");
 }
 
+
 // ----------------------------------------------------------------------
 string PixTestPretest::toolTip(string what) {
   if (string::npos != what.find("programroc")) return string("Quick check that each ROC is programmable ");

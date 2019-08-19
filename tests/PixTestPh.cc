@@ -89,6 +89,19 @@ void PixTestPh::init() {
   fDirectory->cd();
 }
 
+// ----------------------------------------------------------------------
+void PixTestPh::setToolTips() {
+  fTestTip = string( "PH: pulse height studies for single pixels and full DUT") ;
+  fSummaryTip = string("summary plot");
+}
+
+// ----------------------------------------------------------------------
+string PixTestPh::toolTip(string what) {
+  if (string::npos != what.find("phmap")) return string("run PH test for complete DUT ");
+  return string("nada");
+}
+
+
 //------------------------------------------------------------------------------
 void PixTestPh::bookHist(string name) {
   LOG(logDEBUG) << "nothing done with " << name;

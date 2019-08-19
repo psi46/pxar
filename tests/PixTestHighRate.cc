@@ -217,6 +217,16 @@ void PixTestHighRate::setToolTips() {
 
 
 // ----------------------------------------------------------------------
+string PixTestHighRate::toolTip(string what) {
+  if (string::npos != what.find("maskhotpixels")) return string("find and mask hot pixels (more than 10 hits in 10 seconds at 100kHz)");
+  if (string::npos != what.find("phrun")) return string("FIXME");
+  if (string::npos != what.find("ratescan")) return string("FIXME");
+  return string("FIXME");
+  return string("nada");
+}
+
+
+// ----------------------------------------------------------------------
 void PixTestHighRate::bookHist(string name) {
   fDirectory->cd();
   if (fParFillTree) bookTree();

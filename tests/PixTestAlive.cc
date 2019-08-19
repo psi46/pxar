@@ -117,6 +117,13 @@ void PixTestAlive::setToolTips() {
     ;
 }
 
+// ----------------------------------------------------------------------
+string PixTestAlive::toolTip(string what) {
+  if (string::npos != what.find("alivetest")) return string("checks whether PUC works (after pretest OK!)");
+  if (string::npos != what.find("masktest")) return string("checks whether pixels can be masked");
+  if (string::npos != what.find("addressdecodingtest")) return string("checks for correct pixel addresses");
+  return string("nada");
+}
 
 // ----------------------------------------------------------------------
 void PixTestAlive::bookHist(string name) {

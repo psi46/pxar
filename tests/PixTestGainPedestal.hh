@@ -9,20 +9,21 @@ public:
   PixTestGainPedestal(PixSetup *, std::string);
   PixTestGainPedestal();
   virtual ~PixTestGainPedestal();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
   void setToolTips();
-  void bookHist(std::string); 
+  std::string toolTip(std::string what);
+  void bookHist(std::string);
 
-  void runCommand(std::string command); 
-  
+  void runCommand(std::string command);
+
   void measure();
   void printHistograms();
-  void fit(); 
-  void saveGainPedestalParameters(); 
+  void fit();
+  void saveGainPedestalParameters();
 
-  void doTest(); 
-  void fullTest(); 
+  void doTest();
+  void fullTest();
 
 private:
 

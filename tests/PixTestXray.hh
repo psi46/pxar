@@ -12,19 +12,20 @@ public:
   PixTestXray(PixSetup *, std::string);
   PixTestXray();
   virtual ~PixTestXray();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
   void setToolTips();
-  void bookHist(std::string); 
+  std::string toolTip(std::string what);
+  void bookHist(std::string);
   std::vector<TH2D*> bookHotPixelMap();
 
-  void runCommand(std::string command); 
+  void runCommand(std::string command);
   void doStop();
-  void doPhRun(); 
+  void doPhRun();
   void doRateScan();
   void doRunMaskHotPixels();
   void doTest();
- 
+
   //   bool setTrgFrequency(uint8_t TrgTkDel);
   //   void finalCleanup();
   //   void pgToDefault(std::vector<std::pair<std::string, uint8_t> > pg_setup);
@@ -33,9 +34,9 @@ public:
   void readDataOld();
   void analyzeData();
 
-  double meanHit(TH2D*); 
-  double noiseLevel(TH2D*); 
-  int   countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc); 
+  double meanHit(TH2D*);
+  double noiseLevel(TH2D*);
+  int   countHitsAndMaskPixels(TH2D*, double noiseLevel, int iroc);
 
   void processData(uint16_t numevents = 1000);
 
@@ -43,22 +44,22 @@ private:
 
   std::string   fParSource, fParMaskFileName;
   int           fParTriggerFrequency;
-  int           fParRunSeconds; 
-  int           fParStepSeconds; 
-  int           fParVthrCompMin, fParVthrCompMax; 
+  int           fParRunSeconds;
+  int           fParStepSeconds;
+  int           fParVthrCompMin, fParVthrCompMax;
   bool          fParFillTree;
   bool	        fParDelayTBM;
-  uint16_t      fParNtrig; 
-  int           fParVcal; 
+  uint16_t      fParNtrig;
+  int           fParVcal;
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
 
-  int           fParSaveMaskedPixels; 
+  int           fParSaveMaskedPixels;
   bool          fSourceChanged;
 
   bool    fDaq_loop;
-  
+
   int     fVthrComp;
   long int fEventsMax;
 
@@ -80,7 +81,7 @@ private:
   std::vector<TH1D*> fTriggers;
   std::vector<TH1D*> fHitsVsEvents, fHitsVsColumn;
   std::vector<TH2D*> fHitsVsEvtCol;
-  
+
   ClassDef(PixTestXray, 1)
 
 };

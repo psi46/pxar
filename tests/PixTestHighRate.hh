@@ -12,36 +12,37 @@ public:
   PixTestHighRate(PixSetup *, std::string);
   PixTestHighRate();
   virtual ~PixTestHighRate();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
   void setToolTips();
-  void bookHist(std::string); 
+  std::string toolTip(std::string what);
+  void bookHist(std::string);
 
-  void runCommand(std::string command); 
+  void runCommand(std::string command);
   void doTest();
   void doCalDelScan();
   void doXPixelAlive();
   void doXNoiseMaps();
-  void doRunDaq(); 
+  void doRunDaq();
   void doRunMaskHotPixels();
   void doRunTrimHotPixels();
   void doStop();
 
   void doHitMap(int nseconds, std::vector<TH2D*>);
   void fillMap(std::vector<TH2D*>);
- 
+
 private:
 
   int           fParTriggerFrequency;
-  int           fParRunSeconds; 
-  int           fParTriggerDelay; 
+  int           fParRunSeconds;
+  int           fParTriggerDelay;
   bool          fParFillTree;
   bool	        fParDelayTBM;
-  uint16_t      fParNtrig; 
-  int           fParVcal, fParDacLo, fParDacHi, fParDacsPerStep; 
+  uint16_t      fParNtrig;
+  int           fParVcal, fParDacLo, fParDacHi, fParDacsPerStep;
 
-  std::string   fParMaskFileName; 
-  int           fParSaveMaskedPixels; 
+  std::string   fParMaskFileName;
+  int           fParSaveMaskedPixels;
 
   bool          fPhCalOK;
   PHCalibration fPhCal;
@@ -52,9 +53,9 @@ private:
   int     fParTrimHotPixelThr;
 
   bool          fDaq_loop;
-  
+
   std::vector<TH2D*> fHitMap;
-  
+
   ClassDef(PixTestHighRate, 1)
 
 };
