@@ -17,30 +17,30 @@
 #include "log.h"
 
 using namespace std;
-using namespace pxar; 
+using namespace pxar;
 
 ClassImp(PixTab)
 
 // ----------------------------------------------------------------------
 PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
-  init(p, test, tabname); 
+  init(p, test, tabname);
 
-  fBorderN = 2; 
-  fBorderL = 10; 
+  fBorderN = 2;
+  fBorderL = 10;
   fBorderT = 1;
 
   fTriStateColors[0] = kRed;
   fTriStateColors[1] = 0;
   fTriStateColors[2] = kGreen;
 
-  UInt_t w = fGui->getTabs()->GetWidth(); 
-  UInt_t h = fGui->getTabs()->GetHeight(); 
+  UInt_t w = fGui->getTabs()->GetWidth();
+  UInt_t h = fGui->getTabs()->GetHeight();
 
   fTabFrame = fGui->getTabs()->AddTab(fTabName.c_str());
 
   //  fhFrame = new TGHorizontalFrame(fTabFrame, w, h);
   fhFrame = new TGCompositeFrame(fTabFrame, w, h, kHorizontalFrame);
-  
+
   // -- 2 vertical frames
   fV1 = new TGVerticalFrame(fhFrame);
   fhFrame->AddFrame(fV1, new TGLayoutHints(kLHintsLeft | kLHintsExpandX | kLHintsExpandY, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -53,7 +53,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
 
   // -- status bar
-  Int_t wid = fEc1->GetCanvasWindowId();  
+  Int_t wid = fEc1->GetCanvasWindowId();
   TCanvas *myc = new TCanvas(Form("%sCanvas", tabname.c_str()), 10, 10, wid);
   fEc1->AdoptCanvas(myc);
   myc->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "statusBarUpdate(Int_t,Int_t,Int_t,TObject*)");
@@ -66,21 +66,26 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   // -- fV2: create parameter TGText boxes for test
   vector<pair<string, string> > amap = fTest->getParameters();
-  TGTextEntry *te(0); 
-  TGLabel *tl(0); 
-  TGTextBuffer *tb(0); 
+  TGTextEntry *te(0);
+  TGLabel *tl(0);
+  TGTextBuffer *tb(0);
   TGTextButton *tset(0);
-  TGCheckButton *tcheck(0); 
+  TGCheckButton *tcheck(0);
 
-  TGHorizontalFrame *hFrame(0); 
+  TGHorizontalFrame *hFrame(0);
 
-  int cnt(0); 
+  int cnt(0);
   for (unsigned int i = 0; i < amap.size(); ++i) {
     if (amap[i].second == "button") {
-      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
+      hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
       tset = new TGTextButton(hFrame, amap[i].first.c_str(), 1234);
-      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN)); 
-      tset->SetToolTipText("run this subtest");
+      hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+      if (test->toolTip(amap[i].first).empty()) {
+	tset->SetToolTipText("run this subtest");
+      } else {
+	cout << "no tool tip provided for " << amap[i].first << endl;
+	tset->SetToolTipText("run this subtest");
+      }
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");
       tset->SetBackgroundColor(fGui->fDarkSalmon);
@@ -91,7 +96,7 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     if (string::npos != amap[i].second.find("checkbox")) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
       tcheck = new TGCheckButton(hFrame, amap[i].first.c_str(), 1234);
-      hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN)); 
+      hFrame->AddFrame(tcheck, new TGLayoutHints(kLHintsRight, fBorderN, fBorderN, fBorderN, fBorderN));
       fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
       if (string::npos != amap[i].second.find("(1)")) {
 	tcheck->SetState(kButtonDown);
@@ -106,35 +111,35 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
     }
 
 
-    hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX); 
+    hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
     fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsTop));
-    
-    tb = new TGTextBuffer(5); 
+
+    tb = new TGTextBuffer(5);
     tl = new TGLabel(hFrame, amap[i].first.c_str());
     tl->SetWidth(100);
-    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN)); 
+    hFrame->AddFrame(tl, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
 
-    te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100); 
-    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderN, fBorderN, fBorderN, fBorderN)); 
-    fParIds.push_back(amap[i].first); 
-    fParTextEntries.insert(make_pair(amap[i].first, te)); 
+    te  = new TGTextEntry(hFrame, tb, cnt); te->SetWidth(100);
+    hFrame->AddFrame(te, new TGLayoutHints(kLHintsCenterY | kLHintsCenterX, fBorderN, fBorderN, fBorderN, fBorderN));
+    fParIds.push_back(amap[i].first);
+    fParTextEntries.insert(make_pair(amap[i].first, te));
 
     te->SetText(amap[i].second.c_str());
     te->Connect("ReturnPressed()", "PixTab", this, "setParameter()");
-    te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()"); 
-    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()"); 
-    te->Connect("TabPressed()", "PixTab", this, "moveDown()"); 
+    te->Connect("TextChanged(const char*)", "PixTab", this, "yellow()");
+    te->Connect("ShiftTabPressed()", "PixTab", this, "moveUp()");
+    te->Connect("TabPressed()", "PixTab", this, "moveDown()");
 
     tset = new TGTextButton(hFrame, "Set", cnt);
     tset->Connect("Clicked()", "PixTab", this, "setParameter()");
-    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN)); 
+    hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
     tset->SetToolTipText("set the parameter\nor click *return* after changing the numerical value");
     tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
 
     ++cnt;
   }
 
-  hFrame = new TGHorizontalFrame(fV2); 
+  hFrame = new TGHorizontalFrame(fV2);
   TGTextButton * previous = new TGTextButton(hFrame, "Previous");
   previous->SetToolTipText("display previous histogram in this test's list");
   previous->Connect("Clicked()", "PixTab", this, "previousHistogram()");
@@ -168,14 +173,14 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
 
-  hFrame = new TGHorizontalFrame(fV2); 
+  hFrame = new TGHorizontalFrame(fV2);
   // -- create doTest Button
   fbDoTest = new TGTextButton(hFrame, " doTest ", B_DOTEST);
   fbDoTest->ChangeOptions(fbDoTest->GetOptions() | kFixedWidth);
   hFrame->AddFrame(fbDoTest, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbDoTest->Connect("Clicked()", "PixTest", test, "doTest()");
   fbDoTest->SetBackgroundColor(fGui->fDarkSalmon);
-  
+
   // -- create stop Button
   TGTextButton *bStop = new TGTextButton(hFrame, " stop ", B_DOSTOP);
   bStop->SetToolTipText(fTest->getStopTip().c_str());
@@ -202,14 +207,14 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   fbBrowser->SetToolTipText("open a TBrowser (for easier histogram navigation)");
   hFrame->AddFrame(fbBrowser, new TGLayoutHints(kLHintsLeft | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   fbBrowser->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
-  
+
   // -- create close Button
   TGTextButton *bClose = new TGTextButton(hFrame, " close ", B_CLOSETAB);
   bClose->ChangeOptions(bClose->GetOptions() | kFixedWidth);
   bClose->SetToolTipText("close the test tab");
   hFrame->AddFrame(bClose, new TGLayoutHints(kLHintsRight | kLHintsTop, fBorderN, fBorderN, fBorderN, fBorderN));
   bClose->Connect("Clicked()", "PixTab", this, "handleButtons(Int_t)");
-  
+
   fV2->AddFrame(hFrame, new TGLayoutHints(kLHintsRight | kLHintsBottom, fBorderN, fBorderN, fBorderN, fBorderN));
 
   updateToolTips();
@@ -231,9 +236,9 @@ PixTab::PixTab() {
 void PixTab::init(PixGui *p, PixTest *test, string tabname) {
   //  LOG(logINFO) << "PixTab::init()";
   fGui = p;
-  fTest = test; 
-  fTabName = tabname; 
-  fCount = 0; 
+  fTest = test;
+  fTabName = tabname;
+  fCount = 0;
 }
 
 // ----------------------------------------------------------------------
@@ -252,7 +257,7 @@ void PixTab::handleButtons(Int_t id) {
     TGButton *btn = (TGButton*)gTQSender;
     id = btn->WidgetId();
   }
-  
+
   switch (id) {
     case B_DOTEST: {
       LOG(logDEBUG) << "and now what???";
@@ -265,7 +270,7 @@ void PixTab::handleButtons(Int_t id) {
     }
 
     case B_BROWSER: {
-      new TBrowser(getName().c_str(), fTest->getDirectory()); 
+      new TBrowser(getName().c_str(), fTest->getDirectory());
       break;
     }
 
@@ -286,11 +291,11 @@ void PixTab::handleButtons(Int_t id) {
       LOG(logDEBUG) << Form("Tab %s closed", fTabName.c_str());
       fGui->getTabs()->RemoveTab(fGui->getTabs()->GetCurrent());
       fGui->getTabs()->Layout();
-      delete fTabFrame; 
-      delete fhFrame; 
-      delete fV1; 
-      delete fV2; 
-      delete this; 
+      delete fTabFrame;
+      delete fhFrame;
+      delete fV1;
+      delete fV2;
+      delete this;
       break;
     }
   }
@@ -301,9 +306,9 @@ void PixTab::handleButtons(Int_t id) {
 void PixTab::buttonClicked() {
   TGButton *btn = (TGButton*)gTQSender;
   LOG(logDEBUG) << "xxxPressed():  " << btn->GetTitle();
-  fTest->runCommand(btn->GetTitle()); 
+  fTest->runCommand(btn->GetTitle());
 
-} 
+}
 
 // ----------------------------------------------------------------------
 void PixTab::boxChecked() {
@@ -317,14 +322,14 @@ void PixTab::boxChecked() {
 // ----------------------------------------------------------------------
 void PixTab::yellow() {
   TGButton *btn = (TGButton *) gTQSender;
-  int id(-1); 
+  int id(-1);
   id = btn->WidgetId();
   if (-1 == id) {
     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-    return; 
+    return;
   }
-  
-  string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+
+  string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText();
   if (fTest->getParameter(fParIds[id]).compare(svalue)) {
     ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fYellow);
   } else {
@@ -336,13 +341,13 @@ void PixTab::yellow() {
 // ----------------------------------------------------------------------
 void PixTab::moveUp() {
   TGButton *btn = (TGButton *) gTQSender;
-  int id(-1); 
+  int id(-1);
   id = btn->WidgetId();
   if (-1 == id) {
     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-    return; 
+    return;
   }
-  
+
   if (id > 0) {
     ((TGTextEntry*)(fParTextEntries[fParIds[id-1]]))->SetFocus();
   } else {
@@ -353,11 +358,11 @@ void PixTab::moveUp() {
 // ----------------------------------------------------------------------
 void PixTab::moveDown() {
   TGButton *btn = (TGButton *) gTQSender;
-  int id(-1); 
+  int id(-1);
   id = btn->WidgetId();
   if (-1 == id) {
     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-    return; 
+    return;
   }
 
   if (id < static_cast<int>(fParIds.size()) - 1) {
@@ -373,23 +378,23 @@ void PixTab::setParameter() {
   //  LOG(logINFO)  << "PixTab::setParameter: ";
 
   TGButton *btn = (TGButton *) gTQSender;
-  int id(-1); 
+  int id(-1);
   id = btn->WidgetId();
   if (-1 == id) {
     LOG(logDEBUG) << "ASLFDKHAPIUDF ";
-    return; 
+    return;
   }
 
-  string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText(); 
+  string svalue = ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->GetText();
   ((TGTextEntry*)(fParTextEntries[fParIds[id]]))->SetBackgroundColor(fGui->fWhite);
-  
-  LOG(logDEBUG) << "xxxPressed():  ID = " << id 
+
+  LOG(logDEBUG) << "xxxPressed():  ID = " << id
 		<< " -> " << fParIds[id]
 	       << " to value " << svalue;
 
-  fTest->setParameter(fParIds[id], svalue); 
+  fTest->setParameter(fParIds[id], svalue);
   updateToolTips();
-} 
+}
 
 
 // ----------------------------------------------------------------------
@@ -401,26 +406,26 @@ void PixTab::clearHistList() {
 // ----------------------------------------------------------------------
 void PixTab::clearCanvas() {
   TCanvas *c = fEc1->GetCanvas();
-  c->Clear(); 
+  c->Clear();
   update();
 }
 
 // ----------------------------------------------------------------------
 void PixTab::nextHistogram() {
-  TH1 *h = fTest->nextHist(); 
+  TH1 *h = fTest->nextHist();
   if (h) {
     string option = fTest->getHistOption(h);
-    string lopt = option;     
+    string lopt = option;
     if (string::npos != option.find("tristate")) {
-      PixUtil::replaceAll(lopt, "tristate", ""); 
-      gStyle->SetPalette(3, fTriStateColors); 
+      PixUtil::replaceAll(lopt, "tristate", "");
+      gStyle->SetPalette(3, fTriStateColors);
     } else {
       gStyle->SetPalette(1);
     }
 
     if (string::npos == option.find("same")) clearCanvas();
     h->Draw(lopt.c_str());
-    update(); 
+    update();
   } else {
     LOG(logDEBUG) << "no previous histogram found ";
   }
@@ -430,20 +435,20 @@ void PixTab::nextHistogram() {
 
 // ----------------------------------------------------------------------
 void PixTab::previousHistogram() {
-  TH1 *h = fTest->previousHist(); 
+  TH1 *h = fTest->previousHist();
   if (h) {
     string option = fTest->getHistOption(h);
-    string lopt = option;     
+    string lopt = option;
     if (string::npos != option.find("tristate")) {
-      PixUtil::replaceAll(lopt, "tristate", ""); 
-      gStyle->SetPalette(3, fTriStateColors); 
+      PixUtil::replaceAll(lopt, "tristate", "");
+      gStyle->SetPalette(3, fTriStateColors);
     } else {
       gStyle->SetPalette(1);
     }
 
     if (string::npos == option.find("same")) clearCanvas();
     h->Draw(lopt.c_str());
-    update(); 
+    update();
   } else {
     LOG(logDEBUG)  << "no previous histogram found ";
   }
@@ -452,20 +457,20 @@ void PixTab::previousHistogram() {
 
 // ----------------------------------------------------------------------
 void PixTab::nextHistogramV() {
-  TH1 *h = fTest->nextHistV(); 
+  TH1 *h = fTest->nextHistV();
   if (h) {
     string option = fTest->getHistOption(h);
-    string lopt = option;     
+    string lopt = option;
     if (string::npos != option.find("tristate")) {
-      PixUtil::replaceAll(lopt, "tristate", ""); 
-      gStyle->SetPalette(3, fTriStateColors); 
+      PixUtil::replaceAll(lopt, "tristate", "");
+      gStyle->SetPalette(3, fTriStateColors);
     } else {
       gStyle->SetPalette(1);
     }
 
     if (string::npos == option.find("same")) clearCanvas();
-    h->Draw(lopt.c_str());    
-    update(); 
+    h->Draw(lopt.c_str());
+    update();
   } else {
     LOG(logDEBUG) << "no next histogram found ";
   }
@@ -475,20 +480,20 @@ void PixTab::nextHistogramV() {
 
 // ----------------------------------------------------------------------
 void PixTab::previousHistogramV() {
-  TH1 *h = fTest->previousHistV(); 
+  TH1 *h = fTest->previousHistV();
   if (h) {
     string option = fTest->getHistOption(h);
-    string lopt = option;     
+    string lopt = option;
     if (string::npos != option.find("tristate")) {
-      PixUtil::replaceAll(lopt, "tristate", ""); 
-      gStyle->SetPalette(3, fTriStateColors); 
+      PixUtil::replaceAll(lopt, "tristate", "");
+      gStyle->SetPalette(3, fTriStateColors);
     } else {
       gStyle->SetPalette(1);
     }
 
     if (string::npos == option.find("same")) clearCanvas();
     h->Draw(lopt.c_str());
-    update(); 
+    update();
   } else {
     LOG(logDEBUG)  << "no previous histogram found ";
   }
@@ -503,51 +508,51 @@ void PixTab::update() {
   while (TObject *h = next()) {
     if (h->InheritsFrom(TH1::Class())) {
       if (h->InheritsFrom(TH2::Class())) {
-	gStyle->SetOptStat(0); 
+	gStyle->SetOptStat(0);
 	break;
       }	else {
-	gStyle->SetOptStat(1111111); 
+	gStyle->SetOptStat(1111111);
       }
     }
   }
-  
+
   c->cd();
-  c->Modified(); 
-  c->Update(); 
+  c->Modified();
+  c->Update();
 }
 
 
 // ----------------------------------------------------------------------
 void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected) {
   //  char text0[200], text2[200];
-  string text2; 
+  string text2;
   const char* text0 = selected->GetName();
   fStatusBar->SetText(text0, 0);
 
   if (event == kKeyPress) {
-    LOG(logDEBUG) << "key pressed?"; 
+    LOG(logDEBUG) << "key pressed?";
   }
 
   //     sprintf(text1, "%d,%d", px, py);
   //   fStatusBar->SetText(text1, 1);
   if (selected->InheritsFrom(TH1::Class())) {
     string trafo = selected->GetObjectInfo(px,py);
-    string::size_type s1 = trafo.find("binx"); 
-    string trafo1 = trafo.substr(s1); 
-    float x, y, val; 
+    string::size_type s1 = trafo.find("binx");
+    string trafo1 = trafo.substr(s1);
+    float x, y, val;
     if (selected->InheritsFrom(TH2::Class())) {
       sscanf(trafo1.c_str(), "binx=%f, biny=%f, binc=%f", &x, &y, &val);
       if (52 == ((TH2D*)selected)->GetNbinsX() && 80 == ((TH2D*)selected)->GetNbinsY()) {
-	text2 = Form("c=%.0f, r=%.0f, value=%4.3f", x-1, y-1, val); 
+	text2 = Form("c=%.0f, r=%.0f, value=%4.3f", x-1, y-1, val);
       } else if (160 == ((TH2D*)selected)->GetNbinsX() && 416 == ((TH2D*)selected)->GetNbinsY()) {
-	text2 = Form("x=%.0f, y=%.0f, value=%4.3f", x-1, y-1, val); 
+	text2 = Form("x=%.0f, y=%.0f, value=%4.3f", x-1, y-1, val);
       } else {
 	text2 = trafo1;
 	//	cout << "text2: " << text2 << " trafo1: " << trafo1 << endl;
       }
     } else {
       sscanf(trafo1.c_str(), "binx=%f, binc=%f", &x, &val);
-      text2 = Form("x=%.0f, value=%4.3f", x-1, val); 
+      text2 = Form("x=%.0f, value=%4.3f", x-1, val);
     }
   } else {
     text2 = selected->GetObjectInfo(px,py);
@@ -558,16 +563,16 @@ void PixTab::statusBarUpdate(Int_t event, Int_t px, Int_t py, TObject *selected)
 
 // ----------------------------------------------------------------------
 void PixTab::updateToolTips() {
-  string tooltip = string(Form("%s test algorithm (patience may be required)", fTest->getName().c_str())) 
+  string tooltip = string(Form("%s test algorithm (patience may be required)", fTest->getName().c_str()))
     + string("\n") + fTest->getTestTip()
     ;
 
-  fbDoTest->SetToolTipText(tooltip.c_str()); 
-  
-  tooltip = string(Form("summary plot for %s", fTest->getName().c_str())) 
+  fbDoTest->SetToolTipText(tooltip.c_str());
+
+  tooltip = string(Form("summary plot for %s", fTest->getName().c_str()))
     + string("\n") + fTest->getSummaryTip()
     ;
   fbModMap->SetToolTipText(tooltip.c_str());
 
-  
+
 }

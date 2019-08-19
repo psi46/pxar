@@ -133,6 +133,13 @@ void PixTestPretest::setToolTips() {
 }
 
 // ----------------------------------------------------------------------
+string PixTestPretest::toolTip(string what) {
+  if (string::npos != what.find("settimings")) return string("optimize timing settings for TBM08A/TBM08B");
+  return string();
+}
+
+
+// ----------------------------------------------------------------------
 void PixTestPretest::bookHist(string name) {
   fDirectory->cd();
 

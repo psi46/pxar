@@ -106,6 +106,10 @@ void PixTest::setToolTips() {
   fSummaryTip = "generic tool tip for a the summary plot";
 }
 
+// ----------------------------------------------------------------------
+string PixTest::toolTip(string what) {
+  return string("should be overridden");
+}
 
 
 // ----------------------------------------------------------------------

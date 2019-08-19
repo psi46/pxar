@@ -11,6 +11,7 @@ public:
   virtual bool setParameter(std::string parName, std::string sval);
   void init();
   void setToolTips();
+  std::string toolTip(std::string what);
   void runCommand(std::string);
   void bookHist(std::string);
 
@@ -21,7 +22,7 @@ public:
   void setTimings();
   /// Wolfram's timing setting (optimized)
   void findTiming();
-  void findWorkingPixel();  
+  void findWorkingPixel();
   void setVthrCompCalDel();
   void setVthrCompId();
   void setCalDel();
