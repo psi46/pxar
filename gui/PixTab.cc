@@ -80,11 +80,12 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       hFrame = new TGHorizontalFrame(fV2, 300, 30, kLHintsExpandX);
       tset = new TGTextButton(hFrame, amap[i].first.c_str(), 1234);
       hFrame->AddFrame(tset, new TGLayoutHints(kLHintsCenterY | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
-      if (test->toolTip(amap[i].first).empty()) {
+      string tt = test->toolTip(amap[i].first);
+      if (string::npos != tt.find("nada")) {
 	tset->SetToolTipText("run this subtest");
       } else {
-	cout << "no tool tip provided for " << amap[i].first << endl;
-	tset->SetToolTipText("run this subtest");
+	cout << fTabName << "/tool tip provided for " << amap[i].first << endl;
+	tset->SetToolTipText(tt.c_str());
       }
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
       tset->Connect("Clicked()", "PixTab", this, "buttonClicked()");

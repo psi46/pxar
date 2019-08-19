@@ -135,7 +135,8 @@ void PixTestPretest::setToolTips() {
 // ----------------------------------------------------------------------
 string PixTestPretest::toolTip(string what) {
   if (string::npos != what.find("settimings")) return string("optimize timing settings for TBM08A/TBM08B");
-  return string();
+  if (string::npos != what.find("findtiming")) return string("optimize timing settings for TBMs >= TBM08C");
+  return string("nada");
 }
 
 
