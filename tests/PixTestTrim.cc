@@ -82,6 +82,13 @@ void PixTestTrim::runCommand(std::string command) {
 
 
 // ----------------------------------------------------------------------
+string PixTestTrim::toolTip(string what) {
+  if (string::npos != what.find("trimbits")) return string("check that all trim bits are functional");
+  if (string::npos != what.find("trim")) return string("run the trim test");
+  return string("nada");
+}
+
+// ----------------------------------------------------------------------
 void PixTestTrim::setToolTips() {
   fTestTip    = string(Form("trimming results in a uniform in-time threshold\n")
 		       + string("TO BE FINISHED!!"))
