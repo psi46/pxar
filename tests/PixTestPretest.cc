@@ -527,6 +527,17 @@ void PixTestPretest::findTiming() {
 // ----------------------------------------------------------------------
 void PixTestPretest::setTimings() {
 
+  string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
+  if (tbmtype != "tbm08b" && tbmtype != "tbm08a" && tbmtype == "tbm08") {
+    LOG(logINFO) << "Wrong timing test for TBM type " << tbmtype;
+    return;
+  }
+  size_t nTBMs = fApi->_dut->getNTbms();
+  if (nTBMs==0) {
+    LOG(logINFO) << "Timing test not needed for single ROC.";
+    return;
+  }
+
   fStopTest = false;
   // Start test timer
   timer t;
@@ -536,11 +547,7 @@ void PixTestPretest::setTimings() {
   fApi->_dut->maskAllPixels(true);
 
   TLogLevel UserReportingLevel = Log::ReportingLevel();
-  size_t nTBMs = fApi->_dut->getNTbms();
-  if (nTBMs==0) {
-    LOG(logINFO) << "Timing test not needed for single ROC.";
-    return;
-  }
+
   int nTokenChains = 0;
   std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
   for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
