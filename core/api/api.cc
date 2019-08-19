@@ -1359,7 +1359,7 @@ bool pxarCore::daqStart(const uint16_t flags, const int buffersize, const bool i
   }
 
   // Now run over all existing ROCs and program an unphysical pixel
-  LOG(logINFO) << "programming unphysical pixel on all rocs in pxarCore::daqStart";
+  LOG(logDEBUG) << "programming unphysical pixel on all rocs in pxarCore::daqStart";
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->RocUnphysicalPixel(rocit->i2c_address);
   }
@@ -1667,7 +1667,7 @@ std::vector<Event> pxarCore::expandLoop(HalMemFnPixelSerial pixelfn, HalMemFnPix
   else { MaskAndTrim(true); }
 
   // Now run over all existing ROCs and program an unphysical pixel
-  LOG(logINFO) << "programming unphysical pixel on all rocs in pxarCore::expandLoop";
+  LOG(logDEBUG) << "programming unphysical pixel on all rocs in pxarCore::expandLoop";
   for (std::vector<rocConfig>::iterator rocit = _dut->roc.begin(); rocit != _dut->roc.end(); ++rocit) {
     _hal->RocUnphysicalPixel(rocit->i2c_address);
   }
