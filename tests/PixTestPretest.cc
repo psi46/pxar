@@ -528,7 +528,10 @@ void PixTestPretest::findTiming() {
 void PixTestPretest::setTimings() {
 
   string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
-  if (tbmtype != "tbm08b" && tbmtype != "tbm08a" && tbmtype == "tbm08") {
+  bool OK(false);
+  if (tbmtype == "tbm08b") OK = true;
+  if (tbmtype == "tbm08a") OK = true;
+  if (!OK) {
     LOG(logINFO) << "Wrong timing test for TBM type " << tbmtype;
     return;
   }
