@@ -812,23 +812,7 @@ ClkMax              19
 saveTbParameters    button
 
 EOF
-} else {
-    print FH <<"EOF";
--- Timing
-targetclk           4
-ntrig               10000
-notokenpass         checkbox(0)
-ignorereadback      checkbox(0)
-clocksdascan        button
-phasescan           button
-levelscan           button
-tbmphasescan        button
-rocdelayscan        button
-timingtest          button
-saveparameters      button
-EOF
 }
-
 
 close(FH);
 
@@ -906,6 +890,19 @@ max                 40
 npix                4
 delay               65
 data                button
+
+-- Timing
+targetclk           4
+ntrig               10000
+notokenpass         checkbox(0)
+ignorereadback      checkbox(0)
+clocksdascan        button
+phasescan           button
+levelscan           button
+tbmphasescan        button
+rocdelayscan        button
+timingtest          button
+saveparameters      button
 
 
 EOF
