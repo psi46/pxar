@@ -341,7 +341,7 @@ sub setDacs {
     } elsif ($roctype eq "proc600v4") {
 	$dacs .= "  1 vdig       6  \n";
 	$dacs .= "  2 vana       74 \n";
-	$dacs .= "  3 vsh        30 \n";
+	$dacs .= "  3 vsh        8 \n";
 	$dacs .= "  4 vcomp      12 \n";
 	$dacs .= "  7 vwllpr     150\n";
 	$dacs .= "  9 vwllsh     150\n";
