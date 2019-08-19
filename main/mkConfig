@@ -328,7 +328,7 @@ sub setDacs {
 	$dacs .= " 10 vhlddel    250\n";
 	$dacs .= " 11 vtrim      0  \n";
 	$dacs .= " 12 vthrcomp   85 \n";
-	$dacs .= " 13 vcolorbias 30 \n";
+	$dacs .= " 13 vcolorbias 120\n";
 	$dacs .= " 17 phoffset   185\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
 	$dacs .= " 20 phscale    65\n";
@@ -348,7 +348,7 @@ sub setDacs {
 	$dacs .= " 10 vhlddel    250\n";
 	$dacs .= " 11 vtrim      0  \n";
 	$dacs .= " 12 vthrcomp   85 \n";
-	$dacs .= " 13 vcolorbias 30 \n";
+	$dacs .= " 13 vcolorbias 120\n";
 	$dacs .= " 17 phoffset   185\n";
 	$dacs .= " 19 vcomp_adc  50 \n";
 	$dacs .= " 20 phscale    65\n";
