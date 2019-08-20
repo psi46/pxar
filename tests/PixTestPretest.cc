@@ -487,7 +487,7 @@ void PixTestPretest::findTiming() {
   banner(Form("PixTestPretest::findTiming() "));
   PixTestFactory *factory = PixTestFactory::instance();
   PixTest *t =  factory->createTest("cmd", fPixSetup);
-  t->runCommand("timing");
+  t->runCommand("pretesttiming");
   delete t;
 
   // -- parse output file
@@ -496,7 +496,7 @@ void PixTestPretest::findTiming() {
   string sline, sparameters, ssuccess;
   string::size_type s1;
   vector<double> x;
-  INS.open("pxar_timing.log");
+  INS.open(Form("%s/pxar_timing.log", fPixSetup->getConfigParameters()->getDirectory().c_str()));
   while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer;
     s1 = sline.find("selecting");
