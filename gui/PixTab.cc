@@ -84,7 +84,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
       if (string::npos != tt.find("nada")) {
 	tset->SetToolTipText("run this subtest");
       } else {
-	cout << fTabName << "/tool tip provided for " << amap[i].first << endl;
 	tset->SetToolTipText(tt.c_str());
       }
       tset->GetToolTip()->SetDelay(2000); // add a bit of delay to ease button hitting
