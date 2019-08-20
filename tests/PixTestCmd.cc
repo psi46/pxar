@@ -6193,6 +6193,7 @@ void PixTestCmd::runCommand(std::string command) {
   cmd->setApi(fApi, fPixSetup);
 
   if (!command.compare("timing")){
+      cout << "LOOK HERE: " << fPixSetup->getConfigParameters()->getDirectory() << endl;
       std::string s_redirect = "timing > pxar_timing.log";
       cmd->exec(s_redirect.c_str());
       cmd->fApi->daqTriggerSource("pg_direct");
