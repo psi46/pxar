@@ -496,6 +496,9 @@ void PixTestPretest::findTiming() {
   string sline, sparameters, ssuccess;
   string::size_type s1;
   vector<double> x;
+  string lcase = string(Form("pxar_timing_%s.log", fPixSetup->getConfigParameters()->getDirectory().c_str()));
+  std::transform(lcase.begin(), lcase.end(), lcase.begin(), ::tolower);
+  system(Form("/bin/mv %s %s/pxar_timing.log", lcase.c_str(), fPixSetup->getConfigParameters()->getDirectory().c_str()));
   INS.open(Form("%s/pxar_timing.log", fPixSetup->getConfigParameters()->getDirectory().c_str()));
   while (INS.getline(buffer, 1000, '\n')) {
     sline = buffer;
