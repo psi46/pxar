@@ -29,7 +29,7 @@ int PixTestPretest::fGetBufMethod = 1; // 0:daqGetBuffer  1:daqGetRawEventBuffer
 
 // ----------------------------------------------------------------------
 PixTestPretest::PixTestPretest( PixSetup *a, std::string name) :
-PixTest(a, name),
+  PixTest(a, name),
   fTargetIa(24), fNoiseWidth(22), fNoiseMargin(10),
   fParNtrig(1),
   fParVcal(200),
@@ -39,6 +39,55 @@ PixTest(a, name),
 {
   PixTest::init();
   init();
+  fGetBufMethod = 1;
+  fPixelConfigNeeded = true;
+  fTCT = 106;
+  fTRC = 10;
+  fTTK = 30;
+  fMaxPeriod = 10000;
+  fBufsize = 100000; // DTB_SOURCE_BUFFER_SIZE makes things slow, only increase where needed
+  fSeq = 7;  // pg sequence bits
+  fPeriod = 0;
+  fPgRunning = false;
+  fDaqChannelRocIdOffset.reserve( nDaqChannelMax );
+  fnTbmCore =   fApi->_dut->getNTbms();
+  fTbmChannels.clear();   // daq channels connected to a tbm (bit-pattern) [fnTbm]
+  if(layer1()){
+    fnTbm = 2;
+    fnRocPerChannel=2;
+    fnCoresPerTBM = 2;
+    fnDaqChannel=8;
+    fDaqChannelRocIdOffset[0]= 4;
+    fDaqChannelRocIdOffset[1]= 6;
+    fDaqChannelRocIdOffset[2]= 8;
+    fDaqChannelRocIdOffset[3]= 10;
+    fDaqChannelRocIdOffset[4]= 12;
+    fDaqChannelRocIdOffset[5]= 14;
+    fDaqChannelRocIdOffset[6]= 0;
+    fDaqChannelRocIdOffset[7]= 2;
+    fTbmChannels.push_back(0xf0);
+    fTbmChannels.push_back(0x0f);
+
+  }else if(tbm08()){
+    fnTbm = 1;
+    fnRocPerChannel=8;
+    fnCoresPerTBM = 1;
+    fnDaqChannel=2;
+    fDaqChannelRocIdOffset[0]= 0;
+    fDaqChannelRocIdOffset[1]= 8;
+    fTbmChannels.push_back(0x03);
+  }else{ //09
+    fnTbm = 1;
+    fnRocPerChannel=4;
+    fnCoresPerTBM = 2;
+    fnDaqChannel=4;
+    fDaqChannelRocIdOffset[0]= 0;
+    fDaqChannelRocIdOffset[1]= 4;
+    fDaqChannelRocIdOffset[2]= 8;
+    fDaqChannelRocIdOffset[3]=12;
+    fTbmChannels.push_back(0x0f);
+  }
+
 }
 
 // ----------------------------------------------------------------------
@@ -205,12 +254,16 @@ void PixTestPretest::doTest() {
   h1->Draw(getHistOption(h1).c_str());
   PixTest::update();
 
+  bool saveTiming(false);
   string tbmtype = fApi->_dut->getTbmType(); //"tbm09c"
-  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c") || (tbmtype == "tbm10c")
-       || (tbmtype == "tbm08d")  || (tbmtype == "tbm10d") ) {
+  if ((tbmtype == "tbm08c") ||  (tbmtype == "tbm08d")
+      || (tbmtype == "tbm09c")
+      || (tbmtype == "tbm10c") || (tbmtype == "tbm10d")) {
     findTiming();
+    saveTiming = true;
   } else if (tbmtype == "tbm08b" || tbmtype == "tbm08a") {
     setTimings();
+    saveTiming = true;
   } else if (tbmtype == "tbm08") {
     LOG(logWARNING) << "tbm08 does not have programable phase settings";
   } else {
@@ -239,10 +292,9 @@ void PixTestPretest::doTest() {
 
   // -- save DACs and TBM parameters!
   saveDacs();
-  if ((tbmtype == "tbm09c") || (tbmtype == "tbm08c") || (tbmtype == "tbm10c")) {
+  if (!fProblem && saveTiming) {
     saveTbmParameters();
   }
-
   int seconds = t.RealTime();
   LOG(logINFO) << "PixTestPretest::doTest() done, duration: " << seconds << " seconds";
 }
@@ -357,8 +409,8 @@ void PixTestPretest::setVana() {
 
     int iter = 0;
     LOG(logDEBUG) << "ROC " << roc << " iter " << iter
-		 << " Vana " << vana
-		 << " Ia " << ia-i015 << " mA";
+		  << " Vana " << vana
+		  << " Ia " << ia-i015 << " mA";
 
     while (TMath::Abs(diff) > eps && iter < 11 && vana >= 0 && vana < 255) {
 
@@ -389,9 +441,9 @@ void PixTestPretest::setVana() {
       diff = fTargetIa + extra - (ia - i015);
 
       LOG(logDEBUG) << "ROC " << setw(2) << roc
-		   << " iter " << setw(2) << iter
-		   << " Vana " << setw(3) << vana
-		   << " Ia " << ia-i015 << " mA";
+		    << " iter " << setw(2) << iter
+		    << " Vana " << setw(3) << vana
+		    << " Ia " << ia-i015 << " mA";
     } // iter
 
     rocIana[roc] = ia-i015; // more or less identical for all ROCS?!
@@ -553,6 +605,10 @@ void PixTestPretest::findTimingCmd() {
 // this is a local replica of the above with some histogramming
 void PixTestPretest::findTiming() {
 
+  PixTest::update();
+
+  int npass(2);
+
   banner(Form("PixTestPretest::findTiming() "));
 
   string tbmtype = fApi->_dut->getTbmType();
@@ -580,75 +636,220 @@ void PixTestPretest::findTiming() {
   tbmsetbit("base0",ALLTBMS , 6, 1);
   // diagonal scan to find something that works
   int nmax=0;
+  TH1D *hDiag = bookTH1D("DiagScan", Form("diagonal scan (nloop = %d)", nloop), 8, 0., 8);
+  hDiag->SetMinimum(0);
+  hDiag->SetMaximum(nloop+1);
+  setTitles(hDiag, "phase(160MHz) = phase(400MHz)", "number of readouts");
+  fHistList.push_back(hDiag);
+
   for(uint8_t m=0; m<8; m++){
     int nvalid = test_timing(nloop, m, m);
     LOG(logINFO) << "diag scan " << (int) m << "  valid = " << nvalid << "/ " << nloop;
+    hDiag->SetBinContent(m+1, static_cast<double>(nvalid));
     if (nvalid>nmax){
       d400 = m;
       d160 = m;
       nmax = nvalid;
     }
-    flush(out);
   }
+
   if (nmax==0){
-    out << " no working phases found ";
+    LOG(logINFO) << " no working phases found ";
     tbmset("base0",ALLTBMS ,register_0);
     tbmset("basee",ALLTBMS ,register_e);
     return;
   }
   LOG(logINFO) << "diag scan result = " << (int) d400;
 
-  return;
+  TMarker *pm = new TMarker(static_cast<double>(d400)+0.5, static_cast<double>(nmax), 20);
+  pm->SetMarkerColor(kBlue);
+  pm->SetMarkerSize(2);
+  hDiag->GetListOfFunctions()->Add(pm);
 
-  // -- parse output file
-  ifstream INS;
-  char buffer[1000];
-  string sline, sparameters, ssuccess;
-  string::size_type s1;
-  vector<double> x;
-  string lcase = string(Form("pxar_timing_%s.log", fPixSetup->getConfigParameters()->getDirectory().c_str()));
-  std::transform(lcase.begin(), lcase.end(), lcase.begin(), ::tolower);
-  system(Form("/bin/mv %s %s/pxar_timing.log", lcase.c_str(), fPixSetup->getConfigParameters()->getDirectory().c_str()));
-  INS.open(Form("%s/pxar_timing.log", fPixSetup->getConfigParameters()->getDirectory().c_str()));
-  while (INS.getline(buffer, 1000, '\n')) {
-    sline = buffer;
-    s1 = sline.find("selecting");
-    if (string::npos == s1) continue;
-    sparameters = sline;
-    INS.getline(buffer, 1000, '\n');
-    ssuccess = buffer;
-  }
-  INS.close();
+  hDiag->Draw();
+  fDisplayedHist = find(fHistList.begin(), fHistList.end(), hDiag);
+  PixTest::update();
 
-  // -- parse relevant lines
-  int tries(-1), success(-1);
-  istringstream istring(ssuccess);
-  istring >> sline >> sline >> success >> sline >> tries;
-  istring.clear();
-  istring.str(sparameters);
-  int i160(-1), i400(-1), iroc(-1), iht(-1), itoken(-1), iwidth(-1);
-  istring >> sline >> i160 >> i400 >> iroc >> iht >> itoken >> sline >> sline >> iwidth;
-  LOG(logINFO) << "TBM phases:  160MHz: " << i160 << ", 400MHz: " << i400
-	       << ", TBM delays: ROC(0/1):" << iroc << ", header/trailer: " << iht << ", token: " << itoken;
-  LOG(logINFO) << "(success/tries = " << success << "/" << tries << "), width = " << iwidth;
+  bool verbose(true);
+  TH1D *h1(0);
+  for(int pass=0; pass<3; pass++){
+    if (verbose) LOG(logINFO) << "==> pass: " << pass << " of findTiming";
 
-  uint8_t value= ((i160 & 0x7)<<5) + ((i400 & 0x7)<<2);
-  int stat = tbmSet("basee", 0, value);
-  if (stat > 0){
-    LOG(logWARNING) << "error setting delay  base E " << hex << value << dec;
-  }
+    // -- scan 160 MHz @ selected position
+    h1 = bookTH1D(Form("D160_pass%d", pass), Form("160MHz delay, pass = %d, 400MHz = %d", pass, d400), 8, 0., 8);
+    h1->SetMinimum(0);
+    h1->SetMaximum(nloop+1);
+    setTitles(h1, "phase(160MHz)", "number of readouts");
+    fHistList.push_back(h1);
 
-  if (iroc >= 0){
-    value = ((itoken & 0x1)<<7) + ((iht & 0x1)<<6) + ((iroc & 0x7)<<3) + (iroc & 0x7);
-    stat = tbmSet("basea",2, value);
-    if (stat > 0){
-      LOG(logWARNING) << "error setting delay  base A " << hex << value << dec;
+    int test160[8]={0,0,0,0,0,0,0,0};
+    for (uint8_t m=0; m<8; m++){
+      if (pass==0){
+	test160[m] = test_timing(nloop, m, d400);
+      }else{
+	test160[m] = test_timing(nloop, m, d400, rocdelay, htdelay, tokendelay);
+      }
+      h1->SetBinContent(m+1, test160[m]);
+    }
+
+    int w160=0;
+    if (! find_midpoint(nloop, STEP160, RANGE160, test160, d160, w160)){
+      LOG(logINFO) << "160 MHz scan failed  in pass " << pass << "  d400=" << (int) d400 << " " ;
+      for(unsigned int i=0; i<8; i++){ LOG(logINFO) << " " << dec << (int) test160[i];}
+      tbmset("base0",ALLTBMS ,register_0);
+      tbmset("basee",ALLTBMS ,register_e);
+      return;
+    }
+    if(w160==8){
+      d160=0; // anything goes, 0 often seems to be ok
+    }
+
+    pm = new TMarker(static_cast<double>(d160)+0.5, h1->GetBinContent(h1->FindBin(static_cast<double>(d160)+0.5)), 20);
+    pm->SetMarkerColor(kBlue);
+    pm->SetMarkerSize(2);
+    h1->GetListOfFunctions()->Add(pm);
+
+    h1->Draw();
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+    PixTest::update();
+
+    LOG(logINFO) << "160 MHz set to " << dec << (int) d160 << "  width=" << (int) w160;
+
+
+    // -- scan 400 MHz @ selected position
+    h1 = bookTH1D(Form("D400_pass%d", pass), Form("400MHz delay, pass = %d, 160MHz = %d", pass, d160), 8, 0., 8);
+    h1->SetMinimum(0);
+    h1->SetMaximum(nloop+1);
+    setTitles(h1, "phase(400MHz)", "number of readouts");
+    fHistList.push_back(h1);
+
+    int test400[8]={0,0,0,0,0,0,0,0};
+    for (uint8_t m=0; m<8; m++){
+      if (pass==0){
+	test400[m] = test_timing(nloop, d160, m);
+      }else{
+	test400[m] = test_timing(nloop, d160, m, rocdelay, htdelay, tokendelay);
+      }
+      h1->SetBinContent(m+1, test400[m]);
+    }
+
+    int w400=0;
+    if (! find_midpoint(nloop, STEP400, RANGE400, test400, d400, w400)){
+      LOG(logINFO) << "400 MHz scan failed ";
+      tbmset("base0",ALLTBMS, register_0);
+      tbmset("basee",ALLTBMS, register_e);
+      return;
+    }
+    LOG(logINFO) << "400 MHz set to " << dec << (int) d400 <<  "  width="<< (int) w400;
+    pm = new TMarker(static_cast<double>(d400)+0.5, h1->GetBinContent(h1->FindBin(static_cast<double>(d400)+0.5)), 20);
+    pm->SetMarkerColor(kRed);
+    pm->SetMarkerSize(2);
+    h1->GetListOfFunctions()->Add(pm);
+
+    h1->Draw();
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
+    PixTest::update();
+
+    // now enable trigger (again) and scan roc and header trailer delay
+    if(pass==0) tbmsetbit("base0",ALLTBMS, 6,0);
+
+    TH2D *h2 = bookTH2D(Form("ROCdelay_rest_pass%d", pass),
+			Form("ROC delay, pass = %d, 400MHz = %d, 160MHz = %d", pass, d400, d160),
+			8, 0., 8., 4, 0., 4.);
+    h2->SetMinimum(0);
+    setTitles(h2, "ROC delay", "token*2 + header/trailer");
+    fHistList.push_back(h2);
+
+    int wmax=0;
+    int sumtestmax=0;
+    int ybin(0);
+    for(uint8_t dtoken=0; dtoken<2; dtoken++){
+      for(uint8_t dheader=0; dheader<2; dheader++){
+	LOG(logINFO) << "scanning ROC delay for token = " << (int) dtoken << " header/trailer = " << (int) dheader;
+	ybin = dtoken*2 + dheader;
+	int test[8]={0,0,0,0,0,0,0,0};  // for midpoint search
+	int sumtest = 0;                // fallback, maxmimum search
+	uint8_t portmax= 0;
+	for(uint8_t dport=0; dport<8; dport++){
+	  test[dport] = test_timing(nloop, d160, d400, dport, dheader, dtoken);
+	  sumtest += test[dport];
+	  if (test[dport]>test[portmax]) portmax=dport;
+	  h2->SetBinContent(dport+1, ybin+1, test[dport]);
+	}
+	int w=0;
+	uint8_t d=0;
+	if(find_midpoint(nloop, 1.0, 6.25, test, d, w)){
+	  if( (w>wmax) || ( (w>0) && (w==wmax) && (dheader==dtoken)) ){
+	    wmax=w;
+	    tokendelay = dtoken;
+	    htdelay = dheader;
+	    rocdelay = d;
+	  }
+	}else{
+	  // mid point search failed, fall-back method:
+	  if ( (pass==0) && (wmax==0) && (sumtest>sumtestmax) ){
+	    tokendelay = dtoken;
+	    htdelay = dheader;
+	    rocdelay = portmax;
+	  }
+	  if (verbose && (pass==0)){
+	    LOG(logINFO) << "no midpoint for token = " << (int) dtoken << " header/trailer = " << (int) dheader << "  : ";
+	  }
+	}
+      }
+    }
+
+    pm = new TMarker(static_cast<double>(rocdelay)+0.5, tokendelay*2 + htdelay + 0.5, 20);
+    pm->SetMarkerColor(kGreen+2);
+    pm->SetMarkerSize(2);
+    h2->GetListOfFunctions()->Add(pm);
+
+    h2->Draw("colz");
+    fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
+    PixTest::update();
+
+
+    LOG(logINFO) << "selecting phases/delays: 160MHz = " << dec << (int) d160 << " 400MHz = " << (int) d400
+		 << " ROC = " << (int) rocdelay
+		 << " H/T = " << (int) htdelay
+		 << " Token = " << (int) tokendelay
+		 << " width = " << wmax
+		 << " pass = " << pass
+      ;
+
+    int nloop2=fNtrigTimingTest;
+    int result=test_timing(nloop2, d160, d400, rocdelay, htdelay, tokendelay);
+    LOG(logINFO)
+      << "TBM phases:  160MHz: " << (int)d160
+      << " 400MHz: " << (int)d400
+      << " TBM delays: ROC: " << (int)rocdelay
+      << " header/trailer: " << (int)htdelay
+      << " token: " << (int)tokendelay
+      << " with result =  " << dec<<  result << " / " << nloop2 ;
+
+    if (result==nloop2) {
+      // restore base0 (token pass)
+      tbmset("base0", ALLTBMS, register_0);
+      if(pass>=npass-1){
+	LOG(logINFO) << "findTiming completed successfully.";
+	return;
+      }else{
+	LOG(logINFO) << "pass " << pass << " successful, continuing";
+      }
+    }else{
+      LOG(logINFO) << "pass " << pass <<" failed, retrying";
     }
   }
-  tbmSet("base4", 2, 0x80); // reset once after changing phases
 
-  if (success < 0) fProblem = true;
 
+  LOG(logINFO) << "failed to find timings, sorry";
+  // restore initial state
+  tbmset("base0", ALLTBMS, register_0);
+  tbmset("basea", ALLTBMS, register_a);
+  tbmset("basee", TBMA, register_e);
+
+  fProblem = true;
+  return;
 }
 
 
@@ -681,7 +882,8 @@ void PixTestPretest::setTimings() {
 
   int nTokenChains = 0;
   std::vector<tbmConfig> enabledTBMs = fApi->_dut->getEnabledTbms();
-  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++) nTokenChains += enabledTBM->tokenchains.size();
+  for(std::vector<tbmConfig>::iterator enabledTBM = enabledTBMs.begin(); enabledTBM != enabledTBMs.end(); enabledTBM++)
+    nTokenChains += enabledTBM->tokenchains.size();
 
   int NTrig = 10000;
   uint16_t period = 300;
@@ -931,7 +1133,7 @@ void PixTestPretest::setVthrCompId() {
     if (!selectedRoc(roc)) continue;
     h1 = bookTH1D(Form("Id_vs_VthrComp_C%d", int(roc)),
 		  Form("Id vs VthrComp C%d", int(roc)),
-		   256, 0., 256.);
+		  256, 0., 256.);
     h1->SetMinimum(0);
     h1->SetStats(0);
     setTitles( h1, "VthrComp [DAC]", "ROC digital current [mA]" );
@@ -988,7 +1190,7 @@ void PixTestPretest::setVthrCompId() {
     // analyze:
 
     LOG(logDEBUG) << "current peak " << hid->GetMaximum()
-		 << " mA at DAC " << hid->GetMaximumBin();
+		  << " mA at DAC " << hid->GetMaximumBin();
 
     double maxd = 0;
     int maxi = 0;
@@ -1312,12 +1514,12 @@ void PixTestPretest::findWorkingPixel() {
       int idac2 = w.first;
       vector<pixel> wpix = w.second;
       for (unsigned ipix = 0; ipix < wpix.size(); ++ipix) {
-          hname = Form("fwp_c%d_r%d_C%d", ic, ir, wpix[ipix].roc());
-          if (maps.count(hname) > 0) {
-	        maps[hname]->Fill(idac1, idac2, wpix[ipix].value());
-	      } else {
-	        LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping";
-	      }
+	hname = Form("fwp_c%d_r%d_C%d", ic, ir, wpix[ipix].roc());
+	if (maps.count(hname) > 0) {
+	  maps[hname]->Fill(idac1, idac2, wpix[ipix].value());
+	} else {
+	  LOG(logDEBUG) << "bad pixel address decoded: " << hname << ", skipping";
+	}
       }
     }
 
@@ -1409,7 +1611,10 @@ int PixTestPretest::tbmset(int address, int  value){
   uint8_t tbm = (address & 0x100);
   if( base == 0xF0){ core = 1;}
   else if(base==0xE0){ core = 0;}
-  else {out << "bad tbm register address "<< hex << address << dec << "\n"; return 1;};
+  else {
+    LOG(logINFO) << "bad tbm register address "<< hex << address << dec;
+    return 1;
+  };
 
   if (tbm==1){
     core +=2;
@@ -1430,18 +1635,16 @@ int PixTestPretest::tbmset(string name, uint8_t coreMask, int value, uint8_t val
    *
    */
   if ((value & (~valueMask) )>0) {
-    out << "Warning! tbm set value " << hex << (int) value
-	<< " has bits outside mask ("<<hex<< (int) valueMask << ")\n";
+    LOG(logINFO)<< "Warning! tbm set value " << hex << (int) value << " has bits outside mask ("<<hex<< (int) valueMask << ")";
   }
 
 
   int err=1;
-  //out << "tbmset: " << name << " " <<  (int) coreMask << " " << value << "  " << bitset<8>(valueMask) << "\n";
   for(size_t core=0; core < fApi->_dut->getNEnabledTbms(); core++){
     if ( ((coreMask >> core) & 1) == 1 ){
       std::vector< std::pair<std::string,uint8_t> > regs = fApi->_dut->getTbmDACs(core);
       if (regs.size()==0) {
-	out << "TBM registers not set !?! This is not going to work.\n";
+	LOG(logINFO) << "TBM registers not set !?! This is not going to work.";
       }
       for(unsigned int i=0; i<regs.size(); i++){
 	if (name==regs[i].first){
@@ -1449,15 +1652,11 @@ int PixTestPretest::tbmset(string name, uint8_t coreMask, int value, uint8_t val
 	  uint8_t present = regs[i].second;
 	  uint8_t update = value & valueMask;
 	  update |= (present & (~valueMask) );
-	  out << "changing tbm reg " <<  name << "["<<core<<"]";
-	  out << " from 0x" << hex << (int) regs[i].second;
-	  out << " to 0x" << hex << (int) update << "\n";
-	  out << "fApi->setTbmReg  name=" << name << " update=" << (int) update << " core= "<< (int) core << "\n";
 	  bool stat = fApi->setTbmReg( name, update, core );
 	  if (stat){
 	    err=0;
 	  }else{
-	    out << "api setTbmReg returns error status\n";
+	    LOG(logINFO) << "api setTbmReg returns error status";
 	    err=1;
 	  }
 	}
@@ -1496,9 +1695,9 @@ int PixTestPretest::pg_restore(){
   // restore the default pattern generator so that it works for other tests
   std::vector<std::pair<std::string,uint8_t> > pg_setup
     =  fPixSetup->getConfigParameters()->getTbPgSettings();
-  for(std::vector<std::pair<std::string,uint8_t> >::iterator it=pg_setup.begin(); it!=pg_setup.end(); it++){
-    LOG(logINFO) << it->first << "  : " << (int) it->second;
-  }
+  // for(std::vector<std::pair<std::string,uint8_t> >::iterator it=pg_setup.begin(); it!=pg_setup.end(); it++){
+  //   LOG(logINFO) << it->first << "  : " << (int) it->second;
+  // }
   fApi->setPatternGenerator(pg_setup);
   return 0;
 }
@@ -1507,7 +1706,7 @@ int PixTestPretest::pg_restore(){
 int PixTestPretest::restoreDaq(int verbosity){
   bool stat = fApi->daqStop(false);
   if( (! stat ) && (verbosity>0) ){
-    out  << "something wrong with daqstop !" <<endl;
+    LOG(logINFO)<< "something wrong with daqstop !";
   }
   pg_restore(); // undo any changes
   return 0;
@@ -1548,9 +1747,9 @@ int PixTestPretest::setupDaq(int ntrig, int ftrigkhz, int verbosity){
 
   // warn user when no data expected
   if( (ntrig>0) && (fApi->_dut->getNTbms()>0) && ((fSeq & 0x02 ) ==0 ) ){
-    out << "The current sequence does not contain a trigger!\n";
+    LOG(logINFO) << "The current sequence does not contain a trigger!";
   }else if( (fApi->_dut->getNTbms()==0) && ((fSeq & 0x01 ) ==0 ) ){
-    out <<"The current sequence does not contain a token!\n";
+    LOG(logINFO) <<"The current sequence does not contain a token!";
   }
 
   int length=0;
@@ -1572,11 +1771,10 @@ int PixTestPretest::setupDaq(int ntrig, int ftrigkhz, int verbosity){
     return 2;
   }
 
-  LOG(logINFO) << "runDaq  " << dec << ftrigkhz  << "   " << length << "  " << fPeriod;
-  LOG(logINFO) << "runDaq  " << dec << ftrigkhz  << "   " << length << "  " << fPeriod;
+  //  LOG(logINFO) << "runDaq  " << dec << ftrigkhz  << "   " << length << "  " << fPeriod;
   int leff = 40* int(length / 40);  // emulate testboards cDelay
   if((leff<length)&&(ntrig>1)){
-    out << "period will be truncated to " << dec<< leff << " BC  = " << int(40000/leff) << " kHz !!" << endl;
+    LOG(logINFO) << "period will be truncated to " << dec<< leff << " BC  = " << int(40000/leff) << " kHz !!";
   }
   return 0;
 
@@ -1584,19 +1782,19 @@ int PixTestPretest::setupDaq(int ntrig, int ftrigkhz, int verbosity){
 
 
 int PixTestPretest::countErrors(unsigned int ntrig, int ftrigkhz, int nroc, bool setup){
-    int stat = runDaqRaw(fBuf, ntrig, ftrigkhz, 0, setup);
-    if (stat>0) return -1; // no data
-    vector<DRecord > data;
-    data.clear();
-    int verbosity = 1;
-    stat = getData(fBuf, data, verbosity, nroc, true);
-    if (stat>0){
-        return stat;
-    }else{
-        if  (fNumberOfEvents==ntrig) return 0;
-        LOG(logINFO) << "number of events (" << fNumberOfEvents << ") does not match triggers "<< ntrig;
-        return 999;
-    }
+  int stat = runDaqRaw(fBuf, ntrig, ftrigkhz, 0, setup);
+  if (stat>0) return -1; // no data
+  vector<DRecord > data;
+  data.clear();
+  int verbosity = 1;
+  stat = getData(fBuf, data, verbosity, nroc, true);
+  if (stat>0){
+    return stat;
+  }else{
+    if  (fNumberOfEvents==ntrig) return 0;
+    LOG(logINFO) << "number of events (" << fNumberOfEvents << ") does not match triggers "<< ntrig;
+    return 999;
+  }
 }
 
 int PixTestPretest::countGood(unsigned int nloop, unsigned int ntrig, int ftrigkhz, int nroc){
@@ -1640,14 +1838,14 @@ int PixTestPretest::test_timing(int nloop, int d160, int d400, int rocdelay, int
 
   int stat = tbmset("basee", TBMA, value);
   if(stat>0){
-    out << "error setting delay  base E " << hex << (int) value << dec << "\n";
+    LOG(logINFO)<< "error setting delay  base E " << hex << (int) value << dec;
   }
 
   if (rocdelay>=0){
     value = ( (tokdelay&0x1)<<7 ) + ( (htdelay&0x1)<<6 ) + ( (rocdelay&0x7)<<3 ) + (rocdelay&0x7);
     stat = tbmset("basea",ALLTBMS, value);
     if(stat>0){
-      out << "error setting delay  base A " << hex << (int) value << dec << "\n";
+      LOG(logINFO) << "error setting delay  base A " << hex << (int) value << dec;
     }
   }
   tbmset("base4", ALLTBMS, 0x10); // reset once after changing phases
@@ -1655,508 +1853,560 @@ int PixTestPretest::test_timing(int nloop, int d160, int d400, int rocdelay, int
   return countGood(nloop, fNtrigTimingTest, ftrigkhz, nroc);
 }
 
+int PixTestPretest::runDaqRaw(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity, bool setup){
+  /* run ntrig sequences and get the raw data from the DTB */
 
-void PixTestPretest::flush(stringstream &st) {
-  string s = st.str();
-  if (s.size()>0){
+  if(setup) setupDaq(ntrig, ftrigkhz, verbosity);
 
-    // break multiline output into lines
-    std::stringstream ss( s );
-    std::string line;
-    while(std::getline(ss,line,'\n')){
-      LOG(logINFO) << line;
-    }
+  if(ntrig>0){
+    fApi->daqTrigger(ntrig, fPeriod);
   }
 
-  gSystem->ProcessEvents();
-}
+  getBuffer( buf );
+  if(buf.size()==0){
+    if (verbosity>0){ LOG(logINFO) << "no data !";}
+    if (setup) restoreDaq(verbosity);
+    return 1;
+  }
 
-
-int PixTestPretest::runDaqRaw(vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity, bool setup){
-    /* run ntrig sequences and get the raw data from the DTB */
-
-    if(setup) setupDaq(ntrig, ftrigkhz, verbosity);
-
-	if(ntrig>0){
-	  fApi->daqTrigger(ntrig, fPeriod);
-	}
-
-    getBuffer( buf );
-    if(buf.size()==0){
-        if (verbosity>0){ out << "no data !" << endl;}
-        if (setup) restoreDaq(verbosity);
-        return 1;
-    }
-
-    if(setup) restoreDaq(verbosity);
-    return 0;
+  if(setup) restoreDaq(verbosity);
+  return 0;
 }
 
 
 
 int PixTestPretest::runDaqRaw(int ntrig, int ftrigkhz, int verbosity){
-    /* run ntrig sequences but don't get the data */
+  /* run ntrig sequences but don't get the data */
 
-    int length=0;
-    if((ntrig==1) || (ftrigkhz==0)){
-        length=0;
-    }else{
-        length = 40000 / ftrigkhz;
-    }
+  int length=0;
+  if((ntrig==1) || (ftrigkhz==0)){
+    length=0;
+  }else{
+    length = 40000 / ftrigkhz;
+  }
 
-    pg_sequence( fSeq, length ); // set up the pattern generator
-    fApi->daqTriggerSource("pg_dir");
+  pg_sequence( fSeq, length ); // set up the pattern generator
+  fApi->daqTriggerSource("pg_dir");
 
-    bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
-    if (! stat ){
-        if(verbosity>0){ out << "something wrong with daqstart !!!" << endl;}
-        return 2;
-    }
+  bool stat = fApi->daqStart(fBufsize, fPixelConfigNeeded);
+  if (! stat ){
+    if(verbosity>0){ LOG(logINFO) << "something wrong with daqstart !!!";}
+    return 2;
+  }
 
-    LOG(logINFO) << "runDaq  f=" << dec <<  ftrigkhz  << "   length=" << length << "  fPeriod=" << fPeriod;
-    int leff = 40* int(length / 40);  // emulate testboards cDelay
-    if((leff<length)&&(ntrig>1)){
-        out << "period will be truncated to " << dec<< leff << " BC  = " << int(40000/leff) << " kHz !!" << endl;
-    }
-    if (length>0){
-        fApi->daqTrigger(ntrig, length);
-    }else{
-        // take the default (maximum)
-        fApi->daqTrigger(ntrig, fPeriod);
-    }
+  LOG(logINFO) << "runDaq  f=" << dec <<  ftrigkhz  << "   length=" << length << "  fPeriod=" << fPeriod;
+  int leff = 40* int(length / 40);  // emulate testboards cDelay
+  if((leff<length)&&(ntrig>1)){
+    LOG(logINFO) << "period will be truncated to " << dec<< leff << " BC  = " << int(40000/leff) << " kHz !!";
+  }
+  if (length>0){
+    fApi->daqTrigger(ntrig, length);
+  }else{
+    // take the default (maximum)
+    fApi->daqTrigger(ntrig, fPeriod);
+  }
 
-    fApi->daqStop(false);
-    fPixelConfigNeeded = false;
-    pg_restore(); // undo any changes
+  fApi->daqStop(false);
+  fPixelConfigNeeded = false;
+  pg_restore(); // undo any changes
 
-    return 0;
+  return 0;
 }
 
 int PixTestPretest::getData(vector<uint16_t> & buf, vector<DRecord > & data, int verbosity,
-    int nroc_expected, bool resetStats){
-    // pre-decoding and validity check of raw data in fBuf
-    // returns the number of errors
-    // record flags:
-    //   0 (0x00) = hit         24 bits ("raw")
-    //   4 (0x04) = roc header  12 bits
-    //  10 (0x0a) = tbm header  16 bits
-    //  14 (0x0e) = tbm trailer 16 bits
-    //  16  = filler
-    //
-    // FIXME, for >1 event this code required fGetBufMethod=1
+			    int nroc_expected, bool resetStats){
+  // pre-decoding and validity check of raw data in fBuf
+  // returns the number of errors
+  // record flags:
+  //   0 (0x00) = hit         24 bits ("raw")
+  //   4 (0x04) = roc header  12 bits
+  //  10 (0x0a) = tbm header  16 bits
+  //  14 (0x0e) = tbm trailer 16 bits
+  //  16  = filler
+  //
+  // FIXME, for >1 event this code required fGetBufMethod=1
 
-    if(verbosity>100){
-	stringstream ss;
-        for(unsigned int i=0; i< buf.size(); i++){
-            ss << hex << setw(4) << setfill('0') << buf[i] << " ";
-        }
-        LOG(logINFO) << ss.str() << dec << setfill(' ');
+  if(verbosity>100){
+    stringstream ss;
+    for(unsigned int i=0; i< buf.size(); i++){
+      ss << hex << setw(4) << setfill('0') << buf[i] << " ";
+    }
+    LOG(logINFO) << ss.str() << dec << setfill(' ');
+  }
+
+  unsigned int nerr=0;
+
+  data.clear();
+  fDeser400err  =  0;
+  if (resetStats) resetDaqStatus();
+
+  for(size_t i=0; i<17; i++){
+    fRocHeaderData[i]=0;
+  }
+  vector<uint16_t> rocHeaderWord(17);
+  vector<uint16_t> rocHeaderBits(17);
+
+  fNumberOfEvents = 0;
+  fHeaderCount=0;
+  fHeadersWithErrors.clear();  // a list of headers with errors
+
+  unsigned int i=0;
+  if ( fApi->_dut->getNTbms()>0 ) {
+
+    uint8_t daqChannel=0; // from tbm header qualifier
+    uint8_t roc=0;
+    uint8_t tbm=0;
+    bool tbmHeaderSeen=false;
+    unsigned int nevent=0;
+    unsigned int lastEventStart=0;
+
+    vector<unsigned int> rocCounter(nDaqChannelMax);
+
+
+    unsigned int nloop=0;
+    int fffCounter=0;
+
+
+    while((i<buf.size())&&((nloop++)<buf.size())){
+
+      uint16_t flag= ((buf[i]>>12)&0xE);
+
+      if (buf[i]&0x1000){
+	fDeser400err++;
+	fDeser400SymbolErrors[daqChannel]++;
+	fDaqErrorCount[daqChannel]++;
+      }
+
+      if ((buf[i]&0x0fff)==0xfff){
+	fffCounter++;
+	if (fffCounter>1000) {
+	  if(verbosity>0) LOG(logINFO) << "junk data, decoding aborted";
+	  fDaqErrorCount[daqChannel]++;
+	  nerr++;
+	  return nerr + fDeser400err;
+	}
+      }else{
+	fffCounter=0;
+      }
+
+
+      if( flag == 0xa ){ // TBM header
+
+	tbmHeaderSeen=true;
+	fHeaderCount++;
+
+	daqChannel = (buf[i]&0x700)>>8;
+	fNTBMHeader[daqChannel]++;
+	rocCounter[daqChannel]=0;
+
+	if (buf[i]&0x0800) { // assuming the lower bits are used for the channel nr
+	  nerr++; // should be 0
+	  fDaqErrorCount[daqChannel]++;
+	  if (verbosity>0) LOG(logINFO) << "illegal deser400 header record";
+	}
+
+
+	uint8_t h1=buf[i]&0xFF;
+	i++;
+	if(i>=buf.size()){
+	  if(verbosity>0) LOG(logINFO) << " unexpected end of data";
+	  nerr++;
+	  fHeadersWithErrors.push_back(fHeaderCount);
+	  return nerr + fDeser400err;
+	}
+
+	if (buf[i]&0x1000){
+	  fDeser400SymbolErrors[daqChannel]++;
+	  fDaqErrorCount[daqChannel]++;
+	  fDeser400err++;
+	}
+
+	if ((buf[i]&0xE000)==0x8000){
+	  uint8_t h2 = buf[i]&0xFF;
+	  data.push_back( DRecord( daqChannel, 0xa, (h1<<8 | h2), buf[i-1], buf[i]) );
+	  i++;
+	}else{
+	  if(verbosity>0){
+	    LOG(logINFO) << " incomplete header " << hex << (int) buf[i-1] << " " << (int) buf[i]  << dec;
+	  }
+	  nerr ++;
+	  fDaqErrorCount[daqChannel]++;
+	}
+	continue;
+      }// TBM header
+
+
+      if( flag == 0x4 ){ // ROC header
+
+	if( !tbmHeaderSeen ){
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+	  if(verbosity>0)  LOG(logINFO) << "ROC header outside TBM header/trailer ["<<(int)i<< "]";
+	  cout << "ROC header outside TBM header/trailer\n";
+	  for(unsigned int ii=lastEventStart; ii<i+1; ii++){
+	    cout << hex << setw(4) <<  setfill('0') << buf[ii] << " ";
+	  }
+	  cout << endl;
+	}
+
+	if(nroc_expected==0){
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+	}else{
+	  roc ++;
+	  unsigned int rocId = rocIdFromReadoutPosition( daqChannel, rocCounter[daqChannel]);
+	  if ( rocCounter[daqChannel] < fnRocPerChannel){
+	    rocCounter[daqChannel]++;
+	  }else{
+	    rocId=16;// for unknown
+	  }
+
+	  if (rocId>16){
+	    cout<< "roc counting error " << dec << (int) daqChannel << setw(4) << dec << (int) rocCounter[daqChannel]<<  setw(4) << dec << (int) fDaqChannelRocIdOffset[daqChannel]<< endl;
+	    rocId=0;
+	    nerr++;
+	    fDaqErrorCount[daqChannel]++;
+	  }
+
+	  if( (buf[i]&0x0004)>0 ) {
+	    nerr++;
+	    fDaqErrorCount[daqChannel]++;
+	    if(verbosity>0) LOG(logINFO) << "zero-bit in roc header not zero";
+	  }
+	  data.push_back( DRecord(daqChannel, 0x4, buf[i]&0x3, buf[i], rocId) );
+
+	  // roc header data
+	  rocHeaderWord[rocId] = (rocHeaderWord[rocId] << 1) + (buf[i]&0x0001);
+	  rocHeaderBits[rocId]++;
+
+	  if ((buf[i]&0x0002)==2){  // startbit seen
+	    if (rocHeaderBits[rocId]==16){
+	      fRocHeaderData[rocId] = rocHeaderWord[rocId]&0xffff;
+	      uint8_t hrocid= (fRocHeaderData[rocId] & 0xF000) >> 12;
+
+	      if ( !(hrocid == rocId) ){
+		fRocReadBackErrors[daqChannel]++;
+		if( !fIgnoreReadbackErrors ) {
+		  nerr++;
+		  fDaqErrorCount[daqChannel]++;
+		}
+		if( !fIgnoreReadbackErrors ){
+		  // cout << hex << setw(4) << rocHeaderWord[rocId];
+		  // cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
+		  // cout <<  "  <> " << dec <<  setw(2) << (int) hrocid;
+		  // cout << "  daqChannel " << (int) daqChannel;
+		  // cout << endl;
+		}
+	      }else{
+		//cout << " readback ok " << dec<< (int) rocId << "  " << hex<< rocHeaderWord[rocId] << endl;
+	      }
+	    }
+	    rocHeaderWord[rocId]=0;
+	    rocHeaderBits[rocId]=0;
+	  }else  if(rocHeaderBits[rocId]==16){
+	    if( ! fIgnoreReadbackErrors ) {
+	      nerr++;
+	    }
+	    if( !fIgnoreReadbackErrors ){
+	      // cout << "start bit expected ";
+	      // cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
+	      // cout << "  daqChannel " << (int) daqChannel;
+	      // cout << endl;
+	    }
+
+	  }
+
+
+
+	  uint8_t xordata = (buf[i] & 0x0ff0)>>4;
+	  if(xordata==0xff){
+	    nerr++;
+	    fDaqErrorCount[daqChannel]++;
+	    if(verbosity>0) LOG(logINFO) << "Deser400 phase error";
+	    fDeser400PhaseErrors[daqChannel]++;
+	  }else{
+	    if (fDeser400XOR[daqChannel]==xordata){
+	      // ok
+	    }else{
+	      if(fDeser400XOR[daqChannel]==0x100){
+		// inital value, ok
+	      }else{
+		fDeser400XORChanges[daqChannel]++;
+	      }
+	      fDeser400XOR[daqChannel]=xordata;
+	    }
+
+
+	  }
+	}
+
+	i++;
+	continue;
+      }
+
+
+      if (flag == 0x0){  // hit
+	if (roc==0) {
+	  if(verbosity>0) LOG(logINFO) << "no hit expected here";
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+	}
+	int rocId = rocIdFromReadoutPosition( daqChannel, roc-1);
+	int d1=buf[i++];
+	if(i>=buf.size()){
+	  if(verbosity>0) LOG(logINFO) << " unexpected end of data";
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+	  fHeadersWithErrors.push_back(fHeaderCount);
+	  return nerr + fDeser400err;
+	}
+
+	if (buf[i]&0x1000) {
+	  fDaqErrorCount[daqChannel]++;
+	  fDeser400err++;
+	}
+
+	flag = (buf[i]>>12)&0xe;
+	int d2=buf[i++];
+	if (flag == 0x2) {
+	  uint32_t raw = ((d1 &0x0fff) << 12) + (d2 & 0x0fff);
+	  if( tbmWithDummyHits() && (roc == fnRocPerChannel) && (raw==0xffffff)){
+	    data.push_back( DRecord(daqChannel, 15, raw, buf[i-2], buf[i-1], rocId) );
+	  }else{
+	    data.push_back( DRecord(daqChannel, 0x0, raw, buf[i-2], buf[i-1], rocId) );
+	  }
+
+	}else{
+	  if(verbosity>0) {
+	    LOG(logINFO) << " unexpected qualifier in ROC hit:" << (int) flag << " "
+			 << hex << setw(4) << setfill('0')  << buf[i-1]
+			 << dec << setfill(' ') << " at position "<< i-1;
+	  }
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+	}
+	continue;
+      }
+
+      if (flag  == 0xe){
+	if (!tbmHeaderSeen){
+	  cout << "tbm trailer without header [" << (int) i << "]" << endl;
+	  for(unsigned int ii=lastEventStart; ii< i+2; ii++){
+	    cout << hex << setw(4) <<  setfill('0') << buf[ii] << " ";
+	  }
+	  cout << endl;
+	}
+	fNEvent[daqChannel]++;
+
+	tbmHeaderSeen=false;
+	// TBM trailer
+	if (buf[i]&0x0f00){
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+	  if (buf[i]&0x0800) fDeser400_frame_error[daqChannel]++;
+	  if (buf[i]&0x0400) fDeser400_code_error[daqChannel]++;
+	  if (buf[i]&0x0200) fDeser400_idle_error[daqChannel]++;
+	  if (buf[i]&0x0100) fDeser400_trailer_error[daqChannel]++;
+
+	}
+	int t1=buf[i++];
+	if(i>=buf.size()){
+	  nerr++;
+	  fDaqErrorCount[daqChannel]++;
+
+	  if(verbosity>0) LOG(logINFO) << "unexpected end of data";
+	  return nerr + fDeser400err;
+	}
+
+	flag = (buf[i]>>12)&0xe;
+	if (flag != 0xc ){
+	  if(verbosity>0) LOG(logINFO) << "unexpected qualifier " << (int) flag <<"in TBM trailer ";
+	  continue;
+	}
+	/* in fw4.6 (and higher?) this qualifier just repeat the previous entry
+	   if (buf[i]&0x1000) fDeser400err++;
+	   if (buf[i]&0x0f00) {
+	   nerr++;
+	   if(verbosity>0) out << "illegal data in deser400 trailer record \n";
+	   }
+	*/
+	int t2=buf[i++];
+	data.push_back( DRecord(daqChannel, 0xe, (t1&0xFF)<<8 | (t2&(0xff)), t1, t2) );
+	tbm++;
+
+	if (tbm==fnDaqChannel){
+	  tbm=0; // new event, this depends on the getBuffer method
+	  nevent++;
+	  lastEventStart=i;
+	}
+
+	roc=0;
+	continue;
+      }
+
+      if (verbosity>0){
+	LOG(logINFO) << "unexpected qualifier " << hex << (int) flag <<", skipped\n" << dec;
+      }
+      nerr++;
+      fDaqErrorCount[daqChannel]++;
+      i++;
+
+    } // while i< buf.size()
+
+    // debugging
+    if ((nloop>=buf.size())&&(buf.size()>1000) ){
+      cout << "stuck at i=" << dec << i << endl;
+      cout << hex << (int) buf[i-1] << " " << (int) buf[i] << dec << endl;
     }
 
-    unsigned int nerr=0;
+    fNumberOfEvents = nevent;
 
-    data.clear();
-    fDeser400err  =  0;
-    if (resetStats) resetDaqStatus();
+  }
 
-    for(size_t i=0; i<17; i++){
-        fRocHeaderData[i]=0;
+  else if (fApi->_dut->getNTbms() == 0) {
+    // single ROC
+    while(i<buf.size() && (i<500) ){
+
+      //if ( (buf[i] & 0x0ff8) == 0x07f8 ){
+      if ( (buf[i] & 0x8000) == 0x8000 ){
+	// roc header
+	data.push_back(DRecord(0, 0x4, buf[i]&0x07, buf[i]));
+	i++;
+      }
+      else if( (i+1)<buf.size() ){
+	// hit
+	uint32_t raw = ((buf[i] & 0x0fff)  << 12) + (buf[i+1] & 0x0fff);
+	data.push_back(DRecord(0, 0, raw, buf[i], buf[i+1] ) );
+	i+=2;
+      }else{
+	LOG(logINFO) << "unexpected end of data";
+	nerr++;
+	return nerr;
+      }
     }
-    vector<uint16_t> rocHeaderWord(17);
-    vector<uint16_t> rocHeaderBits(17);
+  }
 
-    fNumberOfEvents = 0;
-    fHeaderCount=0;
-    fHeadersWithErrors.clear();  // a list of headers with errors
-
-    unsigned int i=0;
-    if ( fApi->_dut->getNTbms()>0 ) {
-
-        uint8_t daqChannel=0; // from tbm header qualifier
-        uint8_t roc=0;
-        uint8_t tbm=0;
-        bool tbmHeaderSeen=false;
-        unsigned int nevent=0;
-        unsigned int lastEventStart=0;
-
-        vector<unsigned int> rocCounter(nDaqChannelMax);
-
-
-        unsigned int nloop=0;
-        int fffCounter=0;
-
-
-        while((i<buf.size())&&((nloop++)<buf.size())){
-
-            uint16_t flag= ((buf[i]>>12)&0xE);
-
-            if (buf[i]&0x1000){
-                fDeser400err++;
-                fDeser400SymbolErrors[daqChannel]++;
-                fDaqErrorCount[daqChannel]++;
-            }
-
-            if ((buf[i]&0x0fff)==0xfff){
-                fffCounter++;
-                if (fffCounter>1000){
-                    if(verbosity>0) out << "junk data, decoding aborted\n";
-                    fDaqErrorCount[daqChannel]++;
-                    nerr++;
-                    return nerr + fDeser400err;
-                 }
-            }else{
-                fffCounter=0;
-            }
-
-
-            if( flag == 0xa ){ // TBM header
-
-                tbmHeaderSeen=true;
-                fHeaderCount++;
-
-                daqChannel = (buf[i]&0x700)>>8;
-                fNTBMHeader[daqChannel]++;
-                rocCounter[daqChannel]=0;
-
-                if (buf[i]&0x0800) { // assuming the lower bits are used for the channel nr
-                    nerr++; // should be 0
-                    fDaqErrorCount[daqChannel]++;
-                    if (verbosity>0) out << "illegal deser400 header record \n";
-                }
-
-
-                uint8_t h1=buf[i]&0xFF;
-                i++;
-                if(i>=buf.size()){
-                    if(verbosity>0) out << " unexpected end of data\n";
-                    nerr++;
-                    fHeadersWithErrors.push_back(fHeaderCount);
-                    return nerr + fDeser400err;
-                }
-
-                if (buf[i]&0x1000){
-                    fDeser400SymbolErrors[daqChannel]++;
-                    fDaqErrorCount[daqChannel]++;
-					fDeser400err++;
-				}
-
-                if ((buf[i]&0xE000)==0x8000){
-                    uint8_t h2 = buf[i]&0xFF;
-                    data.push_back( DRecord( daqChannel, 0xa, (h1<<8 | h2), buf[i-1], buf[i]) );
-                    i++;
-                }else{
-                    if(verbosity>0){
-                        out << " incomplete header ";
-                        out << hex << (int) buf[i-1] << " " << (int) buf[i]  << dec << "\n";
-                    }
-                    nerr ++;
-                    fDaqErrorCount[daqChannel]++;
-                }
-                continue;
-            }// TBM header
-
-
-            if( flag == 0x4 ){ // ROC header
-
-                if( !tbmHeaderSeen ){
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-                    if(verbosity>0)  out << "ROC header outside TBM header/trailer ["<<(int)i<< "]\n";
-                    cout << "ROC header outside TBM header/trailer\n";
-                    for(unsigned int ii=lastEventStart; ii<i+1; ii++){
-                        cout << hex << setw(4) <<  setfill('0') << buf[ii] << " ";
-                    }
-                    cout << endl;
-                }
-
-                if(nroc_expected==0){
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-                    if(verbosity>0) out<< "no rocs expected\n";
-                }else{
-                    roc ++;
-                    unsigned int rocId = rocIdFromReadoutPosition( daqChannel, rocCounter[daqChannel]);
-                    if ( rocCounter[daqChannel] < fnRocPerChannel){
-                        rocCounter[daqChannel]++;
-                    }else{
-                        rocId=16;// for unknown
-                    }
-
-                    if (rocId>16){
-                        cout<< "roc counting error " << dec << (int) daqChannel << setw(4) << dec << (int) rocCounter[daqChannel]<<  setw(4) << dec << (int) fDaqChannelRocIdOffset[daqChannel]<< endl;
-                        rocId=0;
-                        nerr++;
-                        fDaqErrorCount[daqChannel]++;
-                    }
-
-                    if( (buf[i]&0x0004)>0 ) {
-                        nerr++;
-                        fDaqErrorCount[daqChannel]++;
-                        if(verbosity>0) out << "zero-bit in roc header not zero\n";
-                    }
-                    data.push_back( DRecord(daqChannel, 0x4, buf[i]&0x3, buf[i], rocId) );
-
-                    // roc header data
-                    rocHeaderWord[rocId] = (rocHeaderWord[rocId] << 1) + (buf[i]&0x0001);
-                    rocHeaderBits[rocId]++;
-
-                    if ((buf[i]&0x0002)==2){  // startbit seen
-                        if (rocHeaderBits[rocId]==16){
-                            fRocHeaderData[rocId] = rocHeaderWord[rocId]&0xffff;
-                            uint8_t hrocid= (fRocHeaderData[rocId] & 0xF000) >> 12;
-
-                            if ( !(hrocid == rocId) ){
-                                fRocReadBackErrors[daqChannel]++;
-                                if( !fIgnoreReadbackErrors ) {
-									nerr++;
-									fDaqErrorCount[daqChannel]++;
-								}
-                                if( !fIgnoreReadbackErrors ){
-                                    cout << hex << setw(4) << rocHeaderWord[rocId];
-                                    cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
-                                    cout <<  "  <> " << dec <<  setw(2) << (int) hrocid;
-                                    cout << "  daqChannel " << (int) daqChannel;
-                                    cout << endl;
-                                }
-                            }else{
-                                //cout << " readback ok " << dec<< (int) rocId << "  " << hex<< rocHeaderWord[rocId] << endl;
-                            }
-                        }
-                        rocHeaderWord[rocId]=0;
-                        rocHeaderBits[rocId]=0;
-                    }else  if(rocHeaderBits[rocId]==16){
-                        if( ! fIgnoreReadbackErrors ) {
-							nerr++;
-						}
-                        if( !fIgnoreReadbackErrors ){
-                                    cout << "start bit expected ";
-                                    cout  << "    rocid=" << dec <<  setw(2) << (int) rocId;
-                                    cout << "  daqChannel " << (int) daqChannel;
-                                    cout << endl;
-                                }
-
-                    }
-
-
-
-                    uint8_t xordata = (buf[i] & 0x0ff0)>>4;
-                    if(xordata==0xff){
-                        nerr++;
-                        fDaqErrorCount[daqChannel]++;
-                        if(verbosity>0) out << "Deser400 phase error\n";
-                        fDeser400PhaseErrors[daqChannel]++;
-                    }else{
-                        if (fDeser400XOR[daqChannel]==xordata){
-                            // ok
-                        }else{
-                            if(fDeser400XOR[daqChannel]==0x100){
-                                // inital value, ok
-                            }else{
-                                fDeser400XORChanges[daqChannel]++;
-                            }
-                            fDeser400XOR[daqChannel]=xordata;
-                        }
-
-
-                    }
-                }
-
-                i++;
-                continue;
-            }
-
-
-            if (flag == 0x0){  // hit
-                if (roc==0) {
-                    if(verbosity>0) out << "no hit expected here\n";
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-                }
-                int rocId = rocIdFromReadoutPosition( daqChannel, roc-1);
-                int d1=buf[i++];
-                if(i>=buf.size()){
-                    if(verbosity>0) out << " unexpected end of data\n";
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-                    fHeadersWithErrors.push_back(fHeaderCount);
-                    return nerr + fDeser400err;
-                }
-
-                if (buf[i]&0x1000) {
-                    fDaqErrorCount[daqChannel]++;
-                    fDeser400err++;
-                }
-
-                flag = (buf[i]>>12)&0xe;
-                int d2=buf[i++];
-                if (flag == 0x2) {
-                    uint32_t raw = ((d1 &0x0fff) << 12) + (d2 & 0x0fff);
-                    if( tbmWithDummyHits() && (roc == fnRocPerChannel) && (raw==0xffffff)){
-                        data.push_back( DRecord(daqChannel, 15, raw, buf[i-2], buf[i-1], rocId) );
-                    }else{
-                        data.push_back( DRecord(daqChannel, 0x0, raw, buf[i-2], buf[i-1], rocId) );
-                    }
-
-                }else{
-                    if(verbosity>0) {
-                        out << " unexpected qualifier in ROC hit:" << (int) flag << " "
-                            << hex << setw(4) << setfill('0')  << buf[i-1]
-                            << dec << setfill(' ') << " at position "<< i-1 << "\n";
-                        }
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-                 }
-                continue;
-            }
-
-            if (flag  == 0xe){
-                if (!tbmHeaderSeen){
-                    cout << "tbm trailer without header [" << (int) i << "]" << endl;
-                    for(unsigned int ii=lastEventStart; ii< i+2; ii++){
-                        cout << hex << setw(4) <<  setfill('0') << buf[ii] << " ";
-                    }
-                    cout << endl;
-                }
-                fNEvent[daqChannel]++;
-
-                tbmHeaderSeen=false;
-                // TBM trailer
-                if (buf[i]&0x0f00){
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-
-                     if(verbosity>0) {
-                        out << "deser400 error flags: ";
-                        if (buf[i]&0x0800) out << "frame ";
-                        if (buf[i]&0x0400) out << "code ";
-                        if (buf[i]&0x0200) out << "idle ";
-                        if (buf[i]&0x0100) out << "missing trailer ";
-                        out << " channel " << (int) daqChannel << "\n";
-                    }
-                    if (buf[i]&0x0800) fDeser400_frame_error[daqChannel]++;
-                    if (buf[i]&0x0400) fDeser400_code_error[daqChannel]++;
-                    if (buf[i]&0x0200) fDeser400_idle_error[daqChannel]++;
-                    if (buf[i]&0x0100) fDeser400_trailer_error[daqChannel]++;
-
-                }
-                int t1=buf[i++];
-                if(i>=buf.size()){
-                    nerr++;
-                    fDaqErrorCount[daqChannel]++;
-
-                    if(verbosity>0) out << "unexpected end of data\n";
-                    return nerr + fDeser400err;
-                }
-
-                flag = (buf[i]>>12)&0xe;
-                if (flag != 0xc ){
-                    if(verbosity>0) out << "unexpected qualifier " << (int) flag <<"in TBM trailer \n";
-                    continue;
-                }
-                /* in fw4.6 (and higher?) this qualifier just repeat the previous entry
-                if (buf[i]&0x1000) fDeser400err++;
-                if (buf[i]&0x0f00) {
-                    nerr++;
-                    if(verbosity>0) out << "illegal data in deser400 trailer record \n";
-                }
-                */
-                int t2=buf[i++];
-                data.push_back( DRecord(daqChannel, 0xe, (t1&0xFF)<<8 | (t2&(0xff)), t1, t2) );
-                tbm++;
-
-                if (tbm==fnDaqChannel){
-                    tbm=0; // new event, this depends on the getBuffer method
-                    nevent++;
-                    lastEventStart=i;
-                }
-
-                roc=0;
-                continue;
-            }
-
-            if (verbosity>0){
-                out << "unexpected qualifier " << hex << (int) flag <<", skipped\n" << dec;
-            }
-            nerr++;
-            fDaqErrorCount[daqChannel]++;
-            i++;
-
-        } // while i< buf.size()
-
-        // debugging
-        if ((nloop>=buf.size())&&(buf.size()>1000) ){
-                cout << "stuck at i=" << dec << i << endl;
-                cout << hex << (int) buf[i-1] << " " << (int) buf[i] << dec << endl;
-        }
-
-         fNumberOfEvents = nevent;
-
-    }
-
-    else if (fApi->_dut->getNTbms() == 0) {
-        // single ROC
-        while(i<buf.size() && (i<500) ){
-
-            //if ( (buf[i] & 0x0ff8) == 0x07f8 ){
-            if ( (buf[i] & 0x8000) == 0x8000 ){
-                // roc header
-                data.push_back(DRecord(0, 0x4, buf[i]&0x07, buf[i]));
-                i++;
-            }
-            else if( (i+1)<buf.size() ){
-                // hit
-                 uint32_t raw = ((buf[i] & 0x0fff)  << 12) + (buf[i+1] & 0x0fff);
-                 data.push_back(DRecord(0, 0, raw, buf[i], buf[i+1] ) );
-                i+=2;
-            }else{
-                out << "unexpected end of data\n";
-                nerr++;
-                return nerr;
-            }
-        }
-    }
-
-    return nerr + fDeser400err;
+  return nerr + fDeser400err;
 }
 
 int PixTestPretest::getBuffer(vector<uint16_t> & buf){
-    for(size_t i=0; i<nDaqChannelMax; i++){
-        fDeser400XOR[i]=0;
-    }
-    if (fGetBufMethod==1){
-        buf.clear();
-        vector<rawEvent> vre;
-        try { vre = fApi->daqGetRawEventBuffer(); }
-        catch(pxar::DataNoEvent &) {}
+  for(size_t i=0; i<nDaqChannelMax; i++){
+    fDeser400XOR[i]=0;
+  }
+  if (fGetBufMethod==1){
+    buf.clear();
+    vector<rawEvent> vre;
+    try { vre = fApi->daqGetRawEventBuffer(); }
+    catch(pxar::DataNoEvent &) {}
 
-        for(unsigned int i=0; i<vre.size(); i++){
-            for(unsigned int j=0; j<vre.at(i).GetSize(); j++){
-                buf.push_back( vre.at(i)[j] );
-            }
-        }
-    }else{
-        buf.clear();
-        try { buf  = fApi->daqGetBuffer(); }
-        catch(pxar::DataNoEvent &) {}
+    for(unsigned int i=0; i<vre.size(); i++){
+      for(unsigned int j=0; j<vre.at(i).GetSize(); j++){
+	buf.push_back( vre.at(i)[j] );
+      }
     }
-    return 0;
+  }else{
+    buf.clear();
+    try { buf  = fApi->daqGetBuffer(); }
+    catch(pxar::DataNoEvent &) {}
+  }
+  return 0;
 }
 
 
 int PixTestPretest::resetDaqStatus(){
-    for(size_t i=0; i<nDaqChannelMax; i++){
-        fDeser400XOR[i]=0x100;
-        fDeser400SymbolErrors[i]=0;
-        fDeser400PhaseErrors[i]=0;
-        fDeser400XORChanges[i]=0;
-        fNTBMHeader[i]=0;
-        fNEvent[i]=0;
-        fRocReadBackErrors[i]=0;
-        fDeser400_frame_error[i]=0;
-        fDeser400_code_error[i]=0;
-        fDeser400_idle_error[i]=0;
-        fDeser400_trailer_error[i]=0;
-        fDaqErrorCount[i]=0;
-    }
-    return 0;
+  for(size_t i=0; i<nDaqChannelMax; i++){
+    fDeser400XOR[i]=0x100;
+    fDeser400SymbolErrors[i]=0;
+    fDeser400PhaseErrors[i]=0;
+    fDeser400XORChanges[i]=0;
+    fNTBMHeader[i]=0;
+    fNEvent[i]=0;
+    fRocReadBackErrors[i]=0;
+    fDeser400_frame_error[i]=0;
+    fDeser400_code_error[i]=0;
+    fDeser400_idle_error[i]=0;
+    fDeser400_trailer_error[i]=0;
+    fDaqErrorCount[i]=0;
+  }
+  return 0;
 }
+
+void PixTestPretest::sort_time(int values[], double step, double range){
+  // indirect sort according to time modulo range
+  for(int i=0; i<8; i++){
+    for(int j=0; j<7; j++){
+      if(  fmod(values[j]*step,range) >  fmod(values[j+1]*step,range) ){
+	int tmp=values[j]; values[j]=values[j+1]; values[j+1]=tmp;
+      }
+    }
+  }
+}
+
+bool PixTestPretest::find_midpoint(int threshold, int data[], uint8_t & position, int & width){
+
+  width=0;
+  for(int i=0; i<8; i++){
+    int w=0;
+    int j=0;
+    while((j<8) && (data[ (i+j) % 8 ]>=threshold) ){
+      w++;
+      j++;
+    }
+    if (w>width){
+      width=w;
+      position = int(i+w/2) % 8;
+    }
+  }
+
+  return width>0;
+}
+
+
+bool PixTestPretest::find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width){
+  int m[8] = {0,1,2,3,4,5,6,7};
+  sort_time(m, step, range);
+  // now data[m[*]] is time-ordered
+
+  width=0;
+  for(int i=0; i<8; i++){
+    int w=0;
+    while( (w<8) && (data[ m[(i+w) % 8] ]>=threshold) ){
+      w++;
+    }
+    if (w>width){
+      width=w;
+      position = m[int(i+w/2) % 8];
+    }
+  }
+  return width>0;
+}
+
+
+int PixTestPretest::rocIdFromReadoutPositionRaw( unsigned int position) {
+  return position;
+  // channels are now sorted in pxar core
+}
+
+int PixTestPretest::daqChannelFromTbmPort( unsigned int port) {
+  if (tbm08()){ return port/2 ; }
+  else if(fnTbmCore==4){
+    return (port+4) % 8; // cross your fingers
+  }
+  else{ return port; }
+}
+
+bool PixTestPretest::tbmWithDummyHits() {
+  return !tbm08();
+}
+
+bool PixTestPretest::layer1() {
+  if (fApi->_dut->getNEnabledTbms() == 4 ) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+bool PixTestPretest::tbm08() {
+  return fApi->_dut->getTbmType()=="tbm08c";
+};

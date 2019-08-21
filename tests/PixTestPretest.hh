@@ -5,6 +5,8 @@
 
 class DLLEXPORT PixTestPretest: public PixTest {
 public:
+  class DRecord; // forward declaration
+
   PixTestPretest(PixSetup *, std::string);
   PixTestPretest();
   virtual ~PixTestPretest();
@@ -26,10 +28,10 @@ public:
   void setTimings();
   /// Wolfram's timing setting (optimized)
   void findTimingCmd();
-  /// local replica
+  /// local replica with histogramming
   void findTiming();
 
-  /// and many helper functions (all from CmdProc)
+  // and now many helper functions (all from CmdProc)
   int runDaqRaw(std::vector<uint16_t> & buf, int ntrig, int ftrigkhz, int verbosity=0, bool setup=true);
   int runDaqRaw(int ntrig, int ftrigkhz, int verbosity=0);
   int test_timing(int nloop, int d160, int d400, int rocdelay = -1, int htdelay = 0, int tokdelay = 0);
@@ -43,25 +45,19 @@ public:
   int tbmset(std::string name, uint8_t coreMask, int value, uint8_t valueMask=0xff);
   int tbmget(std::string name, const uint8_t coreMask, uint8_t & value);
   int tbmsetbit(std::string name, uint8_t coreMask, int bit, int value);
-  void flush(std::stringstream &s);
+  void sort_time(int values[], double step, double range);
+  bool find_midpoint(int threshold, int data[], uint8_t & position, int & width);
+  bool find_midpoint(int threshold, double step, double range,  int data[], uint8_t & position, int & width);
   void clear_DaqChannelCounter(unsigned int f[]) {for(size_t i=0; i<nDaqChannelMax; i++){ f[i]=0;}  }
   int rocIdFromReadoutPosition(unsigned int daqChannel, unsigned int roc){return fDaqChannelRocIdOffset[daqChannel]+roc;}
-  int rocIdFromReadoutPositionRaw( unsigned int position){ return position;
-    // channels are now sorted in pxar core
-  }
-  int daqChannelFromTbmPort( unsigned int port){
-    if (tbm08()){ return port/2 ; }
-    else if(fnTbmCore==4){
-      return (port+4) % 8; // cross your fingers
-    }
-    else{ return port; }
-  }
-  bool tbmWithDummyHits(){ return !tbm08(); }
-
-
+  int rocIdFromReadoutPositionRaw(unsigned int position);
+  int daqChannelFromTbmPort(unsigned int port);
+  bool tbmWithDummyHits();
   int getBuffer(std::vector<uint16_t> & buf);
   int resetDaqStatus();
-  bool tbm08() {return fApi->_dut->getTbmType()=="tbm08c";};
+  bool layer1();
+  bool tbm08();
+  int getData(std::vector<uint16_t> & buf, std::vector<DRecord > & data, int verbosity=1, int nroc_expected=-1, bool resetStats=true);
 
   static int fPrerun;
   static int fGetBufMethod;
@@ -83,7 +79,6 @@ public:
       id = Id;
     }
   };
-  int getData(std::vector<uint16_t> & buf, std::vector<DRecord > & data, int verbosity=1, int nroc_expected=-1, bool resetStats=true);
 
 private:
 
@@ -107,6 +102,12 @@ private:
   #define TBM0B   0x2
   #define TBM1A   0x4
   #define TBM1B   0x8
+
+  #define STEP160   1.0
+  #define RANGE160  6.25
+  #define STEP400   0.57
+  #define RANGE400  2.5
+
 
   bool fPixelConfigNeeded;
   int fDeser400XOR1sum[8];  // count transitions at the 8 phases
@@ -150,12 +151,13 @@ private:
   uint16_t fRocHeaderData[17];
 
   std::vector<unsigned int> fDaqChannelRocIdOffset;  // filled in setApi
+
+  unsigned int fnDaqChannel;// filled in setApi
   unsigned int fnRocPerChannel;// filled in setApi
   unsigned int fnTbmCore; // =   fApi->_dut->getNTbms();
-  unsigned int fnDaqChannel;// filled in setApi
-
-
-  std::stringstream out;
+  unsigned int fnCoresPerTBM; // number of cores per physical TBM
+  unsigned int fnTbm;         // number of physical TBMs
+  std::vector<int> fTbmChannels;   // daq channels connected to a tbm (bit-pattern) [size=fnTbm]
 
   ClassDef(PixTestPretest, 1)
 
