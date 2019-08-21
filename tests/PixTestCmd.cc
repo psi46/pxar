@@ -6201,7 +6201,7 @@ void PixTestCmd::runCommand(std::string command) {
   }
 
   else if (!command.compare("pretesttiming")){
-      std::string s_redirect = Form("timing > %s/pxar_timing.log", fPixSetup->getConfigParameters()->getDirectory().c_str());
+      std::string s_redirect = Form("timing > pxar_timing_%s.log", fPixSetup->getConfigParameters()->getDirectory().c_str());
       cmd->exec(s_redirect.c_str());
       cmd->fApi->daqTriggerSource("pg_direct");
       cmd->fApi->daqStart(500000,true);
