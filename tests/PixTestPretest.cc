@@ -1015,9 +1015,9 @@ void PixTestPretest::setVthrCompCalDel() {
 
   bool done = false;
   vector<pair<uint8_t, pair<uint8_t, vector<pixel> > > >  rresults;
+  int cnt(0);
   while (!done) {
     rresults.clear();
-    int cnt(0);
     gSystem->ProcessEvents();
     if (fStopTest) break;
 
