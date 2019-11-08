@@ -16,7 +16,7 @@ ClassImp(PixTestFullTest)
 // ----------------------------------------------------------------------
 PixTestFullTest::PixTestFullTest(PixSetup *a, std::string name) : PixTest(a, name) {
   PixTest::init();
-  init(); 
+  init();
   LOG(logDEBUG) << "PixTestFullTest ctor(PixSetup &a, string, TGTab *)";
 }
 
@@ -29,18 +29,18 @@ PixTestFullTest::PixTestFullTest() : PixTest() {
 // ----------------------------------------------------------------------
 bool PixTestFullTest::setParameter(string parName, string /*sval*/) {
   bool found(false);
-  string stripParName; 
+  string stripParName;
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
-      found = true; 
+      found = true;
       if (!parName.compare("deadface")) {
-	//	fDeadFace = static_cast<uint16_t>(atoi(sval.c_str())); 
+	//	fDeadFace = static_cast<uint16_t>(atoi(sval.c_str()));
 	setToolTips();
       }
       break;
     }
   }
-  return found; 
+  return found;
 }
 
 
@@ -49,11 +49,11 @@ void PixTestFullTest::init() {
   LOG(logDEBUG) << "PixTestFullTest::init()";
 
   setToolTips();
-  fDirectory = gFile->GetDirectory(fName.c_str()); 
+  fDirectory = gFile->GetDirectory(fName.c_str());
   if (!fDirectory) {
-    fDirectory = gFile->mkdir(fName.c_str()); 
-  } 
-  fDirectory->cd(); 
+    fDirectory = gFile->mkdir(fName.c_str());
+  }
+  fDirectory->cd();
 
 }
 
@@ -69,7 +69,7 @@ void PixTestFullTest::setToolTips() {
 // ----------------------------------------------------------------------
 void PixTestFullTest::bookHist(string name) {
   LOG(logDEBUG) << "nothing done with " << name;
-  fDirectory->cd(); 
+  fDirectory->cd();
 }
 
 
@@ -87,37 +87,35 @@ void PixTestFullTest::doTest() {
   pxar::statistics statSummary;
 
   vector<string> suite;
-  suite.push_back("alive"); 
-  suite.push_back("bb"); 
+  suite.push_back("alive");
+  suite.push_back("bb");
   suite.push_back("scurves");
-  suite.push_back("trim"); 
-  suite.push_back("phoptimization"); 
-  suite.push_back("gainpedestal"); 
+  suite.push_back("trim");
+  suite.push_back("ph");
+  suite.push_back("gainpedestal");
   suite.push_back("readback");
 
-  PixTest *t(0); 
+  PixTest *t(0);
 
-  string trimvcal(""); 
-  PixTestFactory *factory = PixTestFactory::instance(); 
+  string trimvcal("");
+  PixTestFactory *factory = PixTestFactory::instance();
   for (unsigned int i = 0; i < suite.size(); ++i) {
     t =  factory->createTest(suite[i], fPixSetup);
 
     if (!suite[i].compare("trim")) {
-      trimvcal = t->getParameter("vcal"); 
-      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal, true); 
+      trimvcal = t->getParameter("vcal");
+      fPixSetup->getConfigParameters()->setTrimVcalSuffix(trimvcal, true);
     }
 
-    t->fullTest(); 
+    t->fullTest();
 
     pxar::statistics testStat = fApi->getStatistics();
     testStat.dump();
     statSummary += testStat;
-    delete t; 
+    delete t;
   }
 
   statSummary.dump();
-  
+
 
 }
-
-

@@ -21,7 +21,7 @@
 #include "PixTestXray.hh"
 #include "PixTestHighRate.hh"
 #include "PixTestPh.hh"
-#include "PixTestPhOptimization.hh"
+#include "PixTestPhOptimizationOld.hh"
 #include "PixTestReadback.hh"
 #include "PixTestBBMap.hh"
 #include "PixTestBB2Map.hh"
@@ -80,7 +80,7 @@ PixTest* PixTestFactory::createTest(string name, PixSetup *a) {
   if (!name.compare("xray")) return new PixTestXray(a, "Xray");
   if (!name.compare("highrate")) return new PixTestHighRate(a, "HighRate");
   if (!name.compare("ph")) return new PixTestPh(a, "Ph");
-  if (!name.compare("phoptimization")) return new PixTestPhOptimization(a, "PhOptimization");
+  if (!name.compare("phoptimizationold")) return new PixTestPhOptimizationOld(a, "PhOptimizationOld");
   if (!name.compare("readback")) return new PixTestReadback(a, "Readback");
   if (!name.compare("bb")) return new PixTestBBMap(a, "BB");
   if (!name.compare("bb2")) return new PixTestBB2Map(a, "BB2");
