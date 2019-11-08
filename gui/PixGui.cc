@@ -288,6 +288,14 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   // writeButton->Resize(70,35);
   writeButton->ChangeBackground(fYellow);
 
+  TGTextButton *xyButton = new TGTextButton(bFrame, "pin GUI", B_PINGUI);
+  bFrame->AddFrame(xyButton, new TGLayoutHints(kLHintsBottom | kLHintsLeft, fBorderN, fBorderN, fBorderN, fBorderN));
+  xyButton->SetToolTipText("pin GUI position for future starts to same place");
+  xyButton->ChangeOptions(xyButton->GetOptions() );
+  xyButton->Connect("Clicked()", "PixGui", this, "handleButtons()");
+  // writeButton->Resize(70,35);
+  xyButton->ChangeBackground(fDarkSalmon);
+
 
   TGHorizontalFrame *rootfileFrame = new TGHorizontalFrame(FpControl);
   FpControl->AddFrame(rootfileFrame, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, fBorderN, fBorderN, fBorderN, fBorderN));
@@ -358,6 +366,7 @@ TGMainFrame(p, 1, 1, kVerticalFrame), fWidth(w), fHeight(h) {
   if (fWidth < 0) {
     fWidth = gClient->GetDisplayWidth() - GetDefaultWidth();
   }
+
   MoveResize(fWidth, fHeight, GetDefaultWidth(), GetDefaultHeight());
   MapSubwindows();
   MapWindow();
@@ -395,7 +404,9 @@ void PixGui::Cleanup() {
 void PixGui::CloseWindow() {
   LOG(logDEBUG) << "Final Analog Current: " << fApi->getTBia()*1000 << "mA";
   LOG(logDEBUG) << "Final Digital Current: " << fApi->getTBid()*1000 << "mA";
-  if (fConfigParameters->getHdiType() == "fpix") {LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", fPixSetup->getPixMonitor()->getTemp()) << " C";}
+  if (fConfigParameters->getHdiType() == "fpix") {
+    LOG(logDEBUG) << "Final Module Temperature: " << Form("%3.1f", fPixSetup->getPixMonitor()->getTemp()) << " C";
+  }
   std::vector<PixTest*>::iterator il;
   for (il = fTestList.begin(); il != fTestList.end(); ++il) {
     delete (*il);
@@ -468,6 +479,7 @@ void PixGui::handleButtons(Int_t id) {
   }
 
   switch (id) {
+
   case B_DIRECTORY: {
     LOG(logDEBUG) << Form("changing base directory: %s", fDirNameBuffer->GetString());
     fOldDirectory = fConfigParameters->getDirectory();
@@ -484,11 +496,13 @@ void PixGui::handleButtons(Int_t id) {
     changeRootFile();
     break;
   }
+
   case B_FILENAME: {
     LOG(logINFO) << Form("changing rootfilenme: %s", fRootFileNameBuffer->GetString());
     changeRootFile();
     break;
   }
+
   case B_EXIT: {
     LOG(logDEBUG) << "PixGui::exit called";
     CloseWindow();
@@ -500,6 +514,39 @@ void PixGui::handleButtons(Int_t id) {
     fPixSetup->writeAllFiles();
     break;
   }
+
+  case B_PINGUI: {
+    LOG(logDEBUG) << "PixGui::pinGui called";
+    int x(-99), y(-99);
+    GetWMPosition(x,y);
+    LOG(logDEBUG) << "PixGui::pinGui GetWMPosition(x,y) = " << x << "/" << y;
+    UInt_t ww;
+    UInt_t hh;
+    GetWMSize(ww,hh);
+    LOG(logDEBUG) << "PixGui::pinGui GetWMSize(x,y) = " << ww << "/" << hh;
+    LOG(logDEBUG) << "PixGui::pinGui gClient->GetDisplayHeight() = " << gClient->GetDisplayHeight();
+    LOG(logDEBUG) << "PixGui::pinGui gClient->GetDisplayWidth() = " << gClient->GetDisplayWidth();
+
+    Int_t qx, qy;
+    gVirtualX->GetWindowSize(gVirtualX->GetDefaultRootWindow(), qx, qy, ww, hh);
+    LOG(logDEBUG) << "PixGui::pinGui blurp " << qx << " " << qy << " " << ww << " " << hh;
+
+    Int_t xx = 0;
+    Int_t yy = 0;
+    Int_t fx;
+    Int_t fy;
+    Window_t ch;
+
+    gVirtualX->TranslateCoordinates(gClient->GetRoot()->GetId(), GetId(),xx,yy,fx,fy,ch);
+    LOG(logDEBUG) << "TranslateCoordinates = " << xx << " " << yy << " " << fx << " " << fy << " " << ch;
+    LOG(logDEBUG) << "gClient->GetDisplayWidth() = " << gClient->GetDisplayWidth();
+    LOG(logDEBUG) << "GetDefaultWidth() = " <<  GetDefaultWidth();
+
+
+    fPixSetup->pinGui(x, y);
+    break;
+  }
+
   case B_POWER: {
     if(fPower == true) {
       powerOff();
@@ -508,6 +555,7 @@ void PixGui::handleButtons(Int_t id) {
     }
     break;
   }
+
   case B_HV: {
     if(fHV == true) {
       hvOff();
@@ -516,6 +564,7 @@ void PixGui::handleButtons(Int_t id) {
     }
     break;
   }
+
   default:
     break;
   }

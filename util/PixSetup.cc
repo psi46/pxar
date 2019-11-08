@@ -154,3 +154,9 @@ void PixSetup::writeTbmParameterFiles() {
 					     );
   }
 }
+
+// ----------------------------------------------------------------------
+void PixSetup::pinGui(int x, int y ) {
+  fConfigParameters->setGuiX(x);
+  fConfigParameters->setGuiY(y);
+}

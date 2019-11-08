@@ -31,6 +31,7 @@ public:
   bool               doRootFileUpdate() {return fDoUpdateRootFile;}
   bool               guiActive() {return fGuiActive;}
   void               setGuiActive(bool x) {fGuiActive = x;}
+  void               pinGui(int x, int y);
 
   void               writeAllFiles();
   void               writeDacParameterFiles();

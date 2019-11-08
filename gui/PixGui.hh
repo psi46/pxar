@@ -1,11 +1,11 @@
 #ifndef PIXGUI_H
 #define PIXGUI_H
 
-#ifdef __CINT__ 
-#undef __GNUC__ 
+#ifdef __CINT__
+#undef __GNUC__
 typedef char __signed;
-typedef char int8_t; 
-#endif 
+typedef char int8_t;
+#endif
 
 #include <vector>
 #include <map>
@@ -38,7 +38,7 @@ class PixParTab;
 class PixTab;
 class PixMonitorFrame;
 class PixSetup;
-class PixTest; 
+class PixTest;
 class PixTestParameters;
 
 class DLLEXPORT PixGui: public TGMainFrame {
@@ -46,13 +46,13 @@ public:
   PixGui(const TGWindow *p, UInt_t w, UInt_t h, PixSetup *setup);
   ~PixGui();
 
-  void Cleanup(); 
+  void Cleanup();
   void CloseWindow();
 
   void handleButtons(Int_t id = -1);
   void createTab(const char*);
   //  void createParTab();
-  void selectedTab(int); 
+  void selectedTab(int);
   void selectProbes(int);
   void changeRootFile();
   bool isHvOn() {return fHV;}
@@ -62,7 +62,7 @@ public:
   void powerOff();
   bool isPowerOff() {return !fPower;}
 
-  PixTest* createTest(std::string); 
+  PixTest* createTest(std::string);
 
   TGCompositeFrame	*fhFrame;
   TGTab               	*getTabs() {return fTabs;}
@@ -73,20 +73,21 @@ public:
   pxar::pxarCore* getApi() {return fApi;}
   PixSetup* getPixSetup() {return fPixSetup;}
 
-  void updateSelectedRocs(std::map<int, int> a); 
+  void updateSelectedRocs(std::map<int, int> a);
 
-  ULong_t   fRed, fGreen, fYellow, fWhite, fDarkSeaGreen, fDarkOrange, fLavender, fDarkGray, fDarkSalmon; 
+  ULong_t   fRed, fGreen, fYellow, fWhite, fDarkSeaGreen, fDarkOrange, fLavender, fDarkGray, fDarkSalmon;
 
   std::string getHdiType();
-  
-private: 
+
+private:
 
   static const int TESTNUMBER = 300;
   enum CommandIdentifiers {
     B_FILENAME = TESTNUMBER + 21,
-    B_DIRECTORY, 
+    B_DIRECTORY,
     B_EXIT,
     B_WRITEALLFILES,
+    B_PINGUI,
     B_POWER,
     B_HV
   };
@@ -105,23 +106,23 @@ private:
 
   TGComboBox            *fSignalBoxA[2];
   TGComboBox            *fSignalBoxD[2];
-  TGComboBox            *fD1TBM, *fD2TBM; 
+  TGComboBox            *fD1TBM, *fD2TBM;
 
-  std::vector<PixTest *> fTestList; 
+  std::vector<PixTest *> fTestList;
   bool			 fDebug;
   bool			 fPower, fHV;
 
-  PixSetup               *fPixSetup; 
+  PixSetup               *fPixSetup;
   pxar::pxarCore         *fApi;
-  ConfigParameters       *fConfigParameters;  
+  ConfigParameters       *fConfigParameters;
   PixTestParameters      *fTestParameters;
-  PixMonitorFrame        *fMonitor; 
+  PixMonitorFrame        *fMonitor;
   PixParTab              *fParTab;
 
-  std::vector<PixTab*>   fPixTabList; 
+  std::vector<PixTab*>   fPixTabList;
   PixTab                 *fPixTab;
 
-  int                    fWidth, fHeight; 
+  int                    fWidth, fHeight;
   std::string            fOldDirectory;
 
   int                    fBorderN, fBorderT, fBorderL;  // normal, tiny, large
