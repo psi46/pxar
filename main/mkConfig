@@ -645,6 +645,7 @@ DeltaVthrComp       50
 fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
+SaveTbms            button
 
 -- PixelAlive
 Ntrig               10
@@ -681,8 +682,16 @@ PIX                 11,20
 Ntrig               10
 DAC                 vcal
 DACval              200
-PIX                 11,20
 phMap               button
+optimize            button
+adjustvthrcomp      checkbox(0)
+ntrig               10
+vcallow             10
+vcalhigh            255
+phscalemin          50
+phoffsetmin         100
+phmin               20
+phmax               250
 
 -- BB
 dumpAll             checkbox(0)
@@ -753,7 +762,7 @@ measure             button
 fit                 button
 save                button
 
--- PhOptimization
+-- PhOptimizationOld
 ntrig               10
 safetymarginlow     20
 saturationvcal      100
