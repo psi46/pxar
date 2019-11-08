@@ -198,7 +198,8 @@ string PixTestPretest::toolTip(string what) {
 
   if (string::npos != what.find("findworkingpixel")) return string("try to find working pixels on all ROCs");
   if (string::npos != what.find("setvthrcompcaldel")) return string("adjust vthrcomp vs caldel (`tornado plot')");
-  if (string::npos != what.find("savedacs")) return string("write DAC parameters to file");
+  if (string::npos != what.find("savedacs")) return string("write DAC parameters to file(s)");
+  if (string::npos != what.find("savetbms")) return string("write TMB parameters to file(s)");
   return string("nada");
 }
 
@@ -313,6 +314,10 @@ void PixTestPretest::runCommand(std::string command) {
   }
   if (!command.compare("savedacs")) {
     saveDacs();
+    return;
+  }
+  if (!command.compare("savetbms")) {
+    saveTbmParameters();
     return;
   }
   if (!command.compare("setvana")) {
@@ -753,6 +758,7 @@ void PixTestPretest::findTiming() {
     // now enable trigger (again) and scan roc and header trailer delay
     if(pass==0) tbmsetbit("base0",ALLTBMS, 6,0);
 
+    // FIXME: This histogram is displayed without the correct "colz" after 'previous'/'next'
     TH2D *h2 = bookTH2D(Form("ROCdelay_rest_pass%d", pass),
 			Form("ROC delay, pass = %d, 400MHz = %d, 160MHz = %d", pass, d400, d160),
 			8, 0., 8., 4, 0., 4.);
