@@ -23,7 +23,7 @@ PixTestPretest.cc
 PixTestTiming.cc
 PixTestFactory.cc
 PixTestPh.cc
-PixTestPhOptimization.cc
+PixTestPhOptimizationOld.cc
 PixTestReadback.cc
 PixTestBBMap.cc
 PixTestBB2Map.cc
@@ -55,7 +55,7 @@ PixTestPretest.hh
 PixTestTiming.hh
 PixTestFactory.hh
 PixTestPh.hh
-PixTestPhOptimization.hh
+PixTestPhOptimizationOld.hh
 PixTestReadback.hh
 PixTestBBMap.hh
 PixTestBB2Map.hh
