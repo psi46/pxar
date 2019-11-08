@@ -18,12 +18,18 @@ public:
   void runCommand(std::string);
   void doTest();
   void phMap();
+  void optimize();
+  void scan(std::string name);
+  void adjustVthrComp();
 
-private:
+ private:
 
   int     fParNtrig;
   std::string fParDAC;
   int     fParDacVal;
+  // -- PH optimziation
+  std::map<std::string, TH2D*> fMaps;
+  int    fAdjustVthrComp, fVcalLow, fVcalHigh, fPhScaleMin, fPhOffsetMin, fPhMin, fPhMax;
 
   ClassDef(PixTestPh, 1)
 
