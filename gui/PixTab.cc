@@ -49,6 +49,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   // -- fV1: create and add Embedded Canvas
   fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 500, 500);
+  fEc1->GetCanvas()->SetBottomMargin(0.25);
+  fEc1->GetCanvas()->SetLeftMargin(0.25);
   fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 1, 1, 1, 1));
 
 
