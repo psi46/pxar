@@ -1,18 +1,18 @@
-#ifndef PixTestPhOptimization_H
-#define PixTestPhOptimization_H
+#ifndef PixTestPhOptimizationOld_H
+#define PixTestPhOptimizationOld_H
 
 #include "PixTest.hh"
 
 
-class DLLEXPORT PixTestPhOptimization: public PixTest {
+class DLLEXPORT PixTestPhOptimizationOld: public PixTest {
 public:
-  PixTestPhOptimization(PixSetup *, std::string);
-  PixTestPhOptimization();
-  virtual ~PixTestPhOptimization();
-  virtual bool setParameter(std::string parName, std::string sval); 
-  void init(); 
-  void bookHist(std::string); 
-  void BlacklistPixels(std::vector<std::pair<uint8_t, std::pair<int, int> > > &badPixels, int aliveTrig);  
+  PixTestPhOptimizationOld(PixSetup *, std::string);
+  PixTestPhOptimizationOld();
+  virtual ~PixTestPhOptimizationOld();
+  virtual bool setParameter(std::string parName, std::string sval);
+  void init();
+  void bookHist(std::string);
+  void BlacklistPixels(std::vector<std::pair<uint8_t, std::pair<int, int> > > &badPixels, int aliveTrig);
   void SetMinThr();
   pxar::pixel* RandomPixel(std::vector<std::pair<uint8_t, std::pair<int, int> > > &badPixels, uint8_t iroc);
   void GetMaxPhPixel(std::map<int, pxar::pixel> &maxpixel, std::vector<std::pair<uint8_t, std::pair<int, int> > > &badPixels);
@@ -27,17 +27,17 @@ public:
   void getTH2fromMaps(std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_max,   std::vector< std::pair<uint8_t, std::pair<uint8_t, std::vector<pxar::pixel> > > > &dacdac_min, std::vector<TH2D* > &th2_max, std::vector<TH2D* > &th2_min);
 
 
-  void doTest(); 
+  void doTest();
 
 private:
 
-  int         fParNtrig; 
+  int         fParNtrig;
   int         fSafetyMarginLow;
   int         fMinThr;
   double      fQuantMax;
   int         fVcalMax;
 
-  ClassDef(PixTestPhOptimization, 1)
+  ClassDef(PixTestPhOptimizationOld, 1)
 
 };
 #endif
