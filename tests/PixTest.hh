@@ -199,6 +199,11 @@ public:
   bool threshold(TH1 *);
   /// find first bin above 50% level. Fills fThreshold, fThresholdE, fSigma, fSigmaE
   int simpleThreshold(TH1 *);
+  /// return  pixel col/row and minimum value in a (PH) map
+  std::vector<std::pair<std::pair<int, int>, double> > getMinimumPixelAndValue(std::vector<TH2D*>maps);
+  /// return  pixel col/row and maximum value in a (PH) map
+  std::vector<std::pair<std::pair<int, int>, double> > getMaximumPixelAndValue(std::vector<TH2D*>maps);
+
   /// maximum allowable VthrComp
   std::vector<int> getMaximumVthrComp(int ntrig, double frac = 0.8, int reserve = 10);
   /// minimum allowable VthrComp; reserve indicate the separation from the minimum VthrComp where noise sets in
@@ -266,7 +271,7 @@ public:
   void dumpParameters();
   /// utility to set histogram titles
   void setTitles(TH1 *h, const char *sx, const char *sy,
-		 float size = 0.05, float xoff = 1.1, float yoff = 1.1, float lsize = 0.05, int font = 42);
+		 float size = 0.05, float xoff = 1.0, float yoff = 1.3, float lsize = 0.05, int font = 42);
 
   /// set the mapping between ROC ID and index
   void setId2Idx(std::map<int, int> a);

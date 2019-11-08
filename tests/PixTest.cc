@@ -359,7 +359,7 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
     h2->SetMinimum(0.);
     h2->SetDirectory(fDirectory);
     fHistOptions.insert(make_pair(h2, "colz"));
-    setTitles(h2, "col", "row");
+    setTitles(h2, "col", "row", 0.05, 1.0, 1.0);
     maps.push_back(h2);
   }
 
@@ -369,9 +369,10 @@ vector<TH2D*> PixTest::phMaps(string name, uint16_t ntrig, uint16_t FLAGS) {
     if (rocIds.end() != find(rocIds.begin(), rocIds.end(), results[i].roc())) {
       h2 = maps[idx];
       if (h2->GetBinContent(results[i].column()+1, results[i].row()+1) > 0) {
-        LOG(logDEBUG) << "ROC/col/row = " << int(results[i].roc()) << "/" << int(results[i].column()) << "/" << int(results[i].row())
-                     << " with = " << h2->GetBinContent(results[i].column()+1, results[i].row()+1)
-                     << " now adding " << static_cast<float>(results[i].value());
+        LOG(logDEBUG) << h2->GetName() << " "
+		      << "ROC/col/row = " << int(results[i].roc()) << "/" << int(results[i].column()) << "/" << int(results[i].row())
+		      << " with = " << h2->GetBinContent(results[i].column()+1, results[i].row()+1)
+		      << " now adding " << static_cast<float>(results[i].value());
       }
       h2->Fill(results[i].column(), results[i].row(), static_cast<float>(results[i].value()));
     } else {
@@ -1240,6 +1241,49 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 
 
 // ----------------------------------------------------------------------
+vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValue(vector<TH2D*>maps) {
+  vector<pair<pair<int, int>, double> > results;
+  for (unsigned int im = 0; im < maps.size(); ++im) {
+    double minimum(99999.);
+    int minx(-1), miny(-1);
+    for (int ix = 1; ix < maps[im]->GetNbinsX(); ++ix) {
+      for (int iy = 1; iy < maps[im]->GetNbinsY(); ++iy) {
+	if (maps[im]->GetBinContent(ix, iy) < minimum) {
+	  minimum = maps[im]->GetBinContent(ix, iy);
+	  minx = ix-1;
+	  miny = iy-1;
+	}
+      }
+    }
+    results.push_back(make_pair(make_pair(minx, miny), minimum));
+  }
+
+  return results;
+}
+
+// ----------------------------------------------------------------------
+vector<pair<pair<int, int>, double> > PixTest::getMaximumPixelAndValue(vector<TH2D*>maps) {
+  vector<pair<pair<int, int>, double> > results;
+  for (unsigned int im = 0; im < maps.size(); ++im) {
+    double maximum(-99999.);
+    int minx(-1), miny(-1);
+    for (int ix = 1; ix < maps[im]->GetNbinsX(); ++ix) {
+      for (int iy = 1; iy < maps[im]->GetNbinsY(); ++iy) {
+	if (maps[im]->GetBinContent(ix, iy) > maximum) {
+	  maximum = maps[im]->GetBinContent(ix, iy);
+	  minx = ix-1;
+	  miny = iy-1;
+	}
+      }
+    }
+    results.push_back(make_pair(make_pair(minx, miny), maximum));
+  }
+
+  return results;
+}
+
+
+// ----------------------------------------------------------------------
 vector<int> PixTest::getMinimumVthrComp(vector<TH1*>maps, int reserve, double nsigma) {
   vector<int> results;
   results.clear();
@@ -1841,11 +1885,9 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel)
       tEff = efficiencyMaps(Form("dp_caldel%d", icaldel), ntrig);
       for (int i = 0; i < static_cast<int>(tEff.size()); ++i) {
         if (tEff[i]->Integral() > testEff[i]->Integral()) {
-          // cout << " tEff->Integral: " << tEff[i]->Integral() << " >  testEff[i]->Integral(): " << testEff[i]->Integral() << endl;
           delete testEff[i];
           testEff[i] = tEff[i];
         } else {
-          // cout << " tEff->Integral: " << tEff[i]->Integral() << " <  testEff[i]->Integral(): " << testEff[i]->Integral() << endl;
           delete tEff[i];
         }
       }
@@ -1864,7 +1906,10 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel)
       for (int c=0; c<52; c++){
         eff = testEff[i]->GetBinContent(testEff[i]->FindFixBin((double)c + 0.5, (double)r+0.5));
         if (eff<ntrig){
-          LOG(logDEBUG) << Form("ROC %2d", rocIds[i]) << " col/row = " << c << "/" << r << " with eff " << eff << "/" << ntrig << ";  blacklisting";
+          LOG(logDEBUG) << Form("ROC %2d", rocIds[i])
+			<< " col/row = " << c << "/" << r
+			<< " with eff " << eff << "/" << ntrig
+			<< ";  blacklisting";
           badPix.first = c;
           badPix.second = r;
           deadPixelsRoc.push_back(badPix);
