@@ -199,7 +199,7 @@ string PixTestPretest::toolTip(string what) {
   if (string::npos != what.find("findworkingpixel")) return string("try to find working pixels on all ROCs");
   if (string::npos != what.find("setvthrcompcaldel")) return string("adjust vthrcomp vs caldel (`tornado plot')");
   if (string::npos != what.find("savedacs")) return string("write DAC parameters to file(s)");
-  if (string::npos != what.find("savetbms")) return string("write TMB parameters to file(s)");
+  if (string::npos != what.find("savetbms")) return string("write TBM parameters to file(s)");
   return string("nada");
 }
 
