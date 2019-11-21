@@ -272,6 +272,7 @@ int main(int argc, char *argv[]){
       string input;
       std::getline(cin, input);
       if (input.size() == 0) stop = true;
+      if (input[0] == '#') continue;
       string parameters("nada"), subtest("nada");
       // -- split input with space into testname(s) and parameters
       string::size_type m1 = input.find(" ");
