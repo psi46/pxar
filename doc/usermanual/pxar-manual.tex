@@ -1,9 +1,4 @@
-
-%----------------------------------------------------------------------------------------
-%	PACKAGES AND DOCUMENT CONFIGURATIONS
-%----------------------------------------------------------------------------------------
-
-\documentclass{scrartcl}
+\documentclass[11pt]{article}
 
 \usepackage{siunitx} % Provides the \SI{}{} command for typesetting SI units
 \usepackage{booktabs}
@@ -15,7 +10,19 @@
 \usepackage{graphicx} % Required for the inclusion of images
 \usepackage{listings}
 \usepackage[toc, nonumberlist]{glossaries} % must go after hyperref, so entries are clickable
-\setlength\parindent{0pt} % Removes all indentation from paragraphs
+
+\setlength{\textwidth}{156mm}
+\setlength{\textheight}{220mm}
+\setlength{\oddsidemargin}{0mm}
+\setlength{\evensidemargin}{0mm}
+
+
+\setlength{\footskip}{36pt}
+\setlength{\headheight}{15pt}
+\setlength{\headsep}{10pt}%     Distance from bottom of header to main body
+\setlength{\topmargin}{0mm}
+
+
 
 \renewcommand{\labelenumi}{\alph{enumi}.} % Make numbering in the enumerate environment by letter rather than number (e.g. section 6)
 
@@ -81,7 +88,7 @@ Furthermore, many of the implemented chip and module tests are described as well
 \addcontentsline{toc}{section}{References}
 \begin{thebibliography}{99}
   \input{usermanual/references.tex}
-\end{thebibliography}  
+\end{thebibliography}
 
 
 \end{document}
