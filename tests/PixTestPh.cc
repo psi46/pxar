@@ -342,7 +342,8 @@ void PixTestPh::optimize() {
       fApi->setDAC("phscale", is, rocIds[iroc]);
       fApi->setDAC("phoffset", io, rocIds[iroc]);
     } else {
-      LOG(logWARNING) << " PH optimization did not converge for ROC " << static_cast<int>(rocIds[iroc]) << ", setting to default values";
+      LOG(logWARNING) << " PH optimization did not converge for ROC " << static_cast<int>(rocIds[iroc])
+		      << ", setting to default values";
       fApi->setDAC("phscale", fApi->_dut->getDAC(rocIds[iroc], "phscale"), rocIds[iroc]);
       fApi->setDAC("phoffset", fApi->_dut->getDAC(rocIds[iroc], "phoffset"), rocIds[iroc]);
     }
