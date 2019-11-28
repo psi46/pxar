@@ -1,12 +1,1 @@
-setdac vthrcomp 5
-PixelAlive:alivetest
-setdac vthrcomp 10
-PixelAlive:alivetest
-setdac vthrcomp 20
-PixelAlive:alivetest
-setdac vthrcomp 200
-PixelAlive:alivetest
-setdac vthrcomp 400
-PixelAlive:alivetest
-Pretest:setvthrcompcaldel
-q
+scurves:fulltest
