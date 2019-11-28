@@ -157,6 +157,15 @@ void PixTestPh::runCommand(std::string command) {
     return;
   }
 
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
+  if (!command.compare("fulltest")) {
+    fullTest();
+    return;
+  }
+
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
@@ -196,10 +205,14 @@ void PixTestPh::phMap() {
 
 //------------------------------------------------------------------------------
 void PixTestPh::doTest() {
-
   optimize();
   phMap();
+}
 
+
+//------------------------------------------------------------------------------
+void PixTestPh::fullTest() {
+  optimize();
 }
 
 

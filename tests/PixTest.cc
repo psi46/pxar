@@ -171,6 +171,10 @@ void PixTest::runCommand(string command) {
     doTest();
     return;
   }
+  if (!command.compare("fulltest")) {
+    fullTest();
+    return;
+  }
   LOG(logDEBUG) << "Nothing done with " << command;
 }
 

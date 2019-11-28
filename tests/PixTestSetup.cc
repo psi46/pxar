@@ -31,18 +31,18 @@ bool PixTestSetup::setParameter(string parName, string sval) {
   std::transform(parName.begin(), parName.end(), parName.begin(), ::tolower);
   for (unsigned int i = 0; i < fParameters.size(); ++i) {
     if (fParameters[i].first == parName) {
-      found = true; 
+      found = true;
 
       if (!parName.compare("clkmax")) {
-	fClkMax = atoi(sval.c_str()); 
-	if(fClkMax < 0 || fClkMax > 25) { 
+	fClkMax = atoi(sval.c_str());
+	if(fClkMax < 0 || fClkMax > 25) {
 	  LOG(logWARNING) << "PixTestSetup::setParameter() ClkMax out of range (0-25)";
 	  found=false; ParOutOfRange = true;
 	}
       }
       if (!parName.compare("desermax")) {
-	fDeserMax = atoi(sval.c_str()); 
-	if(fDeserMax < 0 || fDeserMax > 7) { 
+	fDeserMax = atoi(sval.c_str());
+	if(fDeserMax < 0 || fDeserMax > 7) {
 	  LOG(logWARNING) << "PixTestSetup::setParameter() DeserMax out of range (0-7)";
 	  found=false; ParOutOfRange = true;
 	}
@@ -50,7 +50,7 @@ bool PixTestSetup::setParameter(string parName, string sval) {
       break;
     }
   }
-  return found; 
+  return found;
 }
 
 void PixTestSetup::init()
@@ -81,7 +81,7 @@ PixTestSetup::~PixTestSetup()
   LOG(logDEBUG) << "PixTestSetup dtor";
   std::list<TH1*>::iterator il;
   fDirectory->cd();
-  for (il = fHistList.begin(); il != fHistList.end(); ++il) 
+  for (il = fHistList.begin(); il != fHistList.end(); ++il)
     {
       LOG(logINFO) << "Write out " << (*il)->GetName();
       (*il)->SetDirectory(fDirectory);
@@ -97,10 +97,10 @@ void PixTestSetup::doTest()
   fDirectory->cd();
   fHistList.clear();
   PixTest::update();
-	
+
   //fixed number of trigger (unstable with only 1 trigger)
   int Ntrig = 10;
-	
+
   LOG(logINFO) << "PixTestSetup::doTest() ntrig = " << Ntrig;
 
   bookHist("bla"); //FIXME
@@ -137,7 +137,7 @@ void PixTestSetup::doTest()
       // Set up the delays in the DTB:
       fApi->setTestboardDelays(getMagicDelays(iclk,ideser));
 
-      // Send the triggers and read out the events:    
+      // Send the triggers and read out the events:
       daqRawEv = fApi->Deser160PhaseScan(Ntrig);
 
       unsigned int head_good = 0;
@@ -157,7 +157,7 @@ void PixTestSetup::doTest()
       if(head_good > 0) {
 	oneline << std::hex << "<7f8>" << std::dec;
 	histo->Fill(ideser, iclk, head_good);
-	good_clk = iclk; good_deser = ideser;					
+	good_clk = iclk; good_deser = ideser;
 
 	// Additionally print number of good headers:
 	if (head_good < 10) oneline << "[" << head_good << "]";
@@ -173,7 +173,7 @@ void PixTestSetup::doTest()
 
   int finalclk, finaldeser;
   histo->Draw("colz");
-  Int_t bin = histo->GetMaximumBin(); //set always to minimum binx/biny  
+  Int_t bin = histo->GetMaximumBin(); //set always to minimum binx/biny
   Int_t binx, biny, binz;
   histo->GetBinXYZ(bin, binx, biny, binz);
 
@@ -200,7 +200,7 @@ void PixTestSetup::doTest()
 
   // If we found some good settings, find the best:
   if (good_clk != -1 && good_deser != -1) {
-    
+
     // Highlight the maximum
     b.Draw();
 
@@ -231,7 +231,7 @@ void PixTestSetup::doTest()
 
   // Reset the pattern generator to the configured default:
   fApi->setPatternGenerator(fPixSetup->getConfigParameters()->getTbPgSettings());
-  
+
   fHistList.clear();
 
   LOG(logINFO) << "PixTestSetup::doTest() done for.";
@@ -249,7 +249,7 @@ std::vector<std::pair<std::string,uint8_t> > PixTestSetup::getMagicDelays(uint8_
 
 // ----------------------------------------------------------------------
 void PixTestSetup::saveTbParameters() {
-  LOG(logINFO) << "PixTestSetup:: Write Tb parameters to file."; 
+  LOG(logINFO) << "PixTestSetup:: Write Tb parameters to file.";
   fPixSetup->getConfigParameters()->writeTbParameterFile();
 }
 
@@ -258,8 +258,17 @@ void PixTestSetup::runCommand(std::string command) {
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
   LOG(logDEBUG) << "running command: " << command;
   if (!command.compare("savetbparameters")) {
-    saveTbParameters(); 
+    saveTbParameters();
     return;
   }
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
+  if (!command.compare("fulltest")) {
+    doTest();
+    return;
+  }
+
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }

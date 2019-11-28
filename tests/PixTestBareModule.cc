@@ -59,7 +59,7 @@ bool PixTestBareModule::setParameter(string parName, string sval) {  //debug - a
 				setToolTips();
 			}
 			break;
-		}		
+		}
 	}
 	return found;
 }
@@ -102,7 +102,7 @@ void PixTestBareModule::runCommand(std::string command) {
 	std::transform(command.begin(), command.end(), command.begin(), ::tolower);
 	LOG(logDEBUG) << "running command: " << command;
 
-	if (!command.compare("stop")){     // Interrupt the test 
+	if (!command.compare("stop")){     // Interrupt the test
 		fStop = true;
 		LOG(logINFO) << "PixTestBareModule:: STOP PRESSED. Ending test.";
 	}
@@ -124,18 +124,27 @@ void PixTestBareModule::runCommand(std::string command) {
 		fParMaxSteps = 3;
 		doTest();
 	}
-	else
-		LOG(logINFO) << "Command " << command << " not implemented.";
+
+	else if (!command.compare("dotest")) {
+	  doTest();
+	  return;
+	}
+	else if (!command.compare("fulltest")) {
+	  fullTest();
+	  return;
+	} else {
+	  LOG(logINFO) << "Command " << command << " not implemented.";
+	}
 }
 
 // ----------------------------------------------------------------------
-bool PixTestBareModule::checkIfInContact(bool fullSeq) {	
+bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 
 	PixTest::hvOff();
 	PixTest::update();
 	LOG(logINFO) << "PixTestBareModule:: HV off for safety.";
 	mDelay(2000);
-	
+
 	//check if probes are in contact
 	LOG(logINFO) << "PixTestBareModule:: checking if probes are in contact.";
 	PixTest::powerOn();
@@ -201,7 +210,7 @@ bool PixTestBareModule::checkIfInContact(bool fullSeq) {
 
 //----------------------------------------------------------
 bool PixTestBareModule::doStdTest(std::string test) {
-	
+
 	PixTestFactory *factory = PixTestFactory::instance();
 	PixTest *t(0);
 	t = factory->createTest(test, fPixSetup);
@@ -210,7 +219,7 @@ bool PixTestBareModule::doStdTest(std::string test) {
 	//to copy 'locally' the test histos
 	bool newHist = true;
 	string firstname, name;
-	while (newHist){		
+	while (newHist){
 		TH1* h = t->nextHist();
 		if (firstname == "") firstname = h->GetName();
 		else name = h->GetName();
@@ -232,8 +241,8 @@ bool PixTestBareModule::doStdTest(std::string test) {
 }
 
 // ----------------------------------------------------------------------
-bool PixTestBareModule::doRocTests(int MaxStep) {	
-	
+bool PixTestBareModule::doRocTests(int MaxStep) {
+
 	vector<string> suite;
 	suite.push_back("pretest");
 	suite.push_back("alive");
@@ -241,7 +250,7 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 	suite.push_back("bb2");
 
 	//Pretest
-	if (MaxStep >= 1 && !fStop) { 
+	if (MaxStep >= 1 && !fStop) {
 		if (!doStdTest(suite[0])) {
 			LOG(logWARNING) << "PixTestBareModule:: Pretest failed. Sequence stopped.";
 			return false;
@@ -252,9 +261,9 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 
 	//Alive
 	if (MaxStep >= 2 && !fStop) {
-		if (!doStdTest(suite[1])) { 
+		if (!doStdTest(suite[1])) {
 			LOG(logWARNING) << "PixTestBareModule:: Alive failed. Sequence stopped.";
-			return false; 
+			return false;
 		}
 	}
 	mDelay(1000);
@@ -263,16 +272,16 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 	//BumpBonding
 	if (MaxStep >= 3 && !fStop) {
 	  //	  cout << fBBMap << fBB2Map << endl;
-		if (fBBMap && !fBB2Map) { 
-			if (!doStdTest(suite[2])) { 
+		if (fBBMap && !fBB2Map) {
+			if (!doStdTest(suite[2])) {
 				LOG(logWARNING) << "PixTestBareModule:: BBMap failed. Sequence stopped.";
-				return false; 
+				return false;
 			}
 		}
-		else if (fBB2Map && !fBBMap) { 
-			if (!doStdTest(suite[3])) { 
+		else if (fBB2Map && !fBBMap) {
+			if (!doStdTest(suite[3])) {
 				LOG(logWARNING) << "PixTestBareModule:: BB2Map failed. Sequence stopped.";
-				return false; 
+				return false;
 			}
 		}
 		else {
@@ -288,7 +297,7 @@ bool PixTestBareModule::doRocTests(int MaxStep) {
 
 // ----------------------------------------------------------------------
 void PixTestBareModule::doTest() {
-	
+
 	LOG(logINFO) << "PixTestBareModule:: *******************************";
 	LOG(logINFO) << "PixTestBareModule::doTest() start with " << fParMaxSteps << " test steps.";
 

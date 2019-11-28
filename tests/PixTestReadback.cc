@@ -18,9 +18,9 @@ ClassImp(PixTestReadback)
 // ----------------------------------------------------------------------
 PixTestReadback::PixTestReadback(PixSetup *a, std::string name) : PixTest(a, name), fCalwVd(true), fCalwVa(false) {
   PixTest::init();
-  init(); 
+  init();
   LOG(logDEBUG) << "PixTestReadback ctor(PixSetup &a, string, TGTab *)";
-  fTree = 0; 
+  fTree = 0;
 
   vector<vector<pair<string, double> > > iniCal;
   vector<pair<string, double> > prova1;
@@ -29,10 +29,10 @@ PixTestReadback::PixTestReadback(PixSetup *a, std::string name) : PixTest(a, nam
   //initialize all calibration factors to 1
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
-    fPar0VdCal.push_back(1.);  
-    fPar1VdCal.push_back(1.);  
-    fPar0VaCal.push_back(1.);  
-    fPar1VaCal.push_back(1.);  
+    fPar0VdCal.push_back(1.);
+    fPar1VdCal.push_back(1.);
+    fPar0VaCal.push_back(1.);
+    fPar1VaCal.push_back(1.);
     fPar0RbIaCal.push_back(1.);
     fPar1RbIaCal.push_back(1.);
     fPar0TbIaCal.push_back(1.);
@@ -81,7 +81,7 @@ PixTestReadback::PixTestReadback(PixSetup *a, std::string name) : PixTest(a, nam
 //----------------------------------------------------------
 PixTestReadback::PixTestReadback() : PixTest() {
   LOG(logDEBUG) << "PixTestReadback ctor()";
-  fTree = 0; 
+  fTree = 0;
 }
 
 //----------------------------------------------------------
@@ -95,11 +95,11 @@ void PixTestReadback::init() {
   LOG(logDEBUG) << "PixTestReadback::init()";
 
   setToolTips();
-  fDirectory = gFile->GetDirectory(fName.c_str()); 
+  fDirectory = gFile->GetDirectory(fName.c_str());
   if (!fDirectory) {
-    fDirectory = gFile->mkdir(fName.c_str()); 
-  } 
-  fDirectory->cd(); 
+    fDirectory = gFile->mkdir(fName.c_str());
+  }
+  fDirectory->cd();
 }
 
 // ----------------------------------------------------------------------
@@ -148,6 +148,14 @@ void PixTestReadback::runCommand(std::string command) {
     setVana();
     return;
   }
+  if(!command.compare("dotest")){
+    doTest();
+    return;
+  }
+  if(!command.compare("fulltest")){
+    doTest();
+    return;
+  }
   else{
     LOG(logINFO) << "Command " << command << " not implemented.";
   }
@@ -166,16 +174,16 @@ bool PixTestReadback::setParameter(string parName, string sval) {
 	setToolTips();
       }
       if (!parName.compare("usecalvd")) {
-	PixUtil::replaceAll(sval, "checkbox(", ""); 
-	PixUtil::replaceAll(sval, ")", ""); 
-	fCalwVd = atoi(sval.c_str()); 
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fCalwVd = atoi(sval.c_str());
 	LOG(logDEBUG)<<"fCalwVd set to "<<fCalwVd;
 	setToolTips();
       }
       if (!parName.compare("usecalva")) {
-	PixUtil::replaceAll(sval, "checkbox(", ""); 
-	PixUtil::replaceAll(sval, ")", ""); 
-	fCalwVa = atoi(sval.c_str()); 
+	PixUtil::replaceAll(sval, "checkbox(", "");
+	PixUtil::replaceAll(sval, ")", "");
+	fCalwVa = atoi(sval.c_str());
 	setToolTips();
       }
     }
@@ -200,7 +208,7 @@ bool PixTestReadback::setTrgFrequency(uint8_t TrgTkDel){
   fPg_setup.push_back(make_pair("delay", ClkDelays));
 
   fParPeriod = fParPeriod + 4 + nDel; //to align to the new pg minimum (1 additional clk cycle per PG call);
-  
+
   return true;
 }
 
@@ -209,7 +217,7 @@ bool PixTestReadback::setTrgFrequency(uint8_t TrgTkDel){
 void PixTestReadback::pgToDefault() {
   fPg_setup.clear();
   LOG(logDEBUG) << "PixTestPattern::PG_Setup clean";
-  
+
   fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
   fApi->setPatternGenerator(fPg_setup);
   LOG(logINFO) << "PixTestPattern::       pg_setup set to default.";
@@ -218,7 +226,7 @@ void PixTestReadback::pgToDefault() {
 // ----------------------------------------------------------------------
 void PixTestReadback::setHistos(){
   fHits.clear(); fPhmap.clear(); fPh.clear(); fQmap.clear(); fQ.clear();
-  
+
   std::vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   TH1D *h1(0);
   TH2D *h2(0);
@@ -230,27 +238,27 @@ void PixTestReadback::setHistos(){
     setTitles(h2, "col", "row");
     fHistOptions.insert(make_pair(h2, "colz"));
     fHits.push_back(h2);
-    
+
     p2 = bookTProfile2D(Form("phMap_C%d", rocIds[iroc]), Form("phMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     p2->SetMinimum(0.);
     p2->SetDirectory(fDirectory);
     setTitles(p2, "col", "row");
     fHistOptions.insert(make_pair(p2, "colz"));
     fPhmap.push_back(p2);
-    
+
     h1 = bookTH1D(Form("ph_C%d", rocIds[iroc]), Form("ph_C%d", rocIds[iroc]), 256, 0., 256.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
     setTitles(h1, "ADC", "Entries/bin");
     fPh.push_back(h1);
-    
+
     p2 = bookTProfile2D(Form("qMap_C%d", rocIds[iroc]), Form("qMap_C%d", rocIds[iroc]), 52, 0., 52., 80, 0., 80.);
     p2->SetMinimum(0.);
     p2->SetDirectory(fDirectory);
     setTitles(p2, "col", "row");
     fHistOptions.insert(make_pair(p2, "colz"));
     fQmap.push_back(p2);
-    
+
     h1 = bookTH1D(Form("q_C%d", rocIds[iroc]), Form("q_C%d", rocIds[iroc]), 200, 0., 1000.);
     h1->SetMinimum(0.);
     h1->SetDirectory(fDirectory);
@@ -262,10 +270,10 @@ void PixTestReadback::setHistos(){
 
 // ----------------------------------------------------------------------
 void PixTestReadback::ProcessData(uint16_t numevents){
-  
+
   LOG(logDEBUG) << "Getting Event Buffer";
   std::vector<pxar::Event> daqdat;
-  
+
   if (numevents > 0) {
     for (unsigned int i = 0; i < numevents; i++) {
       pxar::Event evt;
@@ -279,13 +287,13 @@ void PixTestReadback::ProcessData(uint16_t numevents){
   else
     try { daqdat = fApi->daqGetEventBuffer(); }
     catch(pxar::DataNoEvent &) {}
-  
+
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
 }
 
 // ----------------------------------------------------------------------
 void PixTestReadback::FinalCleaning() {
-  
+
   // Reset the pg_setup to default value.
   pgToDefault();
   //clean local variables:
@@ -295,16 +303,16 @@ void PixTestReadback::FinalCleaning() {
 // ----------------------------------------------------------------------
 void PixTestReadback::doTest() {
   bigBanner(Form("PixTestReadback::doTest()"));
-  
+
   CalibrateVd();
   CalibrateVa();
   readbackVbg();
   vector<double> VBG =  getCalibratedVbg();
   CalibrateIa();
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-    (*il)->Draw((getHistOption(*il)).c_str()); 
+    (*il)->Draw((getHistOption(*il)).c_str());
   }
-  
+
  LOG(logINFO) << "PixTestReadback::doTest() done";
  dutCalibrateOff();
 }
@@ -319,7 +327,7 @@ void PixTestReadback::CalibrateIa(){
   int npoints = 10;
   int pace = 25;
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   vector<uint8_t> readback;
   vector<uint8_t> readback_allRocs;
@@ -335,11 +343,11 @@ void PixTestReadback::CalibrateIa(){
   uint8_t vana=0;
   for(int ivana=0; ivana<npoints; ivana++){
     vana = (uint8_t)ivana*pace;
-    rbIa.insert(make_pair(vana, readback_allRocs));   
+    rbIa.insert(make_pair(vana, readback_allRocs));
   }
   int count=0;
   while(readback.size()<1 && count<10){
-    readback=daqReadback("vana", (uint8_t)80, fParReadback);  
+    readback=daqReadback("vana", (uint8_t)80, fParReadback);
     LOG(logDEBUG)<<"CalibrateIa: daqReadback attempt #"<<count++;
   }
   if(10==count){
@@ -413,7 +421,7 @@ void PixTestReadback::CalibrateIa(){
   gStyle->SetOptFit(1111);
 
   vector<double> rb_vanaMax(rocIds.size(), 0.);
-   
+
   //protection to exclude plateu from fit
   for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
     rb_vanaMax[iroc] = hs_rbIa[iroc]->GetBinCenter(hs_rbIa[iroc]->FindFirstBinAbove(254));
@@ -496,11 +504,11 @@ void PixTestReadback::CalibrateIa(){
     fHistList.push_back(hs_tbIa[iroc]);
   }
   for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
-    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[getIdFromIdx(iroc)]);    
+    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[getIdFromIdx(iroc)]);
   }
-  
+
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
-    (*il)->Draw((getHistOption(*il)).c_str()); 
+    (*il)->Draw((getHistOption(*il)).c_str());
   }
 
   restoreDacs();
@@ -550,7 +558,7 @@ double PixTestReadback::getCalibratedIa(unsigned int iroc){
   double calIa;
   calIa = (((double)readback[iroc])*((double)readback[iroc])*fPar2TbIaCal[iroc]/fPar1RbIaCal[iroc]/fPar1RbIaCal[iroc] + ((double)readback[iroc])/fPar1RbIaCal[iroc]/fPar1RbIaCal[iroc]*(fPar1RbIaCal[iroc]*fPar1TbIaCal[iroc]-2*fPar0RbIaCal[iroc]*fPar2TbIaCal[iroc]) + (fPar0RbIaCal[iroc]*fPar0RbIaCal[iroc]*fPar2TbIaCal[iroc] - fPar0RbIaCal[iroc]*fPar1TbIaCal[iroc])/fPar1RbIaCal[iroc] + fPar0TbIaCal[iroc]);
   LOG(logDEBUG)<<"Calibrated analog current is "<<calIa;
-  
+
   FinalCleaning();
   return  calIa;
 }
@@ -564,7 +572,7 @@ void PixTestReadback::CalibrateVd(){
   //readback DAC set to 8 (i.e. Vd)
   fParReadback=8;
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   LOG(logDEBUG)<<"Number of enabled rocs: "<<(int)rocIds.size();
 
   vector<uint8_t> readback;
@@ -649,12 +657,12 @@ void PixTestReadback::CalibrateVd(){
       hs_dacVd[iroc]->Fill(Vd, fApi->getTBvd());
     }
   }
-  
+
   for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
     hs_rbVd[iroc]->GetXaxis()->SetTitle("Vd [V]");
     hs_rbVd[iroc]->GetYaxis()->SetTitle("Vd_rb [ADC]");
     hs_dacVd[iroc]->GetXaxis()->SetTitle("Vd set [V]");
-    hs_dacVd[iroc]->GetYaxis()->SetTitle("Vd TB [V]"); 
+    hs_dacVd[iroc]->GetYaxis()->SetTitle("Vd TB [V]");
   }
 
   gStyle->SetOptFit(1111);
@@ -663,7 +671,7 @@ void PixTestReadback::CalibrateVd(){
   vector<double> rb_VdMax(rocIds.size(), 0.);
   for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
     rb_VdMax[iroc] = hs_rbVd[iroc]->GetBinCenter(hs_rbVd[iroc]->FindFirstBinAbove(254));
-    
+
     LOG(logDEBUG)<<"Vd max for fit on ROC "<<getIdFromIdx(iroc)<<" : "<<rb_VdMax[iroc];
   }
 
@@ -674,13 +682,13 @@ void PixTestReadback::CalibrateVd(){
     frb = new TF1(name.c_str(), "[0] + x*[1]", 0, rb_VdMax[iroc]);
     v_frb.push_back(frb);
   }
-  
+
   for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
     hs_rbVd[iroc]->Fit(v_frb[iroc], "WS", "", 0., rb_VdMax[iroc]);
 
     fPar0VdCal[iroc]=v_frb[iroc]->GetParameter(0);
     fPar1VdCal[iroc]=v_frb[iroc]->GetParameter(1);
-    
+
     fHistList.push_back(hs_rbVd[iroc]);
     fHistList.push_back(hs_dacVd[iroc]);
   }
@@ -697,15 +705,15 @@ void PixTestReadback::CalibrateVd(){
   }
 
   for(unsigned int iroc = 0; iroc < rocIds.size(); iroc++){
-    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[iroc]);    
+    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[iroc]);
   }
 
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
     //    LOG(logDEBUG)<<"Drawing histo "<<(*il)->GetName();
-    (*il)->Draw((getHistOption(*il)).c_str()); 
+    (*il)->Draw((getHistOption(*il)).c_str());
 
   }
-  
+
   fDisplayedHist = fHistList.begin();
   PixTest::update();
 
@@ -724,13 +732,13 @@ void PixTestReadback::readbackVbg(){
   //readback DAC set to 11 (i.e. Vbg)
   fParReadback=11;
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   vector<uint8_t> readback;
 
   double VdMin;
   int nTbms = fApi->_dut->getNTbms();
-  //on a module, vd=2.8 
+  //on a module, vd=2.8
   if(nTbms>0){
     VdMin=2.8;
   }
@@ -753,13 +761,13 @@ void PixTestReadback::readbackVbg(){
   int n_meas=0;
   bool okRb=true;
   int sumRb=0;
-  
+
   for(int i=0; i<10; i++){
     sumRb=0;
     LOG(logDEBUG)<<"/****:::::: READBACK VBG :::::****/";
     LOG(logDEBUG)<<"Digital voltage will be set to: "<<VdMin;
     count=0;
-    do{ 
+    do{
       readback = daqReadback("vd", VdMin, fParReadback);
       count++;
     }  while(readback.size()<1 && count<10);
@@ -787,10 +795,10 @@ void PixTestReadback::readbackVbg(){
     LOG(logINFO)<<"Measurements of Vbg failed. Aborting.";
     return;
   }
-  
+
   for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
     fRbVbg[iroc] = avReadback[getIdFromIdx(iroc)]/n_meas;
-    
+
   }
 
   restoreDacs();
@@ -841,9 +849,9 @@ vector<double> PixTestReadback::getCalibratedVbg(){
   fHistList.push_back(h_vbg_rb);
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
     //    LOG(logDEBUG)<<"Drawing histo "<<(*il)->GetName();
-    (*il)->Draw((getHistOption(*il)).c_str()); 
+    (*il)->Draw((getHistOption(*il)).c_str());
   }
-  
+
   fDisplayedHist = fHistList.begin();
   PixTest::update();
   return calVbg;
@@ -858,7 +866,7 @@ void PixTestReadback::CalibrateVa(){
   //readback DAC set to 9 (i.e. Va)
   fParReadback=9;
 
-  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs(); 
+  vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
 
   vector<uint8_t> readback;
 
@@ -894,7 +902,7 @@ void PixTestReadback::CalibrateVa(){
   }
   pace=0.025;
   Npoints=13;
-  
+
   //dry run to avoid spikes
   while(readback.size()<1 && count<10){
     readback=daqReadback("va", VaMin, fParReadback);
@@ -931,7 +939,7 @@ void PixTestReadback::CalibrateVa(){
     if(10==count){
       LOG(logINFO)<<"ERROR: no readback data received after "<<count<<" attempts. Aborting readback calibration";
       return;
-    } 
+    }
     for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
       Va_mod = Va - R_va*fApi->getTBia() - DeltaGND; //values measured for 15cm molex cable
       hs_rbVa[iroc]->Fill(Va_mod, readback[getIdFromIdx(iroc)]);
@@ -952,7 +960,7 @@ void PixTestReadback::CalibrateVa(){
   vector<double> rb_VaMax(readback.size(), 0.);
   for(unsigned int iroc=0; iroc < readback.size(); iroc++){
     rb_VaMax[iroc] = hs_rbVa[iroc]->GetBinCenter(hs_rbVa[iroc]->FindFirstBinAbove(254));
-    
+
     LOG(logDEBUG)<<"Va max for fit on ROC "<<iroc<<" : "<<rb_VaMax[iroc];
   }
 
@@ -971,7 +979,7 @@ void PixTestReadback::CalibrateVa(){
     fHistList.push_back(hs_rbVa[iroc]);
     fHistList.push_back(hs_dacVa[iroc]);
   }
-  
+
   for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
     for(std::vector<std::pair<std::string, double> >::iterator ical = fRbCal[iroc].begin(); ical != fRbCal[iroc].end(); ical++){
       if(!(ical->first.compare("par0va"))){
@@ -984,15 +992,15 @@ void PixTestReadback::CalibrateVa(){
   }
 
   for(unsigned int iroc=0; iroc < rocIds.size(); iroc++){
-    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[iroc]);    
+    fPixSetup->getConfigParameters()->writeReadbackFile(getIdFromIdx(iroc), fRbCal[iroc]);
   }
 
   for (list<TH1*>::iterator il = fHistList.begin(); il != fHistList.end(); ++il) {
     //    LOG(logDEBUG)<<"Drawing histo "<<(*il)->GetName();
-    (*il)->Draw((getHistOption(*il)).c_str()); 
+    (*il)->Draw((getHistOption(*il)).c_str());
 
   }
-  
+
   fDisplayedHist = fHistList.begin();
   PixTest::update();
 
@@ -1017,7 +1025,7 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
 
   PixTest::update();
   fDirectory->cd();
-  
+
   if (!dac.compare("vana")){
     LOG(logDEBUG)<<"Wrong daqReadback function called!!!";
   }
@@ -1028,7 +1036,7 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   }
 
   fApi->setDAC("readback", parReadback);
-  
+
   doDAQ();
 
   std::vector<std::vector<uint16_t> > rb;
@@ -1038,7 +1046,7 @@ vector<uint8_t> PixTestReadback::daqReadback(string dac, double vana, int8_t par
   for(uint8_t i=0; i<rb.size(); i++){
     if(!rb.at(i).empty()) {
       // read the last readback word read out for ROC i
-      rb_val.push_back( rb.at(i).back()&0xff ); 
+      rb_val.push_back( rb.at(i).back()&0xff );
     }
   }
 
@@ -1068,7 +1076,7 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, int8
   for(uint8_t i=0; i<rb.size(); i++){
     if(!rb.at(i).empty()) {
       // read the last readback word read out for ROC i
-      rb_val.push_back( rb.at(i).back()&0xff ); 
+      rb_val.push_back( rb.at(i).back()&0xff );
     }
   }
 
@@ -1097,10 +1105,10 @@ std::vector<uint8_t> PixTestReadback::daqReadback(string dac, uint8_t vana, unsi
   for(uint8_t i=0; i<rb.size(); i++){
     if(!rb.at(i).empty()) {
       // read the last readback word read out for ROC i
-      rb_val.push_back( rb.at(i).back()&0xff ); 
+      rb_val.push_back( rb.at(i).back()&0xff );
     }
   }
-  
+
   return rb_val;
  }
 
@@ -1119,21 +1127,21 @@ std::vector<uint8_t> PixTestReadback::daqReadbackIa(){
   for(uint8_t i=0; i<rb.size(); i++){
     if(!rb.at(i).empty()) {
       // read the last readback word read out for ROC i
-      rb_val.push_back( rb.at(i).back()&0xff ); 
+      rb_val.push_back( rb.at(i).back()&0xff );
     }
   }
- 
+
   return rb_val;
 }
 
 void PixTestReadback::setVana() {
   cacheDacs();
   fDirectory->cd();
-  PixTest::update(); 
-  
+  PixTest::update();
+
   int fTargetIa=24;
-  
-  banner(Form("PixTestPretest::setVana() target Ia = %d mA/ROC", fTargetIa)); 
+
+  banner(Form("PixTestPretest::setVana() target Ia = %d mA/ROC", fTargetIa));
 
   fApi->_dut->testAllPixels(false);
 
@@ -1141,25 +1149,25 @@ void PixTestReadback::setVana() {
   vector<double> rocIana;
 
   // -- cache setting and switch off all(!) ROCs
-  int nRocs = fApi->_dut->getNRocs(); 
+  int nRocs = fApi->_dut->getNRocs();
   for (int iroc = 0; iroc < nRocs; ++iroc) {
     vanaStart.push_back(fApi->_dut->getDAC(iroc, "vana"));
-    rocIana.push_back(0.); 
+    rocIana.push_back(0.);
     fApi->setDAC("vana", 0, iroc);
   }
-  
+
   //readback already provides ia value corrected for offset, no need for further correction
   double i015=0.;
 
   // tune per ROC:
 
-  const double extra = 0.1; // [mA] besser zu viel als zu wenig 
+  const double extra = 0.1; // [mA] besser zu viel als zu wenig
   const double eps = 0.25; // [mA] convergence
   const double slope = 6; // 255 DACs / 40 mA
 
   for (int roc = 0; roc < nRocs; ++roc) {
     if (!selectedRoc(roc)) {
-      LOG(logDEBUG) << "skipping ROC idx = " << roc << " (not selected) for Vana tuning"; 
+      LOG(logDEBUG) << "skipping ROC idx = " << roc << " (not selected) for Vana tuning";
       continue;
     }
     int vana = vanaStart[roc];
@@ -1221,14 +1229,14 @@ void PixTestReadback::setVana() {
   } // rocs
 
   TH1D *hsum = bookTH1D("VanaSettings", "Vana per ROC", nRocs, 0., nRocs);
-  setTitles(hsum, "ROC", "Vana [DAC]"); 
+  setTitles(hsum, "ROC", "Vana [DAC]");
   hsum->SetStats(0);
   hsum->SetMinimum(0);
   hsum->SetMaximum(256);
   fHistList.push_back(hsum);
 
   TH1D *hcurr = bookTH1D("Iana", "Iana per ROC", nRocs, 0., nRocs);
-  setTitles(hcurr, "ROC", "Vana [DAC]"); 
+  setTitles(hcurr, "ROC", "Vana [DAC]");
   hcurr->SetStats(0); // no stats
   hcurr->SetMinimum(0);
   hcurr->SetMaximum(30.0);
@@ -1243,11 +1251,11 @@ void PixTestReadback::setVana() {
     // -- histogramming only for those ROCs that were selected
     if (!selectedRoc(roc)) continue;
     hsum->Fill(roc, vanaStart[roc] );
-    hcurr->Fill(roc, rocIana[roc]); 
+    hcurr->Fill(roc, rocIana[roc]);
   }
-  
+
   vector<double> v_ia16; // [mA]
-  
+
   TStopwatch sw;
   sw.Start(kTRUE); // reset
   do {
@@ -1288,7 +1296,7 @@ void PixTestReadback::prepareDAQ(){
 
   //set Pattern Generator
   fApi->setPatternGenerator(fPg_setup);
- 
+
 }
 
 void PixTestReadback::doDAQ(){
@@ -1299,9 +1307,9 @@ void PixTestReadback::doDAQ(){
 
   int  Ntrig=32;
   //Send the triggers:
-  fApi->daqStart(); 
+  fApi->daqStart();
   fApi->daqTrigger(Ntrig, fParPeriod);
-  fApi->daqStop(); 
+  fApi->daqStop();
   LOG(logDEBUG)<<Ntrig<<" triggers sent";
   gSystem->ProcessEvents();
   ProcessData(0);
@@ -1321,7 +1329,7 @@ void PixTestReadback::PreparePG(){
   //for ROCs: subtract "resetroc"
   int nTbms = fApi->_dut->getNTbms();
   vector<pair<string, uint8_t> > pgtmp = fPixSetup->getConfigParameters()->getTbPgSettings();
-  
+
   //for debugging: showing the pattern to be generated
   LOG(logDEBUG) << "********** The Pattern Generator will be set as following:";
   if (1) for (unsigned int i = 0; i < pgtmp.size(); ++i){
@@ -1329,12 +1337,12 @@ void PixTestReadback::PreparePG(){
   }
 
   for (unsigned i = 0; i < pgtmp.size(); ++i) {
-    if(nTbms==0){  
+    if(nTbms==0){
       if (string::npos != pgtmp[i].first.find("resetroc")){
         LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 3) from "<<ClkDelays;
         ClkDelays -= pgtmp[i].second+3;
       }
-    }  
+    }
     if (string::npos != pgtmp[i].first.find("trigger")){
       LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 2) from "<<ClkDelays;
       ClkDelays -= pgtmp[i].second+2;
@@ -1343,7 +1351,7 @@ void PixTestReadback::PreparePG(){
     LOG(logDEBUG)<<"Considering "<<pgtmp[i].first<<" by subtracting ("<< (uint16_t)pgtmp[i].second <<" + 1) from "<<ClkDelays;
     ClkDelays -= pgtmp[i].second+1;
     }
-      
+
   }
 
   //filling the rest of the clock cycles with "delay", taking account, that each delay needs one Clkcycle to be inititated.
@@ -1366,7 +1374,7 @@ void PixTestReadback::PreparePG(){
     if (string::npos != pgtmp[i].first.find("calibrate")) continue;
     fPg_setup.push_back(pgtmp[i]);
   }
-  
+
   //for debugging: showing the pattern to be generated
   LOG(logDEBUG) << "********** The Pattern Generator will be set as following:";
   if (1) for (unsigned int i = 0; i < fPg_setup.size(); ++i){

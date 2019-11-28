@@ -345,6 +345,15 @@ void PixTestPretest::runCommand(std::string command) {
     return;
   }
 
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
+  if (!command.compare("fulltest")) {
+    doTest();
+    return;
+  }
+
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 

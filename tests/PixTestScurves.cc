@@ -233,6 +233,14 @@ void PixTestScurves::runCommand(string command) {
     scurves();
     return;
   }
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
+  if (!command.compare("fulltest")) {
+    fullTest();
+    return;
+  }
   return;
 }
 

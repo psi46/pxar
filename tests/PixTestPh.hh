@@ -17,6 +17,7 @@ public:
 
   void runCommand(std::string);
   void doTest();
+  void fullTest();
   void phMap();
   void optimize();
   void scan(std::string name);

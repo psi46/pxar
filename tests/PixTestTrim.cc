@@ -77,6 +77,14 @@ void PixTestTrim::runCommand(std::string command) {
     trimTest();
     return;
   }
+  if (!command.compare("dotest")) {
+    doTest();
+    return;
+  }
+  if (!command.compare("fulltest")) {
+    doTest();
+    return;
+  }
   LOG(logDEBUG) << "did not find command ->" << command << "<-";
 }
 
