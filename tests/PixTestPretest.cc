@@ -194,7 +194,7 @@ string PixTestPretest::toolTip(string what) {
   if (string::npos != what.find("programroc")) return string("Quick check that each ROC is programmable ");
   if (string::npos != what.find("setvana")) return string("Set VANA such that I(ROC) ~ 24mA ");
   if (string::npos != what.find("settimings")) return string("optimize timing settings for TBM08A/TBM08B");
-  if (string::npos != what.find("findtiming")) return string("optimize timing settings for TBMs >= TBM08C");
+  if (string::npos != what.find("findtiming")) return string("optimize timing settings for modern TBMs");
 
   if (string::npos != what.find("findworkingpixel")) return string("try to find working pixels on all ROCs");
   if (string::npos != what.find("setvthrcompcaldel")) return string("adjust vthrcomp vs caldel (`tornado plot')");
