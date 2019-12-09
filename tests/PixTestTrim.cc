@@ -512,7 +512,8 @@ void PixTestTrim::trimBitTest() {
   }
 
   fApi->setDAC("Vcal", 200);
-  fApi->setDAC("Vthrcomp", 35);
+  // -- 19/12/09: Do not override proper setup
+  // fApi->setDAC("Vthrcomp", 35);
 
   vector<int>vtrim;
   vtrim.push_back(254);
@@ -569,7 +570,9 @@ void PixTestTrim::trimBitTest() {
 
     fApi->setDAC("Vtrim", vtrim[iv]);
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv];
-    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]), NTRIG, 0, static_cast<int>(maxThr)+10, -1, -1, 7), "thr");
+    thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]),
+				    NTRIG, 0, static_cast<int>(maxThr)+10, -1, -1, 7),
+			 "thr");
     maxThr = getMaximumThreshold(thr);
     if (maxThr > 245.) maxThr = 245.;
     steps.push_back(thr);
@@ -581,14 +584,19 @@ void PixTestTrim::trimBitTest() {
   for (unsigned int i = 0; i < steps.size(); ++i) {
     thr = steps[i];
     for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
-      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]), Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]), 256, 0., 256);
+      h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]),
+		    Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]),
+		    256, 0., 256);
       for (int ix = 0; ix < 52; ++ix) {
 	for (int iy = 0; iy < 80; ++iy) {
 	  dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
 	  h1->Fill(dthr);
 	}
       }
-      LOG(logDEBUG) << "ROC " << iroc << " step " << i << ": thr difference mean: " << h1->GetMean() << ", thr difference RMS: " << h1->GetRMS();
+      LOG(logDEBUG) << "ROC " << iroc
+		    << " step " << i
+		    << ": thr difference mean: " << h1->GetMean()
+		    << ", thr difference RMS: " << h1->GetRMS();
       fHistList.push_back(h1);
     }
   }
