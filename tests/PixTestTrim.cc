@@ -516,10 +516,17 @@ void PixTestTrim::trimBitTest() {
   // fApi->setDAC("Vthrcomp", 35);
 
   vector<int>vtrim;
-  vtrim.push_back(254);
-  vtrim.push_back(126);
-  vtrim.push_back(63);
-  vtrim.push_back(32);
+  // -- original
+  // vtrim.push_back(254);
+  // vtrim.push_back(126);
+  // vtrim.push_back(63);
+  // vtrim.push_back(32);
+
+  vtrim.push_back(255);
+  vtrim.push_back(200);
+  vtrim.push_back(150);
+  vtrim.push_back(100);
+
 
   vector<int>btrim;
   btrim.push_back(14);
