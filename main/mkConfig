@@ -686,7 +686,7 @@ phMap               button
 optimize            button
 adjustvthrcomp      checkbox(0)
 ntrig               10
-vcallow             10
+vcallow             50
 vcalhigh            255
 phscalemin          50
 phoffsetmin         100
