@@ -240,7 +240,7 @@ void PixTestPh::optimize() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
-  fApi->setVcalHighRange();
+  fApi->setVcalLowRange();
   fApi->setDAC("vcal", fVcalLow);
 
   LOG(logDEBUG) << "start with shot1Lo, vcallow = " << fVcalLow << " (high range)";
@@ -408,6 +408,8 @@ void PixTestPh::optimize() {
   LOG(logINFO) << hiData;
   LOG(logINFO) << "PH scale (per ROC):  " << psString;
   LOG(logINFO) << "PH offset (per ROC): " << poString;
+
+  fApi->setVcalLowRange();
 
 }
 

@@ -1252,7 +1252,7 @@ vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValue(vector<TH
     int minx(-1), miny(-1);
     for (int ix = 1; ix < maps[im]->GetNbinsX(); ++ix) {
       for (int iy = 1; iy < maps[im]->GetNbinsY(); ++iy) {
-	if (maps[im]->GetBinContent(ix, iy) < minimum) {
+	if ((maps[im]->GetBinContent(ix, iy) > 0) && (maps[im]->GetBinContent(ix, iy) < minimum)) {
 	  minimum = maps[im]->GetBinContent(ix, iy);
 	  minx = ix-1;
 	  miny = iy-1;
