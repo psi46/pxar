@@ -185,7 +185,8 @@ void PixTestPh::phMap() {
   maskPixels();
 
   fNDaqErrors = 0;
-  vector<TH2D*> test2 = phMaps("PH", fParNtrig, FLAG_FORCE_MASKED);
+  vector<uint8_t> v_ctrlreg     = getDacs("ctrlreg");
+  vector<TH2D*> test2 = phMaps(Form("PH_VCAL%d_CTRLREG%d", fParDacVal, v_ctrlreg[0]), fParNtrig, FLAG_FORCE_MASKED);
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
 
   TH2D *h = (TH2D*)(fHistList.back());
@@ -240,44 +241,29 @@ void PixTestPh::optimize() {
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
 
+  // -- set a range where we should see something
+  int vcalshot(255);
   fApi->setVcalLowRange();
-  fApi->setDAC("vcal", fVcalLow);
+  fApi->setDAC("vcal", vcalshot);
 
-  LOG(logDEBUG) << "start with shot1Lo, vcallow = " << fVcalLow << " (high range)";
-  vector<TH2D*> shot1Lo = phMaps("phshotVcalLow", 5);
-  LOG(logDEBUG) << "end with shot1Lo";
-  copy(shot1Lo.begin(), shot1Lo.end(), back_inserter(fHistList));
-  for (unsigned int i = 0; i < shot1Lo.size(); ++i)  {
-    TH1D *h1 = distribution(shot1Lo[i], 256, 0., 256.);
+  LOG(logDEBUG) << "start with shot, vcal = " << vcalshot << " (low range)";
+  vector<uint8_t> v_ctrlreg = getDacs("ctrlreg");
+  vector<TH2D*> shot = phMaps(Form("phshot_VCAL%d_CTRLREG%d", vcalshot, v_ctrlreg[0]), 5);
+  LOG(logDEBUG) << "end with shot";
+  copy(shot.begin(), shot.end(), back_inserter(fHistList));
+  for (unsigned int i = 0; i < shot.size(); ++i)  {
+    TH1D *h1 = distribution(shot[i], 256, 0., 256.);
     fHistList.push_back(h1);
   }
 
-  fApi->setVcalHighRange();
-  fApi->setDAC("vcal", fVcalHigh);
+  vector<pair<pair<int, int>, double> >  minPixel1 = getMinimumPixelAndValue(shot);
+  vector<pair<pair<int, int>, double> >  maxPixel1 = getMaximumPixelAndValue(shot);
 
-  LOG(logDEBUG) << "start with shot1Hi, vcalhigh = " << fVcalHigh << " (high range)";
-  vector<TH2D*> shot1Hi = phMaps("phshotVcalHigh", 5);
-  LOG(logDEBUG) << "end with shot1Hi";
-  copy(shot1Hi.begin(), shot1Hi.end(), back_inserter(fHistList));
-  for (unsigned int i = 0; i < shot1Hi.size(); ++i)  {
-    TH1D *h1 = distribution(shot1Hi[i], 40, 0., 256.);
-    fHistList.push_back(h1);
-  }
+  LOG(logDEBUG) << "minimum: shot " << minPixel1[0].second
+		<< " at " << minPixel1[0].first.first << "/" << minPixel1[0].first.second;
 
-  vector<pair<pair<int, int>, double> >  minPixel1 = getMinimumPixelAndValue(shot1Lo);
-  vector<pair<pair<int, int>, double> >  minPixel2 = getMinimumPixelAndValue(shot1Hi);
-  vector<pair<pair<int, int>, double> >  maxPixel1 = getMaximumPixelAndValue(shot1Lo);
-  vector<pair<pair<int, int>, double> >  maxPixel2 = getMaximumPixelAndValue(shot1Hi);
-
-  LOG(logDEBUG) << "minimum: shot1Lo " << minPixel1[0].second
-		<< " at " << minPixel1[0].first.first << "/" << minPixel1[0].first.second
-		<< " shot1Hi " << minPixel2[0].second
-		<< " at " << minPixel2[0].first.first << "/" << minPixel2[0].first.second ;
-
-  LOG(logDEBUG) << "maximum: shot1Lo " << maxPixel1[0].second
-		<< " at " << maxPixel1[0].first.first << "/" << maxPixel1[0].first.second
-		<< " shot1Hi " << maxPixel2[0].second
-		<< " at " << maxPixel2[0].first.first << "/" << maxPixel2[0].first.second ;
+  LOG(logDEBUG) << "maximum: shot " << maxPixel1[0].second
+		<< " at " << maxPixel1[0].first.first << "/" << maxPixel1[0].first.second;
 
   TH2D *h = (TH2D*)(fHistList.back());
 
@@ -304,6 +290,7 @@ void PixTestPh::optimize() {
     fApi->_dut->testPixel(fPIX[iroc].first, fPIX[iroc].second, true, rocIds[iroc]);
     fApi->_dut->maskPixel(fPIX[iroc].first, fPIX[iroc].second, false, rocIds[iroc]);
   }
+  fApi->setVcalLowRange();
   fApi->setDAC("vcal", fVcalLow);
   scan("phLo");
 
@@ -311,11 +298,12 @@ void PixTestPh::optimize() {
   fApi->_dut->testAllPixels(false);
   fApi->_dut->maskAllPixels(true);
   fPIX.clear();
-  for (unsigned int i = 0; i < maxPixel2.size(); ++i) fPIX.push_back(maxPixel2[i].first);
+  for (unsigned int i = 0; i < maxPixel1.size(); ++i) fPIX.push_back(maxPixel1[i].first);
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     fApi->_dut->testPixel(fPIX[iroc].first, fPIX[iroc].second, true, rocIds[iroc]);
     fApi->_dut->maskPixel(fPIX[iroc].first, fPIX[iroc].second, false, rocIds[iroc]);
   }
+  fApi->setVcalHighRange();
   fApi->setDAC("vcal", fVcalHigh);
   scan("phHi");
 
@@ -324,7 +312,7 @@ void PixTestPh::optimize() {
     hLo = fMaps[Form("phLo_phoffset_phscale_c%d_r%d_C%d",
 		     minPixel1[iroc].first.first, minPixel1[iroc].first.second, rocIds[iroc])];
     hHi = fMaps[Form("phHi_phoffset_phscale_c%d_r%d_C%d",
-		     maxPixel2[iroc].first.first, maxPixel2[iroc].first.second, rocIds[iroc])];
+		     maxPixel1[iroc].first.first, maxPixel1[iroc].first.second, rocIds[iroc])];
     h2[iroc] = bookTH2D(Form("phoffset_phscale_C%d", rocIds[iroc]), Form("phoffset_phscale_C%d", rocIds[iroc]),
 			256, 0., 256., 256, 0., 256.);
     setTitles(h2[iroc], "phoffset", "phscale");
@@ -367,18 +355,21 @@ void PixTestPh::optimize() {
   // -- validation
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-  fApi->setVcalHighRange();
+  fApi->setVcalLowRange();
   fApi->setDAC("vcal", fVcalLow);
   string loData("Lo mean/RMS:"), hiData("Hi mean/RMS:");
-  vector<TH2D*> loAlive = phMaps("phOptValLo", 10, FLAG_FORCE_MASKED);
+  v_ctrlreg = getDacs("ctrlreg");
+  vector<TH2D*> loAlive = phMaps(Form("phOptValLo_VCAL%d_CTRLREG%d", fVcalLow, v_ctrlreg[0]), 10, FLAG_FORCE_MASKED);
   for (unsigned int i = 0; i < loAlive.size(); ++i) {
     TH1* d1 = distribution(loAlive[i], 256, 0., 256.);
     loData += Form(" %3.0f/%3.0f", d1->GetMean(), d1->GetRMS());
     fHistList.push_back(loAlive[i]);
     fHistList.push_back(d1);
   }
+  fApi->setVcalHighRange();
   fApi->setDAC("vcal", fVcalHigh);
-  vector<TH2D*> hiAlive = phMaps("phOptValHi", 10, FLAG_FORCE_MASKED);
+  v_ctrlreg = getDacs("ctrlreg");
+  vector<TH2D*> hiAlive = phMaps(Form("phOptValHi_VCAL%d_CTRLREG%d", fVcalHigh, v_ctrlreg[0]), 10, FLAG_FORCE_MASKED);
   for (unsigned int i = 0; i < hiAlive.size(); ++i) {
     TH1* d1 = distribution(hiAlive[i], 256, 0., 256.);
     hiData += Form(" %3.0f/%3.0f", d1->GetMean(), d1->GetRMS());
