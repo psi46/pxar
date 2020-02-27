@@ -635,8 +635,17 @@ ignoreProblems      checkbox(0)
 targetIa            24
 setVana             button
 iterations          100
+EOF
+if ($tbmtype eq "TBM08A" || $tbmtype eq "TBM08B") {
+    print FH <<"EOF";
 setTimings          button
+EOF
+} else {
+    print FH <<"EOF";
 findTiming          button
+EOF
+}
+    print FH <<"EOF";
 findWorkingPixel    button
 setVthrCompCalDel   button
 PIX                 11,20
@@ -646,7 +655,9 @@ fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
 SaveTbms            button
+EOF
 
+    print FH <<"EOF";
 -- PixelAlive
 Ntrig               10
 Vcal                200
