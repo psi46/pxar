@@ -199,6 +199,8 @@ public:
   bool threshold(TH1 *);
   /// find first bin above 50% level. Fills fThreshold, fThresholdE, fSigma, fSigmaE
   int simpleThreshold(TH1 *);
+  /// return  pixel col/row and minimum value in a (PH) map, using only the double column with the smallest mean PH
+  std::vector<std::pair<std::pair<int, int>, double> > getMinimumPixelAndValueMinCol(std::vector<TH2D*>maps);
   /// return  pixel col/row and minimum value in a (PH) map
   std::vector<std::pair<std::pair<int, int>, double> > getMinimumPixelAndValue(std::vector<TH2D*>maps);
   /// return  pixel col/row and maximum value in a (PH) map

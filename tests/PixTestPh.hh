@@ -24,13 +24,11 @@ public:
   void adjustVthrComp();
 
  private:
-
-  int     fParNtrig;
   std::string fParDAC;
   int     fParDacVal;
   // -- PH optimziation
   std::map<std::string, TH2D*> fMaps;
-  int    fAdjustVthrComp, fVcalLow, fVcalHigh, fPhScaleMin, fPhOffsetMin, fPhMin, fPhMax;
+  int    fVcalLow, fVcalHigh, fPhScaleMin, fPhOffsetMin, fPhMin, fPhMax;
 
   ClassDef(PixTestPh, 1)
 

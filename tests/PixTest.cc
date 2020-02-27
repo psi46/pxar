@@ -1245,6 +1245,54 @@ vector<int> PixTest::getMaximumVthrComp(int ntrig, double frac, int reserve) {
 
 
 // ----------------------------------------------------------------------
+vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValueMinCol(vector<TH2D*>maps) {
+  vector<pair<pair<int, int>, double> > results;
+  for (unsigned int im = 0; im < maps.size(); ++im) {
+    double minimum(99999.);
+    int minx(-1), miny(-1);
+    // -- find double column with the smallest mean
+    int nNonZero(0), dcMinIdx(-1);
+    double dcMean(0.), dcMeanMin(9999.);
+    for (int ix = 0; ix < 26; ++ix) {
+      dcMean = 0.;
+      nNonZero = 0;
+      for (int iy = 1; iy < maps[im]->GetNbinsY(); ++iy) {
+	if (maps[im]->GetBinContent(2*ix+1, iy) > 0) {
+	  dcMean += maps[im]->GetBinContent(2*ix+1, iy);
+	  ++nNonZero;
+	}
+	if (maps[im]->GetBinContent(2*ix+2, iy) > 0) {
+	  dcMean += maps[im]->GetBinContent(2*ix+2, iy);
+	  ++nNonZero;
+	}
+	if ((nNonZero > 0) && (dcMean/nNonZero < dcMeanMin)) {
+	  dcMeanMin = dcMean/nNonZero;
+	  dcMinIdx = ix;
+	}
+      }
+    }
+
+    // -- find pixel with smallest PH in this double column
+    for (int iy = 1; iy < maps[im]->GetNbinsY(); ++iy) {
+      if ((maps[im]->GetBinContent(2*dcMinIdx+1, iy) > 0) && (maps[im]->GetBinContent(2*dcMinIdx+1, iy) < minimum)) {
+	minimum = maps[im]->GetBinContent(2*dcMinIdx+1, iy);
+	minx = 2*dcMinIdx;
+	miny = iy-1;
+      }
+      if ((maps[im]->GetBinContent(2*dcMinIdx+2, iy) > 0) && (maps[im]->GetBinContent(2*dcMinIdx+2, iy) < minimum)) {
+	minimum = maps[im]->GetBinContent(2*dcMinIdx+2, iy);
+	minx = 2*dcMinIdx+1;
+	miny = iy-1;
+      }
+    }
+    results.push_back(make_pair(make_pair(minx, miny), minimum));
+  }
+
+  return results;
+}
+
+
+// ----------------------------------------------------------------------
 vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValue(vector<TH2D*>maps) {
   vector<pair<pair<int, int>, double> > results;
   for (unsigned int im = 0; im < maps.size(); ++im) {
@@ -1264,6 +1312,7 @@ vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValue(vector<TH
 
   return results;
 }
+
 
 // ----------------------------------------------------------------------
 vector<pair<pair<int, int>, double> > PixTest::getMaximumPixelAndValue(vector<TH2D*>maps) {

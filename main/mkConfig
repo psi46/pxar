@@ -685,12 +685,11 @@ DACval              200
 phMap               button
 optimize            button
 adjustvthrcomp      checkbox(0)
-ntrig               10
-vcallow             50
+vcallow             60
 vcalhigh            255
 phscalemin          50
 phoffsetmin         100
-phmin               2
+phmin               10
 phmax               250
 
 -- BB

@@ -16,10 +16,8 @@ ClassImp(PixTestPh)
 
 //------------------------------------------------------------------------------
 PixTestPh::PixTestPh( PixSetup *a, std::string name ) :  PixTest(a, name),
-  fParNtrig(-1),
   fParDAC("nada"),
   fParDacVal(100),
-  fAdjustVthrComp(0),
   fVcalLow(-1),
   fVcalHigh(-1),
   fPhScaleMin(-1),
@@ -50,8 +48,8 @@ bool PixTestPh::setParameter(string parName, string sval) {
       sval.erase(remove(sval.begin(), sval.end(), ' '), sval.end());
       if (!parName.compare("ntrig")) {
 	setTestParameter("ntrig", sval);
-	fParNtrig = atoi( sval.c_str() );
-	LOG(logDEBUG) << "  setting fParNtrig  ->" << fParNtrig
+	fNtrig = atoi( sval.c_str() );
+	LOG(logDEBUG) << "  setting fNtrig  ->" << fNtrig
 		      << "<- from sval = " << sval;
       }
       if (!parName.compare("dac")) {
@@ -91,18 +89,6 @@ bool PixTestPh::setParameter(string parName, string sval) {
 
       if (!parName.compare("phoffsetmin")) {
 	fPhOffsetMin = atoi(sval.c_str());
-      }
-
-
-      if (!parName.compare("ntrig")) {
-	fParNtrig = atoi(sval.c_str());
-      }
-
-      if (!parName.compare("adjustvthrcomp")) {
-	PixUtil::replaceAll(sval, "checkbox(", "");
-	PixUtil::replaceAll(sval, ")", "");
-	fAdjustVthrComp = atoi(sval.c_str());
-	setToolTips();
       }
 
       break;
@@ -176,7 +162,7 @@ void PixTestPh::phMap() {
   fDirectory->cd();
   PixTest::update();
   banner(Form("PixTestPh::phMap() ntrig = %d, %s = %d",
-	      static_cast<int>(fParNtrig), fParDAC.c_str(), static_cast<int>(fParDacVal)));
+	      static_cast<int>(fNtrig), fParDAC.c_str(), static_cast<int>(fParDacVal)));
 
   fApi->setDAC(Form("%s", fParDAC.c_str()), fParDacVal);
 
@@ -186,7 +172,7 @@ void PixTestPh::phMap() {
 
   fNDaqErrors = 0;
   vector<uint8_t> v_ctrlreg     = getDacs("ctrlreg");
-  vector<TH2D*> test2 = phMaps(Form("PH_VCAL%d_CTRLREG%d", fParDacVal, v_ctrlreg[0]), fParNtrig, FLAG_FORCE_MASKED);
+  vector<TH2D*> test2 = phMaps(Form("PH_VCAL%d_CTRLREG%d", fParDacVal, v_ctrlreg[0]), fNtrig, FLAG_FORCE_MASKED);
   copy(test2.begin(), test2.end(), back_inserter(fHistList));
 
   TH2D *h = (TH2D*)(fHistList.back());
@@ -220,8 +206,8 @@ void PixTestPh::fullTest() {
 // ----------------------------------------------------------------------
 void PixTestPh::optimize() {
 
-  bigBanner(Form("PixTestPh::optimize() Ntrig = %d, vcal Low/High = %d/%d, adjustVthrComp = %d"
-		 , fParNtrig, fVcalLow, fVcalHigh, fAdjustVthrComp));
+  bigBanner(Form("PixTestPh::optimize() Ntrig = %d, vcal Low/High = %d/%d"
+		 , fNtrig, fVcalLow, fVcalHigh));
   banner(Form("phmin = %d, phmax = %d", fPhMin, fPhMax));
 
   gStyle->SetPalette(1);
@@ -256,11 +242,13 @@ void PixTestPh::optimize() {
     fHistList.push_back(h1);
   }
 
-  vector<pair<pair<int, int>, double> >  minPixel1 = getMinimumPixelAndValue(shot);
+  vector<pair<pair<int, int>, double> >  minPixel1 = getMinimumPixelAndValueMinCol(shot);
   vector<pair<pair<int, int>, double> >  maxPixel1 = getMaximumPixelAndValue(shot);
+  vector<pair<pair<int, int>, double> >  minPixel1Old = getMinimumPixelAndValue(shot);
 
   LOG(logDEBUG) << "minimum: shot " << minPixel1[0].second
-		<< " at " << minPixel1[0].first.first << "/" << minPixel1[0].first.second;
+		<< " at " << minPixel1[0].first.first << "/" << minPixel1[0].first.second
+		<< " old at " << minPixel1Old[0].first.first << "/" << minPixel1Old[0].first.second;
 
   LOG(logDEBUG) << "maximum: shot " << maxPixel1[0].second
 		<< " at " << maxPixel1[0].first.first << "/" << maxPixel1[0].first.second;
@@ -435,7 +423,7 @@ void PixTestPh::scan(string name) {
   while (!done) {
     LOG(logDEBUG) << "      attempt #" << cnt;
     try{
-      results = fApi->getPulseheightVsDACDAC("phoffset", 0, 255, "phscale", 0, 255, FLAGS, fParNtrig);
+      results = fApi->getPulseheightVsDACDAC("phoffset", 0, 255, "phscale", 0, 255, FLAGS, fNtrig);
       fNDaqErrors = fApi->getStatistics().errors_pixel();
       done = true;
     } catch(pxarException &e) {
