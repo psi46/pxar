@@ -1,13 +1,13 @@
 # Build pXar executables:
 
 INCLUDE_DIRECTORIES( . )
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ana ${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${PROJECT_SOURCE_DIR}/gui )
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/util ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/usertests ${PROJECT_SOURCE_DIR}/gui )
 
 SET (pXar_SOURCES
 pXar.cc
 )
 
-# fill list of header files 
+# fill list of header files
 set(pXar_HEADERS
 )
 
@@ -20,7 +20,7 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 add_executable(${PXAR_EXECUTABLE} pXar.cc )
-target_link_libraries(${PXAR_EXECUTABLE} ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} ${DEVICES_LINK_LIBRARY} pxartests pxarusertests pxargui pxarutil pxarana)
+target_link_libraries(${PXAR_EXECUTABLE} ${PROJECT_NAME} ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} ${DEVICES_LINK_LIBRARY} pxartests pxarusertests pxargui pxarutil )
 
 INSTALL(TARGETS ${PXAR_EXECUTABLE}
   RUNTIME DESTINATION bin

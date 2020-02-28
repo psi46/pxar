@@ -7,9 +7,9 @@
 
 class DLLEXPORT PixUtil {
 
-public: 
+public:
   static void setPlotStyle();
-  static double dEff(int in, int iN); 
+  static double dEff(int in, int iN);
   static double dBinomial(int in, int iN);
 
   /// convert a string into ROC/COL/ROW
@@ -19,7 +19,7 @@ public:
   /// and back again
   static void idx2rcr(int idx, int &iroc, int &icol, int &irow);
   /// cleanup a string: remove everything behind #, concatenate multiple spaces into one, translate tabs into spaces
-  static void cleanupString(std::string &); 
+  static void cleanupString(std::string &);
   /// in str, replace all occurences of from to to
   static void replaceAll(std::string& str, const std::string& from, const std::string& to);
   /// what would you expect?
@@ -29,4 +29,3 @@ public:
 
 
 #endif
-

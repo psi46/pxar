@@ -176,7 +176,7 @@ set(CMAKE_MACOSX_RPATH 1)
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 # when building, don't use the install RPATH already
 # (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # *ALTERNATIVELY*: USE RELATIVE PATHS
 # see http://www.semipol.de/archives/356
@@ -224,9 +224,6 @@ IF(BUILD_pxarui)
   # Build the util library
   ADD_SUBDIRECTORY(util)
 
-  # Build the analysis  library
-  ADD_SUBDIRECTORY(ana)
-
   # Build the tests and test library
   ADD_SUBDIRECTORY(tests)
 
@@ -246,8 +243,6 @@ IF(BUILD_tools)
   ADD_SUBDIRECTORY(tools)
 ENDIF(BUILD_tools)
 
-# Add targets for Doxygen code reference and LaTeX User manual
-ADD_SUBDIRECTORY(doc)
 
 #######################################################
 # Print out system information useful for bug reports #
