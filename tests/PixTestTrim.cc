@@ -511,22 +511,14 @@ void PixTestTrim::trimBitTest() {
     }
   }
 
-  fApi->setDAC("Vcal", 200);
-  // -- 19/12/09: Do not override proper setup
-  // fApi->setDAC("Vthrcomp", 35);
+  fApi->setDAC("Vcal", 250);
+  fApi->setDAC("Vthrcomp", 70);
 
   vector<int>vtrim;
-  // -- original
-  // vtrim.push_back(254);
-  // vtrim.push_back(126);
-  // vtrim.push_back(63);
-  // vtrim.push_back(32);
-
-  vtrim.push_back(255);
-  vtrim.push_back(200);
-  vtrim.push_back(150);
-  vtrim.push_back(100);
-
+  vtrim.push_back(254);
+  vtrim.push_back(126);
+  vtrim.push_back(63);
+  vtrim.push_back(32);
 
   vector<int>btrim;
   btrim.push_back(14);
@@ -553,6 +545,13 @@ void PixTestTrim::trimBitTest() {
     fProblem = true;
     return;
   }
+  // FIXME: Check whether this is necessary!
+  LOG(logDEBUG) << "trimBitTest initDUT with trim bits = 15" ;
+  for (vector<uint8_t>::size_type iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
+  }
+
+
   fApi->setVcalLowRange();
   fApi->setDAC("Vtrim", 0);
   LOG(logDEBUG) << "trimBitTest determine threshold map without trims ";
