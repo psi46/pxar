@@ -1602,21 +1602,9 @@ void PixTest::preScan(string dac, vector<shist256*> maps, int &dacmin, int &dacm
       }
       if (fThreshold > 0) {
         hT->Fill(fThreshold);
-//      TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));
-//      h->SetTitle(Form("OK i = %d, thr = %4.3f, thrn = %4.3f", i, fThreshold, fThresholdN));
-//      fHistList.push_back(h);
       } else {
         hT->Fill(0.);
-//      TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));
-//      h->SetTitle(Form("i = %d, thr = %4.3f, thrn = %4.3f", i, fThreshold, fThresholdN));
-//      fHistList.push_back(h);
       }
-
-//       if (fThreshold > 80.) {
-//      TH1D *h = (TH1D*)h1->Clone(Form("h1_%d", i));
-//      h->SetTitle(Form("i = %d, thr = %4.3f, thrn = %4.3f", i, fThreshold, fThresholdN));
-//      fHistList.push_back(h);
-//       }
     }
   }
 
@@ -1786,13 +1774,13 @@ void PixTest::scurveAna(string dac, string name, vector<shist256*> maps, vector<
         if (dumpFile) OutputFile << empty << endl;
         continue;
       }
-      // -- calculated "proper" errors
+      // -- calculate "proper" errors
       h1->Reset();
       for (int ib = 1; ib <= 256; ++ib) {
         h1->SetBinContent(ib, maps[i]->get(ib));
         h1->SetBinError(ib, fNtrig*PixUtil::dBinomial(static_cast<int>(maps[i]->get(ib)), fNtrig));
       }
-
+      // -- the proper analysis happens here
       bool ok = threshold(h1);
       if (((result & 0x10) && !ok) || (result & 0x20)) {
         TH1D *h1c = (TH1D*)h1->Clone(Form("scurve_%s_c%d_r%d_C%d", dac.c_str(), ic, ir, rocIds[iroc]));
