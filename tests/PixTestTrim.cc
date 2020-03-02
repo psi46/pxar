@@ -546,10 +546,10 @@ void PixTestTrim::trimBitTest() {
     return;
   }
   // FIXME: Check whether this is necessary!
-  LOG(logDEBUG) << "trimBitTest initDUT with trim bits = 15" ;
-  for (vector<uint8_t>::size_type iroc = 0; iroc < rocIds.size(); ++iroc) {
-    fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
-  }
+  // LOG(logDEBUG) << "trimBitTest initDUT with trim bits = 15" ;
+  // for (vector<uint8_t>::size_type iroc = 0; iroc < rocIds.size(); ++iroc) {
+  //   fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
+  // }
 
 
   fApi->setVcalLowRange();
