@@ -650,7 +650,7 @@ findWorkingPixel    button
 setVthrCompCalDel   button
 PIX                 11,20
 Vcal                250
-DeltaVthrComp       50
+DeltaVthrComp       80
 fracCalDel          0.5
 Ntrig               5
 SaveDacs            button
@@ -703,11 +703,12 @@ phoffsetmin         100
 phmin               10
 phmax               250
 
--- BB
-dumpAll             checkbox(0)
-dumpProblematic     checkbox(0)
-Ntrig               5
-vcals               250
+-- BB2
+Ntrig               10
+vcals               222
+Plwidth             35
+PIX                 11,20
+targetIa            24
 
 -- Readback
 calibrateVd         button
@@ -759,7 +760,7 @@ scurves             button
 -- Trim
 trim                button
 Ntrig               8
-Vcal                35
+Vcal                50
 TrimBits            button
 
 -- GainPedestal
@@ -855,12 +856,11 @@ binaryoutput        checkbox(0)
 outputfile          defaultPattern
 resettodefault      button
 
--- BB2
-Ntrig               10
-vcals               222
-Plwidth             35
-PIX                 11,20
-targetIa            24
+-- BB
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
+Ntrig               5
+vcals               250
 
 -- BB3
 dumpAll             checkbox(0)
