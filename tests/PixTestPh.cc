@@ -17,7 +17,7 @@ ClassImp(PixTestPh)
 //------------------------------------------------------------------------------
 PixTestPh::PixTestPh( PixSetup *a, std::string name ) :  PixTest(a, name),
   fParDAC("nada"),
-  fParDacVal(100),
+  fParDacVal(70),
   fVcalLow(-1),
   fVcalHigh(-1),
   fPhScaleMin(-1),

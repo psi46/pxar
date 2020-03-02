@@ -692,7 +692,7 @@ PIX                 11,20
 -- Ph
 Ntrig               10
 DAC                 vcal
-DACval              200
+DACval              70
 phMap               button
 optimize            button
 adjustvthrcomp      checkbox(0)
