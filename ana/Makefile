@@ -26,7 +26,8 @@ $(addprefix obj/,%.o) : %.cc
 	mv $(subst Dict.cc,Dict_rdict.pcm,$@) ../lib
 
 # -- Source code
-ANA = anaFullTest.o \
+ANA = anaPHValidation.o \
+      anaFullTest.o \
       anaGainPedestal.o \
       anaScurve.o
 
