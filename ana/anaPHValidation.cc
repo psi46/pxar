@@ -73,7 +73,19 @@ void anaPHValidation::cleanup() {
 
 // ----------------------------------------------------------------------
 void anaPHValidation::makeAll() {
+
+  string basedir = "/Users/ursl/pxar/pxar/data/phvalidation/T+10/";
+
   vector<string> modules;
+
+  modules.push_back("M1554");
+  modules.push_back("M1555");
+  modules.push_back("M1556");
+
+  modules.push_back("M1561");
+  modules.push_back("M1564");
+  modules.push_back("M1565");
+  modules.push_back("M1566");
   modules.push_back("M1568");
   modules.push_back("M1569");
 
@@ -106,7 +118,7 @@ void anaPHValidation::makeAll() {
 
   for (unsigned int im = 0; im < modules.size(); ++im) {
     if (im > 0) cleanup();
-    string directory = string("../data/phvalidation/new/") + modules[im];
+    string directory = basedir + modules[im];
     readAsciiFiles(directory, (im==0)?true:false);
     fitErr();
   }
@@ -194,8 +206,9 @@ void anaPHValidation::fitErr(int roc, int col, int row, bool draw) {
   TH1D *h(0);
   TH2D *h2(0);
 
+  // -- define histograms per ROC and below per module. NO histograms are defined for EVERYTHING.
   for (int i = 0; i < fNrocs; ++i) {
-    h = new TH1D(Form("cd_%s_C%d", fModule.c_str(), i), Form("chi2/dof for MOD %s ROC%d, errf ", fModule.c_str(), i), 100, 0., 5.);
+    h = new TH1D(Form("cd_%s_C%d", fModule.c_str(), i), Form("chi2/dof for MOD %s ROC%d, errf ", fModule.c_str(), i), 100, 0., 20.);
     fhsummary.insert(make_pair(Form("cd_%s_C%d", fModule.c_str(), i), h));
 
     h = new TH1D(Form("p0_%s_C%d", fModule.c_str(), i), Form("p0 (step) MOD %s ROC %d, errf ", fModule.c_str(), i), 100, 0., 1000.);
@@ -215,9 +228,25 @@ void anaPHValidation::fitErr(int roc, int col, int row, bool draw) {
     fh2summary.insert(make_pair(Form("curve_%s_C%d", fModule.c_str(), i), h2));
   }
 
+  h = new TH1D(Form("cd_%s", fModule.c_str()), Form("chi2/dof module %s, errf ", fModule.c_str()), 100, 0., 20.);
+  fhsummary.insert(make_pair(Form("cd_%s", fModule.c_str()), h));
+  TH1D *h1modcd = h;
+
+  h = new TH1D(Form("p0_%s", fModule.c_str()), Form("p0 (step) module %s, errf ", fModule.c_str()), 100, 0., 1000.);
+  fhsummary.insert(make_pair(Form("p0_%s", fModule.c_str()), h));
+  TH1D *h1modp0 = h;
+
+  h = new TH1D(Form("p1_%s", fModule.c_str()), Form("p1 (slope) module %s, errf ", fModule.c_str()), 120, 0., 1200.);
+  fhsummary.insert(make_pair(Form("p1_%s", fModule.c_str()), h));
+  TH1D *h1modp1 = h;
+
+  h = new TH1D(Form("p2_%s", fModule.c_str()), Form("p2 (floor) module %s, errf ", fModule.c_str()), 100, 0., 10.);
+  fhsummary.insert(make_pair(Form("p2_%s", fModule.c_str()), h));
+  TH1D *h1modp2 = h;
+
   h = new TH1D(Form("p3_%s", fModule.c_str()), Form("p3 (half plateau) module %s, errf ", fModule.c_str()), 100, 0., 200.);
   fhsummary.insert(make_pair(Form("p3_%s", fModule.c_str()), h));
-  TH1D *h1modsum = h;
+  TH1D *h1modp3 = h;
 
   h2 = new TH2D(Form("curve_%s", fModule.c_str()), Form("curve module %s, errf ", fModule.c_str()), 200, 0., 2000., 256, 0., 256.);
   fh2summary.insert(make_pair(Form("curve_%s", fModule.c_str()), h2));
@@ -256,11 +285,15 @@ void anaPHValidation::fitErr(int roc, int col, int row, bool draw) {
     }
     h->Fit(f, (draw?"":"q"));
     hcd->Fill(f->GetChisquare()/f->GetNDF());
+    h1modcd->Fill(f->GetChisquare()/f->GetNDF());
     hp0->Fill(f->GetParameter(0));
+    h1modp0->Fill(f->GetParameter(0));
     hp1->Fill(f->GetParameter(1));
+    h1modp1->Fill(f->GetParameter(1));
     hp2->Fill(f->GetParameter(2));
+    h1modp2->Fill(f->GetParameter(2));
     hp3->Fill(f->GetParameter(3));
-    h1modsum->Fill(f->GetParameter(3));
+    h1modp3->Fill(f->GetParameter(3));
     for (int i = 0; i < h2modsum->GetNbinsX(); ++i) {
       double vcal = h2modsum->GetXaxis()->GetBinCenter(i + 1);
       double ph = f->Eval(vcal);
