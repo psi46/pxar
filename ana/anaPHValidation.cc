@@ -72,49 +72,64 @@ void anaPHValidation::cleanup() {
 
 
 // ----------------------------------------------------------------------
-void anaPHValidation::makeAll() {
-
-  string basedir = "/Users/ursl/pxar/pxar/data/phvalidation/T+10/";
+void anaPHValidation::makeAll(string basedir, string basename) {
 
   vector<string> modules;
+#if defined(WIN32)
+#else
+  TString fname;
+  const char *file;
+  TSystem *lunix = gSystem;
+  void *pDir = lunix->OpenDirectory(basedir.c_str());
+  while ((file = lunix->GetDirEntry(pDir))) {
+    fname = file;
+    if (fname.Contains(basename.c_str())) {
+      modules.push_back(string(fname));
+    }
+  }
+  std::sort(modules.begin(), modules.end());
+#endif
 
-  modules.push_back("M1554");
-  modules.push_back("M1555");
-  modules.push_back("M1556");
 
-  modules.push_back("M1561");
-  modules.push_back("M1564");
-  modules.push_back("M1565");
-  modules.push_back("M1566");
-  modules.push_back("M1568");
-  modules.push_back("M1569");
+  // vector<string> modules;
 
-  modules.push_back("M1570");
-  modules.push_back("M1571");
-  modules.push_back("M1573");
-  modules.push_back("M1574");
-  modules.push_back("M1576");
-  modules.push_back("M1577");
-  modules.push_back("M1578");
-  modules.push_back("M1579");
+  // modules.push_back("M1554");
+  // modules.push_back("M1555");
+  // modules.push_back("M1556");
 
-  modules.push_back("M1580");
-  modules.push_back("M1581");
-  modules.push_back("M1582");
-  modules.push_back("M1583");
-  modules.push_back("M1584");
-  modules.push_back("M1585");
-  modules.push_back("M1587");
-  modules.push_back("M1588");
-  modules.push_back("M1589");
+  // modules.push_back("M1561");
+  // modules.push_back("M1564");
+  // modules.push_back("M1565");
+  // modules.push_back("M1566");
+  // modules.push_back("M1568");
+  // modules.push_back("M1569");
 
-  modules.push_back("M1590");
-  modules.push_back("M1591");
-  modules.push_back("M1592");
-  modules.push_back("M1595");
-  modules.push_back("M1596");
-  modules.push_back("M1597");
-  modules.push_back("M1600");
+  // modules.push_back("M1570");
+  // modules.push_back("M1571");
+  // modules.push_back("M1573");
+  // modules.push_back("M1574");
+  // modules.push_back("M1576");
+  // modules.push_back("M1577");
+  // modules.push_back("M1578");
+  // modules.push_back("M1579");
+
+  // modules.push_back("M1580");
+  // modules.push_back("M1581");
+  // modules.push_back("M1582");
+  // modules.push_back("M1583");
+  // modules.push_back("M1584");
+  // modules.push_back("M1585");
+  // modules.push_back("M1587");
+  // modules.push_back("M1588");
+  // modules.push_back("M1589");
+
+  // modules.push_back("M1590");
+  // modules.push_back("M1591");
+  // modules.push_back("M1592");
+  // modules.push_back("M1595");
+  // modules.push_back("M1596");
+  // modules.push_back("M1597");
+  // modules.push_back("M1600");
 
   for (unsigned int im = 0; im < modules.size(); ++im) {
     if (im > 0) cleanup();
@@ -337,6 +352,8 @@ void anaPHValidation::fitErr(int roc, int col, int row, bool draw) {
   gStyle->SetOptStat(0);
   for (map<string, TH2D*>::iterator il = fh2summary.begin(); il != end2; ++il) {
     if (il->second->GetEntries() < 1) continue;
+    double entries = il->second->ProjectionY("blepy", 40, 40)->Integral();
+    il->second->SetTitle(Form("%s (N = %5.0f)", il->second->GetTitle(), entries));
     il->second->Draw("colz");
     c0->SaveAs(Form("%s/phval-%s.pdf", fDirectory.c_str(), il->second->GetName()));
   }

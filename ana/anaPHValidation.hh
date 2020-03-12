@@ -16,10 +16,10 @@
 class anaPHValidation {
 
  public:
-  anaPHValidation(std::string dir, int nrocs = 16);
+  anaPHValidation(std::string pdfdir, int nrocs = 16);
   virtual ~anaPHValidation();
 
-  void makeAll();
+  void makeAll(std::string directory = "/Users/ursl/pxar/pxar/data/phvalidation/T+10/", std::string basename = "M");
   void cleanup();
   void makeOneModule(std::string directory, int mode = 0 );
   void readAsciiFiles(std::string directory, bool createHists);
