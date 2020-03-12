@@ -703,6 +703,12 @@ phoffsetmin         100
 phmin               10
 phmax               250
 
+-- BB
+dumpAll             checkbox(0)
+dumpProblematic     checkbox(0)
+Ntrig               5
+vcals               250
+
 -- BB2
 Ntrig               10
 vcals               222
