@@ -93,14 +93,14 @@ void anaPHValidation::makeOneModule(string directory, int mode) {
 
 // ----------------------------------------------------------------------
 void anaPHValidation::compareAllDACs(string basename, string dacbase, string dir1, string dir2) {
-  compareDAC("caldel", 0, 250);
-  compareDAC("vana", 50, 150);
+  compareDAC("caldel", 0, 250, basename, dacbase, dir1, dir2);
+  compareDAC("vana", 50, 150, basename, dacbase, dir1, dir2);
 
-  compareDAC("phscale", 50, 150);
-  compareDAC("phoffset", 100, 200);
+  compareDAC("phscale", 50, 150, basename, dacbase, dir1, dir2);
+  compareDAC("phoffset", 100, 200, basename, dacbase, dir1, dir2);
 
-  compareDAC("vtrim", 0, 250);
-  compareDAC("vthrcomp", 0, 250);
+  compareDAC("vtrim", 0, 250, basename, dacbase, dir1, dir2);
+  compareDAC("vthrcomp", 0, 250, basename, dacbase, dir1, dir2);
 
 }
 
