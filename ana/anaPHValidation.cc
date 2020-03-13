@@ -73,7 +73,6 @@ void anaPHValidation::makeAll(string basedir, string basename) {
 
   for (unsigned int im = 0; im < modules.size(); ++im) {
     cout << modules[im] << endl;
-    continue;
     if (im > 0) cleanup();
     string directory = basedir + modules[im];
     readAsciiFiles(directory, (im==0)?true:false);
