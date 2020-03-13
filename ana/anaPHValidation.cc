@@ -42,25 +42,20 @@ anaPHValidation::~anaPHValidation() {
 // ----------------------------------------------------------------------
 void anaPHValidation::cleanup() {
   map<string, TH1D*>::iterator end = fhsummary.end();
-  cout << " delete 1a" << endl;
   for (map<string, TH1D*>::iterator il = fhsummary.begin(); il != end; ++il) {
     delete il->second;
   }
-  cout << " delete 1b" << endl;
   fhsummary.clear();
 
   map<string, TH2D*>::iterator end2 = fh2summary.end();
-  cout << " delete 2a" << endl;
   for (map<string, TH2D*>::iterator il = fh2summary.begin(); il != end2; ++il) {
     delete il->second;
   }
-  cout << " delete 2b" << endl;
   fh2summary.clear();
 
   fhproblems.clear();
 
   map<string, TH1D*>::iterator end3 = fHists.end();
-  cout << " delete 4a" << endl;
   int cnt(0);
   for (map<string, TH1D*>::iterator il = fHists.begin(); il != end3; ++il) {
     il->second->Reset();
@@ -74,64 +69,11 @@ void anaPHValidation::cleanup() {
 // ----------------------------------------------------------------------
 void anaPHValidation::makeAll(string basedir, string basename) {
 
-  vector<string> modules;
-#if defined(WIN32)
-#else
-  TString fname;
-  const char *file;
-  TSystem *lunix = gSystem;
-  void *pDir = lunix->OpenDirectory(basedir.c_str());
-  while ((file = lunix->GetDirEntry(pDir))) {
-    fname = file;
-    if (fname.Contains(basename.c_str())) {
-      modules.push_back(string(fname));
-    }
-  }
-  std::sort(modules.begin(), modules.end());
-#endif
-
-
-  // vector<string> modules;
-
-  // modules.push_back("M1554");
-  // modules.push_back("M1555");
-  // modules.push_back("M1556");
-
-  // modules.push_back("M1561");
-  // modules.push_back("M1564");
-  // modules.push_back("M1565");
-  // modules.push_back("M1566");
-  // modules.push_back("M1568");
-  // modules.push_back("M1569");
-
-  // modules.push_back("M1570");
-  // modules.push_back("M1571");
-  // modules.push_back("M1573");
-  // modules.push_back("M1574");
-  // modules.push_back("M1576");
-  // modules.push_back("M1577");
-  // modules.push_back("M1578");
-  // modules.push_back("M1579");
-
-  // modules.push_back("M1580");
-  // modules.push_back("M1581");
-  // modules.push_back("M1582");
-  // modules.push_back("M1583");
-  // modules.push_back("M1584");
-  // modules.push_back("M1585");
-  // modules.push_back("M1587");
-  // modules.push_back("M1588");
-  // modules.push_back("M1589");
-
-  // modules.push_back("M1590");
-  // modules.push_back("M1591");
-  // modules.push_back("M1592");
-  // modules.push_back("M1595");
-  // modules.push_back("M1596");
-  // modules.push_back("M1597");
-  // modules.push_back("M1600");
+  vector<string> modules = glob(basedir, "M");
 
   for (unsigned int im = 0; im < modules.size(); ++im) {
+    cout << modules[im] << endl;
+    continue;
     if (im > 0) cleanup();
     string directory = basedir + modules[im];
     readAsciiFiles(directory, (im==0)?true:false);
@@ -148,6 +90,119 @@ void anaPHValidation::makeOneModule(string directory, int mode) {
     fitTanH();
   }
 }
+
+
+// ----------------------------------------------------------------------
+void anaPHValidation::compareAllDACs(string basename, string dacbase, string dir1, string dir2) {
+  compareDAC("caldel", 0, 250);
+  compareDAC("vana", 50, 150);
+
+  compareDAC("phscale", 50, 150);
+  compareDAC("phoffset", 100, 200);
+
+  compareDAC("vtrim", 0, 250);
+  compareDAC("vthrcomp", 0, 250);
+
+}
+
+// ----------------------------------------------------------------------
+void anaPHValidation::compareDAC(string dac, double xmin, double xmax, string modbase, string dacbase, string dir1, string dir2) {
+
+  vector<string> mdir1 = glob(dir1, modbase);
+  vector<string> mdir2 = glob(dir2, modbase);
+
+  string ldir1 = dir1;
+  if (string("/") == ldir1[ldir1.size()-1]) ldir1.erase(ldir1.size()-1);
+  ldir1 = ldir1.substr(ldir1.rfind("/")+1);
+  string ldir2 = dir2;
+  if (string("/") == ldir2[ldir2.size()-1]) ldir2.erase(ldir2.size()-1);
+  ldir2 = ldir2.substr(ldir2.rfind("/")+1);
+
+  vector<string>
+    *mdir = &mdir2,
+    *ndir = &mdir1;
+
+  // -- find common modules in the two directories
+  if (mdir1.size() < mdir2.size()) {
+    mdir = &mdir1;
+    ndir = &mdir2;
+  }
+
+  vector<string> modules;
+  for (unsigned int i = 0; i < mdir->size(); ++i) {
+    for (unsigned int j = 0; j < ndir->size(); ++j) {
+      if (mdir->at(i) == ndir->at(j)) {
+	modules.push_back(mdir->at(i));
+      }
+    }
+  }
+
+  TH1D *h1 = new TH1D("hdac1", Form("%s: (%s)", dac.c_str(), ldir1.c_str()), static_cast<int>(xmax-xmin), xmin, xmax);
+  setTitles(h1, Form("%s", dac.c_str()), "Entries / Bin", 0.05, 1.0);
+  setFilledHist(h1);
+  h1->SetMinimum(1.e-3);
+  TH1D *h2 = new TH1D("hdac2", Form("%s: (%s)", dac.c_str(), ldir2.c_str()), static_cast<int>(xmax-xmin), xmin, xmax);
+  setTitles(h2, Form("%s", dac.c_str()), "Entries / Bin", 0.05, 1.0);
+  setFilledHist(h2);
+  h2->SetMinimum(1.e-3);
+
+  TH1D *hdiff = new TH1D("hdiff", Form("%s: (%s) - (%s)", dac.c_str(), ldir2.c_str(), ldir1.c_str()), 100, -50., 50);
+  setTitles(hdiff, Form("#Delta %s: (%s) - (%s)", dac.c_str(), ldir2.c_str(), ldir1.c_str()), "Entries / Bin", 0.03, 1.4, 1.4);
+  setFilledHist(hdiff); hdiff->SetTitleSize(0.05, "y");
+  hdiff->SetMinimum(1.e-3);
+  TH2D *hcorr = new TH2D("hcorr", Form("%s: (%s) vs (%s)", dac.c_str(), ldir2.c_str(), ldir1.c_str()), 40, xmin, xmax, 40, xmin, xmax);
+  setTitles(hcorr, Form("%s (%s)", dac.c_str(), ldir1.c_str()), Form("%s (%s)", dac.c_str(), ldir2.c_str()), 0.03, 1.4, 2.0);
+  setFilledHist(hcorr, kBlack, kBlue);
+
+  for (unsigned int imod = 0; imod < modules.size(); ++imod) {
+    for (unsigned int iroc = 0; iroc < 16; ++iroc) {
+      double val1(-1.), val2(-1.);
+      string dacfile1 = Form("%s/%s/%s_C%d.dat", dir1.c_str(), modules[imod].c_str(), dacbase.c_str(), iroc);
+      string dacfile2 = Form("%s/%s/%s_C%d.dat", dir2.c_str(), modules[imod].c_str(), dacbase.c_str(), iroc);
+      val1 = static_cast<double>(readDacFromFile(dac, dacfile1));
+      val2 = static_cast<double>(readDacFromFile(dac, dacfile2));
+      h1->Fill(val1);
+      h2->Fill(val2);
+      hdiff->Fill(val2 - val1);
+      hcorr->Fill(val1, val2);
+      cout << dac << ": " << val1 << "/" << val2 << " from " << dacfile1 << " and " << dacfile2 << endl;
+    }
+  }
+
+  c0->Clear();
+  c0->Divide(2,2);
+  c0->cd(1);
+  shrinkPad(0.1, 0.15);
+  h1->Draw();
+  c0->cd(2);
+  shrinkPad(0.1, 0.15);
+  h2->Draw();
+  c0->cd(3);
+  shrinkPad(0.1, 0.15);
+  hdiff->Draw();
+  c0->cd(4);
+  shrinkPad(0.1, 0.15);
+  hcorr->Draw("box");
+
+  TPaveStats *ps = (TPaveStats*)hcorr->GetListOfFunctions()->FindObject("stats");
+  if (ps) {
+    ps->SetX1NDC(0.5); ps->SetX2NDC(0.90);
+    ps->SetY1NDC(0.15); ps->SetY2NDC(0.45);
+  } else {
+    cout << "did not find TPaveStats!" << endl;
+  }
+
+  TLine *tl = new TLine();
+  tl->DrawLine(xmin, xmin, xmax, xmax);
+
+  c0->Modified();
+  c0->Update();
+
+  c0->SaveAs(Form("%s/phval-compareDAC-%s.pdf", fDirectory.c_str(), dac.c_str()));
+
+
+}
+
 
 // ----------------------------------------------------------------------
 void anaPHValidation::fitPixel(std::string directory, int roc, int col, int row) {
@@ -378,9 +433,12 @@ void anaPHValidation::fitErr(int roc, int col, int row, bool draw) {
 
 // ----------------------------------------------------------------------
 void anaPHValidation::readAsciiFiles(string directory, bool createHists) {
-  vector<string> files = glob(directory);
+  // -- set module name
+  fModule = directory.substr(directory.find_last_of("/", directory.size()-2)+1);
+  PixUtil::replaceAll(fModule, "/", "");
+  cout << "fModule ->" << fModule << "<-" << endl;
 
-  //  if (createHists) fHists.reserve(fNrocs*4160);
+  vector<string> files = glob(directory);
 
   TH1D *h1(0);
 
@@ -492,11 +550,6 @@ vector<string> anaPHValidation::glob(string directory, string basename) {
   vector<string> lof;
 #if defined(WIN32)
 #else
-  // -- set module name
-  fModule = directory.substr(directory.find_last_of("/", directory.size()-2)+1);
-  PixUtil::replaceAll(fModule, "/", "");
-  cout << "fModule ->" << fModule << "<-" << endl;
-
   TString fname;
   const char *file;
   TSystem *lunix = gSystem;
@@ -509,10 +562,74 @@ vector<string> anaPHValidation::glob(string directory, string basename) {
   }
 #endif
   std::sort(lof.begin(), lof.end());
-  cout << "Read the files " << endl;
-  for (unsigned int i = 0; i < lof.size(); ++i) {
-    cout << "  " << lof[i] << endl;
-  }
-
   return lof;
+}
+
+
+// ----------------------------------------------------------------------
+int anaPHValidation::readDacFromFile(string dac, string dacfile) {
+  ifstream INS;
+
+  string sline;
+  string::size_type s1;
+  int val(-1);
+  for (int i = 0; i < fNrocs; ++i) {
+    INS.open(Form("%s", dacfile.c_str()));
+    while (getline(INS, sline)) {
+      if (sline[0] == '#') continue;
+      if (sline[0] == '/') continue;
+      if (sline[0] == '\n') continue;
+      if (string::npos == sline.find(dac)) continue;
+      s1 = sline.rfind(dac);
+      sline = sline.substr(s1+dac.length()+1);
+      val = atoi(sline.c_str());
+      break;
+    }
+    INS.close();
+  }
+  return val;
+}
+
+
+// ----------------------------------------------------------------------
+void anaPHValidation::setTitles(TH1 *h, const char *sx, const char *sy, float size,
+				float xoff, float yoff, float lsize, int font) {
+  if (h == 0) {
+    cout << " Histogram not defined" << endl;
+  } else {
+    h->SetXTitle(sx);                  h->SetYTitle(sy);
+    h->SetTitleOffset(xoff, "x");      h->SetTitleOffset(yoff, "y");
+    h->SetTitleSize(size, "x");        h->SetTitleSize(size, "y");
+    h->SetLabelSize(lsize, "x");       h->SetLabelSize(lsize, "y");
+    h->SetLabelFont(font, "x");        h->SetLabelFont(font, "y");
+    h->GetXaxis()->SetTitleFont(font); h->GetYaxis()->SetTitleFont(font);
+    h->SetNdivisions(508, "X");
+  }
+}
+
+
+// ----------------------------------------------------------------------
+void anaPHValidation::setHist(TH1 *h, Int_t color, Int_t symbol, Double_t size, Double_t width) {
+  h->SetLineColor(color);   h->SetLineWidth(width);
+  h->SetMarkerColor(color); h->SetMarkerStyle(symbol);  h->SetMarkerSize(size);
+  h->SetStats(kFALSE);
+  h->SetFillStyle(0); h->SetFillColor(color);
+}
+
+// ----------------------------------------------------------------------
+void anaPHValidation::setFilledHist(TH1 *h, Int_t color, Int_t fillcolor, Int_t fillstyle, Int_t width) {
+  // Note: 3004, 3005 are crosshatches
+  // ----- 1000       is solid
+  //       kYellow    comes out gray on bw printers
+  h->SetLineColor(color);     h->SetLineWidth(width);
+  h->SetFillStyle(fillstyle); h->SetFillColor(fillcolor);
+}
+
+
+// ----------------------------------------------------------------------
+void anaPHValidation::shrinkPad(double b, double l, double r, double t) {
+  gPad->SetBottomMargin(b);
+  gPad->SetLeftMargin(l);
+  gPad->SetRightMargin(r);
+  gPad->SetTopMargin(t);
 }

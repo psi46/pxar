@@ -13,6 +13,20 @@
 #include "TCanvas.h"
 
 
+// ----------------------------------------------------------------------
+//
+// anaPHValidation
+// ---------------
+//
+// (1) validate the PH optimization procedure by analyzing the
+//     gain-pedestal calibration results in phCalibration_*.dat files
+//
+// (2) compare the phscale and phoffset DACs between T = -20C and T = +10C
+//     for the same module
+//
+// History: 2020/03/10 First shot
+// ----------------------------------------------------------------------
+
 class anaPHValidation {
 
  public:
@@ -20,17 +34,34 @@ class anaPHValidation {
   virtual ~anaPHValidation();
 
   void makeAll(std::string directory = "/Users/ursl/pxar/pxar/data/phvalidation/T+10/", std::string basename = "M");
-  void cleanup();
   void makeOneModule(std::string directory, int mode = 0 );
-  void readAsciiFiles(std::string directory, bool createHists);
+
+  void compareAllDACs(std::string basename = "M", std::string dacbase = "dacParameters50",
+		  std::string dir1 = "../data/phvalidation/T+10/", std::string dir2 = "../data/phvalidation/T-20/");
+
+  void compareDAC(std::string dac = "phscale", double xmin = 0., double xmax = 256.,
+		  std::string basename = "M", std::string dacbase = "dacParameters50",
+		  std::string dir1 = "../data/phvalidation/T+10/", std::string dir2 = "../data/phvalidation/T-20/");
   void fitPixel(std::string directory, int iroc, int icol, int irow);
-  void readRootFile(std::string filename);
   void test(double y0 = 42., double y1 = 50.);
+
   void fitTanH(int roc = -1, int col = -1, int row = -1, bool draw = false);
   void fitErr(int roc = -1, int col = -1, int row = -1, bool draw = false);
 
   // -- utilities
+  void readAsciiFiles(std::string directory, bool createHists);
+  void readRootFile(std::string filename);
+  void cleanup();
+  int  readDacFromFile(std::string dac, std::string dacfile);
   std::vector<std::string> glob(std::string directory, std::string basename = "phCalibration_");
+
+
+  void shrinkPad(double b = 0.1, double l = 0.1, double r = 0.1, double t = 0.1);
+  void setTitles(TH1 *h, const char *sx, const char *sy,
+		 float size = 0.05, float xoff = 1.1, float yoff = 1.1, float lsize = 0.05, int font = 42);
+  void setHist(TH1 *h, int color = kBlack, int symbol = 20, double size = 1., double width = 2.);
+  void setFilledHist(TH1 *h, int lcol = kBlack, int fcol = kYellow, int fstyle = 1000, int width = 1);
+
 
 private:
   TCanvas                     *c0;
