@@ -243,7 +243,7 @@ void PixTestPh::optimize() {
   }
 
   vector<pair<pair<int, int>, double> >  minPixel1 = getMinimumPixelAndValueMinCol(shot);
-  vector<pair<pair<int, int>, double> >  maxPixel1 = getMaximumPixelAndValue(shot);
+  vector<pair<pair<int, int>, double> >  maxPixel1 = getMaximumPixelAndValue(shot, 255.);
   vector<pair<pair<int, int>, double> >  minPixel1Old = getMinimumPixelAndValue(shot);
 
   LOG(logDEBUG) << "minimum: shot " << minPixel1[0].second

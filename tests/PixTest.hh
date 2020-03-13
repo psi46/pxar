@@ -204,7 +204,7 @@ public:
   /// return  pixel col/row and minimum value in a (PH) map
   std::vector<std::pair<std::pair<int, int>, double> > getMinimumPixelAndValue(std::vector<TH2D*>maps);
   /// return  pixel col/row and maximum value in a (PH) map
-  std::vector<std::pair<std::pair<int, int>, double> > getMaximumPixelAndValue(std::vector<TH2D*>maps);
+  std::vector<std::pair<std::pair<int, int>, double> > getMaximumPixelAndValue(std::vector<TH2D*>maps, double ceiling = 9999999.);
 
   /// maximum allowable VthrComp
   std::vector<int> getMaximumVthrComp(int ntrig, double frac = 0.8, int reserve = 10);

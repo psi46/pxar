@@ -1315,15 +1315,16 @@ vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValue(vector<TH
 
 
 // ----------------------------------------------------------------------
-vector<pair<pair<int, int>, double> > PixTest::getMaximumPixelAndValue(vector<TH2D*>maps) {
+vector<pair<pair<int, int>, double> > PixTest::getMaximumPixelAndValue(vector<TH2D*>maps, double ceiling) {
   vector<pair<pair<int, int>, double> > results;
   for (unsigned int im = 0; im < maps.size(); ++im) {
     double maximum(-99999.);
     int minx(-1), miny(-1);
     for (int ix = 1; ix < maps[im]->GetNbinsX(); ++ix) {
       for (int iy = 1; iy < maps[im]->GetNbinsY(); ++iy) {
-	if (maps[im]->GetBinContent(ix, iy) > maximum) {
-	  maximum = maps[im]->GetBinContent(ix, iy);
+	double val = maps[im]->GetBinContent(ix, iy);
+	if ((val > maximum) && (val < ceiling)) {
+	  maximum = val;
 	  minx = ix-1;
 	  miny = iy-1;
 	}
