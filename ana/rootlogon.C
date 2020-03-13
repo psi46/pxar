@@ -7,7 +7,7 @@
   using namespace RooStats;
 
   cout << "Loading libs for pxar/ana" << endl;
-  gSystem->Load("../lib/libpxarutil.dylib");
+  gSystem->Load("../lib/libpxarutil.so");
   gSystem->Load("../lib/libana.so");
   gStyle->SetPalette(1);
   gStyle->SetOptStat(111111);

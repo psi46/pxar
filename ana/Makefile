@@ -36,7 +36,7 @@ DICTFILES = ${ANA:.o=Dict.o}
 # ================================================================================
 ana: $(addprefix obj/,$(ANA) $(DICTFILES))
 # ---------------------------------------
-	$(CXX) -I ../util $(SOFLAGS) $(GLIBS) $(addprefix obj/,$(ANA) $(DICTFILES)) ../lib/libpxarutil.dylib -o ../lib/libana.so
+	$(CXX) -I ../util $(SOFLAGS) $(GLIBS) $(addprefix obj/,$(ANA) $(DICTFILES)) ../lib/libpxarutil.so -o ../lib/libana.so
 
 # ================================================================================
 #runPhFit: obj/runPhFit.o obj/aPhFit.o obj/aPhFitDict.o
@@ -47,6 +47,7 @@ ana: $(addprefix obj/,$(ANA) $(DICTFILES))
 all:
 # --
 	@$(MAKE) cleanall
+	@$(MAKE) links
 	@$(MAKE) ana
 
 cleanall:
@@ -55,3 +56,6 @@ cleanall:
 
 clean:
 	rm -f $(addprefix obj/,$(ANA)) $(addprefix obj/,$(DICTFILES))
+
+links:
+	cd ../lib && ln -s libpxarutil.dylib libpxarutil.so && cd -
