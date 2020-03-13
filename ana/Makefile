@@ -58,6 +58,7 @@ all:
 	@$(MAKE) ana
 
 cleanall:
+	mkdir -p obj
 	@$(MAKE) clean
 	rm -f ../lib/libana.so
 
