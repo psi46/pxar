@@ -33,6 +33,13 @@ ANA = anaPHValidation.o \
 
 DICTFILES = ${ANA:.o=Dict.o}
 
+ifneq ("$(wildcard ../lib/libpxarutil.so)","")
+LINKCOMMAND = echo "nada"
+else
+LINKCOMMAND = cd ../lib && ln -s libpxarutil.dylib libpxarutil.so && cd -
+endif
+
+
 # ================================================================================
 ana: $(addprefix obj/,$(ANA) $(DICTFILES))
 # ---------------------------------------
@@ -58,4 +65,4 @@ clean:
 	rm -f $(addprefix obj/,$(ANA)) $(addprefix obj/,$(DICTFILES))
 
 links:
-	cd ../lib && ln -s libpxarutil.dylib libpxarutil.so && cd -
+	$(LINKCOMMAND)
