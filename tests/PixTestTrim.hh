@@ -19,6 +19,8 @@ public:
   void trimTest();
 
   int adjustVtrim();
+  void findWorkingPixel();
+  void setVthrCompCalDel();
   std::vector<TH1*> trimStep(std::string name, int corrections, std::vector<TH1*> calMapOld, int vcalMin, int vcalMax);
   void setTrimBits(int itrim = -1);
 
