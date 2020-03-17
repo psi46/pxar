@@ -170,8 +170,10 @@ int main(int argc, char *argv[]){
   vector<pair<string, double> >                power_settings = configParameters->getTbPowerSettings();
   vector<pair<std::string, uint8_t> >          pg_setup = configParameters->getTbPgSettings();
   string tbname = "*";
-  if (configParameters->getTbName() != "")
+  if (configParameters->getTbName() != "") {
     tbname = configParameters->getTbName();
+    cout << "tbname defined ->" << tbname << "<-" << endl;
+  }
 
   try {
       api = new pxar::pxarCore(tbname, verbosity, doDaqMemReset);
