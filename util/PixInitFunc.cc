@@ -14,6 +14,10 @@ using namespace std;
 
 namespace {
 
+  double PIF_pol1(double *x, double *par) {
+    return par[0] + par[1]*x[0];
+  }
+
   // ----------------------------------------------------------------------
   // par[0]: "step"
   // par[1]: "slope"   the smaller the steeper
@@ -23,6 +27,7 @@ namespace {
   double PIF_err(double *x, double *par) {
     return par[3]*(TMath::Erf((x[0]-par[0])/par[1])+par[2]);
   }
+
 
   double PIF_weibullCdf(double *x, double *par) {
     if (par[1] < 0) return 0.;
@@ -238,6 +243,30 @@ TF1* PixInitFunc::gpErr(TH1 *h) {
 
   f->SetParameters(p0, p1, p2, p3);
   f->SetParLimits(1, 50, 1000.); // keep!
+
+  return f;
+}
+
+
+// ----------------------------------------------------------------------
+TF1* PixInitFunc::gpPol1(TH1 *h) {
+
+  fDoNotFit = false;
+
+  // -- setup function
+  TF1* f = (TF1*)gROOT->FindObject("PIF_gpPol1");
+  if (0 == f) {
+    f = new TF1("PIF_gpPol1", PIF_pol1, h->GetBinLowEdge(1), h->GetBinLowEdge(h->GetNbinsX()+1), 2);
+    f->SetParNames("step", "slope");
+    f->SetNpx(1000);
+  } else {
+    f->ReleaseParameter(0);
+    f->ReleaseParameter(1);
+  }
+
+  double p0(-1.), p1(-1.);
+  initPol1(p0, p1, h);
+  f->SetParameters(p0, p1);
 
   return f;
 }

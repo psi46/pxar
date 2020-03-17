@@ -33,20 +33,31 @@ class anaPHValidation {
   anaPHValidation(std::string pdfdir, int nrocs = 16);
   virtual ~anaPHValidation();
 
-  void makeAll(std::string directory = "/Users/ursl/pxar/pxar/data/phvalidation/T+10/", std::string basename = "M");
+  // -- mode: 0 (error function), 1 (pol1)
+  void makeAll(std::string directory = "/Users/ursl/pxar/pxar/data/phvalidation/T+10/", std::string basename = "M", int mode = 0);
   void makeOneModule(std::string directory, int mode = 0 );
 
+  // -- compare DACs between two different settings
   void compareAllDACs(std::string basename = "M", std::string dacbase = "dacParameters50",
 		  std::string dir1 = "../data/phvalidation/T+10/", std::string dir2 = "../data/phvalidation/T-20/");
 
   void compareDAC(std::string dac = "phscale", double xmin = 0., double xmax = 256.,
 		  std::string basename = "M", std::string dacbase = "dacParameters50",
 		  std::string dir1 = "../data/phvalidation/T+10/", std::string dir2 = "../data/phvalidation/T-20/");
+
+  // -- test methods
   void fitPixel(std::string directory, int iroc, int icol, int irow);
   void test(double y0 = 42., double y1 = 50.);
 
-  void fitTanH(int roc = -1, int col = -1, int row = -1, bool draw = false);
+  // -- main method for studying the PH optimization
   void fitErr(int roc = -1, int col = -1, int row = -1, bool draw = false);
+
+  // -- main method for studying the gain/pedestal calibration
+  void fitPol1(int roc = -1, int col = -1, int row = -1, bool draw = false);
+
+  // -- left-over. Resuscitate for (non-)linearity studies
+  void fitTanH(int roc = -1, int col = -1, int row = -1, bool draw = false);
+
 
   // -- utilities
   void readAsciiFiles(std::string directory, bool createHists);

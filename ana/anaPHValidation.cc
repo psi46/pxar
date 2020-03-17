@@ -67,7 +67,7 @@ void anaPHValidation::cleanup() {
 
 
 // ----------------------------------------------------------------------
-void anaPHValidation::makeAll(string basedir, string basename) {
+void anaPHValidation::makeAll(string basedir, string basename, int mode) {
 
   vector<string> modules = glob(basedir, "M");
 
@@ -76,7 +76,11 @@ void anaPHValidation::makeAll(string basedir, string basename) {
     if (im > 0) cleanup();
     string directory = basedir + modules[im];
     readAsciiFiles(directory, (im==0)?true:false);
-    fitErr();
+    if (0 == mode) {
+      fitErr();
+    } else if (1 == mode) {
+      fitPol1();
+    }
   }
 }
 
@@ -85,8 +89,8 @@ void anaPHValidation::makeOneModule(string directory, int mode) {
   readAsciiFiles(directory, true);
   if (0 == mode) {
     fitErr();
-  } else {
-    fitTanH();
+  } else if (1 == mode) {
+    fitPol1();
   }
 }
 
@@ -262,6 +266,175 @@ void anaPHValidation::test(double y0, double y1) {
 
 // ----------------------------------------------------------------------
 void anaPHValidation::fitTanH(int roc, int col, int row, bool draw) {
+}
+
+
+
+// ----------------------------------------------------------------------
+void anaPHValidation::fitPol1(int roc, int col, int row, bool draw) {
+  int lroc, lcol, lrow;
+
+  PixInitFunc pif;
+  double xmin(80.), xmax(631.);
+  pif.fLo = xmin;
+  pif.fHi = xmax;
+  TF1 *f(0);
+  TH1D *h(0);
+  TH2D *h2(0);
+
+  // -- define histograms per ROC and below per module. NO histograms are defined for EVERYTHING.
+  for (int i = 0; i < fNrocs; ++i) {
+    h = new TH1D(Form("cd_%s_C%d", fModule.c_str(), i), Form("chi2/dof for MOD %s ROC%d, pol1 ", fModule.c_str(), i), 100, 0., 5.);
+    fhsummary.insert(make_pair(Form("cd_%s_C%d", fModule.c_str(), i), h));
+
+    h = new TH1D(Form("p0_%s_C%d", fModule.c_str(), i), Form("p0 (pedestal) MOD %s ROC %d, pol1 ", fModule.c_str(), i), 100, 0., 100.);
+    fhsummary.insert(make_pair(Form("p0_%s_C%d", fModule.c_str(), i), h));
+
+    h = new TH1D(Form("p1_%s_C%d", fModule.c_str(), i), Form("p1 (slope) MOD %s ROC %d, pol1 ", fModule.c_str(), i), 200, 0., 1.);
+    fhsummary.insert(make_pair(Form("p1_%s_C%d", fModule.c_str(), i), h));
+
+    h2 = new TH2D(Form("map_p0_%s_C%d", fModule.c_str(), i), Form("p0 (pedestal) MOD %s ROC %d, pol1 ", fModule.c_str(), i), 52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.);    h2->SetMaximum(100.);
+    fh2summary.insert(make_pair(Form("map_p0_%s_C%d", fModule.c_str(), i), h2));
+
+    h2 = new TH2D(Form("map_p1_%s_C%d", fModule.c_str(), i), Form("p1 (slope) MOD %s ROC %d, pol1 ", fModule.c_str(), i), 52, 0., 52., 80, 0., 80.);
+    h2->SetMinimum(0.);    h2->SetMaximum(0.3);
+    fh2summary.insert(make_pair(Form("map_p1_%s_C%d", fModule.c_str(), i), h2));
+
+  }
+
+  h = new TH1D(Form("cd_%s", fModule.c_str()), Form("chi2/dof module %s, pol1 ", fModule.c_str()), 100, 0., 5.);
+  fhsummary.insert(make_pair(Form("cd_%s", fModule.c_str()), h));
+  TH1D *h1modcd = h;
+
+  h = new TH1D(Form("p0_%s", fModule.c_str()), Form("p0 (pedestal) module %s, pol1 ", fModule.c_str()), 100, 0., 100.);
+  fhsummary.insert(make_pair(Form("p0_%s", fModule.c_str()), h));
+  TH1D *h1modp0 = h;
+
+  h = new TH1D(Form("p1_%s", fModule.c_str()), Form("p1 (slope) module %s, pol1 ", fModule.c_str()), 200, 0., 1.);
+  fhsummary.insert(make_pair(Form("p1_%s", fModule.c_str()), h));
+  TH1D *h1modp1 = h;
+
+  h2 = new TH2D(Form("map_p0_%s", fModule.c_str()), Form("p0 (pedestal) module %s, pol1 ", fModule.c_str()), 52, 0., 52., 80, 0., 80.);
+  h2->SetMinimum(0.);    h2->SetMaximum(100.);
+  fh2summary.insert(make_pair(Form("map_p0_%s", fModule.c_str()), h2));
+  TH2D *h2modsump0 = h2;
+
+  h2 = new TH2D(Form("map_p1_%s", fModule.c_str()), Form("p1 (slope) module %s, pol1 ", fModule.c_str()), 52, 0., 52., 80, 0., 80.);
+  h2->SetMinimum(0.);
+  fh2summary.insert(make_pair(Form("map_p1_%s", fModule.c_str()), h2));
+  TH2D *h2modsump1 = h2;
+
+
+  TH1D *hcd, *hp0, *hp1;
+  TH2D *h2p0, *h2p1;
+  int cnt(0);
+  map<string, TH1D*>::iterator end3 = fHists.end();
+  for (map<string, TH1D*>::iterator il = fHists.begin(); il != end3; ++il) {
+    ++cnt;
+    if (0 == cnt%10000) cout << "Fit #" << cnt << endl;
+    PixUtil::str2rcr(il->first, lroc, lcol, lrow);
+    if (roc > -1 && lroc != roc) continue;
+    if (col > -1 && lcol != col) continue;
+    if (row > -1 && lrow != row) continue;
+
+    hcd = fhsummary[Form("cd_%s_C%d", fModule.c_str(), lroc)];
+    hp0 = fhsummary[Form("p0_%s_C%d", fModule.c_str(), lroc)];
+    hp1 = fhsummary[Form("p1_%s_C%d", fModule.c_str(), lroc)];
+    h2p0 = fh2summary[Form("map_p0_%s_C%d", fModule.c_str(), lroc)];
+    h2p1 = fh2summary[Form("map_p1_%s_C%d", fModule.c_str(), lroc)];
+
+    h = il->second;
+    f = pif.gpPol1(h);
+    if (0 == h) break;
+    if (h->GetMaximum() < 1) {
+      cout << "skipping " << h->GetName()  << " with no entries" << endl;
+      continue;
+    }
+
+    if (draw) {
+      cout << "fitting " <<  h->GetName() << endl;
+      gStyle->SetOptFit();
+    }
+    h->Fit(f, (draw?"r":"rq"), "", xmin, xmax);
+    double cd = f->GetChisquare()/f->GetNDF();
+    double p0 = f->GetParameter(0);
+    double p1 = f->GetParameter(1);
+    hcd->Fill(cd);
+    h1modcd->Fill(cd);
+    hp0->Fill(p0);
+    h1modp0->Fill(p0);
+    hp1->Fill(p1);
+    h1modp1->Fill(p1);
+    // -- maps
+    h2p0->Fill(lcol, lrow, p0);
+    h2p1->Fill(lcol, lrow, p1);
+    h2modsump0->Fill(lcol, lrow, p0);
+    h2modsump1->Fill(lcol, lrow, p1);
+
+    if (draw) {
+      c0->Modified();
+      c0->Update();
+      TPaveStats *ps = (TPaveStats*)c0->GetPrimitive("stats");
+      if (ps) {
+	ps->SetX1NDC(0.5); ps->SetX2NDC(0.90);
+	ps->SetY1NDC(0.15); ps->SetY2NDC(0.45);
+      } else {
+	cout << "did not find TPaveStats!" << endl;
+      }
+      c0->Modified();
+      c0->Update();
+    }
+    if ((f->GetNDF() > 0) && f->GetChisquare()/f->GetNDF() > 20) {
+      cout << "problem: " << h->GetName() << endl;
+      fhproblems.push_back(h);
+    }
+  }
+
+  h2modsump0->Scale(1./16.);
+  h2modsump1->Scale(1./16.);
+
+  if ((roc > -1) && (col > -1) && (row > -1)) return;
+
+  c0->Clear();
+
+  // -- plot summaries
+  map<string, TH1D*>::iterator end = fhsummary.end();
+  for (map<string, TH1D*>::iterator il = fhsummary.begin(); il != end; ++il) {
+    if (il->second->GetEntries() < 1) continue;
+    il->second->Draw();
+    c0->SaveAs(Form("%s/gp-%s.pdf", fDirectory.c_str(), il->second->GetName()));
+  }
+
+  map<string, TH2D*>::iterator end2 = fh2summary.end();
+  gStyle->SetOptStat(0);
+  for (map<string, TH2D*>::iterator il = fh2summary.begin(); il != end2; ++il) {
+    if (il->second->GetEntries() < 1) continue;
+    il->second->Draw("colz");
+    c0->SaveAs(Form("%s/gp-%s.pdf", fDirectory.c_str(), il->second->GetName()));
+  }
+
+
+
+  gStyle->SetOptFit(1);
+  for (unsigned int i = 0; i < fhproblems.size(); ++i) {
+    fhproblems[i]->Draw();
+    c0->Modified();
+    c0->Update();
+    TPaveStats *ps = (TPaveStats*)c0->GetPrimitive("stats");
+    if (ps) {
+      ps->SetX1NDC(0.5); ps->SetX2NDC(0.90);
+      ps->SetY1NDC(0.15); ps->SetY2NDC(0.45);
+    } else {
+      cout << "did not find TPaveStats!" << endl;
+    }
+    c0->Modified();
+    c0->Update();
+    c0->SaveAs(Form("%s/gp-problem-%s-%s.pdf", fDirectory.c_str(), fModule.c_str(), fhproblems[i]->GetName()));
+  }
+
+
+
 }
 
 
