@@ -628,10 +628,10 @@ void PixTestTrim::trimBitTest() {
   LOG(logINFO) << "PixTestTrim::trimBitTest() done ";
 
   for (unsigned int i = 0; i < meanThrDiff.size(); ++i) {
-    string vmeanString(Form("step %d: diff(thr) mean = ", i)), vrmsString(Form("step %d: diff(thr) rms = ", i));
+    string vmeanString(Form("step %d: diff(thr) mean = ", i)), vrmsString(Form("step %d: diff(thr) rms =  ", i));
     for (unsigned int iroc = 0; iroc < meanThrDiff[i].size(); ++iroc) {
-      vmeanString += Form("%4.2f ", meanThrDiff[i].at(iroc));
-      vrmsString += Form("%4.2f ", rmsThrDiff[i].at(iroc));
+      vmeanString += Form(" %4.2f ", meanThrDiff[i].at(iroc));
+      vrmsString +=  Form(" %4.2f ", rmsThrDiff[i].at(iroc));
     }
     LOG(logINFO) << vmeanString;
     LOG(logINFO) << vrmsString;
