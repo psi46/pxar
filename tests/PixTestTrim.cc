@@ -591,9 +591,10 @@ void PixTestTrim::trimBitTest() {
   // -- and now determine threshold difference
   TH1 *h1(0);
   double dthr(0.);
-  vector<double> meanThrDiff, rmsThrDiff;
+  vector<vector<double> > meanThrDiff, rmsThrDiff;
   for (unsigned int i = 0; i < steps.size(); ++i) {
     thr = steps[i];
+    vector<double> mean, rms;
     for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
       h1 = bookTH1D(Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]),
 		    Form("TrimBit%d_C%d", btrim[i], rocIds[iroc]),
@@ -608,10 +609,14 @@ void PixTestTrim::trimBitTest() {
 		    << " step " << i
 		    << ": thr difference mean: " << h1->GetMean()
 		    << ", thr difference RMS: " << h1->GetRMS();
-      meanThrDiff.push_back(h1->GetMean());
-      rmsThrDiff.push_back(h1->GetRMS());
+      mean.push_back(h1->GetMean());
+      rms.push_back(h1->GetRMS());
       fHistList.push_back(h1);
     }
+    meanThrDiff.push_back(mean);
+    rmsThrDiff.push_back(rms);
+    mean.clear();
+    rms.clear();
   }
 
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
@@ -622,14 +627,15 @@ void PixTestTrim::trimBitTest() {
   setTrimBits();
   LOG(logINFO) << "PixTestTrim::trimBitTest() done ";
 
-  string vmeanString(""), vrmsString("diff(thr) rms: ");
-  for (unsigned int iroc = 0; iroc < vmeanString.size(); ++iroc) {
-    vmeanString += Form("%4.2f ", meanThrDiff[iroc]);
-    vrmsString += Form("%4.2f ", rmsThrDiff[iroc]);
+  for (unsigned int i = 0; i < meanThrDiff.size(); ++i) {
+    string vmeanString(Form("step %d: diff(thr) mean = ", i)), vrmsString(Form("step %d: diff(thr) rms = ", i));
+    for (unsigned int iroc = 0; iroc < meanThrDiff[i].size(); ++iroc) {
+      vmeanString += Form("%4.2f ", meanThrDiff[i].at(iroc));
+      vrmsString += Form("%4.2f ", rmsThrDiff[i].at(iroc));
+    }
+    LOG(logINFO) << vmeanString;
+    LOG(logINFO) << vrmsString;
   }
-  LOG(logINFO) << "diff(thr) mean: " << vmeanString;
-  LOG(logINFO) << "diff(thr) rms:  " << vrmsString;
-
   dutCalibrateOff();
 }
 
