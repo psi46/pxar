@@ -512,11 +512,10 @@ void PixTestTrim::trimBitTest() {
     }
   }
 
-  fApi->setDAC("Vcal", 250);
-
+  // fApi->setDAC("Vcal", 250);
   //  fApi->setDAC("Vthrcomp", 70);
-  findWorkingPixel();
-  setVthrCompCalDel();
+  // findWorkingPixel();
+  // setVthrCompCalDel();
 
   vector<int>vtrim;
   vtrim.push_back(254);
@@ -549,11 +548,10 @@ void PixTestTrim::trimBitTest() {
     fProblem = true;
     return;
   }
-  // FIXME: Check whether this is necessary!
-  // LOG(logDEBUG) << "trimBitTest initDUT with trim bits = 15" ;
-  // for (vector<uint8_t>::size_type iroc = 0; iroc < rocIds.size(); ++iroc) {
-  //   fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
-  // }
+  LOG(logDEBUG) << "trimBitTest initDUT with trim bits = 15" ;
+  for (vector<uint8_t>::size_type iroc = 0; iroc < rocIds.size(); ++iroc) {
+    fApi->_dut->updateTrimBits(cp->getRocPixelConfig(rocIds[iroc]), rocIds[iroc]);
+  }
 
 
   fApi->setVcalLowRange();
@@ -581,8 +579,10 @@ void PixTestTrim::trimBitTest() {
     fApi->setDAC("Vtrim", vtrim[iv]);
     LOG(logDEBUG) << "trimBitTest threshold map with trim = " << btrim[iv];
     thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]),
-				    NTRIG, 0, static_cast<int>(maxThr)+10, -1, -1, 7),
-			 "thr");
+				    NTRIG, 0, 220, -1, -1, 7), "thr");
+    // thr = mapsWithString(scurveMaps("Vcal", Form("TrimThr_trim%d", btrim[iv]),
+    // 				    NTRIG, 0, static_cast<int>(maxThr)+10, -1, -1, 7),
+    // 			 "thr");
     maxThr = getMaximumThreshold(thr);
     if (maxThr > 245.) maxThr = 245.;
     steps.push_back(thr);
@@ -591,6 +591,7 @@ void PixTestTrim::trimBitTest() {
   // -- and now determine threshold difference
   TH1 *h1(0);
   double dthr(0.);
+  vector<double> meanThrDiff, rmsThrDiff;
   for (unsigned int i = 0; i < steps.size(); ++i) {
     thr = steps[i];
     for (unsigned int iroc = 0; iroc < thr.size(); ++iroc) {
@@ -607,6 +608,8 @@ void PixTestTrim::trimBitTest() {
 		    << " step " << i
 		    << ": thr difference mean: " << h1->GetMean()
 		    << ", thr difference RMS: " << h1->GetRMS();
+      meanThrDiff.push_back(h1->GetMean());
+      rmsThrDiff.push_back(h1->GetRMS());
       fHistList.push_back(h1);
     }
   }
@@ -618,6 +621,15 @@ void PixTestTrim::trimBitTest() {
   restoreDacs();
   setTrimBits();
   LOG(logINFO) << "PixTestTrim::trimBitTest() done ";
+
+  string vmeanString(""), vrmsString("diff(thr) rms: ");
+  for (unsigned int iroc = 0; iroc < vmeanString.size(); ++iroc) {
+    vmeanString += Form("%4.2f ", meanThrDiff[iroc]);
+    vrmsString += Form("%4.2f ", rmsThrDiff[iroc]);
+  }
+  LOG(logINFO) << "diff(thr) mean: " << vmeanString;
+  LOG(logINFO) << "diff(thr) rms:  " << vrmsString;
+
   dutCalibrateOff();
 }
 
