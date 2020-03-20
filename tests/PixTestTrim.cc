@@ -519,9 +519,9 @@ void PixTestTrim::trimBitTest() {
 
   vector<int>vtrim;
   vtrim.push_back(254);
-  vtrim.push_back(126);
-  vtrim.push_back(63);
-  vtrim.push_back(32);
+  vtrim.push_back(128);
+  vtrim.push_back(65);
+  vtrim.push_back(35);
 
   vector<int>btrim;
   btrim.push_back(14);
