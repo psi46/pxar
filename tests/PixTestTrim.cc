@@ -601,8 +601,11 @@ void PixTestTrim::trimBitTest() {
 		    256, 0., 256);
       for (int ix = 0; ix < 52; ++ix) {
 	for (int iy = 0; iy < 80; ++iy) {
-	  dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
-	  h1->Fill(dthr);
+	  // -- check that this is not a dead pixel without initial threshold
+	  if (thr0[iroc]->GetBinContent(ix+1, iy+1) > 0) {
+	    dthr = thr0[iroc]->GetBinContent(ix+1, iy+1) - thr[iroc]->GetBinContent(ix+1, iy+1);
+	    h1->Fill(dthr);
+	  }
 	}
       }
       LOG(logDEBUG) << "ROC " << iroc
