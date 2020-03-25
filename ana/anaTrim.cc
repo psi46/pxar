@@ -46,11 +46,9 @@ void anaTrim::showTrimBits(std::string rootfile) {
   string pdfname(rootfile);
   PixUtil::replaceAll(pdfname, ".root", ".pdf");
   string::size_type m1 = pdfname.rfind("/");
-  pdfname.insert(m1+1, "trimbits-");
+  pdfname = pdfname.substr(m1+1);
 
-  if (string::npos == fDirectory.find("nada")) {
-    filename = fDirectory + "/" + rootfile;
-  }
+  pdfname = fDirectory + "/anaTrim-thrDiff-" + pdfname;
 
   TFile *f = TFile::Open(filename.c_str());
   bool ok = f->cd("Trim");
@@ -139,7 +137,7 @@ void anaTrim::showTrimBits(std::string rootfile) {
   c0->cd();
   tl->SetTextSize(0.02);
   tl->SetTextAngle(90.);
-  tl->DrawLatexNDC(0.99, 0.05, pdfname.c_str());
+  tl->DrawLatexNDC(0.99, 0.05, rootfile.c_str());
 
 
   cout << "Save to " << pdfname << endl;

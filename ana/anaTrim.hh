@@ -14,7 +14,7 @@
 class  anaTrim {
 
  public:
-  anaTrim(std::string dir = "nada");
+  anaTrim(std::string pdfdir = ".");
   virtual ~anaTrim();
 
   void makeAll(std::string directory, int mode = 0 );
