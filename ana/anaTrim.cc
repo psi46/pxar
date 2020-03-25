@@ -44,7 +44,9 @@ void anaTrim::makeAll(string directory, int /*mode*/) {
 void anaTrim::showTrimBits(std::string rootfile) {
   string filename(rootfile);
   string pdfname(rootfile);
-  PixUtil::replaceAll(pdfname, ".root", "-trimbits.pdf");
+  PixUtil::replaceAll(pdfname, ".root", ".pdf");
+  string::size_type m1 = pdfname.rfind("/");
+  pdfname.insert(m1+1, "trimbits-");
 
   if (string::npos == fDirectory.find("nada")) {
     filename = fDirectory + "/" + rootfile;
@@ -133,6 +135,12 @@ void anaTrim::showTrimBits(std::string rootfile) {
   tl->SetTextColor(kMagenta); tl->DrawLatexNDC(0.78, 0.80, "TB 1");
   tl->SetTextColor(kBlue);    tl->DrawLatexNDC(0.78, 0.75, "TB 2");
   tl->SetTextColor(kBlack);   tl->DrawLatexNDC(0.78, 0.70, "TB 3");
+
+  c0->cd();
+  tl->SetTextSize(0.02);
+  tl->SetTextAngle(90.);
+  tl->DrawLatexNDC(0.99, 0.05, pdfname.c_str());
+
 
   cout << "Save to " << pdfname << endl;
   c0->SaveAs(pdfname.c_str());
