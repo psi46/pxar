@@ -45,8 +45,10 @@ void anaTrim::showTrimBits(std::string rootfile) {
   string filename(rootfile);
   string pdfname(rootfile);
   PixUtil::replaceAll(pdfname, ".root", ".pdf");
-  string::size_type m1 = pdfname.rfind("/");
-  pdfname = pdfname.substr(m1+1);
+  PixUtil::replaceAll(pdfname, "../", "");
+  PixUtil::replaceAll(pdfname, "/", "__");
+  // string::size_type m1 = pdfname.rfind("/");
+  // pdfname = pdfname.substr(m1+1);
 
   pdfname = fDirectory + "/anaTrim-thrDiff-" + pdfname;
 
