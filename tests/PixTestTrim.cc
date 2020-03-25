@@ -518,10 +518,10 @@ void PixTestTrim::trimBitTest() {
   // setVthrCompCalDel();
 
   vector<int>vtrim;
+  vtrim.push_back(255);
   vtrim.push_back(254);
-  vtrim.push_back(129);
-  vtrim.push_back(64);
-  vtrim.push_back(33);
+  vtrim.push_back(130);
+  vtrim.push_back(60);
 
   vector<int>btrim;
   btrim.push_back(14);
