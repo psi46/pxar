@@ -137,7 +137,7 @@ void anaTrim::showTrimBits(std::string rootfile) {
   tl->SetTextColor(kBlack);   tl->DrawLatexNDC(0.78, 0.70, "TB 3");
 
   c0->cd();
-  tl->SetTextSize(0.02);
+  tl->SetTextSize(0.015);
   tl->SetTextAngle(90.);
   tl->DrawLatexNDC(0.99, 0.05, rootfile.c_str());
 
