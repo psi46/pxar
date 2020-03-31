@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include <TROOT.h>
+#include <TH2.h>
 #include <TFile.h>
 #include <TKey.h>
 #include <TSystem.h>
@@ -60,8 +61,8 @@ void anaTrim::showTrimBits(std::string rootfile) {
     return;
   }
 
-  vector<TH1D *> htb14, htb13, htb11, htb7;
-  vector<int> vtb;
+  vector<TH1D *> htb14, htb13, htb11, htb7, htb0;
+  vector<int> vtb, vdead;
   vtb.push_back(14);  vtb.push_back(13);  vtb.push_back(11);  vtb.push_back(7);
   for (int iroc = 0; iroc < 16; ++iroc) {
     for (int itb = 0; itb < 4; ++itb) {
@@ -71,6 +72,16 @@ void anaTrim::showTrimBits(std::string rootfile) {
 	if (0 == itb) {
 	  h->SetLineColor(kRed);
 	  htb14.push_back(h);
+	  TH2D *h2 = (TH2D*)gDirectory->Get(Form("thr_TrimBitsThr0_Vcal_C%d_V0", iroc));
+	  int ndead(0);
+	  for (int ix = 0; ix < h2->GetNbinsX(); ++ix) {
+	    for (int iy = 0; iy < h2->GetNbinsY(); ++iy) {
+	      if (h2->GetBinContent(ix+1, iy+1) < 1) {
+		++ndead;
+	      }
+	    }
+	  }
+	  vdead.push_back(ndead);
 	}
 	if (1 == itb) {
 	  h->SetLineColor(kMagenta);
@@ -116,6 +127,13 @@ void anaTrim::showTrimBits(std::string rootfile) {
     htb11[iroc]->Draw("samehist");
     htb7[iroc]->Draw("samehist");
 
+    tl->SetTextSize(0.05);
+    tl->SetTextColor(kBlack);   tl->DrawLatexNDC(0.65, 0.85, Form("dead: %d", vdead[iroc]));
+    tl->SetTextColor(kBlack);   tl->DrawLatexNDC(0.65, 0.80, "Entries:");
+    tl->SetTextColor(kRed);     tl->DrawLatexNDC(0.65, 0.75, Form("TB0: %4.0f", htb14[iroc]->Integral(1, htb14[iroc]->GetNbinsX()+1)));
+    tl->SetTextColor(kMagenta); tl->DrawLatexNDC(0.65, 0.70, Form("TB1: %4.0f", htb13[iroc]->Integral(1, htb13[iroc]->GetNbinsX()+1)));
+    tl->SetTextColor(kBlue);    tl->DrawLatexNDC(0.65, 0.65, Form("TB2: %4.0f", htb11[iroc]->Integral(1, htb11[iroc]->GetNbinsX()+1)));
+    tl->SetTextColor(kBlack);   tl->DrawLatexNDC(0.65, 0.60, Form("TB3: %4.0f", htb7[iroc]->Integral(1, htb7[iroc]->GetNbinsX()+1)));
 
     tl->SetTextSize(0.05);
     tl->SetTextColor(kBlack);
@@ -130,11 +148,6 @@ void anaTrim::showTrimBits(std::string rootfile) {
 
   }
 
-  tl->SetTextSize(0.05);
-  tl->SetTextColor(kRed);     tl->DrawLatexNDC(0.78, 0.85, "TB 0");
-  tl->SetTextColor(kMagenta); tl->DrawLatexNDC(0.78, 0.80, "TB 1");
-  tl->SetTextColor(kBlue);    tl->DrawLatexNDC(0.78, 0.75, "TB 2");
-  tl->SetTextColor(kBlack);   tl->DrawLatexNDC(0.78, 0.70, "TB 3");
 
   c0->cd();
   tl->SetTextSize(0.015);
