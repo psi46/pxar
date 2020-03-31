@@ -222,13 +222,14 @@ void PixTestPh::optimize() {
   fApi->setDAC("vcal", vcalshot);
 
   // -- determine dead pixels with these settings
+  LOG(logINFO) << "PixTestPh::optimize() calling deadPixel(5,false,false)";
   vector<vector<pair<int, int> > > dead = deadPixels(5, false, false);
   for (unsigned int ic = 0; ic < dead.size(); ++ic) {
     for (unsigned int ip = 0; ip < dead[ic].size(); ++ip) {
-      cout << "dead pixel ip = " << ip << ": " << dead[ic][ip].first << "/" << dead[ic][ip].second << endl;
+      LOG(logINFO) << "dead pixel ROC = " << ic << ": " << dead[ic][ip].first << "/" << dead[ic][ip].second;
     }
   }
-  LOG(logDEBUG) << "done with dead pixel determination";
+  LOG(logINFO) << "done with dead pixel determination";
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
