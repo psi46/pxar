@@ -1894,7 +1894,7 @@ void PixTest::saveTbParameters() {
 }
 
 // ----------------------------------------------------------------------
-vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel) {
+vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel, bool changeDACs) {
   vector<vector<pair<int, int> > > deadPixels;
   vector<pair<int, int> > deadPixelsRoc;
 
@@ -1904,9 +1904,11 @@ vector<vector<pair<int, int> > > PixTest::deadPixels(int ntrig, bool scanCalDel)
   vector<uint8_t> vCreg     = getDacs("ctrlreg");
   vector<uint8_t> vCalDel   = getDacs("caldel");
 
-  fApi->setDAC("vcal", 200);
-  fApi->setVcalHighRange();
-  fApi->setDAC("vthrcomp", 50);
+  if (changeDACs) {
+    fApi->setDAC("vcal", 200);
+    fApi->setVcalHighRange();
+    fApi->setDAC("vthrcomp", 50);
+  }
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);

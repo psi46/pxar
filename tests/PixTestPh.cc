@@ -216,7 +216,13 @@ void PixTestPh::optimize() {
   fDirectory->cd();
   PixTest::update();
 
-  vector<vector<pair<int, int> > > dead = deadPixels(5);
+  // -- set a range where we should see something
+  int vcalshot(255);
+  fApi->setVcalLowRange();
+  fApi->setDAC("vcal", vcalshot);
+
+  // -- determine dead pixels with these settings
+  vector<vector<pair<int, int> > > dead = deadPixels(5, false, false);
   for (unsigned int ic = 0; ic < dead.size(); ++ic) {
     for (unsigned int ip = 0; ip < dead[ic].size(); ++ip) {
       cout << "dead pixel ip = " << ip << ": " << dead[ic][ip].first << "/" << dead[ic][ip].second << endl;
@@ -226,11 +232,6 @@ void PixTestPh::optimize() {
 
   fApi->_dut->testAllPixels(true);
   fApi->_dut->maskAllPixels(false);
-
-  // -- set a range where we should see something
-  int vcalshot(255);
-  fApi->setVcalLowRange();
-  fApi->setDAC("vcal", vcalshot);
 
   LOG(logDEBUG) << "start with shot, vcal = " << vcalshot << " (low range)";
   vector<uint8_t> v_ctrlreg = getDacs("ctrlreg");

@@ -95,7 +95,7 @@ public:
   /// save TB parameters to file
   void saveTbParameters();
   /// create vector (per ROC) of vector of dead pixels
-  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig, bool scanCalDel = false);
+  std::vector<std::vector<std::pair<int, int> > > deadPixels(int ntrig, bool scanCalDel = false, bool changeDACs = true);
   /// mask all pixels mentioned in the mask file
   void maskPixels();
   /// query whether test 'failed'
