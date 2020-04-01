@@ -1265,11 +1265,12 @@ vector<pair<pair<int, int>, double> > PixTest::getMinimumPixelAndValueMinCol(vec
 	  dcMean += maps[im]->GetBinContent(2*ix+2, iy);
 	  ++nNonZero;
 	}
-	if ((nNonZero > 0) && (dcMean/nNonZero < dcMeanMin)) {
-	  dcMeanMin = dcMean/nNonZero;
-	  dcMinIdx = ix;
-	}
       }
+      if ((nNonZero > 0) && (dcMean/nNonZero < dcMeanMin)) {
+	dcMeanMin = dcMean/nNonZero;
+	dcMinIdx = ix;
+      }
+
     }
 
     // -- find pixel with smallest PH in this double column
