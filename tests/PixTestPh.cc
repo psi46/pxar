@@ -276,7 +276,9 @@ void PixTestPh::optimize() {
   fApi->_dut->maskAllPixels(true);
   fPIX.clear();
   for (unsigned int i = 0; i < minPixel1.size(); ++i) fPIX.push_back(minPixel1[i].first);
+  LOG(logDEBUG) << "minimum pixels for VCAL = " << fVcalLow;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    LOG(logDEBUG) << "C" << iroc << ": " << fPIX[iroc].first << "/" << fPIX[iroc].second;
     fApi->_dut->testPixel(fPIX[iroc].first, fPIX[iroc].second, true, rocIds[iroc]);
     fApi->_dut->maskPixel(fPIX[iroc].first, fPIX[iroc].second, false, rocIds[iroc]);
   }
@@ -289,7 +291,9 @@ void PixTestPh::optimize() {
   fApi->_dut->maskAllPixels(true);
   fPIX.clear();
   for (unsigned int i = 0; i < maxPixel1.size(); ++i) fPIX.push_back(maxPixel1[i].first);
+  LOG(logDEBUG) << "maximum pixels for VCAL = " << fVcalHigh;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
+    LOG(logDEBUG) << "C" << iroc << ": " << fPIX[iroc].first << "/" << fPIX[iroc].second;
     fApi->_dut->testPixel(fPIX[iroc].first, fPIX[iroc].second, true, rocIds[iroc]);
     fApi->_dut->maskPixel(fPIX[iroc].first, fPIX[iroc].second, false, rocIds[iroc]);
   }
@@ -347,7 +351,7 @@ void PixTestPh::optimize() {
 
   for (unsigned int ibad = 0; ibad < vBad.size(); ++ibad) {
     LOG(logWARNING) << " PH optimization did not converge for ROC " << static_cast<int>(rocIds[vBad[ibad]])
-		    << ", setting to average good values";
+		    << ", setting to average good values (" << meanScale << "," << meanOffset << ")";
     fApi->setDAC("phscale", meanScale, rocIds[vBad[ibad]]);
     fApi->setDAC("phoffset", meanOffset, rocIds[vBad[ibad]]);
   }
