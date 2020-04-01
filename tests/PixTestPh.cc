@@ -323,7 +323,9 @@ void PixTestPh::optimize() {
   restoreDacs();
 
   // -- set phscale and phoffset to values corresponding to maximum range
-  int io(-1), is(-1), ibla(-1), ibin(-1);
+  int io(-1), is(-1), ibla(-1), ibin(-1), nGood(0);
+  double meanOffset(0), meanScale(0);
+  vector<int> vBad;
   for (unsigned int iroc = 0; iroc < rocIds.size(); ++iroc) {
     ibin = h2[iroc]->GetMaximumBin(io, is, ibla);
     LOG(logDEBUG) << " roc " << static_cast<int>(rocIds[iroc]) << " ibin = " << ibin << " io = " << io << " is = " << is
@@ -332,13 +334,24 @@ void PixTestPh::optimize() {
     if (io > fPhOffsetMin && is > fPhScaleMin) {
       fApi->setDAC("phscale", is, rocIds[iroc]);
       fApi->setDAC("phoffset", io, rocIds[iroc]);
+      meanScale  += is;
+      meanOffset += io;
+      ++nGood;
     } else {
-      LOG(logWARNING) << " PH optimization did not converge for ROC " << static_cast<int>(rocIds[iroc])
-		      << ", setting to default values";
-      fApi->setDAC("phscale", fApi->_dut->getDAC(rocIds[iroc], "phscale"), rocIds[iroc]);
-      fApi->setDAC("phoffset", fApi->_dut->getDAC(rocIds[iroc], "phoffset"), rocIds[iroc]);
+      vBad.push_back(iroc);
     }
   }
+
+  meanScale  /= nGood;
+  meanOffset /= nGood;
+
+  for (unsigned int ibad = 0; ibad < vBad.size(); ++ibad) {
+    LOG(logWARNING) << " PH optimization did not converge for ROC " << static_cast<int>(rocIds[vBad[ibad]])
+		    << ", setting to average good values";
+    fApi->setDAC("phscale", meanScale, rocIds[vBad[ibad]]);
+    fApi->setDAC("phoffset", meanOffset, rocIds[vBad[ibad]]);
+  }
+
   saveDacs();
   cacheDacs();
 
