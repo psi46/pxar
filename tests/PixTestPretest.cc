@@ -770,6 +770,7 @@ void PixTestPretest::findTiming() {
 			Form("ROC delay, pass = %d, 400MHz = %d, 160MHz = %d", pass, d400, d160),
 			8, 0., 8., 4, 0., 4.);
     h2->SetMinimum(0);
+    fHistOptions.insert(make_pair(h2, "colz"));
     setTitles(h2, "ROC delay", "token*2 + header/trailer");
     fHistList.push_back(h2);
 
@@ -817,7 +818,7 @@ void PixTestPretest::findTiming() {
     pm->SetMarkerSize(2);
     h2->GetListOfFunctions()->Add(pm);
 
-    h2->Draw("colz");
+    h2->Draw(getHistOption(h2).c_str());
     fDisplayedHist = find(fHistList.begin(), fHistList.end(), h2);
     PixTest::update();
 
