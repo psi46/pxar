@@ -124,10 +124,6 @@ bool PixTestPretest::setParameter(string parName, string sval) {
 	fParNtrig = atoi(sval.c_str() );
       }
 
-      if (!parName.compare("iterations") ) {
-	fIterations = atoi(sval.c_str() );
-      }
-
       if (!parName.compare("vcal") ) {
 	fParVcal = atoi(sval.c_str() );
       }

@@ -634,7 +634,6 @@ programroc          button
 ignoreProblems      checkbox(0)
 targetIa            24
 setVana             button
-iterations          100
 EOF
 if ($tbmtype eq "TBM08A" || $tbmtype eq "TBM08B") {
     print FH <<"EOF";
