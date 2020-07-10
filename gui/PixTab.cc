@@ -49,8 +49,6 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
 
   // -- fV1: create and add Embedded Canvas
   fEc1 = new TRootEmbeddedCanvas(Form("%s", tabname.c_str()), fV1, 500, 500);
-  fEc1->GetCanvas()->SetBottomMargin(0.25);
-  fEc1->GetCanvas()->SetLeftMargin(0.25);
   fV1->AddFrame(fEc1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 1, 1, 1, 1));
 
 
@@ -58,6 +56,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   Int_t wid = fEc1->GetCanvasWindowId();
   TCanvas *myc = new TCanvas(Form("%sCanvas", tabname.c_str()), 10, 10, wid);
   fEc1->AdoptCanvas(myc);
+  fEc1->GetCanvas()->SetBottomMargin(0.25);
+  fEc1->GetCanvas()->SetLeftMargin(0.25);
   myc->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "statusBarUpdate(Int_t,Int_t,Int_t,TObject*)");
 
   Int_t parts[] = {45, 55};
