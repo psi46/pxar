@@ -485,7 +485,9 @@ void PixTestPretest::setVana() {
     // -- histogramming only for those ROCs that were selected
     if (!selectedRoc(roc)) continue;
     hsum->Fill(roc, vanaStart[roc] );
+    hsum->SetBinError(roc, 0 );
     hcurr->Fill(roc, rocIana[roc]);
+    hcurr->SetBinError(roc, 0);
   }
 
   double ia16 = fApi->getTBia()*1E3; // [mA]
@@ -498,7 +500,7 @@ void PixTestPretest::setVana() {
   while( sw.RealTime() < 0.1 );
 
 
-  hsum->Draw();
+  hsum->Draw("hist");
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), hsum);
   PixTest::update();
 
