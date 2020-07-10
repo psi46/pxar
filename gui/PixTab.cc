@@ -56,8 +56,8 @@ PixTab::PixTab(PixGui *p, PixTest *test, string tabname) {
   Int_t wid = fEc1->GetCanvasWindowId();
   TCanvas *myc = new TCanvas(Form("%sCanvas", tabname.c_str()), 10, 10, wid);
   fEc1->AdoptCanvas(myc);
-  fEc1->GetCanvas()->SetBottomMargin(0.25);
-  fEc1->GetCanvas()->SetLeftMargin(0.25);
+  fEc1->GetCanvas()->SetBottomMargin(0.10);
+  fEc1->GetCanvas()->SetLeftMargin(0.15);
   myc->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "statusBarUpdate(Int_t,Int_t,Int_t,TObject*)");
 
   Int_t parts[] = {45, 55};
