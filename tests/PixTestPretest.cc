@@ -1396,6 +1396,7 @@ void PixTestPretest::programROC() {
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   unsigned int nRocs = rocIds.size();
   TH1D *h1 = bookTH1D("programROC", "#Delta(Iana) vs ROC", nRocs, 0., nRocs);
+  h1->SetMinimum(0.);
   fHistList.push_back(h1);
 
   vector<int> vanaStart;
