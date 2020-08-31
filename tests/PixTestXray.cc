@@ -718,7 +718,7 @@ void PixTestXray::readData() {
 			it->pixels[ipix].row(),
 			it->pixels[ipix].value());
       } else {
-	q = 0;
+	q = 0.;
       }
       fHitMap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
       fQ[idx]->Fill(q);
@@ -772,7 +772,10 @@ void PixTestXray::processData(uint16_t numevents) {
   LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events.";
 
   int idx(-1);
-  uint16_t q;
+  //  uint16_t q; 2020/08/31: no longer remember whether this was a feature or not.
+  //  DK wants double, because with zero-suppressed r/o in proc600v4 zero PH should
+  //  not result in a VCAL charge of 65k or so, but rather a negative charge.
+  double q;
   for (std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
     ++evtCnt;
     pixCnt += it->pixels.size();
@@ -798,7 +801,7 @@ void PixTestXray::processData(uint16_t numevents) {
 			it->pixels[ipix].row(),
 			it->pixels[ipix].value());
       } else {
-	q = 0;
+	q = 0.;
       }
       fHmap[idx]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
       fQ[idx]->Fill(q);
