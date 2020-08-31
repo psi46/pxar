@@ -188,8 +188,11 @@ void PixTestTrim::trimTest() {
     return;
   }
   vector<int> minVthrComp = getMinimumVthrComp(thr0, 10, 2.);
-  if(fParVcal<=30){         // for very low thresholds set VcThr slightly lower, because after trimming threshold shifts a bit downwards
-    for(unsigned int i=0; i<minVthrComp.size();  i++) minVthrComp[i]-=5;
+  // -- the following was committed by HCK in
+  // -- https://github.com/psi46/pxar/commit/fef74e7a046767c6ced22d455fe18bac08745d83
+  // for very low thresholds set VcThr slightly lower, because after trimming threshold shifts a bit downwards
+  if (fParVcal <= 30) {
+    for (unsigned int i = 0; i < minVthrComp.size(); i++) minVthrComp[i] -= 5;
   }
 
   TH2D* h2(0);
