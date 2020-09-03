@@ -158,7 +158,7 @@ void PixTestBBMap::doTest() {
   fNDaqErrors = 0;
   vector<TH1*>  thrmapsCals = scurveMaps("VthrComp", "calSMap", fParNtrig, 0, 149, -1, -1, result, 1, flag);
 
-  // -- relabel negative thresholds as 255 and create distribution list
+  // -- relabel negative/zero thresholds as 255 and create distribution list
   vector<TH1D*> dlist;
   TH1D *h(0);
   for (unsigned int i = 0; i < thrmapsCals.size(); ++i) {
