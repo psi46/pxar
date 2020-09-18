@@ -108,7 +108,7 @@ void PixTestXray::runCommand(std::string command) {
   LOG(logDEBUG) << "running command: " << command;
 
   if (!command.compare("stop")){
-     doStop();
+    doStop();
   }
 
   if (!command.compare("maskhotpixels")) {
@@ -445,10 +445,10 @@ void PixTestXray::doPhRun() {
 // ----------------------------------------------------------------------
 void PixTestXray::doRateScan() {
 
-  banner(Form("PixTestXray::doRateScan() fParStepSeconds = %d, vthrcom = %d .. %d", fParStepSeconds, fParVthrCompMin, fParVthrCompMax));
+  banner(Form("PixTestXray::doRateScan() fParStepSeconds = %d, vthrcom = %d .. %d",
+	      fParStepSeconds, fParVthrCompMin, fParVthrCompMax));
   cacheDacs();
 
-  if (1) {
   fPg_setup.clear();
   fPg_setup = fPixSetup->getConfigParameters()->getTbPgSettings();
   fApi->setPatternGenerator(fPg_setup);
@@ -513,26 +513,6 @@ void PixTestXray::doRateScan() {
     PixTest::update();
 
   }
-  }
-
-  if (0) {
-    //    TFile *f = TFile::Open("testROC/pxar_firstXray30_90.root");
-    //    TFile *f = TFile::Open("testROC/pxar_Ag_Vcal_10_70_10s.root");
-    TFile *f = TFile::Open("testROC/pxar_Mo_Vcal_30_80_10s.root");
-
-    TH1D *h1 = ((TH1D*)f->Get("Xray/hits_xrayVthrCompScan_C0_V0"));
-    TH1D *h2 = (TH1D*)h1->Clone("local");
-    h2->SetDirectory(0);
-    f->Close();
-    fHits.push_back(h2);
-    copy(fHits.begin(), fHits.end(), back_inserter(fHistList));
-
-    fHits[0]->Draw();
-    fDisplayedHist = find(fHistList.begin(), fHistList.end(), fHits[0]);
-    PixTest::update();
-    return;
-  }
-
 
   vector<uint8_t> rocIds = fApi->_dut->getEnabledRocIDs();
   unsigned nrocs = rocIds.size();
@@ -544,7 +524,9 @@ void PixTestXray::doRateScan() {
     double thr = f1->GetParameter(0);
     if (thr < 0 || thr > 255.) thr = 0.;
     uint8_t ithr = static_cast<uint8_t>(thr);
-    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i]) << " with VthrComp threshold = " << thr << " -> " << static_cast<int>(ithr);
+    LOG(logINFO) << "ROC " << static_cast<int>(rocIds[i])
+		 << " with VthrComp threshold = " << thr
+		 << " -> " << static_cast<int>(ithr);
     fApi->setDAC("vthrcomp", ithr, rocIds[i]);
     PixTest::update();
   }
@@ -575,25 +557,6 @@ void PixTestXray::doRateScan() {
 
   LOG(logINFO) << "PixTestXray::doRateScan() done";
 
-}
-
-// ----------------------------------------------------------------------
-void PixTestXray::readDataOld() {
-
-  int pixCnt(0);
-  vector<pxar::Event> daqdat;
-
-  try { daqdat = fApi->daqGetEventBuffer(); }
-  catch(pxar::DataNoEvent &) {}
-
-  for(std::vector<pxar::Event>::iterator it = daqdat.begin(); it != daqdat.end(); ++it) {
-    pixCnt += it->pixels.size();
-
-    for (unsigned int ipix = 0; ipix < it->pixels.size(); ++ipix) {
-      fHitMap[getIdxFromId(it->pixels[ipix].roc())]->Fill(it->pixels[ipix].column(), it->pixels[ipix].row());
-    }
-  }
-  LOG(logDEBUG) << "Processing Data: " << daqdat.size() << " events with " << pixCnt << " pixels";
 }
 
 // ----------------------------------------------------------------------
@@ -861,7 +824,7 @@ void PixTestXray::doRunMaskHotPixels() {
 
 // ----------------------------------------------------------------------
 void PixTestXray::doStop(){
-	// Interrupt the test
-	fDaq_loop = false;
-	LOG(logINFO) << "Stop pressed. Ending test.";
+  // Interrupt the test
+  fDaq_loop = false;
+  LOG(logINFO) << "Stop pressed. Ending test.";
 }
