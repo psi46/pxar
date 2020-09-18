@@ -167,7 +167,7 @@ void PixTestIV::doTest() {
   }
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
-  h1->Draw("p");
+  h1->Draw("hist");
   PixTest::update();
 
   writeOutput(voltageMeasurements, currentMeasurements, timeStamps, aborted);
