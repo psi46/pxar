@@ -1,5 +1,5 @@
-#include <cstdlib>    
-#include <algorithm>   
+#include <cstdlib>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 
@@ -21,14 +21,14 @@ using namespace std;
 ClassImp(PixTestIV)
 
 // ----------------------------------------------------------------------
-PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name), 
-                                                 fParVoltageStart(0),
-                                                 fParVoltageStop(150), 
-                                                 fParVoltageStep(5), 
-                                                 fParDelay(1), 
-                                                 fParCompliance(100),
-                                                 fStop(false), 
-                                                 fParPort(""){
+PixTestIV::PixTestIV(PixSetup *a, string name) : PixTest(a, name),
+  fParVoltageStart(0),
+  fParVoltageStop(150),
+  fParVoltageStep(5),
+  fParDelay(1),
+  fParCompliance(100),
+  fStop(false),
+  fParPort(""){
   PixTest::init();
   init();
 }
@@ -113,9 +113,9 @@ void PixTestIV::doTest() {
 #else
 
   fDirectory->cd();
-  
+
   int numMeasurements = ceil(fabs((fParVoltageStart - fParVoltageStop)/fParVoltageStep));
-  
+
   TH1D *h1(0);
   double vMin = min(fParVoltageStart, fParVoltageStop) - fParVoltageStep*.5;
   double vMax = vMin + numMeasurements*fParVoltageStep;
@@ -130,10 +130,10 @@ void PixTestIV::doTest() {
   vector<double> currentMeasurements;
   vector<TTimeStamp> timeStamps;
   double signedStep = (fParVoltageStart < fParVoltageStop) ? fParVoltageStep
-                                                           : -fParVoltageStep;
+    : -fParVoltageStep;
   PixTest::update();
   if(gPad) gPad->SetLogy(true);
-  
+
   LOG(logINFO) << "Starting IV curve measurement...";
   double serialTimeout = (fParDelay > 1.0) ? fParDelay*5 : 5.0;
   pxar::HVSupply *hv = new pxar::HVSupply(fParPort.c_str(), serialTimeout);
@@ -147,15 +147,15 @@ void PixTestIV::doTest() {
     voltageMeasurements.push_back(voltRead);
     currentMeasurements.push_back(current);
     h1->Fill(-voltSet, -current*1E6);
-    
+
     TTimeStamp ts;
     ts.Set();
     timeStamps.push_back(ts);
-    
-    LOG(logINFO) << Form("V = %4f (meas: %+7.2f) I = %4.2e uA %s", 
+
+    LOG(logINFO) << Form("V = %4f (meas: %+7.2f) I = %4.2e uA %s",
                          voltSet, voltRead, current*1E6, ts.AsString("c"));
-    
-    h1->Draw("p");
+
+    h1->Draw("hist");
     PixTest::update();
     gSystem->ProcessEvents();
     if(fStop) break;
@@ -164,23 +164,24 @@ void PixTestIV::doTest() {
 
   if(aborted){
     LOG(logWARNING) << "Sweep Aborted on Compliance!";
-  } 
+  }
   fHistList.push_back(h1);
   fDisplayedHist = find(fHistList.begin(), fHistList.end(), h1);
   h1->Draw("p");
   PixTest::update();
-  
+
   writeOutput(voltageMeasurements, currentMeasurements, timeStamps, aborted);
   LOG(logINFO) << "PixTestIV::doTest() done ";
 #endif
 }
 
+// ----------------------------------------------------------------------
 void PixTestIV::writeOutput(vector<double>       &voltageMeasurements,
                             vector<double>       &currentMeasurements,
                             vector<TTimeStamp>   &timeStamps,
-                            bool aborted){  
+                            bool aborted){
   ofstream OutputFile;
-  OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str())); 
+  OutputFile.open(Form("%s/ivCurve.log", fPixSetup->getConfigParameters()->getDirectory().c_str()));
   OutputFile << "# IV test from "   << timeStamps[0].AsString("l") << endl;
   OutputFile << "#Test Parameters:" << endl;
   OutputFile << "#   HV Supply:      Keithley2410" << endl;
@@ -190,19 +191,18 @@ void PixTestIV::writeOutput(vector<double>       &voltageMeasurements,
   OutputFile << "#   Delay(s):       " << fParDelay << endl;
   OutputFile << "#   Compliance(uA): " << fParCompliance << endl;
   OutputFile << "#voltage(V)\tcurrent(A)\ttimestamp" << endl;
-  
+
   unsigned int numMeasurements = voltageMeasurements.size();
   for (unsigned int i = 0; i < numMeasurements; i++) {
     OutputFile << Form("%+8.3f\t%+e\t%s", voltageMeasurements[i],
-                                          currentMeasurements[i],
-                                          timeStamps[i].AsString("c"))
+		       currentMeasurements[i],
+		       timeStamps[i].AsString("c"))
                << endl;
   }
   if(aborted){
     OutputFile << "#Sweep was aborted on compliance" << endl;
-  }else{
+  } else{
     OutputFile << "#Sweep completed Normally" << endl;
   }
   OutputFile.close();
 }
-
