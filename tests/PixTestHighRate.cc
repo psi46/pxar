@@ -349,13 +349,14 @@ void PixTestHighRate::doCalDelScan() {
     double cdMax   = maps[iroc]->GetMaximum();
     calDelLo[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindFirstBinAbove(0.8*cdMax) + reserve));
     calDelHi[iroc] = static_cast<int>(maps[iroc]->GetBinLowEdge(maps[iroc]->FindLastBinAbove(0.8*cdMax) - reserve));
+    // -- the following is useless
     if (calDelHi[iroc] - calDelLo[iroc] > DeltaCalDelMax) {
       DeltaCalDelMax = calDelHi[iroc] - calDelLo[iroc];
     }
   }
 
 
-  // -- now to xEfficiencyMap vs CalDel
+  // -- now to (x)EfficiencyMap vs CalDel
   // ----------------------------------
   for (unsigned int i = 0; i < fHotPixels.size(); ++i) {
     vector<pair<int, int> > hot = fHotPixels[i];
@@ -375,7 +376,8 @@ void PixTestHighRate::doCalDelScan() {
     if (string::npos != pgtmp[i].first.find("resettbm")) continue;
     fPg_setup.push_back(pgtmp[i]);
   }
-  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i) cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
+  if (0) for (unsigned int i = 0; i < fPg_setup.size(); ++i)
+	   cout << fPg_setup[i].first << ": " << (int)fPg_setup[i].second << endl;
 
   fApi->setPatternGenerator(fPg_setup);
 
@@ -396,11 +398,7 @@ void PixTestHighRate::doCalDelScan() {
       fApi->setDAC("CalDel", caldel, rocIds[iroc]);
     }
 
-
-//     pair<vector<TH2D*>,vector<TH2D*> > tests = xEfficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep),
-// 							       ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
-
-    vector<TH2D*>  test2 = efficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
+    vector<TH2D*> test2 = efficiencyMaps(Form("HR_xeff_CalDelScan_step%d", istep), ntrig, FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED);
 
     for (unsigned int iroc = 0; iroc < test2.size(); ++iroc) {
       fHistOptions.insert(make_pair(test2[iroc], "colz"));
@@ -523,9 +521,11 @@ void PixTestHighRate::doXPixelAlive() {
   for (unsigned int i = 0; i < test2.size(); ++i) {
     fHistOptions.insert(make_pair(test2[i], "colz"));
     fHistOptions.insert(make_pair(test3[i], "colz"));
-    h1 = bookTH1D(Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
+    h1 = bookTH1D(Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),
+		  Form("HR_Overall_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
     fHistList.push_back(h1);
-    h2 = bookTH1D(Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
+    h2 = bookTH1D(Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),
+		  Form("HR_Fiducial_Efficiency_C%d", getIdFromIdx(i)),  201, 0., 1.005);
     fHistList.push_back(h2);
 
     for (int ix = 0; ix < test2[i]->GetNbinsX(); ++ix) {
