@@ -178,12 +178,20 @@ void PixTestCmd::DoDnArrow(){
     }
 }
 
+void PixTestCmd::DoExit(){
+  delete textOutputFrame;
+  delete transcript;
+  delete cmdLineFrame;
+  delete commandLine;
+  delete tf;
+}
 
 
 void PixTestCmd::createWidgets(){
     const TGWindow *main = gClient->GetRoot();
     unsigned int w=600;
     tf = new TGTransientFrame(gClient->GetRoot(), main, 600, 800);//w,h
+    tf->Connect("CloseWindow()", "PixTestCmd", this, "DoExit()");
 
     // == Transcript ============================================================================================
 

@@ -36,6 +36,7 @@ public:
 
   void doTest();
   void createWidgets();
+  void DoExit();
   void DoTextField();
   void DoUpArrow();
   void DoDnArrow();
