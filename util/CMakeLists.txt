@@ -14,7 +14,6 @@ rsstools.cc
 shist256.cc
 )
 
-# fill list of header files
 set(UTILLIB_HEADERS
 PixInitFunc.hh
 PHCalibration.hh
@@ -23,7 +22,6 @@ ConfigParameters.hh
 PixSetup.hh
 PixTestParameters.hh
 PixMonitor.hh
-#rsstools.hh
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/core/api ${PROJECT_SOURCE_DIR}/core/utils ${PROJECT_SOURCE_DIR}/util ${ROOT_INCLUDE_DIR} )
@@ -36,6 +34,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${UTILLIB_HEADERS}" "${UTILLIB_DICTIONARY}" "${MY_
 
 # create a shared library
 ADD_LIBRARY( pxarutil SHARED ${UTILLIB_SOURCES} ${UTILLIB_DICTIONARY} )
+
 # link against our core library, the root stuff, and the USB libs
 target_link_libraries(pxarutil ${PROJECT_NAME}  ${ROOT_LIBRARIES} ${FTDI_LINK_LIBRARY} )
 
