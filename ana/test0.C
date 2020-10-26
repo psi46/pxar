@@ -43,6 +43,7 @@ void test0(string filename, string mod = "test1") {
 
   string pdfname = filename;
   pdfname.replace(pdfname.find(".root"), 5, Form("-%s.pdf", mod.c_str()));
+  pdfname.replace(pdfname.find("/"), 1, "-");
   cout << "pdfname = " << pdfname << endl;
   c0.SaveAs(pdfname.c_str());
 }
