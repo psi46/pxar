@@ -15,8 +15,10 @@ void test0(string filename, string mod = "test1") {
   TH2D *h2(0);
   TH1D *h1x = new TH1D("h1x", "caldel", 16, 0., 16.); h1x->Sumw2(); h1x->SetMinimum(0.); h1x->SetMaximum(200.);
   TH1D *h1y = new TH1D("h1y", "vthrcomp", 16, 0., 16.); h1y->Sumw2();h1y->SetMinimum(0.); h1y->SetMaximum(200.);
+  // search for used pixel:  pretestVthrCompCalDel_c11_r20_C0_V0
+
   for (int i = 0; i < 16; ++i) {
-    h2 = (TH2D*)f->Get(Form("Pretest/pretestVthrCompCalDel_c12_r22_C%d_V0", i));
+    h2 = (TH2D*)f->Get(Form("Pretest/pretestVthrCompCalDel_c11_r20_C%d_V0", i));
     if (h2) {
       h1x->SetBinContent(i+1, h2->GetMean(1)); h1x->SetBinError(i+1, h2->GetRMS(1));
       h1y->SetBinContent(i+1, h2->GetMean(2)); h1y->SetBinError(i+1, h2->GetRMS(2));
