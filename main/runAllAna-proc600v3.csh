@@ -2,6 +2,8 @@
 
 # 2020/11/03
 # This script runs the validation analysis (ana/test0.C) for all proc600v3 modules before/after cap gluing
+# pc11366> cd data && ../main/runAllAna-proc600v3.csh
+
 
 root -l -q '../ana/test0.C("L1-proc600v3-1700/L1-proc600v3-1700-test2.root")'
 root -l -q '../ana/test0.C("L1-proc600v3-1701/L1-proc600v3-1701-test2.root")'
