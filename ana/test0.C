@@ -77,7 +77,7 @@ void test0(string filename, string mod = "") {
       }
     }
   }
-  c0.cd(4);
+  c0.cd(5);
   hall2->Draw("colz");
 
 
