@@ -50,9 +50,9 @@ void test0(string filename, string mod = "") {
     if (h2) {
       for (int ix = 1; ix < 53; ++ix) {
 	for (int iy = 1; iy < 81; ++iy) {
-	  if (h2->GetBinContent(ix-1, iy-1) < 1) {
+	  if (h2->GetBinContent(ix, iy) < 1) {
 	    cout << "missing BB in ROC " << i << ": " << ix << "/" << iy << endl;
-	    hall->Fill(ix, iy);
+	    hall->Fill(ix-1, iy-1);
 	  }
 	}
       }
