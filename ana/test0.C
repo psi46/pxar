@@ -46,9 +46,11 @@ void test0(string filename, string mod = "") {
 
   // -- dump all zero-entries of the BB2 test into one TH2D
   TH2D *hall = new TH2D("hall", "Missing BB (complete module)", 52, 0., 52., 80, 0., 80.);
+  bool OK(false);
   for (int i = 0; i < 16; ++i) {
     h2 = (TH2D*)f->Get(Form("BB2/BBtestMap_C%d_V0;1", i));
     if (h2) {
+      OK = true;
       for (int ix = 1; ix < 53; ++ix) {
 	for (int iy = 1; iy < 81; ++iy) {
 	  if (h2->GetBinContent(ix, iy) < 1) {
@@ -60,13 +62,15 @@ void test0(string filename, string mod = "") {
     }
   }
   c0.cd(6);
-  hall->Draw("colz");
+  if (OK) hall->Draw("colz");
 
   // -- dump all zero-entries of the alive test into one TH2D
+  OK = false;
   TH2D *hall2 = new TH2D("hall2", "Dead pixels (complete module)", 52, 0., 52., 80, 0., 80.);
   for (int i = 0; i < 16; ++i) {
     h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0;1", i));
     if (h2) {
+      OK = true;
       for (int ix = 1; ix < 53; ++ix) {
 	for (int iy = 1; iy < 81; ++iy) {
 	  if (h2->GetBinContent(ix, iy) < 1) {
@@ -78,7 +82,7 @@ void test0(string filename, string mod = "") {
     }
   }
   c0.cd(5);
-  hall2->Draw("colz");
+  if (OK) hall2->Draw("colz");
 
 
 
