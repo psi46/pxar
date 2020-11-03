@@ -48,8 +48,8 @@ void test0(string filename, string mod = "") {
   for (int i = 0; i < 16; ++i) {
     h2 = (TH2D*)f->Get(Form("BB2/BBtestMap_C%d_V0;1", i));
     if (h2) {
-      for (int ix = 1; ix < 53; ++ix) {
-	for (int iy = 1; iy < 81; ++iy) {
+      for (int ix = 0; ix < 52; ++ix) {
+	for (int iy = 0; iy < 80; ++iy) {
 	  if (h2->GetBinContent(ix, iy) < 1) {
 	    cout << "missing BB in ROC " << i << ": " << ix << "/" << iy << endl;
 	    hall->Fill(ix, iy);
