@@ -45,7 +45,7 @@ void test0(string filename, string mod = "") {
   // }
 
   // -- dump all zero-entries of the BB2 test into one TH2D
-  TH2D *hall = new TH2D("hall", "BB2", 52, 0., 52., 80, 0., 80.);
+  TH2D *hall = new TH2D("hall", "BB2 (complete module)", 52, 0., 52., 80, 0., 80.);
   for (int i = 0; i < 16; ++i) {
     h2 = (TH2D*)f->Get(Form("BB2/BBtestMap_C%d_V0;1", i));
     if (h2) {
@@ -59,11 +59,11 @@ void test0(string filename, string mod = "") {
       }
     }
   }
-  c0.cd(4);
+  c0.cd(6);
   hall->Draw("colz");
 
   // -- dump all zero-entries of the alive test into one TH2D
-  TH2D *hall2 = new TH2D("hall2", "PixelAlive", 52, 0., 52., 80, 0., 80.);
+  TH2D *hall2 = new TH2D("hall2", "PixelAlive (complete module)", 52, 0., 52., 80, 0., 80.);
   for (int i = 0; i < 16; ++i) {
     h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0;1", i));
     if (h2) {
