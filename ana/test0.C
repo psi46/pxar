@@ -4,7 +4,8 @@ void test0(string filename, string mod = "") {
   gStyle->SetOptStat(0);
 
   c0.Clear();
-  c0.Divide(4,5);
+  //  c0.Divide(4,5);
+  c0.Divide(2,3);
 
   // -- VANA
   c0.cd(1);
@@ -34,14 +35,14 @@ void test0(string filename, string mod = "") {
   c0.cd(3);
   h1y->Draw();
 
-  // -- All the pixelalive maps
-  int c(5);
-  for (int i = 0; i < 16; ++i) {
-    c0.cd(c);
-    h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0;1", i));
-    if (h2) h2->Draw("col");
-    ++c;
-  }
+  // // -- All the pixelalive maps
+  // int c(5);
+  // for (int i = 0; i < 16; ++i) {
+  //   c0.cd(c);
+  //   h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0;1", i));
+  //   if (h2) h2->Draw("col");
+  //   ++c;
+  // }
 
   // -- dump all zero-entries of the BB2 test into one TH2D
   TH2D *hall = new TH2D("hall", "BB2", 52, 0., 52., 80, 0., 80.);
@@ -60,6 +61,25 @@ void test0(string filename, string mod = "") {
   }
   c0.cd(4);
   hall->Draw("colz");
+
+  // -- dump all zero-entries of the alive test into one TH2D
+  TH2D *hall2 = new TH2D("hall2", "PixelAlive", 52, 0., 52., 80, 0., 80.);
+  for (int i = 0; i < 16; ++i) {
+    h2 = (TH2D*)f->Get(Form("PixelAlive/PixelAlive_C%d_V0;1", i));
+    if (h2) {
+      for (int ix = 1; ix < 53; ++ix) {
+	for (int iy = 1; iy < 81; ++iy) {
+	  if (h2->GetBinContent(ix, iy) < 1) {
+	    cout << "dead pixel in ROC " << i << ": " << ix << "/" << iy << endl;
+	    hall2->Fill(ix-1, iy-1);
+	  }
+	}
+      }
+    }
+  }
+  c0.cd(4);
+  hall2->Draw("colz");
+
 
 
   string pdfname = filename;
