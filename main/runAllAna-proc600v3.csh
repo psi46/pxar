@@ -43,10 +43,44 @@ root -l -q '../ana/test0.C("L1-proc600v3-1713/L1-proc600v3-1713-test2.root")'
 root -l -q '../ana/test0.C("L1-proc600v3-1724/L1-proc600v3-1724-test1.root")'
 root -l -q '../ana/test0.C("L1-proc600v3-1724/L1-proc600v3-1724-test2.root")'
 
-root -l -q '../ana/test0.C("L1-proc600v3-1725/L1-proc600v3-1725-test1.root")'
-root -l -q '../ana/test0.C("L1-proc600v3-1725/L1-proc600v3-1725-test2.root")'
-
 root -l -q '../ana/test0.C("L1-proc600v3-1731/L1-proc600v3-1731-test1.root")'
 root -l -q '../ana/test0.C("L1-proc600v3-1731/L1-proc600v3-1731-test2.root")'
 
+root -l -q '../ana/test0.C("L1-proc600v3-1725/L1-proc600v3-1725-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1725/L1-proc600v3-1725-test2.root")'
+
 root -l -q '../ana/test0.C("L1-proc600v3-1726/L1-proc600v3-1726-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1726/L1-proc600v3-1726-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1727/L1-proc600v3-1727-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1727/L1-proc600v3-1727-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1733/L1-proc600v3-1733-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1733/L1-proc600v3-1733-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1720/L1-proc600v3-1720-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1720/L1-proc600v3-1720-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1721/L1-proc600v3-1721-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1721/L1-proc600v3-1721-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1706/L1-proc600v3-1706-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1706/L1-proc600v3-1706-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1707/L1-proc600v3-1707-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1707/L1-proc600v3-1707-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1709/L1-proc600v3-1709-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1709/L1-proc600v3-1709-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1728/L1-proc600v3-1728-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1728/L1-proc600v3-1728-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1730/L1-proc600v3-1730-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1730/L1-proc600v3-1730-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1732/L1-proc600v3-1732-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1732/L1-proc600v3-1732-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1711/L1-proc600v3-1711-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1711/L1-proc600v3-1711-test2.root")'

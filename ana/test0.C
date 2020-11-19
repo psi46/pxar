@@ -51,10 +51,12 @@ void test0(string filename, string mod = "") {
     h2 = (TH2D*)f->Get(Form("BB2/BBtestMap_C%d_V0;1", i));
     if (h2) {
       OK = true;
+      int nDead(0);
       for (int ix = 1; ix < 53; ++ix) {
 	for (int iy = 1; iy < 81; ++iy) {
-	  if (h2->GetBinContent(ix, iy) < 1) {
-	    cout << "missing BB in ROC " << i << ": " << ix << "/" << iy << endl;
+	  if (h2->GetBinContent(ix, iy) > 1) {
+	    ++nDead;
+	    cout << Form("%03d ", nDead) << "missing BB in ROC " << i << ": " << ix << "/" << iy << endl;
 	    hall->Fill(ix-1, iy-1);
 	  }
 	}
@@ -84,6 +86,21 @@ void test0(string filename, string mod = "") {
   c0.cd(5);
   if (OK) hall2->Draw("colz");
 
+
+  // -- add timestamp of test
+  c0.cd(4);
+  TH1D *ha = (TH1D*)f->Get("HA");
+  string ts = ha->GetTitle();
+  ts.replace(ts.find("analog current measurements, start: "), 36, "");
+  ts.replace(ts.find(" / sec:"), ts.length() - ts.find(" / sec:"), "");
+  ts.replace(ts.rfind("."), ts.length() - ts.rfind("."), "");
+  tl->SetTextSize(0.1);
+  tl->DrawLatexNDC(0.1, 0.32, "Test start:");
+  tl->DrawLatexNDC(0.1, 0.20, ts.c_str());
+  ts = filename;
+  ts.replace(0, ts.find("/")+1, "");
+  ts.replace(ts.find(".root"), 5, "");
+  tl->DrawLatexNDC(0.1, 0.80, ts.c_str());
 
 
   string pdfname = filename;
