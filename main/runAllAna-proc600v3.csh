@@ -84,3 +84,6 @@ root -l -q '../ana/test0.C("L1-proc600v3-1732/L1-proc600v3-1732-test2.root")'
 
 root -l -q '../ana/test0.C("L1-proc600v3-1711/L1-proc600v3-1711-test1.root")'
 root -l -q '../ana/test0.C("L1-proc600v3-1711/L1-proc600v3-1711-test2.root")'
+
+root -l -q '../ana/test0.C("L1-proc600v3-1729/L1-proc600v3-1729-test1.root")'
+root -l -q '../ana/test0.C("L1-proc600v3-1729/L1-proc600v3-1729-test2.root")'
