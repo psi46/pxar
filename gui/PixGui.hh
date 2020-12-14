@@ -29,6 +29,7 @@ typedef char int8_t;
 #include <TRandom.h>
 #include <TH1.h>
 #include <TRootEmbeddedCanvas.h>
+#include <TVirtualX.h>
 #include <TVirtualStreamerInfo.h>  // w/o this dict compilation problems
 
 #include "api.h"
