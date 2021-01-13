@@ -3,6 +3,11 @@ void test3(string filename, string mod = "") {
 
   gStyle->SetOptStat(0);
 
+  TCanvas c0("c0","--c0--",2303,0,656,700);
+  TLatex *tl = new TLatex();
+  tl->SetNDC(kTRUE);
+  tl->SetTextFont(42);
+
   c0.Clear();
   //  c0.Divide(4,5);
   c0.Divide(2,3);
