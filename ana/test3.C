@@ -3,8 +3,8 @@ void test3(string filename, string mod = "") {
 
   gStyle->SetOptStat(0);
 
-  TCanvas c0("c0","--c0--",2303,0,656,700);
-  TLatex *tl = new TLatex();
+  // TCanvas c0("c0","--c0--",2303,0,656,700);
+  // TLatex *tl = new TLatex();
   tl->SetNDC(kTRUE);
   tl->SetTextFont(42);
 
@@ -116,7 +116,9 @@ void test3(string filename, string mod = "") {
 
   string pdfname = filename;
   pdfname.replace(pdfname.find(".root"), 5, Form("%s.pdf", mod.c_str()));
-  pdfname.replace(pdfname.find("/"), 1, "-");
+  if (string::npos != pdfname.find("/")) {
+    pdfname.replace(pdfname.find("/"), 1, "-");
+  }
   cout << "pdfname = " << pdfname << endl;
   c0.SaveAs(pdfname.c_str());
   system(Form("/bin/ls  `pwd`/%s", pdfname.c_str()));
