@@ -1,7 +1,5 @@
 pXar
 ====
-Master Branch: [![Build Status](https://travis-ci.com/psi46/pxar.svg?branch=master)](https://travis-ci.com/psi46/pxar)
-
 
 pixel Xpert analysis &amp; readout
 
