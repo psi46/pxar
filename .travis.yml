@@ -6,7 +6,7 @@ before_install:
   - echo $LANG
   - echo $LC_ALL
   - sudo apt-get update && sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev
-  - sudo wget https://root.cern/download/root_v6.22.06.Linux-ubuntu16-x86_64-gcc5.4.tar.gz && tar -xzvf https://root.cern/download/root_v6.22.06.Linux-ubuntu16-x86_64-gcc5.4.tar.gz && source root/bin/thisroot.sh
+  - sudo wget https://root.cern/download/root_v6.22.06.Linux-ubuntu16-x86_64-gcc5.4.tar.gz && tar -xzvf root_v6.22.06.Linux-ubuntu16-x86_64-gcc5.4.tar.gz && source root/bin/thisroot.sh
   - echo $ROOTSYS
 before_script:
 script:
